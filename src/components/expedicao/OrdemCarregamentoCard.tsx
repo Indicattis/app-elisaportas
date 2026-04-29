@@ -26,6 +26,14 @@ export const OrdemCarregamentoCard = ({
 
   // Lógica de cores
   const getCardStyles = () => {
+    // Correção - Roxo (tem prioridade sobre tipo_entrega)
+    if (ordem.fonte === 'correcoes') {
+      return {
+        backgroundColor: 'rgb(168 85 247 / 0.15)',
+        borderColor: 'rgb(168 85 247 / 0.5)',
+      };
+    }
+
     // Entrega - Verde
     if (tipoEntrega === 'entrega') {
       return {
