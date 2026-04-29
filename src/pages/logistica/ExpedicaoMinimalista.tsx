@@ -190,9 +190,17 @@ export default function ExpedicaoMinimalista() {
       if (pedido) {
         const vendaData = Array.isArray(pedido.vendas) ? pedido.vendas?.[0] : pedido.vendas;
         const tipoEntregaVal = vendaData?.tipo_entrega || 'entrega';
+        const etapaPedido = (pedido as any).etapa_atual;
+        // Determinar fonte correta baseado na etapa do pedido (correções têm fonte própria)
+        const fonteFallback: 'ordens_carregamento' | 'instalacoes' | 'correcoes' =
+          etapaPedido === 'correcoes'
+            ? 'correcoes'
+            : (tipoEntregaVal === 'instalacao' || tipoEntregaVal === 'manutencao' || etapaPedido === 'instalacoes')
+              ? 'instalacoes'
+              : 'ordens_carregamento';
         ordemEncontrada = {
           id: pedido.id,
-          fonte: (tipoEntregaVal === 'instalacao' || tipoEntregaVal === 'manutencao') ? 'instalacoes' : 'ordens_carregamento',
+          fonte: fonteFallback,
           pedido_id: pedido.id,
           venda_id: pedido.venda_id || null,
           nome_cliente: vendaData?.cliente_nome || '',
