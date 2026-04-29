@@ -575,14 +575,14 @@ export function OrdemDetalhesSheet({
           {/* Botão de concluir no header quando todos os itens estão marcados */}
           {todasConcluidas && linhas.length > 0 && podeMarcarLinhas && ordem.status !== 'concluido' && ordem.status !== 'pronta' && !temLinhaComProblema && (
             <div className="mt-4">
-              {tipoOrdem === 'pintura' ? (
+              {tipoOrdem === 'pintura' || tipoOrdem === 'embalagem' ? (
                 <Button
                   className="w-full"
                   disabled={isFinalizando}
                   onClick={onFinalizarPintura}
                 >
                   <CheckCircle2 className="h-4 w-4 mr-2" />
-                  {isFinalizando ? "Concluindo..." : "Concluir Pintura"}
+                  {isFinalizando ? "Concluindo..." : (tipoOrdem === 'embalagem' ? "Concluir Embalagem" : "Concluir Pintura")}
                 </Button>
               ) : (
                 <Button
