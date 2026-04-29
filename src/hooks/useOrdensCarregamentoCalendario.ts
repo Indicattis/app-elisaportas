@@ -518,6 +518,18 @@ export const useOrdensCarregamentoCalendario = (
           queryClient.invalidateQueries({ queryKey: ["ordens-carregamento-disponiveis"] });
         }
       )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'correcoes'
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["ordens_carregamento_calendario", inicio, fim] });
+          queryClient.invalidateQueries({ queryKey: ["ordens-carregamento-disponiveis"] });
+        }
+      )
       .subscribe();
 
     return () => {
