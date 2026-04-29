@@ -179,31 +179,34 @@ Deno.serve(async (req) => {
     let authUser
 
     if (existingUser) {
-      // User already exists - DO NOT reset password every time
-      // Only update metadata if needed, without touching the password
+      // User already exists - sync password with the expected default (gerarSenhaPorNome)
+      // to guarantee that the password in auth.users always matches the system rule.
+      // This prevents "Invalid login credentials" when the auth password drifts from the rule.
       const currentMeta = existingUser.user_metadata || {}
       const needsMetaUpdate = 
         currentMeta.nome !== adminUser.nome ||
         currentMeta.cpf_ultimos_4 !== cpfUltimos4 ||
         currentMeta.setor !== (adminUser.setor || 'fabrica')
 
-      if (needsMetaUpdate) {
-        console.log('[AUDIT] Atualizando metadata (sem trocar senha) para:', email)
-        const { data, error } = await supabaseAdmin.auth.admin.updateUserById(
-          existingUser.id,
-          {
+      console.log('[AUDIT] Sincronizando senha padrão para usuário existente:', email)
+      const { error: syncError } = await supabaseAdmin.auth.admin.updateUserById(
+        existingUser.id,
+        {
+          password: password,
+          email_confirm: true,
+          ...(needsMetaUpdate ? {
             user_metadata: {
               nome: adminUser.nome,
               cpf_ultimos_4: cpfUltimos4,
               setor: adminUser.setor || 'fabrica'
             }
-          }
-        )
-
-        if (error) {
-          console.error('Erro ao atualizar metadata:', error)
-          // Non-fatal: continue with login anyway
+          } : {})
         }
+      )
+
+      if (syncError) {
+        console.error('Erro ao sincronizar senha/metadata:', syncError)
+        // Non-fatal: continue and let signIn attempt anyway
       }
 
       authUser = existingUser
