@@ -1908,8 +1908,10 @@ export function PedidoCard({
 
 
 
-                    // Botão de agendar no calendário
-                    if (onAgendar && !temDataCarregamento && !carregamentoConcluido && !finalizaSemCarregamento && (etapaAtual === 'aguardando_coleta' || etapaAtual === 'instalacoes' || etapaAtual === 'correcoes')) {
+                    // Botão de agendar / reagendar no calendário
+                    // Permite reagendar mesmo quando já existe data, desde que o carregamento ainda não foi concluído
+                    if (onAgendar && !carregamentoConcluido && !finalizaSemCarregamento && (etapaAtual === 'aguardando_coleta' || etapaAtual === 'instalacoes' || etapaAtual === 'correcoes')) {
+                      const tooltipLabel = temDataCarregamento ? 'Reagendar no Calendário' : 'Agendar no Calendário';
                       middleButtons.push(
                         <Tooltip key="agendar">
                           <TooltipTrigger asChild>
@@ -1917,14 +1919,14 @@ export function PedidoCard({
                               size="icon" 
                               variant="outline" 
                               onClick={(e) => { e.stopPropagation(); onAgendar(pedido.id); }} 
-                              title="Agendar no calendário" 
+                              title={tooltipLabel}
                               className="flex h-[20px] w-[20px] rounded-[3px] bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 border-blue-500/50"
                             >
                               <CalendarPlus className="h-3 w-3" />
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent side="top">
-                            <span className="text-xs">Agendar no Calendário</span>
+                            <span className="text-xs">{tooltipLabel}</span>
                           </TooltipContent>
                         </Tooltip>
                       );
