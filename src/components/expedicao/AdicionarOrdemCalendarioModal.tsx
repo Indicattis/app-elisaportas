@@ -75,10 +75,26 @@ export function AdicionarOrdemCalendarioModal({
       }
       
       setSearchTerm("");
-      setDataSelecionadaCalendario(format(dataSelecionada, "yyyy-MM-dd"));
-      setResponsavelTipo("elisa");
-      setResponsavelId("");
-      setResponsavelNomeTerceiro("");
+      // Pré-preencher com a data já agendada (caso exista) — útil para reagendamento
+      const dataExistente = ordemPreSelecionada?.data_carregamento;
+      if (dataExistente) {
+        setDataSelecionadaCalendario(format(new Date(dataExistente), "yyyy-MM-dd"));
+      } else {
+        setDataSelecionadaCalendario(format(dataSelecionada, "yyyy-MM-dd"));
+      }
+      // Pré-preencher responsável atual (caso exista)
+      const tipoExistente = ordemPreSelecionada?.tipo_carregamento;
+      if (tipoExistente === 'elisa' || tipoExistente === 'autorizados' || tipoExistente === 'terceiro') {
+        setResponsavelTipo(tipoExistente);
+        setResponsavelId(ordemPreSelecionada?.responsavel_carregamento_id || "");
+        setResponsavelNomeTerceiro(
+          tipoExistente === 'terceiro' ? (ordemPreSelecionada?.responsavel_carregamento_nome || "") : ""
+        );
+      } else {
+        setResponsavelTipo("elisa");
+        setResponsavelId("");
+        setResponsavelNomeTerceiro("");
+      }
     }
   }, [open, ordemPreSelecionada, dataSelecionada]);
 
