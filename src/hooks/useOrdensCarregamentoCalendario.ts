@@ -311,7 +311,7 @@ export const useOrdensCarregamentoCalendario = (
       }));
 
       // 5. Combinar ordens e instalações (filtros já aplicados nas queries)
-      return [...ordensComFonte, ...instalacoesNormalizadas] as OrdemCarregamento[];
+      return [...ordensComFonte, ...instalacoesNormalizadas, ...correcoesNormalizadas] as OrdemCarregamento[];
     },
   });
 
