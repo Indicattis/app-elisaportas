@@ -146,6 +146,99 @@ export const useOrdensCarregamentoCalendario = (
 
       if (errorInstalacoes) throw errorInstalacoes;
 
+      // 2b. Buscar correcoes com data_carregamento agendada (carregamento de correção pela expedição)
+      const { data: correcoesData, error: errorCorrecoes } = await supabase
+        .from("correcoes")
+        .select(`
+          id,
+          pedido_id,
+          venda_id,
+          nome_cliente,
+          data_carregamento,
+          hora_carregamento,
+          tipo_carregamento,
+          responsavel_carregamento_id,
+          responsavel_carregamento_nome,
+          status,
+          carregamento_concluido,
+          observacoes,
+          created_at,
+          updated_at,
+          cidade,
+          estado,
+          pedido:pedidos_producao!correcoes_pedido_id_fkey(
+            id,
+            numero_pedido,
+            etapa_atual
+          ),
+          venda:vendas(
+            id,
+            cliente_nome,
+            cliente_telefone,
+            cliente_email,
+            estado,
+            cidade,
+            cep,
+            bairro,
+            data_prevista_entrega,
+            tipo_entrega,
+            metodo_pagamento,
+            cliente:clientes(
+              endereco
+            ),
+            produtos:produtos_vendas(
+              tipo_produto,
+              tamanho,
+              largura,
+              altura,
+              quantidade,
+              cor:catalogo_cores(
+                nome,
+                codigo_hex
+              )
+            )
+          )
+        `)
+        .not("data_carregamento", "is", null)
+        .gte("data_carregamento", inicio)
+        .lte("data_carregamento", fim)
+        .eq("carregamento_concluido", false);
+
+      if (errorCorrecoes) throw errorCorrecoes;
+
+      const correcoesNormalizadas = (correcoesData || []).map((corr: any) => ({
+        id: corr.id,
+        pedido_id: corr.pedido?.id || corr.pedido_id || null,
+        venda_id: corr.venda?.id || corr.venda_id || null,
+        nome_cliente: corr.nome_cliente,
+        tipo_carregamento: corr.tipo_carregamento,
+        data_carregamento: corr.data_carregamento,
+        hora: corr.hora_carregamento,
+        hora_carregamento: corr.hora_carregamento,
+        responsavel_carregamento_id: corr.responsavel_carregamento_id,
+        responsavel_carregamento_nome: corr.responsavel_carregamento_nome,
+        status: corr.status,
+        carregamento_concluido: corr.carregamento_concluido,
+        carregamento_concluido_em: null,
+        carregamento_concluido_por: null,
+        latitude: null,
+        longitude: null,
+        geocode_precision: null,
+        last_geocoded_at: null,
+        observacoes: corr.observacoes,
+        created_at: corr.created_at,
+        updated_at: corr.updated_at,
+        created_by: null,
+        fonte: 'correcoes' as const,
+        pedido: corr.pedido ? {
+          id: corr.pedido.id,
+          numero_pedido: corr.pedido.numero_pedido,
+          etapa_atual: corr.pedido.etapa_atual,
+          instalacao: null,
+        } : undefined,
+        venda: corr.venda || null,
+      }));
+
       // 3. Normalizar instalações para o formato OrdemCarregamento
       const instalacoesNormalizadas = (instalacoes || []).map((inst: any) => {
         // Se tem venda vinculada, usar dados da venda
@@ -218,7 +311,7 @@ export const useOrdensCarregamentoCalendario = (
       }));
 
       // 5. Combinar ordens e instalações (filtros já aplicados nas queries)
-      return [...ordensComFonte, ...instalacoesNormalizadas] as OrdemCarregamento[];
+      return [...ordensComFonte, ...instalacoesNormalizadas, ...correcoesNormalizadas] as OrdemCarregamento[];
     },
   });
 
@@ -419,6 +512,18 @@ export const useOrdensCarregamentoCalendario = (
           event: '*',
           schema: 'public',
           table: 'instalacoes'
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["ordens_carregamento_calendario", inicio, fim] });
+          queryClient.invalidateQueries({ queryKey: ["ordens-carregamento-disponiveis"] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'correcoes'
         },
         () => {
           queryClient.invalidateQueries({ queryKey: ["ordens_carregamento_calendario", inicio, fim] });

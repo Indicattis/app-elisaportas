@@ -1,50 +1,33 @@
-# Alinhar valores entre `/paineis/metas-vendas` e `/paineis/tv-dashboard`
+# Mostrar correções reagendadas no calendário de expedição
 
-## Diagnóstico
+## Problema confirmado
 
-Os dois painéis usam fórmulas diferentes para somar vendas do mês — por isso os valores divergem.
+O pedido #0152 está em etapa `correcoes` e foi reagendado: a tabela `correcoes` tem `data_carregamento = 2026-04-30` corretamente gravado, com responsável "Equipe 3" e status `agendada`. Porém o card não aparece em `/logistica/expedicao`.
 
-| Painel | Fonte | Fórmula por venda | Filtra rascunho? |
-|---|---|---|---|
-| `/paineis/tv-dashboard` (FATURAMENTO + ranking) | `useSalesData`, `useSellersRanking` | `valor_venda − valor_frete + valor_credito` | ❌ |
-| `/paineis/metas-vendas` (totais e progresso) | `useProgressoMetasVendas` | `valor_venda` (inclui frete, ignora crédito) | ✅ |
+**Causa raiz:** o hook `useOrdensCarregamentoCalendario` (que alimenta o calendário) só consulta as tabelas `ordens_carregamento` e `instalacoes`. **Nunca lê a tabela `correcoes`.** Já existe um `useCorrecoes` paralelo na página, mas esse outro hook filtra por `data_correcao` (data da visita do correcionista), não por `data_carregamento` (data de saída da fábrica). Resultado: correções reagendadas pela expedição caem em um buraco e não aparecem em lugar algum do calendário.
 
-A regra canônica do projeto, definida em `src/utils/faturamentoCalc.ts` (`calcularFaturamentoLiquido`), é **`valor_venda + valor_credito − valor_frete`**, e é a que o TV Dashboard segue. Sua suspeita está correta: o painel de metas hoje está incluindo frete (e ignorando o crédito), por isso o número diverge.
+## Solução
 
-Há também uma diferença secundária: o painel de metas exclui rascunhos (`is_rascunho = false`) e o TV Dashboard não filtra. Em geral rascunhos não deveriam contar como faturamento, então essa diferença é "a favor" do painel de metas.
+Adicionar uma terceira fonte ao `useOrdensCarregamentoCalendario`: buscar correções com `data_carregamento` no período e normalizá-las no formato `OrdemCarregamento` com `fonte: 'correcoes'`. Assim aparecem como cards normais (estilo entrega/instalação) ao lado das ordens e instalações já existentes.
 
-## Mudanças propostas
+## Detalhes técnicos
 
-### 1. Padronizar o cálculo de progresso de metas (corrige a divergência)
+Arquivo: `src/hooks/useOrdensCarregamentoCalendario.ts`
 
-Em `src/hooks/useProgressoMetasVendas.ts`:
+1. Após o bloco que busca `instalacoes` (linha ~147), adicionar uma nova query em `correcoes`:
+   - `select` dos campos de carregamento + join com `pedidos_producao` (numero_pedido, etapa_atual) e `vendas` (cliente, endereço, produtos com cores)
+   - Filtros: `data_carregamento` não-nulo, dentro do intervalo `[inicio, fim]`, e `carregamento_concluido = false`
 
-- Trocar todos os `select('atendente_id, valor_venda')` por `select('atendente_id, valor_venda, valor_frete, valor_credito')`.
-- Substituir `Number(v.valor_venda || 0)` por `calcularFaturamentoLiquido(v)` (importando de `@/utils/faturamentoCalc`) nos três loops:
-  - acumulação `vendasMes` → `porVendedorMes` / `totalGlobalMes`
-  - acumulação `vendasSemana` → `porVendedorSemana` / `totalGlobalSemana`
-  - acumulação por meta (`vendas` dentro do `for` das metas ativas)
+2. Mapear o resultado para o formato `OrdemCarregamento` com `fonte: 'correcoes' as const`, espelhando a normalização feita para `instalacoes`.
 
-Isso faz o painel de metas usar exatamente a mesma fórmula líquida do TV Dashboard.
+3. Concatenar no `return` final: `[...ordensComFonte, ...instalacoesNormalizadas, ...correcoesNormalizadas]`.
 
-### 2. Alinhar filtro de rascunhos no TV Dashboard
+Subscription em tempo real: adicionar também um `.on('postgres_changes', { table: 'correcoes' }, ...)` (linha ~414) para invalidar a query quando uma correção mudar.
 
-Em `src/hooks/useDashboardData.ts`, adicionar `.eq('is_rascunho', false)` em:
-- `useSalesData` (FATURAMENTO do mês)
-- `useSellersRanking` (ranking de vendedores)
+A `updateOrdemMutation` já trata `fonte === 'correcoes'` corretamente (linha 236) — nada a alterar lá.
 
-Assim os dois painéis ignoram rascunhos da mesma forma.
-
-### 3. (Opcional, mesma direção) Trimestre do TV Dashboard
-
-Em `TvDashboard.tsx`, o bloco `vendas-trimestre` calcula `valor_venda − valor_frete` (sem somar crédito). Para consistência total, trocar por `calcularFaturamentoLiquido` e também adicionar `.eq('is_rascunho', false)`. Isso não afeta diretamente a tela que o usuário está comparando, mas evita reabrir o mesmo bug em outro card.
+Componentes que renderizam os cards (`OrdemCarregamentoCard`, `DiaCardExpedicao`) já recebem `OrdemCarregamento` genérico, então cards de correção aparecerão automaticamente. O botão de remover do calendário (`handleRemoverDoCalendario` na página) já passa `fonte` baseado no `ordem.fonte`, então remover/reagendar a partir do card também funcionará.
 
 ## Resultado esperado
 
-Após o ajuste, o "Total no período" exibido em `/paineis/metas-vendas` para uma meta mensal global passará a bater exatamente com o valor de FATURAMENTO mostrado no slide 1 do `/paineis/tv-dashboard` (e com a soma do ranking de vendedores), porque ambos usarão `valor_venda + valor_credito − valor_frete` sobre vendas não-rascunho do mês corrente.
-
-## Arquivos afetados
-
-- `src/hooks/useProgressoMetasVendas.ts` — padronizar fórmula
-- `src/hooks/useDashboardData.ts` — adicionar filtro `is_rascunho = false`
-- `src/pages/TvDashboard.tsx` — (opcional) padronizar query do trimestre
+Pedido #0152 (e qualquer outra correção reagendada) passa a aparecer como card no dia 30/04/2026 do calendário de expedição, podendo ser editado, concluído ou removido normalmente.
