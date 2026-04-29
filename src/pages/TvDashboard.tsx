@@ -10,6 +10,7 @@ import { useInstalacoesCadastradas } from '@/hooks/useInstalacoesCadastradas';
 import { useFaturamentoPorProduto } from '@/hooks/useFaturamentoPorProduto';
 import { Package, Wrench, Truck, TrendingUp } from "lucide-react";
 import elisaLogoSite from "@/assets/elisa-logo-ouro.png";
+import { calcularFaturamentoLiquido } from "@/utils/faturamentoCalc";
 interface VendedorRanking {
   nome: string;
   total_vendas: number;
@@ -63,7 +64,8 @@ export default function TvDashboard() {
         error
       } = await supabase.
       from('vendas').
-      select('data_venda, valor_venda, valor_frete').
+      select('data_venda, valor_venda, valor_frete, valor_credito').
+      eq('is_rascunho', false).
       gte('data_venda', format(inicioJulho, 'yyyy-MM-dd')).
       lte('data_venda', format(fimSetembro, 'yyyy-MM-dd'));
 
@@ -75,8 +77,7 @@ export default function TvDashboard() {
       // Agrupar por data e calcular valor sem frete
       const vendasPorDia = (data || []).reduce((acc: {[key: string]: number;}, venda: any) => {
         const dataKey = venda.data_venda.split('T')[0];
-        const valorSemFrete = Number(venda.valor_venda || 0) - Number(venda.valor_frete || 0);
-        acc[dataKey] = (acc[dataKey] || 0) + valorSemFrete;
+        acc[dataKey] = (acc[dataKey] || 0) + calcularFaturamentoLiquido(venda);
         return acc;
       }, {});
 
