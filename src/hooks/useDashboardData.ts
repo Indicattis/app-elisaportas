@@ -28,6 +28,7 @@ export const useSalesData = () => {
       const { data, error } = await supabase
         .from('vendas')
         .select('data_venda, valor_venda, valor_frete, valor_credito')
+        .eq('is_rascunho', false)
         .gte('data_venda', primeiroDiaDoMes.toISOString())
         .lte('data_venda', ultimoDiaDoMes.toISOString());
 
@@ -78,6 +79,7 @@ export const useSellersRanking = () => {
           atendente_id,
           admin_users!inner(nome, foto_perfil_url)
         `)
+        .eq('is_rascunho', false)
         .gte('data_venda', primeiroDiaDoMes.toISOString())
         .lte('data_venda', ultimoDiaDoMes.toISOString());
 

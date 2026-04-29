@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useMetasVendas, type MetaVendas, type MetaVendasTier } from './useMetasVendas';
 import { getInicioFimSemana, getInicioFimMes } from '@/lib/periodoMeta';
+import { calcularFaturamentoLiquido } from '@/utils/faturamentoCalc';
 
 export interface VendedorProgresso {
   vendedor_id: string;
@@ -69,7 +70,7 @@ export function useProgressoMetasVendas() {
       const periodoMes = getInicioFimMes(hoje);
       const { data: vendasMes, error: errMes } = await supabase
         .from('vendas')
-        .select('atendente_id, valor_venda')
+        .select('atendente_id, valor_venda, valor_frete, valor_credito')
         .eq('is_rascunho', false)
         .gte('data_venda', periodoMes.inicioIso)
         .lte('data_venda', periodoMes.fimIso);
@@ -77,7 +78,7 @@ export function useProgressoMetasVendas() {
       const porVendedorMes = new Map<string, number>();
       let totalGlobalMes = 0;
       for (const v of (vendasMes as any[]) || []) {
-        const valor = Number(v.valor_venda || 0);
+        const valor = calcularFaturamentoLiquido(v);
         totalGlobalMes += valor;
         porVendedorMes.set(v.atendente_id, (porVendedorMes.get(v.atendente_id) || 0) + valor);
       }
@@ -86,7 +87,7 @@ export function useProgressoMetasVendas() {
       const periodoSemana = getInicioFimSemana(hoje);
       const { data: vendasSemana, error: errSemana } = await supabase
         .from('vendas')
-        .select('atendente_id, valor_venda')
+        .select('atendente_id, valor_venda, valor_frete, valor_credito')
         .eq('is_rascunho', false)
         .gte('data_venda', periodoSemana.inicioIso)
         .lte('data_venda', periodoSemana.fimIso);
@@ -94,7 +95,7 @@ export function useProgressoMetasVendas() {
       const porVendedorSemana = new Map<string, number>();
       let totalGlobalSemana = 0;
       for (const v of (vendasSemana as any[]) || []) {
-        const valor = Number(v.valor_venda || 0);
+        const valor = calcularFaturamentoLiquido(v);
         totalGlobalSemana += valor;
         porVendedorSemana.set(v.atendente_id, (porVendedorSemana.get(v.atendente_id) || 0) + valor);
       }
@@ -106,7 +107,7 @@ export function useProgressoMetasVendas() {
 
         let q = supabase
           .from('vendas')
-          .select('atendente_id, valor_venda')
+          .select('atendente_id, valor_venda, valor_frete, valor_credito')
           .eq('is_rascunho', false)
           .gte('data_venda', periodo.inicioIso)
           .lte('data_venda', periodo.fimIso);
@@ -122,7 +123,7 @@ export function useProgressoMetasVendas() {
         const porVendedor = new Map<string, number>();
         let totalGlobal = 0;
         for (const v of (vendas as any[]) || []) {
-          const valor = Number(v.valor_venda || 0);
+          const valor = calcularFaturamentoLiquido(v);
           totalGlobal += valor;
           porVendedor.set(v.atendente_id, (porVendedor.get(v.atendente_id) || 0) + valor);
         }
