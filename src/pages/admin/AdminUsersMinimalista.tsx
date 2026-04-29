@@ -46,6 +46,7 @@ interface AdminUser {
 
 export default function AdminUsersMinimalista() {
   const [users, setUsers] = useState<AdminUser[]>([]);
+  const [representantes, setRepresentantes] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("todos");
@@ -82,6 +83,7 @@ export default function AdminUsersMinimalista() {
 
   useEffect(() => {
     fetchUsers();
+    fetchRepresentantes();
   }, []);
 
   const fetchUsers = async () => {
@@ -102,6 +104,38 @@ export default function AdminUsersMinimalista() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchRepresentantes = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("representantes")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      const mapped: AdminUser[] = (data || []).map((r: any) => ({
+        id: r.id,
+        user_id: r.user_id,
+        email: r.email,
+        nome: r.nome,
+        role: "representante",
+        setor: null,
+        cpf: null,
+        data_nascimento: null,
+        ativo: r.ativo,
+        foto_perfil_url: null,
+        eh_colaborador: false,
+        salario: null,
+        created_at: r.created_at,
+        updated_at: r.updated_at,
+        tipo_usuario: "representante",
+      }));
+      setRepresentantes(mapped);
+    } catch (error) {
+      console.error("Erro ao buscar representantes:", error);
     }
   };
 
@@ -242,8 +276,9 @@ export default function AdminUsersMinimalista() {
     );
   };
 
-  const filteredUsers = users
-    .filter((user) => user.tipo_usuario === activeTab)
+  const sourceUsers = activeTab === "representante" ? representantes : users;
+  const filteredUsers = sourceUsers
+    .filter((user) => activeTab === "representante" ? true : user.tipo_usuario === activeTab)
     .filter((user) => {
       const matchesSearch =
         user.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -272,7 +307,7 @@ export default function AdminUsersMinimalista() {
     searchTerm || filterStatus !== "todos" || filterSetor !== "todos" || filterRole !== "todos";
 
   const colaboradoresCount = users.filter((u) => u.tipo_usuario === "colaborador").length;
-  const representantesCount = users.filter((u) => u.tipo_usuario === "representante").length;
+  const representantesCount = representantes.length;
   const metamorfosCount = users.filter((u) => u.tipo_usuario === "metamorfo").length;
 
   const handleDownloadPDF = () => {
