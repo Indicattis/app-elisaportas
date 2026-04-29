@@ -366,6 +366,8 @@ export const useOrdensCarregamentoCalendario = (
       queryClient.invalidateQueries({ queryKey: ["ordens_carregamento_calendario"] });
       queryClient.invalidateQueries({ queryKey: ["ordens_carregamento"] });
       queryClient.invalidateQueries({ queryKey: ["instalacoes"] });
+      queryClient.invalidateQueries({ queryKey: ["ordens_carregamento_unificadas"] });
+      queryClient.invalidateQueries({ queryKey: ["correcoes"] });
       queryClient.invalidateQueries({ queryKey: ["ordens-carregamento-disponiveis"] });
       queryClient.invalidateQueries({ queryKey: ["pedido-carregamento"] });
     },
