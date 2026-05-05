@@ -361,15 +361,15 @@ export function useOrdemPintura(onOrdemConcluida?: (pedidoId: string, tipoOrdem:
   // Marcar linha como concluída
   const marcarLinhaConcluida = useMutation({
     mutationFn: async ({ linhaId, concluida }: { linhaId: string; concluida: boolean }) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Usuário não autenticado');
+      const currentUserId = user?.user_id;
+      if (!currentUserId) throw new Error('Usuário não autenticado');
 
       const { data, error } = await supabase
         .from("linhas_ordens")
         .update({
           concluida,
           concluida_em: concluida ? new Date().toISOString() : null,
-          concluida_por: concluida ? user.id : null,
+          concluida_por: concluida ? currentUserId : null,
         })
         .eq("id", linhaId)
         .select();
@@ -380,12 +380,13 @@ export function useOrdemPintura(onOrdemConcluida?: (pedidoId: string, tipoOrdem:
     onMutate: async ({ linhaId, concluida }) => {
       // Cancelar queries pendentes
       await queryClient.cancelQueries({ queryKey: ["ordens-pintura"] });
+      await queryClient.cancelQueries({ queryKey: ["ordens-pintura", user?.user_id] });
 
       // Snapshot do valor anterior
-      const previousOrdens = queryClient.getQueryData(["ordens-pintura"]);
+      const previousOrdens = queryClient.getQueryData(["ordens-pintura", user?.user_id]);
 
       // Atualizar otimisticamente
-      queryClient.setQueryData(["ordens-pintura"], (old: any[] = []) => {
+      queryClient.setQueryData(["ordens-pintura", user?.user_id], (old: any[] = []) => {
         return old.map(ordem => ({
           ...ordem,
           linhas: ordem.linhas?.map((linha: any) =>
@@ -401,12 +402,12 @@ export function useOrdemPintura(onOrdemConcluida?: (pedidoId: string, tipoOrdem:
     onError: (error, variables, context) => {
       // Reverter em caso de erro
       if (context?.previousOrdens) {
-        queryClient.setQueryData(["ordens-pintura"], context.previousOrdens);
+        queryClient.setQueryData(["ordens-pintura", user?.user_id], context.previousOrdens);
       }
       console.error("Erro ao marcar linha:", error);
       toast({
         title: "Erro",
-        description: "Não foi possível atualizar a linha",
+        description: (error as any)?.message || "Não foi possível atualizar a linha",
         variant: "destructive",
       });
     },
