@@ -2377,6 +2377,50 @@ className="flex h-[20px] w-full rounded-[3px]"
         />
 
         <ArquivamentoLoadingModal open={showArquivamentoLoading} />
+
+        <Dialog open={showCarregarOrdem} onOpenChange={(open) => { if (!isCarregando) setShowCarregarOrdem(open); }}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-base">
+                <Truck className="w-5 h-5 text-sky-600" />
+                Carregar Ordem
+              </DialogTitle>
+              <DialogDescription asChild>
+                <div className="space-y-3 pt-2">
+                  <div className="rounded-lg bg-muted p-3 space-y-1.5">
+                    <p className="text-sm font-medium text-foreground">{pedido.venda?.cliente?.nome || 'Cliente'}</p>
+                    <p className="text-xs text-muted-foreground font-mono">{pedido.numero_pedido_mensal ? formatarNumeroPedidoMensal(pedido.numero_pedido_mensal) : pedido.id.slice(0, 8)}</p>
+                    <p className="text-xs text-muted-foreground">Etapa atual: <span className="font-medium text-foreground">{ETAPAS_CONFIG[pedido.etapa_atual as EtapaPedido]?.label || pedido.etapa_atual}</span></p>
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    Ao confirmar, a ordem agendada será marcada como <span className="font-medium text-foreground">carregada</span>. Você passa a ser o responsável pela conclusão.
+                  </div>
+                </div>
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button variant="outline" onClick={() => setShowCarregarOrdem(false)} disabled={isCarregando}>
+                Cancelar
+              </Button>
+              <Button
+                className="bg-sky-600 hover:bg-sky-700 text-white"
+                disabled={isCarregando}
+                onClick={async () => {
+                  if (!onCarregarOrdem) return;
+                  setIsCarregando(true);
+                  try {
+                    await onCarregarOrdem(pedido.id);
+                    setShowCarregarOrdem(false);
+                  } finally {
+                    setIsCarregando(false);
+                  }
+                }}
+              >
+                {isCarregando ? 'Carregando...' : 'Sim, Carregar'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </>;
   }
 
