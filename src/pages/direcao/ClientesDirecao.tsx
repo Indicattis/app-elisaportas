@@ -6,6 +6,7 @@ import { useColumnConfig, ColumnConfig } from '@/hooks/useColumnConfig';
 import { ColumnManager } from '@/components/ColumnManager';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { ClienteForm } from '@/components/clientes/ClienteForm';
+import { TransferirClientesModal } from '@/components/clientes/TransferirClientesModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
@@ -43,7 +44,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Search, User, Pencil, Trash2, X, Phone, Mail, ArrowUpDown, ArrowUp, ArrowDown, Star, Triangle } from 'lucide-react';
+import { Search, User, Pencil, Trash2, X, Phone, Mail, ArrowUpDown, ArrowUp, ArrowDown, Star, Triangle, ArrowRightLeft } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -108,6 +109,7 @@ export default function ClientesDirecao() {
   const [clienteEditando, setClienteEditando] = useState<Cliente | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [clienteParaExcluir, setClienteParaExcluir] = useState<Cliente | null>(null);
+  const [transferirOpen, setTransferirOpen] = useState(false);
   
   const [sortConfig, setSortConfig] = useState<{
     column: string | null;
@@ -399,13 +401,24 @@ export default function ClientesDirecao() {
   };
 
   const headerActions = (
-    <ColumnManager
-      columns={columns}
-      visibleIds={visibleIds}
-      onToggle={toggleColumn}
-      onReorder={setColumnOrder}
-      onReset={resetColumns}
-    />
+    <div className="flex items-center gap-2">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => setTransferirOpen(true)}
+        className="bg-white/5 border-white/10 hover:bg-white/10 text-white"
+      >
+        <ArrowRightLeft className="h-4 w-4" />
+        Transferir Clientes
+      </Button>
+      <ColumnManager
+        columns={columns}
+        visibleIds={visibleIds}
+        onToggle={toggleColumn}
+        onReorder={setColumnOrder}
+        onReset={resetColumns}
+      />
+    </div>
   );
 
   if (isLoading) {
