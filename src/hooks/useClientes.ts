@@ -253,3 +253,86 @@ export function useDeleteCliente() {
     },
   });
 }
+
+export interface VendedorTransferencia {
+  user_id: string;
+  nome: string;
+  ativo: boolean;
+  foto_perfil_url?: string | null;
+  totalClientes: number;
+}
+
+export function useVendedoresParaTransferencia() {
+  return useQuery({
+    queryKey: ["vendedores-transferencia"],
+    queryFn: async () => {
+      const [{ data: usuarios, error: usuariosError }, { data: clientesData, error: clientesError }] = await Promise.all([
+        supabase
+          .from("admin_users")
+          .select("user_id, nome, ativo, foto_perfil_url, tipo_usuario")
+          .in("tipo_usuario", ["colaborador", "metamorfo"]),
+        supabase
+          .from("clientes" as any)
+          .select("created_by")
+          .eq("ativo", true),
+      ]);
+
+      if (usuariosError) throw usuariosError;
+      if (clientesError) throw clientesError;
+
+      const contagem = new Map<string, number>();
+      (clientesData || []).forEach((c: any) => {
+        if (c.created_by) contagem.set(c.created_by, (contagem.get(c.created_by) || 0) + 1);
+      });
+
+      const vendedores: VendedorTransferencia[] = (usuarios || [])
+        .filter((u: any) => u.user_id)
+        .map((u: any) => ({
+          user_id: u.user_id,
+          nome: u.nome,
+          ativo: !!u.ativo,
+          foto_perfil_url: u.foto_perfil_url,
+          totalClientes: contagem.get(u.user_id) || 0,
+        }));
+
+      return {
+        inativosComClientes: vendedores
+          .filter(v => !v.ativo && v.totalClientes > 0)
+          .sort((a, b) => b.totalClientes - a.totalClientes),
+        ativos: vendedores
+          .filter(v => v.ativo)
+          .sort((a, b) => a.nome.localeCompare(b.nome)),
+      };
+    },
+  });
+}
+
+export function useTransferirClientes() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ origemUserId, destinoUserId }: { origemUserId: string; destinoUserId: string }) => {
+      if (origemUserId === destinoUserId) {
+        throw new Error("Vendedor de origem e destino devem ser diferentes");
+      }
+      const { data, error } = await supabase
+        .from("clientes" as any)
+        .update({ created_by: destinoUserId })
+        .eq("created_by", origemUserId)
+        .select("id");
+
+      if (error) throw error;
+      return (data as any[])?.length || 0;
+    },
+    onSuccess: (count) => {
+      queryClient.invalidateQueries({ queryKey: ["clientes"] });
+      queryClient.invalidateQueries({ queryKey: ["clientes-search"] });
+      queryClient.invalidateQueries({ queryKey: ["vendedores-transferencia"] });
+      toast.success(`${count} cliente(s) transferido(s) com sucesso!`);
+    },
+    onError: (error: any) => {
+      console.error("Erro ao transferir clientes:", error);
+      toast.error(error?.message || "Erro ao transferir clientes");
+    },
+  });
+}
