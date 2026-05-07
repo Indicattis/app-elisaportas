@@ -701,6 +701,8 @@ export default function ClientesDirecao() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <TransferirClientesModal open={transferirOpen} onOpenChange={setTransferirOpen} />
     </MinimalistLayout>
   );
 }
