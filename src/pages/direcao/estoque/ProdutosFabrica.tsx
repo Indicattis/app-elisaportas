@@ -16,6 +16,7 @@ import { useEstoque } from "@/hooks/useEstoque";
 import { useCategorias } from "@/hooks/useCategorias";
 import { useSubcategorias } from "@/hooks/useSubcategorias";
 import { useFornecedores } from "@/hooks/useFornecedores";
+import type { Categoria } from "@/hooks/useCategorias";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { toast } from "sonner";
 import { baixarEstoquePDF, imprimirEstoquePDF } from "@/utils/estoquePDFGenerator";
@@ -42,6 +43,114 @@ import { CSS } from "@dnd-kit/utilities";
 import { restrictToWindowEdges } from "@dnd-kit/modifiers";
 import { ProdutoEstoque } from "@/hooks/useEstoque";
 
+// --- EditableCell: clique único para editar in-place ---
+type EditableCellProps = {
+  value: string | number | null | undefined;
+  type?: "text" | "number" | "currency";
+  align?: "left" | "right" | "center";
+  display?: React.ReactNode;
+  placeholder?: string;
+  onSave: (newValue: string | number) => Promise<void> | void;
+};
+
+function EditableCell({ value, type = "text", align = "left", display, placeholder, onSave }: EditableCellProps) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState<string>(value == null ? "" : String(value));
+
+  useEffect(() => {
+    if (!editing) setDraft(value == null ? "" : String(value));
+  }, [value, editing]);
+
+  const commit = async () => {
+    setEditing(false);
+    const original = value == null ? "" : String(value);
+    if (draft === original) return;
+    if (type === "number" || type === "currency") {
+      const num = Number(draft.replace(",", "."));
+      if (Number.isNaN(num)) return;
+      await onSave(num);
+    } else {
+      await onSave(draft);
+    }
+  };
+
+  if (editing) {
+    return (
+      <Input
+        autoFocus
+        type={type === "text" ? "text" : "number"}
+        step={type === "currency" ? "0.01" : undefined}
+        value={draft}
+        placeholder={placeholder}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") { e.preventDefault(); commit(); }
+          if (e.key === "Escape") { setEditing(false); setDraft(value == null ? "" : String(value)); }
+        }}
+        onClick={(e) => e.stopPropagation()}
+        className="h-7 px-2 text-sm bg-white/10 border-white/20 text-white"
+      />
+    );
+  }
+
+  const alignCls = align === "right" ? "text-right" : align === "center" ? "text-center" : "text-left";
+  return (
+    <div
+      className={`${alignCls} cursor-text rounded px-1 py-0.5 hover:bg-white/5 min-h-[1.5rem]`}
+      onClick={(e) => { e.stopPropagation(); setEditing(true); }}
+    >
+      {display ?? (value === null || value === undefined || value === "" ? <span className="text-white/30">—</span> : value)}
+    </div>
+  );
+}
+
+// --- EditableSelectCell ---
+type EditableSelectCellProps = {
+  value: string | null | undefined;
+  options: { value: string; label: string; color?: string }[];
+  display: React.ReactNode;
+  placeholder?: string;
+  onSave: (newValue: string) => Promise<void> | void;
+};
+
+function EditableSelectCell({ value, options, display, placeholder, onSave }: EditableSelectCellProps) {
+  const [editing, setEditing] = useState(false);
+
+  if (editing) {
+    return (
+      <div onClick={(e) => e.stopPropagation()}>
+        <Select
+          defaultOpen
+          value={value ?? undefined}
+          onValueChange={async (v) => {
+            setEditing(false);
+            if (v !== value) await onSave(v);
+          }}
+        >
+          <SelectTrigger className="h-7 px-2 text-sm bg-white/10 border-white/20 text-white">
+            <SelectValue placeholder={placeholder} />
+          </SelectTrigger>
+          <SelectContent className="bg-zinc-900 border-white/10 text-white">
+            {options.map((o) => (
+              <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="cursor-pointer rounded px-1 py-0.5 hover:bg-white/5 min-h-[1.5rem]"
+      onClick={(e) => { e.stopPropagation(); setEditing(true); }}
+    >
+      {display}
+    </div>
+  );
+}
+
 // Componente SortableProductRow definido FORA do componente principal para estabilidade
 interface SortableProductRowProps {
   produto: ProdutoEstoque;
@@ -50,9 +159,12 @@ interface SortableProductRowProps {
   pedidosCount: number;
   onToggleConferir: (id: string, currentStatus: boolean) => void;
   onExcluir: (id: string) => void;
+  onUpdateField: (id: string, patch: Record<string, any>) => Promise<void>;
+  categorias: Categoria[];
+  fornecedores: { id: string; nome: string }[];
 }
 
-function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCount, onToggleConferir, onExcluir }: SortableProductRowProps) {
+function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCount, onToggleConferir, onExcluir, onUpdateField, categorias, fornecedores }: SortableProductRowProps) {
   const {
     attributes,
     listeners,
@@ -67,6 +179,9 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
     transition,
     opacity: isDragging ? 0.4 : 1,
   };
+
+  const categoriaAtual = categorias.find(c => c.id === produto.categoria || c.nome.toLowerCase() === (produto.categoria || "").toLowerCase());
+  const categoriaBadgeClass = categoriaAtual ? `bg-${categoriaAtual.cor}-500/20 text-${categoriaAtual.cor}-300 border-${categoriaAtual.cor}-500/30` : "";
 
   return (
     <TableRow
@@ -87,33 +202,87 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
         )}
       </TableCell>
       <TableCell>
-        <div>
-          <p className="text-sm font-medium text-white">{produto.nome_produto}</p>
-          {produto.descricao_produto && (
-            <p className="text-xs text-white/50">{produto.descricao_produto}</p>
-          )}
+        <div className="space-y-1">
+          <EditableCell
+            value={produto.nome_produto}
+            display={<span className="text-sm font-medium text-white">{produto.nome_produto}</span>}
+            onSave={(v) => onUpdateField(produto.id, { nome_produto: String(v) })}
+          />
+          <EditableCell
+            value={produto.descricao_produto ?? ""}
+            placeholder="Descrição"
+            display={
+              produto.descricao_produto
+                ? <span className="text-xs text-white/50">{produto.descricao_produto}</span>
+                : <span className="text-xs text-white/30">Adicionar descrição</span>
+            }
+            onSave={(v) => onUpdateField(produto.id, { descricao_produto: String(v) || null })}
+          />
         </div>
       </TableCell>
       <TableCell className="text-white/60 text-sm">
-        {produto.fornecedor?.nome || <span className="text-white/30">—</span>}
+        <EditableSelectCell
+          value={produto.fornecedor?.id ?? null}
+          options={fornecedores.map(f => ({ value: f.id, label: f.nome }))}
+          display={produto.fornecedor?.nome || <span className="text-white/30">—</span>}
+          placeholder="Fornecedor"
+          onSave={(v) => onUpdateField(produto.id, { fornecedor_id: v || null })}
+        />
+      </TableCell>
+      <TableCell>
+        <EditableSelectCell
+          value={categoriaAtual?.id ?? null}
+          options={categorias.map(c => ({ value: c.id, label: c.nome, color: c.cor }))}
+          display={
+            categoriaAtual ? (
+              <Badge className={categoriaBadgeClass}>{categoriaAtual.nome}</Badge>
+            ) : (
+              <span className="text-white/30">—</span>
+            )
+          }
+          placeholder="Categoria"
+          onSave={(v) => onUpdateField(produto.id, { categoria: v || null })}
+        />
       </TableCell>
       <TableCell className="text-center text-white/80">
-        {produto.conferir_estoque ? (produto.quantidade_ideal || 0) : "---"}
+        {produto.conferir_estoque ? (
+          <EditableCell
+            value={produto.quantidade_ideal || 0}
+            type="number"
+            align="center"
+            onSave={(v) => onUpdateField(produto.id, { quantidade_ideal: Number(v) })}
+          />
+        ) : "---"}
       </TableCell>
       <TableCell className="text-center text-white/80">
-        {produto.conferir_estoque ? (produto.quantidade_maxima || 0) : "---"}
+        {produto.conferir_estoque ? (
+          <EditableCell
+            value={produto.quantidade_maxima || 0}
+            type="number"
+            align="center"
+            onSave={(v) => onUpdateField(produto.id, { quantidade_maxima: Number(v) })}
+          />
+        ) : "---"}
       </TableCell>
       <TableCell className="text-center">
         {produto.conferir_estoque ? (
-          <Badge className={
-            produto.quantidade < (produto.quantidade_ideal || 0)
-              ? "bg-red-500/20 text-red-400 border-red-500/30"
-              : produto.quantidade > (produto.quantidade_maxima || Infinity)
-                ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
-                : "bg-green-500/20 text-green-400 border-green-500/30"
-          }>
-            {produto.quantidade}
-          </Badge>
+          <EditableCell
+            value={produto.quantidade}
+            type="number"
+            align="center"
+            display={
+              <Badge className={
+                produto.quantidade < (produto.quantidade_ideal || 0)
+                  ? "bg-red-500/20 text-red-400 border-red-500/30"
+                  : produto.quantidade > (produto.quantidade_maxima || Infinity)
+                    ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
+                    : "bg-green-500/20 text-green-400 border-green-500/30"
+              }>
+                {produto.quantidade}
+              </Badge>
+            }
+            onSave={(v) => onUpdateField(produto.id, { quantidade: Number(v) })}
+          />
         ) : (
           <span className="text-white/30">---</span>
         )}
@@ -128,7 +297,13 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
         />
       </TableCell>
       <TableCell className="text-right text-white/80">
-        {formatCurrency(produto.custo_unitario)}
+        <EditableCell
+          value={produto.custo_unitario}
+          type="currency"
+          align="right"
+          display={<span>{formatCurrency(produto.custo_unitario)}</span>}
+          onSave={(v) => onUpdateField(produto.id, { custo_unitario: Number(v) })}
+        />
       </TableCell>
       <TableCell className="text-right font-medium text-white">
         {produto.conferir_estoque ? formatCurrency(produto.quantidade * produto.custo_unitario) : "---"}
@@ -206,6 +381,16 @@ export default function ProdutosFabrica() {
     } catch {
       toast.error("Erro ao excluir produto");
     }
+  };
+
+  const handleUpdateField = async (id: string, patch: Record<string, any>) => {
+    const { error } = await supabase.from("estoque").update(patch).eq("id", id);
+    if (error) {
+      toast.error("Erro ao atualizar");
+      return;
+    }
+    queryClient.invalidateQueries({ queryKey: ["estoque"] });
+    toast.success("Atualizado");
   };
 
   const [localProdutos, setLocalProdutos] = useState<ProdutoEstoque[]>([]);
@@ -652,8 +837,9 @@ export default function ProdutosFabrica() {
       backPath="/direcao/estoque/configuracoes/produtos"
       headerActions={headerActions}
       breadcrumbItems={breadcrumbItems}
+      fullWidth
     >
-      <div className="space-y-4">
+      <div className="space-y-4 px-[84px]">
         {/* Barra de busca + indicadores */}
         <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
           <div className="p-4 rounded-lg space-y-4">
@@ -716,6 +902,7 @@ export default function ProdutosFabrica() {
                     <TableHead className="w-10 px-1" />
                     <TableHead className="text-xs font-medium text-white/60">Produto</TableHead>
                     <TableHead className="text-xs font-medium text-white/60">Fornecedor</TableHead>
+                    <TableHead className="text-xs font-medium text-white/60">Categoria</TableHead>
                     <TableHead className="text-center text-xs font-medium text-white/60">Est. Mín</TableHead>
                     <TableHead className="text-center text-xs font-medium text-white/60">Est. Máx</TableHead>
                     <TableHead className="text-center text-xs font-medium text-white/60">Atual</TableHead>
@@ -730,13 +917,13 @@ export default function ProdutosFabrica() {
                   <TableBody>
                     {loading ? (
                       <TableRow className="border-white/10">
-                        <TableCell colSpan={11} className="text-center py-8 text-sm text-white/40">
+                        <TableCell colSpan={12} className="text-center py-8 text-sm text-white/40">
                           Carregando...
                         </TableCell>
                       </TableRow>
                     ) : filteredProdutos.length === 0 ? (
                       <TableRow className="border-white/10">
-                        <TableCell colSpan={11} className="text-center py-8 text-sm text-white/40">
+                        <TableCell colSpan={12} className="text-center py-8 text-sm text-white/40">
                           {searchTerm ? "Nenhum produto encontrado" : "Nenhum produto cadastrado"}
                         </TableCell>
                       </TableRow>
@@ -750,6 +937,9 @@ export default function ProdutosFabrica() {
                           pedidosCount={pedidosCountMap[produto.id] || 0}
                           onToggleConferir={handleToggleConferir}
                           onExcluir={handleExcluir}
+                          onUpdateField={handleUpdateField}
+                          categorias={categorias}
+                          fornecedores={fornecedores}
                         />
                       ))
                     )}
@@ -762,6 +952,7 @@ export default function ProdutosFabrica() {
                     <TableCell className="font-bold text-white">
                       TOTAL ({filteredProdutos.length} itens)
                     </TableCell>
+                    <TableCell />
                     <TableCell />
                     <TableCell className="text-center font-bold text-white">
                       {totals.ideal}
