@@ -1,0 +1,2 @@
+ALTER TABLE public.pedido_porta_observacoes DROP CONSTRAINT IF EXISTS pedido_porta_observacoes_produto_venda_id_fkey;
+ALTER TABLE public.pedido_porta_social_observacoes DROP CONSTRAINT IF EXISTS pedido_porta_social_observacoes_produto_venda_id_fkey;

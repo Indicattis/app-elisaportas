@@ -5742,13 +5742,6 @@ export type Database = {
             referencedRelation: "pedidos_producao"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "pedido_porta_observacoes_produto_venda_id_fkey"
-            columns: ["produto_venda_id"]
-            isOneToOne: false
-            referencedRelation: "produtos_vendas"
-            referencedColumns: ["id"]
-          },
         ]
       }
       pedido_porta_social_observacoes: {
@@ -5825,13 +5818,6 @@ export type Database = {
             columns: ["pedido_id"]
             isOneToOne: false
             referencedRelation: "pedidos_producao"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "pedido_porta_social_observacoes_produto_venda_id_fkey"
-            columns: ["produto_venda_id"]
-            isOneToOne: false
-            referencedRelation: "produtos_vendas"
             referencedColumns: ["id"]
           },
         ]
