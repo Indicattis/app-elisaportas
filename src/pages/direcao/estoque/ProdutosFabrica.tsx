@@ -845,6 +845,10 @@ export default function ProdutosFabrica() {
           </form>
         </DialogContent>
       </Dialog>
+      <GerenciarCategoriasModal
+        open={gerenciarCategoriasOpen}
+        onOpenChange={setGerenciarCategoriasOpen}
+      />
     </div>
   );
 
