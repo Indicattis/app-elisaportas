@@ -383,6 +383,16 @@ export default function ProdutosFabrica() {
     }
   };
 
+  const handleUpdateField = async (id: string, patch: Record<string, any>) => {
+    const { error } = await supabase.from("estoque").update(patch).eq("id", id);
+    if (error) {
+      toast.error("Erro ao atualizar");
+      return;
+    }
+    queryClient.invalidateQueries({ queryKey: ["estoque"] });
+    toast.success("Atualizado");
+  };
+
   const [localProdutos, setLocalProdutos] = useState<ProdutoEstoque[]>([]);
   const [novoModal, setNovoModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -827,8 +837,9 @@ export default function ProdutosFabrica() {
       backPath="/direcao/estoque/configuracoes/produtos"
       headerActions={headerActions}
       breadcrumbItems={breadcrumbItems}
+      fullWidth
     >
-      <div className="space-y-4">
+      <div className="space-y-4 px-[84px]">
         {/* Barra de busca + indicadores */}
         <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
           <div className="p-4 rounded-lg space-y-4">
