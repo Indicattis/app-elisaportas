@@ -405,6 +405,7 @@ export default function ProdutosFabrica() {
   const { categorias } = useCategorias();
   const { subcategorias } = useSubcategorias();
   const { fornecedores } = useFornecedores();
+  const { materiasPrimas } = useMateriasPrimas();
   
   const queryClient = useQueryClient();
 
@@ -1036,6 +1037,7 @@ export default function ProdutosFabrica() {
                           onUpdateField={handleUpdateField}
                           categorias={categorias}
                           fornecedores={fornecedores}
+                          materiasPrimas={materiasPrimas}
                         />
                       ))
                     )}
