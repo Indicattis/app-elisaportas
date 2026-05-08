@@ -1,54 +1,29 @@
-## Objetivo
+## Problema
 
-Permitir, na tela `/direcao/vendas/clientes`, transferir em lote os clientes de um vendedor desativado para outro vendedor ativo.
+A venda `d4a3d889-22e8-4cba-a755-f4f2ecb99fc9` (AMICI EMPREENDIMENTOS, R$ 33.000) foi faturada corretamente:
+- `frete_aprovado = true`
+- todos os 3 produtos com `faturamento = true`
+- `status_aprovacao = aprovado`
+- nenhum `pedido_producao` vinculado
 
-## Como funciona hoje
+Mas ela tem `pedido_dispensado = true`, e o hook `useVendasPendentePedido` (que alimenta a aba "Aprovação Diretor" em `/direcao/gestao-fabrica`) filtra essas vendas com `.eq("pedido_dispensado", false)`.
 
-- `clientes.created_by` armazena o `user_id` (auth) do vendedor que cadastrou o cliente.
-- O hook `useClientes` já mapeia `vendedor` a partir de `admin_users.user_id`.
-- Hoje não há UI para reatribuir clientes quando um vendedor é desativado — eles ficam órfãos visualmente vinculados ao usuário inativo.
+Esse flag foi marcado quando alguém clicou em **"Dispensar Pedido"** ou **"Finalizar Direto"** no `VendaPendentePedidoCard`. Hoje o flag é uma via de mão única — não existe UI para reverter.
 
 ## Plano
 
-### 1. Novo botão no header da página
-- Em `src/pages/direcao/ClientesDirecao.tsx`, adicionar botão **"Transferir Clientes"** ao lado do `ColumnManager` em `headerActions`.
-- Ícone: `ArrowRightLeft` (lucide-react). Estilo glassmorphism consistente com a página.
+### 1. Correção pontual desta venda
+Migration setando `pedido_dispensado = false` na venda `d4a3d889-22e8-4cba-a755-f4f2ecb99fc9`. Após isso ela voltará a aparecer na aba "Aprovação Diretor" automaticamente (refetch a cada 30s + invalidação manual).
 
-### 2. Novo modal `TransferirClientesModal`
-Criar `src/components/clientes/TransferirClientesModal.tsx` com:
+### 2. (Opcional) Reverter dispensa pela UI
+Adicionar um botão "Reativar Pedido" em `/direcao/gestao-fabrica` na aba **Arquivo Morto** (ou em uma seção dedicada de "Vendas Dispensadas") que faz `UPDATE vendas SET pedido_dispensado = false` e invalida `vendas-pendente-pedido`. Isso evita ter que pedir migration toda vez que alguém dispensa por engano.
 
-- **Select "Vendedor de origem (desativado)"**: lista apenas vendedores **inativos** (`admin_users.ativo = false`) que possuam ao menos 1 cliente em `clientes.created_by`. Mostrar nome + contador `(N clientes)`.
-- **Select "Vendedor de destino"**: lista vendedores **ativos** (`admin_users.ativo = true`) do tipo `colaborador`/`metamorfo`, excluindo o vendedor de origem.
-- **Resumo**: "Você está transferindo X clientes de [Origem] para [Destino]".
-- **Botão "Transferir"**: dispara mutação. Confirmação inline via `AlertDialog` antes de executar.
-- Estados de loading e toasts de sucesso/erro.
+## Detalhes técnicos
 
-### 3. Novo hook `useTransferirClientes`
-Em `src/hooks/useClientes.ts` (ou arquivo próprio):
+- Arquivo do filtro: `src/hooks/useVendasPendentePedido.ts:85`
+- Arquivos onde o flag é setado: `src/components/pedidos/VendaPendentePedidoCard.tsx:142,161` (handlers `handleDispensarPedido` e `handleFinalizarDireto`)
+- Sem alterações em RLS — a coluna já é editável pelos mesmos perfis que dispensam.
 
-- Mutação que executa:
-  ```ts
-  supabase
-    .from('clientes')
-    .update({ created_by: novoVendedorUserId })
-    .eq('created_by', vendedorOrigemUserId)
-  ```
-- Em `onSuccess`, invalidar `['clientes']` e `['clientes-search']`, e mostrar toast com a contagem transferida.
+## Pergunta antes de implementar
 
-### 4. Hook auxiliar para listar vendedores (ativos + inativos)
-Adicionar `useVendedoresParaTransferencia` que busca `admin_users` (sem filtro `ativo`), tipo `colaborador`/`metamorfo`, e cruza com a contagem de clientes por `created_by` (já disponível em `clientes`).
-
-- Retorna duas listas: `inativosComClientes` e `ativos`.
-
-### 5. RLS / Permissões
-A tabela `clientes` já permite update via hook `useUpdateCliente`. A nova mutação usa o mesmo padrão (sem alterações de schema/RLS necessárias). Caso o update em lote retorne `0 rows` por RLS, exibir o erro real do Supabase no toast (mesmo padrão usado em outros hooks recentes).
-
-## Arquivos previstos
-
-- `src/components/clientes/TransferirClientesModal.tsx` (novo)
-- `src/hooks/useClientes.ts` (adicionar `useTransferirClientes` e `useVendedoresParaTransferencia`)
-- `src/pages/direcao/ClientesDirecao.tsx` (botão + integração com modal)
-
-## Resultado esperado
-
-Diretor abre `/direcao/vendas/clientes`, clica em **"Transferir Clientes"**, escolhe um vendedor desativado como origem e um vendedor ativo como destino, confirma, e todos os clientes do vendedor desativado passam a aparecer sob o vendedor escolhido — refletindo imediatamente nos cards de meta CR e na coluna "Vendedor".
+Quer só a correção pontual (item 1), ou também o botão de reativação para evitar o problema no futuro (item 1 + item 2)?
