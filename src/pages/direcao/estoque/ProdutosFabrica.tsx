@@ -244,6 +244,22 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
           onSave={(v) => onUpdateField(produto.id, { categoria: v || null })}
         />
       </TableCell>
+      <TableCell className="text-center text-white/70 text-sm">
+        <EditableSelectCell
+          value={produto.unidade || "UN"}
+          options={[
+            { value: "UN", label: "Unidade (UN)" },
+            { value: "KG", label: "Quilograma (KG)" },
+            { value: "L", label: "Litro (L)" },
+            { value: "M", label: "Metro (M)" },
+            { value: "M2", label: "Metro² (M²)" },
+            { value: "CX", label: "Caixa (CX)" },
+          ]}
+          display={<span>{produto.unidade || "UN"}</span>}
+          placeholder="Unidade"
+          onSave={(v) => onUpdateField(produto.id, { unidade: v || "UN" })}
+        />
+      </TableCell>
       <TableCell className="text-center text-white/80">
         {produto.conferir_estoque ? (
           <EditableCell
@@ -903,6 +919,7 @@ export default function ProdutosFabrica() {
                     <TableHead className="text-xs font-medium text-white/60">Produto</TableHead>
                     <TableHead className="text-xs font-medium text-white/60">Fornecedor</TableHead>
                     <TableHead className="text-xs font-medium text-white/60">Categoria</TableHead>
+                    <TableHead className="text-center text-xs font-medium text-white/60">Unidade</TableHead>
                     <TableHead className="text-center text-xs font-medium text-white/60">Est. Mín</TableHead>
                     <TableHead className="text-center text-xs font-medium text-white/60">Est. Máx</TableHead>
                     <TableHead className="text-center text-xs font-medium text-white/60">Atual</TableHead>
@@ -917,13 +934,13 @@ export default function ProdutosFabrica() {
                   <TableBody>
                     {loading ? (
                       <TableRow className="border-white/10">
-                        <TableCell colSpan={12} className="text-center py-8 text-sm text-white/40">
+                        <TableCell colSpan={13} className="text-center py-8 text-sm text-white/40">
                           Carregando...
                         </TableCell>
                       </TableRow>
                     ) : filteredProdutos.length === 0 ? (
                       <TableRow className="border-white/10">
-                        <TableCell colSpan={12} className="text-center py-8 text-sm text-white/40">
+                        <TableCell colSpan={13} className="text-center py-8 text-sm text-white/40">
                           {searchTerm ? "Nenhum produto encontrado" : "Nenhum produto cadastrado"}
                         </TableCell>
                       </TableRow>
@@ -952,6 +969,7 @@ export default function ProdutosFabrica() {
                     <TableCell className="font-bold text-white">
                       TOTAL ({filteredProdutos.length} itens)
                     </TableCell>
+                    <TableCell />
                     <TableCell />
                     <TableCell />
                     <TableCell className="text-center font-bold text-white">
