@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { ArrowLeft, Lock, ClipboardList, Calendar, Package } from "lucide-react";
+import { ArrowLeft, Lock, ClipboardList, Calendar, Package, PackageCheck } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,12 +10,14 @@ import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
 import { DelayedParticles } from '@/components/DelayedParticles';
 
 const menuItems = [
+  { label: 'Montagem de Pedidos', icon: PackageCheck, path: '/fabrica/montagem-pedidos' },
   { label: 'Ordens por Pedido', icon: ClipboardList, path: '/fabrica/ordens-pedidos' },
   { label: 'Cronograma Produção', icon: Calendar, path: '/fabrica/cronograma-producao' },
   { label: 'Configurar Itens', icon: Package, path: '/fabrica/produtos' },
 ];
 
 const routeKeyMap: Record<string, string> = {
+  '/fabrica/montagem-pedidos': 'administrativo_hub',
   '/fabrica/ordens-pedidos': 'fabrica_ordens_pedidos',
   '/fabrica/cronograma-producao': 'fabrica_cronograma_producao',
   '/fabrica/produtos': 'fabrica_produtos',
