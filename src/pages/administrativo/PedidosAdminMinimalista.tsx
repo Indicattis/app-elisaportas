@@ -455,11 +455,11 @@ export default function PedidosAdminMinimalista() {
     <MinimalistLayout 
       title="Pedidos" 
       subtitle={`${totalPedidosAtivos} pedidos ativos`}
-      backPath="/administrativo"
+      backPath="/fabrica"
       fullWidth
       breadcrumbItems={[
         { label: "Home", path: "/home" },
-        { label: "Administrativo", path: "/administrativo" },
+        { label: "Fábrica", path: "/fabrica" },
         { label: "Pedidos" }
       ]}
       headerActions={

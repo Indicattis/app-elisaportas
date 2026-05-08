@@ -394,7 +394,7 @@ export default function PedidoViewMinimalista() {
         skipCheckboxValidation: pedido.etapa_atual === 'aberto',
       });
       setMostrarModalAvancar(false);
-      navigate('/administrativo/pedidos');
+      navigate('/fabrica/montagem-pedidos');
     } catch (error) {
       console.error("Erro ao avançar etapa:", error);
       setMostrarModalAvancar(false);
@@ -500,8 +500,8 @@ export default function PedidoViewMinimalista() {
       backPath="/fabrica/montagem-pedidos"
       breadcrumbItems={[
         { label: 'Home', path: '/home' },
-        { label: 'Administrativo', path: '/administrativo' },
-        { label: 'Pedidos', path: '/administrativo/pedidos' },
+        { label: 'Fábrica', path: '/fabrica' },
+        { label: 'Pedidos', path: '/fabrica/montagem-pedidos' },
         { label: `Pedido #${pedido.numero_pedido}` }
       ]}
       headerActions={
