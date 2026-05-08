@@ -122,6 +122,19 @@ export default function GestaoFabricaDirecao() {
         .not('estoque_id', 'is', null);
       if (lErr) throw lErr;
 
+      // Resolver categorias: estoque.categoria pode ser UUID (referência a
+      // estoque_categorias.id) ou string legada (ex: "motor", "geral").
+      const { data: cats } = await supabase
+        .from('estoque_categorias')
+        .select('id, nome');
+      const catMap = new Map<string, string>();
+      (cats || []).forEach((c: any) => catMap.set(String(c.id), c.nome));
+      const resolverCategoria = (raw: string | null | undefined): string => {
+        if (!raw) return 'Sem categoria';
+        if (catMap.has(raw)) return catMap.get(raw)!;
+        return raw.charAt(0).toUpperCase() + raw.slice(1);
+      };
+
       const map = new Map<string, ItemListaCompras>();
       (linhas || []).forEach((linha: any) => {
         if (!linha.estoque) return;
@@ -142,7 +155,7 @@ export default function GestaoFabricaDirecao() {
           map.set(e.id, {
             estoque_id: e.id,
             nome_produto: e.nome_produto,
-            categoria: e.categoria || 'Sem categoria',
+            categoria: resolverCategoria(e.categoria),
             unidade: e.unidade || 'un',
             quantidade_padrao: e.quantidade_padrao,
             necessario,
