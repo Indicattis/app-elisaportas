@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { baixarEstoquePDF, imprimirEstoquePDF } from "@/utils/estoquePDFGenerator";
 import { formatCurrency } from "@/lib/utils";
 import { GerenciarCategoriasModal } from "@/components/estoque/GerenciarCategoriasModal";
+import { GerenciarMateriasPrimasModal } from "@/components/estoque/GerenciarMateriasPrimasModal";
 import {
   DndContext,
   closestCenter,
@@ -413,6 +414,7 @@ export default function ProdutosFabrica() {
   const [localProdutos, setLocalProdutos] = useState<ProdutoEstoque[]>([]);
   const [novoModal, setNovoModal] = useState(false);
   const [gerenciarCategoriasOpen, setGerenciarCategoriasOpen] = useState(false);
+  const [gerenciarMateriasPrimasOpen, setGerenciarMateriasPrimasOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
 
@@ -604,6 +606,15 @@ export default function ProdutosFabrica() {
       >
         <Tags className="mr-2 h-4 w-4" />
         Categorias
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => setGerenciarMateriasPrimasOpen(true)}
+        className="bg-white/5 border-white/10 text-white hover:bg-white/10"
+      >
+        <Package className="mr-2 h-4 w-4" />
+        Matérias-Primas
       </Button>
       <Button 
         variant="outline"
@@ -848,6 +859,10 @@ export default function ProdutosFabrica() {
       <GerenciarCategoriasModal
         open={gerenciarCategoriasOpen}
         onOpenChange={setGerenciarCategoriasOpen}
+      />
+      <GerenciarMateriasPrimasModal
+        open={gerenciarMateriasPrimasOpen}
+        onOpenChange={setGerenciarMateriasPrimasOpen}
       />
     </div>
   );
