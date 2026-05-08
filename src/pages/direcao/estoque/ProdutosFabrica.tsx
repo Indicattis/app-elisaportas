@@ -21,6 +21,7 @@ import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { toast } from "sonner";
 import { baixarEstoquePDF, imprimirEstoquePDF } from "@/utils/estoquePDFGenerator";
 import { formatCurrency } from "@/lib/utils";
+import { GerenciarCategoriasModal } from "@/components/estoque/GerenciarCategoriasModal";
 import {
   DndContext,
   closestCenter,
@@ -411,6 +412,7 @@ export default function ProdutosFabrica() {
 
   const [localProdutos, setLocalProdutos] = useState<ProdutoEstoque[]>([]);
   const [novoModal, setNovoModal] = useState(false);
+  const [gerenciarCategoriasOpen, setGerenciarCategoriasOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
 
