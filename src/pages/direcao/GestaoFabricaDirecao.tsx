@@ -2,7 +2,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Package, RefreshCw, Factory, Clock, ClipboardCheck, Paintbrush, Wrench, CheckCircle2, HardHat, AlertTriangle, UserPlus, ShieldCheck, CalendarDays, Archive, Search, Calendar, User, Undo2, ChevronDown, Truck, Settings, CalendarIcon, DollarSign } from "lucide-react";
+import { Package, RefreshCw, Factory, Clock, ClipboardCheck, Paintbrush, Wrench, CheckCircle2, HardHat, AlertTriangle, UserPlus, ShieldCheck, CalendarDays, Archive, Search, Calendar, User, Undo2, ChevronDown, Truck, Settings, CalendarIcon, DollarSign, ShoppingCart } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { usePedidosArquivados } from "@/hooks/usePedidosArquivados";
@@ -49,6 +49,7 @@ import type { VendaPendentePedido } from "@/hooks/useVendasPendentePedido";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { enviarParaAguardandoCliente } from "@/lib/aguardandoCliente";
+import { gerarListaComprasPDF, type ItemListaCompras } from "@/utils/listaComprasPDF";
 
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { useIsMobile } from "@/hooks/use-mobile";
