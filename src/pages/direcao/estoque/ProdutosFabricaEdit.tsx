@@ -12,6 +12,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { useFornecedores } from "@/hooks/useFornecedores";
 import { useEstoque } from "@/hooks/useEstoque";
+import { useMateriasPrimas } from "@/hooks/useMateriasPrimas";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -38,6 +39,7 @@ export default function ProdutosFabricaEdit() {
   const queryClient = useQueryClient();
   const { fornecedores } = useFornecedores();
   const { excluirProduto } = useEstoque();
+  const { materiasPrimas } = useMateriasPrimas();
 
   const [formData, setFormData] = useState({
     nome_produto: "",
@@ -49,6 +51,8 @@ export default function ProdutosFabricaEdit() {
     unidade: "UN",
     fornecedor_id: "",
     conferir_estoque: true,
+    materia_prima_id: "",
+    materia_prima_conversao: 0,
   });
   const [isSaving, setIsSaving] = useState(false);
 
@@ -95,6 +99,8 @@ export default function ProdutosFabricaEdit() {
         unidade: produto.unidade || "UN",
         fornecedor_id: produto.fornecedor_id || "",
         conferir_estoque: produto.conferir_estoque ?? true,
+        materia_prima_id: (produto as any).materia_prima_id || "",
+        materia_prima_conversao: Number((produto as any).materia_prima_conversao) || 0,
       });
     }
   }, [produto]);
@@ -118,6 +124,10 @@ export default function ProdutosFabricaEdit() {
           unidade: formData.unidade,
           fornecedor_id: formData.fornecedor_id || null,
           conferir_estoque: formData.conferir_estoque,
+          materia_prima_id: formData.materia_prima_id || null,
+          materia_prima_conversao: formData.materia_prima_id
+            ? formData.materia_prima_conversao || null
+            : null,
         })
         .eq("id", id);
 
