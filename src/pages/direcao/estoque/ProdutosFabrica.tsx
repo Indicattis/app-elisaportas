@@ -596,6 +596,15 @@ export default function ProdutosFabrica() {
 
   const headerActions = (
     <div className="flex gap-2 flex-wrap">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => setGerenciarCategoriasOpen(true)}
+        className="bg-white/5 border-white/10 text-white hover:bg-white/10"
+      >
+        <Tags className="mr-2 h-4 w-4" />
+        Categorias
+      </Button>
       <Button 
         variant="outline"
         size="sm"
