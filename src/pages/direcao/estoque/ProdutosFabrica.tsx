@@ -16,6 +16,7 @@ import { useEstoque } from "@/hooks/useEstoque";
 import { useCategorias } from "@/hooks/useCategorias";
 import { useSubcategorias } from "@/hooks/useSubcategorias";
 import { useFornecedores } from "@/hooks/useFornecedores";
+import { useMateriasPrimas, MateriaPrima } from "@/hooks/useMateriasPrimas";
 import type { Categoria } from "@/hooks/useCategorias";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { toast } from "sonner";
@@ -164,9 +165,10 @@ interface SortableProductRowProps {
   onUpdateField: (id: string, patch: Record<string, any>) => Promise<void>;
   categorias: Categoria[];
   fornecedores: { id: string; nome: string }[];
+  materiasPrimas: MateriaPrima[];
 }
 
-function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCount, onToggleConferir, onExcluir, onUpdateField, categorias, fornecedores }: SortableProductRowProps) {
+function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCount, onToggleConferir, onExcluir, onUpdateField, categorias, fornecedores, materiasPrimas }: SortableProductRowProps) {
   const {
     attributes,
     listeners,
@@ -230,6 +232,53 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
           placeholder="Fornecedor"
           onSave={(v) => onUpdateField(produto.id, { fornecedor_id: v || null })}
         />
+      </TableCell>
+      <TableCell className="text-white/70 text-sm">
+        <div className="space-y-1">
+          <EditableSelectCell
+            value={produto.materia_prima?.id ?? null}
+            options={[
+              { value: "__none__", label: "Nenhuma" },
+              ...materiasPrimas.map(m => ({ value: m.id, label: `${m.nome} (${m.unidade})` })),
+            ]}
+            display={
+              produto.materia_prima ? (
+                <span className="text-sm">
+                  {produto.materia_prima.nome}
+                  <span className="text-white/40"> ({produto.materia_prima.unidade})</span>
+                </span>
+              ) : (
+                <span className="text-white/30">—</span>
+              )
+            }
+            placeholder="Matéria-prima"
+            onSave={(v) =>
+              onUpdateField(produto.id, {
+                materia_prima_id: v === "__none__" ? null : v,
+                ...(v === "__none__" ? { materia_prima_conversao: null } : {}),
+              })
+            }
+          />
+          {produto.materia_prima && (
+            <EditableCell
+              value={produto.materia_prima_conversao ?? ""}
+              type="number"
+              placeholder="Conversão"
+              display={
+                produto.materia_prima_conversao && produto.materia_prima_conversao > 0 ? (
+                  <span className="text-xs text-white/50">
+                    1 {produto.materia_prima.unidade} = {produto.materia_prima_conversao} {produto.unidade || "un"}
+                  </span>
+                ) : (
+                  <span className="text-xs text-amber-400/70">Definir conversão</span>
+                )
+              }
+              onSave={(v) =>
+                onUpdateField(produto.id, { materia_prima_conversao: Number(v) || null })
+              }
+            />
+          )}
+        </div>
       </TableCell>
       <TableCell>
         <EditableSelectCell
@@ -356,6 +405,7 @@ export default function ProdutosFabrica() {
   const { categorias } = useCategorias();
   const { subcategorias } = useSubcategorias();
   const { fornecedores } = useFornecedores();
+  const { materiasPrimas } = useMateriasPrimas();
   
   const queryClient = useQueryClient();
 
@@ -948,6 +998,7 @@ export default function ProdutosFabrica() {
                     <TableHead className="w-10 px-1" />
                     <TableHead className="text-xs font-medium text-white/60">Produto</TableHead>
                     <TableHead className="text-xs font-medium text-white/60">Fornecedor</TableHead>
+                    <TableHead className="text-xs font-medium text-white/60">Matéria-prima</TableHead>
                     <TableHead className="text-xs font-medium text-white/60">Categoria</TableHead>
                     <TableHead className="text-center text-xs font-medium text-white/60">Unidade</TableHead>
                     <TableHead className="text-center text-xs font-medium text-white/60">Est. Mín</TableHead>
@@ -964,13 +1015,13 @@ export default function ProdutosFabrica() {
                   <TableBody>
                     {loading ? (
                       <TableRow className="border-white/10">
-                        <TableCell colSpan={13} className="text-center py-8 text-sm text-white/40">
+                        <TableCell colSpan={14} className="text-center py-8 text-sm text-white/40">
                           Carregando...
                         </TableCell>
                       </TableRow>
                     ) : filteredProdutos.length === 0 ? (
                       <TableRow className="border-white/10">
-                        <TableCell colSpan={13} className="text-center py-8 text-sm text-white/40">
+                        <TableCell colSpan={14} className="text-center py-8 text-sm text-white/40">
                           {searchTerm ? "Nenhum produto encontrado" : "Nenhum produto cadastrado"}
                         </TableCell>
                       </TableRow>
@@ -987,6 +1038,7 @@ export default function ProdutosFabrica() {
                           onUpdateField={handleUpdateField}
                           categorias={categorias}
                           fornecedores={fornecedores}
+                          materiasPrimas={materiasPrimas}
                         />
                       ))
                     )}
@@ -999,6 +1051,7 @@ export default function ProdutosFabrica() {
                     <TableCell className="font-bold text-white">
                       TOTAL ({filteredProdutos.length} itens)
                     </TableCell>
+                    <TableCell />
                     <TableCell />
                     <TableCell />
                     <TableCell />

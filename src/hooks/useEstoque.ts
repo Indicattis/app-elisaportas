@@ -45,6 +45,8 @@ export interface ProdutoEstoque {
   qtd_eixo_calculo: 'largura' | 'altura' | 'qtd_meia_cana' | null;
   qtd_operador: 'multiplicar' | 'dividir' | 'somar' | 'subtrair' | null;
   qtd_valor_calculo: number | null;
+  materia_prima_id: string | null;
+  materia_prima_conversao: number | null;
   subcategoria?: {
     id: string;
     nome: string;
@@ -52,6 +54,11 @@ export interface ProdutoEstoque {
   fornecedor?: {
     id: string;
     nome: string;
+  } | null;
+  materia_prima?: {
+    id: string;
+    nome: string;
+    unidade: string;
   } | null;
 }
 
@@ -80,6 +87,8 @@ export interface ProdutoEstoqueInput {
   qtd_eixo_calculo?: 'largura' | 'altura' | 'qtd_meia_cana' | null;
   qtd_operador?: 'multiplicar' | 'dividir' | 'somar' | 'subtrair' | null;
   qtd_valor_calculo?: number | null;
+  materia_prima_id?: string | null;
+  materia_prima_conversao?: number | null;
 }
 
 export const useEstoque = (termoBuscaInicial: string = "", setorFiltro: 'perfiladeira' | 'soldagem' | 'separacao' | 'pintura' | null = null) => {
@@ -95,7 +104,8 @@ export const useEstoque = (termoBuscaInicial: string = "", setorFiltro: 'perfila
         .select(`
           *,
           subcategoria:estoque_subcategorias(id, nome),
-          fornecedor:fornecedores(id, nome)
+          fornecedor:fornecedores(id, nome),
+          materia_prima:materias_primas(id, nome, unidade)
         `)
         .eq("ativo", true)
         .order("ordem", { ascending: true });
