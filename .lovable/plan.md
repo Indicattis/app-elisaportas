@@ -1,48 +1,22 @@
-## O que fazer
+## Problema
 
-Adicionar um botão **"Gerar lista de material"** dentro de cada aba de etapa em `/direcao/gestao-fabrica`. Ao clicar, gera um PDF idêntico ao anexo: lista todos os materiais necessários para os pedidos da etapa atual, agrupados por categoria, mostrando:
+Na lista de material, alguns grupos aparecem como UUIDs (ex: `3923529c-56df-...`) em vez do nome da categoria.
 
-- **Necessário**: soma da metragem/quantidade total exigida pelos pedidos da etapa
-- **Comprar**: arredondamento para cima de `necessário ÷ quantidade_padrao` (ex: 11996 m ÷ 300 m por bobina = 40 bobinas)
+Causa: a coluna `estoque.categoria` armazena dois formatos misturados:
+- UUIDs que referenciam `estoque_categorias.id` (ex: `3923529c-...` → "Acessório")
+- Strings legadas com o próprio nome (ex: `"motor"`, `"geral"`)
 
-## Layout do PDF (igual ao anexo)
+O PDF apenas lê `estoque.categoria` cru, então UUIDs vazam para a tela.
 
-```text
-                    Lista de Compras
-              Cálculo de Materiais por Categoria
-   Gerado em: dd/mm/aa HH:MM   |   Categorias: N   |   Materiais: N
-   Etapa: <nome da etapa>
+## Correção
 
-   ── Bobina ── (3 itens)
-   #  MATERIAL                          NECESSÁRIO    COMPRAR
-   1  Meia Cana Lisa 0,70               11996.16 m    40 metragens
-      Padrão: 300.00 m por Metragem
-   ...
+Editar `src/pages/direcao/GestaoFabricaDirecao.tsx` no `handleGerarListaCompras`:
 
-   ── Caixa ── (2 itens)
-   ...
-```
+1. Buscar uma vez `estoque_categorias` (`id`, `nome`).
+2. Montar um `Map<id, nome>`.
+3. Ao agregar materiais, resolver `categoria`:
+   - Se o valor bate em algum `id` do map → usar `nome` correspondente.
+   - Senão → usar a string como está (com primeira letra maiúscula para uniformizar nomes legados como "motor" → "Motor").
+   - Vazio/null → "Sem categoria".
 
-Rodapé: "Sistema Azul • Compras • Cálculo de Materiais"
-
-## Detalhes técnicos
-
-**Arquivos novos:**
-- `src/utils/listaComprasPDF.ts` — gera o PDF usando `jsPDF` + `jspdf-autotable` (já usados no projeto). Recebe `{ etapaLabel, materiais: MaterialAgrupado[] }` e dispara o download.
-- `src/hooks/useMateriaisPorEtapa.ts` (helper) — consulta única que, dada uma etapa, faz:
-  1. `pedidos_producao` com `etapa_atual = etapa`
-  2. `pedido_linhas` desses pedidos com `estoque_id` preenchido, JOIN em `estoque(id, nome_produto, categoria, unidade, quantidade_padrao)`
-  3. Agrega por `estoque_id` somando `quantidade_necessaria` (igual à lógica já existente em `useMateriaisPendentesPorEtapa.ts` — quantidade × largura × altura ou × tamanho)
-  4. Agrupa por `categoria` e calcula `comprar = Math.ceil(necessario / quantidade_padrao)`
-
-**Arquivo editado:**
-- `src/pages/direcao/GestaoFabricaDirecao.tsx` — adicionar botão `<Button variant="ghost">` com ícone `ShoppingCart` no header de cada `TabsContent` de etapa (ao lado do bloco "Responsável da Etapa", linha ~973). `onClick` chama o hook + gera PDF. Loading state durante a busca.
-
-**Etapas cobertas:** todas em `ORDEM_ETAPAS` (aberto, aprovação CEO, em produção, etc.). Pulamos `pendente_pedido`, `aguardando_cliente`, `arquivo_morto` (não fazem sentido para lista de compras).
-
-**Sem mudanças de DB.** Usa colunas que já existem (`estoque.categoria`, `estoque.unidade`, `estoque.quantidade_padrao`).
-
-## Observações
-- Itens sem `categoria` definida vão para um grupo "Sem categoria".
-- Itens com `quantidade_padrao = 0/null` exibem "—" na coluna "Comprar".
-- O termo "metragem"/"unidade" no texto "Comprar" segue a `unidade` do produto.
+Sem mudanças de DB, sem alteração no `listaComprasPDF.ts`.
