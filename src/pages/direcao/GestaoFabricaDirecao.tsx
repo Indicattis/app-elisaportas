@@ -97,6 +97,72 @@ export default function GestaoFabricaDirecao() {
   const [agendarModalOpen, setAgendarModalOpen] = useState(false);
   const [agendarData, setAgendarData] = useState(new Date());
   const [agendarPedidoId, setAgendarPedidoId] = useState<string | null>(null);
+  const [gerandoListaEtapa, setGerandoListaEtapa] = useState<EtapaPedido | null>(null);
+
+  const handleGerarListaCompras = useCallback(async (etapa: EtapaPedido) => {
+    try {
+      setGerandoListaEtapa(etapa);
+      const { data: peds, error: pErr } = await supabase
+        .from('pedidos_producao')
+        .select('id')
+        .eq('etapa_atual', etapa as any);
+      if (pErr) throw pErr;
+      const pedidoIds = (peds || []).map((p: any) => p.id);
+      if (pedidoIds.length === 0) {
+        toast({ title: 'Sem pedidos', description: 'Não há pedidos nesta etapa.' });
+        return;
+      }
+      const { data: linhas, error: lErr } = await supabase
+        .from('pedido_linhas')
+        .select(`
+          quantidade, largura, altura, tamanho, estoque_id,
+          estoque:estoque_id ( id, nome_produto, categoria, unidade, quantidade_padrao )
+        `)
+        .in('pedido_id', pedidoIds)
+        .not('estoque_id', 'is', null);
+      if (lErr) throw lErr;
+
+      const map = new Map<string, ItemListaCompras>();
+      (linhas || []).forEach((linha: any) => {
+        if (!linha.estoque) return;
+        const e = linha.estoque;
+        const qtd = Number(linha.quantidade) || 0;
+        let necessario = 0;
+        if (linha.largura && linha.altura) {
+          necessario = qtd * Number(linha.largura) * Number(linha.altura);
+        } else if (linha.tamanho) {
+          const t = parseFloat(String(linha.tamanho).replace(',', '.'));
+          necessario = !isNaN(t) ? qtd * t : qtd;
+        } else {
+          necessario = qtd;
+        }
+        if (map.has(e.id)) {
+          map.get(e.id)!.necessario += necessario;
+        } else {
+          map.set(e.id, {
+            estoque_id: e.id,
+            nome_produto: e.nome_produto,
+            categoria: e.categoria || 'Sem categoria',
+            unidade: e.unidade || 'un',
+            quantidade_padrao: e.quantidade_padrao,
+            necessario,
+          });
+        }
+      });
+
+      const itens = Array.from(map.values());
+      if (itens.length === 0) {
+        toast({ title: 'Sem materiais', description: 'Nenhum material vinculado nesta etapa.' });
+        return;
+      }
+      gerarListaComprasPDF(ETAPAS_CONFIG[etapa]?.label || String(etapa), itens);
+    } catch (err: any) {
+      console.error(err);
+      toast({ title: 'Erro', description: err.message || 'Falha ao gerar lista', variant: 'destructive' });
+    } finally {
+      setGerandoListaEtapa(null);
+    }
+  }, [toast]);
   
   // Debounce para busca do arquivo morto
   useEffect(() => {
