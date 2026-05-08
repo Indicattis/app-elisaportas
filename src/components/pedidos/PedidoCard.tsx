@@ -206,6 +206,7 @@ export function PedidoCard({
   const isProducao = location.pathname.startsWith('/producao');
   const isAdministrativo = location.pathname.startsWith('/administrativo');
   const isDirecao = location.pathname.startsWith('/direcao');
+  const isFabricaMontagem = location.pathname.startsWith('/fabrica/montagem-pedidos');
 
   const { pausarOrdem: pausarOrdemDirecao, despausarOrdem: despausarOrdemDirecao } = useGestaoOrdensProducao();
 
@@ -1435,8 +1436,8 @@ export function PedidoCard({
                       onClick={(e) => {
                         if (disableClienteClick) return;
                         e.stopPropagation();
-                        if (isAdministrativo) {
-                          navigate(`/administrativo/pedidos/${pedido.id}`);
+                        if (isFabricaMontagem || isAdministrativo) {
+                          navigate(`/fabrica/montagem-pedidos/${pedido.id}`);
                         } else if (isProducao) {
                           navigate(`/producao/controle/pedido/${pedido.id}/view`);
                         } else if (isDirecao) {
@@ -2435,7 +2436,15 @@ className="flex h-[20px] w-full rounded-[3px]"
           className="py-2 px-3 bg-muted/30 border-b cursor-pointer hover:bg-muted/50 transition-colors"
           onClick={(e) => {
             e.stopPropagation();
-            navigate(`/dashboard/pedido/${pedido.id}/view`);
+            if (isFabricaMontagem || isAdministrativo) {
+              navigate(`/fabrica/montagem-pedidos/${pedido.id}`);
+            } else if (isProducao) {
+              navigate(`/producao/controle/pedido/${pedido.id}/view`);
+            } else if (isDirecao) {
+              navigate(`/direcao/pedidos/${pedido.id}`);
+            } else {
+              navigate(`/dashboard/pedido/${pedido.id}/view`);
+            }
           }}
         >
           <div className="flex items-center justify-between gap-2">
