@@ -903,6 +903,7 @@ export default function ProdutosFabrica() {
                     <TableHead className="text-xs font-medium text-white/60">Produto</TableHead>
                     <TableHead className="text-xs font-medium text-white/60">Fornecedor</TableHead>
                     <TableHead className="text-xs font-medium text-white/60">Categoria</TableHead>
+                    <TableHead className="text-center text-xs font-medium text-white/60">Unidade</TableHead>
                     <TableHead className="text-center text-xs font-medium text-white/60">Est. Mín</TableHead>
                     <TableHead className="text-center text-xs font-medium text-white/60">Est. Máx</TableHead>
                     <TableHead className="text-center text-xs font-medium text-white/60">Atual</TableHead>
@@ -917,7 +918,7 @@ export default function ProdutosFabrica() {
                   <TableBody>
                     {loading ? (
                       <TableRow className="border-white/10">
-                        <TableCell colSpan={12} className="text-center py-8 text-sm text-white/40">
+                        <TableCell colSpan={13} className="text-center py-8 text-sm text-white/40">
                           Carregando...
                         </TableCell>
                       </TableRow>
