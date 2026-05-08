@@ -1,12 +1,8 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { useItensNaoConcluidosPorEtapa } from "@/hooks/useItensNaoConcluidosPorEtapa";
-import { ORDEM_ETAPAS } from "@/types/pedidoEtapa";
 import { useQueryClient } from "@tanstack/react-query";
-import { Package, RefreshCw, Factory, CheckCircle, Paintbrush, Truck, HardHat, AlertTriangle, CheckCircle2, ShieldCheck, Archive, Clock, ClipboardCheck, Wrench, ChevronDown, Loader2, ClipboardList } from "lucide-react";
+import { Package, RefreshCw, Factory, CheckCircle, Paintbrush, Truck, HardHat, AlertTriangle, CheckCircle2, ShieldCheck, Archive, Clock, ClipboardCheck, Wrench } from "lucide-react";
 import type { EtapaPedido } from "@/types/pedidoEtapa";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -17,7 +13,6 @@ import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, PaginationEllipsis } from "@/components/ui/pagination";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PedidosFiltrosMinimalista } from "@/components/pedidos/PedidosFiltrosMinimalista";
-import { RelatorioMateriaisPendentesDialog } from "@/components/administrativo/RelatorioMateriaisPendentesDialog";
 
 import { supabase } from "@/integrations/supabase/client";
 import { usePedidosArquivados } from "@/hooks/usePedidosArquivados";
@@ -129,8 +124,6 @@ export default function PedidosAdminMinimalista() {
   const [activeTab, setActiveTab] = useState<string>("aberto");
   const [currentPages, setCurrentPages] = useState<Record<string, number>>({});
   const [arquivoPage, setArquivoPage] = useState(1);
-  const [relatorioMateriaisOpen, setRelatorioMateriaisOpen] = useState(false);
-  
   // Hooks para cada etapa
   const { 
     pedidos: pedidosAberto, 
