@@ -445,6 +445,8 @@ const App = () => (
                 <Route path="/fabrica" element={<ProtectedRoute routeKeyPrefix="fabrica_"><FabricaHub /></ProtectedRoute>} />
                 <Route path="/fabrica/ordens-pedidos" element={<ProtectedRoute routeKey="fabrica_ordens_pedidos"><OrdensPorPedido /></ProtectedRoute>} />
                 <Route path="/fabrica/cronograma-producao" element={<ProtectedRoute routeKey="fabrica_cronograma_producao"><CronogramaProducao /></ProtectedRoute>} />
+                <Route path="/fabrica/produtos" element={<ProtectedRoute routeKey="fabrica_produtos"><ProdutosFabrica /></ProtectedRoute>} />
+                <Route path="/fabrica/produtos/editar/:id" element={<ProtectedRoute routeKey="fabrica_produtos"><ProdutosFabricaEdit /></ProtectedRoute>} />
 
                 {/* Hub da Direção Minimalista */}
                 <Route path="/direcao" element={<ProtectedRoute routeKeyPrefix="direcao_"><DirecaoHub /></ProtectedRoute>} />
