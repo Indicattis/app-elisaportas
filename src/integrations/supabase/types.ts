@@ -8571,6 +8571,7 @@ export type Database = {
         Args: { _route_key: string; _user_id: string }
         Returns: boolean
       }
+      increment_whatsapp_clique: { Args: { _id: string }; Returns: undefined }
       is_admin: { Args: never; Returns: boolean }
       is_admin_user:
         | { Args: never; Returns: boolean }
