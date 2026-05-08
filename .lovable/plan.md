@@ -1,22 +1,63 @@
-## Problema
+## Sistema de Matérias-Primas (Fase 1)
 
-Na lista de material, alguns grupos aparecem como UUIDs (ex: `3923529c-56df-...`) em vez do nome da categoria.
+Esta fase cria apenas o cadastro de matérias-primas e o vínculo com itens do estoque. A coluna na geração de lista de material em `/direcao/gestao-fabrica` fica para a fase 2.
 
-Causa: a coluna `estoque.categoria` armazena dois formatos misturados:
-- UUIDs que referenciam `estoque_categorias.id` (ex: `3923529c-...` → "Acessório")
-- Strings legadas com o próprio nome (ex: `"motor"`, `"geral"`)
+### 1. Banco de dados
 
-O PDF apenas lê `estoque.categoria` cru, então UUIDs vazam para a tela.
+Nova tabela `materias_primas` (cadastro básico, controle de estoque manual):
 
-## Correção
+- `nome` (texto, obrigatório)
+- `unidade` (texto, ex.: "bobina", "kg", "rolo")
+- `quantidade` (numérico, estoque atual editado manualmente)
+- `custo_unitario` (numérico)
+- `fornecedor_id` (referência a `fornecedores`, opcional)
+- `ativo` (booleano, padrão true)
+- `ordem` (inteiro, para ordenação)
+- campos padrão (id, created_at, updated_at, created_by)
 
-Editar `src/pages/direcao/GestaoFabricaDirecao.tsx` no `handleGerarListaCompras`:
+RLS: leitura/escrita para usuários autenticados (mesmo padrão da tabela `estoque`).
 
-1. Buscar uma vez `estoque_categorias` (`id`, `nome`).
-2. Montar um `Map<id, nome>`.
-3. Ao agregar materiais, resolver `categoria`:
-   - Se o valor bate em algum `id` do map → usar `nome` correspondente.
-   - Senão → usar a string como está (com primeira letra maiúscula para uniformizar nomes legados como "motor" → "Motor").
-   - Vazio/null → "Sem categoria".
+Novas colunas em `estoque` (vínculo 1 → 1):
 
-Sem mudanças de DB, sem alteração no `listaComprasPDF.ts`.
+- `materia_prima_id` (uuid, FK para `materias_primas`, opcional)
+- `materia_prima_conversao` (numérico, opcional) — quanto da unidade do item é obtido a partir de **1 unidade** da matéria-prima. Ex.: meia cana → bobina, conversão = 300 (300 m de meia cana por bobina).
+
+### 2. UI — `/fabrica/produtos`
+
+**Botão no header**: "Matérias-Primas" (ao lado do botão "Categorias" já existente). Abre um Dialog com:
+
+- Lista das matérias-primas cadastradas (nome, unidade, quantidade em estoque, custo, fornecedor, qtd. de itens vinculados).
+- Botão "Nova matéria-prima" → formulário com os campos básicos.
+- Ações por linha: editar, excluir (soft delete via `ativo=false`; bloqueia exclusão se houver itens vinculados, com aviso).
+- Edição inline da `quantidade` (estoque manual).
+
+**Edição/criação de produto do estoque**: adicionar uma seção "Matéria-prima vinculada" com:
+
+- Select de matéria-prima (com opção "Nenhuma").
+- Campo numérico "Quantos `<unidade do item>` por 1 `<unidade da matéria-prima>`" (= `materia_prima_conversao`).
+- Texto auxiliar mostrando exemplo: "Ex.: 1 bobina = 300 m de meia cana".
+
+### 3. Hook + tipos
+
+Novo `src/hooks/useMateriasPrimas.ts` no padrão de `useEstoque`:
+
+- `listar`, `criar`, `editar`, `excluir`, `ajustarQuantidade` (entrada/saída manual).
+- Query key `["materias-primas"]`.
+
+Atualizar `ProdutoEstoque` / `ProdutoEstoqueInput` em `useEstoque.ts` com os dois novos campos e join opcional `materia_prima:materias_primas(id, nome, unidade)`.
+
+### 4. Fora do escopo desta fase
+
+- Coluna nova no PDF de lista de material em `/direcao/gestao-fabrica` (será a fase 2, depois que os vínculos estiverem cadastrados).
+- Cálculo automático do estoque da matéria-prima a partir dos itens vinculados.
+- Movimentações históricas da matéria-prima (entrada/saída logada). Por enquanto, edição direta da quantidade.
+
+### Arquivos afetados
+
+- Migration: nova tabela `materias_primas` + colunas em `estoque` + RLS.
+- `src/hooks/useEstoque.ts` — novos campos no tipo e no select.
+- `src/hooks/useMateriasPrimas.ts` — novo.
+- `src/pages/direcao/estoque/ProdutosFabrica.tsx` — botão "Matérias-Primas" no header.
+- `src/components/estoque/MateriasPrimasDialog.tsx` — novo, lista + CRUD.
+- `src/components/estoque/MateriaPrimaForm.tsx` — novo, formulário criar/editar.
+- Form de produto do estoque (onde edita item de `/fabrica/produtos`) — nova seção de vínculo.
