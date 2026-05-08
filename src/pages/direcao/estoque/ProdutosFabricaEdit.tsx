@@ -355,6 +355,61 @@ export default function ProdutosFabricaEdit() {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Vínculo com matéria-prima */}
+            <div className="space-y-3 pt-4 border-t">
+              <div className="space-y-1">
+                <Label className="text-base">Matéria-prima vinculada</Label>
+                <p className="text-xs text-muted-foreground">
+                  Vincule este item a uma matéria-prima comprada (ex.: bobina) e informe quantos {formData.unidade} se obtém de 1 unidade da matéria-prima.
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Matéria-prima</Label>
+                  <Select
+                    value={formData.materia_prima_id || "none"}
+                    onValueChange={(v) => setFormData({ ...formData, materia_prima_id: v === "none" ? "" : v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Nenhuma" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Nenhuma</SelectItem>
+                      {materiasPrimas.map((m) => (
+                        <SelectItem key={m.id} value={m.id}>
+                          {m.nome} ({m.unidade})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>
+                    {formData.materia_prima_id
+                      ? `${formData.unidade} por 1 ${
+                          materiasPrimas.find((m) => m.id === formData.materia_prima_id)?.unidade || "un"
+                        }`
+                      : "Conversão"}
+                  </Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    disabled={!formData.materia_prima_id}
+                    value={formData.materia_prima_conversao}
+                    onChange={(e) => setFormData({ ...formData, materia_prima_conversao: Number(e.target.value) })}
+                    placeholder="Ex: 300"
+                  />
+                </div>
+              </div>
+              {formData.materia_prima_id && formData.materia_prima_conversao > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Ex.: 1 {materiasPrimas.find((m) => m.id === formData.materia_prima_id)?.unidade} ={" "}
+                  {formData.materia_prima_conversao} {formData.unidade} de {formData.nome_produto || "este item"}.
+                </p>
+              )}
+            </div>
           </CardContent>
         </Card>
 
