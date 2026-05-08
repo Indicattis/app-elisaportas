@@ -458,14 +458,6 @@ export default function PedidosAdminMinimalista() {
       headerActions={
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setRelatorioMateriaisOpen(true)}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-blue-500/10 hover:bg-white/10 transition-all text-white/80 text-sm"
-            title="Relatório de Materiais Pendentes"
-          >
-            <ClipboardList className="w-4 h-4 text-blue-400" />
-            <span className="hidden sm:inline">Materiais Pendentes</span>
-          </button>
-          <button
             onClick={handleRefresh}
             className="p-2 rounded-lg bg-white/5 border border-blue-500/10 hover:bg-white/10 transition-all"
             title="Atualizar"
@@ -475,10 +467,6 @@ export default function PedidosAdminMinimalista() {
         </div>
       }
     >
-      <RelatorioMateriaisPendentesDialog
-        open={relatorioMateriaisOpen}
-        onOpenChange={setRelatorioMateriaisOpen}
-      />
       {/* Tabs para alternar entre etapas - estilo Gestão de Fábrica */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         {/* Seletor mobile */}
