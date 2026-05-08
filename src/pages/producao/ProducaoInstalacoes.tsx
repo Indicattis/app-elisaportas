@@ -9,6 +9,8 @@ import { useInstalacoesMinhaEquipeCalendario } from "@/hooks/useInstalacoesMinha
 import { useNeoInstalacoesMinhaEquipe } from "@/hooks/useNeoInstalacoesMinhaEquipe";
 import { useNeoCorrecoesMinhaEquipe } from "@/hooks/useNeoCorrecoesMinhaEquipe";
 import { OrdemCarregamentoDetails } from "@/components/expedicao/OrdemCarregamentoDetails";
+import { NeoInstalacaoDetails } from "@/components/expedicao/NeoInstalacaoDetails";
+import { NeoCorrecaoDetails } from "@/components/expedicao/NeoCorrecaoDetails";
 import { CalendarioSemanalExpedicaoMobile } from "@/components/expedicao/CalendarioSemanalExpedicaoMobile";
 import { CalendarioSemanalExpedicaoDesktop } from "@/components/expedicao/CalendarioSemanalExpedicaoDesktop";
 import { CalendarioMensalExpedicaoDesktop } from "@/components/expedicao/CalendarioMensalExpedicaoDesktop";
@@ -16,6 +18,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { format, addDays, startOfWeek, startOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { OrdemCarregamento } from "@/types/ordemCarregamento";
+import { NeoInstalacao } from "@/types/neoInstalacao";
+import { NeoCorrecao } from "@/types/neoCorrecao";
 import { useProducaoAuth } from "@/hooks/useProducaoAuth";
 
 export default function ProducaoInstalacoes() {
@@ -30,6 +34,10 @@ export default function ProducaoInstalacoes() {
   const [viewType, setViewType] = useState<'week' | 'month'>('week');
   const [selectedItem, setSelectedItem] = useState<OrdemCarregamento | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [selectedNeoInstalacao, setSelectedNeoInstalacao] = useState<NeoInstalacao | null>(null);
+  const [neoInstalacaoOpen, setNeoInstalacaoOpen] = useState(false);
+  const [selectedNeoCorrecao, setSelectedNeoCorrecao] = useState<NeoCorrecao | null>(null);
+  const [neoCorrecaoOpen, setNeoCorrecaoOpen] = useState(false);
 
   const {
     ordens,
@@ -67,6 +75,16 @@ export default function ProducaoInstalacoes() {
   const handleOrdemClick = (ordem: OrdemCarregamento) => {
     setSelectedItem(ordem);
     setDetailsOpen(true);
+  };
+
+  const handleOpenNeoInstalacaoDetails = (neo: NeoInstalacao) => {
+    setSelectedNeoInstalacao(neo);
+    setNeoInstalacaoOpen(true);
+  };
+
+  const handleOpenNeoCorrecaoDetails = (neo: NeoCorrecao) => {
+    setSelectedNeoCorrecao(neo);
+    setNeoCorrecaoOpen(true);
   };
 
   const handleMonthChange = (date: Date) => {
@@ -129,6 +147,8 @@ export default function ProducaoInstalacoes() {
                   onToday={handleToday}
                   onDayClick={() => {}}
                   onOrdemClick={handleOrdemClick}
+                  onOpenNeoInstalacaoDetails={handleOpenNeoInstalacaoDetails}
+                  onOpenNeoCorrecaoDetails={handleOpenNeoCorrecaoDetails}
                   hideLegendas
                 />
               ) : viewType === 'week' ? (
@@ -141,6 +161,8 @@ export default function ProducaoInstalacoes() {
                   onNextWeek={handleNextWeek}
                   onToday={handleToday}
                   onOrdemClick={handleOrdemClick}
+                  onOpenNeoInstalacaoDetails={handleOpenNeoInstalacaoDetails}
+                  onOpenNeoCorrecaoDetails={handleOpenNeoCorrecaoDetails}
                   readOnly
                   hideLegendas
                 />
@@ -152,6 +174,8 @@ export default function ProducaoInstalacoes() {
                   neoCorrecoes={neoCorrecoes}
                   onMonthChange={handleMonthChange}
                   onOrdemClick={handleOrdemClick}
+                  onOpenNeoInstalacaoDetails={handleOpenNeoInstalacaoDetails}
+                  onOpenNeoCorrecaoDetails={handleOpenNeoCorrecaoDetails}
                   readOnly
                   hideLegendas
                 />
@@ -165,6 +189,18 @@ export default function ProducaoInstalacoes() {
         ordem={selectedItem}
         open={detailsOpen}
         onOpenChange={setDetailsOpen}
+      />
+
+      <NeoInstalacaoDetails
+        neoInstalacao={selectedNeoInstalacao}
+        open={neoInstalacaoOpen}
+        onOpenChange={setNeoInstalacaoOpen}
+      />
+
+      <NeoCorrecaoDetails
+        neoCorrecao={selectedNeoCorrecao}
+        open={neoCorrecaoOpen}
+        onOpenChange={setNeoCorrecaoOpen}
       />
     </div>
   );

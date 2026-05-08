@@ -1,29 +1,22 @@
 ## Problema
 
-A venda `d4a3d889-22e8-4cba-a755-f4f2ecb99fc9` (AMICI EMPREENDIMENTOS, R$ 33.000) foi faturada corretamente:
-- `frete_aprovado = true`
-- todos os 3 produtos com `faturamento = true`
-- `status_aprovacao = aprovado`
-- nenhum `pedido_producao` vinculado
+Em `/producao/instalacoes`, os cards roxos (`NeoInstalacao` e `NeoCorrecao`) possuem um botão "Detalhes" que deveria abrir o drawer (`NeoInstalacaoDetails` / `NeoCorrecaoDetails`), mas nada acontece ao clicar.
 
-Mas ela tem `pedido_dispensado = true`, e o hook `useVendasPendentePedido` (que alimenta a aba "Aprovação Diretor" em `/direcao/gestao-fabrica`) filtra essas vendas com `.eq("pedido_dispensado", false)`.
+## Causa
 
-Esse flag foi marcado quando alguém clicou em **"Dispensar Pedido"** ou **"Finalizar Direto"** no `VendaPendentePedidoCard`. Hoje o flag é uma via de mão única — não existe UI para reverter.
+Os calendários (`CalendarioSemanalExpedicaoDesktop`, `CalendarioMensalExpedicaoDesktop`, `CalendarioSemanalExpedicaoMobile`) já aceitam e propagam as props `onOpenNeoInstalacaoDetails` e `onOpenNeoCorrecaoDetails`, mas a página `src/pages/producao/ProducaoInstalacoes.tsx` **não passa esses handlers** nem renderiza os drawers de detalhe — só trata `onOrdemClick` (cards de carregamento) com `OrdemCarregamentoDetails`.
+
+Resultado: clicar em qualquer ação dos cards roxos cai em handler `undefined`.
 
 ## Plano
 
-### 1. Correção pontual desta venda
-Migration setando `pedido_dispensado = false` na venda `d4a3d889-22e8-4cba-a755-f4f2ecb99fc9`. Após isso ela voltará a aparecer na aba "Aprovação Diretor" automaticamente (refetch a cada 30s + invalidação manual).
+Editar apenas `src/pages/producao/ProducaoInstalacoes.tsx`:
 
-### 2. (Opcional) Reverter dispensa pela UI
-Adicionar um botão "Reativar Pedido" em `/direcao/gestao-fabrica` na aba **Arquivo Morto** (ou em uma seção dedicada de "Vendas Dispensadas") que faz `UPDATE vendas SET pedido_dispensado = false` e invalida `vendas-pendente-pedido`. Isso evita ter que pedir migration toda vez que alguém dispensa por engano.
+1. Adicionar dois estados:
+   - `selectedNeoInstalacao` + `neoInstalacaoOpen`
+   - `selectedNeoCorrecao` + `neoCorrecaoOpen`
+2. Criar handlers `handleOpenNeoInstalacaoDetails` e `handleOpenNeoCorrecaoDetails` que setam o item e abrem o respectivo drawer.
+3. Repassar esses handlers como props (`onOpenNeoInstalacaoDetails` e `onOpenNeoCorrecaoDetails`) nos três calendários (Mobile, Semanal Desktop, Mensal Desktop).
+4. Renderizar abaixo do `OrdemCarregamentoDetails` os componentes `NeoInstalacaoDetails` e `NeoCorrecaoDetails` controlados pelos novos estados.
 
-## Detalhes técnicos
-
-- Arquivo do filtro: `src/hooks/useVendasPendentePedido.ts:85`
-- Arquivos onde o flag é setado: `src/components/pedidos/VendaPendentePedidoCard.tsx:142,161` (handlers `handleDispensarPedido` e `handleFinalizarDireto`)
-- Sem alterações em RLS — a coluna já é editável pelos mesmos perfis que dispensam.
-
-## Pergunta antes de implementar
-
-Quer só a correção pontual (item 1), ou também o botão de reativação para evitar o problema no futuro (item 1 + item 2)?
+Sem mudanças em hooks, regras de negócio ou nos próprios cards/calendários — eles já estão preparados.
