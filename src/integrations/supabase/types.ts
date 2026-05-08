@@ -2284,6 +2284,8 @@ export type Database = {
           fornecedor_id: string | null
           id: string
           item_padrao_porta_enrolar: boolean | null
+          materia_prima_conversao: number | null
+          materia_prima_id: string | null
           modulo_calculo: string | null
           nome_produto: string
           ordem: number
@@ -2318,6 +2320,8 @@ export type Database = {
           fornecedor_id?: string | null
           id?: string
           item_padrao_porta_enrolar?: boolean | null
+          materia_prima_conversao?: number | null
+          materia_prima_id?: string | null
           modulo_calculo?: string | null
           nome_produto: string
           ordem?: number
@@ -2352,6 +2356,8 @@ export type Database = {
           fornecedor_id?: string | null
           id?: string
           item_padrao_porta_enrolar?: boolean | null
+          materia_prima_conversao?: number | null
+          materia_prima_id?: string | null
           modulo_calculo?: string | null
           nome_produto?: string
           ordem?: number
@@ -2380,6 +2386,13 @@ export type Database = {
             columns: ["fornecedor_id"]
             isOneToOne: false
             referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estoque_materia_prima_id_fkey"
+            columns: ["materia_prima_id"]
+            isOneToOne: false
+            referencedRelation: "materias_primas"
             referencedColumns: ["id"]
           },
           {
@@ -3496,6 +3509,56 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      materias_primas: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          created_by: string | null
+          custo_unitario: number
+          fornecedor_id: string | null
+          id: string
+          nome: string
+          ordem: number
+          quantidade: number
+          unidade: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          created_by?: string | null
+          custo_unitario?: number
+          fornecedor_id?: string | null
+          id?: string
+          nome: string
+          ordem?: number
+          quantidade?: number
+          unidade?: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          created_by?: string | null
+          custo_unitario?: number
+          fornecedor_id?: string | null
+          id?: string
+          nome?: string
+          ordem?: number
+          quantidade?: number
+          unidade?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "materias_primas_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       metas_colaboradores: {
         Row: {
