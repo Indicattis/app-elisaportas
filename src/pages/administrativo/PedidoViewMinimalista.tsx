@@ -468,7 +468,7 @@ export default function PedidoViewMinimalista() {
 
   if (loading) {
     return (
-      <MinimalistLayout title="Carregando..." backPath="/administrativo/pedidos">
+      <MinimalistLayout title="Carregando..." backPath="/fabrica/montagem-pedidos">
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400"></div>
         </div>
@@ -478,7 +478,7 @@ export default function PedidoViewMinimalista() {
 
   if (!pedido) {
     return (
-      <MinimalistLayout title="Pedido não encontrado" backPath="/administrativo/pedidos">
+      <MinimalistLayout title="Pedido não encontrado" backPath="/fabrica/montagem-pedidos">
         <div className="text-center py-8">
           <p className="text-white/60">Pedido não encontrado</p>
         </div>
@@ -497,7 +497,7 @@ export default function PedidoViewMinimalista() {
     <MinimalistLayout 
       title={`Pedido #${pedido.numero_pedido}`}
       subtitle={`Cadastrado em ${format(new Date(pedido.created_at), "dd/MM/yyyy", { locale: ptBR })}`}
-      backPath="/administrativo/pedidos"
+      backPath="/fabrica/montagem-pedidos"
       breadcrumbItems={[
         { label: 'Home', path: '/home' },
         { label: 'Administrativo', path: '/administrativo' },
