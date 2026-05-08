@@ -1037,6 +1037,27 @@ export default function GestaoFabricaDirecao() {
                           </Tooltip>
                         </TooltipProvider>
                       )}
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleGerarListaCompras(etapa)}
+                              disabled={gerandoListaEtapa === etapa}
+                              className="h-7 px-2 text-white/70 hover:text-white hover:bg-white/10 gap-1"
+                            >
+                              <ShoppingCart className="h-4 w-4" />
+                              <span className="text-xs">
+                                {gerandoListaEtapa === etapa ? 'Gerando...' : 'Lista de material'}
+                              </span>
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="text-xs">Gerar PDF com materiais necessários desta etapa</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </div>
                   </CardTitle>
                   
