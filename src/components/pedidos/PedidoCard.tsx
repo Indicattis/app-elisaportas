@@ -1437,7 +1437,7 @@ export function PedidoCard({
                         if (disableClienteClick) return;
                         e.stopPropagation();
                         if (isFabricaMontagem || isAdministrativo) {
-                          navigate(`/administrativo/pedidos/${pedido.id}`);
+                          navigate(`/fabrica/montagem-pedidos/${pedido.id}`);
                         } else if (isProducao) {
                           navigate(`/producao/controle/pedido/${pedido.id}/view`);
                         } else if (isDirecao) {
@@ -2437,7 +2437,7 @@ className="flex h-[20px] w-full rounded-[3px]"
           onClick={(e) => {
             e.stopPropagation();
             if (isFabricaMontagem || isAdministrativo) {
-              navigate(`/administrativo/pedidos/${pedido.id}`);
+              navigate(`/fabrica/montagem-pedidos/${pedido.id}`);
             } else if (isProducao) {
               navigate(`/producao/controle/pedido/${pedido.id}/view`);
             } else if (isDirecao) {
