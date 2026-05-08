@@ -392,6 +392,11 @@ function HeaderUserInfo() {
   );
 }
 
+const RedirectPedidoAdmin = () => {
+  const { id } = useParams();
+  return <Navigate to={`/fabrica/montagem-pedidos/${id}`} replace />;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
