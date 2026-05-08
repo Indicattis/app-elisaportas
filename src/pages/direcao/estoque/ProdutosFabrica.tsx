@@ -16,6 +16,7 @@ import { useEstoque } from "@/hooks/useEstoque";
 import { useCategorias } from "@/hooks/useCategorias";
 import { useSubcategorias } from "@/hooks/useSubcategorias";
 import { useFornecedores } from "@/hooks/useFornecedores";
+import { useMateriasPrimas, MateriaPrima } from "@/hooks/useMateriasPrimas";
 import type { Categoria } from "@/hooks/useCategorias";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { toast } from "sonner";
@@ -164,9 +165,10 @@ interface SortableProductRowProps {
   onUpdateField: (id: string, patch: Record<string, any>) => Promise<void>;
   categorias: Categoria[];
   fornecedores: { id: string; nome: string }[];
+  materiasPrimas: MateriaPrima[];
 }
 
-function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCount, onToggleConferir, onExcluir, onUpdateField, categorias, fornecedores }: SortableProductRowProps) {
+function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCount, onToggleConferir, onExcluir, onUpdateField, categorias, fornecedores, materiasPrimas }: SortableProductRowProps) {
   const {
     attributes,
     listeners,
@@ -230,6 +232,53 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
           placeholder="Fornecedor"
           onSave={(v) => onUpdateField(produto.id, { fornecedor_id: v || null })}
         />
+      </TableCell>
+      <TableCell className="text-white/70 text-sm">
+        <div className="space-y-1">
+          <EditableSelectCell
+            value={produto.materia_prima?.id ?? null}
+            options={[
+              { value: "__none__", label: "Nenhuma" },
+              ...materiasPrimas.map(m => ({ value: m.id, label: `${m.nome} (${m.unidade})` })),
+            ]}
+            display={
+              produto.materia_prima ? (
+                <span className="text-sm">
+                  {produto.materia_prima.nome}
+                  <span className="text-white/40"> ({produto.materia_prima.unidade})</span>
+                </span>
+              ) : (
+                <span className="text-white/30">—</span>
+              )
+            }
+            placeholder="Matéria-prima"
+            onSave={(v) =>
+              onUpdateField(produto.id, {
+                materia_prima_id: v === "__none__" ? null : v,
+                ...(v === "__none__" ? { materia_prima_conversao: null } : {}),
+              })
+            }
+          />
+          {produto.materia_prima && (
+            <EditableCell
+              value={produto.materia_prima_conversao ?? ""}
+              type="number"
+              placeholder="Conversão"
+              display={
+                produto.materia_prima_conversao && produto.materia_prima_conversao > 0 ? (
+                  <span className="text-xs text-white/50">
+                    1 {produto.materia_prima.unidade} = {produto.materia_prima_conversao} {produto.unidade || "un"}
+                  </span>
+                ) : (
+                  <span className="text-xs text-amber-400/70">Definir conversão</span>
+                )
+              }
+              onSave={(v) =>
+                onUpdateField(produto.id, { materia_prima_conversao: Number(v) || null })
+              }
+            />
+          )}
+        </div>
       </TableCell>
       <TableCell>
         <EditableSelectCell
