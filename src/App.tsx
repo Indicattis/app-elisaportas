@@ -562,7 +562,7 @@ const App = () => (
                 {/* Hub Administrativo Minimalista */}
                 <Route path="/administrativo" element={<ProtectedRoute routeKeyPrefix="administrativo_"><AdministrativoHub /></ProtectedRoute>} />
                 <Route path="/administrativo/pedidos" element={<Navigate to="/fabrica/montagem-pedidos" replace />} />
-                <Route path="/administrativo/pedidos/:id" element={<Navigate to="/fabrica/montagem-pedidos" replace />} />
+                <Route path="/administrativo/pedidos/:id" element={<RedirectWithParams to="/fabrica/montagem-pedidos/:id" />} />
                 <Route path="/fabrica/montagem-pedidos" element={<ProtectedRoute routeKey="administrativo_hub"><PedidosAdminMinimalista /></ProtectedRoute>} />
                 <Route path="/fabrica/montagem-pedidos/:id" element={<ProtectedRoute routeKey="administrativo_hub"><PedidoViewMinimalista /></ProtectedRoute>} />
                 <Route path="/administrativo/vendas/:id" element={<ProtectedRoute routeKey="administrativo_hub"><VendaDetalhesMinimalista /></ProtectedRoute>} />
