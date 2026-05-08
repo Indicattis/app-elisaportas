@@ -1,0 +1,1 @@
+UPDATE public.vendas SET pedido_dispensado = false WHERE id = 'd4a3d889-22e8-4cba-a755-f4f2ecb99fc9';
