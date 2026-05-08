@@ -29,11 +29,12 @@ const UNIDADES = [
   { value: "CX", label: "Caixa (CX)" },
 ];
 
-const BACK_PATH = "/direcao/estoque/configuracoes/produtos/fabrica";
-
 export default function ProdutosFabricaEdit() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const BACK_PATH = window.location.pathname.startsWith("/fabrica/produtos")
+    ? "/fabrica/produtos"
+    : "/direcao/estoque/configuracoes/produtos/fabrica";
   const queryClient = useQueryClient();
   const { fornecedores } = useFornecedores();
   const { excluirProduto } = useEstoque();

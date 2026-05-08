@@ -359,7 +359,10 @@ export default function ProdutosFabrica() {
   };
 
   const handleDoubleClick = (produtoId: string) => {
-    navigate(`/direcao/estoque/configuracoes/produtos/fabrica/editar/${produtoId}`);
+    const basePath = window.location.pathname.startsWith("/fabrica/produtos")
+      ? "/fabrica/produtos"
+      : "/direcao/estoque/configuracoes/produtos/fabrica";
+    navigate(`${basePath}/editar/${produtoId}`);
   };
 
   const handleDownloadPDF = () => {
