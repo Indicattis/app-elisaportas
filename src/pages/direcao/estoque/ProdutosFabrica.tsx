@@ -924,7 +924,7 @@ export default function ProdutosFabrica() {
                       </TableRow>
                     ) : filteredProdutos.length === 0 ? (
                       <TableRow className="border-white/10">
-                        <TableCell colSpan={12} className="text-center py-8 text-sm text-white/40">
+                        <TableCell colSpan={13} className="text-center py-8 text-sm text-white/40">
                           {searchTerm ? "Nenhum produto encontrado" : "Nenhum produto cadastrado"}
                         </TableCell>
                       </TableRow>
@@ -953,6 +953,7 @@ export default function ProdutosFabrica() {
                     <TableCell className="font-bold text-white">
                       TOTAL ({filteredProdutos.length} itens)
                     </TableCell>
+                    <TableCell />
                     <TableCell />
                     <TableCell />
                     <TableCell className="text-center font-bold text-white">
