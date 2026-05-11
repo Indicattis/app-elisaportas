@@ -416,18 +416,15 @@ export default function EstoqueMinimalista() {
             <Table>
               <TableHeader>
                 <TableRow className="border-white/10 hover:bg-transparent">
-                  <TableHead className="text-xs font-medium text-white/60 w-24">SKU</TableHead>
                   <TableHead className="text-xs font-medium text-white/60">Produto</TableHead>
-                  <TableHead className="text-xs font-medium text-white/60">Categoria</TableHead>
-                  <TableHead className="text-xs font-medium text-white/60">Setor</TableHead>
-                  <TableHead className="text-center text-xs font-medium text-white/60">Pintura</TableHead>
-                  <TableHead className="text-center text-xs font-medium text-white/60">Cálculo</TableHead>
+                  <TableHead className="text-right text-xs font-medium text-white/60">Quantidade</TableHead>
+                  <TableHead className="text-right text-xs font-medium text-white/60">Custo Unitário</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow className="border-white/10">
-                    <TableCell colSpan={6} className="text-center py-8 text-sm text-white/40">
+                    <TableCell colSpan={3} className="text-center py-8 text-sm text-white/40">
                       Carregando...
                     </TableCell>
                   </TableRow>
@@ -438,7 +435,7 @@ export default function EstoqueMinimalista() {
                     p.sku?.toLowerCase().includes(searchTerm.toLowerCase())
                   ).length === 0 ? (
                   <TableRow className="border-white/10">
-                    <TableCell colSpan={6} className="text-center py-8 text-sm text-white/40">
+                    <TableCell colSpan={3} className="text-center py-8 text-sm text-white/40">
                       Nenhum produto encontrado
                     </TableCell>
                   </TableRow>
@@ -457,11 +454,6 @@ export default function EstoqueMinimalista() {
                       onDoubleClick={() => handleDoubleClick(produto.id)}
                     >
                       <TableCell className="px-3 py-2">
-                        <Badge variant="outline" className="text-xs font-mono border-white/20 text-white/80">
-                          {produto.sku || '-'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="px-3 py-2">
                         <div>
                           <div className="font-medium text-sm text-white">{produto.nome_produto}</div>
                           {produto.descricao_produto && (
@@ -471,48 +463,11 @@ export default function EstoqueMinimalista() {
                           )}
                         </div>
                       </TableCell>
-                      <TableCell className="px-3 py-2">
-                        <Badge 
-                          className="text-xs"
-                          style={{ 
-                            backgroundColor: `${getCategoriaColor(produto.categoria)}40`,
-                            color: getCategoriaColor(produto.categoria),
-                            borderColor: `${getCategoriaColor(produto.categoria)}60`
-                          }}
-                        >
-                          {getCategoriaLabel(produto.categoria)}
-                        </Badge>
+                      <TableCell className="text-right px-3 py-2 text-white">
+                        {produto.quantidade} <span className="text-white/40 text-xs">{produto.unidade}</span>
                       </TableCell>
-                      <TableCell className="px-3 py-2">
-                        {produto.setor_responsavel_producao ? (
-                          <Badge variant="outline" className="text-xs border-white/20 text-white/80">
-                            {produto.setor_responsavel_producao === 'perfiladeira' ? 'Perfiladeira' :
-                             produto.setor_responsavel_producao === 'soldagem' ? 'Soldagem' :
-                             produto.setor_responsavel_producao === 'separacao' ? 'Separação' :
-                             produto.setor_responsavel_producao === 'pintura' ? 'Pintura' :
-                             produto.setor_responsavel_producao}
-                          </Badge>
-                        ) : (
-                          <span className="text-xs text-white/40">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-center px-3 py-2">
-                        {produto.requer_pintura ? (
-                          <Badge className="text-xs bg-purple-500/20 text-purple-400 border-purple-500/30">
-                            Sim
-                          </Badge>
-                        ) : (
-                          <span className="text-xs text-white/40">Não</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-center px-3 py-2">
-                        {produto.modulo_calculo ? (
-                          <Badge className="text-xs bg-green-500/20 text-green-400 border-green-500/30">
-                            {String(produto.modulo_calculo)}
-                          </Badge>
-                        ) : (
-                          <span className="text-xs text-white/40">—</span>
-                        )}
+                      <TableCell className="text-right px-3 py-2 text-white">
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(produto.custo_unitario || 0)}
                       </TableCell>
                     </TableRow>
                   ))
