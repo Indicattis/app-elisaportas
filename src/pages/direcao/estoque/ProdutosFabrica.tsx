@@ -400,6 +400,7 @@ function DragOverlayRow({ produto }: { produto: ProdutoEstoque | null }) {
 
 export default function ProdutosFabrica() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { produtos, loading, adicionarProduto, reordenarProdutos, excluirProduto } = useEstoque();
   const { categorias } = useCategorias();
   const { subcategorias } = useSubcategorias();
