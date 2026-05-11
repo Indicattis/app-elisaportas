@@ -8,6 +8,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getLabelProdutoExpandido } from "@/utils/tipoProdutoLabels";
+import { classificarTamanhoPorta } from "@/utils/classificarTamanhoPorta";
 import type { PedidoLinha, PedidoLinhaNova, PedidoLinhaUpdate, CategoriaLinha } from "@/hooks/usePedidoLinhas";
 
 interface LinhasAgrupadasPorPortaProps {
@@ -34,6 +35,10 @@ interface ItemPadraoPortaEnrolar {
   qtd_eixo_calculo: string | null;
   qtd_operador: string | null;
   qtd_valor_calculo: number | null;
+  qtd_modo_calculo?: string | null;
+  qtd_porta_p?: number | null;
+  qtd_porta_g?: number | null;
+  qtd_porta_gg?: number | null;
 }
 
 // Função para calcular o tamanho automático
@@ -66,6 +71,15 @@ function calcularQuantidadeAutomaticaItem(
   portaLargura?: number,
   portaAltura?: number
 ): number | null {
+  if (item.qtd_modo_calculo === 'por_tamanho') {
+    const tamanho = classificarTamanhoPorta(portaLargura);
+    if (!tamanho) return null;
+    const qtd = tamanho === 'P' ? item.qtd_porta_p
+      : tamanho === 'G' ? item.qtd_porta_g
+      : item.qtd_porta_gg;
+    return qtd ?? null;
+  }
+
   if (!item.qtd_eixo_calculo || !item.qtd_operador || !item.qtd_valor_calculo) {
     return null;
   }
@@ -129,7 +143,7 @@ export function LinhasAgrupadasPorPorta({
         const setorAtual = CATEGORIA_TO_SETOR[categoria];
         const { data, error } = await supabase
           .from('estoque')
-          .select('id, nome_produto, descricao_produto, modulo_calculo, valor_calculo, eixo_calculo, setor_responsavel_producao, quantidade_padrao, qtd_eixo_calculo, qtd_operador, qtd_valor_calculo')
+          .select('id, nome_produto, descricao_produto, modulo_calculo, valor_calculo, eixo_calculo, setor_responsavel_producao, quantidade_padrao, qtd_eixo_calculo, qtd_operador, qtd_valor_calculo, qtd_modo_calculo, qtd_porta_p, qtd_porta_g, qtd_porta_gg')
           .eq('item_padrao_porta_enrolar', true)
           .eq('ativo', true)
           .eq('setor_responsavel_producao', setorAtual as 'perfiladeira' | 'soldagem' | 'separacao' | 'pintura');
