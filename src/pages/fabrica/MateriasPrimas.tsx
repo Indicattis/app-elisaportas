@@ -40,8 +40,12 @@ import { Plus, Pencil, Trash2, Search, Package, Link2 } from "lucide-react";
 import { useMateriasPrimas, MateriaPrima } from "@/hooks/useMateriasPrimas";
 import { useFornecedores } from "@/hooks/useFornecedores";
 import { VincularMaterialDialog } from "@/components/estoque/VincularMaterialDialog";
-
-const UNIDADES = ["un", "bobina", "rolo", "kg", "m", "m²", "l", "cx", "pç"];
+import {
+  UNIDADES_MATERIA_PRIMA,
+  formatarQuantidadeUnidade,
+  getUnidade,
+  normalizarUnidade,
+} from "@/utils/unidadesMedida";
 
 const emptyForm = {
   nome: "",
@@ -78,7 +82,7 @@ export default function MateriasPrimasPage() {
     setEditando(m);
     setForm({
       nome: m.nome,
-      unidade: m.unidade,
+      unidade: normalizarUnidade(m.unidade),
       quantidade: Number(m.quantidade),
       custo_unitario: Number(m.custo_unitario),
       fornecedor_id: m.fornecedor_id || "",
@@ -208,12 +212,9 @@ export default function MateriasPrimasPage() {
               {filtradas.map((m) => (
                 <TableRow key={m.id} className="border-white/10 hover:bg-white/5">
                   <TableCell className="font-medium text-white">{m.nome}</TableCell>
-                  <TableCell className="text-white/80">{m.unidade}</TableCell>
+                  <TableCell className="text-white/80">{getUnidade(m.unidade).label}</TableCell>
                   <TableCell className="text-right text-white/80">
-                    {Number(m.quantidade).toLocaleString("pt-BR", {
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 2,
-                    })}
+                    {formatarQuantidadeUnidade(m.quantidade, m.unidade)}
                   </TableCell>
                   <TableCell className="text-right text-white/80">
                     {Number(m.custo_unitario).toLocaleString("pt-BR", {
@@ -307,20 +308,25 @@ export default function MateriasPrimasPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {UNIDADES.map((u) => (
-                    <SelectItem key={u} value={u}>
-                      {u}
+                  {UNIDADES_MATERIA_PRIMA.map((u) => (
+                    <SelectItem key={u.value} value={u.value}>
+                      {u.label} ({u.abreviacao})
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Quantidade em estoque</Label>
+              <Label>
+                Quantidade em estoque{" "}
+                <span className="text-muted-foreground">
+                  ({getUnidade(form.unidade).labelPlural.toLowerCase()})
+                </span>
+              </Label>
               <Input
                 type="number"
                 min={0}
-                step="0.01"
+                step={getUnidade(form.unidade).discreta ? "1" : "0.01"}
                 value={form.quantidade}
                 onChange={(e) =>
                   setForm({ ...form, quantidade: Number(e.target.value) })
@@ -328,7 +334,9 @@ export default function MateriasPrimasPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Custo unitário (R$)</Label>
+              <Label>
+                Custo por {getUnidade(form.unidade).label.toLowerCase()} (R$)
+              </Label>
               <Input
                 type="number"
                 min={0}
