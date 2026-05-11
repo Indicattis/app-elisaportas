@@ -170,6 +170,7 @@ export default function ProdutosFabricaEdit() {
           qtd_porta_p: formData.qtd_modo_calculo === "por_tamanho" ? formData.qtd_porta_p : null,
           qtd_porta_g: formData.qtd_modo_calculo === "por_tamanho" ? formData.qtd_porta_g : null,
           qtd_porta_gg: formData.qtd_modo_calculo === "por_tamanho" ? formData.qtd_porta_gg : null,
+          setor_responsavel_producao: (formData.setor_responsavel_producao || null) as any,
         })
         .eq("id", id);
 
