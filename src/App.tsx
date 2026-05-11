@@ -453,6 +453,7 @@ const App = () => (
                 <Route path="/fabrica/cronograma-producao" element={<ProtectedRoute routeKey="fabrica_cronograma_producao"><CronogramaProducao /></ProtectedRoute>} />
                 <Route path="/fabrica/produtos" element={<ProtectedRoute routeKey="fabrica_produtos"><ProdutosFabrica /></ProtectedRoute>} />
                 <Route path="/fabrica/produtos/editar/:id" element={<ProtectedRoute routeKey="fabrica_produtos"><ProdutosFabricaEdit /></ProtectedRoute>} />
+                <Route path="/fabrica/produtos/materias-primas" element={<ProtectedRoute routeKey="fabrica_produtos"><MateriasPrimasPage /></ProtectedRoute>} />
 
                 {/* Hub da Direção Minimalista */}
                 <Route path="/direcao" element={<ProtectedRoute routeKeyPrefix="direcao_"><DirecaoHub /></ProtectedRoute>} />
