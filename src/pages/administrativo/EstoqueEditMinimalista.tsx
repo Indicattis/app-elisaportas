@@ -164,35 +164,15 @@ export default function EstoqueEditMinimalista() {
           <div className="p-6 rounded-lg space-y-6">
             <h3 className="text-lg font-semibold text-white">Informações do Produto</h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="nome_produto" className="text-white/80">Nome do Produto *</Label>
-                <Input
-                  id="nome_produto"
-                  value={formData.nome_produto}
-                  onChange={(e) => setFormData({ ...formData, nome_produto: e.target.value })}
-                  required
-                  className="bg-white/5 border-white/10 text-white"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="setor_responsavel_producao" className="text-white/80">Setor de Produção</Label>
-                <Select
-                  value={formData.setor_responsavel_producao || undefined}
-                  onValueChange={(value) => setFormData({ ...formData, setor_responsavel_producao: value })}
-                >
-                  <SelectTrigger className="bg-white/5 border-white/10 text-white">
-                    <SelectValue placeholder="Selecione um setor" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-zinc-900 border-white/10">
-                    <SelectItem value="perfiladeira">Perfiladeira</SelectItem>
-                    <SelectItem value="soldagem">Soldagem</SelectItem>
-                    <SelectItem value="separacao">Separação</SelectItem>
-                    <SelectItem value="pintura">Pintura</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="nome_produto" className="text-white/80">Nome do Produto *</Label>
+              <Input
+                id="nome_produto"
+                value={formData.nome_produto}
+                onChange={(e) => setFormData({ ...formData, nome_produto: e.target.value })}
+                required
+                className="bg-white/5 border-white/10 text-white"
+              />
             </div>
 
             <div className="space-y-2">
