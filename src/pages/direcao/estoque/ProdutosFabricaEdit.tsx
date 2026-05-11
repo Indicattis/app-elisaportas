@@ -453,6 +453,246 @@ export default function ProdutosFabricaEdit() {
           </CardContent>
         </Card>
 
+        {/* Produção */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">Produção</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="requer_pintura"
+                checked={formData.requer_pintura}
+                onCheckedChange={(checked) => setFormData({ ...formData, requer_pintura: !!checked })}
+              />
+              <Label htmlFor="requer_pintura" className="text-sm font-normal cursor-pointer">
+                Este item requer pintura na produção
+              </Label>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Cálculo Automático */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">Cálculo Automático</CardTitle>
+            <CardDescription>
+              Configure o cálculo automático do tamanho e quantidade do item em relação às dimensões da porta.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Cálculo de tamanho */}
+            <div className="space-y-3">
+              <Label className="text-base">Cálculo de tamanho</Label>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="modulo_calculo">Módulo</Label>
+                  <Select
+                    value={formData.modulo_calculo || undefined}
+                    onValueChange={(value) => setFormData({ ...formData, modulo_calculo: value as any })}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="acrescimo">Acréscimo</SelectItem>
+                      <SelectItem value="desconto">Desconto</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="valor_calculo">Valor (m)</Label>
+                  <Input
+                    id="valor_calculo"
+                    type="number"
+                    step="0.01"
+                    value={formData.valor_calculo}
+                    onChange={(e) => setFormData({ ...formData, valor_calculo: parseFloat(e.target.value) || 0 })}
+                    placeholder="Ex: 0.14"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="eixo_calculo">Eixo</Label>
+                  <Select
+                    value={formData.eixo_calculo || undefined}
+                    onValueChange={(value) => setFormData({ ...formData, eixo_calculo: value as any })}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="largura">Largura</SelectItem>
+                      <SelectItem value="altura">Altura</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-2 pt-3 border-t">
+              <Checkbox
+                id="item_padrao_porta_enrolar"
+                checked={formData.item_padrao_porta_enrolar}
+                onCheckedChange={(checked) => setFormData({ ...formData, item_padrao_porta_enrolar: !!checked })}
+              />
+              <Label htmlFor="item_padrao_porta_enrolar" className="text-sm font-normal cursor-pointer">
+                Item padrão para porta de enrolar (será sugerido automaticamente nos pedidos)
+              </Label>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="quantidade_padrao">Quantidade padrão</Label>
+              <Input
+                id="quantidade_padrao"
+                type="number"
+                min={1}
+                value={formData.quantidade_padrao}
+                onChange={(e) => setFormData({ ...formData, quantidade_padrao: parseInt(e.target.value) || 1 })}
+                className="w-32"
+              />
+              <p className="text-xs text-muted-foreground">Quantidade inserida automaticamente ao adicionar este item a um pedido.</p>
+            </div>
+
+            {/* Cálculo automático de quantidade */}
+            <div className="space-y-3 pt-3 border-t">
+              <div>
+                <Label className="text-base">Cálculo automático de quantidade</Label>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Quando configurado, a quantidade será calculada com base nas dimensões da porta ao inserir o item no pedido. Se não configurado, será usada a quantidade padrão acima.
+                </p>
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, qtd_modo_calculo: "formula" })}
+                  className={`flex-1 px-3 py-2 rounded-md text-sm border transition-colors ${
+                    formData.qtd_modo_calculo === "formula"
+                      ? "bg-primary/10 border-primary/40 text-primary"
+                      : "bg-background border-input hover:bg-accent"
+                  }`}
+                >
+                  Por fórmula (eixo × operador × valor)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, qtd_modo_calculo: "por_tamanho" })}
+                  className={`flex-1 px-3 py-2 rounded-md text-sm border transition-colors ${
+                    formData.qtd_modo_calculo === "por_tamanho"
+                      ? "bg-primary/10 border-primary/40 text-primary"
+                      : "bg-background border-input hover:bg-accent"
+                  }`}
+                >
+                  Por tamanho de porta (P / G / GG)
+                </button>
+              </div>
+
+              {formData.qtd_modo_calculo === "formula" ? (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="qtd_eixo_calculo">Eixo</Label>
+                    <Select
+                      value={formData.qtd_eixo_calculo || undefined}
+                      onValueChange={(value) => setFormData({ ...formData, qtd_eixo_calculo: value as any })}
+                    >
+                      <SelectTrigger><SelectValue placeholder="Selecione o eixo" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="largura">Largura</SelectItem>
+                        <SelectItem value="altura">Altura</SelectItem>
+                        <SelectItem value="qtd_meia_cana">Qtd Meia Cana (⌈Altura÷0.076⌉)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="qtd_operador">Operador</Label>
+                    <Select
+                      value={formData.qtd_operador || undefined}
+                      onValueChange={(value) => setFormData({ ...formData, qtd_operador: value as any })}
+                    >
+                      <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="multiplicar">Multiplicar</SelectItem>
+                        <SelectItem value="dividir">Dividir</SelectItem>
+                        <SelectItem value="somar">Somar</SelectItem>
+                        <SelectItem value="subtrair">Subtrair</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="qtd_valor_calculo">Valor</Label>
+                    <Input
+                      id="qtd_valor_calculo"
+                      type="number"
+                      step="0.01"
+                      value={formData.qtd_valor_calculo}
+                      onChange={(e) => setFormData({ ...formData, qtd_valor_calculo: parseFloat(e.target.value) || 0 })}
+                      placeholder="Ex: 0.10"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-xs text-muted-foreground">
+                    Defina a quantidade fixa para cada faixa de largura da porta. Faixas: P (&lt; 2m), G (2m a 2,99m), GG (≥ 3m).
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="qtd_porta_p">Qtd para porta P</Label>
+                      <Input
+                        id="qtd_porta_p"
+                        type="number"
+                        min={0}
+                        value={formData.qtd_porta_p ?? ""}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          qtd_porta_p: e.target.value === "" ? null : parseInt(e.target.value) || 0,
+                        })}
+                        placeholder="Ex: 2"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="qtd_porta_g">Qtd para porta G</Label>
+                      <Input
+                        id="qtd_porta_g"
+                        type="number"
+                        min={0}
+                        value={formData.qtd_porta_g ?? ""}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          qtd_porta_g: e.target.value === "" ? null : parseInt(e.target.value) || 0,
+                        })}
+                        placeholder="Ex: 3"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="qtd_porta_gg">Qtd para porta GG</Label>
+                      <Input
+                        id="qtd_porta_gg"
+                        type="number"
+                        min={0}
+                        value={formData.qtd_porta_gg ?? ""}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          qtd_porta_gg: e.target.value === "" ? null : parseInt(e.target.value) || 0,
+                        })}
+                        placeholder="Ex: 4"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Regras de Quebra de Etiqueta */}
+        {id && (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">Regras de Quebra de Etiqueta</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <RegrasEtiquetasEditor estoqueId={id} nomeProduto={formData.nome_produto} />
+            </CardContent>
+          </Card>
+        )}
+
         {/* Histórico de Movimentações */}
         {movimentacoes.length > 0 && (
           <Card>
