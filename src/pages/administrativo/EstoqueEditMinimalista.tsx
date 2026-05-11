@@ -43,11 +43,9 @@ export default function EstoqueEditMinimalista() {
   const [formData, setFormData] = useState<{
     nome_produto: string;
     descricao_produto: string;
-    setor_responsavel_producao: string;
   }>({
     nome_produto: "",
     descricao_produto: "",
-    setor_responsavel_producao: "",
   });
 
   const [dadosCarregados, setDadosCarregados] = useState(false);
@@ -79,7 +77,6 @@ export default function EstoqueEditMinimalista() {
       const newFormData = {
         nome_produto: produto.nome_produto || "",
         descricao_produto: produto.descricao_produto || "",
-        setor_responsavel_producao: produto.setor_responsavel_producao || "",
       };
       
       setFormData(newFormData);
@@ -95,7 +92,6 @@ export default function EstoqueEditMinimalista() {
         id: id!,
         nome_produto: formData.nome_produto,
         descricao_produto: formData.descricao_produto || undefined,
-        setor_responsavel_producao: (formData.setor_responsavel_producao || null) as 'perfiladeira' | 'soldagem' | 'separacao' | 'pintura' | null,
       };
       
       await editarProduto(dadosParaSalvar);
