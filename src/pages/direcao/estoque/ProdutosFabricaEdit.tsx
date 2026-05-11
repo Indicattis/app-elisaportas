@@ -67,6 +67,7 @@ export default function ProdutosFabricaEdit() {
     qtd_porta_p: null as number | null,
     qtd_porta_g: null as number | null,
     qtd_porta_gg: null as number | null,
+    setor_responsavel_producao: "" as "" | "perfiladeira" | "soldagem" | "separacao" | "pintura",
   });
   const [isSaving, setIsSaving] = useState(false);
 
@@ -128,6 +129,7 @@ export default function ProdutosFabricaEdit() {
         qtd_porta_p: (produto as any).qtd_porta_p ?? null,
         qtd_porta_g: (produto as any).qtd_porta_g ?? null,
         qtd_porta_gg: (produto as any).qtd_porta_gg ?? null,
+        setor_responsavel_producao: ((produto as any).setor_responsavel_producao || "") as any,
       });
     }
   }, [produto]);
