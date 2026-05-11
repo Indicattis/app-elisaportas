@@ -927,20 +927,30 @@ export default function ProdutosFabrica() {
     </div>
   );
 
-  const breadcrumbItems = [
-    { label: 'Home', path: '/home' },
-    { label: 'Direção', path: '/direcao' },
-    { label: 'Estoque', path: '/direcao/estoque' },
-    { label: 'Configurações', path: '/direcao/estoque/configuracoes' },
-    { label: 'Produtos', path: '/direcao/estoque/configuracoes/produtos' },
-    { label: 'Fábrica' }
-  ];
+  const isFabricaRoute = location.pathname.startsWith('/fabrica');
+
+  const backPath = isFabricaRoute ? '/fabrica' : '/direcao/estoque/configuracoes/produtos';
+
+  const breadcrumbItems = isFabricaRoute
+    ? [
+        { label: 'Home', path: '/home' },
+        { label: 'Fábrica', path: '/fabrica' },
+        { label: 'Produtos' }
+      ]
+    : [
+        { label: 'Home', path: '/home' },
+        { label: 'Direção', path: '/direcao' },
+        { label: 'Estoque', path: '/direcao/estoque' },
+        { label: 'Configurações', path: '/direcao/estoque/configuracoes' },
+        { label: 'Produtos', path: '/direcao/estoque/configuracoes/produtos' },
+        { label: 'Fábrica' }
+      ];
 
   return (
     <MinimalistLayout
       title="Produtos da Fábrica"
       subtitle="Gerencie os produtos do estoque"
-      backPath="/direcao/estoque/configuracoes/produtos"
+      backPath={backPath}
       headerActions={headerActions}
       breadcrumbItems={breadcrumbItems}
       fullWidth
