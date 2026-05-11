@@ -7,7 +7,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Trash2, History } from "lucide-react";
-import { RegrasEtiquetasEditor } from "@/components/estoque/RegrasEtiquetasEditor";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useCategorias } from "@/hooks/useCategorias";
@@ -45,36 +44,10 @@ export default function EstoqueEditMinimalista() {
     nome_produto: string;
     descricao_produto: string;
     setor_responsavel_producao: string;
-    requer_pintura: boolean;
-    modulo_calculo: string;
-    valor_calculo: number;
-    eixo_calculo: string;
-    item_padrao_porta_enrolar: boolean;
-    quantidade_padrao: number;
-    qtd_eixo_calculo: string;
-    qtd_operador: string;
-    qtd_valor_calculo: number;
-    qtd_modo_calculo: 'formula' | 'por_tamanho';
-    qtd_porta_p: number | null;
-    qtd_porta_g: number | null;
-    qtd_porta_gg: number | null;
   }>({
     nome_produto: "",
     descricao_produto: "",
     setor_responsavel_producao: "",
-    requer_pintura: false,
-    modulo_calculo: "",
-    valor_calculo: 0,
-    eixo_calculo: "",
-    item_padrao_porta_enrolar: false,
-    quantidade_padrao: 1,
-    qtd_eixo_calculo: "",
-    qtd_operador: "",
-    qtd_valor_calculo: 0,
-    qtd_modo_calculo: 'formula',
-    qtd_porta_p: null,
-    qtd_porta_g: null,
-    qtd_porta_gg: null,
   });
 
   const [dadosCarregados, setDadosCarregados] = useState(false);
@@ -107,19 +80,6 @@ export default function EstoqueEditMinimalista() {
         nome_produto: produto.nome_produto || "",
         descricao_produto: produto.descricao_produto || "",
         setor_responsavel_producao: produto.setor_responsavel_producao || "",
-        requer_pintura: produto.requer_pintura === true,
-        modulo_calculo: produto.modulo_calculo || "",
-        valor_calculo: Number(produto.valor_calculo) || 0,
-        eixo_calculo: produto.eixo_calculo || "",
-        item_padrao_porta_enrolar: produto.item_padrao_porta_enrolar === true,
-        quantidade_padrao: (produto as any).quantidade_padrao ?? 1,
-        qtd_eixo_calculo: (produto as any).qtd_eixo_calculo || "",
-        qtd_operador: (produto as any).qtd_operador || "",
-        qtd_valor_calculo: Number((produto as any).qtd_valor_calculo) || 0,
-        qtd_modo_calculo: ((produto as any).qtd_modo_calculo === 'por_tamanho' ? 'por_tamanho' : 'formula') as 'formula' | 'por_tamanho',
-        qtd_porta_p: (produto as any).qtd_porta_p ?? null,
-        qtd_porta_g: (produto as any).qtd_porta_g ?? null,
-        qtd_porta_gg: (produto as any).qtd_porta_gg ?? null,
       };
       
       setFormData(newFormData);
@@ -136,19 +96,6 @@ export default function EstoqueEditMinimalista() {
         nome_produto: formData.nome_produto,
         descricao_produto: formData.descricao_produto || undefined,
         setor_responsavel_producao: (formData.setor_responsavel_producao || null) as 'perfiladeira' | 'soldagem' | 'separacao' | 'pintura' | null,
-        requer_pintura: formData.requer_pintura,
-        modulo_calculo: (formData.modulo_calculo || null) as 'acrescimo' | 'desconto' | null,
-        valor_calculo: formData.valor_calculo != null ? formData.valor_calculo : null,
-        eixo_calculo: (formData.eixo_calculo || null) as 'largura' | 'altura' | null,
-        item_padrao_porta_enrolar: formData.item_padrao_porta_enrolar,
-        quantidade_padrao: formData.quantidade_padrao,
-        qtd_eixo_calculo: (formData.qtd_eixo_calculo || null) as 'largura' | 'altura' | 'qtd_meia_cana' | null,
-        qtd_operador: (formData.qtd_operador || null) as 'multiplicar' | 'dividir' | 'somar' | 'subtrair' | null,
-        qtd_valor_calculo: formData.qtd_valor_calculo || null,
-        qtd_modo_calculo: formData.qtd_modo_calculo,
-        qtd_porta_p: formData.qtd_modo_calculo === 'por_tamanho' ? formData.qtd_porta_p : null,
-        qtd_porta_g: formData.qtd_modo_calculo === 'por_tamanho' ? formData.qtd_porta_g : null,
-        qtd_porta_gg: formData.qtd_modo_calculo === 'por_tamanho' ? formData.qtd_porta_gg : null,
       };
       
       await editarProduto(dadosParaSalvar);
