@@ -255,47 +255,44 @@ export default function ProdutosFabricaEdit() {
       <div className="space-y-6 max-w-4xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate(BACK_PATH)}>
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <div>
-              <h1 className="text-2xl font-bold">Editar Produto</h1>
-              <p className="text-muted-foreground text-sm">Gerencie as informações de estoque</p>
-            </div>
+          <div>
+            <h1 className="text-2xl font-semibold text-white">{formData.nome_produto || "Editar Produto"}</h1>
+            <p className="text-sm text-white/60">Gerencie as informações de estoque deste produto</p>
           </div>
-          <Badge variant={stockStatus.color as any} className="gap-1">
+          <Badge className="gap-1 bg-white/5 border-white/10 text-white/80">
             <stockStatus.icon className="h-3 w-3" />
             {stockStatus.text}
           </Badge>
         </div>
 
         {/* Informações do Produto */}
-        <Card>
+        <Card className="bg-white/5 border-white/10 backdrop-blur-xl text-white">
           <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center gap-2">
+            <CardTitle className="text-lg flex items-center gap-2 text-white">
               <Package className="h-5 w-5" />
               Informações do Produto
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="nome_produto">Nome do Produto *</Label>
+              <Label htmlFor="nome_produto" className="text-white/70">Nome do Produto *</Label>
               <Input
                 id="nome_produto"
                 value={formData.nome_produto}
                 onChange={(e) => setFormData({ ...formData, nome_produto: e.target.value })}
                 placeholder="Nome do produto"
+                className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="descricao_produto">Descrição</Label>
+              <Label htmlFor="descricao_produto" className="text-white/70">Descrição</Label>
               <Textarea
                 id="descricao_produto"
                 value={formData.descricao_produto}
                 onChange={(e) => setFormData({ ...formData, descricao_produto: e.target.value })}
                 placeholder="Descrição do produto (opcional)"
                 rows={2}
+                className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
               />
             </div>
             <div className="flex items-center space-x-2">
@@ -304,7 +301,7 @@ export default function ProdutosFabricaEdit() {
                 checked={formData.conferir_estoque}
                 onCheckedChange={(checked) => setFormData({ ...formData, conferir_estoque: !!checked })}
               />
-              <Label htmlFor="conferir_estoque" className="text-sm font-normal cursor-pointer">
+              <Label htmlFor="conferir_estoque" className="text-sm font-normal cursor-pointer text-white/80">
                 Conferir na conferência de estoque
               </Label>
             </div>
@@ -312,22 +309,22 @@ export default function ProdutosFabricaEdit() {
         </Card>
 
         {/* Controle de Estoque */}
-        <Card>
+        <Card className="bg-white/5 border-white/10 backdrop-blur-xl text-white">
           <CardHeader className="pb-3">
-            <CardTitle className="text-lg">Controle de Estoque</CardTitle>
-            <CardDescription>{stockStatus.description}</CardDescription>
+            <CardTitle className="text-lg text-white">Controle de Estoque</CardTitle>
+            <CardDescription className="text-white/60">{stockStatus.description}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Cards de info */}
             <div className="grid grid-cols-2 gap-4">
-              <div className="bg-muted/50 rounded-lg p-4 text-center">
-                <p className="text-sm text-muted-foreground">Quantidade Atual</p>
-                <p className="text-2xl font-bold">{formData.quantidade}</p>
-                <p className="text-xs text-muted-foreground">{formData.unidade}</p>
+              <div className="bg-white/5 border border-white/10 rounded-lg p-4 text-center">
+                <p className="text-sm text-white/60">Quantidade Atual</p>
+                <p className="text-2xl font-bold text-white">{formData.quantidade}</p>
+                <p className="text-xs text-white/40">{formData.unidade}</p>
               </div>
-              <div className="bg-muted/50 rounded-lg p-4 text-center">
-                <p className="text-sm text-muted-foreground">Valor em Estoque</p>
-                <p className="text-2xl font-bold">
+              <div className="bg-white/5 border border-white/10 rounded-lg p-4 text-center">
+                <p className="text-sm text-white/60">Valor em Estoque</p>
+                <p className="text-2xl font-bold text-white">
                   {(formData.quantidade * formData.custo_unitario).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                 </p>
               </div>
@@ -336,30 +333,32 @@ export default function ProdutosFabricaEdit() {
             {/* Campos editáveis */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="quantidade_ideal">Quantidade Mínima</Label>
+                <Label htmlFor="quantidade_ideal" className="text-white/70">Quantidade Mínima</Label>
                 <Input
                   id="quantidade_ideal"
                   type="number"
                   min={0}
                   value={formData.quantidade_ideal}
                   onChange={(e) => setFormData({ ...formData, quantidade_ideal: Number(e.target.value) })}
+                  className="bg-white/10 border-white/20 text-white"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="quantidade_maxima">Quantidade Máxima</Label>
+                <Label htmlFor="quantidade_maxima" className="text-white/70">Quantidade Máxima</Label>
                 <Input
                   id="quantidade_maxima"
                   type="number"
                   min={0}
                   value={formData.quantidade_maxima}
                   onChange={(e) => setFormData({ ...formData, quantidade_maxima: Number(e.target.value) })}
+                  className="bg-white/10 border-white/20 text-white"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="custo_unitario">Custo Unitário (R$)</Label>
+                <Label htmlFor="custo_unitario" className="text-white/70">Custo Unitário (R$)</Label>
                 <Input
                   id="custo_unitario"
                   type="number"
@@ -367,15 +366,16 @@ export default function ProdutosFabricaEdit() {
                   step={0.01}
                   value={formData.custo_unitario}
                   onChange={(e) => setFormData({ ...formData, custo_unitario: Number(e.target.value) })}
+                  className="bg-white/10 border-white/20 text-white"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="unidade">Unidade de Medida</Label>
+                <Label htmlFor="unidade" className="text-white/70">Unidade de Medida</Label>
                 <Select value={formData.unidade} onValueChange={(v) => setFormData({ ...formData, unidade: v })}>
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-white/10 border-white/20 text-white">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-zinc-900 border-white/10 text-white">
                     {UNIDADES.map((u) => (
                       <SelectItem key={u.value} value={u.value}>{u.label}</SelectItem>
                     ))}
@@ -385,12 +385,12 @@ export default function ProdutosFabricaEdit() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="fornecedor">Fornecedor</Label>
+              <Label htmlFor="fornecedor" className="text-white/70">Fornecedor</Label>
               <Select value={formData.fornecedor_id || "none"} onValueChange={(v) => setFormData({ ...formData, fornecedor_id: v === "none" ? "" : v })}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-white/10 border-white/20 text-white">
                   <SelectValue placeholder="Selecione um fornecedor" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-zinc-900 border-white/10 text-white">
                   <SelectItem value="none">Nenhum</SelectItem>
                   {fornecedores.map((f) => (
                     <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
@@ -400,24 +400,24 @@ export default function ProdutosFabricaEdit() {
             </div>
 
             {/* Vínculo com matéria-prima */}
-            <div className="space-y-3 pt-4 border-t">
+            <div className="space-y-3 pt-4 border-t border-white/10">
               <div className="space-y-1">
-                <Label className="text-base">Matéria-prima vinculada</Label>
-                <p className="text-xs text-muted-foreground">
+                <Label className="text-base text-white">Matéria-prima vinculada</Label>
+                <p className="text-xs text-white/50">
                   Vincule este item a uma matéria-prima comprada (ex.: bobina) e informe quantos {formData.unidade} se obtém de 1 unidade da matéria-prima.
                 </p>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Matéria-prima</Label>
+                  <Label className="text-white/70">Matéria-prima</Label>
                   <Select
                     value={formData.materia_prima_id || "none"}
                     onValueChange={(v) => setFormData({ ...formData, materia_prima_id: v === "none" ? "" : v })}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="bg-white/10 border-white/20 text-white">
                       <SelectValue placeholder="Nenhuma" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-zinc-900 border-white/10 text-white">
                       <SelectItem value="none">Nenhuma</SelectItem>
                       {materiasPrimas.map((m) => (
                         <SelectItem key={m.id} value={m.id}>
@@ -428,7 +428,7 @@ export default function ProdutosFabricaEdit() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>
+                  <Label className="text-white/70">
                     {formData.materia_prima_id
                       ? `${formData.unidade} por 1 ${
                           materiasPrimas.find((m) => m.id === formData.materia_prima_id)?.unidade || "un"
@@ -443,11 +443,12 @@ export default function ProdutosFabricaEdit() {
                     value={formData.materia_prima_conversao}
                     onChange={(e) => setFormData({ ...formData, materia_prima_conversao: Number(e.target.value) })}
                     placeholder="Ex: 300"
+                    className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
                   />
                 </div>
               </div>
               {formData.materia_prima_id && formData.materia_prima_conversao > 0 && (
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-white/50">
                   Ex.: 1 {materiasPrimas.find((m) => m.id === formData.materia_prima_id)?.unidade} ={" "}
                   {formData.materia_prima_conversao} {formData.unidade} de {formData.nome_produto || "este item"}.
                 </p>
@@ -457,9 +458,9 @@ export default function ProdutosFabricaEdit() {
         </Card>
 
         {/* Produção */}
-        <Card>
+        <Card className="bg-white/5 border-white/10 backdrop-blur-xl text-white">
           <CardHeader className="pb-3">
-            <CardTitle className="text-lg">Produção</CardTitle>
+            <CardTitle className="text-lg text-white">Produção</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -469,22 +470,22 @@ export default function ProdutosFabricaEdit() {
                 checked={formData.requer_pintura}
                 onCheckedChange={(checked) => setFormData({ ...formData, requer_pintura: !!checked })}
               />
-              <Label htmlFor="requer_pintura" className="text-sm font-normal cursor-pointer">
+              <Label htmlFor="requer_pintura" className="text-sm font-normal cursor-pointer text-white/80">
                 Este item requer pintura na produção
               </Label>
             </div>
             <div className="space-y-2 max-w-md">
-              <Label htmlFor="setor_responsavel_producao">Setor de Produção</Label>
+              <Label htmlFor="setor_responsavel_producao" className="text-white/70">Setor de Produção</Label>
               <Select
                 value={formData.setor_responsavel_producao || undefined}
                 onValueChange={(value) =>
                   setFormData({ ...formData, setor_responsavel_producao: value as any })
                 }
               >
-                <SelectTrigger id="setor_responsavel_producao">
+                <SelectTrigger id="setor_responsavel_producao" className="bg-white/10 border-white/20 text-white">
                   <SelectValue placeholder="Selecione um setor" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-zinc-900 border-white/10 text-white">
                   <SelectItem value="perfiladeira">Perfiladeira</SelectItem>
                   <SelectItem value="soldagem">Soldagem</SelectItem>
                   <SelectItem value="separacao">Separação</SelectItem>
@@ -497,33 +498,33 @@ export default function ProdutosFabricaEdit() {
         </Card>
 
         {/* Cálculo Automático */}
-        <Card>
+        <Card className="bg-white/5 border-white/10 backdrop-blur-xl text-white">
           <CardHeader className="pb-3">
-            <CardTitle className="text-lg">Cálculo Automático</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-lg text-white">Cálculo Automático</CardTitle>
+            <CardDescription className="text-white/60">
               Configure o cálculo automático do tamanho e quantidade do item em relação às dimensões da porta.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Cálculo de tamanho */}
             <div className="space-y-3">
-              <Label className="text-base">Cálculo de tamanho</Label>
+              <Label className="text-base text-white">Cálculo de tamanho</Label>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="modulo_calculo">Módulo</Label>
+                  <Label htmlFor="modulo_calculo" className="text-white/70">Módulo</Label>
                   <Select
                     value={formData.modulo_calculo || undefined}
                     onValueChange={(value) => setFormData({ ...formData, modulo_calculo: value as any })}
                   >
-                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                    <SelectContent>
+                    <SelectTrigger className="bg-white/10 border-white/20 text-white"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent className="bg-zinc-900 border-white/10 text-white">
                       <SelectItem value="acrescimo">Acréscimo</SelectItem>
                       <SelectItem value="desconto">Desconto</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="valor_calculo">Valor (m)</Label>
+                  <Label htmlFor="valor_calculo" className="text-white/70">Valor (m)</Label>
                   <Input
                     id="valor_calculo"
                     type="number"
@@ -531,16 +532,17 @@ export default function ProdutosFabricaEdit() {
                     value={formData.valor_calculo}
                     onChange={(e) => setFormData({ ...formData, valor_calculo: parseFloat(e.target.value) || 0 })}
                     placeholder="Ex: 0.14"
+                    className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="eixo_calculo">Eixo</Label>
+                  <Label htmlFor="eixo_calculo" className="text-white/70">Eixo</Label>
                   <Select
                     value={formData.eixo_calculo || undefined}
                     onValueChange={(value) => setFormData({ ...formData, eixo_calculo: value as any })}
                   >
-                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                    <SelectContent>
+                    <SelectTrigger className="bg-white/10 border-white/20 text-white"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent className="bg-zinc-900 border-white/10 text-white">
                       <SelectItem value="largura">Largura</SelectItem>
                       <SelectItem value="altura">Altura</SelectItem>
                     </SelectContent>
@@ -549,35 +551,35 @@ export default function ProdutosFabricaEdit() {
               </div>
             </div>
 
-            <div className="flex items-center space-x-2 pt-3 border-t">
+            <div className="flex items-center space-x-2 pt-3 border-t border-white/10">
               <Checkbox
                 id="item_padrao_porta_enrolar"
                 checked={formData.item_padrao_porta_enrolar}
                 onCheckedChange={(checked) => setFormData({ ...formData, item_padrao_porta_enrolar: !!checked })}
               />
-              <Label htmlFor="item_padrao_porta_enrolar" className="text-sm font-normal cursor-pointer">
+              <Label htmlFor="item_padrao_porta_enrolar" className="text-sm font-normal cursor-pointer text-white/80">
                 Item padrão para porta de enrolar (será sugerido automaticamente nos pedidos)
               </Label>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="quantidade_padrao">Quantidade padrão</Label>
+              <Label htmlFor="quantidade_padrao" className="text-white/70">Quantidade padrão</Label>
               <Input
                 id="quantidade_padrao"
                 type="number"
                 min={1}
                 value={formData.quantidade_padrao}
                 onChange={(e) => setFormData({ ...formData, quantidade_padrao: parseInt(e.target.value) || 1 })}
-                className="w-32"
+                className="w-32 bg-white/10 border-white/20 text-white"
               />
-              <p className="text-xs text-muted-foreground">Quantidade inserida automaticamente ao adicionar este item a um pedido.</p>
+              <p className="text-xs text-white/50">Quantidade inserida automaticamente ao adicionar este item a um pedido.</p>
             </div>
 
             {/* Cálculo automático de quantidade */}
-            <div className="space-y-3 pt-3 border-t">
+            <div className="space-y-3 pt-3 border-t border-white/10">
               <div>
-                <Label className="text-base">Cálculo automático de quantidade</Label>
-                <p className="text-xs text-muted-foreground mt-1">
+                <Label className="text-base text-white">Cálculo automático de quantidade</Label>
+                <p className="text-xs text-white/50 mt-1">
                   Quando configurado, a quantidade será calculada com base nas dimensões da porta ao inserir o item no pedido. Se não configurado, será usada a quantidade padrão acima.
                 </p>
               </div>
@@ -588,8 +590,8 @@ export default function ProdutosFabricaEdit() {
                   onClick={() => setFormData({ ...formData, qtd_modo_calculo: "formula" })}
                   className={`flex-1 px-3 py-2 rounded-md text-sm border transition-colors ${
                     formData.qtd_modo_calculo === "formula"
-                      ? "bg-primary/10 border-primary/40 text-primary"
-                      : "bg-background border-input hover:bg-accent"
+                      ? "bg-primary/20 border-primary/50 text-white"
+                      : "bg-white/5 border-white/10 text-white/70 hover:bg-white/10"
                   }`}
                 >
                   Por fórmula (eixo × operador × valor)
@@ -599,8 +601,8 @@ export default function ProdutosFabricaEdit() {
                   onClick={() => setFormData({ ...formData, qtd_modo_calculo: "por_tamanho" })}
                   className={`flex-1 px-3 py-2 rounded-md text-sm border transition-colors ${
                     formData.qtd_modo_calculo === "por_tamanho"
-                      ? "bg-primary/10 border-primary/40 text-primary"
-                      : "bg-background border-input hover:bg-accent"
+                      ? "bg-primary/20 border-primary/50 text-white"
+                      : "bg-white/5 border-white/10 text-white/70 hover:bg-white/10"
                   }`}
                 >
                   Por tamanho de porta (P / G / GG)
@@ -610,13 +612,13 @@ export default function ProdutosFabricaEdit() {
               {formData.qtd_modo_calculo === "formula" ? (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="qtd_eixo_calculo">Eixo</Label>
+                    <Label htmlFor="qtd_eixo_calculo" className="text-white/70">Eixo</Label>
                     <Select
                       value={formData.qtd_eixo_calculo || undefined}
                       onValueChange={(value) => setFormData({ ...formData, qtd_eixo_calculo: value as any })}
                     >
-                      <SelectTrigger><SelectValue placeholder="Selecione o eixo" /></SelectTrigger>
-                      <SelectContent>
+                      <SelectTrigger className="bg-white/10 border-white/20 text-white"><SelectValue placeholder="Selecione o eixo" /></SelectTrigger>
+                      <SelectContent className="bg-zinc-900 border-white/10 text-white">
                         <SelectItem value="largura">Largura</SelectItem>
                         <SelectItem value="altura">Altura</SelectItem>
                         <SelectItem value="qtd_meia_cana">Qtd Meia Cana (⌈Altura÷0.076⌉)</SelectItem>
@@ -624,13 +626,13 @@ export default function ProdutosFabricaEdit() {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="qtd_operador">Operador</Label>
+                    <Label htmlFor="qtd_operador" className="text-white/70">Operador</Label>
                     <Select
                       value={formData.qtd_operador || undefined}
                       onValueChange={(value) => setFormData({ ...formData, qtd_operador: value as any })}
                     >
-                      <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                      <SelectContent>
+                      <SelectTrigger className="bg-white/10 border-white/20 text-white"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectContent className="bg-zinc-900 border-white/10 text-white">
                         <SelectItem value="multiplicar">Multiplicar</SelectItem>
                         <SelectItem value="dividir">Dividir</SelectItem>
                         <SelectItem value="somar">Somar</SelectItem>
@@ -639,7 +641,7 @@ export default function ProdutosFabricaEdit() {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="qtd_valor_calculo">Valor</Label>
+                    <Label htmlFor="qtd_valor_calculo" className="text-white/70">Valor</Label>
                     <Input
                       id="qtd_valor_calculo"
                       type="number"
@@ -647,17 +649,18 @@ export default function ProdutosFabricaEdit() {
                       value={formData.qtd_valor_calculo}
                       onChange={(e) => setFormData({ ...formData, qtd_valor_calculo: parseFloat(e.target.value) || 0 })}
                       placeholder="Ex: 0.10"
+                      className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
                     />
                   </div>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-white/50">
                     Defina a quantidade fixa para cada faixa de largura da porta. Faixas: P (&lt; 2m), G (2m a 2,99m), GG (≥ 3m).
                   </p>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="qtd_porta_p">Qtd para porta P</Label>
+                      <Label htmlFor="qtd_porta_p" className="text-white/70">Qtd para porta P</Label>
                       <Input
                         id="qtd_porta_p"
                         type="number"
@@ -668,10 +671,11 @@ export default function ProdutosFabricaEdit() {
                           qtd_porta_p: e.target.value === "" ? null : parseInt(e.target.value) || 0,
                         })}
                         placeholder="Ex: 2"
+                        className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="qtd_porta_g">Qtd para porta G</Label>
+                      <Label htmlFor="qtd_porta_g" className="text-white/70">Qtd para porta G</Label>
                       <Input
                         id="qtd_porta_g"
                         type="number"
@@ -682,10 +686,11 @@ export default function ProdutosFabricaEdit() {
                           qtd_porta_g: e.target.value === "" ? null : parseInt(e.target.value) || 0,
                         })}
                         placeholder="Ex: 3"
+                        className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="qtd_porta_gg">Qtd para porta GG</Label>
+                      <Label htmlFor="qtd_porta_gg" className="text-white/70">Qtd para porta GG</Label>
                       <Input
                         id="qtd_porta_gg"
                         type="number"
@@ -696,6 +701,7 @@ export default function ProdutosFabricaEdit() {
                           qtd_porta_gg: e.target.value === "" ? null : parseInt(e.target.value) || 0,
                         })}
                         placeholder="Ex: 4"
+                        className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
                       />
                     </div>
                   </div>
@@ -707,9 +713,9 @@ export default function ProdutosFabricaEdit() {
 
         {/* Regras de Quebra de Etiqueta */}
         {id && (
-          <Card>
+          <Card className="bg-white/5 border-white/10 backdrop-blur-xl text-white">
             <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Regras de Quebra de Etiqueta</CardTitle>
+              <CardTitle className="text-lg text-white">Regras de Quebra de Etiqueta</CardTitle>
             </CardHeader>
             <CardContent>
               <RegrasEtiquetasEditor estoqueId={id} nomeProduto={formData.nome_produto} />
@@ -719,35 +725,35 @@ export default function ProdutosFabricaEdit() {
 
         {/* Histórico de Movimentações */}
         {movimentacoes.length > 0 && (
-          <Card>
+          <Card className="bg-white/5 border-white/10 backdrop-blur-xl text-white">
             <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Últimas Movimentações</CardTitle>
+              <CardTitle className="text-lg text-white">Últimas Movimentações</CardTitle>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>Data</TableHead>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead className="text-right">Quantidade</TableHead>
-                    <TableHead className="text-right">Anterior</TableHead>
-                    <TableHead className="text-right">Nova</TableHead>
-                    <TableHead>Observações</TableHead>
+                  <TableRow className="border-white/10 hover:bg-transparent">
+                    <TableHead className="text-white/60">Data</TableHead>
+                    <TableHead className="text-white/60">Tipo</TableHead>
+                    <TableHead className="text-right text-white/60">Quantidade</TableHead>
+                    <TableHead className="text-right text-white/60">Anterior</TableHead>
+                    <TableHead className="text-right text-white/60">Nova</TableHead>
+                    <TableHead className="text-white/60">Observações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {movimentacoes.map((m) => (
-                    <TableRow key={m.id}>
-                      <TableCell>{format(new Date(m.created_at), "dd/MM/yy HH:mm", { locale: ptBR })}</TableCell>
+                    <TableRow key={m.id} className="border-white/10 hover:bg-white/5">
+                      <TableCell className="text-white/80">{format(new Date(m.created_at), "dd/MM/yy HH:mm", { locale: ptBR })}</TableCell>
                       <TableCell>
                         <Badge variant={m.tipo_movimentacao === "entrada" ? "default" : m.tipo_movimentacao === "saida" ? "destructive" : "secondary"}>
                           {m.tipo_movimentacao === "entrada" ? "Entrada" : m.tipo_movimentacao === "saida" ? "Saída" : "Alteração"}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-right">{m.quantidade}</TableCell>
-                      <TableCell className="text-right">{m.quantidade_anterior}</TableCell>
-                      <TableCell className="text-right">{m.quantidade_nova}</TableCell>
-                      <TableCell className="text-muted-foreground text-xs max-w-[150px] truncate">{m.observacoes || "-"}</TableCell>
+                      <TableCell className="text-right text-white/80">{m.quantidade}</TableCell>
+                      <TableCell className="text-right text-white/60">{m.quantidade_anterior}</TableCell>
+                      <TableCell className="text-right text-white/80">{m.quantidade_nova}</TableCell>
+                      <TableCell className="text-white/50 text-xs max-w-[150px] truncate">{m.observacoes || "-"}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -757,7 +763,7 @@ export default function ProdutosFabricaEdit() {
         )}
 
         {/* Botões de Ação */}
-        <div className="flex items-center justify-between pt-4 border-t">
+        <div className="flex items-center justify-between pt-4 border-t border-white/10">
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="destructive" size="sm">
@@ -780,7 +786,7 @@ export default function ProdutosFabricaEdit() {
           </AlertDialog>
 
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => navigate(BACK_PATH)}>
+            <Button variant="outline" onClick={() => navigate(BACK_PATH)} className="bg-white/5 border-white/20 text-white hover:bg-white/10">
               Cancelar
             </Button>
             <Button onClick={handleSave} disabled={isSaving}>
