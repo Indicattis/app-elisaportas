@@ -33,6 +33,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { expandirPortasPorQuantidade } from "@/utils/expandirPortas";
+import { classificarTamanhoPorta } from "@/utils/classificarTamanhoPorta";
 import { getLabelProdutoExpandido } from "@/utils/tipoProdutoLabels";
 import { AdicionarLinhaModal } from "./AdicionarLinhaModal";
 
