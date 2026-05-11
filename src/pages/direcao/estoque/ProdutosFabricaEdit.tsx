@@ -67,6 +67,7 @@ export default function ProdutosFabricaEdit() {
     qtd_porta_p: null as number | null,
     qtd_porta_g: null as number | null,
     qtd_porta_gg: null as number | null,
+    setor_responsavel_producao: "" as "" | "perfiladeira" | "soldagem" | "separacao" | "pintura",
   });
   const [isSaving, setIsSaving] = useState(false);
 
@@ -128,6 +129,7 @@ export default function ProdutosFabricaEdit() {
         qtd_porta_p: (produto as any).qtd_porta_p ?? null,
         qtd_porta_g: (produto as any).qtd_porta_g ?? null,
         qtd_porta_gg: (produto as any).qtd_porta_gg ?? null,
+        setor_responsavel_producao: ((produto as any).setor_responsavel_producao || "") as any,
       });
     }
   }, [produto]);
@@ -168,6 +170,7 @@ export default function ProdutosFabricaEdit() {
           qtd_porta_p: formData.qtd_modo_calculo === "por_tamanho" ? formData.qtd_porta_p : null,
           qtd_porta_g: formData.qtd_modo_calculo === "por_tamanho" ? formData.qtd_porta_g : null,
           qtd_porta_gg: formData.qtd_modo_calculo === "por_tamanho" ? formData.qtd_porta_gg : null,
+          setor_responsavel_producao: (formData.setor_responsavel_producao || null) as any,
         })
         .eq("id", id);
 
@@ -459,6 +462,7 @@ export default function ProdutosFabricaEdit() {
             <CardTitle className="text-lg">Produção</CardTitle>
           </CardHeader>
           <CardContent>
+            <div className="space-y-4">
             <div className="flex items-center space-x-2">
               <Checkbox
                 id="requer_pintura"
@@ -468,6 +472,26 @@ export default function ProdutosFabricaEdit() {
               <Label htmlFor="requer_pintura" className="text-sm font-normal cursor-pointer">
                 Este item requer pintura na produção
               </Label>
+            </div>
+            <div className="space-y-2 max-w-md">
+              <Label htmlFor="setor_responsavel_producao">Setor de Produção</Label>
+              <Select
+                value={formData.setor_responsavel_producao || undefined}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, setor_responsavel_producao: value as any })
+                }
+              >
+                <SelectTrigger id="setor_responsavel_producao">
+                  <SelectValue placeholder="Selecione um setor" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="perfiladeira">Perfiladeira</SelectItem>
+                  <SelectItem value="soldagem">Soldagem</SelectItem>
+                  <SelectItem value="separacao">Separação</SelectItem>
+                  <SelectItem value="pintura">Pintura</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             </div>
           </CardContent>
         </Card>

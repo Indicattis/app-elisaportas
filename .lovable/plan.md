@@ -1,38 +1,16 @@
-## Objetivo
-Mover as seções **Requer pintura**, **Cálculo automático** (tamanho + quantidade, incluindo modo Por Tamanho de Porta) e **Regras de quebra de etiqueta** da página `/administrativo/compras/estoque/editar-item/:id` (`EstoqueEditMinimalista.tsx`) para a página de edição de produto da fábrica `/fabrica/produtos/editar/:id` (`ProdutosFabricaEdit.tsx`).
+## Mover "Setor de Produção" para Edição de Produto da Fábrica
 
-## Escopo
+Mover o campo **Setor de Produção** (perfiladeira / soldagem / separação / pintura) da tela administrativa de estoque para a tela de edição de produto da fábrica, mantendo consistência com a migração já feita anteriormente (pintura, cálculo automático, regras de etiqueta).
 
-### Em `ProdutosFabricaEdit.tsx` — adicionar
-Estender `formData` com:
-- `requer_pintura: boolean`
-- `modulo_calculo: string`, `valor_calculo: number`, `eixo_calculo: string` (cálculo automático de tamanho)
-- `item_padrao_porta_enrolar: boolean`
-- `quantidade_padrao: number`
-- `qtd_eixo_calculo`, `qtd_operador`, `qtd_valor_calculo` (cálculo automático de quantidade — modo fórmula)
-- `qtd_modo_calculo: 'formula' | 'por_tamanho'`, `qtd_porta_p`, `qtd_porta_g`, `qtd_porta_gg` (modo por tamanho de porta)
+### Em `src/pages/direcao/estoque/ProdutosFabricaEdit.tsx` (destino)
+- Adicionar `setor_responsavel_producao: string` ao `formData`.
+- Hidratar no `useEffect` a partir do produto carregado.
+- Persistir no `handleSave` (cast `'perfiladeira' | 'soldagem' | 'separacao' | 'pintura' | null`).
+- Renderizar um `Select` dentro do Card de **Produção** (junto com `requer_pintura`), com as 4 opções.
 
-Hidratação no `useEffect` e persistência no `handleSave` (incluir os campos no `update`).
+### Em `src/pages/administrativo/EstoqueEditMinimalista.tsx` (origem)
+- Remover o campo do `formData`, da hidratação e do `handleSave`.
+- Remover o bloco JSX do Select "Setor de Produção".
+- Ajustar o grid para que "Nome do Produto" ocupe a linha inteira (ou manter grid 2 colunas conforme melhor visual).
 
-Adicionar 3 novos Cards (visual coerente com os Cards já existentes da página) entre "Controle de Estoque" e "Histórico de Movimentações":
-
-1. **Card "Produção"** — checkbox `requer_pintura`.
-2. **Card "Cálculo Automático"** — replicando os blocos atuais:
-   - Cálculo de tamanho (Módulo / Valor / Eixo).
-   - Checkbox item padrão para porta de enrolar.
-   - Quantidade padrão.
-   - Cálculo automático de quantidade com toggle entre **Por fórmula** e **Por tamanho de porta (P/G/GG)** — mesmos campos já implementados.
-3. **Card "Regras de Quebra de Etiqueta"** — usar componente `RegrasEtiquetasEditor` passando `estoqueId={id}` e `nomeProduto={formData.nome_produto}`.
-
-### Em `EstoqueEditMinimalista.tsx` — remover
-- Checkbox "requer_pintura".
-- Toda a seção "Configurações de Cálculo Automático" (tamanho + quantidade + por tamanho de porta + item padrão + quantidade padrão).
-- Bloco do `RegrasEtiquetasEditor`.
-
-Manter o restante (informações básicas, descrição, histórico, etc.). Ajustar `formData` e `handleSubmit` removendo as chaves não usadas.
-
-## Notas técnicas
-- A coluna `requer_pintura` já existe na tabela `estoque`. Os campos de cálculo automático e P/G/GG também já existem (criados em migrations recentes). Nenhuma alteração de banco é necessária.
-- A página da fábrica usa `Card`/`CardHeader`/`CardContent` (não glassmorphism). Manter esse padrão visual nos novos cards.
-- `RegrasEtiquetasEditor` já está importado/usado pela página administrativa — apenas mover o import.
-- Garantir que o `update` do Supabase em `handleSave` salve os novos campos (incluindo nulificar P/G/GG quando o modo for `formula`, como já é feito hoje).
+Nenhuma mudança de schema/migração — a coluna já existe.
