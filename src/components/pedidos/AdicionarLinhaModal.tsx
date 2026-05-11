@@ -8,6 +8,7 @@ import { useEstoque, ProdutoEstoque } from "@/hooks/useEstoque";
 import { Search, Package, Calculator, Zap } from "lucide-react";
 import { toast } from "sonner";
 import type { CategoriaLinha, PedidoLinhaNova } from "@/hooks/usePedidoLinhas";
+import { classificarTamanhoPorta } from "@/utils/classificarTamanhoPorta";
 import type { PortaExpandida } from "@/utils/expandirPortas";
 import { getLabelProdutoExpandido } from "@/utils/tipoProdutoLabels";
 import {
@@ -81,6 +82,15 @@ function calcularQuantidadeAutomatica(
   portaLargura?: number,
   portaAltura?: number
 ): number | null {
+  if ((produto as any).qtd_modo_calculo === 'por_tamanho') {
+    const tamanho = classificarTamanhoPorta(portaLargura);
+    if (!tamanho) return null;
+    const qtd = tamanho === 'P' ? (produto as any).qtd_porta_p
+      : tamanho === 'G' ? (produto as any).qtd_porta_g
+      : (produto as any).qtd_porta_gg;
+    return qtd ?? null;
+  }
+
   if (!produto.qtd_eixo_calculo || !produto.qtd_operador || !produto.qtd_valor_calculo) {
     return null;
   }
