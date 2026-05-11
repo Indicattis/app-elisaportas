@@ -244,6 +244,7 @@ import ProdutosHub from "./pages/direcao/estoque/ProdutosHub";
 import ProdutosFabrica from "./pages/direcao/estoque/ProdutosFabrica";
 import ProdutosAlmoxarifado from "./pages/direcao/estoque/ProdutosAlmoxarifado";
 import ProdutosFabricaEdit from "./pages/direcao/estoque/ProdutosFabricaEdit";
+import MateriasPrimasPage from "./pages/fabrica/MateriasPrimas";
 import FornecedoresDirecao from "./pages/direcao/estoque/FornecedoresDirecao";
 
 // Hub de Aprovações da Direção
