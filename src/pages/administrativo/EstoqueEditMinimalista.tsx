@@ -353,7 +353,33 @@ export default function EstoqueEditMinimalista() {
                     Quando configurado, a quantidade será calculada com base nas dimensões da porta ao inserir o item no pedido. Se não configurado, será usada a quantidade padrão acima.
                   </p>
                 </div>
-                
+
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, qtd_modo_calculo: 'formula' })}
+                    className={`flex-1 px-3 py-2 rounded-lg text-sm border transition-colors ${
+                      formData.qtd_modo_calculo === 'formula'
+                        ? 'bg-blue-500/20 border-blue-500/40 text-blue-200'
+                        : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'
+                    }`}
+                  >
+                    Por fórmula (eixo × operador × valor)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, qtd_modo_calculo: 'por_tamanho' })}
+                    className={`flex-1 px-3 py-2 rounded-lg text-sm border transition-colors ${
+                      formData.qtd_modo_calculo === 'por_tamanho'
+                        ? 'bg-blue-500/20 border-blue-500/40 text-blue-200'
+                        : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'
+                    }`}
+                  >
+                    Por tamanho de porta (P / G / GG)
+                  </button>
+                </div>
+
+                {formData.qtd_modo_calculo === 'formula' ? (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="qtd_eixo_calculo" className="text-white/80">Eixo</Label>
@@ -403,8 +429,62 @@ export default function EstoqueEditMinimalista() {
                     />
                   </div>
                 </div>
+                ) : (
+                  <div className="space-y-3">
+                    <p className="text-xs text-white/50">
+                      Defina a quantidade fixa para cada faixa de largura da porta. Faixas: P (&lt; 2m), G (2m a 2,99m), GG (≥ 3m).
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="qtd_porta_p" className="text-white/80">Qtd para porta P</Label>
+                        <Input
+                          id="qtd_porta_p"
+                          type="number"
+                          min={0}
+                          value={formData.qtd_porta_p ?? ""}
+                          onChange={(e) => setFormData({
+                            ...formData,
+                            qtd_porta_p: e.target.value === "" ? null : parseInt(e.target.value) || 0
+                          })}
+                          placeholder="Ex: 2"
+                          className="bg-white/5 border-white/10 text-white"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="qtd_porta_g" className="text-white/80">Qtd para porta G</Label>
+                        <Input
+                          id="qtd_porta_g"
+                          type="number"
+                          min={0}
+                          value={formData.qtd_porta_g ?? ""}
+                          onChange={(e) => setFormData({
+                            ...formData,
+                            qtd_porta_g: e.target.value === "" ? null : parseInt(e.target.value) || 0
+                          })}
+                          placeholder="Ex: 3"
+                          className="bg-white/5 border-white/10 text-white"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="qtd_porta_gg" className="text-white/80">Qtd para porta GG</Label>
+                        <Input
+                          id="qtd_porta_gg"
+                          type="number"
+                          min={0}
+                          value={formData.qtd_porta_gg ?? ""}
+                          onChange={(e) => setFormData({
+                            ...formData,
+                            qtd_porta_gg: e.target.value === "" ? null : parseInt(e.target.value) || 0
+                          })}
+                          placeholder="Ex: 4"
+                          className="bg-white/5 border-white/10 text-white"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
 
-                {formData.qtd_eixo_calculo && formData.qtd_operador && formData.qtd_valor_calculo ? (
+                {formData.qtd_modo_calculo === 'formula' && formData.qtd_eixo_calculo && formData.qtd_operador && formData.qtd_valor_calculo ? (
                   <div className="flex items-center justify-between p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
                     <p className="text-xs text-blue-300">
                       Fórmula: {formData.qtd_eixo_calculo === 'largura' ? 'Largura' : formData.qtd_eixo_calculo === 'qtd_meia_cana' ? 'Qtd Meia Cana (⌈Altura÷0.076⌉)' : 'Altura'} da porta{' '}
