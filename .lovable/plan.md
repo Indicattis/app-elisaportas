@@ -1,47 +1,38 @@
 ## Objetivo
-Adicionar, no cálculo automático de quantidade do item de estoque, um modo alternativo: definir quantidade fixa por tamanho de porta (P, G, GG), além do modo atual por fórmula (eixo × operador × valor).
+Mover as seções **Requer pintura**, **Cálculo automático** (tamanho + quantidade, incluindo modo Por Tamanho de Porta) e **Regras de quebra de etiqueta** da página `/administrativo/compras/estoque/editar-item/:id` (`EstoqueEditMinimalista.tsx`) para a página de edição de produto da fábrica `/fabrica/produtos/editar/:id` (`ProdutosFabricaEdit.tsx`).
 
-## Comportamento
+## Escopo
 
-Na seção "Cálculo automático de quantidade" da página `/administrativo/compras/estoque/editar-item/:id`, o usuário escolhe entre dois modos via toggle:
+### Em `ProdutosFabricaEdit.tsx` — adicionar
+Estender `formData` com:
+- `requer_pintura: boolean`
+- `modulo_calculo: string`, `valor_calculo: number`, `eixo_calculo: string` (cálculo automático de tamanho)
+- `item_padrao_porta_enrolar: boolean`
+- `quantidade_padrao: number`
+- `qtd_eixo_calculo`, `qtd_operador`, `qtd_valor_calculo` (cálculo automático de quantidade — modo fórmula)
+- `qtd_modo_calculo: 'formula' | 'por_tamanho'`, `qtd_porta_p`, `qtd_porta_g`, `qtd_porta_gg` (modo por tamanho de porta)
 
-- **Modo Fórmula** (atual): eixo + operador + valor de cálculo.
-- **Modo Por Tamanho de Porta** (novo): três inputs numéricos — Qtd P, Qtd G, Qtd GG.
+Hidratação no `useEffect` e persistência no `handleSave` (incluir os campos no `update`).
 
-Classificação reusada do sistema (memory): `P < 2m`, `G ≥ 2m`, `GG ≥ 3m`, medida pela **largura** da porta.
+Adicionar 3 novos Cards (visual coerente com os Cards já existentes da página) entre "Controle de Estoque" e "Histórico de Movimentações":
 
-Ao inserir o item num pedido:
-1. Se modo = `por_tamanho`, calcula tamanho da porta pela largura → retorna Qtd P/G/GG.
-2. Se modo = `formula`, usa o cálculo atual.
-3. Fallback continua sendo `quantidade_padrao`.
+1. **Card "Produção"** — checkbox `requer_pintura`.
+2. **Card "Cálculo Automático"** — replicando os blocos atuais:
+   - Cálculo de tamanho (Módulo / Valor / Eixo).
+   - Checkbox item padrão para porta de enrolar.
+   - Quantidade padrão.
+   - Cálculo automático de quantidade com toggle entre **Por fórmula** e **Por tamanho de porta (P/G/GG)** — mesmos campos já implementados.
+3. **Card "Regras de Quebra de Etiqueta"** — usar componente `RegrasEtiquetasEditor` passando `estoqueId={id}` e `nomeProduto={formData.nome_produto}`.
 
-## Mudanças
+### Em `EstoqueEditMinimalista.tsx` — remover
+- Checkbox "requer_pintura".
+- Toda a seção "Configurações de Cálculo Automático" (tamanho + quantidade + por tamanho de porta + item padrão + quantidade padrão).
+- Bloco do `RegrasEtiquetasEditor`.
 
-### Banco de dados (migration)
-Tabela `estoque`, novas colunas:
-- `qtd_modo_calculo` text (`'formula' | 'por_tamanho'`, default `'formula'`)
-- `qtd_porta_p` integer null
-- `qtd_porta_g` integer null
-- `qtd_porta_gg` integer null
-
-### Frontend
-
-**`src/pages/administrativo/EstoqueEditMinimalista.tsx`**
-- Adicionar os 4 campos ao `formData`, ao `useEffect` de hidratação e ao `handleSubmit`.
-- UI: Tabs ou radio "Fórmula" / "Por tamanho de porta" controlando qual bloco aparece.
-- Bloco novo: 3 inputs numéricos lado a lado (Qtd P, Qtd G, Qtd GG) com legenda das faixas.
-
-**`src/utils/` (novo helper `classificarTamanhoPorta.ts`)**
-Função `classificarTamanhoPorta(largura: number): 'P' | 'G' | 'GG'` — retorna a faixa conforme regras do sistema.
-
-**`src/components/pedidos/PedidoLinhasEditor.tsx`** e **`src/components/pedidos/LinhasAgrupadasPorPorta.tsx`** e **`src/components/pedidos/AdicionarLinhaModal.tsx`**
-- Estender a query de itens para trazer `qtd_modo_calculo`, `qtd_porta_p/g/gg`.
-- Em `calcularQuantidadeAutomaticaItem(...)`/`calcularQuantidadeAutomatica(...)`: se `qtd_modo_calculo === 'por_tamanho'`, classificar pela largura e retornar a Qtd correspondente; senão manter a lógica atual.
-
-### Types
-Regenerar `src/integrations/supabase/types.ts` após migration.
+Manter o restante (informações básicas, descrição, histórico, etc.). Ajustar `formData` e `handleSubmit` removendo as chaves não usadas.
 
 ## Notas técnicas
-- Sem M para manter consistência com a memória "Door sizing classification" e o hub de frete que também usa P/G/GG.
-- Largura é o eixo padrão de classificação (consistente com frete e tabela de preços).
-- Itens existentes ficam em `qtd_modo_calculo = 'formula'` por default → zero impacto retroativo.
+- A coluna `requer_pintura` já existe na tabela `estoque`. Os campos de cálculo automático e P/G/GG também já existem (criados em migrations recentes). Nenhuma alteração de banco é necessária.
+- A página da fábrica usa `Card`/`CardHeader`/`CardContent` (não glassmorphism). Manter esse padrão visual nos novos cards.
+- `RegrasEtiquetasEditor` já está importado/usado pela página administrativa — apenas mover o import.
+- Garantir que o `update` do Supabase em `handleSave` salve os novos campos (incluindo nulificar P/G/GG quando o modo for `formula`, como já é feito hoje).

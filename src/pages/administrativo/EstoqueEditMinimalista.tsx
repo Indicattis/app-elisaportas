@@ -7,7 +7,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Trash2, History } from "lucide-react";
-import { RegrasEtiquetasEditor } from "@/components/estoque/RegrasEtiquetasEditor";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useCategorias } from "@/hooks/useCategorias";
@@ -45,36 +44,10 @@ export default function EstoqueEditMinimalista() {
     nome_produto: string;
     descricao_produto: string;
     setor_responsavel_producao: string;
-    requer_pintura: boolean;
-    modulo_calculo: string;
-    valor_calculo: number;
-    eixo_calculo: string;
-    item_padrao_porta_enrolar: boolean;
-    quantidade_padrao: number;
-    qtd_eixo_calculo: string;
-    qtd_operador: string;
-    qtd_valor_calculo: number;
-    qtd_modo_calculo: 'formula' | 'por_tamanho';
-    qtd_porta_p: number | null;
-    qtd_porta_g: number | null;
-    qtd_porta_gg: number | null;
   }>({
     nome_produto: "",
     descricao_produto: "",
     setor_responsavel_producao: "",
-    requer_pintura: false,
-    modulo_calculo: "",
-    valor_calculo: 0,
-    eixo_calculo: "",
-    item_padrao_porta_enrolar: false,
-    quantidade_padrao: 1,
-    qtd_eixo_calculo: "",
-    qtd_operador: "",
-    qtd_valor_calculo: 0,
-    qtd_modo_calculo: 'formula',
-    qtd_porta_p: null,
-    qtd_porta_g: null,
-    qtd_porta_gg: null,
   });
 
   const [dadosCarregados, setDadosCarregados] = useState(false);
@@ -107,19 +80,6 @@ export default function EstoqueEditMinimalista() {
         nome_produto: produto.nome_produto || "",
         descricao_produto: produto.descricao_produto || "",
         setor_responsavel_producao: produto.setor_responsavel_producao || "",
-        requer_pintura: produto.requer_pintura === true,
-        modulo_calculo: produto.modulo_calculo || "",
-        valor_calculo: Number(produto.valor_calculo) || 0,
-        eixo_calculo: produto.eixo_calculo || "",
-        item_padrao_porta_enrolar: produto.item_padrao_porta_enrolar === true,
-        quantidade_padrao: (produto as any).quantidade_padrao ?? 1,
-        qtd_eixo_calculo: (produto as any).qtd_eixo_calculo || "",
-        qtd_operador: (produto as any).qtd_operador || "",
-        qtd_valor_calculo: Number((produto as any).qtd_valor_calculo) || 0,
-        qtd_modo_calculo: ((produto as any).qtd_modo_calculo === 'por_tamanho' ? 'por_tamanho' : 'formula') as 'formula' | 'por_tamanho',
-        qtd_porta_p: (produto as any).qtd_porta_p ?? null,
-        qtd_porta_g: (produto as any).qtd_porta_g ?? null,
-        qtd_porta_gg: (produto as any).qtd_porta_gg ?? null,
       };
       
       setFormData(newFormData);
@@ -136,19 +96,6 @@ export default function EstoqueEditMinimalista() {
         nome_produto: formData.nome_produto,
         descricao_produto: formData.descricao_produto || undefined,
         setor_responsavel_producao: (formData.setor_responsavel_producao || null) as 'perfiladeira' | 'soldagem' | 'separacao' | 'pintura' | null,
-        requer_pintura: formData.requer_pintura,
-        modulo_calculo: (formData.modulo_calculo || null) as 'acrescimo' | 'desconto' | null,
-        valor_calculo: formData.valor_calculo != null ? formData.valor_calculo : null,
-        eixo_calculo: (formData.eixo_calculo || null) as 'largura' | 'altura' | null,
-        item_padrao_porta_enrolar: formData.item_padrao_porta_enrolar,
-        quantidade_padrao: formData.quantidade_padrao,
-        qtd_eixo_calculo: (formData.qtd_eixo_calculo || null) as 'largura' | 'altura' | 'qtd_meia_cana' | null,
-        qtd_operador: (formData.qtd_operador || null) as 'multiplicar' | 'dividir' | 'somar' | 'subtrair' | null,
-        qtd_valor_calculo: formData.qtd_valor_calculo || null,
-        qtd_modo_calculo: formData.qtd_modo_calculo,
-        qtd_porta_p: formData.qtd_modo_calculo === 'por_tamanho' ? formData.qtd_porta_p : null,
-        qtd_porta_g: formData.qtd_modo_calculo === 'por_tamanho' ? formData.qtd_porta_g : null,
-        qtd_porta_gg: formData.qtd_modo_calculo === 'por_tamanho' ? formData.qtd_porta_gg : null,
       };
       
       await editarProduto(dadosParaSalvar);
@@ -251,267 +198,6 @@ export default function EstoqueEditMinimalista() {
                 </Select>
               </div>
             </div>
-
-            <div className="flex items-center space-x-2 p-4 rounded-lg bg-white/5 border border-white/10">
-              <input
-                type="checkbox"
-                id="requer_pintura"
-                checked={formData.requer_pintura}
-                onChange={(e) => setFormData({ ...formData, requer_pintura: e.target.checked })}
-                className="h-4 w-4 rounded border-white/20 bg-white/5"
-              />
-              <Label htmlFor="requer_pintura" className="cursor-pointer font-medium text-white">
-                Este item requer pintura na produção
-              </Label>
-            </div>
-
-            {/* Seção de Cálculo Automático */}
-            <div className="p-4 rounded-lg bg-white/5 border border-white/10 space-y-4">
-              <h4 className="font-medium text-white">Configurações de Cálculo Automático</h4>
-              <p className="text-sm text-white/60">
-                Configure o cálculo automático do tamanho do item em relação às dimensões da porta.
-              </p>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="modulo_calculo" className="text-white/80">Módulo de Cálculo</Label>
-                  <Select
-                    value={formData.modulo_calculo || undefined}
-                    onValueChange={(value) => setFormData({ ...formData, modulo_calculo: value })}
-                  >
-                    <SelectTrigger className="bg-white/5 border-white/10 text-white">
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-zinc-900 border-white/10">
-                      <SelectItem value="acrescimo">Acréscimo</SelectItem>
-                      <SelectItem value="desconto">Desconto</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="valor_calculo" className="text-white/80">Valor de Cálculo (m)</Label>
-                  <Input
-                    id="valor_calculo"
-                    type="number"
-                    step="0.01"
-                    value={formData.valor_calculo}
-                    onChange={(e) => setFormData({ ...formData, valor_calculo: parseFloat(e.target.value) || 0 })}
-                    placeholder="Ex: 0.14"
-                    className="bg-white/5 border-white/10 text-white"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="eixo_calculo" className="text-white/80">Eixo de Cálculo</Label>
-                  <Select
-                    value={formData.eixo_calculo || undefined}
-                    onValueChange={(value) => setFormData({ ...formData, eixo_calculo: value })}
-                  >
-                    <SelectTrigger className="bg-white/5 border-white/10 text-white">
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-zinc-900 border-white/10">
-                      <SelectItem value="largura">Largura</SelectItem>
-                      <SelectItem value="altura">Altura</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-2 pt-3 border-t border-white/10">
-                <input
-                  type="checkbox"
-                  id="item_padrao_porta_enrolar"
-                  checked={formData.item_padrao_porta_enrolar}
-                  onChange={(e) => setFormData({ ...formData, item_padrao_porta_enrolar: e.target.checked })}
-                  className="h-4 w-4 rounded border-white/20 bg-white/5"
-                />
-                <Label htmlFor="item_padrao_porta_enrolar" className="cursor-pointer font-medium text-white">
-                  Item padrão para porta de enrolar (será sugerido automaticamente nos pedidos)
-                </Label>
-              </div>
-
-              <div className="space-y-2 pt-3">
-                <Label htmlFor="quantidade_padrao" className="text-white/80">Quantidade padrão</Label>
-                <Input
-                  id="quantidade_padrao"
-                  type="number"
-                  min={1}
-                  value={formData.quantidade_padrao}
-                  onChange={(e) => setFormData({ ...formData, quantidade_padrao: parseInt(e.target.value) || 1 })}
-                  className="bg-white/5 border-white/10 text-white w-32"
-                />
-                <p className="text-xs text-white/40">Quantidade inserida automaticamente ao adicionar este item a um pedido</p>
-              </div>
-
-              {/* Cálculo automático de quantidade */}
-              <div className="space-y-4 pt-3 border-t border-white/10">
-                <div>
-                  <h5 className="font-medium text-white text-sm">Cálculo automático de quantidade</h5>
-                  <p className="text-xs text-white/40 mt-1">
-                    Quando configurado, a quantidade será calculada com base nas dimensões da porta ao inserir o item no pedido. Se não configurado, será usada a quantidade padrão acima.
-                  </p>
-                </div>
-
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, qtd_modo_calculo: 'formula' })}
-                    className={`flex-1 px-3 py-2 rounded-lg text-sm border transition-colors ${
-                      formData.qtd_modo_calculo === 'formula'
-                        ? 'bg-blue-500/20 border-blue-500/40 text-blue-200'
-                        : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'
-                    }`}
-                  >
-                    Por fórmula (eixo × operador × valor)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, qtd_modo_calculo: 'por_tamanho' })}
-                    className={`flex-1 px-3 py-2 rounded-lg text-sm border transition-colors ${
-                      formData.qtd_modo_calculo === 'por_tamanho'
-                        ? 'bg-blue-500/20 border-blue-500/40 text-blue-200'
-                        : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'
-                    }`}
-                  >
-                    Por tamanho de porta (P / G / GG)
-                  </button>
-                </div>
-
-                {formData.qtd_modo_calculo === 'formula' ? (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="qtd_eixo_calculo" className="text-white/80">Eixo</Label>
-                    <Select
-                      value={formData.qtd_eixo_calculo || undefined}
-                      onValueChange={(value) => setFormData({ ...formData, qtd_eixo_calculo: value })}
-                    >
-                      <SelectTrigger className="bg-white/5 border-white/10 text-white">
-                        <SelectValue placeholder="Selecione o eixo" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-zinc-900 border-white/10">
-                        <SelectItem value="largura">Largura</SelectItem>
-                        <SelectItem value="altura">Altura</SelectItem>
-                        <SelectItem value="qtd_meia_cana">Qtd Meia Cana (⌈Altura÷0.076⌉)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="qtd_operador" className="text-white/80">Operador</Label>
-                    <Select
-                      value={formData.qtd_operador || undefined}
-                      onValueChange={(value) => setFormData({ ...formData, qtd_operador: value })}
-                    >
-                      <SelectTrigger className="bg-white/5 border-white/10 text-white">
-                        <SelectValue placeholder="Selecione" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-zinc-900 border-white/10">
-                        <SelectItem value="multiplicar">Multiplicar</SelectItem>
-                        <SelectItem value="dividir">Dividir</SelectItem>
-                        <SelectItem value="somar">Somar</SelectItem>
-                        <SelectItem value="subtrair">Subtrair</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="qtd_valor_calculo" className="text-white/80">Valor</Label>
-                    <Input
-                      id="qtd_valor_calculo"
-                      type="number"
-                      step="0.01"
-                      value={formData.qtd_valor_calculo}
-                      onChange={(e) => setFormData({ ...formData, qtd_valor_calculo: parseFloat(e.target.value) || 0 })}
-                      placeholder="Ex: 0.10"
-                      className="bg-white/5 border-white/10 text-white"
-                    />
-                  </div>
-                </div>
-                ) : (
-                  <div className="space-y-3">
-                    <p className="text-xs text-white/50">
-                      Defina a quantidade fixa para cada faixa de largura da porta. Faixas: P (&lt; 2m), G (2m a 2,99m), GG (≥ 3m).
-                    </p>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="qtd_porta_p" className="text-white/80">Qtd para porta P</Label>
-                        <Input
-                          id="qtd_porta_p"
-                          type="number"
-                          min={0}
-                          value={formData.qtd_porta_p ?? ""}
-                          onChange={(e) => setFormData({
-                            ...formData,
-                            qtd_porta_p: e.target.value === "" ? null : parseInt(e.target.value) || 0
-                          })}
-                          placeholder="Ex: 2"
-                          className="bg-white/5 border-white/10 text-white"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="qtd_porta_g" className="text-white/80">Qtd para porta G</Label>
-                        <Input
-                          id="qtd_porta_g"
-                          type="number"
-                          min={0}
-                          value={formData.qtd_porta_g ?? ""}
-                          onChange={(e) => setFormData({
-                            ...formData,
-                            qtd_porta_g: e.target.value === "" ? null : parseInt(e.target.value) || 0
-                          })}
-                          placeholder="Ex: 3"
-                          className="bg-white/5 border-white/10 text-white"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="qtd_porta_gg" className="text-white/80">Qtd para porta GG</Label>
-                        <Input
-                          id="qtd_porta_gg"
-                          type="number"
-                          min={0}
-                          value={formData.qtd_porta_gg ?? ""}
-                          onChange={(e) => setFormData({
-                            ...formData,
-                            qtd_porta_gg: e.target.value === "" ? null : parseInt(e.target.value) || 0
-                          })}
-                          placeholder="Ex: 4"
-                          className="bg-white/5 border-white/10 text-white"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {formData.qtd_modo_calculo === 'formula' && formData.qtd_eixo_calculo && formData.qtd_operador && formData.qtd_valor_calculo ? (
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
-                    <p className="text-xs text-blue-300">
-                      Fórmula: {formData.qtd_eixo_calculo === 'largura' ? 'Largura' : formData.qtd_eixo_calculo === 'qtd_meia_cana' ? 'Qtd Meia Cana (⌈Altura÷0.076⌉)' : 'Altura'} da porta{' '}
-                      {formData.qtd_operador === 'multiplicar' ? '×' : formData.qtd_operador === 'dividir' ? '÷' : formData.qtd_operador === 'somar' ? '+' : '−'}{' '}
-                      {formData.qtd_valor_calculo} → arredondado para cima
-                    </p>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="text-red-400 hover:text-red-300 hover:bg-red-500/10 h-7 text-xs"
-                      onClick={() => setFormData({ ...formData, qtd_eixo_calculo: "", qtd_operador: "", qtd_valor_calculo: 0 })}
-                    >
-                      Limpar
-                    </Button>
-                  </div>
-                ) : null}
-              </div>
-            </div>
-
-            {/* Regras de Etiquetas */}
-            {id && (
-              <RegrasEtiquetasEditor 
-                estoqueId={id} 
-                nomeProduto={formData.nome_produto} 
-              />
-            )}
 
             <div className="space-y-2">
               <Label htmlFor="descricao_produto" className="text-white/80">Descrição</Label>
