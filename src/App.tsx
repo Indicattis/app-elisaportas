@@ -244,6 +244,7 @@ import ProdutosHub from "./pages/direcao/estoque/ProdutosHub";
 import ProdutosFabrica from "./pages/direcao/estoque/ProdutosFabrica";
 import ProdutosAlmoxarifado from "./pages/direcao/estoque/ProdutosAlmoxarifado";
 import ProdutosFabricaEdit from "./pages/direcao/estoque/ProdutosFabricaEdit";
+import MateriasPrimasPage from "./pages/fabrica/MateriasPrimas";
 import FornecedoresDirecao from "./pages/direcao/estoque/FornecedoresDirecao";
 
 // Hub de Aprovações da Direção
@@ -452,6 +453,7 @@ const App = () => (
                 <Route path="/fabrica/cronograma-producao" element={<ProtectedRoute routeKey="fabrica_cronograma_producao"><CronogramaProducao /></ProtectedRoute>} />
                 <Route path="/fabrica/produtos" element={<ProtectedRoute routeKey="fabrica_produtos"><ProdutosFabrica /></ProtectedRoute>} />
                 <Route path="/fabrica/produtos/editar/:id" element={<ProtectedRoute routeKey="fabrica_produtos"><ProdutosFabricaEdit /></ProtectedRoute>} />
+                <Route path="/fabrica/produtos/materias-primas" element={<ProtectedRoute routeKey="fabrica_produtos"><MateriasPrimasPage /></ProtectedRoute>} />
 
                 {/* Hub da Direção Minimalista */}
                 <Route path="/direcao" element={<ProtectedRoute routeKeyPrefix="direcao_"><DirecaoHub /></ProtectedRoute>} />

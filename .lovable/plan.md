@@ -1,30 +1,30 @@
-## Situação atual
+## Objetivo
 
-Venda `ffad3c1b-e514-4e0b-988c-d42746b519d2` (WDL Vanderlei da Silva Esquadrias) — pedido `b4a53909-0072-480e-86cb-191762ddda34`:
+Substituir o modal `GerenciarMateriasPrimasModal` (aberto pelo botão "Matérias-Primas" em `/fabrica/produtos`) por uma página dedicada em `/fabrica/produtos/materias-primas`, seguindo o mesmo estilo glassmorphism minimalista usado no restante da fábrica (`MinimalistLayout`, `bg-white/5`, `backdrop-blur-xl`, `border-white/10`).
 
-- `vendas.tipo_entrega` = `instalacao` (deveria ser `entrega`)
-- `valor_instalacao` = 0 (confirma que não há instalação)
-- Produtos: apenas 38 un. de "Meia cana lisa - 0,70mm" (tipo `adicional`) — nenhum item de instalação
-- Etapa atual em `pedidos_etapas`: `instalacoes` (entrada 2026-05-11 13:46:46, sem saída)
-- Linha criada em `instalacoes` (id `d609f9dd-e8cb-4819-861d-37ef5392057b`, status `pronta_fabrica`, agendada 2026-05-15 às 08:00 com Equipe 3)
-- `ordens_carregamento` id `c1994613-...` status `pronta_fabrica`
+## Passos
 
-Para `tipo_entrega='entrega'`, após `inspecao_qualidade` o fluxo correto é `aguardando_coleta` → `finalizado` (não passa por `instalacoes`).
+1. Criar `src/pages/fabrica/MateriasPrimas.tsx`:
+   - Usa `MinimalistLayout` com título "Matérias-Primas", subtítulo curto e `backPath="/fabrica/produtos"`.
+   - `headerActions`: botão "Nova" (gradient azul, mesmo estilo dos botões do header de `/fabrica/produtos`) que abre um drawer/dialog inline de criação.
+   - Conteúdo: cards/lista com `bg-white/5 backdrop-blur-xl border-white/10`:
+     - Busca por nome
+     - Tabela glass com colunas Nome, Unidade, Estoque, Custo, Fornecedor, Itens vinculados, Ações (Editar/Excluir)
+     - Formulário em painel lateral ou inline para criar/editar (mesmos campos do modal atual: nome, unidade, quantidade, custo unitário, fornecedor)
+   - Usa o hook existente `useMateriasPrimas` (criar/editar/excluir) sem mudanças de lógica.
+   - AlertDialog de confirmação para exclusão, idêntico ao atual.
 
-## Correção (via migration SQL)
+2. Registrar a rota em `src/App.tsx`:
+   - `/fabrica/produtos/materias-primas` → nova página, dentro do mesmo guard de acesso/route key usado por `/fabrica/produtos`.
 
-1. **Atualizar a venda**: `vendas.tipo_entrega = 'entrega'` onde `id = ffad3c1b-...`.
+3. Atualizar `src/pages/direcao/estoque/ProdutosFabrica.tsx`:
+   - Botão "Matérias-Primas" passa a navegar para `/fabrica/produtos/materias-primas` (via `useNavigate`) em vez de abrir o modal.
+   - Remover o estado `gerenciarMateriasPrimasOpen` e o `<GerenciarMateriasPrimasModal />`.
+   - Manter o componente `GerenciarMateriasPrimasModal` no projeto por ora (sem novas referências) para evitar quebras em outros lugares; remover apenas se não houver outros usos.
 
-2. **Remover linha de instalação**: `DELETE FROM instalacoes WHERE id = 'd609f9dd-e8cb-4819-861d-37ef5392057b'` (não está concluída nem carregada, então é seguro). Isso também libera a Equipe 3 da agenda do dia 15/05.
+## Detalhes técnicos
 
-3. **Reverter etapa do pedido**: na tabela `pedidos_etapas` do pedido `b4a53909-...`:
-   - Deletar a linha aberta de `instalacoes`.
-   - Inserir nova linha em `aguardando_coleta` com `data_entrada = now()` e `data_saida = NULL` (usando UPSERT conforme a integridade já estabelecida das etapas).
-
-4. **Manter `ordens_carregamento`**: a linha já está em `pronta_fabrica`, que é compatível com fluxo de entrega — não precisa alterar.
-
-## Verificação pós-correção
-
-- Listar `vendas.tipo_entrega`, etapa ativa em `pedidos_etapas` e existência em `instalacoes` para confirmar que o pedido aparece em Expedição/Aguardando Coleta e não mais em Instalações.
-
-Nenhuma alteração de código frontend é necessária — é uma correção pontual de dados.
+- Sem alterações em banco, hooks ou regras de negócio. Apenas extração de UI do modal para página dedicada.
+- Estilo de botões do header igual ao já aplicado em `/fabrica/produtos` (gradient + `h-10 px-5 rounded-lg hover:scale-[1.02]`).
+- Cards/tabela seguem padrão glass já usado em outras páginas da fábrica.
+- Permissões: a nova rota herda a mesma key de acesso de `/fabrica/produtos`.

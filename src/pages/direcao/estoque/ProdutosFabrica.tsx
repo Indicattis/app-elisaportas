@@ -23,7 +23,6 @@ import { toast } from "sonner";
 import { baixarEstoquePDF, imprimirEstoquePDF } from "@/utils/estoquePDFGenerator";
 import { formatCurrency } from "@/lib/utils";
 import { GerenciarCategoriasModal } from "@/components/estoque/GerenciarCategoriasModal";
-import { GerenciarMateriasPrimasModal } from "@/components/estoque/GerenciarMateriasPrimasModal";
 import {
   DndContext,
   closestCenter,
@@ -464,7 +463,7 @@ export default function ProdutosFabrica() {
   const [localProdutos, setLocalProdutos] = useState<ProdutoEstoque[]>([]);
   const [novoModal, setNovoModal] = useState(false);
   const [gerenciarCategoriasOpen, setGerenciarCategoriasOpen] = useState(false);
-  const [gerenciarMateriasPrimasOpen, setGerenciarMateriasPrimasOpen] = useState(false);
+  // matérias-primas agora abrem em página dedicada
   const [searchTerm, setSearchTerm] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
 
@@ -660,7 +659,7 @@ export default function ProdutosFabrica() {
         Categorias
       </button>
       <button
-        onClick={() => setGerenciarMateriasPrimasOpen(true)}
+        onClick={() => navigate('/fabrica/produtos/materias-primas')}
         className="h-10 px-5 rounded-lg font-medium text-white border
                    bg-gradient-to-r from-violet-500 to-violet-700 border-violet-400/30
                    shadow-lg shadow-violet-500/30
@@ -923,10 +922,6 @@ export default function ProdutosFabrica() {
       <GerenciarCategoriasModal
         open={gerenciarCategoriasOpen}
         onOpenChange={setGerenciarCategoriasOpen}
-      />
-      <GerenciarMateriasPrimasModal
-        open={gerenciarMateriasPrimasOpen}
-        onOpenChange={setGerenciarMateriasPrimasOpen}
       />
     </div>
   );
