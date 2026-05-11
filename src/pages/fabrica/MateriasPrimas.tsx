@@ -36,9 +36,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, Search, Package } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Package, Link2 } from "lucide-react";
 import { useMateriasPrimas, MateriaPrima } from "@/hooks/useMateriasPrimas";
 import { useFornecedores } from "@/hooks/useFornecedores";
+import { VincularMaterialDialog } from "@/components/estoque/VincularMaterialDialog";
 
 const UNIDADES = ["un", "bobina", "rolo", "kg", "m", "m²", "l", "cx", "pç"];
 
@@ -59,6 +60,7 @@ export default function MateriasPrimasPage() {
   const [editando, setEditando] = useState<MateriaPrima | null>(null);
   const [removerId, setRemoverId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [vincularMP, setVincularMP] = useState<MateriaPrima | null>(null);
 
   const filtradas = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -225,6 +227,15 @@ export default function MateriasPrimasPage() {
                         size="sm"
                         variant="ghost"
                         className="text-white/80 hover:text-white hover:bg-white/10"
+                        title="Vincular materiais"
+                        onClick={() => setVincularMP(m)}
+                      >
+                        <Link2 className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-white/80 hover:text-white hover:bg-white/10"
                         onClick={() => abrirEditar(m)}
                       >
                         <Pencil className="h-4 w-4" />
@@ -369,6 +380,11 @@ export default function MateriasPrimasPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <VincularMaterialDialog
+        materiaPrima={vincularMP}
+        onOpenChange={(open) => !open && setVincularMP(null)}
+      />
     </MinimalistLayout>
   );
 }
