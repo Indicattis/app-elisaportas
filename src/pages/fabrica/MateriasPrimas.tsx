@@ -380,6 +380,11 @@ export default function MateriasPrimasPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <VincularMaterialDialog
+        materiaPrima={vincularMP}
+        onOpenChange={(open) => !open && setVincularMP(null)}
+      />
     </MinimalistLayout>
   );
 }
