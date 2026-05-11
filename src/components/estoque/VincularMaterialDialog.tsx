@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/table";
 import { Link2, Trash2, Save, Plus } from "lucide-react";
 import type { MateriaPrima } from "@/hooks/useMateriasPrimas";
+import { getUnidade, getUnidadeLabel } from "@/utils/unidadesMedida";
 
 interface Props {
   materiaPrima: MateriaPrima | null;
@@ -47,6 +48,7 @@ export function VincularMaterialDialog({ materiaPrima, onOpenChange }: Props) {
   const open = !!materiaPrima;
   const { toast } = useToast();
   const qc = useQueryClient();
+  const mpUnidade = materiaPrima ? getUnidade(materiaPrima.unidade) : null;
 
   const [novoMaterialId, setNovoMaterialId] = useState<string>("");
   const [novoConversao, setNovoConversao] = useState<number>(0);
@@ -161,7 +163,8 @@ export function VincularMaterialDialog({ materiaPrima, onOpenChange }: Props) {
           <p className="text-xs text-muted-foreground">
             Informe quantos {""}
             <span className="font-medium">(unidade do material)</span> são
-            produzidos a partir de <span className="font-medium">1 {materiaPrima.unidade}</span>{" "}
+            produzidos a partir de{" "}
+            <span className="font-medium">1 {mpUnidade?.label.toLowerCase()}</span>{" "}
             desta matéria-prima.
           </p>
         </DialogHeader>
@@ -193,11 +196,11 @@ export function VincularMaterialDialog({ materiaPrima, onOpenChange }: Props) {
               </div>
               <div className="space-y-1.5">
                 <Label>
-                  Qtd produzida por 1 {materiaPrima.unidade}
+                  Qtd produzida por 1 {mpUnidade?.label.toLowerCase()}
                   {novoMaterialId && (
                     <span className="text-muted-foreground">
                       {" "}
-                      ({disponiveis.find((d) => d.id === novoMaterialId)?.unidade})
+                      ({getUnidadeLabel(disponiveis.find((d) => d.id === novoMaterialId)?.unidade).toLowerCase()})
                     </span>
                   )}
                 </Label>
@@ -231,7 +234,7 @@ export function VincularMaterialDialog({ materiaPrima, onOpenChange }: Props) {
                     <TableHead>Material</TableHead>
                     <TableHead>Unidade</TableHead>
                     <TableHead className="text-right">
-                      Qtd por 1 {materiaPrima.unidade}
+                      Qtd por 1 {mpUnidade?.label.toLowerCase()}
                     </TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
@@ -246,7 +249,7 @@ export function VincularMaterialDialog({ materiaPrima, onOpenChange }: Props) {
                     return (
                       <TableRow key={v.id}>
                         <TableCell className="font-medium">{v.nome_produto}</TableCell>
-                        <TableCell>{v.unidade}</TableCell>
+                        <TableCell>{getUnidadeLabel(v.unidade)}</TableCell>
                         <TableCell className="text-right">
                           <Input
                             type="number"
