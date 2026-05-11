@@ -306,7 +306,7 @@ export const PedidoLinhasEditor = ({
       try {
         const { data, error } = await supabase
           .from('estoque')
-          .select('id, nome_produto, descricao_produto, modulo_calculo, valor_calculo, eixo_calculo, setor_responsavel_producao, quantidade_padrao, qtd_eixo_calculo, qtd_operador, qtd_valor_calculo')
+          .select('id, nome_produto, descricao_produto, modulo_calculo, valor_calculo, eixo_calculo, setor_responsavel_producao, quantidade_padrao, qtd_eixo_calculo, qtd_operador, qtd_valor_calculo, qtd_modo_calculo, qtd_porta_p, qtd_porta_g, qtd_porta_gg')
           .eq('item_padrao_porta_enrolar', true)
           .eq('ativo', true);
 
