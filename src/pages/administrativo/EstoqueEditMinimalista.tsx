@@ -54,6 +54,10 @@ export default function EstoqueEditMinimalista() {
     qtd_eixo_calculo: string;
     qtd_operador: string;
     qtd_valor_calculo: number;
+    qtd_modo_calculo: 'formula' | 'por_tamanho';
+    qtd_porta_p: number | null;
+    qtd_porta_g: number | null;
+    qtd_porta_gg: number | null;
   }>({
     nome_produto: "",
     descricao_produto: "",
@@ -67,6 +71,10 @@ export default function EstoqueEditMinimalista() {
     qtd_eixo_calculo: "",
     qtd_operador: "",
     qtd_valor_calculo: 0,
+    qtd_modo_calculo: 'formula',
+    qtd_porta_p: null,
+    qtd_porta_g: null,
+    qtd_porta_gg: null,
   });
 
   const [dadosCarregados, setDadosCarregados] = useState(false);
@@ -108,6 +116,10 @@ export default function EstoqueEditMinimalista() {
         qtd_eixo_calculo: (produto as any).qtd_eixo_calculo || "",
         qtd_operador: (produto as any).qtd_operador || "",
         qtd_valor_calculo: Number((produto as any).qtd_valor_calculo) || 0,
+        qtd_modo_calculo: ((produto as any).qtd_modo_calculo === 'por_tamanho' ? 'por_tamanho' : 'formula') as 'formula' | 'por_tamanho',
+        qtd_porta_p: (produto as any).qtd_porta_p ?? null,
+        qtd_porta_g: (produto as any).qtd_porta_g ?? null,
+        qtd_porta_gg: (produto as any).qtd_porta_gg ?? null,
       };
       
       setFormData(newFormData);
@@ -133,6 +145,10 @@ export default function EstoqueEditMinimalista() {
         qtd_eixo_calculo: (formData.qtd_eixo_calculo || null) as 'largura' | 'altura' | 'qtd_meia_cana' | null,
         qtd_operador: (formData.qtd_operador || null) as 'multiplicar' | 'dividir' | 'somar' | 'subtrair' | null,
         qtd_valor_calculo: formData.qtd_valor_calculo || null,
+        qtd_modo_calculo: formData.qtd_modo_calculo,
+        qtd_porta_p: formData.qtd_modo_calculo === 'por_tamanho' ? formData.qtd_porta_p : null,
+        qtd_porta_g: formData.qtd_modo_calculo === 'por_tamanho' ? formData.qtd_porta_g : null,
+        qtd_porta_gg: formData.qtd_modo_calculo === 'por_tamanho' ? formData.qtd_porta_gg : null,
       };
       
       await editarProduto(dadosParaSalvar);
