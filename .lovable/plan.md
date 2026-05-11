@@ -1,48 +1,47 @@
-## Problema
+## Objetivo
+Adicionar, no cálculo automático de quantidade do item de estoque, um modo alternativo: definir quantidade fixa por tamanho de porta (P, G, GG), além do modo atual por fórmula (eixo × operador × valor).
 
-Ao salvar as observações de visita técnica em `/fabrica/montagem-pedidos/:id`, o banco retorna:
+## Comportamento
 
-```
-violates foreign key constraint "pedido_porta_observacoes_produto_venda_id_fkey"
-Key is not present in table "produtos_vendas".
-```
+Na seção "Cálculo automático de quantidade" da página `/administrativo/compras/estoque/editar-item/:id`, o usuário escolhe entre dois modos via toggle:
 
-A tabela `pedido_porta_observacoes` (e a irmã `pedido_porta_social_observacoes`) ainda tem uma FK em `produto_venda_id → produtos_vendas(id) ON DELETE CASCADE`. O hook `usePedidoPortaObservacoes.ts` já trazia o comentário "FK foi removida para permitir autorizados", mas a remoção nunca chegou ao banco — a constraint continua viva. Por isso, qualquer pedido cuja linha de produto não exista mais (ou foi recriada após edição da venda, correção/manutenção sem produtos_vendas correspondentes, autorizados etc.) quebra ao salvar.
+- **Modo Fórmula** (atual): eixo + operador + valor de cálculo.
+- **Modo Por Tamanho de Porta** (novo): três inputs numéricos — Qtd P, Qtd G, Qtd GG.
 
-## Causa direta
+Classificação reusada do sistema (memory): `P < 2m`, `G ≥ 2m`, `GG ≥ 3m`, medida pela **largura** da porta.
 
-- `produto_venda_id` salvo vem de `porta._originalId` (id do `produtos_vendas` no momento do fetch).
-- Se a venda foi reeditada (linhas recriadas), ou se o pedido aponta para uma venda cujos produtos foram removidos/recriados, a FK rejeita o INSERT/UPSERT.
-- A FK não é necessária: o app já controla a associação por `pedido_id + produto_venda_id + indice_porta` (UNIQUE) e a limpeza acontece via `pedido_id` (CASCADE com `pedidos_producao`).
+Ao inserir o item num pedido:
+1. Se modo = `por_tamanho`, calcula tamanho da porta pela largura → retorna Qtd P/G/GG.
+2. Se modo = `formula`, usa o cálculo atual.
+3. Fallback continua sendo `quantidade_padrao`.
 
-## O que vou fazer
+## Mudanças
 
-### 1. Migration
+### Banco de dados (migration)
+Tabela `estoque`, novas colunas:
+- `qtd_modo_calculo` text (`'formula' | 'por_tamanho'`, default `'formula'`)
+- `qtd_porta_p` integer null
+- `qtd_porta_g` integer null
+- `qtd_porta_gg` integer null
 
-Remover apenas as duas FKs em `produto_venda_id` (mantendo PK, UNIQUE, CHECKs e a FK de `pedido_id`):
+### Frontend
 
-```sql
-ALTER TABLE public.pedido_porta_observacoes
-  DROP CONSTRAINT IF EXISTS pedido_porta_observacoes_produto_venda_id_fkey;
+**`src/pages/administrativo/EstoqueEditMinimalista.tsx`**
+- Adicionar os 4 campos ao `formData`, ao `useEffect` de hidratação e ao `handleSubmit`.
+- UI: Tabs ou radio "Fórmula" / "Por tamanho de porta" controlando qual bloco aparece.
+- Bloco novo: 3 inputs numéricos lado a lado (Qtd P, Qtd G, Qtd GG) com legenda das faixas.
 
-ALTER TABLE public.pedido_porta_social_observacoes
-  DROP CONSTRAINT IF EXISTS pedido_porta_social_observacoes_produto_venda_id_fkey;
-```
+**`src/utils/` (novo helper `classificarTamanhoPorta.ts`)**
+Função `classificarTamanhoPorta(largura: number): 'P' | 'G' | 'GG'` — retorna a faixa conforme regras do sistema.
 
-Sem alteração de colunas, dados ou políticas RLS.
+**`src/components/pedidos/PedidoLinhasEditor.tsx`** e **`src/components/pedidos/LinhasAgrupadasPorPorta.tsx`** e **`src/components/pedidos/AdicionarLinhaModal.tsx`**
+- Estender a query de itens para trazer `qtd_modo_calculo`, `qtd_porta_p/g/gg`.
+- Em `calcularQuantidadeAutomaticaItem(...)`/`calcularQuantidadeAutomatica(...)`: se `qtd_modo_calculo === 'por_tamanho'`, classificar pela largura e retornar a Qtd correspondente; senão manter a lógica atual.
 
-### 2. Frontend
+### Types
+Regenerar `src/integrations/supabase/types.ts` após migration.
 
-Nenhuma mudança de código — o hook já está escrito assumindo a ausência da FK (sem JOIN para `produtos_vendas`). Apenas atualizar o comentário se precisar deixar explícito.
-
-## Por que dropar a FK em vez de "consertar" o id
-
-- O id de `produtos_vendas` é volátil: edições na venda recriam linhas, e queremos preservar as observações da visita técnica do pedido independentemente disso.
-- A integridade real (não deixar observação órfã) já é garantida pelo `ON DELETE CASCADE` em `pedido_id`, que é o vínculo que importa para o ciclo de vida do pedido de produção.
-- Alternativa (validar id no front) re-introduziria o mesmo bug toda vez que a venda for reeditada — não resolve.
-
-## Riscos / impacto
-
-- Nenhuma perda de dados.
-- Nenhuma mudança em UI ou regra de negócio.
-- Após a migration, o salvar deixa de quebrar mesmo quando o `produto_venda_id` referenciado não existir mais no `produtos_vendas`.
+## Notas técnicas
+- Sem M para manter consistência com a memória "Door sizing classification" e o hub de frete que também usa P/G/GG.
+- Largura é o eixo padrão de classificação (consistente com frete e tabela de preços).
+- Itens existentes ficam em `qtd_modo_calculo = 'formula'` por default → zero impacto retroativo.

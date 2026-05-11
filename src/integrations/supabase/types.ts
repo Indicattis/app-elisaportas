@@ -2292,7 +2292,11 @@ export type Database = {
           peso_porta: number | null
           pontuacao_producao: number | null
           qtd_eixo_calculo: string | null
+          qtd_modo_calculo: string
           qtd_operador: string | null
+          qtd_porta_g: number | null
+          qtd_porta_gg: number | null
+          qtd_porta_p: number | null
           qtd_valor_calculo: number | null
           quantidade: number
           quantidade_ideal: number | null
@@ -2328,7 +2332,11 @@ export type Database = {
           peso_porta?: number | null
           pontuacao_producao?: number | null
           qtd_eixo_calculo?: string | null
+          qtd_modo_calculo?: string
           qtd_operador?: string | null
+          qtd_porta_g?: number | null
+          qtd_porta_gg?: number | null
+          qtd_porta_p?: number | null
           qtd_valor_calculo?: number | null
           quantidade?: number
           quantidade_ideal?: number | null
@@ -2364,7 +2372,11 @@ export type Database = {
           peso_porta?: number | null
           pontuacao_producao?: number | null
           qtd_eixo_calculo?: string | null
+          qtd_modo_calculo?: string
           qtd_operador?: string | null
+          qtd_porta_g?: number | null
+          qtd_porta_gg?: number | null
+          qtd_porta_p?: number | null
           qtd_valor_calculo?: number | null
           quantidade?: number
           quantidade_ideal?: number | null
