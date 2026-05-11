@@ -20,6 +20,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, Save, Trash2, Package, AlertTriangle, CheckCircle2, TrendingDown, TrendingUp } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { RegrasEtiquetasEditor } from "@/components/estoque/RegrasEtiquetasEditor";
 
 const UNIDADES = [
   { value: "UN", label: "Unidade (UN)" },
@@ -53,6 +54,19 @@ export default function ProdutosFabricaEdit() {
     conferir_estoque: true,
     materia_prima_id: "",
     materia_prima_conversao: 0,
+    requer_pintura: false,
+    modulo_calculo: "" as "" | "acrescimo" | "desconto",
+    valor_calculo: 0,
+    eixo_calculo: "" as "" | "largura" | "altura",
+    item_padrao_porta_enrolar: false,
+    quantidade_padrao: 1,
+    qtd_eixo_calculo: "" as "" | "largura" | "altura" | "qtd_meia_cana",
+    qtd_operador: "" as "" | "multiplicar" | "dividir" | "somar" | "subtrair",
+    qtd_valor_calculo: 0,
+    qtd_modo_calculo: "formula" as "formula" | "por_tamanho",
+    qtd_porta_p: null as number | null,
+    qtd_porta_g: null as number | null,
+    qtd_porta_gg: null as number | null,
   });
   const [isSaving, setIsSaving] = useState(false);
 
@@ -101,6 +115,19 @@ export default function ProdutosFabricaEdit() {
         conferir_estoque: produto.conferir_estoque ?? true,
         materia_prima_id: (produto as any).materia_prima_id || "",
         materia_prima_conversao: Number((produto as any).materia_prima_conversao) || 0,
+        requer_pintura: (produto as any).requer_pintura === true,
+        modulo_calculo: ((produto as any).modulo_calculo || "") as any,
+        valor_calculo: Number((produto as any).valor_calculo) || 0,
+        eixo_calculo: ((produto as any).eixo_calculo || "") as any,
+        item_padrao_porta_enrolar: (produto as any).item_padrao_porta_enrolar === true,
+        quantidade_padrao: (produto as any).quantidade_padrao ?? 1,
+        qtd_eixo_calculo: ((produto as any).qtd_eixo_calculo || "") as any,
+        qtd_operador: ((produto as any).qtd_operador || "") as any,
+        qtd_valor_calculo: Number((produto as any).qtd_valor_calculo) || 0,
+        qtd_modo_calculo: ((produto as any).qtd_modo_calculo === "por_tamanho" ? "por_tamanho" : "formula"),
+        qtd_porta_p: (produto as any).qtd_porta_p ?? null,
+        qtd_porta_g: (produto as any).qtd_porta_g ?? null,
+        qtd_porta_gg: (produto as any).qtd_porta_gg ?? null,
       });
     }
   }, [produto]);
@@ -128,6 +155,19 @@ export default function ProdutosFabricaEdit() {
           materia_prima_conversao: formData.materia_prima_id
             ? formData.materia_prima_conversao || null
             : null,
+          requer_pintura: formData.requer_pintura,
+          modulo_calculo: (formData.modulo_calculo || null) as any,
+          valor_calculo: formData.valor_calculo || null,
+          eixo_calculo: (formData.eixo_calculo || null) as any,
+          item_padrao_porta_enrolar: formData.item_padrao_porta_enrolar,
+          quantidade_padrao: formData.quantidade_padrao,
+          qtd_eixo_calculo: (formData.qtd_eixo_calculo || null) as any,
+          qtd_operador: (formData.qtd_operador || null) as any,
+          qtd_valor_calculo: formData.qtd_valor_calculo || null,
+          qtd_modo_calculo: formData.qtd_modo_calculo,
+          qtd_porta_p: formData.qtd_modo_calculo === "por_tamanho" ? formData.qtd_porta_p : null,
+          qtd_porta_g: formData.qtd_modo_calculo === "por_tamanho" ? formData.qtd_porta_g : null,
+          qtd_porta_gg: formData.qtd_modo_calculo === "por_tamanho" ? formData.qtd_porta_gg : null,
         })
         .eq("id", id);
 
