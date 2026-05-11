@@ -139,6 +139,12 @@ export default function MateriasPrimasPage() {
       subtitle="Gestão de insumos e materiais"
       backPath="/fabrica/produtos"
       headerActions={headerActions}
+      breadcrumbItems={[
+        { label: "Home", path: "/home" },
+        { label: "Fábrica", path: "/fabrica" },
+        { label: "Produtos", path: "/fabrica/produtos" },
+        { label: "Matérias-Primas" },
+      ]}
     >
       <div className="space-y-4">
         {/* Cards resumo */}
