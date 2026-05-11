@@ -45,6 +45,10 @@ export interface ProdutoEstoque {
   qtd_eixo_calculo: 'largura' | 'altura' | 'qtd_meia_cana' | null;
   qtd_operador: 'multiplicar' | 'dividir' | 'somar' | 'subtrair' | null;
   qtd_valor_calculo: number | null;
+  qtd_modo_calculo?: 'formula' | 'por_tamanho';
+  qtd_porta_p?: number | null;
+  qtd_porta_g?: number | null;
+  qtd_porta_gg?: number | null;
   materia_prima_id: string | null;
   materia_prima_conversao: number | null;
   subcategoria?: {
@@ -87,6 +91,10 @@ export interface ProdutoEstoqueInput {
   qtd_eixo_calculo?: 'largura' | 'altura' | 'qtd_meia_cana' | null;
   qtd_operador?: 'multiplicar' | 'dividir' | 'somar' | 'subtrair' | null;
   qtd_valor_calculo?: number | null;
+  qtd_modo_calculo?: 'formula' | 'por_tamanho';
+  qtd_porta_p?: number | null;
+  qtd_porta_g?: number | null;
+  qtd_porta_gg?: number | null;
   materia_prima_id?: string | null;
   materia_prima_conversao?: number | null;
 }
