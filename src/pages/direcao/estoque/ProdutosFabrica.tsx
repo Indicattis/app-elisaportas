@@ -647,49 +647,63 @@ export default function ProdutosFabrica() {
   };
 
   const headerActions = (
-    <div className="flex gap-2 flex-wrap">
-      <Button
-        variant="outline"
-        size="sm"
+    <div className="flex items-center gap-2 flex-wrap">
+      <button
         onClick={() => setGerenciarCategoriasOpen(true)}
-        className="bg-white/5 border-white/10 text-white hover:bg-white/10"
+        className="h-10 px-5 rounded-lg font-medium text-white border
+                   bg-gradient-to-r from-purple-500 to-purple-700 border-purple-400/30
+                   shadow-lg shadow-purple-500/30
+                   hover:scale-[1.02] hover:shadow-xl hover:shadow-purple-500/40
+                   transition-all duration-200 flex items-center gap-2"
       >
-        <Tags className="mr-2 h-4 w-4" />
+        <Tags className="w-4 h-4" />
         Categorias
-      </Button>
-      <Button
-        variant="outline"
-        size="sm"
+      </button>
+      <button
         onClick={() => setGerenciarMateriasPrimasOpen(true)}
-        className="bg-white/5 border-white/10 text-white hover:bg-white/10"
+        className="h-10 px-5 rounded-lg font-medium text-white border
+                   bg-gradient-to-r from-violet-500 to-violet-700 border-violet-400/30
+                   shadow-lg shadow-violet-500/30
+                   hover:scale-[1.02] hover:shadow-xl hover:shadow-violet-500/40
+                   transition-all duration-200 flex items-center gap-2"
       >
-        <Package className="mr-2 h-4 w-4" />
+        <Package className="w-4 h-4" />
         Matérias-Primas
-      </Button>
-      <Button 
-        variant="outline"
-        size="sm"
+      </button>
+      <button
         onClick={handleDownloadPDF}
-        className="bg-white/5 border-white/10 text-white hover:bg-white/10"
+        className="h-10 px-5 rounded-lg font-medium text-white border
+                   bg-gradient-to-r from-zinc-600 to-zinc-800 border-zinc-400/30
+                   shadow-lg shadow-zinc-500/30
+                   hover:scale-[1.02] hover:shadow-xl hover:shadow-zinc-500/40
+                   transition-all duration-200 flex items-center gap-2"
       >
-        <FileDown className="mr-2 h-4 w-4" />
+        <FileDown className="w-4 h-4" />
         PDF
-      </Button>
-      <Button 
-        variant="outline"
-        size="sm"
+      </button>
+      <button
         onClick={handlePrint}
-        className="bg-white/5 border-white/10 text-white hover:bg-white/10"
+        className="h-10 px-5 rounded-lg font-medium text-white border
+                   bg-gradient-to-r from-zinc-600 to-zinc-800 border-zinc-400/30
+                   shadow-lg shadow-zinc-500/30
+                   hover:scale-[1.02] hover:shadow-xl hover:shadow-zinc-500/40
+                   transition-all duration-200 flex items-center gap-2"
       >
-        <Printer className="mr-2 h-4 w-4" />
+        <Printer className="w-4 h-4" />
         Imprimir
-      </Button>
+      </button>
       <Dialog open={novoModal} onOpenChange={setNovoModal}>
         <DialogTrigger asChild>
-          <Button size="sm" className="bg-gradient-to-r from-blue-500 to-blue-700 text-white border-0">
-            <Plus className="mr-2 h-4 w-4" />
+          <button
+            className="h-10 px-5 rounded-lg font-medium text-white border
+                       bg-gradient-to-r from-blue-500 to-blue-700 border-blue-400/30
+                       shadow-lg shadow-blue-500/30
+                       hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-500/40
+                       transition-all duration-200 flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
             Novo
-          </Button>
+          </button>
         </DialogTrigger>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-zinc-900 border-white/10 text-white">
           <DialogHeader>
