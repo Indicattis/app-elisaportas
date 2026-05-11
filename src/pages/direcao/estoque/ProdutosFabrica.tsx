@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Plus, Tags, FileDown, Printer, GripVertical, DollarSign, Package, AlertTriangle, TrendingUp, Trash2 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -400,6 +400,7 @@ function DragOverlayRow({ produto }: { produto: ProdutoEstoque | null }) {
 
 export default function ProdutosFabrica() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { produtos, loading, adicionarProduto, reordenarProdutos, excluirProduto } = useEstoque();
   const { categorias } = useCategorias();
   const { subcategorias } = useSubcategorias();
@@ -926,20 +927,30 @@ export default function ProdutosFabrica() {
     </div>
   );
 
-  const breadcrumbItems = [
-    { label: 'Home', path: '/home' },
-    { label: 'Direção', path: '/direcao' },
-    { label: 'Estoque', path: '/direcao/estoque' },
-    { label: 'Configurações', path: '/direcao/estoque/configuracoes' },
-    { label: 'Produtos', path: '/direcao/estoque/configuracoes/produtos' },
-    { label: 'Fábrica' }
-  ];
+  const isFabricaRoute = location.pathname.startsWith('/fabrica');
+
+  const backPath = isFabricaRoute ? '/fabrica' : '/direcao/estoque/configuracoes/produtos';
+
+  const breadcrumbItems = isFabricaRoute
+    ? [
+        { label: 'Home', path: '/home' },
+        { label: 'Fábrica', path: '/fabrica' },
+        { label: 'Produtos' }
+      ]
+    : [
+        { label: 'Home', path: '/home' },
+        { label: 'Direção', path: '/direcao' },
+        { label: 'Estoque', path: '/direcao/estoque' },
+        { label: 'Configurações', path: '/direcao/estoque/configuracoes' },
+        { label: 'Produtos', path: '/direcao/estoque/configuracoes/produtos' },
+        { label: 'Fábrica' }
+      ];
 
   return (
     <MinimalistLayout
       title="Produtos da Fábrica"
       subtitle="Gerencie os produtos do estoque"
-      backPath="/direcao/estoque/configuracoes/produtos"
+      backPath={backPath}
       headerActions={headerActions}
       breadcrumbItems={breadcrumbItems}
       fullWidth
