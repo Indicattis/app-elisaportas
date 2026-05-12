@@ -1,63 +1,97 @@
-## Problema
+## Objetivo
 
-Em `/fabrica/montagem-pedidos/:id`, no seletor "Responsável pelas medidas" das Observações da visita técnica, apenas 3 usuários internos aparecem (além de todos os autorizados).
+Em `/administrativo/compras/requisicoes`, capturar todos os campos exigidos pelo PDF padrão Bling e gerar um PDF com o mesmo layout do anexo.
 
-## Causa
+## 1. Migration — novos campos por item
 
-A página faz `supabase.from('admin_users').select('id, nome').eq('ativo', true)`, mas a RLS de `admin_users` para SELECT é:
-
-- `Users see own admin row, admins see all`: `user_id = auth.uid() OR is_admin()`
-- `Public can view attendants`: `ativo = true AND role = 'atendente'`
-
-Resultado para um usuário da fábrica (não admin): vê apenas a própria linha + os atendentes (~3 usuários). Autorizados aparecem todos porque vêm de outra tabela com RLS aberta.
-
-## Solução
-
-Expor uma lista mínima (`id`, `nome`) de todos os colaboradores internos ativos via função `SECURITY DEFINER`, sem afrouxar a RLS de `admin_users` (que contém PII como email/CPF/salário).
-
-### 1. Migration — função RPC
-
-Criar `public.get_responsaveis_internos()`:
+Adicionar em `requisicoes_compra_itens` (quantidade segue INTEGER):
 
 ```sql
-CREATE OR REPLACE FUNCTION public.get_responsaveis_internos()
-RETURNS TABLE (id uuid, nome text)
-LANGUAGE sql
-STABLE
-SECURITY DEFINER
-SET search_path = public
-AS $$
-  SELECT id, nome
-  FROM public.admin_users
-  WHERE ativo = true
-    AND tipo_usuario IN ('colaborador', 'metamorfo', 'atendente')
-  ORDER BY nome;
-$$;
-
-GRANT EXECUTE ON FUNCTION public.get_responsaveis_internos() TO authenticated;
+ALTER TABLE public.requisicoes_compra_itens
+  ADD COLUMN IF NOT EXISTS valor_unitario numeric NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS ipi_percent numeric NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS codigo_fornecedor text,
+  ADD COLUMN IF NOT EXISTS localizacao text;
 ```
 
-Retorna apenas `id` e `nome` — nada sensível.
+Os campos legados `preco_unitario`/`preco_total` permanecem para retrocompatibilidade (não usados no novo fluxo).
 
-### 2. Frontend — `src/pages/administrativo/PedidoViewMinimalista.tsx`
+## 2. Form — `src/components/compras/RequisicaoCompraForm.tsx`
 
-Trocar a query atual:
+Trocar a área "Adicionar Item" por uma tabela editável com colunas:
 
-```ts
-const { data: usuarios = [] } = useQuery({
-  queryKey: ['responsaveis-internos'],
-  queryFn: async () => {
-    const { data, error } = await supabase.rpc('get_responsaveis_internos');
-    if (error) throw error;
-    return data ?? [];
-  },
-});
+- Produto (Select do estoque — já existe)
+- Un (auto, exibe `produto.unidade` somente leitura)
+- Quantidade (number, INTEGER ≥ 1)
+- Valor unitário (number, BRL com 2 casas)
+- IPI % (number, default 0)
+- Código fornecedor (text, opcional)
+- Localização (text, opcional)
+- Observações (text, opcional)
+- Valor total = `quantidade × valor_unitario × (1 + ipi_percent/100)` (somente leitura)
+- Remover linha
+
+Rodapé do bloco mostra: Nº de itens, Soma das quantidades, Total de produtos, Total de IPI, Total do pedido.
+
+## 3. Hook — `src/hooks/useRequisicoesCompra.ts`
+
+- Adicionar `valor_unitario`, `ipi_percent`, `codigo_fornecedor`, `localizacao` em `RequisicaoCompraItem`.
+- No `createMutation`: persistir esses campos e calcular `valor_total` da requisição (`Σ qtd × valor_unitario × (1+ipi/100)`).
+- No fetch: trazer os mesmos campos (já vem com `select *`).
+
+## 4. Detalhes (Sheet) — `RequisicoesMinimalista.tsx`
+
+Adicionar colunas Un, Valor unit., IPI, Total na tabela de itens e um botão **Exportar PDF** ao lado de "Ver Detalhes" / no Sheet.
+
+## 5. PDF — `src/utils/pedidoCompraPDF.ts` (novo)
+
+Função `gerarPedidoCompraPDF(requisicao, fornecedor, company)` usando `jsPDF` + `jspdf-autotable` (ambos já no projeto, ver `listaComprasPDF.ts`).
+
+Layout (1 página A4 retrato), replicando o anexo:
+
+```text
+[topo direito] data/hora geração
+Pedido de compra Nº {numero_requisicao}
+
+{company.nome} - {company.telefone}
+{company.endereco}
+{company.cep} - {company.cidade}
+CNPJ: {company.cnpj}
+{company.cidade}, {data_emissao}
+
+Fornecedor
+{fornecedor.nome}
+CNPJ: {fornecedor.cnpj}, {fornecedor.cidade}, {fornecedor.estado}
+
+| Número do pedido | {numero_requisicao} |
+| Data             | {created_at}        |
+| Data prevista    | {data_necessidade}  |
+
+Itens do pedido de compra
+| Descrição | Código | Cód. fornec. | Localização | Un | Qtde | Valor unit. | IPI % | Valor total |
+
+Rodapé totais:
+  N° de itens, Soma das Qtdes, Total de produtos, Total do IPI, Total do pedido
+
+Observações
+{observacoes}
 ```
 
-Resto da página (props passadas para `ObservacoesPortaForm`, lookup `usuarios.find(...)` na linha 442 etc.) permanece igual — mesma forma `{id, nome}`.
+Notas:
+
+- IE não é exibido (decisão do usuário).
+- Valores formatados com 10 casas decimais como o original (`toFixed(10)` com vírgula como separador, mantendo o visual do Bling). Cabeçalhos e totais em bold.
+- `Código` = `produto.sku` se existir, senão vazio.
+- `Un` = `produto.unidade`.
+
+## 6. Integração
+
+- Botão "Exportar PDF" chama `gerarPedidoCompraPDF` com a requisição já carregada (estende a query do hook para trazer `fornecedor.endereco/cidade/estado/cep` e `estoque.sku/unidade`).
+- Buscar `company_settings` via `useCompanySettings` (já existe).
 
 ## Fora de escopo
 
-- Não altera RLS de `admin_users`.
-- Não altera `ObservacoesPortaForm` nem a lista de autorizados.
-- Não muda outros lugares que usam `admin_users` (que podem ter o mesmo problema, mas o pedido foi específico desta tela).
+- Não altera fluxo de aprovação, status, ou integrações fiscais.
+- Não adiciona campo IE em `company_settings`.
+- Quantidade segue INTEGER (decisão do usuário).
+- `preco_unitario`/`preco_total` legados permanecem na tabela.

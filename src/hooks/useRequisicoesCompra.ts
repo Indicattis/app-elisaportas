@@ -6,9 +6,15 @@ export interface RequisicaoCompraItem {
   id?: string;
   produto_id: string;
   produto_nome?: string;
+  produto_sku?: string | null;
+  produto_unidade?: string | null;
   quantidade: number;
   preco_unitario?: number;
   preco_total?: number;
+  valor_unitario?: number;
+  ipi_percent?: number;
+  codigo_fornecedor?: string | null;
+  localizacao?: string | null;
   observacoes?: string;
 }
 
@@ -17,6 +23,9 @@ export interface RequisicaoCompra {
   numero_requisicao: string;
   fornecedor_id?: string;
   fornecedor_nome?: string;
+  fornecedor_cnpj?: string | null;
+  fornecedor_cidade?: string | null;
+  fornecedor_estado?: string | null;
   status: "pendente_aprovacao" | "em_analise" | "aprovada" | "aguardando_fornecedor" | "ok_financeiro" | "rejeitada" | "em_cotacao" | "pedido_realizado" | "concluida";
   solicitante_id?: string;
   solicitante_nome?: string;
@@ -48,7 +57,7 @@ export const useRequisicoesCompra = () => {
         .from("requisicoes_compra")
         .select(`
           *,
-          fornecedores(nome),
+          fornecedores(nome, cnpj, cidade, estado),
           admin_users!requisicoes_compra_solicitante_id_fkey(nome)
         `)
         .order("created_at", { ascending: false });
@@ -62,7 +71,7 @@ export const useRequisicoesCompra = () => {
             .from("requisicoes_compra_itens")
             .select(`
               *,
-              estoque(nome_produto)
+              estoque(nome_produto, sku, unidade)
             `)
             .eq("requisicao_id", req.id);
 
@@ -71,10 +80,15 @@ export const useRequisicoesCompra = () => {
           return {
             ...req,
             fornecedor_nome: req.fornecedores?.nome,
+            fornecedor_cnpj: req.fornecedores?.cnpj ?? null,
+            fornecedor_cidade: req.fornecedores?.cidade ?? null,
+            fornecedor_estado: req.fornecedores?.estado ?? null,
             solicitante_nome: req.admin_users?.nome,
             itens: (itensData || []).map((item: any) => ({
               ...item,
               produto_nome: item.estoque?.nome_produto,
+              produto_sku: item.estoque?.sku ?? null,
+              produto_unidade: item.estoque?.unidade ?? null,
             })),
           };
         })
@@ -93,6 +107,13 @@ export const useRequisicoesCompra = () => {
       if (numeroError) throw numeroError;
 
       // Criar requisição
+      const valorTotal = (requisicao.itens || []).reduce((acc, it) => {
+        const qtd = Number(it.quantidade) || 0;
+        const vu = Number(it.valor_unitario) || 0;
+        const ipi = Number(it.ipi_percent) || 0;
+        return acc + qtd * vu * (1 + ipi / 100);
+      }, 0);
+
       const { data: reqData, error: reqError } = await supabase
         .from("requisicoes_compra")
         .insert([{
@@ -101,6 +122,7 @@ export const useRequisicoesCompra = () => {
           data_necessidade: requisicao.data_necessidade,
           observacoes: requisicao.observacoes,
           status: "pendente_aprovacao",
+          valor_total: valorTotal,
         }])
         .select()
         .single();
@@ -112,6 +134,10 @@ export const useRequisicoesCompra = () => {
         requisicao_id: reqData.id,
         produto_id: item.produto_id,
         quantidade: item.quantidade,
+        valor_unitario: Number(item.valor_unitario) || 0,
+        ipi_percent: Number(item.ipi_percent) || 0,
+        codigo_fornecedor: item.codigo_fornecedor || null,
+        localizacao: item.localizacao || null,
         observacoes: item.observacoes,
       }));
 
