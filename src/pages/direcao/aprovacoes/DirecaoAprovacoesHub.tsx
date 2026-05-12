@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Factory, ArrowLeft, ShieldCheck, ShoppingCart, Users, ClipboardCheck } from 'lucide-react';
+import { Factory, ArrowLeft, ShieldCheck, ShoppingCart, Users, ClipboardCheck, ShoppingBag } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -12,6 +12,7 @@ const menuItems = [
   { label: 'Aprovações Pedidos', icon: ClipboardCheck, path: '/direcao/aprovacoes/pedidos' },
   { label: 'Aprovações Fábrica', icon: Factory, path: '/direcao/aprovacoes/fabrica' },
   { label: 'Aprovações Vendas', icon: ShoppingCart, path: '/direcao/aprovacoes/vendas' },
+  { label: 'Aprovações Compras', icon: ShoppingBag, path: '/direcao/aprovacoes/compras' },
   { label: 'Aprovações Autorizados', icon: Users, path: '/direcao/aprovacoes/autorizados' },
 ];
 
@@ -65,10 +66,22 @@ export default function DirecaoAprovacoesHub() {
     },
   });
 
+  const { data: countCompras } = useQuery({
+    queryKey: ['aprovacoes-compras-count'],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('requisicoes_compra')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'pendente_aprovacao');
+      return count || 0;
+    },
+  });
+
   const countsMap: Record<string, number> = {
     '/direcao/aprovacoes/pedidos': countPedidos || 0,
     '/direcao/aprovacoes/fabrica': countFabrica || 0,
     '/direcao/aprovacoes/vendas': (countVendas as number) || 0,
+    '/direcao/aprovacoes/compras': countCompras || 0,
     '/direcao/aprovacoes/autorizados': (countAutorizados as number) || 0,
   };
   useEffect(() => {
