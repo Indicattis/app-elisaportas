@@ -1,6 +1,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
+import logoElisa from "@/assets/logo-elisa.png";
 
 export interface PedidoCompraItemPDF {
   descricao: string;
@@ -50,11 +51,30 @@ const fmtDate = (iso?: string | null) => {
   }
 };
 
-export function gerarPedidoCompraPDF(data: PedidoCompraDataPDF) {
+async function loadImageAsDataUrl(url: string): Promise<string> {
+  const res = await fetch(url);
+  const blob = await res.blob();
+  return await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+export async function gerarPedidoCompraPDF(data: PedidoCompraDataPDF) {
   const doc = new jsPDF({ orientation: "portrait", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
   const margin = 12;
   let y = 12;
+
+  // Logo (canto superior esquerdo) — proporção ~3.3:1
+  try {
+    const logoData = await loadImageAsDataUrl(logoElisa);
+    doc.addImage(logoData, "PNG", margin, y, 46, 14);
+  } catch {
+    // segue sem logo se falhar o carregamento
+  }
 
   // Top-right timestamp
   doc.setFontSize(8);
@@ -62,6 +82,9 @@ export function gerarPedidoCompraPDF(data: PedidoCompraDataPDF) {
   doc.setTextColor(120);
   doc.text(format(new Date(), "dd/MM/yy, HH:mm"), pageWidth - margin, y, { align: "right" });
   doc.text("Pedido de Compra", pageWidth - margin, y + 4, { align: "right" });
+
+  // Empurra o conteúdo abaixo da logo
+  y += 18;
 
   // Title
   doc.setTextColor(0);

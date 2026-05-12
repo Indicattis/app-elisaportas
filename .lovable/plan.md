@@ -1,19 +1,12 @@
-## Problema
+## Plano
 
-O hook `useRequisicoesCompra` faz um embed PostgREST:
+1. Copiar a logo para `src/assets/logo-elisa.png` (a partir do upload).
+2. Em `src/utils/pedidoCompraPDF.ts`:
+   - Importar a logo: `import logoElisa from "@/assets/logo-elisa.png";` (Vite resolve para uma URL).
+   - No início de `gerarPedidoCompraPDF`, carregar a imagem em base64 via `fetch(logoElisa).then(r => r.blob())` + `FileReader` (helper `loadImageAsBase64`).
+   - Tornar `gerarPedidoCompraPDF` `async` para aguardar o carregamento.
+   - Adicionar a logo no canto superior esquerdo com `doc.addImage(base64, "PNG", margin, y, 45, 14)` mantendo proporção do logo (≈3.3:1).
+   - Empurrar o título "Pedido de compra Nº X" para baixo da logo (ajustar `y` inicial para ~30) e manter o restante do layout intacto.
+3. Em `src/pages/administrativo/RequisicoesMinimalista.tsx`, ajustar `handleExportarPDF` para `await gerarPedidoCompraPDF(...)` (a função passa a ser async).
 
-```
-admin_users!requisicoes_compra_solicitante_id_fkey(nome)
-```
-
-Mas a FK `requisicoes_compra_solicitante_id_fkey` aponta para `auth.users(id)`, não para `admin_users`. Por isso o PostgREST devolve 400.
-
-## Correção
-
-Em `src/hooks/useRequisicoesCompra.ts`:
-
-1. Remover o embed `admin_users!...` da query principal de `requisicoes_compra`.
-2. Após buscar as requisições, coletar os `solicitante_id` distintos e fazer uma busca paralela em `admin_users` por `user_id IN (...)` selecionando `user_id, nome`.
-3. Mapear `solicitante_nome` no resultado final usando esse dicionário (mantendo o restante intacto: fornecedor, itens, etc.).
-
-Sem alterações de schema/RLS — só ajuste no hook de leitura.
+Sem mudanças de schema nem de outras telas.
