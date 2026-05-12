@@ -83,8 +83,8 @@ export default function RequisicoesMinimalista() {
     }
   };
 
-  const handleExportarPDF = (req: RequisicaoCompra) => {
-    gerarPedidoCompraPDF({
+  const handleExportarPDF = async (req: RequisicaoCompra) => {
+    await gerarPedidoCompraPDF({
       numero: req.numero_requisicao,
       data_emissao: req.created_at,
       data_prevista: req.data_necessidade,
