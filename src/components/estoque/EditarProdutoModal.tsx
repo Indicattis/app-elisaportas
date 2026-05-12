@@ -33,6 +33,8 @@ export function EditarProdutoModal({ produto, open, onOpenChange, onEditar }: Ed
     peso_porta: null as number | null,
     setor_responsavel_producao: null as 'perfiladeira' | 'soldagem' | 'separacao' | 'pintura' | null,
     fornecedor_id: null as string | null,
+    codigo_fornecedor: "" as string,
+    ipi_percent: 0 as number,
   });
 
   useEffect(() => {
@@ -49,6 +51,8 @@ export function EditarProdutoModal({ produto, open, onOpenChange, onEditar }: Ed
         peso_porta: produto.peso_porta,
         setor_responsavel_producao: produto.setor_responsavel_producao,
         fornecedor_id: produto.fornecedor_id,
+        codigo_fornecedor: (produto as any).codigo_fornecedor || "",
+        ipi_percent: Number((produto as any).ipi_percent) || 0,
       });
 
       const catId = categorias.find(c => c.nome.toLowerCase() === produto.categoria.toLowerCase())?.id;
@@ -58,7 +62,11 @@ export function EditarProdutoModal({ produto, open, onOpenChange, onEditar }: Ed
 
   const handleSubmit = async () => {
     if (!produto) return;
-    await onEditar(produto.id, formData);
+    await onEditar(produto.id, {
+      ...formData,
+      codigo_fornecedor: formData.codigo_fornecedor || null,
+      ipi_percent: Number(formData.ipi_percent) || 0,
+    });
     onOpenChange(false);
   };
 
@@ -239,6 +247,25 @@ export function EditarProdutoModal({ produto, open, onOpenChange, onEditar }: Ed
                 ))}
               </SelectContent>
             </Select>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Código no Fornecedor</Label>
+              <Input
+                value={formData.codigo_fornecedor}
+                onChange={(e) => setFormData({ ...formData, codigo_fornecedor: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>IPI (%)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                value={formData.ipi_percent}
+                onChange={(e) => setFormData({ ...formData, ipi_percent: parseFloat(e.target.value) || 0 })}
+              />
+            </div>
           </div>
           <div className="flex gap-2">
             <Button onClick={handleSubmit} className="flex-1">Salvar</Button>

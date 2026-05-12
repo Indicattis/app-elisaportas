@@ -1,38 +1,50 @@
 ## Objetivo
 
-Alinhar visualmente `/administrativo/compras/requisicoes` ao padrão minimalista escuro de `/administrativo/compras/estoque`. O foco é o **modal de Nova Requisição** (que hoje usa o tema light padrão do Dialog) e pequenos ajustes na página.
+Transformar o cadastro de requisição de compra em uma página dedicada e tornar a seleção de itens dependente do fornecedor escolhido, puxando automaticamente do cadastro do item o **código do fornecedor** e o **IPI**.
 
-## 1. Modal — `src/components/compras/RequisicaoCompraForm.tsx`
+## Mudanças
 
-Aplicar o tema glass escuro do estoque:
+### 1. Banco de dados
+A tabela `estoque` hoje tem `fornecedor_id`, mas não armazena `codigo_fornecedor` nem `ipi_percent` por item. Migration para adicionar:
+- `estoque.codigo_fornecedor` (text, nullable)
+- `estoque.ipi_percent` (numeric, default 0)
 
-- `DialogContent`: adicionar `bg-zinc-900 border-white/10 text-white`
-- `DialogTitle` / `DialogDescription`: `text-white` / `text-white/60`
-- Todos os `Input` / `Textarea`: `bg-white/5 border-white/10 text-white placeholder:text-white/40`
-- Todos os `SelectTrigger`: `bg-white/5 border-white/10 text-white`
-- Todos os `SelectContent`: `bg-zinc-900 border-white/10`
-- Tabela editável de itens:
-  - Wrapper: `border border-white/10 rounded-lg`
-  - `TableHeader`/`TableRow`: `border-white/10 hover:bg-transparent`
-  - `TableHead`: `text-xs font-medium text-white/60`
-  - `TableCell`: `text-white` (com `text-white/60` para colunas auxiliares)
-  - Inputs/selects das células com mesmo padrão acima
-- Card de totais: `bg-white/5 border-white/10 text-white` (substitui `bg-muted/30`)
-- Botão "Adicionar item": variant default (gradiente azul) `bg-gradient-to-r from-blue-500 to-blue-700 text-white border-0`
-- Botão "Cancelar" (footer): `border-white/10 text-white hover:bg-white/10`
-- Botão "Criar Requisição": gradiente azul
+### 2. Cadastro do item (estoque)
+No formulário de cadastro/edição de item em `/administrativo/compras/estoque` adicionar dois campos:
+- "Código no fornecedor"
+- "IPI (%)"
 
-## 2. Página — `src/pages/administrativo/RequisicoesMinimalista.tsx`
+Ambos opcionais, agrupados perto do campo Fornecedor já existente.
 
-Pequenos alinhamentos para ficar mais próximo do estoque:
+### 3. Nova página dedicada de requisição
+- Criar rota `/administrativo/compras/requisicoes/nova` (e `/:id/editar` para edição) com a página `NovaRequisicaoCompra.tsx`.
+- Em `RequisicoesMinimalista.tsx`, o botão "Nova Requisição" passa a navegar para essa rota em vez de abrir o `Dialog`. Os botões de editar nos cards também navegam.
+- Remover o `RequisicaoCompraForm` em modal; mover seu conteúdo para a nova página, mantendo o mesmo estilo glass/dark, agora com layout em largura total (header com ações Salvar/Cancelar fixas no topo, seções "Dados gerais", "Itens", "Totais").
 
-- Botão "Nova Requisição" no header: já usa gradiente azul — manter; trocar variant das ações secundárias se houver, e padronizar tamanho `size="sm"`.
-- Adicionar uma **barra de busca** no mesmo padrão do estoque (`p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10` com `Input` glass dentro), filtrando por número da requisição, fornecedor ou solicitante. Mantém os KPI cards e o grid de cards de requisição.
-- Os KPI cards e grid de requisições já seguem o padrão glass — sem mudança.
-- Ajustar o botão "Exportar PDF" do card para o mesmo padrão glass outline (`bg-white/5 border-white/10 text-white hover:bg-white/10`).
+### 4. Vínculo fornecedor → itens
+Na nova página:
+- O seletor de "Item" em cada linha só lista itens de `estoque` cujo `fornecedor_id` = fornecedor selecionado.
+- Se nenhum fornecedor estiver selecionado, o botão "Adicionar item" fica desabilitado com hint "Selecione um fornecedor primeiro".
+- Trocar de fornecedor com itens já adicionados: confirmar com o usuário e limpar a lista de itens (evita inconsistência).
+- Ao escolher um item:
+  - `codigo_fornecedor` ← `estoque.codigo_fornecedor`
+  - `ipi_percent` ← `estoque.ipi_percent`
+  - `valor_unitario` ← `estoque.custo_unitario` (mantido como hoje)
+  - `sku`, `unidade`, `localizacao` (se houver) ← cadastro
+- Esses campos continuam editáveis na linha (sobrescrita manual permitida), mas pré-preenchidos.
+
+### 5. Hook `useEstoque` / consulta
+Adicionar uma query auxiliar `useEstoqueByFornecedor(fornecedorId)` que retorna itens ativos filtrados por `fornecedor_id`, usada apenas pela nova página.
+
+## Detalhes técnicos
+
+- Arquivos novos: `src/pages/administrativo/NovaRequisicaoCompra.tsx`, migration SQL.
+- Arquivos editados: `src/App.tsx` (rotas), `RequisicoesMinimalista.tsx` (navegação, remover Dialog), formulário/modal de cadastro de item em estoque, `useEstoque.ts` (campos novos no tipo + query por fornecedor), `useRequisicoesCompra.ts` (enriquecimento dos itens já passa a incluir `codigo_fornecedor` e `ipi_percent` do estoque como fallback).
+- `RequisicaoCompraForm.tsx` é descontinuado (deletar) ou convertido em componente interno da nova página.
+- PDF e cálculos de totais permanecem inalterados.
 
 ## Fora de escopo
 
-- Não alterar fluxo, validações, hooks ou regras de negócio.
-- Não trocar o grid de cards por tabela (cards já são glass e cabem bem na página).
-- Não tocar em PDF, migrações ou backend.
+- Mudanças no fluxo de aprovação/status.
+- Multi-fornecedor por item (continua 1:1).
+- Histórico de preços.

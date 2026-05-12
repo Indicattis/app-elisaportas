@@ -2275,6 +2275,7 @@ export type Database = {
         Row: {
           ativo: boolean | null
           categoria: string | null
+          codigo_fornecedor: string | null
           conferir_estoque: boolean
           created_at: string | null
           created_by: string | null
@@ -2283,6 +2284,7 @@ export type Database = {
           eixo_calculo: string | null
           fornecedor_id: string | null
           id: string
+          ipi_percent: number
           item_padrao_porta_enrolar: boolean | null
           materia_prima_conversao: number | null
           materia_prima_id: string | null
@@ -2315,6 +2317,7 @@ export type Database = {
         Insert: {
           ativo?: boolean | null
           categoria?: string | null
+          codigo_fornecedor?: string | null
           conferir_estoque?: boolean
           created_at?: string | null
           created_by?: string | null
@@ -2323,6 +2326,7 @@ export type Database = {
           eixo_calculo?: string | null
           fornecedor_id?: string | null
           id?: string
+          ipi_percent?: number
           item_padrao_porta_enrolar?: boolean | null
           materia_prima_conversao?: number | null
           materia_prima_id?: string | null
@@ -2355,6 +2359,7 @@ export type Database = {
         Update: {
           ativo?: boolean | null
           categoria?: string | null
+          codigo_fornecedor?: string | null
           conferir_estoque?: boolean
           created_at?: string | null
           created_by?: string | null
@@ -2363,6 +2368,7 @@ export type Database = {
           eixo_calculo?: string | null
           fornecedor_id?: string | null
           id?: string
+          ipi_percent?: number
           item_padrao_porta_enrolar?: boolean | null
           materia_prima_conversao?: number | null
           materia_prima_id?: string | null

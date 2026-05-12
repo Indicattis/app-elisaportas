@@ -46,6 +46,8 @@ export default function EstoqueMinimalista() {
     valor_calculo: 0,
     eixo_calculo: "",
     item_padrao_porta_enrolar: false,
+    codigo_fornecedor: "",
+    ipi_percent: 0,
   });
 
   const getCategoriaColor = (categoriaId: string) => {
@@ -78,6 +80,8 @@ export default function EstoqueMinimalista() {
         valor_calculo: formData.valor_calculo || null,
         eixo_calculo: formData.eixo_calculo ? formData.eixo_calculo as any : null,
         item_padrao_porta_enrolar: formData.item_padrao_porta_enrolar,
+        codigo_fornecedor: formData.codigo_fornecedor || null,
+        ipi_percent: Number(formData.ipi_percent) || 0,
       });
       
       setFormData({
@@ -96,6 +100,8 @@ export default function EstoqueMinimalista() {
         valor_calculo: 0,
         eixo_calculo: "",
         item_padrao_porta_enrolar: false,
+        codigo_fornecedor: "",
+        ipi_percent: 0,
       });
       setNovoModal(false);
       toast.success("Produto adicionado com sucesso");
@@ -349,6 +355,30 @@ export default function EstoqueMinimalista() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="codigo_fornecedor">Código no Fornecedor</Label>
+                <Input
+                  id="codigo_fornecedor"
+                  value={formData.codigo_fornecedor}
+                  onChange={(e) => setFormData({ ...formData, codigo_fornecedor: e.target.value })}
+                  className="bg-white/5 border-white/10 text-white"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="ipi_percent">IPI (%)</Label>
+                <Input
+                  id="ipi_percent"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={formData.ipi_percent}
+                  onChange={(e) => setFormData({ ...formData, ipi_percent: Number(e.target.value) })}
+                  className="bg-white/5 border-white/10 text-white"
+                />
               </div>
             </div>
 

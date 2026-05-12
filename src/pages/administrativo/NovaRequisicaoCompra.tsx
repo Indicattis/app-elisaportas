@@ -1,31 +1,27 @@
-import { useState, useEffect, useMemo } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Trash2 } from "lucide-react";
-import { RequisicaoCompraFormData, RequisicaoCompraItem } from "@/hooks/useRequisicoesCompra";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Plus, Trash2, ArrowLeft, Save } from "lucide-react";
+import { useRequisicoesCompra, RequisicaoCompraFormData, RequisicaoCompraItem } from "@/hooks/useRequisicoesCompra";
 import { useFornecedores } from "@/hooks/useFornecedores";
 import { useEstoque } from "@/hooks/useEstoque";
+import { MinimalistLayout } from "@/components/MinimalistLayout";
+import { toast } from "sonner";
 
-interface RequisicaoCompraFormProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSubmit: (data: RequisicaoCompraFormData) => Promise<void>;
-  isSubmitting?: boolean;
-}
+const fmtBRL = (n: number) =>
+  n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-export const RequisicaoCompraForm = ({ 
-  open, 
-  onOpenChange, 
-  onSubmit,
-  isSubmitting = false 
-}: RequisicaoCompraFormProps) => {
+export default function NovaRequisicaoCompra() {
+  const navigate = useNavigate();
   const { fornecedores } = useFornecedores();
   const { produtos: estoque } = useEstoque();
+  const { createRequisicao, isCreating } = useRequisicoesCompra();
 
   const [formData, setFormData] = useState<RequisicaoCompraFormData>({
     fornecedor_id: "",
@@ -34,18 +30,40 @@ export const RequisicaoCompraForm = ({
     itens: [],
   });
 
-  useEffect(() => {
-    if (!open) {
-      setFormData({
-        fornecedor_id: "",
-        data_necessidade: "",
-        observacoes: "",
-        itens: [],
-      });
+  const [pendingFornecedorChange, setPendingFornecedorChange] = useState<string | null>(null);
+
+  const itensDoFornecedor = useMemo(
+    () =>
+      estoque.filter(
+        (p) => p.ativo && formData.fornecedor_id && p.fornecedor_id === formData.fornecedor_id
+      ),
+    [estoque, formData.fornecedor_id]
+  );
+
+  const handleSelectFornecedor = (value: string) => {
+    if (formData.itens.length > 0 && value !== formData.fornecedor_id) {
+      setPendingFornecedorChange(value);
+      return;
     }
-  }, [open]);
+    setFormData((prev) => ({ ...prev, fornecedor_id: value }));
+  };
+
+  const confirmFornecedorChange = () => {
+    if (pendingFornecedorChange) {
+      setFormData((prev) => ({
+        ...prev,
+        fornecedor_id: pendingFornecedorChange,
+        itens: [],
+      }));
+      setPendingFornecedorChange(null);
+    }
+  };
 
   const handleAdicionarLinha = () => {
+    if (!formData.fornecedor_id) {
+      toast.error("Selecione um fornecedor primeiro");
+      return;
+    }
     const novoItem: RequisicaoCompraItem = {
       produto_id: "",
       quantidade: 1,
@@ -65,11 +83,14 @@ export const RequisicaoCompraForm = ({
         if (i !== index) return it;
         const merged = { ...it, ...patch };
         if (patch.produto_id) {
-          const produto = estoque.find((p) => p.id === patch.produto_id);
+          const produto: any = estoque.find((p) => p.id === patch.produto_id);
           if (produto) {
             merged.produto_nome = produto.nome_produto;
             merged.produto_unidade = produto.unidade;
-            merged.produto_sku = (produto as any).sku ?? null;
+            merged.produto_sku = produto.sku ?? null;
+            merged.codigo_fornecedor = produto.codigo_fornecedor ?? "";
+            merged.ipi_percent = Number(produto.ipi_percent) || 0;
+            merged.valor_unitario = Number(produto.custo_unitario) || 0;
           }
         }
         return merged;
@@ -99,85 +120,134 @@ export const RequisicaoCompraForm = ({
     return { qtd, produtos, ipi, total: produtos + ipi };
   }, [formData.itens]);
 
-  const fmtBRL = (n: number) =>
-    n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (formData.itens.length === 0 || formData.itens.some((it) => !it.produto_id)) {
+  const handleSalvar = async () => {
+    if (!formData.fornecedor_id) {
+      toast.error("Selecione um fornecedor");
       return;
     }
-
-    await onSubmit(formData);
-    onOpenChange(false);
+    if (formData.itens.length === 0 || formData.itens.some((it) => !it.produto_id)) {
+      toast.error("Adicione ao menos um item válido");
+      return;
+    }
+    try {
+      await createRequisicao(formData);
+      navigate("/administrativo/compras/requisicoes");
+    } catch (e) {
+      // toast já tratado no hook
+    }
   };
 
+  const breadcrumbItems = [
+    { label: "Home", path: "/home" },
+    { label: "Administrativo", path: "/administrativo" },
+    { label: "Compras", path: "/administrativo/compras" },
+    { label: "Requisições", path: "/administrativo/compras/requisicoes" },
+    { label: "Nova" },
+  ];
+
+  const headerActions = (
+    <div className="flex gap-2">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => navigate("/administrativo/compras/requisicoes")}
+        className="border-white/10 text-white hover:bg-white/10"
+      >
+        <ArrowLeft className="h-4 w-4 mr-2" /> Cancelar
+      </Button>
+      <Button
+        size="sm"
+        onClick={handleSalvar}
+        disabled={isCreating}
+        className="bg-gradient-to-r from-blue-500 to-blue-700 text-white border-0"
+      >
+        <Save className="h-4 w-4 mr-2" />
+        {isCreating ? "Salvando..." : "Salvar Requisição"}
+      </Button>
+    </div>
+  );
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-zinc-900 border-white/10 text-white">
-        <DialogHeader>
-          <DialogTitle className="text-white">Nova Requisição de Compra</DialogTitle>
-        </DialogHeader>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="fornecedor" className="text-white/80">Fornecedor</Label>
-              <Select
-                value={formData.fornecedor_id}
-                onValueChange={(value) => 
-                  setFormData(prev => ({ ...prev, fornecedor_id: value }))
-                }
-              >
-                <SelectTrigger id="fornecedor" className="bg-white/5 border-white/10 text-white">
-                  <SelectValue placeholder="Selecione (opcional)" />
-                </SelectTrigger>
-                <SelectContent className="bg-zinc-900 border-white/10 text-white">
-                  {fornecedores.map((fornecedor) => (
-                    <SelectItem key={fornecedor.id} value={fornecedor.id}>
-                      {fornecedor.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+    <MinimalistLayout
+      title="Nova Requisição de Compra"
+      subtitle="Cadastre uma nova requisição"
+      backPath="/administrativo/compras/requisicoes"
+      headerActions={headerActions}
+      breadcrumbItems={breadcrumbItems}
+    >
+      <div className="space-y-6">
+        {/* Dados gerais */}
+        <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
+          <div className="p-5 rounded-lg space-y-4">
+            <h3 className="font-semibold text-white">Dados gerais</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-white/80">Fornecedor *</Label>
+                <Select value={formData.fornecedor_id} onValueChange={handleSelectFornecedor}>
+                  <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                    <SelectValue placeholder="Selecione um fornecedor" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-zinc-900 border-white/10 text-white">
+                    {fornecedores.map((f) => (
+                      <SelectItem key={f.id} value={f.id}>
+                        {f.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-white/80">Data de Necessidade</Label>
+                <Input
+                  type="date"
+                  value={formData.data_necessidade}
+                  onChange={(e) => setFormData((p) => ({ ...p, data_necessidade: e.target.value }))}
+                  className="bg-white/5 border-white/10 text-white placeholder:text-white/40"
+                />
+              </div>
             </div>
-
             <div className="space-y-2">
-              <Label htmlFor="data_necessidade" className="text-white/80">Data de Necessidade</Label>
-              <Input
-                id="data_necessidade"
-                type="date"
-                value={formData.data_necessidade}
-                onChange={(e) => setFormData(prev => ({ ...prev, data_necessidade: e.target.value }))}
+              <Label className="text-white/80">Observações</Label>
+              <Textarea
+                value={formData.observacoes}
+                onChange={(e) => setFormData((p) => ({ ...p, observacoes: e.target.value }))}
+                rows={3}
                 className="bg-white/5 border-white/10 text-white placeholder:text-white/40"
               />
             </div>
           </div>
+        </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="observacoes" className="text-white/80">Observações</Label>
-            <Textarea
-              id="observacoes"
-              value={formData.observacoes}
-              onChange={(e) => setFormData(prev => ({ ...prev, observacoes: e.target.value }))}
-              rows={3}
-              className="bg-white/5 border-white/10 text-white placeholder:text-white/40"
-            />
-          </div>
-
-          <div className="space-y-3">
+        {/* Itens */}
+        <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
+          <div className="p-5 rounded-lg space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-white">Itens da Requisição ({formData.itens.length})</h3>
+              <h3 className="font-semibold text-white">
+                Itens da Requisição ({formData.itens.length})
+              </h3>
               <Button
                 type="button"
                 size="sm"
                 onClick={handleAdicionarLinha}
-                className="bg-gradient-to-r from-blue-500 to-blue-700 text-white border-0"
+                disabled={!formData.fornecedor_id}
+                className="bg-gradient-to-r from-blue-500 to-blue-700 text-white border-0 disabled:opacity-50"
+                title={!formData.fornecedor_id ? "Selecione um fornecedor primeiro" : ""}
               >
                 <Plus className="h-4 w-4 mr-1" /> Adicionar item
               </Button>
             </div>
+
+            {!formData.fornecedor_id && (
+              <p className="text-sm text-white/40">
+                Selecione um fornecedor para liberar a lista de itens disponíveis.
+              </p>
+            )}
+
+            {formData.fornecedor_id && itensDoFornecedor.length === 0 && (
+              <p className="text-sm text-amber-300/80">
+                Este fornecedor não possui itens cadastrados no estoque.
+              </p>
+            )}
 
             {formData.itens.length > 0 && (
               <div className="border border-white/10 rounded-lg overflow-x-auto">
@@ -213,13 +283,11 @@ export const RequisicaoCompraForm = ({
                                 <SelectValue placeholder="Selecione" />
                               </SelectTrigger>
                               <SelectContent className="bg-zinc-900 border-white/10 text-white">
-                                {estoque
-                                  .filter((p) => p.ativo)
-                                  .map((produto) => (
-                                    <SelectItem key={produto.id} value={produto.id}>
-                                      {produto.nome_produto}
-                                    </SelectItem>
-                                  ))}
+                                {itensDoFornecedor.map((produto) => (
+                                  <SelectItem key={produto.id} value={produto.id}>
+                                    {produto.nome_produto}
+                                  </SelectItem>
+                                ))}
                               </SelectContent>
                             </Select>
                           </TableCell>
@@ -326,30 +394,33 @@ export const RequisicaoCompraForm = ({
               </div>
             )}
           </div>
+        </div>
+      </div>
 
-          <div className="flex justify-end gap-2 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              className="border-white/10 text-white hover:bg-white/10"
-            >
+      <AlertDialog
+        open={!!pendingFornecedorChange}
+        onOpenChange={(o) => !o && setPendingFornecedorChange(null)}
+      >
+        <AlertDialogContent className="bg-zinc-900 border-white/10 text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">Trocar fornecedor?</AlertDialogTitle>
+            <AlertDialogDescription className="text-white/60">
+              Os itens já adicionados serão removidos pois pertencem ao fornecedor anterior.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-white/10 text-white hover:bg-white/10">
               Cancelar
-            </Button>
-            <Button
-              type="submit"
-              disabled={
-                isSubmitting ||
-                formData.itens.length === 0 ||
-                formData.itens.some((it) => !it.produto_id)
-              }
-              className="bg-gradient-to-r from-blue-500 to-blue-700 text-white border-0"
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmFornecedorChange}
+              className="bg-gradient-to-r from-blue-500 to-blue-700 text-white"
             >
-              {isSubmitting ? "Criando..." : "Criar Requisição"}
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+              Trocar e limpar itens
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </MinimalistLayout>
   );
-};
+}
