@@ -1,97 +1,38 @@
 ## Objetivo
 
-Em `/administrativo/compras/requisicoes`, capturar todos os campos exigidos pelo PDF padrão Bling e gerar um PDF com o mesmo layout do anexo.
+Alinhar visualmente `/administrativo/compras/requisicoes` ao padrão minimalista escuro de `/administrativo/compras/estoque`. O foco é o **modal de Nova Requisição** (que hoje usa o tema light padrão do Dialog) e pequenos ajustes na página.
 
-## 1. Migration — novos campos por item
+## 1. Modal — `src/components/compras/RequisicaoCompraForm.tsx`
 
-Adicionar em `requisicoes_compra_itens` (quantidade segue INTEGER):
+Aplicar o tema glass escuro do estoque:
 
-```sql
-ALTER TABLE public.requisicoes_compra_itens
-  ADD COLUMN IF NOT EXISTS valor_unitario numeric NOT NULL DEFAULT 0,
-  ADD COLUMN IF NOT EXISTS ipi_percent numeric NOT NULL DEFAULT 0,
-  ADD COLUMN IF NOT EXISTS codigo_fornecedor text,
-  ADD COLUMN IF NOT EXISTS localizacao text;
-```
+- `DialogContent`: adicionar `bg-zinc-900 border-white/10 text-white`
+- `DialogTitle` / `DialogDescription`: `text-white` / `text-white/60`
+- Todos os `Input` / `Textarea`: `bg-white/5 border-white/10 text-white placeholder:text-white/40`
+- Todos os `SelectTrigger`: `bg-white/5 border-white/10 text-white`
+- Todos os `SelectContent`: `bg-zinc-900 border-white/10`
+- Tabela editável de itens:
+  - Wrapper: `border border-white/10 rounded-lg`
+  - `TableHeader`/`TableRow`: `border-white/10 hover:bg-transparent`
+  - `TableHead`: `text-xs font-medium text-white/60`
+  - `TableCell`: `text-white` (com `text-white/60` para colunas auxiliares)
+  - Inputs/selects das células com mesmo padrão acima
+- Card de totais: `bg-white/5 border-white/10 text-white` (substitui `bg-muted/30`)
+- Botão "Adicionar item": variant default (gradiente azul) `bg-gradient-to-r from-blue-500 to-blue-700 text-white border-0`
+- Botão "Cancelar" (footer): `border-white/10 text-white hover:bg-white/10`
+- Botão "Criar Requisição": gradiente azul
 
-Os campos legados `preco_unitario`/`preco_total` permanecem para retrocompatibilidade (não usados no novo fluxo).
+## 2. Página — `src/pages/administrativo/RequisicoesMinimalista.tsx`
 
-## 2. Form — `src/components/compras/RequisicaoCompraForm.tsx`
+Pequenos alinhamentos para ficar mais próximo do estoque:
 
-Trocar a área "Adicionar Item" por uma tabela editável com colunas:
-
-- Produto (Select do estoque — já existe)
-- Un (auto, exibe `produto.unidade` somente leitura)
-- Quantidade (number, INTEGER ≥ 1)
-- Valor unitário (number, BRL com 2 casas)
-- IPI % (number, default 0)
-- Código fornecedor (text, opcional)
-- Localização (text, opcional)
-- Observações (text, opcional)
-- Valor total = `quantidade × valor_unitario × (1 + ipi_percent/100)` (somente leitura)
-- Remover linha
-
-Rodapé do bloco mostra: Nº de itens, Soma das quantidades, Total de produtos, Total de IPI, Total do pedido.
-
-## 3. Hook — `src/hooks/useRequisicoesCompra.ts`
-
-- Adicionar `valor_unitario`, `ipi_percent`, `codigo_fornecedor`, `localizacao` em `RequisicaoCompraItem`.
-- No `createMutation`: persistir esses campos e calcular `valor_total` da requisição (`Σ qtd × valor_unitario × (1+ipi/100)`).
-- No fetch: trazer os mesmos campos (já vem com `select *`).
-
-## 4. Detalhes (Sheet) — `RequisicoesMinimalista.tsx`
-
-Adicionar colunas Un, Valor unit., IPI, Total na tabela de itens e um botão **Exportar PDF** ao lado de "Ver Detalhes" / no Sheet.
-
-## 5. PDF — `src/utils/pedidoCompraPDF.ts` (novo)
-
-Função `gerarPedidoCompraPDF(requisicao, fornecedor, company)` usando `jsPDF` + `jspdf-autotable` (ambos já no projeto, ver `listaComprasPDF.ts`).
-
-Layout (1 página A4 retrato), replicando o anexo:
-
-```text
-[topo direito] data/hora geração
-Pedido de compra Nº {numero_requisicao}
-
-{company.nome} - {company.telefone}
-{company.endereco}
-{company.cep} - {company.cidade}
-CNPJ: {company.cnpj}
-{company.cidade}, {data_emissao}
-
-Fornecedor
-{fornecedor.nome}
-CNPJ: {fornecedor.cnpj}, {fornecedor.cidade}, {fornecedor.estado}
-
-| Número do pedido | {numero_requisicao} |
-| Data             | {created_at}        |
-| Data prevista    | {data_necessidade}  |
-
-Itens do pedido de compra
-| Descrição | Código | Cód. fornec. | Localização | Un | Qtde | Valor unit. | IPI % | Valor total |
-
-Rodapé totais:
-  N° de itens, Soma das Qtdes, Total de produtos, Total do IPI, Total do pedido
-
-Observações
-{observacoes}
-```
-
-Notas:
-
-- IE não é exibido (decisão do usuário).
-- Valores formatados com 10 casas decimais como o original (`toFixed(10)` com vírgula como separador, mantendo o visual do Bling). Cabeçalhos e totais em bold.
-- `Código` = `produto.sku` se existir, senão vazio.
-- `Un` = `produto.unidade`.
-
-## 6. Integração
-
-- Botão "Exportar PDF" chama `gerarPedidoCompraPDF` com a requisição já carregada (estende a query do hook para trazer `fornecedor.endereco/cidade/estado/cep` e `estoque.sku/unidade`).
-- Buscar `company_settings` via `useCompanySettings` (já existe).
+- Botão "Nova Requisição" no header: já usa gradiente azul — manter; trocar variant das ações secundárias se houver, e padronizar tamanho `size="sm"`.
+- Adicionar uma **barra de busca** no mesmo padrão do estoque (`p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10` com `Input` glass dentro), filtrando por número da requisição, fornecedor ou solicitante. Mantém os KPI cards e o grid de cards de requisição.
+- Os KPI cards e grid de requisições já seguem o padrão glass — sem mudança.
+- Ajustar o botão "Exportar PDF" do card para o mesmo padrão glass outline (`bg-white/5 border-white/10 text-white hover:bg-white/10`).
 
 ## Fora de escopo
 
-- Não altera fluxo de aprovação, status, ou integrações fiscais.
-- Não adiciona campo IE em `company_settings`.
-- Quantidade segue INTEGER (decisão do usuário).
-- `preco_unitario`/`preco_total` legados permanecem na tabela.
+- Não alterar fluxo, validações, hooks ou regras de negócio.
+- Não trocar o grid de cards por tabela (cards já são glass e cabem bem na página).
+- Não tocar em PDF, migrações ou backend.

@@ -12,6 +12,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useCompanySettings } from "@/hooks/useCompanySettings";
 import { gerarPedidoCompraPDF } from "@/utils/pedidoCompraPDF";
+import { Input } from "@/components/ui/input";
 
 const statusColors: Record<string, string> = {
   pendente_aprovacao: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
@@ -45,6 +46,24 @@ export default function RequisicoesMinimalista() {
   const [requisicaoSelecionada, setRequisicaoSelecionada] = useState<RequisicaoCompra | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [requisicaoToDelete, setRequisicaoToDelete] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState(
+    () => sessionStorage.getItem("requisicoes_searchTerm") || ""
+  );
+
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    sessionStorage.setItem("requisicoes_searchTerm", value);
+  };
+
+  const requisicoesFiltradas = useMemo(() => {
+    if (!searchTerm.trim()) return requisicoes;
+    const q = searchTerm.toLowerCase();
+    return requisicoes.filter((r) =>
+      [r.numero_requisicao, r.fornecedor_nome, r.solicitante_nome]
+        .filter(Boolean)
+        .some((v) => (v as string).toLowerCase().includes(q))
+    );
+  }, [requisicoes, searchTerm]);
 
   const handleVerDetalhes = (requisicao: RequisicaoCompra) => {
     setRequisicaoSelecionada(requisicao);
@@ -192,23 +211,37 @@ export default function RequisicoesMinimalista() {
           </div>
         </div>
 
+        {/* Barra de busca */}
+        <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
+          <div className="p-4 rounded-lg">
+            <Input
+              placeholder="Buscar por número, fornecedor ou solicitante..."
+              value={searchTerm}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              className="max-w-sm bg-white/5 border-white/10 text-white placeholder:text-white/40"
+            />
+          </div>
+        </div>
+
         {/* Lista de Requisições */}
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
           </div>
-        ) : requisicoes.length === 0 ? (
+        ) : requisicoesFiltradas.length === 0 ? (
           <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
             <div className="flex flex-col items-center justify-center py-12 rounded-lg">
               <ShoppingCart className="h-12 w-12 text-white/20 mb-4" />
               <p className="text-white/40 text-center">
-                Nenhuma requisição cadastrada. Clique em "Nova Requisição" para começar.
+                {searchTerm
+                  ? "Nenhuma requisição encontrada para a busca."
+                  : 'Nenhuma requisição cadastrada. Clique em "Nova Requisição" para começar.'}
               </p>
             </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {requisicoes.map((requisicao) => (
+            {requisicoesFiltradas.map((requisicao) => (
               <div key={requisicao.id} className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 hover:bg-white/10 transition-colors">
                 <div className="p-4 rounded-lg space-y-3">
                   <div className="flex items-start justify-between">
