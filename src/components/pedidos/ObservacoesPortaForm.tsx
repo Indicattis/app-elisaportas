@@ -8,6 +8,7 @@ import { FileText, ChevronDown, Edit, Save, X, User, Building2, Check, ChevronsU
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from "@/components/ui/command";
+import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import type { PedidoPortaObservacoesInsert } from "@/types/pedidoObservacoes";
 import {
@@ -56,6 +57,7 @@ export function ObservacoesPortaForm({
       indice_porta: porta._indicePorta ?? 0,
       responsavel_medidas_id: valoresIniciais?.responsavel_medidas_id || null,
       tipo_responsavel: valoresIniciais?.tipo_responsavel || 'admin',
+      cliente_medeu: valoresIniciais?.cliente_medeu ?? false,
       opcao_tubo: valoresIniciais?.opcao_tubo || 'sem_tubo',
       interna_externa: valoresIniciais?.interna_externa || 'porta_interna',
       retirada_porta: valoresIniciais?.retirada_porta || false,
@@ -85,6 +87,7 @@ export function ObservacoesPortaForm({
       indice_porta: porta._indicePorta ?? 0,
       responsavel_medidas_id: valoresIniciais?.responsavel_medidas_id || null,
       tipo_responsavel: valoresIniciais?.tipo_responsavel || 'admin',
+      cliente_medeu: valoresIniciais?.cliente_medeu ?? false,
       opcao_tubo: valoresIniciais?.opcao_tubo || 'sem_tubo',
       interna_externa: valoresIniciais?.interna_externa || 'porta_interna',
       retirada_porta: valoresIniciais?.retirada_porta || false,
@@ -116,7 +119,8 @@ export function ObservacoesPortaForm({
     return porta.tamanho || 'Medidas não informadas';
   };
 
-  const responsavelPreenchido = !!form.watch('responsavel_medidas_id');
+  const clienteMedeu = !!form.watch('cliente_medeu');
+  const responsavelPreenchido = !!form.watch('responsavel_medidas_id') || clienteMedeu;
 
   // Label da porta considerando se é expandida
   const portaLabel = porta._totalNoGrupo && porta._totalNoGrupo > 1
