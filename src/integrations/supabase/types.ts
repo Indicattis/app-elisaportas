@@ -8605,6 +8605,13 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_responsaveis_internos: {
+        Args: never
+        Returns: {
+          id: string
+          nome: string
+        }[]
+      }
       get_venda_itens_vinculados: {
         Args: { p_venda_id: string }
         Returns: Json
