@@ -8431,6 +8431,17 @@ export type Database = {
           numero: number
         }[]
       }
+      get_configuracoes_vendas_publicas: {
+        Args: never
+        Returns: {
+          id: string
+          limite_adicional_responsavel: number
+          limite_desconto_avista: number
+          limite_desconto_presencial: number
+          responsavel_senha_master_id: string
+          responsavel_senha_responsavel_id: string
+        }[]
+      }
       get_cores_pintadas_hoje: {
         Args: never
         Returns: {
@@ -8762,6 +8773,10 @@ export type Database = {
       }
       verificar_ordens_pedido_concluidas: {
         Args: { p_pedido_id: string }
+        Returns: boolean
+      }
+      verificar_senha_vendas: {
+        Args: { p_senha: string; p_tipo: string }
         Returns: boolean
       }
     }
