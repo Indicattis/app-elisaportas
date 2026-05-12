@@ -6851,34 +6851,46 @@ export type Database = {
       }
       requisicoes_compra_itens: {
         Row: {
+          codigo_fornecedor: string | null
           created_at: string
           id: string
+          ipi_percent: number
+          localizacao: string | null
           observacoes: string | null
           preco_total: number | null
           preco_unitario: number | null
           produto_id: string
           quantidade: number
           requisicao_id: string
+          valor_unitario: number
         }
         Insert: {
+          codigo_fornecedor?: string | null
           created_at?: string
           id?: string
+          ipi_percent?: number
+          localizacao?: string | null
           observacoes?: string | null
           preco_total?: number | null
           preco_unitario?: number | null
           produto_id: string
           quantidade: number
           requisicao_id: string
+          valor_unitario?: number
         }
         Update: {
+          codigo_fornecedor?: string | null
           created_at?: string
           id?: string
+          ipi_percent?: number
+          localizacao?: string | null
           observacoes?: string | null
           preco_total?: number | null
           preco_unitario?: number | null
           produto_id?: string
           quantidade?: number
           requisicao_id?: string
+          valor_unitario?: number
         }
         Relationships: [
           {
