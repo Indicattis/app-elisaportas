@@ -35,7 +35,6 @@ export function useLiderVendas() {
         .from("admin_users")
         .select("user_id, nome, email, role, foto_perfil_url")
         .eq("user_id", setorLider.lider_id)
-        .eq("ativo", true)
         .maybeSingle();
 
       if (usuarioError) {
