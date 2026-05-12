@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,10 +34,6 @@ export const RequisicaoCompraForm = ({
     itens: [],
   });
 
-  const [itemSelecionado, setItemSelecionado] = useState<string>("");
-  const [quantidadeItem, setQuantidadeItem] = useState<number>(1);
-  const [observacoesItem, setObservacoesItem] = useState<string>("");
-
   useEffect(() => {
     if (!open) {
       setFormData({
@@ -46,35 +42,39 @@ export const RequisicaoCompraForm = ({
         observacoes: "",
         itens: [],
       });
-      setItemSelecionado("");
-      setQuantidadeItem(1);
-      setObservacoesItem("");
     }
   }, [open]);
 
-  const handleAdicionarItem = () => {
-    if (!itemSelecionado || quantidadeItem <= 0) {
-      return;
-    }
-
-    const produto = estoque.find((p) => p.id === itemSelecionado);
-    if (!produto) return;
-
+  const handleAdicionarLinha = () => {
     const novoItem: RequisicaoCompraItem = {
-      produto_id: itemSelecionado,
-      produto_nome: produto.nome_produto,
-      quantidade: quantidadeItem,
-      observacoes: observacoesItem,
+      produto_id: "",
+      quantidade: 1,
+      valor_unitario: 0,
+      ipi_percent: 0,
+      codigo_fornecedor: "",
+      localizacao: "",
+      observacoes: "",
     };
+    setFormData((prev) => ({ ...prev, itens: [...prev.itens, novoItem] }));
+  };
 
+  const handleAlterarItem = (index: number, patch: Partial<RequisicaoCompraItem>) => {
     setFormData((prev) => ({
       ...prev,
-      itens: [...prev.itens, novoItem],
+      itens: prev.itens.map((it, i) => {
+        if (i !== index) return it;
+        const merged = { ...it, ...patch };
+        if (patch.produto_id) {
+          const produto = estoque.find((p) => p.id === patch.produto_id);
+          if (produto) {
+            merged.produto_nome = produto.nome_produto;
+            merged.produto_unidade = produto.unidade;
+            merged.produto_sku = (produto as any).sku ?? null;
+          }
+        }
+        return merged;
+      }),
     }));
-
-    setItemSelecionado("");
-    setQuantidadeItem(1);
-    setObservacoesItem("");
   };
 
   const handleRemoverItem = (index: number) => {
@@ -84,10 +84,28 @@ export const RequisicaoCompraForm = ({
     }));
   };
 
+  const totais = useMemo(() => {
+    let qtd = 0;
+    let produtos = 0;
+    let ipi = 0;
+    formData.itens.forEach((it) => {
+      const q = Number(it.quantidade) || 0;
+      const vu = Number(it.valor_unitario) || 0;
+      const ip = Number(it.ipi_percent) || 0;
+      qtd += q;
+      produtos += q * vu;
+      ipi += q * vu * (ip / 100);
+    });
+    return { qtd, produtos, ipi, total: produtos + ipi };
+  }, [formData.itens]);
+
+  const fmtBRL = (n: number) =>
+    n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (formData.itens.length === 0) {
+
+    if (formData.itens.length === 0 || formData.itens.some((it) => !it.produto_id)) {
       return;
     }
 
@@ -146,99 +164,167 @@ export const RequisicaoCompraForm = ({
             />
           </div>
 
-          <div className="border rounded-lg p-4 space-y-4">
-            <h3 className="font-semibold">Adicionar Item</h3>
-            
-            <div className="grid grid-cols-12 gap-2">
-              <div className="col-span-5 space-y-2">
-                <Label>Produto *</Label>
-                <Select value={itemSelecionado} onValueChange={setItemSelecionado}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {estoque
-                      .filter((p) => p.ativo)
-                      .map((produto) => (
-                        <SelectItem key={produto.id} value={produto.id}>
-                          {produto.nome_produto}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="col-span-2 space-y-2">
-                <Label>Quantidade *</Label>
-                <Input
-                  type="number"
-                  min="1"
-                  value={quantidadeItem}
-                  onChange={(e) => setQuantidadeItem(parseInt(e.target.value) || 1)}
-                />
-              </div>
-
-              <div className="col-span-4 space-y-2">
-                <Label>Observações</Label>
-                <Input
-                  value={observacoesItem}
-                  onChange={(e) => setObservacoesItem(e.target.value)}
-                />
-              </div>
-
-              <div className="col-span-1 flex items-end">
-                <Button
-                  type="button"
-                  onClick={handleAdicionarItem}
-                  disabled={!itemSelecionado || quantidadeItem <= 0}
-                  size="icon"
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold">Itens da Requisição ({formData.itens.length})</h3>
+              <Button type="button" size="sm" onClick={handleAdicionarLinha}>
+                <Plus className="h-4 w-4 mr-1" /> Adicionar item
+              </Button>
             </div>
-          </div>
 
-          {formData.itens.length > 0 && (
-            <div>
-              <h3 className="font-semibold mb-2">Itens da Requisição ({formData.itens.length})</h3>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Produto</TableHead>
-                    <TableHead className="text-center">Quantidade</TableHead>
-                    <TableHead>Observações</TableHead>
-                    <TableHead className="w-16"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {formData.itens.map((item, index) => (
-                    <TableRow key={index}>
-                      <TableCell className="font-medium">{item.produto_nome}</TableCell>
-                      <TableCell className="text-center">{item.quantidade}</TableCell>
-                      <TableCell>{item.observacoes || "-"}</TableCell>
-                      <TableCell>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleRemoverItem(index)}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </TableCell>
+            {formData.itens.length > 0 && (
+              <div className="border rounded-lg overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="min-w-[220px]">Produto *</TableHead>
+                      <TableHead className="w-16">Un</TableHead>
+                      <TableHead className="w-20">Qtde *</TableHead>
+                      <TableHead className="w-28">Valor unit.</TableHead>
+                      <TableHead className="w-20">IPI %</TableHead>
+                      <TableHead className="w-32">Cód. fornec.</TableHead>
+                      <TableHead className="w-32">Localização</TableHead>
+                      <TableHead className="min-w-[160px]">Observações</TableHead>
+                      <TableHead className="w-28 text-right">Total</TableHead>
+                      <TableHead className="w-12"></TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
+                  </TableHeader>
+                  <TableBody>
+                    {formData.itens.map((item, index) => {
+                      const total =
+                        (Number(item.quantidade) || 0) *
+                        (Number(item.valor_unitario) || 0) *
+                        (1 + (Number(item.ipi_percent) || 0) / 100);
+                      return (
+                        <TableRow key={index}>
+                          <TableCell>
+                            <Select
+                              value={item.produto_id}
+                              onValueChange={(v) => handleAlterarItem(index, { produto_id: v })}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {estoque
+                                  .filter((p) => p.ativo)
+                                  .map((produto) => (
+                                    <SelectItem key={produto.id} value={produto.id}>
+                                      {produto.nome_produto}
+                                    </SelectItem>
+                                  ))}
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {item.produto_unidade || "-"}
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              min="1"
+                              value={item.quantidade}
+                              onChange={(e) =>
+                                handleAlterarItem(index, {
+                                  quantidade: parseInt(e.target.value) || 1,
+                                })
+                              }
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={item.valor_unitario ?? 0}
+                              onChange={(e) =>
+                                handleAlterarItem(index, {
+                                  valor_unitario: parseFloat(e.target.value) || 0,
+                                })
+                              }
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={item.ipi_percent ?? 0}
+                              onChange={(e) =>
+                                handleAlterarItem(index, {
+                                  ipi_percent: parseFloat(e.target.value) || 0,
+                                })
+                              }
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              value={item.codigo_fornecedor ?? ""}
+                              onChange={(e) =>
+                                handleAlterarItem(index, { codigo_fornecedor: e.target.value })
+                              }
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              value={item.localizacao ?? ""}
+                              onChange={(e) =>
+                                handleAlterarItem(index, { localizacao: e.target.value })
+                              }
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              value={item.observacoes ?? ""}
+                              onChange={(e) =>
+                                handleAlterarItem(index, { observacoes: e.target.value })
+                              }
+                            />
+                          </TableCell>
+                          <TableCell className="text-right text-sm font-medium">
+                            {fmtBRL(total)}
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleRemoverItem(index)}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+
+            {formData.itens.length > 0 && (
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-2 text-sm border rounded-lg p-3 bg-muted/30">
+                <div><span className="text-muted-foreground">Itens:</span> <strong>{formData.itens.length}</strong></div>
+                <div><span className="text-muted-foreground">Qtdes:</span> <strong>{totais.qtd}</strong></div>
+                <div><span className="text-muted-foreground">Produtos:</span> <strong>{fmtBRL(totais.produtos)}</strong></div>
+                <div><span className="text-muted-foreground">IPI:</span> <strong>{fmtBRL(totais.ipi)}</strong></div>
+                <div><span className="text-muted-foreground">Total:</span> <strong>{fmtBRL(totais.total)}</strong></div>
+              </div>
+            )}
+          </div>
 
           <div className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={isSubmitting || formData.itens.length === 0}>
+            <Button
+              type="submit"
+              disabled={
+                isSubmitting ||
+                formData.itens.length === 0 ||
+                formData.itens.some((it) => !it.produto_id)
+              }
+            >
               {isSubmitting ? "Criando..." : "Criar Requisição"}
             </Button>
           </div>
