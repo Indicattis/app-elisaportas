@@ -8347,6 +8347,7 @@ export type Database = {
         Returns: number
       }
       can_manage_permissions: { Args: { _user_id: string }; Returns: boolean }
+      can_view_all_admin_users: { Args: never; Returns: boolean }
       concluir_carregamento_e_avancar_pedido: {
         Args: { p_ordem_carregamento_id: string }
         Returns: undefined
