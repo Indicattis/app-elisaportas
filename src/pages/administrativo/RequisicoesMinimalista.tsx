@@ -240,78 +240,79 @@ export default function RequisicoesMinimalista() {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {requisicoesFiltradas.map((requisicao) => (
-              <div key={requisicao.id} className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 hover:bg-white/10 transition-colors">
-                <div className="p-4 rounded-lg space-y-3">
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-1">
-                      <h3 className="text-lg font-semibold text-white">{requisicao.numero_requisicao}</h3>
-                      <div className="flex items-center gap-1 text-xs text-white/40">
-                        <Calendar className="h-3 w-3" />
+          <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
+            <div className="rounded-lg overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-white/10 hover:bg-transparent">
+                    <TableHead className="text-white/60">Número</TableHead>
+                    <TableHead className="text-white/60">Data</TableHead>
+                    <TableHead className="text-white/60">Fornecedor</TableHead>
+                    <TableHead className="text-white/60">Solicitante</TableHead>
+                    <TableHead className="text-white/60">Necessário até</TableHead>
+                    <TableHead className="text-center text-white/60">Itens</TableHead>
+                    <TableHead className="text-white/60">Status</TableHead>
+                    <TableHead className="text-right text-white/60">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {requisicoesFiltradas.map((requisicao) => (
+                    <TableRow key={requisicao.id} className="border-white/10 hover:bg-white/5">
+                      <TableCell className="font-semibold text-white">{requisicao.numero_requisicao}</TableCell>
+                      <TableCell className="text-white/70">
                         {format(new Date(requisicao.created_at), "dd/MM/yyyy", { locale: ptBR })}
-                      </div>
-                    </div>
-                    <Badge className={statusColors[requisicao.status]}>
-                      {statusLabels[requisicao.status]}
-                    </Badge>
-                  </div>
-
-                  {requisicao.fornecedor_nome && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <PackageIcon className="h-4 w-4 text-white/40" />
-                      <span className="font-medium text-white">{requisicao.fornecedor_nome}</span>
-                    </div>
-                  )}
-                  
-                  <div className="flex items-center gap-2 text-sm">
-                    <User className="h-4 w-4 text-white/40" />
-                    <span className="text-white/80">{requisicao.solicitante_nome || "Sistema"}</span>
-                  </div>
-
-                  {requisicao.data_necessidade && (
-                    <div className="text-sm text-white/60">
-                      Necessário até: {format(new Date(requisicao.data_necessidade), "dd/MM/yyyy", { locale: ptBR })}
-                    </div>
-                  )}
-
-                  <div className="text-sm font-medium text-white">
-                    {requisicao.itens?.length || 0} {requisicao.itens?.length === 1 ? "item" : "itens"}
-                  </div>
-
-                  <div className="flex gap-2 pt-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleVerDetalhes(requisicao)}
-                      className="flex-1 border-white/10 text-white hover:bg-white/10"
-                    >
-                      <Eye className="h-4 w-4 mr-1" />
-                      Ver Detalhes
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleExportarPDF(requisicao)}
-                      className="border-white/10 text-white hover:bg-white/10"
-                      title="Exportar PDF"
-                    >
-                      <Download className="h-4 w-4" />
-                    </Button>
-                    {requisicao.status === "pendente_aprovacao" && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(requisicao.id)}
-                        className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
+                      </TableCell>
+                      <TableCell className="text-white">{requisicao.fornecedor_nome || "-"}</TableCell>
+                      <TableCell className="text-white/80">{requisicao.solicitante_nome || "Sistema"}</TableCell>
+                      <TableCell className="text-white/70">
+                        {requisicao.data_necessidade
+                          ? format(new Date(requisicao.data_necessidade), "dd/MM/yyyy", { locale: ptBR })
+                          : "-"}
+                      </TableCell>
+                      <TableCell className="text-center text-white">{requisicao.itens?.length || 0}</TableCell>
+                      <TableCell>
+                        <Badge className={statusColors[requisicao.status]}>
+                          {statusLabels[requisicao.status]}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleVerDetalhes(requisicao)}
+                            className="text-white hover:bg-white/10"
+                            title="Ver detalhes"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleExportarPDF(requisicao)}
+                            className="text-white hover:bg-white/10"
+                            title="Exportar PDF"
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
+                          {requisicao.status === "pendente_aprovacao" && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDelete(requisicao.id)}
+                              className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                              title="Excluir"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </div>
         )}
       </div>
