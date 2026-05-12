@@ -580,6 +580,15 @@ export default function VendaDetalhesDirecao() {
                   <p className="text-white">{formatDate(venda.previsao_entrega)}</p>
                 </div>
               )}
+              {tipoOp && (
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-white/60">
+                    <tipoOp.icon className="w-4 h-4" />
+                    Tipo de Operação
+                  </div>
+                  <Badge className={`${tipoOp.color} border`}>{tipoOp.label}</Badge>
+                </div>
+              )}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-white/60">
                   <CreditCard className="w-4 h-4" />
