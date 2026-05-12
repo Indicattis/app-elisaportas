@@ -57,12 +57,26 @@ export const useRequisicoesCompra = () => {
         .from("requisicoes_compra")
         .select(`
           *,
-          fornecedores(nome, cnpj, cidade, estado),
-          admin_users!requisicoes_compra_solicitante_id_fkey(nome)
+          fornecedores(nome, cnpj, cidade, estado)
         `)
         .order("created_at", { ascending: false });
 
       if (reqError) throw reqError;
+
+      // Buscar nomes dos solicitantes separadamente (FK aponta para auth.users, não para admin_users)
+      const solicitanteIds = Array.from(
+        new Set((reqData || []).map((r: any) => r.solicitante_id).filter(Boolean))
+      );
+      const solicitanteMap: Record<string, string> = {};
+      if (solicitanteIds.length > 0) {
+        const { data: usersData } = await supabase
+          .from("admin_users")
+          .select("user_id, nome")
+          .in("user_id", solicitanteIds);
+        (usersData || []).forEach((u: any) => {
+          if (u.user_id) solicitanteMap[u.user_id] = u.nome;
+        });
+      }
 
       // Buscar itens de cada requisição
       const requisicoesComItens = await Promise.all(
@@ -83,7 +97,7 @@ export const useRequisicoesCompra = () => {
             fornecedor_cnpj: req.fornecedores?.cnpj ?? null,
             fornecedor_cidade: req.fornecedores?.cidade ?? null,
             fornecedor_estado: req.fornecedores?.estado ?? null,
-            solicitante_nome: req.admin_users?.nome,
+            solicitante_nome: solicitanteMap[req.solicitante_id] ?? null,
             itens: (itensData || []).map((item: any) => ({
               ...item,
               produto_nome: item.estoque?.nome_produto,
