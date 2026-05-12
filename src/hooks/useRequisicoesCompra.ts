@@ -100,6 +100,9 @@ export const useRequisicoesCompra = () => {
 
   const createMutation = useMutation({
     mutationFn: async (requisicao: RequisicaoCompraFormData) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuário não autenticado");
+
       // Gerar número da requisição
       const { data: numeroData, error: numeroError } = await supabase
         .rpc("gerar_numero_requisicao");
@@ -119,10 +122,11 @@ export const useRequisicoesCompra = () => {
         .insert([{
           numero_requisicao: numeroData,
           fornecedor_id: requisicao.fornecedor_id,
-          data_necessidade: requisicao.data_necessidade,
+          data_necessidade: requisicao.data_necessidade || null,
           observacoes: requisicao.observacoes,
           status: "pendente_aprovacao",
           valor_total: valorTotal,
+          solicitante_id: user.id,
         }])
         .select()
         .single();
