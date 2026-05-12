@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -6,7 +7,6 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ShoppingCart, Plus, Eye, Trash2, Calendar, User, Package as PackageIcon, FileText, Clock, CheckCircle, TruckIcon, Download } from "lucide-react";
 import { useRequisicoesCompra, RequisicaoCompra } from "@/hooks/useRequisicoesCompra";
-import { RequisicaoCompraForm } from "@/components/compras/RequisicaoCompraForm";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -39,9 +39,9 @@ const statusLabels: Record<string, string> = {
 };
 
 export default function RequisicoesMinimalista() {
-  const { requisicoes, isLoading, createRequisicao, deleteRequisicao, isCreating, isDeleting } = useRequisicoesCompra();
+  const navigate = useNavigate();
+  const { requisicoes, isLoading, deleteRequisicao, isDeleting } = useRequisicoesCompra();
   const { settings: company } = useCompanySettings();
-  const [formOpen, setFormOpen] = useState(false);
   const [detalhesOpen, setDetalhesOpen] = useState(false);
   const [requisicaoSelecionada, setRequisicaoSelecionada] = useState<RequisicaoCompra | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -135,7 +135,7 @@ export default function RequisicoesMinimalista() {
 
   const headerActions = (
     <Button 
-      onClick={() => setFormOpen(true)}
+      onClick={() => navigate("/administrativo/compras/requisicoes/nova")}
       className="bg-gradient-to-r from-blue-500 to-blue-700 text-white border-0"
       size="sm"
     >
@@ -315,15 +315,6 @@ export default function RequisicoesMinimalista() {
           </div>
         )}
       </div>
-
-      <RequisicaoCompraForm
-        open={formOpen}
-        onOpenChange={setFormOpen}
-        onSubmit={async (data) => {
-          await createRequisicao(data);
-        }}
-        isSubmitting={isCreating}
-      />
 
       <Sheet open={detalhesOpen} onOpenChange={setDetalhesOpen}>
         <SheetContent className="w-full sm:max-w-2xl overflow-y-auto bg-zinc-900 border-white/10 text-white">
