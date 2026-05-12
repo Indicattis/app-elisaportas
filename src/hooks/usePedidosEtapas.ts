@@ -610,12 +610,12 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
             // Verificar se todas as portas têm observações com responsável preenchido
             const { data: observacoes } = await supabase
               .from('pedido_porta_observacoes')
-              .select('produto_venda_id, responsavel_medidas_id')
+              .select('produto_venda_id, responsavel_medidas_id, cliente_medeu')
               .eq('pedido_id', pedidoId);
 
             for (const porta of portasEnrolar) {
               const obs = observacoes?.find(o => o.produto_venda_id === porta.id);
-              if (!obs || !obs.responsavel_medidas_id) {
+              if (!obs || (!obs.responsavel_medidas_id && !(obs as any).cliente_medeu)) {
                 throw new Error('Preencha o responsável pelas medidas em todas as portas antes de iniciar a produção');
               }
             }
