@@ -30,7 +30,8 @@ import {
   ArrowDown,
   ArrowUp,
   Trash2,
-  Pencil
+  Pencil,
+  Settings
 } from "lucide-react";
 import { agruparItensCatalogo } from "@/utils/agruparItensCatalogo";
 
@@ -86,6 +87,7 @@ interface Venda {
   observacoes_venda: string | null;
   comprovante_url: string | null;
   atendente_id: string | null;
+  tipo_entrega: 'entrega' | 'instalacao' | 'manutencao' | null;
   produtos?: Produto[];
   atendente?: Atendente;
 }
@@ -251,6 +253,13 @@ export default function VendaDetalhesDirecao() {
 
   const cardClass = "bg-white/5 border border-blue-500/10 backdrop-blur-xl rounded-xl p-4";
 
+  const tipoEntregaInfo: Record<string, { label: string; icon: typeof Wrench; color: string }> = {
+    entrega: { label: 'Entrega', icon: Truck, color: 'bg-purple-500/20 text-purple-300 border-purple-400/30' },
+    instalacao: { label: 'Instalação', icon: Wrench, color: 'bg-orange-500/20 text-orange-300 border-orange-400/30' },
+    manutencao: { label: 'Manutenção', icon: Settings, color: 'bg-green-500/20 text-green-300 border-green-400/30' },
+  };
+  const tipoOp = venda.tipo_entrega ? tipoEntregaInfo[venda.tipo_entrega] : null;
+
   return (
     <MinimalistLayout 
       title="Detalhes da Venda" 
@@ -264,6 +273,12 @@ export default function VendaDetalhesDirecao() {
       ]}
       headerActions={
         <div className="flex items-center gap-2">
+          {tipoOp && (
+            <Badge className={`${tipoOp.color} border h-10 px-3 rounded-lg flex items-center gap-1.5 text-xs`}>
+              <tipoOp.icon className="w-4 h-4" />
+              {tipoOp.label}
+            </Badge>
+          )}
           {isAdmin && (
             <Button 
               onClick={() => navigate(`/direcao/vendas/${id}/editar`)}
