@@ -1,36 +1,63 @@
-## Objetivo
-No PDF "Lista de Compras" gerado em `/direcao/gestao-fabrica`, adicionar duas colunas relativas à matéria-prima vinculada ao material e exibir todas as quantidades (necessário e a comprar) com a unidade de medida correta — usando o catálogo `src/utils/unidadesMedida.ts` (rolo, kg, m, cm, un, etc.).
+## Problema
 
-## Mudanças
+Em `/fabrica/montagem-pedidos/:id`, no seletor "Responsável pelas medidas" das Observações da visita técnica, apenas 3 usuários internos aparecem (além de todos os autorizados).
 
-### 1. `src/pages/direcao/GestaoFabricaDirecao.tsx` — coleta de dados
+## Causa
 
-- Ampliar o `select` de `estoque` na query de linhas para incluir `materia_prima_id` e `materia_prima_conversao` (quantos do material são produzidos por 1 unidade da matéria-prima).
-- Após montar o `map` de itens, buscar em uma única query `materias_primas` (`id, nome, unidade`) para todos os `materia_prima_id` distintos.
-- Estender `ItemListaCompras` com os campos opcionais:
-  - `materia_prima_nome?: string`
-  - `materia_prima_unidade?: string`
-  - `materia_prima_conversao?: number` (qtd de material produzida por 1 un. da MP)
-- Preencher esses campos nos itens antes de chamar `gerarListaComprasPDF`.
+A página faz `supabase.from('admin_users').select('id, nome').eq('ativo', true)`, mas a RLS de `admin_users` para SELECT é:
 
-### 2. `src/utils/listaComprasPDF.ts` — colunas e formatação
+- `Users see own admin row, admins see all`: `user_id = auth.uid() OR is_admin()`
+- `Public can view attendants`: `ativo = true AND role = 'atendente'`
 
-- Substituir `pluralUnidade` pelo helper `formatarQuantidadeUnidade(qtd, unidade)` de `src/utils/unidadesMedida.ts`, que já trata unidades discretas (inteiros) vs contínuas (decimais) e devolve labels amigáveis (ex.: `2 rolos`, `5,50 kg`, `200 cm`).
-- Atualizar a tabela `autoTable` para 6 colunas:
-  1. `#`
-  2. `MATERIAL` (nome + linha de "Padrão")
-  3. `NECESSÁRIO` — quantidade na unidade do material
-  4. `COMPRAR (MATERIAL)` — quantidade calculada via `quantidade_padrao` (lógica atual), na unidade do material
-  5. `MATÉRIA-PRIMA` — nome (ou `—` quando não vinculada)
-  6. `COMPRAR (MATÉRIA-PRIMA)` — `Math.ceil(necessario / materia_prima_conversao)` na unidade da matéria-prima (ou `—` quando não houver vínculo/conversão)
-- Larguras ajustadas para caber em A4 retrato; se ficar apertado, mudar a orientação do `jsPDF` para `landscape` (preferir paisagem para acomodar 6 colunas confortavelmente).
-- Manter o agrupamento por categoria, cabeçalho azul e rodapé existentes.
+Resultado para um usuário da fábrica (não admin): vê apenas a própria linha + os atendentes (~3 usuários). Autorizados aparecem todos porque vêm de outra tabela com RLS aberta.
 
-## Fora do escopo
-- Nenhuma alteração de banco de dados, RLS, hooks ou regra de negócio.
-- Sem novas telas; apenas o PDF e a query que o alimenta.
+## Solução
 
-## Detalhes técnicos
-- Conversão: `comprar_mp = Math.ceil(necessario_material / materia_prima_conversao)` (mesma lógica usada no `VincularMaterialDialog`).
-- Unidades exibidas via `formatarQuantidadeUnidade` para padronizar com o catálogo já usado em `/fabrica/produtos/materias-primas`.
-- `quantidade_padrao` continua opcional; quando ausente, "COMPRAR (MATERIAL)" exibe `—`.
+Expor uma lista mínima (`id`, `nome`) de todos os colaboradores internos ativos via função `SECURITY DEFINER`, sem afrouxar a RLS de `admin_users` (que contém PII como email/CPF/salário).
+
+### 1. Migration — função RPC
+
+Criar `public.get_responsaveis_internos()`:
+
+```sql
+CREATE OR REPLACE FUNCTION public.get_responsaveis_internos()
+RETURNS TABLE (id uuid, nome text)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT id, nome
+  FROM public.admin_users
+  WHERE ativo = true
+    AND tipo_usuario IN ('colaborador', 'metamorfo', 'atendente')
+  ORDER BY nome;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_responsaveis_internos() TO authenticated;
+```
+
+Retorna apenas `id` e `nome` — nada sensível.
+
+### 2. Frontend — `src/pages/administrativo/PedidoViewMinimalista.tsx`
+
+Trocar a query atual:
+
+```ts
+const { data: usuarios = [] } = useQuery({
+  queryKey: ['responsaveis-internos'],
+  queryFn: async () => {
+    const { data, error } = await supabase.rpc('get_responsaveis_internos');
+    if (error) throw error;
+    return data ?? [];
+  },
+});
+```
+
+Resto da página (props passadas para `ObservacoesPortaForm`, lookup `usuarios.find(...)` na linha 442 etc.) permanece igual — mesma forma `{id, nome}`.
+
+## Fora de escopo
+
+- Não altera RLS de `admin_users`.
+- Não altera `ObservacoesPortaForm` nem a lista de autorizados.
+- Não muda outros lugares que usam `admin_users` (que podem ter o mesmo problema, mas o pedido foi específico desta tela).

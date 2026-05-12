@@ -144,11 +144,11 @@ export default function PedidoViewMinimalista() {
   }, [linhas]);
 
   const { data: usuarios = [] } = useQuery({
-    queryKey: ['admin-users-active'],
+    queryKey: ['responsaveis-internos'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('admin_users').select('id, nome').eq('ativo', true).order('nome');
+      const { data, error } = await supabase.rpc('get_responsaveis_internos');
       if (error) throw error;
-      return data;
+      return data ?? [];
     },
   });
 
