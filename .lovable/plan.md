@@ -1,36 +1,38 @@
 ## Problema
 
-Na rota `/direcao/vendas/regras-vendas`, ao tentar salvar senhas ou limites, nada acontece (ou aparece erro de "Configurações não encontradas" / "Sem permissão").
+Em `/direcao/vendas/regras-vendas`, o usuário consegue acessar a página, mas não consegue salvar as senhas.
 
 ## Causa raiz
 
-As políticas de RLS da tabela `configuracoes_vendas` no banco estão restritas demais:
+A permissão da rota e a permissão do banco estão desalinhadas:
 
-- **SELECT**: usa `is_admin()`, que só retorna `true` para `role = 'administrador'`. Usuários com role `ceo` ou `diretor` não conseguem nem ler o registro (vira `null`), o que já bloqueia o update no hook `useConfiguracoesVendas` (`if (!configuracoes?.id) throw "Configurações não encontradas"`).
-- **UPDATE / INSERT**: só permitem `role IN ('admin','administrador','diretor')`. O usuário logado é `ceo`, então mesmo que conseguisse ler, o update retornaria 0 linhas e cairia no erro "Você não tem permissão...".
-
-A página é "Direção", então `ceo` (e diretor) precisam acessar.
+- O usuário logado (`joao.staehler@gmail.com`) tem acesso à rota `direcao_regras_vendas` via `has_route_access(...)`.
+- Porém as políticas da tabela `configuracoes_vendas` só permitem alterar para `admin`, `administrador`, `diretor`, `ceo` ou `bypass_permissions`.
+- Como o usuário é `gerente_marketing`, a página abre, mas o banco bloqueia a gravação.
 
 ## Plano de correção
 
-### 1. Migration SQL — ajustar RLS de `configuracoes_vendas`
+### 1. Ajustar RLS de `configuracoes_vendas`
 
-Substituir as três políticas existentes por novas que incluam os papéis de liderança (`administrador`, `admin`, `diretor`, `ceo`) e `bypass_permissions = true`:
+Criar uma migration para atualizar as políticas da tabela e permitir leitura/edição/criação quando o usuário estiver ativo e atender a pelo menos uma condição:
 
-- **SELECT**: permitir leitura para usuários ativos com role em `('administrador','admin','diretor','ceo')` ou `bypass_permissions`.
-- **UPDATE**: mesma checagem em `USING` e `WITH CHECK`.
-- **INSERT**: mesma checagem em `WITH CHECK`.
+- Tem acesso à rota `direcao_regras_vendas` via `public.has_route_access(auth.uid(), 'direcao_regras_vendas')`;
+- Ou tem role de liderança (`administrador`, `admin`, `diretor`, `ceo`);
+- Ou possui `bypass_permissions = true`.
 
-Manter `TO authenticated` explicitamente.
+### 2. Manter segurança
 
-### 2. Sem alterações de frontend
+A tabela continuará protegida por autenticação e RLS. A liberação será baseada na permissão granular já existente para a rota, não em acesso público.
 
-O hook `useConfiguracoesVendas` já trata o retorno corretamente — basta as policies passarem a permitir leitura/escrita para o CEO.
+### 3. Sem alteração de frontend
 
-## Detalhes técnicos
+O hook `useConfiguracoesVendas` e a página já enviam o update corretamente. O bloqueio está no banco.
 
-Arquivos:
-- Nova migration em `supabase/migrations/` ajustando políticas de `public.configuracoes_vendas`.
+## Validação
 
-Validação após aplicar:
-- Logar como `metall.ltda@gmail.com` (role `ceo`) e confirmar que `Salvar Alterações` (senhas) e `Salvar Limites` retornam sucesso.
+Depois da migration aprovada/aplicada:
+
+- Entrar com o mesmo usuário que acessa `/direcao/vendas/regras-vendas`.
+- Alterar a senha do responsável ou master.
+- Clicar em `Salvar Alterações`.
+- Confirmar toast de sucesso e persistência no banco.
