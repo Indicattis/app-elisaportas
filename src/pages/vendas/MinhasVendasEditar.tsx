@@ -30,7 +30,7 @@ import { ptBR } from "date-fns/locale";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { VendaBloqueadaDialog } from "@/components/vendas/VendaBloqueadaDialog";
 import { validarDesconto, getTipoAutorizacaoNecessaria } from "@/utils/descontoVendasRules";
-import { useConfiguracoesVendas } from "@/hooks/useConfiguracoesVendas";
+import { useConfiguracoesVendasPublicas } from "@/hooks/useConfiguracoesVendasPublicas";
 import { AutorizacaoDescontoModal } from "@/components/vendas/AutorizacaoDescontoModal";
 
 export default function MinhasVendasEditar() {
@@ -71,10 +71,15 @@ export default function MinhasVendasEditar() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isCadastrando, setIsCadastrando] = useState(false);
-  const { configuracoes, limites: limitesConfig } = useConfiguracoesVendas();
+  const { configuracoesPublicas, limites: limitesConfig } = useConfiguracoesVendasPublicas();
   const [autorizacaoDescontoOpen, setAutorizacaoDescontoOpen] = useState(false);
-  const [tipoAutorizacaoNecessaria, setTipoAutorizacaoNecessaria] = useState<'responsavel_setor' | 'master'>('responsavel_setor');
-  const [descontoAutorizado, setDescontoAutorizado] = useState(false);
+  const [tipoAutorizacaoNecessaria, setTipoAutorizacaoNecessaria] = useState<'responsavel_setor' | 'master' | null>(null);
+  const [autorizacaoPendente, setAutorizacaoPendente] = useState<{
+    autorizadoPor: string;
+    senhaUsada: string;
+    percentualDesconto: number;
+    tipo: 'responsavel_setor' | 'master';
+  } | null>(null);
   const [percentualDescontoAtual, setPercentualDescontoAtual] = useState(0);
   const [limitePermitidoAtual, setLimitePermitidoAtual] = useState(0);
 
