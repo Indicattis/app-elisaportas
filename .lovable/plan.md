@@ -1,27 +1,36 @@
-Adicionar flag "Cliente mediu" na seleção de responsável pelas medidas das portas de enrolar em `/fabrica/montagem-pedidos/:id`.
+## Problema
 
-## Contexto
-Na página `PedidoViewMinimalista`, o componente `ObservacoesPortaForm` exige o preenchimento de um responsável pelas medidas (interno ou autorizado) para cada porta de enrolar. Quando um cliente mesmo faz a medição, essa seleção deve ser dispensada por meio de uma flag.
+Na rota `/direcao/vendas/regras-vendas`, ao tentar salvar senhas ou limites, nada acontece (ou aparece erro de "Configurações não encontradas" / "Sem permissão").
 
-## Alterações
+## Causa raiz
 
-### 1. Banco de dados
-- Adicionar coluna `cliente_medeu` (boolean, DEFAULT false) na tabela `pedido_porta_observacoes`.
+As políticas de RLS da tabela `configuracoes_vendas` no banco estão restritas demais:
 
-### 2. Tipos (`src/types/pedidoObservacoes.ts`)
-- Incluir `cliente_medeu: boolean` na interface `PedidoPortaObservacoes` e no `Insert`/`Update`.
+- **SELECT**: usa `is_admin()`, que só retorna `true` para `role = 'administrador'`. Usuários com role `ceo` ou `diretor` não conseguem nem ler o registro (vira `null`), o que já bloqueia o update no hook `useConfiguracoesVendas` (`if (!configuracoes?.id) throw "Configurações não encontradas"`).
+- **UPDATE / INSERT**: só permitem `role IN ('admin','administrador','diretor')`. O usuário logado é `ceo`, então mesmo que conseguisse ler, o update retornaria 0 linhas e cairia no erro "Você não tem permissão...".
 
-### 3. Formulário de observações (`src/components/pedidos/ObservacoesPortaForm.tsx`)
-- Adicionar checkbox "Cliente mediu" junto ao campo "Responsável pelas medidas".
-- Quando a flag estiver ativa:
-  - O seletor de responsável fica desabilitado/oculto.
-  - `responsavel_medidas_id` é resetado para `null`.
-  - O card da porta não exibe mais o estado "Pendente" (borda vermelha) apenas por causa do responsável.
-- Quando desativada, o comportamento atual se mantem.
+A página é "Direção", então `ceo` (e diretor) precisam acessar.
 
-### 4. Validação de avanço (`src/hooks/usePedidosEtapas.ts`)
-- Na verificação de "responsável pelas medidas preenchido em todas as portas", considerar também `cliente_medeu = true` como válido (linha 610-620).
+## Plano de correção
 
-## Fora de escopo
-- Alterar `pedido_porta_social_observacoes` (portas sociais não têm responsável pela medida).
-- Criar histórico de quem marcou a flag.
+### 1. Migration SQL — ajustar RLS de `configuracoes_vendas`
+
+Substituir as três políticas existentes por novas que incluam os papéis de liderança (`administrador`, `admin`, `diretor`, `ceo`) e `bypass_permissions = true`:
+
+- **SELECT**: permitir leitura para usuários ativos com role em `('administrador','admin','diretor','ceo')` ou `bypass_permissions`.
+- **UPDATE**: mesma checagem em `USING` e `WITH CHECK`.
+- **INSERT**: mesma checagem em `WITH CHECK`.
+
+Manter `TO authenticated` explicitamente.
+
+### 2. Sem alterações de frontend
+
+O hook `useConfiguracoesVendas` já trata o retorno corretamente — basta as policies passarem a permitir leitura/escrita para o CEO.
+
+## Detalhes técnicos
+
+Arquivos:
+- Nova migration em `supabase/migrations/` ajustando políticas de `public.configuracoes_vendas`.
+
+Validação após aplicar:
+- Logar como `metall.ltda@gmail.com` (role `ceo`) e confirmar que `Salvar Alterações` (senhas) e `Salvar Limites` retornam sucesso.
