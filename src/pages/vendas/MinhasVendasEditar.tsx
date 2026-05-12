@@ -1153,7 +1153,7 @@ export default function MinhasVendasEditar() {
                 <Button 
                   type="button"
                   size="sm"
-                  onClick={handleCadastrarVenda}
+                  onClick={() => handleCadastrarVenda()}
                   disabled={isCadastrando}
                   className="bg-gradient-to-r from-green-500 to-green-700 text-white hover:from-green-600 hover:to-green-800"
                 >
@@ -1169,19 +1169,27 @@ export default function MinhasVendasEditar() {
           </CardContent>
         </Card>
       </div>
-      <AutorizacaoDescontoModal
-        open={autorizacaoDescontoOpen}
-        onOpenChange={setAutorizacaoDescontoOpen}
-        onAutorizado={() => {
-          setDescontoAutorizado(true);
-          setAutorizacaoDescontoOpen(false);
-          // Re-trigger cadastro após autorização
-          setTimeout(() => handleCadastrarVenda(), 100);
-        }}
-        percentualDesconto={percentualDescontoAtual}
-        tipoAutorizacao={tipoAutorizacaoNecessaria}
-        limitePermitido={limitePermitidoAtual}
-      />
+      {tipoAutorizacaoNecessaria && (
+        <AutorizacaoDescontoModal
+          open={autorizacaoDescontoOpen}
+          onOpenChange={setAutorizacaoDescontoOpen}
+          onAutorizado={(autorizadorId, senhaDigitada) => {
+            const novaAutorizacao = {
+              autorizadoPor: autorizadorId,
+              senhaUsada: senhaDigitada,
+              percentualDesconto: percentualDescontoAtual,
+              tipo: tipoAutorizacaoNecessaria,
+            };
+            setAutorizacaoPendente(novaAutorizacao);
+            setAutorizacaoDescontoOpen(false);
+            // Encadeia direto, sem setTimeout, e passa a autorização recém-obtida
+            void handleCadastrarVenda(novaAutorizacao);
+          }}
+          percentualDesconto={percentualDescontoAtual}
+          tipoAutorizacao={tipoAutorizacaoNecessaria}
+          limitePermitido={limitePermitidoAtual}
+        />
+      )}
     </MinimalistLayout>
   );
 }
