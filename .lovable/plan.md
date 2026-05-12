@@ -1,36 +1,27 @@
-## Objetivo
+Adicionar flag "Cliente mediu" na seleção de responsável pelas medidas das portas de enrolar em `/fabrica/montagem-pedidos/:id`.
 
-Tornar "Código do fornecedor" um identificador numérico sequencial do **próprio fornecedor** (não do item no fornecedor). Ele é gerado uma única vez por fornecedor, fica visível no cadastro e é puxado automaticamente — em modo somente leitura — para cada linha de item da requisição.
+## Contexto
+Na página `PedidoViewMinimalista`, o componente `ObservacoesPortaForm` exige o preenchimento de um responsável pelas medidas (interno ou autorizado) para cada porta de enrolar. Quando um cliente mesmo faz a medição, essa seleção deve ser dispensada por meio de uma flag.
 
-## Mudanças
+## Alterações
 
 ### 1. Banco de dados
-- Adicionar `fornecedores.codigo` como `integer`, único, com sequência dedicada `fornecedores_codigo_seq` e default `nextval(...)`.
-- Backfill: preencher `codigo` dos fornecedores já existentes em ordem de `created_at` (1, 2, 3...).
-- Reposicionar a sequência para o próximo valor após o backfill.
+- Adicionar coluna `cliente_medeu` (boolean, DEFAULT false) na tabela `pedido_porta_observacoes`.
 
-### 2. Cadastro de fornecedor
-- Em `FornecedoresMinimalista` exibir o `codigo` em modo leitura (badge no topo do card / lista). Sem campo editável — é gerado pelo banco no insert.
-- Tipos `Fornecedor` (`useFornecedores`) ganham `codigo: number`.
+### 2. Tipos (`src/types/pedidoObservacoes.ts`)
+- Incluir `cliente_medeu: boolean` na interface `PedidoPortaObservacoes` e no `Insert`/`Update`.
 
-### 3. Cadastro de item (estoque)
-- Remover os campos "Código no Fornecedor" do `EstoqueMinimalista` e `EditarProdutoModal` adicionados na rodada anterior. Manter apenas IPI (%).
-- Migration adicional dropa `estoque.codigo_fornecedor` (não é mais usado por item; o código vive no fornecedor).
+### 3. Formulário de observações (`src/components/pedidos/ObservacoesPortaForm.tsx`)
+- Adicionar checkbox "Cliente mediu" junto ao campo "Responsável pelas medidas".
+- Quando a flag estiver ativa:
+  - O seletor de responsável fica desabilitado/oculto.
+  - `responsavel_medidas_id` é resetado para `null`.
+  - O card da porta não exibe mais o estado "Pendente" (borda vermelha) apenas por causa do responsável.
+- Quando desativada, o comportamento atual se mantem.
 
-### 4. Página `NovaRequisicaoCompra`
-- Ao selecionar um fornecedor, derivar `codigo_fornecedor = fornecedor.codigo` (string) e aplicar a todos os itens já presentes.
-- Ao adicionar/alterar produto numa linha, o campo `Cód. fornec.` é preenchido com `fornecedor.codigo` automaticamente.
-- O input do `Cód. fornec.` na tabela fica `readOnly` + `disabled`-look (cursor padrão, sem foco) e mostra o código.
-- Salvar continua persistindo `codigo_fornecedor` em cada item (string), assim o PDF não muda de schema.
-
-### 5. PDF
-- `pedidoCompraPDF` já imprime `codigo_fornecedor` na coluna correspondente — sem alteração de código, só passa a vir o número do fornecedor.
-
-## Detalhes técnicos
-- Migration 1: `ADD COLUMN codigo`, criar sequence, backfill via CTE com `row_number() OVER (ORDER BY created_at)`, set `DEFAULT nextval`, `NOT NULL`, `UNIQUE`.
-- Migration 2: `ALTER TABLE estoque DROP COLUMN IF EXISTS codigo_fornecedor`.
-- Arquivos editados: `useFornecedores.ts` (tipo + select inclui `codigo`), `FornecedoresMinimalista.tsx` (exibir código), `EstoqueMinimalista.tsx` e `EditarProdutoModal.tsx` (remover input código fornecedor), `NovaRequisicaoCompra.tsx` (auto-fill + readOnly), `useRequisicoesCompra.ts` (remover `codigo_fornecedor` do select de `estoque`, manter na linha).
+### 4. Validação de avanço (`src/hooks/usePedidosEtapas.ts`)
+- Na verificação de "responsável pelas medidas preenchido em todas as portas", considerar também `cliente_medeu = true` como válido (linha 610-620).
 
 ## Fora de escopo
-- Editar manualmente o código do fornecedor.
-- Recalcular código de fornecedores antigos depois de criados (sequência só avança).
+- Alterar `pedido_porta_social_observacoes` (portas sociais não têm responsável pela medida).
+- Criar histórico de quem marcou a flag.

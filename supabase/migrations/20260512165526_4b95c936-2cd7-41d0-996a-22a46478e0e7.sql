@@ -1,0 +1,1 @@
+ALTER TABLE public.pedido_porta_observacoes ADD COLUMN IF NOT EXISTS cliente_medeu boolean NOT NULL DEFAULT false;
