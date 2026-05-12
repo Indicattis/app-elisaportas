@@ -350,10 +350,9 @@ export default function NovaRequisicaoCompra() {
                           <TableCell>
                             <Input
                               value={item.codigo_fornecedor ?? ""}
-                              onChange={(e) =>
-                                handleAlterarItem(index, { codigo_fornecedor: e.target.value })
-                              }
-                              className="bg-white/5 border-white/10 text-white"
+                              readOnly
+                              tabIndex={-1}
+                              className="bg-white/[0.03] border-white/10 text-white/70 cursor-not-allowed"
                             />
                           </TableCell>
                           <TableCell>
