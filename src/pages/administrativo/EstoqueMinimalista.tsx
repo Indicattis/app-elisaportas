@@ -46,6 +46,8 @@ export default function EstoqueMinimalista() {
     valor_calculo: 0,
     eixo_calculo: "",
     item_padrao_porta_enrolar: false,
+    codigo_fornecedor: "",
+    ipi_percent: 0,
   });
 
   const getCategoriaColor = (categoriaId: string) => {
@@ -78,6 +80,8 @@ export default function EstoqueMinimalista() {
         valor_calculo: formData.valor_calculo || null,
         eixo_calculo: formData.eixo_calculo ? formData.eixo_calculo as any : null,
         item_padrao_porta_enrolar: formData.item_padrao_porta_enrolar,
+        codigo_fornecedor: formData.codigo_fornecedor || null,
+        ipi_percent: Number(formData.ipi_percent) || 0,
       });
       
       setFormData({
@@ -96,6 +100,8 @@ export default function EstoqueMinimalista() {
         valor_calculo: 0,
         eixo_calculo: "",
         item_padrao_porta_enrolar: false,
+        codigo_fornecedor: "",
+        ipi_percent: 0,
       });
       setNovoModal(false);
       toast.success("Produto adicionado com sucesso");
