@@ -1,11 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useAllUsers } from '@/hooks/useAllUsers';
 import { useLiderVendas } from '@/hooks/useLiderVendas';
 import { useConfiguracoesVendas } from '@/hooks/useConfiguracoesVendas';
 import { Loader2, AlertCircle, ShieldCheck, Infinity } from 'lucide-react';
@@ -34,10 +35,25 @@ export function AutorizacaoDescontoModal({
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState('');
   
-  const { data: usuarios = [], isLoading: loadingUsuarios } = useAllUsers();
   const { data: liderVendas, isLoading: loadingLider } = useLiderVendas();
   const { configuracoes, isLoading: loadingConfig, limites, refetch: refetchConfiguracoes } = useConfiguracoesVendas();
-  
+
+  // Buscar o responsável master direto (sem filtrar por ativo/visivel_organograma)
+  const masterId = configuracoes?.responsavel_senha_master_id ?? null;
+  const { data: responsavelMaster, isLoading: loadingMaster } = useQuery({
+    queryKey: ['responsavel-senha-master', masterId],
+    enabled: !!masterId && tipoAutorizacao === 'master',
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('admin_users')
+        .select('user_id, nome, role')
+        .eq('user_id', masterId!)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
   // Obter o autorizador configurado (não permite seleção manual)
   const autorizadorConfigurado = useMemo(() => {
     if (tipoAutorizacao === 'responsavel_setor') {
@@ -50,20 +66,17 @@ export function AutorizacaoDescontoModal({
       }
       return null;
     }
-    
-    // Para master, buscar o responsável configurado
-    if (configuracoes?.responsavel_senha_master_id) {
-      const responsavel = usuarios.find(u => u.user_id === configuracoes.responsavel_senha_master_id);
-      if (responsavel) {
-        return {
-          id: responsavel.user_id,
-          nome: responsavel.nome,
-          role: responsavel.role
-        };
-      }
+
+    // Para master, usar o responsável buscado direto
+    if (responsavelMaster) {
+      return {
+        id: responsavelMaster.user_id,
+        nome: responsavelMaster.nome,
+        role: responsavelMaster.role,
+      };
     }
     return null;
-  }, [usuarios, tipoAutorizacao, liderVendas, configuracoes]);
+  }, [tipoAutorizacao, liderVendas, responsavelMaster]);
 
   useEffect(() => {
     if (open) {
@@ -187,7 +200,7 @@ export function AutorizacaoDescontoModal({
 
           <div className="space-y-2">
             <Label>Quem está autorizando?</Label>
-            {loadingLider || loadingUsuarios ? (
+            {loadingLider || loadingMaster ? (
               <div className="flex items-center gap-2 p-3 bg-muted rounded-md">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 <span className="text-sm text-muted-foreground">Carregando...</span>
