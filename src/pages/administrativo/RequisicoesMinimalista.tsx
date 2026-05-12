@@ -4,12 +4,14 @@ import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ShoppingCart, Plus, Eye, Trash2, Calendar, User, Package as PackageIcon, FileText, Clock, CheckCircle, TruckIcon } from "lucide-react";
+import { ShoppingCart, Plus, Eye, Trash2, Calendar, User, Package as PackageIcon, FileText, Clock, CheckCircle, TruckIcon, Download } from "lucide-react";
 import { useRequisicoesCompra, RequisicaoCompra } from "@/hooks/useRequisicoesCompra";
 import { RequisicaoCompraForm } from "@/components/compras/RequisicaoCompraForm";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useCompanySettings } from "@/hooks/useCompanySettings";
+import { gerarPedidoCompraPDF } from "@/utils/pedidoCompraPDF";
 
 const statusColors: Record<string, string> = {
   pendente_aprovacao: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
@@ -37,6 +39,7 @@ const statusLabels: Record<string, string> = {
 
 export default function RequisicoesMinimalista() {
   const { requisicoes, isLoading, createRequisicao, deleteRequisicao, isCreating, isDeleting } = useRequisicoesCompra();
+  const { settings: company } = useCompanySettings();
   const [formOpen, setFormOpen] = useState(false);
   const [detalhesOpen, setDetalhesOpen] = useState(false);
   const [requisicaoSelecionada, setRequisicaoSelecionada] = useState<RequisicaoCompra | null>(null);
@@ -59,6 +62,39 @@ export default function RequisicoesMinimalista() {
       setDeleteDialogOpen(false);
       setRequisicaoToDelete(null);
     }
+  };
+
+  const handleExportarPDF = (req: RequisicaoCompra) => {
+    gerarPedidoCompraPDF({
+      numero: req.numero_requisicao,
+      data_emissao: req.created_at,
+      data_prevista: req.data_necessidade,
+      observacoes: req.observacoes,
+      itens: (req.itens || []).map((it) => ({
+        descricao: it.produto_nome || "-",
+        codigo: it.produto_sku ?? null,
+        codigo_fornecedor: it.codigo_fornecedor ?? null,
+        localizacao: it.localizacao ?? null,
+        unidade: it.produto_unidade ?? null,
+        quantidade: Number(it.quantidade) || 0,
+        valor_unitario: Number(it.valor_unitario) || 0,
+        ipi_percent: Number(it.ipi_percent) || 0,
+      })),
+      fornecedor: {
+        nome: req.fornecedor_nome || "-",
+        cnpj: req.fornecedor_cnpj,
+        cidade: req.fornecedor_cidade,
+        estado: req.fornecedor_estado,
+      },
+      empresa: {
+        nome: company?.nome || "",
+        cnpj: company?.cnpj,
+        endereco: company?.endereco,
+        cidade: company?.cidade,
+        cep: company?.cep,
+        telefone: company?.telefone,
+      },
+    });
   };
 
   const indicadores = useMemo(() => {
@@ -220,6 +256,15 @@ export default function RequisicoesMinimalista() {
                       <Eye className="h-4 w-4 mr-1" />
                       Ver Detalhes
                     </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleExportarPDF(requisicao)}
+                      className="border-white/10 text-white hover:bg-white/10"
+                      title="Exportar PDF"
+                    >
+                      <Download className="h-4 w-4" />
+                    </Button>
                     {requisicao.status === "pendente_aprovacao" && (
                       <Button
                         variant="ghost"
@@ -303,20 +348,45 @@ export default function RequisicoesMinimalista() {
                   <TableHeader>
                     <TableRow className="border-white/10 hover:bg-transparent">
                       <TableHead className="text-white/60">Produto</TableHead>
+                      <TableHead className="text-white/60">Un</TableHead>
                       <TableHead className="text-center text-white/60">Quantidade</TableHead>
+                      <TableHead className="text-right text-white/60">Valor unit.</TableHead>
+                      <TableHead className="text-right text-white/60">IPI %</TableHead>
+                      <TableHead className="text-right text-white/60">Total</TableHead>
                       <TableHead className="text-white/60">Observações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {requisicaoSelecionada.itens?.map((item) => (
-                      <TableRow key={item.id} className="border-white/10">
-                        <TableCell className="font-medium text-white">{item.produto_nome}</TableCell>
-                        <TableCell className="text-center text-white">{item.quantidade}</TableCell>
-                        <TableCell className="text-white/60">{item.observacoes || "-"}</TableCell>
-                      </TableRow>
-                    ))}
+                    {requisicaoSelecionada.itens?.map((item) => {
+                      const qtd = Number(item.quantidade) || 0;
+                      const vu = Number(item.valor_unitario) || 0;
+                      const ipi = Number(item.ipi_percent) || 0;
+                      const total = qtd * vu * (1 + ipi / 100);
+                      const fmt = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+                      return (
+                        <TableRow key={item.id} className="border-white/10">
+                          <TableCell className="font-medium text-white">{item.produto_nome}</TableCell>
+                          <TableCell className="text-white/80">{item.produto_unidade || "-"}</TableCell>
+                          <TableCell className="text-center text-white">{qtd}</TableCell>
+                          <TableCell className="text-right text-white/80">{fmt(vu)}</TableCell>
+                          <TableCell className="text-right text-white/80">{ipi.toFixed(2)}%</TableCell>
+                          <TableCell className="text-right text-white">{fmt(total)}</TableCell>
+                          <TableCell className="text-white/60">{item.observacoes || "-"}</TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
+                <div className="mt-3 flex justify-end">
+                  <Button
+                    onClick={() => handleExportarPDF(requisicaoSelecionada)}
+                    className="bg-gradient-to-r from-blue-500 to-blue-700 text-white border-0"
+                    size="sm"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Exportar PDF
+                  </Button>
+                </div>
               </div>
             </div>
           )}
