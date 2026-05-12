@@ -441,7 +441,10 @@ export default function VendasNova() {
     }
   };
 
-  const handleAutorizacaoDesconto = async (autorizadorUserId: string) => {
+  const handleAutorizacaoDesconto = async (
+    autorizadorUserId: string,
+    senhaDigitada: string,
+  ) => {
     if (!user || !tipoAutorizacaoNecessaria) return;
     
     setAutorizadorId(autorizadorUserId);
@@ -466,7 +469,7 @@ export default function VendasNova() {
           autorizado_por: autorizadorUserId,
           solicitado_por: user.id,
           percentual_desconto: validacao.percentualDesconto,
-          senha_usada: '1qazxsw2',
+          senha_usada: senhaDigitada,
           tipo_autorizacao: tipoAutorizacaoNecessaria
         },
         creditoVenda: { valorCredito: 0, percentualCredito: 0 } // Desconto não pode ter crédito

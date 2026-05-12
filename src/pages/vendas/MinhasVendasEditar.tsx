@@ -30,7 +30,7 @@ import { ptBR } from "date-fns/locale";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { VendaBloqueadaDialog } from "@/components/vendas/VendaBloqueadaDialog";
 import { validarDesconto, getTipoAutorizacaoNecessaria } from "@/utils/descontoVendasRules";
-import { useConfiguracoesVendas } from "@/hooks/useConfiguracoesVendas";
+import { useConfiguracoesVendasPublicas } from "@/hooks/useConfiguracoesVendasPublicas";
 import { AutorizacaoDescontoModal } from "@/components/vendas/AutorizacaoDescontoModal";
 
 export default function MinhasVendasEditar() {
@@ -71,10 +71,15 @@ export default function MinhasVendasEditar() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isCadastrando, setIsCadastrando] = useState(false);
-  const { configuracoes, limites: limitesConfig } = useConfiguracoesVendas();
+  const { configuracoesPublicas, limites: limitesConfig } = useConfiguracoesVendasPublicas();
   const [autorizacaoDescontoOpen, setAutorizacaoDescontoOpen] = useState(false);
-  const [tipoAutorizacaoNecessaria, setTipoAutorizacaoNecessaria] = useState<'responsavel_setor' | 'master'>('responsavel_setor');
-  const [descontoAutorizado, setDescontoAutorizado] = useState(false);
+  const [tipoAutorizacaoNecessaria, setTipoAutorizacaoNecessaria] = useState<'responsavel_setor' | 'master' | null>(null);
+  const [autorizacaoPendente, setAutorizacaoPendente] = useState<{
+    autorizadoPor: string;
+    senhaUsada: string;
+    percentualDesconto: number;
+    tipo: 'responsavel_setor' | 'master';
+  } | null>(null);
   const [percentualDescontoAtual, setPercentualDescontoAtual] = useState(0);
   const [limitePermitidoAtual, setLimitePermitidoAtual] = useState(0);
 
@@ -460,8 +465,12 @@ export default function MinhasVendasEditar() {
     navigate('/vendas/minhas-vendas');
   };
 
-  const handleCadastrarVenda = async () => {
+  const handleCadastrarVenda = async (
+    autorizacaoOverride?: typeof autorizacaoPendente,
+  ) => {
     if (!id || !venda) return;
+
+    const autorizacaoParaUsar = autorizacaoOverride ?? autorizacaoPendente;
 
     // Validações obrigatórias
     const erros: string[] = [];
@@ -489,11 +498,11 @@ export default function MinhasVendasEditar() {
     }
 
     // Validação de desconto
-    if (!descontoAutorizado) {
-      const configLimites = configuracoes ? {
-        avista: configuracoes.limite_desconto_avista,
-        presencial: configuracoes.limite_desconto_presencial,
-        adicionalResponsavel: configuracoes.limite_adicional_responsavel,
+    if (!autorizacaoParaUsar) {
+      const configLimites = configuracoesPublicas ? {
+        avista: configuracoesPublicas.limite_desconto_avista,
+        presencial: configuracoesPublicas.limite_desconto_presencial,
+        adicionalResponsavel: configuracoesPublicas.limite_adicional_responsavel,
       } : undefined;
 
       const validacao = validarDesconto(
@@ -513,9 +522,6 @@ export default function MinhasVendasEditar() {
         return;
       }
     }
-
-    // Reset flag para próximas vendas
-    setDescontoAutorizado(false);
 
     setIsCadastrando(true);
     try {
@@ -538,6 +544,24 @@ export default function MinhasVendasEditar() {
 
       if (error) throw error;
       if (!data) throw new Error('Não foi possível registrar a venda. Verifique suas permissões.');
+
+      // Persistir auditoria de autorização de desconto, se houver
+      if (autorizacaoParaUsar && user) {
+        const { error: autErr } = await supabase
+          .from('vendas_autorizacoes_desconto')
+          .insert({
+            venda_id: id,
+            autorizado_por: autorizacaoParaUsar.autorizadoPor,
+            solicitado_por: user.id,
+            percentual_desconto: autorizacaoParaUsar.percentualDesconto,
+            senha_usada: autorizacaoParaUsar.senhaUsada,
+            tipo_autorizacao: autorizacaoParaUsar.tipo,
+          } as any);
+        if (autErr) {
+          console.error('Erro ao registrar autorização de desconto:', autErr);
+        }
+        setAutorizacaoPendente(null);
+      }
 
       queryClient.invalidateQueries({ queryKey: ['vendas'] });
       queryClient.invalidateQueries({ queryKey: ['rascunhos-vendas'] });
@@ -1129,7 +1153,7 @@ export default function MinhasVendasEditar() {
                 <Button 
                   type="button"
                   size="sm"
-                  onClick={handleCadastrarVenda}
+                  onClick={() => handleCadastrarVenda()}
                   disabled={isCadastrando}
                   className="bg-gradient-to-r from-green-500 to-green-700 text-white hover:from-green-600 hover:to-green-800"
                 >
@@ -1145,19 +1169,27 @@ export default function MinhasVendasEditar() {
           </CardContent>
         </Card>
       </div>
-      <AutorizacaoDescontoModal
-        open={autorizacaoDescontoOpen}
-        onOpenChange={setAutorizacaoDescontoOpen}
-        onAutorizado={() => {
-          setDescontoAutorizado(true);
-          setAutorizacaoDescontoOpen(false);
-          // Re-trigger cadastro após autorização
-          setTimeout(() => handleCadastrarVenda(), 100);
-        }}
-        percentualDesconto={percentualDescontoAtual}
-        tipoAutorizacao={tipoAutorizacaoNecessaria}
-        limitePermitido={limitePermitidoAtual}
-      />
+      {tipoAutorizacaoNecessaria && (
+        <AutorizacaoDescontoModal
+          open={autorizacaoDescontoOpen}
+          onOpenChange={setAutorizacaoDescontoOpen}
+          onAutorizado={(autorizadorId, senhaDigitada) => {
+            const novaAutorizacao = {
+              autorizadoPor: autorizadorId,
+              senhaUsada: senhaDigitada,
+              percentualDesconto: percentualDescontoAtual,
+              tipo: tipoAutorizacaoNecessaria,
+            };
+            setAutorizacaoPendente(novaAutorizacao);
+            setAutorizacaoDescontoOpen(false);
+            // Encadeia direto, sem setTimeout, e passa a autorização recém-obtida
+            void handleCadastrarVenda(novaAutorizacao);
+          }}
+          percentualDesconto={percentualDescontoAtual}
+          tipoAutorizacao={tipoAutorizacaoNecessaria}
+          limitePermitido={limitePermitidoAtual}
+        />
+      )}
     </MinimalistLayout>
   );
 }

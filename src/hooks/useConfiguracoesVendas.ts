@@ -94,14 +94,29 @@ export function useConfiguracoesVendas() {
     },
   });
 
-  // Função para verificar senha do responsável
-  const verificarSenhaResponsavel = (senha: string): boolean => {
-    return configuracoes?.senha_responsavel === senha;
+  // Verificar senha via RPC (não expõe senha ao cliente)
+  const verificarSenhaResponsavel = async (senha: string): Promise<boolean> => {
+    const { data, error } = await supabase.rpc("verificar_senha_vendas", {
+      p_senha: senha,
+      p_tipo: "responsavel",
+    });
+    if (error) {
+      console.error("Erro ao verificar senha responsavel:", error);
+      return false;
+    }
+    return data === true;
   };
 
-  // Função para verificar senha master
-  const verificarSenhaMaster = (senha: string): boolean => {
-    return configuracoes?.senha_master === senha;
+  const verificarSenhaMaster = async (senha: string): Promise<boolean> => {
+    const { data, error } = await supabase.rpc("verificar_senha_vendas", {
+      p_senha: senha,
+      p_tipo: "master",
+    });
+    if (error) {
+      console.error("Erro ao verificar senha master:", error);
+      return false;
+    }
+    return data === true;
   };
 
   // Limites calculados

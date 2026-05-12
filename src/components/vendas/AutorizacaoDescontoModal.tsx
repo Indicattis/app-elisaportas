@@ -8,13 +8,13 @@ import { Label } from '@/components/ui/label';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useLiderVendas } from '@/hooks/useLiderVendas';
-import { useConfiguracoesVendas } from '@/hooks/useConfiguracoesVendas';
+import { useConfiguracoesVendasPublicas } from '@/hooks/useConfiguracoesVendasPublicas';
 import { Loader2, AlertCircle, ShieldCheck, Infinity } from 'lucide-react';
 
 interface AutorizacaoDescontoModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAutorizado: (autorizadorId: string) => void;
+  onAutorizado: (autorizadorId: string, senhaDigitada: string) => void;
   onSolicitarAprovacao?: () => void;
   percentualDesconto: number;
   tipoAutorizacao: 'responsavel_setor' | 'master';
@@ -36,10 +36,15 @@ export function AutorizacaoDescontoModal({
   const [erro, setErro] = useState('');
   
   const { data: liderVendas, isLoading: loadingLider } = useLiderVendas();
-  const { configuracoes, isLoading: loadingConfig, limites, refetch: refetchConfiguracoes } = useConfiguracoesVendas();
+  const {
+    configuracoesPublicas,
+    isLoading: loadingConfig,
+    limites,
+    refetch: refetchConfiguracoes,
+  } = useConfiguracoesVendasPublicas();
 
   // Buscar o responsável master direto (sem filtrar por ativo/visivel_organograma)
-  const masterId = configuracoes?.responsavel_senha_master_id ?? null;
+  const masterId = configuracoesPublicas?.responsavel_senha_master_id ?? null;
   const { data: responsavelMaster, isLoading: loadingMaster } = useQuery({
     queryKey: ['responsavel-senha-master', masterId],
     enabled: !!masterId && tipoAutorizacao === 'master',
@@ -105,7 +110,7 @@ export function AutorizacaoDescontoModal({
       return;
     }
 
-    if (loadingConfig || !configuracoes) {
+    if (loadingConfig || !configuracoesPublicas) {
       setErro('Carregando configurações...');
       return;
     }
@@ -114,18 +119,22 @@ export function AutorizacaoDescontoModal({
     setErro('');
 
     try {
-      // Validar senha baseado no tipo de autorização
-      let senhaValida = false;
-      
-      if (tipoAutorizacao === 'master') {
-        // Verificar senha master
-        senhaValida = senha === configuracoes.senha_master;
-      } else {
-        // Verificar senha do responsável
-        senhaValida = senha === configuracoes.senha_responsavel;
+      // Validar senha via RPC SECURITY DEFINER (não expõe senhas ao cliente)
+      const { data: senhaValida, error: rpcError } = await supabase.rpc(
+        'verificar_senha_vendas',
+        {
+          p_senha: senha,
+          p_tipo: tipoAutorizacao === 'master' ? 'master' : 'responsavel',
+        }
+      );
+
+      if (rpcError) {
+        console.error('Erro ao validar senha:', rpcError);
+        setErro('Erro ao validar senha. Tente novamente.');
+        return;
       }
 
-      if (!senhaValida) {
+      if (senhaValida !== true) {
         setErro('Senha incorreta');
         return;
       }
@@ -142,8 +151,8 @@ export function AutorizacaoDescontoModal({
         }
       }
 
-      // Senha correta, prosseguir
-      onAutorizado(autorizadorId);
+      // Senha correta, prosseguir devolvendo a senha digitada para auditoria
+      onAutorizado(autorizadorId, senha);
       onOpenChange(false);
     } catch (error) {
       console.error('Erro ao autorizar desconto:', error);

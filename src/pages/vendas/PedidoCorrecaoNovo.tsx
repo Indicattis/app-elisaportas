@@ -154,7 +154,8 @@ export default function PedidoCorrecaoNovo() {
       setSenhaErro('Informe a senha master');
       return;
     }
-    if (!verificarSenhaMaster(senhaMaster)) {
+    const senhaOk = await verificarSenhaMaster(senhaMaster);
+    if (!senhaOk) {
       setSenhaErro('Senha master incorreta');
       return;
     }
