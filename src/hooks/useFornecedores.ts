@@ -4,6 +4,7 @@ import { toast } from "@/hooks/use-toast";
 
 export interface Fornecedor {
   id: string;
+  codigo: number;
   tipo: "fisica" | "juridica";
   nome: string;
   responsavel?: string;
