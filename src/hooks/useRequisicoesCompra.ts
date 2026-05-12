@@ -71,7 +71,7 @@ export const useRequisicoesCompra = () => {
             .from("requisicoes_compra_itens")
             .select(`
               *,
-              estoque(nome_produto, sku, unidade, codigo_fornecedor, ipi_percent)
+              estoque(nome_produto, sku, unidade, ipi_percent)
             `)
             .eq("requisicao_id", req.id);
 

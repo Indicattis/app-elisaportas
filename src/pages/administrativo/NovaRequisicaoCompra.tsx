@@ -32,6 +32,12 @@ export default function NovaRequisicaoCompra() {
 
   const [pendingFornecedorChange, setPendingFornecedorChange] = useState<string | null>(null);
 
+  const fornecedorAtual = useMemo(
+    () => fornecedores.find((f) => f.id === formData.fornecedor_id) || null,
+    [fornecedores, formData.fornecedor_id]
+  );
+  const codigoFornecedorStr = fornecedorAtual ? String(fornecedorAtual.codigo) : "";
+
   const itensDoFornecedor = useMemo(
     () =>
       estoque.filter(
@@ -45,7 +51,13 @@ export default function NovaRequisicaoCompra() {
       setPendingFornecedorChange(value);
       return;
     }
-    setFormData((prev) => ({ ...prev, fornecedor_id: value }));
+    const novo = fornecedores.find((f) => f.id === value);
+    const codigo = novo ? String(novo.codigo) : "";
+    setFormData((prev) => ({
+      ...prev,
+      fornecedor_id: value,
+      itens: prev.itens.map((it) => ({ ...it, codigo_fornecedor: codigo })),
+    }));
   };
 
   const confirmFornecedorChange = () => {
@@ -69,7 +81,7 @@ export default function NovaRequisicaoCompra() {
       quantidade: 1,
       valor_unitario: 0,
       ipi_percent: 0,
-      codigo_fornecedor: "",
+      codigo_fornecedor: codigoFornecedorStr,
       localizacao: "",
       observacoes: "",
     };
@@ -88,10 +100,10 @@ export default function NovaRequisicaoCompra() {
             merged.produto_nome = produto.nome_produto;
             merged.produto_unidade = produto.unidade;
             merged.produto_sku = produto.sku ?? null;
-            merged.codigo_fornecedor = produto.codigo_fornecedor ?? "";
             merged.ipi_percent = Number(produto.ipi_percent) || 0;
             merged.valor_unitario = Number(produto.custo_unitario) || 0;
           }
+          merged.codigo_fornecedor = codigoFornecedorStr;
         }
         return merged;
       }),
@@ -338,10 +350,9 @@ export default function NovaRequisicaoCompra() {
                           <TableCell>
                             <Input
                               value={item.codigo_fornecedor ?? ""}
-                              onChange={(e) =>
-                                handleAlterarItem(index, { codigo_fornecedor: e.target.value })
-                              }
-                              className="bg-white/5 border-white/10 text-white"
+                              readOnly
+                              tabIndex={-1}
+                              className="bg-white/[0.03] border-white/10 text-white/70 cursor-not-allowed"
                             />
                           </TableCell>
                           <TableCell>
