@@ -610,6 +610,7 @@ const App = () => (
                 <Route path="/administrativo/compras/estoque" element={<ProtectedRoute routeKey="administrativo_hub"><EstoqueMinimalista /></ProtectedRoute>} />
                 <Route path="/administrativo/compras/estoque/editar-item/:id" element={<ProtectedRoute routeKey="administrativo_hub"><EstoqueEditMinimalista /></ProtectedRoute>} />
                 <Route path="/administrativo/compras/requisicoes" element={<ProtectedRoute routeKey="administrativo_hub"><RequisicoesMinimalista /></ProtectedRoute>} />
+                <Route path="/administrativo/compras/requisicoes/nova" element={<ProtectedRoute routeKey="administrativo_hub"><NovaRequisicaoCompra /></ProtectedRoute>} />
                 <Route path="/administrativo/compras/fornecedores" element={<ProtectedRoute routeKey="administrativo_hub"><FornecedoresMinimalista /></ProtectedRoute>} />
 
                 {/* Hub Fiscal Minimalista */}
