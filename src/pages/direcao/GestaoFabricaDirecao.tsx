@@ -116,7 +116,7 @@ export default function GestaoFabricaDirecao() {
         .from('pedido_linhas')
         .select(`
           quantidade, largura, altura, tamanho, estoque_id,
-          estoque:estoque_id ( id, nome_produto, categoria, unidade, quantidade_padrao )
+          estoque:estoque_id ( id, nome_produto, categoria, unidade, quantidade_padrao, materia_prima_id, materia_prima_conversao )
         `)
         .in('pedido_id', pedidoIds)
         .not('estoque_id', 'is', null);
@@ -159,6 +159,8 @@ export default function GestaoFabricaDirecao() {
             unidade: e.unidade || 'un',
             quantidade_padrao: e.quantidade_padrao,
             necessario,
+            materia_prima_id: e.materia_prima_id || null,
+            materia_prima_conversao: e.materia_prima_conversao || null,
           });
         }
       });
@@ -168,6 +170,29 @@ export default function GestaoFabricaDirecao() {
         toast({ title: 'Sem materiais', description: 'Nenhum material vinculado nesta etapa.' });
         return;
       }
+
+      // Buscar matérias-primas vinculadas para enriquecer os itens
+      const mpIds = Array.from(
+        new Set(itens.map((i) => i.materia_prima_id).filter((id): id is string => !!id))
+      );
+      if (mpIds.length > 0) {
+        const { data: mps } = await supabase
+          .from('materias_primas')
+          .select('id, nome, unidade')
+          .in('id', mpIds);
+        const mpMap = new Map<string, { nome: string; unidade: string }>();
+        (mps || []).forEach((m: any) =>
+          mpMap.set(String(m.id), { nome: m.nome, unidade: m.unidade })
+        );
+        itens.forEach((it) => {
+          if (it.materia_prima_id && mpMap.has(it.materia_prima_id)) {
+            const mp = mpMap.get(it.materia_prima_id)!;
+            it.materia_prima_nome = mp.nome;
+            it.materia_prima_unidade = mp.unidade;
+          }
+        });
+      }
+
       gerarListaComprasPDF(ETAPAS_CONFIG[etapa]?.label || String(etapa), itens);
     } catch (err: any) {
       console.error(err);
