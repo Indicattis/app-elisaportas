@@ -35,6 +35,8 @@ export interface ProdutoEstoque {
   quantidade_maxima: number;
   requer_pintura: boolean;
   pontuacao_producao: number;
+  codigo_fornecedor: string | null;
+  ipi_percent: number;
   // Novos campos de cálculo automático
   modulo_calculo: 'acrescimo' | 'desconto' | null;
   valor_calculo: number | null;
