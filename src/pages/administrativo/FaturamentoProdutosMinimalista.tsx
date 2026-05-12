@@ -99,11 +99,7 @@ export default function FaturamentoProdutosMinimalista() {
   }, []);
 
   const fetchAtendentes = async () => {
-    const { data } = await supabase
-      .from('admin_users')
-      .select('user_id, nome, ativo')
-      .in('tipo_usuario', ['colaborador', 'arquivado'])
-      .order('nome');
+    const { data } = await supabase.rpc('list_atendentes_for_filter');
     if (data) setAtendentes(data);
   };
 
