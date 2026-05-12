@@ -94,7 +94,6 @@ import ContratoTemplates from "./pages/ContratoTemplates";
 import Suporte from "./pages/Suporte";
 import Clientes from "./pages/Clientes";
 import Fornecedores from "./pages/Fornecedores";
-import RequisicoesCompra from "./pages/RequisicoesCompra";
 import Estoque from "./pages/Estoque";
 import EstoqueEdit from "./pages/EstoqueEdit";
 import EstoqueGerenciamento from "./pages/EstoqueGerenciamento";
