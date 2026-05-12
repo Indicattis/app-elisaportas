@@ -2275,7 +2275,6 @@ export type Database = {
         Row: {
           ativo: boolean | null
           categoria: string | null
-          codigo_fornecedor: string | null
           conferir_estoque: boolean
           created_at: string | null
           created_by: string | null
@@ -2317,7 +2316,6 @@ export type Database = {
         Insert: {
           ativo?: boolean | null
           categoria?: string | null
-          codigo_fornecedor?: string | null
           conferir_estoque?: boolean
           created_at?: string | null
           created_by?: string | null
@@ -2359,7 +2357,6 @@ export type Database = {
         Update: {
           ativo?: boolean | null
           categoria?: string | null
-          codigo_fornecedor?: string | null
           conferir_estoque?: boolean
           created_at?: string | null
           created_by?: string | null
@@ -2869,6 +2866,7 @@ export type Database = {
           cep: string | null
           cidade: string | null
           cnpj: string | null
+          codigo: number
           created_at: string
           created_by: string | null
           estado: string | null
@@ -2884,6 +2882,7 @@ export type Database = {
           cep?: string | null
           cidade?: string | null
           cnpj?: string | null
+          codigo?: number
           created_at?: string
           created_by?: string | null
           estado?: string | null
@@ -2899,6 +2898,7 @@ export type Database = {
           cep?: string | null
           cidade?: string | null
           cnpj?: string | null
+          codigo?: number
           created_at?: string
           created_by?: string | null
           estado?: string | null

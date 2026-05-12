@@ -1,50 +1,36 @@
 ## Objetivo
 
-Transformar o cadastro de requisição de compra em uma página dedicada e tornar a seleção de itens dependente do fornecedor escolhido, puxando automaticamente do cadastro do item o **código do fornecedor** e o **IPI**.
+Tornar "Código do fornecedor" um identificador numérico sequencial do **próprio fornecedor** (não do item no fornecedor). Ele é gerado uma única vez por fornecedor, fica visível no cadastro e é puxado automaticamente — em modo somente leitura — para cada linha de item da requisição.
 
 ## Mudanças
 
 ### 1. Banco de dados
-A tabela `estoque` hoje tem `fornecedor_id`, mas não armazena `codigo_fornecedor` nem `ipi_percent` por item. Migration para adicionar:
-- `estoque.codigo_fornecedor` (text, nullable)
-- `estoque.ipi_percent` (numeric, default 0)
+- Adicionar `fornecedores.codigo` como `integer`, único, com sequência dedicada `fornecedores_codigo_seq` e default `nextval(...)`.
+- Backfill: preencher `codigo` dos fornecedores já existentes em ordem de `created_at` (1, 2, 3...).
+- Reposicionar a sequência para o próximo valor após o backfill.
 
-### 2. Cadastro do item (estoque)
-No formulário de cadastro/edição de item em `/administrativo/compras/estoque` adicionar dois campos:
-- "Código no fornecedor"
-- "IPI (%)"
+### 2. Cadastro de fornecedor
+- Em `FornecedoresMinimalista` exibir o `codigo` em modo leitura (badge no topo do card / lista). Sem campo editável — é gerado pelo banco no insert.
+- Tipos `Fornecedor` (`useFornecedores`) ganham `codigo: number`.
 
-Ambos opcionais, agrupados perto do campo Fornecedor já existente.
+### 3. Cadastro de item (estoque)
+- Remover os campos "Código no Fornecedor" do `EstoqueMinimalista` e `EditarProdutoModal` adicionados na rodada anterior. Manter apenas IPI (%).
+- Migration adicional dropa `estoque.codigo_fornecedor` (não é mais usado por item; o código vive no fornecedor).
 
-### 3. Nova página dedicada de requisição
-- Criar rota `/administrativo/compras/requisicoes/nova` (e `/:id/editar` para edição) com a página `NovaRequisicaoCompra.tsx`.
-- Em `RequisicoesMinimalista.tsx`, o botão "Nova Requisição" passa a navegar para essa rota em vez de abrir o `Dialog`. Os botões de editar nos cards também navegam.
-- Remover o `RequisicaoCompraForm` em modal; mover seu conteúdo para a nova página, mantendo o mesmo estilo glass/dark, agora com layout em largura total (header com ações Salvar/Cancelar fixas no topo, seções "Dados gerais", "Itens", "Totais").
+### 4. Página `NovaRequisicaoCompra`
+- Ao selecionar um fornecedor, derivar `codigo_fornecedor = fornecedor.codigo` (string) e aplicar a todos os itens já presentes.
+- Ao adicionar/alterar produto numa linha, o campo `Cód. fornec.` é preenchido com `fornecedor.codigo` automaticamente.
+- O input do `Cód. fornec.` na tabela fica `readOnly` + `disabled`-look (cursor padrão, sem foco) e mostra o código.
+- Salvar continua persistindo `codigo_fornecedor` em cada item (string), assim o PDF não muda de schema.
 
-### 4. Vínculo fornecedor → itens
-Na nova página:
-- O seletor de "Item" em cada linha só lista itens de `estoque` cujo `fornecedor_id` = fornecedor selecionado.
-- Se nenhum fornecedor estiver selecionado, o botão "Adicionar item" fica desabilitado com hint "Selecione um fornecedor primeiro".
-- Trocar de fornecedor com itens já adicionados: confirmar com o usuário e limpar a lista de itens (evita inconsistência).
-- Ao escolher um item:
-  - `codigo_fornecedor` ← `estoque.codigo_fornecedor`
-  - `ipi_percent` ← `estoque.ipi_percent`
-  - `valor_unitario` ← `estoque.custo_unitario` (mantido como hoje)
-  - `sku`, `unidade`, `localizacao` (se houver) ← cadastro
-- Esses campos continuam editáveis na linha (sobrescrita manual permitida), mas pré-preenchidos.
-
-### 5. Hook `useEstoque` / consulta
-Adicionar uma query auxiliar `useEstoqueByFornecedor(fornecedorId)` que retorna itens ativos filtrados por `fornecedor_id`, usada apenas pela nova página.
+### 5. PDF
+- `pedidoCompraPDF` já imprime `codigo_fornecedor` na coluna correspondente — sem alteração de código, só passa a vir o número do fornecedor.
 
 ## Detalhes técnicos
-
-- Arquivos novos: `src/pages/administrativo/NovaRequisicaoCompra.tsx`, migration SQL.
-- Arquivos editados: `src/App.tsx` (rotas), `RequisicoesMinimalista.tsx` (navegação, remover Dialog), formulário/modal de cadastro de item em estoque, `useEstoque.ts` (campos novos no tipo + query por fornecedor), `useRequisicoesCompra.ts` (enriquecimento dos itens já passa a incluir `codigo_fornecedor` e `ipi_percent` do estoque como fallback).
-- `RequisicaoCompraForm.tsx` é descontinuado (deletar) ou convertido em componente interno da nova página.
-- PDF e cálculos de totais permanecem inalterados.
+- Migration 1: `ADD COLUMN codigo`, criar sequence, backfill via CTE com `row_number() OVER (ORDER BY created_at)`, set `DEFAULT nextval`, `NOT NULL`, `UNIQUE`.
+- Migration 2: `ALTER TABLE estoque DROP COLUMN IF EXISTS codigo_fornecedor`.
+- Arquivos editados: `useFornecedores.ts` (tipo + select inclui `codigo`), `FornecedoresMinimalista.tsx` (exibir código), `EstoqueMinimalista.tsx` e `EditarProdutoModal.tsx` (remover input código fornecedor), `NovaRequisicaoCompra.tsx` (auto-fill + readOnly), `useRequisicoesCompra.ts` (remover `codigo_fornecedor` do select de `estoque`, manter na linha).
 
 ## Fora de escopo
-
-- Mudanças no fluxo de aprovação/status.
-- Multi-fornecedor por item (continua 1:1).
-- Histórico de preços.
+- Editar manualmente o código do fornecedor.
+- Recalcular código de fornecedores antigos depois de criados (sequência só avança).
