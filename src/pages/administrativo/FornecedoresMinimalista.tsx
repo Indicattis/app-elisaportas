@@ -85,6 +85,7 @@ export default function FornecedoresMinimalista() {
             <Table>
               <TableHeader>
                 <TableRow className="border-white/10 hover:bg-transparent">
+                  <TableHead className="w-20 text-white/60">Código</TableHead>
                   <TableHead className="text-white/60">Tipo</TableHead>
                   <TableHead className="text-white/60">Nome</TableHead>
                   <TableHead className="text-white/60">Responsável</TableHead>
@@ -96,6 +97,9 @@ export default function FornecedoresMinimalista() {
               <TableBody>
                 {fornecedores.map((fornecedor) => (
                   <TableRow key={fornecedor.id} className="border-white/10 hover:bg-white/5">
+                    <TableCell className="font-mono text-white/70">
+                      #{String(fornecedor.codigo).padStart(4, "0")}
+                    </TableCell>
                     <TableCell>
                       <Badge className={fornecedor.tipo === "juridica" 
                         ? "bg-blue-500/20 text-blue-400 border-blue-500/30" 
