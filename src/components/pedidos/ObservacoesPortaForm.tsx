@@ -219,6 +219,26 @@ export function ObservacoesPortaForm({
                         Responsável pelas medidas
                         <span className="text-destructive ml-1">*</span>
                       </FormLabel>
+                      <div className="flex items-center gap-2 mb-1">
+                        <Checkbox
+                          id={`cliente-medeu-${porta._virtualKey || porta.id}-${portaIndex}`}
+                          checked={clienteMedeu}
+                          disabled={!modoEdicao}
+                          onCheckedChange={(v) => {
+                            const checked = v === true;
+                            form.setValue('cliente_medeu', checked);
+                            if (checked) {
+                              form.setValue('responsavel_medidas_id', null);
+                            }
+                          }}
+                        />
+                        <label
+                          htmlFor={`cliente-medeu-${porta._virtualKey || porta.id}-${portaIndex}`}
+                          className="text-[11px] text-muted-foreground cursor-pointer select-none"
+                        >
+                          Cliente mediu (dispensa responsável)
+                        </label>
+                      </div>
                       <Popover open={open} onOpenChange={setOpen}>
                         <PopoverTrigger asChild>
                           <FormControl>
@@ -226,14 +246,16 @@ export function ObservacoesPortaForm({
                               variant="outline"
                               role="combobox"
                               aria-expanded={open}
-                              disabled={!modoEdicao}
+                              disabled={!modoEdicao || clienteMedeu}
                               className={cn(
                                 "h-9 w-full justify-between text-xs font-normal",
-                                !field.value && modoEdicao && "border-destructive",
+                                !field.value && modoEdicao && !clienteMedeu && "border-destructive",
                                 !field.value && "text-muted-foreground"
                               )}
                             >
-                              {selectedName ? (
+                              {clienteMedeu ? (
+                                <span className="text-muted-foreground">Cliente mediu</span>
+                              ) : selectedName ? (
                                 <span className="flex items-center gap-1.5 truncate">
                                   {selectedType === 'admin' ? (
                                     <User className="h-3 w-3 text-primary shrink-0" />
@@ -317,7 +339,7 @@ export function ObservacoesPortaForm({
                           </Command>
                         </PopoverContent>
                       </Popover>
-                      {!field.value && <p className="text-[10px] text-destructive">Obrigatório para avançar o pedido</p>}
+                      {!field.value && !clienteMedeu && <p className="text-[10px] text-destructive">Obrigatório para avançar o pedido</p>}
                       <FormMessage />
                     </FormItem>
                   );
