@@ -358,6 +358,30 @@ export default function EstoqueMinimalista() {
               </div>
             </div>
 
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="codigo_fornecedor">Código no Fornecedor</Label>
+                <Input
+                  id="codigo_fornecedor"
+                  value={formData.codigo_fornecedor}
+                  onChange={(e) => setFormData({ ...formData, codigo_fornecedor: e.target.value })}
+                  className="bg-white/5 border-white/10 text-white"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="ipi_percent">IPI (%)</Label>
+                <Input
+                  id="ipi_percent"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={formData.ipi_percent}
+                  onChange={(e) => setFormData({ ...formData, ipi_percent: Number(e.target.value) })}
+                  className="bg-white/5 border-white/10 text-white"
+                />
+              </div>
+            </div>
+
             <div className="flex items-center space-x-2">
               <input
                 type="checkbox"
