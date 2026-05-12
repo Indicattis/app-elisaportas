@@ -7061,6 +7061,45 @@ export type Database = {
           },
         ]
       }
+      suporte_tickets: {
+        Row: {
+          assunto: string
+          created_at: string
+          email: string
+          id: string
+          mensagem: string
+          nome: string
+          status: Database["public"]["Enums"]["suporte_status"]
+          telefone: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          assunto: string
+          created_at?: string
+          email: string
+          id?: string
+          mensagem: string
+          nome: string
+          status?: Database["public"]["Enums"]["suporte_status"]
+          telefone?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          assunto?: string
+          created_at?: string
+          email?: string
+          id?: string
+          mensagem?: string
+          nome?: string
+          status?: Database["public"]["Enums"]["suporte_status"]
+          telefone?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       system_roles: {
         Row: {
           ativo: boolean
@@ -8734,6 +8773,7 @@ export type Database = {
         | "administrativo"
       status_vaga: "em_analise" | "aberta" | "fechada" | "preenchida"
       status_visita: "agendada" | "concluida" | "cancelada"
+      suporte_status: "aberto" | "em_andamento" | "resolvido"
       tarefa_status: "em_andamento" | "concluida"
       tipo_autorizacao_desconto: "responsavel_setor" | "master"
       tipo_carregamento: "elisa" | "autorizados" | "terceiro" | "instalacao"
@@ -8939,6 +8979,7 @@ export const Constants = {
       ],
       status_vaga: ["em_analise", "aberta", "fechada", "preenchida"],
       status_visita: ["agendada", "concluida", "cancelada"],
+      suporte_status: ["aberto", "em_andamento", "resolvido"],
       tarefa_status: ["em_andamento", "concluida"],
       tipo_autorizacao_desconto: ["responsavel_setor", "master"],
       tipo_carregamento: ["elisa", "autorizados", "terceiro", "instalacao"],
