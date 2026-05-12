@@ -1,49 +1,23 @@
 ## Objetivo
+Exibir na página `/direcao/vendas/:id` (`VendaDetalhesDirecao.tsx`) o tipo de operação da venda — Entrega, Instalação ou Manutenção — que hoje fica apenas no banco (`vendas.tipo_entrega`) e não aparece na UI.
 
-Em `/fabrica/produtos/materias-primas`, ampliar a lista de unidades de medida e garantir que a quantidade (estoque e conversão de vínculos) seja sempre exibida junto da unidade, com formatação consistente em pt-BR.
+## Mudanças
 
-## Catálogo de unidades
+### `src/pages/direcao/VendaDetalhesDirecao.tsx`
 
-Lista padrão centralizada (com código curto + rótulo amigável + plural):
+1. **Tipagem**: adicionar `tipo_entrega: 'entrega' | 'instalacao' | 'manutencao' | null` na interface `Venda`.
 
-| Código | Singular     | Plural        |
-|--------|--------------|---------------|
-| un     | Unidade      | Unidades      |
-| rolo   | Rolo         | Rolos         |
-| bobina | Bobina       | Bobinas       |
-| cx     | Caixa        | Caixas        |
-| pc     | Peça         | Peças         |
-| kg     | Quilo        | Quilos (kg)   |
-| g      | Grama        | Gramas (g)    |
-| m      | Metro        | Metros (m)    |
-| cm     | Centímetro   | Centímetros (cm) |
-| m2     | Metro²       | Metros² (m²)  |
-| l      | Litro        | Litros (l)    |
-| ml     | Mililitro    | Mililitros (ml) |
+2. **Badge no cabeçalho** (logo abaixo do nome do cliente, no `subtitle` ou ao lado do título): renderizar um badge com ícone + label conforme o valor:
+   - `instalacao` → ícone `Wrench`, label "Instalação", cor laranja (mesmo tom do card de Instalação já existente)
+   - `manutencao` → ícone existente `Wrench`/`Settings`, label "Manutenção", cor verde
+   - `entrega` → ícone `Truck`, label "Entrega", cor roxa (mesmo tom do card de Frete)
+   - `null`/indefinido → não renderizar
 
-Compatibilidade: códigos legados existentes no banco (`m²`, `pç`) são mapeados para `m2` e `pc` apenas na exibição; nenhum registro é migrado.
+3. **Card resumo**: incluir um pequeno bloco/linha "Tipo de Operação" na seção de informações gerais (junto com `previsao_entrega`, ~linha 559) para reforçar a informação de forma textual.
 
-## Passos
+Sem alterações de banco, hooks ou regras de negócio — apenas leitura e apresentação do campo já existente.
 
-1. **Criar `src/utils/unidadesMedida.ts`**
-   - Exporta `UNIDADES_MATERIA_PRIMA` (array com `{ value, label, labelPlural, abreviacao }`).
-   - Helpers:
-     - `formatarQuantidadeUnidade(qtd, unidade)` → "10 rolos", "5,50 kg", "200 cm" (usa `toLocaleString('pt-BR')`, sem casas para discretas, até 2 casas para contínuas).
-     - `getUnidadeLabel(unidade)` → rótulo amigável.
-     - `normalizarUnidade(unidade)` → mapeia legados (`m²` → `m2`, `pç` → `pc`).
-
-2. **Atualizar `src/pages/fabrica/MateriasPrimas.tsx`**
-   - Substituir a constante local `UNIDADES` pelo import do novo catálogo.
-   - Select de unidade mostra rótulo amigável (ex.: "Rolo") mantendo `value` técnico.
-   - Coluna "Estoque" da tabela passa a usar `formatarQuantidadeUnidade(m.quantidade, m.unidade)`.
-   - Label do campo "Quantidade em estoque" no dialog mostra a unidade selecionada entre parênteses (ex.: "Quantidade em estoque (rolos)").
-
-3. **Atualizar `src/components/estoque/VincularMaterialDialog.tsx`**
-   - Substituir `materiaPrima.unidade` cru por `getUnidadeLabel(materiaPrima.unidade)` nos textos ("1 Rolo", "Qtd por 1 Rolo").
-   - Idem para a unidade do material vinculado.
-
-## Fora de escopo
-
-- Sem mudanças de schema, hooks ou regras de conversão.
-- Sem migração de dados existentes (apenas normalização de exibição).
-- Sem alteração na precisão aceita pelos inputs (continua `step="0.01"` para todos).
+## Detalhes técnicos
+- O campo `tipo_entrega` já vem no `select *` da query atual, não precisa ajustar a busca.
+- Usar `Badge` do shadcn já importado e os ícones `Wrench`/`Truck` já importados (adicionar `Settings` ou reutilizar `Wrench` para manutenção).
+- Cores em classes utilitárias semânticas seguindo o padrão glassmorphism atual (`bg-orange-500/20 text-orange-400 border-orange-500/30`, etc.).
