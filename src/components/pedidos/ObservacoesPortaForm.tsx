@@ -8,6 +8,7 @@ import { FileText, ChevronDown, Edit, Save, X, User, Building2, Check, ChevronsU
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from "@/components/ui/command";
+import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import type { PedidoPortaObservacoesInsert } from "@/types/pedidoObservacoes";
 import {
@@ -56,6 +57,7 @@ export function ObservacoesPortaForm({
       indice_porta: porta._indicePorta ?? 0,
       responsavel_medidas_id: valoresIniciais?.responsavel_medidas_id || null,
       tipo_responsavel: valoresIniciais?.tipo_responsavel || 'admin',
+      cliente_medeu: valoresIniciais?.cliente_medeu ?? false,
       opcao_tubo: valoresIniciais?.opcao_tubo || 'sem_tubo',
       interna_externa: valoresIniciais?.interna_externa || 'porta_interna',
       retirada_porta: valoresIniciais?.retirada_porta || false,
@@ -85,6 +87,7 @@ export function ObservacoesPortaForm({
       indice_porta: porta._indicePorta ?? 0,
       responsavel_medidas_id: valoresIniciais?.responsavel_medidas_id || null,
       tipo_responsavel: valoresIniciais?.tipo_responsavel || 'admin',
+      cliente_medeu: valoresIniciais?.cliente_medeu ?? false,
       opcao_tubo: valoresIniciais?.opcao_tubo || 'sem_tubo',
       interna_externa: valoresIniciais?.interna_externa || 'porta_interna',
       retirada_porta: valoresIniciais?.retirada_porta || false,
@@ -116,7 +119,8 @@ export function ObservacoesPortaForm({
     return porta.tamanho || 'Medidas não informadas';
   };
 
-  const responsavelPreenchido = !!form.watch('responsavel_medidas_id');
+  const clienteMedeu = !!form.watch('cliente_medeu');
+  const responsavelPreenchido = !!form.watch('responsavel_medidas_id') || clienteMedeu;
 
   // Label da porta considerando se é expandida
   const portaLabel = porta._totalNoGrupo && porta._totalNoGrupo > 1
@@ -215,6 +219,26 @@ export function ObservacoesPortaForm({
                         Responsável pelas medidas
                         <span className="text-destructive ml-1">*</span>
                       </FormLabel>
+                      <div className="flex items-center gap-2 mb-1">
+                        <Checkbox
+                          id={`cliente-medeu-${porta._virtualKey || porta.id}-${portaIndex}`}
+                          checked={clienteMedeu}
+                          disabled={!modoEdicao}
+                          onCheckedChange={(v) => {
+                            const checked = v === true;
+                            form.setValue('cliente_medeu', checked);
+                            if (checked) {
+                              form.setValue('responsavel_medidas_id', null);
+                            }
+                          }}
+                        />
+                        <label
+                          htmlFor={`cliente-medeu-${porta._virtualKey || porta.id}-${portaIndex}`}
+                          className="text-[11px] text-muted-foreground cursor-pointer select-none"
+                        >
+                          Cliente mediu (dispensa responsável)
+                        </label>
+                      </div>
                       <Popover open={open} onOpenChange={setOpen}>
                         <PopoverTrigger asChild>
                           <FormControl>
@@ -222,14 +246,16 @@ export function ObservacoesPortaForm({
                               variant="outline"
                               role="combobox"
                               aria-expanded={open}
-                              disabled={!modoEdicao}
+                              disabled={!modoEdicao || clienteMedeu}
                               className={cn(
                                 "h-9 w-full justify-between text-xs font-normal",
-                                !field.value && modoEdicao && "border-destructive",
+                                !field.value && modoEdicao && !clienteMedeu && "border-destructive",
                                 !field.value && "text-muted-foreground"
                               )}
                             >
-                              {selectedName ? (
+                              {clienteMedeu ? (
+                                <span className="text-muted-foreground">Cliente mediu</span>
+                              ) : selectedName ? (
                                 <span className="flex items-center gap-1.5 truncate">
                                   {selectedType === 'admin' ? (
                                     <User className="h-3 w-3 text-primary shrink-0" />
@@ -313,7 +339,7 @@ export function ObservacoesPortaForm({
                           </Command>
                         </PopoverContent>
                       </Popover>
-                      {!field.value && <p className="text-[10px] text-destructive">Obrigatório para avançar o pedido</p>}
+                      {!field.value && !clienteMedeu && <p className="text-[10px] text-destructive">Obrigatório para avançar o pedido</p>}
                       <FormMessage />
                     </FormItem>
                   );

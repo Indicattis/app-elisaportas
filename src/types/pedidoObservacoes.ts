@@ -51,6 +51,7 @@ export interface PedidoPortaObservacoes {
   indice_porta: number;
   responsavel_medidas_id: string | null;
   tipo_responsavel: 'admin' | 'autorizado';
+  cliente_medeu: boolean;
   opcao_tubo: keyof typeof OPCOES_TUBO;
   interna_externa: keyof typeof OPCOES_INTERNA_EXTERNA;
   retirada_porta: boolean;
