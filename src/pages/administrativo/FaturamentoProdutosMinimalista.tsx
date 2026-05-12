@@ -101,7 +101,8 @@ export default function FaturamentoProdutosMinimalista() {
   const fetchAtendentes = async () => {
     const { data } = await supabase
       .from('admin_users')
-      .select('user_id, nome')
+      .select('user_id, nome, ativo')
+      .in('tipo_usuario', ['colaborador', 'arquivado'])
       .order('nome');
     if (data) setAtendentes(data);
   };
@@ -242,7 +243,9 @@ export default function FaturamentoProdutosMinimalista() {
                 <SelectContent className="bg-zinc-900 border-white/10">
                   <SelectItem value="todos" className="text-white">Todos atendentes</SelectItem>
                   {atendentes.map((at) => (
-                    <SelectItem key={at.user_id} value={at.user_id} className="text-white">{at.nome}</SelectItem>
+                    <SelectItem key={at.user_id} value={at.user_id} className="text-white">
+                      {at.nome}{at.ativo === false ? ' (inativo)' : ''}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
