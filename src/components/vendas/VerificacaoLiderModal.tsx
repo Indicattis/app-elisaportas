@@ -58,7 +58,6 @@ export function VerificacaoLiderModal({
         .from('admin_users')
         .select('nome')
         .eq('user_id', setorData.lider_id)
-        .eq('ativo', true)
         .maybeSingle();
       
       if (userError) {
@@ -112,7 +111,6 @@ export function VerificacaoLiderModal({
         .from('admin_users')
         .select('user_id, nome, role')
         .eq('user_id', setorData.lider_id)
-        .eq('ativo', true)
         .maybeSingle();
 
       if (userError) {
