@@ -730,7 +730,7 @@ export default function FaturamentoVendaMinimalista() {
       setLoading(true);
       const { data, error } = await supabase
         .from("vendas")
-        .select("id, cliente_nome, valor_venda, valor_frete, valor_instalacao, valor_credito, lucro_total, frete_aprovado, comprovante_url, comprovante_nome, lucro_instalacao, custo_instalacao, instalacao_faturada, metodo_pagamento, numero_parcelas, intervalo_boletos, empresa_receptora_id, data_venda, forma_pagamento, venda_presencial, pagamento_na_entrega, valor_entrada, valor_a_receber, quantidade_parcelas, contrato_url")
+        .select("id, cliente_nome, valor_venda, valor_frete, valor_instalacao, valor_credito, lucro_total, frete_aprovado, comprovante_url, comprovante_nome, lucro_instalacao, custo_instalacao, instalacao_faturada, metodo_pagamento, numero_parcelas, intervalo_boletos, empresa_receptora_id, data_venda, forma_pagamento, venda_presencial, pagamento_na_entrega, valor_entrada, valor_a_receber, quantidade_parcelas, contrato_url, contrato_dispensado")
         .eq("id", id)
         .single();
 
@@ -915,7 +915,7 @@ export default function FaturamentoVendaMinimalista() {
   }, [produtos]);
 
   const vendaFaturada = todosProdutosFaturados && venda?.frete_aprovado === true;
-  const aguardandoContrato = !vendaFaturada && !((venda as any)?.contrato_url);
+  const aguardandoContrato = !vendaFaturada && !((venda as any)?.contrato_url) && !((venda as any)?.contrato_dispensado);
   const lucroProdutos = produtos?.reduce((acc, p) => acc + (p.lucro_item || 0), 0) || 0;  // valor já é o total da linha
   
   // Instalação: para vendas novas, é um produto separado tipo 'instalacao' com lucro_item
