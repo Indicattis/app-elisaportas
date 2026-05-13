@@ -1163,16 +1163,28 @@ export default function GestaoFabricaDirecao() {
                     </div>
                   </CardTitle>
                   
-                  <PedidosFiltrosMinimalista 
-                    searchTerm={searchTerm} 
-                    onSearchChange={setSearchTerm} 
-                    tipoEntrega={tipoEntrega} 
-                    onTipoEntregaChange={setTipoEntrega} 
-                    corPintura={corPintura} 
-                    onCorPinturaChange={setCorPintura} 
-                    mostrarProntos={mostrarProntos} 
-                    onMostrarProntosToggle={() => setMostrarProntos(!mostrarProntos)} 
-                  />
+                  <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2 w-full lg:w-auto">
+                    <PedidosSelecaoBar
+                      selecionadosCount={selecionados.size}
+                      totalFiltrados={pedidosFiltrados.length}
+                      onSelecionarTodos={() => setSelecionados(new Set(pedidosFiltrados.map((p: any) => p.id)))}
+                      onLimpar={limparSelecao}
+                      onGerarLista={handleGerarListaSelecao}
+                      onImprimir={handleImprimirSelecao}
+                      isGerandoLista={gerandoListaSelecao}
+                      isImprimindo={imprimindoSelecao}
+                    />
+                    <PedidosFiltrosMinimalista 
+                      searchTerm={searchTerm} 
+                      onSearchChange={setSearchTerm} 
+                      tipoEntrega={tipoEntrega} 
+                      onTipoEntregaChange={setTipoEntrega} 
+                      corPintura={corPintura} 
+                      onCorPinturaChange={setCorPintura} 
+                      mostrarProntos={mostrarProntos} 
+                      onMostrarProntosToggle={() => setMostrarProntos(!mostrarProntos)} 
+                    />
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="px-4 py-4">
