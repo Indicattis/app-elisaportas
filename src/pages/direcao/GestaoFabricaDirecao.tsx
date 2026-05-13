@@ -242,7 +242,7 @@ export default function GestaoFabricaDirecao() {
         ? (pedidosFiltradosRef.current || []).map((p: any) => p.id)
         : Array.from(selecionados);
       if (ids.length === 0) return;
-      const baseLabel = etapaAtiva && etapaAtiva !== 'arquivo_morto' && etapaAtiva !== 'pendente_pedido'
+      const baseLabel = etapaAtiva && etapaAtiva !== 'arquivo_morto' && etapaAtiva !== 'pendente_pedido' && etapaAtiva !== 'assinatura_contrato'
         ? ETAPAS_CONFIG[etapaAtiva as EtapaPedido]?.label || etapaAtiva
         : 'Seleção';
       const etapaLabel = usarTodos ? String(baseLabel) : `${baseLabel} (seleção)`;
