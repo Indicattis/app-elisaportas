@@ -1115,6 +1115,19 @@ export default function FaturamentoVendaMinimalista() {
           )}
         </div>
 
+        {aguardandoContrato && (
+          <div className="flex items-start gap-3 p-4 rounded-lg bg-amber-500/10 border border-amber-500/40 text-amber-200">
+            <FileSignature className="h-5 w-5 mt-0.5 flex-shrink-0 text-amber-400" />
+            <div className="text-sm">
+              <p className="font-semibold text-amber-300">Aguardando assinatura do contrato</p>
+              <p className="text-amber-200/80">
+                Esta venda só poderá ser faturada após o contrato ser anexado em
+                {" "}<strong>Gestão da Fábrica → Assinatura de Contrato</strong>.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Indicadores Financeiros */}
         <div className="grid gap-3 grid-cols-2 md:grid-cols-4 lg:grid-cols-9">
           {/* Valor de Tabela */}
