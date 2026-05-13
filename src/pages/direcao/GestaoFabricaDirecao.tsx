@@ -283,6 +283,7 @@ export default function GestaoFabricaDirecao() {
   const contadores = usePedidosContadores();
   const { data: vendasPendentePedido = [], isLoading: isLoadingPendentes } = useVendasPendentePedido();
   const { data: vendasPendenteFaturamento = [], isLoading: isLoadingFaturamento } = useVendasPendenteFaturamento();
+  const { data: vendasAssinaturaContrato = [], isLoading: isLoadingContrato } = useVendasAssinaturaContrato();
   const { data: pedidosArquivados = [], isLoading: isLoadingArquivados } = usePedidosArquivados({
     search: debouncedArquivoSearch,
     dataInicio: arquivoDataInicio || null,
@@ -300,7 +301,7 @@ export default function GestaoFabricaDirecao() {
     removerResponsavel, 
     isAtribuindo 
   } = useEtapaResponsaveis();
-  const etapaParaQuery = (etapaAtiva === 'arquivo_morto' || etapaAtiva === 'pendente_pedido') ? 'aberto' : etapaAtiva;
+  const etapaParaQuery = (etapaAtiva === 'arquivo_morto' || etapaAtiva === 'pendente_pedido' || etapaAtiva === 'assinatura_contrato') ? 'aberto' : etapaAtiva;
   const {
     pedidos,
     isLoading,
