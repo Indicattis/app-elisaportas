@@ -177,10 +177,12 @@ export function PedidosDraggableList({
   const renderSelectionCheckbox = (pedidoId: string) => {
     if (!selectionEnabled || !onToggleSelecionado) return null;
     const checked = selecionados?.has(pedidoId) ?? false;
+    const positionClass = viewMode === 'list' ? 'top-2 left-8' : 'top-2 right-2';
     return (
       <div
         className={cn(
-          "absolute top-2 left-2 z-20 rounded-md p-1 transition-colors",
+          "absolute z-20 rounded-md p-1 transition-colors",
+          positionClass,
           checked ? "bg-primary/20 border border-primary/40" : "bg-white/10 border border-white/20 hover:bg-white/20"
         )}
         onClick={(e) => {
