@@ -238,7 +238,7 @@ export default function GestaoFabricaDirecao() {
       setGerandoListaSelecao(true);
       const usarTodos = selecionados.size === 0;
       const ids = usarTodos
-        ? pedidosFiltrados.map((p: any) => p.id)
+        ? (pedidosFiltradosRef.current || []).map((p: any) => p.id)
         : Array.from(selecionados);
       if (ids.length === 0) return;
       const baseLabel = etapaAtiva && etapaAtiva !== 'arquivo_morto' && etapaAtiva !== 'pendente_pedido'
@@ -249,13 +249,13 @@ export default function GestaoFabricaDirecao() {
     } finally {
       setGerandoListaSelecao(false);
     }
-  }, [selecionados, etapaAtiva, gerarListaParaPedidos, pedidosFiltrados]);
+  }, [selecionados, etapaAtiva, gerarListaParaPedidos]);
 
   const handleImprimirSelecao = useCallback(async () => {
     try {
       setImprimindoSelecao(true);
       const ids = selecionados.size === 0
-        ? pedidosFiltrados.map((p: any) => p.id)
+        ? (pedidosFiltradosRef.current || []).map((p: any) => p.id)
         : Array.from(selecionados);
       if (ids.length === 0) return;
       const dados = await Promise.all(ids.map((id) => buscarDadosPedidoProducaoPDF(id)));
@@ -271,7 +271,7 @@ export default function GestaoFabricaDirecao() {
     } finally {
       setImprimindoSelecao(false);
     }
-  }, [selecionados, toast, pedidosFiltrados]);
+  }, [selecionados, toast]);
   
   // Debounce para busca do arquivo morto
   useEffect(() => {
