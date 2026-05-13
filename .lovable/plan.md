@@ -1,29 +1,17 @@
-## Sinalizar vendas aguardando assinatura de contrato
+## Plano: Botão Anexar/Ver Contrato na sidebar direita
 
-Em `/administrativo/financeiro/faturamento/vendas`, marcar visualmente as vendas que ainda não têm contrato anexado e impedir o faturamento delas.
+**Arquivo:** `src/pages/administrativo/FaturamentoVendasMinimalista.tsx`
 
-### 1. Página de listagem (`FaturamentoVendasMinimalista.tsx`)
+No `selectedVendaContent` (sidebar direita quando uma venda está selecionada), acima do botão "Abrir Faturamento", adicionar um novo botão condicional baseado em `selectedVenda.contrato_url`:
 
-- Incluir `contrato_url` no `select` da query de vendas.
-- Criar helper `aguardandoContrato(venda)` = `!isFaturada(venda) && !venda.contrato_url`.
-- Nova coluna "Contrato" (entre "Faturada" e "Tempo s/ Faturar"):
-  - Faturada → ícone `Check` verde.
-  - Sem contrato → badge âmbar com `FileSignature` + texto "Aguardando" (tooltip: "Aguardando assinatura do contrato — não pode ser faturada").
-  - Com contrato porém ainda não faturada → ícone `FileCheck` azul (tooltip: "Contrato anexado").
-- Linha inteira ganha um leve destaque âmbar à esquerda (`border-l-2 border-l-amber-500/60`) quando aguardando contrato.
-- Ao clicar numa linha aguardando contrato, em vez de navegar para o detalhamento, exibir toast: "Anexe o contrato em Gestão da Fábrica > Assinatura de Contrato antes de faturar." (a navegação para o detalhamento continua possível via outra ação se necessário — manter clique mas exibindo aviso e ainda navegando, conforme decisão abaixo).
+- **Se `contrato_url` existir** → botão **"Ver Contrato"** (variant outline, ícone `FileCheck`). Ao clicar: gera signed URL via `supabase.storage.from('contratos-vendas').createSignedUrl(contrato_url, 3600)` e abre em nova aba.
 
-### 2. Página de detalhamento (`FaturamentoVendaMinimalista.tsx`)
+- **Se NÃO existir** → botão **"Anexar Contrato"** (cor âmbar para sinalizar pendência, ícone `FileSignature`). Ao clicar: abre o `AnexarContratoModal` já existente passando `vendaId` e `clienteNome`.
 
-- Ler `contrato_url` da venda.
-- Se ausente e venda não faturada:
-  - Banner âmbar no topo: "Esta venda está aguardando assinatura do contrato. O faturamento só pode ser concluído após o contrato ser anexado em Gestão da Fábrica > Assinatura de Contrato."
-  - Botão "Faturar" fica `disabled` com tooltip explicando o motivo.
+**Mudanças adicionais no mesmo arquivo:**
+- Importar `AnexarContratoModal` de `@/components/vendas/AnexarContratoModal`
+- Importar ícones `FileSignature` e `FileCheck` (já presentes no arquivo conforme implementação anterior)
+- Adicionar state `anexarContratoOpen: boolean`
+- Renderizar `<AnexarContratoModal>` no fim do componente, controlado por esse state, recebendo `selectedVenda?.id` e `selectedVenda?.cliente_nome`
 
-### Pergunta pendente
-
-Ao clicar numa linha aguardando contrato na listagem, prefere:
-- (A) Bloquear o clique e mostrar apenas o toast, OU
-- (B) Permitir abrir o detalhamento (que mostrará o banner + botão Faturar desabilitado).
-
-Sem mudanças de banco de dados — `contrato_url` já existe na tabela `vendas`.
+**Não muda:** lógica de bloqueio do faturamento, banner âmbar, regras de negócio, modal de anexo (já implementado), bucket de storage. Apenas presentação na sidebar.
