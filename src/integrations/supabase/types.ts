@@ -7783,6 +7783,9 @@ export type Database = {
           comprovante_url: string | null
           contrato_anexado_por: string | null
           contrato_assinado_em: string | null
+          contrato_dispensado: boolean
+          contrato_dispensado_em: string | null
+          contrato_dispensado_por: string | null
           contrato_url: string | null
           cpf_cliente: string | null
           created_at: string
@@ -7841,6 +7844,9 @@ export type Database = {
           comprovante_url?: string | null
           contrato_anexado_por?: string | null
           contrato_assinado_em?: string | null
+          contrato_dispensado?: boolean
+          contrato_dispensado_em?: string | null
+          contrato_dispensado_por?: string | null
           contrato_url?: string | null
           cpf_cliente?: string | null
           created_at?: string
@@ -7899,6 +7905,9 @@ export type Database = {
           comprovante_url?: string | null
           contrato_anexado_por?: string | null
           contrato_assinado_em?: string | null
+          contrato_dispensado?: boolean
+          contrato_dispensado_em?: string | null
+          contrato_dispensado_por?: string | null
           contrato_url?: string | null
           cpf_cliente?: string | null
           created_at?: string
