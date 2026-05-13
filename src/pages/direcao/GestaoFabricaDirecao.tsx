@@ -1055,7 +1055,50 @@ export default function GestaoFabricaDirecao() {
             <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl w-full max-w-none">
               <CardHeader className="pb-3 px-4 py-4">
                 <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-                  <CardTitle className="text-lg flex items-center gap-2 text-white">
+                  <CardTitle className="text-lg flex items-center gap-3 text-white">
+                    {/* Responsável da Etapa - destaque antes do título */}
+                    {(() => {
+                      const responsavel = getResponsavel(etapa);
+                      return responsavel ? (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                onClick={() => handleAbrirModalResponsavel(etapa)}
+                                className="rounded-full ring-2 ring-blue-500/40 hover:ring-blue-500/70 transition-all"
+                              >
+                                <Avatar style={{ width: 50, height: 50 }}>
+                                  <AvatarImage src={responsavel.foto_perfil_url || undefined} />
+                                  <AvatarFallback className="text-base bg-blue-500/20">
+                                    {responsavel.nome.charAt(0).toUpperCase()}
+                                  </AvatarFallback>
+                                </Avatar>
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="text-xs">Responsável: {responsavel.nome}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      ) : (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                onClick={() => handleAbrirModalResponsavel(etapa)}
+                                style={{ width: 50, height: 50 }}
+                                className="rounded-full flex items-center justify-center bg-white/5 border border-dashed border-white/20 text-white/50 hover:text-white hover:bg-white/10 transition-colors"
+                              >
+                                <UserPlus className="h-5 w-5" />
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="text-xs">Atribuir responsável</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      );
+                    })()}
                     <span>{ETAPAS_CONFIG[etapa].label}</span>
                     <span className="text-sm font-normal text-white/60">
                       {pedidosFiltrados.length} {pedidosFiltrados.length === 1 ? 'pedido' : 'pedidos'}
@@ -1066,52 +1109,7 @@ export default function GestaoFabricaDirecao() {
                       </Badge>
                     )}
                     
-                    {/* Responsável da Etapa */}
                     <div className="flex items-center gap-2 ml-4">
-                      {(() => {
-                        const responsavel = getResponsavel(etapa);
-                        return responsavel ? (
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <button 
-                                  onClick={() => handleAbrirModalResponsavel(etapa)}
-                                  className="flex items-center gap-2 px-2 py-1 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 transition-colors"
-                                >
-                                  <Avatar className="h-6 w-6 border border-blue-500/30">
-                                    <AvatarImage src={responsavel.foto_perfil_url || undefined} />
-                                    <AvatarFallback className="text-[10px] bg-blue-500/20">
-                                      {responsavel.nome.charAt(0).toUpperCase()}
-                                    </AvatarFallback>
-                                  </Avatar>
-                                  <span className="text-xs text-white/80">{responsavel.nome.split(' ')[0]}</span>
-                                </button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p className="text-xs">Clique para alterar o responsável</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        ) : (
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleAbrirModalResponsavel(etapa)}
-                                  className="h-7 px-2 text-white/50 hover:text-white hover:bg-white/10"
-                                >
-                                  <UserPlus className="h-4 w-4" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p className="text-xs">Atribuir responsável</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        );
-                      })()}
                       {(etapaAtiva === 'instalacoes' || etapaAtiva === 'aguardando_coleta') && (
                         <TooltipProvider>
                           <Tooltip>
