@@ -18,6 +18,7 @@ import { ProdutoVendaForm } from '@/components/vendas/ProdutoVendaForm';
 import { ProdutosVendaTable } from '@/components/vendas/ProdutosVendaTable';
 import { VendaResumo } from '@/components/vendas/VendaResumo';
 import { useToast } from '@/hooks/use-toast';
+import { toast as sonnerToast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -450,50 +451,62 @@ export default function VendaNovaMinimalista() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (portas.length === 0) {
-      toast({
-        variant: 'destructive',
-        title: 'Erro',
-        description: 'É necessário adicionar pelo menos um produto'
-      });
-      return;
+
+    // Coleta granular de campos obrigatórios faltantes / inválidos
+    const faltantes: string[] = [];
+
+    // Cliente
+    if (!formData.cliente_nome?.trim()) faltantes.push('Nome do cliente');
+    if (!formData.cliente_telefone?.trim()) faltantes.push('Telefone do cliente');
+
+    // Localização
+    if (!formData.estado) faltantes.push('Estado');
+    if (!formData.cidade) faltantes.push('Cidade');
+    if (!formData.cep) faltantes.push('CEP');
+    if (!formData.bairro) {
+      faltantes.push('Bairro');
+    } else if (formData.bairro.length < 2) {
+      faltantes.push('Bairro (mínimo 2 caracteres)');
+    }
+    if (!formData.endereco) {
+      faltantes.push('Endereço');
+    } else if (formData.endereco.length < 2) {
+      faltantes.push('Endereço (mínimo 2 caracteres)');
     }
 
-    if (!formData.estado || !formData.cidade || !formData.cep || !formData.bairro || !formData.endereco) {
-      toast({
-        variant: 'destructive',
-        title: 'Erro',
-        description: 'Todos os campos de localização são obrigatórios (Estado, Cidade, CEP, Bairro e Endereço).'
-      });
-      return;
-    }
-
-    if (formData.endereco.length < 2) {
-      toast({
-        variant: 'destructive',
-        title: 'Erro',
-        description: 'O endereço deve ter no mínimo 2 caracteres.'
-      });
-      return;
-    }
-
-    if (formData.bairro.length < 2) {
-      toast({
-        variant: 'destructive',
-        title: 'Erro',
-        description: 'O bairro deve ter no mínimo 2 caracteres.'
-      });
-      return;
-    }
-
+    // Documento (somente formato — campo opcional)
     const documentoDigitos = formData.cpf_cliente?.replace(/\D/g, '') || '';
     if (documentoDigitos && documentoDigitos.length !== 11 && documentoDigitos.length !== 14) {
-      toast({
-        variant: 'destructive',
-        title: 'Erro',
-        description: 'Documento inválido. Digite um CPF (11 dígitos) ou CNPJ (14 dígitos).'
+      faltantes.push('CPF/CNPJ inválido (use 11 ou 14 dígitos)');
+    }
+
+    // Produtos
+    if (portas.length === 0) faltantes.push('Pelo menos um produto');
+
+    // Datas e entrega
+    if (!dataEntrega) faltantes.push('Previsão de entrega');
+    if (!formData.tipo_entrega) faltantes.push('Tipo de entrega');
+
+    // Forma de pagamento
+    if (!pagamentoData?.metodos || pagamentoData.metodos.length === 0 || !pagamentoData.metodos[0]?.tipo) {
+      faltantes.push('Forma de pagamento');
+    }
+
+    if (faltantes.length > 0) {
+      sonnerToast.error('Campos obrigatórios não preenchidos', {
+        description: (
+          <ul className="list-disc pl-4 mt-1 space-y-0.5">
+            {faltantes.map((f) => (
+              <li key={f}>{f}</li>
+            ))}
+          </ul>
+        ) as any,
+        duration: 6000,
       });
+      // Rolar até o topo para o usuário visualizar a primeira seção do formulário
+      try {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } catch {}
       return;
     }
 
