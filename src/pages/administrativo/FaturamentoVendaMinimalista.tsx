@@ -1763,10 +1763,11 @@ export default function FaturamentoVendaMinimalista() {
             <Button
               size="lg"
               onClick={handleFaturar}
-              disabled={isFinalizandoFaturamento}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+              disabled={isFinalizandoFaturamento || aguardandoContrato}
+              title={aguardandoContrato ? "Anexe o contrato em Gestão da Fábrica > Assinatura de Contrato antes de faturar." : undefined}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isFinalizandoFaturamento ? "Faturando..." : "Faturar"}
+              {isFinalizandoFaturamento ? "Faturando..." : aguardandoContrato ? "Aguardando contrato" : "Faturar"}
             </Button>
           )}
         </div>
