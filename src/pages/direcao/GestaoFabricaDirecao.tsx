@@ -1093,11 +1093,6 @@ export default function GestaoFabricaDirecao() {
           </TooltipProvider>
         </TabsList>
 
-        {/* Aba Pendente Faturamento - vendas NÃO faturadas */}
-        <TabsContent value="pendente_pedido" className="mt-4">
-        {/* placeholder removed below */}
-        </TabsContent>
-
         {/* Aba Assinatura Contrato - vendas sem contrato anexado */}
         <TabsContent value="assinatura_contrato" className="mt-4">
           <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl w-full max-w-none">
@@ -1130,8 +1125,8 @@ export default function GestaoFabricaDirecao() {
           </Card>
         </TabsContent>
 
-        {/* Aba Pendente Faturamento - vendas faturadas pendentes de pedido */}
-        <TabsContent value="pendente_pedido_real" className="mt-4">
+        {/* Aba Pendente Faturamento - vendas com contrato porém ainda não faturadas */}
+        <TabsContent value="pendente_pedido" className="mt-4">
           <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl w-full max-w-none">
             <CardHeader className="pb-3 px-4 py-4">
               <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
