@@ -27,7 +27,8 @@ import {
   Trash2,
   FileText,
   Eye,
-  Image
+  Image,
+  FileSignature
 } from "lucide-react";
 import { format, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
