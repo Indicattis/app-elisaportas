@@ -183,7 +183,7 @@ export function PedidosDraggableList({
         className={cn(
           "absolute z-20 rounded-md p-0.5 transition-colors cursor-pointer",
           positionClass,
-          checked ? "bg-primary/20 border border-primary/40" : "bg-white/10 hover:bg-white/20"
+          checked ? "bg-primary/20 border border-primary/40" : "hover:bg-white/10"
         )}
         onClick={(e) => {
           e.stopPropagation();
