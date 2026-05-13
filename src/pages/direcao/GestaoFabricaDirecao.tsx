@@ -1229,6 +1229,9 @@ export default function GestaoFabricaDirecao() {
                       showPosicao={true}
                       onAvisoEspera={handleAvisoEspera}
                       enableDragAndDrop={true}
+                      selectionEnabled={true}
+                      selecionados={selecionados}
+                      onToggleSelecionado={toggleSelecionado}
                     />
 
                     {/* Neo Finalizados - após os pedidos */}
