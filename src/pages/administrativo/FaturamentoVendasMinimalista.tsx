@@ -374,6 +374,8 @@ export default function FaturamentoMinimalista() {
   };
 
   const isFaturada = (venda: Venda) => isVendaFaturada(venda);
+  const aguardandoContrato = (venda: Venda) =>
+    !isFaturada(venda) && !(venda as any).contrato_url;
 
   const calcularLucroVenda = (venda: Venda) => {
     const portas = venda.portas || [];
@@ -721,14 +723,14 @@ export default function FaturamentoMinimalista() {
   };
 
   const getColumnResponsiveClass = (columnId: string) => {
-    const hiddenOnMobile = ['cidade', 'expedicao', 'desc_cartao', 'desc_gelo', 'desc_responsavel', 'tempo_sem_faturar', 'justificativa', 'lucro', 'tabela'];
+    const hiddenOnMobile = ['cidade', 'expedicao', 'desc_cartao', 'desc_gelo', 'desc_responsavel', 'tempo_sem_faturar', 'justificativa', 'lucro', 'tabela', 'contrato'];
     if (hiddenOnMobile.includes(columnId)) return 'hidden md:table-cell';
     return '';
   };
 
   const getColumnAlignment = (columnId: string) => {
     const rightAligned = ['valor', 'lucro', 'desc_cartao', 'desc_gelo', 'desc_responsavel', 'tabela'];
-    const centerAligned = ['faturada', 'tempo_sem_faturar', 'expedicao'];
+    const centerAligned = ['faturada', 'tempo_sem_faturar', 'expedicao', 'contrato'];
     if (rightAligned.includes(columnId)) return 'text-right';
     if (centerAligned.includes(columnId)) return 'text-center';
     return 'text-left';
