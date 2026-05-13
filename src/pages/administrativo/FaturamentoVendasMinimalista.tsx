@@ -1484,6 +1484,61 @@ export default function FaturamentoMinimalista() {
           clienteNome={selectedVenda.cliente_nome}
         />
       )}
+
+      <AlertDialog open={dispensarContratoOpen} onOpenChange={(o) => !dispensandoContrato && setDispensarContratoOpen(o)}>
+        <AlertDialogContent className="bg-slate-950/90 backdrop-blur-xl border-white/10 text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white flex items-center gap-2">
+              <FileX className="h-5 w-5 text-white/70" />
+              Dispensar contrato?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-white/60">
+              {selectedVenda ? (
+                <>Cliente: <span className="text-white/90 font-medium">{selectedVenda.cliente_nome}</span><br /></>
+              ) : null}
+              A venda poderá ser faturada sem contrato assinado. Você poderá reverter depois anexando o contrato.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={dispensandoContrato} className="bg-white/5 border-white/15 text-white hover:bg-white/10 hover:text-white">
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={dispensandoContrato || !selectedVenda}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+              onClick={async (e) => {
+                e.preventDefault();
+                if (!selectedVenda) return;
+                try {
+                  setDispensandoContrato(true);
+                  const { data: userData } = await supabase.auth.getUser();
+                  const userId = userData.user?.id ?? null;
+                  const { error } = await supabase
+                    .from('vendas')
+                    .update({
+                      contrato_dispensado: true,
+                      contrato_dispensado_em: new Date().toISOString(),
+                      contrato_dispensado_por: userId,
+                    } as any)
+                    .eq('id', selectedVenda.id);
+                  if (error) throw error;
+                  toast({ title: 'Contrato dispensado', description: 'A venda já pode ser faturada.' });
+                  setSelectedVenda((prev) => prev ? ({ ...(prev as any), contrato_dispensado: true } as Venda) : prev);
+                  setVendas((prev) => prev.map((v) => v.id === selectedVenda.id ? ({ ...(v as any), contrato_dispensado: true } as Venda) : v));
+                  setDispensarContratoOpen(false);
+                } catch (err: any) {
+                  console.error('Erro ao dispensar contrato:', err);
+                  toast({ variant: 'destructive', title: 'Erro', description: err?.message || 'Não foi possível dispensar o contrato.' });
+                } finally {
+                  setDispensandoContrato(false);
+                }
+              }}
+            >
+              {dispensandoContrato ? 'Dispensando...' : 'Confirmar dispensa'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </MinimalistLayout>
   );
 }
