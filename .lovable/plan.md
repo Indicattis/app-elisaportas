@@ -1,53 +1,59 @@
-# Melhorar avisos de erro de campos obrigatórios em /vendas/minhas-vendas/nova
+# Seleção múltipla de pedidos em /direcao/gestao-fabrica
 
-## Problema atual
+## Objetivo
 
-Em `src/pages/vendas/VendaNovaMinimalista.tsx`, o `handleSubmit` exibe toasts genéricos:
+Permitir selecionar vários pedidos dentro de cada aba de etapa e habilitar uma barra de ações (Lista de material, Imprimir pedidos) na mesma região onde hoje ficam os filtros (`PedidosFiltrosMinimalista`).
 
-- "Todos os campos de localização são obrigatórios (Estado, Cidade, CEP, Bairro e Endereço)" — não diz qual está faltando.
-- Não valida explicitamente cliente (nome, telefone), data de previsão de entrega, tipo de entrega ou forma de pagamento (mostra erro só ao processar).
-- Toasts somem rápido e não direcionam o usuário até o campo.
+## Mudanças
 
-## O que fazer
+### 1. Estado de seleção (`GestaoFabricaDirecao.tsx`)
 
-### 1. Validação granular em `handleSubmit`
+- Novo state `selecionados: Set<string>` (ids de pedidos), resetado ao trocar de `etapaAtiva`.
+- Helpers `toggleSelecionado(id)`, `selecionarTodos()`, `limparSelecao()`.
+- Passar `selecionados`, `onToggleSelecionado` para `PedidosDraggableList`.
 
-Substituir os toasts genéricos por uma checagem que coleta **todos** os campos faltantes em uma lista e mostra um único toast claro:
+### 2. Checkbox no card de pedido
 
-- Nome do cliente
-- Telefone do cliente
-- CPF/CNPJ (se preenchido, validar formato — manter regra atual)
-- Estado, Cidade, CEP, Bairro, Endereço (cada um listado individualmente)
-- Data de previsão de entrega (`dataEntrega`)
-- Tipo de entrega
-- Forma de pagamento (ao menos um método em `pagamentoData.metodos`)
-- Pelo menos um produto
+- Em `PedidosDraggableList` / `PedidoCardMinimalista`, adicionar um `<Checkbox>` à esquerda do card (visível só quando passada a prop `selectionEnabled`/handler).
+- Borda azul e leve `bg-primary/5` quando selecionado.
+- Não interfere no drag-and-drop (checkbox com `onClick` que faz `stopPropagation`).
 
-Formato do toast (sonner `toast.error` com `description` em lista):
+### 3. Barra de ações ao lado dos filtros
 
-```
-Título: "Campos obrigatórios não preenchidos"
-Descrição: lista com bullets dos campos faltantes
-```
+Na linha do header (linhas ~993 e ~957) onde fica `PedidosFiltrosMinimalista`, criar um novo componente `PedidosSelecaoBar` que aparece **somente quando `selecionados.size > 0`**, exibindo:
 
-### 2. Destaque visual nos campos faltantes
+- Texto "X selecionados" + botão "Limpar".
+- Botão "Selecionar todos" (filtrados) quando selecionados < total.
+- Botão `Lista de material` (ShoppingCart).
+- Botão `Imprimir pedidos` (Printer).
 
-- Manter um state `camposFaltantes: Set<string>` populado no submit.
-- Aplicar borda vermelha (`border-destructive` / `ring-destructive`) nos inputs/labels listados quando o respectivo campo estiver no set.
-- Limpar a marcação do campo assim que o usuário começa a digitar/selecionar nele.
-- Rolar suavemente até o primeiro campo faltante (`scrollIntoView({ behavior: 'smooth', block: 'center' })`) e dar foco quando possível.
+Layout: barra fica à esquerda dos filtros existentes, no mesmo flex-row. Em mobile, empilha acima.
 
-### 3. Mensagens específicas mantidas
+### 4. Ação "Lista de material" (em lote)
 
-- Documento inválido (CPF/CNPJ com dígitos errados) continua com mensagem própria.
-- Endereço/bairro com menos de 2 caracteres continua com mensagem própria, mas integrada à lista de campos destacados.
+Reutilizar a lógica já existente em `handleGerarListaCompras` extraindo o miolo para uma função `gerarListaParaPedidos(pedidoIds: string[], etapaLabel: string)` em `src/utils/listaComprasPDF.ts` (ou helper local). A nova ação chama com `Array.from(selecionados)` e `ETAPAS_CONFIG[etapaAtiva].label + " (seleção)"`.
+
+### 5. Ação "Imprimir pedidos" (em lote)
+
+- Para cada pedido selecionado, chamar o gerador existente `pedidoProducaoPDFGenerator` (usado hoje em outras telas — precisa confirmar a função pública exportada; se não houver, usar `pedidoPDFGenerator`).
+- Estratégia: gerar **um único PDF** com todos os pedidos concatenados (`doc.addPage()` entre pedidos) para imprimir de uma vez. Buscar dados em paralelo com `Promise.all` reaproveitando a mesma query do gerador atual (centralizar em uma função `buscarDadosPedidoParaPDF(id)` já que hoje cada gerador busca seus próprios dados).
+- Ao final, `doc.save()` ou abrir em nova aba para impressão (`window.open(doc.output('bloburl'))`).
+- Toast de sucesso/erro; loading state `imprimindoSelecionados`.
+
+### 6. Escopo das abas
+
+Aplicar a seleção **apenas nas abas de etapa** (`ORDEM_ETAPAS.map`). Não habilitar em `pendente_pedido`, `arquivo_morto`, nem nas listas Neo (instalações/correções) — fora do pedido do usuário.
 
 ## Fora de escopo
 
-- Validação de descontos/autorização (`validarDesconto`) permanece igual.
-- `VendaEditarMinimalista.tsx` não será alterada (não foi pedido).
-- Nenhuma mudança de banco ou hook.
+- Mobile (`GestaoFabricaMobile`) não recebe a barra nesta etapa, salvo se trivial.
+- Nenhuma alteração de banco, RLS ou hook de dados.
+- Nenhuma mudança nos PDFs em si — apenas chamadas em lote.
 
 ## Arquivos afetados
 
-- `src/pages/vendas/VendaNovaMinimalista.tsx` (apenas frontend).
+- `src/pages/direcao/GestaoFabricaDirecao.tsx` — state, barra, handlers.
+- `src/components/pedidos/PedidosDraggableList.tsx` (e card filho) — checkbox de seleção.
+- `src/components/pedidos/PedidosSelecaoBar.tsx` — novo componente.
+- `src/utils/listaComprasPDF.ts` — opcional: aceitar `pedidoIds` direto.
+- `src/utils/pedidoProducaoPDFGenerator.ts` — opcional: expor função para múltiplos pedidos em um doc.
