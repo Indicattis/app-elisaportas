@@ -488,7 +488,7 @@ export default function VendaNovaMinimalista() {
     if (!formData.tipo_entrega) faltantes.push('Tipo de entrega');
 
     // Forma de pagamento
-    if (!pagamentoData?.metodos || pagamentoData.metodos.length === 0 || !pagamentoData.metodos[0]?.tipo) {
+    if (!pagamentoData?.metodos?.[0]?.tipo) {
       faltantes.push('Forma de pagamento');
     }
 
