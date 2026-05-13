@@ -60,7 +60,7 @@ export const useVendasPendenteFaturamento = () => {
         `)
         .eq("is_rascunho", false)
         .eq("pedido_dispensado", false)
-        .not("contrato_url", "is", null)
+        .or("contrato_url.not.is.null,contrato_dispensado.eq.true")
         .gte("data_venda", startOfYear)
         .order("data_venda", { ascending: false });
 

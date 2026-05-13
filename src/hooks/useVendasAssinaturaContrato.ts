@@ -62,6 +62,7 @@ export const useVendasAssinaturaContrato = () => {
         .eq("is_rascunho", false)
         .eq("pedido_dispensado", false)
         .is("contrato_url", null)
+        .eq("contrato_dispensado", false)
         .gte("data_venda", startOfYear)
         .order("data_venda", { ascending: false });
 
