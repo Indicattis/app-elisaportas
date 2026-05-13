@@ -504,7 +504,7 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
             </div>
 
             {/* % Desconto - apenas no modo faturamento */}
-            {mode === 'faturamento' && (
+            {isFaturamentoLayout && (
               <div className="text-center">
                 {(() => {
                   const desc = venda.valor_desconto_total || 0;
