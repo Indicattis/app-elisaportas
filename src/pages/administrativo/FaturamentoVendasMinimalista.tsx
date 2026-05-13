@@ -17,7 +17,7 @@ import {
   CheckCircle2, Clock, Truck, Wrench, Paintbrush, Target,
   Calculator, AlertCircle, Plus, Minus, Pencil, MessageSquare,
   ArrowUpDown, ArrowUp, ArrowDown, Check, X, Hammer,
-  Package, PlusCircle, Filter, PanelRight, Info, FileSignature, FileCheck
+  Package, PlusCircle, Filter, PanelRight, Info, FileSignature, FileCheck, FileX
 } from "lucide-react";
 import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
@@ -35,6 +35,10 @@ import { ColumnManager } from "@/components/ColumnManager";
 import { useColumnConfig, ColumnConfig } from "@/hooks/useColumnConfig";
 import { generateFaturamentoPDF } from "@/utils/faturamentoPDFGenerator";
 import { AnexarContratoModal } from "@/components/vendas/AnexarContratoModal";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 import { Checkbox } from "@/components/ui/checkbox";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
@@ -158,6 +162,8 @@ export default function FaturamentoMinimalista() {
   });
   const [savingJustificativa, setSavingJustificativa] = useState(false);
   const [anexarContratoOpen, setAnexarContratoOpen] = useState(false);
+  const [dispensarContratoOpen, setDispensarContratoOpen] = useState(false);
+  const [dispensandoContrato, setDispensandoContrato] = useState(false);
 
   const handleUpdatePagamento = async (contaId: string, campo: 'status' | 'observacoes', valor: string) => {
     try {
@@ -252,6 +258,7 @@ export default function FaturamentoMinimalista() {
           tipo_entrega,
           lucro_instalacao,
           contrato_url,
+          contrato_dispensado,
           produtos_vendas (
             id,
             tipo_produto,
@@ -376,7 +383,7 @@ export default function FaturamentoMinimalista() {
 
   const isFaturada = (venda: Venda) => isVendaFaturada(venda);
   const aguardandoContrato = (venda: Venda) =>
-    !isFaturada(venda) && !(venda as any).contrato_url;
+    !isFaturada(venda) && !(venda as any).contrato_url && !(venda as any).contrato_dispensado;
 
   const calcularLucroVenda = (venda: Venda) => {
     const portas = venda.portas || [];
@@ -769,6 +776,19 @@ export default function FaturamentoMinimalista() {
             </Tooltip>
           );
         }
+        if ((venda as any).contrato_dispensado) {
+          return (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-white/5 border border-white/15 text-white/60 text-[10px] font-medium">
+                  <FileX className="h-3 w-3" />
+                  Dispensado
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>Contrato dispensado — venda pode ser faturada</TooltipContent>
+            </Tooltip>
+          );
+        }
         if (!(venda as any).contrato_url) {
           return (
             <Tooltip>
@@ -1108,14 +1128,29 @@ export default function FaturamentoMinimalista() {
             <FileCheck className="h-4 w-4 mr-2 text-blue-400" />
             Ver Contrato
           </Button>
+        ) : (selectedVenda as any).contrato_dispensado ? (
+          <div className="w-full px-3 py-2 rounded-md bg-white/5 border border-white/15 text-white/70 text-xs flex items-center justify-center gap-2">
+            <FileX className="h-4 w-4" />
+            Contrato dispensado
+          </div>
         ) : (
-          <Button
-            className="w-full bg-amber-500/15 border border-amber-400/30 text-amber-200 hover:bg-amber-500/25 hover:text-amber-100"
-            onClick={() => setAnexarContratoOpen(true)}
-          >
-            <FileSignature className="h-4 w-4 mr-2" />
-            Anexar Contrato
-          </Button>
+          <>
+            <Button
+              className="w-full bg-amber-500/15 border border-amber-400/30 text-amber-200 hover:bg-amber-500/25 hover:text-amber-100"
+              onClick={() => setAnexarContratoOpen(true)}
+            >
+              <FileSignature className="h-4 w-4 mr-2" />
+              Anexar Contrato
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full bg-white/5 border-white/15 text-white/80 hover:bg-white/10 hover:text-white"
+              onClick={() => setDispensarContratoOpen(true)}
+            >
+              <FileX className="h-4 w-4 mr-2" />
+              Dispensar Contrato
+            </Button>
+          </>
         )}
       </div>
     );
