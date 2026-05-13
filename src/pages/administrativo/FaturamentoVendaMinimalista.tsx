@@ -915,6 +915,7 @@ export default function FaturamentoVendaMinimalista() {
   }, [produtos]);
 
   const vendaFaturada = todosProdutosFaturados && venda?.frete_aprovado === true;
+  const aguardandoContrato = !vendaFaturada && !((venda as any)?.contrato_url);
   const lucroProdutos = produtos?.reduce((acc, p) => acc + (p.lucro_item || 0), 0) || 0;  // valor já é o total da linha
   
   // Instalação: para vendas novas, é um produto separado tipo 'instalacao' com lucro_item
