@@ -1,39 +1,24 @@
 ## Objetivo
 
-Em `/direcao/gestao-fabrica`, dentro de cada aba de etapa (`ORDEM_ETAPAS`), reorganizar o topo do card:
+Adicionar a logo (imagem enviada) no cabeçalho do PDF de **Lista de Compras** (`gerarListaComprasPDF`).
 
-- A `PedidosSelecaoBar` fica no header, alinhada à direita (onde hoje convive com os filtros).
-- A `PedidosFiltrosMinimalista` sai do header e vira uma nova seção própria, logo abaixo do header e acima do conteúdo da lista.
+## Passos
 
-## Arquivo afetado
+1. Salvar a logo enviada em `src/assets/logo-lista-material.png` (cópia direta do upload).
+2. Em `src/utils/listaComprasPDF.ts`:
+   - Importar a logo como módulo.
+   - Pré-carregar a imagem em base64 (via `fetch` + `FileReader`) — alternativa: usar `Image` + canvas para obter dataURL síncrono no carregamento do módulo. Como `jsPDF.addImage` aceita data URL, faremos uma função util `loadImageDataURL(src)` async e tornaremos `gerarListaComprasPDF` assíncrono (`await loadImageDataURL`).
+   - Adicionar `doc.addImage(dataUrl, "PNG", 14, 8, 38, 12)` no canto superior esquerdo do header.
+   - Ajustar título/subtítulo permanecendo centralizados (sem alteração de coordenadas, a logo fica à esquerda sem sobrepor).
+3. Atualizar os call sites de `gerarListaComprasPDF` para `await` a função (buscar com rg as chamadas em `GestaoFabricaDirecao.tsx` e demais).
 
-- `src/pages/direcao/GestaoFabricaDirecao.tsx` (bloco `ORDEM_ETAPAS.map` ~ linhas 1053-1190).
+## Arquivos afetados
 
-## Mudanças
-
-1. No `<CardHeader>` da aba de etapa, manter o título à esquerda e, à direita, renderizar apenas a `PedidosSelecaoBar` (sem o wrapper que hoje agrupa seleção + filtros). Quando não houver seleção, o lado direito fica vazio (a barra já retorna `null`).
-
-2. Criar uma nova seção entre `CardHeader` e `CardContent`: uma `<div>` com borda superior sutil (`border-t border-white/5`), padding horizontal/vertical compatível com o card (`px-4 py-3`), contendo a `PedidosFiltrosMinimalista` alinhada à esquerda e ocupando largura total. Em mobile mantém o wrap natural do componente.
-
-3. Não alterar a aba `pendente_pedido` (já tem layout próprio sem seleção). Não mexer nas listas Neo nem no `GestaoFabricaMobile`.
-
-4. Nenhuma mudança de lógica, props ou hooks — apenas reorganização de JSX.
-
-## Layout resultante
-
-```text
-┌─────────────────────────────────────────────────────────────┐
-│ Header: [Título + contadores + responsável + lista mat.]    │
-│                                       [PedidosSelecaoBar →] │
-├─────────────────────────────────────────────────────────────┤
-│ Filtros: [busca] [entrega] [cor] ...                        │
-├─────────────────────────────────────────────────────────────┤
-│ CardContent (lista de pedidos)                              │
-└─────────────────────────────────────────────────────────────┘
-```
+- `src/assets/logo-lista-material.png` (novo)
+- `src/utils/listaComprasPDF.ts`
+- Call sites que invocam `gerarListaComprasPDF` (adicionar `await`).
 
 ## Fora de escopo
 
-- Estilos da `PedidosSelecaoBar` e `PedidosFiltrosMinimalista` em si.
-- Mobile (`GestaoFabricaMobile.tsx`).
-- Outras abas (faturamento, arquivo morto).
+- Outros PDFs do sistema.
+- Alteração de layout além de inserir a logo.

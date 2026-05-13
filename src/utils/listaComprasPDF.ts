@@ -3,6 +3,26 @@ import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { formatarQuantidadeUnidade, getUnidadeAbreviacao } from "./unidadesMedida";
+import logoUrl from "@/assets/logo-lista-material.png";
+
+let logoDataUrlCache: string | null = null;
+async function getLogoDataUrl(): Promise<string | null> {
+  if (logoDataUrlCache) return logoDataUrlCache;
+  try {
+    const res = await fetch(logoUrl);
+    const blob = await res.blob();
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+    logoDataUrlCache = dataUrl;
+    return dataUrl;
+  } catch {
+    return null;
+  }
+}
 
 export interface ItemListaCompras {
   estoque_id: string;
@@ -17,9 +37,16 @@ export interface ItemListaCompras {
   materia_prima_conversao?: number | null;
 }
 
-export function gerarListaComprasPDF(etapaLabel: string, itens: ItemListaCompras[]) {
+export async function gerarListaComprasPDF(etapaLabel: string, itens: ItemListaCompras[]) {
   const doc = new jsPDF({ orientation: "landscape", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
+
+  // Logo no canto superior esquerdo
+  const logoData = await getLogoDataUrl();
+  if (logoData) {
+    // Proporção da logo ≈ 3.4:1 (largura:altura)
+    doc.addImage(logoData, "PNG", 14, 8, 40, 12);
+  }
 
   // Cabeçalho
   doc.setFontSize(20);
