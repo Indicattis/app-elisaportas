@@ -855,6 +855,32 @@ export default function GestaoFabricaDirecao() {
           <TooltipProvider>
             {/* Grupo Azul: Pré-Produção */}
             <div className="flex gap-1 border-2 border-blue-500/50 rounded-lg p-1 h-full">
+              <TabsTrigger
+                value="assinatura_contrato"
+                className="flex-shrink-0 flex-row items-center justify-start h-full min-w-[150px] px-3 py-2 gap-2.5 rounded-lg bg-white/5 border border-white/10 backdrop-blur-xl text-white/70 hover:bg-white/[0.08] hover:border-blue-400/30 transition-all data-[state=active]:bg-blue-500/15 data-[state=active]:border-blue-400/50 data-[state=active]:text-white data-[state=active]:shadow-[0_0_0_1px_rgba(96,165,250,0.3)]"
+              >
+                {(() => {
+                  const resp = getResponsavel('assinatura_contrato' as any);
+                  return resp ? (
+                    <Avatar className="h-9 w-9 flex-shrink-0 border border-blue-500/30">
+                      <AvatarImage src={resp.foto_perfil_url || undefined} />
+                      <AvatarFallback className="text-xs bg-blue-500/20 text-blue-400">
+                        {resp.nome.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  ) : (
+                    <div className="h-9 w-9 flex-shrink-0 rounded-full bg-blue-500/10 border border-blue-500/30 flex items-center justify-center">
+                      <FileSignature className="h-4 w-4 text-blue-400" />
+                    </div>
+                  );
+                })()}
+                <div className="flex flex-col items-start gap-1 min-w-0">
+                  <span className="text-xs font-medium leading-tight truncate">Assinatura Contrato</span>
+                  <span className="px-1.5 py-0.5 bg-blue-500/20 text-blue-400 rounded-full text-[10px] font-semibold leading-none">
+                    {vendasAssinaturaContrato.length}
+                  </span>
+                </div>
+              </TabsTrigger>
               <TabsTrigger 
                 value="pendente_pedido" 
                 className="flex-shrink-0 flex-row items-center justify-start h-full min-w-[150px] px-3 py-2 gap-2.5 rounded-lg bg-white/5 border border-white/10 backdrop-blur-xl text-white/70 hover:bg-white/[0.08] hover:border-blue-400/30 transition-all data-[state=active]:bg-blue-500/15 data-[state=active]:border-blue-400/50 data-[state=active]:text-white data-[state=active]:shadow-[0_0_0_1px_rgba(96,165,250,0.3)]"
