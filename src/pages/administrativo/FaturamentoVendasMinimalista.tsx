@@ -1440,6 +1440,15 @@ export default function FaturamentoMinimalista() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {selectedVenda && (
+        <AnexarContratoModal
+          open={anexarContratoOpen}
+          onOpenChange={setAnexarContratoOpen}
+          vendaId={selectedVenda.id}
+          clienteNome={selectedVenda.cliente_nome}
+        />
+      )}
     </MinimalistLayout>
   );
 }
