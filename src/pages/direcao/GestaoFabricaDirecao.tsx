@@ -81,7 +81,7 @@ export default function GestaoFabricaDirecao() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const [etapaAtiva, setEtapaAtiva] = useState<EtapaPedido | 'arquivo_morto' | 'pendente_pedido'>('aprovacao_diretor');
+  const [etapaAtiva, setEtapaAtiva] = useState<EtapaPedido | 'arquivo_morto' | 'pendente_pedido' | 'assinatura_contrato'>('aprovacao_diretor');
   const [arquivoSearch, setArquivoSearch] = useState('');
   const [debouncedArquivoSearch, setDebouncedArquivoSearch] = useState('');
   const [desarquivandoId, setDesarquivandoId] = useState<string | null>(null);
@@ -747,10 +747,10 @@ export default function GestaoFabricaDirecao() {
       </div>
 
       {/* Tabs de Etapas */}
-      <Tabs value={etapaAtiva} onValueChange={v => setEtapaAtiva(v as EtapaPedido | 'arquivo_morto' | 'pendente_pedido')}>
+      <Tabs value={etapaAtiva} onValueChange={v => setEtapaAtiva(v as EtapaPedido | 'arquivo_morto' | 'pendente_pedido' | 'assinatura_contrato')}>
         {/* Seletor mobile */}
         <div className="md:hidden mb-4">
-          <Select value={etapaAtiva} onValueChange={v => setEtapaAtiva(v as EtapaPedido | 'arquivo_morto' | 'pendente_pedido')}>
+          <Select value={etapaAtiva} onValueChange={v => setEtapaAtiva(v as EtapaPedido | 'arquivo_morto' | 'pendente_pedido' | 'assinatura_contrato')}>
             <SelectTrigger className="w-full h-12 bg-white/5 border-blue-500/10 text-white">
               <SelectValue>
                 {(() => {
