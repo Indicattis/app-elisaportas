@@ -754,6 +754,13 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
         onOpenChange={setShowDetalhes}
       />
 
+      <AnexarContratoModal
+        open={showAnexarContrato}
+        onOpenChange={setShowAnexarContrato}
+        vendaId={venda.id}
+        clienteNome={venda.cliente_nome}
+      />
+
       {/* Dialog Finalizar Direto */}
       <Dialog open={showFinalizarDireto} onOpenChange={setShowFinalizarDireto}>
         <DialogContent className="max-w-md">
