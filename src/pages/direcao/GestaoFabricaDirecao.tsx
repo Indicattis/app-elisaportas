@@ -501,6 +501,27 @@ export default function GestaoFabricaDirecao() {
     return filtered;
   }, [vendasPendenteFaturamento, searchTerm, tipoEntrega, corPintura]);
 
+  const vendasContratoFiltradas = useMemo(() => {
+    let filtered = vendasAssinaturaContrato;
+    if (searchTerm.trim()) {
+      const termo = searchTerm.toLowerCase().trim();
+      filtered = filtered.filter(venda => {
+        const nome = venda.cliente_nome?.toLowerCase() || '';
+        const atendente = venda.atendente_nome?.toLowerCase() || '';
+        return nome.includes(termo) || atendente.includes(termo);
+      });
+    }
+    if (tipoEntrega !== 'todos') {
+      filtered = filtered.filter(venda => venda.tipo_entrega === tipoEntrega);
+    }
+    if (corPintura !== 'todas') {
+      filtered = filtered.filter(venda => {
+        return venda.cores?.some(c => c.nome.toLowerCase().includes(corPintura.toLowerCase()));
+      });
+    }
+    return filtered;
+  }, [vendasAssinaturaContrato, searchTerm, tipoEntrega, corPintura]);
+
   const handleReorganizarVendas = useCallback((novaOrdem: VendaPendentePedido[]) => {
     setVendasOrdemLocal(novaOrdem);
   }, []);
