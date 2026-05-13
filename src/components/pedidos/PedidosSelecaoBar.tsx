@@ -23,16 +23,26 @@ export function PedidosSelecaoBar({
   isGerandoLista,
   isImprimindo,
 }: PedidosSelecaoBarProps) {
-  if (selecionadosCount === 0) return null;
-  const todosSelecionados = selecionadosCount >= totalFiltrados && totalFiltrados > 0;
+  const hasSelecao = selecionadosCount > 0;
+  const todosSelecionados = hasSelecao && selecionadosCount >= totalFiltrados && totalFiltrados > 0;
+  const escopoLabel = hasSelecao
+    ? `${selecionadosCount} selecionado${selecionadosCount === 1 ? "" : "s"}`
+    : `Todos (${totalFiltrados})`;
 
   return (
-    <div className="flex flex-wrap items-center gap-2 px-3 py-2 rounded-lg bg-primary/10 border border-primary/30 backdrop-blur-xl">
-      <Badge variant="secondary" className="bg-primary/20 text-primary border-primary/30">
-        {selecionadosCount} selecionado{selecionadosCount === 1 ? "" : "s"}
+    <div className="flex flex-wrap items-center gap-2 px-3 h-10 rounded-lg bg-white/5 border border-white/10 backdrop-blur-xl">
+      <Badge
+        variant="secondary"
+        className={
+          hasSelecao
+            ? "bg-blue-500/20 text-blue-200 border-blue-400/40"
+            : "bg-white/10 text-white/70 border-white/15"
+        }
+      >
+        {escopoLabel}
       </Badge>
 
-      {!todosSelecionados && (
+      {hasSelecao && !todosSelecionados && (
         <Button
           variant="ghost"
           size="sm"
@@ -44,13 +54,13 @@ export function PedidosSelecaoBar({
         </Button>
       )}
 
-      <div className="h-4 w-px bg-white/20" />
+      <div className="h-4 w-px bg-white/15" />
 
       <Button
         variant="ghost"
         size="sm"
         onClick={onGerarLista}
-        disabled={isGerandoLista}
+        disabled={isGerandoLista || totalFiltrados === 0}
         className="h-7 px-2 text-xs text-white/90 hover:text-white hover:bg-white/10 gap-1"
       >
         <ShoppingCart className="h-3.5 w-3.5" />
@@ -61,22 +71,24 @@ export function PedidosSelecaoBar({
         variant="ghost"
         size="sm"
         onClick={onImprimir}
-        disabled={isImprimindo}
+        disabled={isImprimindo || totalFiltrados === 0}
         className="h-7 px-2 text-xs text-white/90 hover:text-white hover:bg-white/10 gap-1"
       >
         <Printer className="h-3.5 w-3.5" />
         {isImprimindo ? "Preparando..." : "Imprimir pedidos"}
       </Button>
 
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={onLimpar}
-        className="h-7 px-2 text-xs text-white/60 hover:text-white hover:bg-white/10 gap-1 ml-auto"
-      >
-        <X className="h-3.5 w-3.5" />
-        Limpar
-      </Button>
+      {hasSelecao && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onLimpar}
+          className="h-7 px-2 text-xs text-white/60 hover:text-white hover:bg-white/10 gap-1 ml-auto"
+        >
+          <X className="h-3.5 w-3.5" />
+          Limpar
+        </Button>
+      )}
     </div>
   );
 }
