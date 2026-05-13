@@ -61,13 +61,27 @@ export function AvatarUpload({ userId, currentAvatarUrl, userName, onAvatarUpdat
         .getPublicUrl(filePath);
 
       // Atualizar na base de dados com a URL do Storage
-      const { error: updateError } = await supabase
+      const { data: updatedRows, error: updateError } = await supabase
         .from('admin_users')
         .update({ foto_perfil_url: publicUrl })
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .select('id');
 
       if (updateError) {
         throw updateError;
+      }
+
+      // Fallback para representantes (não estão em admin_users)
+      if (!updatedRows || updatedRows.length === 0) {
+        const { data: repRows, error: repError } = await supabase
+          .from('representantes')
+          .update({ foto_perfil_url: publicUrl } as Record<string, unknown>)
+          .eq('user_id', userId)
+          .select('id');
+        if (repError) throw repError;
+        if (!repRows || repRows.length === 0) {
+          throw new Error('Não foi possível salvar a foto: usuário não encontrado ou sem permissão.');
+        }
       }
 
       onAvatarUpdate(publicUrl);
@@ -102,13 +116,26 @@ export function AvatarUpload({ userId, currentAvatarUrl, userName, onAvatarUpdat
       }
 
       // Remover da base de dados
-      const { error: updateError } = await supabase
+      const { data: updatedRows, error: updateError } = await supabase
         .from('admin_users')
         .update({ foto_perfil_url: null })
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .select('id');
 
       if (updateError) {
         throw updateError;
+      }
+
+      if (!updatedRows || updatedRows.length === 0) {
+        const { data: repRows, error: repError } = await supabase
+          .from('representantes')
+          .update({ foto_perfil_url: null } as Record<string, unknown>)
+          .eq('user_id', userId)
+          .select('id');
+        if (repError) throw repError;
+        if (!repRows || repRows.length === 0) {
+          throw new Error('Não foi possível remover a foto: usuário não encontrado ou sem permissão.');
+        }
       }
 
       onAvatarUpdate(null);

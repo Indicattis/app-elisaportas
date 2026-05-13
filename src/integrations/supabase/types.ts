@@ -6698,6 +6698,7 @@ export type Database = {
           ativo: boolean
           created_at: string
           email: string
+          foto_perfil_url: string | null
           id: string
           nome: string
           telefone: string | null
@@ -6708,6 +6709,7 @@ export type Database = {
           ativo?: boolean
           created_at?: string
           email: string
+          foto_perfil_url?: string | null
           id?: string
           nome: string
           telefone?: string | null
@@ -6718,6 +6720,7 @@ export type Database = {
           ativo?: boolean
           created_at?: string
           email?: string
+          foto_perfil_url?: string | null
           id?: string
           nome?: string
           telefone?: string | null
