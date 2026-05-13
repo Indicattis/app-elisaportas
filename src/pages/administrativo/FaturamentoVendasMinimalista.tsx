@@ -1118,11 +1118,21 @@ export default function FaturamentoMinimalista() {
             <FileCheck className="h-4 w-4 mr-2 text-blue-400" />
             Ver Contrato
           </Button>
-        ) : (selectedVenda as any).contrato_dispensado ? (
-          <div className="w-full px-3 py-2 rounded-md bg-white/5 border border-white/15 text-white/70 text-xs flex items-center justify-center gap-2">
-            <FileX className="h-4 w-4" />
-            Contrato dispensado
-          </div>
+        ) : ((selectedVenda as any).contrato_dispensado || isFaturada(selectedVenda)) ? (
+          <>
+            <div className="w-full px-3 py-2 rounded-md bg-white/5 border border-white/15 text-white/70 text-xs flex items-center justify-center gap-2">
+              <FileX className="h-4 w-4" />
+              Contrato dispensado
+            </div>
+            <Button
+              variant="outline"
+              disabled
+              className="w-full bg-white/5 border-white/10 text-white/30 cursor-not-allowed"
+            >
+              <FileCheck className="h-4 w-4 mr-2" />
+              Ver Contrato
+            </Button>
+          </>
         ) : (
           <>
             <Button
