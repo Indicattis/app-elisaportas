@@ -1,79 +1,29 @@
-## Objetivo
+## Sinalizar vendas aguardando assinatura de contrato
 
-Adicionar uma nova etapa **"Assinatura Contrato"** no início do fluxo de vendas, antes de "Pend. Faturamento". Toda venda recém-criada cai nessa etapa e só avança para "Pend. Faturamento" quando o responsável anexa o contrato de venda assinado.
+Em `/administrativo/financeiro/faturamento/vendas`, marcar visualmente as vendas que ainda não têm contrato anexado e impedir o faturamento delas.
 
-## Fluxo novo
+### 1. Página de listagem (`FaturamentoVendasMinimalista.tsx`)
 
-```text
-Criação da Venda
-       │
-       ▼
-[ Assinatura Contrato ]  ← responsável anexa PDF/imagem do contrato
-       │  (contrato anexado)
-       ▼
-[ Pend. Faturamento ]
-       │
-       ▼
-[ Aprovação Diretor ] → ... fluxo atual
-```
+- Incluir `contrato_url` no `select` da query de vendas.
+- Criar helper `aguardandoContrato(venda)` = `!isFaturada(venda) && !venda.contrato_url`.
+- Nova coluna "Contrato" (entre "Faturada" e "Tempo s/ Faturar"):
+  - Faturada → ícone `Check` verde.
+  - Sem contrato → badge âmbar com `FileSignature` + texto "Aguardando" (tooltip: "Aguardando assinatura do contrato — não pode ser faturada").
+  - Com contrato porém ainda não faturada → ícone `FileCheck` azul (tooltip: "Contrato anexado").
+- Linha inteira ganha um leve destaque âmbar à esquerda (`border-l-2 border-l-amber-500/60`) quando aguardando contrato.
+- Ao clicar numa linha aguardando contrato, em vez de navegar para o detalhamento, exibir toast: "Anexe o contrato em Gestão da Fábrica > Assinatura de Contrato antes de faturar." (a navegação para o detalhamento continua possível via outra ação se necessário — manter clique mas exibindo aviso e ainda navegando, conforme decisão abaixo).
 
-## Mudanças no banco
+### 2. Página de detalhamento (`FaturamentoVendaMinimalista.tsx`)
 
-1. **Tabela `vendas`** — adicionar colunas:
-   - `contrato_url` (texto, nullable) — caminho do arquivo no storage
-   - `contrato_assinado_em` (timestamp, nullable) — quando foi anexado
-   - `contrato_anexado_por` (uuid, nullable) — quem anexou
-2. **Bucket de storage privado** `contratos-vendas` com policies:
-   - Leitura: usuários autenticados (admin/diretor/responsável da etapa)
-   - Upload/Update/Delete: usuários autenticados
-3. **Sem alterar enum `EtapaPedido`** — a etapa "assinatura_contrato" é virtual no front (igual ao tratamento atual de `pendente_pedido`/`pendente_faturamento`), pois a coluna `etapa` em `etapa_responsaveis` é TEXT e aceita qualquer valor.
+- Ler `contrato_url` da venda.
+- Se ausente e venda não faturada:
+  - Banner âmbar no topo: "Esta venda está aguardando assinatura do contrato. O faturamento só pode ser concluído após o contrato ser anexado em Gestão da Fábrica > Assinatura de Contrato."
+  - Botão "Faturar" fica `disabled` com tooltip explicando o motivo.
 
-## Mudanças no front
+### Pergunta pendente
 
-### Hook novo `useVendasAssinaturaContrato`
-- Mesma query base de `useVendasPendenteFaturamento`, mas filtra `contrato_url IS NULL`.
+Ao clicar numa linha aguardando contrato na listagem, prefere:
+- (A) Bloquear o clique e mostrar apenas o toast, OU
+- (B) Permitir abrir o detalhamento (que mostrará o banner + botão Faturar desabilitado).
 
-### Hook ajustado `useVendasPendenteFaturamento`
-- Adicionar `contrato_url IS NOT NULL` ao filtro (vendas sem contrato somem dessa lista).
-
-### Página `GestaoFabricaDirecao.tsx`
-- Adicionar nova aba **"Assinatura Contrato"** no grupo azul, antes de "Pend. Faturamento":
-  - Ícone: `FileSignature` (lucide)
-  - Mesmo estilo glass aplicado às demais abas
-  - Badge com contagem de vendas pendentes de contrato
-  - Suporte a responsável da etapa via `getResponsavel('assinatura_contrato' as any)`
-- Adicionar `TabsContent value="assinatura_contrato"` reutilizando `VendasPendenteDraggableList` em modo novo `mode="contrato"`.
-- Atualizar o `Select` mobile incluindo a nova etapa.
-
-### Componente novo `AnexarContratoModal`
-- Abre ao clicar em "Anexar contrato" no card da venda na aba Assinatura Contrato
-- Estilo glass (igual aos modais já unificados)
-- Campos:
-  - Upload de arquivo (PDF/JPG/PNG, máx. 10 MB)
-  - Preview do nome
-  - Botão "Anexar e enviar para faturamento"
-- Ao confirmar:
-  1. Upload em `contratos-vendas/{venda_id}/{timestamp}-{filename}`
-  2. Update na venda: `contrato_url`, `contrato_assinado_em = now()`, `contrato_anexado_por = auth.uid()`
-  3. Invalida queries `vendas-assinatura-contrato` e `vendas-pendente-faturamento`
-  4. Toast de sucesso e fecha modal
-- Permite também substituir/remover contrato (quando já existir).
-
-### Componente `VendasPendenteDraggableList`
-- Adicionar branch `mode="contrato"` que renderiza no card o botão **"Anexar contrato"** em vez do botão de criar pedido. Quando já existir contrato anexado, mostrar link "Ver contrato" (URL assinada do storage) e botão para substituir.
-
-### Modal de seleção de responsável
-- `SelecionarResponsavelEtapaModal` já aceita qualquer string em `etapa`, então funciona automaticamente para `assinatura_contrato`.
-
-## Detalhes técnicos
-
-- **Aba virtual** segue o mesmo padrão de `pendente_pedido`/`pendente_faturamento` (não passa pelo enum `EtapaPedido` e usa cast `as any` quando necessário).
-- **URLs do contrato**: bucket privado, gerar URL assinada via `supabase.storage.from('contratos-vendas').createSignedUrl(path, 3600)` quando o usuário clicar em "Ver contrato".
-- **Retrocompatibilidade**: vendas existentes sem `contrato_url` cairão na nova aba "Assinatura Contrato" — vou ajustar a migration para marcar vendas já faturadas (ou já com pedido criado) como tendo contrato implícito (`contrato_url = 'legado'`, `contrato_assinado_em = data_venda`) para que não voltem indevidamente. Vendas não faturadas existentes ficam pendentes de contrato (comportamento esperado para novo processo).
-- **Memória**: salvar uma nova memory `mem://features/vendas/assinatura-contrato` documentando que a etapa é virtual e exige `contrato_url` para avançar.
-
-## Pontos de atenção / dúvidas para depois
-
-- Tipos de arquivo aceitos no upload: vou liberar PDF, JPG, PNG. Se quiser restringir só a PDF, ajuste depois.
-- Limite de tamanho: 10 MB. Posso aumentar se necessário.
-- Validação de quem pode anexar: hoje qualquer usuário autenticado da fábrica pode. Se precisar restringir só ao responsável da etapa + admins, peça que eu adicione checagem.
+Sem mudanças de banco de dados — `contrato_url` já existe na tabela `vendas`.
