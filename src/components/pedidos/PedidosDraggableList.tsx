@@ -170,7 +170,41 @@ export function PedidosDraggableList({
   disableClienteClick = false,
   hideOrdensStatus = false,
   hideCorrecaoButton = false,
+  selectionEnabled = false,
+  selecionados,
+  onToggleSelecionado,
 }: PedidosDraggableListProps) {
+  const renderSelectionCheckbox = (pedidoId: string) => {
+    if (!selectionEnabled || !onToggleSelecionado) return null;
+    const checked = selecionados?.has(pedidoId) ?? false;
+    return (
+      <div
+        className={cn(
+          "absolute top-2 left-2 z-20 rounded-md p-1 transition-colors",
+          checked ? "bg-primary/20 border border-primary/40" : "bg-white/10 border border-white/20 hover:bg-white/20"
+        )}
+        onClick={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          onToggleSelecionado(pedidoId);
+        }}
+        onPointerDown={(e) => e.stopPropagation()}
+      >
+        <Checkbox
+          checked={checked}
+          onCheckedChange={() => onToggleSelecionado(pedidoId)}
+          className="h-4 w-4"
+        />
+      </div>
+    );
+  };
+
+  const wrapperClass = (pedidoId: string) =>
+    cn(
+      "relative",
+      selectionEnabled && selecionados?.has(pedidoId) && "ring-2 ring-primary/60 rounded-lg"
+    );
+
   const [activeId, setActiveId] = useState<string | null>(null);
   const overlayContainerRef = useRef<HTMLDivElement | null>(null);
 
