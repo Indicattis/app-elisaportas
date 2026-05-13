@@ -829,10 +829,10 @@ export default function GestaoFabricaDirecao() {
         </div>
 
         {/* Tabs - Desktop */}
-        <TabsList className="hidden md:flex w-full justify-start overflow-x-auto flex-nowrap h-auto p-1 gap-2 bg-white/5 border border-blue-500/10">
+        <TabsList className="hidden md:flex w-full justify-start overflow-x-auto flex-nowrap h-[85px] p-1.5 gap-2 bg-white/5 border border-white/10 backdrop-blur-xl rounded-xl">
           <TooltipProvider>
             {/* Grupo Azul: Pré-Produção */}
-            <div className="flex gap-1 border-2 border-blue-500/50 rounded-lg p-1">
+            <div className="flex gap-1 border-2 border-blue-500/50 rounded-lg p-1 h-full">
               <TabsTrigger 
                 value="pendente_pedido" 
                 className="flex-shrink-0 flex-col h-full min-w-[110px] px-3 py-2 gap-1.5 rounded-lg bg-white/5 border border-white/10 backdrop-blur-xl text-white/70 hover:bg-white/[0.08] hover:border-blue-400/30 transition-all data-[state=active]:bg-blue-500/15 data-[state=active]:border-blue-400/50 data-[state=active]:text-white data-[state=active]:shadow-[0_0_0_1px_rgba(96,165,250,0.3)]"
@@ -893,7 +893,7 @@ export default function GestaoFabricaDirecao() {
             </div>
 
             {/* Grupo Vermelho: Produção */}
-            <div className="flex gap-1 border-2 border-red-500/50 rounded-lg p-1">
+            <div className="flex gap-1 border-2 border-red-500/50 rounded-lg p-1 h-full">
               {(['aberto', 'aprovacao_ceo', 'em_producao', 'inspecao_qualidade', 'aguardando_pintura', 'embalagem'] as const).map(etapa => {
                 const config = ETAPAS_CONFIG[etapa];
                 const count = contadores[etapa] || 0;
@@ -932,7 +932,7 @@ export default function GestaoFabricaDirecao() {
             </div>
 
             {/* Grupo Amarelo: Expedição */}
-            <div className="flex gap-1 border-2 border-yellow-500/50 rounded-lg p-1">
+            <div className="flex gap-1 border-2 border-yellow-500/50 rounded-lg p-1 h-full">
               {(['aguardando_coleta', 'instalacoes', 'correcoes'] as const).map(etapa => {
                 const config = ETAPAS_CONFIG[etapa];
                 const count = contadores[etapa] || 0;
@@ -971,7 +971,7 @@ export default function GestaoFabricaDirecao() {
             </div>
 
             {/* Grupo Verde: Finalizados */}
-            <div className="flex gap-1 border-2 border-green-500/50 rounded-lg p-1">
+            <div className="flex gap-1 border-2 border-green-500/50 rounded-lg p-1 h-full">
               {(['finalizado'] as const).map(etapa => {
                 const config = ETAPAS_CONFIG[etapa];
                 const count = contadores[etapa] || 0;
