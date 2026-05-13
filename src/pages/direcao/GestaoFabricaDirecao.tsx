@@ -1108,7 +1108,6 @@ export default function GestaoFabricaDirecao() {
                         🚪 {totalPortasEtapa} {totalPortasEtapa === 1 ? 'porta' : 'portas'}
                       </Badge>
                     )}
-                    
                     <div className="flex items-center gap-2 ml-4">
                       {(etapaAtiva === 'instalacoes' || etapaAtiva === 'aguardando_coleta') && (
                         <TooltipProvider>
