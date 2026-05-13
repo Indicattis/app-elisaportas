@@ -167,7 +167,7 @@ export function SelecionarPedidoInstalacaoModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl bg-slate-950/80 backdrop-blur-xl border-white/10 text-white shadow-[0_0_0_1px_rgba(96,165,250,0.15),0_20px_60px_-20px_rgba(0,0,0,0.8)]">
         <DialogHeader>
           <DialogTitle>Selecionar Pedido para Instalação</DialogTitle>
           <DialogDescription>
