@@ -60,29 +60,14 @@ export function AvatarUpload({ userId, currentAvatarUrl, userName, onAvatarUpdat
         .from('user-avatars')
         .getPublicUrl(filePath);
 
-      // Atualizar na base de dados com a URL do Storage
-      const { data: updatedRows, error: updateError } = await supabase
-        .from('admin_users')
-        .update({ foto_perfil_url: publicUrl })
-        .eq('user_id', userId)
-        .select('id');
+      // Atualizar na base de dados via RPC com SECURITY DEFINER (lida com RLS e representantes)
+      const { data: ok, error: updateError } = await supabase.rpc('update_user_avatar', {
+        _target_user_id: userId,
+        _new_url: publicUrl,
+      });
 
-      if (updateError) {
-        throw updateError;
-      }
-
-      // Fallback para representantes (não estão em admin_users)
-      if (!updatedRows || updatedRows.length === 0) {
-        const { data: repRows, error: repError } = await supabase
-          .from('representantes')
-          .update({ foto_perfil_url: publicUrl } as Record<string, unknown>)
-          .eq('user_id', userId)
-          .select('id');
-        if (repError) throw repError;
-        if (!repRows || repRows.length === 0) {
-          throw new Error('Não foi possível salvar a foto: usuário não encontrado ou sem permissão.');
-        }
-      }
+      if (updateError) throw updateError;
+      if (!ok) throw new Error('Não foi possível salvar a foto: usuário não encontrado.');
 
       onAvatarUpdate(publicUrl);
       
@@ -115,28 +100,14 @@ export function AvatarUpload({ userId, currentAvatarUrl, userName, onAvatarUpdat
         }
       }
 
-      // Remover da base de dados
-      const { data: updatedRows, error: updateError } = await supabase
-        .from('admin_users')
-        .update({ foto_perfil_url: null })
-        .eq('user_id', userId)
-        .select('id');
+      // Remover via RPC
+      const { data: ok, error: updateError } = await supabase.rpc('update_user_avatar', {
+        _target_user_id: userId,
+        _new_url: null as unknown as string,
+      });
 
-      if (updateError) {
-        throw updateError;
-      }
-
-      if (!updatedRows || updatedRows.length === 0) {
-        const { data: repRows, error: repError } = await supabase
-          .from('representantes')
-          .update({ foto_perfil_url: null } as Record<string, unknown>)
-          .eq('user_id', userId)
-          .select('id');
-        if (repError) throw repError;
-        if (!repRows || repRows.length === 0) {
-          throw new Error('Não foi possível remover a foto: usuário não encontrado ou sem permissão.');
-        }
-      }
+      if (updateError) throw updateError;
+      if (!ok) throw new Error('Não foi possível remover a foto: usuário não encontrado.');
 
       onAvatarUpdate(null);
       
