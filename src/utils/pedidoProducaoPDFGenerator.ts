@@ -67,8 +67,21 @@ const STATUS_LABELS: Record<string, string> = {
 
 export const gerarPedidoProducaoPDF = (data: PedidoProducaoPDFData): jsPDF => {
   const doc = new jsPDF();
+  renderPedidoProducaoIntoDoc(doc, data);
+  return doc;
+};
+
+/**
+ * Renderiza um pedido em um documento jsPDF existente, começando em startY.
+ * Útil para concatenar múltiplos pedidos em um único PDF (impressão em lote).
+ */
+export const renderPedidoProducaoIntoDoc = (
+  doc: jsPDF,
+  data: PedidoProducaoPDFData,
+  startY: number = 15
+): number => {
   const margemX = 15;
-  let posY = 15;
+  let posY = startY;
   
   const corPrimaria: [number, number, number] = [41, 128, 185];
   const corSecundaria: [number, number, number] = [128, 128, 128];
