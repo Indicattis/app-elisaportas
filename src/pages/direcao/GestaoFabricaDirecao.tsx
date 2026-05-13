@@ -43,7 +43,7 @@ import type { EtapaPedido, DirecaoPrioridade } from "@/types/pedidoEtapa";
 import type { NeoInstalacao } from "@/types/neoInstalacao";
 import type { NeoCorrecao } from "@/types/neoCorrecao";
 import type { OrdemCarregamento } from "@/types/ordemCarregamento";
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import type { VendaPendentePedido } from "@/hooks/useVendasPendentePedido";
 import { useToast } from "@/hooks/use-toast";
@@ -234,27 +234,34 @@ export default function GestaoFabricaDirecao() {
   }, [gerarListaParaPedidos]);
 
   const handleGerarListaSelecao = useCallback(async () => {
-    if (selecionados.size === 0) return;
     try {
       setGerandoListaSelecao(true);
-      const etapaLabel = etapaAtiva && etapaAtiva !== 'arquivo_morto' && etapaAtiva !== 'pendente_pedido'
-        ? `${ETAPAS_CONFIG[etapaAtiva as EtapaPedido]?.label || etapaAtiva} (seleção)`
+      const usarTodos = selecionados.size === 0;
+      const ids = usarTodos
+        ? (pedidosFiltradosRef.current || []).map((p: any) => p.id)
+        : Array.from(selecionados);
+      if (ids.length === 0) return;
+      const baseLabel = etapaAtiva && etapaAtiva !== 'arquivo_morto' && etapaAtiva !== 'pendente_pedido'
+        ? ETAPAS_CONFIG[etapaAtiva as EtapaPedido]?.label || etapaAtiva
         : 'Seleção';
-      await gerarListaParaPedidos(Array.from(selecionados), etapaLabel);
+      const etapaLabel = usarTodos ? String(baseLabel) : `${baseLabel} (seleção)`;
+      await gerarListaParaPedidos(ids, etapaLabel);
     } finally {
       setGerandoListaSelecao(false);
     }
   }, [selecionados, etapaAtiva, gerarListaParaPedidos]);
 
   const handleImprimirSelecao = useCallback(async () => {
-    if (selecionados.size === 0) return;
     try {
       setImprimindoSelecao(true);
-      const ids = Array.from(selecionados);
+      const ids = selecionados.size === 0
+        ? (pedidosFiltradosRef.current || []).map((p: any) => p.id)
+        : Array.from(selecionados);
+      if (ids.length === 0) return;
       const dados = await Promise.all(ids.map((id) => buscarDadosPedidoProducaoPDF(id)));
       const filtrados = dados.filter((d): d is NonNullable<typeof d> => !!d);
       if (filtrados.length === 0) {
-        toast({ title: 'Sem dados', description: 'Não foi possível carregar os pedidos selecionados.' });
+        toast({ title: 'Sem dados', description: 'Não foi possível carregar os pedidos.' });
         return;
       }
       imprimirPedidosProducaoPDFBatch(filtrados);
@@ -435,6 +442,11 @@ export default function GestaoFabricaDirecao() {
     }
     return filtered;
   }, [pedidos, searchTerm, tipoEntrega, corPintura, mostrarProntos, etapaAtiva]);
+
+  const pedidosFiltradosRef = useRef<any[]>([]);
+  useEffect(() => {
+    pedidosFiltradosRef.current = pedidosFiltrados;
+  }, [pedidosFiltrados]);
 
   const [vendasOrdemLocal, setVendasOrdemLocal] = useState<VendaPendentePedido[]>([]);
 
@@ -1154,31 +1166,30 @@ export default function GestaoFabricaDirecao() {
                       </TooltipProvider>
                     </div>
                   </CardTitle>
-                  
-                  <div className="flex items-center justify-end w-full lg:w-auto">
-                    <PedidosSelecaoBar
-                      selecionadosCount={selecionados.size}
-                      totalFiltrados={pedidosFiltrados.length}
-                      onSelecionarTodos={() => setSelecionados(new Set(pedidosFiltrados.map((p: any) => p.id)))}
-                      onLimpar={limparSelecao}
-                      onGerarLista={handleGerarListaSelecao}
-                      onImprimir={handleImprimirSelecao}
-                      isGerandoLista={gerandoListaSelecao}
-                      isImprimindo={imprimindoSelecao}
-                    />
-                  </div>
                 </div>
               </CardHeader>
-              <div className="px-4 py-3 border-t border-white/5">
-                <PedidosFiltrosMinimalista
-                  searchTerm={searchTerm}
-                  onSearchChange={setSearchTerm}
-                  tipoEntrega={tipoEntrega}
-                  onTipoEntregaChange={setTipoEntrega}
-                  corPintura={corPintura}
-                  onCorPinturaChange={setCorPintura}
-                  mostrarProntos={mostrarProntos}
-                  onMostrarProntosToggle={() => setMostrarProntos(!mostrarProntos)}
+              <div className="px-4 py-3 border-t border-white/5 flex flex-col lg:flex-row lg:items-center gap-3">
+                <div className="flex-1 min-w-0">
+                  <PedidosFiltrosMinimalista
+                    searchTerm={searchTerm}
+                    onSearchChange={setSearchTerm}
+                    tipoEntrega={tipoEntrega}
+                    onTipoEntregaChange={setTipoEntrega}
+                    corPintura={corPintura}
+                    onCorPinturaChange={setCorPintura}
+                    mostrarProntos={mostrarProntos}
+                    onMostrarProntosToggle={() => setMostrarProntos(!mostrarProntos)}
+                  />
+                </div>
+                <PedidosSelecaoBar
+                  selecionadosCount={selecionados.size}
+                  totalFiltrados={pedidosFiltrados.length}
+                  onSelecionarTodos={() => setSelecionados(new Set(pedidosFiltrados.map((p: any) => p.id)))}
+                  onLimpar={limparSelecao}
+                  onGerarLista={handleGerarListaSelecao}
+                  onImprimir={handleImprimirSelecao}
+                  isGerandoLista={gerandoListaSelecao}
+                  isImprimindo={imprimindoSelecao}
                 />
               </div>
               <CardContent className="px-4 py-4">
