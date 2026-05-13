@@ -1,29 +1,53 @@
-# Frete automático em /vendas/minhas-vendas/nova
+# Melhorar avisos de erro de campos obrigatórios em /vendas/minhas-vendas/nova
+
+## Problema atual
+
+Em `src/pages/vendas/VendaNovaMinimalista.tsx`, o `handleSubmit` exibe toasts genéricos:
+
+- "Todos os campos de localização são obrigatórios (Estado, Cidade, CEP, Bairro e Endereço)" — não diz qual está faltando.
+- Não valida explicitamente cliente (nome, telefone), data de previsão de entrega, tipo de entrega ou forma de pagamento (mostra erro só ao processar).
+- Toasts somem rápido e não direcionam o usuário até o campo.
 
 ## O que fazer
 
-Em `src/pages/vendas/VendaNovaMinimalista.tsx`, alterar o campo de Frete para que:
+### 1. Validação granular em `handleSubmit`
 
-1. Quando a cidade e o estado do cliente estiverem preenchidos e existir um registro ativo correspondente em `frete_cidades` (origem de `/logistica/frete/internos`):
-   - O `valor_frete` é preenchido automaticamente com o valor cadastrado.
-   - O input fica **bloqueado** (`readOnly`/`disabled`) com indicação visual de auto-preenchimento.
-   - Mostrar uma badge informativa do tipo "Frete automático para {cidade}/{estado}".
+Substituir os toasts genéricos por uma checagem que coleta **todos** os campos faltantes em uma lista e mostra um único toast claro:
 
-2. Quando não houver frete cadastrado para a cidade/estado:
-   - O input fica **liberado** para preenchimento manual.
-   - Exibir um aviso discreto: "Sem frete cadastrado para esta cidade — preencha manualmente".
+- Nome do cliente
+- Telefone do cliente
+- CPF/CNPJ (se preenchido, validar formato — manter regra atual)
+- Estado, Cidade, CEP, Bairro, Endereço (cada um listado individualmente)
+- Data de previsão de entrega (`dataEntrega`)
+- Tipo de entrega
+- Forma de pagamento (ao menos um método em `pagamentoData.metodos`)
+- Pelo menos um produto
 
-3. Se a cidade/estado mudar, o valor do frete é recalculado (sobrescrito pelo automático ou liberado para edição).
+Formato do toast (sonner `toast.error` com `description` em lista):
 
-## Detalhes técnicos
+```
+Título: "Campos obrigatórios não preenchidos"
+Descrição: lista com bullets dos campos faltantes
+```
 
-- `freteSugerido` (memo já existente, linhas ~286-294) continua sendo a fonte da busca em `fretes` via `useFretesCidades()`.
-- Substituir o bloco atual (badge "Sugerido" + botão "Usar") por aplicação automática via `useEffect` que dispara quando `freteSugerido?.valor_frete` muda, atualizando `formData.valor_frete`.
-- Adicionar `disabled={!!freteSugerido}` (ou `readOnly`) no `<Input id="valor_frete">` e ajuste de estilos (cursor-not-allowed, opacity).
-- Manter o handler `onChange` somente para o caso manual.
-- Não alterar lógica de cálculo de total nem de submissão — apenas a forma como `valor_frete` é definido.
+### 2. Destaque visual nos campos faltantes
+
+- Manter um state `camposFaltantes: Set<string>` populado no submit.
+- Aplicar borda vermelha (`border-destructive` / `ring-destructive`) nos inputs/labels listados quando o respectivo campo estiver no set.
+- Limpar a marcação do campo assim que o usuário começa a digitar/selecionar nele.
+- Rolar suavemente até o primeiro campo faltante (`scrollIntoView({ behavior: 'smooth', block: 'center' })`) e dar foco quando possível.
+
+### 3. Mensagens específicas mantidas
+
+- Documento inválido (CPF/CNPJ com dígitos errados) continua com mensagem própria.
+- Endereço/bairro com menos de 2 caracteres continua com mensagem própria, mas integrada à lista de campos destacados.
 
 ## Fora de escopo
 
-- Edição de venda existente (`VendaEditarMinimalista.tsx`) — não foi pedido.
-- Mudanças na tabela `frete_cidades` ou no hub de logística.
+- Validação de descontos/autorização (`validarDesconto`) permanece igual.
+- `VendaEditarMinimalista.tsx` não será alterada (não foi pedido).
+- Nenhuma mudança de banco ou hook.
+
+## Arquivos afetados
+
+- `src/pages/vendas/VendaNovaMinimalista.tsx` (apenas frontend).
