@@ -246,7 +246,12 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
   return (
     <TooltipProvider>
       <Card
-        className={`hover:shadow-sm transition-all cursor-pointer h-10 overflow-hidden ${isDragging ? 'opacity-50 shadow-2xl' : ''}`}
+        className={cn(
+          "h-10 overflow-hidden cursor-pointer rounded-lg transition-all",
+          "bg-white/5 border-white/10 backdrop-blur-xl text-white",
+          "hover:bg-white/[0.08] hover:border-blue-400/30 hover:shadow-[0_0_0_1px_rgba(96,165,250,0.15)]",
+          isDragging && "opacity-50 cursor-grabbing"
+        )}
         onClick={() => setShowDetalhes(true)}
       >
         <CardContent className="p-0 h-full">
