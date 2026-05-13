@@ -801,9 +801,6 @@ export default function FaturamentoMinimalista() {
                 Aguardando assinatura do contrato — não pode ser faturada
               </TooltipContent>
             </Tooltip>
-            </TooltipTrigger>
-            <TooltipContent>Contrato anexado</TooltipContent>
-          </Tooltip>
         );
       }
       case 'tabela':
