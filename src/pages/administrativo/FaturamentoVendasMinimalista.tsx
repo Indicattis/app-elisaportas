@@ -1099,7 +1099,7 @@ export default function FaturamentoMinimalista() {
                 .from('contratos-vendas')
                 .createSignedUrl(path, 3600);
               if (error || !data?.signedUrl) {
-                toast.error('Não foi possível abrir o contrato.');
+                toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível abrir o contrato.' });
                 return;
               }
               window.open(data.signedUrl, '_blank');
