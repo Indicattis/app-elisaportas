@@ -1166,31 +1166,30 @@ export default function GestaoFabricaDirecao() {
                       </TooltipProvider>
                     </div>
                   </CardTitle>
-                  
-                  <div className="flex items-center justify-end w-full lg:w-auto">
-                    <PedidosSelecaoBar
-                      selecionadosCount={selecionados.size}
-                      totalFiltrados={pedidosFiltrados.length}
-                      onSelecionarTodos={() => setSelecionados(new Set(pedidosFiltrados.map((p: any) => p.id)))}
-                      onLimpar={limparSelecao}
-                      onGerarLista={handleGerarListaSelecao}
-                      onImprimir={handleImprimirSelecao}
-                      isGerandoLista={gerandoListaSelecao}
-                      isImprimindo={imprimindoSelecao}
-                    />
-                  </div>
                 </div>
               </CardHeader>
-              <div className="px-4 py-3 border-t border-white/5">
-                <PedidosFiltrosMinimalista
-                  searchTerm={searchTerm}
-                  onSearchChange={setSearchTerm}
-                  tipoEntrega={tipoEntrega}
-                  onTipoEntregaChange={setTipoEntrega}
-                  corPintura={corPintura}
-                  onCorPinturaChange={setCorPintura}
-                  mostrarProntos={mostrarProntos}
-                  onMostrarProntosToggle={() => setMostrarProntos(!mostrarProntos)}
+              <div className="px-4 py-3 border-t border-white/5 flex flex-col lg:flex-row lg:items-center gap-3">
+                <div className="flex-1 min-w-0">
+                  <PedidosFiltrosMinimalista
+                    searchTerm={searchTerm}
+                    onSearchChange={setSearchTerm}
+                    tipoEntrega={tipoEntrega}
+                    onTipoEntregaChange={setTipoEntrega}
+                    corPintura={corPintura}
+                    onCorPinturaChange={setCorPintura}
+                    mostrarProntos={mostrarProntos}
+                    onMostrarProntosToggle={() => setMostrarProntos(!mostrarProntos)}
+                  />
+                </div>
+                <PedidosSelecaoBar
+                  selecionadosCount={selecionados.size}
+                  totalFiltrados={pedidosFiltrados.length}
+                  onSelecionarTodos={() => setSelecionados(new Set(pedidosFiltrados.map((p: any) => p.id)))}
+                  onLimpar={limparSelecao}
+                  onGerarLista={handleGerarListaSelecao}
+                  onImprimir={handleImprimirSelecao}
+                  isGerandoLista={gerandoListaSelecao}
+                  isImprimindo={imprimindoSelecao}
                 />
               </div>
               <CardContent className="px-4 py-4">
