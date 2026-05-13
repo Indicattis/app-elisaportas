@@ -236,7 +236,7 @@ export function AdicionarOrdemCalendarioModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] sm:max-w-[500px] max-h-[85vh] flex flex-col p-0 gap-0">
+      <DialogContent className="max-w-[95vw] sm:max-w-[500px] max-h-[85vh] flex flex-col p-0 gap-0 bg-slate-950/80 backdrop-blur-xl border-white/10 text-white shadow-[0_0_0_1px_rgba(96,165,250,0.15),0_20px_60px_-20px_rgba(0,0,0,0.8)]">
         <DialogHeader className="px-5 pt-5 pb-3">
           <DialogTitle className="text-base">Adicionar ao Calendário</DialogTitle>
           <DialogDescription className="sr-only">
