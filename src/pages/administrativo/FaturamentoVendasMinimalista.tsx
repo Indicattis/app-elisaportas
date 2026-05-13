@@ -1094,7 +1094,9 @@ export default function FaturamentoMinimalista() {
           </div>
         </div>
         <Button
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white disabled:bg-white/5 disabled:text-white/30 disabled:cursor-not-allowed"
+          disabled={aguardandoContrato(selectedVenda)}
+          title={aguardandoContrato(selectedVenda) ? "Anexe ou dispense o contrato para faturar." : undefined}
           onClick={() => navigate(`/administrativo/financeiro/faturamento/${selectedVenda.id}?from=vendas`)}
         >
           Abrir Faturamento
