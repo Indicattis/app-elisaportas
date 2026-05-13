@@ -1286,9 +1286,17 @@ export default function FaturamentoMinimalista() {
                         key={venda.id} 
                         className={cn(
                           "border-white/10 hover:bg-white/5 cursor-pointer",
-                          selectedVenda?.id === venda.id && "bg-blue-500/10 border-l-2 border-l-blue-500"
+                          selectedVenda?.id === venda.id && "bg-blue-500/10 border-l-2 border-l-blue-500",
+                          aguardandoContrato(venda) && selectedVenda?.id !== venda.id && "border-l-2 border-l-amber-500/60"
                         )}
                         onClick={() => {
+                          if (aguardandoContrato(venda)) {
+                            toast({
+                              variant: "destructive",
+                              title: "Aguardando assinatura do contrato",
+                              description: "Anexe o contrato em Gestão da Fábrica > Assinatura de Contrato antes de faturar.",
+                            });
+                          }
                           setSelectedVenda(venda);
                           if (isMobile) setMobileDownbarOpen(true);
                         }}
