@@ -1103,12 +1103,6 @@ export default function GestaoFabricaDirecao() {
                     <span className="text-sm font-normal text-white/60">
                       {pedidosFiltrados.length} {pedidosFiltrados.length === 1 ? 'pedido' : 'pedidos'}
                     </span>
-                    {totalPortasEtapa > 0 && (
-                      <Badge variant="secondary" className="text-xs ml-2 bg-blue-500/10 text-white">
-                        🚪 {totalPortasEtapa} {totalPortasEtapa === 1 ? 'porta' : 'portas'}
-                      </Badge>
-                    )}
-                    
                     <div className="flex items-center gap-2 ml-4">
                       {(etapaAtiva === 'instalacoes' || etapaAtiva === 'aguardando_coleta') && (
                         <TooltipProvider>
