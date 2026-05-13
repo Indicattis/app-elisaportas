@@ -211,7 +211,7 @@ export default function GestaoFabricaDirecao() {
         });
       }
 
-      gerarListaComprasPDF(etapaLabel, itens);
+      await gerarListaComprasPDF(etapaLabel, itens);
     } catch (err: any) {
       console.error(err);
       toast({ title: 'Erro', description: err.message || 'Falha ao gerar lista', variant: 'destructive' });
