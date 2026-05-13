@@ -501,6 +501,27 @@ export default function GestaoFabricaDirecao() {
     return filtered;
   }, [vendasPendenteFaturamento, searchTerm, tipoEntrega, corPintura]);
 
+  const vendasContratoFiltradas = useMemo(() => {
+    let filtered = vendasAssinaturaContrato;
+    if (searchTerm.trim()) {
+      const termo = searchTerm.toLowerCase().trim();
+      filtered = filtered.filter(venda => {
+        const nome = venda.cliente_nome?.toLowerCase() || '';
+        const atendente = venda.atendente_nome?.toLowerCase() || '';
+        return nome.includes(termo) || atendente.includes(termo);
+      });
+    }
+    if (tipoEntrega !== 'todos') {
+      filtered = filtered.filter(venda => venda.tipo_entrega === tipoEntrega);
+    }
+    if (corPintura !== 'todas') {
+      filtered = filtered.filter(venda => {
+        return venda.cores?.some(c => c.nome.toLowerCase().includes(corPintura.toLowerCase()));
+      });
+    }
+    return filtered;
+  }, [vendasAssinaturaContrato, searchTerm, tipoEntrega, corPintura]);
+
   const handleReorganizarVendas = useCallback((novaOrdem: VendaPendentePedido[]) => {
     setVendasOrdemLocal(novaOrdem);
   }, []);
@@ -1143,21 +1164,37 @@ export default function GestaoFabricaDirecao() {
                   })()}
                   <span>Assinatura de Contrato</span>
                   <span className="text-sm font-normal text-white/60">
-                    {vendasAssinaturaContrato.length} {vendasAssinaturaContrato.length === 1 ? 'venda' : 'vendas'}
+                    {vendasContratoFiltradas.length} {vendasContratoFiltradas.length === 1 ? 'venda' : 'vendas'}
                   </span>
                 </CardTitle>
               </div>
             </CardHeader>
+            <div className="px-4 py-3 border-t border-white/5 flex flex-col lg:flex-row lg:items-center gap-3">
+              <div className="flex-1 min-w-0">
+                <PedidosFiltrosMinimalista
+                  searchTerm={searchTerm}
+                  onSearchChange={setSearchTerm}
+                  tipoEntrega={tipoEntrega}
+                  onTipoEntregaChange={setTipoEntrega}
+                  corPintura={corPintura}
+                  onCorPinturaChange={setCorPintura}
+                  mostrarProntos={mostrarProntos}
+                  onMostrarProntosToggle={() => setMostrarProntos(!mostrarProntos)}
+                />
+              </div>
+            </div>
             <CardContent className="px-4 py-4">
               {isLoadingContrato ? (
                 <div className="text-center py-8 text-white/50">Carregando...</div>
-              ) : vendasAssinaturaContrato.length === 0 ? (
+              ) : vendasContratoFiltradas.length === 0 ? (
                 <div className="text-center py-8 text-white/50">
-                  Nenhuma venda aguardando assinatura de contrato
+                  {searchTerm || tipoEntrega !== 'todos' || corPintura !== 'todas'
+                    ? 'Nenhuma venda encontrada com os filtros aplicados'
+                    : 'Nenhuma venda aguardando assinatura de contrato'}
                 </div>
               ) : (
                 <VendasPendenteDraggableList
-                  vendas={vendasAssinaturaContrato}
+                  vendas={vendasContratoFiltradas}
                   onReorganizar={() => {}}
                   mode="contrato"
                 />
@@ -1219,18 +1256,22 @@ export default function GestaoFabricaDirecao() {
                     {vendasFaturamentoFiltradas.length} {vendasFaturamentoFiltradas.length === 1 ? 'venda' : 'vendas'}
                   </span>
                 </CardTitle>
-                <PedidosFiltrosMinimalista 
-                  searchTerm={searchTerm} 
-                  onSearchChange={setSearchTerm} 
-                  tipoEntrega={tipoEntrega} 
-                  onTipoEntregaChange={setTipoEntrega} 
-                  corPintura={corPintura} 
-                  onCorPinturaChange={setCorPintura} 
-                  mostrarProntos={mostrarProntos} 
-                  onMostrarProntosToggle={() => setMostrarProntos(!mostrarProntos)} 
-                />
               </div>
             </CardHeader>
+            <div className="px-4 py-3 border-t border-white/5 flex flex-col lg:flex-row lg:items-center gap-3">
+              <div className="flex-1 min-w-0">
+                <PedidosFiltrosMinimalista
+                  searchTerm={searchTerm}
+                  onSearchChange={setSearchTerm}
+                  tipoEntrega={tipoEntrega}
+                  onTipoEntregaChange={setTipoEntrega}
+                  corPintura={corPintura}
+                  onCorPinturaChange={setCorPintura}
+                  mostrarProntos={mostrarProntos}
+                  onMostrarProntosToggle={() => setMostrarProntos(!mostrarProntos)}
+                />
+              </div>
+            </div>
             <CardContent className="px-4 py-4">
               {isLoadingFaturamento ? (
                 <div className="text-center py-8 text-white/50">Carregando...</div>
