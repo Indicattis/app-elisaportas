@@ -18,7 +18,6 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { PedidoCard } from "./PedidoCard";
-import { PedidosTotalRow } from "./PedidosTotalRow";
 import { PedidosHeaderRow } from "./PedidosHeaderRow";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
@@ -301,7 +300,6 @@ export function PedidosDraggableList({
             </div>
           ))}
         </div>
-        {viewMode === 'list' && <PedidosTotalRow pedidos={pedidosParaTotais || pedidos} etapa={etapa} />}
       </>
     );
   }
@@ -353,8 +351,6 @@ export function PedidosDraggableList({
           ))}
         </div>
         
-        {/* Linha de totais - usa todos os pedidos filtrados se disponível */}
-        {viewMode === 'list' && <PedidosTotalRow pedidos={pedidosParaTotais || pedidos} etapa={etapa} />}
       </SortableContext>
 
       {overlayContainerRef.current && createPortal(
