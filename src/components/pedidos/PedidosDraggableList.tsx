@@ -200,11 +200,7 @@ export function PedidosDraggableList({
     );
   };
 
-  const wrapperClass = (pedidoId: string) =>
-    cn(
-      "relative",
-      selectionEnabled && selecionados?.has(pedidoId) && "ring-2 ring-primary/60 rounded-lg"
-    );
+  const wrapperClass = (_pedidoId: string) => "relative";
 
   const [activeId, setActiveId] = useState<string | null>(null);
   const overlayContainerRef = useRef<HTMLDivElement | null>(null);
