@@ -27,9 +27,9 @@ interface MiniRankingProps {
 function MiniRanking({ colaboradores, campo, unidade = "", isLoading, onColaboradorClick }: MiniRankingProps) {
   if (isLoading) {
     return (
-      <div className="mt-2 pt-2 border-t border-border/50 space-y-2 flex flex-col items-center">
+      <div className="mt-2 pt-2 border-t border-white/10 space-y-2 w-full">
         {[1, 2, 3].map((i) => (
-          <Skeleton key={i} className="h-5 w-[180px]" />
+          <Skeleton key={i} className="h-7 w-full bg-white/5" />
         ))}
       </div>
     );
@@ -42,14 +42,14 @@ function MiniRanking({ colaboradores, campo, unidade = "", isLoading, onColabora
 
   if (top3.length === 0) {
     return (
-      <div className="mt-2 pt-2 border-t border-border/50 flex justify-center">
-        <p className="text-[10px] text-muted-foreground italic">Sem produção</p>
+      <div className="mt-2 pt-2 border-t border-white/10 flex justify-center w-full">
+        <p className="text-[10px] text-white/40 italic">Sem produção</p>
       </div>
     );
   }
 
   return (
-    <div className="mt-2 pt-2 border-t border-border/50 space-y-2 flex flex-col items-center">
+    <div className="mt-2 pt-2 border-t border-white/10 space-y-1.5 w-full">
       {top3.map((c, i) => {
         const valorRaw = c[campo];
         const valor = (campo === 'pintura_m2' || campo === 'perfiladas_metros')
@@ -70,16 +70,16 @@ function MiniRanking({ colaboradores, campo, unidade = "", isLoading, onColabora
         return (
           <div 
             key={c.user_id} 
-            className="flex items-center justify-center gap-2 text-[11px] max-w-[200px] w-full bg-blue-500/10 border border-blue-500/30 rounded-lg px-2 py-1.5 cursor-pointer hover:bg-blue-500/20 transition-colors"
+            className="flex items-center gap-2 text-[11px] w-full bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 cursor-pointer hover:bg-white/[0.08] hover:border-blue-400/30 backdrop-blur-xl transition-all"
             onClick={() => onColaboradorClick?.(c.user_id)}
           >
-            <Avatar className="h-6 w-6">
+            <Avatar className="h-6 w-6 ring-1 ring-blue-400/30">
               <AvatarImage src={c.foto_perfil_url || undefined} alt={c.nome} />
-              <AvatarFallback className="text-[8px]">{iniciais}</AvatarFallback>
+              <AvatarFallback className="text-[8px] bg-blue-500/20 text-white">{iniciais}</AvatarFallback>
             </Avatar>
-            <span className="truncate flex-1 text-foreground">{primeiroNome}</span>
+            <span className="truncate flex-1 text-white/90">{primeiroNome}</span>
             {isSoldadas && temPG ? (
-              <span className="font-semibold text-foreground flex items-center gap-1">
+              <span className="font-semibold text-white flex items-center gap-1">
                 {c.soldadas_p > 0 && (
                   <Badge className="bg-blue-500 hover:bg-blue-500 text-white text-[9px] px-1.5 py-0 h-4 font-bold">
                     {c.soldadas_p}P
@@ -92,7 +92,7 @@ function MiniRanking({ colaboradores, campo, unidade = "", isLoading, onColabora
                 )}
               </span>
             ) : (
-              <span className="font-semibold text-foreground">
+              <span className="font-semibold text-white">
                 {valor}{unidade}
               </span>
             )}
