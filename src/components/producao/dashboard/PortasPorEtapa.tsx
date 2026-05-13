@@ -253,17 +253,17 @@ export function PortasPorEtapa() {
   ];
 
   return (
-    <Card className="p-4">
+    <Card className="p-4 bg-white/5 border-white/10 backdrop-blur-xl text-white">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
-        <h3 className="text-sm font-medium text-muted-foreground">
+        <h3 className="text-sm font-medium text-white/70">
           Desempenho por Etapa ({getPeriodoLabel()})
         </h3>
         <div className="flex flex-wrap items-center gap-2">
           <Select value={periodo} onValueChange={(v) => setPeriodo(v as Periodo)}>
-            <SelectTrigger className="w-[140px] h-8 text-xs">
+            <SelectTrigger className="w-[140px] h-9 text-xs bg-white/5 border-white/10 hover:bg-white/[0.07] hover:border-blue-400/30 backdrop-blur-xl text-white rounded-lg transition-all">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-slate-950/95 border-white/10 backdrop-blur-xl text-white">
               <SelectItem value="hoje">Hoje</SelectItem>
               <SelectItem value="semana">Semana</SelectItem>
               <SelectItem value="mes">Mês</SelectItem>
@@ -340,27 +340,27 @@ export function PortasPorEtapa() {
           )}
         </div>
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
         {etapas.map((etapa) => {
           const Icon = etapa.icon;
           return (
             <div
               key={etapa.label}
-              className="flex flex-col"
+              className="flex flex-col gap-3 p-3 rounded-xl bg-white/5 border border-white/10 backdrop-blur-xl hover:bg-white/[0.08] hover:border-blue-400/30 hover:shadow-[0_0_0_1px_rgba(96,165,250,0.15)] transition-all"
             >
               <div className="flex items-center gap-3">
                 <div className={`p-2 rounded-md ${etapa.bgColor}`}>
                   <Icon className={`h-5 w-5 ${etapa.iconColor}`} />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">{etapa.label}</p>
+                  <p className="text-xs text-white/60">{etapa.label}</p>
                   {isLoadingDesempenho ? (
                     <Skeleton className="h-6 w-12 mt-1" />
                   ) : (
-                    <p className="text-xl font-bold">
+                    <p className="text-xl font-bold text-white">
                       {etapa.value}
                       {etapa.extra && (
-                        <span className="text-sm font-normal text-muted-foreground ml-1">
+                        <span className="text-sm font-normal text-white/60 ml-1">
                           {etapa.extra}
                         </span>
                       )}
