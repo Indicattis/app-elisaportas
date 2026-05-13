@@ -20,6 +20,8 @@ import { CSS } from "@dnd-kit/utilities";
 import { PedidoCard } from "./PedidoCard";
 import { PedidosTotalRow } from "./PedidosTotalRow";
 import { PedidosHeaderRow } from "./PedidosHeaderRow";
+import { Checkbox } from "@/components/ui/checkbox";
+import { cn } from "@/lib/utils";
 import type { EtapaPedido, DirecaoPrioridade, PrioridadeUpdate } from "@/types/pedidoEtapa";
 
 interface PedidosDraggableListProps {
@@ -46,6 +48,9 @@ interface PedidosDraggableListProps {
   disableClienteClick?: boolean;
   hideOrdensStatus?: boolean;
   hideCorrecaoButton?: boolean;
+  selectionEnabled?: boolean;
+  selecionados?: Set<string>;
+  onToggleSelecionado?: (id: string) => void;
 }
 
 interface SortableItemProps {
