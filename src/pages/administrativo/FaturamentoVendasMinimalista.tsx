@@ -250,6 +250,7 @@ export default function FaturamentoMinimalista() {
           data_prevista_entrega,
           tipo_entrega,
           lucro_instalacao,
+          contrato_url,
           produtos_vendas (
             id,
             tipo_produto,
