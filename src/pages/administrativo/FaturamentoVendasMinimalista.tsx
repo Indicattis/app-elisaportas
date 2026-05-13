@@ -766,17 +766,17 @@ export default function FaturamentoMinimalista() {
         if (venda.tipo_entrega === 'instalacao') return <Hammer className="h-4 w-4 text-cyan-400 mx-auto" />;
         return <Truck className="h-4 w-4 text-orange-400 mx-auto" />;
       case 'contrato': {
-        if (isFaturada(venda)) {
+        if ((venda as any).contrato_url) {
           return (
             <Tooltip>
               <TooltipTrigger asChild>
-                <Check className="h-4 w-4 text-green-400 mx-auto" />
+                <FileCheck className="h-4 w-4 text-blue-400 mx-auto" />
               </TooltipTrigger>
-              <TooltipContent>Venda faturada</TooltipContent>
+              <TooltipContent>Contrato anexado</TooltipContent>
             </Tooltip>
           );
         }
-        if ((venda as any).contrato_dispensado) {
+        if ((venda as any).contrato_dispensado || isFaturada(venda)) {
           return (
             <Tooltip>
               <TooltipTrigger asChild>
@@ -789,8 +789,7 @@ export default function FaturamentoMinimalista() {
             </Tooltip>
           );
         }
-        if (!(venda as any).contrato_url) {
-          return (
+        return (
             <Tooltip>
               <TooltipTrigger asChild>
                 <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-amber-500/15 border border-amber-500/40 text-amber-300 text-[10px] font-medium">
@@ -802,12 +801,6 @@ export default function FaturamentoMinimalista() {
                 Aguardando assinatura do contrato — não pode ser faturada
               </TooltipContent>
             </Tooltip>
-          );
-        }
-        return (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <FileCheck className="h-4 w-4 text-blue-400 mx-auto" />
             </TooltipTrigger>
             <TooltipContent>Contrato anexado</TooltipContent>
           </Tooltip>
