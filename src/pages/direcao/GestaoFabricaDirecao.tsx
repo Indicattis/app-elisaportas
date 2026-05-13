@@ -835,7 +835,7 @@ export default function GestaoFabricaDirecao() {
             <div className="flex gap-1 border-2 border-blue-500/50 rounded-lg p-1">
               <TabsTrigger 
                 value="pendente_pedido" 
-                className="flex-shrink-0 px-2 xs:px-3 py-2 gap-1 xs:gap-1.5 sm:gap-2 text-white/60 data-[state=active]:bg-blue-500/10 data-[state=active]:text-white"
+                className="flex-shrink-0 flex-col h-full min-w-[110px] px-3 py-2 gap-1.5 rounded-lg bg-white/5 border border-white/10 backdrop-blur-xl text-white/70 hover:bg-white/[0.08] hover:border-blue-400/30 transition-all data-[state=active]:bg-blue-500/15 data-[state=active]:border-blue-400/50 data-[state=active]:text-white data-[state=active]:shadow-[0_0_0_1px_rgba(96,165,250,0.3)]"
               >
                 {(() => {
                   const resp = getResponsavel('pendente_pedido' as any);
@@ -864,7 +864,7 @@ export default function GestaoFabricaDirecao() {
                   <TabsTrigger 
                     key={etapa} 
                     value={etapa} 
-                    className="flex-shrink-0 px-2 xs:px-3 py-2 gap-1 xs:gap-1.5 sm:gap-2 text-white/60 data-[state=active]:bg-blue-500/10 data-[state=active]:text-white"
+                    className="flex-shrink-0 flex-col h-full min-w-[110px] px-3 py-2 gap-1.5 rounded-lg bg-white/5 border border-white/10 backdrop-blur-xl text-white/70 hover:bg-white/[0.08] hover:border-blue-400/30 transition-all data-[state=active]:bg-blue-500/15 data-[state=active]:border-blue-400/50 data-[state=active]:text-white data-[state=active]:shadow-[0_0_0_1px_rgba(96,165,250,0.3)]"
                   >
                     {responsavel ? (
                       <Tooltip>
@@ -903,7 +903,7 @@ export default function GestaoFabricaDirecao() {
                   <TabsTrigger 
                     key={etapa} 
                     value={etapa} 
-                    className="flex-shrink-0 px-2 xs:px-3 py-2 gap-1 xs:gap-1.5 sm:gap-2 text-white/60 data-[state=active]:bg-blue-500/10 data-[state=active]:text-white"
+                    className="flex-shrink-0 flex-col h-full min-w-[110px] px-3 py-2 gap-1.5 rounded-lg bg-white/5 border border-white/10 backdrop-blur-xl text-white/70 hover:bg-white/[0.08] hover:border-blue-400/30 transition-all data-[state=active]:bg-blue-500/15 data-[state=active]:border-blue-400/50 data-[state=active]:text-white data-[state=active]:shadow-[0_0_0_1px_rgba(96,165,250,0.3)]"
                   >
                     {responsavel ? (
                       <Tooltip>
@@ -942,7 +942,7 @@ export default function GestaoFabricaDirecao() {
                   <TabsTrigger 
                     key={etapa} 
                     value={etapa} 
-                    className="flex-shrink-0 px-2 xs:px-3 py-2 gap-1 xs:gap-1.5 sm:gap-2 text-white/60 data-[state=active]:bg-blue-500/10 data-[state=active]:text-white"
+                    className="flex-shrink-0 flex-col h-full min-w-[110px] px-3 py-2 gap-1.5 rounded-lg bg-white/5 border border-white/10 backdrop-blur-xl text-white/70 hover:bg-white/[0.08] hover:border-blue-400/30 transition-all data-[state=active]:bg-blue-500/15 data-[state=active]:border-blue-400/50 data-[state=active]:text-white data-[state=active]:shadow-[0_0_0_1px_rgba(96,165,250,0.3)]"
                   >
                     {responsavel ? (
                       <Tooltip>
@@ -981,7 +981,7 @@ export default function GestaoFabricaDirecao() {
                   <TabsTrigger 
                     key={etapa} 
                     value={etapa} 
-                    className="flex-shrink-0 px-2 xs:px-3 py-2 gap-1 xs:gap-1.5 sm:gap-2 text-white/60 data-[state=active]:bg-blue-500/10 data-[state=active]:text-white"
+                    className="flex-shrink-0 flex-col h-full min-w-[110px] px-3 py-2 gap-1.5 rounded-lg bg-white/5 border border-white/10 backdrop-blur-xl text-white/70 hover:bg-white/[0.08] hover:border-blue-400/30 transition-all data-[state=active]:bg-blue-500/15 data-[state=active]:border-blue-400/50 data-[state=active]:text-white data-[state=active]:shadow-[0_0_0_1px_rgba(96,165,250,0.3)]"
                   >
                     {responsavel ? (
                       <Tooltip>
