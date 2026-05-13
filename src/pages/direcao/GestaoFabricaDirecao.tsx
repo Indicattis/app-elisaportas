@@ -1163,7 +1163,7 @@ export default function GestaoFabricaDirecao() {
                     </div>
                   </CardTitle>
                   
-                  <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2 w-full lg:w-auto">
+                  <div className="flex items-center justify-end w-full lg:w-auto">
                     <PedidosSelecaoBar
                       selecionadosCount={selecionados.size}
                       totalFiltrados={pedidosFiltrados.length}
@@ -1174,19 +1174,21 @@ export default function GestaoFabricaDirecao() {
                       isGerandoLista={gerandoListaSelecao}
                       isImprimindo={imprimindoSelecao}
                     />
-                    <PedidosFiltrosMinimalista 
-                      searchTerm={searchTerm} 
-                      onSearchChange={setSearchTerm} 
-                      tipoEntrega={tipoEntrega} 
-                      onTipoEntregaChange={setTipoEntrega} 
-                      corPintura={corPintura} 
-                      onCorPinturaChange={setCorPintura} 
-                      mostrarProntos={mostrarProntos} 
-                      onMostrarProntosToggle={() => setMostrarProntos(!mostrarProntos)} 
-                    />
                   </div>
                 </div>
               </CardHeader>
+              <div className="px-4 py-3 border-t border-white/5">
+                <PedidosFiltrosMinimalista
+                  searchTerm={searchTerm}
+                  onSearchChange={setSearchTerm}
+                  tipoEntrega={tipoEntrega}
+                  onTipoEntregaChange={setTipoEntrega}
+                  corPintura={corPintura}
+                  onCorPinturaChange={setCorPintura}
+                  mostrarProntos={mostrarProntos}
+                  onMostrarProntosToggle={() => setMostrarProntos(!mostrarProntos)}
+                />
+              </div>
               <CardContent className="px-4 py-4">
                 {/* Vendas faturadas aguardando criação de pedido - apenas na aba aprovacao_diretor */}
                 {etapaAtiva === 'aprovacao_diretor' && vendasPendentePedido.length > 0 && (
