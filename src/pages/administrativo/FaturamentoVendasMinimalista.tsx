@@ -34,7 +34,6 @@ import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { ColumnManager } from "@/components/ColumnManager";
 import { useColumnConfig, ColumnConfig } from "@/hooks/useColumnConfig";
 import { generateFaturamentoPDF } from "@/utils/faturamentoPDFGenerator";
-import { VendasNaoFaturadasHistorico } from "@/components/faturamento/VendasNaoFaturadasHistorico";
 
 import { Checkbox } from "@/components/ui/checkbox";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
@@ -1332,17 +1331,6 @@ export default function FaturamentoMinimalista() {
             {rightContent}
           </div>
         </aside>
-      </div>
-
-      {/* Vendas Não Faturadas - Histórico 3 meses */}
-      <div className="mt-6">
-        <VendasNaoFaturadasHistorico 
-          onOpenJustificativa={(vendaId, clienteNome, justificativa) => {
-            setJustificativaDialog({
-              open: true, vendaId, vendaCliente: clienteNome, justificativa
-            });
-          }}
-        />
       </div>
 
       {/* Mobile Downbar */}
