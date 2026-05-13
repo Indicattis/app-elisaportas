@@ -34,6 +34,7 @@ import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { ColumnManager } from "@/components/ColumnManager";
 import { useColumnConfig, ColumnConfig } from "@/hooks/useColumnConfig";
 import { generateFaturamentoPDF } from "@/utils/faturamentoPDFGenerator";
+import { AnexarContratoModal } from "@/components/vendas/AnexarContratoModal";
 
 import { Checkbox } from "@/components/ui/checkbox";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
@@ -156,6 +157,7 @@ export default function FaturamentoMinimalista() {
     open: false, vendaId: '', vendaCliente: '', justificativa: '' 
   });
   const [savingJustificativa, setSavingJustificativa] = useState(false);
+  const [anexarContratoOpen, setAnexarContratoOpen] = useState(false);
 
   const handleUpdatePagamento = async (contaId: string, campo: 'status' | 'observacoes', valor: string) => {
     try {
@@ -1087,6 +1089,34 @@ export default function FaturamentoMinimalista() {
         >
           Abrir Faturamento
         </Button>
+        {(selectedVenda as any).contrato_url ? (
+          <Button
+            variant="outline"
+            className="w-full bg-white/5 border-white/15 text-white hover:bg-white/10 hover:text-white"
+            onClick={async () => {
+              const path = (selectedVenda as any).contrato_url as string;
+              const { data, error } = await supabase.storage
+                .from('contratos-vendas')
+                .createSignedUrl(path, 3600);
+              if (error || !data?.signedUrl) {
+                toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível abrir o contrato.' });
+                return;
+              }
+              window.open(data.signedUrl, '_blank');
+            }}
+          >
+            <FileCheck className="h-4 w-4 mr-2 text-blue-400" />
+            Ver Contrato
+          </Button>
+        ) : (
+          <Button
+            className="w-full bg-amber-500/15 border border-amber-400/30 text-amber-200 hover:bg-amber-500/25 hover:text-amber-100"
+            onClick={() => setAnexarContratoOpen(true)}
+          >
+            <FileSignature className="h-4 w-4 mr-2" />
+            Anexar Contrato
+          </Button>
+        )}
       </div>
     );
   })() : null;
@@ -1410,6 +1440,15 @@ export default function FaturamentoMinimalista() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {selectedVenda && (
+        <AnexarContratoModal
+          open={anexarContratoOpen}
+          onOpenChange={setAnexarContratoOpen}
+          vendaId={selectedVenda.id}
+          clienteNome={selectedVenda.cliente_nome}
+        />
+      )}
     </MinimalistLayout>
   );
 }
