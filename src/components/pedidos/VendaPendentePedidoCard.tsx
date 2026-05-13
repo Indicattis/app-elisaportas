@@ -565,14 +565,22 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
               )}
             </div>
 
-            {mode === 'faturamento' ? (
+            {isFaturamentoLayout ? (
               <>
-                {/* Faturar link */}
-                <div className="flex items-center justify-center" onClick={(e) => { e.stopPropagation(); navigate(`/administrativo/financeiro/faturamento/${venda.id}`); }}>
-                  <span className="text-[10px] font-medium text-yellow-400/80 hover:text-yellow-400 transition-colors whitespace-nowrap cursor-pointer">
-                    Faturar →
-                  </span>
-                </div>
+                {/* Ação principal: Faturar (faturamento) ou Anexar Contrato (contrato) */}
+                {mode === 'contrato' ? (
+                  <div className="flex items-center justify-center" onClick={(e) => { e.stopPropagation(); setShowAnexarContrato(true); }}>
+                    <span className="text-[10px] font-medium text-blue-400/80 hover:text-blue-400 transition-colors whitespace-nowrap cursor-pointer flex items-center gap-1">
+                      <FileSignature className="h-3 w-3" /> Anexar →
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center" onClick={(e) => { e.stopPropagation(); navigate(`/administrativo/financeiro/faturamento/${venda.id}`); }}>
+                    <span className="text-[10px] font-medium text-yellow-400/80 hover:text-yellow-400 transition-colors whitespace-nowrap cursor-pointer">
+                      Faturar →
+                    </span>
+                  </div>
+                )}
 
                 {/* Dispensar Pedido */}
                 <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
