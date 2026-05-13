@@ -43,7 +43,7 @@ import type { EtapaPedido, DirecaoPrioridade } from "@/types/pedidoEtapa";
 import type { NeoInstalacao } from "@/types/neoInstalacao";
 import type { NeoCorrecao } from "@/types/neoCorrecao";
 import type { OrdemCarregamento } from "@/types/ordemCarregamento";
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import type { VendaPendentePedido } from "@/hooks/useVendasPendentePedido";
 import { useToast } from "@/hooks/use-toast";
