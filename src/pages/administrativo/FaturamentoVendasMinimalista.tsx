@@ -17,7 +17,7 @@ import {
   CheckCircle2, Clock, Truck, Wrench, Paintbrush, Target,
   Calculator, AlertCircle, Plus, Minus, Pencil, MessageSquare,
   ArrowUpDown, ArrowUp, ArrowDown, Check, X, Hammer,
-  Package, PlusCircle, Filter, PanelRight, Info
+  Package, PlusCircle, Filter, PanelRight, Info, FileSignature, FileCheck
 } from "lucide-react";
 import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
@@ -98,6 +98,7 @@ const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
   { id: 'data', label: 'Data', defaultVisible: true },
   { id: 'cidade', label: 'Cidade', defaultVisible: true },
   { id: 'expedicao', label: 'Expedição', defaultVisible: true },
+  { id: 'contrato', label: 'Contrato', defaultVisible: true },
   { id: 'tabela', label: 'Tabela', defaultVisible: true },
   { id: 'valor', label: 'Venda', defaultVisible: true },
   { id: 'desc_cartao', label: 'Cartão', defaultVisible: true },
