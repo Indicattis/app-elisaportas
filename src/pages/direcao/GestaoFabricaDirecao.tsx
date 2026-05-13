@@ -754,6 +754,17 @@ export default function GestaoFabricaDirecao() {
             <SelectTrigger className="w-full h-12 bg-white/5 border-blue-500/10 text-white">
               <SelectValue>
                 {(() => {
+                  if (etapaAtiva === 'assinatura_contrato') {
+                    return (
+                      <div className="flex items-center gap-2">
+                        <FileSignature className="h-5 w-5" />
+                        <span className="font-medium">Assinatura Contrato</span>
+                        <Badge variant="secondary" className="ml-auto bg-blue-500/20 text-blue-400">
+                          {vendasAssinaturaContrato.length}
+                        </Badge>
+                      </div>
+                    );
+                  }
                   if (etapaAtiva === 'pendente_pedido') {
                     return (
                       <div className="flex items-center gap-2">
@@ -792,6 +803,15 @@ export default function GestaoFabricaDirecao() {
               </SelectValue>
             </SelectTrigger>
             <SelectContent className="bg-zinc-900 border-blue-500/10">
+              <SelectItem value="assinatura_contrato" className="text-white cursor-pointer">
+                <div className="flex items-center gap-2 w-full">
+                  <FileSignature className="h-4 w-4 flex-shrink-0 text-blue-400" />
+                  <span className="flex-1 text-blue-400">Assinatura Contrato</span>
+                  <Badge variant="secondary" className="text-xs bg-blue-500/20 text-blue-400">
+                    {vendasAssinaturaContrato.length}
+                  </Badge>
+                </div>
+              </SelectItem>
               <SelectItem value="pendente_pedido" className="text-white cursor-pointer">
                 <div className="flex items-center gap-2 w-full">
                   <DollarSign className="h-4 w-4 flex-shrink-0 text-blue-400" />
