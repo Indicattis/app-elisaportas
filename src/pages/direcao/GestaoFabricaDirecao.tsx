@@ -50,6 +50,9 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { enviarParaAguardandoCliente } from "@/lib/aguardandoCliente";
 import { gerarListaComprasPDF, type ItemListaCompras } from "@/utils/listaComprasPDF";
+import { buscarDadosPedidoProducaoPDF } from "@/utils/buscarDadosPedidoProducaoPDF";
+import { imprimirPedidosProducaoPDFBatch } from "@/utils/pedidoProducaoPDFGenerator";
+import { PedidosSelecaoBar } from "@/components/pedidos/PedidosSelecaoBar";
 
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -98,18 +101,33 @@ export default function GestaoFabricaDirecao() {
   const [agendarData, setAgendarData] = useState(new Date());
   const [agendarPedidoId, setAgendarPedidoId] = useState<string | null>(null);
   const [gerandoListaEtapa, setGerandoListaEtapa] = useState<EtapaPedido | null>(null);
+  const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
+  const [gerandoListaSelecao, setGerandoListaSelecao] = useState(false);
+  const [imprimindoSelecao, setImprimindoSelecao] = useState(false);
 
-  const handleGerarListaCompras = useCallback(async (etapa: EtapaPedido) => {
+  // Resetar seleção quando trocar de etapa
+  useEffect(() => {
+    setSelecionados(new Set());
+  }, [etapaAtiva]);
+
+  const toggleSelecionado = useCallback((id: string) => {
+    setSelecionados((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const limparSelecao = useCallback(() => setSelecionados(new Set()), []);
+
+  const gerarListaParaPedidos = useCallback(async (
+    pedidoIds: string[],
+    etapaLabel: string
+  ) => {
     try {
-      setGerandoListaEtapa(etapa);
-      const { data: peds, error: pErr } = await supabase
-        .from('pedidos_producao')
-        .select('id')
-        .eq('etapa_atual', etapa as any);
-      if (pErr) throw pErr;
-      const pedidoIds = (peds || []).map((p: any) => p.id);
       if (pedidoIds.length === 0) {
-        toast({ title: 'Sem pedidos', description: 'Não há pedidos nesta etapa.' });
+        toast({ title: 'Sem pedidos', description: 'Nenhum pedido para gerar a lista.' });
         return;
       }
       const { data: linhas, error: lErr } = await supabase
@@ -167,7 +185,7 @@ export default function GestaoFabricaDirecao() {
 
       const itens = Array.from(map.values());
       if (itens.length === 0) {
-        toast({ title: 'Sem materiais', description: 'Nenhum material vinculado nesta etapa.' });
+        toast({ title: 'Sem materiais', description: 'Nenhum material vinculado.' });
         return;
       }
 
@@ -193,14 +211,60 @@ export default function GestaoFabricaDirecao() {
         });
       }
 
-      gerarListaComprasPDF(ETAPAS_CONFIG[etapa]?.label || String(etapa), itens);
+      gerarListaComprasPDF(etapaLabel, itens);
     } catch (err: any) {
       console.error(err);
       toast({ title: 'Erro', description: err.message || 'Falha ao gerar lista', variant: 'destructive' });
+    }
+  }, [toast]);
+
+  const handleGerarListaCompras = useCallback(async (etapa: EtapaPedido) => {
+    try {
+      setGerandoListaEtapa(etapa);
+      const { data: peds, error: pErr } = await supabase
+        .from('pedidos_producao')
+        .select('id')
+        .eq('etapa_atual', etapa as any);
+      if (pErr) throw pErr;
+      const pedidoIds = (peds || []).map((p: any) => p.id);
+      await gerarListaParaPedidos(pedidoIds, ETAPAS_CONFIG[etapa]?.label || String(etapa));
     } finally {
       setGerandoListaEtapa(null);
     }
-  }, [toast]);
+  }, [gerarListaParaPedidos]);
+
+  const handleGerarListaSelecao = useCallback(async () => {
+    if (selecionados.size === 0) return;
+    try {
+      setGerandoListaSelecao(true);
+      const etapaLabel = etapaAtiva && etapaAtiva !== 'arquivo_morto' && etapaAtiva !== 'pendente_pedido'
+        ? `${ETAPAS_CONFIG[etapaAtiva as EtapaPedido]?.label || etapaAtiva} (seleção)`
+        : 'Seleção';
+      await gerarListaParaPedidos(Array.from(selecionados), etapaLabel);
+    } finally {
+      setGerandoListaSelecao(false);
+    }
+  }, [selecionados, etapaAtiva, gerarListaParaPedidos]);
+
+  const handleImprimirSelecao = useCallback(async () => {
+    if (selecionados.size === 0) return;
+    try {
+      setImprimindoSelecao(true);
+      const ids = Array.from(selecionados);
+      const dados = await Promise.all(ids.map((id) => buscarDadosPedidoProducaoPDF(id)));
+      const filtrados = dados.filter((d): d is NonNullable<typeof d> => !!d);
+      if (filtrados.length === 0) {
+        toast({ title: 'Sem dados', description: 'Não foi possível carregar os pedidos selecionados.' });
+        return;
+      }
+      imprimirPedidosProducaoPDFBatch(filtrados);
+    } catch (err: any) {
+      console.error(err);
+      toast({ title: 'Erro', description: err.message || 'Falha ao imprimir', variant: 'destructive' });
+    } finally {
+      setImprimindoSelecao(false);
+    }
+  }, [selecionados, toast]);
   
   // Debounce para busca do arquivo morto
   useEffect(() => {
