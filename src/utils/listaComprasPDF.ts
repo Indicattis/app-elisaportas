@@ -69,39 +69,35 @@ export function gerarListaComprasPDF(etapaLabel: string, itens: ItemListaCompras
     cursorY += 8;
 
     const rows = lista.map((m, idx) => {
-      const padrao = m.quantidade_padrao && m.quantidade_padrao > 0 ? m.quantidade_padrao : null;
-      const comprarQtd = padrao ? Math.ceil(m.necessario / padrao) : null;
-      const unidadeAbrev = getUnidadeAbreviacao(m.unidade);
-      const padraoStr = padrao
-        ? `Padrão: ${padrao.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 2 })} ${unidadeAbrev}`
-        : "Sem padrão definido";
       const necessarioStr = formatarQuantidadeUnidade(m.necessario, m.unidade);
-      const comprarStr =
-        comprarQtd !== null ? formatarQuantidadeUnidade(comprarQtd, m.unidade) : "—";
 
-      // Matéria-prima
-      const mpNome = m.materia_prima_nome || "—";
+      // Matéria-prima: se houver vínculo, mostra qtd da MP necessária; senão, repete o necessário do material
       const mpUnidade = m.materia_prima_unidade || m.unidade;
       const conv = m.materia_prima_conversao && m.materia_prima_conversao > 0
         ? Number(m.materia_prima_conversao)
         : null;
-      const comprarMpStr =
-        m.materia_prima_id && conv
-          ? formatarQuantidadeUnidade(Math.ceil(m.necessario / conv), mpUnidade)
-          : "—";
+      let materiaPrimaStr: string;
+      if (m.materia_prima_id && conv) {
+        const qtdMp = Math.ceil(m.necessario / conv);
+        const nome = m.materia_prima_nome ? ` (${m.materia_prima_nome})` : "";
+        materiaPrimaStr = `${formatarQuantidadeUnidade(qtdMp, mpUnidade)}${nome}`;
+      } else if (m.materia_prima_id) {
+        const nome = m.materia_prima_nome ? ` (${m.materia_prima_nome})` : "";
+        materiaPrimaStr = `${necessarioStr}${nome}`;
+      } else {
+        materiaPrimaStr = necessarioStr;
+      }
 
       return [
         String(idx + 1),
-        `${m.nome_produto}\n${padraoStr}`,
+        m.nome_produto,
         necessarioStr,
-        comprarStr,
-        mpNome,
-        comprarMpStr,
+        materiaPrimaStr,
       ];
     });
 
     autoTable(doc, {
-      head: [["#", "MATERIAL", "NECESSÁRIO", "COMPRAR (MATERIAL)", "MATÉRIA-PRIMA", "COMPRAR (MATÉRIA-PRIMA)"]],
+      head: [["#", "MATERIAL", "NECESSÁRIO", "MATÉRIA-PRIMA"]],
       body: rows,
       startY: cursorY,
       theme: "grid",
@@ -109,10 +105,8 @@ export function gerarListaComprasPDF(etapaLabel: string, itens: ItemListaCompras
       headStyles: { fillColor: [240, 240, 240], textColor: 60, fontStyle: "bold", fontSize: 8 },
       columnStyles: {
         0: { cellWidth: 10, halign: "center" },
-        2: { halign: "right", cellWidth: 38 },
-        3: { halign: "right", cellWidth: 42, fontStyle: "bold", textColor: [37, 99, 235] },
-        4: { cellWidth: 60 },
-        5: { halign: "right", cellWidth: 48, fontStyle: "bold", textColor: [37, 99, 235] },
+        2: { halign: "right", cellWidth: 60, fontStyle: "bold" },
+        3: { halign: "right", cellWidth: 80, fontStyle: "bold", textColor: [37, 99, 235] },
       },
       margin: { left: 14, right: 14 },
       didDrawPage: () => {
