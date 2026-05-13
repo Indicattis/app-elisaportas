@@ -868,14 +868,14 @@ export default function GestaoFabricaDirecao() {
                   <TabsTrigger 
                     key={etapa} 
                     value={etapa} 
-                    className="flex-shrink-0 flex-col h-full min-w-[110px] px-3 py-2 gap-1.5 rounded-lg bg-white/5 border border-white/10 backdrop-blur-xl text-white/70 hover:bg-white/[0.08] hover:border-blue-400/30 transition-all data-[state=active]:bg-blue-500/15 data-[state=active]:border-blue-400/50 data-[state=active]:text-white data-[state=active]:shadow-[0_0_0_1px_rgba(96,165,250,0.3)]"
+                    className="flex-shrink-0 flex-row items-center justify-start h-full min-w-[150px] px-3 py-2 gap-2.5 rounded-lg bg-white/5 border border-white/10 backdrop-blur-xl text-white/70 hover:bg-white/[0.08] hover:border-blue-400/30 transition-all data-[state=active]:bg-blue-500/15 data-[state=active]:border-blue-400/50 data-[state=active]:text-white data-[state=active]:shadow-[0_0_0_1px_rgba(96,165,250,0.3)]"
                   >
                     {responsavel ? (
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Avatar className="h-5 w-5 border border-blue-500/30">
+                          <Avatar className="h-9 w-9 flex-shrink-0 border border-blue-500/30">
                             <AvatarImage src={responsavel.foto_perfil_url || undefined} />
-                            <AvatarFallback className="text-[10px] bg-blue-500/20">
+                            <AvatarFallback className="text-xs bg-blue-500/20 text-blue-400">
                               {responsavel.nome.charAt(0).toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
@@ -885,12 +885,16 @@ export default function GestaoFabricaDirecao() {
                         </TooltipContent>
                       </Tooltip>
                     ) : (
-                      <IconComponent className="h-4 w-4 flex-shrink-0" />
+                      <div className="h-9 w-9 flex-shrink-0 rounded-full bg-blue-500/10 border border-blue-500/30 flex items-center justify-center">
+                        <IconComponent className="h-4 w-4 text-blue-400" />
+                      </div>
                     )}
-                    <span className="text-xs">{config.label}</span>
-                    <span className="px-1.5 py-0.5 bg-blue-500/20 text-blue-400 rounded-full text-xs font-semibold">
-                      {count + vendasPendentePedido.length}
-                    </span>
+                    <div className="flex flex-col items-start gap-1 min-w-0">
+                      <span className="text-xs font-medium leading-tight truncate">{config.label}</span>
+                      <span className="px-1.5 py-0.5 bg-blue-500/20 text-blue-400 rounded-full text-[10px] font-semibold leading-none">
+                        {count + vendasPendentePedido.length}
+                      </span>
+                    </div>
                   </TabsTrigger>
                 );
               })}
@@ -907,14 +911,14 @@ export default function GestaoFabricaDirecao() {
                   <TabsTrigger 
                     key={etapa} 
                     value={etapa} 
-                    className="flex-shrink-0 flex-col h-full min-w-[110px] px-3 py-2 gap-1.5 rounded-lg bg-white/5 border border-white/10 backdrop-blur-xl text-white/70 hover:bg-white/[0.08] hover:border-blue-400/30 transition-all data-[state=active]:bg-blue-500/15 data-[state=active]:border-blue-400/50 data-[state=active]:text-white data-[state=active]:shadow-[0_0_0_1px_rgba(96,165,250,0.3)]"
+                    className="flex-shrink-0 flex-row items-center justify-start h-full min-w-[150px] px-3 py-2 gap-2.5 rounded-lg bg-white/5 border border-white/10 backdrop-blur-xl text-white/70 hover:bg-white/[0.08] hover:border-red-400/30 transition-all data-[state=active]:bg-red-500/15 data-[state=active]:border-red-400/50 data-[state=active]:text-white data-[state=active]:shadow-[0_0_0_1px_rgba(248,113,113,0.3)]"
                   >
                     {responsavel ? (
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Avatar className="h-5 w-5 border border-blue-500/30">
+                          <Avatar className="h-9 w-9 flex-shrink-0 border border-red-500/30">
                             <AvatarImage src={responsavel.foto_perfil_url || undefined} />
-                            <AvatarFallback className="text-[10px] bg-blue-500/20">
+                            <AvatarFallback className="text-xs bg-red-500/20 text-red-400">
                               {responsavel.nome.charAt(0).toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
@@ -924,12 +928,16 @@ export default function GestaoFabricaDirecao() {
                         </TooltipContent>
                       </Tooltip>
                     ) : (
-                      <IconComponent className="h-4 w-4 flex-shrink-0" />
+                      <div className="h-9 w-9 flex-shrink-0 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center">
+                        <IconComponent className="h-4 w-4 text-red-400" />
+                      </div>
                     )}
-                    <span className="text-xs">{config.label}</span>
-                    <span className="px-1.5 py-0.5 bg-blue-500/20 text-blue-400 rounded-full text-xs font-semibold">
-                      {count}
-                    </span>
+                    <div className="flex flex-col items-start gap-1 min-w-0">
+                      <span className="text-xs font-medium leading-tight truncate">{config.label}</span>
+                      <span className="px-1.5 py-0.5 bg-red-500/20 text-red-400 rounded-full text-[10px] font-semibold leading-none">
+                        {count}
+                      </span>
+                    </div>
                   </TabsTrigger>
                 );
               })}
@@ -946,14 +954,14 @@ export default function GestaoFabricaDirecao() {
                   <TabsTrigger 
                     key={etapa} 
                     value={etapa} 
-                    className="flex-shrink-0 flex-col h-full min-w-[110px] px-3 py-2 gap-1.5 rounded-lg bg-white/5 border border-white/10 backdrop-blur-xl text-white/70 hover:bg-white/[0.08] hover:border-blue-400/30 transition-all data-[state=active]:bg-blue-500/15 data-[state=active]:border-blue-400/50 data-[state=active]:text-white data-[state=active]:shadow-[0_0_0_1px_rgba(96,165,250,0.3)]"
+                    className="flex-shrink-0 flex-row items-center justify-start h-full min-w-[150px] px-3 py-2 gap-2.5 rounded-lg bg-white/5 border border-white/10 backdrop-blur-xl text-white/70 hover:bg-white/[0.08] hover:border-yellow-400/30 transition-all data-[state=active]:bg-yellow-500/15 data-[state=active]:border-yellow-400/50 data-[state=active]:text-white data-[state=active]:shadow-[0_0_0_1px_rgba(250,204,21,0.3)]"
                   >
                     {responsavel ? (
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Avatar className="h-5 w-5 border border-blue-500/30">
+                          <Avatar className="h-9 w-9 flex-shrink-0 border border-yellow-500/30">
                             <AvatarImage src={responsavel.foto_perfil_url || undefined} />
-                            <AvatarFallback className="text-[10px] bg-blue-500/20">
+                            <AvatarFallback className="text-xs bg-yellow-500/20 text-yellow-400">
                               {responsavel.nome.charAt(0).toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
@@ -963,12 +971,16 @@ export default function GestaoFabricaDirecao() {
                         </TooltipContent>
                       </Tooltip>
                     ) : (
-                      <IconComponent className="h-4 w-4 flex-shrink-0" />
+                      <div className="h-9 w-9 flex-shrink-0 rounded-full bg-yellow-500/10 border border-yellow-500/30 flex items-center justify-center">
+                        <IconComponent className="h-4 w-4 text-yellow-400" />
+                      </div>
                     )}
-                    <span className="text-xs">{config.label}</span>
-                    <span className="px-1.5 py-0.5 bg-blue-500/20 text-blue-400 rounded-full text-xs font-semibold">
-                      {count}
-                    </span>
+                    <div className="flex flex-col items-start gap-1 min-w-0">
+                      <span className="text-xs font-medium leading-tight truncate">{config.label}</span>
+                      <span className="px-1.5 py-0.5 bg-yellow-500/20 text-yellow-400 rounded-full text-[10px] font-semibold leading-none">
+                        {count}
+                      </span>
+                    </div>
                   </TabsTrigger>
                 );
               })}
@@ -985,14 +997,14 @@ export default function GestaoFabricaDirecao() {
                   <TabsTrigger 
                     key={etapa} 
                     value={etapa} 
-                    className="flex-shrink-0 flex-col h-full min-w-[110px] px-3 py-2 gap-1.5 rounded-lg bg-white/5 border border-white/10 backdrop-blur-xl text-white/70 hover:bg-white/[0.08] hover:border-blue-400/30 transition-all data-[state=active]:bg-blue-500/15 data-[state=active]:border-blue-400/50 data-[state=active]:text-white data-[state=active]:shadow-[0_0_0_1px_rgba(96,165,250,0.3)]"
+                    className="flex-shrink-0 flex-row items-center justify-start h-full min-w-[150px] px-3 py-2 gap-2.5 rounded-lg bg-white/5 border border-white/10 backdrop-blur-xl text-white/70 hover:bg-white/[0.08] hover:border-green-400/30 transition-all data-[state=active]:bg-green-500/15 data-[state=active]:border-green-400/50 data-[state=active]:text-white data-[state=active]:shadow-[0_0_0_1px_rgba(74,222,128,0.3)]"
                   >
                     {responsavel ? (
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Avatar className="h-5 w-5 border border-blue-500/30">
+                          <Avatar className="h-9 w-9 flex-shrink-0 border border-green-500/30">
                             <AvatarImage src={responsavel.foto_perfil_url || undefined} />
-                            <AvatarFallback className="text-[10px] bg-blue-500/20">
+                            <AvatarFallback className="text-xs bg-green-500/20 text-green-400">
                               {responsavel.nome.charAt(0).toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
@@ -1002,21 +1014,32 @@ export default function GestaoFabricaDirecao() {
                         </TooltipContent>
                       </Tooltip>
                     ) : (
-                      <IconComponent className="h-4 w-4 flex-shrink-0" />
+                      <div className="h-9 w-9 flex-shrink-0 rounded-full bg-green-500/10 border border-green-500/30 flex items-center justify-center">
+                        <IconComponent className="h-4 w-4 text-green-400" />
+                      </div>
                     )}
-                    <span className="text-xs">{config.label}</span>
-                    <span className="px-1.5 py-0.5 bg-blue-500/20 text-blue-400 rounded-full text-xs font-semibold">
-                      {count}
-                    </span>
+                    <div className="flex flex-col items-start gap-1 min-w-0">
+                      <span className="text-xs font-medium leading-tight truncate">{config.label}</span>
+                      <span className="px-1.5 py-0.5 bg-green-500/20 text-green-400 rounded-full text-[10px] font-semibold leading-none">
+                        {count}
+                      </span>
+                    </div>
                   </TabsTrigger>
                 );
               })}
               <TabsTrigger 
                 value="arquivo_morto" 
-                className="flex-shrink-0 px-2 xs:px-3 py-2 gap-1 xs:gap-1.5 sm:gap-2 text-emerald-400/60 data-[state=active]:bg-emerald-500/10 data-[state=active]:text-emerald-400"
+                className="flex-shrink-0 flex-row items-center justify-start h-full min-w-[150px] px-3 py-2 gap-2.5 rounded-lg bg-white/5 border border-white/10 backdrop-blur-xl text-emerald-400/70 hover:bg-white/[0.08] hover:border-emerald-400/30 transition-all data-[state=active]:bg-emerald-500/15 data-[state=active]:border-emerald-400/50 data-[state=active]:text-emerald-300"
               >
-                <Archive className="h-4 w-4 flex-shrink-0" />
-                <span className="text-xs">Arquivo Morto</span>
+                <div className="h-9 w-9 flex-shrink-0 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center">
+                  <Archive className="h-4 w-4 text-emerald-400" />
+                </div>
+                <div className="flex flex-col items-start gap-1 min-w-0">
+                  <span className="text-xs font-medium leading-tight truncate">Arquivo Morto</span>
+                  <span className="px-1.5 py-0.5 bg-emerald-500/20 text-emerald-400 rounded-full text-[10px] font-semibold leading-none">
+                    {pedidosArquivados.length}
+                  </span>
+                </div>
               </TabsTrigger>
             </div>
           </TooltipProvider>
