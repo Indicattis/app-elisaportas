@@ -8785,6 +8785,10 @@ export type Database = {
             }
             Returns: Json
           }
+      update_user_avatar: {
+        Args: { _new_url: string; _target_user_id: string }
+        Returns: boolean
+      }
       verificar_ordem_pintura_concluida: {
         Args: { p_pedido_id: string }
         Returns: boolean
