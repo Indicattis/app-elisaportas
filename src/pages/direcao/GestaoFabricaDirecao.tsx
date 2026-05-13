@@ -234,27 +234,34 @@ export default function GestaoFabricaDirecao() {
   }, [gerarListaParaPedidos]);
 
   const handleGerarListaSelecao = useCallback(async () => {
-    if (selecionados.size === 0) return;
     try {
       setGerandoListaSelecao(true);
-      const etapaLabel = etapaAtiva && etapaAtiva !== 'arquivo_morto' && etapaAtiva !== 'pendente_pedido'
-        ? `${ETAPAS_CONFIG[etapaAtiva as EtapaPedido]?.label || etapaAtiva} (seleção)`
+      const usarTodos = selecionados.size === 0;
+      const ids = usarTodos
+        ? pedidosFiltrados.map((p: any) => p.id)
+        : Array.from(selecionados);
+      if (ids.length === 0) return;
+      const baseLabel = etapaAtiva && etapaAtiva !== 'arquivo_morto' && etapaAtiva !== 'pendente_pedido'
+        ? ETAPAS_CONFIG[etapaAtiva as EtapaPedido]?.label || etapaAtiva
         : 'Seleção';
-      await gerarListaParaPedidos(Array.from(selecionados), etapaLabel);
+      const etapaLabel = usarTodos ? String(baseLabel) : `${baseLabel} (seleção)`;
+      await gerarListaParaPedidos(ids, etapaLabel);
     } finally {
       setGerandoListaSelecao(false);
     }
-  }, [selecionados, etapaAtiva, gerarListaParaPedidos]);
+  }, [selecionados, etapaAtiva, gerarListaParaPedidos, pedidosFiltrados]);
 
   const handleImprimirSelecao = useCallback(async () => {
-    if (selecionados.size === 0) return;
     try {
       setImprimindoSelecao(true);
-      const ids = Array.from(selecionados);
+      const ids = selecionados.size === 0
+        ? pedidosFiltrados.map((p: any) => p.id)
+        : Array.from(selecionados);
+      if (ids.length === 0) return;
       const dados = await Promise.all(ids.map((id) => buscarDadosPedidoProducaoPDF(id)));
       const filtrados = dados.filter((d): d is NonNullable<typeof d> => !!d);
       if (filtrados.length === 0) {
-        toast({ title: 'Sem dados', description: 'Não foi possível carregar os pedidos selecionados.' });
+        toast({ title: 'Sem dados', description: 'Não foi possível carregar os pedidos.' });
         return;
       }
       imprimirPedidosProducaoPDFBatch(filtrados);
@@ -264,7 +271,7 @@ export default function GestaoFabricaDirecao() {
     } finally {
       setImprimindoSelecao(false);
     }
-  }, [selecionados, toast]);
+  }, [selecionados, toast, pedidosFiltrados]);
   
   // Debounce para busca do arquivo morto
   useEffect(() => {
