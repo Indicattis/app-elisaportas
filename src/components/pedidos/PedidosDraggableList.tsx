@@ -181,9 +181,8 @@ export function PedidosDraggableList({
     return (
       <div
         className={cn(
-          "absolute z-20 rounded-md p-0.5 transition-colors cursor-pointer",
-          positionClass,
-          checked ? "bg-primary/20 border border-primary/40" : "hover:bg-white/10"
+          "absolute z-20 rounded-md p-0.5 transition-colors cursor-pointer hover:bg-white/10",
+          positionClass
         )}
         onClick={(e) => {
           e.stopPropagation();
