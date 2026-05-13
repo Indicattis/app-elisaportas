@@ -20,6 +20,8 @@ import { CSS } from "@dnd-kit/utilities";
 import { PedidoCard } from "./PedidoCard";
 import { PedidosTotalRow } from "./PedidosTotalRow";
 import { PedidosHeaderRow } from "./PedidosHeaderRow";
+import { Checkbox } from "@/components/ui/checkbox";
+import { cn } from "@/lib/utils";
 import type { EtapaPedido, DirecaoPrioridade, PrioridadeUpdate } from "@/types/pedidoEtapa";
 
 interface PedidosDraggableListProps {
@@ -46,6 +48,9 @@ interface PedidosDraggableListProps {
   disableClienteClick?: boolean;
   hideOrdensStatus?: boolean;
   hideCorrecaoButton?: boolean;
+  selectionEnabled?: boolean;
+  selecionados?: Set<string>;
+  onToggleSelecionado?: (id: string) => void;
 }
 
 interface SortableItemProps {
@@ -165,7 +170,41 @@ export function PedidosDraggableList({
   disableClienteClick = false,
   hideOrdensStatus = false,
   hideCorrecaoButton = false,
+  selectionEnabled = false,
+  selecionados,
+  onToggleSelecionado,
 }: PedidosDraggableListProps) {
+  const renderSelectionCheckbox = (pedidoId: string) => {
+    if (!selectionEnabled || !onToggleSelecionado) return null;
+    const checked = selecionados?.has(pedidoId) ?? false;
+    return (
+      <div
+        className={cn(
+          "absolute top-2 left-2 z-20 rounded-md p-1 transition-colors",
+          checked ? "bg-primary/20 border border-primary/40" : "bg-white/10 border border-white/20 hover:bg-white/20"
+        )}
+        onClick={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          onToggleSelecionado(pedidoId);
+        }}
+        onPointerDown={(e) => e.stopPropagation()}
+      >
+        <Checkbox
+          checked={checked}
+          onCheckedChange={() => onToggleSelecionado(pedidoId)}
+          className="h-4 w-4"
+        />
+      </div>
+    );
+  };
+
+  const wrapperClass = (pedidoId: string) =>
+    cn(
+      "relative",
+      selectionEnabled && selecionados?.has(pedidoId) && "ring-2 ring-primary/60 rounded-lg"
+    );
+
   const [activeId, setActiveId] = useState<string | null>(null);
   const overlayContainerRef = useRef<HTMLDivElement | null>(null);
 
@@ -238,9 +277,10 @@ export function PedidosDraggableList({
             : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
         }>
           {pedidos.map((pedido, index) => (
-            <PedidoCard
-              key={pedido.id}
-              pedido={pedido}
+            <div key={pedido.id} className={wrapperClass(pedido.id)}>
+              {renderSelectionCheckbox(pedido.id)}
+              <PedidoCard
+                pedido={pedido}
               isAberto={isAberto}
               viewMode={viewMode}
               onMoverEtapa={onMoverEtapa}
@@ -261,7 +301,8 @@ export function PedidosDraggableList({
               hideCorrecaoButton={hideCorrecaoButton}
               // Sem dragHandleProps - não há arrastar
               // Sem onMoverPrioridade - não há botões de prioridade
-            />
+              />
+            </div>
           ))}
         </div>
         {viewMode === 'list' && <PedidosTotalRow pedidos={pedidosParaTotais || pedidos} etapa={etapa} />}
@@ -287,9 +328,10 @@ export function PedidosDraggableList({
             : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
         }>
           {pedidos.map((pedido, index) => (
-            <SortableItem
-              key={pedido.id}
-              id={pedido.id}
+            <div key={pedido.id} className={wrapperClass(pedido.id)}>
+              {renderSelectionCheckbox(pedido.id)}
+              <SortableItem
+                id={pedido.id}
               pedido={pedido}
               posicao={showPosicao ? index + 1 : 0}
               total={showPosicao ? pedidos.length : 0}
@@ -310,7 +352,8 @@ export function PedidosDraggableList({
               disableClienteClick={disableClienteClick}
               hideOrdensStatus={hideOrdensStatus}
               hideCorrecaoButton={hideCorrecaoButton}
-            />
+              />
+            </div>
           ))}
         </div>
         

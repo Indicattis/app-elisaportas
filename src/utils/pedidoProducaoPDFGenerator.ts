@@ -67,8 +67,21 @@ const STATUS_LABELS: Record<string, string> = {
 
 export const gerarPedidoProducaoPDF = (data: PedidoProducaoPDFData): jsPDF => {
   const doc = new jsPDF();
+  renderPedidoProducaoIntoDoc(doc, data);
+  return doc;
+};
+
+/**
+ * Renderiza um pedido em um documento jsPDF existente, começando em startY.
+ * Útil para concatenar múltiplos pedidos em um único PDF (impressão em lote).
+ */
+export const renderPedidoProducaoIntoDoc = (
+  doc: jsPDF,
+  data: PedidoProducaoPDFData,
+  startY: number = 15
+): number => {
   const margemX = 15;
-  let posY = 15;
+  let posY = startY;
   
   const corPrimaria: [number, number, number] = [41, 128, 185];
   const corSecundaria: [number, number, number] = [128, 128, 128];
@@ -375,8 +388,9 @@ export const gerarPedidoProducaoPDF = (data: PedidoProducaoPDFData): jsPDF => {
   const dataEmissao = format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
   doc.text(`Emitido em: ${dataEmissao}`, margemX, finalY);
   doc.text('Elisa Portas - comercial@elisaportas.com.br | www.elisaportas.com.br', margemX, finalY + 4);
-  
-  return doc;
+  doc.setTextColor(0, 0, 0);
+
+  return finalY + 4;
 };
 
 export const baixarPedidoProducaoPDF = (data: PedidoProducaoPDFData): void => {
@@ -387,6 +401,32 @@ export const baixarPedidoProducaoPDF = (data: PedidoProducaoPDFData): void => {
 
 export const imprimirPedidoProducaoPDF = (data: PedidoProducaoPDFData): void => {
   const doc = gerarPedidoProducaoPDF(data);
+  const pdfBlob = doc.output('blob');
+  const url = URL.createObjectURL(pdfBlob);
+  const printWindow = window.open(url, '_blank');
+  if (printWindow) {
+    printWindow.onload = () => printWindow.print();
+  }
+};
+
+/**
+ * Gera um único PDF contendo vários pedidos, um por página.
+ */
+export const gerarPedidosProducaoPDFBatch = (
+  dataArr: PedidoProducaoPDFData[]
+): jsPDF => {
+  const doc = new jsPDF();
+  dataArr.forEach((data, idx) => {
+    if (idx > 0) doc.addPage();
+    renderPedidoProducaoIntoDoc(doc, data, 15);
+  });
+  return doc;
+};
+
+export const imprimirPedidosProducaoPDFBatch = (
+  dataArr: PedidoProducaoPDFData[]
+): void => {
+  const doc = gerarPedidosProducaoPDFBatch(dataArr);
   const pdfBlob = doc.output('blob');
   const url = URL.createObjectURL(pdfBlob);
   const printWindow = window.open(url, '_blank');
