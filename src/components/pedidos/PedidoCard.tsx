@@ -1341,7 +1341,9 @@ export function PedidoCard({
     return <>
         <Card 
           className={cn(
-            "hover:shadow-sm transition-all cursor-pointer h-10 overflow-hidden", 
+            "h-10 overflow-hidden cursor-pointer rounded-lg transition-all",
+            "bg-white/5 border-white/10 backdrop-blur-xl text-white",
+            "hover:bg-white/[0.08] hover:border-blue-400/30 hover:shadow-[0_0_0_1px_rgba(96,165,250,0.15)]",
             isDragging && "opacity-50 cursor-grabbing",
             
             (pedido as any).is_correcao && "border-l-4 border-l-purple-600",
