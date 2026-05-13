@@ -126,7 +126,7 @@ export default function AdminUsersMinimalista() {
         cpf: null,
         data_nascimento: null,
         ativo: r.ativo,
-        foto_perfil_url: null,
+        foto_perfil_url: r.foto_perfil_url ?? null,
         eh_colaborador: false,
         salario: null,
         created_at: r.created_at,
