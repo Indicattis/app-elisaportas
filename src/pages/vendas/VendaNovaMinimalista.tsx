@@ -293,6 +293,13 @@ export default function VendaNovaMinimalista() {
     );
   }, [formData.estado, formData.cidade, fretes]);
 
+  // Auto-preenche o valor do frete quando há frete cadastrado para a cidade/estado
+  useEffect(() => {
+    if (freteSugerido && formData.valor_frete !== freteSugerido.valor_frete) {
+      setFormData(prev => ({ ...prev, valor_frete: freteSugerido.valor_frete }));
+    }
+  }, [freteSugerido?.valor_frete]);
+
   const handleAddPorta = (produto: ProdutoVenda) => {
     setPortas(prev => {
       let newPortas;
@@ -719,7 +726,7 @@ export default function VendaNovaMinimalista() {
               </Popover>
             </div>
 
-            {/* Campo de Frete Sofisticado */}
+            {/* Campo de Frete - Auto-preenchido a partir de /logistica/frete/internos */}
             <div className="space-y-2">
               <Label htmlFor="valor_frete" className={labelClass}>Frete (R$)</Label>
               <div className="relative">
@@ -732,28 +739,27 @@ export default function VendaNovaMinimalista() {
                   value={formData.valor_frete}
                   onChange={(e) => setFormData(prev => ({ ...prev, valor_frete: parseFloat(e.target.value) || 0 }))}
                   placeholder="0,00"
-                  className={cn(inputClass, "pl-10")}
+                  disabled={!!freteSugerido}
+                  readOnly={!!freteSugerido}
+                  className={cn(
+                    inputClass,
+                    "pl-10",
+                    freteSugerido && "cursor-not-allowed opacity-80"
+                  )}
                 />
+                {freteSugerido && (
+                  <Lock className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-blue-400/60" />
+                )}
               </div>
-              {freteSugerido && formData.valor_frete !== freteSugerido.valor_frete && (
-                <div className="flex items-center gap-2 text-xs">
-                  <Badge variant="outline" className="bg-blue-500/10 border-blue-500/30 text-blue-300">
-                    💡 Sugerido: R$ {freteSugerido.valor_frete.toFixed(2)}
-                  </Badge>
-                  <Button 
-                    type="button"
-                    variant="ghost" 
-                    size="sm"
-                    className="h-6 text-xs text-blue-400 hover:text-blue-300"
-                    onClick={() => setFormData(prev => ({ 
-                      ...prev, 
-                      valor_frete: freteSugerido.valor_frete 
-                    }))}
-                  >
-                    Usar
-                  </Button>
-                </div>
-              )}
+              {freteSugerido ? (
+                <Badge variant="outline" className="bg-blue-500/10 border-blue-500/30 text-blue-300 text-xs">
+                  🔒 Frete automático para {formData.cidade}/{formData.estado}
+                </Badge>
+              ) : formData.cidade && formData.estado ? (
+                <p className="text-xs text-amber-300/80">
+                  Sem frete cadastrado para esta cidade — preencha manualmente.
+                </p>
+              ) : null}
             </div>
 
             {/* Campo de Previsão de Entrega com Calendar Popover */}
