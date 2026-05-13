@@ -443,6 +443,11 @@ export default function GestaoFabricaDirecao() {
     return filtered;
   }, [pedidos, searchTerm, tipoEntrega, corPintura, mostrarProntos, etapaAtiva]);
 
+  const pedidosFiltradosRef = useRef<any[]>([]);
+  useEffect(() => {
+    pedidosFiltradosRef.current = pedidosFiltrados;
+  }, [pedidosFiltrados]);
+
   const [vendasOrdemLocal, setVendasOrdemLocal] = useState<VendaPendentePedido[]>([]);
 
   // Sync local order when data changes
