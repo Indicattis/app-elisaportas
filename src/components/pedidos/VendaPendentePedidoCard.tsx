@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { GripVertical, Hammer, Truck, Wrench, Plus, Loader2, AlertTriangle, CheckCircle2, Archive } from "lucide-react";
+import { GripVertical, Hammer, Truck, Wrench, Plus, Loader2, AlertTriangle, CheckCircle2, Archive, FileSignature } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -18,12 +18,13 @@ import { VendaPendentePedido } from "@/hooks/useVendasPendentePedido";
 import { usePedidoCreation } from "@/hooks/usePedidoCreation";
 import { VendaPendenteDetalhesSheet } from "./VendaPendenteDetalhesSheet";
 import { formatCurrency } from "@/lib/utils";
+import { AnexarContratoModal } from "@/components/vendas/AnexarContratoModal";
 
 interface VendaPendentePedidoCardProps {
   venda: VendaPendentePedido;
   dragHandleProps?: any;
   isDragging?: boolean;
-  mode?: 'pedido' | 'faturamento';
+  mode?: 'pedido' | 'faturamento' | 'contrato';
 }
 
 const FORMAS_PAGAMENTO_LABELS: Record<string, string> = {
@@ -48,6 +49,8 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
   const [isDispensando, setIsDispensando] = useState(false);
   const [showDetalhes, setShowDetalhes] = useState(false);
   const [showFinalizarDireto, setShowFinalizarDireto] = useState(false);
+  const [showAnexarContrato, setShowAnexarContrato] = useState(false);
+  const isFaturamentoLayout = mode === 'faturamento' || mode === 'contrato';
 
   const { data: ultimoComentario } = useQuery({
     queryKey: ['venda-ultimo-comentario', venda.id],
