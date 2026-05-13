@@ -328,9 +328,10 @@ export function PedidosDraggableList({
             : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
         }>
           {pedidos.map((pedido, index) => (
-            <SortableItem
-              key={pedido.id}
-              id={pedido.id}
+            <div key={pedido.id} className={wrapperClass(pedido.id)}>
+              {renderSelectionCheckbox(pedido.id)}
+              <SortableItem
+                id={pedido.id}
               pedido={pedido}
               posicao={showPosicao ? index + 1 : 0}
               total={showPosicao ? pedidos.length : 0}
@@ -351,7 +352,8 @@ export function PedidosDraggableList({
               disableClienteClick={disableClienteClick}
               hideOrdensStatus={hideOrdensStatus}
               hideCorrecaoButton={hideCorrecaoButton}
-            />
+              />
+            </div>
           ))}
         </div>
         
