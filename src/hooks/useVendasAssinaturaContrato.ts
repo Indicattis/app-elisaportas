@@ -3,12 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { isVendaFaturada } from "@/lib/faturamentoStatus";
 import type { VendaPendentePedido } from "@/hooks/useVendasPendentePedido";
 
-export type VendaPendenteFaturamento = VendaPendentePedido;
+export type VendaAssinaturaContrato = VendaPendentePedido;
 
-export const useVendasPendenteFaturamento = () => {
+export const useVendasAssinaturaContrato = () => {
   return useQuery({
-    queryKey: ["vendas-pendente-faturamento"],
-    queryFn: async (): Promise<VendaPendenteFaturamento[]> => {
+    queryKey: ["vendas-assinatura-contrato"],
+    queryFn: async (): Promise<VendaAssinaturaContrato[]> => {
       const currentYear = new Date().getFullYear();
       const startOfYear = `${currentYear}-01-01`;
 
@@ -35,6 +35,7 @@ export const useVendasPendenteFaturamento = () => {
           pago_na_instalacao,
           cidade,
           estado,
+          contrato_url,
           produtos_vendas (
             id,
             faturamento,
@@ -60,14 +61,13 @@ export const useVendasPendenteFaturamento = () => {
         `)
         .eq("is_rascunho", false)
         .eq("pedido_dispensado", false)
-        .not("contrato_url", "is", null)
+        .is("contrato_url", null)
         .gte("data_venda", startOfYear)
         .order("data_venda", { ascending: false });
 
       if (error) throw error;
       if (!vendas) return [];
 
-      // Fetch atendentes
       const { data: usuarios } = await supabase
         .from("admin_users")
         .select("user_id, nome, foto_perfil_url");
@@ -77,7 +77,6 @@ export const useVendasPendenteFaturamento = () => {
         usuarios.forEach((u) => atendenteMap.set(u.user_id, { nome: u.nome, foto: u.foto_perfil_url }));
       }
 
-      // Fetch payment methods
       const pagamentoMetodosPorVenda = new Map<string, string[]>();
       const parcelasPorVenda = new Map<string, number>();
       const pagoInstalacaoPorVenda = new Map<string, boolean>();
@@ -106,7 +105,7 @@ export const useVendasPendenteFaturamento = () => {
         console.error("Erro ao buscar métodos de pagamento:", e);
       }
 
-      // Filter: NOT faturada + no pedido + not reprovado
+      // Filter: NOT faturada + no pedido + not reprovado + sem contrato
       return vendas
         .filter((v: any) => {
           if (v.status_aprovacao === "reprovado") return false;

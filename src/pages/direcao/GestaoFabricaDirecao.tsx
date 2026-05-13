@@ -2,7 +2,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Package, RefreshCw, Factory, Clock, ClipboardCheck, Paintbrush, Wrench, CheckCircle2, HardHat, AlertTriangle, UserPlus, ShieldCheck, CalendarDays, Archive, Search, Calendar, User, Undo2, ChevronDown, Truck, Settings, CalendarIcon, DollarSign, ShoppingCart } from "lucide-react";
+import { Package, RefreshCw, Factory, Clock, ClipboardCheck, Paintbrush, Wrench, CheckCircle2, HardHat, AlertTriangle, UserPlus, ShieldCheck, CalendarDays, Archive, Search, Calendar, User, Undo2, ChevronDown, Truck, Settings, CalendarIcon, DollarSign, ShoppingCart, FileSignature } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { usePedidosArquivados } from "@/hooks/usePedidosArquivados";
@@ -24,6 +24,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { usePedidosEtapas, usePedidosContadores } from "@/hooks/usePedidosEtapas";
 import { useVendasPendentePedido } from "@/hooks/useVendasPendentePedido";
 import { useVendasPendenteFaturamento } from "@/hooks/useVendasPendenteFaturamento";
+import { useVendasAssinaturaContrato } from "@/hooks/useVendasAssinaturaContrato";
 import { VendaPendentePedidoCard } from "@/components/pedidos/VendaPendentePedidoCard";
 
 import { VendasPendenteDraggableList } from "@/components/pedidos/VendasPendenteDraggableList";
@@ -80,7 +81,7 @@ export default function GestaoFabricaDirecao() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const [etapaAtiva, setEtapaAtiva] = useState<EtapaPedido | 'arquivo_morto' | 'pendente_pedido'>('aprovacao_diretor');
+  const [etapaAtiva, setEtapaAtiva] = useState<EtapaPedido | 'arquivo_morto' | 'pendente_pedido' | 'assinatura_contrato'>('aprovacao_diretor');
   const [arquivoSearch, setArquivoSearch] = useState('');
   const [debouncedArquivoSearch, setDebouncedArquivoSearch] = useState('');
   const [desarquivandoId, setDesarquivandoId] = useState<string | null>(null);
@@ -241,7 +242,7 @@ export default function GestaoFabricaDirecao() {
         ? (pedidosFiltradosRef.current || []).map((p: any) => p.id)
         : Array.from(selecionados);
       if (ids.length === 0) return;
-      const baseLabel = etapaAtiva && etapaAtiva !== 'arquivo_morto' && etapaAtiva !== 'pendente_pedido'
+      const baseLabel = etapaAtiva && etapaAtiva !== 'arquivo_morto' && etapaAtiva !== 'pendente_pedido' && etapaAtiva !== 'assinatura_contrato'
         ? ETAPAS_CONFIG[etapaAtiva as EtapaPedido]?.label || etapaAtiva
         : 'Seleção';
       const etapaLabel = usarTodos ? String(baseLabel) : `${baseLabel} (seleção)`;
@@ -282,6 +283,7 @@ export default function GestaoFabricaDirecao() {
   const contadores = usePedidosContadores();
   const { data: vendasPendentePedido = [], isLoading: isLoadingPendentes } = useVendasPendentePedido();
   const { data: vendasPendenteFaturamento = [], isLoading: isLoadingFaturamento } = useVendasPendenteFaturamento();
+  const { data: vendasAssinaturaContrato = [], isLoading: isLoadingContrato } = useVendasAssinaturaContrato();
   const { data: pedidosArquivados = [], isLoading: isLoadingArquivados } = usePedidosArquivados({
     search: debouncedArquivoSearch,
     dataInicio: arquivoDataInicio || null,
@@ -299,7 +301,7 @@ export default function GestaoFabricaDirecao() {
     removerResponsavel, 
     isAtribuindo 
   } = useEtapaResponsaveis();
-  const etapaParaQuery = (etapaAtiva === 'arquivo_morto' || etapaAtiva === 'pendente_pedido') ? 'aberto' : etapaAtiva;
+  const etapaParaQuery = (etapaAtiva === 'arquivo_morto' || etapaAtiva === 'pendente_pedido' || etapaAtiva === 'assinatura_contrato') ? 'aberto' : etapaAtiva;
   const {
     pedidos,
     isLoading,
@@ -745,13 +747,24 @@ export default function GestaoFabricaDirecao() {
       </div>
 
       {/* Tabs de Etapas */}
-      <Tabs value={etapaAtiva} onValueChange={v => setEtapaAtiva(v as EtapaPedido | 'arquivo_morto' | 'pendente_pedido')}>
+      <Tabs value={etapaAtiva} onValueChange={v => setEtapaAtiva(v as EtapaPedido | 'arquivo_morto' | 'pendente_pedido' | 'assinatura_contrato')}>
         {/* Seletor mobile */}
         <div className="md:hidden mb-4">
-          <Select value={etapaAtiva} onValueChange={v => setEtapaAtiva(v as EtapaPedido | 'arquivo_morto' | 'pendente_pedido')}>
+          <Select value={etapaAtiva} onValueChange={v => setEtapaAtiva(v as EtapaPedido | 'arquivo_morto' | 'pendente_pedido' | 'assinatura_contrato')}>
             <SelectTrigger className="w-full h-12 bg-white/5 border-blue-500/10 text-white">
               <SelectValue>
                 {(() => {
+                  if (etapaAtiva === 'assinatura_contrato') {
+                    return (
+                      <div className="flex items-center gap-2">
+                        <FileSignature className="h-5 w-5" />
+                        <span className="font-medium">Assinatura Contrato</span>
+                        <Badge variant="secondary" className="ml-auto bg-blue-500/20 text-blue-400">
+                          {vendasAssinaturaContrato.length}
+                        </Badge>
+                      </div>
+                    );
+                  }
                   if (etapaAtiva === 'pendente_pedido') {
                     return (
                       <div className="flex items-center gap-2">
@@ -790,6 +803,15 @@ export default function GestaoFabricaDirecao() {
               </SelectValue>
             </SelectTrigger>
             <SelectContent className="bg-zinc-900 border-blue-500/10">
+              <SelectItem value="assinatura_contrato" className="text-white cursor-pointer">
+                <div className="flex items-center gap-2 w-full">
+                  <FileSignature className="h-4 w-4 flex-shrink-0 text-blue-400" />
+                  <span className="flex-1 text-blue-400">Assinatura Contrato</span>
+                  <Badge variant="secondary" className="text-xs bg-blue-500/20 text-blue-400">
+                    {vendasAssinaturaContrato.length}
+                  </Badge>
+                </div>
+              </SelectItem>
               <SelectItem value="pendente_pedido" className="text-white cursor-pointer">
                 <div className="flex items-center gap-2 w-full">
                   <DollarSign className="h-4 w-4 flex-shrink-0 text-blue-400" />
@@ -833,6 +855,32 @@ export default function GestaoFabricaDirecao() {
           <TooltipProvider>
             {/* Grupo Azul: Pré-Produção */}
             <div className="flex gap-1 border-2 border-blue-500/50 rounded-lg p-1 h-full">
+              <TabsTrigger
+                value="assinatura_contrato"
+                className="flex-shrink-0 flex-row items-center justify-start h-full min-w-[150px] px-3 py-2 gap-2.5 rounded-lg bg-white/5 border border-white/10 backdrop-blur-xl text-white/70 hover:bg-white/[0.08] hover:border-blue-400/30 transition-all data-[state=active]:bg-blue-500/15 data-[state=active]:border-blue-400/50 data-[state=active]:text-white data-[state=active]:shadow-[0_0_0_1px_rgba(96,165,250,0.3)]"
+              >
+                {(() => {
+                  const resp = getResponsavel('assinatura_contrato' as any);
+                  return resp ? (
+                    <Avatar className="h-9 w-9 flex-shrink-0 border border-blue-500/30">
+                      <AvatarImage src={resp.foto_perfil_url || undefined} />
+                      <AvatarFallback className="text-xs bg-blue-500/20 text-blue-400">
+                        {resp.nome.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  ) : (
+                    <div className="h-9 w-9 flex-shrink-0 rounded-full bg-blue-500/10 border border-blue-500/30 flex items-center justify-center">
+                      <FileSignature className="h-4 w-4 text-blue-400" />
+                    </div>
+                  );
+                })()}
+                <div className="flex flex-col items-start gap-1 min-w-0">
+                  <span className="text-xs font-medium leading-tight truncate">Assinatura Contrato</span>
+                  <span className="px-1.5 py-0.5 bg-blue-500/20 text-blue-400 rounded-full text-[10px] font-semibold leading-none">
+                    {vendasAssinaturaContrato.length}
+                  </span>
+                </div>
+              </TabsTrigger>
               <TabsTrigger 
                 value="pendente_pedido" 
                 className="flex-shrink-0 flex-row items-center justify-start h-full min-w-[150px] px-3 py-2 gap-2.5 rounded-lg bg-white/5 border border-white/10 backdrop-blur-xl text-white/70 hover:bg-white/[0.08] hover:border-blue-400/30 transition-all data-[state=active]:bg-blue-500/15 data-[state=active]:border-blue-400/50 data-[state=active]:text-white data-[state=active]:shadow-[0_0_0_1px_rgba(96,165,250,0.3)]"
@@ -1045,7 +1093,39 @@ export default function GestaoFabricaDirecao() {
           </TooltipProvider>
         </TabsList>
 
-        {/* Aba Pendente Faturamento - vendas NÃO faturadas */}
+        {/* Aba Assinatura Contrato - vendas sem contrato anexado */}
+        <TabsContent value="assinatura_contrato" className="mt-4">
+          <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl w-full max-w-none">
+            <CardHeader className="pb-3 px-4 py-4">
+              <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+                <CardTitle className="text-lg flex items-center gap-2 text-white">
+                  <FileSignature className="h-5 w-5 text-blue-400" />
+                  <span>Vendas em Assinatura de Contrato</span>
+                  <Badge variant="secondary" className="bg-blue-500/20 text-blue-400">
+                    {vendasAssinaturaContrato.length}
+                  </Badge>
+                </CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="px-4 py-4">
+              {isLoadingContrato ? (
+                <div className="text-center py-8 text-white/50">Carregando...</div>
+              ) : vendasAssinaturaContrato.length === 0 ? (
+                <div className="text-center py-8 text-white/50">
+                  Nenhuma venda aguardando assinatura de contrato
+                </div>
+              ) : (
+                <VendasPendenteDraggableList
+                  vendas={vendasAssinaturaContrato}
+                  onReorganizar={() => {}}
+                  mode="contrato"
+                />
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Aba Pendente Faturamento - vendas com contrato porém ainda não faturadas */}
         <TabsContent value="pendente_pedido" className="mt-4">
           <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl w-full max-w-none">
             <CardHeader className="pb-3 px-4 py-4">

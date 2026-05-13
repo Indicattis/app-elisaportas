@@ -7781,6 +7781,9 @@ export type Database = {
           cliente_telefone: string | null
           comprovante_nome: string | null
           comprovante_url: string | null
+          contrato_anexado_por: string | null
+          contrato_assinado_em: string | null
+          contrato_url: string | null
           cpf_cliente: string | null
           created_at: string
           custo_instalacao: number | null
@@ -7836,6 +7839,9 @@ export type Database = {
           cliente_telefone?: string | null
           comprovante_nome?: string | null
           comprovante_url?: string | null
+          contrato_anexado_por?: string | null
+          contrato_assinado_em?: string | null
+          contrato_url?: string | null
           cpf_cliente?: string | null
           created_at?: string
           custo_instalacao?: number | null
@@ -7891,6 +7897,9 @@ export type Database = {
           cliente_telefone?: string | null
           comprovante_nome?: string | null
           comprovante_url?: string | null
+          contrato_anexado_por?: string | null
+          contrato_assinado_em?: string | null
+          contrato_url?: string | null
           cpf_cliente?: string | null
           created_at?: string
           custo_instalacao?: number | null

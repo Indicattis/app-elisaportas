@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { GripVertical, Hammer, Truck, Wrench, Plus, Loader2, AlertTriangle, CheckCircle2, Archive } from "lucide-react";
+import { GripVertical, Hammer, Truck, Wrench, Plus, Loader2, AlertTriangle, CheckCircle2, Archive, FileSignature } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -18,12 +18,13 @@ import { VendaPendentePedido } from "@/hooks/useVendasPendentePedido";
 import { usePedidoCreation } from "@/hooks/usePedidoCreation";
 import { VendaPendenteDetalhesSheet } from "./VendaPendenteDetalhesSheet";
 import { formatCurrency } from "@/lib/utils";
+import { AnexarContratoModal } from "@/components/vendas/AnexarContratoModal";
 
 interface VendaPendentePedidoCardProps {
   venda: VendaPendentePedido;
   dragHandleProps?: any;
   isDragging?: boolean;
-  mode?: 'pedido' | 'faturamento';
+  mode?: 'pedido' | 'faturamento' | 'contrato';
 }
 
 const FORMAS_PAGAMENTO_LABELS: Record<string, string> = {
@@ -48,6 +49,8 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
   const [isDispensando, setIsDispensando] = useState(false);
   const [showDetalhes, setShowDetalhes] = useState(false);
   const [showFinalizarDireto, setShowFinalizarDireto] = useState(false);
+  const [showAnexarContrato, setShowAnexarContrato] = useState(false);
+  const isFaturamentoLayout = mode === 'faturamento' || mode === 'contrato';
 
   const { data: ultimoComentario } = useQuery({
     queryKey: ['venda-ultimo-comentario', venda.id],
@@ -249,7 +252,7 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
         <CardContent className="p-0 h-full">
           <div
             className="grid items-center gap-1.5 h-full px-2 w-full"
-            style={{ gridTemplateColumns: mode === 'faturamento'
+            style={{ gridTemplateColumns: isFaturamentoLayout
               ? '24px 1fr 100px 60px 75px 50px 60px 65px 80px 35px 35px 55px 45px 70px 60px 70px 60px 70px 30px 30px'
               : '20px 24px 1fr 100px 60px 75px 50px 60px 65px 80px 35px 35px 55px 70px 60px 70px 60px 30px 30px 30px 20px'
             }}
@@ -501,7 +504,7 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
             </div>
 
             {/* % Desconto - apenas no modo faturamento */}
-            {mode === 'faturamento' && (
+            {isFaturamentoLayout && (
               <div className="text-center">
                 {(() => {
                   const desc = venda.valor_desconto_total || 0;
@@ -562,14 +565,22 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
               )}
             </div>
 
-            {mode === 'faturamento' ? (
+            {isFaturamentoLayout ? (
               <>
-                {/* Faturar link */}
-                <div className="flex items-center justify-center" onClick={(e) => { e.stopPropagation(); navigate(`/administrativo/financeiro/faturamento/${venda.id}`); }}>
-                  <span className="text-[10px] font-medium text-yellow-400/80 hover:text-yellow-400 transition-colors whitespace-nowrap cursor-pointer">
-                    Faturar →
-                  </span>
-                </div>
+                {/* Ação principal: Faturar (faturamento) ou Anexar Contrato (contrato) */}
+                {mode === 'contrato' ? (
+                  <div className="flex items-center justify-center" onClick={(e) => { e.stopPropagation(); setShowAnexarContrato(true); }}>
+                    <span className="text-[10px] font-medium text-blue-400/80 hover:text-blue-400 transition-colors whitespace-nowrap cursor-pointer flex items-center gap-1">
+                      <FileSignature className="h-3 w-3" /> Anexar →
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center" onClick={(e) => { e.stopPropagation(); navigate(`/administrativo/financeiro/faturamento/${venda.id}`); }}>
+                    <span className="text-[10px] font-medium text-yellow-400/80 hover:text-yellow-400 transition-colors whitespace-nowrap cursor-pointer">
+                      Faturar →
+                    </span>
+                  </div>
+                )}
 
                 {/* Dispensar Pedido */}
                 <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
@@ -741,6 +752,13 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
         venda={venda}
         open={showDetalhes}
         onOpenChange={setShowDetalhes}
+      />
+
+      <AnexarContratoModal
+        open={showAnexarContrato}
+        onOpenChange={setShowAnexarContrato}
+        vendaId={venda.id}
+        clienteNome={venda.cliente_nome}
       />
 
       {/* Dialog Finalizar Direto */}

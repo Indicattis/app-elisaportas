@@ -24,10 +24,10 @@ import type { VendaPendentePedido } from "@/hooks/useVendasPendentePedido";
 interface VendasPendenteDraggableListProps {
   vendas: VendaPendentePedido[];
   onReorganizar: (vendas: VendaPendentePedido[]) => void;
-  mode?: 'pedido' | 'faturamento';
+  mode?: 'pedido' | 'faturamento' | 'contrato';
 }
 
-function SortableVendaItem({ venda, mode }: { venda: VendaPendentePedido; mode?: 'pedido' | 'faturamento' }) {
+function SortableVendaItem({ venda, mode }: { venda: VendaPendentePedido; mode?: 'pedido' | 'faturamento' | 'contrato' }) {
   const {
     attributes,
     listeners,
