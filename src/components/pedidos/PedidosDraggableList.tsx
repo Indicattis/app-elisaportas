@@ -277,9 +277,10 @@ export function PedidosDraggableList({
             : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
         }>
           {pedidos.map((pedido, index) => (
-            <PedidoCard
-              key={pedido.id}
-              pedido={pedido}
+            <div key={pedido.id} className={wrapperClass(pedido.id)}>
+              {renderSelectionCheckbox(pedido.id)}
+              <PedidoCard
+                pedido={pedido}
               isAberto={isAberto}
               viewMode={viewMode}
               onMoverEtapa={onMoverEtapa}
@@ -300,7 +301,8 @@ export function PedidosDraggableList({
               hideCorrecaoButton={hideCorrecaoButton}
               // Sem dragHandleProps - não há arrastar
               // Sem onMoverPrioridade - não há botões de prioridade
-            />
+              />
+            </div>
           ))}
         </div>
         {viewMode === 'list' && <PedidosTotalRow pedidos={pedidosParaTotais || pedidos} etapa={etapa} />}
