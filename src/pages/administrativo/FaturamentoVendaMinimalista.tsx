@@ -27,7 +27,8 @@ import {
   Trash2,
   FileText,
   Eye,
-  Image
+  Image,
+  FileSignature
 } from "lucide-react";
 import { format, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -729,7 +730,7 @@ export default function FaturamentoVendaMinimalista() {
       setLoading(true);
       const { data, error } = await supabase
         .from("vendas")
-        .select("id, cliente_nome, valor_venda, valor_frete, valor_instalacao, valor_credito, lucro_total, frete_aprovado, comprovante_url, comprovante_nome, lucro_instalacao, custo_instalacao, instalacao_faturada, metodo_pagamento, numero_parcelas, intervalo_boletos, empresa_receptora_id, data_venda, forma_pagamento, venda_presencial, pagamento_na_entrega, valor_entrada, valor_a_receber, quantidade_parcelas")
+        .select("id, cliente_nome, valor_venda, valor_frete, valor_instalacao, valor_credito, lucro_total, frete_aprovado, comprovante_url, comprovante_nome, lucro_instalacao, custo_instalacao, instalacao_faturada, metodo_pagamento, numero_parcelas, intervalo_boletos, empresa_receptora_id, data_venda, forma_pagamento, venda_presencial, pagamento_na_entrega, valor_entrada, valor_a_receber, quantidade_parcelas, contrato_url")
         .eq("id", id)
         .single();
 
@@ -914,6 +915,7 @@ export default function FaturamentoVendaMinimalista() {
   }, [produtos]);
 
   const vendaFaturada = todosProdutosFaturados && venda?.frete_aprovado === true;
+  const aguardandoContrato = !vendaFaturada && !((venda as any)?.contrato_url);
   const lucroProdutos = produtos?.reduce((acc, p) => acc + (p.lucro_item || 0), 0) || 0;  // valor já é o total da linha
   
   // Instalação: para vendas novas, é um produto separado tipo 'instalacao' com lucro_item
@@ -1112,6 +1114,19 @@ export default function FaturamentoVendaMinimalista() {
             </div>
           )}
         </div>
+
+        {aguardandoContrato && (
+          <div className="flex items-start gap-3 p-4 rounded-lg bg-amber-500/10 border border-amber-500/40 text-amber-200">
+            <FileSignature className="h-5 w-5 mt-0.5 flex-shrink-0 text-amber-400" />
+            <div className="text-sm">
+              <p className="font-semibold text-amber-300">Aguardando assinatura do contrato</p>
+              <p className="text-amber-200/80">
+                Esta venda só poderá ser faturada após o contrato ser anexado em
+                {" "}<strong>Gestão da Fábrica → Assinatura de Contrato</strong>.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Indicadores Financeiros */}
         <div className="grid gap-3 grid-cols-2 md:grid-cols-4 lg:grid-cols-9">
@@ -1761,10 +1776,11 @@ export default function FaturamentoVendaMinimalista() {
             <Button
               size="lg"
               onClick={handleFaturar}
-              disabled={isFinalizandoFaturamento}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+              disabled={isFinalizandoFaturamento || aguardandoContrato}
+              title={aguardandoContrato ? "Anexe o contrato em Gestão da Fábrica > Assinatura de Contrato antes de faturar." : undefined}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isFinalizandoFaturamento ? "Faturando..." : "Faturar"}
+              {isFinalizandoFaturamento ? "Faturando..." : aguardandoContrato ? "Aguardando contrato" : "Faturar"}
             </Button>
           )}
         </div>

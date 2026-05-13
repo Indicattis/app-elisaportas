@@ -17,7 +17,7 @@ import {
   CheckCircle2, Clock, Truck, Wrench, Paintbrush, Target,
   Calculator, AlertCircle, Plus, Minus, Pencil, MessageSquare,
   ArrowUpDown, ArrowUp, ArrowDown, Check, X, Hammer,
-  Package, PlusCircle, Filter, PanelRight, Info
+  Package, PlusCircle, Filter, PanelRight, Info, FileSignature, FileCheck
 } from "lucide-react";
 import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
@@ -98,6 +98,7 @@ const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
   { id: 'data', label: 'Data', defaultVisible: true },
   { id: 'cidade', label: 'Cidade', defaultVisible: true },
   { id: 'expedicao', label: 'Expedição', defaultVisible: true },
+  { id: 'contrato', label: 'Contrato', defaultVisible: true },
   { id: 'tabela', label: 'Tabela', defaultVisible: true },
   { id: 'valor', label: 'Venda', defaultVisible: true },
   { id: 'desc_cartao', label: 'Cartão', defaultVisible: true },
@@ -249,6 +250,7 @@ export default function FaturamentoMinimalista() {
           data_prevista_entrega,
           tipo_entrega,
           lucro_instalacao,
+          contrato_url,
           produtos_vendas (
             id,
             tipo_produto,
@@ -372,6 +374,8 @@ export default function FaturamentoMinimalista() {
   };
 
   const isFaturada = (venda: Venda) => isVendaFaturada(venda);
+  const aguardandoContrato = (venda: Venda) =>
+    !isFaturada(venda) && !(venda as any).contrato_url;
 
   const calcularLucroVenda = (venda: Venda) => {
     const portas = venda.portas || [];
@@ -719,14 +723,14 @@ export default function FaturamentoMinimalista() {
   };
 
   const getColumnResponsiveClass = (columnId: string) => {
-    const hiddenOnMobile = ['cidade', 'expedicao', 'desc_cartao', 'desc_gelo', 'desc_responsavel', 'tempo_sem_faturar', 'justificativa', 'lucro', 'tabela'];
+    const hiddenOnMobile = ['cidade', 'expedicao', 'desc_cartao', 'desc_gelo', 'desc_responsavel', 'tempo_sem_faturar', 'justificativa', 'lucro', 'tabela', 'contrato'];
     if (hiddenOnMobile.includes(columnId)) return 'hidden md:table-cell';
     return '';
   };
 
   const getColumnAlignment = (columnId: string) => {
     const rightAligned = ['valor', 'lucro', 'desc_cartao', 'desc_gelo', 'desc_responsavel', 'tabela'];
-    const centerAligned = ['faturada', 'tempo_sem_faturar', 'expedicao'];
+    const centerAligned = ['faturada', 'tempo_sem_faturar', 'expedicao', 'contrato'];
     if (rightAligned.includes(columnId)) return 'text-right';
     if (centerAligned.includes(columnId)) return 'text-center';
     return 'text-left';
@@ -753,6 +757,41 @@ export default function FaturamentoMinimalista() {
       case 'expedicao':
         if (venda.tipo_entrega === 'instalacao') return <Hammer className="h-4 w-4 text-cyan-400 mx-auto" />;
         return <Truck className="h-4 w-4 text-orange-400 mx-auto" />;
+      case 'contrato': {
+        if (isFaturada(venda)) {
+          return (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Check className="h-4 w-4 text-green-400 mx-auto" />
+              </TooltipTrigger>
+              <TooltipContent>Venda faturada</TooltipContent>
+            </Tooltip>
+          );
+        }
+        if (!(venda as any).contrato_url) {
+          return (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-amber-500/15 border border-amber-500/40 text-amber-300 text-[10px] font-medium">
+                  <FileSignature className="h-3 w-3" />
+                  Aguardando
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                Aguardando assinatura do contrato — não pode ser faturada
+              </TooltipContent>
+            </Tooltip>
+          );
+        }
+        return (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <FileCheck className="h-4 w-4 text-blue-400 mx-auto" />
+            </TooltipTrigger>
+            <TooltipContent>Contrato anexado</TooltipContent>
+          </Tooltip>
+        );
+      }
       case 'tabela':
         const tabelaTotal = (venda.portas || []).reduce((acc: number, p: any) => {
           const qty = p.quantidade || 1;
@@ -1247,9 +1286,17 @@ export default function FaturamentoMinimalista() {
                         key={venda.id} 
                         className={cn(
                           "border-white/10 hover:bg-white/5 cursor-pointer",
-                          selectedVenda?.id === venda.id && "bg-blue-500/10 border-l-2 border-l-blue-500"
+                          selectedVenda?.id === venda.id && "bg-blue-500/10 border-l-2 border-l-blue-500",
+                          aguardandoContrato(venda) && selectedVenda?.id !== venda.id && "border-l-2 border-l-amber-500/60"
                         )}
                         onClick={() => {
+                          if (aguardandoContrato(venda)) {
+                            toast({
+                              variant: "destructive",
+                              title: "Aguardando assinatura do contrato",
+                              description: "Anexe o contrato em Gestão da Fábrica > Assinatura de Contrato antes de faturar.",
+                            });
+                          }
                           setSelectedVenda(venda);
                           if (isMobile) setMobileDownbarOpen(true);
                         }}
