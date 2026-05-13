@@ -1095,6 +1095,43 @@ export default function GestaoFabricaDirecao() {
 
         {/* Aba Pendente Faturamento - vendas NÃO faturadas */}
         <TabsContent value="pendente_pedido" className="mt-4">
+        {/* placeholder removed below */}
+        </TabsContent>
+
+        {/* Aba Assinatura Contrato - vendas sem contrato anexado */}
+        <TabsContent value="assinatura_contrato" className="mt-4">
+          <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl w-full max-w-none">
+            <CardHeader className="pb-3 px-4 py-4">
+              <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+                <CardTitle className="text-lg flex items-center gap-2 text-white">
+                  <FileSignature className="h-5 w-5 text-blue-400" />
+                  <span>Vendas em Assinatura de Contrato</span>
+                  <Badge variant="secondary" className="bg-blue-500/20 text-blue-400">
+                    {vendasAssinaturaContrato.length}
+                  </Badge>
+                </CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="px-4 py-4">
+              {isLoadingContrato ? (
+                <div className="text-center py-8 text-white/50">Carregando...</div>
+              ) : vendasAssinaturaContrato.length === 0 ? (
+                <div className="text-center py-8 text-white/50">
+                  Nenhuma venda aguardando assinatura de contrato
+                </div>
+              ) : (
+                <VendasPendenteDraggableList
+                  vendas={vendasAssinaturaContrato}
+                  onReorganizar={() => {}}
+                  mode="contrato"
+                />
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Aba Pendente Faturamento - vendas faturadas pendentes de pedido */}
+        <TabsContent value="pendente_pedido_real" className="mt-4">
           <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl w-full max-w-none">
             <CardHeader className="pb-3 px-4 py-4">
               <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
