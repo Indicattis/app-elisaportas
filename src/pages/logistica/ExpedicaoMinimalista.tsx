@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Calendar, CalendarDays, ArrowLeft, LogOut, Plus, Hammer, Wrench, Package, HardHat, AlertTriangle, UserPlus, RefreshCw, CheckCircle } from "lucide-react";
+import { Calendar, CalendarDays, LogOut, Plus, Hammer, Wrench, Package, HardHat, AlertTriangle, UserPlus, RefreshCw, CheckCircle } from "lucide-react";
 
-import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
+import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -533,88 +533,69 @@ export default function ExpedicaoMinimalista() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
 
+  const headerActions = (
+    <div className="flex items-center gap-1 sm:gap-2">
+      <Button
+        variant="outline"
+        size="sm"
+        className="bg-white/5 border-blue-500/10 text-white hover:bg-white/10"
+        onClick={() => navigate('/logistica/expedicao/nova-neo')}
+      >
+        <Plus className="h-4 w-4 sm:mr-1" />
+        <span className="hidden sm:inline">Novo Neo</span>
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => setViewType(viewType === 'week' ? 'month' : 'week')}
+        className="bg-white/5 border-blue-500/10 text-white hover:bg-white/10"
+      >
+        {viewType === 'week' ? <CalendarDays className="h-4 w-4" /> : <Calendar className="h-4 w-4" />}
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={handleToday}
+        className="bg-white/5 border-blue-500/10 text-white hover:bg-white/10"
+      >
+        Hoje
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={signOut}
+        className="bg-white/5 border-blue-500/10 text-white hover:bg-white/10"
+      >
+        <LogOut className="h-4 w-4" />
+      </Button>
+    </div>
+  );
+
+  const subtitlePeriodo = viewType === 'week'
+    ? `${format(weekStart, "dd/MM", { locale: ptBR })} - ${format(weekEnd, "dd/MM/yyyy", { locale: ptBR })}`
+    : format(currentDate, "MMMM 'de' yyyy", { locale: ptBR });
+
   return (
-    <div className="min-h-screen bg-black text-white overflow-hidden relative">
-      <AnimatedBreadcrumb 
-        items={[
-          { label: "Home", path: "/home" },
-          { label: "Logística", path: "/logistica" },
-          { label: "Expedição" }
-        ]} 
-        mounted={mounted} 
-      />
-      
-      
-      <div className="relative z-10 min-h-screen flex flex-col pt-14">
-        {/* Header */}
-        <header className="sticky top-0 z-20 px-4 py-3 bg-black/80 backdrop-blur-md border-b border-primary/10">
-          <div className="max-w-[1600px] mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => navigate('/logistica')}
-                className="p-2 rounded-lg hover:bg-primary/10 transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5 text-white/80" />
-              </button>
-              <div>
-                <h1 className="text-lg font-semibold text-white">Expedição</h1>
-                <p className="text-xs text-white/60">
-                  {viewType === 'week' 
-                    ? `${format(weekStart, "dd/MM", { locale: ptBR })} - ${format(weekEnd, "dd/MM/yyyy", { locale: ptBR })}`
-                    : format(currentDate, "MMMM 'de' yyyy", { locale: ptBR })
-                  }
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-1 sm:gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-white/80 hover:text-white hover:bg-primary/10 text-xs"
-                onClick={() => navigate('/logistica/expedicao/nova-neo')}
-              >
-                <Plus className="h-4 w-4 sm:mr-1" />
-                <span className="hidden sm:inline">Novo Neo</span>
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setViewType(viewType === 'week' ? 'month' : 'week')}
-                className="text-white/80 hover:text-white hover:bg-primary/10"
-              >
-                {viewType === 'week' ? <CalendarDays className="h-4 w-4" /> : <Calendar className="h-4 w-4" />}
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleToday}
-                className="text-white/80 hover:text-white hover:bg-primary/10 text-xs"
-              >
-                Hoje
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={signOut}
-                className="text-white/80 hover:text-white hover:bg-primary/10"
-              >
-                <LogOut className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </header>
-
-        {/* Conteúdo */}
-        <main className="flex-1 p-4 overflow-auto">
-          {isLoading ? (
-            <div className="flex items-center justify-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-            </div>
-          ) : (
-            <div className="max-w-[1600px] mx-auto space-y-4">
-              {/* Calendário */}
-              <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
+    <MinimalistLayout
+      title="Expedição"
+      subtitle={subtitlePeriodo}
+      backPath="/logistica"
+      breadcrumbItems={[
+        { label: "Home", path: "/home" },
+        { label: "Logística", path: "/logistica" },
+        { label: "Expedição" }
+      ]}
+      headerActions={headerActions}
+      fullWidth
+    >
+      {isLoading ? (
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400"></div>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {/* Calendário */}
+          <Card className="bg-white/5 border-white/10 backdrop-blur-xl rounded-xl">
                 <CardContent className="p-4">
                   {isMobile ? (
                     <CalendarioSemanalExpedicaoMobile
@@ -713,13 +694,13 @@ export default function ExpedicaoMinimalista() {
                 </CardContent>
               </Card>
 
-              {/* Listagem de Pedidos por Etapa com DnD */}
-              <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
+          {/* Listagem de Pedidos por Etapa com DnD */}
+          <Card className="bg-white/5 border-white/10 backdrop-blur-xl rounded-xl">
                 <Tabs value={etapaAtiva} onValueChange={v => setEtapaAtiva(v as EtapaPedido)}>
                   {/* Seletor mobile */}
                   <div className="md:hidden px-4 pt-4">
                     <Select value={etapaAtiva} onValueChange={v => setEtapaAtiva(v as EtapaPedido)}>
-                      <SelectTrigger className="w-full h-12 bg-primary/5 border-primary/10 text-white">
+                      <SelectTrigger className="w-full h-12 bg-white/5 border-blue-500/10 text-white">
                         <SelectValue>
                           {(() => {
                             const config = ETAPAS_CONFIG[etapaAtiva];
@@ -729,13 +710,13 @@ export default function ExpedicaoMinimalista() {
                               <div className="flex items-center gap-2">
                                 {IconComponent && <IconComponent className="h-5 w-5" />}
                                 <span className="font-medium">{config.label}</span>
-                                <Badge variant="secondary" className="ml-auto bg-primary/10">{count}</Badge>
+                                <Badge variant="secondary" className="ml-auto bg-blue-500/20 text-blue-400">{count}</Badge>
                               </div>
                             );
                           })()}
                         </SelectValue>
                       </SelectTrigger>
-                      <SelectContent className="bg-zinc-900 border-primary/10">
+                      <SelectContent className="bg-zinc-900 border-blue-500/10">
                         {ETAPAS_LOGISTICA.map(etapa => {
                           const config = ETAPAS_CONFIG[etapa];
                           const count = contadores[etapa] || 0;
@@ -745,7 +726,7 @@ export default function ExpedicaoMinimalista() {
                               <div className="flex items-center gap-2 w-full">
                                 {IconComponent && <IconComponent className="h-4 w-4 flex-shrink-0" />}
                                 <span className="flex-1">{config.label}</span>
-                                <Badge variant="secondary" className="text-xs bg-primary/10">{count}</Badge>
+                                <Badge variant="secondary" className="text-xs bg-blue-500/20 text-blue-400">{count}</Badge>
                               </div>
                             </SelectItem>
                           );
@@ -756,7 +737,7 @@ export default function ExpedicaoMinimalista() {
 
                   {/* Tabs - Desktop */}
                   <div className="hidden md:block px-4 pt-4">
-                    <TabsList className="w-full justify-start overflow-x-auto flex-nowrap h-auto p-1 gap-1 bg-primary/5 border border-primary/10">
+                    <TabsList className="w-full justify-start overflow-x-auto flex-nowrap h-[85px] p-1.5 gap-2 bg-white/5 border border-white/10 backdrop-blur-xl rounded-xl">
                       <TooltipProvider>
                         {ETAPAS_LOGISTICA.map(etapa => {
                           const config = ETAPAS_CONFIG[etapa];
@@ -764,26 +745,30 @@ export default function ExpedicaoMinimalista() {
                           const IconComponent = ETAPA_ICONS[etapa as keyof typeof ETAPA_ICONS];
                           const responsavel = getResponsavel(etapa);
                           return (
-                            <TabsTrigger 
-                              key={etapa} 
-                              value={etapa} 
-                              className="flex-shrink-0 px-3 py-2 gap-2 text-white/60 data-[state=active]:bg-primary/10 data-[state=active]:text-white"
+                            <TabsTrigger
+                              key={etapa}
+                              value={etapa}
+                              className="flex-shrink-0 flex-row items-center justify-start h-full min-w-[150px] px-3 py-2 gap-2.5 rounded-lg bg-white/5 border border-white/10 backdrop-blur-xl text-white/70 hover:bg-white/[0.08] hover:border-blue-400/30 transition-all data-[state=active]:bg-blue-500/15 data-[state=active]:border-blue-400/50 data-[state=active]:text-white data-[state=active]:shadow-[0_0_0_1px_rgba(96,165,250,0.3)]"
                             >
                               {responsavel ? (
                                 <Tooltip>
                                   <TooltipTrigger asChild>
-                                    <Avatar className="h-5 w-5 border border-primary/30">
+                                    <Avatar className="h-9 w-9 flex-shrink-0 border border-blue-500/30">
                                       <AvatarImage src={responsavel.foto_perfil_url || undefined} />
-                                      <AvatarFallback className="text-[10px] bg-primary/20">{responsavel.nome.charAt(0).toUpperCase()}</AvatarFallback>
+                                      <AvatarFallback className="text-xs bg-blue-500/20 text-blue-400">{responsavel.nome.charAt(0).toUpperCase()}</AvatarFallback>
                                     </Avatar>
                                   </TooltipTrigger>
                                   <TooltipContent><p className="text-xs">Responsável: {responsavel.nome}</p></TooltipContent>
                                 </Tooltip>
                               ) : (
-                                IconComponent && <IconComponent className="h-4 w-4 flex-shrink-0" />
+                                <div className="h-9 w-9 flex-shrink-0 rounded-full bg-blue-500/10 border border-blue-500/30 flex items-center justify-center">
+                                  {IconComponent && <IconComponent className="h-4 w-4 text-blue-400" />}
+                                </div>
                               )}
-                              <span className="text-xs">{config.label}</span>
-                              <span className="px-1.5 py-0.5 bg-blue-500/20 text-blue-400 rounded-full text-xs font-semibold">{count}</span>
+                              <div className="flex flex-col items-start gap-1 min-w-0">
+                                <span className="text-xs font-medium leading-tight truncate">{config.label}</span>
+                                <span className="px-1.5 py-0.5 bg-blue-500/20 text-blue-400 rounded-full text-[10px] font-semibold leading-none">{count}</span>
+                              </div>
                             </TabsTrigger>
                           );
                         })}
@@ -1008,10 +993,8 @@ export default function ExpedicaoMinimalista() {
                   ))}
                 </Tabs>
               </Card>
-            </div>
-          )}
-        </main>
-      </div>
+        </div>
+      )}
 
       {/* Detalhes da Ordem */}
       <OrdemCarregamentoDetails
@@ -1120,6 +1103,6 @@ export default function ExpedicaoMinimalista() {
           />
         );
       })()}
-    </div>
+    </MinimalistLayout>
   );
 }
