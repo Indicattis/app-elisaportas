@@ -2185,6 +2185,33 @@ className="flex h-[20px] w-full rounded-[3px]"
                       );
                     }
 
+                    // Botão Resetar Carregamento: limpa agendamento (data, hora, responsável) para reagendar do zero
+                    if (
+                      onResetarCarregamento &&
+                      isEtapaCarregamento &&
+                      temDataCarregamento &&
+                      !carregamentoConcluido
+                    ) {
+                      middleButtons.push(
+                        <Tooltip key="resetar-carregamento">
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="icon"
+                              variant="outline"
+                              onClick={(e) => { e.stopPropagation(); setShowResetarCarregamento(true); }}
+                              title="Resetar Carregamento"
+                              className="flex h-[20px] w-[20px] rounded-[3px] bg-amber-500/10 text-amber-700 hover:bg-amber-500/20 border-amber-500/50"
+                            >
+                              <CalendarX className="h-3 w-3" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">
+                            <span className="text-xs">Resetar Carregamento</span>
+                          </TooltipContent>
+                        </Tooltip>
+                      );
+                    }
+
                     // Botão de arquivar (apenas etapa finalizado)
                     if (etapaAtual === 'finalizado' && onArquivar) {
                       middleButtons.push(
