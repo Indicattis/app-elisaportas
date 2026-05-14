@@ -1099,6 +1099,6 @@ export default function ExpedicaoMinimalista() {
           />
         );
       })()}
-    </div>
+    </MinimalistLayout>
   );
 }
