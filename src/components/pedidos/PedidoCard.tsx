@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatCurrency, cn } from "@/lib/utils";
 import { format, formatDistanceToNow, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ArrowRight, Package, ChevronUp, ChevronDown, GripVertical, AlertCircle, CheckCircle, ArrowLeft, FileText, Paintbrush, Truck, Hammer, AlertTriangle, Archive, User, PauseCircle, PlayCircle, Boxes, Sparkles, UserMinus, Trash2, Clock, Wrench, CalendarPlus } from "lucide-react";
+import { ArrowRight, Package, ChevronUp, ChevronDown, GripVertical, AlertCircle, CheckCircle, ArrowLeft, FileText, Paintbrush, Truck, Hammer, AlertTriangle, Archive, User, PauseCircle, PlayCircle, Boxes, Sparkles, UserMinus, Trash2, Clock, Wrench, CalendarPlus, CalendarX } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -78,6 +78,7 @@ interface PedidoCardProps {
   onCarregarOrdem?: (pedidoId: string) => Promise<void>;
   onEnviarAguardandoCliente?: (pedidoId: string) => Promise<void>;
   onDevolverParaFinalizado?: (pedidoId: string) => Promise<void>;
+  onResetarCarregamento?: (pedidoId: string) => Promise<void>;
   basePath?: string;
   readOnly?: boolean;
   disableClienteClick?: boolean;
@@ -105,6 +106,7 @@ export function PedidoCard({
   onCarregarOrdem,
   onEnviarAguardandoCliente,
   onDevolverParaFinalizado,
+  onResetarCarregamento,
   readOnly = false,
   disableClienteClick = false,
   showEtapaBadge = false,
@@ -129,6 +131,8 @@ export function PedidoCard({
   const [isFinalizandoDireto, setIsFinalizandoDireto] = useState(false);
   const [showCarregarOrdem, setShowCarregarOrdem] = useState(false);
   const [isCarregando, setIsCarregando] = useState(false);
+  const [showResetarCarregamento, setShowResetarCarregamento] = useState(false);
+  const [isResetando, setIsResetando] = useState(false);
   const [showAvisoEspera, setShowAvisoEspera] = useState(false);
   const [ordemParaRemover, setOrdemParaRemover] = useState<{ ordem: any; nomeSetor: string } | null>(null);
   const [processos, setProcessos] = useState<Processo[]>([]);
@@ -2181,6 +2185,33 @@ className="flex h-[20px] w-full rounded-[3px]"
                       );
                     }
 
+                    // Botão Resetar Carregamento: limpa agendamento (data, hora, responsável) para reagendar do zero
+                    if (
+                      onResetarCarregamento &&
+                      isEtapaCarregamento &&
+                      temDataCarregamento &&
+                      !carregamentoConcluido
+                    ) {
+                      middleButtons.push(
+                        <Tooltip key="resetar-carregamento">
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="icon"
+                              variant="outline"
+                              onClick={(e) => { e.stopPropagation(); setShowResetarCarregamento(true); }}
+                              title="Resetar Carregamento"
+                              className="flex h-[20px] w-[20px] rounded-[3px] bg-amber-500/10 text-amber-700 hover:bg-amber-500/20 border-amber-500/50"
+                            >
+                              <CalendarX className="h-3 w-3" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">
+                            <span className="text-xs">Resetar Carregamento</span>
+                          </TooltipContent>
+                        </Tooltip>
+                      );
+                    }
+
                     // Botão de arquivar (apenas etapa finalizado)
                     if (etapaAtual === 'finalizado' && onArquivar) {
                       middleButtons.push(
@@ -2420,6 +2451,50 @@ className="flex h-[20px] w-full rounded-[3px]"
                 }}
               >
                 {isCarregando ? 'Carregando...' : 'Sim, Carregar'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={showResetarCarregamento} onOpenChange={(open) => { if (!isResetando) setShowResetarCarregamento(open); }}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-base">
+                <CalendarX className="w-5 h-5 text-amber-600" />
+                Resetar Carregamento
+              </DialogTitle>
+              <DialogDescription asChild>
+                <div className="space-y-3 pt-2">
+                  <div className="rounded-lg bg-muted p-3 space-y-1.5">
+                    <p className="text-sm font-medium text-foreground">{pedido.venda?.cliente?.nome || 'Cliente'}</p>
+                    <p className="text-xs text-muted-foreground font-mono">{pedido.numero_pedido_mensal ? formatarNumeroPedidoMensal(pedido.numero_pedido_mensal) : pedido.id.slice(0, 8)}</p>
+                    <p className="text-xs text-muted-foreground">Etapa atual: <span className="font-medium text-foreground">{ETAPAS_CONFIG[pedido.etapa_atual as EtapaPedido]?.label || pedido.etapa_atual}</span></p>
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    O agendamento (data, hora e responsável) será removido. O pedido voltará a precisar ser <span className="font-medium text-foreground">agendado novamente</span> no calendário de expedição.
+                  </div>
+                </div>
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button variant="outline" onClick={() => setShowResetarCarregamento(false)} disabled={isResetando}>
+                Cancelar
+              </Button>
+              <Button
+                className="bg-amber-600 hover:bg-amber-700 text-white"
+                disabled={isResetando}
+                onClick={async () => {
+                  if (!onResetarCarregamento) return;
+                  setIsResetando(true);
+                  try {
+                    await onResetarCarregamento(pedido.id);
+                    setShowResetarCarregamento(false);
+                  } finally {
+                    setIsResetando(false);
+                  }
+                }}
+              >
+                {isResetando ? 'Resetando...' : 'Sim, Resetar'}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -3111,6 +3186,50 @@ className="flex h-[20px] w-full rounded-[3px]"
               }}
             >
               {isCarregando ? 'Carregando...' : 'Sim, Carregar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showResetarCarregamento} onOpenChange={(open) => { if (!isResetando) setShowResetarCarregamento(open); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <CalendarX className="w-5 h-5 text-amber-600" />
+              Resetar Carregamento
+            </DialogTitle>
+            <DialogDescription asChild>
+              <div className="space-y-3 pt-2">
+                <div className="rounded-lg bg-muted p-3 space-y-1.5">
+                  <p className="text-sm font-medium text-foreground">{pedido.venda?.cliente?.nome || 'Cliente'}</p>
+                  <p className="text-xs text-muted-foreground font-mono">{pedido.numero_pedido_mensal ? formatarNumeroPedidoMensal(pedido.numero_pedido_mensal) : pedido.id.slice(0, 8)}</p>
+                  <p className="text-xs text-muted-foreground">Etapa atual: <span className="font-medium text-foreground">{ETAPAS_CONFIG[pedido.etapa_atual as EtapaPedido]?.label || pedido.etapa_atual}</span></p>
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  O agendamento (data, hora e responsável) será removido. O pedido voltará a precisar ser <span className="font-medium text-foreground">agendado novamente</span> no calendário de expedição.
+                </div>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setShowResetarCarregamento(false)} disabled={isResetando}>
+              Cancelar
+            </Button>
+            <Button
+              className="bg-amber-600 hover:bg-amber-700 text-white"
+              disabled={isResetando}
+              onClick={async () => {
+                if (!onResetarCarregamento) return;
+                setIsResetando(true);
+                try {
+                  await onResetarCarregamento(pedido.id);
+                  setShowResetarCarregamento(false);
+                } finally {
+                  setIsResetando(false);
+                }
+              }}
+            >
+              {isResetando ? 'Resetando...' : 'Sim, Resetar'}
             </Button>
           </DialogFooter>
         </DialogContent>
