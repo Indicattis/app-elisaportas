@@ -168,6 +168,7 @@ export function PedidosDraggableList({
   onCarregarOrdem,
   onEnviarAguardandoCliente,
   onDevolverParaFinalizado,
+  onResetarCarregamento,
   enableDragAndDrop = true,
   showPosicao = true,
   disableClienteClick = false,
