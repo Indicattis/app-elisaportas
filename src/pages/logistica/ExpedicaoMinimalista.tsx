@@ -694,13 +694,13 @@ export default function ExpedicaoMinimalista() {
                 </CardContent>
               </Card>
 
-              {/* Listagem de Pedidos por Etapa com DnD */}
-              <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
+          {/* Listagem de Pedidos por Etapa com DnD */}
+          <Card className="bg-white/5 border-white/10 backdrop-blur-xl rounded-xl">
                 <Tabs value={etapaAtiva} onValueChange={v => setEtapaAtiva(v as EtapaPedido)}>
                   {/* Seletor mobile */}
                   <div className="md:hidden px-4 pt-4">
                     <Select value={etapaAtiva} onValueChange={v => setEtapaAtiva(v as EtapaPedido)}>
-                      <SelectTrigger className="w-full h-12 bg-primary/5 border-primary/10 text-white">
+                      <SelectTrigger className="w-full h-12 bg-white/5 border-blue-500/10 text-white">
                         <SelectValue>
                           {(() => {
                             const config = ETAPAS_CONFIG[etapaAtiva];
@@ -710,13 +710,13 @@ export default function ExpedicaoMinimalista() {
                               <div className="flex items-center gap-2">
                                 {IconComponent && <IconComponent className="h-5 w-5" />}
                                 <span className="font-medium">{config.label}</span>
-                                <Badge variant="secondary" className="ml-auto bg-primary/10">{count}</Badge>
+                                <Badge variant="secondary" className="ml-auto bg-blue-500/20 text-blue-400">{count}</Badge>
                               </div>
                             );
                           })()}
                         </SelectValue>
                       </SelectTrigger>
-                      <SelectContent className="bg-zinc-900 border-primary/10">
+                      <SelectContent className="bg-zinc-900 border-blue-500/10">
                         {ETAPAS_LOGISTICA.map(etapa => {
                           const config = ETAPAS_CONFIG[etapa];
                           const count = contadores[etapa] || 0;
@@ -726,7 +726,7 @@ export default function ExpedicaoMinimalista() {
                               <div className="flex items-center gap-2 w-full">
                                 {IconComponent && <IconComponent className="h-4 w-4 flex-shrink-0" />}
                                 <span className="flex-1">{config.label}</span>
-                                <Badge variant="secondary" className="text-xs bg-primary/10">{count}</Badge>
+                                <Badge variant="secondary" className="text-xs bg-blue-500/20 text-blue-400">{count}</Badge>
                               </div>
                             </SelectItem>
                           );
@@ -737,7 +737,7 @@ export default function ExpedicaoMinimalista() {
 
                   {/* Tabs - Desktop */}
                   <div className="hidden md:block px-4 pt-4">
-                    <TabsList className="w-full justify-start overflow-x-auto flex-nowrap h-auto p-1 gap-1 bg-primary/5 border border-primary/10">
+                    <TabsList className="w-full justify-start overflow-x-auto flex-nowrap h-[85px] p-1.5 gap-2 bg-white/5 border border-white/10 backdrop-blur-xl rounded-xl">
                       <TooltipProvider>
                         {ETAPAS_LOGISTICA.map(etapa => {
                           const config = ETAPAS_CONFIG[etapa];
@@ -745,26 +745,30 @@ export default function ExpedicaoMinimalista() {
                           const IconComponent = ETAPA_ICONS[etapa as keyof typeof ETAPA_ICONS];
                           const responsavel = getResponsavel(etapa);
                           return (
-                            <TabsTrigger 
-                              key={etapa} 
-                              value={etapa} 
-                              className="flex-shrink-0 px-3 py-2 gap-2 text-white/60 data-[state=active]:bg-primary/10 data-[state=active]:text-white"
+                            <TabsTrigger
+                              key={etapa}
+                              value={etapa}
+                              className="flex-shrink-0 flex-row items-center justify-start h-full min-w-[150px] px-3 py-2 gap-2.5 rounded-lg bg-white/5 border border-white/10 backdrop-blur-xl text-white/70 hover:bg-white/[0.08] hover:border-blue-400/30 transition-all data-[state=active]:bg-blue-500/15 data-[state=active]:border-blue-400/50 data-[state=active]:text-white data-[state=active]:shadow-[0_0_0_1px_rgba(96,165,250,0.3)]"
                             >
                               {responsavel ? (
                                 <Tooltip>
                                   <TooltipTrigger asChild>
-                                    <Avatar className="h-5 w-5 border border-primary/30">
+                                    <Avatar className="h-9 w-9 flex-shrink-0 border border-blue-500/30">
                                       <AvatarImage src={responsavel.foto_perfil_url || undefined} />
-                                      <AvatarFallback className="text-[10px] bg-primary/20">{responsavel.nome.charAt(0).toUpperCase()}</AvatarFallback>
+                                      <AvatarFallback className="text-xs bg-blue-500/20 text-blue-400">{responsavel.nome.charAt(0).toUpperCase()}</AvatarFallback>
                                     </Avatar>
                                   </TooltipTrigger>
                                   <TooltipContent><p className="text-xs">Responsável: {responsavel.nome}</p></TooltipContent>
                                 </Tooltip>
                               ) : (
-                                IconComponent && <IconComponent className="h-4 w-4 flex-shrink-0" />
+                                <div className="h-9 w-9 flex-shrink-0 rounded-full bg-blue-500/10 border border-blue-500/30 flex items-center justify-center">
+                                  {IconComponent && <IconComponent className="h-4 w-4 text-blue-400" />}
+                                </div>
                               )}
-                              <span className="text-xs">{config.label}</span>
-                              <span className="px-1.5 py-0.5 bg-blue-500/20 text-blue-400 rounded-full text-xs font-semibold">{count}</span>
+                              <div className="flex flex-col items-start gap-1 min-w-0">
+                                <span className="text-xs font-medium leading-tight truncate">{config.label}</span>
+                                <span className="px-1.5 py-0.5 bg-blue-500/20 text-blue-400 rounded-full text-[10px] font-semibold leading-none">{count}</span>
+                              </div>
                             </TabsTrigger>
                           );
                         })}
