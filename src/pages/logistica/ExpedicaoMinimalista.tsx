@@ -989,10 +989,8 @@ export default function ExpedicaoMinimalista() {
                   ))}
                 </Tabs>
               </Card>
-            </div>
-          )}
-        </main>
-      </div>
+        </div>
+      )}
 
       {/* Detalhes da Ordem */}
       <OrdemCarregamentoDetails
