@@ -1529,6 +1529,7 @@ export default function GestaoFabricaDirecao() {
                       hideOrdensStatus={['aguardando_coleta','instalacoes','correcoes','finalizado'].includes(etapa)}
                       onFinalizarDireto={etapa !== 'finalizado' && !['aguardando_coleta','instalacoes','correcoes'].includes(etapa) ? handleFinalizarDireto : undefined}
                       onCarregarOrdem={['aguardando_coleta','instalacoes','correcoes'].includes(etapa) ? handleCarregarOrdem : undefined}
+                      onResetarCarregamento={['aguardando_coleta','instalacoes','correcoes'].includes(etapa) ? handleResetarCarregamento : undefined}
                       onEnviarAguardandoCliente={etapa === 'finalizado' ? handleEnviarAguardandoCliente : undefined}
                       showPosicao={true}
                       onAvisoEspera={handleAvisoEspera}
