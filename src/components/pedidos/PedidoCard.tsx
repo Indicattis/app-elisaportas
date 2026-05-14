@@ -1907,7 +1907,7 @@ export function PedidoCard({
                     const podeRetroceder = etapaAtual !== 'aberto' && etapaAtual !== 'finalizado' && etapaAtual !== 'correcoes' && etapaAnterior && onRetrocederEtapa;
                     if (podeRetroceder) {
                       retrocederButtons.push(
-                        <Button key="retroceder" size="icon" variant="outline" onClick={(e) => { e.stopPropagation(); setShowRetrocederEtapa(true); }} title="Retroceder para etapa anterior" className="flex h-[20px] w-[20px] rounded-[3px] bg-destructive/10 text-destructive hover:bg-destructive/20 border-destructive/50">
+                        <Button key="retroceder" size="icon" variant="outline" onClick={(e) => { e.stopPropagation(); setShowRetrocederEtapa(true); }} title="Retroceder para etapa anterior" className="flex h-[20px] w-[20px] rounded-[3px] bg-destructive text-destructive-foreground hover:bg-destructive/90 border-destructive">
                           <ArrowLeft className="h-3 w-3" />
                         </Button>
                       );
@@ -1927,7 +1927,7 @@ export function PedidoCard({
                               variant="outline" 
                               onClick={(e) => { e.stopPropagation(); onAgendar(pedido.id); }} 
                               title={tooltipLabel}
-                              className="flex h-[20px] w-[20px] rounded-[3px] bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 border-blue-500/50"
+                              className="flex h-[20px] w-[20px] rounded-[3px] bg-blue-600 text-white hover:bg-blue-700 border-blue-600"
                             >
                               <CalendarPlus className="h-3 w-3" />
                             </Button>
@@ -1950,7 +1950,7 @@ export function PedidoCard({
                               variant="outline" 
                               onClick={(e) => { e.stopPropagation(); setShowEnviarCorrecao(true); }} 
                               title="Enviar para Correções" 
-                              className="flex h-[20px] w-[20px] rounded-[3px] bg-purple-500/10 text-purple-600 hover:bg-purple-500/20 border-purple-500/50"
+                              className="flex h-[20px] w-[20px] rounded-[3px] bg-purple-600 text-white hover:bg-purple-700 border-purple-600"
                             >
                               <Wrench className="h-3 w-3" />
                             </Button>
@@ -1969,7 +1969,7 @@ export function PedidoCard({
                               variant="outline" 
                               onClick={(e) => { e.stopPropagation(); setShowCriarCorrecao(true); }} 
                               title="Gerar pedido de correção" 
-                              className="flex h-[20px] w-[20px] rounded-[3px] bg-purple-500/10 text-purple-600 hover:bg-purple-500/20 border-purple-500/50"
+                              className="flex h-[20px] w-[20px] rounded-[3px] bg-purple-600 text-white hover:bg-purple-700 border-purple-600"
                             >
                               <Wrench className="h-3 w-3" />
                             </Button>
@@ -2078,7 +2078,7 @@ className="flex h-[20px] w-full rounded-[3px]"
                               variant="outline" 
                               onClick={(e) => { e.stopPropagation(); setShowEnviarCorrecao(true); }} 
                               title="Enviar para Correção" 
-                              className="flex h-[20px] w-[20px] rounded-[3px] bg-purple-500/10 text-purple-600 hover:bg-purple-500/20 border-purple-500/50"
+                              className="flex h-[20px] w-[20px] rounded-[3px] bg-purple-600 text-white hover:bg-purple-700 border-purple-600"
                             >
                               <Wrench className="h-3 w-3" />
                             </Button>
@@ -2100,7 +2100,7 @@ className="flex h-[20px] w-full rounded-[3px]"
                               variant="outline" 
                               onClick={(e) => { e.stopPropagation(); setShowAguardandoCliente(true); }} 
                               title="Aguardando Cliente" 
-                              className="flex h-[20px] w-[20px] rounded-[3px] bg-yellow-500/10 text-yellow-600 hover:bg-yellow-500/20 border-yellow-500/50"
+                              className="flex h-[20px] w-[20px] rounded-[3px] bg-yellow-600 text-white hover:bg-yellow-700 border-yellow-600"
                             >
                               <Clock className="h-3 w-3" />
                             </Button>
@@ -2122,7 +2122,7 @@ className="flex h-[20px] w-full rounded-[3px]"
                               variant="outline"
                               onClick={(e) => { e.stopPropagation(); setShowDevolverFinalizado(true); }}
                               title="Devolver para Finalizado"
-                              className="flex h-[20px] w-[20px] rounded-[3px] bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 border-emerald-500/50"
+                              className="flex h-[20px] w-[20px] rounded-[3px] bg-emerald-600 text-white hover:bg-emerald-700 border-emerald-600"
                             >
                               <CheckCircle className="h-3 w-3" />
                             </Button>
@@ -2146,7 +2146,7 @@ className="flex h-[20px] w-full rounded-[3px]"
                               variant="outline" 
                               onClick={(e) => { e.stopPropagation(); setShowFinalizarDireto(true); }} 
                               title="Finalizar Direto" 
-                              className="flex h-[20px] w-[20px] rounded-[3px] bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 border-emerald-500/50"
+                              className="flex h-[20px] w-[20px] rounded-[3px] bg-emerald-600 text-white hover:bg-emerald-700 border-emerald-600"
                             >
                               <CheckCircle className="h-3 w-3" />
                             </Button>
@@ -2173,7 +2173,7 @@ className="flex h-[20px] w-full rounded-[3px]"
                               variant="outline"
                               onClick={(e) => { e.stopPropagation(); setShowCarregarOrdem(true); }}
                               title="Carregar Ordem"
-                              className="flex h-[20px] w-[20px] rounded-[3px] bg-sky-500/10 text-sky-700 hover:bg-sky-500/20 border-sky-500/50"
+                              className="flex h-[20px] w-[20px] rounded-[3px] bg-sky-600 text-white hover:bg-sky-700 border-sky-600"
                             >
                               <Truck className="h-3 w-3" />
                             </Button>
@@ -2200,7 +2200,7 @@ className="flex h-[20px] w-full rounded-[3px]"
                               variant="outline"
                               onClick={(e) => { e.stopPropagation(); setShowResetarCarregamento(true); }}
                               title="Resetar Carregamento"
-                              className="flex h-[20px] w-[20px] rounded-[3px] bg-amber-500/10 text-amber-700 hover:bg-amber-500/20 border-amber-500/50"
+                              className="flex h-[20px] w-[20px] rounded-[3px] bg-amber-600 text-white hover:bg-amber-700 border-amber-600"
                             >
                               <CalendarX className="h-3 w-3" />
                             </Button>
@@ -2222,7 +2222,7 @@ className="flex h-[20px] w-full rounded-[3px]"
                               variant="outline" 
                               onClick={(e) => { e.stopPropagation(); setShowArquivar(true); }} 
                               title="Arquivar Pedido" 
-                              className="flex h-[20px] w-[20px] rounded-[3px] bg-orange-500/10 text-orange-700 hover:bg-orange-500/20 border-orange-500/50"
+                              className="flex h-[20px] w-[20px] rounded-[3px] bg-orange-600 text-white hover:bg-orange-700 border-orange-600"
                             >
                               <Archive className="h-3 w-3" />
                             </Button>
@@ -2866,7 +2866,7 @@ className="flex h-[20px] w-full rounded-[3px]"
                       setShowArquivar(true); 
                     }} 
                     title="Arquivar Pedido" 
-                    className="flex w-full h-[35px] bg-orange-500/10 text-orange-700 hover:bg-orange-500/20 border-orange-500/50"
+                    className="flex w-full h-[35px] bg-orange-600 text-white hover:bg-orange-700 border-orange-600"
                   >
                     <Archive className="h-3.5 w-3.5" />
                   </Button>
@@ -2885,7 +2885,7 @@ className="flex h-[20px] w-full rounded-[3px]"
                       setShowEnviarCorrecao(true); 
                     }} 
                     title="Enviar para Correção" 
-                    className="flex w-full h-[35px] bg-purple-500/10 text-purple-600 hover:bg-purple-500/20 border-purple-500/50"
+                    className="flex w-full h-[35px] bg-purple-600 text-white hover:bg-purple-700 border-purple-600"
                   >
                     <Wrench className="h-3.5 w-3.5" />
                   </Button>
@@ -2901,7 +2901,7 @@ className="flex h-[20px] w-full rounded-[3px]"
                     variant="outline"
                     onClick={(e) => { e.stopPropagation(); setShowDevolverFinalizado(true); }}
                     title="Devolver para Finalizado"
-                    className="flex w-full h-[35px] bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 border-emerald-500/50"
+                    className="flex w-full h-[35px] bg-emerald-600 text-white hover:bg-emerald-700 border-emerald-600"
                   >
                     <CheckCircle className="h-3.5 w-3.5" />
                   </Button>
@@ -2913,7 +2913,7 @@ className="flex h-[20px] w-full rounded-[3px]"
               // Add retroceder button (para todos a partir de em_producao)
               const podeRetroceder = etapaAtual !== 'aberto' && etapaAtual !== 'finalizado' && etapaAtual !== 'correcoes' && etapaAnterior && onRetrocederEtapa;
               if (podeRetroceder) {
-                actionButtons.push(<Button key="retroceder" size="icon" variant="outline" onClick={(e) => { e.stopPropagation(); setShowRetrocederEtapa(true); }} title="Retroceder para etapa anterior" className="flex w-full h-[35px] bg-destructive/10 text-destructive hover:bg-destructive/20 border-destructive/50">
+                actionButtons.push(<Button key="retroceder" size="icon" variant="outline" onClick={(e) => { e.stopPropagation(); setShowRetrocederEtapa(true); }} title="Retroceder para etapa anterior" className="flex w-full h-[35px] bg-destructive text-destructive-foreground hover:bg-destructive/90 border-destructive">
                       <ArrowLeft className="h-3.5 w-3.5" />
                     </Button>);
               }
