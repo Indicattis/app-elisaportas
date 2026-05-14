@@ -347,7 +347,7 @@ export function NeoCorrecaoCardGestao({
                   <Button
                     size="icon"
                     variant="outline"
-                    className="flex h-[20px] w-[20px] rounded-[3px] bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20 border-yellow-500/50"
+                    className="flex h-[20px] w-[20px] rounded-[3px] bg-yellow-600 text-white hover:bg-yellow-700 border-yellow-600"
                     onClick={(e) => {
                       e.stopPropagation();
                       onEditar(neoCorrecao);
@@ -361,7 +361,7 @@ export function NeoCorrecaoCardGestao({
                   <Button
                     size="icon"
                     variant="outline"
-                    className="flex h-[20px] w-[20px] rounded-[3px] bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 border-blue-500/50"
+                    className="flex h-[20px] w-[20px] rounded-[3px] bg-blue-600 text-white hover:bg-blue-700 border-blue-600"
                     onClick={(e) => {
                       e.stopPropagation();
                       onAgendar(neoCorrecao.id);
@@ -377,7 +377,7 @@ export function NeoCorrecaoCardGestao({
                       <Button
                         size="icon"
                         variant="outline"
-                        className="flex h-[20px] w-[20px] rounded-[3px] bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 border-amber-500/50"
+                        className="flex h-[20px] w-[20px] rounded-[3px] bg-amber-600 text-white hover:bg-amber-700 border-amber-600"
                         onClick={(e) => {
                           e.stopPropagation();
                           onRetornar(neoCorrecao.id);
@@ -391,7 +391,7 @@ export function NeoCorrecaoCardGestao({
                       <Button
                         size="icon"
                         variant="outline"
-                        className="flex h-[20px] w-[20px] rounded-[3px] bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20 border-yellow-500/50"
+                        className="flex h-[20px] w-[20px] rounded-[3px] bg-yellow-600 text-white hover:bg-yellow-700 border-yellow-600"
                         onClick={(e) => {
                           e.stopPropagation();
                           onEnviarAguardandoCliente(neoCorrecao.id);
@@ -405,7 +405,7 @@ export function NeoCorrecaoCardGestao({
                       <Button
                         size="icon"
                         variant="outline"
-                        className="flex h-[20px] w-[20px] rounded-[3px] bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 border-orange-500/50"
+                        className="flex h-[20px] w-[20px] rounded-[3px] bg-orange-600 text-white hover:bg-orange-700 border-orange-600"
                         onClick={(e) => {
                           e.stopPropagation();
                           onArquivar(neoCorrecao.id);
@@ -422,7 +422,7 @@ export function NeoCorrecaoCardGestao({
                       <Button
                         size="icon"
                         variant="outline"
-                        className="flex h-[20px] w-[20px] rounded-[3px] bg-green-500/10 text-green-400 hover:bg-green-500/20 border-green-500/50"
+                        className="flex h-[20px] w-[20px] rounded-[3px] bg-green-600 text-white hover:bg-green-700 border-green-600"
                         onClick={(e) => {
                           e.stopPropagation();
                           onRetornarParaFinalizado(neoCorrecao.id);
@@ -436,7 +436,7 @@ export function NeoCorrecaoCardGestao({
                       <Button
                         size="icon"
                         variant="outline"
-                        className="flex h-[20px] w-[20px] rounded-[3px] bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 border-orange-500/50"
+                        className="flex h-[20px] w-[20px] rounded-[3px] bg-orange-600 text-white hover:bg-orange-700 border-orange-600"
                         onClick={(e) => {
                           e.stopPropagation();
                           onArquivar(neoCorrecao.id);
@@ -451,7 +451,7 @@ export function NeoCorrecaoCardGestao({
                   <Button
                     size="icon"
                     variant="outline"
-                    className="flex h-[20px] w-[20px] rounded-[3px] bg-green-500/10 text-green-400 hover:bg-green-500/20 border-green-500/50"
+                    className="flex h-[20px] w-[20px] rounded-[3px] bg-green-600 text-white hover:bg-green-700 border-green-600"
                     onClick={(e) => {
                       e.stopPropagation();
                       onConcluir(neoCorrecao.id);
