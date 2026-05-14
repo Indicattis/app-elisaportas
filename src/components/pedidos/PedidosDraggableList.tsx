@@ -42,6 +42,7 @@ interface PedidosDraggableListProps {
   onCarregarOrdem?: (pedidoId: string) => Promise<void>;
   onEnviarAguardandoCliente?: (pedidoId: string) => Promise<void>;
   onDevolverParaFinalizado?: (pedidoId: string) => Promise<void>;
+  onResetarCarregamento?: (pedidoId: string) => Promise<void>;
   enableDragAndDrop?: boolean;
   showPosicao?: boolean;
   disableClienteClick?: boolean;
@@ -71,6 +72,7 @@ interface SortableItemProps {
   onCarregarOrdem?: (pedidoId: string) => Promise<void>;
   onEnviarAguardandoCliente?: (pedidoId: string) => Promise<void>;
   onDevolverParaFinalizado?: (pedidoId: string) => Promise<void>;
+  onResetarCarregamento?: (pedidoId: string) => Promise<void>;
   disableClienteClick?: boolean;
   hideOrdensStatus?: boolean;
   hideCorrecaoButton?: boolean;
@@ -95,6 +97,7 @@ function SortableItem({
   onCarregarOrdem,
   onEnviarAguardandoCliente,
   onDevolverParaFinalizado,
+  onResetarCarregamento,
   disableClienteClick,
   hideOrdensStatus,
   hideCorrecaoButton,
@@ -133,6 +136,7 @@ function SortableItem({
         onCarregarOrdem={onCarregarOrdem}
         onEnviarAguardandoCliente={onEnviarAguardandoCliente}
         onDevolverParaFinalizado={onDevolverParaFinalizado}
+        onResetarCarregamento={onResetarCarregamento}
         isDragging={isDragging}
         dragHandleProps={{ ...attributes, ...listeners }}
         posicao={posicao}
