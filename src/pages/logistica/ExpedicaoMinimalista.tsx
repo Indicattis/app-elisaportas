@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Calendar, CalendarDays, ArrowLeft, LogOut, Plus, Hammer, Wrench, Package, HardHat, AlertTriangle, UserPlus, RefreshCw, CheckCircle } from "lucide-react";
+import { Calendar, CalendarDays, LogOut, Plus, Hammer, Wrench, Package, HardHat, AlertTriangle, UserPlus, RefreshCw, CheckCircle } from "lucide-react";
 
-import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
+import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
