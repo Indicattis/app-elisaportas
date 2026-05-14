@@ -638,6 +638,75 @@ export default function GestaoFabricaDirecao() {
     await concluirCarregamento({ ordem });
   };
 
+  const handleResetarCarregamento = async (pedidoId: string) => {
+    const ordem = ordensUnificadas.find(o => o.pedido_id === pedidoId && !o.carregamento_concluido);
+    if (!ordem) {
+      toast({ title: "Ordem não encontrada", description: "Nenhuma ordem agendada para resetar.", variant: "destructive" });
+      return;
+    }
+
+    try {
+      if (ordem.fonte === 'ordens_carregamento') {
+        const { error } = await supabase
+          .from('ordens_carregamento')
+          .update({
+            data_carregamento: null,
+            hora: null,
+            hora_carregamento: null,
+            tipo_carregamento: null,
+            responsavel_carregamento_id: null,
+            responsavel_carregamento_nome: null,
+            status: 'pendente',
+            carregamento_concluido: false,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', ordem.id);
+        if (error) throw error;
+      } else if (ordem.fonte === 'instalacoes') {
+        const { error } = await supabase
+          .from('instalacoes')
+          .update({
+            data_carregamento: null,
+            hora: null,
+            hora_carregamento: null,
+            responsavel_carregamento_id: null,
+            responsavel_carregamento_nome: null,
+            carregamento_concluido: false,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', ordem.id);
+        if (error) throw error;
+      } else if (ordem.fonte === 'correcoes') {
+        const { error } = await supabase
+          .from('correcoes')
+          .update({
+            data_carregamento: null,
+            hora: null,
+            hora_carregamento: null,
+            responsavel_carregamento_id: null,
+            responsavel_carregamento_nome: null,
+            carregamento_concluido: false,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', ordem.id);
+        if (error) throw error;
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['ordens_carregamento_unificadas'] });
+      queryClient.invalidateQueries({ queryKey: ['ordens_carregamento'] });
+      queryClient.invalidateQueries({ queryKey: ['ordens_carregamento_calendario'] });
+      queryClient.invalidateQueries({ queryKey: ['ordens_sem_data_carregamento'] });
+      queryClient.invalidateQueries({ queryKey: ['ordens_instalacao_calendario'] });
+      queryClient.invalidateQueries({ queryKey: ['pedidos-etapas'] });
+      queryClient.invalidateQueries({ queryKey: ['pedidos-contadores'] });
+
+      toast({ title: 'Carregamento resetado', description: 'O pedido voltou a precisar ser agendado.' });
+    } catch (err: any) {
+      console.error('Erro ao resetar carregamento:', err);
+      toast({ title: 'Erro', description: err?.message || 'Não foi possível resetar o carregamento.', variant: 'destructive' });
+    }
+  };
+
   const handleDeletarPedido = async (pedidoId: string) => {
     await deletarPedido.mutateAsync(pedidoId);
   };
