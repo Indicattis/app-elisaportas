@@ -533,88 +533,69 @@ export default function ExpedicaoMinimalista() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
 
+  const headerActions = (
+    <div className="flex items-center gap-1 sm:gap-2">
+      <Button
+        variant="outline"
+        size="sm"
+        className="bg-white/5 border-blue-500/10 text-white hover:bg-white/10"
+        onClick={() => navigate('/logistica/expedicao/nova-neo')}
+      >
+        <Plus className="h-4 w-4 sm:mr-1" />
+        <span className="hidden sm:inline">Novo Neo</span>
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => setViewType(viewType === 'week' ? 'month' : 'week')}
+        className="bg-white/5 border-blue-500/10 text-white hover:bg-white/10"
+      >
+        {viewType === 'week' ? <CalendarDays className="h-4 w-4" /> : <Calendar className="h-4 w-4" />}
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={handleToday}
+        className="bg-white/5 border-blue-500/10 text-white hover:bg-white/10"
+      >
+        Hoje
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={signOut}
+        className="bg-white/5 border-blue-500/10 text-white hover:bg-white/10"
+      >
+        <LogOut className="h-4 w-4" />
+      </Button>
+    </div>
+  );
+
+  const subtitlePeriodo = viewType === 'week'
+    ? `${format(weekStart, "dd/MM", { locale: ptBR })} - ${format(weekEnd, "dd/MM/yyyy", { locale: ptBR })}`
+    : format(currentDate, "MMMM 'de' yyyy", { locale: ptBR });
+
   return (
-    <div className="min-h-screen bg-black text-white overflow-hidden relative">
-      <AnimatedBreadcrumb 
-        items={[
-          { label: "Home", path: "/home" },
-          { label: "Logística", path: "/logistica" },
-          { label: "Expedição" }
-        ]} 
-        mounted={mounted} 
-      />
-      
-      
-      <div className="relative z-10 min-h-screen flex flex-col pt-14">
-        {/* Header */}
-        <header className="sticky top-0 z-20 px-4 py-3 bg-black/80 backdrop-blur-md border-b border-primary/10">
-          <div className="max-w-[1600px] mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => navigate('/logistica')}
-                className="p-2 rounded-lg hover:bg-primary/10 transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5 text-white/80" />
-              </button>
-              <div>
-                <h1 className="text-lg font-semibold text-white">Expedição</h1>
-                <p className="text-xs text-white/60">
-                  {viewType === 'week' 
-                    ? `${format(weekStart, "dd/MM", { locale: ptBR })} - ${format(weekEnd, "dd/MM/yyyy", { locale: ptBR })}`
-                    : format(currentDate, "MMMM 'de' yyyy", { locale: ptBR })
-                  }
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-1 sm:gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-white/80 hover:text-white hover:bg-primary/10 text-xs"
-                onClick={() => navigate('/logistica/expedicao/nova-neo')}
-              >
-                <Plus className="h-4 w-4 sm:mr-1" />
-                <span className="hidden sm:inline">Novo Neo</span>
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setViewType(viewType === 'week' ? 'month' : 'week')}
-                className="text-white/80 hover:text-white hover:bg-primary/10"
-              >
-                {viewType === 'week' ? <CalendarDays className="h-4 w-4" /> : <Calendar className="h-4 w-4" />}
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleToday}
-                className="text-white/80 hover:text-white hover:bg-primary/10 text-xs"
-              >
-                Hoje
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={signOut}
-                className="text-white/80 hover:text-white hover:bg-primary/10"
-              >
-                <LogOut className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </header>
-
-        {/* Conteúdo */}
-        <main className="flex-1 p-4 overflow-auto">
-          {isLoading ? (
-            <div className="flex items-center justify-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-            </div>
-          ) : (
-            <div className="max-w-[1600px] mx-auto space-y-4">
-              {/* Calendário */}
-              <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
+    <MinimalistLayout
+      title="Expedição"
+      subtitle={subtitlePeriodo}
+      backPath="/logistica"
+      breadcrumbItems={[
+        { label: "Home", path: "/home" },
+        { label: "Logística", path: "/logistica" },
+        { label: "Expedição" }
+      ]}
+      headerActions={headerActions}
+      fullWidth
+    >
+      {isLoading ? (
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400"></div>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {/* Calendário */}
+          <Card className="bg-white/5 border-white/10 backdrop-blur-xl rounded-xl">
                 <CardContent className="p-4">
                   {isMobile ? (
                     <CalendarioSemanalExpedicaoMobile
