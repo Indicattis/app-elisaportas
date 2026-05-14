@@ -2455,6 +2455,50 @@ className="flex h-[20px] w-full rounded-[3px]"
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <Dialog open={showResetarCarregamento} onOpenChange={(open) => { if (!isResetando) setShowResetarCarregamento(open); }}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-base">
+                <CalendarX className="w-5 h-5 text-amber-600" />
+                Resetar Carregamento
+              </DialogTitle>
+              <DialogDescription asChild>
+                <div className="space-y-3 pt-2">
+                  <div className="rounded-lg bg-muted p-3 space-y-1.5">
+                    <p className="text-sm font-medium text-foreground">{pedido.venda?.cliente?.nome || 'Cliente'}</p>
+                    <p className="text-xs text-muted-foreground font-mono">{pedido.numero_pedido_mensal ? formatarNumeroPedidoMensal(pedido.numero_pedido_mensal) : pedido.id.slice(0, 8)}</p>
+                    <p className="text-xs text-muted-foreground">Etapa atual: <span className="font-medium text-foreground">{ETAPAS_CONFIG[pedido.etapa_atual as EtapaPedido]?.label || pedido.etapa_atual}</span></p>
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    O agendamento (data, hora e responsável) será removido. O pedido voltará a precisar ser <span className="font-medium text-foreground">agendado novamente</span> no calendário de expedição.
+                  </div>
+                </div>
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button variant="outline" onClick={() => setShowResetarCarregamento(false)} disabled={isResetando}>
+                Cancelar
+              </Button>
+              <Button
+                className="bg-amber-600 hover:bg-amber-700 text-white"
+                disabled={isResetando}
+                onClick={async () => {
+                  if (!onResetarCarregamento) return;
+                  setIsResetando(true);
+                  try {
+                    await onResetarCarregamento(pedido.id);
+                    setShowResetarCarregamento(false);
+                  } finally {
+                    setIsResetando(false);
+                  }
+                }}
+              >
+                {isResetando ? 'Resetando...' : 'Sim, Resetar'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </>;
   }
 
