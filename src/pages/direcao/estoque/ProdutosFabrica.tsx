@@ -223,6 +223,18 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
           />
         </div>
       </TableCell>
+      <TableCell className="text-white/70 text-sm">
+        <EditableCell
+          value={produto.sku ?? ""}
+          placeholder="SKU"
+          display={
+            produto.sku
+              ? <span className="text-xs font-mono text-white/70">{produto.sku}</span>
+              : <span className="text-xs text-white/30">—</span>
+          }
+          onSave={(v) => onUpdateField(produto.id, { sku: String(v).trim() || null })}
+        />
+      </TableCell>
       <TableCell className="text-white/60 text-sm">
         <EditableSelectCell
           value={produto.fornecedor?.id ?? null}
@@ -1017,6 +1029,7 @@ export default function ProdutosFabrica() {
                   <TableRow className="border-white/10 hover:bg-transparent">
                     <TableHead className="w-10 px-1" />
                     <TableHead className="text-xs font-medium text-white/60">Produto</TableHead>
+                    <TableHead className="text-xs font-medium text-white/60">SKU</TableHead>
                     <TableHead className="text-xs font-medium text-white/60">Fornecedor</TableHead>
                     <TableHead className="text-xs font-medium text-white/60">Matéria-prima</TableHead>
                     <TableHead className="text-xs font-medium text-white/60">Categoria</TableHead>
@@ -1035,13 +1048,13 @@ export default function ProdutosFabrica() {
                   <TableBody>
                     {loading ? (
                       <TableRow className="border-white/10">
-                        <TableCell colSpan={14} className="text-center py-8 text-sm text-white/40">
+                        <TableCell colSpan={15} className="text-center py-8 text-sm text-white/40">
                           Carregando...
                         </TableCell>
                       </TableRow>
                     ) : filteredProdutos.length === 0 ? (
                       <TableRow className="border-white/10">
-                        <TableCell colSpan={14} className="text-center py-8 text-sm text-white/40">
+                        <TableCell colSpan={15} className="text-center py-8 text-sm text-white/40">
                           {searchTerm ? "Nenhum produto encontrado" : "Nenhum produto cadastrado"}
                         </TableCell>
                       </TableRow>
@@ -1071,6 +1084,7 @@ export default function ProdutosFabrica() {
                     <TableCell className="font-bold text-white">
                       TOTAL ({filteredProdutos.length} itens)
                     </TableCell>
+                    <TableCell />
                     <TableCell />
                     <TableCell />
                     <TableCell />
