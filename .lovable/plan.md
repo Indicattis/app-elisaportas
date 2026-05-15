@@ -1,24 +1,17 @@
-## Contexto
+## Problema
 
-As seções **3. Despesas Fixas**, **4. Folha Salarial** e **5. Despesas Variáveis** do PDF (componente `PrintReport` em `src/pages/direcao/DREMesDirecao.tsx`) são renderizadas pelo helper `PrintDespesaTable`, que hoje só mostra duas colunas: *Descrição* e *Valor*.
+Na página `/direcao/dre/2026-04`, a linha **Total** da coluna **Projetado** soma o `valor_maximo_mensal` de **todos** os tipos de custo cadastrados na categoria, mesmo os que não têm gasto registrado no mês. Por isso aparece R$ 78.500 (variáveis) e R$ 60.120 (fixas, sem Folha) — valores do orçamento mensal completo, e não dos itens efetivamente exibidos.
 
 ## Mudança
 
-Em `src/pages/direcao/DREMesDirecao.tsx`:
+Em `src/pages/direcao/DREMesDirecao.tsx`, no componente `PrintDespesaTable` (PDF) e no equivalente da tela interativa:
 
-1. Estender `PrintDespesaTable` para aceitar um prop opcional `tiposDisponiveis: TipoCustoVariavel[]`.
-   - Quando presente, adicionar a coluna **Projetado** (à direita de *Valor*).
-   - Para cada linha, buscar o tipo correspondente por `nome` e exibir `valor_maximo_mensal`; usar "—" quando não houver match.
-   - Aplicar a mesma coloração da tela (vermelho se realizado > projetado, verde se realizado < projetado, neutro se igual).
-   - Adicionar a soma dos projetados na linha TOTAL.
-2. No `PrintReport`, passar:
-   - Seção 3 → `tiposCustosFixos` filtrados por `!isFolha(t.nome)`
-   - Seção 4 → `tiposCustosFixos` filtrados por `isFolha(t.nome)`
-   - Seção 5 → `tiposCustosVariaveis`
-3. Mover/expor `isFolha` (já criado no escopo do módulo) para reuso — já está disponível.
+- Substituir a soma `tiposDisponiveis.reduce(...)` por uma soma que só considera os tipos cujo `nome` aparece em ao menos uma linha de `despesas`.
+- Aplicar nas três seções (Despesas Fixas, Folha Salarial, Despesas Variáveis), tanto no PDF (`PrintDespesaTable`, ~linha 478) quanto na tela (componente em ~linha 38–102).
+
+Resultado: o total da coluna *Projetado* passa a refletir apenas os tipos efetivamente listados, ficando consistente com o total de *Valor Real*.
 
 ## Fora de escopo
 
-- Sem mudanças nas seções 1, 2, 6, 7 do PDF.
-- Sem mudanças na página interativa (já tem a coluna em todas as três seções).
+- Sem mudanças nas demais seções/colunas do DRE.
 - Sem alterações de banco.
