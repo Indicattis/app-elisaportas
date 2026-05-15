@@ -7,6 +7,7 @@ import { Plus, Pencil, Trash2 } from "lucide-react";
 import { useFornecedores, Fornecedor } from "@/hooks/useFornecedores";
 import { FornecedorForm } from "@/components/compras/FornecedorForm";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
+import { EstadoCidadeInline } from "@/components/EstadoCidadeInline";
 
 // EditableCell: clique único para editar in-place
 type EditableCellProps = {
