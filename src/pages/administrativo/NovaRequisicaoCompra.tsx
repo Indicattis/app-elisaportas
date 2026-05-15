@@ -407,31 +407,6 @@ export default function NovaRequisicaoCompra() {
           </div>
         </div>
       </div>
-
-      <AlertDialog
-        open={!!pendingFornecedorChange}
-        onOpenChange={(o) => !o && setPendingFornecedorChange(null)}
-      >
-        <AlertDialogContent className="bg-zinc-900 border-white/10 text-white">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-white">Trocar fornecedor?</AlertDialogTitle>
-            <AlertDialogDescription className="text-white/60">
-              Os itens já adicionados serão removidos pois pertencem ao fornecedor anterior.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="border-white/10 text-white hover:bg-white/10">
-              Cancelar
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmFornecedorChange}
-              className="bg-gradient-to-r from-blue-500 to-blue-700 text-white"
-            >
-              Trocar e limpar itens
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </MinimalistLayout>
   );
 }
