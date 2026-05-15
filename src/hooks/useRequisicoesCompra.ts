@@ -8,6 +8,7 @@ export interface RequisicaoCompraItem {
   produto_nome?: string;
   produto_sku?: string | null;
   produto_unidade?: string | null;
+  produto_fornecedor_nome?: string | null;
   quantidade: number;
   preco_unitario?: number;
   preco_total?: number;
@@ -38,6 +39,7 @@ export interface RequisicaoCompra {
   created_at: string;
   updated_at: string;
   itens?: RequisicaoCompraItem[];
+  fornecedores_itens?: string[];
 }
 
 export interface RequisicaoCompraFormData {
@@ -85,11 +87,27 @@ export const useRequisicoesCompra = () => {
             .from("requisicoes_compra_itens")
             .select(`
               *,
-              estoque(nome_produto, sku, unidade, ipi_percent)
+              estoque(nome_produto, sku, unidade, ipi_percent, fornecedor:fornecedores(nome))
             `)
             .eq("requisicao_id", req.id);
 
           if (itensError) throw itensError;
+
+          const itensMapeados = (itensData || []).map((item: any) => ({
+            ...item,
+            produto_nome: item.estoque?.nome_produto,
+            produto_sku: item.estoque?.sku ?? null,
+            produto_unidade: item.estoque?.unidade ?? null,
+            produto_fornecedor_nome: item.estoque?.fornecedor?.nome ?? null,
+          }));
+
+          const fornecedoresItens = Array.from(
+            new Set(
+              itensMapeados
+                .map((i: any) => i.produto_fornecedor_nome)
+                .filter(Boolean) as string[]
+            )
+          );
 
           return {
             ...req,
@@ -98,12 +116,8 @@ export const useRequisicoesCompra = () => {
             fornecedor_cidade: req.fornecedores?.cidade ?? null,
             fornecedor_estado: req.fornecedores?.estado ?? null,
             solicitante_nome: solicitanteMap[req.solicitante_id] ?? null,
-            itens: (itensData || []).map((item: any) => ({
-              ...item,
-              produto_nome: item.estoque?.nome_produto,
-              produto_sku: item.estoque?.sku ?? null,
-              produto_unidade: item.estoque?.unidade ?? null,
-            })),
+            itens: itensMapeados,
+            fornecedores_itens: fornecedoresItens,
           };
         })
       );
@@ -135,7 +149,7 @@ export const useRequisicoesCompra = () => {
         .from("requisicoes_compra")
         .insert([{
           numero_requisicao: numeroData,
-          fornecedor_id: requisicao.fornecedor_id,
+          fornecedor_id: requisicao.fornecedor_id || null,
           data_necessidade: requisicao.data_necessidade || null,
           observacoes: requisicao.observacoes,
           status: "pendente_aprovacao",
