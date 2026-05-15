@@ -632,13 +632,7 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
           supabase.from('correcoes').select('data_carregamento, carregamento_concluido').eq('pedido_id', pedidoId).order('created_at', { ascending: false }).limit(1),
         ]);
 
-        console.log('[DEBUG carregamento] pedidoId:', pedidoId);
-        console.log('[DEBUG carregamento] ordensRes:', ordensRes.data);
-        console.log('[DEBUG carregamento] instRes:', instRes.data);
-        console.log('[DEBUG carregamento] corrRes:', corrRes.data);
-
         const todasFontes = [ordensRes.data?.[0], instRes.data?.[0], corrRes.data?.[0]].filter(Boolean);
-        console.log('[DEBUG carregamento] todasFontes:', todasFontes);
 
         if (todasFontes.length === 0) {
           throw new Error('Ordem de carregamento não encontrada para este pedido');
@@ -646,9 +640,9 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
 
         const algumaComData = todasFontes.some(f => f.data_carregamento);
         const algumaConcluida = todasFontes.some(f => f.carregamento_concluido);
-        console.log('[DEBUG carregamento] algumaComData:', algumaComData, 'algumaConcluida:', algumaConcluida);
 
-        if (!algumaComData) {
+        // Se já está concluído, aceita mesmo sem data preenchida (data inferida de carregamento_concluido_em)
+        if (!algumaConcluida && !algumaComData) {
           throw new Error('Informe a data de carregamento antes de finalizar o pedido');
         }
 

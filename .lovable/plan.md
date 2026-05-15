@@ -1,40 +1,65 @@
-## Aplicar visual de /direcao/gestao-fabrica em /logistica/expedicao
+# Corrigir bloqueio "Informe a data de carregamento" no avanço de pedido
 
-Unificar a aparência da página de Expedição com a Gestão de Fábrica: mesmo shell (MinimalistLayout), mesma paleta glass branca/azul, mesmo estilo de tabs com avatares grandes e mesmas wrappers de card.
+## Problema
 
-### Mudanças por seção
+No pedido **63 - Mar/2026 STAATS & CIA LTDA** (`46b56be5...`), a etapa atual é `instalacoes` e o registro em `instalacoes` está com:
+- `carregamento_concluido = true` (concluído em 15/05/2026)
+- `data_carregamento = NULL`
 
-**1. Shell da página**
-- Substituir o wrapper customizado (`min-h-screen bg-black ...` + header sticky próprio) por `<MinimalistLayout title="Expedição" subtitle={...periodo} backPath="/logistica" breadcrumbItems={...} headerActions={...} fullWidth>` — mesmo padrão usado em GestaoFabricaDirecao.
-- Mover os botões do header atual (Novo Neo, alternar week/month, Hoje, Sair) para `headerActions`, usando o estilo `bg-white/5 border-blue-500/10 text-white hover:bg-white/10` (igual aos botões do header da Gestão).
-- Subtítulo dinâmico: o intervalo da semana ou nome do mês atual.
+A validação em `src/hooks/usePedidosEtapas.ts` (linhas 626–657) exige **ambos**: `data_carregamento` preenchido **e** `carregamento_concluido = true`. Como a data está nula, o avanço é barrado mesmo com o carregamento já marcado como concluído.
 
-**2. Wrappers Card → glass branca**
-- Trocar `bg-primary/5 border-primary/10 backdrop-blur-xl` por `bg-white/5 border-white/10 backdrop-blur-xl rounded-xl` (mesma classe da Gestão) nos dois Cards: o do calendário e o da listagem por etapa.
-- Padding interno e estrutura permanecem.
+A causa raiz é um fluxo onde o usuário concluiu o carregamento sem antes agendar uma data (ou a data foi limpa em algum reagendamento), deixando o registro inconsistente.
 
-**3. TabsList das etapas (desktop)**
-- Aplicar exatamente o estilo da Gestão de Fábrica:
-  - `TabsList`: `w-full justify-start overflow-x-auto flex-nowrap h-[85px] p-1.5 gap-2 bg-white/5 border border-white/10 backdrop-blur-xl rounded-xl`.
-  - Cada `TabsTrigger`: `flex-shrink-0 flex-row items-center justify-start h-full min-w-[150px] px-3 py-2 gap-2.5 rounded-lg bg-white/5 border border-white/10 backdrop-blur-xl text-white/70 hover:bg-white/[0.08] hover:border-blue-400/30 transition-all data-[state=active]:bg-blue-500/15 data-[state=active]:border-blue-400/50 data-[state=active]:text-white data-[state=active]:shadow-[0_0_0_1px_rgba(96,165,250,0.3)]`.
-  - Avatar grande 9x9 (`Avatar h-9 w-9` com border `border-blue-500/30`) ou círculo de fallback `h-9 w-9 rounded-full bg-blue-500/10 border-blue-500/30` com o ícone da etapa em `text-blue-400`.
-  - Coluna ao lado: `<span class="text-xs font-medium leading-tight truncate">` + pill de contagem `px-1.5 py-0.5 bg-blue-500/20 text-blue-400 rounded-full text-[10px] font-semibold leading-none`.
-  - Como Expedição tem só 4 etapas (`aguardando_coleta`, `instalacoes`, `correcoes`, `finalizado`), todas ficam em um único container — sem o agrupamento colorido por borda usado na Gestão.
+## Solução
 
-**4. Seletor mobile**
-- Trocar `bg-primary/5 border-primary/10` por `bg-white/5 border-blue-500/10 text-white` no `SelectTrigger`.
-- `SelectContent` mantém `bg-zinc-900 border-blue-500/10`.
-- Badges de contagem usam `bg-blue-500/20 text-blue-400` (em vez de `bg-primary/10`).
+### 1. Relaxar a validação (`src/hooks/usePedidosEtapas.ts`)
 
-**5. CardHeader interno de cada TabsContent**
-- Mesmo título grande (`text-lg`), contagem em `text-white/60`, badge de portas em `bg-blue-500/10 text-blue-400`.
+Tratar `carregamento_concluido = true` como prova suficiente de que o carregamento aconteceu. Se concluído mas sem `data_carregamento`, considerar a data de `carregamento_concluido_em` como fallback ao invés de bloquear.
 
-**6. Detalhes**
-- Loader spinner com `border-blue-400` em vez de `border-primary`.
-- O calendário em si (`CalendarioMensalExpedicaoDesktop` / `CalendarioSemanalExpedicaoDesktop`) já é compartilhado com a Gestão (via `CalendarioExpedicaoModal`) e não muda.
+Mudança no bloco em ~linha 647:
 
-### Arquivos a editar
+```ts
+const fonteConcluida = todasFontes.find(f => f.carregamento_concluido);
+const algumaComData = todasFontes.some(f => f.data_carregamento);
 
-- `src/pages/logistica/ExpedicaoMinimalista.tsx` — única alteração; reescrita do bloco `return (...)` (linhas ~536-720) para usar `MinimalistLayout` + classes glass brancas, e ajuste do bloco de `TabsList`/`Select` para o novo padrão.
+// Se já está concluído, aceita mesmo sem data (data será inferida do carregamento_concluido_em)
+if (!fonteConcluida && !algumaComData) {
+  throw new Error('Informe a data de carregamento antes de finalizar o pedido');
+}
 
-Sem alterações em hooks, dados, calendário, ou componentes filhos. Sem migração.
+if (!fonteConcluida) {
+  throw new Error('O carregamento deve ser concluído antes de finalizar o pedido');
+}
+```
+
+Também remover os `console.log('[DEBUG carregamento] ...')` (linhas 635–649) que estão poluindo o console em produção.
+
+### 2. Backfill no banco (migração)
+
+Para manter consistência (calendários, relatórios e detecções futuras), atualizar registros já concluídos sem data:
+
+```sql
+UPDATE instalacoes
+SET data_carregamento = (carregamento_concluido_em AT TIME ZONE 'UTC')::date
+WHERE carregamento_concluido = true AND data_carregamento IS NULL;
+
+UPDATE ordens_carregamento
+SET data_carregamento = (carregamento_concluido_em AT TIME ZONE 'UTC')::date
+WHERE carregamento_concluido = true AND data_carregamento IS NULL;
+
+UPDATE correcoes
+SET data_carregamento = (carregamento_concluido_em AT TIME ZONE 'UTC')::date
+WHERE carregamento_concluido = true AND data_carregamento IS NULL;
+```
+
+Isso destrava o pedido atual e qualquer outro na mesma situação.
+
+## Arquivos afetados
+
+- `src/hooks/usePedidosEtapas.ts` — relaxar validação + remover debug logs
+- Nova migração SQL — backfill de `data_carregamento`
+
+## Fora do escopo
+
+- Não altero a UI de agendamento/conclusão de carregamento
+- Não mexo na lógica de calendários da expedição
