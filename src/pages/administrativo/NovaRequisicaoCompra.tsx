@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Trash2, ArrowLeft, Save, Search, Zap, Package } from "lucide-react";
+import { Trash2, ArrowLeft, Save, Search, Zap, Package, Truck } from "lucide-react";
 import { useRequisicoesCompra, RequisicaoCompraFormData, RequisicaoCompraItem } from "@/hooks/useRequisicoesCompra";
 import { useFornecedores } from "@/hooks/useFornecedores";
 import { useEstoque } from "@/hooks/useEstoque";
@@ -146,6 +146,14 @@ export default function NovaRequisicaoCompra() {
         className="border-white/10 text-white hover:bg-white/10"
       >
         <Package className="h-4 w-4 mr-2" /> Gerenciar itens
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => navigate("/administrativo/compras/fornecedores")}
+        className="border-white/10 text-white hover:bg-white/10"
+      >
+        <Truck className="h-4 w-4 mr-2" /> Gerenciar fornecedores
       </Button>
       <Button
         size="sm"
