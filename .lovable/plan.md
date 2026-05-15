@@ -1,28 +1,27 @@
-## Mudanças no PDF do DRE (`src/pages/direcao/DREMesDirecao.tsx`)
+## Objetivo
+Em `/administrativo/compras/requisicoes/nova`:
+- Remover a obrigatoriedade de escolher um fornecedor antes de adicionar itens.
+- Tornar o campo de **inserção rápida** o primeiro elemento da página (logo após o cabeçalho).
+- Permitir buscar e adicionar produtos de **qualquer fornecedor** (mostrando o nome do fornecedor em cada sugestão).
+- Na listagem de requisições, exibir os fornecedores **derivados dos itens** adicionados.
 
-### 1. Adicionar logotipo no topo
-- Copiar `user-uploads://Logo_Elisa_Portas_de_ENROLAR_PRETO-4.png` para `src/assets/logo-elisa-dre.png`.
-- Importar como ES6 no topo do arquivo: `import logoElisa from "@/assets/logo-elisa-dre.png"`.
-- No componente `PrintReport`, no bloco "CABEÇALHO" (linhas 178‑204), inserir um `<img src={logoElisa} />` à esquerda do bloco de título "Demonstrativo de Resultados", com altura ~48px e `objectFit: contain`, mantendo o título e a coluna direita ("Emitido em") alinhados como hoje.
+## Mudanças em `src/pages/administrativo/NovaRequisicaoCompra.tsx`
+1. **Reordenar layout:** mover o bloco de "Inserção rápida" para o topo, antes de "Dados gerais". "Dados gerais" passa a ter apenas Data de Necessidade + Observações (remover o `Select` de Fornecedor).
+2. **Quick search global:** trocar `itensDoFornecedor` por filtragem em todo `estoque` ativo. Cada sugestão exibe `nome_produto` + `SKU` + **nome do fornecedor** (`p.fornecedor?.nome`).
+3. **Adicionar item:** ao adicionar, gravar `codigo_fornecedor` a partir do fornecedor do próprio produto (buscar em `fornecedores` pelo `produto.fornecedor_id`), não mais do fornecedor da requisição.
+4. **Linha da tabela de itens:** adicionar coluna "Fornecedor" exibindo `produto.fornecedor?.nome`. Remover o `Select` de produto por linha (toda inserção passa a ser pelo quick-add) — manter só visualização do nome do produto + SKU.
+5. **Remover** estados/funções não utilizados: `pendingFornecedorChange`, `handleSelectFornecedor`, `confirmFornecedorChange`, `handleAdicionarLinha`, AlertDialog de troca de fornecedor.
+6. **Salvar:** remover validação `if (!formData.fornecedor_id)`. Enviar `fornecedor_id: undefined` (campo já é opcional no hook).
 
-### 2. Remover seção "Top 5 Acessórios / Top 5 Itens Avulso"
-- Excluir o bloco JSX das linhas ~283‑333 (`{(topAcessorios.length > 0 || topAdicionais.length > 0) && (...)}`)
-- Manter as props `topAcessorios` e `topAdicionais` por enquanto sem uso no PDF (não tocar na lógica que as carrega — fora do escopo da requisição).
+## Mudanças em `src/hooks/useRequisicoesCompra.ts`
+- Nenhuma alteração de schema. `fornecedor_id` já é opcional no insert.
+- Já carrega `estoque(...)` por item; expandir o `select` de itens para incluir `fornecedores(nome)` via `estoque(fornecedor:fornecedores(nome))` para que a listagem tenha acesso ao nome do fornecedor de cada item.
+- Adicionar campo derivado `fornecedores_itens: string[]` (lista única de nomes) em cada requisição, para uso na listagem.
 
-### 3. Mover "7. Resumo Final" para a posição da seção removida
-- Recortar o bloco "RESUMO FINAL" atual (linhas ~419‑447) do final do relatório.
-- Colá‑lo exatamente onde estava o Top 5 (logo após a tabela "1. Faturamento por Categoria" e antes do `<div className="pdf-page-break" />` que inicia as Despesas).
-- Renomear o título de `"7. Resumo Final"` para `"2. Resumo Final"` e renumerar as seções seguintes:
-  - Despesas Fixas: 2 → 3
-  - Folha Salarial: 3 → 4
-  - Despesas Variáveis: 4 → 5
-  - Despesas Projetadas do Ano: 5 → 6
-  - Estoque: 6 → 7
-- Remover a referência antiga a "7. Resumo Final" no final (já movida).
+## Mudanças em `src/pages/administrativo/RequisicoesMinimalista.tsx`
+- Coluna "Fornecedor" passa a renderizar `requisicao.fornecedores_itens?.join(", ") || requisicao.fornecedor_nome || "-"` (mantém retrocompatibilidade com requisições antigas que tinham fornecedor único).
+- Mesma troca no painel de detalhes (linha 345).
+- Atualizar busca para considerar `fornecedores_itens`.
 
-### 4. Sem mudanças de lógica
-- Cálculos, hooks e dados permanecem idênticos. Apenas reorganização visual e numeração das seções no PDF.
-
-### Arquivos afetados
-- `src/pages/direcao/DREMesDirecao.tsx` (edições no `PrintReport`)
-- `src/assets/logo-elisa-dre.png` (novo arquivo, cópia do upload)
+## Sem mudanças de banco
+Modelo continua aceitando `fornecedor_id` nulo na requisição; o vínculo do fornecedor por item já existe através do `produto_id → estoque.fornecedor_id`.

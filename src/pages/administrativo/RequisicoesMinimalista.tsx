@@ -59,7 +59,12 @@ export default function RequisicoesMinimalista() {
     if (!searchTerm.trim()) return requisicoes;
     const q = searchTerm.toLowerCase();
     return requisicoes.filter((r) =>
-      [r.numero_requisicao, r.fornecedor_nome, r.solicitante_nome]
+      [
+        r.numero_requisicao,
+        r.fornecedor_nome,
+        r.solicitante_nome,
+        ...(r.fornecedores_itens || []),
+      ]
         .filter(Boolean)
         .some((v) => (v as string).toLowerCase().includes(q))
     );
@@ -262,7 +267,11 @@ export default function RequisicoesMinimalista() {
                       <TableCell className="text-white/70">
                         {format(new Date(requisicao.created_at), "dd/MM/yyyy", { locale: ptBR })}
                       </TableCell>
-                      <TableCell className="text-white">{requisicao.fornecedor_nome || "-"}</TableCell>
+                      <TableCell className="text-white">
+                        {requisicao.fornecedores_itens && requisicao.fornecedores_itens.length > 0
+                          ? requisicao.fornecedores_itens.join(", ")
+                          : requisicao.fornecedor_nome || "-"}
+                      </TableCell>
                       <TableCell className="text-white/80">{requisicao.solicitante_nome || "Sistema"}</TableCell>
                       <TableCell className="text-white/70">
                         {requisicao.data_necessidade
@@ -342,7 +351,11 @@ export default function RequisicoesMinimalista() {
                 </div>
                 <div>
                   <p className="text-sm text-white/60">Fornecedor</p>
-                  <p className="font-medium text-white">{requisicaoSelecionada.fornecedor_nome || "Não especificado"}</p>
+                  <p className="font-medium text-white">
+                    {requisicaoSelecionada.fornecedores_itens && requisicaoSelecionada.fornecedores_itens.length > 0
+                      ? requisicaoSelecionada.fornecedores_itens.join(", ")
+                      : requisicaoSelecionada.fornecedor_nome || "Não especificado"}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-white/60">Data de Criação</p>
