@@ -109,6 +109,7 @@ function PrintReport({
   despesasFixas,
   despesasFolha,
   despesasVariaveis,
+  tiposCustosFixos,
   tiposCustosVariaveis,
   totalDespFixas,
   totalDespFolha,
@@ -128,6 +129,7 @@ function PrintReport({
   despesasFixas: DespesaAgrupada[];
   despesasFolha: DespesaAgrupada[];
   despesasVariaveis: DespesaAgrupada[];
+  tiposCustosFixos: TipoCustoVariavel[];
   tiposCustosVariaveis: TipoCustoVariavel[];
   totalDespFixas: number;
   totalDespFolha: number;
@@ -326,17 +328,32 @@ function PrintReport({
 
       <div style={{ marginTop: 0 }}>
         <div style={H2}>3. Despesas Fixas</div>
-        <PrintDespesaTable items={despesasFixas} total={totalDespFixas} formatCurrency={formatCurrency} />
+        <PrintDespesaTable
+          items={despesasFixas}
+          total={totalDespFixas}
+          formatCurrency={formatCurrency}
+          tiposDisponiveis={tiposCustosFixos.filter(t => !isFolha(t.nome))}
+        />
       </div>
 
       <div style={SECTION}>
         <div style={H2}>4. Folha Salarial</div>
-        <PrintDespesaTable items={despesasFolha} total={totalDespFolha} formatCurrency={formatCurrency} />
+        <PrintDespesaTable
+          items={despesasFolha}
+          total={totalDespFolha}
+          formatCurrency={formatCurrency}
+          tiposDisponiveis={tiposCustosFixos.filter(t => isFolha(t.nome))}
+        />
       </div>
 
       <div style={SECTION}>
         <div style={H2}>5. Despesas Variáveis</div>
-        <PrintDespesaTable items={despesasVariaveis} total={totalDespVariaveis} formatCurrency={formatCurrency} />
+        <PrintDespesaTable
+          items={despesasVariaveis}
+          total={totalDespVariaveis}
+          formatCurrency={formatCurrency}
+          tiposDisponiveis={tiposCustosVariaveis}
+        />
       </div>
 
       {/* PROJETADAS DO ANO */}
@@ -426,10 +443,12 @@ function PrintDespesaTable({
   items,
   total,
   formatCurrency,
+  tiposDisponiveis,
 }: {
   items: DespesaAgrupada[];
   total: number;
   formatCurrency: (v: number) => string;
+  tiposDisponiveis?: TipoCustoVariavel[];
 }) {
   const TH: React.CSSProperties = {
     background: '#f1f5f9',
@@ -454,21 +473,49 @@ function PrintDespesaTable({
       </div>
     );
   }
+  const showProj = !!(tiposDisponiveis && tiposDisponiveis.length > 0);
+  const totalProj = showProj
+    ? tiposDisponiveis!.reduce((s, t) => s + (t.valor_maximo_mensal || 0), 0)
+    : 0;
   return (
     <table>
       <thead>
         <tr>
           <th style={TH}>Descrição</th>
           <th style={{ ...TH, textAlign: 'right', width: 140 }}>Valor</th>
+          {showProj && (
+            <th style={{ ...TH, textAlign: 'right', width: 140 }}>Projetado</th>
+          )}
         </tr>
       </thead>
       <tbody>
         {items.map((d, i) => (
           <tr key={d.id} style={{ background: i % 2 === 0 ? '#ffffff' : '#fafbfc' }}>
             <td style={TD}>{d.nome}</td>
-            <td style={{ ...TD, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
-              {formatCurrency(d.valor_real)}
-            </td>
+            {(() => {
+              const tipoRef = showProj
+                ? tiposDisponiveis!.find(t => t.nome === d.nome)
+                : undefined;
+              const cor = tipoRef
+                ? d.valor_real > tipoRef.valor_maximo_mensal
+                  ? '#b91c1c'
+                  : d.valor_real < tipoRef.valor_maximo_mensal
+                    ? '#047857'
+                    : '#0f172a'
+                : '#0f172a';
+              return (
+                <>
+                  <td style={{ ...TD, textAlign: 'right', fontVariantNumeric: 'tabular-nums', color: cor, fontWeight: tipoRef ? 600 : 400 }}>
+                    {formatCurrency(d.valor_real)}
+                  </td>
+                  {showProj && (
+                    <td style={{ ...TD, textAlign: 'right', fontVariantNumeric: 'tabular-nums', color: '#64748b' }}>
+                      {tipoRef ? formatCurrency(tipoRef.valor_maximo_mensal) : '—'}
+                    </td>
+                  )}
+                </>
+              );
+            })()}
           </tr>
         ))}
         <tr style={{ background: '#1e3a8a', color: '#fff' }}>
@@ -476,6 +523,11 @@ function PrintDespesaTable({
           <td style={{ ...TD, textAlign: 'right', fontWeight: 800, color: '#fff', borderBottom: 'none', fontVariantNumeric: 'tabular-nums' }}>
             {formatCurrency(total)}
           </td>
+          {showProj && (
+            <td style={{ ...TD, textAlign: 'right', fontWeight: 800, color: '#fff', borderBottom: 'none', fontVariantNumeric: 'tabular-nums' }}>
+              {formatCurrency(totalProj)}
+            </td>
+          )}
         </tr>
       </tbody>
     </table>
@@ -778,6 +830,7 @@ export default function DREMesDirecao() {
         despesasFolha={despesasFolha}
         despesasVariaveis={despesasVariaveis}
         tiposCustosVariaveis={tiposCustosVariaveis}
+        tiposCustosFixos={tiposCustosFixos}
         totalDespFixas={totalDespFixas}
         totalDespFolha={totalDespFolha}
         totalDespVariaveis={totalDespVariaveis}
