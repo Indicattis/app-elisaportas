@@ -810,7 +810,19 @@ export default function DREMesDirecao() {
       headerActions={
         !loading ? (
           <button
-            onClick={() => window.print()}
+            onClick={async () => {
+              // Pré-carrega o logo antes de imprimir, pois #dre-print-document
+              // está em display:none e o Chrome pode não carregar a imagem a tempo.
+              try {
+                await new Promise<void>((resolve) => {
+                  const img = new Image();
+                  img.onload = () => resolve();
+                  img.onerror = () => resolve();
+                  img.src = logoElisa;
+                });
+              } catch {}
+              window.print();
+            }}
             className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/10 border border-white/10 text-white text-sm hover:bg-white/20 transition-colors print:hidden"
           >
             <Printer className="w-4 h-4" strokeWidth={1.5} />
