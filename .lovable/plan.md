@@ -1,17 +1,12 @@
-## Problema
-
-Na página `/direcao/dre/2026-04`, a linha **Total** da coluna **Projetado** soma o `valor_maximo_mensal` de **todos** os tipos de custo cadastrados na categoria, mesmo os que não têm gasto registrado no mês. Por isso aparece R$ 78.500 (variáveis) e R$ 60.120 (fixas, sem Folha) — valores do orçamento mensal completo, e não dos itens efetivamente exibidos.
-
 ## Mudança
 
-Em `src/pages/direcao/DREMesDirecao.tsx`, no componente `PrintDespesaTable` (PDF) e no equivalente da tela interativa:
+Em `src/pages/administrativo/NovaRequisicaoCompra.tsx`, adicionar uma coluna dedicada **SKU** na tabela de itens da requisição (logo após "Produto"):
 
-- Substituir a soma `tiposDisponiveis.reduce(...)` por uma soma que só considera os tipos cujo `nome` aparece em ao menos uma linha de `despesas`.
-- Aplicar nas três seções (Despesas Fixas, Folha Salarial, Despesas Variáveis), tanto no PDF (`PrintDespesaTable`, ~linha 478) quanto na tela (componente em ~linha 38–102).
-
-Resultado: o total da coluna *Projetado* passa a refletir apenas os tipos efetivamente listados, ficando consistente com o total de *Valor Real*.
+- Novo `<TableHead>` com largura `w-28`, label "SKU".
+- Nova `<TableCell>` exibindo `item.produto_sku` (ou "-" se vazio), em `text-xs text-white/60`.
+- Remover o subtítulo "SKU ..." que hoje aparece embaixo do nome do produto, para não duplicar a informação.
 
 ## Fora de escopo
 
-- Sem mudanças nas demais seções/colunas do DRE.
-- Sem alterações de banco.
+- Sem mudanças no fluxo de adicionar/remover itens.
+- Sem mudanças no banco.
