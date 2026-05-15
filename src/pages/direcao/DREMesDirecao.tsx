@@ -548,9 +548,6 @@ export default function DREMesDirecao() {
       tipo: v.tipo,
     }));
 
-    // Separar por tipo — "Salário" ou "Folha" vai para folha salarial
-    const isFolha = (nome: string) => /sal[áa]rio|folha/i.test(nome);
-
     setDespesasFixas(items.filter(i => i.tipo === 'fixa' && !isFolha(i.nome)));
     setDespesasFolha(items.filter(i => isFolha(i.nome)));
     setDespesasVariaveis(items.filter(i => i.tipo === 'variavel' && !isFolha(i.nome)));
