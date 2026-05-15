@@ -1,30 +1,35 @@
 ## Objetivo
 
-Substituir a página em `/administrativo/compras/estoque` por uma cópia idêntica de `/administrativo/compras/itens` (mesmo comportamento, layout e edição inline incluindo SKU).
+Tornar a tabela em `/administrativo/compras/fornecedores` editável inline ao clicar nas células — incluindo o **código numérico** do fornecedor.
 
 ## Mudanças
 
-### 1. Substituir o componente da rota `/administrativo/compras/estoque`
-- Em `src/App.tsx` (linha 612), trocar `<EstoqueMinimalista />` por `<ItensAdministrativo />` na rota `/administrativo/compras/estoque`.
-- Remover a rota `/administrativo/compras/estoque/editar-item/:id` (linha 613) e o import de `EstoqueEditMinimalista`, já que a nova página usa edição inline (sem rota de edição separada).
-- Remover o import de `EstoqueMinimalista` em `App.tsx`.
+### 1. `src/hooks/useFornecedores.ts`
+- Acrescentar `codigo?: number` em `FornecedorFormData` (atualmente só o create gera código). Isso libera o `updateFornecedor` a aceitar `codigo` no patch sem mudar o create.
+- O mutation de update já faz `.update(data)` direto, então o novo campo flui automaticamente.
 
-### 2. Excluir os arquivos antigos
-- Apagar `src/pages/administrativo/EstoqueMinimalista.tsx`.
-- Apagar `src/pages/administrativo/EstoqueEditMinimalista.tsx`.
+### 2. `src/pages/administrativo/FornecedoresMinimalista.tsx`
+- Adicionar um componente local `EditableCell` (mesmo padrão do `ProdutosFabrica.tsx`: clique único entra em modo edição, `Enter` salva, `Esc` cancela, `blur` salva).
+- Suportar variações:
+  - texto (nome, responsavel, cnpj, cidade, estado)
+  - número (codigo) com validação `>0` e máscara `#0000`
+  - select (tipo: PF/PJ) usando um `<select>` simples estilizado.
+- Substituir as `<TableCell>` de leitura pelas células editáveis, salvando via `updateFornecedor({ id, ...patch })`.
+- Manter o botão de lápis (abre o `FornecedorForm` completo para campos não exibidos: bairro, CEP) e o botão de excluir.
+- Para `cidade/estado`: dois campos separados na edição (já que são duas colunas no banco), mas mantidos lado a lado na exibição "Cidade - Estado".
 
-### 3. Ajustar `backPath` / breadcrumbs ao usar `ItensAdministrativo` em duas rotas
-- O componente `ItensAdministrativo` hoje aponta `backPath="/administrativo/compras"` e título "Itens" — isso continua válido para ambas as rotas (`/itens` e `/estoque`), então **nenhuma alteração interna** é necessária.
-- A rota `/administrativo/compras/itens` permanece como está (ponto de entrada principal usado pelo botão "Gerenciar itens" da Nova Requisição).
-- A rota `/administrativo/compras/estoque` passa a renderizar exatamente a mesma página.
+### 3. Comportamento de salvamento
+- `onSave` chama `updateFornecedor({ id: fornecedor.id, [campo]: novoValor })`.
+- Toasts de sucesso/erro já existentes no hook cobrem feedback.
+- Em caso de erro (ex.: código duplicado), o React Query revalida e o valor antigo retorna.
 
 ## Pontos fora do escopo
 
-- Não alterar `ComprasHub.tsx` nem `ComprasHome.tsx` (continuam apontando para `/administrativo/compras/estoque`, que agora carrega a nova página).
-- Não mexer em rotas legadas `/dashboard/administrativo/compras/estoque/...` (sub-rotas como `regras-etiquetas` e `gerenciamento` não pertencem a esta rota minimalista).
-- Sem mudanças de banco de dados.
+- Não alterar o `FornecedorForm` (continua sendo o caminho para editar campos não exibidos).
+- Sem mudanças de banco de dados — `fornecedores.codigo` já é editável no schema atual.
+- Não tocar em `/estoque/fornecedores` nem `/direcao/estoque/configuracoes/fornecedores`.
 
 ## Observações técnicas
 
-- A rota `/administrativo/compras/estoque/editar-item/:id` deixa de existir; quaisquer links internos que ainda a referenciem ficarão órfãos. Verificação rápida confirmou que ela só é usada dentro do próprio `EstoqueMinimalista.tsx` (que será excluído).
-- A `routeKey="administrativo_hub"` é mantida para preservar permissões.
+- Se `codigo` tiver `UNIQUE` no banco, a tentativa de duplicar dispara erro do Postgres → o toast de erro do `updateMutation` mostra a mensagem.
+- O `EditableCell` será local ao arquivo (sem extrair util compartilhada agora) para manter a mudança contida.
