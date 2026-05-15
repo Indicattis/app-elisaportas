@@ -410,7 +410,7 @@ function DragOverlayRow({ produto }: { produto: ProdutoEstoque | null }) {
   );
 }
 
-export default function ProdutosFabrica() {
+export default function ItensAdministrativo() {
   const navigate = useNavigate();
   const location = useLocation();
   const { produtos, loading, adicionarProduto, reordenarProdutos, excluirProduto } = useEstoque();
@@ -939,29 +939,19 @@ export default function ProdutosFabrica() {
     </div>
   );
 
-  const isFabricaRoute = location.pathname.startsWith('/fabrica');
+  const backPath = '/administrativo/compras';
 
-  const backPath = isFabricaRoute ? '/fabrica' : '/direcao/estoque/configuracoes/produtos';
-
-  const breadcrumbItems = isFabricaRoute
-    ? [
-        { label: 'Home', path: '/home' },
-        { label: 'Fábrica', path: '/fabrica' },
-        { label: 'Produtos' }
-      ]
-    : [
-        { label: 'Home', path: '/home' },
-        { label: 'Direção', path: '/direcao' },
-        { label: 'Estoque', path: '/direcao/estoque' },
-        { label: 'Configurações', path: '/direcao/estoque/configuracoes' },
-        { label: 'Produtos', path: '/direcao/estoque/configuracoes/produtos' },
-        { label: 'Fábrica' }
-      ];
+  const breadcrumbItems = [
+    { label: 'Home', path: '/home' },
+    { label: 'Administrativo', path: '/administrativo' },
+    { label: 'Compras', path: '/administrativo/compras' },
+    { label: 'Itens' }
+  ];
 
   return (
     <MinimalistLayout
-      title="Produtos da Fábrica"
-      subtitle="Gerencie os produtos do estoque"
+      title="Itens"
+      subtitle="Gerencie os itens do estoque"
       backPath={backPath}
       headerActions={headerActions}
       breadcrumbItems={breadcrumbItems}
