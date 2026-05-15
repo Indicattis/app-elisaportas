@@ -270,8 +270,6 @@ import VagasPage from "./pages/administrativo/VagasPage";
 import PreencherVagaPage from "./pages/administrativo/rh-dp/PreencherVagaPage";
 import ResponsabilidadesPage from "./pages/administrativo/ResponsabilidadesPage";
 import FuncoesPage from "./pages/administrativo/FuncoesPage";
-import EstoqueMinimalista from "./pages/administrativo/EstoqueMinimalista";
-import EstoqueEditMinimalista from "./pages/administrativo/EstoqueEditMinimalista";
 import RequisicoesMinimalista from "./pages/administrativo/RequisicoesMinimalista";
 import NovaRequisicaoCompra from "./pages/administrativo/NovaRequisicaoCompra";
 import ItensAdministrativo from "./pages/administrativo/ItensAdministrativo";
@@ -609,8 +607,7 @@ const App = () => (
 
                 {/* Hub de Compras Minimalista */}
                 <Route path="/administrativo/compras" element={<ProtectedRoute routeKey="administrativo_hub"><ComprasHub /></ProtectedRoute>} />
-                <Route path="/administrativo/compras/estoque" element={<ProtectedRoute routeKey="administrativo_hub"><EstoqueMinimalista /></ProtectedRoute>} />
-                <Route path="/administrativo/compras/estoque/editar-item/:id" element={<ProtectedRoute routeKey="administrativo_hub"><EstoqueEditMinimalista /></ProtectedRoute>} />
+                <Route path="/administrativo/compras/estoque" element={<ProtectedRoute routeKey="administrativo_hub"><ItensAdministrativo /></ProtectedRoute>} />
                 <Route path="/administrativo/compras/requisicoes" element={<ProtectedRoute routeKey="administrativo_hub"><RequisicoesMinimalista /></ProtectedRoute>} />
                 <Route path="/administrativo/compras/requisicoes/nova" element={<ProtectedRoute routeKey="administrativo_hub"><NovaRequisicaoCompra /></ProtectedRoute>} />
                 <Route path="/administrativo/compras/itens" element={<ProtectedRoute routeKey="administrativo_hub"><ItensAdministrativo /></ProtectedRoute>} />
