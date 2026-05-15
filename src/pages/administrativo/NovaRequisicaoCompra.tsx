@@ -199,7 +199,7 @@ export default function NovaRequisicaoCompra() {
                 <span className="text-[10px] uppercase tracking-wider text-white/40">↵ adicionar</span>
               </div>
               {quickSearch && quickMatches.length > 0 && (
-                <div className="absolute z-20 left-0 right-0 mt-1 rounded-lg border border-white/10 bg-zinc-900/95 backdrop-blur-xl shadow-xl overflow-hidden">
+                <div className="absolute z-50 left-0 right-0 mt-1 rounded-lg border border-white/10 bg-zinc-900/95 backdrop-blur-xl shadow-xl overflow-hidden">
                   {quickMatches.map((p, i) => (
                     <button
                       key={p.id}
@@ -226,7 +226,7 @@ export default function NovaRequisicaoCompra() {
                 </div>
               )}
               {quickSearch && quickMatches.length === 0 && (
-                <div className="absolute z-20 left-0 right-0 mt-1 rounded-lg border border-white/10 bg-zinc-900/95 px-3 py-2 text-sm text-white/50">
+                <div className="absolute z-50 left-0 right-0 mt-1 rounded-lg border border-white/10 bg-zinc-900/95 px-3 py-2 text-sm text-white/50">
                   Nenhum item encontrado para “{quickSearch}”.
                 </div>
               )}
