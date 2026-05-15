@@ -274,6 +274,7 @@ import EstoqueMinimalista from "./pages/administrativo/EstoqueMinimalista";
 import EstoqueEditMinimalista from "./pages/administrativo/EstoqueEditMinimalista";
 import RequisicoesMinimalista from "./pages/administrativo/RequisicoesMinimalista";
 import NovaRequisicaoCompra from "./pages/administrativo/NovaRequisicaoCompra";
+import ItensAdministrativo from "./pages/administrativo/ItensAdministrativo";
 import FornecedoresMinimalista from "./pages/administrativo/FornecedoresMinimalista";
 import FrotaMinimalista from "./pages/logistica/FrotaMinimalista";
 import FrotaNovoMinimalista from "./pages/logistica/FrotaNovoMinimalista";
