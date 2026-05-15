@@ -475,7 +475,10 @@ function PrintDespesaTable({
   }
   const showProj = !!(tiposDisponiveis && tiposDisponiveis.length > 0);
   const totalProj = showProj
-    ? tiposDisponiveis!.reduce((s, t) => s + (t.valor_maximo_mensal || 0), 0)
+    ? items.reduce((s, d) => {
+        const t = tiposDisponiveis!.find(t => t.nome === d.nome);
+        return s + (t?.valor_maximo_mensal || 0);
+      }, 0)
     : 0;
   return (
     <table>
