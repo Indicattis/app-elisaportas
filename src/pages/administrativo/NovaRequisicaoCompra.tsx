@@ -234,33 +234,6 @@ export default function NovaRequisicaoCompra() {
           </div>
         </div>
 
-        {/* Dados gerais */}
-        <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
-          <div className="p-5 rounded-lg space-y-4">
-            <h3 className="font-semibold text-white">Dados gerais</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-white/80">Data de Necessidade</Label>
-                <Input
-                  type="date"
-                  value={formData.data_necessidade}
-                  onChange={(e) => setFormData((p) => ({ ...p, data_necessidade: e.target.value }))}
-                  className="bg-white/5 border-white/10 text-white placeholder:text-white/40"
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-white/80">Observações</Label>
-              <Textarea
-                value={formData.observacoes}
-                onChange={(e) => setFormData((p) => ({ ...p, observacoes: e.target.value }))}
-                rows={3}
-                className="bg-white/5 border-white/10 text-white placeholder:text-white/40"
-              />
-            </div>
-          </div>
-        </div>
-
         {/* Itens */}
         <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
           <div className="p-5 rounded-lg space-y-3">
@@ -407,6 +380,33 @@ export default function NovaRequisicaoCompra() {
           </div>
         </div>
       </div>
+        {/* Dados gerais */}
+        <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
+          <div className="p-5 rounded-lg space-y-4">
+            <h3 className="font-semibold text-white">Dados gerais</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-white/80">Data de Necessidade</Label>
+                <Input
+                  type="date"
+                  value={formData.data_necessidade}
+                  onChange={(e) => setFormData((p) => ({ ...p, data_necessidade: e.target.value }))}
+                  className="bg-white/5 border-white/10 text-white placeholder:text-white/40"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-white/80">Observações</Label>
+              <Textarea
+                value={formData.observacoes}
+                onChange={(e) => setFormData((p) => ({ ...p, observacoes: e.target.value }))}
+                rows={3}
+                className="bg-white/5 border-white/10 text-white placeholder:text-white/40"
+              />
+            </div>
+          </div>
+        </div>
+
     </MinimalistLayout>
   );
 }
