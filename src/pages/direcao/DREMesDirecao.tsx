@@ -326,17 +326,32 @@ function PrintReport({
 
       <div style={{ marginTop: 0 }}>
         <div style={H2}>3. Despesas Fixas</div>
-        <PrintDespesaTable items={despesasFixas} total={totalDespFixas} formatCurrency={formatCurrency} />
+        <PrintDespesaTable
+          items={despesasFixas}
+          total={totalDespFixas}
+          formatCurrency={formatCurrency}
+          tiposDisponiveis={tiposCustosFixos.filter(t => !isFolha(t.nome))}
+        />
       </div>
 
       <div style={SECTION}>
         <div style={H2}>4. Folha Salarial</div>
-        <PrintDespesaTable items={despesasFolha} total={totalDespFolha} formatCurrency={formatCurrency} />
+        <PrintDespesaTable
+          items={despesasFolha}
+          total={totalDespFolha}
+          formatCurrency={formatCurrency}
+          tiposDisponiveis={tiposCustosFixos.filter(t => isFolha(t.nome))}
+        />
       </div>
 
       <div style={SECTION}>
         <div style={H2}>5. Despesas Variáveis</div>
-        <PrintDespesaTable items={despesasVariaveis} total={totalDespVariaveis} formatCurrency={formatCurrency} />
+        <PrintDespesaTable
+          items={despesasVariaveis}
+          total={totalDespVariaveis}
+          formatCurrency={formatCurrency}
+          tiposDisponiveis={tiposCustosVariaveis}
+        />
       </div>
 
       {/* PROJETADAS DO ANO */}
