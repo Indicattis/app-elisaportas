@@ -160,26 +160,85 @@ export default function NovaRequisicaoCompra() {
       breadcrumbItems={breadcrumbItems}
     >
       <div className="space-y-6">
+        {/* Inserção rápida */}
+        <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
+          <div className="p-5 rounded-lg space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-white">Inserção rápida de itens</h3>
+              <span className="text-xs text-white/50">{formData.itens.length} item(ns)</span>
+            </div>
+            <div className="relative">
+              <div className="flex items-center gap-2 rounded-lg bg-white/5 border border-white/10 px-3 py-2 focus-within:border-blue-400/50">
+                <Zap className="h-4 w-4 text-blue-400" />
+                <Input
+                  ref={quickInputRef}
+                  autoFocus
+                  value={quickSearch}
+                  onChange={(e) => {
+                    setQuickSearch(e.target.value);
+                    setQuickIndex(0);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "ArrowDown") {
+                      e.preventDefault();
+                      setQuickIndex((i) => Math.min(i + 1, quickMatches.length - 1));
+                    } else if (e.key === "ArrowUp") {
+                      e.preventDefault();
+                      setQuickIndex((i) => Math.max(i - 1, 0));
+                    } else if (e.key === "Enter") {
+                      e.preventDefault();
+                      const sel = quickMatches[quickIndex];
+                      if (sel) adicionarProdutoRapido(sel);
+                    } else if (e.key === "Escape") {
+                      setQuickSearch("");
+                    }
+                  }}
+                  placeholder="Digite SKU, nome ou fornecedor e pressione Enter…"
+                  className="border-0 bg-transparent text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 h-8 px-0"
+                />
+                <span className="text-[10px] uppercase tracking-wider text-white/40">↵ adicionar</span>
+              </div>
+              {quickSearch && quickMatches.length > 0 && (
+                <div className="absolute z-20 left-0 right-0 mt-1 rounded-lg border border-white/10 bg-zinc-900/95 backdrop-blur-xl shadow-xl overflow-hidden">
+                  {quickMatches.map((p, i) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        adicionarProdutoRapido(p);
+                      }}
+                      onMouseEnter={() => setQuickIndex(i)}
+                      className={`w-full text-left px-3 py-2 text-sm flex items-center justify-between gap-3 ${
+                        i === quickIndex ? "bg-blue-500/20 text-white" : "text-white/80 hover:bg-white/5"
+                      }`}
+                    >
+                      <span className="flex items-center gap-2 min-w-0">
+                        <Search className="h-3.5 w-3.5 text-white/40 shrink-0" />
+                        <span className="truncate">{p.nome_produto}</span>
+                      </span>
+                      <span className="text-xs text-white/40 shrink-0">
+                        {p.sku ? `SKU ${p.sku} · ` : ""}{p.unidade}
+                        {p.fornecedor?.nome ? ` · ${p.fornecedor.nome}` : ""}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {quickSearch && quickMatches.length === 0 && (
+                <div className="absolute z-20 left-0 right-0 mt-1 rounded-lg border border-white/10 bg-zinc-900/95 px-3 py-2 text-sm text-white/50">
+                  Nenhum item encontrado para “{quickSearch}”.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
         {/* Dados gerais */}
         <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
           <div className="p-5 rounded-lg space-y-4">
             <h3 className="font-semibold text-white">Dados gerais</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-white/80">Fornecedor *</Label>
-                <Select value={formData.fornecedor_id} onValueChange={handleSelectFornecedor}>
-                  <SelectTrigger className="bg-white/5 border-white/10 text-white">
-                    <SelectValue placeholder="Selecione um fornecedor" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-zinc-900 border-white/10 text-white">
-                    {fornecedores.map((f) => (
-                      <SelectItem key={f.id} value={f.id}>
-                        {f.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
               <div className="space-y-2">
                 <Label className="text-white/80">Data de Necessidade</Label>
                 <Input
@@ -205,107 +264,17 @@ export default function NovaRequisicaoCompra() {
         {/* Itens */}
         <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
           <div className="p-5 rounded-lg space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-white">
-                Itens da Requisição ({formData.itens.length})
-              </h3>
-              <Button
-                type="button"
-                size="sm"
-                onClick={handleAdicionarLinha}
-                disabled={!formData.fornecedor_id}
-                className="bg-gradient-to-r from-blue-500 to-blue-700 text-white border-0 disabled:opacity-50"
-                title={!formData.fornecedor_id ? "Selecione um fornecedor primeiro" : ""}
-              >
-                <Plus className="h-4 w-4 mr-1" /> Adicionar item
-              </Button>
-            </div>
-
-            {!formData.fornecedor_id && (
-              <p className="text-sm text-white/40">
-                Selecione um fornecedor para liberar a lista de itens disponíveis.
-              </p>
-            )}
-
-            {formData.fornecedor_id && itensDoFornecedor.length === 0 && (
-              <p className="text-sm text-amber-300/80">
-                Este fornecedor não possui itens cadastrados no estoque.
-              </p>
-            )}
-
-            {formData.fornecedor_id && itensDoFornecedor.length > 0 && (
-              <div className="relative">
-                <div className="flex items-center gap-2 rounded-lg bg-white/5 border border-white/10 px-3 py-2 focus-within:border-blue-400/50">
-                  <Zap className="h-4 w-4 text-blue-400" />
-                  <Input
-                    ref={quickInputRef}
-                    value={quickSearch}
-                    onChange={(e) => {
-                      setQuickSearch(e.target.value);
-                      setQuickIndex(0);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "ArrowDown") {
-                        e.preventDefault();
-                        setQuickIndex((i) => Math.min(i + 1, quickMatches.length - 1));
-                      } else if (e.key === "ArrowUp") {
-                        e.preventDefault();
-                        setQuickIndex((i) => Math.max(i - 1, 0));
-                      } else if (e.key === "Enter") {
-                        e.preventDefault();
-                        const sel = quickMatches[quickIndex];
-                        if (sel) adicionarProdutoRapido(sel);
-                      } else if (e.key === "Escape") {
-                        setQuickSearch("");
-                      }
-                    }}
-                    placeholder="Inserção rápida: digite SKU ou nome e pressione Enter…"
-                    className="border-0 bg-transparent text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 h-8 px-0"
-                  />
-                  <span className="text-[10px] uppercase tracking-wider text-white/40">
-                    ↵ adicionar
-                  </span>
-                </div>
-                {quickSearch && quickMatches.length > 0 && (
-                  <div className="absolute z-20 left-0 right-0 mt-1 rounded-lg border border-white/10 bg-zinc-900/95 backdrop-blur-xl shadow-xl overflow-hidden">
-                    {quickMatches.map((p, i) => (
-                      <button
-                        key={p.id}
-                        type="button"
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          adicionarProdutoRapido(p);
-                        }}
-                        onMouseEnter={() => setQuickIndex(i)}
-                        className={`w-full text-left px-3 py-2 text-sm flex items-center justify-between gap-3 ${
-                          i === quickIndex ? "bg-blue-500/20 text-white" : "text-white/80 hover:bg-white/5"
-                        }`}
-                      >
-                        <span className="flex items-center gap-2 min-w-0">
-                          <Search className="h-3.5 w-3.5 text-white/40 shrink-0" />
-                          <span className="truncate">{p.nome_produto}</span>
-                        </span>
-                        <span className="text-xs text-white/40 shrink-0">
-                          {p.sku ? `SKU ${p.sku} · ` : ""}{p.unidade}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-                {quickSearch && quickMatches.length === 0 && (
-                  <div className="absolute z-20 left-0 right-0 mt-1 rounded-lg border border-white/10 bg-zinc-900/95 px-3 py-2 text-sm text-white/50">
-                    Nenhum item encontrado para “{quickSearch}”.
-                  </div>
-                )}
-              </div>
-            )}
+            <h3 className="font-semibold text-white">
+              Itens da Requisição ({formData.itens.length})
+            </h3>
 
             {formData.itens.length > 0 && (
               <div className="border border-white/10 rounded-lg overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow className="border-white/10 hover:bg-transparent">
-                      <TableHead className="min-w-[220px] text-xs font-medium text-white/60">Produto *</TableHead>
+                      <TableHead className="min-w-[220px] text-xs font-medium text-white/60">Produto</TableHead>
+                      <TableHead className="min-w-[140px] text-xs font-medium text-white/60">Fornecedor</TableHead>
                       <TableHead className="w-16 text-xs font-medium text-white/60">Un</TableHead>
                       <TableHead className="w-20 text-xs font-medium text-white/60">Qtde *</TableHead>
                       <TableHead className="w-28 text-xs font-medium text-white/60">Valor unit.</TableHead>
@@ -325,22 +294,14 @@ export default function NovaRequisicaoCompra() {
                         (1 + (Number(item.ipi_percent) || 0) / 100);
                       return (
                         <TableRow key={index} className="border-white/10 hover:bg-white/5">
-                          <TableCell>
-                            <Select
-                              value={item.produto_id}
-                              onValueChange={(v) => handleAlterarItem(index, { produto_id: v })}
-                            >
-                              <SelectTrigger className="bg-white/5 border-white/10 text-white">
-                                <SelectValue placeholder="Selecione" />
-                              </SelectTrigger>
-                              <SelectContent className="bg-zinc-900 border-white/10 text-white">
-                                {itensDoFornecedor.map((produto) => (
-                                  <SelectItem key={produto.id} value={produto.id}>
-                                    {produto.nome_produto}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                          <TableCell className="text-sm text-white">
+                            <div className="font-medium">{item.produto_nome || "-"}</div>
+                            {item.produto_sku && (
+                              <div className="text-xs text-white/40">SKU {item.produto_sku}</div>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-sm text-white/70">
+                            {item.produto_fornecedor_nome || "-"}
                           </TableCell>
                           <TableCell className="text-sm text-white/60">
                             {item.produto_unidade || "-"}
