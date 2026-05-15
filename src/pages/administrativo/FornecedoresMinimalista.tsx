@@ -7,6 +7,7 @@ import { Plus, Pencil, Trash2 } from "lucide-react";
 import { useFornecedores, Fornecedor } from "@/hooks/useFornecedores";
 import { FornecedorForm } from "@/components/compras/FornecedorForm";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
+import { EstadoCidadeInline } from "@/components/EstadoCidadeInline";
 
 // EditableCell: clique único para editar in-place
 type EditableCellProps = {
@@ -201,20 +202,17 @@ export default function FornecedoresMinimalista() {
                       />
                     </TableCell>
                     <TableCell className="text-white/80">
-                      <div className="flex items-center gap-1">
-                        <EditableCell
-                          value={fornecedor.cidade ?? ""}
-                          placeholder="cidade"
-                          onSave={(v) => updateFornecedor({ id: fornecedor.id, cidade: (v as string) ?? undefined })}
-                        />
-                        <span className="text-white/40">-</span>
-                        <EditableCell
-                          value={fornecedor.estado ?? ""}
-                          placeholder="UF"
-                          className="w-12"
-                          onSave={(v) => updateFornecedor({ id: fornecedor.id, estado: (v as string) ?? undefined })}
-                        />
-                      </div>
+                      <EstadoCidadeInline
+                        cidade={fornecedor.cidade ?? ""}
+                        estado={fornecedor.estado ?? ""}
+                        onChange={(cidade, estado) =>
+                          updateFornecedor({
+                            id: fornecedor.id,
+                            cidade: cidade || undefined,
+                            estado: estado || undefined,
+                          })
+                        }
+                      />
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
