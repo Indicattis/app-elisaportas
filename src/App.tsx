@@ -274,6 +274,7 @@ import EstoqueMinimalista from "./pages/administrativo/EstoqueMinimalista";
 import EstoqueEditMinimalista from "./pages/administrativo/EstoqueEditMinimalista";
 import RequisicoesMinimalista from "./pages/administrativo/RequisicoesMinimalista";
 import NovaRequisicaoCompra from "./pages/administrativo/NovaRequisicaoCompra";
+import ItensAdministrativo from "./pages/administrativo/ItensAdministrativo";
 import FornecedoresMinimalista from "./pages/administrativo/FornecedoresMinimalista";
 import FrotaMinimalista from "./pages/logistica/FrotaMinimalista";
 import FrotaNovoMinimalista from "./pages/logistica/FrotaNovoMinimalista";
@@ -612,6 +613,7 @@ const App = () => (
                 <Route path="/administrativo/compras/estoque/editar-item/:id" element={<ProtectedRoute routeKey="administrativo_hub"><EstoqueEditMinimalista /></ProtectedRoute>} />
                 <Route path="/administrativo/compras/requisicoes" element={<ProtectedRoute routeKey="administrativo_hub"><RequisicoesMinimalista /></ProtectedRoute>} />
                 <Route path="/administrativo/compras/requisicoes/nova" element={<ProtectedRoute routeKey="administrativo_hub"><NovaRequisicaoCompra /></ProtectedRoute>} />
+                <Route path="/administrativo/compras/itens" element={<ProtectedRoute routeKey="administrativo_hub"><ItensAdministrativo /></ProtectedRoute>} />
                 <Route path="/administrativo/compras/fornecedores" element={<ProtectedRoute routeKey="administrativo_hub"><FornecedoresMinimalista /></ProtectedRoute>} />
 
                 {/* Hub Fiscal Minimalista */}

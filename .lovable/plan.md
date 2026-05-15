@@ -1,27 +1,32 @@
 ## Objetivo
-Em `/administrativo/compras/requisicoes/nova`:
-- Remover a obrigatoriedade de escolher um fornecedor antes de adicionar itens.
-- Tornar o campo de **inserção rápida** o primeiro elemento da página (logo após o cabeçalho).
-- Permitir buscar e adicionar produtos de **qualquer fornecedor** (mostrando o nome do fornecedor em cada sugestão).
-- Na listagem de requisições, exibir os fornecedores **derivados dos itens** adicionados.
 
-## Mudanças em `src/pages/administrativo/NovaRequisicaoCompra.tsx`
-1. **Reordenar layout:** mover o bloco de "Inserção rápida" para o topo, antes de "Dados gerais". "Dados gerais" passa a ter apenas Data de Necessidade + Observações (remover o `Select` de Fornecedor).
-2. **Quick search global:** trocar `itensDoFornecedor` por filtragem em todo `estoque` ativo. Cada sugestão exibe `nome_produto` + `SKU` + **nome do fornecedor** (`p.fornecedor?.nome`).
-3. **Adicionar item:** ao adicionar, gravar `codigo_fornecedor` a partir do fornecedor do próprio produto (buscar em `fornecedores` pelo `produto.fornecedor_id`), não mais do fornecedor da requisição.
-4. **Linha da tabela de itens:** adicionar coluna "Fornecedor" exibindo `produto.fornecedor?.nome`. Remover o `Select` de produto por linha (toda inserção passa a ser pelo quick-add) — manter só visualização do nome do produto + SKU.
-5. **Remover** estados/funções não utilizados: `pendingFornecedorChange`, `handleSelectFornecedor`, `confirmFornecedorChange`, `handleAdicionarLinha`, AlertDialog de troca de fornecedor.
-6. **Salvar:** remover validação `if (!formData.fornecedor_id)`. Enviar `fornecedor_id: undefined` (campo já é opcional no hook).
+1. Adicionar coluna **SKU** editável inline em `/fabrica/produtos` (e na cópia).
+2. Criar uma cópia independente da página em `/administrativo/compras/itens`.
+3. Adicionar botão "Gerenciar itens" no topo de `/administrativo/compras/requisicoes/nova` que leva para a nova rota.
 
-## Mudanças em `src/hooks/useRequisicoesCompra.ts`
-- Nenhuma alteração de schema. `fornecedor_id` já é opcional no insert.
-- Já carrega `estoque(...)` por item; expandir o `select` de itens para incluir `fornecedores(nome)` via `estoque(fornecedor:fornecedores(nome))` para que a listagem tenha acesso ao nome do fornecedor de cada item.
-- Adicionar campo derivado `fornecedores_itens: string[]` (lista única de nomes) em cada requisição, para uso na listagem.
+## Mudanças
 
-## Mudanças em `src/pages/administrativo/RequisicoesMinimalista.tsx`
-- Coluna "Fornecedor" passa a renderizar `requisicao.fornecedores_itens?.join(", ") || requisicao.fornecedor_nome || "-"` (mantém retrocompatibilidade com requisições antigas que tinham fornecedor único).
-- Mesma troca no painel de detalhes (linha 345).
-- Atualizar busca para considerar `fornecedores_itens`.
+### 1. Coluna SKU editável em `ProdutosFabrica.tsx`
+- Adicionar `<TableHead>SKU</TableHead>` logo após "Produto" no header (linha ~1019).
+- Adicionar `<TableCell>` correspondente em `SortableProductRow` usando `EditableCell` com `onSave={(v) => onUpdateField(produto.id, { sku: String(v) || null })}`.
+- Atualizar `colSpan` dos estados vazios (de 14 para 15) e completar `<TableCell />` no `TableFooter`.
 
-## Sem mudanças de banco
-Modelo continua aceitando `fornecedor_id` nulo na requisição; o vínculo do fornecedor por item já existe através do `produto_id → estoque.fornecedor_id`.
+### 2. Cópia da página: `src/pages/administrativo/ItensAdministrativo.tsx`
+- Duplicar `ProdutosFabrica.tsx` (arquivo independente, sem compartilhar componente — atendendo ao pedido).
+- Ajustar título/subtítulo para "Itens" / contexto Administrativo/Compras e atualizar o `breadcrumb`/`backPath` para `/administrativo/compras`.
+- Manter exatamente o mesmo comportamento (mesma fonte de dados `useEstoque`, mesmas edições inline incluindo SKU).
+
+### 3. Rota e link
+- `src/App.tsx`: registrar `<Route path="/administrativo/compras/itens" element={...}>` apontando para o novo componente, com `ProtectedRoute` apropriado (provavelmente `routeKey="administrativo_compras"` — confirmar com as chaves existentes).
+- `src/pages/administrativo/NovaRequisicaoCompra.tsx`: adicionar botão "Gerenciar itens" no `headerActions` (ou ao lado do título da seção "Inserção rápida") com `Link` para `/administrativo/compras/itens`, ícone `Package` ou `Settings`, estilo glassmorphism consistente.
+
+## Observações técnicas
+
+- O componente `EditableCell` já existe e suporta texto livre — o SKU encaixa direto.
+- O hook `useEstoque` (e seu mutation de update) já aceita `sku` no patch, pois o filtro de busca em `searchTerm` (linha 506) já lê `p.sku`.
+- Sem alterações de banco de dados.
+
+## Itens fora do escopo
+
+- Não mexer em validação de unicidade do SKU (não foi pedido).
+- Não alterar o componente original — a cópia é independente conforme escolha.
