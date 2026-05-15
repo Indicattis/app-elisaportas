@@ -161,7 +161,7 @@ export default function NovaRequisicaoCompra() {
     >
       <div className="space-y-6">
         {/* Inserção rápida */}
-        <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
+        <div className="relative z-40 p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
           <div className="p-5 rounded-lg space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="font-semibold text-white">Inserção rápida de itens</h3>
