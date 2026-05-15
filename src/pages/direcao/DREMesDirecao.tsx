@@ -6,6 +6,7 @@ import { Loader2, Printer } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
+import logoElisa from '@/assets/logo-elisa-dre.png';
 
 interface FaturamentoProduto {
   portas: number;
@@ -185,7 +186,13 @@ function PrintReport({
           marginBottom: 4,
         }}
       >
-        <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <img
+            src={logoElisa}
+            alt="Elisa Portas de Enrolar"
+            style={{ height: 48, objectFit: 'contain' }}
+          />
+          <div>
           <div style={{ fontSize: '8pt', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 600 }}>
             Relatório Gerencial
           </div>
@@ -194,6 +201,7 @@ function PrintReport({
           </h1>
           <div style={{ fontSize: '11pt', color: '#1e3a8a', fontWeight: 600, marginTop: 2, textTransform: 'capitalize' }}>
             {mesNome}
+          </div>
           </div>
         </div>
         <div style={{ textAlign: 'right', fontSize: '8pt', color: '#64748b', lineHeight: 1.5 }}>
