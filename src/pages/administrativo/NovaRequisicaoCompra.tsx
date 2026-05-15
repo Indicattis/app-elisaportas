@@ -255,6 +255,7 @@ export default function NovaRequisicaoCompra() {
                   <TableHeader>
                     <TableRow className="border-white/10 hover:bg-transparent">
                       <TableHead className="min-w-[220px] text-xs font-medium text-white/60">Produto</TableHead>
+                      <TableHead className="w-28 text-xs font-medium text-white/60">SKU</TableHead>
                       <TableHead className="min-w-[140px] text-xs font-medium text-white/60">Fornecedor</TableHead>
                       <TableHead className="w-16 text-xs font-medium text-white/60">Un</TableHead>
                       <TableHead className="w-20 text-xs font-medium text-white/60">Qtde *</TableHead>
@@ -277,9 +278,9 @@ export default function NovaRequisicaoCompra() {
                         <TableRow key={index} className="border-white/10 hover:bg-white/5">
                           <TableCell className="text-sm text-white">
                             <div className="font-medium">{item.produto_nome || "-"}</div>
-                            {item.produto_sku && (
-                              <div className="text-xs text-white/40">SKU {item.produto_sku}</div>
-                            )}
+                          </TableCell>
+                          <TableCell className="text-xs text-white/60">
+                            {item.produto_sku || "-"}
                           </TableCell>
                           <TableCell className="text-sm text-white/70">
                             {item.produto_fornecedor_nome || "-"}
