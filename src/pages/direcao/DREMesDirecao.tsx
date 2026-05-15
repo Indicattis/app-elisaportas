@@ -443,10 +443,12 @@ function PrintDespesaTable({
   items,
   total,
   formatCurrency,
+  tiposDisponiveis,
 }: {
   items: DespesaAgrupada[];
   total: number;
   formatCurrency: (v: number) => string;
+  tiposDisponiveis?: TipoCustoVariavel[];
 }) {
   const TH: React.CSSProperties = {
     background: '#f1f5f9',
@@ -471,21 +473,49 @@ function PrintDespesaTable({
       </div>
     );
   }
+  const showProj = !!(tiposDisponiveis && tiposDisponiveis.length > 0);
+  const totalProj = showProj
+    ? tiposDisponiveis!.reduce((s, t) => s + (t.valor_maximo_mensal || 0), 0)
+    : 0;
   return (
     <table>
       <thead>
         <tr>
           <th style={TH}>Descrição</th>
           <th style={{ ...TH, textAlign: 'right', width: 140 }}>Valor</th>
+          {showProj && (
+            <th style={{ ...TH, textAlign: 'right', width: 140 }}>Projetado</th>
+          )}
         </tr>
       </thead>
       <tbody>
         {items.map((d, i) => (
           <tr key={d.id} style={{ background: i % 2 === 0 ? '#ffffff' : '#fafbfc' }}>
             <td style={TD}>{d.nome}</td>
-            <td style={{ ...TD, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
-              {formatCurrency(d.valor_real)}
-            </td>
+            {(() => {
+              const tipoRef = showProj
+                ? tiposDisponiveis!.find(t => t.nome === d.nome)
+                : undefined;
+              const cor = tipoRef
+                ? d.valor_real > tipoRef.valor_maximo_mensal
+                  ? '#b91c1c'
+                  : d.valor_real < tipoRef.valor_maximo_mensal
+                    ? '#047857'
+                    : '#0f172a'
+                : '#0f172a';
+              return (
+                <>
+                  <td style={{ ...TD, textAlign: 'right', fontVariantNumeric: 'tabular-nums', color: cor, fontWeight: tipoRef ? 600 : 400 }}>
+                    {formatCurrency(d.valor_real)}
+                  </td>
+                  {showProj && (
+                    <td style={{ ...TD, textAlign: 'right', fontVariantNumeric: 'tabular-nums', color: '#64748b' }}>
+                      {tipoRef ? formatCurrency(tipoRef.valor_maximo_mensal) : '—'}
+                    </td>
+                  )}
+                </>
+              );
+            })()}
           </tr>
         ))}
         <tr style={{ background: '#1e3a8a', color: '#fff' }}>
@@ -493,6 +523,11 @@ function PrintDespesaTable({
           <td style={{ ...TD, textAlign: 'right', fontWeight: 800, color: '#fff', borderBottom: 'none', fontVariantNumeric: 'tabular-nums' }}>
             {formatCurrency(total)}
           </td>
+          {showProj && (
+            <td style={{ ...TD, textAlign: 'right', fontWeight: 800, color: '#fff', borderBottom: 'none', fontVariantNumeric: 'tabular-nums' }}>
+              {formatCurrency(totalProj)}
+            </td>
+          )}
         </tr>
       </tbody>
     </table>
