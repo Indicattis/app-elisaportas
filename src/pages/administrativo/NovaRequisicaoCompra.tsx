@@ -4,10 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Plus, Trash2, ArrowLeft, Save, Search, Zap } from "lucide-react";
+import { Trash2, ArrowLeft, Save, Search, Zap } from "lucide-react";
 import { useRequisicoesCompra, RequisicaoCompraFormData, RequisicaoCompraItem } from "@/hooks/useRequisicoesCompra";
 import { useFornecedores } from "@/hooks/useFornecedores";
 import { useEstoque } from "@/hooks/useEstoque";
@@ -24,53 +22,51 @@ export default function NovaRequisicaoCompra() {
   const { createRequisicao, isCreating } = useRequisicoesCompra();
 
   const [formData, setFormData] = useState<RequisicaoCompraFormData>({
-    fornecedor_id: "",
     data_necessidade: "",
     observacoes: "",
     itens: [],
   });
 
-  const [pendingFornecedorChange, setPendingFornecedorChange] = useState<string | null>(null);
   const [quickSearch, setQuickSearch] = useState("");
   const [quickIndex, setQuickIndex] = useState(0);
   const quickInputRef = useRef<HTMLInputElement>(null);
 
-  const fornecedorAtual = useMemo(
-    () => fornecedores.find((f) => f.id === formData.fornecedor_id) || null,
-    [fornecedores, formData.fornecedor_id]
-  );
-  const codigoFornecedorStr = fornecedorAtual ? String(fornecedorAtual.codigo) : "";
+  const fornecedoresMap = useMemo(() => {
+    const m: Record<string, { nome: string; codigo: number }> = {};
+    fornecedores.forEach((f) => { m[f.id] = { nome: f.nome, codigo: f.codigo }; });
+    return m;
+  }, [fornecedores]);
 
-  const itensDoFornecedor = useMemo(
-    () =>
-      estoque.filter(
-        (p) => p.ativo && formData.fornecedor_id && p.fornecedor_id === formData.fornecedor_id
-      ),
-    [estoque, formData.fornecedor_id]
+  const produtosAtivos = useMemo(
+    () => estoque.filter((p) => p.ativo),
+    [estoque]
   );
 
   const quickMatches = useMemo(() => {
     const term = quickSearch.trim().toLowerCase();
     if (!term) return [];
-    return itensDoFornecedor
+    return produtosAtivos
       .filter((p) => {
         const nome = (p.nome_produto || "").toLowerCase();
         const sku = (p.sku || "").toLowerCase();
-        return nome.includes(term) || sku.includes(term);
+        const fornecNome = (p.fornecedor?.nome || "").toLowerCase();
+        return nome.includes(term) || sku.includes(term) || fornecNome.includes(term);
       })
-      .slice(0, 8);
-  }, [itensDoFornecedor, quickSearch]);
+      .slice(0, 10);
+  }, [produtosAtivos, quickSearch]);
 
   const adicionarProdutoRapido = (produto: any) => {
+    const fornecInfo = produto.fornecedor_id ? fornecedoresMap[produto.fornecedor_id] : null;
     const novo: RequisicaoCompraItem = {
       produto_id: produto.id,
       produto_nome: produto.nome_produto,
       produto_unidade: produto.unidade,
       produto_sku: produto.sku ?? null,
+      produto_fornecedor_nome: produto.fornecedor?.nome ?? fornecInfo?.nome ?? null,
       quantidade: 1,
       valor_unitario: Number(produto.custo_unitario) || 0,
       ipi_percent: Number(produto.ipi_percent) || 0,
-      codigo_fornecedor: codigoFornecedorStr,
+      codigo_fornecedor: fornecInfo ? String(fornecInfo.codigo) : "",
       localizacao: "",
       observacoes: "",
     };
@@ -80,66 +76,12 @@ export default function NovaRequisicaoCompra() {
     setTimeout(() => quickInputRef.current?.focus(), 0);
   };
 
-  const handleSelectFornecedor = (value: string) => {
-    if (formData.itens.length > 0 && value !== formData.fornecedor_id) {
-      setPendingFornecedorChange(value);
-      return;
-    }
-    const novo = fornecedores.find((f) => f.id === value);
-    const codigo = novo ? String(novo.codigo) : "";
-    setFormData((prev) => ({
-      ...prev,
-      fornecedor_id: value,
-      itens: prev.itens.map((it) => ({ ...it, codigo_fornecedor: codigo })),
-    }));
-  };
-
-  const confirmFornecedorChange = () => {
-    if (pendingFornecedorChange) {
-      setFormData((prev) => ({
-        ...prev,
-        fornecedor_id: pendingFornecedorChange,
-        itens: [],
-      }));
-      setPendingFornecedorChange(null);
-    }
-  };
-
-  const handleAdicionarLinha = () => {
-    if (!formData.fornecedor_id) {
-      toast.error("Selecione um fornecedor primeiro");
-      return;
-    }
-    const novoItem: RequisicaoCompraItem = {
-      produto_id: "",
-      quantidade: 1,
-      valor_unitario: 0,
-      ipi_percent: 0,
-      codigo_fornecedor: codigoFornecedorStr,
-      localizacao: "",
-      observacoes: "",
-    };
-    setFormData((prev) => ({ ...prev, itens: [...prev.itens, novoItem] }));
-  };
-
   const handleAlterarItem = (index: number, patch: Partial<RequisicaoCompraItem>) => {
     setFormData((prev) => ({
       ...prev,
       itens: prev.itens.map((it, i) => {
         if (i !== index) return it;
-        const merged = { ...it, ...patch };
-        if (patch.produto_id) {
-          const produto: any = estoque.find((p) => p.id === patch.produto_id);
-          if (produto) {
-            merged.produto_nome = produto.nome_produto;
-            merged.produto_unidade = produto.unidade;
-            merged.produto_sku = produto.sku ?? null;
-            merged.ipi_percent = Number(produto.ipi_percent) || 0;
-            merged.valor_unitario = Number(produto.custo_unitario) || 0;
-          }
-          merged.codigo_fornecedor = codigoFornecedorStr;
-        }
-        return merged;
+        return { ...it, ...patch };
       }),
     }));
   };
@@ -167,16 +109,12 @@ export default function NovaRequisicaoCompra() {
   }, [formData.itens]);
 
   const handleSalvar = async () => {
-    if (!formData.fornecedor_id) {
-      toast.error("Selecione um fornecedor");
-      return;
-    }
     if (formData.itens.length === 0 || formData.itens.some((it) => !it.produto_id)) {
       toast.error("Adicione ao menos um item válido");
       return;
     }
     try {
-      await createRequisicao(formData);
+      await createRequisicao({ ...formData, fornecedor_id: undefined });
       navigate("/administrativo/compras/requisicoes");
     } catch (e) {
       // toast já tratado no hook
