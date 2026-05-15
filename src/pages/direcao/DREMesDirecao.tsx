@@ -109,6 +109,7 @@ function PrintReport({
   despesasFixas,
   despesasFolha,
   despesasVariaveis,
+  tiposCustosFixos,
   tiposCustosVariaveis,
   totalDespFixas,
   totalDespFolha,
@@ -128,6 +129,7 @@ function PrintReport({
   despesasFixas: DespesaAgrupada[];
   despesasFolha: DespesaAgrupada[];
   despesasVariaveis: DespesaAgrupada[];
+  tiposCustosFixos: TipoCustoVariavel[];
   tiposCustosVariaveis: TipoCustoVariavel[];
   totalDespFixas: number;
   totalDespFolha: number;
