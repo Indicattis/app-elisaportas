@@ -29,6 +29,9 @@ interface TipoCustoVariavel {
   valor_maximo_mensal: number;
 }
 
+// "Salário" ou "Folha" vai para folha salarial
+const isFolha = (nome: string) => /sal[áa]rio|folha/i.test(nome);
+
 function DespesaSectionReadOnly({
   title,
   despesas,
