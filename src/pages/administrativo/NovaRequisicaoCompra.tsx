@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Plus, Trash2, ArrowLeft, Save } from "lucide-react";
+import { Plus, Trash2, ArrowLeft, Save, Search, Zap } from "lucide-react";
 import { useRequisicoesCompra, RequisicaoCompraFormData, RequisicaoCompraItem } from "@/hooks/useRequisicoesCompra";
 import { useFornecedores } from "@/hooks/useFornecedores";
 import { useEstoque } from "@/hooks/useEstoque";
@@ -31,6 +31,9 @@ export default function NovaRequisicaoCompra() {
   });
 
   const [pendingFornecedorChange, setPendingFornecedorChange] = useState<string | null>(null);
+  const [quickSearch, setQuickSearch] = useState("");
+  const [quickIndex, setQuickIndex] = useState(0);
+  const quickInputRef = useRef<HTMLInputElement>(null);
 
   const fornecedorAtual = useMemo(
     () => fornecedores.find((f) => f.id === formData.fornecedor_id) || null,
@@ -45,6 +48,37 @@ export default function NovaRequisicaoCompra() {
       ),
     [estoque, formData.fornecedor_id]
   );
+
+  const quickMatches = useMemo(() => {
+    const term = quickSearch.trim().toLowerCase();
+    if (!term) return [];
+    return itensDoFornecedor
+      .filter((p) => {
+        const nome = (p.nome_produto || "").toLowerCase();
+        const sku = (p.sku || "").toLowerCase();
+        return nome.includes(term) || sku.includes(term);
+      })
+      .slice(0, 8);
+  }, [itensDoFornecedor, quickSearch]);
+
+  const adicionarProdutoRapido = (produto: any) => {
+    const novo: RequisicaoCompraItem = {
+      produto_id: produto.id,
+      produto_nome: produto.nome_produto,
+      produto_unidade: produto.unidade,
+      produto_sku: produto.sku ?? null,
+      quantidade: 1,
+      valor_unitario: Number(produto.custo_unitario) || 0,
+      ipi_percent: Number(produto.ipi_percent) || 0,
+      codigo_fornecedor: codigoFornecedorStr,
+      localizacao: "",
+      observacoes: "",
+    };
+    setFormData((prev) => ({ ...prev, itens: [...prev.itens, novo] }));
+    setQuickSearch("");
+    setQuickIndex(0);
+    setTimeout(() => quickInputRef.current?.focus(), 0);
+  };
 
   const handleSelectFornecedor = (value: string) => {
     if (formData.itens.length > 0 && value !== formData.fornecedor_id) {
@@ -259,6 +293,73 @@ export default function NovaRequisicaoCompra() {
               <p className="text-sm text-amber-300/80">
                 Este fornecedor não possui itens cadastrados no estoque.
               </p>
+            )}
+
+            {formData.fornecedor_id && itensDoFornecedor.length > 0 && (
+              <div className="relative">
+                <div className="flex items-center gap-2 rounded-lg bg-white/5 border border-white/10 px-3 py-2 focus-within:border-blue-400/50">
+                  <Zap className="h-4 w-4 text-blue-400" />
+                  <Input
+                    ref={quickInputRef}
+                    value={quickSearch}
+                    onChange={(e) => {
+                      setQuickSearch(e.target.value);
+                      setQuickIndex(0);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "ArrowDown") {
+                        e.preventDefault();
+                        setQuickIndex((i) => Math.min(i + 1, quickMatches.length - 1));
+                      } else if (e.key === "ArrowUp") {
+                        e.preventDefault();
+                        setQuickIndex((i) => Math.max(i - 1, 0));
+                      } else if (e.key === "Enter") {
+                        e.preventDefault();
+                        const sel = quickMatches[quickIndex];
+                        if (sel) adicionarProdutoRapido(sel);
+                      } else if (e.key === "Escape") {
+                        setQuickSearch("");
+                      }
+                    }}
+                    placeholder="Inserção rápida: digite SKU ou nome e pressione Enter…"
+                    className="border-0 bg-transparent text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 h-8 px-0"
+                  />
+                  <span className="text-[10px] uppercase tracking-wider text-white/40">
+                    ↵ adicionar
+                  </span>
+                </div>
+                {quickSearch && quickMatches.length > 0 && (
+                  <div className="absolute z-20 left-0 right-0 mt-1 rounded-lg border border-white/10 bg-zinc-900/95 backdrop-blur-xl shadow-xl overflow-hidden">
+                    {quickMatches.map((p, i) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          adicionarProdutoRapido(p);
+                        }}
+                        onMouseEnter={() => setQuickIndex(i)}
+                        className={`w-full text-left px-3 py-2 text-sm flex items-center justify-between gap-3 ${
+                          i === quickIndex ? "bg-blue-500/20 text-white" : "text-white/80 hover:bg-white/5"
+                        }`}
+                      >
+                        <span className="flex items-center gap-2 min-w-0">
+                          <Search className="h-3.5 w-3.5 text-white/40 shrink-0" />
+                          <span className="truncate">{p.nome_produto}</span>
+                        </span>
+                        <span className="text-xs text-white/40 shrink-0">
+                          {p.sku ? `SKU ${p.sku} · ` : ""}{p.unidade}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {quickSearch && quickMatches.length === 0 && (
+                  <div className="absolute z-20 left-0 right-0 mt-1 rounded-lg border border-white/10 bg-zinc-900/95 px-3 py-2 text-sm text-white/50">
+                    Nenhum item encontrado para “{quickSearch}”.
+                  </div>
+                )}
+              </div>
             )}
 
             {formData.itens.length > 0 && (
