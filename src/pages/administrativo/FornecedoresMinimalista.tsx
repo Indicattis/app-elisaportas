@@ -15,7 +15,7 @@ type EditableCellProps = {
   display?: (v: string | number | null | undefined) => React.ReactNode;
   placeholder?: string;
   className?: string;
-  onSave: (value: string | number | null) => void | Promise<void>;
+  onSave: (value: string | number | null) => void | Promise<unknown>;
 };
 function EditableCell({ value, type = "text", display, placeholder = "—", className = "", onSave }: EditableCellProps) {
   const [editing, setEditing] = useState(false);
