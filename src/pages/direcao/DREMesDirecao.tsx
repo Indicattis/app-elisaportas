@@ -942,13 +942,14 @@ export default function DREMesDirecao() {
                 despesas={despesasFixas}
                 total={totalDespFixas}
                 formatCurrency={formatCurrency}
-                tiposDisponiveis={tiposCustosFixos}
+                tiposDisponiveis={tiposCustosFixos.filter(t => !isFolha(t.nome))}
               />
               <DespesaSectionReadOnly
                 title="Folha Salarial"
                 despesas={despesasFolha}
                 total={totalDespFolha}
                 formatCurrency={formatCurrency}
+                tiposDisponiveis={tiposCustosFixos.filter(t => isFolha(t.nome))}
               />
               <DespesaSectionReadOnly
                 title="Despesas Variáveis"
