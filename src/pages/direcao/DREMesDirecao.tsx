@@ -794,7 +794,17 @@ export default function DREMesDirecao() {
 
     <style>{`
       @media screen {
-        #dre-print-document { display: none !important; }
+        /* Mantém fora da tela mas renderizado, para que imagens (logo) carreguem */
+        #dre-print-document {
+          position: absolute !important;
+          left: -10000px !important;
+          top: 0 !important;
+          width: 1px !important;
+          height: 1px !important;
+          overflow: hidden !important;
+          opacity: 0 !important;
+          pointer-events: none !important;
+        }
       }
     `}</style>
     <MinimalistLayout
