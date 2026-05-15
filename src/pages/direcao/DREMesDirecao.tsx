@@ -6,6 +6,7 @@ import { Loader2, Printer } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
+import logoElisa from '@/assets/logo-elisa-dre.png';
 
 interface FaturamentoProduto {
   portas: number;
@@ -185,7 +186,13 @@ function PrintReport({
           marginBottom: 4,
         }}
       >
-        <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <img
+            src={logoElisa}
+            alt="Elisa Portas de Enrolar"
+            style={{ height: 48, objectFit: 'contain' }}
+          />
+          <div>
           <div style={{ fontSize: '8pt', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 600 }}>
             Relatório Gerencial
           </div>
@@ -194,6 +201,7 @@ function PrintReport({
           </h1>
           <div style={{ fontSize: '11pt', color: '#1e3a8a', fontWeight: 600, marginTop: 2, textTransform: 'capitalize' }}>
             {mesNome}
+          </div>
           </div>
         </div>
         <div style={{ textAlign: 'right', fontSize: '8pt', color: '#64748b', lineHeight: 1.5 }}>
@@ -280,80 +288,58 @@ function PrintReport({
         </table>
       </div>
 
-      {/* TOP 5 lado a lado */}
-      {(topAcessorios.length > 0 || topAdicionais.length > 0) && (
-        <div style={{ ...SECTION, display: 'flex', gap: 12 }}>
-          {topAcessorios.length > 0 && (
-            <div style={{ flex: 1 }}>
-              <div style={H2}>Top 5 Acessórios</div>
-              <table>
-                <thead>
-                  <tr>
-                    <th style={{ ...TH, width: 30 }}>#</th>
-                    <th style={TH}>Produto</th>
-                    <th style={{ ...TH, textAlign: 'right' }}>Qtd</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {topAcessorios.map((it, i) => (
-                    <tr key={i} style={trZebra(i)}>
-                      <td style={{ ...TD, color: '#64748b' }}>{i + 1}</td>
-                      <td style={TD}>{it.nome}</td>
-                      <td style={tdRight}>{it.qtd}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-          {topAdicionais.length > 0 && (
-            <div style={{ flex: 1 }}>
-              <div style={H2}>Top 5 Itens Avulso</div>
-              <table>
-                <thead>
-                  <tr>
-                    <th style={{ ...TH, width: 30 }}>#</th>
-                    <th style={TH}>Produto</th>
-                    <th style={{ ...TH, textAlign: 'right' }}>Qtd</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {topAdicionais.map((it, i) => (
-                    <tr key={i} style={trZebra(i)}>
-                      <td style={{ ...TD, color: '#64748b' }}>{i + 1}</td>
-                      <td style={TD}>{it.nome}</td>
-                      <td style={tdRight}>{it.qtd}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      )}
+      {/* RESUMO FINAL (movido para após Faturamento por Categoria) */}
+      <div style={SECTION}>
+        <div style={H2}>2. Resumo Final</div>
+        <table>
+          <tbody>
+            {[
+              { l: 'Faturamento Bruto', v: formatCurrency(faturamento.total), c: '#0f172a', b: false },
+              { l: 'Margem Bruta', v: `${percBrutoFinal.toFixed(1)}%`, c: positive(percBrutoFinal), b: false },
+              { l: 'Lucro Bruto', v: formatCurrency(lucro.total), c: positive(lucro.total), b: true },
+              { l: '(–) Despesas Fixas', v: formatCurrency(totalDespFixas), c: '#b91c1c', b: false },
+              { l: '(–) Folha Salarial', v: formatCurrency(totalDespFolha), c: '#b91c1c', b: false },
+              { l: '(–) Despesas Variáveis', v: formatCurrency(totalDespVariaveis), c: '#b91c1c', b: false },
+            ].map((r, i) => (
+              <tr key={i} style={trZebra(i)}>
+                <td style={{ ...TD, fontWeight: r.b ? 700 : 500 }}>{r.l}</td>
+                <td style={{ ...tdRight, color: r.c, fontWeight: r.b ? 800 : 600 }}>{r.v}</td>
+              </tr>
+            ))}
+            <tr style={{ background: lucroLiquidoFinal >= 0 ? '#047857' : '#b91c1c', color: '#fff' }}>
+              <td style={{ ...TD, fontWeight: 800, color: '#fff', borderBottom: 'none', fontSize: '11pt' }}>
+                LUCRO LÍQUIDO
+              </td>
+              <td style={{ ...tdRight, fontWeight: 800, color: '#fff', borderBottom: 'none', fontSize: '11pt' }}>
+                {formatCurrency(lucroLiquidoFinal)}  ({percLiquidFinal.toFixed(1)}%)
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
       {/* DESPESAS — nova página */}
       <div className="pdf-page-break" />
 
       <div style={{ marginTop: 0 }}>
-        <div style={H2}>2. Despesas Fixas</div>
+        <div style={H2}>3. Despesas Fixas</div>
         <PrintDespesaTable items={despesasFixas} total={totalDespFixas} formatCurrency={formatCurrency} />
       </div>
 
       <div style={SECTION}>
-        <div style={H2}>3. Folha Salarial</div>
+        <div style={H2}>4. Folha Salarial</div>
         <PrintDespesaTable items={despesasFolha} total={totalDespFolha} formatCurrency={formatCurrency} />
       </div>
 
       <div style={SECTION}>
-        <div style={H2}>4. Despesas Variáveis</div>
+        <div style={H2}>5. Despesas Variáveis</div>
         <PrintDespesaTable items={despesasVariaveis} total={totalDespVariaveis} formatCurrency={formatCurrency} />
       </div>
 
       {/* PROJETADAS DO ANO */}
       {tiposCustosVariaveis.length > 0 && (
         <div style={SECTION}>
-          <div style={H2}>5. Despesas Projetadas do Ano</div>
+          <div style={H2}>6. Despesas Projetadas do Ano</div>
           <table>
             <thead>
               <tr>
@@ -395,7 +381,7 @@ function PrintReport({
 
       {/* ESTOQUE */}
       <div style={SECTION}>
-        <div style={H2}>6. Estoque</div>
+        <div style={H2}>7. Estoque</div>
         <div style={{ display: 'flex', gap: 8 }}>
           <div style={{ flex: 1, border: '1px solid #e2e8f0', padding: '10px 12px', background: '#fafbfc' }}>
             <div style={{ fontSize: '7pt', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>
@@ -414,36 +400,6 @@ function PrintReport({
             </div>
           </div>
         </div>
-      </div>
-
-      {/* RESUMO FINAL */}
-      <div style={{ ...SECTION, marginTop: 24 }}>
-        <div style={H2}>7. Resumo Final</div>
-        <table>
-          <tbody>
-            {[
-              { l: 'Faturamento Bruto', v: formatCurrency(faturamento.total), c: '#0f172a', b: false },
-              { l: 'Margem Bruta', v: `${percBrutoFinal.toFixed(1)}%`, c: positive(percBrutoFinal), b: false },
-              { l: 'Lucro Bruto', v: formatCurrency(lucro.total), c: positive(lucro.total), b: true },
-              { l: '(–) Despesas Fixas', v: formatCurrency(totalDespFixas), c: '#b91c1c', b: false },
-              { l: '(–) Folha Salarial', v: formatCurrency(totalDespFolha), c: '#b91c1c', b: false },
-              { l: '(–) Despesas Variáveis', v: formatCurrency(totalDespVariaveis), c: '#b91c1c', b: false },
-            ].map((r, i) => (
-              <tr key={i} style={trZebra(i)}>
-                <td style={{ ...TD, fontWeight: r.b ? 700 : 500 }}>{r.l}</td>
-                <td style={{ ...tdRight, color: r.c, fontWeight: r.b ? 800 : 600 }}>{r.v}</td>
-              </tr>
-            ))}
-            <tr style={{ background: lucroLiquidoFinal >= 0 ? '#047857' : '#b91c1c', color: '#fff' }}>
-              <td style={{ ...TD, fontWeight: 800, color: '#fff', borderBottom: 'none', fontSize: '11pt' }}>
-                LUCRO LÍQUIDO
-              </td>
-              <td style={{ ...tdRight, fontWeight: 800, color: '#fff', borderBottom: 'none', fontSize: '11pt' }}>
-                {formatCurrency(lucroLiquidoFinal)}  ({percLiquidFinal.toFixed(1)}%)
-              </td>
-            </tr>
-          </tbody>
-        </table>
       </div>
 
       {/* RODAPÉ */}

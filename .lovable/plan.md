@@ -1,65 +1,28 @@
-# Corrigir bloqueio "Informe a data de carregamento" no avanço de pedido
+## Mudanças no PDF do DRE (`src/pages/direcao/DREMesDirecao.tsx`)
 
-## Problema
+### 1. Adicionar logotipo no topo
+- Copiar `user-uploads://Logo_Elisa_Portas_de_ENROLAR_PRETO-4.png` para `src/assets/logo-elisa-dre.png`.
+- Importar como ES6 no topo do arquivo: `import logoElisa from "@/assets/logo-elisa-dre.png"`.
+- No componente `PrintReport`, no bloco "CABEÇALHO" (linhas 178‑204), inserir um `<img src={logoElisa} />` à esquerda do bloco de título "Demonstrativo de Resultados", com altura ~48px e `objectFit: contain`, mantendo o título e a coluna direita ("Emitido em") alinhados como hoje.
 
-No pedido **63 - Mar/2026 STAATS & CIA LTDA** (`46b56be5...`), a etapa atual é `instalacoes` e o registro em `instalacoes` está com:
-- `carregamento_concluido = true` (concluído em 15/05/2026)
-- `data_carregamento = NULL`
+### 2. Remover seção "Top 5 Acessórios / Top 5 Itens Avulso"
+- Excluir o bloco JSX das linhas ~283‑333 (`{(topAcessorios.length > 0 || topAdicionais.length > 0) && (...)}`)
+- Manter as props `topAcessorios` e `topAdicionais` por enquanto sem uso no PDF (não tocar na lógica que as carrega — fora do escopo da requisição).
 
-A validação em `src/hooks/usePedidosEtapas.ts` (linhas 626–657) exige **ambos**: `data_carregamento` preenchido **e** `carregamento_concluido = true`. Como a data está nula, o avanço é barrado mesmo com o carregamento já marcado como concluído.
+### 3. Mover "7. Resumo Final" para a posição da seção removida
+- Recortar o bloco "RESUMO FINAL" atual (linhas ~419‑447) do final do relatório.
+- Colá‑lo exatamente onde estava o Top 5 (logo após a tabela "1. Faturamento por Categoria" e antes do `<div className="pdf-page-break" />` que inicia as Despesas).
+- Renomear o título de `"7. Resumo Final"` para `"2. Resumo Final"` e renumerar as seções seguintes:
+  - Despesas Fixas: 2 → 3
+  - Folha Salarial: 3 → 4
+  - Despesas Variáveis: 4 → 5
+  - Despesas Projetadas do Ano: 5 → 6
+  - Estoque: 6 → 7
+- Remover a referência antiga a "7. Resumo Final" no final (já movida).
 
-A causa raiz é um fluxo onde o usuário concluiu o carregamento sem antes agendar uma data (ou a data foi limpa em algum reagendamento), deixando o registro inconsistente.
+### 4. Sem mudanças de lógica
+- Cálculos, hooks e dados permanecem idênticos. Apenas reorganização visual e numeração das seções no PDF.
 
-## Solução
-
-### 1. Relaxar a validação (`src/hooks/usePedidosEtapas.ts`)
-
-Tratar `carregamento_concluido = true` como prova suficiente de que o carregamento aconteceu. Se concluído mas sem `data_carregamento`, considerar a data de `carregamento_concluido_em` como fallback ao invés de bloquear.
-
-Mudança no bloco em ~linha 647:
-
-```ts
-const fonteConcluida = todasFontes.find(f => f.carregamento_concluido);
-const algumaComData = todasFontes.some(f => f.data_carregamento);
-
-// Se já está concluído, aceita mesmo sem data (data será inferida do carregamento_concluido_em)
-if (!fonteConcluida && !algumaComData) {
-  throw new Error('Informe a data de carregamento antes de finalizar o pedido');
-}
-
-if (!fonteConcluida) {
-  throw new Error('O carregamento deve ser concluído antes de finalizar o pedido');
-}
-```
-
-Também remover os `console.log('[DEBUG carregamento] ...')` (linhas 635–649) que estão poluindo o console em produção.
-
-### 2. Backfill no banco (migração)
-
-Para manter consistência (calendários, relatórios e detecções futuras), atualizar registros já concluídos sem data:
-
-```sql
-UPDATE instalacoes
-SET data_carregamento = (carregamento_concluido_em AT TIME ZONE 'UTC')::date
-WHERE carregamento_concluido = true AND data_carregamento IS NULL;
-
-UPDATE ordens_carregamento
-SET data_carregamento = (carregamento_concluido_em AT TIME ZONE 'UTC')::date
-WHERE carregamento_concluido = true AND data_carregamento IS NULL;
-
-UPDATE correcoes
-SET data_carregamento = (carregamento_concluido_em AT TIME ZONE 'UTC')::date
-WHERE carregamento_concluido = true AND data_carregamento IS NULL;
-```
-
-Isso destrava o pedido atual e qualquer outro na mesma situação.
-
-## Arquivos afetados
-
-- `src/hooks/usePedidosEtapas.ts` — relaxar validação + remover debug logs
-- Nova migração SQL — backfill de `data_carregamento`
-
-## Fora do escopo
-
-- Não altero a UI de agendamento/conclusão de carregamento
-- Não mexo na lógica de calendários da expedição
+### Arquivos afetados
+- `src/pages/direcao/DREMesDirecao.tsx` (edições no `PrintReport`)
+- `src/assets/logo-elisa-dre.png` (novo arquivo, cópia do upload)
