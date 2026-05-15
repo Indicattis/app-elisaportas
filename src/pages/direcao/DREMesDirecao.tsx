@@ -89,7 +89,12 @@ function DespesaSectionReadOnly({
                 <td className="text-right text-xs font-bold text-white">{formatCurrency(total)}</td>
                 {tiposDisponiveis && tiposDisponiveis.length > 0 && (
                   <td className="text-right text-xs font-bold text-white/40">
-                    {formatCurrency(tiposDisponiveis.reduce((s, t) => s + t.valor_maximo_mensal, 0))}
+                    {formatCurrency(
+                      Array.from(new Set(despesas.map(d => d.nome))).reduce((s, nome) => {
+                        const t = tiposDisponiveis.find(t => t.nome === nome);
+                        return s + (t?.valor_maximo_mensal || 0);
+                      }, 0)
+                    )}
                   </td>
                 )}
               </tr>
