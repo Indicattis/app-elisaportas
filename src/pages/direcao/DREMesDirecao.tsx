@@ -830,6 +830,7 @@ export default function DREMesDirecao() {
         despesasFolha={despesasFolha}
         despesasVariaveis={despesasVariaveis}
         tiposCustosVariaveis={tiposCustosVariaveis}
+        tiposCustosFixos={tiposCustosFixos}
         totalDespFixas={totalDespFixas}
         totalDespFolha={totalDespFolha}
         totalDespVariaveis={totalDespVariaveis}
