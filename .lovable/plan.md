@@ -1,32 +1,30 @@
 ## Objetivo
 
-1. Adicionar coluna **SKU** editável inline em `/fabrica/produtos` (e na cópia).
-2. Criar uma cópia independente da página em `/administrativo/compras/itens`.
-3. Adicionar botão "Gerenciar itens" no topo de `/administrativo/compras/requisicoes/nova` que leva para a nova rota.
+Substituir a página em `/administrativo/compras/estoque` por uma cópia idêntica de `/administrativo/compras/itens` (mesmo comportamento, layout e edição inline incluindo SKU).
 
 ## Mudanças
 
-### 1. Coluna SKU editável em `ProdutosFabrica.tsx`
-- Adicionar `<TableHead>SKU</TableHead>` logo após "Produto" no header (linha ~1019).
-- Adicionar `<TableCell>` correspondente em `SortableProductRow` usando `EditableCell` com `onSave={(v) => onUpdateField(produto.id, { sku: String(v) || null })}`.
-- Atualizar `colSpan` dos estados vazios (de 14 para 15) e completar `<TableCell />` no `TableFooter`.
+### 1. Substituir o componente da rota `/administrativo/compras/estoque`
+- Em `src/App.tsx` (linha 612), trocar `<EstoqueMinimalista />` por `<ItensAdministrativo />` na rota `/administrativo/compras/estoque`.
+- Remover a rota `/administrativo/compras/estoque/editar-item/:id` (linha 613) e o import de `EstoqueEditMinimalista`, já que a nova página usa edição inline (sem rota de edição separada).
+- Remover o import de `EstoqueMinimalista` em `App.tsx`.
 
-### 2. Cópia da página: `src/pages/administrativo/ItensAdministrativo.tsx`
-- Duplicar `ProdutosFabrica.tsx` (arquivo independente, sem compartilhar componente — atendendo ao pedido).
-- Ajustar título/subtítulo para "Itens" / contexto Administrativo/Compras e atualizar o `breadcrumb`/`backPath` para `/administrativo/compras`.
-- Manter exatamente o mesmo comportamento (mesma fonte de dados `useEstoque`, mesmas edições inline incluindo SKU).
+### 2. Excluir os arquivos antigos
+- Apagar `src/pages/administrativo/EstoqueMinimalista.tsx`.
+- Apagar `src/pages/administrativo/EstoqueEditMinimalista.tsx`.
 
-### 3. Rota e link
-- `src/App.tsx`: registrar `<Route path="/administrativo/compras/itens" element={...}>` apontando para o novo componente, com `ProtectedRoute` apropriado (provavelmente `routeKey="administrativo_compras"` — confirmar com as chaves existentes).
-- `src/pages/administrativo/NovaRequisicaoCompra.tsx`: adicionar botão "Gerenciar itens" no `headerActions` (ou ao lado do título da seção "Inserção rápida") com `Link` para `/administrativo/compras/itens`, ícone `Package` ou `Settings`, estilo glassmorphism consistente.
+### 3. Ajustar `backPath` / breadcrumbs ao usar `ItensAdministrativo` em duas rotas
+- O componente `ItensAdministrativo` hoje aponta `backPath="/administrativo/compras"` e título "Itens" — isso continua válido para ambas as rotas (`/itens` e `/estoque`), então **nenhuma alteração interna** é necessária.
+- A rota `/administrativo/compras/itens` permanece como está (ponto de entrada principal usado pelo botão "Gerenciar itens" da Nova Requisição).
+- A rota `/administrativo/compras/estoque` passa a renderizar exatamente a mesma página.
+
+## Pontos fora do escopo
+
+- Não alterar `ComprasHub.tsx` nem `ComprasHome.tsx` (continuam apontando para `/administrativo/compras/estoque`, que agora carrega a nova página).
+- Não mexer em rotas legadas `/dashboard/administrativo/compras/estoque/...` (sub-rotas como `regras-etiquetas` e `gerenciamento` não pertencem a esta rota minimalista).
+- Sem mudanças de banco de dados.
 
 ## Observações técnicas
 
-- O componente `EditableCell` já existe e suporta texto livre — o SKU encaixa direto.
-- O hook `useEstoque` (e seu mutation de update) já aceita `sku` no patch, pois o filtro de busca em `searchTerm` (linha 506) já lê `p.sku`.
-- Sem alterações de banco de dados.
-
-## Itens fora do escopo
-
-- Não mexer em validação de unicidade do SKU (não foi pedido).
-- Não alterar o componente original — a cópia é independente conforme escolha.
+- A rota `/administrativo/compras/estoque/editar-item/:id` deixa de existir; quaisquer links internos que ainda a referenciem ficarão órfãos. Verificação rápida confirmou que ela só é usada dentro do próprio `EstoqueMinimalista.tsx` (que será excluído).
+- A `routeKey="administrativo_hub"` é mantida para preservar permissões.
