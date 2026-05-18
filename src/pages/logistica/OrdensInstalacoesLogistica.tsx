@@ -190,6 +190,19 @@ export default function OrdensInstalacoesLogistica() {
         { label: 'Logística', path: '/logistica' },
         { label: 'Instalações' }
       ]}
+      headerActions={
+        <div className="flex flex-wrap items-center gap-2">
+          <InstalacoesHeaderActions />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.location.reload()}
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Atualizar
+          </Button>
+        </div>
+      }
     >
       <div className="min-h-screen p-4 md:p-4 lg:p-6">
         <div className="max-w-[1800px] mx-auto space-y-4">
@@ -209,18 +222,6 @@ export default function OrdensInstalacoesLogistica() {
                   {neoInstalacoes.length > 0 && ` • ${neoInstalacoes.length} avulsas`}
                   {neoCorrecoes.length > 0 && ` • ${neoCorrecoes.length} correções avulsas`}
                 </p>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2">
-                <InstalacoesHeaderActions />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => window.location.reload()}
-                >
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Atualizar
-                </Button>
               </div>
             </div>
           </div>
