@@ -649,9 +649,9 @@ function PrintDespesaTable({
           )}
         </tr>
       </thead>
-      <tbody>
-        {items.map((d, i) => (
-          <tr key={d.id} style={{ background: i % 2 === 0 ? '#ffffff' : '#fafbfc' }}>
+      {items.map((d, i) => (
+        <tbody key={d.id} style={{ pageBreakInside: 'avoid' }}>
+          <tr style={{ background: i % 2 === 0 ? '#ffffff' : '#fafbfc' }}>
             <td style={TD}>{d.nome}</td>
             {(() => {
               const tipoRef = showProj
@@ -683,7 +683,34 @@ function PrintDespesaTable({
               );
             })()}
           </tr>
-        ))}
+          {(d.gastos || []).map((g) => {
+            const dataFmt = (() => {
+              try {
+                return format(new Date(g.data + 'T12:00:00'), 'dd/MM');
+              } catch {
+                return '—';
+              }
+            })();
+            return (
+              <tr key={g.id} style={{ background: '#fcfdfe' }}>
+                <td style={{ ...TD, paddingLeft: 22, fontSize: '8.5pt', color: '#64748b', borderBottom: '1px solid #f1f5f9' }}>
+                  └ {dataFmt}  {g.descricao || '—'}
+                </td>
+                <td style={{ ...TD, textAlign: 'right', fontVariantNumeric: 'tabular-nums', fontSize: '8.5pt', color: '#64748b', borderBottom: '1px solid #f1f5f9' }}>
+                  {formatCurrency(g.valor)}
+                </td>
+                {showProj && (
+                  <td style={{ ...TD, borderBottom: '1px solid #f1f5f9' }}></td>
+                )}
+                {showProj && (
+                  <td style={{ ...TD, borderBottom: '1px solid #f1f5f9' }}></td>
+                )}
+              </tr>
+            );
+          })}
+        </tbody>
+      ))}
+      <tbody>
         <tr style={{ background: '#1e3a8a', color: '#fff' }}>
           <td style={{ ...TD, fontWeight: 800, color: '#fff', borderBottom: 'none' }}>TOTAL</td>
           <td style={{ ...TD, textAlign: 'right', fontWeight: 800, color: '#fff', borderBottom: 'none', fontVariantNumeric: 'tabular-nums' }}>
