@@ -262,6 +262,7 @@ export function NeoInstalacaoCardGestao({
               </div>
 
               {/* Col 15: Valor a Receber */}
+              {!hideValorAReceber && (
               <div className="text-center">
                 {onUpdateValor ? (
                   <Popover open={popoverValorOpen} onOpenChange={(open) => {
@@ -336,9 +337,10 @@ export function NeoInstalacaoCardGestao({
                   </Tooltip>
                 )}
               </div>
+              )}
 
               {/* Col 16-22: Data criação + Cronômetro (span across ordens + tempo cols) */}
-              <div style={{ gridColumn: '16 / 23' }}>
+              <div style={{ gridColumn: hideValorAReceber ? '15 / 22' : '16 / 23' }}>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div className="flex items-center justify-center gap-1 cursor-help">
