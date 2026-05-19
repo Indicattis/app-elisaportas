@@ -336,3 +336,28 @@ export function useTransferirClientes() {
     },
   });
 }
+
+export function useDelegarCliente() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ clienteId, destinoUserId }: { clienteId: string; destinoUserId: string }) => {
+      const { error } = await supabase
+        .from("clientes" as any)
+        .update({ created_by: destinoUserId })
+        .eq("id", clienteId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["clientes"] });
+      queryClient.invalidateQueries({ queryKey: ["meus-clientes"] });
+      queryClient.invalidateQueries({ queryKey: ["clientes-search"] });
+      queryClient.invalidateQueries({ queryKey: ["vendedores-transferencia"] });
+      toast.success("Cliente delegado com sucesso!");
+    },
+    onError: (error: any) => {
+      console.error("Erro ao delegar cliente:", error);
+      toast.error(error?.message || "Erro ao delegar cliente");
+    },
+  });
+}
