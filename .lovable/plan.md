@@ -1,14 +1,14 @@
 ## Mudança
 
-Na aba "Assinatura Contrato" de `/direcao/gestao-fabrica`, os cards (`VendaPendentePedidoCard` renderizado com `mode="contrato"`) mostram, além de "Anexar Contrato", dois botões herdados do layout de faturamento:
-
-- **Concluir sem pedido** (ícone amarelo `AlertTriangle`, dispensa pedido)
-- **Finalizar Direto (Arquivo Morto)** (ícone verde `CheckCircle2`)
-
-Esses dois botões devem desaparecer apenas quando `mode === 'contrato'`. Em `mode === 'faturamento'` continuam aparecendo normalmente.
+Reaplicar o filtro `pedido_dispensado = false` **apenas** no hook de Pend. Faturamento, mantendo a aba Assinatura Contrato sem o filtro (para continuar exibindo vendas com pedido dispensado que ainda não têm contrato anexado/dispensado).
 
 ## Arquivo a editar
 
-`src/components/pedidos/VendaPendentePedidoCard.tsx` (linhas ~590–655): envolver os blocos "Dispensar Pedido" e "Finalizar Direto" em uma condição `mode !== 'contrato'`, mantendo o botão "Anexar Contrato" como única ação na etapa de assinatura.
+`src/hooks/useVendasPendenteFaturamento.ts` — adicionar `.eq("pedido_dispensado", false)` na query do Supabase, junto dos demais filtros (`is_rascunho`, `contrato_url/contrato_dispensado`).
 
-Sem mudanças em hooks, lógica de negócio ou banco.
+Sem alterações em `useVendasAssinaturaContrato.ts` nem em componentes.
+
+## Efeito
+
+- Aba **Assinatura Contrato**: continua mostrando vendas com `pedido_dispensado = true` (sem contrato).
+- Aba **Pend. Faturamento**: volta a ocultar vendas com `pedido_dispensado = true`, exibindo somente vendas com contrato (anexado ou dispensado) que ainda não foram faturadas e não têm pedido de produção.
