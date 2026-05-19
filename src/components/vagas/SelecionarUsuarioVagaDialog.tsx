@@ -58,20 +58,23 @@ export function SelecionarUsuarioVagaDialog({
   const handleSelect = async (user: User) => {
     setSelecting(user.id);
     try {
-      const { error } = await supabase
-        .from("admin_users")
-        .update({ role: vagaCargo, visivel_organograma: true } as any)
-        .eq("id", user.id);
-
+      if (!vagaId) {
+        throw new Error("Vaga não informada");
+      }
+      const { error } = await supabase.rpc("preencher_vaga_com_usuario" as any, {
+        p_vaga_id: vagaId,
+        p_admin_user_id: user.id,
+      });
       if (error) throw error;
 
       toast.success(`${user.nome} foi atribuído à vaga`);
       queryClient.invalidateQueries({ queryKey: ["all-users"] });
       queryClient.invalidateQueries({ queryKey: ["all-users-including-hidden"] });
+      queryClient.invalidateQueries({ queryKey: ["vagas"] });
       onSelectExisting(user);
       onOpenChange(false);
     } catch (err: any) {
-      toast.error("Erro ao atribuir usuário à vaga");
+      toast.error(err?.message || "Erro ao atribuir usuário à vaga");
       console.error(err);
     } finally {
       setSelecting(null);
