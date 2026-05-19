@@ -1,27 +1,26 @@
 ## Objetivo
 
-Em `/direcao/dre/:mes`, transformar cada linha de tipo de custo em "Despesas Fixas" e "Despesas Variáveis" num botão clicável que abre um modal listando todos os lançamentos da tabela `gastos` daquele `tipo_custo_id` no mês.
+No PDF gerado em `/direcao/dre/:mes`:
+- Remover a seção **"6. Despesas Projetadas do Ano"**.
+- Adicionar uma nova coluna **"Projetado (Ano)"** nas tabelas de **Despesas Fixas** e **Despesas Variáveis**, ao lado da coluna "Projetado" (mensal).
 
-## Mudanças
+## Mudanças em `src/pages/direcao/DREMesDirecao.tsx`
 
-### `src/pages/direcao/DREMesDirecao.tsx`
+### 1. `PrintDespesaTable` (linhas ~638-734)
+- Adicionar nova coluna `Projetado (Ano)` no `<thead>`, logo após `Projetado`, somente quando `showProj` for true.
+- Para cada linha, renderizar `formatCurrency(tipoRef.valor_maximo_mensal * 12)` ou `—` quando não houver `tipoRef`.
+- Calcular `totalProjAno = totalProj * 12` (ou somar `t.valor_maximo_mensal * 12` da mesma forma que `totalProj`) e exibir na linha TOTAL.
+- Estilo: mesma formatação numérica usada em `Projetado`, cor neutra `#64748b`, `width: 140`.
 
-1. **`DespesaSectionReadOnly`**: tornar a célula `Nome` (`<td>` da linha) clicável. Ao clicar, dispara um callback `onClickTipo(d.id, d.nome)` recebido por props.
-   - Estilo: cursor-pointer, hover `text-white`, sem mudar layout.
-   - Não aplicar para a seção "Folha Salarial" (não é tipo de custo).
+### 2. Remover seção 6 (linhas 555-596)
+- Excluir todo o bloco `{tiposCustosVariaveis.length > 0 && ( ... )}` que renderiza "6. Despesas Projetadas do Ano".
+- Renumerar a seção seguinte: **"7. Estoque" → "6. Estoque"**.
 
-2. **Novo componente `GastosDoTipoDialog`** (dentro do mesmo arquivo):
-   - Props: `open`, `onOpenChange`, `mes` (`YYYY-MM`), `tipoCustoId`, `tipoNome`.
-   - Ao abrir, consulta `gastos` filtrando por `tipo_custo_id` + intervalo do mês, com join leve em `admin_users` (responsável) e `bancos` (banco) para exibir nomes.
-   - Layout: tabela compacta com colunas Data, Descrição, Responsável, Banco, Status, Valor. Rodapé com total e contagem.
-   - Vazio: mensagem "Nenhum gasto lançado neste tipo para o mês".
-   - Botão "Abrir em Gastos" → navega para `/administrativo/financeiro/gastos?mes=${mes}` (filtro do mês já existe).
-   - Estilo glassmórfico (bg-white/5, border-white/10), seguindo o padrão do DRE.
-
-3. **No corpo de `DREMesDirecao`**: novo estado `tipoModal: { id: string; nome: string } | null`. Passar `onClickTipo` para as duas seções (fixas e variáveis) renderizadas em tela (componente `DespesaSectionReadOnly`). A folha mantém comportamento atual.
+### 3. Limpeza
+- A constante `totalProjetadoAnual` (calculada no componente pai) só é usada no bloco removido. Verificar e remover sua declaração e qualquer cálculo associado se ficar órfão.
 
 ## Fora de escopo
 
-- Layout de impressão (`PrintReport` / `PrintDespesaTable`) permanece igual — modal não faz sentido em PDF.
-- Edição/exclusão de gastos a partir do modal: somente leitura, com link para a tela de Gastos para qualquer alteração.
-- "Folha Salarial" não recebe modal (a fonte é `custos_folha_mensais`, não `gastos`).
+- A visualização em tela (`DespesaSectionReadOnly`) permanece inalterada — a mudança é apenas no layout de impressão/PDF.
+- Não alterar a seção "3. Folha Salarial" (sem projeção).
+- Modal de gastos por tipo continua igual.
