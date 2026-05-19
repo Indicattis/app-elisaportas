@@ -103,6 +103,7 @@ function SortableItem({
   disableClienteClick,
   hideOrdensStatus,
   hideCorrecaoButton,
+  hideValorAReceber,
 }: SortableItemProps) {
   const {
     attributes,
