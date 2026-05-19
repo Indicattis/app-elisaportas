@@ -624,7 +624,7 @@ function PrintReport({
                       <td style={TD}>{v.cliente || '—'}</td>
                       <td style={tdRight}>{formatCurrency(v.valorTabela)}</td>
                       <td style={tdRight}>{formatCurrency(v.valorVenda)}</td>
-                      <td style={{ ...tdRight, color: '#b91c1c', fontWeight: 600 }}>
+                      <td style={{ ...tdRight, color: v.desconto > 0 ? '#b91c1c' : v.desconto < 0 ? '#047857' : undefined, fontWeight: 600 }}>
                         {formatCurrency(v.desconto)}
                       </td>
                       <td style={{ ...tdRight, color: positive(v.lucro), fontWeight: 600 }}>
