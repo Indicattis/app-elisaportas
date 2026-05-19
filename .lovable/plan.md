@@ -1,35 +1,27 @@
 ## Objetivo
 
-Em `/administrativo/financeiro/custos`, os valores reais de cada tipo de custo (por mês) passam a vir agregados automaticamente da tabela `gastos` (mesma fonte de `/administrativo/financeiro/gastos`). A tela do mês deixa de ser editável — vira só leitura.
+Em `/direcao/dre/:mes`, transformar cada linha de tipo de custo em "Despesas Fixas" e "Despesas Variáveis" num botão clicável que abre um modal listando todos os lançamentos da tabela `gastos` daquele `tipo_custo_id` no mês.
 
 ## Mudanças
 
-### 1. `src/hooks/useCustosMensais.ts`
+### `src/pages/direcao/DREMesDirecao.tsx`
 
-- `fetchCustosMes(mesDate)`:
-  - Trocar a consulta a `despesas_mensais` por uma consulta em `gastos` filtrando pelo intervalo do mês (`data >= primeiro dia` e `data <= último dia`).
-  - Agrupar `SUM(valor)` por `tipo_custo_id`.
-  - Para cada `tipo_custo` ativo, retornar 1 item `CustoMensal` com `valor_real = soma dos gastos` e `observacoes = null`.
-- `fetchTotaisPorMes(ano)`:
-  - Trocar consulta a `despesas_mensais` por consulta a `gastos` no intervalo do ano (`data` entre `ano-01-01` e `ano-12-31`).
-  - Agrupar por mês (`new Date(data).getMonth()+1`) e somar `valor`.
-  - Manter o cálculo de `total_limite` a partir de `tipos_custos` ativos.
-- `saveCustosMensaisBatch`: marcar como deprecated/no-op (mantém assinatura mas retorna `true` sem gravar). Não é mais usado.
+1. **`DespesaSectionReadOnly`**: tornar a célula `Nome` (`<td>` da linha) clicável. Ao clicar, dispara um callback `onClickTipo(d.id, d.nome)` recebido por props.
+   - Estilo: cursor-pointer, hover `text-white`, sem mudar layout.
+   - Não aplicar para a seção "Folha Salarial" (não é tipo de custo).
 
-### 2. `src/pages/administrativo/CustosMesMinimalista.tsx`
+2. **Novo componente `GastosDoTipoDialog`** (dentro do mesmo arquivo):
+   - Props: `open`, `onOpenChange`, `mes` (`YYYY-MM`), `tipoCustoId`, `tipoNome`.
+   - Ao abrir, consulta `gastos` filtrando por `tipo_custo_id` + intervalo do mês, com join leve em `admin_users` (responsável) e `bancos` (banco) para exibir nomes.
+   - Layout: tabela compacta com colunas Data, Descrição, Responsável, Banco, Status, Valor. Rodapé com total e contagem.
+   - Vazio: mensagem "Nenhum gasto lançado neste tipo para o mês".
+   - Botão "Abrir em Gastos" → navega para `/administrativo/financeiro/gastos?mes=${mes}` (filtro do mês já existe).
+   - Estilo glassmórfico (bg-white/5, border-white/10), seguindo o padrão do DRE.
 
-- Remover botão **Salvar Custos** e o estado `saving`.
-- Remover os `<Input>` editáveis: substituir por valor exibido em texto (`formatCurrency(vals.valor_real)`).
-- Remover input de observações (vem dos gastos individuais agora).
-- Adicionar um botão/link "Ver gastos do mês" que navega para `/administrativo/financeiro/gastos?mes=YYYY-MM` (filtro por mês).
-- Subtítulo: trocar "Lance os valores reais…" por "Valores agregados automaticamente dos lançamentos em Gastos".
-
-### 3. `src/pages/administrativo/GastosPage.tsx` (opcional, pequeno)
-
-- Ler `mes` da query string ao montar e pré-selecionar `mesFiltro`, para que o link da tela de Custos funcione.
+3. **No corpo de `DREMesDirecao`**: novo estado `tipoModal: { id: string; nome: string } | null`. Passar `onClickTipo` para as duas seções (fixas e variáveis) renderizadas em tela (componente `DespesaSectionReadOnly`). A folha mantém comportamento atual.
 
 ## Fora de escopo
 
-- DRE (`DREMesDirecao.tsx`) e `despesas_mensais` permanecem como estão. Os dados antigos de `despesas_mensais` continuam intactos, apenas deixam de aparecer em `/financeiro/custos`.
-- Estrutura/CRUD de `tipos_custos` permanece igual (cadastro, limites, ativo, etc.).
-- Tabela `gastos` não é alterada.
+- Layout de impressão (`PrintReport` / `PrintDespesaTable`) permanece igual — modal não faz sentido em PDF.
+- Edição/exclusão de gastos a partir do modal: somente leitura, com link para a tela de Gastos para qualquer alteração.
+- "Folha Salarial" não recebe modal (a fonte é `custos_folha_mensais`, não `gastos`).
