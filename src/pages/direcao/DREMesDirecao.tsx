@@ -315,16 +315,42 @@ function PrintReport({
                 <td style={{ ...tdRight, color: r.c, fontWeight: r.b ? 800 : 600 }}>{r.v}</td>
               </tr>
             ))}
-            <tr style={{ background: lucroLiquidoFinal >= 0 ? '#047857' : '#b91c1c', color: '#fff' }}>
-              <td style={{ ...TD, fontWeight: 800, color: '#fff', borderBottom: 'none', fontSize: '11pt' }}>
-                LUCRO LÍQUIDO
-              </td>
-              <td style={{ ...tdRight, fontWeight: 800, color: '#fff', borderBottom: 'none', fontSize: '11pt' }}>
-                {formatCurrency(lucroLiquidoFinal)}  ({percLiquidFinal.toFixed(1)}%)
-              </td>
-            </tr>
           </tbody>
         </table>
+        <div style={{ display: 'flex', gap: 8, marginTop: 10, pageBreakInside: 'avoid' }}>
+          <div
+            style={{
+              flex: 1,
+              border: `1.5px solid ${positive(percLiquidFinal)}`,
+              borderRadius: 4,
+              padding: '10px 12px',
+              background: '#fafbfc',
+            }}
+          >
+            <div style={{ fontSize: '7pt', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>
+              Margem Líquida
+            </div>
+            <div style={{ fontSize: '14pt', fontWeight: 800, color: positive(percLiquidFinal), marginTop: 3, fontVariantNumeric: 'tabular-nums' }}>
+              {percLiquidFinal.toFixed(1)}%
+            </div>
+          </div>
+          <div
+            style={{
+              flex: 1,
+              border: `1.5px solid ${positive(lucroLiquidoFinal)}`,
+              borderRadius: 4,
+              padding: '10px 12px',
+              background: '#fafbfc',
+            }}
+          >
+            <div style={{ fontSize: '7pt', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>
+              Lucro Líquido Final
+            </div>
+            <div style={{ fontSize: '14pt', fontWeight: 800, color: positive(lucroLiquidoFinal), marginTop: 3, fontVariantNumeric: 'tabular-nums' }}>
+              {formatCurrency(lucroLiquidoFinal)}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* DESPESAS — nova página */}
