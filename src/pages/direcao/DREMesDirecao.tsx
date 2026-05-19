@@ -1474,24 +1474,34 @@ export default function DREMesDirecao() {
                     {columns.map(col => {
                       const topList = col.key === 'acessorios' ? topAcessorios : col.key === 'adicionais' ? topAdicionais : null;
                       const isPortas = col.key === 'portas';
+                      const isPintura = col.key === 'pintura';
+                      const isAcessorios = col.key === 'acessorios';
+                      const isAdicionais = col.key === 'adicionais';
+                      const onClickHeader = isPortas
+                        ? () => setPortasModalOpen(true)
+                        : isPintura
+                          ? () => setPinturaModalOpen(true)
+                          : isAcessorios
+                            ? () => setAcessoriosModalOpen(true)
+                            : isAdicionais
+                              ? () => setAvulsosModalOpen(true)
+                              : null;
                       return (
                         <th
                           key={col.key}
                           className={`text-right p-3 text-white/40 font-medium text-xs uppercase ${col.key === 'total' ? 'bg-white/5' : ''}`}
                         >
-                          {isPortas ? (
-                            <button
-                              type="button"
-                              onClick={() => setPortasModalOpen(true)}
-                              className="uppercase cursor-pointer underline decoration-dotted underline-offset-4 hover:text-white transition-colors"
-                            >
-                              {col.label}
-                            </button>
-                          ) : topList && topList.length > 0 ? (
+                          {onClickHeader && topList && topList.length > 0 ? (
                             <TooltipProvider>
                               <Tooltip>
-                                <TooltipTrigger className="cursor-default underline decoration-dotted underline-offset-4 uppercase">
-                                  {col.label}
+                                <TooltipTrigger asChild>
+                                  <button
+                                    type="button"
+                                    onClick={onClickHeader}
+                                    className="uppercase cursor-pointer underline decoration-dotted underline-offset-4 hover:text-white transition-colors"
+                                  >
+                                    {col.label}
+                                  </button>
                                 </TooltipTrigger>
                                 <TooltipContent side="bottom" className="max-w-[220px]">
                                   <p className="font-semibold mb-1 text-xs">Top 5 mais vendidos</p>
@@ -1503,6 +1513,14 @@ export default function DREMesDirecao() {
                                 </TooltipContent>
                               </Tooltip>
                             </TooltipProvider>
+                          ) : onClickHeader ? (
+                            <button
+                              type="button"
+                              onClick={onClickHeader}
+                              className="uppercase cursor-pointer underline decoration-dotted underline-offset-4 hover:text-white transition-colors"
+                            >
+                              {col.label}
+                            </button>
                           ) : (
                             col.label
                           )}
