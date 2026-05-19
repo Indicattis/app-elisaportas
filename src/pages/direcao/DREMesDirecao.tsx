@@ -849,6 +849,12 @@ export default function DREMesDirecao() {
   const [vendasListagem, setVendasListagem] = useState<{ id: string; data: string; cliente: string; valorTabela: number; valorVenda: number; desconto: number; lucro: number }[]>([]);
   const [portasModalOpen, setPortasModalOpen] = useState(false);
   const [portasDetalhe, setPortasDetalhe] = useState<VendaComPortasRow[]>([]);
+  const [pinturaModalOpen, setPinturaModalOpen] = useState(false);
+  const [pinturaDetalhe, setPinturaDetalhe] = useState<VendaComItensSimplesRow[]>([]);
+  const [acessoriosModalOpen, setAcessoriosModalOpen] = useState(false);
+  const [acessoriosDetalhe, setAcessoriosDetalhe] = useState<VendaComItensSimplesRow[]>([]);
+  const [avulsosModalOpen, setAvulsosModalOpen] = useState(false);
+  const [avulsosDetalhe, setAvulsosDetalhe] = useState<VendaComItensSimplesRow[]>([]);
 
   const mesDate = mes ? new Date(mes + '-15') : new Date();
   const mesNome = format(mesDate, 'MMMM yyyy', { locale: ptBR });
