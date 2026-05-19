@@ -71,6 +71,7 @@ export function NeoInstalacoesDraggableList({
   onEditar,
   onUpdateValor,
   onReorganizar,
+  hideValorAReceber = false,
 }: NeoInstalacoesDraggableListProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
 
