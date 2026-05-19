@@ -1,79 +1,81 @@
-## Modal de "Portas" no cabeçalho da primeira tabela do DRE
 
-Ao clicar no cabeçalho **Portas** da primeira tabela em `/direcao/dre/:mes`, abrir um modal listando todas as vendas do mês que contenham `tipo_produto = 'porta_enrolar'` em seus itens, com demonstrativo dos produtos relacionados.
+## Objetivo
 
-### Comportamento
+Adicionar botão "Caixa Roboost" no hub `/direcao` que abre uma nova página onde se cadastram entradas (nome, valor e etiqueta colorida), exibidas em lista com total consolidado — replicando o layout do print.
 
-- Cabeçalho **Portas** ganha cursor pointer + underline sutil ao hover (igual ao padrão dos tooltips existentes).
-- Clique abre um `Dialog` (shadcn) com título "Vendas com Portas de Enrolar — {mesNome}".
-- Demais cabeçalhos permanecem como estão.
+## 1. Hub /direcao
+- Em `DirecaoHub.tsx`, adicionar item no `menuItems`:
+  - label: "Caixa Roboost", icon: `Wallet` (lucide), path: `/direcao/caixa-roboost`, routePrefix: `direcao_caixa_roboost`.
 
-### Conteúdo do modal
+## 2. Nova página `CaixaRoboostDirecao.tsx`
 
-Listagem agrupada por venda, ordenada por `data_venda` crescente. Cada venda exibe:
+Layout idêntico ao print, com glassmorphism padrão do projeto (`bg-white/5 backdrop-blur-xl border-white/10`):
 
-- **Cabeçalho da venda**: data (dd/MM), cliente, nº da venda (se houver), valor total líquido da venda.
-- **Tabela de itens "porta_enrolar"** da venda, colunas:
-  - Descrição
-  - Qtd
-  - Valor Porta (bruto unit × qtd)
-  - Valor Pintura
-  - Valor Instalação
-  - Desconto aplicado (proporcional à linha)
-  - Valor Líquido da linha
-  - Lucro da linha (`lucro_item`)
+```text
+[Breadcrumb: Início › Direção › Caixa Roboost]
 
-Rodapé do modal com totais consolidados: total Porta, total Pintura, total Instalação, total Líquido, total Lucro — somando apenas as linhas de `porta_enrolar` exibidas (deve bater com `fat.portas` quando isolado do `porta_social`).
+┌───────────────────────────────────────────────────────────┐
+│ 💼 Caixa Roboost                        [+ Nova entrada] │
+│    Cadastre valores e organize-os com etiquetas           │
+└───────────────────────────────────────────────────────────┘
 
-### Implementação técnica
+┌───────────────────────────────────────────────────────────┐
+│              MONTANTE TOTAL                               │
+│              R$ 800.000,00                                │
+│                 4 entradas                                │
+└───────────────────────────────────────────────────────────┘
 
-1. **Novo state** em `DREMesDirecao`:
-   ```ts
-   const [portasModalOpen, setPortasModalOpen] = useState(false);
-   const [portasDetalhe, setPortasDetalhe] = useState<VendaComPortasRow[]>([]);
-   ```
-
-2. **Nova consulta** em `useEffect` (junto às outras), após a já existente em `produtos_vendas`:
-   ```ts
-   supabase.from('produtos_vendas')
-     .select(`
-       id, descricao, quantidade,
-       valor_produto, valor_pintura, valor_instalacao,
-       tipo_desconto, desconto_percentual, desconto_valor,
-       lucro_item, valor_total_sem_frete,
-       vendas!inner(id, data_venda, cliente_nome, valor_venda, valor_frete)
-     `)
-     .eq('tipo_produto', 'porta_enrolar')
-     .gte('vendas.data_venda', start + ' 00:00:00')
-     .lte('vendas.data_venda', end + ' 23:59:59')
-     .order('vendas(data_venda)', { ascending: true });
-   ```
-   Agrupar em memória por `vendas.id`, calcular desconto proporcional por linha exatamente como o cálculo já existente em `fat.portas` (linhas 956-976), e armazenar em `portasDetalhe`.
-
-3. **Tornar o `<th>` "Portas" clicável** no JSX da primeira tabela (linha ~1237). Adicionar `onClick={() => setPortasModalOpen(true)}` quando `col.key === 'portas'`, com `cursor-pointer hover:text-white underline decoration-dotted underline-offset-4`. Manter os outros cabeçalhos inalterados (incluindo o tooltip de Acessórios/Adicionais).
-
-4. **Novo componente local `PortasDetalheDialog`** no mesmo arquivo, recebendo `open`, `onOpenChange`, `mesNome`, `vendas: VendaComPortasRow[]`, `formatCurrency`. Usa `Dialog` shadcn já importado. Layout: cards por venda + tabela interna por venda + rodapé com totais. Estilo glassmorphism alinhado ao restante (bg-white/5, border-white/10).
-
-5. **Escopo**: apenas a tela (não afeta o PDF). Comportamento read-only.
-
-### Tipos
-
-```ts
-interface VendaComPortasRow {
-  vendaId: string;
-  dataVenda: string;
-  clienteNome: string;
-  valorVenda: number;
-  itens: {
-    id: string;
-    descricao: string;
-    quantidade: number;
-    valorPortaBruto: number;
-    valorPinturaBruto: number;
-    valorInstalacaoBruto: number;
-    descontoLinha: number;
-    valorLiquido: number;
-    lucro: number;
-  }[];
-}
+┌───────────────────────────────────────────────────────────┐
+│ ⋮⋮  Stone   [Vamos receber]            R$ 145.000,00 ✏ 🗑 │
+│ ⋮⋮  Banco Sicredi [Em Caixa Hoje 18/05] R$ 105.000,00 ✏🗑│
+│ ...                                                       │
+└───────────────────────────────────────────────────────────┘
 ```
+
+### Componentes
+- Card de cabeçalho com botão azul "Nova entrada" (gradiente padrão).
+- Card de total: soma de todas as entradas, formatada em BRL, com contador.
+- Lista de entradas: cada item em card pílula com handle drag (`GripVertical`), nome em bold, badge colorido com o nome da etiqueta, valor à direita, ícones de editar (`Pencil`) e excluir (`Trash2`).
+- Drag-and-drop para reordenar (`@dnd-kit/core` já presente no projeto; verificar e usar — se não houver, usar setas ↑↓ simples).
+
+### Dialog "Nova entrada" / "Editar entrada"
+- Campos: Nome (text), Valor (input monetário R$), Etiqueta (combobox: selecionar existente ou criar nova com nome + cor).
+- Botões: Cancelar / Salvar.
+
+### Dialog de exclusão
+- Confirmação simples ("Excluir entrada?").
+
+## 3. Persistência (Lovable Cloud / Supabase)
+
+Migração nova criando duas tabelas:
+
+**`caixa_roboost_etiquetas`**
+- `id uuid pk default gen_random_uuid()`
+- `nome text not null unique`
+- `cor text not null` (hex ou nome do preset: amber, emerald, rose, sky, etc.)
+- `created_at timestamptz default now()`
+
+**`caixa_roboost_entradas`**
+- `id uuid pk default gen_random_uuid()`
+- `nome text not null`
+- `valor numeric not null default 0`
+- `etiqueta_id uuid references caixa_roboost_etiquetas(id) on delete set null`
+- `ordem integer not null default 0`
+- `created_at timestamptz default now()`
+- `updated_at timestamptz default now()`
+
+RLS: ambas com policies para `authenticated` SELECT/INSERT/UPDATE/DELETE usando `is_admin()` ou checagem por `has_route_access('direcao_caixa_roboost')` — seguir padrão das outras telas /direcao.
+
+## 4. Rota
+
+Em `src/App.tsx`:
+- import `CaixaRoboostDirecao from "./pages/direcao/CaixaRoboostDirecao"`
+- adicionar rota `/direcao/caixa-roboost` dentro do mesmo bloco protegido das demais rotas `direcao_*`.
+
+## Fora do escopo
+- Integração com DRE / contas a receber.
+- Histórico de alterações.
+- Filtros por etiqueta (pode ser adicionado depois se quiser).
+
+## Confirmações
+Posso assumir cores predefinidas para etiquetas (amber/emerald/rose/sky/violet/etc.) ou prefere color-picker livre? Se não responder, assumirei presets fixos para manter consistência visual.
