@@ -637,8 +637,27 @@ export default function DREMesDirecao() {
     }));
 
     setDespesasFixas(items.filter(i => i.tipo === 'fixa' && !isFolha(i.nome)));
-    setDespesasFolha(items.filter(i => isFolha(i.nome)));
     setDespesasVariaveis(items.filter(i => i.tipo === 'variavel' && !isFolha(i.nome)));
+
+    // Folha salarial agora vem da tabela custos_folha_mensais
+    const { data: folhaItens, error: folhaErr } = await supabase
+      .from('custos_folha_mensais' as any)
+      .select('id, colaborador_nome, valor')
+      .eq('mes_referencia', start);
+
+    if (folhaErr) {
+      console.error('Erro ao buscar custos de folha:', folhaErr);
+      setDespesasFolha([]);
+    } else {
+      setDespesasFolha(
+        ((folhaItens || []) as any[]).map((f) => ({
+          id: f.id,
+          nome: f.colaborador_nome,
+          valor_real: Number(f.valor) || 0,
+          tipo: 'fixa',
+        }))
+      );
+    }
   };
 
   const fetchTiposCustosAtivos = async () => {

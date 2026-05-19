@@ -313,6 +313,7 @@ import AdministrativoHub from "./pages/administrativo/AdministrativoHub";
 import PedidosAdminMinimalista from "./pages/administrativo/PedidosAdminMinimalista";
 import PedidoViewMinimalista from "./pages/administrativo/PedidoViewMinimalista";
 import FinanceiroHub from "./pages/administrativo/FinanceiroHub";
+import CustoFolhaMensal from "./pages/administrativo/CustoFolhaMensal";
 import FaturamentoHub from "./pages/administrativo/FaturamentoHub";
 import FaturamentoVendasMinimalista from "./pages/administrativo/FaturamentoVendasMinimalista";
 import FaturamentoProdutosMinimalista from "./pages/administrativo/FaturamentoProdutosMinimalista";
@@ -582,6 +583,7 @@ const App = () => (
                 <Route path="/administrativo/financeiro/custos/:mes" element={<ProtectedRoute routeKey="administrativo_hub"><CustosMesMinimalista /></ProtectedRoute>} />
                 <Route path="/administrativo/financeiro/custos" element={<ProtectedRoute routeKey="administrativo_hub"><CustosGridMinimalista /></ProtectedRoute>} />
                 <Route path="/administrativo/financeiro/gastos" element={<ProtectedRoute routeKey="admin_gastos"><GastosPage /></ProtectedRoute>} />
+                <Route path="/administrativo/financeiro/custo-folha" element={<ProtectedRoute routeKey="administrativo_hub"><CustoFolhaMensal /></ProtectedRoute>} />
                 <Route path="/administrativo/financeiro/bancos" element={<ProtectedRoute routeKey="admin_bancos"><BancosPage /></ProtectedRoute>} />
                 
                 

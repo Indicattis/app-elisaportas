@@ -1676,6 +1676,39 @@ export type Database = {
         }
         Relationships: []
       }
+      custos_folha_mensais: {
+        Row: {
+          colaborador_id: string
+          colaborador_nome: string
+          created_at: string
+          created_by: string | null
+          id: string
+          mes_referencia: string
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          colaborador_id: string
+          colaborador_nome: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          mes_referencia: string
+          updated_at?: string
+          valor?: number
+        }
+        Update: {
+          colaborador_id?: string
+          colaborador_nome?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          mes_referencia?: string
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: []
+      }
       custos_mensais: {
         Row: {
           created_at: string | null
