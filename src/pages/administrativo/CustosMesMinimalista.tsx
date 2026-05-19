@@ -1,9 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft, ExternalLink } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 import { FloatingProfileMenu } from "@/components/FloatingProfileMenu";
@@ -26,10 +25,10 @@ export default function CustosMesMinimalista() {
   const anoMes = mes ? parseInt(mes.split("-")[0]) : new Date().getFullYear();
   const nomeMes = MESES_NOMES[mesIndex] || "";
 
-  const { custosMes, loading: loadingCustos, saving, saveCustosMensaisBatch, fetchCustosMes } = useCustosMensais(mesDate);
+  const { custosMes, loading: loadingCustos } = useCustosMensais(mesDate);
   const { tiposCustos, loading: loadingTipos } = useTiposCustos();
 
-  const [formValues, setFormValues] = useState<Record<string, { valor_real: number; observacoes: string }>>({});
+  const [formValues, setFormValues] = useState<Record<string, { valor_real: number }>>({});
 
   useEffect(() => {
     const timer = setTimeout(() => setMounted(true), 100);
@@ -37,18 +36,14 @@ export default function CustosMesMinimalista() {
   }, []);
 
   useEffect(() => {
-    const values: Record<string, { valor_real: number; observacoes: string }> = {};
+    const values: Record<string, { valor_real: number }> = {};
     tiposCustos.filter(t => t.ativo).forEach(t => {
-      values[t.id] = { valor_real: 0, observacoes: "" };
+      values[t.id] = { valor_real: 0 };
     });
-    // Mapeia custosMes (vindos de despesas_mensais) ao tipo_custo correspondente
+    // Mapeia custosMes (agregados da tabela gastos) ao tipo_custo correspondente
     custosMes.forEach(c => {
-      // c.tipo_custo_id já foi resolvido pelo hook via match por nome
       if (c.tipo_custo_id) {
-        values[c.tipo_custo_id] = {
-          valor_real: Number(c.valor_real) || 0,
-          observacoes: c.observacoes || "",
-        };
+        values[c.tipo_custo_id] = { valor_real: Number(c.valor_real) || 0 };
       }
     });
     setFormValues(values);
@@ -59,23 +54,6 @@ export default function CustosMesMinimalista() {
   const totalReal = Object.values(formValues).reduce((acc, v) => acc + (v.valor_real || 0), 0);
   const totalLimite = tiposAtivos.reduce((acc, t) => acc + t.valor_maximo_mensal, 0);
   const percentual = totalLimite > 0 ? (totalReal / totalLimite) * 100 : 0;
-
-  const handleSave = async () => {
-    const custos = Object.entries(formValues)
-      .filter(([id]) => tiposAtivos.some(t => t.id === id))
-      .map(([tipo_custo_id, vals]) => ({
-        tipo_custo_id,
-        valor_real: vals.valor_real,
-        observacoes: vals.observacoes || undefined,
-      }));
-    const tiposRef = tiposAtivos.map(t => ({ id: t.id, nome: t.nome, tipo: t.tipo }));
-    const success = await saveCustosMensaisBatch(mesDate, custos, tiposRef);
-    if (success) fetchCustosMes(mesDate);
-  };
-
-  const updateValue = (tipoCustoId: string, field: "valor_real" | "observacoes", value: string | number) => {
-    setFormValues(prev => ({ ...prev, [tipoCustoId]: { ...prev[tipoCustoId], [field]: value } }));
-  };
 
   const loading = loadingCustos || loadingTipos;
 
@@ -120,10 +98,13 @@ export default function CustosMesMinimalista() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold">Custos - {nomeMes} {anoMes}</h1>
-            <p className="text-white/60">Lance os valores reais de cada tipo de custo</p>
+            <p className="text-white/60">Valores agregados automaticamente dos lançamentos em Gastos</p>
           </div>
-          <Button onClick={handleSave} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
-            <Save className="h-4 w-4 mr-2" />{saving ? "Salvando..." : "Salvar Custos"}
+          <Button
+            onClick={() => navigate(`/administrativo/financeiro/gastos?mes=${mes}`)}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            <ExternalLink className="h-4 w-4 mr-2" />Ver gastos do mês
           </Button>
         </div>
 
@@ -163,7 +144,7 @@ export default function CustosMesMinimalista() {
           <Card className="bg-white/5 border-white/10">
             <CardContent className="pt-6 space-y-3">
               {tiposAtivos.map((tipo) => {
-                const vals = formValues[tipo.id] || { valor_real: 0, observacoes: "" };
+                const vals = formValues[tipo.id] || { valor_real: 0 };
                 const tipoPercentual = tipo.valor_maximo_mensal > 0 ? (vals.valor_real / tipo.valor_maximo_mensal) * 100 : 0;
                 return (
                   <div key={tipo.id} className="flex flex-col md:flex-row md:items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/10">
@@ -175,11 +156,8 @@ export default function CustosMesMinimalista() {
                       </p>
                     </div>
                     <div className="flex items-center gap-3">
-                      <div className="w-40">
-                        <Input type="number" step="0.01" min="0" value={vals.valor_real || ""} onChange={(e) => updateValue(tipo.id, "valor_real", parseFloat(e.target.value) || 0)} placeholder="R$ 0,00" className="bg-white/5 border-white/20 text-white text-right" />
-                      </div>
-                      <div className="w-48 hidden md:block">
-                        <Input type="text" value={vals.observacoes} onChange={(e) => updateValue(tipo.id, "observacoes", e.target.value)} placeholder="Observações" className="bg-white/5 border-white/20 text-white text-sm" />
+                      <div className="w-40 text-right font-medium text-white tabular-nums">
+                        {formatCurrency(vals.valor_real)}
                       </div>
                       {tipo.valor_maximo_mensal > 0 && (
                         <span className={`text-xs font-medium w-12 text-right ${tipoPercentual > 100 ? "text-red-400" : tipoPercentual > 80 ? "text-amber-400" : "text-green-400"}`}>
