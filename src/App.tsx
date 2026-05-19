@@ -233,6 +233,7 @@ import DREDirecao from "./pages/direcao/DREDirecao";
 import DREMesDirecao from "./pages/direcao/DREMesDirecao";
 import DREDespesasDirecao from "./pages/direcao/DREDespesasDirecao";
 import DRECustosDirecao from "./pages/direcao/DRECustosDirecao";
+import CaixaRoboostDirecao from "./pages/direcao/CaixaRoboostDirecao";
 
 // Hub de Estoque da Direção
 import DirecaoEstoqueHub from "./pages/direcao/estoque/DirecaoEstoqueHub";
