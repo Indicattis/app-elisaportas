@@ -357,22 +357,22 @@ function PrintReport({
       <div className="pdf-page-break" />
 
       <div style={{ marginTop: 0 }}>
-        <div style={H2}>3. Despesas Fixas</div>
-        <PrintDespesaTable
-          items={despesasFixas}
-          total={totalDespFixas}
-          formatCurrency={formatCurrency}
-          tiposDisponiveis={tiposCustosFixos.filter(t => !isFolha(t.nome))}
-        />
-      </div>
-
-      <div style={SECTION}>
-        <div style={H2}>4. Folha Salarial</div>
+        <div style={H2}>3. Folha Salarial</div>
         <PrintDespesaTable
           items={despesasFolha}
           total={totalDespFolha}
           formatCurrency={formatCurrency}
           tiposDisponiveis={tiposCustosFixos.filter(t => isFolha(t.nome))}
+        />
+      </div>
+
+      <div style={SECTION}>
+        <div style={H2}>4. Despesas Fixas</div>
+        <PrintDespesaTable
+          items={despesasFixas}
+          total={totalDespFixas}
+          formatCurrency={formatCurrency}
+          tiposDisponiveis={tiposCustosFixos.filter(t => !isFolha(t.nome))}
         />
       </div>
 
