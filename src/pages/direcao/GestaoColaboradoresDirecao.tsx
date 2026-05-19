@@ -307,36 +307,6 @@ function SortableRoleGroup({ group, allUsers, systemRoles, onEditRole, onDeleteR
                 </div>
               </div>
             ))}
-            {group.filledVagasList.map((vaga) => {
-              const filledUser = vaga.preenchida_por ? allUsers.find(u => u.id === vaga.preenchida_por) : null;
-              return (
-                <div
-                  key={vaga.id}
-                  className="p-1.5 rounded-xl border border-dashed border-emerald-500/20 bg-emerald-500/5 relative"
-                >
-                  <div className="flex items-center gap-3 px-3 py-2.5">
-                    {filledUser?.foto_perfil_url ? (
-                      <Avatar className="h-10 w-10 border border-emerald-500/30">
-                        <AvatarImage src={filledUser.foto_perfil_url} />
-                        <AvatarFallback className="text-xs bg-emerald-500/10 text-emerald-400">
-                          {filledUser.nome.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                    ) : (
-                      <div className="h-10 w-10 rounded-full border border-dashed border-emerald-500/30 flex items-center justify-center">
-                        <Check className="w-4 h-4 text-emerald-500/50" />
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs text-emerald-400/70">
-                        {filledUser ? filledUser.nome : 'Vaga preenchida'}
-                      </p>
-                      <p className="text-[10px] text-emerald-400/40">Preenchida</p>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
           </div>
         </SortableContext>
       </DndContext>
