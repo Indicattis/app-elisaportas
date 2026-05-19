@@ -865,21 +865,18 @@ export default function GestaoColaboradoresDirecao() {
               onClick={async () => {
                 if (!userToDeactivate) return;
                 setDeactivating(true);
-                const { error } = await supabase
-                  .from('admin_users')
-                  .update({ visivel_organograma: false } as any)
-                  .eq('id', userToDeactivate.id);
+                const { error } = await supabase.rpc('remover_colaborador_organograma' as any, {
+                  p_admin_user_id: userToDeactivate.id,
+                });
                 setDeactivating(false);
                 if (error) {
-                  toast.error('Erro ao remover do organograma');
+                  toast.error(error.message || 'Erro ao remover do organograma');
                   console.error(error);
                 } else {
-                  toast.success(`${userToDeactivate.nome} foi removido do organograma`);
-                  await createVaga({
-                    cargo: userToDeactivate.role,
-                    justificativa: `Vaga aberta pela remoção de ${userToDeactivate.nome} do organograma`,
-                  });
+                  toast.success(`${userToDeactivate.nome} foi removido do organograma e uma vaga foi aberta`);
                   queryClient.invalidateQueries({ queryKey: ['all-users'] });
+                  queryClient.invalidateQueries({ queryKey: ['all-users-including-hidden'] });
+                  queryClient.invalidateQueries({ queryKey: ['vagas'] });
                 }
                 setUserToDeactivate(null);
               }}
