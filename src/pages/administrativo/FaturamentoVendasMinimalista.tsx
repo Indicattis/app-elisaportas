@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { useConfiguracoesVendas } from "@/hooks/useConfiguracoesVendas";
 import { IndicadorExpandivel } from "@/components/direcao/IndicadorExpandivel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
