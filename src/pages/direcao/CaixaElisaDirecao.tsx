@@ -43,7 +43,7 @@ interface Entrada {
   etiqueta?: Etiqueta | null;
 }
 
-export default function CaixaRoboostDirecao() {
+export default function CaixaElisaDirecao() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [mounted, setMounted] = useState(false);
@@ -170,7 +170,7 @@ export default function CaixaRoboostDirecao() {
         items={[
           { label: 'Home', path: '/home' },
           { label: 'Direção', path: '/direcao' },
-          { label: 'Caixa Roboost' },
+          { label: 'Caixa Elisa' },
         ]}
         mounted={mounted}
       />
@@ -193,7 +193,7 @@ export default function CaixaRoboostDirecao() {
               <Wallet className="w-6 h-6 text-blue-400" strokeWidth={1.5} />
             </div>
             <div>
-              <h1 className="text-xl font-semibold text-white">Caixa Roboost</h1>
+              <h1 className="text-xl font-semibold text-white">Caixa Elisa</h1>
               <p className="text-sm text-white/50">Cadastre valores e organize-os com etiquetas</p>
             </div>
           </div>
