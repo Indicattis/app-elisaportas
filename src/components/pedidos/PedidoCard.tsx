@@ -2719,6 +2719,7 @@ className="flex h-[20px] w-full rounded-[3px]"
               <span className="font-semibold text-primary">
                 {formatCurrency(venda?.valor_venda || 0)}
               </span>
+              {!hideValorAReceber && (
               <div onClick={(e) => e.stopPropagation()}>
                 {venda?.valor_a_receber_faturamento ? (
                   <span
@@ -2769,6 +2770,7 @@ className="flex h-[20px] w-full rounded-[3px]"
                 </Popover>
                 )}
               </div>
+              )}
             </div>
             <div className="flex flex-col items-end gap-0.5">
               <span className="text-muted-foreground" title="Data prevista de entrega">
