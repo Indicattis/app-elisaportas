@@ -44,6 +44,23 @@ interface VendaComPortasRow {
   }[];
 }
 
+interface VendaComItensSimplesRow {
+  vendaId: string;
+  dataVenda: string;
+  clienteNome: string;
+  valorVenda: number;
+  itens: {
+    id: string;
+    descricao: string;
+    quantidade: number;
+    valorUnitario: number;
+    valorBruto: number;
+    descontoLinha: number;
+    valorLiquido: number;
+    lucro: number;
+  }[];
+}
+
 interface TipoCustoVariavel {
   id: string;
   nome: string;
@@ -832,6 +849,12 @@ export default function DREMesDirecao() {
   const [vendasListagem, setVendasListagem] = useState<{ id: string; data: string; cliente: string; valorTabela: number; valorVenda: number; desconto: number; lucro: number }[]>([]);
   const [portasModalOpen, setPortasModalOpen] = useState(false);
   const [portasDetalhe, setPortasDetalhe] = useState<VendaComPortasRow[]>([]);
+  const [pinturaModalOpen, setPinturaModalOpen] = useState(false);
+  const [pinturaDetalhe, setPinturaDetalhe] = useState<VendaComItensSimplesRow[]>([]);
+  const [acessoriosModalOpen, setAcessoriosModalOpen] = useState(false);
+  const [acessoriosDetalhe, setAcessoriosDetalhe] = useState<VendaComItensSimplesRow[]>([]);
+  const [avulsosModalOpen, setAvulsosModalOpen] = useState(false);
+  const [avulsosDetalhe, setAvulsosDetalhe] = useState<VendaComItensSimplesRow[]>([]);
 
   const mesDate = mes ? new Date(mes + '-15') : new Date();
   const mesNome = format(mesDate, 'MMMM yyyy', { locale: ptBR });
@@ -1155,6 +1178,148 @@ export default function DREMesDirecao() {
         setPortasDetalhe(
           Array.from(porVenda.values()).sort((a, b) => a.dataVenda.localeCompare(b.dataVenda))
         );
+
+        // ============ Detalhes Pintura / Acessórios / Itens Avulso ============
+        const { data: detalhesRaw } = await supabase
+          .from('produtos_vendas')
+          .select(`
+            id, descricao, quantidade, tipo_produto,
+            valor_produto, valor_pintura, valor_instalacao,
+            tipo_desconto, desconto_percentual, desconto_valor,
+            lucro_item, lucro_pintura,
+            vendas!inner(id, data_venda, cliente_nome, valor_venda, valor_frete)
+          `)
+          .in('tipo_produto', ['pintura_epoxi', 'acessorio', 'adicional', 'manutencao', 'porta_enrolar', 'porta_social'])
+          .gte('vendas.data_venda', start + ' 00:00:00')
+          .lte('vendas.data_venda', end + ' 23:59:59');
+
+        const buildMap = (
+          rows: any[],
+          mapper: (p: any, v: any) => VendaComItensSimplesRow['itens'][number] | null,
+        ) => {
+          const map = new Map<string, VendaComItensSimplesRow>();
+          rows.forEach((p) => {
+            const v = p.vendas;
+            if (!v) return;
+            const item = mapper(p, v);
+            if (!item) return;
+            const existing = map.get(v.id) || {
+              vendaId: v.id,
+              dataVenda: v.data_venda,
+              clienteNome: v.cliente_nome || '',
+              valorVenda: (v.valor_venda || 0) - (v.valor_frete || 0),
+              itens: [],
+            };
+            existing.itens.push(item);
+            map.set(v.id, existing);
+          });
+          return Array.from(map.values()).sort((a, b) => a.dataVenda.localeCompare(b.dataVenda));
+        };
+
+        const todosRows = (detalhesRaw || []) as any[];
+
+        // ---- Pintura: pintura_epoxi + componente pintura de portas ----
+        setPinturaDetalhe(
+          buildMap(todosRows, (p) => {
+            const qty = p.quantidade || 1;
+            if (p.tipo_produto === 'pintura_epoxi') {
+              const bruto = (p.valor_produto || 0) * qty;
+              let desc = 0;
+              if (p.tipo_desconto === 'percentual' && p.desconto_percentual > 0) {
+                desc = bruto * (p.desconto_percentual / 100);
+              } else if (p.tipo_desconto === 'valor' && p.desconto_valor > 0) {
+                desc = p.desconto_valor;
+              }
+              return {
+                id: p.id,
+                descricao: p.descricao || 'Pintura Epóxi',
+                quantidade: qty,
+                valorUnitario: p.valor_produto || 0,
+                valorBruto: bruto,
+                descontoLinha: desc,
+                valorLiquido: bruto - desc,
+                lucro: p.lucro_item || 0,
+              };
+            }
+            // Pintura embutida em porta_enrolar / porta_social
+            if (['porta_enrolar', 'porta_social'].includes(p.tipo_produto) && (p.valor_pintura || 0) > 0) {
+              const valorProdutoBase = (p.valor_produto || 0) * qty;
+              const valorPinturaBase = (p.valor_pintura || 0) * qty;
+              const valorInstBase = (p.valor_instalacao || 0) * qty;
+              const bruto = valorProdutoBase + valorPinturaBase + valorInstBase;
+              let descTotal = 0;
+              if (p.tipo_desconto === 'percentual' && p.desconto_percentual > 0) {
+                descTotal = bruto * (p.desconto_percentual / 100);
+              } else if (p.tipo_desconto === 'valor' && p.desconto_valor > 0) {
+                descTotal = p.desconto_valor;
+              }
+              const propPintura = bruto > 0 ? valorPinturaBase / bruto : 0;
+              const descPintura = descTotal * propPintura;
+              const lucroLinha = p.lucro_item || 0;
+              return {
+                id: p.id + '-pintura',
+                descricao: `${p.descricao || 'Porta'} — pintura`,
+                quantidade: qty,
+                valorUnitario: p.valor_pintura || 0,
+                valorBruto: valorPinturaBase,
+                descontoLinha: descPintura,
+                valorLiquido: valorPinturaBase - descPintura,
+                lucro: lucroLinha * propPintura,
+              };
+            }
+            return null;
+          }),
+        );
+
+        // ---- Acessórios ----
+        setAcessoriosDetalhe(
+          buildMap(todosRows, (p) => {
+            if (p.tipo_produto !== 'acessorio') return null;
+            const qty = p.quantidade || 1;
+            const bruto = (p.valor_produto || 0) * qty;
+            let desc = 0;
+            if (p.tipo_desconto === 'percentual' && p.desconto_percentual > 0) {
+              desc = bruto * (p.desconto_percentual / 100);
+            } else if (p.tipo_desconto === 'valor' && p.desconto_valor > 0) {
+              desc = p.desconto_valor;
+            }
+            return {
+              id: p.id,
+              descricao: p.descricao || 'Acessório',
+              quantidade: qty,
+              valorUnitario: p.valor_produto || 0,
+              valorBruto: bruto,
+              descontoLinha: desc,
+              valorLiquido: bruto - desc,
+              lucro: p.lucro_item || 0,
+            };
+          }),
+        );
+
+        // ---- Itens Avulso (adicional + manutencao) ----
+        setAvulsosDetalhe(
+          buildMap(todosRows, (p) => {
+            if (!['adicional', 'manutencao'].includes(p.tipo_produto)) return null;
+            const qty = p.quantidade || 1;
+            const bruto = (p.valor_produto || 0) * qty;
+            let desc = 0;
+            if (p.tipo_desconto === 'percentual' && p.desconto_percentual > 0) {
+              desc = bruto * (p.desconto_percentual / 100);
+            } else if (p.tipo_desconto === 'valor' && p.desconto_valor > 0) {
+              desc = p.desconto_valor;
+            }
+            return {
+              id: p.id,
+              descricao: p.descricao || 'Item avulso',
+              quantidade: qty,
+              valorUnitario: p.valor_produto || 0,
+              valorBruto: bruto,
+              descontoLinha: desc,
+              valorLiquido: bruto - desc,
+              lucro: p.lucro_item || 0,
+            };
+          }),
+        );
       } catch (err) {
         console.error('Erro ao buscar dados DRE:', err);
       } finally {
@@ -1309,24 +1474,34 @@ export default function DREMesDirecao() {
                     {columns.map(col => {
                       const topList = col.key === 'acessorios' ? topAcessorios : col.key === 'adicionais' ? topAdicionais : null;
                       const isPortas = col.key === 'portas';
+                      const isPintura = col.key === 'pintura';
+                      const isAcessorios = col.key === 'acessorios';
+                      const isAdicionais = col.key === 'adicionais';
+                      const onClickHeader = isPortas
+                        ? () => setPortasModalOpen(true)
+                        : isPintura
+                          ? () => setPinturaModalOpen(true)
+                          : isAcessorios
+                            ? () => setAcessoriosModalOpen(true)
+                            : isAdicionais
+                              ? () => setAvulsosModalOpen(true)
+                              : null;
                       return (
                         <th
                           key={col.key}
                           className={`text-right p-3 text-white/40 font-medium text-xs uppercase ${col.key === 'total' ? 'bg-white/5' : ''}`}
                         >
-                          {isPortas ? (
-                            <button
-                              type="button"
-                              onClick={() => setPortasModalOpen(true)}
-                              className="uppercase cursor-pointer underline decoration-dotted underline-offset-4 hover:text-white transition-colors"
-                            >
-                              {col.label}
-                            </button>
-                          ) : topList && topList.length > 0 ? (
+                          {onClickHeader && topList && topList.length > 0 ? (
                             <TooltipProvider>
                               <Tooltip>
-                                <TooltipTrigger className="cursor-default underline decoration-dotted underline-offset-4 uppercase">
-                                  {col.label}
+                                <TooltipTrigger asChild>
+                                  <button
+                                    type="button"
+                                    onClick={onClickHeader}
+                                    className="uppercase cursor-pointer underline decoration-dotted underline-offset-4 hover:text-white transition-colors"
+                                  >
+                                    {col.label}
+                                  </button>
                                 </TooltipTrigger>
                                 <TooltipContent side="bottom" className="max-w-[220px]">
                                   <p className="font-semibold mb-1 text-xs">Top 5 mais vendidos</p>
@@ -1338,6 +1513,14 @@ export default function DREMesDirecao() {
                                 </TooltipContent>
                               </Tooltip>
                             </TooltipProvider>
+                          ) : onClickHeader ? (
+                            <button
+                              type="button"
+                              onClick={onClickHeader}
+                              className="uppercase cursor-pointer underline decoration-dotted underline-offset-4 hover:text-white transition-colors"
+                            >
+                              {col.label}
+                            </button>
                           ) : (
                             col.label
                           )}
@@ -1544,6 +1727,30 @@ export default function DREMesDirecao() {
       vendas={portasDetalhe}
       formatCurrency={formatCurrency}
     />
+    <ItensSimplesDetalheDialog
+      open={pinturaModalOpen}
+      onOpenChange={setPinturaModalOpen}
+      titulo={`Vendas com Pintura — ${mesNome}`}
+      categoriaLabel="Pintura"
+      vendas={pinturaDetalhe}
+      formatCurrency={formatCurrency}
+    />
+    <ItensSimplesDetalheDialog
+      open={acessoriosModalOpen}
+      onOpenChange={setAcessoriosModalOpen}
+      titulo={`Vendas com Acessórios — ${mesNome}`}
+      categoriaLabel="Acessórios"
+      vendas={acessoriosDetalhe}
+      formatCurrency={formatCurrency}
+    />
+    <ItensSimplesDetalheDialog
+      open={avulsosModalOpen}
+      onOpenChange={setAvulsosModalOpen}
+      titulo={`Vendas com Itens Avulso — ${mesNome}`}
+      categoriaLabel="Itens Avulso"
+      vendas={avulsosDetalhe}
+      formatCurrency={formatCurrency}
+    />
     </>
   );
 }
@@ -1650,6 +1857,118 @@ function PortasDetalheDialog({
                 <div><div className="text-[10px] text-white/40 uppercase">Porta</div><div className="font-semibold text-white">{formatCurrency(totals.porta)}</div></div>
                 <div><div className="text-[10px] text-white/40 uppercase">Pintura</div><div className="font-semibold text-white">{formatCurrency(totals.pintura)}</div></div>
                 <div><div className="text-[10px] text-white/40 uppercase">Instalação</div><div className="font-semibold text-white">{formatCurrency(totals.instalacao)}</div></div>
+                <div><div className="text-[10px] text-white/40 uppercase">Desconto</div><div className="font-semibold text-red-400">{formatCurrency(totals.desconto)}</div></div>
+                <div><div className="text-[10px] text-white/40 uppercase">Líquido</div><div className="font-semibold text-white">{formatCurrency(totals.liquido)}</div></div>
+                <div><div className="text-[10px] text-white/40 uppercase">Lucro</div><div className={`font-semibold ${totals.lucro >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{formatCurrency(totals.lucro)}</div></div>
+              </div>
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ItensSimplesDetalheDialog({
+  open,
+  onOpenChange,
+  titulo,
+  categoriaLabel,
+  vendas,
+  formatCurrency,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  titulo: string;
+  categoriaLabel: string;
+  vendas: VendaComItensSimplesRow[];
+  formatCurrency: (v: number) => string;
+}) {
+  const totals = vendas.reduce(
+    (acc, v) => {
+      v.itens.forEach((i) => {
+        acc.bruto += i.valorBruto;
+        acc.desconto += i.descontoLinha;
+        acc.liquido += i.valorLiquido;
+        acc.lucro += i.lucro;
+        acc.qtd += i.quantidade;
+      });
+      return acc;
+    },
+    { bruto: 0, desconto: 0, liquido: 0, lucro: 0, qtd: 0 }
+  );
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto bg-slate-900 border-white/10 text-white">
+        <DialogHeader>
+          <DialogTitle className="text-white">{titulo}</DialogTitle>
+          <DialogDescription className="text-white/60">
+            {vendas.length} venda{vendas.length === 1 ? '' : 's'} com itens da categoria {categoriaLabel}.
+          </DialogDescription>
+        </DialogHeader>
+
+        {vendas.length === 0 ? (
+          <p className="text-white/40 text-sm py-8 text-center">Nenhuma venda com {categoriaLabel.toLowerCase()} neste mês.</p>
+        ) : (
+          <div className="space-y-4">
+            {vendas.map((v) => {
+              const subLiquido = v.itens.reduce((s, i) => s + i.valorLiquido, 0);
+              const subLucro = v.itens.reduce((s, i) => s + i.lucro, 0);
+              return (
+                <div key={v.vendaId} className="rounded-xl bg-white/5 border border-white/10 p-4">
+                  <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                    <div>
+                      <div className="text-xs text-white/40 uppercase">{format(new Date(v.dataVenda.slice(0, 10) + 'T12:00:00'), 'dd/MM/yyyy')}</div>
+                      <div className="text-sm font-semibold text-white">{v.clienteNome || '—'}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-xs text-white/40 uppercase">Valor da venda</div>
+                      <div className="text-sm font-semibold text-white">{formatCurrency(v.valorVenda)}</div>
+                    </div>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="border-b border-white/10 text-white/40 uppercase">
+                          <th className="text-left py-2 font-medium">Descrição</th>
+                          <th className="text-right py-2 font-medium w-12">Qtd</th>
+                          <th className="text-right py-2 font-medium w-24">Valor unit.</th>
+                          <th className="text-right py-2 font-medium w-24">Bruto</th>
+                          <th className="text-right py-2 font-medium w-24">Desconto</th>
+                          <th className="text-right py-2 font-medium w-28">Líquido</th>
+                          <th className="text-right py-2 font-medium w-24">Lucro</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {v.itens.map((i) => (
+                          <tr key={i.id} className="border-b border-white/5 last:border-0">
+                            <td className="py-2 text-white/80">{i.descricao}</td>
+                            <td className="py-2 text-right text-white/70">{i.quantidade}</td>
+                            <td className="py-2 text-right text-white/70">{formatCurrency(i.valorUnitario)}</td>
+                            <td className="py-2 text-right text-white/70">{formatCurrency(i.valorBruto)}</td>
+                            <td className="py-2 text-right text-red-400">{i.descontoLinha > 0 ? formatCurrency(i.descontoLinha) : '—'}</td>
+                            <td className="py-2 text-right text-white font-medium">{formatCurrency(i.valorLiquido)}</td>
+                            <td className={`py-2 text-right font-medium ${i.lucro >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{formatCurrency(i.lucro)}</td>
+                          </tr>
+                        ))}
+                        <tr className="border-t border-white/10">
+                          <td colSpan={5} className="py-2 text-right text-white/60 uppercase text-[10px]">Subtotal desta venda</td>
+                          <td className="py-2 text-right text-white font-semibold">{formatCurrency(subLiquido)}</td>
+                          <td className={`py-2 text-right font-semibold ${subLucro >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{formatCurrency(subLucro)}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              );
+            })}
+
+            <div className="rounded-xl bg-blue-900/40 border border-blue-500/30 p-4">
+              <div className="text-xs text-white/60 uppercase mb-2 font-semibold">Totais consolidados ({categoriaLabel})</div>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
+                <div><div className="text-[10px] text-white/40 uppercase">Qtd Itens</div><div className="font-semibold text-white">{totals.qtd}</div></div>
+                <div><div className="text-[10px] text-white/40 uppercase">Bruto</div><div className="font-semibold text-white">{formatCurrency(totals.bruto)}</div></div>
                 <div><div className="text-[10px] text-white/40 uppercase">Desconto</div><div className="font-semibold text-red-400">{formatCurrency(totals.desconto)}</div></div>
                 <div><div className="text-[10px] text-white/40 uppercase">Líquido</div><div className="font-semibold text-white">{formatCurrency(totals.liquido)}</div></div>
                 <div><div className="text-[10px] text-white/40 uppercase">Lucro</div><div className={`font-semibold ${totals.lucro >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{formatCurrency(totals.lucro)}</div></div>

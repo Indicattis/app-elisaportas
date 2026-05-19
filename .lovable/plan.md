@@ -1,22 +1,37 @@
-## Permitir desmarcar linhas em `/producao/separacao`
+## Replicar modal de detalhes em Pintura, Acessórios e Itens Avulso
 
-### Comportamento atual
-No `OrdemDetalhesSheet` (a "downbar" / sheet de detalhes da ordem), o `Checkbox` de cada linha fica desabilitado quando `!linhaAnteriorConcluida`. Isso impede desmarcar uma linha já concluída se a próxima também estiver concluída, e bloqueia qualquer ajuste antes da ordem ser efetivamente concluída.
+Atualmente, no header da tabela de Faturamento/Lucro de `/direcao/dre/:mes`, apenas o título **Portas** abre o `PortasDetalheDialog` ao ser clicado, mostrando venda por venda os itens daquele tipo no mês.
 
-### Mudança
-Em `src/components/production/OrdemDetalhesSheet.tsx` (linha ~1065), tornar a regra de `disabled` do `Checkbox` sensível ao estado atual da linha:
+Vamos aplicar o mesmo padrão (botão sublinhado com tracejado no header + dialog full com lista de vendas, itens, descontos, líquido e lucro) para:
 
-- Se `linha.concluida === true` (usuário quer **desmarcar**):
-  - Permitir desde que `ordem.status !== 'concluido'` e `ordem.status !== 'pronta'`, e o usuário seja o responsável (`podeMarcarLinhas`), e não esteja em `isUpdating`.
-  - Ignora a restrição sequencial (`linhaAnteriorConcluida`) — pode desmarcar mesmo com linhas posteriores ainda marcadas.
-- Se `linha.concluida === false` (usuário quer **marcar**):
-  - Mantém a regra atual, exigindo `linhaAnteriorConcluida` para preservar a sequência.
+- **Pintura** → `tipo_produto = 'pintura_epoxi'` **e** o componente "pintura" embutido em portas (`valor_pintura` em itens `porta_enrolar`/`porta_social` quando > 0).
+- **Acessórios** → `tipo_produto = 'acessorio'`.
+- **Itens Avulso** → `tipo_produto = 'adicional'` (corresponde à coluna `adicionais` no código).
 
-Atualizar também o `title` (tooltip) para refletir o caso de desmarcar.
+### UX
+- Cada um dos 3 títulos vira um botão clicável com `underline decoration-dotted` (igual ao Portas).
+- Mantém o tooltip "Top 5 mais vendidos" hoje exibido em Acessórios e Itens Avulso: passa a aparecer como hint ao lado, mas o clique abre o novo modal (não bloqueia o tooltip — o tooltip é exibido em hover normal do botão).
+- O modal segue o mesmo visual do `PortasDetalheDialog`: cards por venda com data/cliente/valor da venda, tabela de itens, subtotal por venda, e card azul de totais consolidados no rodapé.
+
+### Estrutura técnica
+
+1. **Generalizar o dialog.** Renomear/extrair `PortasDetalheDialog` para um `ItensDetalheDialog` reutilizável, parametrizado por:
+   - `titulo` (ex.: "Vendas com Pintura — Abril/2026")
+   - `colunas` exibidas (Portas tem Porta/Pintura/Instalação; Pintura tem Pintura; Acessórios e Avulso têm apenas Valor unit. × Qtd → Líquido). Definir 2 layouts: "porta" (atual) e "simples" (descrição, qtd, valor unit, desconto, líquido, lucro).
+   - `vendas: VendaComItensRow[]` (estrutura genérica já compatível, sem campos específicos de porta).
+
+2. **Buscar dados no `fetchData`** do `DREMesDirecao.tsx` (mesmo bloco que monta `portasDetalhe`), criando 3 novos states:
+   - `pinturaDetalhe` — vendas que tenham `tipo_produto = 'pintura_epoxi'` **OU** itens `porta_enrolar`/`porta_social` com `valor_pintura > 0`. Cada item exibe valor da pintura (proporcional ao desconto, igual à lógica usada hoje no cálculo de `fat.pintura`).
+   - `acessoriosDetalhe` — vendas com `tipo_produto = 'acessorio'`.
+   - `avulsosDetalhe` — vendas com `tipo_produto = 'adicional'`.
+   
+   Cada consulta segue o mesmo padrão do `portasRaw` (join com `vendas!inner`, filtro de período, agrupamento por `vendaId` em `Map`).
+
+3. **Cabeçalho da tabela.** No bloco `columns.map` (linhas ~1309-1346), adicionar branches `isPintura`, `isAcessorios`, `isAdicionais` que renderizam o mesmo botão clicável de Portas, abrindo o respectivo modal. O tooltip de Top 5 continua sendo exibido como `Tooltip` ao redor do botão para Acessórios e Itens Avulso.
+
+4. **States e renders dos modais.** Adicionar `pinturaModalOpen`, `acessoriosModalOpen`, `avulsosModalOpen` e renderizar 3 `ItensDetalheDialog` no final do componente, mantendo o `PortasDetalheDialog` (ou usando o componente generalizado também para portas).
 
 ### Escopo
-- Mudança aplica-se a separação, perfiladeira, soldagem, embalagem (mesmo componente). A intenção do usuário foi separação; outros setores se beneficiam por consistência, sem efeito quando a ordem já está concluída.
-- Sem alterações em banco, hooks ou regras de negócio. A mutation `marcarLinhaConcluida` já aceita `concluida: false`.
-
-### Arquivo
-- `src/components/production/OrdemDetalhesSheet.tsx`
+- Só `src/pages/direcao/DREMesDirecao.tsx`.
+- Sem mudanças em hooks, banco ou regras de negócio. Os totais já calculados (fat/luc por categoria) continuam a fonte de verdade para a tabela; os novos modais apenas detalham as vendas que compõem cada coluna.
+- Os modais não aparecem no PDF impresso (são triggers de tela, fora de `#dre-print-document`).
