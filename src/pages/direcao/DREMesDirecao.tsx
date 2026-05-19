@@ -116,6 +116,162 @@ function DespesaSectionReadOnly({
   );
 }
 
+// =============== Modal com gastos do tipo selecionado ===============
+interface GastoRow {
+  id: string;
+  data: string;
+  descricao: string | null;
+  valor: number;
+  status: string | null;
+  responsavel_nome?: string;
+  banco_nome?: string;
+}
+
+function GastosDoTipoDialog({
+  open,
+  onOpenChange,
+  mes,
+  tipoCustoId,
+  tipoNome,
+  formatCurrency,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  mes: string;
+  tipoCustoId: string | null;
+  tipoNome: string;
+  formatCurrency: (v: number) => string;
+}) {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [rows, setRows] = useState<GastoRow[]>([]);
+
+  useEffect(() => {
+    if (!open || !tipoCustoId || !mes) return;
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      const start = `${mes}-01`;
+      const [y, m] = mes.split('-').map(Number);
+      const end = new Date(y, m, 0).toISOString().split('T')[0];
+
+      const { data: gastos, error } = await supabase
+        .from('gastos' as any)
+        .select('id, data, descricao, valor, status, responsavel_id, banco_id')
+        .eq('tipo_custo_id', tipoCustoId)
+        .gte('data', start)
+        .lte('data', end)
+        .order('data', { ascending: false });
+
+      if (error || !gastos) {
+        if (!cancelled) { setRows([]); setLoading(false); }
+        return;
+      }
+
+      const respIds = [...new Set((gastos as any[]).map((g: any) => g.responsavel_id).filter(Boolean))];
+      const bancoIds = [...new Set((gastos as any[]).map((g: any) => g.banco_id).filter(Boolean))];
+
+      const [respRes, bancoRes] = await Promise.all([
+        respIds.length
+          ? supabase.from('admin_users').select('user_id, nome').in('user_id', respIds)
+          : Promise.resolve({ data: [] as any[] }),
+        bancoIds.length
+          ? supabase.from('bancos' as any).select('id, nome').in('id', bancoIds)
+          : Promise.resolve({ data: [] as any[] }),
+      ]);
+
+      const respMap: Record<string, string> = {};
+      ((respRes.data || []) as any[]).forEach((u: any) => { respMap[u.user_id] = u.nome; });
+      const bancoMap: Record<string, string> = {};
+      ((bancoRes.data || []) as any[]).forEach((b: any) => { bancoMap[b.id] = b.nome; });
+
+      const mapped: GastoRow[] = (gastos as any[]).map((g: any) => ({
+        id: g.id,
+        data: g.data,
+        descricao: g.descricao,
+        valor: Number(g.valor) || 0,
+        status: g.status,
+        responsavel_nome: g.responsavel_id ? respMap[g.responsavel_id] || '—' : '—',
+        banco_nome: g.banco_id ? bancoMap[g.banco_id] || '—' : '—',
+      }));
+      if (!cancelled) { setRows(mapped); setLoading(false); }
+    })();
+    return () => { cancelled = true; };
+  }, [open, tipoCustoId, mes]);
+
+  const total = rows.reduce((s, r) => s + r.valor, 0);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-3xl bg-[#0a0a0a] border-white/10 text-white">
+        <DialogHeader>
+          <DialogTitle className="text-white">{tipoNome}</DialogTitle>
+          <DialogDescription className="text-white/50">
+            Gastos lançados em {mes} • {rows.length} {rows.length === 1 ? 'lançamento' : 'lançamentos'}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="rounded-lg bg-white/5 border border-white/10 overflow-hidden max-h-[60vh] overflow-y-auto">
+          {loading ? (
+            <div className="p-8 flex items-center justify-center text-white/50">
+              <Loader2 className="h-5 w-5 animate-spin" />
+            </div>
+          ) : rows.length === 0 ? (
+            <div className="p-8 text-center text-white/40 text-sm">
+              Nenhum gasto lançado neste tipo para o mês.
+            </div>
+          ) : (
+            <table className="w-full text-xs">
+              <thead className="sticky top-0 bg-[#0a0a0a]">
+                <tr className="border-b border-white/10 text-white/40 uppercase text-[10px]">
+                  <th className="text-left p-2 font-medium">Data</th>
+                  <th className="text-left p-2 font-medium">Descrição</th>
+                  <th className="text-left p-2 font-medium">Responsável</th>
+                  <th className="text-left p-2 font-medium">Banco</th>
+                  <th className="text-left p-2 font-medium">Status</th>
+                  <th className="text-right p-2 font-medium">Valor</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map(r => (
+                  <tr key={r.id} className="border-b border-white/5 last:border-0 hover:bg-white/5">
+                    <td className="p-2 text-white/70 whitespace-nowrap">
+                      {format(new Date(r.data + 'T12:00:00'), 'dd/MM/yyyy')}
+                    </td>
+                    <td className="p-2 text-white/80">{r.descricao || '—'}</td>
+                    <td className="p-2 text-white/60">{r.responsavel_nome}</td>
+                    <td className="p-2 text-white/60">{r.banco_nome}</td>
+                    <td className="p-2 text-white/60">{r.status || '—'}</td>
+                    <td className="p-2 text-right font-medium text-white tabular-nums">
+                      {formatCurrency(r.valor)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr className="border-t border-white/10 bg-white/5">
+                  <td colSpan={5} className="p-2 text-white/70 font-semibold">Total</td>
+                  <td className="p-2 text-right font-bold text-white tabular-nums">{formatCurrency(total)}</td>
+                </tr>
+              </tfoot>
+            </table>
+          )}
+        </div>
+
+        <div className="flex justify-end pt-2">
+          <Button
+            variant="outline"
+            className="bg-white/5 border-white/20 text-white hover:bg-white/10"
+            onClick={() => navigate(`/administrativo/financeiro/gastos?mes=${mes}`)}
+          >
+            <ExternalLink className="h-4 w-4 mr-2" />Abrir em Gastos
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // =============== Layout dedicado para impressão (PDF) ===============
 function PrintReport({
   mesNome,
