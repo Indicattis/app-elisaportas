@@ -1,13 +1,17 @@
-## Renomear "Caixa Roboost" → "Caixa Elisa"
+## Ajustes no PDF de `/direcao/dre/2026-04`
 
-### Alterações de rota e label (frontend)
-- `src/App.tsx`: alterar path `/direcao/caixa-roboost` → `/direcao/caixa-elisa` e routeKey `direcao_caixa_roboost` → `direcao_caixa_elisa`. Renomear import/arquivo para `CaixaElisaDirecao`.
-- `src/pages/direcao/DirecaoHub.tsx`: label `Caixa Roboost` → `Caixa Elisa`, path e routePrefix idem.
-- Renomear arquivo `src/pages/direcao/CaixaRoboostDirecao.tsx` → `CaixaElisaDirecao.tsx`. Atualizar nome do componente e breadcrumb interno ("Caixa Roboost" → "Caixa Elisa") e textos da UI (título, subtítulo).
+### 1. Centralizar tópicos azuis
+- No `PrintReport`, o estilo `H2` (banner azul `#1e3a8a` usado em cada seção: "1. Faturamento por Categoria", "2. Lucro por Categoria", etc.) recebe `textAlign: 'center'`.
+- As linhas de TOTAL com fundo azul (`<tr style={{ background: '#1e3a8a' }}>`) continuam com o conteúdo das células existentes (labels à esquerda, valores à direita) — interpretando "tópicos" como os **títulos de seção**. Confirme se quer também centralizar a linha TOTAL.
 
-### Banco
-- Atualizar `app_routes`: linha existente `direcao_caixa_roboost` será trocada por `direcao_caixa_elisa` (UPDATE de key/path/label). Mantém eventuais permissões já concedidas migrando referências em `user_route_access` (UPDATE route_key).
-- **Tabelas de dados** `caixa_roboost_etiquetas` e `caixa_roboost_entradas`: manter os nomes para evitar risco em migrações de dados, OU renomear para `caixa_elisa_*`. 
+### 2. Remover o link no rodapé
+- O link no rodapé é o **URL adicionado automaticamente pelo Chrome** ao imprimir (não há `<a>` no código). O Chrome só esconde esses headers/footers nativos quando `@page { margin: 0 }`.
+- Solução: mudar o CSS de impressão para:
+  - `@page { size: A4; margin: 0; }`
+  - Adicionar `padding: 14mm 12mm` em `#dre-print-document` para preservar as margens visuais atuais.
+- Resultado: URL e timestamp do navegador desaparecem do rodapé do PDF gerado.
 
-### Pergunta
-Renomeio também as **tabelas do banco** (`caixa_roboost_entradas` / `caixa_roboost_etiquetas`) para `caixa_elisa_*`, ou deixo os nomes internos do DB como estão (só muda label/rota/UI)? Se não responder, mantenho os nomes das tabelas no DB e mudo apenas rota, label e UI — é o caminho mais seguro.
+### Arquivo
+- `src/pages/direcao/DREMesDirecao.tsx` apenas.
+
+Sem alterações de dados, rotas ou banco.
