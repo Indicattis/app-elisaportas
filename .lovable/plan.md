@@ -1,34 +1,49 @@
-# Vagas "preenchidas" duplicam colaborador no organograma
+# Preencher vaga com colaborador existente não atualiza `admin_users`
 
 ## Causa raiz
 
-Em `GestaoColaboradoresDirecao.tsx`, cada `RoleGroup` renderiza três coisas:
+Mesma causa do bug anterior, em outro fluxo. Em `src/components/vagas/SelecionarUsuarioVagaDialog.tsx`, ao escolher um colaborador para preencher a vaga, o código faz:
 
-1. `group.users` — colaboradores com aquela `role` em `admin_users` (já é a fonte de verdade do organograma).
-2. `group.openVagasList` — vagas com status `aberta`/`em_analise` (cards tracejados amarelos).
-3. `group.filledVagasList` — vagas com status `preenchida` (cards tracejados verdes).
+```ts
+supabase.from("admin_users")
+  .update({ role: vagaCargo, visivel_organograma: true })
+  .eq("id", user.id);
+```
 
-O bloco (3) é redundante: assim que uma vaga é preenchida, o colaborador já aparece no grupo (1). Mantê-lo gera:
+A policy de UPDATE de `admin_users` (`Admins update all, users update own (no role escalation)`) só permite admin (`is_admin()`) ou o próprio usuário atualizar a linha. Diretor/líder → 0 linhas atualizadas, **sem erro**. A vaga é marcada como `preenchida` (RLS de `vagas` permite), mas o `admin_users` do colaborador escolhido continua com a `role` antiga (no caso atual: Guilherme segue `perfilador`, sem aparecer em PCP).
 
-- "Vagas preenchidas" duplicadas que sobrevivem para sempre na tela.
-- Aparição de pessoas erradas: o filtro atual (`!userIds.has(v.preenchida_por)`) só esconde a vaga se o `preenchida_por` ainda for um usuário **com aquele mesmo cargo**. Se o colaborador trocou de função depois (ex.: vaga PCP marcada como preenchida por alguém que hoje é `perfilador`), o card continua sob "PCP" mostrando o rosto errado.
-- No caso atual de PCP no setor Administrativo: existem 2 registros `vagas.status='preenchida'` legados apontando para `f9de0071…` (Guiherme, hoje `perfilador`) + 1 vaga `em_analise` recém-criada → a UI mostra 1 aberta + 2 "preenchidas" pelo mesmo colaborador.
+Dados confirmam: 4 vagas PCP marcadas `preenchida` com `preenchida_por=Guilherme`, mas `admin_users` dele continua `role='perfilador'`. E o grupo PCP segue vazio porque o único PCP real (Henrique) está com `visivel_organograma=false`.
 
-## Correção (somente front-end)
+## Correção
 
-Arquivo único: `src/pages/direcao/GestaoColaboradoresDirecao.tsx`.
+Criar uma única RPC `SECURITY DEFINER` que faz as duas operações atomicamente, e usá-la no diálogo.
 
-1. **Remover a renderização de `filledVagasList`** dentro de `SortableRoleGroup` (o bloco `group.filledVagasList.map(...)` em ~linha 311–340) — vagas preenchidas não devem aparecer como cards no organograma; o colaborador já está listado em `group.users`.
-2. **Remover `filledVagasList` da interface `RoleGroup` e da prop**, e parar de calcular `filledVagasForRole` / passá-lo para o grupo (linhas ~429, 445).
-3. Manter inalterado:
-   - `group.users` (fonte do organograma).
-   - `group.openVagasList` (vagas em aberto continuam visíveis e clicáveis para preencher).
-   - O contador `users.length / total` continua usando apenas `openVagas` + usuários reais.
+### 1. Migração SQL
 
-Nenhuma mudança em hooks (`useVagas`, `useAllUsers`), em RLS ou em outras telas. As vagas `preenchida` permanecem no banco para histórico/relatórios — só deixam de poluir o organograma.
+Criar `public.preencher_vaga_com_usuario(p_vaga_id uuid, p_admin_user_id uuid)`:
+
+- `SECURITY DEFINER`, `SET search_path = public`.
+- Valida `is_admin() OR can_view_all_admin_users()`; senão `RAISE EXCEPTION`.
+- Lê `cargo` da vaga (erro se não existir ou se já estiver `preenchida`/`fechada`).
+- `UPDATE admin_users SET role = vaga.cargo, visivel_organograma = true WHERE id = p_admin_user_id`. Erro se 0 linhas.
+- `UPDATE vagas SET status='preenchida', preenchida_por = p_admin_user_id, updated_at = now() WHERE id = p_vaga_id`.
+- `GRANT EXECUTE ... TO authenticated`.
+
+### 2. Front-end — `src/components/vagas/SelecionarUsuarioVagaDialog.tsx`
+
+Em `handleSelect`:
+
+- Substituir o `supabase.from("admin_users").update(...)` por `supabase.rpc('preencher_vaga_com_usuario', { p_vaga_id: vagaId, p_admin_user_id: user.id })`.
+- Tornar `vagaId` obrigatório na prop interface (hoje é opcional; o caller `GestaoColaboradoresDirecao` já passa o `vaga.id` quando abre o diálogo via `onFillVaga`).
+- Em sucesso, invalidar também `['vagas']` (além das queries de users já invalidadas), e remover/não chamar separadamente `updateVagaStatus` no caller (a RPC já fecha o ciclo). Verificar `GestaoColaboradoresDirecao` para garantir que não está chamando `updateVagaStatus` em paralelo após `onSelectExisting`.
+- Se `vagaId` não estiver presente (cenário de "reanexar usuário sem vaga", se existir), manter o caminho atual como fallback apenas para `admins`; caso contrário, exigir vaga.
+
+### 3. Limpeza pontual (opcional, **fora desta migração**)
+
+As 4 vagas PCP `preenchida` órfãs apontando para Guilherme ficam como histórico. Não vamos apagar — quando o usuário marcar essas vagas como `fechada` pela UI, somem das contagens.
 
 ## Fora de escopo
 
-- Não vou apagar/limpar as vagas `preenchida` legadas no banco (ficam como histórico).
-- Não vou mexer no fluxo de marcar vaga como `preenchida` (continua acontecendo via `SelecionarUsuarioVagaDialog`/`PreencherVagaDialog`).
-- Não vou alterar a tela de "Vagas/Recrutamento" (se existir) que possa querer mostrar histórico de vagas preenchidas.
+- Não vou ampliar a policy de UPDATE de `admin_users` (mantém superfície mínima de escalonamento).
+- Não vou alterar `PreencherVagaDialog` (cadastro de novo colaborador): ele já usa a edge function `create-user` com service role, então funciona.
+- Não vou mexer em `useVagas.updateVagaStatus` (continua útil para cancelar/fechar vagas).

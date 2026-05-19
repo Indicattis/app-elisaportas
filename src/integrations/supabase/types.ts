@@ -8714,6 +8714,10 @@ export type Database = {
         Args: { p_ordem_id: string; p_tipo_ordem: string }
         Returns: boolean
       }
+      preencher_vaga_com_usuario: {
+        Args: { p_admin_user_id: string; p_vaga_id: string }
+        Returns: undefined
+      }
       processar_postagens_agendadas: { Args: never; Returns: number }
       proximo_numero_orcamento_app: { Args: never; Returns: number }
       recalcular_pontuacao_linhas_concluidas: {
