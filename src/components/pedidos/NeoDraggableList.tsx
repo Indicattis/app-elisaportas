@@ -60,6 +60,7 @@ interface NeoInstalacoesDraggableListProps {
   onEditar?: (neo: NeoInstalacao) => void;
   onUpdateValor?: (id: string, data: { valor_a_receber: number | null; valor_a_receber_texto: string }) => Promise<void>;
   onReorganizar: (updates: { id: string; prioridade_gestao: number }[]) => void;
+  hideValorAReceber?: boolean;
 }
 
 export function NeoInstalacoesDraggableList({
