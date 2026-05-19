@@ -834,6 +834,11 @@ export default function DREMesDirecao() {
         body * { visibility: hidden !important; }
         #dre-screen-area { display: none !important; }
         #dre-print-document, #dre-print-document * { visibility: visible !important; }
+        #dre-print-document, #dre-print-document * {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+          color-adjust: exact !important;
+        }
         #dre-print-document {
           display: block !important;
           position: absolute !important;
