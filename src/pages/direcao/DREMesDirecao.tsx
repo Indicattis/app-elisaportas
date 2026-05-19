@@ -26,6 +26,24 @@ interface DespesaAgrupada {
   gastos?: { id: string; descricao: string | null; data: string; valor: number }[];
 }
 
+interface VendaComPortasRow {
+  vendaId: string;
+  dataVenda: string;
+  clienteNome: string;
+  valorVenda: number;
+  itens: {
+    id: string;
+    descricao: string;
+    quantidade: number;
+    valorPortaBruto: number;
+    valorPinturaBruto: number;
+    valorInstalacaoBruto: number;
+    descontoLinha: number;
+    valorLiquido: number;
+    lucro: number;
+  }[];
+}
+
 interface TipoCustoVariavel {
   id: string;
   nome: string;
