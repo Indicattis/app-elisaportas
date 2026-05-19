@@ -1,16 +1,18 @@
 interface PedidosHeaderRowProps {
   hideOrdensStatus?: boolean;
   showEtapaBadge?: boolean;
+  hideValorAReceber?: boolean;
 }
 
-export function PedidosHeaderRow({ hideOrdensStatus = false, showEtapaBadge = false }: PedidosHeaderRowProps) {
+export function PedidosHeaderRow({ hideOrdensStatus = false, showEtapaBadge = false, hideValorAReceber = false }: PedidosHeaderRowProps) {
+  const aRec = hideValorAReceber ? '' : ' 65px';
   const gridCols = hideOrdensStatus
     ? (showEtapaBadge
-      ? '20px 60px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 65px 65px 1fr 55px'
-      : '20px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 65px 65px 1fr 55px')
+      ? `20px 60px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 65px${aRec} 1fr 55px`
+      : `20px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 65px${aRec} 1fr 55px`)
     : (showEtapaBadge
-      ? '20px 60px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 65px 65px 24px 24px 24px 24px 24px 24px 1fr 55px'
-      : '20px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 65px 65px 24px 24px 24px 24px 24px 24px 1fr 55px');
+      ? `20px 60px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 65px${aRec} 24px 24px 24px 24px 24px 24px 1fr 55px`
+      : `20px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 65px${aRec} 24px 24px 24px 24px 24px 24px 1fr 55px`);
 
   return (
     <div
@@ -48,7 +50,7 @@ export function PedidosHeaderRow({ hideOrdensStatus = false, showEtapaBadge = fa
       {/* Valor */}
       <div className="text-center">Valor</div>
       {/* A Receber */}
-      <div className="text-center">A Rec.</div>
+      {!hideValorAReceber && <div className="text-center">A Rec.</div>}
       {/* Ordens */}
       {!hideOrdensStatus && (
         <>

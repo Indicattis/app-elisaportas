@@ -48,6 +48,7 @@ interface PedidosDraggableListProps {
   disableClienteClick?: boolean;
   hideOrdensStatus?: boolean;
   hideCorrecaoButton?: boolean;
+  hideValorAReceber?: boolean;
   selectionEnabled?: boolean;
   selecionados?: Set<string>;
   onToggleSelecionado?: (id: string) => void;
@@ -76,6 +77,7 @@ interface SortableItemProps {
   disableClienteClick?: boolean;
   hideOrdensStatus?: boolean;
   hideCorrecaoButton?: boolean;
+  hideValorAReceber?: boolean;
 }
 
 function SortableItem({
@@ -101,6 +103,7 @@ function SortableItem({
   disableClienteClick,
   hideOrdensStatus,
   hideCorrecaoButton,
+  hideValorAReceber,
 }: SortableItemProps) {
   const {
     attributes,
@@ -144,6 +147,7 @@ function SortableItem({
         disableClienteClick={disableClienteClick}
         hideOrdensStatus={hideOrdensStatus}
         hideCorrecaoButton={hideCorrecaoButton}
+        hideValorAReceber={hideValorAReceber}
       />
     </div>
   );
@@ -174,6 +178,7 @@ export function PedidosDraggableList({
   disableClienteClick = false,
   hideOrdensStatus = false,
   hideCorrecaoButton = false,
+  hideValorAReceber = false,
   selectionEnabled = false,
   selecionados,
   onToggleSelecionado,
@@ -270,7 +275,7 @@ export function PedidosDraggableList({
   if (!enableDragAndDrop) {
     return (
       <>
-        {viewMode === 'list' && <PedidosHeaderRow hideOrdensStatus={hideOrdensStatus} />}
+        {viewMode === 'list' && <PedidosHeaderRow hideOrdensStatus={hideOrdensStatus} hideValorAReceber={hideValorAReceber} />}
         <div className={
           viewMode === 'list' 
             ? "space-y-1" 
@@ -300,6 +305,7 @@ export function PedidosDraggableList({
               disableClienteClick={disableClienteClick}
               hideOrdensStatus={hideOrdensStatus}
               hideCorrecaoButton={hideCorrecaoButton}
+              hideValorAReceber={hideValorAReceber}
               // Sem dragHandleProps - não há arrastar
               // Sem onMoverPrioridade - não há botões de prioridade
               />
@@ -321,7 +327,7 @@ export function PedidosDraggableList({
         items={pedidos.map((p) => p.id)}
         strategy={verticalListSortingStrategy}
       >
-        {viewMode === 'list' && <PedidosHeaderRow hideOrdensStatus={hideOrdensStatus} />}
+        {viewMode === 'list' && <PedidosHeaderRow hideOrdensStatus={hideOrdensStatus} hideValorAReceber={hideValorAReceber} />}
         <div className={
           viewMode === 'list' 
             ? "space-y-1" 
@@ -353,6 +359,7 @@ export function PedidosDraggableList({
               disableClienteClick={disableClienteClick}
               hideOrdensStatus={hideOrdensStatus}
               hideCorrecaoButton={hideCorrecaoButton}
+              hideValorAReceber={hideValorAReceber}
               />
             </div>
           ))}

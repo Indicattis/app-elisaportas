@@ -1537,6 +1537,7 @@ export default function GestaoFabricaDirecao() {
                       selectionEnabled={true}
                       selecionados={selecionados}
                       onToggleSelecionado={toggleSelecionado}
+                      hideValorAReceber={true}
                     />
 
                     {/* Neo Finalizados - após os pedidos */}
@@ -1565,6 +1566,7 @@ export default function GestaoFabricaDirecao() {
                                 onRetornar={handleRetornarNeoInstalacao}
                                 onArquivar={handleArquivarNeoInstalacao}
                                 onEnviarAguardandoCliente={(id) => enviarAguardandoClienteNeoInstalacao(id)}
+                                hideValorAReceber
                               />
                             ))}
                           {neoCorrecoesFinalizadas
@@ -1583,6 +1585,7 @@ export default function GestaoFabricaDirecao() {
                                 onRetornar={handleRetornarNeoCorrecao}
                                 onArquivar={handleArquivarNeoCorrecao}
                                 onEnviarAguardandoCliente={(id) => enviarAguardandoClienteNeoCorrecao(id)}
+                                hideValorAReceber
                               />
                             ))}
                         </div>
@@ -1602,8 +1605,8 @@ export default function GestaoFabricaDirecao() {
                             setAgendarModalOpen(true);
                           }}
                           onEditar={handleEditarNeoInstalacao}
-                          onUpdateValor={handleUpdateValorNeoInstalacao}
                           onReorganizar={reorganizarNeoInstalacoes}
+                          hideValorAReceber
                         />
                       </div>
                     )}
@@ -1621,8 +1624,8 @@ export default function GestaoFabricaDirecao() {
                             setAgendarModalOpen(true);
                           }}
                           onEditar={handleEditarNeoCorrecao}
-                          onUpdateValor={handleUpdateValorNeoCorrecao}
                           onReorganizar={reorganizarNeoCorrecoes}
+                          hideValorAReceber
                         />
                       </div>
                     )}
@@ -1667,6 +1670,7 @@ export default function GestaoFabricaDirecao() {
                       showPosicao={true}
                       enableDragAndDrop={true}
                       hideOrdensStatus={true}
+                      hideValorAReceber={true}
                     />
                   )}
                   {(neoInstalacoesAguardandoCliente.length > 0 || neoCorrecoesAguardandoCliente.length > 0) && (
@@ -1684,6 +1688,7 @@ export default function GestaoFabricaDirecao() {
                             showAguardandoCliente
                             onRetornarParaFinalizado={(id) => retornarParaFinalizadoNeoInstalacao(id)}
                             onArquivar={handleArquivarNeoInstalacao}
+                            hideValorAReceber
                           />
                         ))}
                         {neoCorrecoesAguardandoCliente.map((neo) => (
@@ -1694,6 +1699,7 @@ export default function GestaoFabricaDirecao() {
                             showAguardandoCliente
                             onRetornarParaFinalizado={(id) => retornarParaFinalizadoNeoCorrecao(id)}
                             onArquivar={handleArquivarNeoCorrecao}
+                            hideValorAReceber
                           />
                         ))}
                       </div>
