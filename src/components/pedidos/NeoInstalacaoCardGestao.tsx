@@ -43,6 +43,7 @@ interface NeoInstalacaoCardGestaoProps {
   onUpdateValor?: (id: string, data: { valor_a_receber: number | null; valor_a_receber_texto: string }) => Promise<void>;
   dragHandleProps?: Record<string, any>;
   isDragging?: boolean;
+  hideValorAReceber?: boolean;
 }
 
 export function NeoInstalacaoCardGestao({
@@ -61,6 +62,7 @@ export function NeoInstalacaoCardGestao({
   onUpdateValor,
   dragHandleProps,
   isDragging,
+  hideValorAReceber = false,
 }: NeoInstalacaoCardGestaoProps) {
   const [popoverValorOpen, setPopoverValorOpen] = useState(false);
   const [valorTexto, setValorTexto] = useState('');
@@ -94,7 +96,7 @@ export function NeoInstalacaoCardGestao({
             {/* Grid layout IDÊNTICO ao PedidoCard */}
             <div 
               className="grid items-center gap-1.5 h-full px-2 w-full" 
-              style={{ gridTemplateColumns: '20px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 65px 65px 24px 24px 24px 24px 24px 24px 1fr 55px' }}
+              style={{ gridTemplateColumns: `20px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 65px${hideValorAReceber ? '' : ' 65px'} 24px 24px 24px 24px 24px 24px 1fr 55px` }}
             >
               {/* Col 1: Drag handle */}
               <div className="flex items-center justify-center">
