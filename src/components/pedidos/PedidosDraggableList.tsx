@@ -275,7 +275,7 @@ export function PedidosDraggableList({
   if (!enableDragAndDrop) {
     return (
       <>
-        {viewMode === 'list' && <PedidosHeaderRow hideOrdensStatus={hideOrdensStatus} />}
+        {viewMode === 'list' && <PedidosHeaderRow hideOrdensStatus={hideOrdensStatus} hideValorAReceber={hideValorAReceber} />}
         <div className={
           viewMode === 'list' 
             ? "space-y-1" 
@@ -305,6 +305,7 @@ export function PedidosDraggableList({
               disableClienteClick={disableClienteClick}
               hideOrdensStatus={hideOrdensStatus}
               hideCorrecaoButton={hideCorrecaoButton}
+              hideValorAReceber={hideValorAReceber}
               // Sem dragHandleProps - não há arrastar
               // Sem onMoverPrioridade - não há botões de prioridade
               />
@@ -326,7 +327,7 @@ export function PedidosDraggableList({
         items={pedidos.map((p) => p.id)}
         strategy={verticalListSortingStrategy}
       >
-        {viewMode === 'list' && <PedidosHeaderRow hideOrdensStatus={hideOrdensStatus} />}
+        {viewMode === 'list' && <PedidosHeaderRow hideOrdensStatus={hideOrdensStatus} hideValorAReceber={hideValorAReceber} />}
         <div className={
           viewMode === 'list' 
             ? "space-y-1" 
@@ -358,6 +359,7 @@ export function PedidosDraggableList({
               disableClienteClick={disableClienteClick}
               hideOrdensStatus={hideOrdensStatus}
               hideCorrecaoButton={hideCorrecaoButton}
+              hideValorAReceber={hideValorAReceber}
               />
             </div>
           ))}
