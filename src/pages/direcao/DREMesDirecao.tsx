@@ -44,6 +44,23 @@ interface VendaComPortasRow {
   }[];
 }
 
+interface VendaComItensSimplesRow {
+  vendaId: string;
+  dataVenda: string;
+  clienteNome: string;
+  valorVenda: number;
+  itens: {
+    id: string;
+    descricao: string;
+    quantidade: number;
+    valorUnitario: number;
+    valorBruto: number;
+    descontoLinha: number;
+    valorLiquido: number;
+    lucro: number;
+  }[];
+}
+
 interface TipoCustoVariavel {
   id: string;
   nome: string;
