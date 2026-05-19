@@ -1364,7 +1364,17 @@ export function PedidoCard({
           }}
         >
           <CardContent className="p-0 h-full">
-            <div className="grid items-center gap-1.5 h-full px-2 w-full" style={{ gridTemplateColumns: hideOrdensStatus ? (showEtapaBadge ? '20px 60px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 65px 65px 1fr 55px' : '20px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 65px 65px 1fr 55px') : (showEtapaBadge ? '20px 60px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 65px 65px 24px 24px 24px 24px 24px 24px 1fr 55px' : '20px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 65px 65px 24px 24px 24px 24px 24px 24px 1fr 55px') }}>
+            <div className="grid items-center gap-1.5 h-full px-2 w-full" style={{ gridTemplateColumns: (() => {
+              const valorAReceberCol = hideValorAReceber ? '' : ' 65px';
+              if (hideOrdensStatus) {
+                return showEtapaBadge
+                  ? `20px 60px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 65px${valorAReceberCol} 1fr 55px`
+                  : `20px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 65px${valorAReceberCol} 1fr 55px`;
+              }
+              return showEtapaBadge
+                ? `20px 60px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 65px${valorAReceberCol} 24px 24px 24px 24px 24px 24px 1fr 55px`
+                : `20px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 65px${valorAReceberCol} 24px 24px 24px 24px 24px 24px 1fr 55px`;
+            })() }}>
               {/* Col 1: Drag Handle ou Aviso de Espera */}
               <div>
                 {dragHandleProps ? (
