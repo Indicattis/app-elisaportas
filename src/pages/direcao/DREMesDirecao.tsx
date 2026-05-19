@@ -810,6 +810,7 @@ export default function DREMesDirecao() {
   const [topAcessorios, setTopAcessorios] = useState<{nome: string, qtd: number}[]>([]);
   const [topAdicionais, setTopAdicionais] = useState<{nome: string, qtd: number}[]>([]);
   const [estoqueResumo, setEstoqueResumo] = useState({ valorTotal: 0, totalItens: 0 });
+  const [vendasListagem, setVendasListagem] = useState<{ id: string; data: string; cliente: string; valorTabela: number; valorVenda: number; desconto: number; lucro: number }[]>([]);
 
   const mesDate = mes ? new Date(mes + '-15') : new Date();
   const mesNome = format(mesDate, 'MMMM yyyy', { locale: ptBR });
@@ -1051,6 +1052,34 @@ export default function DREMesDirecao() {
         };
 
         await Promise.all([fetchDespesasFromGastos(), fetchTiposCustosAtivos(), fetchEstoque()]);
+
+        // Listagem de vendas do mês para o PDF
+        const { data: vendasList } = await supabase
+          .from('vendas')
+          .select('id, data_venda, cliente_nome, valor_venda, valor_frete, lucro_total, lucro_instalacao, produtos_vendas(valor_produto, valor_pintura, valor_instalacao, quantidade)')
+          .gte('data_venda', start + ' 00:00:00')
+          .lte('data_venda', end + ' 23:59:59')
+          .order('data_venda', { ascending: true });
+
+        setVendasListagem(
+          ((vendasList || []) as any[]).map((v) => {
+            const valorTabela = (v.produtos_vendas || []).reduce(
+              (s: number, p: any) =>
+                s + ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * (p.quantidade || 1),
+              0
+            );
+            const valorVenda = (v.valor_venda || 0) - (v.valor_frete || 0);
+            return {
+              id: v.id,
+              data: v.data_venda,
+              cliente: v.cliente_nome || '',
+              valorTabela,
+              valorVenda,
+              desconto: valorTabela - valorVenda,
+              lucro: (v.lucro_total || 0) + (v.lucro_instalacao || 0),
+            };
+          })
+        );
       } catch (err) {
         console.error('Erro ao buscar dados DRE:', err);
       } finally {
@@ -1136,6 +1165,7 @@ export default function DREMesDirecao() {
         percBrutoFinal={percBrutoFinal}
         percLiquidFinal={percLiquidFinal}
         formatCurrency={formatCurrency}
+        vendasListagem={vendasListagem}
       />
     </div>
 
