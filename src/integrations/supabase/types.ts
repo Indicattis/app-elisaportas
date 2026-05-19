@@ -8727,6 +8727,10 @@ export type Database = {
         Args: { p_ordem_id: string; p_tipo_ordem: string }
         Returns: Json
       }
+      remover_colaborador_organograma: {
+        Args: { p_admin_user_id: string; p_justificativa?: string }
+        Returns: string
+      }
       remover_responsavel_ordem_producao: {
         Args: { p_ordem_id: string; p_tipo_ordem: string }
         Returns: Json
