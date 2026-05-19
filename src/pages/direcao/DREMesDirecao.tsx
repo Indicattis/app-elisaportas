@@ -1100,6 +1100,60 @@ export default function DREMesDirecao() {
             };
           })
         );
+
+        // Detalhe das vendas com porta_enrolar (modal "Portas")
+        const { data: portasRaw } = await supabase
+          .from('produtos_vendas')
+          .select(`
+            id, descricao, quantidade,
+            valor_produto, valor_pintura, valor_instalacao,
+            tipo_desconto, desconto_percentual, desconto_valor,
+            lucro_item,
+            vendas!inner(id, data_venda, cliente_nome, valor_venda, valor_frete)
+          `)
+          .eq('tipo_produto', 'porta_enrolar')
+          .gte('vendas.data_venda', start + ' 00:00:00')
+          .lte('vendas.data_venda', end + ' 23:59:59');
+
+        const porVenda = new Map<string, VendaComPortasRow>();
+        ((portasRaw || []) as any[]).forEach((p) => {
+          const v = p.vendas;
+          if (!v) return;
+          const qty = p.quantidade || 1;
+          const valorPortaBruto = (p.valor_produto || 0) * qty;
+          const valorPinturaBruto = (p.valor_pintura || 0) * qty;
+          const valorInstBruto = (p.valor_instalacao || 0) * qty;
+          const bruto = valorPortaBruto + valorPinturaBruto + valorInstBruto;
+          let desc = 0;
+          if (p.tipo_desconto === 'percentual' && p.desconto_percentual > 0) {
+            desc = bruto * (p.desconto_percentual / 100);
+          } else if (p.tipo_desconto === 'valor' && p.desconto_valor > 0) {
+            desc = p.desconto_valor;
+          }
+          const valorLiquido = bruto - desc;
+          const existing = porVenda.get(v.id) || {
+            vendaId: v.id,
+            dataVenda: v.data_venda,
+            clienteNome: v.cliente_nome || '',
+            valorVenda: (v.valor_venda || 0) - (v.valor_frete || 0),
+            itens: [],
+          };
+          existing.itens.push({
+            id: p.id,
+            descricao: p.descricao || 'Sem descrição',
+            quantidade: qty,
+            valorPortaBruto,
+            valorPinturaBruto,
+            valorInstalacaoBruto: valorInstBruto,
+            descontoLinha: desc,
+            valorLiquido,
+            lucro: p.lucro_item || 0,
+          });
+          porVenda.set(v.id, existing);
+        });
+        setPortasDetalhe(
+          Array.from(porVenda.values()).sort((a, b) => a.dataVenda.localeCompare(b.dataVenda))
+        );
       } catch (err) {
         console.error('Erro ao buscar dados DRE:', err);
       } finally {
