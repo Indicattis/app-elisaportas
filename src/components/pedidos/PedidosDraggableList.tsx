@@ -48,6 +48,7 @@ interface PedidosDraggableListProps {
   disableClienteClick?: boolean;
   hideOrdensStatus?: boolean;
   hideCorrecaoButton?: boolean;
+  hideValorAReceber?: boolean;
   selectionEnabled?: boolean;
   selecionados?: Set<string>;
   onToggleSelecionado?: (id: string) => void;
@@ -76,6 +77,7 @@ interface SortableItemProps {
   disableClienteClick?: boolean;
   hideOrdensStatus?: boolean;
   hideCorrecaoButton?: boolean;
+  hideValorAReceber?: boolean;
 }
 
 function SortableItem({
