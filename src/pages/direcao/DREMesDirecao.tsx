@@ -1029,18 +1029,18 @@ export default function DREMesDirecao() {
             {/* Coluna esquerda: 3 seções empilhadas */}
             <div className="space-y-4">
               <DespesaSectionReadOnly
-                title="Despesas Fixas"
-                despesas={despesasFixas}
-                total={totalDespFixas}
-                formatCurrency={formatCurrency}
-                tiposDisponiveis={tiposCustosFixos.filter(t => !isFolha(t.nome))}
-              />
-              <DespesaSectionReadOnly
                 title="Folha Salarial"
                 despesas={despesasFolha}
                 total={totalDespFolha}
                 formatCurrency={formatCurrency}
                 tiposDisponiveis={tiposCustosFixos.filter(t => isFolha(t.nome))}
+              />
+              <DespesaSectionReadOnly
+                title="Despesas Fixas"
+                despesas={despesasFixas}
+                total={totalDespFixas}
+                formatCurrency={formatCurrency}
+                tiposDisponiveis={tiposCustosFixos.filter(t => !isFolha(t.nome))}
               />
               <DespesaSectionReadOnly
                 title="Despesas Variáveis"
