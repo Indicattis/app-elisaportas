@@ -552,52 +552,9 @@ function PrintReport({
         />
       </div>
 
-      {/* PROJETADAS DO ANO */}
-      {tiposCustosVariaveis.length > 0 && (
-        <div style={SECTION}>
-          <div style={H2}>6. Despesas Projetadas do Ano</div>
-          <table>
-            <thead>
-              <tr>
-                <th style={TH}>Tipo de Custo</th>
-                <th style={{ ...TH, textAlign: 'right', width: 110 }}>Realizado (Mês)</th>
-                <th style={{ ...TH, textAlign: 'right', width: 110 }}>Projetado (Mês)</th>
-                <th style={{ ...TH, textAlign: 'right', width: 110 }}>Projetado (Ano)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {tiposCustosVariaveis.map((t, i) => {
-                const dm = despesasVariaveis.find(d => d.nome === t.nome);
-                const realizado = dm?.valor_real || 0;
-                return (
-                  <tr key={t.id} style={trZebra(i)}>
-                    <td style={{ ...TD, fontWeight: 600 }}>{t.nome}</td>
-                    <td style={tdRight}>{formatCurrency(realizado)}</td>
-                    <td style={tdRight}>{formatCurrency(t.valor_maximo_mensal)}</td>
-                    <td style={{ ...tdRight, fontWeight: 600 }}>{formatCurrency(t.valor_maximo_mensal * 12)}</td>
-                  </tr>
-                );
-              })}
-              <tr style={{ background: '#1e3a8a', color: '#fff' }}>
-                <td style={{ ...TD, fontWeight: 800, color: '#fff', borderBottom: 'none' }}>TOTAL</td>
-                <td style={{ ...tdRight, fontWeight: 800, color: '#fff', borderBottom: 'none' }}>
-                  {formatCurrency(totalDespVariaveis)}
-                </td>
-                <td style={{ ...tdRight, fontWeight: 800, color: '#fff', borderBottom: 'none' }}>
-                  {formatCurrency(tiposCustosVariaveis.reduce((s, t) => s + t.valor_maximo_mensal, 0))}
-                </td>
-                <td style={{ ...tdRight, fontWeight: 800, color: '#fff', borderBottom: 'none' }}>
-                  {formatCurrency(totalProjetadoAnual)}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      )}
-
       {/* ESTOQUE */}
       <div style={SECTION}>
-        <div style={H2}>7. Estoque</div>
+        <div style={H2}>6. Estoque</div>
         <div style={{ display: 'flex', gap: 8 }}>
           <div style={{ flex: 1, border: '1px solid #e2e8f0', padding: '10px 12px', background: '#fafbfc' }}>
             <div style={{ fontSize: '7pt', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>
