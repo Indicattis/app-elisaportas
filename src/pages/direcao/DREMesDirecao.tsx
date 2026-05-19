@@ -1227,6 +1227,7 @@ export default function DREMesDirecao() {
                 total={totalDespFixas}
                 formatCurrency={formatCurrency}
                 tiposDisponiveis={tiposCustosFixos.filter(t => !isFolha(t.nome))}
+                onClickTipo={(id, nome) => setTipoModal({ id, nome })}
               />
               <DespesaSectionReadOnly
                 title="Despesas Variáveis"
@@ -1234,6 +1235,7 @@ export default function DREMesDirecao() {
                 total={totalDespVariaveis}
                 formatCurrency={formatCurrency}
                 tiposDisponiveis={tiposCustosVariaveis}
+                onClickTipo={(id, nome) => setTipoModal({ id, nome })}
               />
             </div>
 
