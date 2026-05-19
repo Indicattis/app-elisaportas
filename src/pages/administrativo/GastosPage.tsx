@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Plus, Pencil, Trash2, Loader2, ChevronLeft, ChevronRight, CalendarIcon, FileText, ArrowUpDown } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -36,11 +36,15 @@ interface ColaboradorOption {
 
 export default function GastosPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [mounted, setMounted] = useState(false);
 
   const now = new Date();
+  const mesQuery = searchParams.get("mes");
   const [mesFiltro, setMesFiltro] = useState(
-    `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`
+    mesQuery && /^\d{4}-\d{2}$/.test(mesQuery)
+      ? mesQuery
+      : `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`
   );
 
   const [ordenarPor, setOrdenarPor] = useState<GastosOrdenarPor>('cadastro');

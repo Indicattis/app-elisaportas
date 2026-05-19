@@ -1,71 +1,35 @@
-# Custo em Folha — lançamento mensal por colaborador
+## Objetivo
 
-## Resumo
+Em `/administrativo/financeiro/custos`, os valores reais de cada tipo de custo (por mês) passam a vir agregados automaticamente da tabela `gastos` (mesma fonte de `/administrativo/financeiro/gastos`). A tela do mês deixa de ser editável — vira só leitura.
 
-Novo item no hub `/administrativo/financeiro` chamado **Custo em Folha** que abre uma tela enxuta: o usuário seleciona o mês e lança um único valor de custo para cada colaborador ativo. O total alimenta a linha "Folha Salarial" do DRE, substituindo a fonte atual (gastos com nome contendo "salário/folha").
+## Mudanças
 
-## Banco de dados
+### 1. `src/hooks/useCustosMensais.ts`
 
-Nova tabela `public.custos_folha_mensais`:
+- `fetchCustosMes(mesDate)`:
+  - Trocar a consulta a `despesas_mensais` por uma consulta em `gastos` filtrando pelo intervalo do mês (`data >= primeiro dia` e `data <= último dia`).
+  - Agrupar `SUM(valor)` por `tipo_custo_id`.
+  - Para cada `tipo_custo` ativo, retornar 1 item `CustoMensal` com `valor_real = soma dos gastos` e `observacoes = null`.
+- `fetchTotaisPorMes(ano)`:
+  - Trocar consulta a `despesas_mensais` por consulta a `gastos` no intervalo do ano (`data` entre `ano-01-01` e `ano-12-31`).
+  - Agrupar por mês (`new Date(data).getMonth()+1`) e somar `valor`.
+  - Manter o cálculo de `total_limite` a partir de `tipos_custos` ativos.
+- `saveCustosMensaisBatch`: marcar como deprecated/no-op (mantém assinatura mas retorna `true` sem gravar). Não é mais usado.
 
-- `id uuid pk default gen_random_uuid()`
-- `mes_referencia date not null` — sempre o 1º dia do mês (ex.: `2026-04-01`)
-- `colaborador_id uuid not null` (referência lógica a `admin_users.id`, sem FK rígida)
-- `colaborador_nome text not null` — snapshot do nome no momento do lançamento
-- `valor numeric not null default 0`
-- `created_by uuid`, `created_at`, `updated_at` com trigger `update_updated_at_column`
-- `unique (mes_referencia, colaborador_id)` — evita duplicidade por colaborador/mês
+### 2. `src/pages/administrativo/CustosMesMinimalista.tsx`
 
-RLS:
-- Enable RLS.
-- SELECT/INSERT/UPDATE/DELETE permitido apenas para admins (`public.is_admin(auth.uid())`), no mesmo padrão das demais tabelas financeiras.
+- Remover botão **Salvar Custos** e o estado `saving`.
+- Remover os `<Input>` editáveis: substituir por valor exibido em texto (`formatCurrency(vals.valor_real)`).
+- Remover input de observações (vem dos gastos individuais agora).
+- Adicionar um botão/link "Ver gastos do mês" que navega para `/administrativo/financeiro/gastos?mes=YYYY-MM` (filtro por mês).
+- Subtítulo: trocar "Lance os valores reais…" por "Valores agregados automaticamente dos lançamentos em Gastos".
 
-## Frontend
+### 3. `src/pages/administrativo/GastosPage.tsx` (opcional, pequeno)
 
-### 1. Hub Financeiro (`src/pages/administrativo/FinanceiroHub.tsx`)
-
-Adicionar novo item no array `menuItems`:
-```
-{ label: "Custo em Folha", icon: Users, path: "/administrativo/financeiro/custo-folha", ativo: true }
-```
-(ícone `Users` do lucide-react). Posicionar logo abaixo de "Gastos".
-
-### 2. Rota (`src/App.tsx`)
-
-```
-<Route path="/administrativo/financeiro/custo-folha" element={<ProtectedRoute routeKey="administrativo_hub"><CustoFolhaMensal /></ProtectedRoute>} />
-```
-
-### 3. Nova página `src/pages/administrativo/CustoFolhaMensal.tsx`
-
-Layout em `MinimalistLayout` (mesmo padrão glassmorphism: `bg-white/5`, `backdrop-blur-xl`, `border-white/10`), breadcrumb Home → Administrativo → Financeiro → Custo em Folha.
-
-Elementos:
-- **Seletor de mês**: Select com últimos 12 meses + atual + próximo, formato "abril/2026". Estado `mesReferencia: Date` (1º dia do mês). Datas sempre tratadas com `T12:00:00` (memória do projeto).
-- **Lista de colaboradores**: query a `admin_users` filtrando `eh_colaborador=true` e `ativo=true`, ordenada por `nome`.
-- **Por linha**: nome do colaborador + input numérico (R$) para o valor. Pré-preenchido a partir de `custos_folha_mensais` do mês selecionado.
-- **Resumo no rodapé fixo**: total da folha do mês + botão "Salvar".
-- **Salvar**: faz `upsert` em `custos_folha_mensais` (`onConflict: 'mes_referencia,colaborador_id'`) para cada colaborador com valor > 0; remove (DELETE) linhas existentes cujo input ficou em 0/vazio, para o usuário poder zerar.
-- Toast de sucesso/erro com `sonner`.
-
-Sem campos extras (horas, acréscimos, descontos) — esta tela é só "custo total no mês por colaborador".
-
-### 4. DRE (`src/pages/direcao/DREMesDirecao.tsx`)
-
-No `fetchDespesasFromGastos`:
-- Continuar lendo `gastos` para Despesas Fixas e Variáveis, **excluindo** itens cujo nome bate `isFolha` (já é feito hoje para fixas/variáveis — manter).
-- **Remover** o `setDespesasFolha(items.filter(i => isFolha(i.nome)))`.
-- Em vez disso, fazer nova query em `custos_folha_mensais` filtrando por `mes_referencia = ${mes}-01`. Somar `valor` e setar:
-  ```
-  setDespesasFolha([{ id: 'folha-mensal', nome: 'Folha Salarial', valor_real: totalFolha, tipo: 'fixa' }])
-  ```
-- `totalDespFolha` continua sendo a soma → linha "Folha Salarial" do DRE passa a refletir o lançado na nova tela.
-- A lista detalhada lateral em `PrintDespesaTable` (Folha Salarial) mostra cada colaborador como uma linha (`nome`/`valor`) — converter os registros de `custos_folha_mensais` em `DespesaAgrupada[]` para alimentar o detalhamento.
-
-Lançamentos antigos em `gastos` com nome "Salário/Folha" deixam de ser somados; permanecem na tabela só por histórico (não removemos dados).
+- Ler `mes` da query string ao montar e pré-selecionar `mesFiltro`, para que o link da tela de Custos funcione.
 
 ## Fora de escopo
 
-- Não tocar na página existente `/administrativo/rh-dp/colaboradores/folha-pagamento` nem nas tabelas `folhas_pagamento`/`folha_pagamento_itens`.
-- Sem geração automática de `contas_pagar` a partir do custo em folha.
-- Sem migração dos lançamentos antigos de `gastos` (folha) para a nova tabela — o usuário pode relançar o mês quando quiser.
+- DRE (`DREMesDirecao.tsx`) e `despesas_mensais` permanecem como estão. Os dados antigos de `despesas_mensais` continuam intactos, apenas deixam de aparecer em `/financeiro/custos`.
+- Estrutura/CRUD de `tipos_custos` permanece igual (cadastro, limites, ativo, etc.).
+- Tabela `gastos` não é alterada.

@@ -38,51 +38,55 @@ export const useCustosMensais = (mes?: string) => {
   const fetchCustosMes = useCallback(async (mesDate: string) => {
     setLoading(true);
 
-    // Busca despesas do mês (fixas e variáveis/projetadas)
-    const { data: despesas, error: errDesp } = await supabase
-      .from("despesas_mensais")
-      .select("*")
-      .eq("mes", mesDate)
-      .in("modalidade", ["fixa", "projetada", "variavel_nao_esperada"]);
+    // Intervalo do mês
+    const [y, m] = mesDate.split("-").map(Number);
+    const start = `${mesDate.slice(0, 7)}-01`;
+    const end = new Date(y, m, 0).toISOString().split("T")[0];
 
-    if (errDesp) {
-      console.error(errDesp);
+    // Busca gastos no intervalo do mês
+    const { data: gastos, error: errGastos } = await supabase
+      .from("gastos" as any)
+      .select("tipo_custo_id, valor")
+      .gte("data", start)
+      .lte("data", end);
+
+    if (errGastos) {
+      console.error(errGastos);
       toast.error("Erro ao carregar custos do mês");
       setLoading(false);
       return;
     }
 
-    // Busca tipos_custos para mapear por nome
+    // Agrega por tipo_custo_id
+    const somaPorTipo = new Map<string, number>();
+    ((gastos || []) as any[]).forEach((g: any) => {
+      if (!g.tipo_custo_id) return;
+      somaPorTipo.set(g.tipo_custo_id, (somaPorTipo.get(g.tipo_custo_id) || 0) + Number(g.valor || 0));
+    });
+
+    // Busca tipos_custos ativos
     const { data: tipos } = await supabase
       .from("tipos_custos" as any)
-      .select("id, nome, descricao, valor_maximo_mensal, tipo, ativo");
+      .select("id, nome, descricao, valor_maximo_mensal, tipo, ativo")
+      .eq("ativo", true);
 
-    const tiposMap = new Map<string, any>();
-    ((tipos || []) as any[]).forEach((t: any) => {
-      tiposMap.set(t.nome.toLowerCase().trim(), t);
-    });
-
-    // Mapeia despesas_mensais → CustoMensal, vinculando ao tipo_custo pelo nome
-    const result: CustoMensal[] = ((despesas || []) as any[]).map((d: any) => {
-      const tipoCusto = tiposMap.get(d.nome.toLowerCase().trim());
-      return {
-        id: d.id,
-        mes: d.mes,
-        tipo_custo_id: tipoCusto?.id || "",
-        valor_real: Number(d.valor_real) || 0,
-        observacoes: d.observacoes || null,
-        tipo_custo: tipoCusto ? {
-          id: tipoCusto.id,
-          nome: tipoCusto.nome,
-          descricao: tipoCusto.descricao,
-          categoria_id: null,
-          subcategoria_id: null,
-          valor_maximo_mensal: tipoCusto.valor_maximo_mensal,
-          tipo: tipoCusto.tipo,
-          ativo: tipoCusto.ativo,
-        } : undefined,
-      };
-    });
+    const result: CustoMensal[] = ((tipos || []) as any[]).map((t: any) => ({
+      id: t.id,
+      mes: start,
+      tipo_custo_id: t.id,
+      valor_real: somaPorTipo.get(t.id) || 0,
+      observacoes: null,
+      tipo_custo: {
+        id: t.id,
+        nome: t.nome,
+        descricao: t.descricao,
+        categoria_id: null,
+        subcategoria_id: null,
+        valor_maximo_mensal: t.valor_maximo_mensal,
+        tipo: t.tipo,
+        ativo: t.ativo,
+      },
+    }));
 
     setCustosMes(result);
     setLoading(false);
@@ -91,15 +95,14 @@ export const useCustosMensais = (mes?: string) => {
   const fetchTotaisPorMes = useCallback(async (ano: number) => {
     setLoading(true);
     const startDate = `${ano}-01-01`;
-    const endDate = `${ano}-12-01`;
+    const endDate = `${ano}-12-31`;
 
-    // Busca de despesas_mensais
+    // Busca gastos do ano inteiro
     const { data, error } = await supabase
-      .from("despesas_mensais")
-      .select("mes, valor_real")
-      .gte("mes", startDate)
-      .lte("mes", endDate)
-      .in("modalidade", ["fixa", "projetada", "variavel_nao_esperada"]);
+      .from("gastos" as any)
+      .select("data, valor")
+      .gte("data", startDate)
+      .lte("data", endDate);
 
     if (error) {
       console.error(error);
@@ -108,11 +111,11 @@ export const useCustosMensais = (mes?: string) => {
       return;
     }
 
-    // Agrupa por mês
+    // Agrupa por mês (chave YYYY-MM-01)
     const totais: Record<string, number> = {};
     ((data || []) as any[]).forEach((row: any) => {
-      const m = row.mes;
-      totais[m] = (totais[m] || 0) + Number(row.valor_real || 0);
+      const mKey = `${String(row.data).slice(0, 7)}-01`;
+      totais[mKey] = (totais[mKey] || 0) + Number(row.valor || 0);
     });
 
     // Busca limites dos tipos ativos
@@ -143,80 +146,8 @@ export const useCustosMensais = (mes?: string) => {
     custos: { tipo_custo_id: string; valor_real: number; observacoes?: string }[],
     tiposCustosRef?: { id: string; nome: string; tipo: string }[]
   ) => {
-    setSaving(true);
-    const userId = (await supabase.auth.getUser()).data.user?.id;
-
-    // Se não recebeu referência, busca tipos_custos
-    let tiposMap = new Map<string, any>();
-    if (tiposCustosRef) {
-      tiposCustosRef.forEach(t => tiposMap.set(t.id, t));
-    } else {
-      const { data: tipos } = await supabase
-        .from("tipos_custos" as any)
-        .select("id, nome, tipo");
-      ((tipos || []) as any[]).forEach((t: any) => tiposMap.set(t.id, t));
-    }
-
-    // Para cada custo, faz upsert individual em despesas_mensais
-    for (const c of custos) {
-      const tipo = tiposMap.get(c.tipo_custo_id);
-      if (!tipo) continue;
-
-      const modalidade = tipo.tipo === "fixa" ? "fixa" : "projetada";
-      const categoria = tipo.tipo === "fixa" ? "Despesas fixas" : "Despesas variáveis";
-
-      // Verifica se já existe registro com mesmo mes + nome
-      const { data: existing } = await supabase
-        .from("despesas_mensais")
-        .select("id")
-        .eq("mes", mesDate)
-        .eq("nome", tipo.nome)
-        .maybeSingle();
-
-      if (existing) {
-        // Update
-        const { error } = await supabase
-          .from("despesas_mensais")
-          .update({
-            valor_real: c.valor_real,
-            observacoes: c.observacoes || null,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", existing.id);
-
-        if (error) {
-          console.error(error);
-          toast.error(`Erro ao salvar ${tipo.nome}`);
-          setSaving(false);
-          return false;
-        }
-      } else {
-        // Insert
-        const { error } = await supabase
-          .from("despesas_mensais")
-          .insert({
-            mes: mesDate,
-            nome: tipo.nome,
-            modalidade,
-            categoria,
-            valor_real: c.valor_real,
-            valor_esperado: 0,
-            observacoes: c.observacoes || null,
-            tipo_status: "decretada",
-            created_by: userId,
-          });
-
-        if (error) {
-          console.error(error);
-          toast.error(`Erro ao salvar ${tipo.nome}`);
-          setSaving(false);
-          return false;
-        }
-      }
-    }
-
-    toast.success("Custos salvos com sucesso!");
-    setSaving(false);
+    // Deprecated: custos agora são agregados de `gastos`. Mantido como no-op.
+    void mesDate; void custos; void tiposCustosRef;
     return true;
   };
 
