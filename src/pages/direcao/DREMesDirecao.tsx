@@ -1868,3 +1868,115 @@ function PortasDetalheDialog({
     </Dialog>
   );
 }
+
+function ItensSimplesDetalheDialog({
+  open,
+  onOpenChange,
+  titulo,
+  categoriaLabel,
+  vendas,
+  formatCurrency,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  titulo: string;
+  categoriaLabel: string;
+  vendas: VendaComItensSimplesRow[];
+  formatCurrency: (v: number) => string;
+}) {
+  const totals = vendas.reduce(
+    (acc, v) => {
+      v.itens.forEach((i) => {
+        acc.bruto += i.valorBruto;
+        acc.desconto += i.descontoLinha;
+        acc.liquido += i.valorLiquido;
+        acc.lucro += i.lucro;
+        acc.qtd += i.quantidade;
+      });
+      return acc;
+    },
+    { bruto: 0, desconto: 0, liquido: 0, lucro: 0, qtd: 0 }
+  );
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto bg-slate-900 border-white/10 text-white">
+        <DialogHeader>
+          <DialogTitle className="text-white">{titulo}</DialogTitle>
+          <DialogDescription className="text-white/60">
+            {vendas.length} venda{vendas.length === 1 ? '' : 's'} com itens da categoria {categoriaLabel}.
+          </DialogDescription>
+        </DialogHeader>
+
+        {vendas.length === 0 ? (
+          <p className="text-white/40 text-sm py-8 text-center">Nenhuma venda com {categoriaLabel.toLowerCase()} neste mês.</p>
+        ) : (
+          <div className="space-y-4">
+            {vendas.map((v) => {
+              const subLiquido = v.itens.reduce((s, i) => s + i.valorLiquido, 0);
+              const subLucro = v.itens.reduce((s, i) => s + i.lucro, 0);
+              return (
+                <div key={v.vendaId} className="rounded-xl bg-white/5 border border-white/10 p-4">
+                  <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                    <div>
+                      <div className="text-xs text-white/40 uppercase">{format(new Date(v.dataVenda.slice(0, 10) + 'T12:00:00'), 'dd/MM/yyyy')}</div>
+                      <div className="text-sm font-semibold text-white">{v.clienteNome || '—'}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-xs text-white/40 uppercase">Valor da venda</div>
+                      <div className="text-sm font-semibold text-white">{formatCurrency(v.valorVenda)}</div>
+                    </div>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="border-b border-white/10 text-white/40 uppercase">
+                          <th className="text-left py-2 font-medium">Descrição</th>
+                          <th className="text-right py-2 font-medium w-12">Qtd</th>
+                          <th className="text-right py-2 font-medium w-24">Valor unit.</th>
+                          <th className="text-right py-2 font-medium w-24">Bruto</th>
+                          <th className="text-right py-2 font-medium w-24">Desconto</th>
+                          <th className="text-right py-2 font-medium w-28">Líquido</th>
+                          <th className="text-right py-2 font-medium w-24">Lucro</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {v.itens.map((i) => (
+                          <tr key={i.id} className="border-b border-white/5 last:border-0">
+                            <td className="py-2 text-white/80">{i.descricao}</td>
+                            <td className="py-2 text-right text-white/70">{i.quantidade}</td>
+                            <td className="py-2 text-right text-white/70">{formatCurrency(i.valorUnitario)}</td>
+                            <td className="py-2 text-right text-white/70">{formatCurrency(i.valorBruto)}</td>
+                            <td className="py-2 text-right text-red-400">{i.descontoLinha > 0 ? formatCurrency(i.descontoLinha) : '—'}</td>
+                            <td className="py-2 text-right text-white font-medium">{formatCurrency(i.valorLiquido)}</td>
+                            <td className={`py-2 text-right font-medium ${i.lucro >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{formatCurrency(i.lucro)}</td>
+                          </tr>
+                        ))}
+                        <tr className="border-t border-white/10">
+                          <td colSpan={5} className="py-2 text-right text-white/60 uppercase text-[10px]">Subtotal desta venda</td>
+                          <td className="py-2 text-right text-white font-semibold">{formatCurrency(subLiquido)}</td>
+                          <td className={`py-2 text-right font-semibold ${subLucro >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{formatCurrency(subLucro)}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              );
+            })}
+
+            <div className="rounded-xl bg-blue-900/40 border border-blue-500/30 p-4">
+              <div className="text-xs text-white/60 uppercase mb-2 font-semibold">Totais consolidados ({categoriaLabel})</div>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
+                <div><div className="text-[10px] text-white/40 uppercase">Qtd Itens</div><div className="font-semibold text-white">{totals.qtd}</div></div>
+                <div><div className="text-[10px] text-white/40 uppercase">Bruto</div><div className="font-semibold text-white">{formatCurrency(totals.bruto)}</div></div>
+                <div><div className="text-[10px] text-white/40 uppercase">Desconto</div><div className="font-semibold text-red-400">{formatCurrency(totals.desconto)}</div></div>
+                <div><div className="text-[10px] text-white/40 uppercase">Líquido</div><div className="font-semibold text-white">{formatCurrency(totals.liquido)}</div></div>
+                <div><div className="text-[10px] text-white/40 uppercase">Lucro</div><div className={`font-semibold ${totals.lucro >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{formatCurrency(totals.lucro)}</div></div>
+              </div>
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
