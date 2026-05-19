@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Package, Clock, RefreshCw, Truck, PackageCheck, Calendar, MapPin, Phone, Wrench } from "lucide-react";
+import { Package, Clock, RefreshCw, Truck, PackageCheck, Calendar, MapPin, Phone, Wrench, FileText, ExternalLink } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { OrdemCarregamentoUnificada } from "@/hooks/useOrdensCarregamentoUnificadas";
@@ -167,6 +167,28 @@ function OrdemCard({ ordem, onIniciarColeta, podeIniciar }: OrdemCardProps) {
                 <p className="text-[10px] sm:text-xs line-clamp-2">{ordem.observacoes}</p>
               </div>
             )}
+
+            <div className="col-span-1 sm:col-span-2">
+              <p className="text-[10px] sm:text-xs text-muted-foreground flex items-center gap-1 mb-1">
+                <FileText className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                Visita Técnica
+              </p>
+              {ordem.pedido?.ficha_visita_url ? (
+                <a
+                  href={ordem.pedido.ficha_visita_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="inline-flex items-center gap-1.5 text-[10px] sm:text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors bg-blue-500/10 hover:bg-blue-500/20 px-2 py-1 rounded-md max-w-full"
+                >
+                  <FileText className="h-3 w-3 shrink-0" />
+                  <span className="truncate">{ordem.pedido.ficha_visita_nome || 'Ver ficha de visita'}</span>
+                  <ExternalLink className="h-2.5 w-2.5 opacity-60 shrink-0" />
+                </a>
+              ) : (
+                <p className="text-[10px] sm:text-xs text-muted-foreground italic">Sem ficha de visita anexada</p>
+              )}
+            </div>
           </div>
 
           {/* LATERAL DIREITA - Botão Iniciar */}
