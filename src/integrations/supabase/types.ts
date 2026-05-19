@@ -719,6 +719,65 @@ export type Database = {
         }
         Relationships: []
       }
+      caixa_roboost_entradas: {
+        Row: {
+          created_at: string
+          etiqueta_id: string | null
+          id: string
+          nome: string
+          ordem: number
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          created_at?: string
+          etiqueta_id?: string | null
+          id?: string
+          nome: string
+          ordem?: number
+          updated_at?: string
+          valor?: number
+        }
+        Update: {
+          created_at?: string
+          etiqueta_id?: string | null
+          id?: string
+          nome?: string
+          ordem?: number
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "caixa_roboost_entradas_etiqueta_id_fkey"
+            columns: ["etiqueta_id"]
+            isOneToOne: false
+            referencedRelation: "caixa_roboost_etiquetas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      caixa_roboost_etiquetas: {
+        Row: {
+          cor: string
+          created_at: string
+          id: string
+          nome: string
+        }
+        Insert: {
+          cor?: string
+          created_at?: string
+          id?: string
+          nome: string
+        }
+        Update: {
+          cor?: string
+          created_at?: string
+          id?: string
+          nome?: string
+        }
+        Relationships: []
+      }
       calendario_cores: {
         Row: {
           ativa: boolean
