@@ -85,6 +85,7 @@ interface PedidoCardProps {
   showEtapaBadge?: boolean;
   hideOrdensStatus?: boolean;
   hideCorrecaoButton?: boolean;
+  hideValorAReceber?: boolean;
 }
 export function PedidoCard({
   pedido,
@@ -111,7 +112,8 @@ export function PedidoCard({
   disableClienteClick = false,
   showEtapaBadge = false,
   hideOrdensStatus = false,
-  hideCorrecaoButton = false
+  hideCorrecaoButton = false,
+  hideValorAReceber = false
 }: PedidoCardProps) {
   const [showDetalhes, setShowDetalhes] = useState(false);
   const [showAcaoEtapa, setShowAcaoEtapa] = useState(false);
