@@ -1688,6 +1688,7 @@ export default function GestaoFabricaDirecao() {
                             showAguardandoCliente
                             onRetornarParaFinalizado={(id) => retornarParaFinalizadoNeoInstalacao(id)}
                             onArquivar={handleArquivarNeoInstalacao}
+                            hideValorAReceber
                           />
                         ))}
                         {neoCorrecoesAguardandoCliente.map((neo) => (
@@ -1698,6 +1699,7 @@ export default function GestaoFabricaDirecao() {
                             showAguardandoCliente
                             onRetornarParaFinalizado={(id) => retornarParaFinalizadoNeoCorrecao(id)}
                             onArquivar={handleArquivarNeoCorrecao}
+                            hideValorAReceber
                           />
                         ))}
                       </div>
