@@ -411,7 +411,7 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
                 <Route path="/perfil" element={<ProtectedRoute><MeuPerfil /></ProtectedRoute>} />
-                <Route path="/home/pedidos-producao" element={<ProtectedRoute><PedidosProducaoReadOnly /></ProtectedRoute>} />
+                <Route path="/home/pedidos-producao" element={<ProtectedRoute><GestaoFabricaDirecao /></ProtectedRoute>} />
                 <Route path="/home/calendario-expedicao" element={<ProtectedRoute><CalendarioExpedicaoReadOnly /></ProtectedRoute>} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/forbidden" element={<Forbidden />} />
