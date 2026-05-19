@@ -47,7 +47,6 @@ interface RoleGroup {
   users: User[];
   openVagas: number;
   openVagasList: Vaga[];
-  filledVagasList: Vaga[];
 }
 
 interface SortableRoleGroupProps {
@@ -425,24 +424,18 @@ export default function GestaoColaboradoresDirecao() {
   const openVagasForRole = (role: string): Vaga[] =>
     (vagas || []).filter(v => v.cargo === role && (v.status === 'aberta' || v.status === 'em_analise'));
 
-  const filledVagasForRole = (role: string): Vaga[] =>
-    (vagas || []).filter(v => v.cargo === role && v.status === 'preenchida');
-
   const openVagasByRole = (role: string) => openVagasForRole(role).length;
 
   const grouped = rolesForSetor.map(role => {
     const usersInRole = filteredUsers
       .filter(u => u.role === role && u.em_teste !== true)
       .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0));
-    const userIds = new Set(usersInRole.map(u => u.id));
     return {
       role,
       label: (systemRoles || []).find(r => r.key === role)?.label || ROLE_LABELS[role] || role,
       users: usersInRole,
       openVagas: openVagasByRole(role),
       openVagasList: openVagasForRole(role),
-      // Hide filled vacancies whose user is already shown in the users list
-      filledVagasList: filledVagasForRole(role).filter(v => !v.preenchida_por || !userIds.has(v.preenchida_por)),
     };
   });
 
