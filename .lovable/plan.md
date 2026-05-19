@@ -1,42 +1,36 @@
-## Objetivo
+## Adicionar listagem de vendas do mês no PDF da DRE
 
-No PDF do DRE (`/direcao/dre/:mes`), nas seções **4. Despesas Fixas** e **5. Despesas Variáveis**, exibir cada tipo de custo como um cabeçalho de agrupamento e listar abaixo cada gasto individual cadastrado naquele tipo (descrição + data + valor).
+Nova seção final no PDF (`src/pages/direcao/DREMesDirecao.tsx`), após "Estoque", listando todas as vendas do mês com colunas:
 
-Exemplo:
+- **Data** (dd/MM)
+- **Cliente**
+- **Valor Tabela** — soma bruta dos produtos (`valor_produto + valor_pintura + valor_instalacao`) × quantidade, sem desconto
+- **Valor da Venda** — `vendas.valor_venda` (líquido, sem frete)
+- **Desc./Acrésc.** — `valor_tabela − valor_venda_liquido`. Positivo = desconto (verde escuro), negativo = acréscimo (vermelho)
+- **Lucro** — `vendas.lucro_total + lucro_instalacao` (com cor pelo sinal)
 
-```text
-Energia Elétrica                            R$ 2.300,00   R$ 2.500,00   R$ 30.000,00
-  └ 05/04  Conta CPFL — matriz                R$ 1.500,00
-  └ 18/04  Conta CPFL — galpão 2                R$ 800,00
-```
+Linha TOTAL ao final somando as quatro colunas numéricas.
 
-A seção **3. Folha Salarial** continua igual (já lista colaborador por linha, não há sub-agrupamento).
+### Implementação técnica
 
-## Mudanças em `src/pages/direcao/DREMesDirecao.tsx`
+1. **Novo state** `vendasListagem: VendaListagemRow[]` em `DREMesDirecao`.
 
-### 1. Tipo `DespesaAgrupada`
-Adicionar campo opcional `gastos?: { id: string; descricao: string | null; data: string; valor: number }[]`.
+2. **Fetch** no `useEffect` existente (junto com os outros): consulta única
+   ```ts
+   supabase.from('vendas')
+     .select('id, data_venda, cliente_nome, valor_venda, valor_frete, lucro_total, lucro_instalacao, produtos_vendas(valor_produto, valor_pintura, valor_instalacao, quantidade)')
+     .gte('data_venda', start + ' 00:00:00')
+     .lte('data_venda', end + ' 23:59:59')
+     .order('data_venda', { ascending: true });
+   ```
+   Para cada venda:
+   - `valorTabela = Σ (valor_produto + valor_pintura + valor_instalacao) × quantidade`
+   - `valorLiquido = valor_venda − (valor_frete || 0)`
+   - `desconto = valorTabela − valorLiquido`
+   - `lucro = (lucro_total || 0) + (lucro_instalacao || 0)`
 
-### 2. `fetchDespesasFromGastos`
-- Incluir `id, descricao, data` no `select` de `gastos`.
-- Ao agrupar por `tipo_custo_id`, além de somar `valor`, acumular os gastos individuais em um array ordenado por `data` ascendente.
-- Passar esse array no campo `gastos` de cada item.
+3. **Nova seção no `PrintReport`** — "7. Vendas do Mês" (renumerar Estoque → 8 se necessário; atualmente Estoque é "6", então: 6. Estoque → 6. Vendas do Mês? Verificar a numeração atual e manter sequência consistente. A ordem final fica: 1. Faturamento por Categoria, 2. Resumo Final, 3. Folha, 4. Fixas, 5. Variáveis, 6. Estoque, **7. Vendas do Mês**).
 
-### 3. `PrintDespesaTable`
-- Após cada `<tr>` do tipo (linha já existente do agrupamento), renderizar uma `<tr>` filha por gasto:
-  - Coluna **Descrição**: indentada (`paddingLeft: 22`), prefixo `└`, fonte menor (`8.5pt`), cor `#64748b`, mostrando `dd/MM` + `descricao` (ou `—` se nula).
-  - Coluna **Valor**: `formatCurrency(g.valor)`, mesma cor neutra, sem comparação com projetado.
-  - Colunas **Projetado** e **Projetado (Ano)**: vazias (`—` discreto) quando `showProj`.
-  - `colSpan` mantido — todas as colunas existem, apenas as de projetado ficam em branco.
-- Estilo: linha filha sem zebra forte, fundo `#fcfdfe`, borda inferior `#f1f5f9` mais clara, `pageBreakInside: avoid` no par tipo+filhos via wrapper `<tbody>` por tipo (cada tipo em seu próprio `<tbody>`).
-- TOTAL no final permanece igual.
+4. **Nova prop** `vendasListagem` em `PrintReport` + nova `<table>` reaproveitando os estilos `TH`/`TD`/`trZebra`/`positive`/`formatCurrency`. `pageBreakInside: 'avoid'` no `<tbody>` apenas para a linha TOTAL; cabeçalho com `display: table-header-group` para repetir entre páginas.
 
-### 4. Fora de escopo
-- Visualização em tela (`DespesaSectionReadOnly`) não muda.
-- Modal de gastos por tipo continua igual.
-- Folha Salarial (seção 3) sem mudança.
-- Despesas sem `descricao` nem `data` (caso raro): exibir apenas valor.
-
-## Observação
-
-Se um tipo tiver muitos gastos (>15), o agrupamento pode estourar a página. O `pageBreakInside: avoid` por `<tbody>` permite quebra entre tipos mas mantém cada grupo inteiro quando couber; tipos muito grandes serão quebrados naturalmente pelo navegador.
+5. **Escopo**: somente o PDF. A tela (read-only) permanece igual.

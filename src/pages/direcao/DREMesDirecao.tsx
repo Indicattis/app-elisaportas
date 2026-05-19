@@ -294,6 +294,7 @@ function PrintReport({
   percBrutoFinal,
   percLiquidFinal,
   formatCurrency,
+  vendasListagem,
 }: {
   mesNome: string;
   faturamento: FaturamentoProduto;
@@ -314,6 +315,7 @@ function PrintReport({
   percBrutoFinal: number;
   percLiquidFinal: number;
   formatCurrency: (v: number) => string;
+  vendasListagem: { id: string; data: string; cliente: string; valorTabela: number; valorVenda: number; desconto: number; lucro: number }[];
 }) {
   const SECTION: React.CSSProperties = { marginTop: 18, pageBreakInside: 'avoid' };
   const H2: React.CSSProperties = {
@@ -589,6 +591,68 @@ function PrintReport({
       >
         Documento gerado automaticamente • {format(new Date(), "dd/MM/yyyy HH:mm")} • D.R.E {mesNome}
       </div>
+
+      {/* VENDAS DO MÊS — nova página */}
+      {vendasListagem.length > 0 && (
+        <>
+          <div className="pdf-page-break" />
+          <div style={{ marginTop: 0 }}>
+            <div style={H2}>7. Vendas do Mês</div>
+            <table>
+              <thead style={{ display: 'table-header-group' }}>
+                <tr>
+                  <th style={{ ...TH, width: 55 }}>Data</th>
+                  <th style={TH}>Cliente</th>
+                  <th style={{ ...TH, textAlign: 'right', width: 110 }}>Valor Tabela</th>
+                  <th style={{ ...TH, textAlign: 'right', width: 110 }}>Valor Venda</th>
+                  <th style={{ ...TH, textAlign: 'right', width: 110 }}>Desc./Acrésc.</th>
+                  <th style={{ ...TH, textAlign: 'right', width: 110 }}>Lucro</th>
+                </tr>
+              </thead>
+              <tbody>
+                {vendasListagem.map((v, i) => {
+                  const dataFmt = (() => {
+                    try {
+                      return format(new Date(v.data), 'dd/MM');
+                    } catch {
+                      return '—';
+                    }
+                  })();
+                  return (
+                    <tr key={v.id} style={trZebra(i)}>
+                      <td style={{ ...TD, fontVariantNumeric: 'tabular-nums' }}>{dataFmt}</td>
+                      <td style={TD}>{v.cliente || '—'}</td>
+                      <td style={tdRight}>{formatCurrency(v.valorTabela)}</td>
+                      <td style={tdRight}>{formatCurrency(v.valorVenda)}</td>
+                      <td style={{ ...tdRight, color: v.desconto >= 0 ? '#047857' : '#b91c1c', fontWeight: 600 }}>
+                        {formatCurrency(v.desconto)}
+                      </td>
+                      <td style={{ ...tdRight, color: positive(v.lucro), fontWeight: 600 }}>
+                        {formatCurrency(v.lucro)}
+                      </td>
+                    </tr>
+                  );
+                })}
+                {(() => {
+                  const tT = vendasListagem.reduce((s, v) => s + v.valorTabela, 0);
+                  const tV = vendasListagem.reduce((s, v) => s + v.valorVenda, 0);
+                  const tD = vendasListagem.reduce((s, v) => s + v.desconto, 0);
+                  const tL = vendasListagem.reduce((s, v) => s + v.lucro, 0);
+                  return (
+                    <tr style={{ background: '#1e3a8a', color: '#fff' }}>
+                      <td style={{ ...TD, fontWeight: 800, color: '#fff', borderBottom: 'none' }} colSpan={2}>TOTAL</td>
+                      <td style={{ ...tdRight, fontWeight: 800, color: '#fff', borderBottom: 'none' }}>{formatCurrency(tT)}</td>
+                      <td style={{ ...tdRight, fontWeight: 800, color: '#fff', borderBottom: 'none' }}>{formatCurrency(tV)}</td>
+                      <td style={{ ...tdRight, fontWeight: 800, color: '#fff', borderBottom: 'none' }}>{formatCurrency(tD)}</td>
+                      <td style={{ ...tdRight, fontWeight: 800, color: '#fff', borderBottom: 'none' }}>{formatCurrency(tL)}</td>
+                    </tr>
+                  );
+                })()}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -746,6 +810,7 @@ export default function DREMesDirecao() {
   const [topAcessorios, setTopAcessorios] = useState<{nome: string, qtd: number}[]>([]);
   const [topAdicionais, setTopAdicionais] = useState<{nome: string, qtd: number}[]>([]);
   const [estoqueResumo, setEstoqueResumo] = useState({ valorTotal: 0, totalItens: 0 });
+  const [vendasListagem, setVendasListagem] = useState<{ id: string; data: string; cliente: string; valorTabela: number; valorVenda: number; desconto: number; lucro: number }[]>([]);
 
   const mesDate = mes ? new Date(mes + '-15') : new Date();
   const mesNome = format(mesDate, 'MMMM yyyy', { locale: ptBR });
@@ -987,6 +1052,34 @@ export default function DREMesDirecao() {
         };
 
         await Promise.all([fetchDespesasFromGastos(), fetchTiposCustosAtivos(), fetchEstoque()]);
+
+        // Listagem de vendas do mês para o PDF
+        const { data: vendasList } = await supabase
+          .from('vendas')
+          .select('id, data_venda, cliente_nome, valor_venda, valor_frete, lucro_total, lucro_instalacao, produtos_vendas(valor_produto, valor_pintura, valor_instalacao, quantidade)')
+          .gte('data_venda', start + ' 00:00:00')
+          .lte('data_venda', end + ' 23:59:59')
+          .order('data_venda', { ascending: true });
+
+        setVendasListagem(
+          ((vendasList || []) as any[]).map((v) => {
+            const valorTabela = (v.produtos_vendas || []).reduce(
+              (s: number, p: any) =>
+                s + ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * (p.quantidade || 1),
+              0
+            );
+            const valorVenda = (v.valor_venda || 0) - (v.valor_frete || 0);
+            return {
+              id: v.id,
+              data: v.data_venda,
+              cliente: v.cliente_nome || '',
+              valorTabela,
+              valorVenda,
+              desconto: valorTabela - valorVenda,
+              lucro: (v.lucro_total || 0) + (v.lucro_instalacao || 0),
+            };
+          })
+        );
       } catch (err) {
         console.error('Erro ao buscar dados DRE:', err);
       } finally {
@@ -1072,6 +1165,7 @@ export default function DREMesDirecao() {
         percBrutoFinal={percBrutoFinal}
         percLiquidFinal={percLiquidFinal}
         formatCurrency={formatCurrency}
+        vendasListagem={vendasListagem}
       />
     </div>
 
