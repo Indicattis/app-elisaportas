@@ -8,10 +8,10 @@ import { DelayedParticles } from '@/components/DelayedParticles';
 import { useBulkRouteAccess } from '@/hooks/useBulkRouteAccess';
 
 const menuItems = [
+  { label: 'Caixa Roboost', icon: Wallet, path: '/direcao/caixa-roboost', routePrefix: 'direcao_caixa_roboost' },
   { label: 'Vendas', icon: ShoppingCart, path: '/direcao/vendas', routePrefix: 'direcao_vendas' },
   { label: 'CRM', icon: ExternalLink, path: 'https://crm.elisaportas.com/', external: true, routePrefix: '' },
   { label: 'DRE', icon: Calculator, path: '/direcao/dre', routePrefix: 'direcao_dre' },
-  { label: 'Caixa Roboost', icon: Wallet, path: '/direcao/caixa-roboost', routePrefix: 'direcao_caixa_roboost' },
   { label: 'Faturamento', icon: DollarSign, path: '/direcao/faturamento', routePrefix: 'direcao_faturamento' },
   { label: 'Checklist Liderança', icon: ClipboardCheck, path: '/direcao/checklist-lideranca', routePrefix: 'direcao_checklist' },
   { label: 'Gestão de Fábrica', icon: Factory, path: '/direcao/gestao-fabrica', routePrefix: 'direcao_gestao_fabrica' },
