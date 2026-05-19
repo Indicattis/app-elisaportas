@@ -1345,6 +1345,14 @@ export default function DREMesDirecao() {
         </div>
       )}
     </MinimalistLayout>
+    <GastosDoTipoDialog
+      open={!!tipoModal}
+      onOpenChange={(o) => { if (!o) setTipoModal(null); }}
+      mes={mes || ''}
+      tipoCustoId={tipoModal?.id || null}
+      tipoNome={tipoModal?.nome || ''}
+      formatCurrency={formatCurrency}
+    />
     </>
   );
 }
