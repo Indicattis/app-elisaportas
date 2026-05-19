@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Users, Loader2, Plus, UserPlus, ArrowRightLeft, Trash2, FlaskConical, Pencil } from "lucide-react";
+import { Users, Loader2, Plus, UserPlus, ArrowRightLeft, Trash2, FlaskConical, Pencil, UserX } from "lucide-react";
 import { toast } from "sonner";
 
 import { MinimalistLayout } from "@/components/MinimalistLayout";
@@ -33,6 +33,9 @@ export default function VagasPage() {
   const [transferUser, setTransferUser] = useState<User | null>(null);
   const [newRole, setNewRole] = useState("");
   const [transferring, setTransferring] = useState(false);
+
+  const [userToDeactivate, setUserToDeactivate] = useState<User | null>(null);
+  const [deactivating, setDeactivating] = useState(false);
   
   const [vagaToDelete, setVagaToDelete] = useState<Vaga | null>(null);
   const [criarVagaOpen, setCriarVagaOpen] = useState(false);
@@ -125,6 +128,26 @@ export default function VagasPage() {
       console.error(err);
     } finally {
       setTransferring(false);
+    }
+  };
+
+  const handleDeactivateUser = async () => {
+    if (!userToDeactivate) return;
+    setDeactivating(true);
+    try {
+      const { error } = await supabase
+        .from("admin_users")
+        .update({ ativo: false })
+        .eq("id", userToDeactivate.id);
+      if (error) throw error;
+      toast.success(`${userToDeactivate.nome} foi desativado`);
+      queryClient.invalidateQueries({ queryKey: ["all-users"] });
+      setUserToDeactivate(null);
+    } catch (err: any) {
+      toast.error("Erro ao desativar usuário");
+      console.error(err);
+    } finally {
+      setDeactivating(false);
     }
   };
 
@@ -331,6 +354,13 @@ export default function VagasPage() {
                             >
                               <ArrowRightLeft className="w-3.5 h-3.5" />
                             </button>
+                            <button
+                              onClick={() => setUserToDeactivate(user)}
+                              className="opacity-0 group-hover/card:opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-red-500/10 text-white/40 hover:text-red-400"
+                              title="Desativar usuário"
+                            >
+                              <UserX className="w-3.5 h-3.5" />
+                            </button>
                           </div>
                         </div>
                       ))}
@@ -415,6 +445,13 @@ export default function VagasPage() {
                             title="Transferir função"
                           >
                             <ArrowRightLeft className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => setUserToDeactivate(user)}
+                            className="opacity-0 group-hover/card:opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-red-500/10 text-white/40 hover:text-red-400"
+                            title="Desativar usuário"
+                          >
+                            <UserX className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </div>
@@ -577,6 +614,27 @@ export default function VagasPage() {
 
       <CreateRoleModal open={createRoleModalOpen} onOpenChange={setCreateRoleModalOpen} />
       <EditRoleModal open={!!editingRole} onOpenChange={(open) => !open && setEditingRole(null)} role={editingRole} />
+
+      <AlertDialog open={!!userToDeactivate} onOpenChange={open => !open && setUserToDeactivate(null)}>
+        <AlertDialogContent className="bg-slate-900 border-white/10">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">Desativar usuário</AlertDialogTitle>
+            <AlertDialogDescription className="text-white/60">
+              Tem certeza que deseja desativar <strong className="text-white">{userToDeactivate?.nome}</strong>? O usuário perderá o acesso ao sistema e deixará de aparecer nas listagens. Esta ação pode ser revertida em Gestão de Usuários.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-white/5 border-white/10 text-white hover:bg-white/10">Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeactivateUser}
+              disabled={deactivating}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              {deactivating ? "Desativando..." : "Desativar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
     </MinimalistLayout>
   );
