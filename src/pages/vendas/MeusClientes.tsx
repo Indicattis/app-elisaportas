@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Plus, Search, Users, Phone, Mail, Target, Star, Triangle } from 'lucide-react';
+import { Plus, Search, Users, Phone, Mail, Target, Star, Triangle, UserCheck } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
 import { NovoClienteMinimalistaModal } from '@/components/clientes/NovoClienteMinimalistaModal';
+import { DelegarClienteModal } from '@/components/clientes/DelegarClienteModal';
 
 const META_CR = 500;
 
@@ -18,6 +19,7 @@ export default function MeusClientes() {
   const { user } = useAuth();
   const [busca, setBusca] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
+  const [delegarCliente, setDelegarCliente] = useState<{ id: string; nome: string } | null>(null);
 
   const { data: clientes, isLoading } = useQuery({
     queryKey: ['meus-clientes', user?.id],
@@ -176,6 +178,18 @@ export default function MeusClientes() {
                     </p>
                   )}
                 </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDelegarCliente({ id: cliente.id, nome: cliente.nome });
+                  }}
+                  className="text-white/60 hover:text-white hover:bg-white/10 shrink-0"
+                  title="Delegar cliente"
+                >
+                  <UserCheck className="w-4 h-4" />
+                </Button>
               </div>
             </div>
           ))
@@ -202,6 +216,15 @@ export default function MeusClientes() {
         open={modalOpen} 
         onOpenChange={setModalOpen}
       />
+
+      {delegarCliente && (
+        <DelegarClienteModal
+          open={!!delegarCliente}
+          onOpenChange={(open) => !open && setDelegarCliente(null)}
+          clienteId={delegarCliente.id}
+          clienteNome={delegarCliente.nome}
+        />
+      )}
     </MinimalistLayout>
   );
 }
