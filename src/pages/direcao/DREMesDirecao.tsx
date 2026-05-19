@@ -591,6 +591,68 @@ function PrintReport({
       >
         Documento gerado automaticamente • {format(new Date(), "dd/MM/yyyy HH:mm")} • D.R.E {mesNome}
       </div>
+
+      {/* VENDAS DO MÊS — nova página */}
+      {vendasListagem.length > 0 && (
+        <>
+          <div className="pdf-page-break" />
+          <div style={{ marginTop: 0 }}>
+            <div style={H2}>7. Vendas do Mês</div>
+            <table>
+              <thead style={{ display: 'table-header-group' }}>
+                <tr>
+                  <th style={{ ...TH, width: 55 }}>Data</th>
+                  <th style={TH}>Cliente</th>
+                  <th style={{ ...TH, textAlign: 'right', width: 110 }}>Valor Tabela</th>
+                  <th style={{ ...TH, textAlign: 'right', width: 110 }}>Valor Venda</th>
+                  <th style={{ ...TH, textAlign: 'right', width: 110 }}>Desc./Acrésc.</th>
+                  <th style={{ ...TH, textAlign: 'right', width: 110 }}>Lucro</th>
+                </tr>
+              </thead>
+              <tbody>
+                {vendasListagem.map((v, i) => {
+                  const dataFmt = (() => {
+                    try {
+                      return format(new Date(v.data), 'dd/MM');
+                    } catch {
+                      return '—';
+                    }
+                  })();
+                  return (
+                    <tr key={v.id} style={trZebra(i)}>
+                      <td style={{ ...TD, fontVariantNumeric: 'tabular-nums' }}>{dataFmt}</td>
+                      <td style={TD}>{v.cliente || '—'}</td>
+                      <td style={tdRight}>{formatCurrency(v.valorTabela)}</td>
+                      <td style={tdRight}>{formatCurrency(v.valorVenda)}</td>
+                      <td style={{ ...tdRight, color: v.desconto >= 0 ? '#047857' : '#b91c1c', fontWeight: 600 }}>
+                        {formatCurrency(v.desconto)}
+                      </td>
+                      <td style={{ ...tdRight, color: positive(v.lucro), fontWeight: 600 }}>
+                        {formatCurrency(v.lucro)}
+                      </td>
+                    </tr>
+                  );
+                })}
+                {(() => {
+                  const tT = vendasListagem.reduce((s, v) => s + v.valorTabela, 0);
+                  const tV = vendasListagem.reduce((s, v) => s + v.valorVenda, 0);
+                  const tD = vendasListagem.reduce((s, v) => s + v.desconto, 0);
+                  const tL = vendasListagem.reduce((s, v) => s + v.lucro, 0);
+                  return (
+                    <tr style={{ background: '#1e3a8a', color: '#fff' }}>
+                      <td style={{ ...TD, fontWeight: 800, color: '#fff', borderBottom: 'none' }} colSpan={2}>TOTAL</td>
+                      <td style={{ ...tdRight, fontWeight: 800, color: '#fff', borderBottom: 'none' }}>{formatCurrency(tT)}</td>
+                      <td style={{ ...tdRight, fontWeight: 800, color: '#fff', borderBottom: 'none' }}>{formatCurrency(tV)}</td>
+                      <td style={{ ...tdRight, fontWeight: 800, color: '#fff', borderBottom: 'none' }}>{formatCurrency(tD)}</td>
+                      <td style={{ ...tdRight, fontWeight: 800, color: '#fff', borderBottom: 'none' }}>{formatCurrency(tL)}</td>
+                    </tr>
+                  );
+                })()}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
     </div>
   );
 }
