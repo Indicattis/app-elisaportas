@@ -1178,6 +1178,148 @@ export default function DREMesDirecao() {
         setPortasDetalhe(
           Array.from(porVenda.values()).sort((a, b) => a.dataVenda.localeCompare(b.dataVenda))
         );
+
+        // ============ Detalhes Pintura / Acessórios / Itens Avulso ============
+        const { data: detalhesRaw } = await supabase
+          .from('produtos_vendas')
+          .select(`
+            id, descricao, quantidade, tipo_produto,
+            valor_produto, valor_pintura, valor_instalacao,
+            tipo_desconto, desconto_percentual, desconto_valor,
+            lucro_item, lucro_pintura,
+            vendas!inner(id, data_venda, cliente_nome, valor_venda, valor_frete)
+          `)
+          .in('tipo_produto', ['pintura_epoxi', 'acessorio', 'adicional', 'manutencao', 'porta_enrolar', 'porta_social'])
+          .gte('vendas.data_venda', start + ' 00:00:00')
+          .lte('vendas.data_venda', end + ' 23:59:59');
+
+        const buildMap = (
+          rows: any[],
+          mapper: (p: any, v: any) => VendaComItensSimplesRow['itens'][number] | null,
+        ) => {
+          const map = new Map<string, VendaComItensSimplesRow>();
+          rows.forEach((p) => {
+            const v = p.vendas;
+            if (!v) return;
+            const item = mapper(p, v);
+            if (!item) return;
+            const existing = map.get(v.id) || {
+              vendaId: v.id,
+              dataVenda: v.data_venda,
+              clienteNome: v.cliente_nome || '',
+              valorVenda: (v.valor_venda || 0) - (v.valor_frete || 0),
+              itens: [],
+            };
+            existing.itens.push(item);
+            map.set(v.id, existing);
+          });
+          return Array.from(map.values()).sort((a, b) => a.dataVenda.localeCompare(b.dataVenda));
+        };
+
+        const todosRows = (detalhesRaw || []) as any[];
+
+        // ---- Pintura: pintura_epoxi + componente pintura de portas ----
+        setPinturaDetalhe(
+          buildMap(todosRows, (p) => {
+            const qty = p.quantidade || 1;
+            if (p.tipo_produto === 'pintura_epoxi') {
+              const bruto = (p.valor_produto || 0) * qty;
+              let desc = 0;
+              if (p.tipo_desconto === 'percentual' && p.desconto_percentual > 0) {
+                desc = bruto * (p.desconto_percentual / 100);
+              } else if (p.tipo_desconto === 'valor' && p.desconto_valor > 0) {
+                desc = p.desconto_valor;
+              }
+              return {
+                id: p.id,
+                descricao: p.descricao || 'Pintura Epóxi',
+                quantidade: qty,
+                valorUnitario: p.valor_produto || 0,
+                valorBruto: bruto,
+                descontoLinha: desc,
+                valorLiquido: bruto - desc,
+                lucro: p.lucro_item || 0,
+              };
+            }
+            // Pintura embutida em porta_enrolar / porta_social
+            if (['porta_enrolar', 'porta_social'].includes(p.tipo_produto) && (p.valor_pintura || 0) > 0) {
+              const valorProdutoBase = (p.valor_produto || 0) * qty;
+              const valorPinturaBase = (p.valor_pintura || 0) * qty;
+              const valorInstBase = (p.valor_instalacao || 0) * qty;
+              const bruto = valorProdutoBase + valorPinturaBase + valorInstBase;
+              let descTotal = 0;
+              if (p.tipo_desconto === 'percentual' && p.desconto_percentual > 0) {
+                descTotal = bruto * (p.desconto_percentual / 100);
+              } else if (p.tipo_desconto === 'valor' && p.desconto_valor > 0) {
+                descTotal = p.desconto_valor;
+              }
+              const propPintura = bruto > 0 ? valorPinturaBase / bruto : 0;
+              const descPintura = descTotal * propPintura;
+              const lucroLinha = p.lucro_item || 0;
+              return {
+                id: p.id + '-pintura',
+                descricao: `${p.descricao || 'Porta'} — pintura`,
+                quantidade: qty,
+                valorUnitario: p.valor_pintura || 0,
+                valorBruto: valorPinturaBase,
+                descontoLinha: descPintura,
+                valorLiquido: valorPinturaBase - descPintura,
+                lucro: lucroLinha * propPintura,
+              };
+            }
+            return null;
+          }),
+        );
+
+        // ---- Acessórios ----
+        setAcessoriosDetalhe(
+          buildMap(todosRows, (p) => {
+            if (p.tipo_produto !== 'acessorio') return null;
+            const qty = p.quantidade || 1;
+            const bruto = (p.valor_produto || 0) * qty;
+            let desc = 0;
+            if (p.tipo_desconto === 'percentual' && p.desconto_percentual > 0) {
+              desc = bruto * (p.desconto_percentual / 100);
+            } else if (p.tipo_desconto === 'valor' && p.desconto_valor > 0) {
+              desc = p.desconto_valor;
+            }
+            return {
+              id: p.id,
+              descricao: p.descricao || 'Acessório',
+              quantidade: qty,
+              valorUnitario: p.valor_produto || 0,
+              valorBruto: bruto,
+              descontoLinha: desc,
+              valorLiquido: bruto - desc,
+              lucro: p.lucro_item || 0,
+            };
+          }),
+        );
+
+        // ---- Itens Avulso (adicional + manutencao) ----
+        setAvulsosDetalhe(
+          buildMap(todosRows, (p) => {
+            if (!['adicional', 'manutencao'].includes(p.tipo_produto)) return null;
+            const qty = p.quantidade || 1;
+            const bruto = (p.valor_produto || 0) * qty;
+            let desc = 0;
+            if (p.tipo_desconto === 'percentual' && p.desconto_percentual > 0) {
+              desc = bruto * (p.desconto_percentual / 100);
+            } else if (p.tipo_desconto === 'valor' && p.desconto_valor > 0) {
+              desc = p.desconto_valor;
+            }
+            return {
+              id: p.id,
+              descricao: p.descricao || 'Item avulso',
+              quantidade: qty,
+              valorUnitario: p.valor_produto || 0,
+              valorBruto: bruto,
+              descontoLinha: desc,
+              valorLiquido: bruto - desc,
+              lucro: p.lucro_item || 0,
+            };
+          }),
+        );
       } catch (err) {
         console.error('Erro ao buscar dados DRE:', err);
       } finally {
