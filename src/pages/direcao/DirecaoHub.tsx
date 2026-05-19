@@ -8,7 +8,7 @@ import { DelayedParticles } from '@/components/DelayedParticles';
 import { useBulkRouteAccess } from '@/hooks/useBulkRouteAccess';
 
 const menuItems = [
-  { label: 'Caixa Roboost', icon: Wallet, path: '/direcao/caixa-roboost', routePrefix: 'direcao_caixa_roboost' },
+  { label: 'Caixa Elisa', icon: Wallet, path: '/direcao/caixa-elisa', routePrefix: 'direcao_caixa_elisa' },
   { label: 'Vendas', icon: ShoppingCart, path: '/direcao/vendas', routePrefix: 'direcao_vendas' },
   { label: 'CRM', icon: ExternalLink, path: 'https://crm.elisaportas.com/', external: true, routePrefix: '' },
   { label: 'DRE', icon: Calculator, path: '/direcao/dre', routePrefix: 'direcao_dre' },
