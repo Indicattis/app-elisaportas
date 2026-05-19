@@ -26,6 +26,24 @@ interface DespesaAgrupada {
   gastos?: { id: string; descricao: string | null; data: string; valor: number }[];
 }
 
+interface VendaComPortasRow {
+  vendaId: string;
+  dataVenda: string;
+  clienteNome: string;
+  valorVenda: number;
+  itens: {
+    id: string;
+    descricao: string;
+    quantidade: number;
+    valorPortaBruto: number;
+    valorPinturaBruto: number;
+    valorInstalacaoBruto: number;
+    descontoLinha: number;
+    valorLiquido: number;
+    lucro: number;
+  }[];
+}
+
 interface TipoCustoVariavel {
   id: string;
   nome: string;
@@ -811,6 +829,8 @@ export default function DREMesDirecao() {
   const [topAdicionais, setTopAdicionais] = useState<{nome: string, qtd: number}[]>([]);
   const [estoqueResumo, setEstoqueResumo] = useState({ valorTotal: 0, totalItens: 0 });
   const [vendasListagem, setVendasListagem] = useState<{ id: string; data: string; cliente: string; valorTabela: number; valorVenda: number; desconto: number; lucro: number }[]>([]);
+  const [portasModalOpen, setPortasModalOpen] = useState(false);
+  const [portasDetalhe, setPortasDetalhe] = useState<VendaComPortasRow[]>([]);
 
   const mesDate = mes ? new Date(mes + '-15') : new Date();
   const mesNome = format(mesDate, 'MMMM yyyy', { locale: ptBR });
@@ -1080,6 +1100,60 @@ export default function DREMesDirecao() {
             };
           })
         );
+
+        // Detalhe das vendas com porta_enrolar (modal "Portas")
+        const { data: portasRaw } = await supabase
+          .from('produtos_vendas')
+          .select(`
+            id, descricao, quantidade,
+            valor_produto, valor_pintura, valor_instalacao,
+            tipo_desconto, desconto_percentual, desconto_valor,
+            lucro_item,
+            vendas!inner(id, data_venda, cliente_nome, valor_venda, valor_frete)
+          `)
+          .eq('tipo_produto', 'porta_enrolar')
+          .gte('vendas.data_venda', start + ' 00:00:00')
+          .lte('vendas.data_venda', end + ' 23:59:59');
+
+        const porVenda = new Map<string, VendaComPortasRow>();
+        ((portasRaw || []) as any[]).forEach((p) => {
+          const v = p.vendas;
+          if (!v) return;
+          const qty = p.quantidade || 1;
+          const valorPortaBruto = (p.valor_produto || 0) * qty;
+          const valorPinturaBruto = (p.valor_pintura || 0) * qty;
+          const valorInstBruto = (p.valor_instalacao || 0) * qty;
+          const bruto = valorPortaBruto + valorPinturaBruto + valorInstBruto;
+          let desc = 0;
+          if (p.tipo_desconto === 'percentual' && p.desconto_percentual > 0) {
+            desc = bruto * (p.desconto_percentual / 100);
+          } else if (p.tipo_desconto === 'valor' && p.desconto_valor > 0) {
+            desc = p.desconto_valor;
+          }
+          const valorLiquido = bruto - desc;
+          const existing = porVenda.get(v.id) || {
+            vendaId: v.id,
+            dataVenda: v.data_venda,
+            clienteNome: v.cliente_nome || '',
+            valorVenda: (v.valor_venda || 0) - (v.valor_frete || 0),
+            itens: [],
+          };
+          existing.itens.push({
+            id: p.id,
+            descricao: p.descricao || 'Sem descrição',
+            quantidade: qty,
+            valorPortaBruto,
+            valorPinturaBruto,
+            valorInstalacaoBruto: valorInstBruto,
+            descontoLinha: desc,
+            valorLiquido,
+            lucro: p.lucro_item || 0,
+          });
+          porVenda.set(v.id, existing);
+        });
+        setPortasDetalhe(
+          Array.from(porVenda.values()).sort((a, b) => a.dataVenda.localeCompare(b.dataVenda))
+        );
       } catch (err) {
         console.error('Erro ao buscar dados DRE:', err);
       } finally {
@@ -1233,12 +1307,21 @@ export default function DREMesDirecao() {
                     <th className="text-left p-3 text-white/40 font-medium text-xs uppercase"></th>
                     {columns.map(col => {
                       const topList = col.key === 'acessorios' ? topAcessorios : col.key === 'adicionais' ? topAdicionais : null;
+                      const isPortas = col.key === 'portas';
                       return (
                         <th
                           key={col.key}
                           className={`text-right p-3 text-white/40 font-medium text-xs uppercase ${col.key === 'total' ? 'bg-white/5' : ''}`}
                         >
-                          {topList && topList.length > 0 ? (
+                          {isPortas ? (
+                            <button
+                              type="button"
+                              onClick={() => setPortasModalOpen(true)}
+                              className="uppercase cursor-pointer underline decoration-dotted underline-offset-4 hover:text-white transition-colors"
+                            >
+                              {col.label}
+                            </button>
+                          ) : topList && topList.length > 0 ? (
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger className="cursor-default underline decoration-dotted underline-offset-4 uppercase">
@@ -1453,6 +1536,127 @@ export default function DREMesDirecao() {
       tipoNome={tipoModal?.nome || ''}
       formatCurrency={formatCurrency}
     />
+    <PortasDetalheDialog
+      open={portasModalOpen}
+      onOpenChange={setPortasModalOpen}
+      mesNome={mesNome}
+      vendas={portasDetalhe}
+      formatCurrency={formatCurrency}
+    />
     </>
+  );
+}
+
+function PortasDetalheDialog({
+  open,
+  onOpenChange,
+  mesNome,
+  vendas,
+  formatCurrency,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  mesNome: string;
+  vendas: VendaComPortasRow[];
+  formatCurrency: (v: number) => string;
+}) {
+  const totals = vendas.reduce(
+    (acc, v) => {
+      v.itens.forEach((i) => {
+        acc.porta += i.valorPortaBruto;
+        acc.pintura += i.valorPinturaBruto;
+        acc.instalacao += i.valorInstalacaoBruto;
+        acc.desconto += i.descontoLinha;
+        acc.liquido += i.valorLiquido;
+        acc.lucro += i.lucro;
+      });
+      return acc;
+    },
+    { porta: 0, pintura: 0, instalacao: 0, desconto: 0, liquido: 0, lucro: 0 }
+  );
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto bg-slate-900 border-white/10 text-white">
+        <DialogHeader>
+          <DialogTitle className="text-white">Vendas com Portas de Enrolar — {mesNome}</DialogTitle>
+          <DialogDescription className="text-white/60">
+            {vendas.length} venda{vendas.length === 1 ? '' : 's'} com itens do tipo Porta de Enrolar.
+          </DialogDescription>
+        </DialogHeader>
+
+        {vendas.length === 0 ? (
+          <p className="text-white/40 text-sm py-8 text-center">Nenhuma venda com portas de enrolar neste mês.</p>
+        ) : (
+          <div className="space-y-4">
+            {vendas.map((v) => {
+              const subLiquido = v.itens.reduce((s, i) => s + i.valorLiquido, 0);
+              const subLucro = v.itens.reduce((s, i) => s + i.lucro, 0);
+              return (
+                <div key={v.vendaId} className="rounded-xl bg-white/5 border border-white/10 p-4">
+                  <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                    <div>
+                      <div className="text-xs text-white/40 uppercase">{format(new Date(v.dataVenda.slice(0, 10) + 'T12:00:00'), 'dd/MM/yyyy')}</div>
+                      <div className="text-sm font-semibold text-white">{v.clienteNome || '—'}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-xs text-white/40 uppercase">Valor da venda</div>
+                      <div className="text-sm font-semibold text-white">{formatCurrency(v.valorVenda)}</div>
+                    </div>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="border-b border-white/10 text-white/40 uppercase">
+                          <th className="text-left py-2 font-medium">Descrição</th>
+                          <th className="text-right py-2 font-medium w-12">Qtd</th>
+                          <th className="text-right py-2 font-medium w-24">Porta</th>
+                          <th className="text-right py-2 font-medium w-24">Pintura</th>
+                          <th className="text-right py-2 font-medium w-24">Instalação</th>
+                          <th className="text-right py-2 font-medium w-24">Desconto</th>
+                          <th className="text-right py-2 font-medium w-28">Líquido</th>
+                          <th className="text-right py-2 font-medium w-24">Lucro</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {v.itens.map((i) => (
+                          <tr key={i.id} className="border-b border-white/5 last:border-0">
+                            <td className="py-2 text-white/80">{i.descricao}</td>
+                            <td className="py-2 text-right text-white/70">{i.quantidade}</td>
+                            <td className="py-2 text-right text-white/70">{formatCurrency(i.valorPortaBruto)}</td>
+                            <td className="py-2 text-right text-white/70">{formatCurrency(i.valorPinturaBruto)}</td>
+                            <td className="py-2 text-right text-white/70">{formatCurrency(i.valorInstalacaoBruto)}</td>
+                            <td className="py-2 text-right text-red-400">{i.descontoLinha > 0 ? formatCurrency(i.descontoLinha) : '—'}</td>
+                            <td className="py-2 text-right text-white font-medium">{formatCurrency(i.valorLiquido)}</td>
+                            <td className={`py-2 text-right font-medium ${i.lucro >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{formatCurrency(i.lucro)}</td>
+                          </tr>
+                        ))}
+                        <tr className="border-t border-white/10">
+                          <td colSpan={6} className="py-2 text-right text-white/60 uppercase text-[10px]">Subtotal desta venda</td>
+                          <td className="py-2 text-right text-white font-semibold">{formatCurrency(subLiquido)}</td>
+                          <td className={`py-2 text-right font-semibold ${subLucro >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{formatCurrency(subLucro)}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              );
+            })}
+
+            <div className="rounded-xl bg-blue-900/40 border border-blue-500/30 p-4">
+              <div className="text-xs text-white/60 uppercase mb-2 font-semibold">Totais consolidados (Portas de Enrolar)</div>
+              <div className="grid grid-cols-2 md:grid-cols-6 gap-3 text-sm">
+                <div><div className="text-[10px] text-white/40 uppercase">Porta</div><div className="font-semibold text-white">{formatCurrency(totals.porta)}</div></div>
+                <div><div className="text-[10px] text-white/40 uppercase">Pintura</div><div className="font-semibold text-white">{formatCurrency(totals.pintura)}</div></div>
+                <div><div className="text-[10px] text-white/40 uppercase">Instalação</div><div className="font-semibold text-white">{formatCurrency(totals.instalacao)}</div></div>
+                <div><div className="text-[10px] text-white/40 uppercase">Desconto</div><div className="font-semibold text-red-400">{formatCurrency(totals.desconto)}</div></div>
+                <div><div className="text-[10px] text-white/40 uppercase">Líquido</div><div className="font-semibold text-white">{formatCurrency(totals.liquido)}</div></div>
+                <div><div className="text-[10px] text-white/40 uppercase">Lucro</div><div className={`font-semibold ${totals.lucro >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{formatCurrency(totals.lucro)}</div></div>
+              </div>
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }

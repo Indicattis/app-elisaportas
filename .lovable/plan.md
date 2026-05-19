@@ -1,36 +1,79 @@
-## Adicionar listagem de vendas do mês no PDF da DRE
+## Modal de "Portas" no cabeçalho da primeira tabela do DRE
 
-Nova seção final no PDF (`src/pages/direcao/DREMesDirecao.tsx`), após "Estoque", listando todas as vendas do mês com colunas:
+Ao clicar no cabeçalho **Portas** da primeira tabela em `/direcao/dre/:mes`, abrir um modal listando todas as vendas do mês que contenham `tipo_produto = 'porta_enrolar'` em seus itens, com demonstrativo dos produtos relacionados.
 
-- **Data** (dd/MM)
-- **Cliente**
-- **Valor Tabela** — soma bruta dos produtos (`valor_produto + valor_pintura + valor_instalacao`) × quantidade, sem desconto
-- **Valor da Venda** — `vendas.valor_venda` (líquido, sem frete)
-- **Desc./Acrésc.** — `valor_tabela − valor_venda_liquido`. Positivo = desconto (verde escuro), negativo = acréscimo (vermelho)
-- **Lucro** — `vendas.lucro_total + lucro_instalacao` (com cor pelo sinal)
+### Comportamento
 
-Linha TOTAL ao final somando as quatro colunas numéricas.
+- Cabeçalho **Portas** ganha cursor pointer + underline sutil ao hover (igual ao padrão dos tooltips existentes).
+- Clique abre um `Dialog` (shadcn) com título "Vendas com Portas de Enrolar — {mesNome}".
+- Demais cabeçalhos permanecem como estão.
+
+### Conteúdo do modal
+
+Listagem agrupada por venda, ordenada por `data_venda` crescente. Cada venda exibe:
+
+- **Cabeçalho da venda**: data (dd/MM), cliente, nº da venda (se houver), valor total líquido da venda.
+- **Tabela de itens "porta_enrolar"** da venda, colunas:
+  - Descrição
+  - Qtd
+  - Valor Porta (bruto unit × qtd)
+  - Valor Pintura
+  - Valor Instalação
+  - Desconto aplicado (proporcional à linha)
+  - Valor Líquido da linha
+  - Lucro da linha (`lucro_item`)
+
+Rodapé do modal com totais consolidados: total Porta, total Pintura, total Instalação, total Líquido, total Lucro — somando apenas as linhas de `porta_enrolar` exibidas (deve bater com `fat.portas` quando isolado do `porta_social`).
 
 ### Implementação técnica
 
-1. **Novo state** `vendasListagem: VendaListagemRow[]` em `DREMesDirecao`.
-
-2. **Fetch** no `useEffect` existente (junto com os outros): consulta única
+1. **Novo state** em `DREMesDirecao`:
    ```ts
-   supabase.from('vendas')
-     .select('id, data_venda, cliente_nome, valor_venda, valor_frete, lucro_total, lucro_instalacao, produtos_vendas(valor_produto, valor_pintura, valor_instalacao, quantidade)')
-     .gte('data_venda', start + ' 00:00:00')
-     .lte('data_venda', end + ' 23:59:59')
-     .order('data_venda', { ascending: true });
+   const [portasModalOpen, setPortasModalOpen] = useState(false);
+   const [portasDetalhe, setPortasDetalhe] = useState<VendaComPortasRow[]>([]);
    ```
-   Para cada venda:
-   - `valorTabela = Σ (valor_produto + valor_pintura + valor_instalacao) × quantidade`
-   - `valorLiquido = valor_venda − (valor_frete || 0)`
-   - `desconto = valorTabela − valorLiquido`
-   - `lucro = (lucro_total || 0) + (lucro_instalacao || 0)`
 
-3. **Nova seção no `PrintReport`** — "7. Vendas do Mês" (renumerar Estoque → 8 se necessário; atualmente Estoque é "6", então: 6. Estoque → 6. Vendas do Mês? Verificar a numeração atual e manter sequência consistente. A ordem final fica: 1. Faturamento por Categoria, 2. Resumo Final, 3. Folha, 4. Fixas, 5. Variáveis, 6. Estoque, **7. Vendas do Mês**).
+2. **Nova consulta** em `useEffect` (junto às outras), após a já existente em `produtos_vendas`:
+   ```ts
+   supabase.from('produtos_vendas')
+     .select(`
+       id, descricao, quantidade,
+       valor_produto, valor_pintura, valor_instalacao,
+       tipo_desconto, desconto_percentual, desconto_valor,
+       lucro_item, valor_total_sem_frete,
+       vendas!inner(id, data_venda, cliente_nome, valor_venda, valor_frete)
+     `)
+     .eq('tipo_produto', 'porta_enrolar')
+     .gte('vendas.data_venda', start + ' 00:00:00')
+     .lte('vendas.data_venda', end + ' 23:59:59')
+     .order('vendas(data_venda)', { ascending: true });
+   ```
+   Agrupar em memória por `vendas.id`, calcular desconto proporcional por linha exatamente como o cálculo já existente em `fat.portas` (linhas 956-976), e armazenar em `portasDetalhe`.
 
-4. **Nova prop** `vendasListagem` em `PrintReport` + nova `<table>` reaproveitando os estilos `TH`/`TD`/`trZebra`/`positive`/`formatCurrency`. `pageBreakInside: 'avoid'` no `<tbody>` apenas para a linha TOTAL; cabeçalho com `display: table-header-group` para repetir entre páginas.
+3. **Tornar o `<th>` "Portas" clicável** no JSX da primeira tabela (linha ~1237). Adicionar `onClick={() => setPortasModalOpen(true)}` quando `col.key === 'portas'`, com `cursor-pointer hover:text-white underline decoration-dotted underline-offset-4`. Manter os outros cabeçalhos inalterados (incluindo o tooltip de Acessórios/Adicionais).
 
-5. **Escopo**: somente o PDF. A tela (read-only) permanece igual.
+4. **Novo componente local `PortasDetalheDialog`** no mesmo arquivo, recebendo `open`, `onOpenChange`, `mesNome`, `vendas: VendaComPortasRow[]`, `formatCurrency`. Usa `Dialog` shadcn já importado. Layout: cards por venda + tabela interna por venda + rodapé com totais. Estilo glassmorphism alinhado ao restante (bg-white/5, border-white/10).
+
+5. **Escopo**: apenas a tela (não afeta o PDF). Comportamento read-only.
+
+### Tipos
+
+```ts
+interface VendaComPortasRow {
+  vendaId: string;
+  dataVenda: string;
+  clienteNome: string;
+  valorVenda: number;
+  itens: {
+    id: string;
+    descricao: string;
+    quantidade: number;
+    valorPortaBruto: number;
+    valorPinturaBruto: number;
+    valorInstalacaoBruto: number;
+    descontoLinha: number;
+    valorLiquido: number;
+    lucro: number;
+  }[];
+}
+```
