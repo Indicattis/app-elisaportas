@@ -9,9 +9,6 @@ export const useVendasAssinaturaContrato = () => {
   return useQuery({
     queryKey: ["vendas-assinatura-contrato"],
     queryFn: async (): Promise<VendaAssinaturaContrato[]> => {
-      const currentYear = new Date().getFullYear();
-      const startOfYear = `${currentYear}-01-01`;
-
       const { data: vendas, error } = await supabase
         .from("vendas")
         .select(`
@@ -60,10 +57,8 @@ export const useVendasAssinaturaContrato = () => {
           )
         `)
         .eq("is_rascunho", false)
-        .eq("pedido_dispensado", false)
         .is("contrato_url", null)
         .eq("contrato_dispensado", false)
-        .gte("data_venda", startOfYear)
         .order("data_venda", { ascending: false });
 
       if (error) throw error;

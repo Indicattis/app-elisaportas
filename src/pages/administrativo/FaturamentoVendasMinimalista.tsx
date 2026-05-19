@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { useConfiguracoesVendas } from "@/hooks/useConfiguracoesVendas";
 import { IndicadorExpandivel } from "@/components/direcao/IndicadorExpandivel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -137,6 +138,7 @@ export default function FaturamentoMinimalista() {
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const { limites: configLimites } = useConfiguracoesVendas();
+  const queryClient = useQueryClient();
   const [vendas, setVendas] = useState<Venda[]>([]);
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
@@ -1520,6 +1522,9 @@ export default function FaturamentoMinimalista() {
                   toast({ title: 'Contrato dispensado', description: 'A venda já pode ser faturada.' });
                   setSelectedVenda((prev) => prev ? ({ ...(prev as any), contrato_dispensado: true } as Venda) : prev);
                   setVendas((prev) => prev.map((v) => v.id === selectedVenda.id ? ({ ...(v as any), contrato_dispensado: true } as Venda) : v));
+                  queryClient.invalidateQueries({ queryKey: ['vendas-assinatura-contrato'] });
+                  queryClient.invalidateQueries({ queryKey: ['vendas-pendente-faturamento'] });
+                  queryClient.invalidateQueries({ queryKey: ['vendas-pendente-pedido'] });
                   setDispensarContratoOpen(false);
                 } catch (err: any) {
                   console.error('Erro ao dispensar contrato:', err);
