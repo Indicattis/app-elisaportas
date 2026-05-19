@@ -588,6 +588,7 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
                 )}
 
                 {/* Dispensar Pedido */}
+                {mode !== 'contrato' && (
                 <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
                   <AlertDialog>
                     <Tooltip>
@@ -629,8 +630,10 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
                     </AlertDialogContent>
                   </AlertDialog>
                 </div>
+                )}
 
                 {/* Finalizar Direto */}
+                {mode !== 'contrato' && (
                 <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -653,6 +656,7 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
                     </TooltipContent>
                   </Tooltip>
                 </div>
+                )}
               </>
             ) : (
               <>
