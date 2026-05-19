@@ -40,12 +40,14 @@ function DespesaSectionReadOnly({
   total,
   formatCurrency,
   tiposDisponiveis,
+  onClickTipo,
 }: {
   title: string;
   despesas: DespesaAgrupada[];
   total: number;
   formatCurrency: (v: number) => string;
   tiposDisponiveis?: TipoCustoVariavel[];
+  onClickTipo?: (tipoCustoId: string, nome: string) => void;
 }) {
   return (
     <div className="rounded-xl bg-white/5 border border-white/10 p-4">
@@ -69,9 +71,15 @@ function DespesaSectionReadOnly({
           <tbody>
             {despesas.map(d => {
               const tipoRef = tiposDisponiveis?.find(t => t.nome === d.nome);
+              const clickable = !!onClickTipo;
               return (
                 <tr key={d.id} className="h-[30px] border-b border-white/5 last:border-0">
-                  <td className="align-middle text-xs text-white/60">{d.nome}</td>
+                  <td
+                    className={`align-middle text-xs ${clickable ? 'text-white/60 hover:text-white cursor-pointer underline-offset-2 hover:underline' : 'text-white/60'}`}
+                    onClick={clickable ? () => onClickTipo!(d.id, d.nome) : undefined}
+                  >
+                    {d.nome}
+                  </td>
                   <td className={`align-middle text-right text-xs font-medium ${tipoRef ? (d.valor_real > tipoRef.valor_maximo_mensal ? 'text-red-400' : d.valor_real < tipoRef.valor_maximo_mensal ? 'text-emerald-400' : 'text-white') : 'text-white'}`}>
                     {formatCurrency(d.valor_real)}
                   </td>
