@@ -233,7 +233,7 @@ import DREDirecao from "./pages/direcao/DREDirecao";
 import DREMesDirecao from "./pages/direcao/DREMesDirecao";
 import DREDespesasDirecao from "./pages/direcao/DREDespesasDirecao";
 import DRECustosDirecao from "./pages/direcao/DRECustosDirecao";
-import CaixaRoboostDirecao from "./pages/direcao/CaixaRoboostDirecao";
+import CaixaElisaDirecao from "./pages/direcao/CaixaElisaDirecao";
 
 // Hub de Estoque da Direção
 import DirecaoEstoqueHub from "./pages/direcao/estoque/DirecaoEstoqueHub";
@@ -514,8 +514,8 @@ const App = () => (
                 <Route path="/direcao/dre/custos" element={<ProtectedRoute routeKey="direcao_dre"><DRECustosDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/dre/:mes" element={<ProtectedRoute routeKey="direcao_dre"><DREMesDirecao /></ProtectedRoute>} />
 
-                {/* Caixa Roboost */}
-                <Route path="/direcao/caixa-roboost" element={<ProtectedRoute routeKey="direcao_caixa_roboost"><CaixaRoboostDirecao /></ProtectedRoute>} />
+                {/* Caixa Elisa */}
+                <Route path="/direcao/caixa-elisa" element={<ProtectedRoute routeKey="direcao_caixa_elisa"><CaixaElisaDirecao /></ProtectedRoute>} />
 
                 {/* Organograma RH */}
                 <Route path="/direcao/gestao-colaboradores" element={<ProtectedRoute routeKey="direcao_gestao_colaboradores"><GestaoColaboradoresDirecao /></ProtectedRoute>} />
