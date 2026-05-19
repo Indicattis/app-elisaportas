@@ -615,6 +615,27 @@ export default function VagasPage() {
       <CreateRoleModal open={createRoleModalOpen} onOpenChange={setCreateRoleModalOpen} />
       <EditRoleModal open={!!editingRole} onOpenChange={(open) => !open && setEditingRole(null)} role={editingRole} />
 
+      <AlertDialog open={!!userToDeactivate} onOpenChange={open => !open && setUserToDeactivate(null)}>
+        <AlertDialogContent className="bg-slate-900 border-white/10">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">Desativar usuário</AlertDialogTitle>
+            <AlertDialogDescription className="text-white/60">
+              Tem certeza que deseja desativar <strong className="text-white">{userToDeactivate?.nome}</strong>? O usuário perderá o acesso ao sistema e deixará de aparecer nas listagens. Esta ação pode ser revertida em Gestão de Usuários.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-white/5 border-white/10 text-white hover:bg-white/10">Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeactivateUser}
+              disabled={deactivating}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              {deactivating ? "Desativando..." : "Desativar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </MinimalistLayout>
   );
 }
