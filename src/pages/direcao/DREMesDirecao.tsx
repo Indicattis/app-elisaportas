@@ -1190,7 +1190,7 @@ export default function DREMesDirecao() {
     <>
     <style>{`
       @media print {
-        @page { size: A4; margin: 14mm 12mm; }
+        @page { size: A4; margin: 0; }
         body * { visibility: hidden !important; }
         #dre-screen-area { display: none !important; }
         #dre-print-document, #dre-print-document * { visibility: visible !important; }
@@ -1204,7 +1204,7 @@ export default function DREMesDirecao() {
           position: absolute !important;
           left: 0; top: 0;
           width: 100%;
-          padding: 0 !important;
+          padding: 14mm 12mm !important;
           background: white !important;
           color: #0f172a !important;
           font-family: 'Helvetica Neue', Arial, sans-serif;
