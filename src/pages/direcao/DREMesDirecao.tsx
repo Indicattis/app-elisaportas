@@ -23,6 +23,7 @@ interface DespesaAgrupada {
   id: string;
   nome: string;
   valor_real: number;
+  gastos?: { id: string; descricao: string | null; data: string; valor: number }[];
 }
 
 interface TipoCustoVariavel {
@@ -648,9 +649,9 @@ function PrintDespesaTable({
           )}
         </tr>
       </thead>
-      <tbody>
-        {items.map((d, i) => (
-          <tr key={d.id} style={{ background: i % 2 === 0 ? '#ffffff' : '#fafbfc' }}>
+      {items.map((d, i) => (
+        <tbody key={d.id} style={{ pageBreakInside: 'avoid' }}>
+          <tr style={{ background: i % 2 === 0 ? '#ffffff' : '#fafbfc' }}>
             <td style={TD}>{d.nome}</td>
             {(() => {
               const tipoRef = showProj
@@ -682,7 +683,34 @@ function PrintDespesaTable({
               );
             })()}
           </tr>
-        ))}
+          {(d.gastos || []).map((g) => {
+            const dataFmt = (() => {
+              try {
+                return format(new Date(g.data + 'T12:00:00'), 'dd/MM');
+              } catch {
+                return '—';
+              }
+            })();
+            return (
+              <tr key={g.id} style={{ background: '#fcfdfe' }}>
+                <td style={{ ...TD, paddingLeft: 22, fontSize: '8.5pt', color: '#64748b', borderBottom: '1px solid #f1f5f9' }}>
+                  └ {dataFmt}  {g.descricao || '—'}
+                </td>
+                <td style={{ ...TD, textAlign: 'right', fontVariantNumeric: 'tabular-nums', fontSize: '8.5pt', color: '#64748b', borderBottom: '1px solid #f1f5f9' }}>
+                  {formatCurrency(g.valor)}
+                </td>
+                {showProj && (
+                  <td style={{ ...TD, borderBottom: '1px solid #f1f5f9' }}></td>
+                )}
+                {showProj && (
+                  <td style={{ ...TD, borderBottom: '1px solid #f1f5f9' }}></td>
+                )}
+              </tr>
+            );
+          })}
+        </tbody>
+      ))}
+      <tbody>
         <tr style={{ background: '#1e3a8a', color: '#fff' }}>
           <td style={{ ...TD, fontWeight: 800, color: '#fff', borderBottom: 'none' }}>TOTAL</td>
           <td style={{ ...TD, textAlign: 'right', fontWeight: 800, color: '#fff', borderBottom: 'none', fontVariantNumeric: 'tabular-nums' }}>
@@ -731,7 +759,7 @@ export default function DREMesDirecao() {
     // Fetch gastos do mês
     const { data: gastos, error } = await supabase
       .from('gastos' as any)
-      .select('valor, tipo_custo_id')
+      .select('id, valor, tipo_custo_id, descricao, data')
       .gte('data', start)
       .lte('data', end);
 
@@ -757,14 +785,20 @@ export default function DREMesDirecao() {
     });
 
     // Agrupar gastos por tipo_custo_id
-    const agrupado: Record<string, { nome: string; tipo: string; valor: number }> = {};
+    const agrupado: Record<string, { nome: string; tipo: string; valor: number; gastos: { id: string; descricao: string | null; data: string; valor: number }[] }> = {};
     ((gastos || []) as any[]).forEach((g: any) => {
       const tipo = tiposMap[g.tipo_custo_id];
       if (!tipo) return;
       if (!agrupado[g.tipo_custo_id]) {
-        agrupado[g.tipo_custo_id] = { nome: tipo.nome, tipo: tipo.tipo, valor: 0 };
+        agrupado[g.tipo_custo_id] = { nome: tipo.nome, tipo: tipo.tipo, valor: 0, gastos: [] };
       }
       agrupado[g.tipo_custo_id].valor += g.valor || 0;
+      agrupado[g.tipo_custo_id].gastos.push({
+        id: g.id,
+        descricao: g.descricao ?? null,
+        data: g.data,
+        valor: Number(g.valor) || 0,
+      });
     });
 
     const items = Object.entries(agrupado).map(([id, v]) => ({
@@ -772,6 +806,7 @@ export default function DREMesDirecao() {
       nome: v.nome,
       valor_real: v.valor,
       tipo: v.tipo,
+      gastos: v.gastos.slice().sort((a, b) => a.data.localeCompare(b.data)),
     }));
 
     setDespesasFixas(items.filter(i => i.tipo === 'fixa' && !isFolha(i.nome)));

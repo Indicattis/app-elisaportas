@@ -1,26 +1,42 @@
 ## Objetivo
 
-No PDF gerado em `/direcao/dre/:mes`:
-- Remover a seção **"6. Despesas Projetadas do Ano"**.
-- Adicionar uma nova coluna **"Projetado (Ano)"** nas tabelas de **Despesas Fixas** e **Despesas Variáveis**, ao lado da coluna "Projetado" (mensal).
+No PDF do DRE (`/direcao/dre/:mes`), nas seções **4. Despesas Fixas** e **5. Despesas Variáveis**, exibir cada tipo de custo como um cabeçalho de agrupamento e listar abaixo cada gasto individual cadastrado naquele tipo (descrição + data + valor).
+
+Exemplo:
+
+```text
+Energia Elétrica                            R$ 2.300,00   R$ 2.500,00   R$ 30.000,00
+  └ 05/04  Conta CPFL — matriz                R$ 1.500,00
+  └ 18/04  Conta CPFL — galpão 2                R$ 800,00
+```
+
+A seção **3. Folha Salarial** continua igual (já lista colaborador por linha, não há sub-agrupamento).
 
 ## Mudanças em `src/pages/direcao/DREMesDirecao.tsx`
 
-### 1. `PrintDespesaTable` (linhas ~638-734)
-- Adicionar nova coluna `Projetado (Ano)` no `<thead>`, logo após `Projetado`, somente quando `showProj` for true.
-- Para cada linha, renderizar `formatCurrency(tipoRef.valor_maximo_mensal * 12)` ou `—` quando não houver `tipoRef`.
-- Calcular `totalProjAno = totalProj * 12` (ou somar `t.valor_maximo_mensal * 12` da mesma forma que `totalProj`) e exibir na linha TOTAL.
-- Estilo: mesma formatação numérica usada em `Projetado`, cor neutra `#64748b`, `width: 140`.
+### 1. Tipo `DespesaAgrupada`
+Adicionar campo opcional `gastos?: { id: string; descricao: string | null; data: string; valor: number }[]`.
 
-### 2. Remover seção 6 (linhas 555-596)
-- Excluir todo o bloco `{tiposCustosVariaveis.length > 0 && ( ... )}` que renderiza "6. Despesas Projetadas do Ano".
-- Renumerar a seção seguinte: **"7. Estoque" → "6. Estoque"**.
+### 2. `fetchDespesasFromGastos`
+- Incluir `id, descricao, data` no `select` de `gastos`.
+- Ao agrupar por `tipo_custo_id`, além de somar `valor`, acumular os gastos individuais em um array ordenado por `data` ascendente.
+- Passar esse array no campo `gastos` de cada item.
 
-### 3. Limpeza
-- A constante `totalProjetadoAnual` (calculada no componente pai) só é usada no bloco removido. Verificar e remover sua declaração e qualquer cálculo associado se ficar órfão.
+### 3. `PrintDespesaTable`
+- Após cada `<tr>` do tipo (linha já existente do agrupamento), renderizar uma `<tr>` filha por gasto:
+  - Coluna **Descrição**: indentada (`paddingLeft: 22`), prefixo `└`, fonte menor (`8.5pt`), cor `#64748b`, mostrando `dd/MM` + `descricao` (ou `—` se nula).
+  - Coluna **Valor**: `formatCurrency(g.valor)`, mesma cor neutra, sem comparação com projetado.
+  - Colunas **Projetado** e **Projetado (Ano)**: vazias (`—` discreto) quando `showProj`.
+  - `colSpan` mantido — todas as colunas existem, apenas as de projetado ficam em branco.
+- Estilo: linha filha sem zebra forte, fundo `#fcfdfe`, borda inferior `#f1f5f9` mais clara, `pageBreakInside: avoid` no par tipo+filhos via wrapper `<tbody>` por tipo (cada tipo em seu próprio `<tbody>`).
+- TOTAL no final permanece igual.
 
-## Fora de escopo
-
-- A visualização em tela (`DespesaSectionReadOnly`) permanece inalterada — a mudança é apenas no layout de impressão/PDF.
-- Não alterar a seção "3. Folha Salarial" (sem projeção).
+### 4. Fora de escopo
+- Visualização em tela (`DespesaSectionReadOnly`) não muda.
 - Modal de gastos por tipo continua igual.
+- Folha Salarial (seção 3) sem mudança.
+- Despesas sem `descricao` nem `data` (caso raro): exibir apenas valor.
+
+## Observação
+
+Se um tipo tiver muitos gastos (>15), o agrupamento pode estourar a página. O `pageBreakInside: avoid` por `<tbody>` permite quebra entre tipos mas mantém cada grupo inteiro quando couber; tipos muito grandes serão quebrados naturalmente pelo navegador.
