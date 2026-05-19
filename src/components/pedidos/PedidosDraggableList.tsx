@@ -178,6 +178,7 @@ export function PedidosDraggableList({
   disableClienteClick = false,
   hideOrdensStatus = false,
   hideCorrecaoButton = false,
+  hideValorAReceber = false,
   selectionEnabled = false,
   selecionados,
   onToggleSelecionado,
