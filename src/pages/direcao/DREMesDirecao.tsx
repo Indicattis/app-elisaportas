@@ -294,6 +294,7 @@ function PrintReport({
   percBrutoFinal,
   percLiquidFinal,
   formatCurrency,
+  vendasListagem,
 }: {
   mesNome: string;
   faturamento: FaturamentoProduto;
@@ -314,6 +315,7 @@ function PrintReport({
   percBrutoFinal: number;
   percLiquidFinal: number;
   formatCurrency: (v: number) => string;
+  vendasListagem: { id: string; data: string; cliente: string; valorTabela: number; valorVenda: number; desconto: number; lucro: number }[];
 }) {
   const SECTION: React.CSSProperties = { marginTop: 18, pageBreakInside: 'avoid' };
   const H2: React.CSSProperties = {
