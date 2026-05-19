@@ -121,6 +121,7 @@ export function NeoInstalacoesDraggableList({
                   onUpdateValor={onUpdateValor}
                   dragHandleProps={dragHandleProps}
                   isDragging={isDragging}
+                  hideValorAReceber={hideValorAReceber}
                 />
               )}
             </SortableNeoItem>
@@ -131,7 +132,7 @@ export function NeoInstalacoesDraggableList({
         <DragOverlay modifiers={[restrictToWindowEdges]} dropAnimation={{ duration: 200, easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)' }}>
           {activeNeo ? (
             <div className="opacity-90 shadow-2xl pointer-events-none">
-              <NeoInstalacaoCardGestao neoInstalacao={activeNeo} viewMode={viewMode} isDragging />
+              <NeoInstalacaoCardGestao neoInstalacao={activeNeo} viewMode={viewMode} isDragging hideValorAReceber={hideValorAReceber} />
             </div>
           ) : null}
         </DragOverlay>,
