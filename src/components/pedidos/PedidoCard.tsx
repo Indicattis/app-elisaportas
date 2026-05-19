@@ -1795,6 +1795,7 @@ export function PedidoCard({
               </div>
 
               {/* Col: Valor a Receber */}
+              {!hideValorAReceber && (
               <div className="text-center" onClick={(e) => e.stopPropagation()}>
                 {venda?.valor_a_receber_faturamento ? (
                   <span
@@ -1848,6 +1849,7 @@ export function PedidoCard({
                 </Popover>
                 )}
               </div>
+              )}
 
               {/* Col 8-12: Status das Ordens */}
               {!hideOrdensStatus && (
