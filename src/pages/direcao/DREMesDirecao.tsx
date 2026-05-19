@@ -306,8 +306,8 @@ function PrintReport({
               { l: 'Faturamento Bruto', v: formatCurrency(faturamento.total), c: '#0f172a', b: false },
               { l: 'Margem Bruta', v: `${percBrutoFinal.toFixed(1)}%`, c: positive(percBrutoFinal), b: false },
               { l: 'Lucro Bruto', v: formatCurrency(lucro.total), c: positive(lucro.total), b: true },
-              { l: '(–) Despesas Fixas', v: formatCurrency(totalDespFixas), c: '#b91c1c', b: false },
               { l: '(–) Folha Salarial', v: formatCurrency(totalDespFolha), c: '#b91c1c', b: false },
+              { l: '(–) Despesas Fixas', v: formatCurrency(totalDespFixas), c: '#b91c1c', b: false },
               { l: '(–) Despesas Variáveis', v: formatCurrency(totalDespVariaveis), c: '#b91c1c', b: false },
             ].map((r, i) => (
               <tr key={i} style={trZebra(i)}>
@@ -357,22 +357,22 @@ function PrintReport({
       <div className="pdf-page-break" />
 
       <div style={{ marginTop: 0 }}>
-        <div style={H2}>3. Despesas Fixas</div>
-        <PrintDespesaTable
-          items={despesasFixas}
-          total={totalDespFixas}
-          formatCurrency={formatCurrency}
-          tiposDisponiveis={tiposCustosFixos.filter(t => !isFolha(t.nome))}
-        />
-      </div>
-
-      <div style={SECTION}>
-        <div style={H2}>4. Folha Salarial</div>
+        <div style={H2}>3. Folha Salarial</div>
         <PrintDespesaTable
           items={despesasFolha}
           total={totalDespFolha}
           formatCurrency={formatCurrency}
           tiposDisponiveis={tiposCustosFixos.filter(t => isFolha(t.nome))}
+        />
+      </div>
+
+      <div style={SECTION}>
+        <div style={H2}>4. Despesas Fixas</div>
+        <PrintDespesaTable
+          items={despesasFixas}
+          total={totalDespFixas}
+          formatCurrency={formatCurrency}
+          tiposDisponiveis={tiposCustosFixos.filter(t => !isFolha(t.nome))}
         />
       </div>
 
@@ -1029,18 +1029,18 @@ export default function DREMesDirecao() {
             {/* Coluna esquerda: 3 seções empilhadas */}
             <div className="space-y-4">
               <DespesaSectionReadOnly
-                title="Despesas Fixas"
-                despesas={despesasFixas}
-                total={totalDespFixas}
-                formatCurrency={formatCurrency}
-                tiposDisponiveis={tiposCustosFixos.filter(t => !isFolha(t.nome))}
-              />
-              <DespesaSectionReadOnly
                 title="Folha Salarial"
                 despesas={despesasFolha}
                 total={totalDespFolha}
                 formatCurrency={formatCurrency}
                 tiposDisponiveis={tiposCustosFixos.filter(t => isFolha(t.nome))}
+              />
+              <DespesaSectionReadOnly
+                title="Despesas Fixas"
+                despesas={despesasFixas}
+                total={totalDespFixas}
+                formatCurrency={formatCurrency}
+                tiposDisponiveis={tiposCustosFixos.filter(t => !isFolha(t.nome))}
               />
               <DespesaSectionReadOnly
                 title="Despesas Variáveis"
