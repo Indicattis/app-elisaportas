@@ -151,6 +151,7 @@ interface NeoCorrecoesDraggableListProps {
   onEditar?: (neo: NeoCorrecao) => void;
   onUpdateValor?: (id: string, data: { valor_a_receber: number | null; valor_a_receber_texto: string }) => Promise<void>;
   onReorganizar: (updates: { id: string; prioridade_gestao: number }[]) => void;
+  hideValorAReceber?: boolean;
 }
 
 export function NeoCorrecoesDraggableList({
@@ -162,6 +163,7 @@ export function NeoCorrecoesDraggableList({
   onEditar,
   onUpdateValor,
   onReorganizar,
+  hideValorAReceber = false,
 }: NeoCorrecoesDraggableListProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
 
@@ -210,6 +212,7 @@ export function NeoCorrecoesDraggableList({
                   onUpdateValor={onUpdateValor}
                   dragHandleProps={dragHandleProps}
                   isDragging={isDragging}
+                  hideValorAReceber={hideValorAReceber}
                 />
               )}
             </SortableNeoItem>
@@ -220,7 +223,7 @@ export function NeoCorrecoesDraggableList({
         <DragOverlay modifiers={[restrictToWindowEdges]} dropAnimation={{ duration: 200, easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)' }}>
           {activeNeo ? (
             <div className="opacity-90 shadow-2xl pointer-events-none">
-              <NeoCorrecaoCardGestao neoCorrecao={activeNeo} viewMode={viewMode} isDragging />
+              <NeoCorrecaoCardGestao neoCorrecao={activeNeo} viewMode={viewMode} isDragging hideValorAReceber={hideValorAReceber} />
             </div>
           ) : null}
         </DragOverlay>,
