@@ -732,7 +732,7 @@ export default function DREMesDirecao() {
     // Fetch gastos do mês
     const { data: gastos, error } = await supabase
       .from('gastos' as any)
-      .select('valor, tipo_custo_id')
+      .select('id, valor, tipo_custo_id, descricao, data')
       .gte('data', start)
       .lte('data', end);
 
@@ -758,14 +758,20 @@ export default function DREMesDirecao() {
     });
 
     // Agrupar gastos por tipo_custo_id
-    const agrupado: Record<string, { nome: string; tipo: string; valor: number }> = {};
+    const agrupado: Record<string, { nome: string; tipo: string; valor: number; gastos: { id: string; descricao: string | null; data: string; valor: number }[] }> = {};
     ((gastos || []) as any[]).forEach((g: any) => {
       const tipo = tiposMap[g.tipo_custo_id];
       if (!tipo) return;
       if (!agrupado[g.tipo_custo_id]) {
-        agrupado[g.tipo_custo_id] = { nome: tipo.nome, tipo: tipo.tipo, valor: 0 };
+        agrupado[g.tipo_custo_id] = { nome: tipo.nome, tipo: tipo.tipo, valor: 0, gastos: [] };
       }
       agrupado[g.tipo_custo_id].valor += g.valor || 0;
+      agrupado[g.tipo_custo_id].gastos.push({
+        id: g.id,
+        descricao: g.descricao ?? null,
+        data: g.data,
+        valor: Number(g.valor) || 0,
+      });
     });
 
     const items = Object.entries(agrupado).map(([id, v]) => ({
@@ -773,6 +779,7 @@ export default function DREMesDirecao() {
       nome: v.nome,
       valor_real: v.valor,
       tipo: v.tipo,
+      gastos: v.gastos.slice().sort((a, b) => a.data.localeCompare(b.data)),
     }));
 
     setDespesasFixas(items.filter(i => i.tipo === 'fixa' && !isFolha(i.nome)));
