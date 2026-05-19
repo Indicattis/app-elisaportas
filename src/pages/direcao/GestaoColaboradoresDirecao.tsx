@@ -967,11 +967,10 @@ export default function GestaoColaboradoresDirecao() {
         onOpenChange={(open) => { setSelecionarUsuarioOpen(open); if (!open) setVagaToFill(null); }}
         vagaCargo={vagaToFill?.cargo || ''}
         vagaId={vagaToFill?.id}
-        onSelectExisting={async (user) => {
-          if (vagaToFill) {
-            await updateVagaStatus(vagaToFill.id, 'preenchida', user.id);
-          }
+        onSelectExisting={() => {
+          // RPC `preencher_vaga_com_usuario` no diálogo já atualizou admin_users + vagas
           queryClient.invalidateQueries({ queryKey: ['all-users'] });
+          queryClient.invalidateQueries({ queryKey: ['vagas'] });
           setSelecionarUsuarioOpen(false);
           setVagaToFill(null);
         }}
