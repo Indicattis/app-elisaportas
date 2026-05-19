@@ -23,6 +23,7 @@ interface DespesaAgrupada {
   id: string;
   nome: string;
   valor_real: number;
+  gastos?: { id: string; descricao: string | null; data: string; valor: number }[];
 }
 
 interface TipoCustoVariavel {
