@@ -154,9 +154,10 @@ function PrintReport({
     fontWeight: 700,
     textTransform: 'uppercase',
     letterSpacing: '0.06em',
-    color: '#1e3a8a',
-    borderBottom: '2px solid #1e3a8a',
-    paddingBottom: 4,
+    color: '#ffffff',
+    background: '#1e3a8a',
+    padding: '6px 10px',
+    borderRadius: 3,
     marginBottom: 8,
   };
   const TH: React.CSSProperties = {
@@ -191,9 +192,7 @@ function PrintReport({
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'flex-end',
-          borderBottom: '3px solid #1e3a8a',
-          paddingBottom: 10,
-          marginBottom: 4,
+          marginBottom: 14,
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
@@ -234,8 +233,8 @@ function PrintReport({
             key={i}
             style={{
               flex: 1,
-              border: '1px solid #e2e8f0',
-              borderTop: `3px solid ${k.accent}`,
+              border: `1.5px solid ${k.accent}`,
+              borderRadius: 4,
               padding: '8px 10px',
               background: '#fafbfc',
             }}
