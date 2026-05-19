@@ -346,6 +346,7 @@ function PrintReport({
     padding: '6px 10px',
     borderRadius: 3,
     marginBottom: 8,
+    textAlign: 'center',
   };
   const TH: React.CSSProperties = {
     background: '#f1f5f9',
