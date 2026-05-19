@@ -354,6 +354,13 @@ export default function VagasPage() {
                             >
                               <ArrowRightLeft className="w-3.5 h-3.5" />
                             </button>
+                            <button
+                              onClick={() => setUserToDeactivate(user)}
+                              className="opacity-0 group-hover/card:opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-red-500/10 text-white/40 hover:text-red-400"
+                              title="Desativar usuário"
+                            >
+                              <UserX className="w-3.5 h-3.5" />
+                            </button>
                           </div>
                         </div>
                       ))}
