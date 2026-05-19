@@ -146,6 +146,7 @@ function SortableItem({
         disableClienteClick={disableClienteClick}
         hideOrdensStatus={hideOrdensStatus}
         hideCorrecaoButton={hideCorrecaoButton}
+        hideValorAReceber={hideValorAReceber}
       />
     </div>
   );
