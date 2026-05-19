@@ -1062,14 +1062,21 @@ export function OrdemDetalhesSheet({
                                 id={`checkbox-${linha.id}`}
                                 checked={linha.concluida}
                                 onCheckedChange={(checked) => onMarcarLinha(linha.id, checked as boolean)}
-                                disabled={ordem.status === 'concluido' || ordem.status === 'pronta' || isUpdating || !podeMarcarLinhas || (tipoOrdem === 'qualidade' && linha.com_problema) || !linhaAnteriorConcluida}
+                                disabled={
+                                  ordem.status === 'concluido' ||
+                                  ordem.status === 'pronta' ||
+                                  isUpdating ||
+                                  !podeMarcarLinhas ||
+                                  (tipoOrdem === 'qualidade' && linha.com_problema) ||
+                                  (!linha.concluida && !linhaAnteriorConcluida)
+                                }
                                 className="mt-1"
                                 title={
                                   !podeMarcarLinhas && !temResponsavel
                                     ? 'Capture a ordem para marcar as linhas'
                                     : !podeMarcarLinhas
                                       ? 'Apenas o responsável pode marcar as linhas'
-                                      : !linhaAnteriorConcluida
+                                      : !linha.concluida && !linhaAnteriorConcluida
                                         ? 'Conclua a linha anterior primeiro'
                                         : undefined
                                 }
