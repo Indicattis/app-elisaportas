@@ -1,46 +1,34 @@
-# Remoção do organograma não funciona
+# Vagas "preenchidas" duplicam colaborador no organograma
 
 ## Causa raiz
 
-Em `/direcao/gestao-colaboradores`, ao clicar em "Remover do organograma" o código faz:
+Em `GestaoColaboradoresDirecao.tsx`, cada `RoleGroup` renderiza três coisas:
 
-```ts
-supabase.from('admin_users').update({ visivel_organograma: false }).eq('id', userToDeactivate.id)
-```
+1. `group.users` — colaboradores com aquela `role` em `admin_users` (já é a fonte de verdade do organograma).
+2. `group.openVagasList` — vagas com status `aberta`/`em_analise` (cards tracejados amarelos).
+3. `group.filledVagasList` — vagas com status `preenchida` (cards tracejados verdes).
 
-A policy de UPDATE em `admin_users` (`Admins update all, users update own (no role escalation)`) só permite que:
-- um `administrador` (via `is_admin()`) atualize qualquer linha, ou
-- o próprio usuário atualize a própria linha.
+O bloco (3) é redundante: assim que uma vaga é preenchida, o colaborador já aparece no grupo (1). Mantê-lo gera:
 
-Diretores/gerentes podem **ler** todos os colaboradores (via `can_view_all_admin_users()`), mas **não podem atualizar a linha de outro colaborador**. O update então retorna 0 linhas afetadas, **sem erro**, e o front exibe o toast de sucesso e ainda cria a vaga (a tabela `vagas` tem RLS mais permissiva). Resultado: vaga criada, colaborador continua visível no organograma.
+- "Vagas preenchidas" duplicadas que sobrevivem para sempre na tela.
+- Aparição de pessoas erradas: o filtro atual (`!userIds.has(v.preenchida_por)`) só esconde a vaga se o `preenchida_por` ainda for um usuário **com aquele mesmo cargo**. Se o colaborador trocou de função depois (ex.: vaga PCP marcada como preenchida por alguém que hoje é `perfilador`), o card continua sob "PCP" mostrando o rosto errado.
+- No caso atual de PCP no setor Administrativo: existem 2 registros `vagas.status='preenchida'` legados apontando para `f9de0071…` (Guiherme, hoje `perfilador`) + 1 vaga `em_analise` recém-criada → a UI mostra 1 aberta + 2 "preenchidas" pelo mesmo colaborador.
 
-## Correção
+## Correção (somente front-end)
 
-Criar uma RPC `SECURITY DEFINER` que execute as duas operações de forma atômica e autorizada, e usá-la no front em vez do par update+createVaga.
+Arquivo único: `src/pages/direcao/GestaoColaboradoresDirecao.tsx`.
 
-### 1. Migração SQL
+1. **Remover a renderização de `filledVagasList`** dentro de `SortableRoleGroup` (o bloco `group.filledVagasList.map(...)` em ~linha 311–340) — vagas preenchidas não devem aparecer como cards no organograma; o colaborador já está listado em `group.users`.
+2. **Remover `filledVagasList` da interface `RoleGroup` e da prop**, e parar de calcular `filledVagasForRole` / passá-lo para o grupo (linhas ~429, 445).
+3. Manter inalterado:
+   - `group.users` (fonte do organograma).
+   - `group.openVagasList` (vagas em aberto continuam visíveis e clicáveis para preencher).
+   - O contador `users.length / total` continua usando apenas `openVagas` + usuários reais.
 
-Criar `public.remover_colaborador_organograma(p_admin_user_id uuid, p_justificativa text default null)`:
-
-- `SECURITY DEFINER`, `SET search_path = public`.
-- Valida que o caller é `is_admin()` **ou** `can_view_all_admin_users()`. Caso contrário, `RAISE EXCEPTION 'Sem permissão...'`.
-- Lê `role` e `nome` da linha alvo em `admin_users` (erro se não existir).
-- `UPDATE admin_users SET visivel_organograma = false WHERE id = p_admin_user_id`.
-- `INSERT INTO vagas (cargo, justificativa, created_by, status) VALUES (role_alvo, coalesce(p_justificativa, 'Vaga aberta pela remoção de '||nome_alvo||' do organograma'), auth.uid(), 'em_analise')`.
-- Retorna o `id` da vaga criada.
-- `GRANT EXECUTE ... TO authenticated`.
-
-### 2. Front-end — `src/pages/direcao/GestaoColaboradoresDirecao.tsx`
-
-No `onClick` do `AlertDialogAction` "Remover" (linhas ~864–890):
-
-- Substituir o `supabase.from('admin_users').update(...)` + `createVaga(...)` por uma única chamada `supabase.rpc('remover_colaborador_organograma', { p_admin_user_id: userToDeactivate.id })`.
-- Se `error`, mostrar `toast.error(error.message)` e **não** mostrar sucesso.
-- Em sucesso, invalidar as queries `['all-users']`, `['all-users-including-hidden']` e `['vagas']`.
-
-Nenhuma outra mudança de UI é necessária — o card desaparece automaticamente porque `useAllUsers` filtra por `visivel_organograma = true`.
+Nenhuma mudança em hooks (`useVagas`, `useAllUsers`), em RLS ou em outras telas. As vagas `preenchida` permanecem no banco para histórico/relatórios — só deixam de poluir o organograma.
 
 ## Fora de escopo
 
-- Não alterar a policy de UPDATE genérica de `admin_users` (evita ampliar superfície de escalonamento de privilégios).
-- Não mexer no fluxo de "Preencher vaga" / `SelecionarUsuarioVagaDialog`, que já funciona (admin atualiza role+visivel_organograma quando preenche).
+- Não vou apagar/limpar as vagas `preenchida` legadas no banco (ficam como histórico).
+- Não vou mexer no fluxo de marcar vaga como `preenchida` (continua acontecendo via `SelecionarUsuarioVagaDialog`/`PreencherVagaDialog`).
+- Não vou alterar a tela de "Vagas/Recrutamento" (se existir) que possa querer mostrar histórico de vagas preenchidas.
