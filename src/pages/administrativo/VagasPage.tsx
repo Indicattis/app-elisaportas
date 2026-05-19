@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Users, Loader2, Plus, UserPlus, ArrowRightLeft, Trash2, FlaskConical, Pencil } from "lucide-react";
+import { Users, Loader2, Plus, UserPlus, ArrowRightLeft, Trash2, FlaskConical, Pencil, UserX } from "lucide-react";
 import { toast } from "sonner";
 
 import { MinimalistLayout } from "@/components/MinimalistLayout";
@@ -33,6 +33,9 @@ export default function VagasPage() {
   const [transferUser, setTransferUser] = useState<User | null>(null);
   const [newRole, setNewRole] = useState("");
   const [transferring, setTransferring] = useState(false);
+
+  const [userToDeactivate, setUserToDeactivate] = useState<User | null>(null);
+  const [deactivating, setDeactivating] = useState(false);
   
   const [vagaToDelete, setVagaToDelete] = useState<Vaga | null>(null);
   const [criarVagaOpen, setCriarVagaOpen] = useState(false);
@@ -125,6 +128,26 @@ export default function VagasPage() {
       console.error(err);
     } finally {
       setTransferring(false);
+    }
+  };
+
+  const handleDeactivateUser = async () => {
+    if (!userToDeactivate) return;
+    setDeactivating(true);
+    try {
+      const { error } = await supabase
+        .from("admin_users")
+        .update({ ativo: false })
+        .eq("id", userToDeactivate.id);
+      if (error) throw error;
+      toast.success(`${userToDeactivate.nome} foi desativado`);
+      queryClient.invalidateQueries({ queryKey: ["all-users"] });
+      setUserToDeactivate(null);
+    } catch (err: any) {
+      toast.error("Erro ao desativar usuário");
+      console.error(err);
+    } finally {
+      setDeactivating(false);
     }
   };
 
