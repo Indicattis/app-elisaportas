@@ -1727,6 +1727,30 @@ export default function DREMesDirecao() {
       vendas={portasDetalhe}
       formatCurrency={formatCurrency}
     />
+    <ItensSimplesDetalheDialog
+      open={pinturaModalOpen}
+      onOpenChange={setPinturaModalOpen}
+      titulo={`Vendas com Pintura — ${mesNome}`}
+      categoriaLabel="Pintura"
+      vendas={pinturaDetalhe}
+      formatCurrency={formatCurrency}
+    />
+    <ItensSimplesDetalheDialog
+      open={acessoriosModalOpen}
+      onOpenChange={setAcessoriosModalOpen}
+      titulo={`Vendas com Acessórios — ${mesNome}`}
+      categoriaLabel="Acessórios"
+      vendas={acessoriosDetalhe}
+      formatCurrency={formatCurrency}
+    />
+    <ItensSimplesDetalheDialog
+      open={avulsosModalOpen}
+      onOpenChange={setAvulsosModalOpen}
+      titulo={`Vendas com Itens Avulso — ${mesNome}`}
+      categoriaLabel="Itens Avulso"
+      vendas={avulsosDetalhe}
+      formatCurrency={formatCurrency}
+    />
     </>
   );
 }
