@@ -1200,6 +1200,7 @@ export default function ProdutosFabrica({
                           hideMateriaPrima={hideMateriaPrima}
                           hidePedidos={hidePedidos}
                           hideConferir={hideConferir}
+                          hideStockColumns={hideStockColumns}
                           showPrecoVenda={showPrecoVenda}
                         />
                       ))
