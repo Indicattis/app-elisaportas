@@ -832,8 +832,20 @@ function PrintDespesaTable({
   );
 }
 
-export default function DREMesDirecao() {
-  const { mes } = useParams<{ mes: string }>();
+export type DREMesViewMode = 'full' | 'despesas' | 'resultados';
+
+interface DREMesDirecaoProps {
+  mesProp?: string;
+  viewMode?: DREMesViewMode;
+  embedded?: boolean;
+}
+
+export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = false }: DREMesDirecaoProps = {}) {
+  const params = useParams<{ mes: string }>();
+  const mes = mesProp ?? params.mes;
+  const showFaturamento = viewMode === 'full';
+  const showDespesas = viewMode === 'full' || viewMode === 'despesas';
+  const showResumoFinal = viewMode === 'full' || viewMode === 'resultados';
   const [loading, setLoading] = useState(true);
   const [faturamento, setFaturamento] = useState<FaturamentoProduto>({ portas: 0, pintura: 0, instalacoes: 0, acessorios: 0, adicionais: 0, total: 0 });
   const [lucro, setLucro] = useState<FaturamentoProduto>({ portas: 0, pintura: 0, instalacoes: 0, acessorios: 0, adicionais: 0, total: 0 });
