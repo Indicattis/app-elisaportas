@@ -46,6 +46,7 @@ interface Produto {
   desconto_percentual: number;
   desconto_valor?: number;
   descricao?: string | null;
+  observacao_item?: string | null;
   catalogo_cores?: { nome: string; codigo_hex: string } | null;
 }
 
@@ -158,6 +159,7 @@ export default function VendaDetalhesDirecao() {
             desconto_percentual,
             desconto_valor,
             descricao,
+            observacao_item,
             catalogo_cores(nome, codigo_hex)
           ),
           autorizacao_desconto:vendas_autorizacoes_desconto(
@@ -424,12 +426,13 @@ export default function VendaDetalhesDirecao() {
                       <TableHead className="text-xs text-white/70 text-right">Valor Unit.</TableHead>
                       <TableHead className="text-xs text-white/70 text-right">Desconto</TableHead>
                       <TableHead className="text-xs text-white/70 text-right">Total</TableHead>
+                      <TableHead className="text-xs text-white/70">Observação</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {(!venda.produtos || venda.produtos.length === 0) && (
                       <TableRow>
-                        <TableCell colSpan={8} className="text-center py-8 text-white/50">
+                        <TableCell colSpan={9} className="text-center py-8 text-white/50">
                           Nenhum produto cadastrado nesta venda
                         </TableCell>
                       </TableRow>
@@ -477,6 +480,15 @@ export default function VendaDetalhesDirecao() {
                         </TableCell>
                         <TableCell className="text-right text-white font-medium">
                           {formatCurrency(produto.valor_total)}
+                        </TableCell>
+                        <TableCell className="text-white/70 max-w-[240px]">
+                          {produto.observacao_item && produto.observacao_item.trim().length > 0 ? (
+                            <span className="block truncate text-xs" title={produto.observacao_item}>
+                              {produto.observacao_item}
+                            </span>
+                          ) : (
+                            <span className="text-white/40">—</span>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}
