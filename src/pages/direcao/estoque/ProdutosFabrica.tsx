@@ -1064,16 +1064,16 @@ export default function ProdutosFabrica({
                   <TableRow className="border-white/10 hover:bg-transparent">
                     <TableHead className="w-10 px-1" />
                     <TableHead className="text-xs font-medium text-white/60">Produto</TableHead>
-                    <TableHead className="text-xs font-medium text-white/60">SKU</TableHead>
+                    {!hideSku && <TableHead className="text-xs font-medium text-white/60">SKU</TableHead>}
                     <TableHead className="text-xs font-medium text-white/60">Fornecedor</TableHead>
-                    <TableHead className="text-xs font-medium text-white/60">Matéria-prima</TableHead>
+                    {!hideMateriaPrima && <TableHead className="text-xs font-medium text-white/60">Matéria-prima</TableHead>}
                     <TableHead className="text-xs font-medium text-white/60">Categoria</TableHead>
                     <TableHead className="text-center text-xs font-medium text-white/60">Unidade</TableHead>
                     <TableHead className="text-center text-xs font-medium text-white/60">Est. Mín</TableHead>
                     <TableHead className="text-center text-xs font-medium text-white/60">Est. Máx</TableHead>
                     <TableHead className="text-center text-xs font-medium text-white/60">Atual</TableHead>
-                    <TableHead className="text-center text-xs font-medium text-white/60">Pedidos</TableHead>
-                    <TableHead className="text-center text-xs font-medium text-white/60">Conferir</TableHead>
+                    {!hidePedidos && <TableHead className="text-center text-xs font-medium text-white/60">Pedidos</TableHead>}
+                    {!hideConferir && <TableHead className="text-center text-xs font-medium text-white/60">Conferir</TableHead>}
                     <TableHead className="text-right text-xs font-medium text-white/60">Preço/Un</TableHead>
                     <TableHead className="text-right text-xs font-medium text-white/60">Valor Total</TableHead>
                     <TableHead className="text-center text-xs font-medium text-white/60">Ações</TableHead>
@@ -1107,6 +1107,10 @@ export default function ProdutosFabrica({
                           categorias={categorias}
                           fornecedores={fornecedores}
                           materiasPrimas={materiasPrimas}
+                          hideSku={hideSku}
+                          hideMateriaPrima={hideMateriaPrima}
+                          hidePedidos={hidePedidos}
+                          hideConferir={hideConferir}
                         />
                       ))
                     )}
