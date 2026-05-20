@@ -11,6 +11,7 @@ interface PortaFolderCardProps {
   categorias?: CategoriaLinha[];
   statusBadge?: string;
   statusVariant?: 'default' | 'secondary' | 'outline' | 'destructive';
+  observacao?: string | null;
   isOpen: boolean;
   onClick: () => void;
 }
@@ -34,6 +35,7 @@ export function PortaFolderCard({
   categorias = [],
   statusBadge,
   statusVariant = 'secondary',
+  observacao,
   isOpen,
   onClick,
 }: PortaFolderCardProps) {
@@ -59,6 +61,11 @@ export function PortaFolderCard({
           <p className="text-sm font-semibold leading-tight truncate">{label}</p>
           {dimensoes && (
             <p className="text-xs text-muted-foreground">{dimensoes}</p>
+          )}
+          {observacao && observacao.trim().length > 0 && (
+            <p className="text-xs text-primary/80 italic truncate" title={observacao}>
+              “{observacao}”
+            </p>
           )}
           <div className="flex items-center gap-1.5 flex-wrap">
             {statusBadge ? (
