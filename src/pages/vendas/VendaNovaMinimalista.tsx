@@ -237,6 +237,7 @@ export default function VendaNovaMinimalista() {
           desconto_valor: 0,
           tipo_desconto: 'percentual' as const,
           valor_credito: 0,
+          observacao_item: p.observacao_item || null,
         }));
         setPortas(produtosConvertidos);
       }
