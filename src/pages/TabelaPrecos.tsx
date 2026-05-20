@@ -15,7 +15,25 @@ import { CatalogoPrecosTab } from "@/components/tabela-precos/CatalogoPrecosTab"
 import { useQueryClient } from "@tanstack/react-query";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 
-export default function TabelaPrecos() {
+interface TabelaPrecosProps {
+  hideLucroColumn?: boolean;
+  hideAcoesColumn?: boolean;
+  hideCatalogoTab?: boolean;
+  titleOverride?: string;
+  subtitleOverride?: string;
+  backPathOverride?: string;
+  breadcrumbItemsOverride?: { label: string; path?: string }[];
+}
+
+export default function TabelaPrecos({
+  hideLucroColumn = false,
+  hideAcoesColumn = false,
+  hideCatalogoTab = false,
+  titleOverride,
+  subtitleOverride,
+  backPathOverride,
+  breadcrumbItemsOverride,
+}: TabelaPrecosProps = {}) {
   const [searchTerm, setSearchTerm] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [bulkUploadModalOpen, setBulkUploadModalOpen] = useState(false);
