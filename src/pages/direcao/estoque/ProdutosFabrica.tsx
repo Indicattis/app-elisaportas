@@ -1149,22 +1149,22 @@ export default function ProdutosFabrica({
                     <TableHead className="w-10 px-1" />
                     <TableHead className="text-xs font-medium text-white/60">Produto</TableHead>
                     {!hideSku && <TableHead className="text-xs font-medium text-white/60">SKU</TableHead>}
-                    <TableHead className="text-xs font-medium text-white/60">Fornecedor</TableHead>
+                    {!hideStockColumns && <TableHead className="text-xs font-medium text-white/60">Fornecedor</TableHead>}
                     {!hideMateriaPrima && <TableHead className="text-xs font-medium text-white/60">Matéria-prima</TableHead>}
-                    <TableHead className="text-xs font-medium text-white/60">Categoria</TableHead>
-                    <TableHead className="text-center text-xs font-medium text-white/60">Est. Mín</TableHead>
-                    <TableHead className="text-center text-xs font-medium text-white/60">Est. Máx</TableHead>
-                    <TableHead className="text-center text-xs font-medium text-white/60">Atual</TableHead>
+                    {!hideStockColumns && <TableHead className="text-xs font-medium text-white/60">Categoria</TableHead>}
+                    {!hideStockColumns && <TableHead className="text-center text-xs font-medium text-white/60">Est. Mín</TableHead>}
+                    {!hideStockColumns && <TableHead className="text-center text-xs font-medium text-white/60">Est. Máx</TableHead>}
+                    {!hideStockColumns && <TableHead className="text-center text-xs font-medium text-white/60">Atual</TableHead>}
                     {!hidePedidos && <TableHead className="text-center text-xs font-medium text-white/60">Pedidos</TableHead>}
                     {!hideConferir && <TableHead className="text-center text-xs font-medium text-white/60">Conferir</TableHead>}
                     <TableHead className="text-right text-xs font-medium text-white/60">Preço/Un</TableHead>
-                    <TableHead className="text-center text-xs font-medium text-white/60">Unidade</TableHead>
+                    {!hideStockColumns && <TableHead className="text-center text-xs font-medium text-white/60">Unidade</TableHead>}
                     {showPrecoVenda && <TableHead className="text-right text-xs font-medium text-white/60">Preço de Venda</TableHead>}
                     {showPrecoVenda && <TableHead className="text-right text-xs font-medium text-white/60">Impostos %</TableHead>}
                     {showPrecoVenda && <TableHead className="text-right text-xs font-medium text-white/60">Cartão %</TableHead>}
                     {showPrecoVenda && <TableHead className="text-right text-xs font-medium text-white/60">Descontos %</TableHead>}
                     {showPrecoVenda && <TableHead className="text-right text-xs font-medium text-white/60">Lucro</TableHead>}
-                    <TableHead className="text-right text-xs font-medium text-white/60">Valor Total</TableHead>
+                    {!hideStockColumns && <TableHead className="text-right text-xs font-medium text-white/60">Valor Total</TableHead>}
                     <TableHead className="text-center text-xs font-medium text-white/60">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
