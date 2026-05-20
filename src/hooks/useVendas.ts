@@ -29,6 +29,7 @@ export interface ProdutoVenda {
   valor_credito?: number;
   percentual_credito?: number;
   unidade?: string;
+  observacao_item?: string | null;
 }
 
 // Manter compatibilidade com código existente
