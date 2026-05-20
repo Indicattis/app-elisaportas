@@ -595,32 +595,6 @@ export default function GestaoFabricaDirecao() {
     await arquivarNeoCorrecao(id);
   };
 
-  const handleUpdateValorNeoInstalacao = async (id: string, data: { valor_a_receber: number | null; valor_a_receber_texto: string }) => {
-    const { error } = await supabase
-      .from('neo_instalacoes')
-      .update({ valor_a_receber: data.valor_a_receber, valor_a_receber_texto: data.valor_a_receber_texto } as any)
-      .eq('id', id);
-    if (error) {
-      toast({ title: "Erro", description: "Não foi possível atualizar o valor", variant: "destructive" });
-    } else {
-      queryClient.invalidateQueries({ queryKey: ['neo_instalacoes_listagem'] });
-      queryClient.invalidateQueries({ queryKey: ['neo_instalacoes_finalizadas'] });
-    }
-  };
-
-  const handleUpdateValorNeoCorrecao = async (id: string, data: { valor_a_receber: number | null; valor_a_receber_texto: string }) => {
-    const { error } = await supabase
-      .from('neo_correcoes')
-      .update({ valor_a_receber: data.valor_a_receber, valor_a_receber_texto: data.valor_a_receber_texto } as any)
-      .eq('id', id);
-    if (error) {
-      toast({ title: "Erro", description: "Não foi possível atualizar o valor", variant: "destructive" });
-    } else {
-      queryClient.invalidateQueries({ queryKey: ['neo_correcoes_listagem'] });
-      queryClient.invalidateQueries({ queryKey: ['neo_correcoes_finalizadas'] });
-    }
-  };
-
   const handleArquivar = async (pedidoId: string) => {
     await arquivarPedido.mutateAsync(pedidoId);
   };

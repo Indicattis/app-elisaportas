@@ -537,13 +537,13 @@ export function NeoInstalacaoCardGestao({
           )}
         </div>
 
-        {(neoInstalacao.valor_total > 0 || neoInstalacao.valor_a_receber > 0 || neoInstalacao.valor_a_receber_texto) && (
+        {(neoInstalacao.valor_total > 0 || ((neoInstalacao.valor_a_receber > 0 || neoInstalacao.valor_a_receber_texto) && !hideValorAReceber)) && (
           <div className="flex items-center gap-3 text-sm">
             <DollarSign className="h-4 w-4 text-muted-foreground" />
             {neoInstalacao.valor_total > 0 && (
               <span className="text-muted-foreground">Total: {formatCurrency(neoInstalacao.valor_total)}</span>
             )}
-            {(neoInstalacao.valor_a_receber_texto || neoInstalacao.valor_a_receber > 0) && (
+            {!hideValorAReceber && (neoInstalacao.valor_a_receber_texto || neoInstalacao.valor_a_receber > 0) && (
               <span className="text-emerald-500">A receber: {neoInstalacao.valor_a_receber_texto || formatCurrency(neoInstalacao.valor_a_receber)}</span>
             )}
           </div>
