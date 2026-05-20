@@ -170,6 +170,7 @@ interface SortableProductRowProps {
   hideMateriaPrima?: boolean;
   hidePedidos?: boolean;
   hideConferir?: boolean;
+  showPrecoVenda?: boolean;
 }
 
 function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCount, onToggleConferir, onExcluir, onUpdateField, categorias, fornecedores, materiasPrimas, hideSku, hideMateriaPrima, hidePedidos, hideConferir }: SortableProductRowProps) {
