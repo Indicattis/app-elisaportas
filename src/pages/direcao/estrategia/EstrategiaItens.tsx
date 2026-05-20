@@ -9,6 +9,7 @@ export default function EstrategiaItens() {
       hideConferir
       disableNavigate
       showPrecoVenda
+      hideStockColumns
       blockDelete
       titleOverride="Itens"
       subtitleOverride="Catálogo de itens"

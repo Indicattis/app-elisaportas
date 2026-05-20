@@ -170,10 +170,11 @@ interface SortableProductRowProps {
   hideMateriaPrima?: boolean;
   hidePedidos?: boolean;
   hideConferir?: boolean;
+  hideStockColumns?: boolean;
   showPrecoVenda?: boolean;
 }
 
-function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCount, onToggleConferir, onExcluir, onUpdateField, categorias, fornecedores, materiasPrimas, hideSku, hideMateriaPrima, hidePedidos, hideConferir, showPrecoVenda }: SortableProductRowProps) {
+function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCount, onToggleConferir, onExcluir, onUpdateField, categorias, fornecedores, materiasPrimas, hideSku, hideMateriaPrima, hidePedidos, hideConferir, hideStockColumns, showPrecoVenda }: SortableProductRowProps) {
   const {
     attributes,
     listeners,
@@ -243,6 +244,7 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
           />
         </TableCell>
       )}
+      {!hideStockColumns && (
       <TableCell className="text-white/60 text-sm">
         <EditableSelectCell
           value={produto.fornecedor?.id ?? null}
@@ -252,6 +254,7 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
           onSave={(v) => onUpdateField(produto.id, { fornecedor_id: v || null })}
         />
       </TableCell>
+      )}
       {!hideMateriaPrima && (
       <TableCell className="text-white/70 text-sm">
         <div className="space-y-1">
@@ -301,6 +304,7 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
         </div>
       </TableCell>
       )}
+      {!hideStockColumns && (
       <TableCell>
         <EditableSelectCell
           value={categoriaAtual?.id ?? null}
@@ -316,6 +320,8 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
           onSave={(v) => onUpdateField(produto.id, { categoria: v || null })}
         />
       </TableCell>
+      )}
+      {!hideStockColumns && (
       <TableCell className="text-center text-white/80">
         {produto.conferir_estoque ? (
           <EditableCell
@@ -326,6 +332,8 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
           />
         ) : "---"}
       </TableCell>
+      )}
+      {!hideStockColumns && (
       <TableCell className="text-center text-white/80">
         {produto.conferir_estoque ? (
           <EditableCell
@@ -336,6 +344,8 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
           />
         ) : "---"}
       </TableCell>
+      )}
+      {!hideStockColumns && (
       <TableCell className="text-center">
         {produto.conferir_estoque ? (
           <EditableCell
@@ -359,6 +369,7 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
           <span className="text-white/30">---</span>
         )}
       </TableCell>
+      )}
       {!hidePedidos && (
         <TableCell className="text-center text-white/60 text-sm">
           {pedidosCount || 0}
@@ -381,6 +392,7 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
           onSave={(v) => onUpdateField(produto.id, { custo_unitario: Number(v) })}
         />
       </TableCell>
+      {!hideStockColumns && (
       <TableCell className="text-center text-white/70 text-sm">
         <EditableSelectCell
           value={produto.unidade || "UN"}
@@ -397,6 +409,7 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
           onSave={(v) => onUpdateField(produto.id, { unidade: v || "UN" })}
         />
       </TableCell>
+      )}
       {showPrecoVenda && (
         <TableCell className="text-right text-white/80">
           <EditableCell
@@ -453,9 +466,11 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
           </TableCell>
         );
       })()}
+      {!hideStockColumns && (
       <TableCell className="text-right font-medium text-white">
         {produto.conferir_estoque ? formatCurrency(produto.quantidade * produto.custo_unitario) : "---"}
       </TableCell>
+      )}
       <TableCell className="text-center">
         <Button
           variant="ghost"
@@ -485,6 +500,7 @@ interface ProdutosFabricaProps {
   hideMateriaPrima?: boolean;
   hidePedidos?: boolean;
   hideConferir?: boolean;
+  hideStockColumns?: boolean;
   disableNavigate?: boolean;
   showPrecoVenda?: boolean;
   blockDelete?: boolean;
@@ -499,6 +515,7 @@ export default function ProdutosFabrica({
   hideMateriaPrima = false,
   hidePedidos = false,
   hideConferir = false,
+  hideStockColumns = false,
   disableNavigate = false,
   showPrecoVenda = false,
   blockDelete = false,
@@ -1132,22 +1149,22 @@ export default function ProdutosFabrica({
                     <TableHead className="w-10 px-1" />
                     <TableHead className="text-xs font-medium text-white/60">Produto</TableHead>
                     {!hideSku && <TableHead className="text-xs font-medium text-white/60">SKU</TableHead>}
-                    <TableHead className="text-xs font-medium text-white/60">Fornecedor</TableHead>
+                    {!hideStockColumns && <TableHead className="text-xs font-medium text-white/60">Fornecedor</TableHead>}
                     {!hideMateriaPrima && <TableHead className="text-xs font-medium text-white/60">Matéria-prima</TableHead>}
-                    <TableHead className="text-xs font-medium text-white/60">Categoria</TableHead>
-                    <TableHead className="text-center text-xs font-medium text-white/60">Est. Mín</TableHead>
-                    <TableHead className="text-center text-xs font-medium text-white/60">Est. Máx</TableHead>
-                    <TableHead className="text-center text-xs font-medium text-white/60">Atual</TableHead>
+                    {!hideStockColumns && <TableHead className="text-xs font-medium text-white/60">Categoria</TableHead>}
+                    {!hideStockColumns && <TableHead className="text-center text-xs font-medium text-white/60">Est. Mín</TableHead>}
+                    {!hideStockColumns && <TableHead className="text-center text-xs font-medium text-white/60">Est. Máx</TableHead>}
+                    {!hideStockColumns && <TableHead className="text-center text-xs font-medium text-white/60">Atual</TableHead>}
                     {!hidePedidos && <TableHead className="text-center text-xs font-medium text-white/60">Pedidos</TableHead>}
                     {!hideConferir && <TableHead className="text-center text-xs font-medium text-white/60">Conferir</TableHead>}
                     <TableHead className="text-right text-xs font-medium text-white/60">Preço/Un</TableHead>
-                    <TableHead className="text-center text-xs font-medium text-white/60">Unidade</TableHead>
+                    {!hideStockColumns && <TableHead className="text-center text-xs font-medium text-white/60">Unidade</TableHead>}
                     {showPrecoVenda && <TableHead className="text-right text-xs font-medium text-white/60">Preço de Venda</TableHead>}
                     {showPrecoVenda && <TableHead className="text-right text-xs font-medium text-white/60">Impostos %</TableHead>}
                     {showPrecoVenda && <TableHead className="text-right text-xs font-medium text-white/60">Cartão %</TableHead>}
                     {showPrecoVenda && <TableHead className="text-right text-xs font-medium text-white/60">Descontos %</TableHead>}
                     {showPrecoVenda && <TableHead className="text-right text-xs font-medium text-white/60">Lucro</TableHead>}
-                    <TableHead className="text-right text-xs font-medium text-white/60">Valor Total</TableHead>
+                    {!hideStockColumns && <TableHead className="text-right text-xs font-medium text-white/60">Valor Total</TableHead>}
                     <TableHead className="text-center text-xs font-medium text-white/60">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -1183,6 +1200,7 @@ export default function ProdutosFabrica({
                           hideMateriaPrima={hideMateriaPrima}
                           hidePedidos={hidePedidos}
                           hideConferir={hideConferir}
+                          hideStockColumns={hideStockColumns}
                           showPrecoVenda={showPrecoVenda}
                         />
                       ))
@@ -1196,33 +1214,41 @@ export default function ProdutosFabrica({
                     <TableCell className="font-bold text-white">
                       TOTAL ({filteredProdutos.length} itens)
                     </TableCell>
-                    <TableCell />
-                    <TableCell />
-                    <TableCell />
-                    <TableCell />
-                    <TableCell />
-                    <TableCell className="text-center font-bold text-white">
-                      {totals.ideal}
-                    </TableCell>
-                    <TableCell className="text-center font-bold text-white">
-                      {totals.maxima}
-                    </TableCell>
-                    <TableCell className="text-center font-bold text-white">
-                      {totals.atual}
-                    </TableCell>
-                    <TableCell />
-                    <TableCell />
+                    {!hideSku && <TableCell />}
+                    {!hideStockColumns && <TableCell />}
+                    {!hideMateriaPrima && <TableCell />}
+                    {!hideStockColumns && <TableCell />}
+                    {!hideStockColumns && (
+                      <TableCell className="text-center font-bold text-white">
+                        {totals.ideal}
+                      </TableCell>
+                    )}
+                    {!hideStockColumns && (
+                      <TableCell className="text-center font-bold text-white">
+                        {totals.maxima}
+                      </TableCell>
+                    )}
+                    {!hideStockColumns && (
+                      <TableCell className="text-center font-bold text-white">
+                        {totals.atual}
+                      </TableCell>
+                    )}
+                    {!hidePedidos && <TableCell />}
+                    {!hideConferir && <TableCell />}
                     <TableCell className="text-right font-bold text-white/50">
                       ---
                     </TableCell>
+                    {!hideStockColumns && <TableCell />}
                     {showPrecoVenda && <TableCell />}
                     {showPrecoVenda && <TableCell />}
                     {showPrecoVenda && <TableCell />}
                     {showPrecoVenda && <TableCell />}
                     {showPrecoVenda && <TableCell />}
-                    <TableCell className="text-right font-bold text-white">
-                      {formatCurrency(totals.valor)}
-                    </TableCell>
+                    {!hideStockColumns && (
+                      <TableCell className="text-right font-bold text-white">
+                        {formatCurrency(totals.valor)}
+                      </TableCell>
+                    )}
                     <TableCell />
                   </TableRow>
                 </TableFooter>
