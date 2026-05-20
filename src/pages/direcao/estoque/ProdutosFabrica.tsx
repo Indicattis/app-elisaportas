@@ -411,7 +411,7 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
       </TableCell>
       )}
       {showPrecoVenda && (
-        <TableCell className="text-right text-white/80">
+        <TableCell className="text-right text-white/80 bg-green-500/10">
           <EditableCell
             value={produto.preco_venda ?? 0}
             type="currency"
@@ -422,7 +422,7 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
         </TableCell>
       )}
       {showPrecoVenda && (
-        <TableCell className="text-right text-white/80">
+        <TableCell className="text-right text-white/80 bg-orange-500/10">
           <EditableCell
             value={produto.taxa_impostos ?? 0}
             type="number"
@@ -433,7 +433,7 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
         </TableCell>
       )}
       {showPrecoVenda && (
-        <TableCell className="text-right text-white/80">
+        <TableCell className="text-right text-white/80 bg-teal-500/10">
           <EditableCell
             value={produto.taxa_cartao ?? 0}
             type="number"
@@ -444,7 +444,7 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
         </TableCell>
       )}
       {showPrecoVenda && (
-        <TableCell className="text-right text-white/80">
+        <TableCell className="text-right text-white/80 bg-yellow-500/10">
           <EditableCell
             value={produto.taxa_descontos ?? 0}
             type="number"
@@ -461,7 +461,7 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
         const lucro = preco - deducoes - (produto.custo_unitario ?? 0);
         const cor = lucro > 0 ? "text-emerald-400" : lucro < 0 ? "text-red-400" : "text-white/60";
         return (
-          <TableCell className={`text-right font-medium ${cor}`}>
+          <TableCell className={`text-right font-medium bg-blue-500/10 ${cor}`}>
             {formatCurrency(lucro)}
           </TableCell>
         );
@@ -1157,13 +1157,13 @@ export default function ProdutosFabrica({
                     {!hideStockColumns && <TableHead className="text-center text-xs font-medium text-white/60">Atual</TableHead>}
                     {!hidePedidos && <TableHead className="text-center text-xs font-medium text-white/60">Pedidos</TableHead>}
                     {!hideConferir && <TableHead className="text-center text-xs font-medium text-white/60">Conferir</TableHead>}
-                    <TableHead className="text-right text-xs font-medium text-white/60">Preço/Un</TableHead>
+                    <TableHead className="text-right text-xs font-medium text-white/60">Custo</TableHead>
                     {!hideStockColumns && <TableHead className="text-center text-xs font-medium text-white/60">Unidade</TableHead>}
-                    {showPrecoVenda && <TableHead className="text-right text-xs font-medium text-white/60">Preço de Venda</TableHead>}
-                    {showPrecoVenda && <TableHead className="text-right text-xs font-medium text-white/60">Impostos %</TableHead>}
-                    {showPrecoVenda && <TableHead className="text-right text-xs font-medium text-white/60">Cartão %</TableHead>}
-                    {showPrecoVenda && <TableHead className="text-right text-xs font-medium text-white/60">Descontos %</TableHead>}
-                    {showPrecoVenda && <TableHead className="text-right text-xs font-medium text-white/60">Lucro</TableHead>}
+                    {showPrecoVenda && <TableHead className="text-right text-xs font-medium text-white/80 bg-green-500/10">Preço Final</TableHead>}
+                    {showPrecoVenda && <TableHead className="text-right text-xs font-medium text-white/80 bg-orange-500/10">Impostos %</TableHead>}
+                    {showPrecoVenda && <TableHead className="text-right text-xs font-medium text-white/80 bg-teal-500/10">Cartão %</TableHead>}
+                    {showPrecoVenda && <TableHead className="text-right text-xs font-medium text-white/80 bg-yellow-500/10">Desc. Gerente %</TableHead>}
+                    {showPrecoVenda && <TableHead className="text-right text-xs font-medium text-white/80 bg-blue-500/10">Lucro</TableHead>}
                     {!hideStockColumns && <TableHead className="text-right text-xs font-medium text-white/60">Valor Total</TableHead>}
                     <TableHead className="text-center text-xs font-medium text-white/60">Ações</TableHead>
                   </TableRow>
@@ -1239,11 +1239,11 @@ export default function ProdutosFabrica({
                       ---
                     </TableCell>
                     {!hideStockColumns && <TableCell />}
-                    {showPrecoVenda && <TableCell />}
-                    {showPrecoVenda && <TableCell />}
-                    {showPrecoVenda && <TableCell />}
-                    {showPrecoVenda && <TableCell />}
-                    {showPrecoVenda && <TableCell />}
+                    {showPrecoVenda && <TableCell className="bg-green-500/10" />}
+                    {showPrecoVenda && <TableCell className="bg-orange-500/10" />}
+                    {showPrecoVenda && <TableCell className="bg-teal-500/10" />}
+                    {showPrecoVenda && <TableCell className="bg-yellow-500/10" />}
+                    {showPrecoVenda && <TableCell className="bg-blue-500/10" />}
                     {!hideStockColumns && (
                       <TableCell className="text-right font-bold text-white">
                         {formatCurrency(totals.valor)}
