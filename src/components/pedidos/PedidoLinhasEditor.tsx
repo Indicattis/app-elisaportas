@@ -727,6 +727,14 @@ export const PedidoLinhasEditor = ({
               {pastaAbertaDados.dimensoes && (
                 <span className="text-xs text-muted-foreground">{pastaAbertaDados.dimensoes}</span>
               )}
+              {(pastaAbertaDados.porta as any)?.observacao_item && (
+                <span
+                  className="text-xs text-primary/80 italic max-w-[320px] truncate"
+                  title={(pastaAbertaDados.porta as any).observacao_item}
+                >
+                  “{(pastaAbertaDados.porta as any).observacao_item}”
+                </span>
+              )}
             </div>
             {!isReadOnly && (
               <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => handleAbrirModal(pastaAbertaDados.porta)}>
