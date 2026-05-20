@@ -1,0 +1,4 @@
+ALTER TABLE public.estoque
+ADD COLUMN IF NOT EXISTS taxa_impostos numeric NOT NULL DEFAULT 0,
+ADD COLUMN IF NOT EXISTS taxa_cartao numeric NOT NULL DEFAULT 0,
+ADD COLUMN IF NOT EXISTS taxa_descontos numeric NOT NULL DEFAULT 0;

@@ -408,8 +408,44 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
           />
         </TableCell>
       )}
+      {showPrecoVenda && (
+        <TableCell className="text-right text-white/80">
+          <EditableCell
+            value={produto.taxa_impostos ?? 0}
+            type="number"
+            align="right"
+            display={<span>{(produto.taxa_impostos ?? 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%</span>}
+            onSave={(v) => onUpdateField(produto.id, { taxa_impostos: Number(v) })}
+          />
+        </TableCell>
+      )}
+      {showPrecoVenda && (
+        <TableCell className="text-right text-white/80">
+          <EditableCell
+            value={produto.taxa_cartao ?? 0}
+            type="number"
+            align="right"
+            display={<span>{(produto.taxa_cartao ?? 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%</span>}
+            onSave={(v) => onUpdateField(produto.id, { taxa_cartao: Number(v) })}
+          />
+        </TableCell>
+      )}
+      {showPrecoVenda && (
+        <TableCell className="text-right text-white/80">
+          <EditableCell
+            value={produto.taxa_descontos ?? 0}
+            type="number"
+            align="right"
+            display={<span>{(produto.taxa_descontos ?? 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%</span>}
+            onSave={(v) => onUpdateField(produto.id, { taxa_descontos: Number(v) })}
+          />
+        </TableCell>
+      )}
       {showPrecoVenda && (() => {
-        const lucro = (produto.preco_venda ?? 0) - (produto.custo_unitario ?? 0);
+        const preco = produto.preco_venda ?? 0;
+        const taxas = (produto.taxa_impostos ?? 0) + (produto.taxa_cartao ?? 0) + (produto.taxa_descontos ?? 0);
+        const deducoes = preco * taxas / 100;
+        const lucro = preco - deducoes - (produto.custo_unitario ?? 0);
         const cor = lucro > 0 ? "text-emerald-400" : lucro < 0 ? "text-red-400" : "text-white/60";
         return (
           <TableCell className={`text-right font-medium ${cor}`}>
@@ -1107,6 +1143,9 @@ export default function ProdutosFabrica({
                     <TableHead className="text-right text-xs font-medium text-white/60">Preço/Un</TableHead>
                     <TableHead className="text-center text-xs font-medium text-white/60">Unidade</TableHead>
                     {showPrecoVenda && <TableHead className="text-right text-xs font-medium text-white/60">Preço de Venda</TableHead>}
+                    {showPrecoVenda && <TableHead className="text-right text-xs font-medium text-white/60">Impostos %</TableHead>}
+                    {showPrecoVenda && <TableHead className="text-right text-xs font-medium text-white/60">Cartão %</TableHead>}
+                    {showPrecoVenda && <TableHead className="text-right text-xs font-medium text-white/60">Descontos %</TableHead>}
                     {showPrecoVenda && <TableHead className="text-right text-xs font-medium text-white/60">Lucro</TableHead>}
                     <TableHead className="text-right text-xs font-medium text-white/60">Valor Total</TableHead>
                     <TableHead className="text-center text-xs font-medium text-white/60">Ações</TableHead>
@@ -1176,6 +1215,10 @@ export default function ProdutosFabrica({
                     <TableCell className="text-right font-bold text-white/50">
                       ---
                     </TableCell>
+                    {showPrecoVenda && <TableCell />}
+                    {showPrecoVenda && <TableCell />}
+                    {showPrecoVenda && <TableCell />}
+                    {showPrecoVenda && <TableCell />}
                     {showPrecoVenda && <TableCell />}
                     <TableCell className="text-right font-bold text-white">
                       {formatCurrency(totals.valor)}
