@@ -358,11 +358,13 @@ export function useVendas() {
               desconto_valor: produto.tipo_desconto === 'valor'
                 ? (produto.desconto_valor || 0) / qty
                 : produto.desconto_valor,
+              observacao_item: produto.observacao_item || null,
             }))
           : [{
               ...baseSplit,
               quantidade: qty,
               desconto_valor: produto.desconto_valor,
+              observacao_item: produto.observacao_item || null,
             }];
         
         // Se é porta com instalação, criar produto separado de instalação
@@ -671,11 +673,13 @@ export function useVendas() {
                 desconto_valor: produto.tipo_desconto === 'valor'
                   ? (produto.desconto_valor || 0) / qty
                   : produto.desconto_valor,
+              observacao_item: produto.observacao_item || null,
               }))
             : [{
                 ...baseSplit,
                 quantidade: qty,
                 desconto_valor: produto.desconto_valor,
+              observacao_item: produto.observacao_item || null,
               }];
           
           // Se é porta com instalação, criar produto separado de instalação
