@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -169,9 +170,10 @@ interface SortableProductRowProps {
   hideMateriaPrima?: boolean;
   hidePedidos?: boolean;
   hideConferir?: boolean;
+  showPrecoVenda?: boolean;
 }
 
-function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCount, onToggleConferir, onExcluir, onUpdateField, categorias, fornecedores, materiasPrimas, hideSku, hideMateriaPrima, hidePedidos, hideConferir }: SortableProductRowProps) {
+function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCount, onToggleConferir, onExcluir, onUpdateField, categorias, fornecedores, materiasPrimas, hideSku, hideMateriaPrima, hidePedidos, hideConferir, showPrecoVenda }: SortableProductRowProps) {
   const {
     attributes,
     listeners,
@@ -395,6 +397,17 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
           onSave={(v) => onUpdateField(produto.id, { custo_unitario: Number(v) })}
         />
       </TableCell>
+      {showPrecoVenda && (
+        <TableCell className="text-right text-white/80">
+          <EditableCell
+            value={produto.preco_venda ?? 0}
+            type="currency"
+            align="right"
+            display={<span>{formatCurrency(produto.preco_venda ?? 0)}</span>}
+            onSave={(v) => onUpdateField(produto.id, { preco_venda: Number(v) })}
+          />
+        </TableCell>
+      )}
       <TableCell className="text-right font-medium text-white">
         {produto.conferir_estoque ? formatCurrency(produto.quantidade * produto.custo_unitario) : "---"}
       </TableCell>
@@ -428,6 +441,8 @@ interface ProdutosFabricaProps {
   hidePedidos?: boolean;
   hideConferir?: boolean;
   disableNavigate?: boolean;
+  showPrecoVenda?: boolean;
+  blockDelete?: boolean;
   titleOverride?: string;
   subtitleOverride?: string;
   backPathOverride?: string;
@@ -440,6 +455,8 @@ export default function ProdutosFabrica({
   hidePedidos = false,
   hideConferir = false,
   disableNavigate = false,
+  showPrecoVenda = false,
+  blockDelete = false,
   titleOverride,
   subtitleOverride,
   backPathOverride,
@@ -488,6 +505,10 @@ export default function ProdutosFabrica({
   };
 
   const handleExcluir = async (id: string) => {
+    if (blockDelete) {
+      setBlockDeleteOpen(true);
+      return;
+    }
     if (!confirm("Tem certeza que deseja excluir este produto?")) return;
     try {
       await excluirProduto(id);
@@ -510,6 +531,7 @@ export default function ProdutosFabrica({
   const [localProdutos, setLocalProdutos] = useState<ProdutoEstoque[]>([]);
   const [novoModal, setNovoModal] = useState(false);
   const [gerenciarCategoriasOpen, setGerenciarCategoriasOpen] = useState(false);
+  const [blockDeleteOpen, setBlockDeleteOpen] = useState(false);
   // matérias-primas agora abrem em página dedicada
   const [searchTerm, setSearchTerm] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -1075,6 +1097,7 @@ export default function ProdutosFabrica({
                     {!hidePedidos && <TableHead className="text-center text-xs font-medium text-white/60">Pedidos</TableHead>}
                     {!hideConferir && <TableHead className="text-center text-xs font-medium text-white/60">Conferir</TableHead>}
                     <TableHead className="text-right text-xs font-medium text-white/60">Preço/Un</TableHead>
+                    {showPrecoVenda && <TableHead className="text-right text-xs font-medium text-white/60">Preço de Venda</TableHead>}
                     <TableHead className="text-right text-xs font-medium text-white/60">Valor Total</TableHead>
                     <TableHead className="text-center text-xs font-medium text-white/60">Ações</TableHead>
                   </TableRow>
@@ -1111,6 +1134,7 @@ export default function ProdutosFabrica({
                           hideMateriaPrima={hideMateriaPrima}
                           hidePedidos={hidePedidos}
                           hideConferir={hideConferir}
+                          showPrecoVenda={showPrecoVenda}
                         />
                       ))
                     )}
@@ -1142,6 +1166,7 @@ export default function ProdutosFabrica({
                     <TableCell className="text-right font-bold text-white/50">
                       ---
                     </TableCell>
+                    {showPrecoVenda && <TableCell />}
                     <TableCell className="text-right font-bold text-white">
                       {formatCurrency(totals.valor)}
                     </TableCell>
@@ -1166,6 +1191,19 @@ export default function ProdutosFabrica({
           </div>
         </div>
       </div>
+      <AlertDialog open={blockDeleteOpen} onOpenChange={setBlockDeleteOpen}>
+        <AlertDialogContent className="bg-zinc-900 border-white/10 text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Exclusão não permitida</AlertDialogTitle>
+            <AlertDialogDescription className="text-white/70">
+              Para excluir este item, fale com o administrador.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction>Entendi</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </MinimalistLayout>
   );
 }

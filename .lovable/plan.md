@@ -1,65 +1,26 @@
-# Plano: Hub Estratégia em /direcao
+## Mudanças em `/direcao/estrategia/itens`
 
-## 1. Novo botão "Estratégia" no Hub
-Em `src/pages/direcao/DirecaoHub.tsx`, adicionar item no início do `menuItems` (acima de "Caixa Elisa"):
-- label: "Estratégia", icon: `Lightbulb` (ou `Sparkles`), path: `/direcao/estrategia`, routePrefix: `direcao_estrategia`.
+### 1. Banco
+- Migration: adicionar coluna `preco_venda numeric NOT NULL DEFAULT 0` em `public.estoque`.
 
-## 2. Nova página Hub `/direcao/estrategia`
-Arquivo: `src/pages/direcao/estrategia/EstrategiaHub.tsx`.
-Mesmo padrão visual do `DirecaoHub` / `MetasHubDirecao` (fundo preto, breadcrumb, FloatingProfileMenu, botões gradiente azul), com título "Estratégia" e 5 botões:
-1. Itens → `/direcao/estrategia/itens`
-2. Tabela de Kits → `/direcao/estrategia/kits`
-3. Tabela de Preços → `/direcao/estrategia/precos`
-4. Despesas → `/direcao/estrategia/despesas`
-5. Resultados → `/direcao/estrategia/resultados`
+### 2. Coluna "Preço de Venda" editável
+- Em `ProdutosFabrica.tsx`, adicionar nova prop `showPrecoVenda?: boolean` (default `false`, para não impactar `/fabrica/produtos`).
+- Quando `true`:
+  - Adicionar `<TableHead>` "Preço de Venda" entre as colunas existentes (após "Custo Unit.").
+  - Adicionar `<TableCell>` na `SortableProductRow` com `EditableCell` tipo `currency` salvando `preco_venda` via `onUpdateField`.
+- Atualizar `useEstoque.ts` para incluir `preco_venda` no tipo `ProdutoEstoque` e nos SELECT/UPDATE.
+- Em `EstrategiaItens.tsx`, passar `showPrecoVenda`.
 
-## 3. Sub-páginas
+### 3. Bloquear exclusão pela lixeira
+- Adicionar nova prop `blockDelete?: boolean` em `ProdutosFabrica.tsx`.
+- Quando `true`, o clique em `Trash2` abre um `AlertDialog` informativo:
+  - Título: "Exclusão não permitida"
+  - Descrição: "Para excluir este item, fale com o administrador."
+  - Apenas botão "Entendi" (fecha o modal). Nenhuma chamada de delete.
+- Em `EstrategiaItens.tsx`, passar `blockDelete`.
 
-### 3.1 Itens (`EstrategiaItens.tsx`)
-Reaproveitar o conteúdo de `src/pages/direcao/estoque/ProdutosFabrica.tsx`, removendo da listagem:
-- Coluna **SKU**
-- Botão/seção **Matéria Prima**
-- Coluna/contagem de **Pedidos**
-- Botão **Conferir**
-- Clique na linha que navega para edição (apenas exibição)
-
-Implementação: criar componente novo que renderiza a mesma tabela mas com props/flags para esconder essas colunas/ações, ou duplicar enxuto. Preferir refatorar `ProdutosFabrica` aceitando props `hideSku`, `hideMateriaPrima`, `hidePedidos`, `hideConferir`, `readOnly`.
-
-### 3.2 Tabela de Kits (`EstrategiaKits.tsx`)
-Renderiza exatamente o conteúdo de `src/pages/TabelaPrecos.tsx` (sem alterações).
-
-### 3.3 Tabela de Preços (`EstrategiaPrecos.tsx`)
-Renderiza `TabelaPrecos` ocultando colunas **Lucro** e **Ações**. Refatorar `TabelaPrecos` aceitando props `hideLucro` e `hideAcoes`, ou extrair a tabela em subcomponente reutilizável.
-
-### 3.4 Despesas (`EstrategiaDespesas.tsx`)
-- Grid de 3 colunas com os 12 meses do ano atual (cards clicáveis estilo glassmorphism).
-- Ao clicar, expandir abaixo exibindo apenas as seções **Despesas Fixas**, **Despesas Variáveis** e **Folha Salarial** de `DREMesDirecao` para o mês selecionado.
-- Extrair essas seções de `DREMesDirecao.tsx` em componentes reutilizáveis (`DespesasFixasSection`, `DespesasVariaveisSection`, `FolhaSalarialSection`) que recebem `mes` (YYYY-MM) como prop.
-
-### 3.5 Resultados (`EstrategiaResultados.tsx`)
-- Listagem de meses como em `DREDirecao` (`src/pages/direcao/DREDirecao.tsx`).
-- Ao clicar no mês, expandir abaixo apenas a **seção final de Resultados** de `DREMesDirecao`. Extrair em `ResultadosFinaisSection` recebendo `mes`.
-
-## 4. Rotas (`src/App.tsx`)
-Adicionar rotas protegidas com `routeKey="direcao_estrategia"`:
-```
-/direcao/estrategia
-/direcao/estrategia/itens
-/direcao/estrategia/kits
-/direcao/estrategia/precos
-/direcao/estrategia/despesas
-/direcao/estrategia/resultados
-```
-
-## 5. Permissões
-Registrar prefixo `direcao_estrategia` no sistema de rotas/permissões (igual aos outros itens do hub).
-
-## Notas técnicas
-- Manter estética glassmorphism unificada (bg-white/5, backdrop-blur-xl, border-white/10, gradiente azul).
-- Preferir refatorar componentes existentes (`ProdutosFabrica`, `TabelaPrecos`, seções do `DREMesDirecao`) com props para evitar duplicação de lógica/dados.
-- Nenhuma migration de banco necessária.
-
-## Pontos a confirmar
-1. Ícone do botão "Estratégia": `Lightbulb`, `Sparkles`, `Target` ou outro?
-2. Em "Resultados", qual exatamente é "a sessão final" do DRE — apenas o card de Lucro/Prejuízo final, ou todo o bloco de totais consolidados?
-3. Em "Despesas", o ano exibido deve ser sempre o atual ou permitir trocar de ano?
+### Arquivos afetados
+- `supabase/migrations/*_add_preco_venda_estoque.sql` (novo)
+- `src/hooks/useEstoque.ts`
+- `src/pages/direcao/estoque/ProdutosFabrica.tsx`
+- `src/pages/direcao/estrategia/EstrategiaItens.tsx`

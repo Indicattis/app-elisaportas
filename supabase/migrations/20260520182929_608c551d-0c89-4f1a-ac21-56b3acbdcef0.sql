@@ -1,0 +1,1 @@
+ALTER TABLE public.estoque ADD COLUMN IF NOT EXISTS preco_venda numeric NOT NULL DEFAULT 0;
