@@ -6466,6 +6466,7 @@ export type Database = {
           lucro_produto: number | null
           margem_pintura: number | null
           margem_produto: number | null
+          observacao_item: string | null
           pedido_correcao_id: string | null
           percentual_credito: number | null
           quantidade: number | null
@@ -6505,6 +6506,7 @@ export type Database = {
           lucro_produto?: number | null
           margem_pintura?: number | null
           margem_produto?: number | null
+          observacao_item?: string | null
           pedido_correcao_id?: string | null
           percentual_credito?: number | null
           quantidade?: number | null
@@ -6544,6 +6546,7 @@ export type Database = {
           lucro_produto?: number | null
           margem_pintura?: number | null
           margem_produto?: number | null
+          observacao_item?: string | null
           pedido_correcao_id?: string | null
           percentual_credito?: number | null
           quantidade?: number | null
