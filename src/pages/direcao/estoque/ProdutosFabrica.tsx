@@ -173,7 +173,7 @@ interface SortableProductRowProps {
   showPrecoVenda?: boolean;
 }
 
-function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCount, onToggleConferir, onExcluir, onUpdateField, categorias, fornecedores, materiasPrimas, hideSku, hideMateriaPrima, hidePedidos, hideConferir }: SortableProductRowProps) {
+function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCount, onToggleConferir, onExcluir, onUpdateField, categorias, fornecedores, materiasPrimas, hideSku, hideMateriaPrima, hidePedidos, hideConferir, showPrecoVenda }: SortableProductRowProps) {
   const {
     attributes,
     listeners,
