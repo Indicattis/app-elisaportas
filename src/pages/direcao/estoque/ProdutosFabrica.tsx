@@ -1216,6 +1216,10 @@ export default function ProdutosFabrica({
                       ---
                     </TableCell>
                     {showPrecoVenda && <TableCell />}
+                    {showPrecoVenda && <TableCell />}
+                    {showPrecoVenda && <TableCell />}
+                    {showPrecoVenda && <TableCell />}
+                    {showPrecoVenda && <TableCell />}
                     <TableCell className="text-right font-bold text-white">
                       {formatCurrency(totals.valor)}
                     </TableCell>
