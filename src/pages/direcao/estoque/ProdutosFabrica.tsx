@@ -316,22 +316,6 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
           onSave={(v) => onUpdateField(produto.id, { categoria: v || null })}
         />
       </TableCell>
-      <TableCell className="text-center text-white/70 text-sm">
-        <EditableSelectCell
-          value={produto.unidade || "UN"}
-          options={[
-            { value: "UN", label: "Unidade (UN)" },
-            { value: "KG", label: "Quilograma (KG)" },
-            { value: "L", label: "Litro (L)" },
-            { value: "M", label: "Metro (M)" },
-            { value: "M2", label: "Metro² (M²)" },
-            { value: "CX", label: "Caixa (CX)" },
-          ]}
-          display={<span>{produto.unidade || "UN"}</span>}
-          placeholder="Unidade"
-          onSave={(v) => onUpdateField(produto.id, { unidade: v || "UN" })}
-        />
-      </TableCell>
       <TableCell className="text-center text-white/80">
         {produto.conferir_estoque ? (
           <EditableCell
@@ -388,6 +372,22 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
           />
         </TableCell>
       )}
+      <TableCell className="text-center text-white/70 text-sm">
+        <EditableSelectCell
+          value={produto.unidade || "UN"}
+          options={[
+            { value: "UN", label: "Unidade (UN)" },
+            { value: "KG", label: "Quilograma (KG)" },
+            { value: "L", label: "Litro (L)" },
+            { value: "M", label: "Metro (M)" },
+            { value: "M2", label: "Metro² (M²)" },
+            { value: "CX", label: "Caixa (CX)" },
+          ]}
+          display={<span>{produto.unidade || "UN"}</span>}
+          placeholder="Unidade"
+          onSave={(v) => onUpdateField(produto.id, { unidade: v || "UN" })}
+        />
+      </TableCell>
       <TableCell className="text-right text-white/80">
         <EditableCell
           value={produto.custo_unitario}
@@ -1090,12 +1090,12 @@ export default function ProdutosFabrica({
                     <TableHead className="text-xs font-medium text-white/60">Fornecedor</TableHead>
                     {!hideMateriaPrima && <TableHead className="text-xs font-medium text-white/60">Matéria-prima</TableHead>}
                     <TableHead className="text-xs font-medium text-white/60">Categoria</TableHead>
-                    <TableHead className="text-center text-xs font-medium text-white/60">Unidade</TableHead>
                     <TableHead className="text-center text-xs font-medium text-white/60">Est. Mín</TableHead>
                     <TableHead className="text-center text-xs font-medium text-white/60">Est. Máx</TableHead>
                     <TableHead className="text-center text-xs font-medium text-white/60">Atual</TableHead>
                     {!hidePedidos && <TableHead className="text-center text-xs font-medium text-white/60">Pedidos</TableHead>}
                     {!hideConferir && <TableHead className="text-center text-xs font-medium text-white/60">Conferir</TableHead>}
+                    <TableHead className="text-center text-xs font-medium text-white/60">Unidade</TableHead>
                     <TableHead className="text-right text-xs font-medium text-white/60">Preço/Un</TableHead>
                     {showPrecoVenda && <TableHead className="text-right text-xs font-medium text-white/60">Preço de Venda</TableHead>}
                     <TableHead className="text-right text-xs font-medium text-white/60">Valor Total</TableHead>
