@@ -165,9 +165,13 @@ interface SortableProductRowProps {
   categorias: Categoria[];
   fornecedores: { id: string; nome: string }[];
   materiasPrimas: MateriaPrima[];
+  hideSku?: boolean;
+  hideMateriaPrima?: boolean;
+  hidePedidos?: boolean;
+  hideConferir?: boolean;
 }
 
-function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCount, onToggleConferir, onExcluir, onUpdateField, categorias, fornecedores, materiasPrimas }: SortableProductRowProps) {
+function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCount, onToggleConferir, onExcluir, onUpdateField, categorias, fornecedores, materiasPrimas, hideSku, hideMateriaPrima, hidePedidos, hideConferir }: SortableProductRowProps) {
   const {
     attributes,
     listeners,
@@ -223,18 +227,20 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
           />
         </div>
       </TableCell>
-      <TableCell className="text-white/70 text-sm">
-        <EditableCell
-          value={produto.sku ?? ""}
-          placeholder="SKU"
-          display={
-            produto.sku
-              ? <span className="text-xs font-mono text-white/70">{produto.sku}</span>
-              : <span className="text-xs text-white/30">—</span>
-          }
-          onSave={(v) => onUpdateField(produto.id, { sku: String(v).trim() || null })}
-        />
-      </TableCell>
+      {!hideSku && (
+        <TableCell className="text-white/70 text-sm">
+          <EditableCell
+            value={produto.sku ?? ""}
+            placeholder="SKU"
+            display={
+              produto.sku
+                ? <span className="text-xs font-mono text-white/70">{produto.sku}</span>
+                : <span className="text-xs text-white/30">—</span>
+            }
+            onSave={(v) => onUpdateField(produto.id, { sku: String(v).trim() || null })}
+          />
+        </TableCell>
+      )}
       <TableCell className="text-white/60 text-sm">
         <EditableSelectCell
           value={produto.fornecedor?.id ?? null}
@@ -244,6 +250,7 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
           onSave={(v) => onUpdateField(produto.id, { fornecedor_id: v || null })}
         />
       </TableCell>
+      {!hideMateriaPrima && (
       <TableCell className="text-white/70 text-sm">
         <div className="space-y-1">
           <EditableSelectCell
@@ -291,6 +298,7 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
           )}
         </div>
       </TableCell>
+      )}
       <TableCell>
         <EditableSelectCell
           value={categoriaAtual?.id ?? null}
@@ -365,15 +373,19 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
           <span className="text-white/30">---</span>
         )}
       </TableCell>
-      <TableCell className="text-center text-white/60 text-sm">
-        {pedidosCount || 0}
-      </TableCell>
-      <TableCell className="text-center">
-        <Checkbox
-          checked={produto.conferir_estoque}
-          onCheckedChange={() => onToggleConferir(produto.id, !!produto.conferir_estoque)}
-        />
-      </TableCell>
+      {!hidePedidos && (
+        <TableCell className="text-center text-white/60 text-sm">
+          {pedidosCount || 0}
+        </TableCell>
+      )}
+      {!hideConferir && (
+        <TableCell className="text-center">
+          <Checkbox
+            checked={produto.conferir_estoque}
+            onCheckedChange={() => onToggleConferir(produto.id, !!produto.conferir_estoque)}
+          />
+        </TableCell>
+      )}
       <TableCell className="text-right text-white/80">
         <EditableCell
           value={produto.custo_unitario}
@@ -410,7 +422,29 @@ function DragOverlayRow({ produto }: { produto: ProdutoEstoque | null }) {
   );
 }
 
-export default function ProdutosFabrica() {
+interface ProdutosFabricaProps {
+  hideSku?: boolean;
+  hideMateriaPrima?: boolean;
+  hidePedidos?: boolean;
+  hideConferir?: boolean;
+  disableNavigate?: boolean;
+  titleOverride?: string;
+  subtitleOverride?: string;
+  backPathOverride?: string;
+  breadcrumbItemsOverride?: { label: string; path?: string }[];
+}
+
+export default function ProdutosFabrica({
+  hideSku = false,
+  hideMateriaPrima = false,
+  hidePedidos = false,
+  hideConferir = false,
+  disableNavigate = false,
+  titleOverride,
+  subtitleOverride,
+  backPathOverride,
+  breadcrumbItemsOverride,
+}: ProdutosFabricaProps = {}) {
   const navigate = useNavigate();
   const location = useLocation();
   const { produtos, loading, adicionarProduto, reordenarProdutos, excluirProduto } = useEstoque();
@@ -626,6 +660,7 @@ export default function ProdutosFabrica() {
   };
 
   const handleDoubleClick = (produtoId: string) => {
+    if (disableNavigate) return;
     const basePath = window.location.pathname.startsWith("/fabrica/produtos")
       ? "/fabrica/produtos"
       : "/direcao/estoque/configuracoes/produtos/fabrica";
@@ -943,7 +978,7 @@ export default function ProdutosFabrica() {
 
   const backPath = isFabricaRoute ? '/fabrica' : '/direcao/estoque/configuracoes/produtos';
 
-  const breadcrumbItems = isFabricaRoute
+  const breadcrumbItems = breadcrumbItemsOverride ?? (isFabricaRoute
     ? [
         { label: 'Home', path: '/home' },
         { label: 'Fábrica', path: '/fabrica' },
@@ -956,13 +991,13 @@ export default function ProdutosFabrica() {
         { label: 'Configurações', path: '/direcao/estoque/configuracoes' },
         { label: 'Produtos', path: '/direcao/estoque/configuracoes/produtos' },
         { label: 'Fábrica' }
-      ];
+      ]);
 
   return (
     <MinimalistLayout
-      title="Produtos da Fábrica"
-      subtitle="Gerencie os produtos do estoque"
-      backPath={backPath}
+      title={titleOverride ?? "Produtos da Fábrica"}
+      subtitle={subtitleOverride ?? "Gerencie os produtos do estoque"}
+      backPath={backPathOverride ?? backPath}
       headerActions={headerActions}
       breadcrumbItems={breadcrumbItems}
       fullWidth
@@ -1029,16 +1064,16 @@ export default function ProdutosFabrica() {
                   <TableRow className="border-white/10 hover:bg-transparent">
                     <TableHead className="w-10 px-1" />
                     <TableHead className="text-xs font-medium text-white/60">Produto</TableHead>
-                    <TableHead className="text-xs font-medium text-white/60">SKU</TableHead>
+                    {!hideSku && <TableHead className="text-xs font-medium text-white/60">SKU</TableHead>}
                     <TableHead className="text-xs font-medium text-white/60">Fornecedor</TableHead>
-                    <TableHead className="text-xs font-medium text-white/60">Matéria-prima</TableHead>
+                    {!hideMateriaPrima && <TableHead className="text-xs font-medium text-white/60">Matéria-prima</TableHead>}
                     <TableHead className="text-xs font-medium text-white/60">Categoria</TableHead>
                     <TableHead className="text-center text-xs font-medium text-white/60">Unidade</TableHead>
                     <TableHead className="text-center text-xs font-medium text-white/60">Est. Mín</TableHead>
                     <TableHead className="text-center text-xs font-medium text-white/60">Est. Máx</TableHead>
                     <TableHead className="text-center text-xs font-medium text-white/60">Atual</TableHead>
-                    <TableHead className="text-center text-xs font-medium text-white/60">Pedidos</TableHead>
-                    <TableHead className="text-center text-xs font-medium text-white/60">Conferir</TableHead>
+                    {!hidePedidos && <TableHead className="text-center text-xs font-medium text-white/60">Pedidos</TableHead>}
+                    {!hideConferir && <TableHead className="text-center text-xs font-medium text-white/60">Conferir</TableHead>}
                     <TableHead className="text-right text-xs font-medium text-white/60">Preço/Un</TableHead>
                     <TableHead className="text-right text-xs font-medium text-white/60">Valor Total</TableHead>
                     <TableHead className="text-center text-xs font-medium text-white/60">Ações</TableHead>
@@ -1072,6 +1107,10 @@ export default function ProdutosFabrica() {
                           categorias={categorias}
                           fornecedores={fornecedores}
                           materiasPrimas={materiasPrimas}
+                          hideSku={hideSku}
+                          hideMateriaPrima={hideMateriaPrima}
+                          hidePedidos={hidePedidos}
+                          hideConferir={hideConferir}
                         />
                       ))
                     )}

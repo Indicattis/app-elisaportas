@@ -15,7 +15,25 @@ import { CatalogoPrecosTab } from "@/components/tabela-precos/CatalogoPrecosTab"
 import { useQueryClient } from "@tanstack/react-query";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 
-export default function TabelaPrecos() {
+interface TabelaPrecosProps {
+  hideLucroColumn?: boolean;
+  hideAcoesColumn?: boolean;
+  hideCatalogoTab?: boolean;
+  titleOverride?: string;
+  subtitleOverride?: string;
+  backPathOverride?: string;
+  breadcrumbItemsOverride?: { label: string; path?: string }[];
+}
+
+export default function TabelaPrecos({
+  hideLucroColumn = false,
+  hideAcoesColumn = false,
+  hideCatalogoTab = false,
+  titleOverride,
+  subtitleOverride,
+  backPathOverride,
+  breadcrumbItemsOverride,
+}: TabelaPrecosProps = {}) {
   const [searchTerm, setSearchTerm] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [bulkUploadModalOpen, setBulkUploadModalOpen] = useState(false);
@@ -131,10 +149,10 @@ export default function TabelaPrecos() {
 
   return (
     <MinimalistLayout
-      title="Tabela de Preços"
-      subtitle="Gestão de preços das portas por tamanho"
-      backPath="/direcao/vendas"
-      breadcrumbItems={[
+      title={titleOverride ?? "Tabela de Preços"}
+      subtitle={subtitleOverride ?? "Gestão de preços das portas por tamanho"}
+      backPath={backPathOverride ?? "/direcao/vendas"}
+      breadcrumbItems={breadcrumbItemsOverride ?? [
         { label: 'Home', path: '/home' },
         { label: 'Direção', path: '/direcao' },
         { label: 'Vendas', path: '/direcao/vendas' },
@@ -143,10 +161,12 @@ export default function TabelaPrecos() {
       headerActions={headerActions}
     >
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'portas' | 'catalogo')} className="space-y-6">
-        <TabsList className="bg-white/5 border border-white/10">
-          <TabsTrigger value="portas" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-white/70">Portas</TabsTrigger>
-          <TabsTrigger value="catalogo" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-white/70">Catálogo</TabsTrigger>
-        </TabsList>
+        {!hideCatalogoTab && (
+          <TabsList className="bg-white/5 border border-white/10">
+            <TabsTrigger value="portas" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-white/70">Portas</TabsTrigger>
+            <TabsTrigger value="catalogo" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-white/70">Catálogo</TabsTrigger>
+          </TabsList>
+        )}
 
         <TabsContent value="portas" className="space-y-6 mt-0">
         {/* Card de Pesquisa Rápida */}
@@ -271,8 +291,8 @@ export default function TabelaPrecos() {
                       <TableHead className="text-right hidden md:table-cell text-white/60">Valor Instalação</TableHead>
                       <TableHead className="text-right hidden md:table-cell text-white/60">Valor Pintura</TableHead>
                       <TableHead className="text-right text-white/60">Total</TableHead>
-                      <TableHead className="text-right hidden md:table-cell text-white/60">Lucro</TableHead>
-                      <TableHead className="text-center w-24 text-white/60">Ações</TableHead>
+                      {!hideLucroColumn && <TableHead className="text-right hidden md:table-cell text-white/60">Lucro</TableHead>}
+                      {!hideAcoesColumn && <TableHead className="text-center w-24 text-white/60">Ações</TableHead>}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -309,7 +329,7 @@ export default function TabelaPrecos() {
                               })}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-right hidden md:table-cell">
+                          {!hideLucroColumn && <TableCell className="text-right hidden md:table-cell">
                             {editingLucroId === item.id ? (
                               <div className="flex items-center justify-end gap-1">
                                 <Input
@@ -340,8 +360,8 @@ export default function TabelaPrecos() {
                                 {(item.lucro || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                               </span>
                             )}
-                          </TableCell>
-                          <TableCell>
+                          </TableCell>}
+                          {!hideAcoesColumn && <TableCell>
                             <div className="flex items-center justify-center gap-1">
                               <Button
                                 variant="ghost"
@@ -362,7 +382,7 @@ export default function TabelaPrecos() {
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </div>
-                          </TableCell>
+                          </TableCell>}
                         </TableRow>
                       );
                     })}
