@@ -1097,6 +1097,7 @@ export default function ProdutosFabrica({
                     {!hidePedidos && <TableHead className="text-center text-xs font-medium text-white/60">Pedidos</TableHead>}
                     {!hideConferir && <TableHead className="text-center text-xs font-medium text-white/60">Conferir</TableHead>}
                     <TableHead className="text-right text-xs font-medium text-white/60">Preço/Un</TableHead>
+                    {showPrecoVenda && <TableHead className="text-right text-xs font-medium text-white/60">Preço de Venda</TableHead>}
                     <TableHead className="text-right text-xs font-medium text-white/60">Valor Total</TableHead>
                     <TableHead className="text-center text-xs font-medium text-white/60">Ações</TableHead>
                   </TableRow>
@@ -1133,6 +1134,7 @@ export default function ProdutosFabrica({
                           hideMateriaPrima={hideMateriaPrima}
                           hidePedidos={hidePedidos}
                           hideConferir={hideConferir}
+                          showPrecoVenda={showPrecoVenda}
                         />
                       ))
                     )}
