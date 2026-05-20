@@ -15,14 +15,18 @@ export default function EstrategiaPrecos() {
         { label: 'Tabela de Preços' },
       ]}
     >
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <TabelaPrecos
-          embedded
-          hideLucroColumn
-          hideAcoesColumn
-          hideTotalColumn
-        />
-        <CatalogoPrecosTab compact />
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        <div className="lg:col-span-3">
+          <TabelaPrecos
+            embedded
+            hideLucroColumn
+            hideAcoesColumn
+            hideTotalColumn
+          />
+        </div>
+        <div className="lg:col-span-2">
+          <CatalogoPrecosTab compact />
+        </div>
       </div>
     </MinimalistLayout>
   );
