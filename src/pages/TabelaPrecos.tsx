@@ -190,6 +190,8 @@ export default function TabelaPrecos({
                       <TableHead className="text-center text-white/60">L</TableHead>
                       <TableHead className="text-center text-white/60">A</TableHead>
                       <TableHead className="text-right text-white/60">Valor Porta</TableHead>
+                      <TableHead className="text-right text-white/60">Valor Instalação</TableHead>
+                      <TableHead className="text-right text-white/60">Valor Pintura</TableHead>
                       {!hideTotalColumn && <TableHead className="text-right text-white/60">Total</TableHead>}
                     </TableRow>
                   </TableHeader>
@@ -203,6 +205,12 @@ export default function TabelaPrecos({
                           <TableCell className="text-center text-white/70">{item.altura}m</TableCell>
                           <TableCell className="text-right text-white/70">
                             {item.valor_porta.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                          </TableCell>
+                          <TableCell className="text-right text-white/70">
+                            {item.valor_instalacao.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                          </TableCell>
+                          <TableCell className="text-right text-white/70">
+                            {item.valor_pintura.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                           </TableCell>
                           {!hideTotalColumn && (
                             <TableCell className="text-right">
