@@ -165,9 +165,13 @@ interface SortableProductRowProps {
   categorias: Categoria[];
   fornecedores: { id: string; nome: string }[];
   materiasPrimas: MateriaPrima[];
+  hideSku?: boolean;
+  hideMateriaPrima?: boolean;
+  hidePedidos?: boolean;
+  hideConferir?: boolean;
 }
 
-function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCount, onToggleConferir, onExcluir, onUpdateField, categorias, fornecedores, materiasPrimas }: SortableProductRowProps) {
+function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCount, onToggleConferir, onExcluir, onUpdateField, categorias, fornecedores, materiasPrimas, hideSku, hideMateriaPrima, hidePedidos, hideConferir }: SortableProductRowProps) {
   const {
     attributes,
     listeners,
