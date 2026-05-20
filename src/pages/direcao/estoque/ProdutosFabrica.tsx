@@ -531,6 +531,7 @@ export default function ProdutosFabrica({
   const [localProdutos, setLocalProdutos] = useState<ProdutoEstoque[]>([]);
   const [novoModal, setNovoModal] = useState(false);
   const [gerenciarCategoriasOpen, setGerenciarCategoriasOpen] = useState(false);
+  const [blockDeleteOpen, setBlockDeleteOpen] = useState(false);
   // matérias-primas agora abrem em página dedicada
   const [searchTerm, setSearchTerm] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
