@@ -1191,6 +1191,19 @@ export default function ProdutosFabrica({
           </div>
         </div>
       </div>
+      <AlertDialog open={blockDeleteOpen} onOpenChange={setBlockDeleteOpen}>
+        <AlertDialogContent className="bg-zinc-900 border-white/10 text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Exclusão não permitida</AlertDialogTitle>
+            <AlertDialogDescription className="text-white/70">
+              Para excluir este item, fale com o administrador.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction>Entendi</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </MinimalistLayout>
   );
 }
