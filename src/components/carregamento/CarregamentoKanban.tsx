@@ -211,6 +211,40 @@ function OrdemCard({ ordem, onIniciarColeta, podeIniciar }: OrdemCardProps) {
                 <p className="text-[10px] sm:text-xs text-muted-foreground italic">Sem ficha de visita anexada</p>
               )}
             </div>
+
+            {observacoesVisita && observacoesVisita.length > 0 && (
+              <div className="col-span-1 sm:col-span-2">
+                <p className="text-[10px] sm:text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1 font-medium mb-1">
+                  <ClipboardList className="h-3 w-3" />
+                  Observações da Visita ({observacoesVisita.length} {observacoesVisita.length === 1 ? 'porta' : 'portas'})
+                </p>
+                <div className="space-y-1.5">
+                  {observacoesVisita.map((obs: any, idx: number) => {
+                    const items = [
+                      obs.opcao_tubo && OPCOES_TUBO[obs.opcao_tubo as keyof typeof OPCOES_TUBO],
+                      obs.interna_externa && OPCOES_INTERNA_EXTERNA[obs.interna_externa as keyof typeof OPCOES_INTERNA_EXTERNA],
+                      obs.posicao_guia && OPCOES_POSICAO_GUIA[obs.posicao_guia as keyof typeof OPCOES_POSICAO_GUIA],
+                      obs.opcao_guia && OPCOES_GUIA[obs.opcao_guia as keyof typeof OPCOES_GUIA],
+                      obs.opcao_rolo && OPCOES_ROLO[obs.opcao_rolo as keyof typeof OPCOES_ROLO],
+                      obs.tubo_tiras_frontais && OPCOES_TUBO_TIRAS_FRONTAIS[obs.tubo_tiras_frontais as keyof typeof OPCOES_TUBO_TIRAS_FRONTAIS],
+                      obs.lado_motor && `Motor: ${OPCOES_LADO_MOTOR[obs.lado_motor as keyof typeof OPCOES_LADO_MOTOR]}`,
+                      obs.aparencia_testeira && `Testeira: ${OPCOES_APARENCIA_TESTEIRA[obs.aparencia_testeira as keyof typeof OPCOES_APARENCIA_TESTEIRA]}`,
+                    ].filter(Boolean);
+
+                    if (items.length === 0) return null;
+
+                    return (
+                      <div key={obs.id || idx} className="text-[10px] sm:text-xs text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/30 rounded px-2 py-1 border border-amber-200 dark:border-amber-800">
+                        {observacoesVisita.length > 1 && (
+                          <span className="font-semibold">Porta {(obs.indice_porta ?? idx) + 1}: </span>
+                        )}
+                        {items.join(' · ')}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* LATERAL DIREITA - Botão Iniciar */}
