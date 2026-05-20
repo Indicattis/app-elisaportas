@@ -27,6 +27,7 @@ export interface ProdutoEstoque {
   categoria: string;
   ativo: boolean;
   custo_unitario: number;
+  preco_venda: number;
   subcategoria_id: string | null;
   peso_porta: number | null;
   setor_responsavel_producao: 'perfiladeira' | 'soldagem' | 'separacao' | 'pintura' | null;
