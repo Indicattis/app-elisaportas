@@ -234,6 +234,12 @@ import DREMesDirecao from "./pages/direcao/DREMesDirecao";
 import DREDespesasDirecao from "./pages/direcao/DREDespesasDirecao";
 import DRECustosDirecao from "./pages/direcao/DRECustosDirecao";
 import CaixaElisaDirecao from "./pages/direcao/CaixaElisaDirecao";
+import EstrategiaHub from "./pages/direcao/estrategia/EstrategiaHub";
+import EstrategiaItens from "./pages/direcao/estrategia/EstrategiaItens";
+import EstrategiaKits from "./pages/direcao/estrategia/EstrategiaKits";
+import EstrategiaPrecos from "./pages/direcao/estrategia/EstrategiaPrecos";
+import EstrategiaDespesas from "./pages/direcao/estrategia/EstrategiaDespesas";
+import EstrategiaResultados from "./pages/direcao/estrategia/EstrategiaResultados";
 
 // Hub de Estoque da Direção
 import DirecaoEstoqueHub from "./pages/direcao/estoque/DirecaoEstoqueHub";
@@ -516,6 +522,14 @@ const App = () => (
 
                 {/* Caixa Elisa */}
                 <Route path="/direcao/caixa-elisa" element={<ProtectedRoute routeKey="direcao_caixa_elisa"><CaixaElisaDirecao /></ProtectedRoute>} />
+
+                {/* Estratégia */}
+                <Route path="/direcao/estrategia" element={<ProtectedRoute routeKey="direcao_estrategia"><EstrategiaHub /></ProtectedRoute>} />
+                <Route path="/direcao/estrategia/itens" element={<ProtectedRoute routeKey="direcao_estrategia"><EstrategiaItens /></ProtectedRoute>} />
+                <Route path="/direcao/estrategia/kits" element={<ProtectedRoute routeKey="direcao_estrategia"><EstrategiaKits /></ProtectedRoute>} />
+                <Route path="/direcao/estrategia/precos" element={<ProtectedRoute routeKey="direcao_estrategia"><EstrategiaPrecos /></ProtectedRoute>} />
+                <Route path="/direcao/estrategia/despesas" element={<ProtectedRoute routeKey="direcao_estrategia"><EstrategiaDespesas /></ProtectedRoute>} />
+                <Route path="/direcao/estrategia/resultados" element={<ProtectedRoute routeKey="direcao_estrategia"><EstrategiaResultados /></ProtectedRoute>} />
 
                 {/* Organograma RH */}
                 <Route path="/direcao/gestao-colaboradores" element={<ProtectedRoute routeKey="direcao_gestao_colaboradores"><GestaoColaboradoresDirecao /></ProtectedRoute>} />
