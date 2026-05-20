@@ -8,6 +8,8 @@ export default function EstrategiaItens() {
       hidePedidos
       hideConferir
       disableNavigate
+      showPrecoVenda
+      blockDelete
       titleOverride="Itens"
       subtitleOverride="Catálogo de itens"
       backPathOverride="/direcao/estrategia"
