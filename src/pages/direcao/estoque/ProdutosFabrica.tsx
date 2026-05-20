@@ -227,18 +227,20 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
           />
         </div>
       </TableCell>
-      <TableCell className="text-white/70 text-sm">
-        <EditableCell
-          value={produto.sku ?? ""}
-          placeholder="SKU"
-          display={
-            produto.sku
-              ? <span className="text-xs font-mono text-white/70">{produto.sku}</span>
-              : <span className="text-xs text-white/30">—</span>
-          }
-          onSave={(v) => onUpdateField(produto.id, { sku: String(v).trim() || null })}
-        />
-      </TableCell>
+      {!hideSku && (
+        <TableCell className="text-white/70 text-sm">
+          <EditableCell
+            value={produto.sku ?? ""}
+            placeholder="SKU"
+            display={
+              produto.sku
+                ? <span className="text-xs font-mono text-white/70">{produto.sku}</span>
+                : <span className="text-xs text-white/30">—</span>
+            }
+            onSave={(v) => onUpdateField(produto.id, { sku: String(v).trim() || null })}
+          />
+        </TableCell>
+      )}
       <TableCell className="text-white/60 text-sm">
         <EditableSelectCell
           value={produto.fornecedor?.id ?? null}
@@ -248,6 +250,7 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
           onSave={(v) => onUpdateField(produto.id, { fornecedor_id: v || null })}
         />
       </TableCell>
+      {!hideMateriaPrima && (
       <TableCell className="text-white/70 text-sm">
         <div className="space-y-1">
           <EditableSelectCell
@@ -295,6 +298,7 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
           )}
         </div>
       </TableCell>
+      )}
       <TableCell>
         <EditableSelectCell
           value={categoriaAtual?.id ?? null}
@@ -369,15 +373,19 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
           <span className="text-white/30">---</span>
         )}
       </TableCell>
-      <TableCell className="text-center text-white/60 text-sm">
-        {pedidosCount || 0}
-      </TableCell>
-      <TableCell className="text-center">
-        <Checkbox
-          checked={produto.conferir_estoque}
-          onCheckedChange={() => onToggleConferir(produto.id, !!produto.conferir_estoque)}
-        />
-      </TableCell>
+      {!hidePedidos && (
+        <TableCell className="text-center text-white/60 text-sm">
+          {pedidosCount || 0}
+        </TableCell>
+      )}
+      {!hideConferir && (
+        <TableCell className="text-center">
+          <Checkbox
+            checked={produto.conferir_estoque}
+            onCheckedChange={() => onToggleConferir(produto.id, !!produto.conferir_estoque)}
+          />
+        </TableCell>
+      )}
       <TableCell className="text-right text-white/80">
         <EditableCell
           value={produto.custo_unitario}
