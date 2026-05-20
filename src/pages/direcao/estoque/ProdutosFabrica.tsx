@@ -660,6 +660,7 @@ export default function ProdutosFabrica({
   };
 
   const handleDoubleClick = (produtoId: string) => {
+    if (disableNavigate) return;
     const basePath = window.location.pathname.startsWith("/fabrica/produtos")
       ? "/fabrica/produtos"
       : "/direcao/estoque/configuracoes/produtos/fabrica";
@@ -977,7 +978,7 @@ export default function ProdutosFabrica({
 
   const backPath = isFabricaRoute ? '/fabrica' : '/direcao/estoque/configuracoes/produtos';
 
-  const breadcrumbItems = isFabricaRoute
+  const breadcrumbItems = breadcrumbItemsOverride ?? (isFabricaRoute
     ? [
         { label: 'Home', path: '/home' },
         { label: 'Fábrica', path: '/fabrica' },
@@ -990,13 +991,13 @@ export default function ProdutosFabrica({
         { label: 'Configurações', path: '/direcao/estoque/configuracoes' },
         { label: 'Produtos', path: '/direcao/estoque/configuracoes/produtos' },
         { label: 'Fábrica' }
-      ];
+      ]);
 
   return (
     <MinimalistLayout
-      title="Produtos da Fábrica"
-      subtitle="Gerencie os produtos do estoque"
-      backPath={backPath}
+      title={titleOverride ?? "Produtos da Fábrica"}
+      subtitle={subtitleOverride ?? "Gerencie os produtos do estoque"}
+      backPath={backPathOverride ?? backPath}
       headerActions={headerActions}
       breadcrumbItems={breadcrumbItems}
       fullWidth
