@@ -372,6 +372,15 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
           />
         </TableCell>
       )}
+      <TableCell className="text-right text-white/80">
+        <EditableCell
+          value={produto.custo_unitario}
+          type="currency"
+          align="right"
+          display={<span>{formatCurrency(produto.custo_unitario)}</span>}
+          onSave={(v) => onUpdateField(produto.id, { custo_unitario: Number(v) })}
+        />
+      </TableCell>
       <TableCell className="text-center text-white/70 text-sm">
         <EditableSelectCell
           value={produto.unidade || "UN"}
@@ -386,15 +395,6 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
           display={<span>{produto.unidade || "UN"}</span>}
           placeholder="Unidade"
           onSave={(v) => onUpdateField(produto.id, { unidade: v || "UN" })}
-        />
-      </TableCell>
-      <TableCell className="text-right text-white/80">
-        <EditableCell
-          value={produto.custo_unitario}
-          type="currency"
-          align="right"
-          display={<span>{formatCurrency(produto.custo_unitario)}</span>}
-          onSave={(v) => onUpdateField(produto.id, { custo_unitario: Number(v) })}
         />
       </TableCell>
       {showPrecoVenda && (
@@ -1095,8 +1095,8 @@ export default function ProdutosFabrica({
                     <TableHead className="text-center text-xs font-medium text-white/60">Atual</TableHead>
                     {!hidePedidos && <TableHead className="text-center text-xs font-medium text-white/60">Pedidos</TableHead>}
                     {!hideConferir && <TableHead className="text-center text-xs font-medium text-white/60">Conferir</TableHead>}
-                    <TableHead className="text-center text-xs font-medium text-white/60">Unidade</TableHead>
                     <TableHead className="text-right text-xs font-medium text-white/60">Preço/Un</TableHead>
+                    <TableHead className="text-center text-xs font-medium text-white/60">Unidade</TableHead>
                     {showPrecoVenda && <TableHead className="text-right text-xs font-medium text-white/60">Preço de Venda</TableHead>}
                     <TableHead className="text-right text-xs font-medium text-white/60">Valor Total</TableHead>
                     <TableHead className="text-center text-xs font-medium text-white/60">Ações</TableHead>
