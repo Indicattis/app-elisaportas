@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingCart, DollarSign, Factory, Truck, Target, ArrowLeft, Users, Warehouse, ShieldCheck, Calculator, Network, ClipboardCheck, ExternalLink, Lock, Wallet } from 'lucide-react';
+import { ShoppingCart, DollarSign, Factory, Truck, Target, ArrowLeft, Users, Warehouse, ShieldCheck, Calculator, Network, ClipboardCheck, ExternalLink, Lock, Wallet, Lightbulb } from 'lucide-react';
 
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
@@ -8,6 +8,7 @@ import { DelayedParticles } from '@/components/DelayedParticles';
 import { useBulkRouteAccess } from '@/hooks/useBulkRouteAccess';
 
 const menuItems = [
+  { label: 'Estratégia', icon: Lightbulb, path: '/direcao/estrategia', routePrefix: 'direcao_estrategia' },
   { label: 'Caixa Elisa', icon: Wallet, path: '/direcao/caixa-elisa', routePrefix: 'direcao_caixa_elisa' },
   { label: 'Vendas', icon: ShoppingCart, path: '/direcao/vendas', routePrefix: 'direcao_vendas' },
   { label: 'CRM', icon: ExternalLink, path: 'https://crm.elisaportas.com/', external: true, routePrefix: '' },
