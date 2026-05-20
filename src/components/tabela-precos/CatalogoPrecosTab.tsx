@@ -15,7 +15,11 @@ const UNIDADES = ["Unitário", "Metro", "Kg", "Litro"] as const;
 const formatCurrency = (value: number) =>
   (value || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-export function CatalogoPrecosTab() {
+interface CatalogoPrecosTabProps {
+  compact?: boolean;
+}
+
+export function CatalogoPrecosTab({ compact = false }: CatalogoPrecosTabProps = {}) {
   const [busca, setBusca] = useState("");
   const { produtos, isLoading, editarProduto } = useVendasCatalogo({ busca });
 
@@ -174,15 +178,15 @@ export function CatalogoPrecosTab() {
             <Table>
               <TableHeader>
                 <TableRow className="border-white/10 hover:bg-white/5">
-                  <TableHead className="w-14 text-white/60"></TableHead>
+                  {!compact && <TableHead className="w-14 text-white/60"></TableHead>}
                   <TableHead className="text-white/60">Produto</TableHead>
-                  <TableHead className="text-white/60 hidden md:table-cell">Categoria</TableHead>
-                  <TableHead className="text-white/60 hidden lg:table-cell">SKU</TableHead>
-                  <TableHead className="text-center text-white/60 hidden md:table-cell">Unidade</TableHead>
-                  <TableHead className="text-right text-white/60">Custo</TableHead>
+                  {!compact && <TableHead className="text-white/60 hidden md:table-cell">Categoria</TableHead>}
+                  {!compact && <TableHead className="text-white/60 hidden lg:table-cell">SKU</TableHead>}
+                  {!compact && <TableHead className="text-center text-white/60 hidden md:table-cell">Unidade</TableHead>}
+                  {!compact && <TableHead className="text-right text-white/60">Custo</TableHead>}
                   <TableHead className="text-right text-white/60">Preço Venda</TableHead>
-                  <TableHead className="text-right text-white/60 hidden md:table-cell">Margem</TableHead>
-                  <TableHead className="text-center text-white/60 hidden lg:table-cell">Estoque</TableHead>
+                  {!compact && <TableHead className="text-right text-white/60 hidden md:table-cell">Margem</TableHead>}
+                  {!compact && <TableHead className="text-center text-white/60 hidden lg:table-cell">Estoque</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -190,7 +194,7 @@ export function CatalogoPrecosTab() {
                   const margem = calcMargem(produto.preco_venda, produto.custo_produto || 0);
                   return (
                     <TableRow key={produto.id} className="border-white/10 hover:bg-white/5">
-                      <TableCell>
+                      {!compact && <TableCell>
                         <div className="w-10 h-10 rounded bg-white/5 overflow-hidden flex items-center justify-center">
                           {produto.imagem_url ? (
                             <img src={produto.imagem_url} alt={produto.nome_produto} className="w-full h-full object-cover" />
@@ -198,14 +202,14 @@ export function CatalogoPrecosTab() {
                             <Package className="w-4 h-4 text-white/30" />
                           )}
                         </div>
-                      </TableCell>
+                      </TableCell>}
                       <TableCell className="font-medium text-white">{produto.nome_produto}</TableCell>
-                      <TableCell className="text-white/60 hidden md:table-cell">{produto.categoria || "—"}</TableCell>
-                      <TableCell className="text-white/60 hidden lg:table-cell">{produto.sku || "—"}</TableCell>
-                      <TableCell className="text-center hidden md:table-cell">{renderUnidadeCell(produto)}</TableCell>
-                      <TableCell className="text-right">{renderEditableCell(produto, "custo_produto")}</TableCell>
+                      {!compact && <TableCell className="text-white/60 hidden md:table-cell">{produto.categoria || "—"}</TableCell>}
+                      {!compact && <TableCell className="text-white/60 hidden lg:table-cell">{produto.sku || "—"}</TableCell>}
+                      {!compact && <TableCell className="text-center hidden md:table-cell">{renderUnidadeCell(produto)}</TableCell>}
+                      {!compact && <TableCell className="text-right">{renderEditableCell(produto, "custo_produto")}</TableCell>}
                       <TableCell className="text-right">{renderEditableCell(produto, "preco_venda")}</TableCell>
-                      <TableCell className="text-right hidden md:table-cell">
+                      {!compact && <TableCell className="text-right hidden md:table-cell">
                         {margem !== null ? (
                           <Badge
                             className={
@@ -221,8 +225,8 @@ export function CatalogoPrecosTab() {
                         ) : (
                           <span className="text-white/40">—</span>
                         )}
-                      </TableCell>
-                      <TableCell className="text-center hidden lg:table-cell">
+                      </TableCell>}
+                      {!compact && <TableCell className="text-center hidden lg:table-cell">
                         <span
                           className={`text-xs px-2 py-0.5 rounded-full ${
                             produto.quantidade > 0
@@ -232,7 +236,7 @@ export function CatalogoPrecosTab() {
                         >
                           {produto.quantidade > 0 ? `${produto.quantidade} ${produto.unidade || "un"}` : "Sem estoque"}
                         </span>
-                      </TableCell>
+                      </TableCell>}
                     </TableRow>
                   );
                 })}
