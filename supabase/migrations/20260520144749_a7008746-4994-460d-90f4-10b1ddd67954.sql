@@ -1,0 +1,1 @@
+ALTER TABLE public.produtos_vendas ADD COLUMN IF NOT EXISTS observacao_item TEXT;

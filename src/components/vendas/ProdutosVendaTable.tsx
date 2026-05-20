@@ -2,7 +2,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Trash2, Pencil, X } from 'lucide-react';
+import { Trash2, Pencil, X, MessageSquare, MessageSquarePlus } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { useState } from 'react';
 import { ProdutoVenda } from '@/hooks/useVendas';
 import { useCatalogoCores } from '@/hooks/useCatalogoCores';
 
@@ -12,6 +15,7 @@ interface ProdutosVendaTableProps {
   onEditProduto?: (index: number) => void;
   onUpdateQuantidade?: (index: number, quantidade: number) => void;
   onRemoverDesconto?: (index: number) => void;
+  onUpdateObservacao?: (index: number, observacao: string) => void;
 }
 
 const getTipoProdutoLabel = (tipo: string) => {
@@ -44,7 +48,64 @@ const getTipoProdutoVariant = (tipo: string): "default" | "secondary" | "outline
   }
 };
 
-export function ProdutosVendaTable({ produtos, onRemoveProduto, onEditProduto, onUpdateQuantidade, onRemoverDesconto }: ProdutosVendaTableProps) {
+function ObservacaoCell({
+  valor,
+  onSalvar,
+}: {
+  valor: string;
+  onSalvar: (v: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [texto, setTexto] = useState(valor || '');
+  const temObs = !!valor && valor.trim().length > 0;
+  return (
+    <Popover open={open} onOpenChange={(o) => { setOpen(o); if (o) setTexto(valor || ''); }}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-8 max-w-[180px] gap-1 px-2 text-left"
+          title={valor || 'Adicionar observação'}
+        >
+          {temObs ? (
+            <MessageSquare className="w-3.5 h-3.5 shrink-0 text-primary" />
+          ) : (
+            <MessageSquarePlus className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
+          )}
+          <span className={`truncate text-xs ${temObs ? '' : 'text-muted-foreground'}`}>
+            {temObs ? valor : 'Adicionar'}
+          </span>
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-80" align="start">
+        <div className="space-y-2">
+          <p className="text-xs font-medium">Observação do item</p>
+          <Textarea
+            value={texto}
+            onChange={(e) => setTexto(e.target.value)}
+            placeholder="Anotações específicas deste item..."
+            className="min-h-[100px] text-sm"
+          />
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="ghost" size="sm" onClick={() => setOpen(false)}>
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => { onSalvar(texto.trim()); setOpen(false); }}
+            >
+              Salvar
+            </Button>
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+export function ProdutosVendaTable({ produtos, onRemoveProduto, onEditProduto, onUpdateQuantidade, onRemoverDesconto, onUpdateObservacao }: ProdutosVendaTableProps) {
   const { cores } = useCatalogoCores();
 
   if (produtos.length === 0) {
@@ -67,6 +128,7 @@ export function ProdutosVendaTable({ produtos, onRemoveProduto, onEditProduto, o
           <TableHead>Valor Unit.</TableHead>
           <TableHead>Desconto</TableHead>
           <TableHead>Total</TableHead>
+          <TableHead>Observação</TableHead>
           <TableHead className="w-[120px]">Ações</TableHead>
         </TableRow>
       </TableHeader>
@@ -183,6 +245,18 @@ export function ProdutosVendaTable({ produtos, onRemoveProduto, onEditProduto, o
                 </div>
               </TableCell>
               <TableCell className="font-semibold">R$ {valorTotal.toFixed(2)}</TableCell>
+            <TableCell>
+              {onUpdateObservacao ? (
+                <ObservacaoCell
+                  valor={produto.observacao_item || ''}
+                  onSalvar={(v) => onUpdateObservacao(index, v)}
+                />
+              ) : (
+                <span className="text-xs text-muted-foreground truncate block max-w-[180px]" title={produto.observacao_item || ''}>
+                  {produto.observacao_item || '—'}
+                </span>
+              )}
+            </TableCell>
               <TableCell>
                 <div className="flex gap-2">
                   {onEditProduto && (

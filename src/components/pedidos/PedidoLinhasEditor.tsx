@@ -700,6 +700,7 @@ export const PedidoLinhasEditor = ({
               dimensoes={dimensoes}
               linhasCount={grupo.linhasGrupo.length}
               categorias={categorias}
+              observacao={(p as any)?.observacao_item || null}
               isOpen={pastaAberta === key}
               onClick={() => setPastaAberta(prev => prev === key ? null : key)}
             />
@@ -725,6 +726,14 @@ export const PedidoLinhasEditor = ({
               <span className="text-sm font-semibold">{pastaAbertaDados.label}</span>
               {pastaAbertaDados.dimensoes && (
                 <span className="text-xs text-muted-foreground">{pastaAbertaDados.dimensoes}</span>
+              )}
+              {(pastaAbertaDados.porta as any)?.observacao_item && (
+                <span
+                  className="text-xs text-primary/80 italic max-w-[320px] truncate"
+                  title={(pastaAbertaDados.porta as any).observacao_item}
+                >
+                  “{(pastaAbertaDados.porta as any).observacao_item}”
+                </span>
               )}
             </div>
             {!isReadOnly && (

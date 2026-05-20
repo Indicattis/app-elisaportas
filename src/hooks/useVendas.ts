@@ -29,6 +29,7 @@ export interface ProdutoVenda {
   valor_credito?: number;
   percentual_credito?: number;
   unidade?: string;
+  observacao_item?: string | null;
 }
 
 // Manter compatibilidade com código existente
@@ -357,11 +358,13 @@ export function useVendas() {
               desconto_valor: produto.tipo_desconto === 'valor'
                 ? (produto.desconto_valor || 0) / qty
                 : produto.desconto_valor,
+              observacao_item: produto.observacao_item || null,
             }))
           : [{
               ...baseSplit,
               quantidade: qty,
               desconto_valor: produto.desconto_valor,
+              observacao_item: produto.observacao_item || null,
             }];
         
         // Se é porta com instalação, criar produto separado de instalação
@@ -383,7 +386,8 @@ export function useVendas() {
             quantidade: 1,
             descricao: 'Instalação',
             valor_credito: 0,
-            percentual_credito: 0
+            percentual_credito: 0,
+            observacao_item: produto.observacao_item || null,
           }));
           items.push(...instalacaoItems);
         }
@@ -669,11 +673,13 @@ export function useVendas() {
                 desconto_valor: produto.tipo_desconto === 'valor'
                   ? (produto.desconto_valor || 0) / qty
                   : produto.desconto_valor,
+              observacao_item: produto.observacao_item || null,
               }))
             : [{
                 ...baseSplit,
                 quantidade: qty,
                 desconto_valor: produto.desconto_valor,
+              observacao_item: produto.observacao_item || null,
               }];
           
           // Se é porta com instalação, criar produto separado de instalação
@@ -695,7 +701,8 @@ export function useVendas() {
               quantidade: 1,
               descricao: 'Instalação',
               valor_credito: 0,
-              percentual_credito: 0
+              percentual_credito: 0,
+              observacao_item: produto.observacao_item || null,
             }));
             items.push(...instalacaoItems);
           }
