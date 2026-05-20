@@ -259,17 +259,6 @@ export function ProdutosVendaTable({ produtos, onRemoveProduto, onEditProduto, o
             </TableCell>
               <TableCell>
                 <div className="flex gap-2">
-                  {onEditProduto && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => onEditProduto(index)}
-                      title="Editar produto"
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </Button>
-                  )}
                   <Button
                     type="button"
                     variant="ghost"
