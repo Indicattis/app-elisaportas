@@ -397,6 +397,17 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
           onSave={(v) => onUpdateField(produto.id, { custo_unitario: Number(v) })}
         />
       </TableCell>
+      {showPrecoVenda && (
+        <TableCell className="text-right text-white/80">
+          <EditableCell
+            value={produto.preco_venda ?? 0}
+            type="currency"
+            align="right"
+            display={<span>{formatCurrency(produto.preco_venda ?? 0)}</span>}
+            onSave={(v) => onUpdateField(produto.id, { preco_venda: Number(v) })}
+          />
+        </TableCell>
+      )}
       <TableCell className="text-right font-medium text-white">
         {produto.conferir_estoque ? formatCurrency(produto.quantidade * produto.custo_unitario) : "---"}
       </TableCell>
