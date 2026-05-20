@@ -410,7 +410,29 @@ function DragOverlayRow({ produto }: { produto: ProdutoEstoque | null }) {
   );
 }
 
-export default function ProdutosFabrica() {
+interface ProdutosFabricaProps {
+  hideSku?: boolean;
+  hideMateriaPrima?: boolean;
+  hidePedidos?: boolean;
+  hideConferir?: boolean;
+  disableNavigate?: boolean;
+  titleOverride?: string;
+  subtitleOverride?: string;
+  backPathOverride?: string;
+  breadcrumbItemsOverride?: { label: string; path?: string }[];
+}
+
+export default function ProdutosFabrica({
+  hideSku = false,
+  hideMateriaPrima = false,
+  hidePedidos = false,
+  hideConferir = false,
+  disableNavigate = false,
+  titleOverride,
+  subtitleOverride,
+  backPathOverride,
+  breadcrumbItemsOverride,
+}: ProdutosFabricaProps = {}) {
   const navigate = useNavigate();
   const location = useLocation();
   const { produtos, loading, adicionarProduto, reordenarProdutos, excluirProduto } = useEstoque();
