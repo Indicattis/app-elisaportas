@@ -384,7 +384,8 @@ export function useVendas() {
             quantidade: 1,
             descricao: 'Instalação',
             valor_credito: 0,
-            percentual_credito: 0
+            percentual_credito: 0,
+            observacao_item: produto.observacao_item || null,
           }));
           items.push(...instalacaoItems);
         }
@@ -696,7 +697,8 @@ export function useVendas() {
               quantidade: 1,
               descricao: 'Instalação',
               valor_credito: 0,
-              percentual_credito: 0
+              percentual_credito: 0,
+              observacao_item: produto.observacao_item || null,
             }));
             items.push(...instalacaoItems);
           }
