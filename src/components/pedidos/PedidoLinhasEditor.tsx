@@ -700,6 +700,7 @@ export const PedidoLinhasEditor = ({
               dimensoes={dimensoes}
               linhasCount={grupo.linhasGrupo.length}
               categorias={categorias}
+              observacao={(p as any)?.observacao_item || null}
               isOpen={pastaAberta === key}
               onClick={() => setPastaAberta(prev => prev === key ? null : key)}
             />
