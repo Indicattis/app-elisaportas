@@ -500,6 +500,7 @@ interface ProdutosFabricaProps {
   hideMateriaPrima?: boolean;
   hidePedidos?: boolean;
   hideConferir?: boolean;
+  hideStockColumns?: boolean;
   disableNavigate?: boolean;
   showPrecoVenda?: boolean;
   blockDelete?: boolean;
@@ -514,6 +515,7 @@ export default function ProdutosFabrica({
   hideMateriaPrima = false,
   hidePedidos = false,
   hideConferir = false,
+  hideStockColumns = false,
   disableNavigate = false,
   showPrecoVenda = false,
   blockDelete = false,
