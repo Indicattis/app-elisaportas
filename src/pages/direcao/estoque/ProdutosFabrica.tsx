@@ -306,6 +306,9 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
       )}
       <TableCell>
         <EditableSelectCell
+      {!hideStockColumns && (
+      <TableCell>
+        <EditableSelectCell
           value={categoriaAtual?.id ?? null}
           options={categorias.map(c => ({ value: c.id, label: c.nome, color: c.cor }))}
           display={
@@ -319,6 +322,8 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
           onSave={(v) => onUpdateField(produto.id, { categoria: v || null })}
         />
       </TableCell>
+      )}
+      {!hideStockColumns && (
       <TableCell className="text-center text-white/80">
         {produto.conferir_estoque ? (
           <EditableCell
@@ -329,6 +334,8 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
           />
         ) : "---"}
       </TableCell>
+      )}
+      {!hideStockColumns && (
       <TableCell className="text-center text-white/80">
         {produto.conferir_estoque ? (
           <EditableCell
@@ -339,6 +346,8 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
           />
         ) : "---"}
       </TableCell>
+      )}
+      {!hideStockColumns && (
       <TableCell className="text-center">
         {produto.conferir_estoque ? (
           <EditableCell
@@ -362,6 +371,7 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
           <span className="text-white/30">---</span>
         )}
       </TableCell>
+      )}
       {!hidePedidos && (
         <TableCell className="text-center text-white/60 text-sm">
           {pedidosCount || 0}
