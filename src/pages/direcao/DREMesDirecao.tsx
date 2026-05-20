@@ -1370,18 +1370,117 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
   ) : (
     <div id={embedded ? undefined : 'dre-screen-area'} className="space-y-6">
       {showFaturamento && (
-        <FaturamentoGrid
-          columns={columns}
-          faturamento={faturamento}
-          lucro={lucro}
-          topAcessorios={topAcessorios}
-          topAdicionais={topAdicionais}
-          formatCurrency={formatCurrency}
-          setPortasModalOpen={setPortasModalOpen}
-          setPinturaModalOpen={setPinturaModalOpen}
-          setAcessoriosModalOpen={setAcessoriosModalOpen}
-          setAvulsosModalOpen={setAvulsosModalOpen}
-        />
+        <div className="rounded-xl bg-white/5 border border-white/10 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-white/10">
+                  <th className="text-left p-3 text-white/40 font-medium text-xs uppercase"></th>
+                  {columns.map(col => {
+                    const topList = col.key === 'acessorios' ? topAcessorios : col.key === 'adicionais' ? topAdicionais : null;
+                    const isPortas = col.key === 'portas';
+                    const isPintura = col.key === 'pintura';
+                    const isAcessorios = col.key === 'acessorios';
+                    const isAdicionais = col.key === 'adicionais';
+                    const onClickHeader = isPortas
+                      ? () => setPortasModalOpen(true)
+                      : isPintura
+                        ? () => setPinturaModalOpen(true)
+                        : isAcessorios
+                          ? () => setAcessoriosModalOpen(true)
+                          : isAdicionais
+                            ? () => setAvulsosModalOpen(true)
+                            : null;
+                    return (
+                      <th
+                        key={col.key}
+                        className={`text-right p-3 text-white/40 font-medium text-xs uppercase ${col.key === 'total' ? 'bg-white/5' : ''}`}
+                      >
+                        {onClickHeader && topList && topList.length > 0 ? (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  type="button"
+                                  onClick={onClickHeader}
+                                  className="uppercase cursor-pointer underline decoration-dotted underline-offset-4 hover:text-white transition-colors"
+                                >
+                                  {col.label}
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent side="bottom" className="max-w-[220px]">
+                                <p className="font-semibold mb-1 text-xs">Top 5 mais vendidos</p>
+                                {topList.map((item, i) => (
+                                  <p key={i} className="text-xs text-muted-foreground">
+                                    {i + 1}. {item.nome} ({item.qtd})
+                                  </p>
+                                ))}
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        ) : onClickHeader ? (
+                          <button
+                            type="button"
+                            onClick={onClickHeader}
+                            className="uppercase cursor-pointer underline decoration-dotted underline-offset-4 hover:text-white transition-colors"
+                          >
+                            {col.label}
+                          </button>
+                        ) : (
+                          col.label
+                        )}
+                      </th>
+                    );
+                  })}
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="border-b border-white/5">
+                  <td className="p-3 text-white/60 font-medium text-xs uppercase">Faturamento</td>
+                  {columns.map(col => (
+                    <td
+                      key={col.key}
+                      className={`text-right p-3 font-semibold text-white ${col.key === 'total' ? 'bg-white/5' : ''}`}
+                    >
+                      {formatCurrency(faturamento[col.key])}
+                    </td>
+                  ))}
+                </tr>
+                <tr>
+                  <td className="p-3 text-white/60 font-medium text-xs uppercase">Lucro</td>
+                  {columns.map(col => {
+                    const val = lucro[col.key];
+                    const isInstalacoes = col.key === 'instalacoes';
+                    return (
+                      <td
+                        key={col.key}
+                        className={`text-right p-3 font-semibold ${isInstalacoes ? 'text-yellow-400' : val >= 0 ? 'text-emerald-400' : 'text-red-400'} ${col.key === 'total' ? 'bg-white/5' : ''}`}
+                      >
+                        {formatCurrency(val)}
+                      </td>
+                    );
+                  })}
+                </tr>
+                <tr className="border-t border-white/5">
+                  <td className="p-3 text-white/60 font-medium text-xs uppercase">Margem %</td>
+                  {columns.map(col => {
+                    const perc = faturamento[col.key] > 0
+                      ? (lucro[col.key] / faturamento[col.key]) * 100
+                      : 0;
+                    const isInstalacoes = col.key === 'instalacoes';
+                    return (
+                      <td key={col.key} className={`text-right p-3 ${col.key === 'total' ? 'bg-white/5' : ''}`}>
+                        <span className={`inline-block rounded-full bg-white/10 px-2 py-0.5 text-xs font-semibold ${isInstalacoes ? 'text-yellow-400' : perc >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                          {perc.toFixed(1)}%
+                        </span>
+                      </td>
+                    );
+                  })}
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       )}
       {showDespesas && (
         <div className="grid grid-cols-1 lg:grid-cols-[3fr_1fr] gap-4">
