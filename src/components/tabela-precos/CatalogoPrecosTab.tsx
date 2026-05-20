@@ -15,7 +15,11 @@ const UNIDADES = ["Unitário", "Metro", "Kg", "Litro"] as const;
 const formatCurrency = (value: number) =>
   (value || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-export function CatalogoPrecosTab() {
+interface CatalogoPrecosTabProps {
+  compact?: boolean;
+}
+
+export function CatalogoPrecosTab({ compact = false }: CatalogoPrecosTabProps = {}) {
   const [busca, setBusca] = useState("");
   const { produtos, isLoading, editarProduto } = useVendasCatalogo({ busca });
 
