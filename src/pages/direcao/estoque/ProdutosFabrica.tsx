@@ -1107,6 +1107,7 @@ export default function ProdutosFabrica({
                     <TableHead className="text-right text-xs font-medium text-white/60">Preço/Un</TableHead>
                     <TableHead className="text-center text-xs font-medium text-white/60">Unidade</TableHead>
                     {showPrecoVenda && <TableHead className="text-right text-xs font-medium text-white/60">Preço de Venda</TableHead>}
+                    {showPrecoVenda && <TableHead className="text-right text-xs font-medium text-white/60">Lucro</TableHead>}
                     <TableHead className="text-right text-xs font-medium text-white/60">Valor Total</TableHead>
                     <TableHead className="text-center text-xs font-medium text-white/60">Ações</TableHead>
                   </TableRow>
