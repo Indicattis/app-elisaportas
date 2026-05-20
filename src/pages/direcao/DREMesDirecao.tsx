@@ -1363,6 +1363,210 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
   const percBrutoFinal = faturamento.total > 0 ? (lucro.total / faturamento.total) * 100 : 0;
   const percLiquidFinal = faturamento.total > 0 ? (lucroLiquidoFinal / faturamento.total) * 100 : 0;
 
+  const screenContent = loading ? (
+    <div className="flex items-center justify-center py-20">
+      <Loader2 className="w-6 h-6 animate-spin text-white/40" />
+    </div>
+  ) : (
+    <div id={embedded ? undefined : 'dre-screen-area'} className="space-y-6">
+      {showFaturamento && (
+        <FaturamentoGrid
+          columns={columns}
+          faturamento={faturamento}
+          lucro={lucro}
+          topAcessorios={topAcessorios}
+          topAdicionais={topAdicionais}
+          formatCurrency={formatCurrency}
+          setPortasModalOpen={setPortasModalOpen}
+          setPinturaModalOpen={setPinturaModalOpen}
+          setAcessoriosModalOpen={setAcessoriosModalOpen}
+          setAvulsosModalOpen={setAvulsosModalOpen}
+        />
+      )}
+      {showDespesas && (
+        <div className="grid grid-cols-1 lg:grid-cols-[3fr_1fr] gap-4">
+          <div className="space-y-4">
+            <DespesaSectionReadOnly
+              title="Folha Salarial"
+              despesas={despesasFolha}
+              total={totalDespFolha}
+              formatCurrency={formatCurrency}
+              tiposDisponiveis={tiposCustosFixos.filter(t => isFolha(t.nome))}
+            />
+            <DespesaSectionReadOnly
+              title="Despesas Fixas"
+              despesas={despesasFixas}
+              total={totalDespFixas}
+              formatCurrency={formatCurrency}
+              tiposDisponiveis={tiposCustosFixos.filter(t => !isFolha(t.nome))}
+              onClickTipo={(id, nome) => setTipoModal({ id, nome })}
+            />
+            <DespesaSectionReadOnly
+              title="Despesas Variáveis"
+              despesas={despesasVariaveis}
+              total={totalDespVariaveis}
+              formatCurrency={formatCurrency}
+              tiposDisponiveis={tiposCustosVariaveis}
+              onClickTipo={(id, nome) => setTipoModal({ id, nome })}
+            />
+          </div>
+          {viewMode === 'full' && (
+            <>
+              <div className="rounded-xl bg-white/5 border border-white/10 p-4 h-fit lg:sticky lg:top-4">
+                <h3 className="text-sm font-semibold text-white/70 uppercase mb-3">
+                  Despesas Projetadas do Ano
+                </h3>
+                {tiposCustosVariaveis.length === 0 ? (
+                  <p className="text-white/30 text-sm">Nenhum tipo de custo variável cadastrado</p>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between pb-1 border-b border-white/10">
+                      <span className="text-xs text-white/40 uppercase flex-1">Nome</span>
+                      <span className="text-xs text-white/40 uppercase w-24 text-right">Mês</span>
+                      <span className="text-xs text-white/40 uppercase w-24 text-right">Anual</span>
+                    </div>
+                    {tiposCustosVariaveis.map(t => {
+                      const despMes = despesasVariaveis.find(d => d.nome === t.nome);
+                      const valorMes = despMes?.valor_real || 0;
+                      return (
+                        <div key={t.id} className="flex items-center justify-between py-1.5 border-b border-white/5 last:border-0">
+                          <span className="text-sm text-white/60 flex-1">{t.nome}</span>
+                          <span className="text-sm font-medium text-white/70 w-24 text-right">
+                            {formatCurrency(valorMes)}
+                          </span>
+                          <span className="text-sm font-medium text-white w-24 text-right">
+                            {formatCurrency(t.valor_maximo_mensal * 12)}
+                          </span>
+                        </div>
+                      );
+                    })}
+                    <div className="flex items-center justify-between pt-2 border-t border-white/10">
+                      <span className="text-sm font-semibold text-white/80 flex-1">Total</span>
+                      <span className="text-sm font-bold text-white/70 w-24 text-right">
+                        {formatCurrency(totalDespVariaveis)}
+                      </span>
+                      <span className="text-sm font-bold text-white w-24 text-right">
+                        {formatCurrency(totalProjetadoAnual)}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="rounded-xl bg-white/5 border border-white/10 p-4">
+                <h3 className="text-sm font-semibold text-white/50 uppercase tracking-wider mb-3">Estoque</h3>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between py-1.5 border-b border-white/5">
+                    <span className="text-sm text-white/60">Total de Itens</span>
+                    <span className="text-sm font-medium text-white">{estoqueResumo.totalItens.toLocaleString('pt-BR')}</span>
+                  </div>
+                  <div className="flex items-center justify-between py-1.5">
+                    <span className="text-sm text-white/60">Valor Total</span>
+                    <span className="text-sm font-bold text-white">{formatCurrency(estoqueResumo.valorTotal)}</span>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+      {showResumoFinal && (() => {
+        const lucroLiquido = lucro.total - totalDespFixas - totalDespFolha - totalDespVariaveis;
+        const percBruto = faturamento.total > 0 ? (lucro.total / faturamento.total) * 100 : 0;
+        const percLiquid = faturamento.total > 0 ? (lucroLiquido / faturamento.total) * 100 : 0;
+        const colorClass = (v: number) => v >= 0 ? 'text-emerald-400' : 'text-red-400';
+        const items = [
+          { label: 'Faturamento Bruto', value: formatCurrency(faturamento.total), color: 'text-white' },
+          { label: '% Bruto', value: `${percBruto.toFixed(1)}%`, color: colorClass(percBruto) },
+          { label: 'Fat. Líquido (Lucro Bruto)', value: formatCurrency(lucro.total), color: colorClass(lucro.total) },
+          { label: 'Despesas Fixas', value: formatCurrency(totalDespFixas), color: 'text-red-400' },
+          { label: 'Folha Salarial', value: formatCurrency(totalDespFolha), color: 'text-red-400' },
+          { label: 'Desp. Variáveis', value: formatCurrency(totalDespVariaveis), color: 'text-red-400' },
+          { label: 'Lucro Líquido', value: formatCurrency(lucroLiquido), color: colorClass(lucroLiquido) },
+          { label: '% Lucro Líquido', value: `${percLiquid.toFixed(1)}%`, color: colorClass(percLiquid) },
+        ];
+        return (
+          <div className="rounded-xl bg-white/5 border border-white/10 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-white/10">
+                    {items.map((item, i) => (
+                      <th key={i} className="text-center p-3 text-white/40 font-medium text-xs uppercase whitespace-nowrap">
+                        {item.label}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    {items.map((item, i) => (
+                      <td key={i} className={`text-center p-3 font-semibold whitespace-nowrap ${item.color}`}>
+                        {item.value}
+                      </td>
+                    ))}
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+      })()}
+    </div>
+  );
+
+  const modals = (
+    <>
+      <GastosDoTipoDialog
+        open={!!tipoModal}
+        onOpenChange={(o) => { if (!o) setTipoModal(null); }}
+        mes={mes || ''}
+        tipoCustoId={tipoModal?.id || null}
+        tipoNome={tipoModal?.nome || ''}
+        formatCurrency={formatCurrency}
+      />
+      <PortasDetalheDialog
+        open={portasModalOpen}
+        onOpenChange={setPortasModalOpen}
+        mesNome={mesNome}
+        vendas={portasDetalhe}
+        formatCurrency={formatCurrency}
+      />
+      <ItensSimplesDetalheDialog
+        open={pinturaModalOpen}
+        onOpenChange={setPinturaModalOpen}
+        titulo={`Vendas com Pintura — ${mesNome}`}
+        categoriaLabel="Pintura"
+        vendas={pinturaDetalhe}
+        formatCurrency={formatCurrency}
+      />
+      <ItensSimplesDetalheDialog
+        open={acessoriosModalOpen}
+        onOpenChange={setAcessoriosModalOpen}
+        titulo={`Vendas com Acessórios — ${mesNome}`}
+        categoriaLabel="Acessórios"
+        vendas={acessoriosDetalhe}
+        formatCurrency={formatCurrency}
+      />
+      <ItensSimplesDetalheDialog
+        open={avulsosModalOpen}
+        onOpenChange={setAvulsosModalOpen}
+        titulo={`Vendas com Itens Avulso — ${mesNome}`}
+        categoriaLabel="Itens Avulso"
+        vendas={avulsosDetalhe}
+        formatCurrency={formatCurrency}
+      />
+    </>
+  );
+
+  if (embedded) {
+    return (
+      <>
+        {screenContent}
+        {modals}
+      </>
+    );
+  }
+
   return (
     <>
     <style>{`
