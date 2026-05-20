@@ -6,11 +6,11 @@ import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
 import { DelayedParticles } from '@/components/DelayedParticles';
 
 const menuItems = [
-  { label: 'Itens', icon: Package, path: '/direcao/estrategia/itens' },
-  { label: 'Tabela de Kits', icon: Table2, path: '/direcao/estrategia/kits' },
-  { label: 'Tabela de Preços', icon: DollarSign, path: '/direcao/estrategia/precos' },
-  { label: 'Despesas', icon: Wallet, path: '/direcao/estrategia/despesas' },
-  { label: 'Resultados', icon: BarChart3, path: '/direcao/estrategia/resultados' },
+  { label: 'Tabela de Custos Elisa', icon: Package, path: '/direcao/estrategia/itens' },
+  { label: 'Tabela de Lucro Líquido Kits', icon: Table2, path: '/direcao/estrategia/kits' },
+  { label: 'Tabela de Preços Vendedores', icon: DollarSign, path: '/direcao/estrategia/precos' },
+  { label: 'Despesa fixa, salarial e variável', icon: Wallet, path: '/direcao/estrategia/despesas' },
+  { label: 'DRE', icon: BarChart3, path: '/direcao/estrategia/resultados' },
 ];
 
 export default function EstrategiaHub() {
