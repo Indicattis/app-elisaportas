@@ -441,6 +441,8 @@ interface ProdutosFabricaProps {
   hidePedidos?: boolean;
   hideConferir?: boolean;
   disableNavigate?: boolean;
+  showPrecoVenda?: boolean;
+  blockDelete?: boolean;
   titleOverride?: string;
   subtitleOverride?: string;
   backPathOverride?: string;
@@ -453,6 +455,8 @@ export default function ProdutosFabrica({
   hidePedidos = false,
   hideConferir = false,
   disableNavigate = false,
+  showPrecoVenda = false,
+  blockDelete = false,
   titleOverride,
   subtitleOverride,
   backPathOverride,
