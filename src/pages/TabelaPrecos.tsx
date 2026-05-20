@@ -291,8 +291,8 @@ export default function TabelaPrecos({
                       <TableHead className="text-right hidden md:table-cell text-white/60">Valor Instalação</TableHead>
                       <TableHead className="text-right hidden md:table-cell text-white/60">Valor Pintura</TableHead>
                       <TableHead className="text-right text-white/60">Total</TableHead>
-                      <TableHead className="text-right hidden md:table-cell text-white/60">Lucro</TableHead>
-                      <TableHead className="text-center w-24 text-white/60">Ações</TableHead>
+                      {!hideLucroColumn && <TableHead className="text-right hidden md:table-cell text-white/60">Lucro</TableHead>}
+                      {!hideAcoesColumn && <TableHead className="text-center w-24 text-white/60">Ações</TableHead>}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -329,7 +329,7 @@ export default function TabelaPrecos({
                               })}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-right hidden md:table-cell">
+                          {!hideLucroColumn && <TableCell className="text-right hidden md:table-cell">
                             {editingLucroId === item.id ? (
                               <div className="flex items-center justify-end gap-1">
                                 <Input
@@ -360,8 +360,8 @@ export default function TabelaPrecos({
                                 {(item.lucro || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                               </span>
                             )}
-                          </TableCell>
-                          <TableCell>
+                          </TableCell>}
+                          {!hideAcoesColumn && <TableCell>
                             <div className="flex items-center justify-center gap-1">
                               <Button
                                 variant="ghost"
@@ -382,7 +382,7 @@ export default function TabelaPrecos({
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </div>
-                          </TableCell>
+                          </TableCell>}
                         </TableRow>
                       );
                     })}
