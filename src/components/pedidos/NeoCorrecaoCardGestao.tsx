@@ -522,13 +522,13 @@ export function NeoCorrecaoCardGestao({
           </p>
         )}
 
-        {(neoCorrecao.valor_total > 0 || neoCorrecao.valor_a_receber > 0 || neoCorrecao.valor_a_receber_texto) && (
+        {(neoCorrecao.valor_total > 0 || ((neoCorrecao.valor_a_receber > 0 || neoCorrecao.valor_a_receber_texto) && !hideValorAReceber)) && (
           <div className="flex items-center gap-3 text-sm">
             <DollarSign className="h-3.5 w-3.5 text-muted-foreground" />
             {neoCorrecao.valor_total > 0 && (
               <span className="text-muted-foreground">Total: {formatCurrency(neoCorrecao.valor_total)}</span>
             )}
-            {(neoCorrecao.valor_a_receber_texto || neoCorrecao.valor_a_receber > 0) && (
+            {!hideValorAReceber && (neoCorrecao.valor_a_receber_texto || neoCorrecao.valor_a_receber > 0) && (
               <span className="text-emerald-500">A receber: {neoCorrecao.valor_a_receber_texto || formatCurrency(neoCorrecao.valor_a_receber)}</span>
             )}
           </div>
