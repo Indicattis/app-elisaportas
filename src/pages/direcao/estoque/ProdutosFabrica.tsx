@@ -1166,6 +1166,7 @@ export default function ProdutosFabrica({
                     <TableCell className="text-right font-bold text-white/50">
                       ---
                     </TableCell>
+                    {showPrecoVenda && <TableCell />}
                     <TableCell className="text-right font-bold text-white">
                       {formatCurrency(totals.valor)}
                     </TableCell>
