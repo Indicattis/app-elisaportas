@@ -5,7 +5,6 @@ export default function EstrategiaPrecos() {
     <TabelaPrecos
       hideLucroColumn
       hideAcoesColumn
-      hideCatalogoTab
       titleOverride="Tabela de Preços"
       subtitleOverride="Preços das portas por tamanho"
       backPathOverride="/direcao/estrategia"
