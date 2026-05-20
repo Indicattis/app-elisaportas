@@ -28,6 +28,9 @@ export interface ProdutoEstoque {
   ativo: boolean;
   custo_unitario: number;
   preco_venda: number;
+  taxa_impostos: number;
+  taxa_cartao: number;
+  taxa_descontos: number;
   subcategoria_id: string | null;
   peso_porta: number | null;
   setor_responsavel_producao: 'perfiladeira' | 'soldagem' | 'separacao' | 'pintura' | null;
@@ -84,6 +87,9 @@ export interface ProdutoEstoqueInput {
   requer_pintura?: boolean;
   pontuacao_producao?: number;
   ipi_percent?: number;
+  taxa_impostos?: number;
+  taxa_cartao?: number;
+  taxa_descontos?: number;
   // Novos campos de cálculo automático
   modulo_calculo?: 'acrescimo' | 'desconto' | null;
   valor_calculo?: number | null;
