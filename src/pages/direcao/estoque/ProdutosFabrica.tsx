@@ -1214,33 +1214,41 @@ export default function ProdutosFabrica({
                     <TableCell className="font-bold text-white">
                       TOTAL ({filteredProdutos.length} itens)
                     </TableCell>
-                    <TableCell />
-                    <TableCell />
-                    <TableCell />
-                    <TableCell />
-                    <TableCell />
-                    <TableCell className="text-center font-bold text-white">
-                      {totals.ideal}
-                    </TableCell>
-                    <TableCell className="text-center font-bold text-white">
-                      {totals.maxima}
-                    </TableCell>
-                    <TableCell className="text-center font-bold text-white">
-                      {totals.atual}
-                    </TableCell>
-                    <TableCell />
-                    <TableCell />
+                    {!hideSku && <TableCell />}
+                    {!hideStockColumns && <TableCell />}
+                    {!hideMateriaPrima && <TableCell />}
+                    {!hideStockColumns && <TableCell />}
+                    {!hideStockColumns && (
+                      <TableCell className="text-center font-bold text-white">
+                        {totals.ideal}
+                      </TableCell>
+                    )}
+                    {!hideStockColumns && (
+                      <TableCell className="text-center font-bold text-white">
+                        {totals.maxima}
+                      </TableCell>
+                    )}
+                    {!hideStockColumns && (
+                      <TableCell className="text-center font-bold text-white">
+                        {totals.atual}
+                      </TableCell>
+                    )}
+                    {!hidePedidos && <TableCell />}
+                    {!hideConferir && <TableCell />}
                     <TableCell className="text-right font-bold text-white/50">
                       ---
                     </TableCell>
+                    {!hideStockColumns && <TableCell />}
                     {showPrecoVenda && <TableCell />}
                     {showPrecoVenda && <TableCell />}
                     {showPrecoVenda && <TableCell />}
                     {showPrecoVenda && <TableCell />}
                     {showPrecoVenda && <TableCell />}
-                    <TableCell className="text-right font-bold text-white">
-                      {formatCurrency(totals.valor)}
-                    </TableCell>
+                    {!hideStockColumns && (
+                      <TableCell className="text-right font-bold text-white">
+                        {formatCurrency(totals.valor)}
+                      </TableCell>
+                    )}
                     <TableCell />
                   </TableRow>
                 </TableFooter>
