@@ -695,6 +695,9 @@ export default function VendaNovaMinimalista() {
               onEditProduto={handleEditPorta}
               onUpdateQuantidade={handleUpdateQuantidade}
               onRemoverDesconto={handleRemoverDesconto}
+              onUpdateObservacao={(index, observacao) => {
+                setPortas(prev => prev.map((p, i) => i === index ? { ...p, observacao_item: observacao } : p));
+              }}
             />
           </div>
         </Section>
