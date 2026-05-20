@@ -19,6 +19,8 @@ interface TabelaPrecosProps {
   hideLucroColumn?: boolean;
   hideAcoesColumn?: boolean;
   hideCatalogoTab?: boolean;
+  hideTotalColumn?: boolean;
+  embedded?: boolean;
   titleOverride?: string;
   subtitleOverride?: string;
   backPathOverride?: string;
@@ -29,6 +31,8 @@ export default function TabelaPrecos({
   hideLucroColumn = false,
   hideAcoesColumn = false,
   hideCatalogoTab = false,
+  hideTotalColumn = false,
+  embedded = false,
   titleOverride,
   subtitleOverride,
   backPathOverride,
@@ -290,7 +294,7 @@ export default function TabelaPrecos({
                       <TableHead className="text-right text-white/60">Valor Porta</TableHead>
                       <TableHead className="text-right hidden md:table-cell text-white/60">Valor Instalação</TableHead>
                       <TableHead className="text-right hidden md:table-cell text-white/60">Valor Pintura</TableHead>
-                      <TableHead className="text-right text-white/60">Total</TableHead>
+                      {!hideTotalColumn && <TableHead className="text-right text-white/60">Total</TableHead>}
                       {!hideLucroColumn && <TableHead className="text-right hidden md:table-cell text-white/60">Lucro</TableHead>}
                       {!hideLucroColumn && <TableHead className="text-right hidden md:table-cell text-white/60">% Lucro</TableHead>}
                       {!hideAcoesColumn && <TableHead className="text-center w-24 text-white/60">Ações</TableHead>}
@@ -322,14 +326,14 @@ export default function TabelaPrecos({
                               currency: 'BRL' 
                             })}
                           </TableCell>
-                          <TableCell className="text-right">
+                          {!hideTotalColumn && <TableCell className="text-right">
                             <Badge className="font-semibold bg-white/10 text-white">
                               {total.toLocaleString('pt-BR', { 
                                 style: 'currency', 
                                 currency: 'BRL' 
                               })}
                             </Badge>
-                          </TableCell>
+                          </TableCell>}
                           {!hideLucroColumn && <TableCell className="text-right hidden md:table-cell">
                             {editingLucroId === item.id ? (
                               <div className="flex items-center justify-end gap-1">
