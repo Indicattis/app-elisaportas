@@ -517,6 +517,14 @@ const App = () => (
                 {/* Caixa Elisa */}
                 <Route path="/direcao/caixa-elisa" element={<ProtectedRoute routeKey="direcao_caixa_elisa"><CaixaElisaDirecao /></ProtectedRoute>} />
 
+                {/* Estratégia */}
+                <Route path="/direcao/estrategia" element={<ProtectedRoute routeKey="direcao_estrategia"><EstrategiaHub /></ProtectedRoute>} />
+                <Route path="/direcao/estrategia/itens" element={<ProtectedRoute routeKey="direcao_estrategia"><EstrategiaItens /></ProtectedRoute>} />
+                <Route path="/direcao/estrategia/kits" element={<ProtectedRoute routeKey="direcao_estrategia"><EstrategiaKits /></ProtectedRoute>} />
+                <Route path="/direcao/estrategia/precos" element={<ProtectedRoute routeKey="direcao_estrategia"><EstrategiaPrecos /></ProtectedRoute>} />
+                <Route path="/direcao/estrategia/despesas" element={<ProtectedRoute routeKey="direcao_estrategia"><EstrategiaDespesas /></ProtectedRoute>} />
+                <Route path="/direcao/estrategia/resultados" element={<ProtectedRoute routeKey="direcao_estrategia"><EstrategiaResultados /></ProtectedRoute>} />
+
                 {/* Organograma RH */}
                 <Route path="/direcao/gestao-colaboradores" element={<ProtectedRoute routeKey="direcao_gestao_colaboradores"><GestaoColaboradoresDirecao /></ProtectedRoute>} />
 
