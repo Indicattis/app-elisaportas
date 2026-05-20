@@ -505,6 +505,10 @@ export default function ProdutosFabrica({
   };
 
   const handleExcluir = async (id: string) => {
+    if (blockDelete) {
+      setBlockDeleteOpen(true);
+      return;
+    }
     if (!confirm("Tem certeza que deseja excluir este produto?")) return;
     try {
       await excluirProduto(id);
