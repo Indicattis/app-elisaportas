@@ -234,6 +234,12 @@ import DREMesDirecao from "./pages/direcao/DREMesDirecao";
 import DREDespesasDirecao from "./pages/direcao/DREDespesasDirecao";
 import DRECustosDirecao from "./pages/direcao/DRECustosDirecao";
 import CaixaElisaDirecao from "./pages/direcao/CaixaElisaDirecao";
+import EstrategiaHub from "./pages/direcao/estrategia/EstrategiaHub";
+import EstrategiaItens from "./pages/direcao/estrategia/EstrategiaItens";
+import EstrategiaKits from "./pages/direcao/estrategia/EstrategiaKits";
+import EstrategiaPrecos from "./pages/direcao/estrategia/EstrategiaPrecos";
+import EstrategiaDespesas from "./pages/direcao/estrategia/EstrategiaDespesas";
+import EstrategiaResultados from "./pages/direcao/estrategia/EstrategiaResultados";
 
 // Hub de Estoque da Direção
 import DirecaoEstoqueHub from "./pages/direcao/estoque/DirecaoEstoqueHub";
