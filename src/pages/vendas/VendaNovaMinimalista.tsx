@@ -1111,9 +1111,9 @@ export default function VendaNovaMinimalista() {
         open={pinturaItemModalOpen}
         onOpenChange={setPinturaItemModalOpen}
         portas={portas}
-        onConfirm={(pintura) => {
+        onConfirm={(pinturas) => {
           setPortas(prev => {
-            const newPortas = [...prev, pintura];
+            const newPortas = [...prev, ...pinturas];
             const valorTotal = recalcularValorTotal(newPortas);
             setFormData(prevForm => ({
               ...prevForm,
