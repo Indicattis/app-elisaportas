@@ -372,6 +372,22 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
           />
         </TableCell>
       )}
+      <TableCell className="text-center text-white/70 text-sm">
+        <EditableSelectCell
+          value={produto.unidade || "UN"}
+          options={[
+            { value: "UN", label: "Unidade (UN)" },
+            { value: "KG", label: "Quilograma (KG)" },
+            { value: "L", label: "Litro (L)" },
+            { value: "M", label: "Metro (M)" },
+            { value: "M2", label: "Metro² (M²)" },
+            { value: "CX", label: "Caixa (CX)" },
+          ]}
+          display={<span>{produto.unidade || "UN"}</span>}
+          placeholder="Unidade"
+          onSave={(v) => onUpdateField(produto.id, { unidade: v || "UN" })}
+        />
+      </TableCell>
       <TableCell className="text-right text-white/80">
         <EditableCell
           value={produto.custo_unitario}
