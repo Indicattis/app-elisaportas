@@ -408,6 +408,15 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
           />
         </TableCell>
       )}
+      {showPrecoVenda && (() => {
+        const lucro = (produto.preco_venda ?? 0) - (produto.custo_unitario ?? 0);
+        const cor = lucro > 0 ? "text-emerald-400" : lucro < 0 ? "text-red-400" : "text-white/60";
+        return (
+          <TableCell className={`text-right font-medium ${cor}`}>
+            {formatCurrency(lucro)}
+          </TableCell>
+        );
+      })()}
       <TableCell className="text-right font-medium text-white">
         {produto.conferir_estoque ? formatCurrency(produto.quantidade * produto.custo_unitario) : "---"}
       </TableCell>
@@ -1098,6 +1107,7 @@ export default function ProdutosFabrica({
                     <TableHead className="text-right text-xs font-medium text-white/60">Preço/Un</TableHead>
                     <TableHead className="text-center text-xs font-medium text-white/60">Unidade</TableHead>
                     {showPrecoVenda && <TableHead className="text-right text-xs font-medium text-white/60">Preço de Venda</TableHead>}
+                    {showPrecoVenda && <TableHead className="text-right text-xs font-medium text-white/60">Lucro</TableHead>}
                     <TableHead className="text-right text-xs font-medium text-white/60">Valor Total</TableHead>
                     <TableHead className="text-center text-xs font-medium text-white/60">Ações</TableHead>
                   </TableRow>
