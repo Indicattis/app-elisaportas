@@ -466,9 +466,11 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
           </TableCell>
         );
       })()}
+      {!hideStockColumns && (
       <TableCell className="text-right font-medium text-white">
         {produto.conferir_estoque ? formatCurrency(produto.quantidade * produto.custo_unitario) : "---"}
       </TableCell>
+      )}
       <TableCell className="text-center">
         <Button
           variant="ghost"
