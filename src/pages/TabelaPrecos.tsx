@@ -151,12 +151,6 @@ export default function TabelaPrecos({
     </div>
   ) : null;
 
-  const portasCard = (
-    <Card className="bg-white/5 border-white/10">
-      {/* placeholder replaced below */}
-    </Card>
-  );
-
   if (embedded) {
     return (
       <>
