@@ -149,10 +149,10 @@ export default function TabelaPrecos({
 
   return (
     <MinimalistLayout
-      title="Tabela de Preços"
-      subtitle="Gestão de preços das portas por tamanho"
-      backPath="/direcao/vendas"
-      breadcrumbItems={[
+      title={titleOverride ?? "Tabela de Preços"}
+      subtitle={subtitleOverride ?? "Gestão de preços das portas por tamanho"}
+      backPath={backPathOverride ?? "/direcao/vendas"}
+      breadcrumbItems={breadcrumbItemsOverride ?? [
         { label: 'Home', path: '/home' },
         { label: 'Direção', path: '/direcao' },
         { label: 'Vendas', path: '/direcao/vendas' },
@@ -161,10 +161,12 @@ export default function TabelaPrecos({
       headerActions={headerActions}
     >
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'portas' | 'catalogo')} className="space-y-6">
-        <TabsList className="bg-white/5 border border-white/10">
-          <TabsTrigger value="portas" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-white/70">Portas</TabsTrigger>
-          <TabsTrigger value="catalogo" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-white/70">Catálogo</TabsTrigger>
-        </TabsList>
+        {!hideCatalogoTab && (
+          <TabsList className="bg-white/5 border border-white/10">
+            <TabsTrigger value="portas" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-white/70">Portas</TabsTrigger>
+            <TabsTrigger value="catalogo" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-white/70">Catálogo</TabsTrigger>
+          </TabsList>
+        )}
 
         <TabsContent value="portas" className="space-y-6 mt-0">
         {/* Card de Pesquisa Rápida */}
