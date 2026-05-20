@@ -2402,6 +2402,9 @@ export type Database = {
             | null
           sku: string | null
           subcategoria_id: string | null
+          taxa_cartao: number
+          taxa_descontos: number
+          taxa_impostos: number
           unidade: string | null
           updated_at: string | null
           valor_calculo: number | null
@@ -2444,6 +2447,9 @@ export type Database = {
             | null
           sku?: string | null
           subcategoria_id?: string | null
+          taxa_cartao?: number
+          taxa_descontos?: number
+          taxa_impostos?: number
           unidade?: string | null
           updated_at?: string | null
           valor_calculo?: number | null
@@ -2486,6 +2492,9 @@ export type Database = {
             | null
           sku?: string | null
           subcategoria_id?: string | null
+          taxa_cartao?: number
+          taxa_descontos?: number
+          taxa_impostos?: number
           unidade?: string | null
           updated_at?: string | null
           valor_calculo?: number | null
