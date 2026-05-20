@@ -1,37 +1,25 @@
-## Adicionar taxas (%) na página `/direcao/estrategia/itens`
+## Cores e renomeação das colunas de valores em `/direcao/estrategia/itens`
 
-Adicionar 3 campos percentuais editáveis por item que reduzem o lucro: **Impostos**, **Cartão**, **Descontos**. O lucro real passa a considerar essas deduções.
+Aplicar fundos coloridos sutis e renomear colunas na tabela de itens (somente quando `showPrecoVenda=true`, portanto não afeta `/fabrica/produtos`).
 
-### 1. Banco
-Migration adicionando 3 colunas em `public.estoque`:
-- `taxa_impostos numeric NOT NULL DEFAULT 0`
-- `taxa_cartao numeric NOT NULL DEFAULT 0`
-- `taxa_descontos numeric NOT NULL DEFAULT 0`
+### Renomeações
+- **Preço/Un** → **Custo**
+- **Preço de Venda** → **Preço Final**
+- **Descontos %** → **Desc. Gerente %**
 
-(percentuais, ex.: `8.5` = 8,5%)
+### Cores de fundo por coluna
+Aplicar em `<TableHead>` e nas `<TableCell>` correspondentes (header + cada linha + footer), usando tons translúcidos compatíveis com o tema glassmorphism (bg-white/5, backdrop-blur):
 
-### 2. Hook `useEstoque.ts`
-- Incluir `taxa_impostos`, `taxa_cartao`, `taxa_descontos` em `ProdutoEstoque` e `ProdutoEstoqueInput`.
+| Coluna | Cor | Classe Tailwind |
+|---|---|---|
+| Custo | (sem cor / neutro) | — |
+| Preço Final | Verde | `bg-green-500/10` |
+| Impostos % | Laranja | `bg-orange-500/10` |
+| Cartão % | Verde água | `bg-teal-500/10` |
+| Desc. Gerente % | Amarelo | `bg-yellow-500/10` |
+| Lucro | Azul | `bg-blue-500/10` |
 
-### 3. UI em `ProdutosFabrica.tsx` (somente quando `showPrecoVenda`)
-Adicionar 3 novas colunas editáveis (tipo percent) **entre "Preço de Venda" e "Lucro"**:
+Texto continua usando os tokens atuais (verde/vermelho dinâmico do Lucro mantido). As cores só se aplicam quando `showPrecoVenda=true`.
 
-| Preço/Un | Unidade | Preço de Venda | Impostos % | Cartão % | Descontos % | Lucro |
-
-- Cada coluna usa `EditableCell` salvando o respectivo campo via `onUpdateField`.
-- O cálculo do **Lucro** muda para:
-
-```text
-deducoes = preco_venda * (taxa_impostos + taxa_cartao + taxa_descontos) / 100
-lucro    = preco_venda - deducoes - custo_unitario
-```
-
-Mantém estilo verde/vermelho conforme sinal. Colunas só aparecem quando `showPrecoVenda=true` (não afeta `/fabrica/produtos`).
-
-### 4. Página `EstrategiaItens.tsx`
-Sem mudanças — já passa `showPrecoVenda`.
-
-### Arquivos afetados
-- `supabase/migrations/*_add_taxas_estoque.sql` (novo)
-- `src/hooks/useEstoque.ts`
-- `src/pages/direcao/estoque/ProdutosFabrica.tsx`
+### Arquivo afetado
+- `src/pages/direcao/estoque/ProdutosFabrica.tsx` — atualizar labels dos `TableHead`, adicionar `className` de fundo nos `TableHead`, `TableCell` (linha) e `TableCell` (footer) das 5 colunas coloridas.
