@@ -304,8 +304,6 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
         </div>
       </TableCell>
       )}
-      <TableCell>
-        <EditableSelectCell
       {!hideStockColumns && (
       <TableCell>
         <EditableSelectCell
