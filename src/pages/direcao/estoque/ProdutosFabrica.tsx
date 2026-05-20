@@ -372,6 +372,15 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
           />
         </TableCell>
       )}
+      <TableCell className="text-right text-white/80">
+        <EditableCell
+          value={produto.custo_unitario}
+          type="currency"
+          align="right"
+          display={<span>{formatCurrency(produto.custo_unitario)}</span>}
+          onSave={(v) => onUpdateField(produto.id, { custo_unitario: Number(v) })}
+        />
+      </TableCell>
       <TableCell className="text-center text-white/70 text-sm">
         <EditableSelectCell
           value={produto.unidade || "UN"}
@@ -386,15 +395,6 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
           display={<span>{produto.unidade || "UN"}</span>}
           placeholder="Unidade"
           onSave={(v) => onUpdateField(produto.id, { unidade: v || "UN" })}
-        />
-      </TableCell>
-      <TableCell className="text-right text-white/80">
-        <EditableCell
-          value={produto.custo_unitario}
-          type="currency"
-          align="right"
-          display={<span>{formatCurrency(produto.custo_unitario)}</span>}
-          onSave={(v) => onUpdateField(produto.id, { custo_unitario: Number(v) })}
         />
       </TableCell>
       {showPrecoVenda && (
