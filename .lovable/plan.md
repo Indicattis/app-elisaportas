@@ -1,37 +1,51 @@
-## Replicar modal de detalhes em Pintura, Acessórios e Itens Avulso
+# Correção da venda 33af14d6 e prevenção
 
-Atualmente, no header da tabela de Faturamento/Lucro de `/direcao/dre/:mes`, apenas o título **Portas** abre o `PortasDetalheDialog` ao ser clicado, mostrando venda por venda os itens daquele tipo no mês.
+## Problema confirmado
+Os 2 itens `pintura_epoxi` da venda têm `valor_produto = 970` **e** `valor_pintura = 970` (mesmo valor duplicado), inflando a base em R$ 1.940 e mascarando o desconto real (~70% efetivo, mostrado como ~49%).
 
-Vamos aplicar o mesmo padrão (botão sublinhado com tracejado no header + dialog full com lista de vendas, itens, descontos, líquido e lucro) para:
+## Etapa 1 — Corrigir os dois itens dessa venda
 
-- **Pintura** → `tipo_produto = 'pintura_epoxi'` **e** o componente "pintura" embutido em portas (`valor_pintura` em itens `porta_enrolar`/`porta_social` quando > 0).
-- **Acessórios** → `tipo_produto = 'acessorio'`.
-- **Itens Avulso** → `tipo_produto = 'adicional'` (corresponde à coluna `adicionais` no código).
+Migration de dados (UPDATE) zerando `valor_produto` apenas nos itens pintura_epoxi dessa venda:
 
-### UX
-- Cada um dos 3 títulos vira um botão clicável com `underline decoration-dotted` (igual ao Portas).
-- Mantém o tooltip "Top 5 mais vendidos" hoje exibido em Acessórios e Itens Avulso: passa a aparecer como hint ao lado, mas o clique abre o novo modal (não bloqueia o tooltip — o tooltip é exibido em hover normal do botão).
-- O modal segue o mesmo visual do `PortasDetalheDialog`: cards por venda com data/cliente/valor da venda, tabela de itens, subtotal por venda, e card azul de totais consolidados no rodapé.
+```sql
+UPDATE produtos_vendas
+SET valor_produto = 0
+WHERE venda_id = '33af14d6-5fe4-4746-9b7c-a95aa9731449'
+  AND tipo_produto = 'pintura_epoxi'
+  AND valor_produto = valor_pintura;
+```
 
-### Estrutura técnica
+Não altero `desconto_valor` nem `valor_venda` — o desconto absoluto em R$ permanece o mesmo (R$ 3.151). Apenas o **percentual exibido** passa a refletir a realidade (~70% sobre R$ 4.486), tornando visível que esse desconto excede e muito o limite máximo de 13% (8% + 5% master).
 
-1. **Generalizar o dialog.** Renomear/extrair `PortasDetalheDialog` para um `ItensDetalheDialog` reutilizável, parametrizado por:
-   - `titulo` (ex.: "Vendas com Pintura — Abril/2026")
-   - `colunas` exibidas (Portas tem Porta/Pintura/Instalação; Pintura tem Pintura; Acessórios e Avulso têm apenas Valor unit. × Qtd → Líquido). Definir 2 layouts: "porta" (atual) e "simples" (descrição, qtd, valor unit, desconto, líquido, lucro).
-   - `vendas: VendaComItensRow[]` (estrutura genérica já compatível, sem campos específicos de porta).
+## Etapa 2 — Varredura de vendas legadas com o mesmo bug
 
-2. **Buscar dados no `fetchData`** do `DREMesDirecao.tsx` (mesmo bloco que monta `portasDetalhe`), criando 3 novos states:
-   - `pinturaDetalhe` — vendas que tenham `tipo_produto = 'pintura_epoxi'` **OU** itens `porta_enrolar`/`porta_social` com `valor_pintura > 0`. Cada item exibe valor da pintura (proporcional ao desconto, igual à lógica usada hoje no cálculo de `fat.pintura`).
-   - `acessoriosDetalhe` — vendas com `tipo_produto = 'acessorio'`.
-   - `avulsosDetalhe` — vendas com `tipo_produto = 'adicional'`.
-   
-   Cada consulta segue o mesmo padrão do `portasRaw` (join com `vendas!inner`, filtro de período, agrupamento por `vendaId` em `Map`).
+Antes de aplicar o UPDATE pontual, rodo um SELECT diagnóstico para listar todas as outras vendas afetadas:
 
-3. **Cabeçalho da tabela.** No bloco `columns.map` (linhas ~1309-1346), adicionar branches `isPintura`, `isAcessorios`, `isAdicionais` que renderizam o mesmo botão clicável de Portas, abrindo o respectivo modal. O tooltip de Top 5 continua sendo exibido como `Tooltip` ao redor do botão para Acessórios e Itens Avulso.
+```sql
+SELECT venda_id, COUNT(*) 
+FROM produtos_vendas 
+WHERE tipo_produto IN ('pintura_epoxi','instalacao')
+  AND valor_produto > 0 
+  AND valor_produto = COALESCE(valor_pintura,0) + COALESCE(valor_instalacao,0)
+GROUP BY venda_id;
+```
 
-4. **States e renders dos modais.** Adicionar `pinturaModalOpen`, `acessoriosModalOpen`, `avulsosModalOpen` e renderizar 3 `ItensDetalheDialog` no final do componente, mantendo o `PortasDetalheDialog` (ou usando o componente generalizado também para portas).
+Se aparecer um volume pequeno, aplico o mesmo fix em lote. Se for grande, paro e te mostro a lista antes de decidir.
 
-### Escopo
-- Só `src/pages/direcao/DREMesDirecao.tsx`.
-- Sem mudanças em hooks, banco ou regras de negócio. Os totais já calculados (fat/luc por categoria) continuam a fonte de verdade para a tabela; os novos modais apenas detalham as vendas que compõem cada coluna.
-- Os modais não aparecem no PDF impresso (são triggers de tela, fora de `#dre-print-document`).
+## Etapa 3 — Trigger de validação no banco
+
+Adiciono um trigger `BEFORE INSERT OR UPDATE` em `produtos_vendas` que força:
+- `tipo_produto = 'pintura_epoxi'` → `valor_produto = 0`, `valor_instalacao = 0` (só `valor_pintura`)
+- `tipo_produto = 'instalacao'` → `valor_produto = 0`, `valor_pintura = 0` (só `valor_instalacao`)
+
+Isso impede que qualquer caminho (UI nova, edição manual, scripts) reintroduza a duplicação.
+
+## Etapa 4 — Auditoria do código
+
+Busco no front os locais que criam itens `pintura_epoxi` / `instalacao` (provavelmente em `useProdutosVenda`, modais de adicionar pintura/instalação e fluxos de criação/edição de venda) para garantir que estão enviando `valor_produto = 0`. Se algum estiver duplicando, ajusto.
+
+## Fora de escopo
+- Não recalculo nem reembolso o desconto dessa venda (decisão comercial sua).
+- Não toco em `valor_venda`, `custo_total` ou `lucro_total` — esses serão recalculados naturalmente no faturamento.
+
+Confirma para eu rodar?

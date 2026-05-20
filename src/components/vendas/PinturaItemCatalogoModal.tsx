@@ -76,7 +76,7 @@ export function PinturaItemCatalogoModal({
       tipo_produto: 'pintura_epoxi',
       largura: item?.largura || 0,
       altura: item?.altura || 0,
-      valor_produto: Number(valorPintura) || 0,
+      valor_produto: 0,
       valor_pintura: Number(valorPintura) || 0,
       valor_instalacao: 0,
       valor_frete: 0,
