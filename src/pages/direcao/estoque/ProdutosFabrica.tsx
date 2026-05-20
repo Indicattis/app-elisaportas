@@ -244,6 +244,7 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
           />
         </TableCell>
       )}
+      {!hideStockColumns && (
       <TableCell className="text-white/60 text-sm">
         <EditableSelectCell
           value={produto.fornecedor?.id ?? null}
@@ -253,6 +254,7 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
           onSave={(v) => onUpdateField(produto.id, { fornecedor_id: v || null })}
         />
       </TableCell>
+      )}
       {!hideMateriaPrima && (
       <TableCell className="text-white/70 text-sm">
         <div className="space-y-1">
