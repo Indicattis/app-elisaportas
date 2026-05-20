@@ -1,13 +1,20 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Package, Clock, RefreshCw, Truck, PackageCheck, Calendar, MapPin, Phone, Wrench, FileText, ExternalLink } from "lucide-react";
+import { Package, Clock, RefreshCw, Truck, PackageCheck, Calendar, MapPin, Phone, Wrench, FileText, ExternalLink, ClipboardList } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { OrdemCarregamentoUnificada } from "@/hooks/useOrdensCarregamentoUnificadas";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CoresPortasEnrolar } from "@/components/shared/CoresPortasEnrolar";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  OPCOES_TUBO, OPCOES_INTERNA_EXTERNA, OPCOES_POSICAO_GUIA,
+  OPCOES_GUIA, OPCOES_ROLO, OPCOES_TUBO_TIRAS_FRONTAIS,
+  OPCOES_LADO_MOTOR, OPCOES_APARENCIA_TESTEIRA,
+} from "@/types/pedidoObservacoes";
 
 interface OrdemCardProps {
   ordem: OrdemCarregamentoUnificada;
@@ -19,6 +26,21 @@ function OrdemCard({ ordem, onIniciarColeta, podeIniciar }: OrdemCardProps) {
   const isInstalacao = ordem.fonte === 'instalacoes';
   const isCorrecao = ordem.fonte === 'correcoes';
   const Icon = isCorrecao ? Wrench : isInstalacao ? Wrench : ordem.tipo_carregamento === 'elisa' ? Truck : PackageCheck;
+
+  const { data: observacoesVisita } = useQuery({
+    queryKey: ['observacoes-visita-carregamento-card', ordem.pedido_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('pedido_porta_observacoes')
+        .select('*')
+        .eq('pedido_id', ordem.pedido_id!)
+        .order('indice_porta', { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!ordem.pedido_id,
+    staleTime: 60_000,
+  });
 
   return (
     <Card 
