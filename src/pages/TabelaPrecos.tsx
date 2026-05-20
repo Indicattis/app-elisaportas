@@ -292,6 +292,7 @@ export default function TabelaPrecos({
                       <TableHead className="text-right hidden md:table-cell text-white/60">Valor Pintura</TableHead>
                       <TableHead className="text-right text-white/60">Total</TableHead>
                       {!hideLucroColumn && <TableHead className="text-right hidden md:table-cell text-white/60">Lucro</TableHead>}
+                      {!hideLucroColumn && <TableHead className="text-right hidden md:table-cell text-white/60">% Lucro</TableHead>}
                       {!hideAcoesColumn && <TableHead className="text-center w-24 text-white/60">Ações</TableHead>}
                     </TableRow>
                   </TableHeader>
@@ -361,6 +362,16 @@ export default function TabelaPrecos({
                               </span>
                             )}
                           </TableCell>}
+                          {!hideLucroColumn && (() => {
+                            const lucro = item.lucro || 0;
+                            const pct = total > 0 ? (lucro / total) * 100 : 0;
+                            const cor = pct > 0 ? "text-emerald-400" : pct < 0 ? "text-red-400" : "text-white/60";
+                            return (
+                              <TableCell className={`text-right hidden md:table-cell font-medium ${cor}`}>
+                                {pct.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%
+                              </TableCell>
+                            );
+                          })()}
                           {!hideAcoesColumn && <TableCell>
                             <div className="flex items-center justify-center gap-1">
                               <Button
