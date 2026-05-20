@@ -408,6 +408,15 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
           />
         </TableCell>
       )}
+      {showPrecoVenda && (() => {
+        const lucro = (produto.preco_venda ?? 0) - (produto.custo_unitario ?? 0);
+        const cor = lucro > 0 ? "text-emerald-400" : lucro < 0 ? "text-red-400" : "text-white/60";
+        return (
+          <TableCell className={`text-right font-medium ${cor}`}>
+            {formatCurrency(lucro)}
+          </TableCell>
+        );
+      })()}
       <TableCell className="text-right font-medium text-white">
         {produto.conferir_estoque ? formatCurrency(produto.quantidade * produto.custo_unitario) : "---"}
       </TableCell>
