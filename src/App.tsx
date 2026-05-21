@@ -260,6 +260,7 @@ import AprovacoesPedidos from "./pages/direcao/aprovacoes/AprovacoesPedidos";
 import AprovacoesVendas from "./pages/direcao/aprovacoes/AprovacoesVendas";
 import AprovacoesAutorizados from "./pages/direcao/aprovacoes/AprovacoesAutorizados";
 import AprovacoesCompras from "./pages/direcao/aprovacoes/AprovacoesCompras";
+import DirecaoFinanceiroHub from "./pages/direcao/financeiro/DirecaoFinanceiroHub";
 
 // Hub de Logística Minimalista
 import LogisticaHub from "./pages/logistica/LogisticaHub";
