@@ -773,6 +773,62 @@ export type Database = {
         }
         Relationships: []
       }
+      caixa_elisa_planejamento_itens: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          mes_id: string
+          nome: string
+          valor: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          mes_id: string
+          nome: string
+          valor?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          mes_id?: string
+          nome?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "caixa_elisa_planejamento_itens_mes_id_fkey"
+            columns: ["mes_id"]
+            isOneToOne: false
+            referencedRelation: "caixa_elisa_planejamento_meses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      caixa_elisa_planejamento_meses: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          mes: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          mes: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          mes?: string
+        }
+        Relationships: []
+      }
       calendario_cores: {
         Row: {
           ativa: boolean
