@@ -3,8 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { FileText, Settings, Lock, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
-import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
-
 const menuItems = [
   { label: "Gestão de Notas", icon: FileText, path: "/administrativo/fiscal/notas-fiscais", ativo: true },
   { label: "Configurações", icon: Settings, path: "/administrativo/fiscal/configuracoes", ativo: true },
@@ -44,8 +42,6 @@ export default function FiscalHub() {
       />
 
       {/* Menu de Perfil Flutuante */}
-      <FloatingProfileMenu mounted={mounted} />
-
       {/* Botão Voltar */}
       <button
         onClick={() => navigate('/administrativo')}

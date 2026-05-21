@@ -12,7 +12,6 @@ import {
 } from 'lucide-react';
 
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
-import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
 import { DelayedParticles } from '@/components/DelayedParticles';
 
 const menuItems = [
@@ -48,8 +47,6 @@ export default function VendasHub() {
       />
 
       {/* Menu de Perfil Flutuante */}
-      <FloatingProfileMenu mounted={mounted} />
-
       {/* Botão Voltar */}
       <button
         onClick={() => navigate('/home')}

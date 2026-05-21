@@ -6,7 +6,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
-import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
 import { DelayedParticles } from '@/components/DelayedParticles';
 
 const menuItems = [
@@ -83,8 +82,6 @@ export default function FabricaHub() {
       />
 
       {/* Menu de Perfil Flutuante */}
-      <FloatingProfileMenu mounted={mounted} />
-
       {/* Botão Voltar */}
       <button
         onClick={() => navigate('/home')}

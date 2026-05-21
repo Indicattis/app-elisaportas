@@ -27,7 +27,6 @@ import { ptBR } from "date-fns/locale";
 import { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
-import { FloatingProfileMenu } from "@/components/FloatingProfileMenu";
 import { useFaturamentoDetalhado } from "@/hooks/useFaturamentoDetalhado";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -156,8 +155,6 @@ export default function FaturamentoProdutosMinimalista() {
       />
 
       {/* Menu de Perfil Flutuante */}
-      <FloatingProfileMenu mounted={mounted} />
-
       {/* Botão Voltar */}
       <button
         onClick={() => navigate('/administrativo/financeiro/faturamento')}

@@ -5,7 +5,6 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
-import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
 import { DelayedParticles } from '@/components/DelayedParticles';
 
 const menuItems = [
@@ -89,9 +88,6 @@ export default function DirecaoAprovacoesHub() {
         ]} 
         mounted={mounted} 
       />
-
-      <FloatingProfileMenu mounted={mounted} />
-
       <button
         onClick={() => navigate('/direcao')}
         className="fixed top-4 left-4 z-50 p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10

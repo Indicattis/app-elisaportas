@@ -14,7 +14,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
-import { FloatingProfileMenu } from "@/components/FloatingProfileMenu";
 import { useCustosMensais } from "@/hooks/useCustosMensais";
 import { useTiposCustos, TipoCusto } from "@/hooks/useTiposCustos";
 import { cn, formatCurrency } from "@/lib/utils";
@@ -101,7 +100,6 @@ export default function CustosGridMinimalista() {
   return (
     <div className="min-h-screen bg-black text-white">
       <AnimatedBreadcrumb items={[{ label: "Home", path: "/home" }, { label: "Administrativo", path: "/administrativo" }, { label: "Financeiro", path: "/administrativo/financeiro" }, { label: "Custos" }]} mounted={mounted} />
-      <FloatingProfileMenu mounted={mounted} />
       <button onClick={() => navigate("/administrativo/financeiro")} className="fixed top-4 left-4 z-50 p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 hover:bg-white/10 transition-all duration-300" style={{ opacity: mounted ? 1 : 0, transform: mounted ? "translateX(0)" : "translateX(-20px)", transition: "all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 100ms" }}>
         <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-lg shadow-blue-500/20"><ArrowLeft className="w-5 h-5" strokeWidth={1.5} /></div>
       </button>

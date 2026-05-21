@@ -5,7 +5,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
-import { FloatingProfileMenu } from "@/components/FloatingProfileMenu";
 import { useCustosMensais } from "@/hooks/useCustosMensais";
 import { useTiposCustos } from "@/hooks/useTiposCustos";
 import { formatCurrency } from "@/lib/utils";
@@ -83,7 +82,6 @@ export default function CustosMesMinimalista() {
         ]}
         mounted={mounted}
       />
-      <FloatingProfileMenu mounted={mounted} />
       <button
         onClick={() => navigate("/administrativo/financeiro/custos")}
         className="fixed top-4 left-4 z-50 p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 hover:bg-white/10 transition-all duration-300"

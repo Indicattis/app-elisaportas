@@ -4,7 +4,6 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { ArrowLeft, Search, FileText, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react';
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
-import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
 import { DelayedParticles } from '@/components/DelayedParticles';
 import { Input } from '@/components/ui/input';
 
@@ -87,9 +86,6 @@ export default function VisitasTecnicas() {
         ]}
         mounted={mounted}
       />
-
-      <FloatingProfileMenu mounted={mounted} />
-
       <button
         onClick={() => navigate('/vendas')}
         className="fixed top-4 left-4 z-50 p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10

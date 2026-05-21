@@ -3,8 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { Factory, Package, Truck, Lock, ArrowLeft, FileSearch } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
-import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
-
 const menuItems = [
   { label: "Fábrica", icon: Factory, path: "/estoque/fabrica", ativo: true },
   { label: "Almoxarifado", icon: Package, path: "/estoque/almoxarifado", ativo: true },
@@ -45,8 +43,6 @@ export default function EstoqueHub() {
       />
 
       {/* Menu de Perfil Flutuante */}
-      <FloatingProfileMenu mounted={mounted} />
-
       {/* Botão Voltar */}
       <button
         onClick={() => navigate('/home')}

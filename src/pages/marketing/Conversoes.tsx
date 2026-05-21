@@ -6,7 +6,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { format, startOfMonth, endOfMonth, parseISO, isValid } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
-import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
 import { DelayedParticles } from '@/components/DelayedParticles';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -86,8 +85,6 @@ export default function Conversoes() {
         ]}
         mounted
       />
-      <FloatingProfileMenu mounted />
-
       <button
         onClick={() => navigate('/marketing')}
         className="fixed top-4 left-4 z-50 p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 hover:bg-white/10 transition-all duration-300"

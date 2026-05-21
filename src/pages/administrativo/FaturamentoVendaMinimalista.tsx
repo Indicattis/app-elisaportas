@@ -41,7 +41,6 @@ import { ConfirmarFaturamentoDialog } from "@/components/vendas/ConfirmarFaturam
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { usePedidoCreation } from "@/hooks/usePedidoCreation";
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
-import { FloatingProfileMenu } from "@/components/FloatingProfileMenu";
 import { useConfiguracoesVendas } from "@/hooks/useConfiguracoesVendas";
 import { PagamentoSection, PagamentoData, createEmptyPagamentoData } from "@/components/vendas/PagamentoSection";
 import { MetodoPagamento, createEmptyMetodo } from "@/components/vendas/MetodoPagamentoCard";
@@ -1048,8 +1047,6 @@ export default function FaturamentoVendaMinimalista() {
   return (
     <div className="min-h-screen bg-black text-white">
       <AnimatedBreadcrumb items={breadcrumbItems} mounted={mounted} />
-      <FloatingProfileMenu mounted={mounted} />
-
       <div className="max-w-[1600px] mx-auto p-6 pt-20 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">

@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import { ShoppingCart, Megaphone, Truck, Factory, Building2, Lock, ArrowLeft, Target } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
-import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
 import { DelayedParticles } from '@/components/DelayedParticles';
 
 const menuItems = [
@@ -47,9 +46,6 @@ export default function MetasHubDirecao() {
         ]}
         mounted={mounted}
       />
-
-      <FloatingProfileMenu />
-
       {/* Back button */}
       <button
         onClick={() => navigate('/direcao')}

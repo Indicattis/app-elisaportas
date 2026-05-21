@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SETOR_LABELS } from "@/utils/setorMapping";
-import { FloatingProfileMenu } from "@/components/FloatingProfileMenu";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -57,8 +56,6 @@ export default function MeuPerfil() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white">
-      <FloatingProfileMenu />
-
       <div className="max-w-2xl mx-auto px-4 py-8">
         <Button
           variant="ghost"

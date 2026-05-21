@@ -4,8 +4,6 @@ import { Receipt, Package, Wrench, Lock, ArrowLeft } from "lucide-react";
 
 import { useToast } from "@/hooks/use-toast";
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
-import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
-
 const menuItems = [
   { 
     label: "Por Venda", 
@@ -65,8 +63,6 @@ export default function FaturamentoHub() {
       />
 
       {/* Menu de Perfil Flutuante */}
-      <FloatingProfileMenu mounted={mounted} />
-
       {/* Botão Voltar */}
       <button
         onClick={() => navigate('/administrativo/financeiro')}

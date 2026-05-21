@@ -12,8 +12,6 @@ import { CalendarioMensalCaixa } from "@/components/caixa/CalendarioMensalCaixa"
 import { AdicionarDepositoModal } from "@/components/caixa/AdicionarDepositoModal";
 import { DepositoCaixa, CATEGORIAS_DEPOSITO } from "@/types/caixa";
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
-import { FloatingProfileMenu } from "@/components/FloatingProfileMenu";
-
 export default function GestaoCaixaMinimalista() {
   const navigate = useNavigate();
   const [mounted, setMounted] = useState(false);
@@ -110,8 +108,6 @@ export default function GestaoCaixaMinimalista() {
       />
 
       {/* Menu de Perfil Flutuante */}
-      <FloatingProfileMenu mounted={mounted} />
-
       {/* Botão Voltar */}
       <button
         onClick={() => navigate('/administrativo/financeiro/caixa')}

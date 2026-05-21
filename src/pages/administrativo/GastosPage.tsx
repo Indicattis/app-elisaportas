@@ -9,7 +9,6 @@ import { useGastos, Gasto, GastosOrdenarPor } from "@/hooks/useGastos";
 import { useBancos } from "@/hooks/useBancos";
 import { useTiposCustos } from "@/hooks/useTiposCustos";
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
-import { FloatingProfileMenu } from "@/components/FloatingProfileMenu";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -273,8 +272,6 @@ export default function GastosPage() {
         ]}
         mounted={mounted}
       />
-      <FloatingProfileMenu mounted={mounted} />
-
       <button
         onClick={() => navigate("/administrativo/financeiro")}
         className="fixed top-4 left-4 z-50 p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 hover:bg-white/10 transition-all duration-300"

@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { Wallet, CalendarRange, ArrowLeft, Lock } from 'lucide-react';
 
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
-import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
 import { DelayedParticles } from '@/components/DelayedParticles';
 
 const menuItems = [
@@ -58,9 +57,6 @@ export default function CaixaElisaDirecao() {
         ]}
         mounted={mounted}
       />
-
-      <FloatingProfileMenu mounted={mounted} />
-
       <button
         onClick={() => navigate('/direcao')}
         className="fixed top-4 left-4 z-50 p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 hover:bg-white/10 transition-all duration-300"
