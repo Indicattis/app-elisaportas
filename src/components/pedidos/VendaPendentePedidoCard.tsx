@@ -772,7 +772,45 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
                 </div>
 
                 {/* Slot vazio (mantém grid de 3 colunas de ação) */}
-                <div />
+                <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                  <AlertDialog>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            size="icon"
+                            variant="outline"
+                            disabled={isDispensando}
+                            className="flex h-[20px] w-full rounded-[3px] border-amber-500/50 text-amber-500 hover:bg-amber-500/10"
+                          >
+                            {isDispensando ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <Archive className="h-3 w-3" />
+                            )}
+                          </Button>
+                        </AlertDialogTrigger>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="text-xs">Dispensar pedido — envia para Arquivo Morto</p>
+                      </TooltipContent>
+                    </Tooltip>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Dispensar pedido?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          A venda de <strong>{venda.cliente_nome}</strong> será dispensada e não aparecerá mais nesta tela. Ela será enviada para o Arquivo Morto.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDispensarPedido}>
+                          Dispensar
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
               </>
             )}
 
