@@ -1162,6 +1162,7 @@ export default function MinhasVendasEditar() {
                   }}
                   onRemoverDesconto={handleRemoverDesconto}
                   onUpdateQuantidade={handleUpdateQuantidade}
+                  onUpdateObservacao={handleUpdateObservacao}
                 />
               )}
             </div>
