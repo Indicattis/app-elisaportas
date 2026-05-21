@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { Package, Truck, Building2, ArrowLeft } from "lucide-react";
 
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
-import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
 import { DelayedParticles } from '@/components/DelayedParticles';
 
 const menuItems = [
@@ -33,9 +32,6 @@ export default function FreteHub() {
         ]} 
         mounted={mounted} 
       />
-
-      <FloatingProfileMenu mounted={mounted} />
-
       <button
         onClick={() => navigate('/logistica')}
         className="fixed top-4 left-4 z-50 p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10

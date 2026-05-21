@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 
 import { AnimatedBreadcrumb, BreadcrumbItem } from './AnimatedBreadcrumb';
+import { FloatingProfileMenu } from './FloatingProfileMenu';
 
 interface MinimalistLayoutProps {
   title: string;
@@ -151,6 +152,8 @@ export function MinimalistLayout({
           </div>
         </main>
       </div>
+
+      <FloatingProfileMenu mounted={mounted} />
     </div>
   );
 }

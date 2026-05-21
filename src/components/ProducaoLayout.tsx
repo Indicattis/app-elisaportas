@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import { ProducaoHeader } from "./producao/ProducaoHeader";
+import { FloatingProfileMenu } from "./FloatingProfileMenu";
 
 interface ProducaoLayoutProps {
   children: ReactNode;
@@ -14,6 +15,7 @@ export function ProducaoLayout({ children }: ProducaoLayoutProps) {
           {children}
         </main>
       </div>
+      <FloatingProfileMenu />
     </div>
   );
 }

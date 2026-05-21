@@ -8,7 +8,6 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
-import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
 import { DelayedParticles } from '@/components/DelayedParticles';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -224,8 +223,6 @@ export default function PlanejamentoPage() {
         ]}
         mounted={mounted}
       />
-      <FloatingProfileMenu mounted={mounted} />
-
       <button
         onClick={() => navigate('/direcao/caixa-elisa')}
         className="fixed top-4 left-4 z-50 p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 hover:bg-white/10 transition-all duration-300"

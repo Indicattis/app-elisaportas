@@ -4,8 +4,6 @@ import { Users, Briefcase, ClipboardList, Tag, Lock, ArrowLeft } from "lucide-re
 
 import { useToast } from "@/hooks/use-toast";
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
-import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
-
 const menuItems = [
   { label: "Colaboradores", icon: Users, path: "/administrativo/rh-dp/colaboradores", ativo: true },
   { label: "Vagas", icon: Briefcase, path: "/administrativo/rh-dp/vagas", ativo: true },
@@ -47,8 +45,6 @@ export default function RhDpHub() {
       />
 
       {/* Menu de Perfil Flutuante */}
-      <FloatingProfileMenu mounted={mounted} />
-
       {/* Botão Voltar */}
       <button
         onClick={() => navigate('/administrativo')}

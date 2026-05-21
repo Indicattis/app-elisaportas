@@ -14,7 +14,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
-import { FloatingProfileMenu } from "@/components/FloatingProfileMenu";
 import { DelayedParticles } from "@/components/DelayedParticles";
 import { ColunaOrdensProducao } from "@/components/cronograma/ColunaOrdensProducao";
 import { CronogramaSidebar } from "@/components/cronograma/CronogramaSidebar";
@@ -167,9 +166,6 @@ export default function CronogramaProducao() {
         ]} 
         mounted={mounted} 
       />
-
-      <FloatingProfileMenu mounted={mounted} />
-
       {/* Header */}
       <header className="relative z-10 px-4 pt-4 pb-2">
         <div className="flex items-center justify-between">

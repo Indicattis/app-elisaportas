@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { ShoppingCart, DollarSign, Factory, Truck, ArrowLeft, Warehouse, ShieldCheck, Calculator, Network, Lock, Wallet, Lightbulb, Banknote } from 'lucide-react';
 
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
-import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
 import { DelayedParticles } from '@/components/DelayedParticles';
 import { useBulkRouteAccess } from '@/hooks/useBulkRouteAccess';
 
@@ -91,9 +90,6 @@ export default function DirecaoHub() {
         ]} 
         mounted={mounted} 
       />
-
-      <FloatingProfileMenu mounted={mounted} />
-
       <button
         onClick={() => navigate('/home')}
         className="fixed top-4 left-4 z-50 p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10

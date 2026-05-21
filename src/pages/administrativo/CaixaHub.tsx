@@ -4,8 +4,6 @@ import { Wallet, HandCoins, Lock, ArrowLeft } from "lucide-react";
 
 import { useToast } from "@/hooks/use-toast";
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
-import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
-
 const menuItems: { label: string; icon: any; path: string; ativo: boolean; description: string }[] = [];
 
 export default function CaixaHub() {
@@ -43,8 +41,6 @@ export default function CaixaHub() {
       />
 
       {/* Menu de Perfil Flutuante */}
-      <FloatingProfileMenu mounted={mounted} />
-
       {/* Botão Voltar */}
       <button
         onClick={() => navigate('/administrativo/financeiro')}
