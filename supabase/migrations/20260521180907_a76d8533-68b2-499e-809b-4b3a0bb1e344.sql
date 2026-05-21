@@ -1,0 +1,1 @@
+ALTER TABLE public.custos_folha_mensais ADD COLUMN IF NOT EXISTS previsao numeric NOT NULL DEFAULT 0;
