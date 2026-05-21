@@ -1732,6 +1732,7 @@ export type Database = {
       }
       custos_folha_mensais: {
         Row: {
+          adiantamento: number
           ajuda_custo: number
           chave_pix: string | null
           colaborador_id: string
@@ -1747,6 +1748,7 @@ export type Database = {
           valor: number
         }
         Insert: {
+          adiantamento?: number
           ajuda_custo?: number
           chave_pix?: string | null
           colaborador_id: string
@@ -1762,6 +1764,7 @@ export type Database = {
           valor?: number
         }
         Update: {
+          adiantamento?: number
           ajuda_custo?: number
           chave_pix?: string | null
           colaborador_id?: string

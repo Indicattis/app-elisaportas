@@ -1,0 +1,1 @@
+ALTER TABLE public.custos_folha_mensais ADD COLUMN IF NOT EXISTS adiantamento numeric NOT NULL DEFAULT 0;
