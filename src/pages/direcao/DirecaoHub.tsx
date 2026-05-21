@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingCart, DollarSign, Factory, Truck, ArrowLeft, Warehouse, ShieldCheck, Calculator, Network, ClipboardCheck, Lock, Wallet, Lightbulb, Banknote } from 'lucide-react';
+import { ShoppingCart, DollarSign, Factory, Truck, ArrowLeft, Warehouse, ShieldCheck, Calculator, Network, Lock, Wallet, Lightbulb, Banknote } from 'lucide-react';
 
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
@@ -12,7 +12,6 @@ const menuItems = [
   { label: 'Capital de Giro Elisa', icon: Wallet, path: '/direcao/caixa-elisa', routePrefix: 'direcao_caixa_elisa', variant: 'green' as const },
   { label: 'Vendas', icon: ShoppingCart, path: '/direcao/vendas', routePrefix: 'direcao_vendas' },
   { label: 'Financeiro', icon: Banknote, path: '/direcao/financeiro', routePrefix: 'direcao_financeiro' },
-  { label: 'Checklist Liderança', icon: ClipboardCheck, path: '/direcao/checklist-lideranca', routePrefix: 'direcao_checklist', variant: 'slate' as const },
   { label: 'Gestão de Fábrica', icon: Factory, path: '/direcao/gestao-fabrica', routePrefix: 'direcao_gestao_fabrica' },
   { label: 'Gestão de Instalações', icon: Truck, path: '/direcao/gestao-instalacao', routePrefix: 'direcao_gestao_instalacao' },
   { label: 'Gestão de Frotas', icon: Truck, path: '/direcao/frota', routePrefix: 'direcao_frota' },
