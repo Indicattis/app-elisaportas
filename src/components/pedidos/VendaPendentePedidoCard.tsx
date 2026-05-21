@@ -723,96 +723,56 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
               </>
             ) : (
               <>
-                {/* Criar Pedido */}
+                {/* Aprovar venda (cria pedido em 'aberto') */}
                 <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
                         size="icon"
                         variant="outline"
-                        disabled={isCreating}
-                        className="flex h-[20px] w-full rounded-[3px] border-primary/50 text-primary hover:bg-primary/10"
-                        onClick={handleCriarPedido}
+                        disabled={isAprovando || isReprovando}
+                        className="flex h-[20px] w-full rounded-[3px] border-emerald-500/50 text-emerald-500 hover:bg-emerald-500/10"
+                        onClick={handleAprovarVenda}
                       >
-                        {isCreating ? (
+                        {isAprovando ? (
                           <Loader2 className="h-3 w-3 animate-spin" />
                         ) : (
-                          <Plus className="h-3 w-3" />
+                          <ShieldCheck className="h-3 w-3" />
                         )}
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p className="text-xs">Criar Pedido de Produção</p>
+                      <p className="text-xs">Aprovar venda — cria pedido</p>
                     </TooltipContent>
                   </Tooltip>
                 </div>
 
-                {/* Dispensar Pedido */}
-                <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
-                  <AlertDialog>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            size="icon"
-                            variant="outline"
-                            disabled={isDispensando}
-                            className="flex h-[20px] w-full rounded-[3px] border-yellow-500/50 text-yellow-600 hover:bg-yellow-500/10"
-                          >
-                            {isDispensando ? (
-                              <Loader2 className="h-3 w-3 animate-spin" />
-                            ) : (
-                              <AlertTriangle className="h-3 w-3" />
-                            )}
-                          </Button>
-                        </AlertDialogTrigger>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p className="text-xs">Concluir sem pedido</p>
-                      </TooltipContent>
-                    </Tooltip>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Dispensar Pedido de Produção</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Esta venda será marcada como concluída e não aparecerá mais nesta aba.
-                          <br />
-                          Cliente: <strong>{venda.cliente_nome}</strong>
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDispensarPedido}>
-                          Confirmar
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-
-                {/* Concluir Direto (Arquivo Morto) */}
+                {/* Reprovar venda */}
                 <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
                         size="icon"
                         variant="outline"
-                        disabled={isConcluindoDireto}
-                        className="flex h-[20px] w-full rounded-[3px] border-red-500/50 text-red-600 hover:bg-red-500/10"
-                        onClick={() => setShowConcluirDireto(true)}
+                        disabled={isReprovando || isAprovando}
+                        className="flex h-[20px] w-full rounded-[3px] border-red-500/50 text-red-500 hover:bg-red-500/10"
+                        onClick={() => setShowReprovar(true)}
                       >
-                        {isConcluindoDireto ? (
+                        {isReprovando ? (
                           <Loader2 className="h-3 w-3 animate-spin" />
                         ) : (
-                          <Archive className="h-3 w-3" />
+                          <XCircle className="h-3 w-3" />
                         )}
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p className="text-xs">Concluir Direto (Arquivo Morto)</p>
+                      <p className="text-xs">Reprovar venda</p>
                     </TooltipContent>
                   </Tooltip>
                 </div>
+
+                {/* Slot vazio (mantém grid de 3 colunas de ação) */}
+                <div />
               </>
             )}
 
