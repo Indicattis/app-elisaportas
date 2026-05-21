@@ -96,6 +96,7 @@ export default function CustoFolhaMensal() {
         horasExtras: String(Number(l.horas_extras ?? 0) || 0),
         chavePix: l.chave_pix ?? "",
         previsao: String(Number(l.previsao ?? 0) || 0),
+        adiantamento: String(Number(l.adiantamento ?? 0) || 0),
       };
     });
     setValores(map);
