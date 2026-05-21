@@ -22,6 +22,7 @@ interface LinhaValores {
   horasExtras: string;
   chavePix: string;
   previsao: string;
+  adiantamento: string;
 }
 
 const linhaVazia = (): LinhaValores => ({
@@ -30,6 +31,7 @@ const linhaVazia = (): LinhaValores => ({
   horasExtras: "",
   chavePix: "",
   previsao: "",
+  adiantamento: "",
 });
 
 const parseNum = (v: string) => parseFloat(v || "0") || 0;
@@ -69,7 +71,7 @@ export default function CustoFolhaMensal() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("custos_folha_mensais")
-        .select("colaborador_id, valor, salario_base, ajuda_custo, horas_extras, chave_pix, previsao")
+        .select("colaborador_id, valor, salario_base, ajuda_custo, horas_extras, chave_pix, previsao, adiantamento")
         .eq("mes_referencia", mesIso);
       if (error) throw error;
       return (data || []) as {
@@ -80,6 +82,7 @@ export default function CustoFolhaMensal() {
         horas_extras: number | null;
         chave_pix: string | null;
         previsao: number | null;
+        adiantamento: number | null;
       }[];
     },
   });
@@ -93,6 +96,7 @@ export default function CustoFolhaMensal() {
         horasExtras: String(Number(l.horas_extras ?? 0) || 0),
         chavePix: l.chave_pix ?? "",
         previsao: String(Number(l.previsao ?? 0) || 0),
+        adiantamento: String(Number(l.adiantamento ?? 0) || 0),
       };
     });
     setValores(map);
@@ -111,9 +115,10 @@ export default function CustoFolhaMensal() {
       acc.ajudaCusto += parseNum(l.ajudaCusto);
       acc.horasExtras += parseNum(l.horasExtras);
       acc.previsao += parseNum(l.previsao);
+      acc.adiantamento += parseNum(l.adiantamento);
       return acc;
     },
-    { salarioBase: 0, ajudaCusto: 0, horasExtras: 0, previsao: 0 }
+    { salarioBase: 0, ajudaCusto: 0, horasExtras: 0, previsao: 0, adiantamento: 0 }
   );
   const total = totais.salarioBase + totais.ajudaCusto + totais.horasExtras;
 
@@ -136,8 +141,9 @@ export default function CustoFolhaMensal() {
         const he = parseNum(l.horasExtras);
         const v = sb + ac + he;
         const pv = parseNum(l.previsao);
+        const ad = parseNum(l.adiantamento);
         const pix = l.chavePix.trim();
-        if (v > 0 || pv > 0 || pix.length > 0) {
+        if (v > 0 || pv > 0 || ad > 0 || pix.length > 0) {
           toUpsert.push({
             mes_referencia: mesIso,
             colaborador_id: c.id,
@@ -147,6 +153,7 @@ export default function CustoFolhaMensal() {
             ajuda_custo: ac,
             horas_extras: he,
             previsao: pv,
+            adiantamento: ad,
             chave_pix: pix || null,
             created_by: user?.id ?? null,
           });
@@ -256,6 +263,9 @@ export default function CustoFolhaMensal() {
                   <th className="text-right p-3 text-white/40 font-medium text-xs uppercase w-[140px]">
                     Previsão
                   </th>
+                  <th className="text-right p-3 text-white/40 font-medium text-xs uppercase w-[140px]">
+                    Adiantamento
+                  </th>
                   <th className="text-left p-3 text-white/40 font-medium text-xs uppercase w-[240px]">
                     Chave PIX
                   </th>
@@ -318,6 +328,18 @@ export default function CustoFolhaMensal() {
                           className="bg-white/5 border-white/10 text-white text-right ml-auto w-[130px]"
                         />
                       </td>
+                      <td className="p-3 text-right">
+                        <Input
+                          type="number"
+                          inputMode="decimal"
+                          step="0.01"
+                          min="0"
+                          value={l.adiantamento}
+                          onChange={(e) => updateLinha(c.id, { adiantamento: e.target.value })}
+                          placeholder="0,00"
+                          className="bg-white/5 border-white/10 text-white text-right ml-auto w-[130px]"
+                        />
+                      </td>
                       <td className="p-3">
                         <Input
                           type="text"
@@ -350,6 +372,9 @@ export default function CustoFolhaMensal() {
                   </td>
                   <td className="p-3 text-right font-semibold text-white/80 tabular-nums">
                     {formatBRL(totais.previsao)}
+                  </td>
+                  <td className="p-3 text-right font-semibold text-white/80 tabular-nums">
+                    {formatBRL(totais.adiantamento)}
                   </td>
                   <td className="p-3" />
                 </tr>
