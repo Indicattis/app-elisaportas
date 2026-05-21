@@ -7,8 +7,8 @@ import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
 import { DelayedParticles } from '@/components/DelayedParticles';
 
 const menuItems = [
-  { label: '2M - Capital de Giro', icon: Wallet, path: '/direcao/caixa-elisa/capital-giro' },
-  { label: 'Planejamento 2M de Giro', icon: CalendarRange, path: '/direcao/caixa-elisa/planejamento' },
+  { label: '2 Milhões Capital de Giro', icon: Wallet, path: '/direcao/caixa-elisa/capital-giro' },
+  { label: 'Planejamento 2 Milhões de Giro', icon: CalendarRange, path: '/direcao/caixa-elisa/planejamento' },
 ];
 
 export default function CaixaElisaDirecao() {
