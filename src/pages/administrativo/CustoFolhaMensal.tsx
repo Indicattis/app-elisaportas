@@ -71,7 +71,7 @@ export default function CustoFolhaMensal() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("custos_folha_mensais")
-        .select("colaborador_id, valor, salario_base, ajuda_custo, horas_extras, chave_pix, previsao")
+        .select("colaborador_id, valor, salario_base, ajuda_custo, horas_extras, chave_pix, previsao, adiantamento")
         .eq("mes_referencia", mesIso);
       if (error) throw error;
       return (data || []) as {
@@ -82,6 +82,7 @@ export default function CustoFolhaMensal() {
         horas_extras: number | null;
         chave_pix: string | null;
         previsao: number | null;
+        adiantamento: number | null;
       }[];
     },
   });
