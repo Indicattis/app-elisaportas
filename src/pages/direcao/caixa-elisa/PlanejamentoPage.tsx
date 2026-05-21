@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CalendarRange, ArrowLeft, Plus, Pencil, Trash2 } from 'lucide-react';
+
+interface Mes { id: string; mes: string }
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
