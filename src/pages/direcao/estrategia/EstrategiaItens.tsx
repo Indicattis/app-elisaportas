@@ -248,10 +248,42 @@ export default function EstrategiaItens() {
               </datalist>
             </div>
             <div>
-              <Label>Subcategoria</Label>
+              <Label>Fornecedor</Label>
               <Input
-                value={newItem.subcategoria}
-                onChange={(e) => setNewItem({ ...newItem, subcategoria: e.target.value })}
+                value={newItem.fornecedor}
+                onChange={(e) => setNewItem({ ...newItem, fornecedor: e.target.value })}
+                className="bg-white/5 border-white/10 text-white"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <Label>Qtd Ideal</Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={newItem.quantidade_ideal}
+                onChange={(e) => setNewItem({ ...newItem, quantidade_ideal: e.target.value })}
+                className="bg-white/5 border-white/10 text-white"
+              />
+            </div>
+            <div>
+              <Label>Qtd Máxima</Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={newItem.quantidade_maxima}
+                onChange={(e) => setNewItem({ ...newItem, quantidade_maxima: e.target.value })}
+                className="bg-white/5 border-white/10 text-white"
+              />
+            </div>
+            <div>
+              <Label>Qtd</Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={newItem.quantidade}
+                onChange={(e) => setNewItem({ ...newItem, quantidade: e.target.value })}
                 className="bg-white/5 border-white/10 text-white"
               />
             </div>
@@ -281,12 +313,10 @@ export default function EstrategiaItens() {
               />
             </div>
             <div>
-              <Label>Preço venda (R$)</Label>
+              <Label>Subcategoria</Label>
               <Input
-                type="number"
-                step="0.01"
-                value={newItem.preco_venda}
-                onChange={(e) => setNewItem({ ...newItem, preco_venda: e.target.value })}
+                value={newItem.subcategoria}
+                onChange={(e) => setNewItem({ ...newItem, subcategoria: e.target.value })}
                 className="bg-white/5 border-white/10 text-white"
               />
             </div>
