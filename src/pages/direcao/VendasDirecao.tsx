@@ -580,7 +580,14 @@ export default function VendasDirecao() {
       >
         <Users className="h-4 w-4" />
       </Button>
-      <DropdownMenu>
+      <Button 
+        variant="outline" 
+        size="sm" 
+        className="bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white"
+        onClick={() => window.open('https://crm.elisaportas.com', '_blank')}
+        title="CRM"
+      >
+        <ExternalLink className="h-4 w-4" />
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="sm" className="bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white">
             <Download className="h-4 w-4" />
