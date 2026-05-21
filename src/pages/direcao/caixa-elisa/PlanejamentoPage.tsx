@@ -213,7 +213,7 @@ export default function PlanejamentoPage() {
         </div>
       </button>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6 pt-24 pb-16">
+      <div className="relative z-10 max-w-screen-2xl mx-auto px-6 pt-24 pb-16">
         <div className="rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 p-5 flex items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-4">
             <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30">
@@ -237,7 +237,7 @@ export default function PlanejamentoPage() {
         </div>
 
         <div className="flex flex-col lg:flex-row gap-4">
-          <div className="lg:w-4/5 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 p-4">
+          <div className="lg:flex-1 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 p-4">
             {grupos.length === 0 ? (
               <div className="py-10 text-center text-sm text-white/40">Nenhum mês adicionado.</div>
             ) : (
@@ -315,7 +315,7 @@ export default function PlanejamentoPage() {
             )}
           </div>
 
-          <div className="lg:w-1/5 flex flex-col gap-4">
+          <div className="lg:w-64 flex flex-col gap-4">
             <div className="rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 p-6 text-center">
               <div className="text-xs tracking-widest text-white/40 uppercase">Total Acumulado</div>
               <div className="mt-3 text-3xl font-bold text-white tracking-tight">{formatBRL(totalAcumulado)}</div>
