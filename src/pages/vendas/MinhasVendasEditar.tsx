@@ -185,23 +185,26 @@ export default function MinhasVendasEditar() {
   };
 
   const produtosFormatados: ProdutoVenda[] = (produtos || []).map(p => ({
-    tipo_produto: p.tipo_produto as 'porta' | 'acessorio' | 'adicional',
+    tipo_produto: p.tipo_produto as ProdutoVenda['tipo_produto'],
     tamanho: p.tamanho || '',
     largura: p.largura || undefined,
     altura: p.altura || undefined,
     cor_id: p.cor_id || '',
     acessorio_id: p.acessorio_id || '',
     adicional_id: p.adicional_id || '',
+    vendas_catalogo_id: (p as any).vendas_catalogo_id || '',
     valor_produto: p.valor_produto,
     valor_pintura: p.valor_pintura,
     valor_instalacao: p.valor_instalacao,
     valor_frete: p.valor_frete,
+    valor_credito: (p as any).valor_credito || 0,
     tipo_desconto: p.tipo_desconto as 'percentual' | 'valor',
     desconto_percentual: p.desconto_percentual,
     desconto_valor: p.desconto_valor,
     quantidade: p.quantidade,
     descricao: p.descricao || '',
-    unidade: (p as any).unidade || 'Unitário'
+    observacao_item: (p as any).observacao_item ?? null,
+    unidade: (p as any).unidade ?? null,
   }));
 
   const calcularValorTotalProdutos = () => {
@@ -357,6 +360,19 @@ export default function MinhasVendasEditar() {
       });
     } catch (error) {
       console.error('Erro ao atualizar quantidade:', error);
+    }
+  };
+
+  const handleUpdateObservacao = async (index: number, observacao: string) => {
+    const produto = produtos?.[index];
+    if (!produto?.id) return;
+    try {
+      await updateProduto({
+        produtoId: produto.id,
+        updates: { observacao_item: observacao || null },
+      });
+    } catch (error) {
+      console.error('Erro ao atualizar observação:', error);
     }
   };
 
@@ -1146,6 +1162,7 @@ export default function MinhasVendasEditar() {
                   }}
                   onRemoverDesconto={handleRemoverDesconto}
                   onUpdateQuantidade={handleUpdateQuantidade}
+                  onUpdateObservacao={handleUpdateObservacao}
                 />
               )}
             </div>
