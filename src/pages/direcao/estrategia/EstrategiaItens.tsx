@@ -556,7 +556,7 @@ export default function EstrategiaItens() {
       ]}
       fullWidth
     >
-      <div className="space-y-4 px-[84px]">
+      <div className="dark space-y-4 px-[84px] text-white">
         {/* Barra de busca */}
         <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
           <div className="p-4 rounded-lg flex items-center gap-3">
