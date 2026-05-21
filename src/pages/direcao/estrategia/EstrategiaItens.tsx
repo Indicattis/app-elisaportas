@@ -28,6 +28,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatCurrency } from "@/lib/utils";
+import { toast } from "sonner";
 import { useCustosItens, CustoItem, useCustosItensPadroes, useCustosItensCategoriasOrdem, useRenomearCategoriaItens } from "@/hooks/useCustosItens";
 
 const UNIDADES = ["Un", "M", "Kg", "L", "M²", "M³", "Cx", "Pç"];
@@ -190,6 +191,101 @@ function CategoriaTitulo({
     >
       {categoria}
     </span>
+  );
+}
+
+function CategoriaOrdemRow({
+  categoria,
+  index,
+  total,
+  onMove,
+  onRename,
+}: {
+  categoria: string;
+  index: number;
+  total: number;
+  onMove: (dir: -1 | 1) => void;
+  onRename: (novo: string) => Promise<void> | void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(categoria);
+
+  useEffect(() => {
+    if (!editing) setDraft(categoria);
+  }, [categoria, editing]);
+
+  const commit = async () => {
+    setEditing(false);
+    await onRename(draft);
+  };
+
+  return (
+    <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10">
+      <span className="text-[11px] text-white/40 w-6">{index + 1}.</span>
+      {editing ? (
+        <>
+          <Input
+            autoFocus
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") { e.preventDefault(); commit(); }
+              if (e.key === "Escape") { setEditing(false); setDraft(categoria); }
+            }}
+            className="flex-1 h-7 px-2 text-sm bg-white/10 border-white/20 text-white"
+          />
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-7 w-7 text-emerald-400 hover:text-emerald-300 hover:bg-white/10"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={commit}
+          >
+            <Check className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-7 w-7 text-white/60 hover:text-white hover:bg-white/10"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => { setEditing(false); setDraft(categoria); }}
+          >
+            <X className="h-3.5 w-3.5" />
+          </Button>
+        </>
+      ) : (
+        <>
+          <span className="flex-1 text-sm text-white truncate">{categoria}</span>
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-7 w-7 text-white/60 hover:text-white hover:bg-white/10"
+            onClick={() => setEditing(true)}
+            title="Renomear"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-7 w-7 text-white/60 hover:text-white hover:bg-white/10"
+            onClick={() => onMove(-1)}
+            disabled={index === 0}
+          >
+            <ArrowUp className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-7 w-7 text-white/60 hover:text-white hover:bg-white/10"
+            onClick={() => onMove(1)}
+            disabled={index === total - 1}
+          >
+            <ArrowDown className="h-3.5 w-3.5" />
+          </Button>
+        </>
+      )}
+    </div>
   );
 }
 
