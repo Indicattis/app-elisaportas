@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CalendarRange, ArrowLeft, Plus, Pencil, Trash2 } from 'lucide-react';
+
+interface Mes { id: string; mes: string }
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -21,7 +23,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 const formatBRL = (n: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n || 0);
 
-interface Mes { id: string; mes: string }
 interface Item { id: string; mes_id: string; nome: string; valor: number; data: string | null; pago: boolean }
 
 export default function PlanejamentoPage() {
@@ -31,6 +32,7 @@ export default function PlanejamentoPage() {
 
   const [mesDialogOpen, setMesDialogOpen] = useState(false);
   const [mesInput, setMesInput] = useState(''); // yyyy-MM
+  const [editingMes, setEditingMes] = useState<Mes | null>(null);
 
   const [itemDialogOpen, setItemDialogOpen] = useState(false);
   const [itemForm, setItemForm] = useState<{ mes_id: string; nome: string; valor: string; data: string }>({ mes_id: '', nome: '', valor: '', data: '' });
@@ -105,6 +107,26 @@ export default function PlanejamentoPage() {
       toast.success('Mês adicionado.');
     },
     onError: (e: any) => toast.error(e?.message ?? 'Erro ao adicionar mês.'),
+  });
+
+  const updateMes = useMutation({
+    mutationFn: async () => {
+      if (!editingMes || !mesInput) throw new Error('Selecione o mês.');
+      const dia = `${mesInput}-01`;
+      const { error } = await supabase
+        .from('caixa_elisa_planejamento_meses')
+        .update({ mes: dia })
+        .eq('id', editingMes.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['caixa-elisa-planejamento-meses'] });
+      setMesDialogOpen(false);
+      setEditingMes(null);
+      setMesInput('');
+      toast.success('Mês atualizado.');
+    },
+    onError: (e: any) => toast.error(e?.message ?? 'Erro ao atualizar mês.'),
   });
 
   const deleteMes = useMutation({
@@ -226,6 +248,7 @@ export default function PlanejamentoPage() {
           </div>
           <Button
             onClick={() => {
+              setEditingMes(null);
               setMesInput(format(new Date(), 'yyyy-MM'));
               setMesDialogOpen(true);
             }}
@@ -255,6 +278,17 @@ export default function PlanejamentoPage() {
                           className="text-xs px-2 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/20 transition flex items-center gap-1"
                         >
                           <Plus className="w-3 h-3" /> Item
+                        </button>
+                        <button
+                          onClick={() => {
+                            setEditingMes(g.mes);
+                            setMesInput(g.mes.mes.substring(0, 7));
+                            setMesDialogOpen(true);
+                          }}
+                          className="p-1 rounded-md text-white/50 hover:text-white hover:bg-white/10 transition"
+                          aria-label="Editar mês"
+                        >
+                          <Pencil className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => setConfirmDeleteMes(g.mes)}
@@ -328,11 +362,11 @@ export default function PlanejamentoPage() {
         </div>
       </div>
 
-      {/* Adicionar mês */}
-      <Dialog open={mesDialogOpen} onOpenChange={setMesDialogOpen}>
+      {/* Adicionar/Editar mês */}
+      <Dialog open={mesDialogOpen} onOpenChange={(o) => { if (!o) { setMesDialogOpen(false); setEditingMes(null); } }}>
         <DialogContent className="bg-zinc-950 border border-white/10 text-white">
           <DialogHeader>
-            <DialogTitle>Adicionar mês</DialogTitle>
+            <DialogTitle>{editingMes ? 'Editar mês' : 'Adicionar mês'}</DialogTitle>
           </DialogHeader>
           <div>
             <Label className="text-white/70">Mês</Label>
@@ -344,12 +378,12 @@ export default function PlanejamentoPage() {
             />
           </div>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setMesDialogOpen(false)} className="text-white/70 hover:text-white">
+            <Button variant="ghost" onClick={() => { setMesDialogOpen(false); setEditingMes(null); }} className="text-white/70 hover:text-white">
               Cancelar
             </Button>
             <Button
-              onClick={() => addMes.mutate()}
-              disabled={addMes.isPending}
+              onClick={() => editingMes ? updateMes.mutate() : addMes.mutate()}
+              disabled={addMes.isPending || updateMes.isPending}
               className="bg-gradient-to-r from-emerald-500 to-emerald-700 hover:from-emerald-400 hover:to-emerald-600 text-white"
             >
               Salvar
