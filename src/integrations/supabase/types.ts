@@ -1802,9 +1802,11 @@ export type Database = {
           colaborador_nome: string
           created_at: string
           created_by: string | null
+          data_pagamento: string | null
           horas_extras: number
           id: string
           mes_referencia: string
+          pago: boolean
           pensao_alimenticia: number
           previsao: number
           salario_base: number
@@ -1820,9 +1822,11 @@ export type Database = {
           colaborador_nome: string
           created_at?: string
           created_by?: string | null
+          data_pagamento?: string | null
           horas_extras?: number
           id?: string
           mes_referencia: string
+          pago?: boolean
           pensao_alimenticia?: number
           previsao?: number
           salario_base?: number
@@ -1838,9 +1842,11 @@ export type Database = {
           colaborador_nome?: string
           created_at?: string
           created_by?: string | null
+          data_pagamento?: string | null
           horas_extras?: number
           id?: string
           mes_referencia?: string
+          pago?: boolean
           pensao_alimenticia?: number
           previsao?: number
           salario_base?: number
