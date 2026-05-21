@@ -337,20 +337,23 @@ export default function EstrategiaItens() {
 
         <div className="flex flex-col gap-6">
           {groupedByCategoria.map(([categoria, rows]) => (
-            <div key={categoria} className="rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 overflow-hidden">
-              <div className="px-4 pt-3 pb-1 text-sm font-semibold text-white/80 uppercase tracking-wide">
-                {categoria}
+            <div key={categoria} className="flex flex-col gap-2">
+              <div className="flex items-center gap-2 px-1">
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-white/40" />
+                <span className="text-[11px] uppercase tracking-wider font-medium text-white/60">{categoria}</span>
+                <span className="text-[11px] text-white/30">· {rows.length}</span>
               </div>
+              <div className="rounded-xl overflow-hidden bg-white/5 backdrop-blur-xl border border-white/10">
               <Table>
                 <TableHeader>
                   <TableRow className="border-white/10 hover:bg-transparent">
-                    <TableHead className="text-white/60">Descrição</TableHead>
-                    <TableHead className="text-white/60">Subcategoria</TableHead>
-                    <TableHead className="text-white/60 w-28">Unidade</TableHead>
-                    <TableHead className="text-white/60 text-right w-40">Custo unit.</TableHead>
-                    <TableHead className="text-white/60 text-right w-40">Preço venda</TableHead>
-                    <TableHead className="text-white/60 text-right w-32">% Markup</TableHead>
-                    <TableHead className="w-12" />
+                    <TableHead className="text-xs font-medium text-white/60">Descrição</TableHead>
+                    <TableHead className="text-xs font-medium text-white/60">Subcategoria</TableHead>
+                    <TableHead className="text-xs font-medium text-white/60 text-center w-28">Unidade</TableHead>
+                    <TableHead className="text-xs font-medium text-white/60 text-right w-40">Custo</TableHead>
+                    <TableHead className="text-xs font-medium text-white/80 text-right w-40 bg-green-500/10">Preço Final</TableHead>
+                    <TableHead className="text-xs font-medium text-white/60 text-right w-32">% Markup</TableHead>
+                    <TableHead className="text-xs font-medium text-white/60 text-center w-16">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -418,6 +421,7 @@ export default function EstrategiaItens() {
                   })}
                 </TableBody>
               </Table>
+              </div>
             </div>
           ))}
         </div>
