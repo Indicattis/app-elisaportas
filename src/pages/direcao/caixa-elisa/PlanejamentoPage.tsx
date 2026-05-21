@@ -32,6 +32,7 @@ export default function PlanejamentoPage() {
 
   const [mesDialogOpen, setMesDialogOpen] = useState(false);
   const [mesInput, setMesInput] = useState(''); // yyyy-MM
+  const [editingMes, setEditingMes] = useState<Mes | null>(null);
 
   const [itemDialogOpen, setItemDialogOpen] = useState(false);
   const [itemForm, setItemForm] = useState<{ mes_id: string; nome: string; valor: string; data: string }>({ mes_id: '', nome: '', valor: '', data: '' });
