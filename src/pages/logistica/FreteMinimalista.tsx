@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Plus, Edit, Trash2, Search, Package, Upload, Wand2 } from "lucide-react";
+import { Plus, Edit, Trash2, Search, Package, Upload, Wand2, FileText, FileSpreadsheet } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -13,6 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { useFretesCidades, FreteCidade } from "@/hooks/useFretesCidades";
 import { FreteDialog } from "@/components/frete/FreteDialog";
 import { BulkUploadFretesCidades } from "@/components/frete/BulkUploadFretesCidades";
+import { exportarFretesPDF, exportarFretesExcel } from "@/utils/fretesInternosExport";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -148,6 +149,38 @@ export default function FreteMinimalista() {
       >
         <Upload className="h-4 w-4" />
         <span className="hidden sm:inline">Importar</span>
+      </Button>
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={() => {
+          try {
+            exportarFretesPDF(fretesFiltrados);
+            toast.success(`PDF exportado (${fretesFiltrados.length} registros)`);
+          } catch (e: any) {
+            toast.error(e?.message || "Erro ao exportar PDF");
+          }
+        }}
+        className="h-10 px-4 rounded-lg bg-white/5 border-white/10 text-white hover:bg-white/10 text-xs gap-1.5"
+      >
+        <FileText className="h-4 w-4" />
+        <span className="hidden sm:inline">PDF</span>
+      </Button>
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={() => {
+          try {
+            exportarFretesExcel(fretesFiltrados);
+            toast.success(`Excel exportado (${fretesFiltrados.length} registros)`);
+          } catch (e: any) {
+            toast.error(e?.message || "Erro ao exportar Excel");
+          }
+        }}
+        className="h-10 px-4 rounded-lg bg-white/5 border-white/10 text-white hover:bg-white/10 text-xs gap-1.5"
+      >
+        <FileSpreadsheet className="h-4 w-4" />
+        <span className="hidden sm:inline">Excel</span>
       </Button>
       {hasBrokenNames && (
         <Button

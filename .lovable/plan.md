@@ -1,25 +1,22 @@
-## Layout em duas colunas — /direcao/estrategia/precos
+## Exportação PDF/Excel em /logistica/frete/internos
 
-Trocar as abas atuais por um layout lado-a-lado com as duas listagens.
+Adicionar dois botões no header ("Exportar PDF" e "Exportar Excel") que exportam a lista de fretes por cidade atualmente filtrada (respeitando busca e filtro de estado).
 
-### 1. `src/pages/TabelaPrecos.tsx`
-- Adicionar prop `hideTotalColumn?: boolean`.
-- Quando ativa, ocultar o `TableHead` "Total" e a `TableCell` correspondente do Badge.
-- Adicionar prop `hideTabsAndLayout?: boolean` (ou similar) que, quando true:
-  - Não renderiza `MinimalistLayout`, `TabsList` nem o card "Pesquisa Rápida".
-  - Retorna apenas o card "Itens Cadastrados" (tabela de kits), pronto para ser embutido em outra página.
+### Colunas exportadas
+Estado, Cidade, Valor do Frete (R$), Km, Observações, Ativo (Sim/Não).
 
-### 2. `src/components/tabela-precos/CatalogoPrecosTab.tsx`
-- Adicionar prop `compact?: boolean`.
-- Quando true, exibir apenas duas colunas na tabela: **Produto** (nome) e **Preço Venda**. Ocultar imagem, categoria, SKU, unidade, custo, margem e estoque. Edição inline pode permanecer só no preço.
+### Implementação
 
-### 3. `src/pages/direcao/estrategia/EstrategiaPrecos.tsx`
-- Substituir o `<TabelaPrecos>` único por um `MinimalistLayout` próprio contendo um grid de 2 colunas (`grid-cols-1 lg:grid-cols-2 gap-6`):
-  - Coluna esquerda: `<TabelaPrecos hideTabsAndLayout hideLucroColumn hideAcoesColumn hideTotalColumn />`
-  - Coluna direita: `<CatalogoPrecosTab compact />`
-- Manter título, subtítulo e breadcrumbs atuais.
+**1. `src/utils/fretesInternosExport.ts`** (novo)
+- `exportarFretesPDF(fretes)`: usa `jsPDF` + `jspdf-autotable` (já no projeto, vide `relatorioMateriaisPDF.ts`). Orientação retrato A4, título "Frete por Cidade — Valores Internos", data de geração, total de registros, tabela com as colunas acima. Salva como `fretes-internos-YYYY-MM-DD.pdf`.
+- `exportarFretesExcel(fretes)`: usa `xlsx` (SheetJS). Gera workbook com uma aba "Fretes Internos", cabeçalho em negrito (via larguras de coluna), valor formatado como número, linhas ordenadas por Estado/Cidade. Salva como `fretes-internos-YYYY-MM-DD.xlsx`.
+- Se `xlsx` não estiver instalado, instalar via `bun add xlsx`.
 
-### Resultado
-- Sem abas; duas listagens visíveis simultaneamente.
-- Tabela de kits sem a coluna "Total".
-- Catálogo enxuto com apenas Nome + Preço.
+**2. `src/pages/logistica/FreteMinimalista.tsx`**
+- Adicionar dois `<Button>` no `headerActions` (entre "Importar" e o botão "Novo"): "PDF" (ícone `FileText`) e "Excel" (ícone `FileSpreadsheet`), mesmo estilo outline do botão "Importar".
+- Handlers chamam os utils acima passando `fretesFiltrados`.
+- Toast de sucesso/erro.
+
+### Observações
+- Exporta o que está visível (lista já filtrada por busca + estado), não a base inteira — alinhado com o comportamento esperado de relatórios filtráveis.
+- Nenhuma mudança em hooks ou banco de dados.
