@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { GripVertical, Hammer, Truck, Wrench, Plus, Loader2, AlertTriangle, CheckCircle2, Archive, FileSignature } from "lucide-react";
+import { GripVertical, Hammer, Truck, Wrench, Loader2, AlertTriangle, CheckCircle2, Archive, FileSignature, ShieldCheck, XCircle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -45,7 +45,9 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { createPedidoFromVenda } = usePedidoCreation();
-  const [isCreating, setIsCreating] = useState(false);
+  const [isAprovando, setIsAprovando] = useState(false);
+  const [isReprovando, setIsReprovando] = useState(false);
+  const [showReprovar, setShowReprovar] = useState(false);
   const [isDispensando, setIsDispensando] = useState(false);
   const [showDetalhes, setShowDetalhes] = useState(false);
   const [showFinalizarDireto, setShowFinalizarDireto] = useState(false);
@@ -123,17 +125,78 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
     return null;
   })();
 
-  const handleCriarPedido = async () => {
-    setIsCreating(true);
+  // Aprovar venda (etapa virtual Aprovação Diretor) — cria pedido e envia direto para 'aberto'
+  const handleAprovarVenda = async () => {
+    setIsAprovando(true);
     try {
       const pedidoId = await createPedidoFromVenda(venda.id);
-      if (pedidoId) {
-        queryClient.invalidateQueries({ queryKey: ["vendas-pendente-pedido"] });
-        queryClient.invalidateQueries({ queryKey: ["pedidos-etapas"] });
-        queryClient.invalidateQueries({ queryKey: ["pedidos-contadores"] });
-      }
+      if (!pedidoId) return;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Não autenticado');
+
+      // Move pedido para 'aberto' (já aprovado pelo diretor)
+      await supabase
+        .from('pedidos_producao')
+        .update({ etapa_atual: 'aberto' } as any)
+        .eq('id', pedidoId);
+
+      // Fecha etapa aprovacao_diretor
+      await supabase
+        .from('pedidos_etapas')
+        .update({ data_saida: new Date().toISOString() })
+        .eq('pedido_id', pedidoId)
+        .eq('etapa', 'aprovacao_diretor');
+
+      // Abre etapa 'aberto'
+      await supabase
+        .from('pedidos_etapas')
+        .upsert({
+          pedido_id: pedidoId,
+          etapa: 'aberto',
+          checkboxes: [],
+          data_entrada: new Date().toISOString(),
+          data_saida: null,
+        }, { onConflict: 'pedido_id,etapa' });
+
+      await supabase.from('pedidos_movimentacoes').insert({
+        pedido_id: pedidoId,
+        user_id: user.id,
+        etapa_origem: 'aprovacao_diretor',
+        etapa_destino: 'aberto',
+        teor: 'avanco',
+        descricao: 'Venda aprovada pelo diretor — pedido criado',
+      });
+
+      toast.success('Venda aprovada e pedido criado');
+      queryClient.invalidateQueries({ queryKey: ["vendas-pendente-pedido"] });
+      queryClient.invalidateQueries({ queryKey: ["pedidos-etapas"] });
+      queryClient.invalidateQueries({ queryKey: ["pedidos-contadores"] });
+      queryClient.invalidateQueries({ queryKey: ["pedidos-aprovacao-diretor"] });
+    } catch (e: any) {
+      console.error(e);
+      toast.error('Erro ao aprovar venda');
     } finally {
-      setIsCreating(false);
+      setIsAprovando(false);
+    }
+  };
+
+  const handleReprovarVenda = async () => {
+    setIsReprovando(true);
+    try {
+      const { error } = await supabase
+        .from('vendas')
+        .update({ status_aprovacao: 'reprovado' } as any)
+        .eq('id', venda.id);
+      if (error) throw error;
+      toast.success('Venda reprovada');
+      queryClient.invalidateQueries({ queryKey: ["vendas-pendente-pedido"] });
+      queryClient.invalidateQueries({ queryKey: ["pedidos-contadores"] });
+    } catch (e) {
+      console.error(e);
+      toast.error('Erro ao reprovar venda');
+    } finally {
+      setIsReprovando(false);
+      setShowReprovar(false);
     }
   };
 
@@ -660,96 +723,56 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
               </>
             ) : (
               <>
-                {/* Criar Pedido */}
+                {/* Aprovar venda (cria pedido em 'aberto') */}
                 <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
                         size="icon"
                         variant="outline"
-                        disabled={isCreating}
-                        className="flex h-[20px] w-full rounded-[3px] border-primary/50 text-primary hover:bg-primary/10"
-                        onClick={handleCriarPedido}
+                        disabled={isAprovando || isReprovando}
+                        className="flex h-[20px] w-full rounded-[3px] border-emerald-500/50 text-emerald-500 hover:bg-emerald-500/10"
+                        onClick={handleAprovarVenda}
                       >
-                        {isCreating ? (
+                        {isAprovando ? (
                           <Loader2 className="h-3 w-3 animate-spin" />
                         ) : (
-                          <Plus className="h-3 w-3" />
+                          <ShieldCheck className="h-3 w-3" />
                         )}
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p className="text-xs">Criar Pedido de Produção</p>
+                      <p className="text-xs">Aprovar venda — cria pedido</p>
                     </TooltipContent>
                   </Tooltip>
                 </div>
 
-                {/* Dispensar Pedido */}
-                <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
-                  <AlertDialog>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            size="icon"
-                            variant="outline"
-                            disabled={isDispensando}
-                            className="flex h-[20px] w-full rounded-[3px] border-yellow-500/50 text-yellow-600 hover:bg-yellow-500/10"
-                          >
-                            {isDispensando ? (
-                              <Loader2 className="h-3 w-3 animate-spin" />
-                            ) : (
-                              <AlertTriangle className="h-3 w-3" />
-                            )}
-                          </Button>
-                        </AlertDialogTrigger>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p className="text-xs">Concluir sem pedido</p>
-                      </TooltipContent>
-                    </Tooltip>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Dispensar Pedido de Produção</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Esta venda será marcada como concluída e não aparecerá mais nesta aba.
-                          <br />
-                          Cliente: <strong>{venda.cliente_nome}</strong>
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDispensarPedido}>
-                          Confirmar
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-
-                {/* Concluir Direto (Arquivo Morto) */}
+                {/* Reprovar venda */}
                 <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
                         size="icon"
                         variant="outline"
-                        disabled={isConcluindoDireto}
-                        className="flex h-[20px] w-full rounded-[3px] border-red-500/50 text-red-600 hover:bg-red-500/10"
-                        onClick={() => setShowConcluirDireto(true)}
+                        disabled={isReprovando || isAprovando}
+                        className="flex h-[20px] w-full rounded-[3px] border-red-500/50 text-red-500 hover:bg-red-500/10"
+                        onClick={() => setShowReprovar(true)}
                       >
-                        {isConcluindoDireto ? (
+                        {isReprovando ? (
                           <Loader2 className="h-3 w-3 animate-spin" />
                         ) : (
-                          <Archive className="h-3 w-3" />
+                          <XCircle className="h-3 w-3" />
                         )}
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p className="text-xs">Concluir Direto (Arquivo Morto)</p>
+                      <p className="text-xs">Reprovar venda</p>
                     </TooltipContent>
                   </Tooltip>
                 </div>
+
+                {/* Slot vazio (mantém grid de 3 colunas de ação) */}
+                <div />
               </>
             )}
 
@@ -769,6 +792,27 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
         vendaId={venda.id}
         clienteNome={venda.cliente_nome}
       />
+
+      {/* Confirmação Reprovar Venda */}
+      <AlertDialog open={showReprovar} onOpenChange={setShowReprovar}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reprovar venda?</AlertDialogTitle>
+            <AlertDialogDescription>
+              A venda de <strong>{venda.cliente_nome}</strong> será marcada como <strong>Reprovada</strong> e não seguirá para produção.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleReprovarVenda}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Reprovar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Dialog Finalizar Direto */}
       <Dialog open={showFinalizarDireto} onOpenChange={setShowFinalizarDireto}>

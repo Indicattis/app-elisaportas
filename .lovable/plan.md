@@ -1,22 +1,104 @@
-## Exportação PDF/Excel em /logistica/frete/internos
+## Objetivo
 
-Adicionar dois botões no header ("Exportar PDF" e "Exportar Excel") que exportam a lista de fretes por cidade atualmente filtrada (respeitando busca e filtro de estado).
+Mudar o fluxo: ao faturar uma venda, ela **não cria pedido** automaticamente. Ela avança para a etapa **"Aprovação Diretor"** (etapa virtual na venda, mesmo padrão de `assinatura_contrato` e `pendente_pedido`). O `pedidos_producao` só nasce quando o diretor aprova.
 
-### Colunas exportadas
-Estado, Cidade, Valor do Frete (R$), Km, Observações, Ativo (Sim/Não).
+Hoje a "Aprovação Diretor" só existe DEPOIS de um `pedidos_producao` ter sido criado — por isso a venda dispensada some sem passar por lá.
 
-### Implementação
+---
 
-**1. `src/utils/fretesInternosExport.ts`** (novo)
-- `exportarFretesPDF(fretes)`: usa `jsPDF` + `jspdf-autotable` (já no projeto, vide `relatorioMateriaisPDF.ts`). Orientação retrato A4, título "Frete por Cidade — Valores Internos", data de geração, total de registros, tabela com as colunas acima. Salva como `fretes-internos-YYYY-MM-DD.pdf`.
-- `exportarFretesExcel(fretes)`: usa `xlsx` (SheetJS). Gera workbook com uma aba "Fretes Internos", cabeçalho em negrito (via larguras de coluna), valor formatado como número, linhas ordenadas por Estado/Cidade. Salva como `fretes-internos-YYYY-MM-DD.xlsx`.
-- Se `xlsx` não estiver instalado, instalar via `bun add xlsx`.
+## Mudanças
 
-**2. `src/pages/logistica/FreteMinimalista.tsx`**
-- Adicionar dois `<Button>` no `headerActions` (entre "Importar" e o botão "Novo"): "PDF" (ícone `FileText`) e "Excel" (ícone `FileSpreadsheet`), mesmo estilo outline do botão "Importar".
-- Handlers chamam os utils acima passando `fretesFiltrados`.
-- Toast de sucesso/erro.
+### 1. Etapa virtual "Aprovação Diretor" em vendas
 
-### Observações
-- Exporta o que está visível (lista já filtrada por busca + estado), não a base inteira — alinhado com o comportamento esperado de relatórios filtráveis.
-- Nenhuma mudança em hooks ou banco de dados.
+Nenhuma mudança de schema. Definida por predicado em `vendas`:
+
+```
+is_rascunho=false
+AND pedido_dispensado=false
+AND status_aprovacao <> 'reprovado'
+AND isVendaFaturada(venda) = true   (frete_aprovado + todos itens faturamento=true)
+AND NÃO existe pedidos_producao vinculado
+```
+
+Atualizar `useVendasPendentePedido` → renomear conceitualmente para "Aprovação Diretor" (manter hook, só mudar o label e o destino no UI). O predicado já é exatamente esse.
+
+### 2. Unificar `usePedidosAprovacaoDiretor`
+
+Hoje só lê `pedidos_producao` em `etapa_atual='aprovacao_diretor'`. Passa a retornar **duas origens**:
+
+- **Vendas virtuais** (sem pedido ainda) — fonte primária do novo fluxo
+- **Pedidos legados** já em `aprovacao_diretor` (compatibilidade com pedidos antigos)
+
+Cada item carrega um discriminador `origem: 'venda' | 'pedido'`.
+
+### 3. Ação "Aprovar" (no card de venda virtual)
+
+Quando o diretor aprova uma venda virtual:
+1. Cria `pedidos_producao` (reaproveita `createPedidoFromVenda`)
+2. Já entra direto em `etapa_atual='aberto'` (pula `aprovacao_diretor` porque acabou de ser aprovada)
+3. Cria `pedidos_etapas` para `aberto` + fecha virtualmente registrando movimentação `aprovacao_diretor → aberto`
+
+Para pedidos legados em `aprovacao_diretor`: comportamento atual permanece (`aprovarPedido` em `usePedidosAprovacaoDiretor`).
+
+### 4. Ação "Reprovar" (no card de venda virtual)
+
+`UPDATE vendas SET status_aprovacao='reprovado' WHERE id=?` + registra log. Nenhum pedido é criado.
+
+### 5. Remover atalhos manuais que pulam o diretor
+
+Em `VendaPendentePedidoCard.tsx`:
+- **Remover** botão "Dispensar pedido" (`handleDispensarPedido`)
+- **Remover** botão "Finalizar direto / Arquivo Morto" (`handleFinalizarDireto`)
+- **Remover** botão "Criar Pedido" manual — o pedido só nasce via aprovação do diretor
+
+O card vira read-only com botões **"Aprovar"** e **"Reprovar"** (visível apenas para perfis com permissão).
+
+### 6. UI – aba em `/direcao/gestao-fabrica`
+
+- Renomear a aba "Pend. Pedido" para **"Aprovação Diretor"** (ou unificar as duas abas em uma única).
+- Contador une vendas virtuais + pedidos legados na etapa.
+
+### 7. Backfill das 12 vendas
+
+Migration de dados:
+```sql
+UPDATE vendas
+SET pedido_dispensado = false
+WHERE pedido_dispensado = true
+  AND frete_aprovado = true
+  AND id NOT IN (SELECT venda_id FROM pedidos_producao WHERE venda_id IS NOT NULL)
+  AND EXISTS (
+    SELECT 1 FROM produtos_vendas pv
+    WHERE pv.venda_id = vendas.id
+    GROUP BY pv.venda_id
+    HAVING bool_and(pv.faturamento = true)
+  );
+```
+
+Essas vendas voltam a aparecer naturalmente na nova aba "Aprovação Diretor".
+
+---
+
+## Arquivos afetados
+
+```text
+src/hooks/useVendasPendentePedido.ts        # já tem o predicado correto, manter
+src/hooks/usePedidosAprovacaoDiretor.ts     # unir vendas virtuais + pedidos legados
+src/hooks/usePedidoCreation.ts              # nova opção: criar já em 'aberto' (pós-aprovação)
+src/components/pedidos/VendaPendentePedidoCard.tsx  # remover Criar/Dispensar/Finalizar; adicionar Aprovar/Reprovar
+src/pages/direcao/GestaoFabricaDirecao.tsx  # renomear/unificar aba
+src/components/direcao/GestaoFabricaMobile.tsx
+src/pages/direcao/aprovacoes/AprovacoesPedidos.tsx  # listar vendas virtuais também
+mem/features/direcao/aprovacao-diretor-workflow-v3-virtual-stage.md  # atualizar memória
+```
+
+Migration de dados (backfill) das 12 vendas.
+
+---
+
+## Riscos / verificação
+
+- Vendas com pedido já criado **não** são afetadas (filtro `NOT IN pedidos_producao`).
+- `useCanEditVenda` continua bloqueando edição de vendas faturadas — não muda.
+- Pedidos legados em `aprovacao_diretor` continuam funcionando via mesma aba.
+- Os 5 registros com `pedido_dispensado=true` mas `frete_aprovado=false` permanecem dispensados (não foram faturados, dispensa foi consciente).
