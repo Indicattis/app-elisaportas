@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingCart, DollarSign, Factory, Truck, ArrowLeft, Warehouse, ShieldCheck, Calculator, Network, ClipboardCheck, Lock, Wallet, Lightbulb, Banknote } from 'lucide-react';
+import { ShoppingCart, DollarSign, Factory, Truck, ArrowLeft, Warehouse, ShieldCheck, Calculator, Network, Lock, Wallet, Lightbulb, Banknote } from 'lucide-react';
 
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
