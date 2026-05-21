@@ -83,6 +83,7 @@ export default function EstrategiaHub() {
                   className="w-full h-12 rounded-lg bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 active:scale-[0.98] flex items-center gap-4 px-5 text-white font-medium shadow-lg shadow-blue-500/20 border border-blue-400/30 transition-all duration-300"
                 >
                   <Icon className="w-5 h-5" strokeWidth={1.5} />
+                  <span className="text-sm font-semibold tabular-nums opacity-80">{index + 1}.</span>
                   <span className="text-sm font-medium">{item.label}</span>
                 </button>
               </div>
