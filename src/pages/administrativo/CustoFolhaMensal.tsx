@@ -263,6 +263,9 @@ export default function CustoFolhaMensal() {
                   <th className="text-right p-3 text-white/40 font-medium text-xs uppercase w-[140px]">
                     Previsão
                   </th>
+                  <th className="text-right p-3 text-white/40 font-medium text-xs uppercase w-[140px]">
+                    Adiantamento
+                  </th>
                   <th className="text-left p-3 text-white/40 font-medium text-xs uppercase w-[240px]">
                     Chave PIX
                   </th>
