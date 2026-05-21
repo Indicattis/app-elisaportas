@@ -556,7 +556,7 @@ export default function EstrategiaItens() {
       ]}
       fullWidth
     >
-      <div className="dark space-y-4 px-[84px] py-6 text-foreground bg-zinc-950 min-h-full">
+      <div className="space-y-4 px-[84px]">
         {/* Barra de busca */}
         <div className="p-1.5 rounded-xl bg-card/60 backdrop-blur-xl border border-border">
           <div className="p-4 rounded-lg flex items-center gap-3">
@@ -689,7 +689,7 @@ export default function EstrategiaItens() {
           {groupedByCategoria.map(([categoria, rows]) => (
             <div key={categoria} className="flex flex-col gap-2">
               <div className="flex items-center gap-2 px-1">
-                <span className="inline-block h-1.5 w-1.5 rounded-full bg-white/40" />
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-muted-foreground" />
                 <CategoriaTitulo
                   categoria={categoria}
                   onRename={(novo) => renomearCategoria.mutateAsync({ from: categoria, to: novo })}
