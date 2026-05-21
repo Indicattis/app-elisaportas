@@ -22,6 +22,7 @@ interface LinhaValores {
   horasExtras: string;
   chavePix: string;
   previsao: string;
+  adiantamento: string;
 }
 
 const linhaVazia = (): LinhaValores => ({
@@ -30,6 +31,7 @@ const linhaVazia = (): LinhaValores => ({
   horasExtras: "",
   chavePix: "",
   previsao: "",
+  adiantamento: "",
 });
 
 const parseNum = (v: string) => parseFloat(v || "0") || 0;
