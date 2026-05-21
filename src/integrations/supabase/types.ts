@@ -1741,6 +1741,7 @@ export type Database = {
           horas_extras: number
           id: string
           mes_referencia: string
+          previsao: number
           salario_base: number
           updated_at: string
           valor: number
@@ -1755,6 +1756,7 @@ export type Database = {
           horas_extras?: number
           id?: string
           mes_referencia: string
+          previsao?: number
           salario_base?: number
           updated_at?: string
           valor?: number
@@ -1769,6 +1771,7 @@ export type Database = {
           horas_extras?: number
           id?: string
           mes_referencia?: string
+          previsao?: number
           salario_base?: number
           updated_at?: string
           valor?: number
