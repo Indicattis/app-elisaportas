@@ -1,5 +1,21 @@
-import { useEffect, useMemo, useState } from "react";
-import { Plus, Trash2, Percent, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Check, X } from "lucide-react";
+import { useEffect, useMemo, useState, CSSProperties } from "react";
+import { Plus, Trash2, Percent, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Check, X, GripVertical } from "lucide-react";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  useSortable,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import { restrictToVerticalAxis, restrictToParentElement } from "@dnd-kit/modifiers";
+import { CSS } from "@dnd-kit/utilities";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +46,7 @@ import {
 import { formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
 import { useCustosItens, CustoItem, useCustosItensPadroes, useCustosItensCategoriasOrdem, useRenomearCategoriaItens } from "@/hooks/useCustosItens";
+import { cn } from "@/lib/utils";
 
 const UNIDADES = ["Un", "M", "Kg", "L", "M²", "M³", "Cx", "Pç"];
 
@@ -289,8 +306,133 @@ function CategoriaOrdemRow({
   );
 }
 
+type SortableItemRowProps = {
+  item: CustoItem;
+  disabled: boolean;
+  onUpdate: (patch: Partial<CustoItem>) => Promise<void> | void;
+  onDelete: () => void;
+};
+
+function SortableItemRow({ item, disabled, onUpdate, onDelete }: SortableItemRowProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: item.id,
+    disabled,
+  });
+  const style: CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+    position: "relative",
+    zIndex: isDragging ? 10 : "auto",
+  };
+  const custo = Number(item.custo_unitario || 0);
+  const preco = Number(item.preco_venda || 0);
+  const tImp = Number(item.taxa_impostos || 0);
+  const tDesc = Number(item.taxa_descontos || 0);
+  const tCard = Number(item.taxa_cartao || 0);
+  const taxas = tImp + tDesc + tCard;
+  const deducoes = preco * (taxas / 100);
+  const lucro = preco - deducoes - custo;
+  const corLucro = lucro > 0 ? "text-emerald-400" : lucro < 0 ? "text-red-400" : "text-muted-foreground";
+  return (
+    <TableRow
+      ref={setNodeRef}
+      style={style}
+      className={cn("border-border/60 hover:bg-muted/60", isDragging && "shadow-lg bg-muted/40")}
+    >
+      <TableCell className="w-8 p-0 text-center align-middle">
+        {!disabled && (
+          <button
+            type="button"
+            className="inline-flex h-7 w-7 items-center justify-center text-muted-foreground/50 hover:text-foreground cursor-grab active:cursor-grabbing touch-none"
+            aria-label="Arrastar para reordenar"
+            {...attributes}
+            {...listeners}
+          >
+            <GripVertical className="h-4 w-4" />
+          </button>
+        )}
+      </TableCell>
+      <TableCell className="text-foreground">
+        <EditableCell
+          value={item.descricao}
+          onSave={(v) => onUpdate({ descricao: String(v) })}
+        />
+        <EditableCell
+          value={item.subcategoria ?? ""}
+          placeholder="Subcategoria"
+          display={
+            item.subcategoria
+              ? <span className="text-xs text-muted-foreground/80">{item.subcategoria}</span>
+              : <span className="text-xs text-muted-foreground/60">Adicionar subcategoria</span>
+          }
+          onSave={(v) => onUpdate({ subcategoria: (String(v) || null) as any })}
+        />
+      </TableCell>
+      <TableCell className="text-right text-foreground bg-rose-500/10">
+        <EditableCell
+          value={custo}
+          type="currency"
+          align="right"
+          display={formatCurrency(custo)}
+          onSave={(v) => onUpdate({ custo_unitario: Number(v) })}
+        />
+      </TableCell>
+      <TableCell className={`text-right font-medium bg-blue-500/10 ${corLucro}`}>
+        {formatCurrency(lucro)}
+      </TableCell>
+      <TableCell className="text-right text-foreground bg-orange-500/10">
+        <EditableCell
+          value={tImp}
+          type="number"
+          align="right"
+          display={<span>{tImp.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%</span>}
+          onSave={(v) => onUpdate({ taxa_impostos: Number(v) })}
+        />
+      </TableCell>
+      <TableCell className="text-right text-foreground bg-yellow-500/10">
+        <EditableCell
+          value={tDesc}
+          type="number"
+          align="right"
+          display={<span>{tDesc.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%</span>}
+          onSave={(v) => onUpdate({ taxa_descontos: Number(v) })}
+        />
+      </TableCell>
+      <TableCell className="text-right text-foreground bg-teal-500/10">
+        <EditableCell
+          value={tCard}
+          type="number"
+          align="right"
+          display={<span>{tCard.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%</span>}
+          onSave={(v) => onUpdate({ taxa_cartao: Number(v) })}
+        />
+      </TableCell>
+      <TableCell className="text-right font-medium text-foreground bg-green-500/10">
+        <EditableCell
+          value={preco}
+          type="currency"
+          align="right"
+          display={formatCurrency(preco)}
+          onSave={(v) => onUpdate({ preco_venda: Number(v) })}
+        />
+      </TableCell>
+      <TableCell className="text-center">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 text-muted-foreground/70 hover:text-red-400 hover:bg-red-500/10"
+          onClick={onDelete}
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </TableCell>
+    </TableRow>
+  );
+}
+
 export default function EstrategiaItens() {
-  const { items, isLoading, createItem, updateItem, deleteItem } = useCustosItens();
+  const { items, isLoading, createItem, updateItem, deleteItem, reordenarItens } = useCustosItens();
   const { padroes, aplicarEmTodos } = useCustosItensPadroes();
   const { categoriasOrdem, salvarOrdem } = useCustosItensCategoriasOrdem();
   const renomearCategoria = useRenomearCategoriaItens();
@@ -387,6 +529,21 @@ export default function EstrategiaItens() {
   const handleSalvarOrdem = async () => {
     await salvarOrdem.mutateAsync(ordemDraft.map((categoria, i) => ({ categoria, ordem: i })));
     setOrdemOpen(false);
+  };
+
+  const dndSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } })
+  );
+  const isDndDisabled = Boolean(searchTerm.trim());
+
+  const handleDragEndCategoria = (rows: CustoItem[]) => (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = rows.findIndex((r) => r.id === active.id);
+    const newIndex = rows.findIndex((r) => r.id === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
+    const reordered = arrayMove(rows, oldIndex, newIndex);
+    reordenarItens.mutate(reordered.map((r, i) => ({ id: r.id, ordem: i })));
   };
 
   const categoriasExistentes = useMemo(() => {
@@ -697,10 +854,17 @@ export default function EstrategiaItens() {
                 <span className="text-[11px] text-muted-foreground/60">· {rows.length}</span>
               </div>
               <div className="rounded-xl overflow-hidden bg-card/60 backdrop-blur-xl border border-border">
+              <DndContext
+                sensors={dndSensors}
+                collisionDetection={closestCenter}
+                modifiers={[restrictToVerticalAxis, restrictToParentElement]}
+                onDragEnd={handleDragEndCategoria(rows)}
+              >
               <Table>
                 <TableHeader>
-                  <TableRow className="border-border hover:bg-transparent">
-                    <TableHead className="text-xs font-medium text-muted-foreground">Descrição</TableHead>
+                   <TableRow className="border-border hover:bg-transparent">
+                     <TableHead className="w-8 p-0" />
+                     <TableHead className="text-xs font-medium text-muted-foreground">Descrição</TableHead>
                     <TableHead className="text-xs font-medium text-foreground text-right w-36 bg-rose-500/10">Custo</TableHead>
                     <TableHead className="text-xs font-medium text-foreground text-right w-36 bg-blue-500/10">Lucro</TableHead>
                     <TableHead className="text-xs font-medium text-foreground text-right w-28 bg-orange-500/10">Imposto</TableHead>
@@ -711,101 +875,24 @@ export default function EstrategiaItens() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {rows.map((item) => {
-                    const custo = Number(item.custo_unitario || 0);
-                    const preco = Number(item.preco_venda || 0);
-                    const tImp = Number(item.taxa_impostos || 0);
-                    const tDesc = Number(item.taxa_descontos || 0);
-                    const tCard = Number(item.taxa_cartao || 0);
-                    const taxas = tImp + tDesc + tCard;
-                    const deducoes = preco * (taxas / 100);
-                    const lucro = preco - deducoes - custo;
-                    const corLucro = lucro > 0 ? "text-emerald-400" : lucro < 0 ? "text-red-400" : "text-muted-foreground";
-                    return (
-                      <TableRow key={item.id} className="border-border/60 hover:bg-muted/60">
-                        <TableCell className="text-foreground">
-                          <EditableCell
-                            value={item.descricao}
-                            onSave={(v) => updateItem.mutateAsync({ id: item.id, patch: { descricao: String(v) } })}
-                          />
-                          <EditableCell
-                            value={item.subcategoria ?? ""}
-                            placeholder="Subcategoria"
-                            display={
-                              item.subcategoria
-                                ? <span className="text-xs text-muted-foreground/80">{item.subcategoria}</span>
-                                : <span className="text-xs text-muted-foreground/60">Adicionar subcategoria</span>
-                            }
-                            onSave={(v) => updateItem.mutateAsync({ id: item.id, patch: { subcategoria: String(v) || null } })}
-                          />
-                        </TableCell>
-                        <TableCell className="text-right text-foreground bg-rose-500/10">
-                          <EditableCell
-                            value={custo}
-                            type="currency"
-                            align="right"
-                            display={formatCurrency(custo)}
-                            onSave={(v) => updateItem.mutateAsync({ id: item.id, patch: { custo_unitario: Number(v) } })}
-                          />
-                        </TableCell>
-                        <TableCell className={`text-right font-medium bg-blue-500/10 ${corLucro}`}>
-                          {formatCurrency(lucro)}
-                        </TableCell>
-                        <TableCell className="text-right text-foreground bg-orange-500/10">
-                          <EditableCell
-                            value={tImp}
-                            type="number"
-                            align="right"
-                            display={<span>{tImp.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%</span>}
-                            onSave={(v) => updateItem.mutateAsync({ id: item.id, patch: { taxa_impostos: Number(v) } })}
-                          />
-                        </TableCell>
-                        <TableCell className="text-right text-foreground bg-yellow-500/10">
-                          <EditableCell
-                            value={tDesc}
-                            type="number"
-                            align="right"
-                            display={<span>{tDesc.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%</span>}
-                            onSave={(v) => updateItem.mutateAsync({ id: item.id, patch: { taxa_descontos: Number(v) } })}
-                          />
-                        </TableCell>
-                        <TableCell className="text-right text-foreground bg-teal-500/10">
-                          <EditableCell
-                            value={tCard}
-                            type="number"
-                            align="right"
-                            display={<span>{tCard.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%</span>}
-                            onSave={(v) => updateItem.mutateAsync({ id: item.id, patch: { taxa_cartao: Number(v) } })}
-                          />
-                        </TableCell>
-                        <TableCell className="text-right font-medium text-foreground bg-green-500/10">
-                          <EditableCell
-                            value={preco}
-                            type="currency"
-                            align="right"
-                            display={formatCurrency(preco)}
-                            onSave={(v) => updateItem.mutateAsync({ id: item.id, patch: { preco_venda: Number(v) } })}
-                          />
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 text-muted-foreground/70 hover:text-red-400 hover:bg-red-500/10"
-                            onClick={() => {
-                              if (confirm(`Excluir "${item.descricao}"?`)) {
-                                deleteItem.mutate(item.id);
-                              }
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
+                  <SortableContext items={rows.map((r) => r.id)} strategy={verticalListSortingStrategy}>
+                  {rows.map((item) => (
+                    <SortableItemRow
+                      key={item.id}
+                      item={item}
+                      disabled={isDndDisabled}
+                      onUpdate={(patch) => updateItem.mutateAsync({ id: item.id, patch })}
+                      onDelete={() => {
+                        if (confirm(`Excluir "${item.descricao}"?`)) {
+                          deleteItem.mutate(item.id);
+                        }
+                      }}
+                    />
+                  ))}
+                  </SortableContext>
                 </TableBody>
               </Table>
+              </DndContext>
               </div>
             </div>
           ))}

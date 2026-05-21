@@ -260,11 +260,40 @@ export function useCustosItens() {
     onError: (err: any) => toast.error(err?.message ?? "Erro ao excluir item"),
   });
 
+  const reordenarItens = useMutation({
+    mutationFn: async (ordens: Array<{ id: string; ordem: number }>) => {
+      if (ordens.length === 0) return;
+      await Promise.all(
+        ordens.map((o) =>
+          supabase.from("custos_itens").update({ ordem: o.ordem }).eq("id", o.id)
+        )
+      );
+    },
+    onMutate: async (ordens) => {
+      await queryClient.cancelQueries({ queryKey: QUERY_KEY });
+      const previous = queryClient.getQueryData<CustoItem[]>(QUERY_KEY);
+      if (previous) {
+        const ordemMap = new Map(ordens.map((o) => [o.id, o.ordem]));
+        const next = previous.map((it) =>
+          ordemMap.has(it.id) ? { ...it, ordem: ordemMap.get(it.id)! } : it
+        );
+        queryClient.setQueryData<CustoItem[]>(QUERY_KEY, next);
+      }
+      return { previous };
+    },
+    onError: (err: any, _vars, ctx) => {
+      if (ctx?.previous) queryClient.setQueryData(QUERY_KEY, ctx.previous);
+      toast.error(err?.message ?? "Erro ao reordenar");
+    },
+    onSettled: () => invalidate(),
+  });
+
   return {
     ...query,
     items: query.data ?? [],
     createItem,
     updateItem,
     deleteItem,
+    reordenarItens,
   };
 }
