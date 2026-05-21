@@ -260,13 +260,13 @@ export default function PlanejamentoPage() {
         </div>
 
         <div className="flex flex-col lg:flex-row gap-4">
-          <div className="lg:flex-1 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 p-4">
+          <div className="lg:flex-1">
             {grupos.length === 0 ? (
-              <div className="py-10 text-center text-sm text-white/40">Nenhum mês adicionado.</div>
+              <div className="py-10 text-center text-sm text-white/40 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10">Nenhum mês adicionado.</div>
             ) : (
               <div className="flex flex-col gap-6">
                 {grupos.map((g) => (
-                  <div key={g.mes.id}>
+                  <div key={g.mes.id} className="rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 p-4">
                     <div className="flex items-center justify-between mb-2 px-2 gap-2">
                       <h2 className="text-sm font-semibold text-white/80 uppercase tracking-wider">{g.label}</h2>
                       <div className="flex items-center gap-3">
