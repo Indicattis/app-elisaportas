@@ -9,7 +9,7 @@ import { useBulkRouteAccess } from '@/hooks/useBulkRouteAccess';
 
 const menuItems = [
   { label: 'Estratégia', icon: Lightbulb, path: '/direcao/estrategia', routePrefix: 'direcao_estrategia', variant: 'gold' as const },
-  { label: 'Capital de Giro Elisa', icon: Wallet, path: '/direcao/caixa-elisa', routePrefix: 'direcao_caixa_elisa', variant: 'gold' as const },
+  { label: 'Capital de Giro Elisa', icon: Wallet, path: '/direcao/caixa-elisa', routePrefix: 'direcao_caixa_elisa', variant: 'green' as const },
   { label: 'Vendas', icon: ShoppingCart, path: '/direcao/vendas', routePrefix: 'direcao_vendas' },
   { label: 'DRE', icon: Calculator, path: '/direcao/dre', routePrefix: 'direcao_dre' },
   { label: 'Financeiro', icon: Banknote, path: '/direcao/financeiro', routePrefix: 'direcao_financeiro' },
@@ -18,7 +18,7 @@ const menuItems = [
   { label: 'Gestão de Instalações', icon: Truck, path: '/direcao/gestao-instalacao', routePrefix: 'direcao_gestao_instalacao' },
   { label: 'Gestão de Frotas', icon: Truck, path: '/direcao/frota', routePrefix: 'direcao_frota' },
   { label: 'Estoque', icon: Warehouse, path: '/direcao/estoque', routePrefix: 'direcao_estoque' },
-  { label: 'Aprovações', icon: ShieldCheck, path: '/direcao/aprovacoes', routePrefix: 'direcao_aprovaco' },
+  { label: 'Aprovações', icon: ShieldCheck, path: '/direcao/aprovacoes', routePrefix: 'direcao_aprovaco', variant: 'orange' as const },
   { label: 'Organograma RH', icon: Network, path: '/direcao/gestao-colaboradores', routePrefix: 'direcao_gestao_colaboradores' },
 ];
 
@@ -40,7 +40,7 @@ export default function DirecaoHub() {
     const external = (item as any).external as boolean | undefined;
     const hasAccess = external || !item.routePrefix || accessMap?.[item.routePrefix] !== false;
     const isDisabled = !external && !hasAccess;
-    const variant = (item as any).variant as 'gold' | 'slate' | undefined;
+    const variant = (item as any).variant as 'gold' | 'slate' | 'green' | 'orange' | undefined;
 
     return (
       <div
@@ -67,7 +67,11 @@ export default function DirecaoHub() {
                          ? 'bg-gradient-to-r from-amber-700/70 to-yellow-800/70 shadow-lg shadow-amber-600/20 border border-amber-500/30 hover:from-amber-600/70 hover:to-yellow-700/70 text-white active:scale-[0.98]'
                          : variant === 'slate'
                            ? 'bg-gradient-to-r from-slate-700 to-slate-900 shadow-lg shadow-slate-700/20 border border-slate-500/30 hover:from-slate-600 hover:to-slate-800 text-white active:scale-[0.98]'
-                           : 'bg-gradient-to-r from-blue-500 to-blue-700 shadow-lg shadow-blue-500/20 border border-blue-400/30 hover:from-blue-400 hover:to-blue-600 text-white active:scale-[0.98]'
+                           : variant === 'green'
+                             ? 'bg-gradient-to-r from-emerald-500 to-emerald-700 shadow-lg shadow-emerald-500/20 border border-emerald-400/30 hover:from-emerald-400 hover:to-emerald-600 text-white active:scale-[0.98]'
+                             : variant === 'orange'
+                               ? 'bg-gradient-to-r from-orange-500 to-orange-700 shadow-lg shadow-orange-500/20 border border-orange-400/30 hover:from-orange-400 hover:to-orange-600 text-white active:scale-[0.98]'
+                               : 'bg-gradient-to-r from-blue-500 to-blue-700 shadow-lg shadow-blue-500/20 border border-blue-400/30 hover:from-blue-400 hover:to-blue-600 text-white active:scale-[0.98]'
                      }`}
         >
           {isDisabled ? <Lock className="w-4 h-4" strokeWidth={1.5} /> : <Icon className="w-5 h-5" strokeWidth={1.5} />}
