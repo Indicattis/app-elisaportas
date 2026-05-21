@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { GripVertical, Hammer, Truck, Wrench, Plus, Loader2, AlertTriangle, CheckCircle2, Archive, FileSignature } from "lucide-react";
+import { GripVertical, Hammer, Truck, Wrench, Loader2, AlertTriangle, CheckCircle2, Archive, FileSignature, ShieldCheck, XCircle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -45,7 +45,9 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { createPedidoFromVenda } = usePedidoCreation();
-  const [isCreating, setIsCreating] = useState(false);
+  const [isAprovando, setIsAprovando] = useState(false);
+  const [isReprovando, setIsReprovando] = useState(false);
+  const [showReprovar, setShowReprovar] = useState(false);
   const [isDispensando, setIsDispensando] = useState(false);
   const [showDetalhes, setShowDetalhes] = useState(false);
   const [showFinalizarDireto, setShowFinalizarDireto] = useState(false);
@@ -123,17 +125,78 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
     return null;
   })();
 
-  const handleCriarPedido = async () => {
-    setIsCreating(true);
+  // Aprovar venda (etapa virtual Aprovação Diretor) — cria pedido e envia direto para 'aberto'
+  const handleAprovarVenda = async () => {
+    setIsAprovando(true);
     try {
       const pedidoId = await createPedidoFromVenda(venda.id);
-      if (pedidoId) {
-        queryClient.invalidateQueries({ queryKey: ["vendas-pendente-pedido"] });
-        queryClient.invalidateQueries({ queryKey: ["pedidos-etapas"] });
-        queryClient.invalidateQueries({ queryKey: ["pedidos-contadores"] });
-      }
+      if (!pedidoId) return;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Não autenticado');
+
+      // Move pedido para 'aberto' (já aprovado pelo diretor)
+      await supabase
+        .from('pedidos_producao')
+        .update({ etapa_atual: 'aberto' } as any)
+        .eq('id', pedidoId);
+
+      // Fecha etapa aprovacao_diretor
+      await supabase
+        .from('pedidos_etapas')
+        .update({ data_saida: new Date().toISOString() })
+        .eq('pedido_id', pedidoId)
+        .eq('etapa', 'aprovacao_diretor');
+
+      // Abre etapa 'aberto'
+      await supabase
+        .from('pedidos_etapas')
+        .upsert({
+          pedido_id: pedidoId,
+          etapa: 'aberto',
+          checkboxes: [],
+          data_entrada: new Date().toISOString(),
+          data_saida: null,
+        }, { onConflict: 'pedido_id,etapa' });
+
+      await supabase.from('pedidos_movimentacoes').insert({
+        pedido_id: pedidoId,
+        user_id: user.id,
+        etapa_origem: 'aprovacao_diretor',
+        etapa_destino: 'aberto',
+        teor: 'avanco',
+        descricao: 'Venda aprovada pelo diretor — pedido criado',
+      });
+
+      toast.success('Venda aprovada e pedido criado');
+      queryClient.invalidateQueries({ queryKey: ["vendas-pendente-pedido"] });
+      queryClient.invalidateQueries({ queryKey: ["pedidos-etapas"] });
+      queryClient.invalidateQueries({ queryKey: ["pedidos-contadores"] });
+      queryClient.invalidateQueries({ queryKey: ["pedidos-aprovacao-diretor"] });
+    } catch (e: any) {
+      console.error(e);
+      toast.error('Erro ao aprovar venda');
     } finally {
-      setIsCreating(false);
+      setIsAprovando(false);
+    }
+  };
+
+  const handleReprovarVenda = async () => {
+    setIsReprovando(true);
+    try {
+      const { error } = await supabase
+        .from('vendas')
+        .update({ status_aprovacao: 'reprovado' } as any)
+        .eq('id', venda.id);
+      if (error) throw error;
+      toast.success('Venda reprovada');
+      queryClient.invalidateQueries({ queryKey: ["vendas-pendente-pedido"] });
+      queryClient.invalidateQueries({ queryKey: ["pedidos-contadores"] });
+    } catch (e) {
+      console.error(e);
+      toast.error('Erro ao reprovar venda');
+    } finally {
+      setIsReprovando(false);
+      setShowReprovar(false);
     }
   };
 
