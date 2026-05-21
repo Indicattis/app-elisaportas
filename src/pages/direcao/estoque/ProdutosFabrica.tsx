@@ -1092,10 +1092,10 @@ export default function ProdutosFabrica({
           <div className="p-4 rounded-lg space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center gap-4">
               <Input
-                placeholder="Buscar produtos..."
+                placeholder="Buscar..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="max-w-sm bg-white/5 border-white/10 text-white placeholder:text-white/40"
+                className="h-[50px] w-[150px] bg-white/5 border-white/10 text-white placeholder:text-white/40"
               />
               {!hideStockColumns && (
                 <div className="flex flex-wrap gap-3 flex-1">
@@ -1231,8 +1231,8 @@ export default function ProdutosFabrica({
               return (
                 <div className="flex flex-col gap-6">
                   {groups.map((g) => (
-                    <div key={g.key} className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
-                      <div className="flex items-center gap-2 px-3 pt-2 pb-1">
+                    <div key={g.key} className="flex flex-col gap-2">
+                      <div className="flex items-center gap-2 px-1">
                         <span
                           className="inline-block h-1.5 w-1.5 rounded-full"
                           style={{ background: g.cor ? `hsl(var(--${g.cor}-500, 0 0% 60%))` : "rgba(255,255,255,0.4)" }}
@@ -1240,7 +1240,7 @@ export default function ProdutosFabrica({
                         <span className="text-[11px] uppercase tracking-wider font-medium text-white/60">{g.label}</span>
                         <span className="text-[11px] text-white/30">· {g.items.length}</span>
                       </div>
-                      <div className="rounded-lg overflow-hidden">
+                      <div className="rounded-xl overflow-hidden bg-white/5 backdrop-blur-xl border border-white/10">
                         <Table>
                           {renderHeader()}
                           <TableBody>
