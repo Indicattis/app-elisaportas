@@ -1,42 +1,102 @@
-## Mudanças em `/direcao`
 
-### 1. `src/pages/direcao/DirecaoHub.tsx`
-- Renomear label "Caixa Elisa" → **"Capital de Giro Elisa"**.
-- Remover item **CRM**.
-- Remover itens **Faturamento** e **Metas** (vão para o novo hub Financeiro).
-- Remover item **Autorizados** (vai para o hub Aprovações).
-- Adicionar item **Financeiro** (ícone `Wallet` ou `Banknote`) apontando para `/direcao/financeiro`, routePrefix `direcao_financeiro` (com fallback de acesso aberto).
-- Adicionar suporte a uma variante visual "dourado fraco" no `renderButton`: aplicar a Estratégia e Capital de Giro Elisa um gradiente sutil dourado, ex.: `from-amber-700/70 to-yellow-800/70 border-amber-500/30 shadow-amber-600/20 hover:from-amber-600/70 hover:to-yellow-700/70`.
+## Visão geral
 
-Ordem final dos botões:
-1. Estratégia (dourado fraco)
-2. Capital de Giro Elisa (dourado fraco)
-3. Vendas
-4. DRE
-5. Financeiro (novo)
-6. Checklist Liderança
-7. Gestão de Fábrica
-8. Gestão de Instalações
-9. Gestão de Frotas
-10. Estoque
-11. Aprovações
-12. Organograma RH
+A página `/direcao/caixa-elisa` deixa de ser lista única e vira um **hub** com 2 botões, no mesmo padrão visual dos demais hubs (`DirecaoHub`, `EstrategiaHub`):
 
-### 2. Novo arquivo `src/pages/direcao/financeiro/DirecaoFinanceiroHub.tsx`
-- Hub no mesmo padrão visual do `DirecaoAprovacoesHub` (fundo preto, partículas, breadcrumb, botão voltar, FloatingProfileMenu, botões azuis em gradiente).
-- Header com ícone `Wallet` e título "Financeiro".
-- Breadcrumb: Home › Direção › Financeiro.
-- Itens:
-  - **Faturamento** (`DollarSign`) → `/direcao/faturamento`
-  - **Metas** (`Target`) → `/direcao/metas`
+1. **2M - Capital de Giro** → `/direcao/caixa-elisa/capital-giro`
+2. **Planejamento 2M de Giro** → `/direcao/caixa-elisa/planejamento`
 
-### 3. `src/App.tsx`
-- Importar `DirecaoFinanceiroHub`.
-- Adicionar rota `/direcao/financeiro` protegida com `routeKey="direcao_hub"` (mantendo o mesmo padrão dos demais).
+As entradas antigas (`caixa_roboost_entradas` + `caixa_roboost_etiquetas`) serão descartadas — novas tabelas serão criadas do zero.
 
-### 4. `src/pages/direcao/aprovacoes/DirecaoAprovacoesHub.tsx`
-- Adicionar novo item **Autorizados** (ícone `Users`, sem badge de contagem) apontando para `/direcao/autorizados`, mantendo o item existente **Aprovações Autorizados** intacto.
+---
 
-### Observações
-- As rotas `/direcao/faturamento`, `/direcao/metas` e `/direcao/autorizados` continuam funcionando — apenas mudam os pontos de entrada no hub.
-- Não há alteração de lógica de negócio nem de permissões existentes.
+## Página 1 — "2M - Capital de Giro"
+
+Layout (mesmo aesthetic glassmorphism: `bg-white/5 backdrop-blur-xl border-white/10`):
+
+```text
+┌──────────────────────────────────────────────┐
+│  Capital de Giro      │  Saldo Disponível    │   ← 2 índices grandes
+│  R$ 2.000.000,00 ✎    │  R$ 1.450.000,00     │
+├──────────────────────────────────────────────┤
+│  [+ Nova obrigação]                           │
+│  ☑ Aluguel galpão      05/06/2026  R$ 12.000  │ Editar | Excluir
+│  ☐ Fornecedor X        10/06/2026  R$ 45.000  │
+│  ...                                          │
+└──────────────────────────────────────────────┘
+```
+
+- **Capital de Giro** (1º índice) — valor único editável (clique no ícone de lápis abre dialog para alterar). Armazenado como singleton em uma tabela de config.
+- **Saldo Disponível** (2º índice) — calculado: `capital_giro − SOMA(valor das obrigações não pagas)`. Itens pagos não decrementam.
+- Lista abaixo: cadastro de obrigações com campos **nome**, **data**, **valor** e **checkbox "pago"**. Toggle do checkbox atualiza no banco e recalcula o saldo.
+- Ações por linha: editar, excluir.
+
+## Página 2 — "Planejamento 2M de Giro"
+
+Layout split 80/20:
+
+```text
+┌────────────────────────────────────┬────────────┐
+│ Agrupado por mês                   │ Totais     │
+│                                    │            │
+│  Junho/2026                        │ Acumulado  │
+│   ☑ Aluguel       05/06  R$ 12.000 │ R$ 320.000 │
+│   ☐ Fornecedor    10/06  R$ 45.000 │            │
+│   Subtotal: R$ 57.000              │ Pago       │
+│                                    │ R$ 180.000 │
+│  Julho/2026                        │            │
+│   ...                              │            │
+└────────────────────────────────────┴────────────┘
+```
+
+- Esquerda (80%): mesmas obrigações da página 1, agrupadas por mês (ordem cronológica), apenas leitura, com subtotal por mês.
+- Direita (20%): dois índices empilhados — **Total Acumulado** (soma de todas as obrigações) e **Total Pago** (soma das obrigações com `pago = true`).
+
+---
+
+## Detalhes técnicos
+
+### Banco de dados (migration)
+
+1. **Drop** das tabelas antigas: `caixa_roboost_entradas`, `caixa_roboost_etiquetas` (com CASCADE).
+2. Criar `caixa_elisa_config` (singleton):
+   - `id` (sempre `'singleton'` text PK), `capital_giro` numeric default 0.
+   - RLS: select/insert/update apenas para admins (usar helper `is_admin()` já existente no projeto).
+3. Criar `caixa_elisa_obrigacoes`:
+   - `nome` text, `data` date, `valor` numeric, `pago` boolean default false, `created_by` uuid.
+   - RLS idêntica (admins).
+4. Trigger padrão `update_updated_at_column` em ambas.
+
+### Rotas / código
+
+- `src/pages/direcao/CaixaElisaDirecao.tsx` → reescrever como **hub** (2 cards/botões no padrão de `DirecaoHub.tsx`).
+- Criar `src/pages/direcao/caixa-elisa/CapitalGiroPage.tsx` (Página 1).
+- Criar `src/pages/direcao/caixa-elisa/PlanejamentoPage.tsx` (Página 2).
+- Reaproveitar `IndicadorExpandivel` (ou um componente local mais simples) para os índices grandes.
+- Registrar rotas em `src/App.tsx` reaproveitando `routeKey="direcao_caixa_elisa"` (mesmo prefixo, sem necessidade de nova permissão).
+- Cadastrar 2 rotas em `app_routes` (`direcao_caixa_elisa_capital_giro`, `direcao_caixa_elisa_planejamento`) ou — mais simples — manter ambas sob o prefixo existente `direcao_caixa_elisa` para herdar permissão (ainda usaremos esta opção).
+
+### Cálculos
+
+```ts
+saldoDisponivel = capitalGiro - obrigacoes
+  .filter(o => !o.pago)
+  .reduce((s, o) => s + Number(o.valor), 0);
+
+totalAcumulado = obrigacoes.reduce((s, o) => s + Number(o.valor), 0);
+totalPago = obrigacoes.filter(o => o.pago).reduce((s, o) => s + Number(o.valor), 0);
+```
+
+### Datas
+
+Seguir regra do projeto: gravar como `YYYY-MM-DD` puro (campo `date`), exibir com `T12:00:00` no `new Date(...)` para evitar shift de timezone.
+
+---
+
+## Entregáveis
+
+- 1 migration (drop antigas + criar 2 novas tabelas + RLS).
+- `CaixaElisaDirecao.tsx` reescrito como hub.
+- `CapitalGiroPage.tsx` novo.
+- `PlanejamentoPage.tsx` novo.
+- 2 rotas adicionadas em `src/App.tsx`.

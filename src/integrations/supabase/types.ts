@@ -719,62 +719,57 @@ export type Database = {
         }
         Relationships: []
       }
-      caixa_roboost_entradas: {
+      caixa_elisa_config: {
+        Row: {
+          capital_giro: number
+          created_at: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          capital_giro?: number
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          capital_giro?: number
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      caixa_elisa_obrigacoes: {
         Row: {
           created_at: string
-          etiqueta_id: string | null
+          created_by: string | null
+          data: string
           id: string
           nome: string
-          ordem: number
+          pago: boolean
           updated_at: string
           valor: number
         }
         Insert: {
           created_at?: string
-          etiqueta_id?: string | null
+          created_by?: string | null
+          data: string
           id?: string
           nome: string
-          ordem?: number
+          pago?: boolean
           updated_at?: string
           valor?: number
         }
         Update: {
           created_at?: string
-          etiqueta_id?: string | null
+          created_by?: string | null
+          data?: string
           id?: string
           nome?: string
-          ordem?: number
+          pago?: boolean
           updated_at?: string
           valor?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "caixa_roboost_entradas_etiqueta_id_fkey"
-            columns: ["etiqueta_id"]
-            isOneToOne: false
-            referencedRelation: "caixa_roboost_etiquetas"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      caixa_roboost_etiquetas: {
-        Row: {
-          cor: string
-          created_at: string
-          id: string
-          nome: string
-        }
-        Insert: {
-          cor?: string
-          created_at?: string
-          id?: string
-          nome: string
-        }
-        Update: {
-          cor?: string
-          created_at?: string
-          id?: string
-          nome?: string
         }
         Relationships: []
       }

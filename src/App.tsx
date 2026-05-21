@@ -234,6 +234,8 @@ import DREMesDirecao from "./pages/direcao/DREMesDirecao";
 import DREDespesasDirecao from "./pages/direcao/DREDespesasDirecao";
 import DRECustosDirecao from "./pages/direcao/DRECustosDirecao";
 import CaixaElisaDirecao from "./pages/direcao/CaixaElisaDirecao";
+import CaixaElisaCapitalGiro from "./pages/direcao/caixa-elisa/CapitalGiroPage";
+import CaixaElisaPlanejamento from "./pages/direcao/caixa-elisa/PlanejamentoPage";
 import EstrategiaHub from "./pages/direcao/estrategia/EstrategiaHub";
 import EstrategiaItens from "./pages/direcao/estrategia/EstrategiaItens";
 import EstrategiaKits from "./pages/direcao/estrategia/EstrategiaKits";
@@ -523,6 +525,8 @@ const App = () => (
 
                 {/* Caixa Elisa */}
                 <Route path="/direcao/caixa-elisa" element={<ProtectedRoute routeKey="direcao_caixa_elisa"><CaixaElisaDirecao /></ProtectedRoute>} />
+                <Route path="/direcao/caixa-elisa/capital-giro" element={<ProtectedRoute routeKey="direcao_caixa_elisa"><CaixaElisaCapitalGiro /></ProtectedRoute>} />
+                <Route path="/direcao/caixa-elisa/planejamento" element={<ProtectedRoute routeKey="direcao_caixa_elisa"><CaixaElisaPlanejamento /></ProtectedRoute>} />
 
                 {/* Estratégia */}
                 <Route path="/direcao/estrategia" element={<ProtectedRoute routeKey="direcao_estrategia"><EstrategiaHub /></ProtectedRoute>} />
