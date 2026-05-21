@@ -1030,7 +1030,13 @@ export default function MinhasVendasEditar() {
               <ProductButton 
                 label="Pintura Eletrostática"
                 onClick={() => {
-                  setTipoInicial('pintura_epoxi');
+                  setPinturaItemModalOpen(true);
+                }}
+              />
+              <ProductButton 
+                label="Serviços"
+                onClick={() => {
+                  setTipoInicial('manutencao');
                   setPermitirTrocaTipo(false);
                   setShowProdutoForm(true);
                 }}
@@ -1048,6 +1054,10 @@ export default function MinhasVendasEditar() {
                 if (!id) return;
                 await addProduto({ ...produto, venda_id: id });
                 setShowProdutoForm(false);
+                if (produto.tipo_produto === 'porta_enrolar' && produto.largura && produto.altura) {
+                  setPortaRecemAdicionada({ largura: produto.largura, altura: produto.altura });
+                  setPinturaRapidaOpen(true);
+                }
               }}
               tipoInicial={tipoInicial}
               permitirTrocaTipo={permitirTrocaTipo}
@@ -1064,6 +1074,41 @@ export default function MinhasVendasEditar() {
                 setAcessoriosModalOpen(false);
               }}
             />
+
+            <PinturaItemCatalogoModal
+              open={pinturaItemModalOpen}
+              onOpenChange={setPinturaItemModalOpen}
+              portas={produtosFormatados}
+              onConfirm={async (pinturas) => {
+                if (!id) return;
+                for (const pintura of pinturas) {
+                  await addProduto({ ...pintura, venda_id: id });
+                }
+                setPinturaItemModalOpen(false);
+              }}
+            />
+
+            {portaRecemAdicionada && (
+              <PinturaRapidaModal
+                open={pinturaRapidaOpen}
+                onOpenChange={(open) => {
+                  setPinturaRapidaOpen(open);
+                  if (!open) setPortaRecemAdicionada(null);
+                }}
+                largura={portaRecemAdicionada.largura}
+                altura={portaRecemAdicionada.altura}
+                onConfirm={async (pintura) => {
+                  if (!id) return;
+                  await addProduto({ ...pintura, venda_id: id });
+                  setPinturaRapidaOpen(false);
+                  setPortaRecemAdicionada(null);
+                }}
+                onSkip={() => {
+                  setPinturaRapidaOpen(false);
+                  setPortaRecemAdicionada(null);
+                }}
+              />
+            )}
 
             <DescontoVendaModal
               open={descontoModalOpen}
