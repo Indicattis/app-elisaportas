@@ -151,6 +151,8 @@ export function MinimalistLayout({
           </div>
         </main>
       </div>
+
+      <FloatingProfileMenu mounted={mounted} />
     </div>
   );
 }
