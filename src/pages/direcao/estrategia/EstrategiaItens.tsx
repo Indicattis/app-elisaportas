@@ -142,6 +142,57 @@ function calcularMarkup(custo: number, preco: number) {
   return ((preco - custo) / custo) * 100;
 }
 
+function CategoriaTitulo({
+  categoria,
+  onRename,
+}: {
+  categoria: string;
+  onRename: (novo: string) => Promise<unknown> | unknown;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(categoria);
+
+  useEffect(() => {
+    if (!editing) setDraft(categoria);
+  }, [categoria, editing]);
+
+  const commit = async () => {
+    setEditing(false);
+    const novo = draft.trim();
+    if (!novo || novo === categoria) {
+      setDraft(categoria);
+      return;
+    }
+    await onRename(novo);
+  };
+
+  if (editing) {
+    return (
+      <Input
+        autoFocus
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") { e.preventDefault(); commit(); }
+          if (e.key === "Escape") { setEditing(false); setDraft(categoria); }
+        }}
+        className="h-6 px-2 py-0 text-[11px] uppercase tracking-wider bg-white/10 border-white/20 text-white w-56"
+      />
+    );
+  }
+
+  return (
+    <span
+      onClick={() => setEditing(true)}
+      className="text-[11px] uppercase tracking-wider font-medium text-white/60 cursor-text rounded px-1 py-0.5 hover:bg-white/5 hover:text-white/80"
+      title="Clique para renomear"
+    >
+      {categoria}
+    </span>
+  );
+}
+
 export default function EstrategiaItens() {
   const { items, isLoading, createItem, updateItem, deleteItem } = useCustosItens();
   const { padroes, aplicarEmTodos } = useCustosItensPadroes();
