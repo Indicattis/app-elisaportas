@@ -1185,27 +1185,37 @@ export default function ProdutosFabrica({
                         </TableCell>
                       </TableRow>
                     ) : (
-                      filteredProdutos.map((produto) => (
-                        <SortableProductRow
-                          key={produto.id}
-                          produto={produto}
-                          onDoubleClick={handleDoubleClick}
-                          isDragDisabled={isDragDisabled}
-                          pedidosCount={pedidosCountMap[produto.id] || 0}
-                          onToggleConferir={handleToggleConferir}
-                          onExcluir={handleExcluir}
-                          onUpdateField={handleUpdateField}
-                          categorias={categorias}
-                          fornecedores={fornecedores}
-                          materiasPrimas={materiasPrimas}
-                          hideSku={hideSku}
-                          hideMateriaPrima={hideMateriaPrima}
-                          hidePedidos={hidePedidos}
-                          hideConferir={hideConferir}
-                          hideStockColumns={hideStockColumns}
-                          showPrecoVenda={showPrecoVenda}
-                        />
-                      ))
+                      filteredProdutos.map((produto, idx) => {
+                        const prev = idx > 0 ? filteredProdutos[idx - 1] : null;
+                        const showSpacer = prev && (prev.categoria || "") !== (produto.categoria || "");
+                        return (
+                          <Fragment key={produto.id}>
+                            {showSpacer && (
+                              <tr aria-hidden="true" className="pointer-events-none">
+                                <td colSpan={15} style={{ height: 30, padding: 0, border: 0, background: "transparent" }} />
+                              </tr>
+                            )}
+                            <SortableProductRow
+                              produto={produto}
+                              onDoubleClick={handleDoubleClick}
+                              isDragDisabled={isDragDisabled}
+                              pedidosCount={pedidosCountMap[produto.id] || 0}
+                              onToggleConferir={handleToggleConferir}
+                              onExcluir={handleExcluir}
+                              onUpdateField={handleUpdateField}
+                              categorias={categorias}
+                              fornecedores={fornecedores}
+                              materiasPrimas={materiasPrimas}
+                              hideSku={hideSku}
+                              hideMateriaPrima={hideMateriaPrima}
+                              hidePedidos={hidePedidos}
+                              hideConferir={hideConferir}
+                              hideStockColumns={hideStockColumns}
+                              showPrecoVenda={showPrecoVenda}
+                            />
+                          </Fragment>
+                        );
+                      })
                     )}
                   </TableBody>
               </SortableContext>
