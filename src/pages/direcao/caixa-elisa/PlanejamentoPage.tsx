@@ -74,7 +74,7 @@ export default function PlanejamentoPage() {
           { label: 'Home', path: '/home' },
           { label: 'Direção', path: '/direcao' },
           { label: 'Caixa Elisa', path: '/direcao/caixa-elisa' },
-          { label: 'Planejamento 2M de Giro' },
+          { label: 'Planejamento 2 Milhões de Giro' },
         ]}
         mounted={mounted}
       />
@@ -95,7 +95,7 @@ export default function PlanejamentoPage() {
             <CalendarRange className="w-6 h-6 text-emerald-400" strokeWidth={1.5} />
           </div>
           <div>
-            <h1 className="text-xl font-semibold text-white">Planejamento 2M de Giro</h1>
+            <h1 className="text-xl font-semibold text-white">Planejamento 2 Milhões de Giro</h1>
             <p className="text-sm text-white/50">Obrigações agrupadas por mês</p>
           </div>
         </div>
