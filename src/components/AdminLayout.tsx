@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { AdminSidebar } from "./AdminSidebar";
 import { AdminHeader } from "./admin/AdminHeader";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import { FloatingProfileMenu } from "./FloatingProfileMenu";
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -24,6 +25,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           </main>
         </SidebarInset>
       </div>
+      <FloatingProfileMenu />
     </SidebarProvider>
   );
 }
