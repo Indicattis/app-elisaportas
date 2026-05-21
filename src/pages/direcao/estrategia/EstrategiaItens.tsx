@@ -475,6 +475,61 @@ export default function EstrategiaItens() {
                 </DialogFooter>
               </DialogContent>
             </Dialog>
+            <Dialog open={ordemOpen} onOpenChange={setOrdemOpen}>
+              <DialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="!h-[50px] gap-2 bg-white/5 border-white/10 text-white hover:bg-white/10 hover:text-white"
+                  onClick={openOrdemDialog}
+                >
+                  <ArrowUpDown className="h-4 w-4" />
+                  Ordenar categorias
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="bg-zinc-900 border-white/10 text-white max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Ordenar categorias</DialogTitle>
+                </DialogHeader>
+                <div className="max-h-[60vh] overflow-y-auto space-y-1.5">
+                  {ordemDraft.length === 0 && (
+                    <p className="text-sm text-white/50">Nenhuma categoria cadastrada.</p>
+                  )}
+                  {ordemDraft.map((cat, idx) => (
+                    <div
+                      key={cat}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10"
+                    >
+                      <span className="text-[11px] text-white/40 w-6">{idx + 1}.</span>
+                      <span className="flex-1 text-sm text-white truncate">{cat}</span>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-7 w-7 text-white/60 hover:text-white hover:bg-white/10"
+                        onClick={() => moveOrdem(idx, -1)}
+                        disabled={idx === 0}
+                      >
+                        <ArrowUp className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-7 w-7 text-white/60 hover:text-white hover:bg-white/10"
+                        onClick={() => moveOrdem(idx, 1)}
+                        disabled={idx === ordemDraft.length - 1}
+                      >
+                        <ArrowDown className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+                <DialogFooter>
+                  <Button variant="ghost" onClick={() => setOrdemOpen(false)}>Cancelar</Button>
+                  <Button onClick={handleSalvarOrdem} disabled={salvarOrdem.isPending || ordemDraft.length === 0}>
+                    Salvar ordem
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
 
