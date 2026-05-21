@@ -729,6 +729,12 @@ export default function EstrategiaItens() {
                 <span className="text-[11px] text-muted-foreground/60">· {rows.length}</span>
               </div>
               <div className="rounded-xl overflow-hidden bg-card/60 backdrop-blur-xl border border-border">
+              <DndContext
+                sensors={dndSensors}
+                collisionDetection={closestCenter}
+                modifiers={[restrictToVerticalAxis, restrictToParentElement]}
+                onDragEnd={handleDragEndCategoria(rows)}
+              >
               <Table>
                 <TableHeader>
                    <TableRow className="border-border hover:bg-transparent">
@@ -744,19 +750,29 @@ export default function EstrategiaItens() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {rows.map((item) => {
-                    const custo = Number(item.custo_unitario || 0);
-                    const preco = Number(item.preco_venda || 0);
-                    const tImp = Number(item.taxa_impostos || 0);
-                    const tDesc = Number(item.taxa_descontos || 0);
-                    const tCard = Number(item.taxa_cartao || 0);
-                    const taxas = tImp + tDesc + tCard;
-                    const deducoes = preco * (taxas / 100);
-                    const lucro = preco - deducoes - custo;
-                    const corLucro = lucro > 0 ? "text-emerald-400" : lucro < 0 ? "text-red-400" : "text-muted-foreground";
-                    return (
-                      <TableRow key={item.id} className="border-border/60 hover:bg-muted/60">
-                        <TableCell className="text-foreground">
+                  <SortableContext items={rows.map((r) => r.id)} strategy={verticalListSortingStrategy}>
+                  {rows.map((item) => (
+                    <SortableItemRow
+                      key={item.id}
+                      item={item}
+                      disabled={isDndDisabled}
+                      onUpdate={(patch) => updateItem.mutateAsync({ id: item.id, patch })}
+                      onDelete={() => {
+                        if (confirm(`Excluir "${item.descricao}"?`)) {
+                          deleteItem.mutate(item.id);
+                        }
+                      }}
+                    />
+                  ))}
+                  </SortableContext>
+                </TableBody>
+              </Table>
+              </DndContext>
+              </div>
+            </div>
+          ))}
+        </div>
+
                           <EditableCell
                             value={item.descricao}
                             onSave={(v) => updateItem.mutateAsync({ id: item.id, patch: { descricao: String(v) } })}
