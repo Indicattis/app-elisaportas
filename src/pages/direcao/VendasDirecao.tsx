@@ -588,6 +588,8 @@ export default function VendasDirecao() {
         title="CRM"
       >
         <ExternalLink className="h-4 w-4" />
+      </Button>
+      <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="sm" className="bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white">
             <Download className="h-4 w-4" />
