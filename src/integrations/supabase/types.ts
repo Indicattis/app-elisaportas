@@ -1790,6 +1790,7 @@ export type Database = {
         Row: {
           adiantamento: number
           ajuda_custo: number
+          bonus: number
           chave_pix: string | null
           colaborador_id: string
           colaborador_nome: string
@@ -1798,6 +1799,7 @@ export type Database = {
           horas_extras: number
           id: string
           mes_referencia: string
+          pensao_alimenticia: number
           previsao: number
           salario_base: number
           updated_at: string
@@ -1806,6 +1808,7 @@ export type Database = {
         Insert: {
           adiantamento?: number
           ajuda_custo?: number
+          bonus?: number
           chave_pix?: string | null
           colaborador_id: string
           colaborador_nome: string
@@ -1814,6 +1817,7 @@ export type Database = {
           horas_extras?: number
           id?: string
           mes_referencia: string
+          pensao_alimenticia?: number
           previsao?: number
           salario_base?: number
           updated_at?: string
@@ -1822,6 +1826,7 @@ export type Database = {
         Update: {
           adiantamento?: number
           ajuda_custo?: number
+          bonus?: number
           chave_pix?: string | null
           colaborador_id?: string
           colaborador_nome?: string
@@ -1830,6 +1835,7 @@ export type Database = {
           horas_extras?: number
           id?: string
           mes_referencia?: string
+          pensao_alimenticia?: number
           previsao?: number
           salario_base?: number
           updated_at?: string
