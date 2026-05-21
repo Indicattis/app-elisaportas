@@ -28,7 +28,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatCurrency } from "@/lib/utils";
-import { useCustosItens, CustoItem, useCustosItensPadroes, useCustosItensCategoriasOrdem } from "@/hooks/useCustosItens";
+import { useCustosItens, CustoItem, useCustosItensPadroes, useCustosItensCategoriasOrdem, useRenomearCategoriaItens } from "@/hooks/useCustosItens";
 
 const UNIDADES = ["Un", "M", "Kg", "L", "M²", "M³", "Cx", "Pç"];
 
@@ -146,6 +146,7 @@ export default function EstrategiaItens() {
   const { items, isLoading, createItem, updateItem, deleteItem } = useCustosItens();
   const { padroes, aplicarEmTodos } = useCustosItensPadroes();
   const { categoriasOrdem, salvarOrdem } = useCustosItensCategoriasOrdem();
+  const renomearCategoria = useRenomearCategoriaItens();
   const [searchTerm, setSearchTerm] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [padroesOpen, setPadroesOpen] = useState(false);
@@ -550,7 +551,10 @@ export default function EstrategiaItens() {
             <div key={categoria} className="flex flex-col gap-2">
               <div className="flex items-center gap-2 px-1">
                 <span className="inline-block h-1.5 w-1.5 rounded-full bg-white/40" />
-                <span className="text-[11px] uppercase tracking-wider font-medium text-white/60">{categoria}</span>
+                <CategoriaTitulo
+                  categoria={categoria}
+                  onRename={(novo) => renomearCategoria.mutateAsync({ from: categoria, to: novo })}
+                />
                 <span className="text-[11px] text-white/30">· {rows.length}</span>
               </div>
               <div className="rounded-xl overflow-hidden bg-white/5 backdrop-blur-xl border border-white/10">
