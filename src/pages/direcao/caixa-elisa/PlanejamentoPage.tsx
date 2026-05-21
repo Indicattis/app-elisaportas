@@ -23,7 +23,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 const formatBRL = (n: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n || 0);
 
-interface Mes { id: string; mes: string }
 interface Item { id: string; mes_id: string; nome: string; valor: number; data: string | null; pago: boolean }
 
 export default function PlanejamentoPage() {
