@@ -731,8 +731,9 @@ export default function EstrategiaItens() {
               <div className="rounded-xl overflow-hidden bg-card/60 backdrop-blur-xl border border-border">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-border hover:bg-transparent">
-                    <TableHead className="text-xs font-medium text-muted-foreground">Descrição</TableHead>
+                   <TableRow className="border-border hover:bg-transparent">
+                     <TableHead className="w-8 p-0" />
+                     <TableHead className="text-xs font-medium text-muted-foreground">Descrição</TableHead>
                     <TableHead className="text-xs font-medium text-foreground text-right w-36 bg-rose-500/10">Custo</TableHead>
                     <TableHead className="text-xs font-medium text-foreground text-right w-36 bg-blue-500/10">Lucro</TableHead>
                     <TableHead className="text-xs font-medium text-foreground text-right w-28 bg-orange-500/10">Imposto</TableHead>
