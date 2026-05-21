@@ -109,6 +109,26 @@ export default function PlanejamentoPage() {
     onError: (e: any) => toast.error(e?.message ?? 'Erro ao adicionar mês.'),
   });
 
+  const updateMes = useMutation({
+    mutationFn: async () => {
+      if (!editingMes || !mesInput) throw new Error('Selecione o mês.');
+      const dia = `${mesInput}-01`;
+      const { error } = await supabase
+        .from('caixa_elisa_planejamento_meses')
+        .update({ mes: dia })
+        .eq('id', editingMes.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['caixa-elisa-planejamento-meses'] });
+      setMesDialogOpen(false);
+      setEditingMes(null);
+      setMesInput('');
+      toast.success('Mês atualizado.');
+    },
+    onError: (e: any) => toast.error(e?.message ?? 'Erro ao atualizar mês.'),
+  });
+
   const deleteMes = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from('caixa_elisa_planejamento_meses').delete().eq('id', id);
