@@ -539,7 +539,6 @@ const App = () => (
                 <Route path="/direcao/aprovacoes" element={<ProtectedRoute routeKey="direcao_aprovacoes"><DirecaoAprovacoesHub /></ProtectedRoute>} />
                 <Route path="/direcao/aprovacoes/pedidos" element={<ProtectedRoute routeKey="direcao_aprovacoes_pedidos"><AprovacoesPedidos /></ProtectedRoute>} />
                 <Route path="/direcao/aprovacoes/fabrica" element={<ProtectedRoute routeKey="direcao_aprovacoes"><AprovacoesProducao /></ProtectedRoute>} />
-                <Route path="/direcao/aprovacoes/vendas" element={<ProtectedRoute routeKey="direcao_aprovacoes"><AprovacoesVendas /></ProtectedRoute>} />
                 <Route path="/direcao/aprovacoes/autorizados" element={<ProtectedRoute routeKey="direcao_aprovacoes"><AprovacoesAutorizados /></ProtectedRoute>} />
                 <Route path="/direcao/aprovacoes/compras" element={<ProtectedRoute routeKey="direcao_aprovacoes"><AprovacoesCompras /></ProtectedRoute>} />
 
