@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Trash2, Percent, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Plus, Trash2, Percent, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Check, X } from "lucide-react";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -547,31 +547,23 @@ export default function EstrategiaItens() {
                     <p className="text-sm text-white/50">Nenhuma categoria cadastrada.</p>
                   )}
                   {ordemDraft.map((cat, idx) => (
-                    <div
+                    <CategoriaOrdemRow
                       key={cat}
-                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10"
-                    >
-                      <span className="text-[11px] text-white/40 w-6">{idx + 1}.</span>
-                      <span className="flex-1 text-sm text-white truncate">{cat}</span>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-7 w-7 text-white/60 hover:text-white hover:bg-white/10"
-                        onClick={() => moveOrdem(idx, -1)}
-                        disabled={idx === 0}
-                      >
-                        <ArrowUp className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-7 w-7 text-white/60 hover:text-white hover:bg-white/10"
-                        onClick={() => moveOrdem(idx, 1)}
-                        disabled={idx === ordemDraft.length - 1}
-                      >
-                        <ArrowDown className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
+                      categoria={cat}
+                      index={idx}
+                      total={ordemDraft.length}
+                      onMove={(dir) => moveOrdem(idx, dir)}
+                      onRename={async (novo) => {
+                        const novoTrim = novo.trim();
+                        if (!novoTrim || novoTrim === cat) return;
+                        if (ordemDraft.includes(novoTrim)) {
+                          toast.error("Já existe uma categoria com esse nome");
+                          return;
+                        }
+                        await renomearCategoria.mutateAsync({ from: cat, to: novoTrim });
+                        setOrdemDraft((prev) => prev.map((c) => (c === cat ? novoTrim : c)));
+                      }}
+                    />
                   ))}
                 </div>
                 <DialogFooter>
