@@ -1,47 +1,42 @@
-# Corrigir cadastro de produto em `/vendas/minhas-vendas/editar/:id`
+## Mudanças em `/direcao`
 
-## Problemas reportados
+### 1. `src/pages/direcao/DirecaoHub.tsx`
+- Renomear label "Caixa Elisa" → **"Capital de Giro Elisa"**.
+- Remover item **CRM**.
+- Remover itens **Faturamento** e **Metas** (vão para o novo hub Financeiro).
+- Remover item **Autorizados** (vai para o hub Aprovações).
+- Adicionar item **Financeiro** (ícone `Wallet` ou `Banknote`) apontando para `/direcao/financeiro`, routePrefix `direcao_financeiro` (com fallback de acesso aberto).
+- Adicionar suporte a uma variante visual "dourado fraco" no `renderButton`: aplicar a Estratégia e Capital de Giro Elisa um gradiente sutil dourado, ex.: `from-amber-700/70 to-yellow-800/70 border-amber-500/30 shadow-amber-600/20 hover:from-amber-600/70 hover:to-yellow-700/70`.
 
-1. **Não é possível adicionar observação por produto** na tabela de produtos. A página `/nova` permite (lápis/popover na coluna "Observação"), a `/editar` não.
-2. **Valores calculados diferem** entre as duas páginas para o mesmo conjunto de produtos.
+Ordem final dos botões:
+1. Estratégia (dourado fraco)
+2. Capital de Giro Elisa (dourado fraco)
+3. Vendas
+4. DRE
+5. Financeiro (novo)
+6. Checklist Liderança
+7. Gestão de Fábrica
+8. Gestão de Instalações
+9. Gestão de Frotas
+10. Estoque
+11. Aprovações
+12. Organograma RH
 
-## Causas
+### 2. Novo arquivo `src/pages/direcao/financeiro/DirecaoFinanceiroHub.tsx`
+- Hub no mesmo padrão visual do `DirecaoAprovacoesHub` (fundo preto, partículas, breadcrumb, botão voltar, FloatingProfileMenu, botões azuis em gradiente).
+- Header com ícone `Wallet` e título "Financeiro".
+- Breadcrumb: Home › Direção › Financeiro.
+- Itens:
+  - **Faturamento** (`DollarSign`) → `/direcao/faturamento`
+  - **Metas** (`Target`) → `/direcao/metas`
 
-Em `src/pages/vendas/MinhasVendasEditar.tsx`:
+### 3. `src/App.tsx`
+- Importar `DirecaoFinanceiroHub`.
+- Adicionar rota `/direcao/financeiro` protegida com `routeKey="direcao_hub"` (mantendo o mesmo padrão dos demais).
 
-- O `<ProdutosVendaTable>` (linha ~1139) **não recebe** a prop `onUpdateObservacao`, então o componente esconde o popover de edição e mostra apenas texto somente leitura. Em `/nova` essa prop é passada (linha 699 de `VendaNovaMinimalista.tsx`).
-- O mapeamento `produtosFormatados` (linhas 187–205) **descarta campos** que o `ProdutosVendaTable` e o `VendaResumo` usam para identificar tipo/unidade/observação:
-  - `observacao_item` (não é copiado → coluna sempre vazia mesmo quando há observação salva no banco)
-  - `vendas_catalogo_id` e `valor_credito` (afeta agrupamento e exibição de crédito por item no resumo)
-  - `tipo_produto` é cast para `'porta' | 'acessorio' | 'adicional'`, perdendo `porta_enrolar`, `porta_social`, `pintura_epoxi`, `manutencao`, `instalacao` → o `Badge` cai no `default` e a coluna "Detalhes" não reconhece as portas novas, que dependem de `'porta_enrolar'`/`'porta_social'` para mostrar `largura x altura`. Isso explica a divergência visual nos valores e detalhes versus `/nova`, onde os tipos são preservados.
-  - `unidade` recebe fallback `'Unitário'` em vez do valor real vindo do catálogo (já carregado pelo hook `useProdutosVenda` via join `vendas_catalogo`), o que altera o cálculo de "valor unitário" para itens decimais (metro/kg/litro) na coluna `Valor Unit.`.
+### 4. `src/pages/direcao/aprovacoes/DirecaoAprovacoesHub.tsx`
+- Adicionar novo item **Autorizados** (ícone `Users`, sem badge de contagem) apontando para `/direcao/autorizados`, mantendo o item existente **Aprovações Autorizados** intacto.
 
-A fórmula em si (`(valor_produto + valor_pintura + valor_instalacao) * quantidade − desconto`) é idêntica entre `/nova`, `ProdutosVendaTable` e `VendaResumo`; a divergência percebida vem desses campos perdidos no mapeamento.
-
-## Mudanças propostas (apenas `src/pages/vendas/MinhasVendasEditar.tsx`)
-
-1. **Atualizar `produtosFormatados`** para preservar todos os campos relevantes vindos do hook `useProdutosVenda`:
-   - Manter `tipo_produto` como veio do banco (tipo `ProdutoVenda['tipo_produto']`), sem cast restritivo.
-   - Adicionar: `observacao_item`, `vendas_catalogo_id`, `valor_credito`, `valor_frete`, `descricao_manutencao` (quando existir).
-   - Trocar `unidade: (p as any).unidade || 'Unitário'` por `unidade: (p as any).unidade ?? null` para que o `ProdutosVendaTable` detecte corretamente `metro/kg/litro` (`isCatalogoDecimal`).
-
-2. **Adicionar handler `handleUpdateObservacao`** que persiste no banco:
-   ```ts
-   const handleUpdateObservacao = async (index, observacao) => {
-     const produto = produtos?.[index];
-     if (!produto?.id) return;
-     await updateProduto({ produtoId: produto.id, updates: { observacao_item: observacao || null } });
-   };
-   ```
-
-3. **Passar a prop** `onUpdateObservacao={handleUpdateObservacao}` para `<ProdutosVendaTable>` (linha ~1139).
-
-## Fora do escopo
-
-- Hooks, regras de negócio, fórmulas de cálculo (já são as mesmas).
-- Layout, persistência, validações.
-- Outras páginas (`VendaNovaMinimalista.tsx`, `VendaEditarMinimalista.tsx`).
-
-## Arquivo
-
-- `src/pages/vendas/MinhasVendasEditar.tsx` — única edição.
+### Observações
+- As rotas `/direcao/faturamento`, `/direcao/metas` e `/direcao/autorizados` continuam funcionando — apenas mudam os pontos de entrada no hub.
+- Não há alteração de lógica de negócio nem de permissões existentes.
