@@ -793,6 +793,27 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
         clienteNome={venda.cliente_nome}
       />
 
+      {/* Confirmação Reprovar Venda */}
+      <AlertDialog open={showReprovar} onOpenChange={setShowReprovar}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reprovar venda?</AlertDialogTitle>
+            <AlertDialogDescription>
+              A venda de <strong>{venda.cliente_nome}</strong> será marcada como <strong>Reprovada</strong> e não seguirá para produção.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleReprovarVenda}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Reprovar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Dialog Finalizar Direto */}
       <Dialog open={showFinalizarDireto} onOpenChange={setShowFinalizarDireto}>
         <DialogContent className="max-w-md">
