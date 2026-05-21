@@ -362,11 +362,11 @@ export default function PlanejamentoPage() {
         </div>
       </div>
 
-      {/* Adicionar mês */}
-      <Dialog open={mesDialogOpen} onOpenChange={setMesDialogOpen}>
+      {/* Adicionar/Editar mês */}
+      <Dialog open={mesDialogOpen} onOpenChange={(o) => { if (!o) { setMesDialogOpen(false); setEditingMes(null); } }}>
         <DialogContent className="bg-zinc-950 border border-white/10 text-white">
           <DialogHeader>
-            <DialogTitle>Adicionar mês</DialogTitle>
+            <DialogTitle>{editingMes ? 'Editar mês' : 'Adicionar mês'}</DialogTitle>
           </DialogHeader>
           <div>
             <Label className="text-white/70">Mês</Label>
@@ -378,12 +378,12 @@ export default function PlanejamentoPage() {
             />
           </div>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setMesDialogOpen(false)} className="text-white/70 hover:text-white">
+            <Button variant="ghost" onClick={() => { setMesDialogOpen(false); setEditingMes(null); }} className="text-white/70 hover:text-white">
               Cancelar
             </Button>
             <Button
-              onClick={() => addMes.mutate()}
-              disabled={addMes.isPending}
+              onClick={() => editingMes ? updateMes.mutate() : addMes.mutate()}
+              disabled={addMes.isPending || updateMes.isPending}
               className="bg-gradient-to-r from-emerald-500 to-emerald-700 hover:from-emerald-400 hover:to-emerald-600 text-white"
             >
               Salvar
