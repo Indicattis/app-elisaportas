@@ -123,12 +123,13 @@ export default function PlanejamentoPage() {
         mes_id: itemForm.mes_id,
         nome: itemForm.nome.trim(),
         valor: Number(itemForm.valor.replace(',', '.')) || 0,
+        data: itemForm.data ? itemForm.data : null,
       };
       if (!payload.nome) throw new Error('Informe o nome.');
       if (editingItem) {
         const { error } = await supabase
           .from('caixa_elisa_planejamento_itens')
-          .update({ nome: payload.nome, valor: payload.valor })
+          .update({ nome: payload.nome, valor: payload.valor, data: payload.data })
           .eq('id', editingItem.id);
         if (error) throw error;
       } else {
@@ -161,15 +162,27 @@ export default function PlanejamentoPage() {
     onError: (e: any) => toast.error(e?.message ?? 'Erro ao excluir.'),
   });
 
+  const togglePago = useMutation({
+    mutationFn: async ({ id, pago }: { id: string; pago: boolean }) => {
+      const { error } = await supabase
+        .from('caixa_elisa_planejamento_itens')
+        .update({ pago })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['caixa-elisa-planejamento-itens'] }),
+    onError: (e: any) => toast.error(e?.message ?? 'Erro ao atualizar.'),
+  });
+
   const openAddItem = (mes_id: string) => {
     setEditingItem(null);
-    setItemForm({ mes_id, nome: '', valor: '' });
+    setItemForm({ mes_id, nome: '', valor: '', data: '' });
     setItemDialogOpen(true);
   };
 
   const openEditItem = (it: Item) => {
     setEditingItem(it);
-    setItemForm({ mes_id: it.mes_id, nome: it.nome, valor: String(it.valor ?? '') });
+    setItemForm({ mes_id: it.mes_id, nome: it.nome, valor: String(it.valor ?? ''), data: it.data ?? '' });
     setItemDialogOpen(true);
   };
 
@@ -257,11 +270,21 @@ export default function PlanejamentoPage() {
                             key={it.id}
                             className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5 border border-white/10"
                           >
-                            <div className="w-2 h-2 rounded-full bg-emerald-400" />
+                            <Checkbox
+                              checked={it.pago}
+                              onCheckedChange={(v) => togglePago.mutate({ id: it.id, pago: !!v })}
+                            />
                             <div className="flex flex-col min-w-0 flex-1">
-                              <span className="font-semibold truncate text-white">{it.nome}</span>
+                              <span className={`font-semibold truncate ${it.pago ? 'text-white/40 line-through' : 'text-white'}`}>
+                                {it.nome}
+                              </span>
+                              {it.data && (
+                                <span className="text-xs text-white/40">
+                                  {format(new Date(it.data + 'T12:00:00'), 'dd/MM/yyyy')}
+                                </span>
+                              )}
                             </div>
-                            <div className="font-semibold whitespace-nowrap text-white">
+                            <div className={`font-semibold whitespace-nowrap ${it.pago ? 'text-white/40' : 'text-white'}`}>
                               {formatBRL(Number(it.valor))}
                             </div>
                             <button
@@ -292,6 +315,10 @@ export default function PlanejamentoPage() {
             <div className="rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 p-6 text-center">
               <div className="text-xs tracking-widest text-white/40 uppercase">Total Acumulado</div>
               <div className="mt-3 text-3xl font-bold text-white tracking-tight">{formatBRL(totalAcumulado)}</div>
+            </div>
+            <div className="rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 p-6 text-center">
+              <div className="text-xs tracking-widest text-white/40 uppercase">Total Pago</div>
+              <div className="mt-3 text-3xl font-bold text-emerald-300 tracking-tight">{formatBRL(totalPago)}</div>
             </div>
           </div>
         </div>
@@ -350,6 +377,15 @@ export default function PlanejamentoPage() {
                 value={itemForm.valor}
                 onChange={(e) => setItemForm((f) => ({ ...f, valor: e.target.value.replace(/[^0-9.,]/g, '') }))}
                 placeholder="0,00"
+                className="bg-white/5 border-white/10 text-white mt-2"
+              />
+            </div>
+            <div>
+              <Label className="text-white/70">Data</Label>
+              <Input
+                type="date"
+                value={itemForm.data}
+                onChange={(e) => setItemForm((f) => ({ ...f, data: e.target.value }))}
                 className="bg-white/5 border-white/10 text-white mt-2"
               />
             </div>
