@@ -22,6 +22,8 @@ import { DescontoVendaModal } from "@/components/vendas/DescontoVendaModal";
 import { CreditoVendaModal } from "@/components/vendas/CreditoVendaModal";
 import { ProdutosVendaTable } from "@/components/vendas/ProdutosVendaTable";
 import { VendaResumo } from "@/components/vendas/VendaResumo";
+import { PinturaItemCatalogoModal } from "@/components/vendas/PinturaItemCatalogoModal";
+import { PinturaRapidaModal } from "@/components/vendas/PinturaRapidaModal";
 import type { ProdutoVenda } from "@/hooks/useVendas";
 import { useCanaisAquisicao } from "@/hooks/useCanaisAquisicao";
 import { Badge } from "@/components/ui/badge";
@@ -42,6 +44,9 @@ export default function MinhasVendasEditar() {
   const [acessoriosModalOpen, setAcessoriosModalOpen] = useState(false);
   const [descontoModalOpen, setDescontoModalOpen] = useState(false);
   const [creditoModalOpen, setCreditoModalOpen] = useState(false);
+  const [pinturaItemModalOpen, setPinturaItemModalOpen] = useState(false);
+  const [pinturaRapidaOpen, setPinturaRapidaOpen] = useState(false);
+  const [portaRecemAdicionada, setPortaRecemAdicionada] = useState<{ largura: number; altura: number } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [showBlockedDialog, setShowBlockedDialog] = useState(false);
   const [observacoes, setObservacoes] = useState("");
@@ -1025,7 +1030,13 @@ export default function MinhasVendasEditar() {
               <ProductButton 
                 label="Pintura Eletrostática"
                 onClick={() => {
-                  setTipoInicial('pintura_epoxi');
+                  setPinturaItemModalOpen(true);
+                }}
+              />
+              <ProductButton 
+                label="Serviços"
+                onClick={() => {
+                  setTipoInicial('manutencao');
                   setPermitirTrocaTipo(false);
                   setShowProdutoForm(true);
                 }}
@@ -1043,6 +1054,10 @@ export default function MinhasVendasEditar() {
                 if (!id) return;
                 await addProduto({ ...produto, venda_id: id });
                 setShowProdutoForm(false);
+                if (produto.tipo_produto === 'porta_enrolar' && produto.largura && produto.altura) {
+                  setPortaRecemAdicionada({ largura: produto.largura, altura: produto.altura });
+                  setPinturaRapidaOpen(true);
+                }
               }}
               tipoInicial={tipoInicial}
               permitirTrocaTipo={permitirTrocaTipo}
@@ -1059,6 +1074,41 @@ export default function MinhasVendasEditar() {
                 setAcessoriosModalOpen(false);
               }}
             />
+
+            <PinturaItemCatalogoModal
+              open={pinturaItemModalOpen}
+              onOpenChange={setPinturaItemModalOpen}
+              portas={produtosFormatados}
+              onConfirm={async (pinturas) => {
+                if (!id) return;
+                for (const pintura of pinturas) {
+                  await addProduto({ ...pintura, venda_id: id });
+                }
+                setPinturaItemModalOpen(false);
+              }}
+            />
+
+            {portaRecemAdicionada && (
+              <PinturaRapidaModal
+                open={pinturaRapidaOpen}
+                onOpenChange={(open) => {
+                  setPinturaRapidaOpen(open);
+                  if (!open) setPortaRecemAdicionada(null);
+                }}
+                largura={portaRecemAdicionada.largura}
+                altura={portaRecemAdicionada.altura}
+                onConfirm={async (pintura) => {
+                  if (!id) return;
+                  await addProduto({ ...pintura, venda_id: id });
+                  setPinturaRapidaOpen(false);
+                  setPortaRecemAdicionada(null);
+                }}
+                onSkip={() => {
+                  setPinturaRapidaOpen(false);
+                  setPortaRecemAdicionada(null);
+                }}
+              />
+            )}
 
             <DescontoVendaModal
               open={descontoModalOpen}
