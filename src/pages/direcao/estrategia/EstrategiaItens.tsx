@@ -1,5 +1,21 @@
-import { useEffect, useMemo, useState } from "react";
-import { Plus, Trash2, Percent, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Check, X } from "lucide-react";
+import { useEffect, useMemo, useState, CSSProperties } from "react";
+import { Plus, Trash2, Percent, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Check, X, GripVertical } from "lucide-react";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  useSortable,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import { restrictToVerticalAxis, restrictToParentElement } from "@dnd-kit/modifiers";
+import { CSS } from "@dnd-kit/utilities";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
