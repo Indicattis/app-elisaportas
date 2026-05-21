@@ -307,7 +307,7 @@ function CategoriaOrdemRow({
 }
 
 export default function EstrategiaItens() {
-  const { items, isLoading, createItem, updateItem, deleteItem } = useCustosItens();
+  const { items, isLoading, createItem, updateItem, deleteItem, reordenarItens } = useCustosItens();
   const { padroes, aplicarEmTodos } = useCustosItensPadroes();
   const { categoriasOrdem, salvarOrdem } = useCustosItensCategoriasOrdem();
   const renomearCategoria = useRenomearCategoriaItens();
