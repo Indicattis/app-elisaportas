@@ -1855,6 +1855,45 @@ export type Database = {
         }
         Relationships: []
       }
+      custos_itens: {
+        Row: {
+          categoria: string | null
+          created_at: string
+          custo_unitario: number
+          descricao: string
+          id: string
+          ordem: number
+          preco_venda: number
+          subcategoria: string | null
+          unidade: string | null
+          updated_at: string
+        }
+        Insert: {
+          categoria?: string | null
+          created_at?: string
+          custo_unitario?: number
+          descricao: string
+          id?: string
+          ordem?: number
+          preco_venda?: number
+          subcategoria?: string | null
+          unidade?: string | null
+          updated_at?: string
+        }
+        Update: {
+          categoria?: string | null
+          created_at?: string
+          custo_unitario?: number
+          descricao?: string
+          id?: string
+          ordem?: number
+          preco_venda?: number
+          subcategoria?: string | null
+          unidade?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       custos_mensais: {
         Row: {
           created_at: string | null
