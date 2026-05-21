@@ -1095,7 +1095,7 @@ export default function ProdutosFabrica({
                 placeholder="Buscar..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="h-[50px] w-[150px] bg-white/5 border-white/10 text-white placeholder:text-white/40"
+                className="!h-[50px] w-[150px] bg-white/5 border-white/10 text-white placeholder:text-white/40"
               />
               {!hideStockColumns && (
                 <div className="flex flex-wrap gap-3 flex-1">
