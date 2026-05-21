@@ -141,8 +141,9 @@ export default function CustoFolhaMensal() {
         const he = parseNum(l.horasExtras);
         const v = sb + ac + he;
         const pv = parseNum(l.previsao);
+        const ad = parseNum(l.adiantamento);
         const pix = l.chavePix.trim();
-        if (v > 0 || pv > 0 || pix.length > 0) {
+        if (v > 0 || pv > 0 || ad > 0 || pix.length > 0) {
           toUpsert.push({
             mes_referencia: mesIso,
             colaborador_id: c.id,
@@ -152,6 +153,7 @@ export default function CustoFolhaMensal() {
             ajuda_custo: ac,
             horas_extras: he,
             previsao: pv,
+            adiantamento: ad,
             chave_pix: pix || null,
             created_by: user?.id ?? null,
           });
