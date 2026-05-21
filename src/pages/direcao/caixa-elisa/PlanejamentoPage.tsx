@@ -83,6 +83,10 @@ export default function PlanejamentoPage() {
     () => itens.reduce((s, i) => s + Number(i.valor || 0), 0),
     [itens],
   );
+  const totalPago = useMemo(
+    () => itens.filter((i) => i.pago).reduce((s, i) => s + Number(i.valor || 0), 0),
+    [itens],
+  );
 
   const addMes = useMutation({
     mutationFn: async () => {
