@@ -153,13 +153,17 @@ export default function EstrategiaItens() {
     unidade: "Un",
     custo_unitario: "0",
     preco_venda: "0",
+    fornecedor: "",
+    quantidade: "0",
+    quantidade_ideal: "0",
+    quantidade_maxima: "0",
   });
 
   const filteredItems = useMemo(() => {
     const term = searchTerm.toLowerCase().trim();
     if (!term) return items;
     return items.filter((it) =>
-      [it.descricao, it.categoria, it.subcategoria, it.unidade]
+      [it.descricao, it.categoria, it.subcategoria, it.unidade, it.fornecedor]
         .filter(Boolean)
         .some((v) => String(v).toLowerCase().includes(term))
     );
@@ -183,12 +187,10 @@ export default function EstrategiaItens() {
 
   const totals = useMemo(() => {
     let custo = 0;
-    let preco = 0;
     for (const it of filteredItems) {
       custo += Number(it.custo_unitario || 0);
-      preco += Number(it.preco_venda || 0);
     }
-    return { custo, preco };
+    return { custo };
   }, [filteredItems]);
 
   const handleCreate = async () => {
@@ -200,8 +202,12 @@ export default function EstrategiaItens() {
       unidade: newItem.unidade || null,
       custo_unitario: Number(newItem.custo_unitario.replace(",", ".")) || 0,
       preco_venda: Number(newItem.preco_venda.replace(",", ".")) || 0,
+      fornecedor: newItem.fornecedor.trim() || null,
+      quantidade: Number(newItem.quantidade.replace(",", ".")) || 0,
+      quantidade_ideal: Number(newItem.quantidade_ideal.replace(",", ".")) || 0,
+      quantidade_maxima: Number(newItem.quantidade_maxima.replace(",", ".")) || 0,
     });
-    setNewItem({ descricao: "", categoria: "", subcategoria: "", unidade: "Un", custo_unitario: "0", preco_venda: "0" });
+    setNewItem({ descricao: "", categoria: "", subcategoria: "", unidade: "Un", custo_unitario: "0", preco_venda: "0", fornecedor: "", quantidade: "0", quantidade_ideal: "0", quantidade_maxima: "0" });
     setDialogOpen(false);
   };
 
@@ -242,10 +248,42 @@ export default function EstrategiaItens() {
               </datalist>
             </div>
             <div>
-              <Label>Subcategoria</Label>
+              <Label>Fornecedor</Label>
               <Input
-                value={newItem.subcategoria}
-                onChange={(e) => setNewItem({ ...newItem, subcategoria: e.target.value })}
+                value={newItem.fornecedor}
+                onChange={(e) => setNewItem({ ...newItem, fornecedor: e.target.value })}
+                className="bg-white/5 border-white/10 text-white"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <Label>Qtd Ideal</Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={newItem.quantidade_ideal}
+                onChange={(e) => setNewItem({ ...newItem, quantidade_ideal: e.target.value })}
+                className="bg-white/5 border-white/10 text-white"
+              />
+            </div>
+            <div>
+              <Label>Qtd Máxima</Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={newItem.quantidade_maxima}
+                onChange={(e) => setNewItem({ ...newItem, quantidade_maxima: e.target.value })}
+                className="bg-white/5 border-white/10 text-white"
+              />
+            </div>
+            <div>
+              <Label>Qtd</Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={newItem.quantidade}
+                onChange={(e) => setNewItem({ ...newItem, quantidade: e.target.value })}
                 className="bg-white/5 border-white/10 text-white"
               />
             </div>
@@ -275,12 +313,10 @@ export default function EstrategiaItens() {
               />
             </div>
             <div>
-              <Label>Preço venda (R$)</Label>
+              <Label>Subcategoria</Label>
               <Input
-                type="number"
-                step="0.01"
-                value={newItem.preco_venda}
-                onChange={(e) => setNewItem({ ...newItem, preco_venda: e.target.value })}
+                value={newItem.subcategoria}
+                onChange={(e) => setNewItem({ ...newItem, subcategoria: e.target.value })}
                 className="bg-white/5 border-white/10 text-white"
               />
             </div>
@@ -348,17 +384,17 @@ export default function EstrategiaItens() {
                 <TableHeader>
                   <TableRow className="border-white/10 hover:bg-transparent">
                     <TableHead className="text-xs font-medium text-white/60">Descrição</TableHead>
-                    <TableHead className="text-xs font-medium text-white/60">Subcategoria</TableHead>
-                    <TableHead className="text-xs font-medium text-white/60 text-center w-28">Unidade</TableHead>
+                    <TableHead className="text-xs font-medium text-white/60">Fornecedor</TableHead>
+                    <TableHead className="text-xs font-medium text-white/60 text-center w-28">Qtd Ideal</TableHead>
+                    <TableHead className="text-xs font-medium text-white/60 text-center w-28">Qtd Máxima</TableHead>
+                    <TableHead className="text-xs font-medium text-white/60 text-center w-28">Qtd</TableHead>
                     <TableHead className="text-xs font-medium text-white/60 text-right w-40">Custo</TableHead>
-                    <TableHead className="text-xs font-medium text-white/80 text-right w-40 bg-green-500/10">Preço Final</TableHead>
-                    <TableHead className="text-xs font-medium text-white/60 text-right w-32">% Markup</TableHead>
+                    <TableHead className="text-xs font-medium text-white/60 text-center w-28">Unidade</TableHead>
                     <TableHead className="text-xs font-medium text-white/60 text-center w-16">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {rows.map((item) => {
-                    const markup = calcularMarkup(Number(item.custo_unitario || 0), Number(item.preco_venda || 0));
                     return (
                       <TableRow key={item.id} className="border-white/5 hover:bg-white/5">
                         <TableCell className="text-white">
@@ -366,19 +402,46 @@ export default function EstrategiaItens() {
                             value={item.descricao}
                             onSave={(v) => updateItem.mutateAsync({ id: item.id, patch: { descricao: String(v) } })}
                           />
-                        </TableCell>
-                        <TableCell className="text-white">
                           <EditableCell
                             value={item.subcategoria ?? ""}
+                            placeholder="Subcategoria"
+                            display={
+                              item.subcategoria
+                                ? <span className="text-xs text-white/50">{item.subcategoria}</span>
+                                : <span className="text-xs text-white/30">Adicionar subcategoria</span>
+                            }
                             onSave={(v) => updateItem.mutateAsync({ id: item.id, patch: { subcategoria: String(v) || null } })}
                           />
                         </TableCell>
+                        <TableCell className="text-white/70 text-sm">
+                          <EditableCell
+                            value={item.fornecedor ?? ""}
+                            placeholder="Fornecedor"
+                            onSave={(v) => updateItem.mutateAsync({ id: item.id, patch: { fornecedor: String(v) || null } })}
+                          />
+                        </TableCell>
                         <TableCell className="text-center text-white/80">
-                          <EditableSelectCell
-                            value={item.unidade}
-                            options={UNIDADES}
-                            placeholder="Un"
-                            onSave={(v) => updateItem.mutateAsync({ id: item.id, patch: { unidade: v } })}
+                          <EditableCell
+                            value={Number(item.quantidade_ideal || 0)}
+                            type="number"
+                            align="center"
+                            onSave={(v) => updateItem.mutateAsync({ id: item.id, patch: { quantidade_ideal: Number(v) } })}
+                          />
+                        </TableCell>
+                        <TableCell className="text-center text-white/80">
+                          <EditableCell
+                            value={Number(item.quantidade_maxima || 0)}
+                            type="number"
+                            align="center"
+                            onSave={(v) => updateItem.mutateAsync({ id: item.id, patch: { quantidade_maxima: Number(v) } })}
+                          />
+                        </TableCell>
+                        <TableCell className="text-center text-white/80">
+                          <EditableCell
+                            value={Number(item.quantidade || 0)}
+                            type="number"
+                            align="center"
+                            onSave={(v) => updateItem.mutateAsync({ id: item.id, patch: { quantidade: Number(v) } })}
                           />
                         </TableCell>
                         <TableCell className="text-right text-white/80">
@@ -390,17 +453,13 @@ export default function EstrategiaItens() {
                             onSave={(v) => updateItem.mutateAsync({ id: item.id, patch: { custo_unitario: Number(v) } })}
                           />
                         </TableCell>
-                        <TableCell className="text-right font-medium text-white bg-green-500/10">
-                          <EditableCell
-                            value={Number(item.preco_venda || 0)}
-                            type="currency"
-                            align="right"
-                            display={formatCurrency(Number(item.preco_venda || 0))}
-                            onSave={(v) => updateItem.mutateAsync({ id: item.id, patch: { preco_venda: Number(v) } })}
+                        <TableCell className="text-center text-white/70 text-sm">
+                          <EditableSelectCell
+                            value={item.unidade}
+                            options={UNIDADES}
+                            placeholder="Un"
+                            onSave={(v) => updateItem.mutateAsync({ id: item.id, patch: { unidade: v } })}
                           />
-                        </TableCell>
-                        <TableCell className="text-right text-white/80">
-                          {markup === null ? <span className="text-white/30">—</span> : `${markup.toFixed(1)}%`}
                         </TableCell>
                         <TableCell className="text-center">
                           <Button
@@ -432,10 +491,6 @@ export default function EstrategiaItens() {
             <div className="flex flex-col items-end">
               <span className="text-white/50 text-xs uppercase">Total custo</span>
               <span className="text-white font-semibold">{formatCurrency(totals.custo)}</span>
-            </div>
-            <div className="flex flex-col items-end">
-              <span className="text-white/50 text-xs uppercase">Total preço</span>
-              <span className="text-emerald-400 font-semibold">{formatCurrency(totals.preco)}</span>
             </div>
           </div>
         )}
