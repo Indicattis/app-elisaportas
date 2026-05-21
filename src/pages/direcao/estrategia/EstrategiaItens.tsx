@@ -306,6 +306,131 @@ function CategoriaOrdemRow({
   );
 }
 
+type SortableItemRowProps = {
+  item: CustoItem;
+  disabled: boolean;
+  onUpdate: (patch: Partial<CustoItem>) => Promise<void> | void;
+  onDelete: () => void;
+};
+
+function SortableItemRow({ item, disabled, onUpdate, onDelete }: SortableItemRowProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: item.id,
+    disabled,
+  });
+  const style: CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+    position: "relative",
+    zIndex: isDragging ? 10 : "auto",
+  };
+  const custo = Number(item.custo_unitario || 0);
+  const preco = Number(item.preco_venda || 0);
+  const tImp = Number(item.taxa_impostos || 0);
+  const tDesc = Number(item.taxa_descontos || 0);
+  const tCard = Number(item.taxa_cartao || 0);
+  const taxas = tImp + tDesc + tCard;
+  const deducoes = preco * (taxas / 100);
+  const lucro = preco - deducoes - custo;
+  const corLucro = lucro > 0 ? "text-emerald-400" : lucro < 0 ? "text-red-400" : "text-muted-foreground";
+  return (
+    <TableRow
+      ref={setNodeRef}
+      style={style}
+      className={cn("border-border/60 hover:bg-muted/60", isDragging && "shadow-lg bg-muted/40")}
+    >
+      <TableCell className="w-8 p-0 text-center align-middle">
+        {!disabled && (
+          <button
+            type="button"
+            className="inline-flex h-7 w-7 items-center justify-center text-muted-foreground/50 hover:text-foreground cursor-grab active:cursor-grabbing touch-none"
+            aria-label="Arrastar para reordenar"
+            {...attributes}
+            {...listeners}
+          >
+            <GripVertical className="h-4 w-4" />
+          </button>
+        )}
+      </TableCell>
+      <TableCell className="text-foreground">
+        <EditableCell
+          value={item.descricao}
+          onSave={(v) => onUpdate({ descricao: String(v) })}
+        />
+        <EditableCell
+          value={item.subcategoria ?? ""}
+          placeholder="Subcategoria"
+          display={
+            item.subcategoria
+              ? <span className="text-xs text-muted-foreground/80">{item.subcategoria}</span>
+              : <span className="text-xs text-muted-foreground/60">Adicionar subcategoria</span>
+          }
+          onSave={(v) => onUpdate({ subcategoria: (String(v) || null) as any })}
+        />
+      </TableCell>
+      <TableCell className="text-right text-foreground bg-rose-500/10">
+        <EditableCell
+          value={custo}
+          type="currency"
+          align="right"
+          display={formatCurrency(custo)}
+          onSave={(v) => onUpdate({ custo_unitario: Number(v) })}
+        />
+      </TableCell>
+      <TableCell className={`text-right font-medium bg-blue-500/10 ${corLucro}`}>
+        {formatCurrency(lucro)}
+      </TableCell>
+      <TableCell className="text-right text-foreground bg-orange-500/10">
+        <EditableCell
+          value={tImp}
+          type="number"
+          align="right"
+          display={<span>{tImp.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%</span>}
+          onSave={(v) => onUpdate({ taxa_impostos: Number(v) })}
+        />
+      </TableCell>
+      <TableCell className="text-right text-foreground bg-yellow-500/10">
+        <EditableCell
+          value={tDesc}
+          type="number"
+          align="right"
+          display={<span>{tDesc.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%</span>}
+          onSave={(v) => onUpdate({ taxa_descontos: Number(v) })}
+        />
+      </TableCell>
+      <TableCell className="text-right text-foreground bg-teal-500/10">
+        <EditableCell
+          value={tCard}
+          type="number"
+          align="right"
+          display={<span>{tCard.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%</span>}
+          onSave={(v) => onUpdate({ taxa_cartao: Number(v) })}
+        />
+      </TableCell>
+      <TableCell className="text-right font-medium text-foreground bg-green-500/10">
+        <EditableCell
+          value={preco}
+          type="currency"
+          align="right"
+          display={formatCurrency(preco)}
+          onSave={(v) => onUpdate({ preco_venda: Number(v) })}
+        />
+      </TableCell>
+      <TableCell className="text-center">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 text-muted-foreground/70 hover:text-red-400 hover:bg-red-500/10"
+          onClick={onDelete}
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </TableCell>
+    </TableRow>
+  );
+}
+
 export default function EstrategiaItens() {
   const { items, isLoading, createItem, updateItem, deleteItem, reordenarItens } = useCustosItens();
   const { padroes, aplicarEmTodos } = useCustosItensPadroes();
