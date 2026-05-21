@@ -20,6 +20,8 @@ interface LinhaValores {
   salarioBase: string;
   ajudaCusto: string;
   horasExtras: string;
+  bonus: string;
+  pensaoAlimenticia: string;
   chavePix: string;
   previsao: string;
   adiantamento: string;
@@ -29,6 +31,8 @@ const linhaVazia = (): LinhaValores => ({
   salarioBase: "",
   ajudaCusto: "",
   horasExtras: "",
+  bonus: "",
+  pensaoAlimenticia: "",
   chavePix: "",
   previsao: "",
   adiantamento: "",
@@ -71,7 +75,7 @@ export default function CustoFolhaMensal() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("custos_folha_mensais")
-        .select("colaborador_id, valor, salario_base, ajuda_custo, horas_extras, chave_pix, previsao, adiantamento")
+        .select("colaborador_id, valor, salario_base, ajuda_custo, horas_extras, bonus, pensao_alimenticia, chave_pix, previsao, adiantamento")
         .eq("mes_referencia", mesIso);
       if (error) throw error;
       return (data || []) as {
@@ -80,6 +84,8 @@ export default function CustoFolhaMensal() {
         salario_base: number | null;
         ajuda_custo: number | null;
         horas_extras: number | null;
+        bonus: number | null;
+        pensao_alimenticia: number | null;
         chave_pix: string | null;
         previsao: number | null;
         adiantamento: number | null;
@@ -94,6 +100,8 @@ export default function CustoFolhaMensal() {
         salarioBase: String(Number(l.salario_base ?? 0) || 0),
         ajudaCusto: String(Number(l.ajuda_custo ?? 0) || 0),
         horasExtras: String(Number(l.horas_extras ?? 0) || 0),
+        bonus: String(Number(l.bonus ?? 0) || 0),
+        pensaoAlimenticia: String(Number(l.pensao_alimenticia ?? 0) || 0),
         chavePix: l.chave_pix ?? "",
         previsao: String(Number(l.previsao ?? 0) || 0),
         adiantamento: String(Number(l.adiantamento ?? 0) || 0),
@@ -105,7 +113,13 @@ export default function CustoFolhaMensal() {
   const getLinha = (id: string): LinhaValores => valores[id] ?? linhaVazia();
   const totalLinha = (id: string) => {
     const l = getLinha(id);
-    return parseNum(l.salarioBase) + parseNum(l.ajudaCusto) + parseNum(l.horasExtras);
+    return (
+      parseNum(l.salarioBase) +
+      parseNum(l.ajudaCusto) +
+      parseNum(l.horasExtras) +
+      parseNum(l.bonus) -
+      parseNum(l.pensaoAlimenticia)
+    );
   };
 
   const totais = colaboradores.reduce(
@@ -114,13 +128,16 @@ export default function CustoFolhaMensal() {
       acc.salarioBase += parseNum(l.salarioBase);
       acc.ajudaCusto += parseNum(l.ajudaCusto);
       acc.horasExtras += parseNum(l.horasExtras);
+      acc.bonus += parseNum(l.bonus);
+      acc.pensaoAlimenticia += parseNum(l.pensaoAlimenticia);
       acc.previsao += parseNum(l.previsao);
       acc.adiantamento += parseNum(l.adiantamento);
       return acc;
     },
-    { salarioBase: 0, ajudaCusto: 0, horasExtras: 0, previsao: 0, adiantamento: 0 }
+    { salarioBase: 0, ajudaCusto: 0, horasExtras: 0, bonus: 0, pensaoAlimenticia: 0, previsao: 0, adiantamento: 0 }
   );
-  const total = totais.salarioBase + totais.ajudaCusto + totais.horasExtras;
+  const total =
+    totais.salarioBase + totais.ajudaCusto + totais.horasExtras + totais.bonus - totais.pensaoAlimenticia;
 
   const updateLinha = (id: string, patch: Partial<LinhaValores>) => {
     setValores((prev) => ({
@@ -139,11 +156,13 @@ export default function CustoFolhaMensal() {
         const sb = parseNum(l.salarioBase);
         const ac = parseNum(l.ajudaCusto);
         const he = parseNum(l.horasExtras);
-        const v = sb + ac + he;
+        const bn = parseNum(l.bonus);
+        const pa = parseNum(l.pensaoAlimenticia);
+        const v = sb + ac + he + bn - pa;
         const pv = parseNum(l.previsao);
         const ad = parseNum(l.adiantamento);
         const pix = l.chavePix.trim();
-        if (v > 0 || pv > 0 || ad > 0 || pix.length > 0) {
+        if (v !== 0 || pv > 0 || ad > 0 || bn > 0 || pa > 0 || pix.length > 0) {
           toUpsert.push({
             mes_referencia: mesIso,
             colaborador_id: c.id,
@@ -152,6 +171,8 @@ export default function CustoFolhaMensal() {
             salario_base: sb,
             ajuda_custo: ac,
             horas_extras: he,
+            bonus: bn,
+            pensao_alimenticia: pa,
             previsao: pv,
             adiantamento: ad,
             chave_pix: pix || null,
@@ -258,6 +279,12 @@ export default function CustoFolhaMensal() {
                     Horas Extras
                   </th>
                   <th className="text-right p-3 text-white/40 font-medium text-xs uppercase w-[140px]">
+                    Bônus
+                  </th>
+                  <th className="text-right p-3 text-white/40 font-medium text-xs uppercase w-[140px]">
+                    Pensão Alimentícia
+                  </th>
+                  <th className="text-right p-3 text-white/40 font-medium text-xs uppercase w-[140px]">
                     Total
                   </th>
                   <th className="text-right p-3 text-white/40 font-medium text-xs uppercase w-[140px]">
@@ -309,6 +336,30 @@ export default function CustoFolhaMensal() {
                           min="0"
                           value={l.horasExtras}
                           onChange={(e) => updateLinha(c.id, { horasExtras: e.target.value })}
+                          placeholder="0,00"
+                          className="bg-white/5 border-white/10 text-white text-right ml-auto w-[130px]"
+                        />
+                      </td>
+                      <td className="p-3 text-right">
+                        <Input
+                          type="number"
+                          inputMode="decimal"
+                          step="0.01"
+                          min="0"
+                          value={l.bonus}
+                          onChange={(e) => updateLinha(c.id, { bonus: e.target.value })}
+                          placeholder="0,00"
+                          className="bg-white/5 border-white/10 text-white text-right ml-auto w-[130px]"
+                        />
+                      </td>
+                      <td className="p-3 text-right">
+                        <Input
+                          type="number"
+                          inputMode="decimal"
+                          step="0.01"
+                          min="0"
+                          value={l.pensaoAlimenticia}
+                          onChange={(e) => updateLinha(c.id, { pensaoAlimenticia: e.target.value })}
                           placeholder="0,00"
                           className="bg-white/5 border-white/10 text-white text-right ml-auto w-[130px]"
                         />
@@ -366,6 +417,12 @@ export default function CustoFolhaMensal() {
                   </td>
                   <td className="p-3 text-right font-semibold text-white/80 tabular-nums">
                     {formatBRL(totais.horasExtras)}
+                  </td>
+                  <td className="p-3 text-right font-semibold text-white/80 tabular-nums">
+                    {formatBRL(totais.bonus)}
+                  </td>
+                  <td className="p-3 text-right font-semibold text-white/80 tabular-nums">
+                    {formatBRL(totais.pensaoAlimenticia)}
                   </td>
                   <td className="p-3 text-right font-bold text-white tabular-nums">
                     {formatBRL(total)}
