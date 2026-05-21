@@ -1915,6 +1915,36 @@ export type Database = {
         }
         Relationships: []
       }
+      custos_itens_padroes: {
+        Row: {
+          created_at: string
+          id: string
+          singleton: boolean
+          taxa_cartao: number
+          taxa_descontos: number
+          taxa_impostos: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          singleton?: boolean
+          taxa_cartao?: number
+          taxa_descontos?: number
+          taxa_impostos?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          singleton?: boolean
+          taxa_cartao?: number
+          taxa_descontos?: number
+          taxa_impostos?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       custos_mensais: {
         Row: {
           created_at: string | null

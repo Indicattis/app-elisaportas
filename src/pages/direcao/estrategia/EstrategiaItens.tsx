@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Percent } from "lucide-react";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,7 +28,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatCurrency } from "@/lib/utils";
-import { useCustosItens, CustoItem } from "@/hooks/useCustosItens";
+import { useCustosItens, CustoItem, useCustosItensPadroes } from "@/hooks/useCustosItens";
 
 const UNIDADES = ["Un", "M", "Kg", "L", "M²", "M³", "Cx", "Pç"];
 
@@ -144,8 +144,30 @@ function calcularMarkup(custo: number, preco: number) {
 
 export default function EstrategiaItens() {
   const { items, isLoading, createItem, updateItem, deleteItem } = useCustosItens();
+  const { padroes, aplicarEmTodos } = useCustosItensPadroes();
   const [searchTerm, setSearchTerm] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [padroesOpen, setPadroesOpen] = useState(false);
+  const [padroesForm, setPadroesForm] = useState({ taxa_impostos: "0", taxa_descontos: "0", taxa_cartao: "0" });
+
+  useEffect(() => {
+    if (padroes) {
+      setPadroesForm({
+        taxa_impostos: String(padroes.taxa_impostos ?? 0),
+        taxa_descontos: String(padroes.taxa_descontos ?? 0),
+        taxa_cartao: String(padroes.taxa_cartao ?? 0),
+      });
+    }
+  }, [padroes]);
+
+  const handleAplicarPadroes = async () => {
+    await aplicarEmTodos.mutateAsync({
+      taxa_impostos: Number(padroesForm.taxa_impostos.replace(",", ".")) || 0,
+      taxa_descontos: Number(padroesForm.taxa_descontos.replace(",", ".")) || 0,
+      taxa_cartao: Number(padroesForm.taxa_cartao.replace(",", ".")) || 0,
+    });
+    setPadroesOpen(false);
+  };
   const [newItem, setNewItem] = useState({
     descricao: "",
     categoria: "",
@@ -349,13 +371,70 @@ export default function EstrategiaItens() {
       <div className="space-y-4 px-[84px]">
         {/* Barra de busca */}
         <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
-          <div className="p-4 rounded-lg">
+          <div className="p-4 rounded-lg flex items-center gap-3">
             <Input
               placeholder="Buscar..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="!h-[50px] !w-[150px] min-w-[150px] max-w-[150px] shrink-0 bg-white/5 border-white/10 text-white placeholder:text-white/40"
             />
+            <Dialog open={padroesOpen} onOpenChange={setPadroesOpen}>
+              <DialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="!h-[50px] gap-2 bg-white/5 border-white/10 text-white hover:bg-white/10 hover:text-white"
+                >
+                  <Percent className="h-4 w-4" />
+                  Definir % padrões
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="bg-zinc-900 border-white/10 text-white">
+                <DialogHeader>
+                  <DialogTitle>% padrões dos itens</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-3">
+                  <div>
+                    <Label className="text-orange-300">Imposto (%)</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={padroesForm.taxa_impostos}
+                      onChange={(e) => setPadroesForm({ ...padroesForm, taxa_impostos: e.target.value })}
+                      className="bg-orange-500/10 border-orange-500/20 text-white"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-yellow-300">Desconto Gerente (%)</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={padroesForm.taxa_descontos}
+                      onChange={(e) => setPadroesForm({ ...padroesForm, taxa_descontos: e.target.value })}
+                      className="bg-yellow-500/10 border-yellow-500/20 text-white"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-teal-300">Cartão (%)</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={padroesForm.taxa_cartao}
+                      onChange={(e) => setPadroesForm({ ...padroesForm, taxa_cartao: e.target.value })}
+                      className="bg-teal-500/10 border-teal-500/20 text-white"
+                    />
+                  </div>
+                  <p className="text-xs text-white/50">
+                    Isso vai sobrescrever as % de todos os {items.length} itens cadastrados.
+                  </p>
+                </div>
+                <DialogFooter>
+                  <Button variant="ghost" onClick={() => setPadroesOpen(false)}>Cancelar</Button>
+                  <Button onClick={handleAplicarPadroes} disabled={aplicarEmTodos.isPending}>
+                    Aplicar a todos os itens
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
 
