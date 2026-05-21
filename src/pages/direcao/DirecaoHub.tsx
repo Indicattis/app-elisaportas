@@ -11,7 +11,6 @@ const menuItems = [
   { label: 'Estratégia', icon: Lightbulb, path: '/direcao/estrategia', routePrefix: 'direcao_estrategia', variant: 'gold' as const },
   { label: 'Capital de Giro Elisa', icon: Wallet, path: '/direcao/caixa-elisa', routePrefix: 'direcao_caixa_elisa', variant: 'green' as const },
   { label: 'Vendas', icon: ShoppingCart, path: '/direcao/vendas', routePrefix: 'direcao_vendas' },
-  { label: 'DRE', icon: Calculator, path: '/direcao/dre', routePrefix: 'direcao_dre' },
   { label: 'Financeiro', icon: Banknote, path: '/direcao/financeiro', routePrefix: 'direcao_financeiro' },
   { label: 'Checklist Liderança', icon: ClipboardCheck, path: '/direcao/checklist-lideranca', routePrefix: 'direcao_checklist', variant: 'slate' as const },
   { label: 'Gestão de Fábrica', icon: Factory, path: '/direcao/gestao-fabrica', routePrefix: 'direcao_gestao_fabrica' },
