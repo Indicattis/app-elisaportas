@@ -141,6 +141,56 @@ export function useCustosItensCategoriasOrdem() {
   return { ...query, categoriasOrdem: query.data ?? [], salvarOrdem };
 }
 
+export function useRenomearCategoriaItens() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ from, to }: { from: string; to: string }) => {
+      const fromTrim = from.trim();
+      const toTrim = to.trim();
+      if (!toTrim) throw new Error("Nome da categoria não pode ser vazio");
+      if (fromTrim === toTrim) return;
+
+      if (fromTrim === "Sem categoria") {
+        const { error } = await supabase
+          .from("custos_itens")
+          .update({ categoria: toTrim })
+          .is("categoria", null);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("custos_itens")
+          .update({ categoria: toTrim })
+          .eq("categoria", fromTrim);
+        if (error) throw error;
+      }
+
+      const { data: existing } = await supabase
+        .from("custos_itens_categorias_ordem")
+        .select("ordem")
+        .eq("categoria", fromTrim)
+        .maybeSingle();
+      if (existing) {
+        await supabase
+          .from("custos_itens_categorias_ordem")
+          .delete()
+          .eq("categoria", fromTrim);
+        await supabase
+          .from("custos_itens_categorias_ordem")
+          .upsert(
+            { categoria: toTrim, ordem: existing.ordem },
+            { onConflict: "categoria" }
+          );
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: CATEGORIAS_ORDEM_KEY });
+      toast.success("Categoria renomeada");
+    },
+    onError: (err: any) => toast.error(err?.message ?? "Erro ao renomear categoria"),
+  });
+}
+
 export function useCustosItens() {
   const queryClient = useQueryClient();
 
