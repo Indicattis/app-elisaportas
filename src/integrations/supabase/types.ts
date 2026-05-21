@@ -1915,6 +1915,30 @@ export type Database = {
         }
         Relationships: []
       }
+      custos_itens_categorias_ordem: {
+        Row: {
+          categoria: string
+          created_at: string
+          id: string
+          ordem: number
+          updated_at: string
+        }
+        Insert: {
+          categoria: string
+          created_at?: string
+          id?: string
+          ordem?: number
+          updated_at?: string
+        }
+        Update: {
+          categoria?: string
+          created_at?: string
+          id?: string
+          ordem?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       custos_itens_padroes: {
         Row: {
           created_at: string

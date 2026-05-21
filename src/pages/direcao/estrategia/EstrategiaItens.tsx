@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Trash2, Percent } from "lucide-react";
+import { Plus, Trash2, Percent, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,7 +28,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatCurrency } from "@/lib/utils";
-import { useCustosItens, CustoItem, useCustosItensPadroes } from "@/hooks/useCustosItens";
+import { useCustosItens, CustoItem, useCustosItensPadroes, useCustosItensCategoriasOrdem } from "@/hooks/useCustosItens";
 
 const UNIDADES = ["Un", "M", "Kg", "L", "M²", "M³", "Cx", "Pç"];
 
@@ -145,10 +145,13 @@ function calcularMarkup(custo: number, preco: number) {
 export default function EstrategiaItens() {
   const { items, isLoading, createItem, updateItem, deleteItem } = useCustosItens();
   const { padroes, aplicarEmTodos } = useCustosItensPadroes();
+  const { categoriasOrdem, salvarOrdem } = useCustosItensCategoriasOrdem();
   const [searchTerm, setSearchTerm] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [padroesOpen, setPadroesOpen] = useState(false);
   const [padroesForm, setPadroesForm] = useState({ taxa_impostos: "0", taxa_descontos: "0", taxa_cartao: "0" });
+  const [ordemOpen, setOrdemOpen] = useState(false);
+  const [ordemDraft, setOrdemDraft] = useState<string[]>([]);
 
   useEffect(() => {
     if (padroes) {
@@ -198,8 +201,45 @@ export default function EstrategiaItens() {
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key)!.push(it);
     }
-    return Array.from(groups.entries()).sort(([a], [b]) => a.localeCompare(b));
-  }, [filteredItems]);
+    const ordemMap = new Map(categoriasOrdem.map((c) => [c.categoria, c.ordem]));
+    return Array.from(groups.entries()).sort(([a], [b]) => {
+      const oa = ordemMap.has(a) ? ordemMap.get(a)! : Number.MAX_SAFE_INTEGER;
+      const ob = ordemMap.has(b) ? ordemMap.get(b)! : Number.MAX_SAFE_INTEGER;
+      if (oa !== ob) return oa - ob;
+      return a.localeCompare(b);
+    });
+  }, [filteredItems, categoriasOrdem]);
+
+  const todasCategorias = useMemo(() => {
+    const set = new Set<string>();
+    for (const it of items) set.add(it.categoria?.trim() || "Sem categoria");
+    return Array.from(set);
+  }, [items]);
+
+  const openOrdemDialog = () => {
+    const ordemMap = new Map(categoriasOrdem.map((c) => [c.categoria, c.ordem]));
+    const sorted = [...todasCategorias].sort((a, b) => {
+      const oa = ordemMap.has(a) ? ordemMap.get(a)! : Number.MAX_SAFE_INTEGER;
+      const ob = ordemMap.has(b) ? ordemMap.get(b)! : Number.MAX_SAFE_INTEGER;
+      if (oa !== ob) return oa - ob;
+      return a.localeCompare(b);
+    });
+    setOrdemDraft(sorted);
+    setOrdemOpen(true);
+  };
+
+  const moveOrdem = (idx: number, dir: -1 | 1) => {
+    const next = [...ordemDraft];
+    const target = idx + dir;
+    if (target < 0 || target >= next.length) return;
+    [next[idx], next[target]] = [next[target], next[idx]];
+    setOrdemDraft(next);
+  };
+
+  const handleSalvarOrdem = async () => {
+    await salvarOrdem.mutateAsync(ordemDraft.map((categoria, i) => ({ categoria, ordem: i })));
+    setOrdemOpen(false);
+  };
 
   const categoriasExistentes = useMemo(() => {
     const set = new Set<string>();
@@ -431,6 +471,61 @@ export default function EstrategiaItens() {
                   <Button variant="ghost" onClick={() => setPadroesOpen(false)}>Cancelar</Button>
                   <Button onClick={handleAplicarPadroes} disabled={aplicarEmTodos.isPending}>
                     Aplicar a todos os itens
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+            <Dialog open={ordemOpen} onOpenChange={setOrdemOpen}>
+              <DialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="!h-[50px] gap-2 bg-white/5 border-white/10 text-white hover:bg-white/10 hover:text-white"
+                  onClick={openOrdemDialog}
+                >
+                  <ArrowUpDown className="h-4 w-4" />
+                  Ordenar categorias
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="bg-zinc-900 border-white/10 text-white max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Ordenar categorias</DialogTitle>
+                </DialogHeader>
+                <div className="max-h-[60vh] overflow-y-auto space-y-1.5">
+                  {ordemDraft.length === 0 && (
+                    <p className="text-sm text-white/50">Nenhuma categoria cadastrada.</p>
+                  )}
+                  {ordemDraft.map((cat, idx) => (
+                    <div
+                      key={cat}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10"
+                    >
+                      <span className="text-[11px] text-white/40 w-6">{idx + 1}.</span>
+                      <span className="flex-1 text-sm text-white truncate">{cat}</span>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-7 w-7 text-white/60 hover:text-white hover:bg-white/10"
+                        onClick={() => moveOrdem(idx, -1)}
+                        disabled={idx === 0}
+                      >
+                        <ArrowUp className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-7 w-7 text-white/60 hover:text-white hover:bg-white/10"
+                        onClick={() => moveOrdem(idx, 1)}
+                        disabled={idx === ordemDraft.length - 1}
+                      >
+                        <ArrowDown className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+                <DialogFooter>
+                  <Button variant="ghost" onClick={() => setOrdemOpen(false)}>Cancelar</Button>
+                  <Button onClick={handleSalvarOrdem} disabled={salvarOrdem.isPending || ordemDraft.length === 0}>
+                    Salvar ordem
                   </Button>
                 </DialogFooter>
               </DialogContent>

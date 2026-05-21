@@ -101,6 +101,46 @@ export function useCustosItensPadroes() {
   return { ...query, padroes: query.data, aplicarEmTodos };
 }
 
+const CATEGORIAS_ORDEM_KEY = ["custos_itens_categorias_ordem"] as const;
+
+export type CategoriaOrdem = { categoria: string; ordem: number };
+
+export function useCustosItensCategoriasOrdem() {
+  const queryClient = useQueryClient();
+
+  const query = useQuery({
+    queryKey: CATEGORIAS_ORDEM_KEY,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("custos_itens_categorias_ordem")
+        .select("categoria, ordem")
+        .order("ordem", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as CategoriaOrdem[];
+    },
+  });
+
+  const salvarOrdem = useMutation({
+    mutationFn: async (ordens: CategoriaOrdem[]) => {
+      if (ordens.length === 0) return;
+      const { error } = await supabase
+        .from("custos_itens_categorias_ordem")
+        .upsert(
+          ordens.map((o) => ({ categoria: o.categoria, ordem: o.ordem })),
+          { onConflict: "categoria" }
+        );
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: CATEGORIAS_ORDEM_KEY });
+      toast.success("Ordem das categorias salva");
+    },
+    onError: (err: any) => toast.error(err?.message ?? "Erro ao salvar ordem"),
+  });
+
+  return { ...query, categoriasOrdem: query.data ?? [], salvarOrdem };
+}
+
 export function useCustosItens() {
   const queryClient = useQueryClient();
 
