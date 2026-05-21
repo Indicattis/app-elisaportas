@@ -260,6 +260,7 @@ import AprovacoesPedidos from "./pages/direcao/aprovacoes/AprovacoesPedidos";
 import AprovacoesVendas from "./pages/direcao/aprovacoes/AprovacoesVendas";
 import AprovacoesAutorizados from "./pages/direcao/aprovacoes/AprovacoesAutorizados";
 import AprovacoesCompras from "./pages/direcao/aprovacoes/AprovacoesCompras";
+import DirecaoFinanceiroHub from "./pages/direcao/financeiro/DirecaoFinanceiroHub";
 
 // Hub de Logística Minimalista
 import LogisticaHub from "./pages/logistica/LogisticaHub";
@@ -472,6 +473,7 @@ const App = () => (
                 <Route path="/direcao/vendas/:id" element={<ProtectedRoute routeKey="direcao_hub"><VendaDetalhesDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/vendas/:id/editar" element={<ProtectedRoute routeKey="direcao_hub"><VendaEditarDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/faturamento" element={<ProtectedRoute routeKey="direcao_hub"><FaturamentoDirecao /></ProtectedRoute>} />
+                <Route path="/direcao/financeiro" element={<ProtectedRoute routeKey="direcao_hub"><DirecaoFinanceiroHub /></ProtectedRoute>} />
                 <Route path="/direcao/faturamento/venda/:id" element={<ProtectedRoute routeKey="direcao_hub"><FaturamentoVendaDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/gestao-fabrica" element={<ProtectedRoute routeKey="direcao_gestao_fabrica"><GestaoFabricaDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/gestao-instalacao" element={<ProtectedRoute routeKey="direcao_hub"><GestaoInstalacaoDirecao /></ProtectedRoute>} />

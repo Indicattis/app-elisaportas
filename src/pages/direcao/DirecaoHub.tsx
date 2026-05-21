@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingCart, DollarSign, Factory, Truck, Target, ArrowLeft, Users, Warehouse, ShieldCheck, Calculator, Network, ClipboardCheck, ExternalLink, Lock, Wallet, Lightbulb } from 'lucide-react';
+import { ShoppingCart, DollarSign, Factory, Truck, ArrowLeft, Warehouse, ShieldCheck, Calculator, Network, ClipboardCheck, Lock, Wallet, Lightbulb, Banknote } from 'lucide-react';
 
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
@@ -8,19 +8,16 @@ import { DelayedParticles } from '@/components/DelayedParticles';
 import { useBulkRouteAccess } from '@/hooks/useBulkRouteAccess';
 
 const menuItems = [
-  { label: 'Estratégia', icon: Lightbulb, path: '/direcao/estrategia', routePrefix: 'direcao_estrategia' },
-  { label: 'Caixa Elisa', icon: Wallet, path: '/direcao/caixa-elisa', routePrefix: 'direcao_caixa_elisa' },
+  { label: 'Estratégia', icon: Lightbulb, path: '/direcao/estrategia', routePrefix: 'direcao_estrategia', variant: 'gold' as const },
+  { label: 'Capital de Giro Elisa', icon: Wallet, path: '/direcao/caixa-elisa', routePrefix: 'direcao_caixa_elisa', variant: 'gold' as const },
   { label: 'Vendas', icon: ShoppingCart, path: '/direcao/vendas', routePrefix: 'direcao_vendas' },
-  { label: 'CRM', icon: ExternalLink, path: 'https://crm.elisaportas.com/', external: true, routePrefix: '' },
   { label: 'DRE', icon: Calculator, path: '/direcao/dre', routePrefix: 'direcao_dre' },
-  { label: 'Faturamento', icon: DollarSign, path: '/direcao/faturamento', routePrefix: 'direcao_faturamento' },
-  { label: 'Checklist Liderança', icon: ClipboardCheck, path: '/direcao/checklist-lideranca', routePrefix: 'direcao_checklist' },
+  { label: 'Financeiro', icon: Banknote, path: '/direcao/financeiro', routePrefix: 'direcao_financeiro' },
+  { label: 'Checklist Liderança', icon: ClipboardCheck, path: '/direcao/checklist-lideranca', routePrefix: 'direcao_checklist', variant: 'slate' as const },
   { label: 'Gestão de Fábrica', icon: Factory, path: '/direcao/gestao-fabrica', routePrefix: 'direcao_gestao_fabrica' },
   { label: 'Gestão de Instalações', icon: Truck, path: '/direcao/gestao-instalacao', routePrefix: 'direcao_gestao_instalacao' },
   { label: 'Gestão de Frotas', icon: Truck, path: '/direcao/frota', routePrefix: 'direcao_frota' },
   { label: 'Estoque', icon: Warehouse, path: '/direcao/estoque', routePrefix: 'direcao_estoque' },
-  { label: 'Metas', icon: Target, path: '/direcao/metas', routePrefix: 'direcao_metas' },
-  { label: 'Autorizados', icon: Users, path: '/direcao/autorizados', routePrefix: 'direcao_autorizado' },
   { label: 'Aprovações', icon: ShieldCheck, path: '/direcao/aprovacoes', routePrefix: 'direcao_aprovaco' },
   { label: 'Organograma RH', icon: Network, path: '/direcao/gestao-colaboradores', routePrefix: 'direcao_gestao_colaboradores' },
 ];
@@ -29,7 +26,7 @@ export default function DirecaoHub() {
   const navigate = useNavigate();
   const [mounted, setMounted] = useState(false);
 
-  const prefixes = menuItems.filter(i => !i.external && i.routePrefix).map(i => i.routePrefix);
+  const prefixes = menuItems.filter(i => !(i as any).external && i.routePrefix).map(i => i.routePrefix);
   const { data: accessMap } = useBulkRouteAccess(prefixes);
 
   useEffect(() => {
@@ -40,8 +37,10 @@ export default function DirecaoHub() {
   const renderButton = (item: typeof menuItems[0], index: number) => {
     const Icon = item.icon;
     const delay = 100 + index * 80;
-    const hasAccess = item.external || !item.routePrefix || accessMap?.[item.routePrefix] !== false;
-    const isDisabled = !item.external && !hasAccess;
+    const external = (item as any).external as boolean | undefined;
+    const hasAccess = external || !item.routePrefix || accessMap?.[item.routePrefix] !== false;
+    const isDisabled = !external && !hasAccess;
+    const variant = (item as any).variant as 'gold' | 'slate' | undefined;
 
     return (
       <div
@@ -56,7 +55,7 @@ export default function DirecaoHub() {
         <button
           onClick={() => {
             if (isDisabled) return;
-            item.external ? window.open(item.path, '_blank') : navigate(item.path);
+            (item as any).external ? window.open(item.path, '_blank') : navigate(item.path);
           }}
           disabled={isDisabled}
           className={`w-full h-12 rounded-lg
@@ -64,9 +63,11 @@ export default function DirecaoHub() {
                      font-medium transition-all duration-300
                      ${isDisabled
                        ? 'bg-gradient-to-r from-gray-700 to-gray-800 text-white/30 cursor-not-allowed border border-gray-600/30'
-                       : item.label === 'Checklist Liderança'
-                         ? 'bg-gradient-to-r from-slate-700 to-slate-900 shadow-lg shadow-slate-700/20 border border-slate-500/30 hover:from-slate-600 hover:to-slate-800 text-white active:scale-[0.98]'
-                         : 'bg-gradient-to-r from-blue-500 to-blue-700 shadow-lg shadow-blue-500/20 border border-blue-400/30 hover:from-blue-400 hover:to-blue-600 text-white active:scale-[0.98]'
+                       : variant === 'gold'
+                         ? 'bg-gradient-to-r from-amber-700/70 to-yellow-800/70 shadow-lg shadow-amber-600/20 border border-amber-500/30 hover:from-amber-600/70 hover:to-yellow-700/70 text-white active:scale-[0.98]'
+                         : variant === 'slate'
+                           ? 'bg-gradient-to-r from-slate-700 to-slate-900 shadow-lg shadow-slate-700/20 border border-slate-500/30 hover:from-slate-600 hover:to-slate-800 text-white active:scale-[0.98]'
+                           : 'bg-gradient-to-r from-blue-500 to-blue-700 shadow-lg shadow-blue-500/20 border border-blue-400/30 hover:from-blue-400 hover:to-blue-600 text-white active:scale-[0.98]'
                      }`}
         >
           {isDisabled ? <Lock className="w-4 h-4" strokeWidth={1.5} /> : <Icon className="w-5 h-5" strokeWidth={1.5} />}

@@ -14,6 +14,7 @@ const menuItems = [
   { label: 'Aprovações Vendas', icon: ShoppingCart, path: '/direcao/aprovacoes/vendas' },
   { label: 'Aprovações Compras', icon: ShoppingBag, path: '/direcao/aprovacoes/compras' },
   { label: 'Aprovações Autorizados', icon: Users, path: '/direcao/aprovacoes/autorizados' },
+  { label: 'Autorizados', icon: Users, path: '/direcao/autorizados' },
 ];
 
 export default function DirecaoAprovacoesHub() {
