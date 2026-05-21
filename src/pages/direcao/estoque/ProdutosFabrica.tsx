@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, Fragment } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Plus, Tags, FileDown, Printer, GripVertical, DollarSign, Package, AlertTriangle, TrendingUp, Trash2 } from "lucide-react";
@@ -1136,16 +1136,16 @@ export default function ProdutosFabrica({
           </div>
         </div>
 
-        {/* Tabela */}
-        <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
-          <div className="rounded-lg overflow-hidden">
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragStart={handleDragStart}
-              onDragEnd={handleDragEnd}
-            >
-              <Table>
+        {/* Tabela agrupada por categoria — cada categoria em seu próprio card */}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext items={filteredProdutos.map(p => p.id)} strategy={verticalListSortingStrategy}>
+            {(() => {
+              const renderHeader = () => (
                 <TableHeader>
                   <TableRow className="border-white/10 hover:bg-transparent">
                     <TableHead className="w-10 px-1" />
@@ -1170,148 +1170,168 @@ export default function ProdutosFabrica({
                     <TableHead className="text-center text-xs font-medium text-white/60">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
-                <SortableContext items={filteredProdutos.map(p => p.id)} strategy={verticalListSortingStrategy}>
-                  <TableBody>
-                    {loading ? (
-                      <TableRow className="border-white/10">
-                        <TableCell colSpan={15} className="text-center py-8 text-sm text-white/40">
-                          Carregando...
-                        </TableCell>
-                      </TableRow>
-                    ) : filteredProdutos.length === 0 ? (
-                      <TableRow className="border-white/10">
-                        <TableCell colSpan={15} className="text-center py-8 text-sm text-white/40">
-                          {searchTerm ? "Nenhum produto encontrado" : "Nenhum produto cadastrado"}
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      filteredProdutos.map((produto, idx) => {
-                        const prev = idx > 0 ? filteredProdutos[idx - 1] : null;
-                        const isFirst = idx === 0;
-                        const categoriaMudou = prev && (prev.categoria || "") !== (produto.categoria || "");
-                        const showHeader = isFirst || categoriaMudou;
-                        const catAtual = categorias.find(
-                          (c) => c.id === produto.categoria || c.nome.toLowerCase() === (produto.categoria || "").toLowerCase()
-                        );
-                        const catLabel = catAtual?.nome || produto.categoria || "Sem categoria";
-                        const catCor = catAtual?.cor;
-                        return (
-                          <Fragment key={produto.id}>
-                            {showHeader && (
-                              <tr className="pointer-events-none bg-transparent hover:bg-transparent border-0">
-                                <td
-                                  colSpan={15}
-                                  className="bg-transparent border-0"
-                                  style={{
-                                    paddingTop: categoriaMudou ? 30 : 8,
-                                    paddingBottom: 6,
-                                    paddingLeft: 4,
-                                    paddingRight: 4,
-                                    background: "transparent",
-                                    border: 0,
-                                  }}
-                                >
-                                  <div className="flex items-center gap-2">
-                                    <span
-                                      className="inline-block h-1.5 w-1.5 rounded-full"
-                                      style={{ background: catCor ? `hsl(var(--${catCor}-500, 0 0% 60%))` : "rgba(255,255,255,0.4)" }}
-                                    />
-                                    <span className="text-[11px] uppercase tracking-wider font-medium text-white/60">
-                                      {catLabel}
-                                    </span>
-                                    <span className="text-[11px] text-white/30">
-                                      · {filteredProdutos.filter((p) => (p.categoria || "") === (produto.categoria || "")).length}
-                                    </span>
-                                  </div>
-                                </td>
-                              </tr>
+              );
+
+              if (loading) {
+                return (
+                  <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
+                    <div className="rounded-lg overflow-hidden">
+                      <Table>
+                        {renderHeader()}
+                        <TableBody>
+                          <TableRow className="border-white/10">
+                            <TableCell colSpan={15} className="text-center py-8 text-sm text-white/40">Carregando...</TableCell>
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                );
+              }
+
+              if (filteredProdutos.length === 0) {
+                return (
+                  <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
+                    <div className="rounded-lg overflow-hidden">
+                      <Table>
+                        {renderHeader()}
+                        <TableBody>
+                          <TableRow className="border-white/10">
+                            <TableCell colSpan={15} className="text-center py-8 text-sm text-white/40">
+                              {searchTerm ? "Nenhum produto encontrado" : "Nenhum produto cadastrado"}
+                            </TableCell>
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                );
+              }
+
+              // Agrupa preservando a ordem de aparição
+              const groups: { key: string; label: string; cor?: string; items: typeof filteredProdutos }[] = [];
+              const indexMap = new Map<string, number>();
+              filteredProdutos.forEach((p) => {
+                const key = p.categoria || "__sem__";
+                if (!indexMap.has(key)) {
+                  const catAtual = categorias.find(
+                    (c) => c.id === p.categoria || c.nome.toLowerCase() === (p.categoria || "").toLowerCase()
+                  );
+                  indexMap.set(key, groups.length);
+                  groups.push({
+                    key,
+                    label: catAtual?.nome || p.categoria || "Sem categoria",
+                    cor: catAtual?.cor,
+                    items: [],
+                  });
+                }
+                groups[indexMap.get(key)!].items.push(p);
+              });
+
+              return (
+                <div className="flex flex-col gap-6">
+                  {groups.map((g) => (
+                    <div key={g.key} className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
+                      <div className="flex items-center gap-2 px-3 pt-2 pb-1">
+                        <span
+                          className="inline-block h-1.5 w-1.5 rounded-full"
+                          style={{ background: g.cor ? `hsl(var(--${g.cor}-500, 0 0% 60%))` : "rgba(255,255,255,0.4)" }}
+                        />
+                        <span className="text-[11px] uppercase tracking-wider font-medium text-white/60">{g.label}</span>
+                        <span className="text-[11px] text-white/30">· {g.items.length}</span>
+                      </div>
+                      <div className="rounded-lg overflow-hidden">
+                        <Table>
+                          {renderHeader()}
+                          <TableBody>
+                            {g.items.map((produto) => (
+                              <SortableProductRow
+                                key={produto.id}
+                                produto={produto}
+                                onDoubleClick={handleDoubleClick}
+                                isDragDisabled={isDragDisabled}
+                                pedidosCount={pedidosCountMap[produto.id] || 0}
+                                onToggleConferir={handleToggleConferir}
+                                onExcluir={handleExcluir}
+                                onUpdateField={handleUpdateField}
+                                categorias={categorias}
+                                fornecedores={fornecedores}
+                                materiasPrimas={materiasPrimas}
+                                hideSku={hideSku}
+                                hideMateriaPrima={hideMateriaPrima}
+                                hidePedidos={hidePedidos}
+                                hideConferir={hideConferir}
+                                hideStockColumns={hideStockColumns}
+                                showPrecoVenda={showPrecoVenda}
+                              />
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* TOTAL geral */}
+                  <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
+                    <div className="rounded-lg overflow-hidden">
+                      <Table>
+                        {renderHeader()}
+                        <TableFooter className="bg-white/5 border-t border-white/20">
+                          <TableRow className="border-white/10 hover:bg-transparent">
+                            <TableCell className="w-10 px-1" />
+                            <TableCell className="font-bold text-white">
+                              TOTAL ({filteredProdutos.length} itens)
+                            </TableCell>
+                            {!hideSku && <TableCell />}
+                            {!hideStockColumns && <TableCell />}
+                            {!hideMateriaPrima && <TableCell />}
+                            {!hideStockColumns && <TableCell />}
+                            {!hideStockColumns && (
+                              <TableCell className="text-center font-bold text-white">{totals.ideal}</TableCell>
                             )}
-                            <SortableProductRow
-                              produto={produto}
-                              onDoubleClick={handleDoubleClick}
-                              isDragDisabled={isDragDisabled}
-                              pedidosCount={pedidosCountMap[produto.id] || 0}
-                              onToggleConferir={handleToggleConferir}
-                              onExcluir={handleExcluir}
-                              onUpdateField={handleUpdateField}
-                              categorias={categorias}
-                              fornecedores={fornecedores}
-                              materiasPrimas={materiasPrimas}
-                              hideSku={hideSku}
-                              hideMateriaPrima={hideMateriaPrima}
-                              hidePedidos={hidePedidos}
-                              hideConferir={hideConferir}
-                              hideStockColumns={hideStockColumns}
-                              showPrecoVenda={showPrecoVenda}
-                            />
-                          </Fragment>
-                        );
-                      })
-                    )}
-                  </TableBody>
-              </SortableContext>
-              {filteredProdutos.length > 0 && (
-                <TableFooter className="bg-white/5 border-t border-white/20">
-                  <TableRow className="border-white/10 hover:bg-transparent">
-                    <TableCell className="w-10 px-1" />
-                    <TableCell className="font-bold text-white">
-                      TOTAL ({filteredProdutos.length} itens)
-                    </TableCell>
-                    {!hideSku && <TableCell />}
-                    {!hideStockColumns && <TableCell />}
-                    {!hideMateriaPrima && <TableCell />}
-                    {!hideStockColumns && <TableCell />}
-                    {!hideStockColumns && (
-                      <TableCell className="text-center font-bold text-white">
-                        {totals.ideal}
-                      </TableCell>
-                    )}
-                    {!hideStockColumns && (
-                      <TableCell className="text-center font-bold text-white">
-                        {totals.maxima}
-                      </TableCell>
-                    )}
-                    {!hideStockColumns && (
-                      <TableCell className="text-center font-bold text-white">
-                        {totals.atual}
-                      </TableCell>
-                    )}
-                    {!hidePedidos && <TableCell />}
-                    {!hideConferir && <TableCell />}
-                    <TableCell className="text-right font-bold text-white/50">
-                      ---
-                    </TableCell>
-                    {!hideStockColumns && <TableCell />}
-                    {showPrecoVenda && <TableCell className="bg-blue-500/10" />}
-                    {showPrecoVenda && <TableCell className="bg-orange-500/10" />}
-                    {showPrecoVenda && <TableCell className="bg-yellow-500/10" />}
-                    {showPrecoVenda && <TableCell className="bg-teal-500/10" />}
-                    {showPrecoVenda && <TableCell className="bg-green-500/10" />}
-                    {!hideStockColumns && (
-                      <TableCell className="text-right font-bold text-white">
-                        {formatCurrency(totals.valor)}
-                      </TableCell>
-                    )}
-                    <TableCell />
-                  </TableRow>
-                </TableFooter>
-              )}
-              </Table>
-              {createPortal(
-                <DragOverlay
-                  modifiers={[restrictToWindowEdges]}
-                  dropAnimation={{
-                    duration: 200,
-                    easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)',
-                  }}
-                >
-                  {activeProduto ? <DragOverlayRow produto={activeProduto} /> : null}
-                </DragOverlay>,
-                document.body
-              )}
-            </DndContext>
-          </div>
-        </div>
+                            {!hideStockColumns && (
+                              <TableCell className="text-center font-bold text-white">{totals.maxima}</TableCell>
+                            )}
+                            {!hideStockColumns && (
+                              <TableCell className="text-center font-bold text-white">{totals.atual}</TableCell>
+                            )}
+                            {!hidePedidos && <TableCell />}
+                            {!hideConferir && <TableCell />}
+                            <TableCell className="text-right font-bold text-white/50">---</TableCell>
+                            {!hideStockColumns && <TableCell />}
+                            {showPrecoVenda && <TableCell className="bg-blue-500/10" />}
+                            {showPrecoVenda && <TableCell className="bg-orange-500/10" />}
+                            {showPrecoVenda && <TableCell className="bg-yellow-500/10" />}
+                            {showPrecoVenda && <TableCell className="bg-teal-500/10" />}
+                            {showPrecoVenda && <TableCell className="bg-green-500/10" />}
+                            {!hideStockColumns && (
+                              <TableCell className="text-right font-bold text-white">
+                                {formatCurrency(totals.valor)}
+                              </TableCell>
+                            )}
+                            <TableCell />
+                          </TableRow>
+                        </TableFooter>
+                      </Table>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+          </SortableContext>
+          {createPortal(
+            <DragOverlay
+              modifiers={[restrictToWindowEdges]}
+              dropAnimation={{
+                duration: 200,
+                easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)',
+              }}
+            >
+              {activeProduto ? <DragOverlayRow produto={activeProduto} /> : null}
+            </DragOverlay>,
+            document.body
+          )}
+        </DndContext>
       </div>
       <AlertDialog open={blockDeleteOpen} onOpenChange={setBlockDeleteOpen}>
         <AlertDialogContent className="bg-zinc-900 border-white/10 text-white">
