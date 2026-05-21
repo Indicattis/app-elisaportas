@@ -62,7 +62,7 @@ export default function DirecaoHub() {
                      ${isDisabled
                        ? 'bg-gradient-to-r from-gray-700 to-gray-800 text-white/30 cursor-not-allowed border border-gray-600/30'
                        : variant === 'gold'
-                         ? 'bg-gradient-to-r from-amber-700/70 to-yellow-800/70 shadow-lg shadow-amber-600/20 border border-amber-500/30 hover:from-amber-600/70 hover:to-yellow-700/70 text-white active:scale-[0.98]'
+                         ? 'bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 border-amber-300/50 shadow-lg shadow-amber-500/20 text-white active:scale-[0.98] hover:shadow-xl'
                          : variant === 'slate'
                            ? 'bg-gradient-to-r from-slate-700 to-slate-900 shadow-lg shadow-slate-700/20 border border-slate-500/30 hover:from-slate-600 hover:to-slate-800 text-white active:scale-[0.98]'
                            : variant === 'green'
