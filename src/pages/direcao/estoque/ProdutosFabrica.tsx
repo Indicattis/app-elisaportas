@@ -1187,12 +1187,43 @@ export default function ProdutosFabrica({
                     ) : (
                       filteredProdutos.map((produto, idx) => {
                         const prev = idx > 0 ? filteredProdutos[idx - 1] : null;
-                        const showSpacer = prev && (prev.categoria || "") !== (produto.categoria || "");
+                        const isFirst = idx === 0;
+                        const categoriaMudou = prev && (prev.categoria || "") !== (produto.categoria || "");
+                        const showHeader = isFirst || categoriaMudou;
+                        const catAtual = categorias.find(
+                          (c) => c.id === produto.categoria || c.nome.toLowerCase() === (produto.categoria || "").toLowerCase()
+                        );
+                        const catLabel = catAtual?.nome || produto.categoria || "Sem categoria";
+                        const catCor = catAtual?.cor;
                         return (
                           <Fragment key={produto.id}>
-                            {showSpacer && (
-                              <tr aria-hidden="true" className="pointer-events-none">
-                                <td colSpan={15} style={{ height: 30, padding: 0, border: 0, background: "transparent" }} />
+                            {showHeader && (
+                              <tr className="pointer-events-none bg-transparent hover:bg-transparent border-0">
+                                <td
+                                  colSpan={15}
+                                  className="bg-transparent border-0"
+                                  style={{
+                                    paddingTop: categoriaMudou ? 30 : 8,
+                                    paddingBottom: 6,
+                                    paddingLeft: 4,
+                                    paddingRight: 4,
+                                    background: "transparent",
+                                    border: 0,
+                                  }}
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <span
+                                      className="inline-block h-1.5 w-1.5 rounded-full"
+                                      style={{ background: catCor ? `hsl(var(--${catCor}-500, 0 0% 60%))` : "rgba(255,255,255,0.4)" }}
+                                    />
+                                    <span className="text-[11px] uppercase tracking-wider font-medium text-white/60">
+                                      {catLabel}
+                                    </span>
+                                    <span className="text-[11px] text-white/30">
+                                      · {filteredProdutos.filter((p) => (p.categoria || "") === (produto.categoria || "")).length}
+                                    </span>
+                                  </div>
+                                </td>
                               </tr>
                             )}
                             <SortableProductRow
