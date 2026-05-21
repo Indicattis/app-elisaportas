@@ -14,7 +14,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Search, DollarSign, ShoppingCart, Package, CalendarIcon, Download, FileText, FileSpreadsheet, ArrowUpDown, ArrowUp, ArrowDown, Check, X, Truck, Hammer, Users, BookOpen, Info } from 'lucide-react';
+import { Plus, Search, DollarSign, ShoppingCart, Package, CalendarIcon, Download, FileText, FileSpreadsheet, ArrowUpDown, ArrowUp, ArrowDown, Check, X, Truck, Hammer, Users, BookOpen, Info, ExternalLink } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -579,6 +579,15 @@ export default function VendasDirecao() {
         onClick={() => navigate('/direcao/vendas/clientes')}
       >
         <Users className="h-4 w-4" />
+      </Button>
+      <Button 
+        variant="outline" 
+        size="sm" 
+        className="bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white"
+        onClick={() => window.open('https://crm.elisaportas.com', '_blank')}
+        title="CRM"
+      >
+        <ExternalLink className="h-4 w-4" />
       </Button>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
