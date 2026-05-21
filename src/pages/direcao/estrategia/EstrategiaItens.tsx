@@ -373,7 +373,7 @@ export default function EstrategiaItens() {
                             onSave={(v) => updateItem.mutateAsync({ id: item.id, patch: { subcategoria: String(v) || null } })}
                           />
                         </TableCell>
-                        <TableCell className="text-white">
+                        <TableCell className="text-center text-white/80">
                           <EditableSelectCell
                             value={item.unidade}
                             options={UNIDADES}
@@ -381,7 +381,7 @@ export default function EstrategiaItens() {
                             onSave={(v) => updateItem.mutateAsync({ id: item.id, patch: { unidade: v } })}
                           />
                         </TableCell>
-                        <TableCell className="text-white">
+                        <TableCell className="text-right text-white/80">
                           <EditableCell
                             value={Number(item.custo_unitario || 0)}
                             type="currency"
@@ -390,7 +390,7 @@ export default function EstrategiaItens() {
                             onSave={(v) => updateItem.mutateAsync({ id: item.id, patch: { custo_unitario: Number(v) } })}
                           />
                         </TableCell>
-                        <TableCell className="text-white">
+                        <TableCell className="text-right font-medium text-white bg-green-500/10">
                           <EditableCell
                             value={Number(item.preco_venda || 0)}
                             type="currency"
@@ -402,7 +402,7 @@ export default function EstrategiaItens() {
                         <TableCell className="text-right text-white/80">
                           {markup === null ? <span className="text-white/30">—</span> : `${markup.toFixed(1)}%`}
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-center">
                           <Button
                             variant="ghost"
                             size="icon"
