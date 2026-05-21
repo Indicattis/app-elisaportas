@@ -7,6 +7,7 @@ import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -25,6 +26,8 @@ interface LinhaValores {
   chavePix: string;
   previsao: string;
   adiantamento: string;
+  pago: boolean;
+  dataPagamento: string;
 }
 
 const linhaVazia = (): LinhaValores => ({
@@ -36,6 +39,8 @@ const linhaVazia = (): LinhaValores => ({
   chavePix: "",
   previsao: "",
   adiantamento: "",
+  pago: false,
+  dataPagamento: "",
 });
 
 const parseNum = (v: string) => parseFloat(v || "0") || 0;
@@ -75,7 +80,7 @@ export default function CustoFolhaMensal() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("custos_folha_mensais")
-        .select("colaborador_id, valor, salario_base, ajuda_custo, horas_extras, bonus, pensao_alimenticia, chave_pix, previsao, adiantamento")
+        .select("colaborador_id, valor, salario_base, ajuda_custo, horas_extras, bonus, pensao_alimenticia, chave_pix, previsao, adiantamento, pago, data_pagamento")
         .eq("mes_referencia", mesIso);
       if (error) throw error;
       return (data || []) as {
@@ -89,6 +94,8 @@ export default function CustoFolhaMensal() {
         chave_pix: string | null;
         previsao: number | null;
         adiantamento: number | null;
+        pago: boolean | null;
+        data_pagamento: string | null;
       }[];
     },
   });
@@ -105,6 +112,8 @@ export default function CustoFolhaMensal() {
         chavePix: l.chave_pix ?? "",
         previsao: String(Number(l.previsao ?? 0) || 0),
         adiantamento: String(Number(l.adiantamento ?? 0) || 0),
+        pago: !!l.pago,
+        dataPagamento: l.data_pagamento ?? "",
       };
     });
     setValores(map);
@@ -162,7 +171,7 @@ export default function CustoFolhaMensal() {
         const pv = parseNum(l.previsao);
         const ad = parseNum(l.adiantamento);
         const pix = l.chavePix.trim();
-        if (v !== 0 || pv > 0 || ad > 0 || bn > 0 || pa > 0 || pix.length > 0) {
+        if (v !== 0 || pv > 0 || ad > 0 || bn > 0 || pa > 0 || pix.length > 0 || l.pago || l.dataPagamento) {
           toUpsert.push({
             mes_referencia: mesIso,
             colaborador_id: c.id,
@@ -176,6 +185,8 @@ export default function CustoFolhaMensal() {
             previsao: pv,
             adiantamento: ad,
             chave_pix: pix || null,
+            pago: l.pago,
+            data_pagamento: l.dataPagamento || null,
             created_by: user?.id ?? null,
           });
         } else {
@@ -293,6 +304,12 @@ export default function CustoFolhaMensal() {
                   <th className="text-right p-3 text-white/40 font-medium text-xs uppercase w-[140px]">
                     Adiantamento
                   </th>
+                  <th className="text-center p-3 text-white/40 font-medium text-xs uppercase w-[80px]">
+                    Pago
+                  </th>
+                  <th className="text-left p-3 text-white/40 font-medium text-xs uppercase w-[170px]">
+                    Data Pagamento
+                  </th>
                   <th className="text-left p-3 text-white/40 font-medium text-xs uppercase w-[240px]">
                     Chave PIX
                   </th>
@@ -391,6 +408,22 @@ export default function CustoFolhaMensal() {
                           className="bg-white/5 border-white/10 text-white text-right ml-auto w-[130px]"
                         />
                       </td>
+                      <td className="p-3 text-center">
+                        <div className="flex justify-center">
+                          <Checkbox
+                            checked={l.pago}
+                            onCheckedChange={(v) => updateLinha(c.id, { pago: !!v })}
+                          />
+                        </div>
+                      </td>
+                      <td className="p-3">
+                        <Input
+                          type="date"
+                          value={l.dataPagamento}
+                          onChange={(e) => updateLinha(c.id, { dataPagamento: e.target.value })}
+                          className="bg-white/5 border-white/10 text-white w-[160px]"
+                        />
+                      </td>
                       <td className="p-3">
                         <Input
                           type="text"
@@ -433,6 +466,8 @@ export default function CustoFolhaMensal() {
                   <td className="p-3 text-right font-semibold text-white/80 tabular-nums">
                     {formatBRL(totais.adiantamento)}
                   </td>
+                  <td className="p-3" />
+                  <td className="p-3" />
                   <td className="p-3" />
                 </tr>
               </tfoot>
