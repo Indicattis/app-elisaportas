@@ -10,6 +10,10 @@ export type CustoItem = {
   unidade: string | null;
   custo_unitario: number;
   preco_venda: number;
+  fornecedor: string | null;
+  quantidade: number;
+  quantidade_ideal: number;
+  quantidade_maxima: number;
   ordem: number;
   created_at: string;
   updated_at: string;
@@ -22,6 +26,10 @@ export type NewCustoItem = {
   unidade?: string | null;
   custo_unitario?: number;
   preco_venda?: number;
+  fornecedor?: string | null;
+  quantidade?: number;
+  quantidade_ideal?: number;
+  quantidade_maxima?: number;
   ordem?: number;
 };
 
@@ -57,6 +65,10 @@ export function useCustosItens() {
           unidade: payload.unidade ?? null,
           custo_unitario: payload.custo_unitario ?? 0,
           preco_venda: payload.preco_venda ?? 0,
+          fornecedor: payload.fornecedor ?? null,
+          quantidade: payload.quantidade ?? 0,
+          quantidade_ideal: payload.quantidade_ideal ?? 0,
+          quantidade_maxima: payload.quantidade_maxima ?? 0,
           ordem: payload.ordem ?? 0,
         })
         .select()
