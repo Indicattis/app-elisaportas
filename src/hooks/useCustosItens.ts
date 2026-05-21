@@ -14,6 +14,9 @@ export type CustoItem = {
   quantidade: number;
   quantidade_ideal: number;
   quantidade_maxima: number;
+  taxa_impostos: number;
+  taxa_descontos: number;
+  taxa_cartao: number;
   ordem: number;
   created_at: string;
   updated_at: string;
