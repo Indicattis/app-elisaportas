@@ -406,6 +406,21 @@ export default function EstrategiaItens() {
     setOrdemOpen(false);
   };
 
+  const dndSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } })
+  );
+  const isDndDisabled = Boolean(searchTerm.trim());
+
+  const handleDragEndCategoria = (rows: CustoItem[]) => (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = rows.findIndex((r) => r.id === active.id);
+    const newIndex = rows.findIndex((r) => r.id === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
+    const reordered = arrayMove(rows, oldIndex, newIndex);
+    reordenarItens.mutate(reordered.map((r, i) => ({ id: r.id, ordem: i })));
+  };
+
   const categoriasExistentes = useMemo(() => {
     const set = new Set<string>();
     for (const it of items) if (it.categoria) set.add(it.categoria.trim());
