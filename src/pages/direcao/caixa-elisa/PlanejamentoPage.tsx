@@ -248,6 +248,7 @@ export default function PlanejamentoPage() {
           </div>
           <Button
             onClick={() => {
+              setEditingMes(null);
               setMesInput(format(new Date(), 'yyyy-MM'));
               setMesDialogOpen(true);
             }}
