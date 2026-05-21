@@ -373,6 +373,9 @@ export default function CustoFolhaMensal() {
                   <td className="p-3 text-right font-semibold text-white/80 tabular-nums">
                     {formatBRL(totais.previsao)}
                   </td>
+                  <td className="p-3 text-right font-semibold text-white/80 tabular-nums">
+                    {formatBRL(totais.adiantamento)}
+                  </td>
                   <td className="p-3" />
                 </tr>
               </tfoot>
