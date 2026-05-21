@@ -612,7 +612,7 @@ const App = () => (
                 <Route path="/administrativo/financeiro/caixa/contas-a-pagar" element={<ProtectedRoute routeKey="administrativo_hub"><ContasPagarMinimalista /></ProtectedRoute>} />
                 <Route path="/administrativo/documentos" element={<ProtectedRoute routeKey="administrativo_hub"><DocumentosMinimalista /></ProtectedRoute>} />
                 <Route path="/administrativo/documentos/novo" element={<ProtectedRoute routeKey="administrativo_hub"><DocumentoNovo /></ProtectedRoute>} />
-                <Route path="/administrativo/multas" element={<ProtectedRoute routeKey="admin_multas"><MultasMinimalista /></ProtectedRoute>} />
+                <Route path="/administrativo/multas" element={<ProtectedRoute routeKey="administrativo_multas"><MultasMinimalista /></ProtectedRoute>} />
                 
 
                 {/* Hub RH/DP Minimalista */}
