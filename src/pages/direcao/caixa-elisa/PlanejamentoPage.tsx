@@ -280,6 +280,17 @@ export default function PlanejamentoPage() {
                           <Plus className="w-3 h-3" /> Item
                         </button>
                         <button
+                          onClick={() => {
+                            setEditingMes(g.mes);
+                            setMesInput(g.mes.mes.substring(5, 7));
+                            setMesDialogOpen(true);
+                          }}
+                          className="p-1 rounded-md text-white/50 hover:text-white hover:bg-white/10 transition"
+                          aria-label="Editar mês"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        <button
                           onClick={() => setConfirmDeleteMes(g.mes)}
                           className="p-1 rounded-md text-rose-400/70 hover:text-rose-300 hover:bg-rose-500/10 transition"
                           aria-label="Excluir mês"
