@@ -777,25 +777,31 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          data: string | null
           id: string
           mes_id: string
           nome: string
+          pago: boolean
           valor: number
         }
         Insert: {
           created_at?: string
           created_by?: string | null
+          data?: string | null
           id?: string
           mes_id: string
           nome: string
+          pago?: boolean
           valor?: number
         }
         Update: {
           created_at?: string
           created_by?: string | null
+          data?: string | null
           id?: string
           mes_id?: string
           nome?: string
+          pago?: boolean
           valor?: number
         }
         Relationships: [
