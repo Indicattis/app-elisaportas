@@ -77,7 +77,7 @@ function EditableCell({ value, type = "text", align = "left", display, placehold
           if (e.key === "Enter") { e.preventDefault(); commit(); }
           if (e.key === "Escape") { setEditing(false); setDraft(value == null ? "" : String(value)); }
         }}
-        className="h-7 px-2 text-sm bg-white/10 border-white/20 text-white"
+        className="h-7 px-2 text-sm bg-muted border-border text-foreground"
       />
     );
   }
@@ -85,10 +85,10 @@ function EditableCell({ value, type = "text", align = "left", display, placehold
   const alignCls = align === "right" ? "text-right" : align === "center" ? "text-center" : "text-left";
   return (
     <div
-      className={`${alignCls} cursor-text rounded px-1 py-0.5 hover:bg-white/5 min-h-[1.5rem]`}
+      className={`${alignCls} cursor-text rounded px-1 py-0.5 hover:bg-muted/60 min-h-[1.5rem]`}
       onClick={() => setEditing(true)}
     >
-      {display ?? (value === null || value === undefined || value === "" ? <span className="text-white/30">—</span> : value)}
+      {display ?? (value === null || value === undefined || value === "" ? <span className="text-muted-foreground/60">—</span> : value)}
     </div>
   );
 }
@@ -116,10 +116,10 @@ function EditableSelectCell({
           if (v !== value) await onSave(v);
         }}
       >
-        <SelectTrigger className="h-7 px-2 text-sm bg-white/10 border-white/20 text-white">
+        <SelectTrigger className="h-7 px-2 text-sm bg-muted border-border text-foreground">
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
-        <SelectContent className="bg-zinc-900 border-white/10 text-white">
+        <SelectContent className="bg-popover text-popover-foreground border-border text-foreground">
           {options.map((o) => (
             <SelectItem key={o} value={o}>{o}</SelectItem>
           ))}
@@ -130,10 +130,10 @@ function EditableSelectCell({
 
   return (
     <div
-      className="cursor-pointer rounded px-1 py-0.5 hover:bg-white/5 min-h-[1.5rem]"
+      className="cursor-pointer rounded px-1 py-0.5 hover:bg-muted/60 min-h-[1.5rem]"
       onClick={() => setEditing(true)}
     >
-      {value || <span className="text-white/30">—</span>}
+      {value || <span className="text-muted-foreground/60">—</span>}
     </div>
   );
 }
@@ -178,7 +178,7 @@ function CategoriaTitulo({
           if (e.key === "Enter") { e.preventDefault(); commit(); }
           if (e.key === "Escape") { setEditing(false); setDraft(categoria); }
         }}
-        className="h-6 px-2 py-0 text-[11px] uppercase tracking-wider bg-white/10 border-white/20 text-white w-56"
+        className="h-6 px-2 py-0 text-[11px] uppercase tracking-wider bg-muted border-border text-foreground w-56"
       />
     );
   }
@@ -186,7 +186,7 @@ function CategoriaTitulo({
   return (
     <span
       onClick={() => setEditing(true)}
-      className="text-[11px] uppercase tracking-wider font-medium text-white/60 cursor-text rounded px-1 py-0.5 hover:bg-white/5 hover:text-white/80"
+      className="text-[11px] uppercase tracking-wider font-medium text-muted-foreground cursor-text rounded px-1 py-0.5 hover:bg-muted/60 hover:text-foreground"
       title="Clique para renomear"
     >
       {categoria}
@@ -220,8 +220,8 @@ function CategoriaOrdemRow({
   };
 
   return (
-    <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10">
-      <span className="text-[11px] text-white/40 w-6">{index + 1}.</span>
+    <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-card/60 border border-border">
+      <span className="text-[11px] text-muted-foreground/70 w-6">{index + 1}.</span>
       {editing ? (
         <>
           <Input
@@ -232,12 +232,12 @@ function CategoriaOrdemRow({
               if (e.key === "Enter") { e.preventDefault(); commit(); }
               if (e.key === "Escape") { setEditing(false); setDraft(categoria); }
             }}
-            className="flex-1 h-7 px-2 text-sm bg-white/10 border-white/20 text-white"
+            className="flex-1 h-7 px-2 text-sm bg-muted border-border text-foreground"
           />
           <Button
             size="icon"
             variant="ghost"
-            className="h-7 w-7 text-emerald-400 hover:text-emerald-300 hover:bg-white/10"
+            className="h-7 w-7 text-emerald-400 hover:text-emerald-300 hover:bg-muted"
             onMouseDown={(e) => e.preventDefault()}
             onClick={commit}
           >
@@ -246,7 +246,7 @@ function CategoriaOrdemRow({
           <Button
             size="icon"
             variant="ghost"
-            className="h-7 w-7 text-white/60 hover:text-white hover:bg-white/10"
+            className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted"
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => { setEditing(false); setDraft(categoria); }}
           >
@@ -255,11 +255,11 @@ function CategoriaOrdemRow({
         </>
       ) : (
         <>
-          <span className="flex-1 text-sm text-white truncate">{categoria}</span>
+          <span className="flex-1 text-sm text-foreground truncate">{categoria}</span>
           <Button
             size="icon"
             variant="ghost"
-            className="h-7 w-7 text-white/60 hover:text-white hover:bg-white/10"
+            className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted"
             onClick={() => setEditing(true)}
             title="Renomear"
           >
@@ -268,7 +268,7 @@ function CategoriaOrdemRow({
           <Button
             size="icon"
             variant="ghost"
-            className="h-7 w-7 text-white/60 hover:text-white hover:bg-white/10"
+            className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted"
             onClick={() => onMove(-1)}
             disabled={index === 0}
           >
@@ -277,7 +277,7 @@ function CategoriaOrdemRow({
           <Button
             size="icon"
             variant="ghost"
-            className="h-7 w-7 text-white/60 hover:text-white hover:bg-white/10"
+            className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted"
             onClick={() => onMove(1)}
             disabled={index === total - 1}
           >
@@ -429,7 +429,7 @@ export default function EstrategiaItens() {
           Adicionar item
         </Button>
       </DialogTrigger>
-      <DialogContent className="bg-zinc-900 border-white/10 text-white">
+      <DialogContent className="bg-popover text-popover-foreground border-border text-foreground">
         <DialogHeader>
           <DialogTitle>Novo item</DialogTitle>
         </DialogHeader>
@@ -439,7 +439,7 @@ export default function EstrategiaItens() {
             <Input
               value={newItem.descricao}
               onChange={(e) => setNewItem({ ...newItem, descricao: e.target.value })}
-              className="bg-white/5 border-white/10 text-white"
+              className="bg-card/60 border-border text-foreground"
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -449,7 +449,7 @@ export default function EstrategiaItens() {
                 list="categorias-list"
                 value={newItem.categoria}
                 onChange={(e) => setNewItem({ ...newItem, categoria: e.target.value })}
-                className="bg-white/5 border-white/10 text-white"
+                className="bg-card/60 border-border text-foreground"
               />
               <datalist id="categorias-list">
                 {categoriasExistentes.map((c) => (
@@ -462,7 +462,7 @@ export default function EstrategiaItens() {
               <Input
                 value={newItem.fornecedor}
                 onChange={(e) => setNewItem({ ...newItem, fornecedor: e.target.value })}
-                className="bg-white/5 border-white/10 text-white"
+                className="bg-card/60 border-border text-foreground"
               />
             </div>
           </div>
@@ -474,7 +474,7 @@ export default function EstrategiaItens() {
                 step="0.01"
                 value={newItem.quantidade_ideal}
                 onChange={(e) => setNewItem({ ...newItem, quantidade_ideal: e.target.value })}
-                className="bg-white/5 border-white/10 text-white"
+                className="bg-card/60 border-border text-foreground"
               />
             </div>
             <div>
@@ -484,7 +484,7 @@ export default function EstrategiaItens() {
                 step="0.01"
                 value={newItem.quantidade_maxima}
                 onChange={(e) => setNewItem({ ...newItem, quantidade_maxima: e.target.value })}
-                className="bg-white/5 border-white/10 text-white"
+                className="bg-card/60 border-border text-foreground"
               />
             </div>
             <div>
@@ -494,7 +494,7 @@ export default function EstrategiaItens() {
                 step="0.01"
                 value={newItem.quantidade}
                 onChange={(e) => setNewItem({ ...newItem, quantidade: e.target.value })}
-                className="bg-white/5 border-white/10 text-white"
+                className="bg-card/60 border-border text-foreground"
               />
             </div>
           </div>
@@ -502,10 +502,10 @@ export default function EstrategiaItens() {
             <div>
               <Label>Unidade</Label>
               <Select value={newItem.unidade} onValueChange={(v) => setNewItem({ ...newItem, unidade: v })}>
-                <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                <SelectTrigger className="bg-card/60 border-border text-foreground">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-zinc-900 border-white/10 text-white">
+                <SelectContent className="bg-popover text-popover-foreground border-border text-foreground">
                   {UNIDADES.map((u) => (
                     <SelectItem key={u} value={u}>{u}</SelectItem>
                   ))}
@@ -519,7 +519,7 @@ export default function EstrategiaItens() {
                 step="0.01"
                 value={newItem.custo_unitario}
                 onChange={(e) => setNewItem({ ...newItem, custo_unitario: e.target.value })}
-                className="bg-white/5 border-white/10 text-white"
+                className="bg-card/60 border-border text-foreground"
               />
             </div>
             <div>
@@ -527,7 +527,7 @@ export default function EstrategiaItens() {
               <Input
                 value={newItem.subcategoria}
                 onChange={(e) => setNewItem({ ...newItem, subcategoria: e.target.value })}
-                className="bg-white/5 border-white/10 text-white"
+                className="bg-card/60 border-border text-foreground"
               />
             </div>
           </div>
@@ -556,27 +556,27 @@ export default function EstrategiaItens() {
       ]}
       fullWidth
     >
-      <div className="dark space-y-4 px-[84px] py-6 text-white bg-zinc-950 min-h-full">
+      <div className="dark space-y-4 px-[84px] py-6 text-foreground bg-zinc-950 min-h-full">
         {/* Barra de busca */}
-        <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
+        <div className="p-1.5 rounded-xl bg-card/60 backdrop-blur-xl border border-border">
           <div className="p-4 rounded-lg flex items-center gap-3">
             <Input
               placeholder="Buscar..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="!h-[50px] !w-[150px] min-w-[150px] max-w-[150px] shrink-0 bg-white/5 border-white/10 text-white placeholder:text-white/40"
+              className="!h-[50px] !w-[150px] min-w-[150px] max-w-[150px] shrink-0 bg-card/60 border-border text-foreground placeholder:text-muted-foreground/70"
             />
             <Dialog open={padroesOpen} onOpenChange={setPadroesOpen}>
               <DialogTrigger asChild>
                 <Button
                   variant="outline"
-                  className="!h-[50px] gap-2 bg-white/5 border-white/10 text-white hover:bg-white/10 hover:text-white"
+                  className="!h-[50px] gap-2 bg-card/60 border-border text-foreground hover:bg-muted hover:text-foreground"
                 >
                   <Percent className="h-4 w-4" />
                   Definir % padrões
                 </Button>
               </DialogTrigger>
-              <DialogContent className="bg-zinc-900 border-white/10 text-white">
+              <DialogContent className="bg-popover text-popover-foreground border-border text-foreground">
                 <DialogHeader>
                   <DialogTitle>% padrões dos itens</DialogTitle>
                 </DialogHeader>
@@ -588,7 +588,7 @@ export default function EstrategiaItens() {
                       step="0.01"
                       value={padroesForm.taxa_impostos}
                       onChange={(e) => setPadroesForm({ ...padroesForm, taxa_impostos: e.target.value })}
-                      className="bg-orange-500/10 border-orange-500/20 text-white"
+                      className="bg-orange-500/10 border-orange-500/20 text-foreground"
                     />
                   </div>
                   <div>
@@ -598,7 +598,7 @@ export default function EstrategiaItens() {
                       step="0.01"
                       value={padroesForm.taxa_descontos}
                       onChange={(e) => setPadroesForm({ ...padroesForm, taxa_descontos: e.target.value })}
-                      className="bg-yellow-500/10 border-yellow-500/20 text-white"
+                      className="bg-yellow-500/10 border-yellow-500/20 text-foreground"
                     />
                   </div>
                   <div>
@@ -608,10 +608,10 @@ export default function EstrategiaItens() {
                       step="0.01"
                       value={padroesForm.taxa_cartao}
                       onChange={(e) => setPadroesForm({ ...padroesForm, taxa_cartao: e.target.value })}
-                      className="bg-teal-500/10 border-teal-500/20 text-white"
+                      className="bg-teal-500/10 border-teal-500/20 text-foreground"
                     />
                   </div>
-                  <p className="text-xs text-white/50">
+                  <p className="text-xs text-muted-foreground/80">
                     Isso vai sobrescrever as % de todos os {items.length} itens cadastrados.
                   </p>
                 </div>
@@ -627,20 +627,20 @@ export default function EstrategiaItens() {
               <DialogTrigger asChild>
                 <Button
                   variant="outline"
-                  className="!h-[50px] gap-2 bg-white/5 border-white/10 text-white hover:bg-white/10 hover:text-white"
+                  className="!h-[50px] gap-2 bg-card/60 border-border text-foreground hover:bg-muted hover:text-foreground"
                   onClick={openOrdemDialog}
                 >
                   <ArrowUpDown className="h-4 w-4" />
                   Ordenar categorias
                 </Button>
               </DialogTrigger>
-              <DialogContent className="bg-zinc-900 border-white/10 text-white max-w-md">
+              <DialogContent className="bg-popover text-popover-foreground border-border text-foreground max-w-md">
                 <DialogHeader>
                   <DialogTitle>Ordenar categorias</DialogTitle>
                 </DialogHeader>
                 <div className="max-h-[60vh] overflow-y-auto space-y-1.5">
                   {ordemDraft.length === 0 && (
-                    <p className="text-sm text-white/50">Nenhuma categoria cadastrada.</p>
+                    <p className="text-sm text-muted-foreground/80">Nenhuma categoria cadastrada.</p>
                   )}
                   {ordemDraft.map((cat, idx) => (
                     <CategoriaOrdemRow
@@ -674,13 +674,13 @@ export default function EstrategiaItens() {
         </div>
 
         {isLoading && (
-          <div className="rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 p-6 text-center text-white/60">
+          <div className="rounded-xl bg-card/60 backdrop-blur-xl border border-border p-6 text-center text-muted-foreground">
             Carregando...
           </div>
         )}
 
         {!isLoading && groupedByCategoria.length === 0 && (
-          <div className="rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 p-6 text-center text-white/60">
+          <div className="rounded-xl bg-card/60 backdrop-blur-xl border border-border p-6 text-center text-muted-foreground">
             Nenhum item encontrado.
           </div>
         )}
@@ -694,20 +694,20 @@ export default function EstrategiaItens() {
                   categoria={categoria}
                   onRename={(novo) => renomearCategoria.mutateAsync({ from: categoria, to: novo })}
                 />
-                <span className="text-[11px] text-white/30">· {rows.length}</span>
+                <span className="text-[11px] text-muted-foreground/60">· {rows.length}</span>
               </div>
-              <div className="rounded-xl overflow-hidden bg-white/5 backdrop-blur-xl border border-white/10">
+              <div className="rounded-xl overflow-hidden bg-card/60 backdrop-blur-xl border border-border">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-white/10 hover:bg-transparent">
-                    <TableHead className="text-xs font-medium text-white/60">Descrição</TableHead>
-                    <TableHead className="text-xs font-medium text-white/80 text-right w-36 bg-rose-500/10">Custo</TableHead>
-                    <TableHead className="text-xs font-medium text-white/80 text-right w-36 bg-blue-500/10">Lucro</TableHead>
-                    <TableHead className="text-xs font-medium text-white/80 text-right w-28 bg-orange-500/10">Imposto</TableHead>
-                    <TableHead className="text-xs font-medium text-white/80 text-right w-32 bg-yellow-500/10">Desc. Gerente</TableHead>
-                    <TableHead className="text-xs font-medium text-white/80 text-right w-28 bg-teal-500/10">Cartão</TableHead>
-                    <TableHead className="text-xs font-medium text-white/80 text-right w-40 bg-green-500/10">Valor de Venda</TableHead>
-                    <TableHead className="text-xs font-medium text-white/60 text-center w-16">Ações</TableHead>
+                  <TableRow className="border-border hover:bg-transparent">
+                    <TableHead className="text-xs font-medium text-muted-foreground">Descrição</TableHead>
+                    <TableHead className="text-xs font-medium text-foreground text-right w-36 bg-rose-500/10">Custo</TableHead>
+                    <TableHead className="text-xs font-medium text-foreground text-right w-36 bg-blue-500/10">Lucro</TableHead>
+                    <TableHead className="text-xs font-medium text-foreground text-right w-28 bg-orange-500/10">Imposto</TableHead>
+                    <TableHead className="text-xs font-medium text-foreground text-right w-32 bg-yellow-500/10">Desc. Gerente</TableHead>
+                    <TableHead className="text-xs font-medium text-foreground text-right w-28 bg-teal-500/10">Cartão</TableHead>
+                    <TableHead className="text-xs font-medium text-foreground text-right w-40 bg-green-500/10">Valor de Venda</TableHead>
+                    <TableHead className="text-xs font-medium text-muted-foreground text-center w-16">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -720,10 +720,10 @@ export default function EstrategiaItens() {
                     const taxas = tImp + tDesc + tCard;
                     const deducoes = preco * (taxas / 100);
                     const lucro = preco - deducoes - custo;
-                    const corLucro = lucro > 0 ? "text-emerald-400" : lucro < 0 ? "text-red-400" : "text-white/60";
+                    const corLucro = lucro > 0 ? "text-emerald-400" : lucro < 0 ? "text-red-400" : "text-muted-foreground";
                     return (
-                      <TableRow key={item.id} className="border-white/5 hover:bg-white/5">
-                        <TableCell className="text-white">
+                      <TableRow key={item.id} className="border-border/60 hover:bg-muted/60">
+                        <TableCell className="text-foreground">
                           <EditableCell
                             value={item.descricao}
                             onSave={(v) => updateItem.mutateAsync({ id: item.id, patch: { descricao: String(v) } })}
@@ -733,13 +733,13 @@ export default function EstrategiaItens() {
                             placeholder="Subcategoria"
                             display={
                               item.subcategoria
-                                ? <span className="text-xs text-white/50">{item.subcategoria}</span>
-                                : <span className="text-xs text-white/30">Adicionar subcategoria</span>
+                                ? <span className="text-xs text-muted-foreground/80">{item.subcategoria}</span>
+                                : <span className="text-xs text-muted-foreground/60">Adicionar subcategoria</span>
                             }
                             onSave={(v) => updateItem.mutateAsync({ id: item.id, patch: { subcategoria: String(v) || null } })}
                           />
                         </TableCell>
-                        <TableCell className="text-right text-white/90 bg-rose-500/10">
+                        <TableCell className="text-right text-foreground bg-rose-500/10">
                           <EditableCell
                             value={custo}
                             type="currency"
@@ -751,7 +751,7 @@ export default function EstrategiaItens() {
                         <TableCell className={`text-right font-medium bg-blue-500/10 ${corLucro}`}>
                           {formatCurrency(lucro)}
                         </TableCell>
-                        <TableCell className="text-right text-white/90 bg-orange-500/10">
+                        <TableCell className="text-right text-foreground bg-orange-500/10">
                           <EditableCell
                             value={tImp}
                             type="number"
@@ -760,7 +760,7 @@ export default function EstrategiaItens() {
                             onSave={(v) => updateItem.mutateAsync({ id: item.id, patch: { taxa_impostos: Number(v) } })}
                           />
                         </TableCell>
-                        <TableCell className="text-right text-white/90 bg-yellow-500/10">
+                        <TableCell className="text-right text-foreground bg-yellow-500/10">
                           <EditableCell
                             value={tDesc}
                             type="number"
@@ -769,7 +769,7 @@ export default function EstrategiaItens() {
                             onSave={(v) => updateItem.mutateAsync({ id: item.id, patch: { taxa_descontos: Number(v) } })}
                           />
                         </TableCell>
-                        <TableCell className="text-right text-white/90 bg-teal-500/10">
+                        <TableCell className="text-right text-foreground bg-teal-500/10">
                           <EditableCell
                             value={tCard}
                             type="number"
@@ -778,7 +778,7 @@ export default function EstrategiaItens() {
                             onSave={(v) => updateItem.mutateAsync({ id: item.id, patch: { taxa_cartao: Number(v) } })}
                           />
                         </TableCell>
-                        <TableCell className="text-right font-medium text-white bg-green-500/10">
+                        <TableCell className="text-right font-medium text-foreground bg-green-500/10">
                           <EditableCell
                             value={preco}
                             type="currency"
@@ -791,7 +791,7 @@ export default function EstrategiaItens() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7 text-white/40 hover:text-red-400 hover:bg-red-500/10"
+                            className="h-7 w-7 text-muted-foreground/70 hover:text-red-400 hover:bg-red-500/10"
                             onClick={() => {
                               if (confirm(`Excluir "${item.descricao}"?`)) {
                                 deleteItem.mutate(item.id);
@@ -813,10 +813,10 @@ export default function EstrategiaItens() {
 
         {/* Total geral */}
         {filteredItems.length > 0 && (
-          <div className="rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 p-4 flex items-center justify-end gap-8 text-sm">
+          <div className="rounded-xl bg-card/60 backdrop-blur-xl border border-border p-4 flex items-center justify-end gap-8 text-sm">
             <div className="flex flex-col items-end">
-              <span className="text-white/50 text-xs uppercase">Total custo</span>
-              <span className="text-white font-semibold">{formatCurrency(totals.custo)}</span>
+              <span className="text-muted-foreground/80 text-xs uppercase">Total custo</span>
+              <span className="text-foreground font-semibold">{formatCurrency(totals.custo)}</span>
             </div>
           </div>
         )}
