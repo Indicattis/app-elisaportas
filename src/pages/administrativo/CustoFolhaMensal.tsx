@@ -115,9 +115,10 @@ export default function CustoFolhaMensal() {
       acc.ajudaCusto += parseNum(l.ajudaCusto);
       acc.horasExtras += parseNum(l.horasExtras);
       acc.previsao += parseNum(l.previsao);
+      acc.adiantamento += parseNum(l.adiantamento);
       return acc;
     },
-    { salarioBase: 0, ajudaCusto: 0, horasExtras: 0, previsao: 0 }
+    { salarioBase: 0, ajudaCusto: 0, horasExtras: 0, previsao: 0, adiantamento: 0 }
   );
   const total = totais.salarioBase + totais.ajudaCusto + totais.horasExtras;
 
