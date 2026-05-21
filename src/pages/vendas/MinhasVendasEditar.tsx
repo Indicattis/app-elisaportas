@@ -22,6 +22,8 @@ import { DescontoVendaModal } from "@/components/vendas/DescontoVendaModal";
 import { CreditoVendaModal } from "@/components/vendas/CreditoVendaModal";
 import { ProdutosVendaTable } from "@/components/vendas/ProdutosVendaTable";
 import { VendaResumo } from "@/components/vendas/VendaResumo";
+import { PinturaItemCatalogoModal } from "@/components/vendas/PinturaItemCatalogoModal";
+import { PinturaRapidaModal } from "@/components/vendas/PinturaRapidaModal";
 import type { ProdutoVenda } from "@/hooks/useVendas";
 import { useCanaisAquisicao } from "@/hooks/useCanaisAquisicao";
 import { Badge } from "@/components/ui/badge";
@@ -42,6 +44,9 @@ export default function MinhasVendasEditar() {
   const [acessoriosModalOpen, setAcessoriosModalOpen] = useState(false);
   const [descontoModalOpen, setDescontoModalOpen] = useState(false);
   const [creditoModalOpen, setCreditoModalOpen] = useState(false);
+  const [pinturaItemModalOpen, setPinturaItemModalOpen] = useState(false);
+  const [pinturaRapidaOpen, setPinturaRapidaOpen] = useState(false);
+  const [portaRecemAdicionada, setPortaRecemAdicionada] = useState<{ largura: number; altura: number } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [showBlockedDialog, setShowBlockedDialog] = useState(false);
   const [observacoes, setObservacoes] = useState("");
