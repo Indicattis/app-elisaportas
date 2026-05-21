@@ -1732,32 +1732,44 @@ export type Database = {
       }
       custos_folha_mensais: {
         Row: {
+          ajuda_custo: number
+          chave_pix: string | null
           colaborador_id: string
           colaborador_nome: string
           created_at: string
           created_by: string | null
+          horas_extras: number
           id: string
           mes_referencia: string
+          salario_base: number
           updated_at: string
           valor: number
         }
         Insert: {
+          ajuda_custo?: number
+          chave_pix?: string | null
           colaborador_id: string
           colaborador_nome: string
           created_at?: string
           created_by?: string | null
+          horas_extras?: number
           id?: string
           mes_referencia: string
+          salario_base?: number
           updated_at?: string
           valor?: number
         }
         Update: {
+          ajuda_custo?: number
+          chave_pix?: string | null
           colaborador_id?: string
           colaborador_nome?: string
           created_at?: string
           created_by?: string | null
+          horas_extras?: number
           id?: string
           mes_referencia?: string
+          salario_base?: number
           updated_at?: string
           valor?: number
         }

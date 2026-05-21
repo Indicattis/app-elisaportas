@@ -16,11 +16,27 @@ interface Colaborador {
   nome: string;
 }
 
+interface LinhaValores {
+  salarioBase: string;
+  ajudaCusto: string;
+  horasExtras: string;
+  chavePix: string;
+}
+
+const linhaVazia = (): LinhaValores => ({
+  salarioBase: "",
+  ajudaCusto: "",
+  horasExtras: "",
+  chavePix: "",
+});
+
+const parseNum = (v: string) => parseFloat(v || "0") || 0;
+
 export default function CustoFolhaMensal() {
   const { user } = useAuth();
   const today = startOfMonth(new Date());
   const [mesRef, setMesRef] = useState<Date>(today);
-  const [valores, setValores] = useState<Record<string, string>>({});
+  const [valores, setValores] = useState<Record<string, LinhaValores>>({});
   const [saving, setSaving] = useState(false);
 
   const mesIso = format(mesRef, "yyyy-MM-dd");
@@ -51,22 +67,57 @@ export default function CustoFolhaMensal() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("custos_folha_mensais")
-        .select("colaborador_id, valor")
+        .select("colaborador_id, valor, salario_base, ajuda_custo, horas_extras, chave_pix")
         .eq("mes_referencia", mesIso);
       if (error) throw error;
-      return (data || []) as { colaborador_id: string; valor: number }[];
+      return (data || []) as {
+        colaborador_id: string;
+        valor: number;
+        salario_base: number | null;
+        ajuda_custo: number | null;
+        horas_extras: number | null;
+        chave_pix: string | null;
+      }[];
     },
   });
 
   useEffect(() => {
-    const map: Record<string, string> = {};
+    const map: Record<string, LinhaValores> = {};
     lancamentos.forEach((l) => {
-      map[l.colaborador_id] = String(Number(l.valor) || 0);
+      map[l.colaborador_id] = {
+        salarioBase: String(Number(l.salario_base ?? 0) || 0),
+        ajudaCusto: String(Number(l.ajuda_custo ?? 0) || 0),
+        horasExtras: String(Number(l.horas_extras ?? 0) || 0),
+        chavePix: l.chave_pix ?? "",
+      };
     });
     setValores(map);
   }, [lancamentos, mesIso]);
 
-  const total = colaboradores.reduce((acc, c) => acc + (parseFloat(valores[c.id] || "0") || 0), 0);
+  const getLinha = (id: string): LinhaValores => valores[id] ?? linhaVazia();
+  const totalLinha = (id: string) => {
+    const l = getLinha(id);
+    return parseNum(l.salarioBase) + parseNum(l.ajudaCusto) + parseNum(l.horasExtras);
+  };
+
+  const totais = colaboradores.reduce(
+    (acc, c) => {
+      const l = getLinha(c.id);
+      acc.salarioBase += parseNum(l.salarioBase);
+      acc.ajudaCusto += parseNum(l.ajudaCusto);
+      acc.horasExtras += parseNum(l.horasExtras);
+      return acc;
+    },
+    { salarioBase: 0, ajudaCusto: 0, horasExtras: 0 }
+  );
+  const total = totais.salarioBase + totais.ajudaCusto + totais.horasExtras;
+
+  const updateLinha = (id: string, patch: Partial<LinhaValores>) => {
+    setValores((prev) => ({
+      ...prev,
+      [id]: { ...(prev[id] ?? linhaVazia()), ...patch },
+    }));
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -74,13 +125,22 @@ export default function CustoFolhaMensal() {
       const toUpsert: any[] = [];
       const toDelete: string[] = [];
       colaboradores.forEach((c) => {
-        const v = parseFloat(valores[c.id] || "0") || 0;
-        if (v > 0) {
+        const l = getLinha(c.id);
+        const sb = parseNum(l.salarioBase);
+        const ac = parseNum(l.ajudaCusto);
+        const he = parseNum(l.horasExtras);
+        const v = sb + ac + he;
+        const pix = l.chavePix.trim();
+        if (v > 0 || pix.length > 0) {
           toUpsert.push({
             mes_referencia: mesIso,
             colaborador_id: c.id,
             colaborador_nome: c.nome,
             valor: v,
+            salario_base: sb,
+            ajuda_custo: ac,
+            horas_extras: he,
+            chave_pix: pix || null,
             created_by: user?.id ?? null,
           });
         } else {
@@ -174,40 +234,99 @@ export default function CustoFolhaMensal() {
                   <th className="text-left p-3 text-white/40 font-medium text-xs uppercase">
                     Colaborador
                   </th>
-                  <th className="text-right p-3 text-white/40 font-medium text-xs uppercase w-[220px]">
-                    Custo no mês (R$)
+                  <th className="text-right p-3 text-white/40 font-medium text-xs uppercase w-[140px]">
+                    Salário Base
+                  </th>
+                  <th className="text-right p-3 text-white/40 font-medium text-xs uppercase w-[140px]">
+                    Ajuda de Custo
+                  </th>
+                  <th className="text-right p-3 text-white/40 font-medium text-xs uppercase w-[140px]">
+                    Horas Extras
+                  </th>
+                  <th className="text-right p-3 text-white/40 font-medium text-xs uppercase w-[140px]">
+                    Total
+                  </th>
+                  <th className="text-left p-3 text-white/40 font-medium text-xs uppercase w-[240px]">
+                    Chave PIX
                   </th>
                 </tr>
               </thead>
               <tbody>
-                {colaboradores.map((c) => (
-                  <tr key={c.id} className="border-b border-white/5 last:border-0">
-                    <td className="p-3 text-white/80">{c.nome}</td>
-                    <td className="p-3 text-right">
-                      <Input
-                        type="number"
-                        inputMode="decimal"
-                        step="0.01"
-                        min="0"
-                        value={valores[c.id] ?? ""}
-                        onChange={(e) =>
-                          setValores((prev) => ({ ...prev, [c.id]: e.target.value }))
-                        }
-                        placeholder="0,00"
-                        className="bg-white/5 border-white/10 text-white text-right ml-auto w-[200px]"
-                      />
-                    </td>
-                  </tr>
-                ))}
+                {colaboradores.map((c) => {
+                  const l = getLinha(c.id);
+                  return (
+                    <tr key={c.id} className="border-b border-white/5 last:border-0">
+                      <td className="p-3 text-white/80">{c.nome}</td>
+                      <td className="p-3 text-right">
+                        <Input
+                          type="number"
+                          inputMode="decimal"
+                          step="0.01"
+                          min="0"
+                          value={l.salarioBase}
+                          onChange={(e) => updateLinha(c.id, { salarioBase: e.target.value })}
+                          placeholder="0,00"
+                          className="bg-white/5 border-white/10 text-white text-right ml-auto w-[130px]"
+                        />
+                      </td>
+                      <td className="p-3 text-right">
+                        <Input
+                          type="number"
+                          inputMode="decimal"
+                          step="0.01"
+                          min="0"
+                          value={l.ajudaCusto}
+                          onChange={(e) => updateLinha(c.id, { ajudaCusto: e.target.value })}
+                          placeholder="0,00"
+                          className="bg-white/5 border-white/10 text-white text-right ml-auto w-[130px]"
+                        />
+                      </td>
+                      <td className="p-3 text-right">
+                        <Input
+                          type="number"
+                          inputMode="decimal"
+                          step="0.01"
+                          min="0"
+                          value={l.horasExtras}
+                          onChange={(e) => updateLinha(c.id, { horasExtras: e.target.value })}
+                          placeholder="0,00"
+                          className="bg-white/5 border-white/10 text-white text-right ml-auto w-[130px]"
+                        />
+                      </td>
+                      <td className="p-3 text-right text-white/80 font-medium tabular-nums">
+                        {formatBRL(totalLinha(c.id))}
+                      </td>
+                      <td className="p-3">
+                        <Input
+                          type="text"
+                          value={l.chavePix}
+                          onChange={(e) => updateLinha(c.id, { chavePix: e.target.value })}
+                          placeholder="CPF, e-mail, telefone ou aleatória"
+                          className="bg-white/5 border-white/10 text-white w-full"
+                        />
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
               <tfoot>
                 <tr className="bg-white/5">
                   <td className="p-3 font-semibold text-white/80 uppercase text-xs">
                     Total do mês
                   </td>
+                  <td className="p-3 text-right font-semibold text-white/80 tabular-nums">
+                    {formatBRL(totais.salarioBase)}
+                  </td>
+                  <td className="p-3 text-right font-semibold text-white/80 tabular-nums">
+                    {formatBRL(totais.ajudaCusto)}
+                  </td>
+                  <td className="p-3 text-right font-semibold text-white/80 tabular-nums">
+                    {formatBRL(totais.horasExtras)}
+                  </td>
                   <td className="p-3 text-right font-bold text-white tabular-nums">
                     {formatBRL(total)}
                   </td>
+                  <td className="p-3" />
                 </tr>
               </tfoot>
             </table>
