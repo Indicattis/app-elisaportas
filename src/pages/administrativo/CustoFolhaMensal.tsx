@@ -328,6 +328,18 @@ export default function CustoFolhaMensal() {
                           className="bg-white/5 border-white/10 text-white text-right ml-auto w-[130px]"
                         />
                       </td>
+                      <td className="p-3 text-right">
+                        <Input
+                          type="number"
+                          inputMode="decimal"
+                          step="0.01"
+                          min="0"
+                          value={l.adiantamento}
+                          onChange={(e) => updateLinha(c.id, { adiantamento: e.target.value })}
+                          placeholder="0,00"
+                          className="bg-white/5 border-white/10 text-white text-right ml-auto w-[130px]"
+                        />
+                      </td>
                       <td className="p-3">
                         <Input
                           type="text"
