@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { PaineisSidebar } from "./PaineisSidebar";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import { FloatingProfileMenu } from "./FloatingProfileMenu";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { LogOut, User, Settings } from "lucide-react";
@@ -80,6 +81,7 @@ export function PaineisLayout({ children }: PaineisLayoutProps) {
           </main>
         </SidebarInset>
       </div>
+      <FloatingProfileMenu />
     </SidebarProvider>
   );
 }
