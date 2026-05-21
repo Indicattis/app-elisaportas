@@ -241,10 +241,6 @@ export default function EstrategiaItens() {
     setOrdemOpen(false);
   };
 
-  const dummyMemo = useMemo(() => {
-    return null;
-  }, [filteredItems]);
-
   const categoriasExistentes = useMemo(() => {
     const set = new Set<string>();
     for (const it of items) if (it.categoria) set.add(it.categoria.trim());
