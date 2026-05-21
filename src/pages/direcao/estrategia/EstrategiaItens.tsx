@@ -384,17 +384,26 @@ export default function EstrategiaItens() {
                 <TableHeader>
                   <TableRow className="border-white/10 hover:bg-transparent">
                     <TableHead className="text-xs font-medium text-white/60">Descrição</TableHead>
-                    <TableHead className="text-xs font-medium text-white/60">Fornecedor</TableHead>
-                    <TableHead className="text-xs font-medium text-white/60 text-center w-28">Qtd Ideal</TableHead>
-                    <TableHead className="text-xs font-medium text-white/60 text-center w-28">Qtd Máxima</TableHead>
-                    <TableHead className="text-xs font-medium text-white/60 text-center w-28">Qtd</TableHead>
-                    <TableHead className="text-xs font-medium text-white/60 text-right w-40">Custo</TableHead>
-                    <TableHead className="text-xs font-medium text-white/60 text-center w-28">Unidade</TableHead>
+                    <TableHead className="text-xs font-medium text-white/80 text-right w-36 bg-rose-500/10">Custo</TableHead>
+                    <TableHead className="text-xs font-medium text-white/80 text-right w-36 bg-blue-500/10">Lucro</TableHead>
+                    <TableHead className="text-xs font-medium text-white/80 text-right w-28 bg-orange-500/10">Imposto</TableHead>
+                    <TableHead className="text-xs font-medium text-white/80 text-right w-32 bg-yellow-500/10">Desc. Gerente</TableHead>
+                    <TableHead className="text-xs font-medium text-white/80 text-right w-28 bg-teal-500/10">Cartão</TableHead>
+                    <TableHead className="text-xs font-medium text-white/80 text-right w-40 bg-green-500/10">Valor de Venda</TableHead>
                     <TableHead className="text-xs font-medium text-white/60 text-center w-16">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {rows.map((item) => {
+                    const custo = Number(item.custo_unitario || 0);
+                    const preco = Number(item.preco_venda || 0);
+                    const tImp = Number(item.taxa_impostos || 0);
+                    const tDesc = Number(item.taxa_descontos || 0);
+                    const tCard = Number(item.taxa_cartao || 0);
+                    const taxas = tImp + tDesc + tCard;
+                    const deducoes = preco * (taxas / 100);
+                    const lucro = preco - deducoes - custo;
+                    const corLucro = lucro > 0 ? "text-emerald-400" : lucro < 0 ? "text-red-400" : "text-white/60";
                     return (
                       <TableRow key={item.id} className="border-white/5 hover:bg-white/5">
                         <TableCell className="text-white">
@@ -413,52 +422,52 @@ export default function EstrategiaItens() {
                             onSave={(v) => updateItem.mutateAsync({ id: item.id, patch: { subcategoria: String(v) || null } })}
                           />
                         </TableCell>
-                        <TableCell className="text-white/70 text-sm">
+                        <TableCell className="text-right text-white/90 bg-rose-500/10">
                           <EditableCell
-                            value={item.fornecedor ?? ""}
-                            placeholder="Fornecedor"
-                            onSave={(v) => updateItem.mutateAsync({ id: item.id, patch: { fornecedor: String(v) || null } })}
-                          />
-                        </TableCell>
-                        <TableCell className="text-center text-white/80">
-                          <EditableCell
-                            value={Number(item.quantidade_ideal || 0)}
-                            type="number"
-                            align="center"
-                            onSave={(v) => updateItem.mutateAsync({ id: item.id, patch: { quantidade_ideal: Number(v) } })}
-                          />
-                        </TableCell>
-                        <TableCell className="text-center text-white/80">
-                          <EditableCell
-                            value={Number(item.quantidade_maxima || 0)}
-                            type="number"
-                            align="center"
-                            onSave={(v) => updateItem.mutateAsync({ id: item.id, patch: { quantidade_maxima: Number(v) } })}
-                          />
-                        </TableCell>
-                        <TableCell className="text-center text-white/80">
-                          <EditableCell
-                            value={Number(item.quantidade || 0)}
-                            type="number"
-                            align="center"
-                            onSave={(v) => updateItem.mutateAsync({ id: item.id, patch: { quantidade: Number(v) } })}
-                          />
-                        </TableCell>
-                        <TableCell className="text-right text-white/80">
-                          <EditableCell
-                            value={Number(item.custo_unitario || 0)}
+                            value={custo}
                             type="currency"
                             align="right"
-                            display={formatCurrency(Number(item.custo_unitario || 0))}
+                            display={formatCurrency(custo)}
                             onSave={(v) => updateItem.mutateAsync({ id: item.id, patch: { custo_unitario: Number(v) } })}
                           />
                         </TableCell>
-                        <TableCell className="text-center text-white/70 text-sm">
-                          <EditableSelectCell
-                            value={item.unidade}
-                            options={UNIDADES}
-                            placeholder="Un"
-                            onSave={(v) => updateItem.mutateAsync({ id: item.id, patch: { unidade: v } })}
+                        <TableCell className={`text-right font-medium bg-blue-500/10 ${corLucro}`}>
+                          {formatCurrency(lucro)}
+                        </TableCell>
+                        <TableCell className="text-right text-white/90 bg-orange-500/10">
+                          <EditableCell
+                            value={tImp}
+                            type="number"
+                            align="right"
+                            display={<span>{tImp.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%</span>}
+                            onSave={(v) => updateItem.mutateAsync({ id: item.id, patch: { taxa_impostos: Number(v) } })}
+                          />
+                        </TableCell>
+                        <TableCell className="text-right text-white/90 bg-yellow-500/10">
+                          <EditableCell
+                            value={tDesc}
+                            type="number"
+                            align="right"
+                            display={<span>{tDesc.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%</span>}
+                            onSave={(v) => updateItem.mutateAsync({ id: item.id, patch: { taxa_descontos: Number(v) } })}
+                          />
+                        </TableCell>
+                        <TableCell className="text-right text-white/90 bg-teal-500/10">
+                          <EditableCell
+                            value={tCard}
+                            type="number"
+                            align="right"
+                            display={<span>{tCard.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%</span>}
+                            onSave={(v) => updateItem.mutateAsync({ id: item.id, patch: { taxa_cartao: Number(v) } })}
+                          />
+                        </TableCell>
+                        <TableCell className="text-right font-medium text-white bg-green-500/10">
+                          <EditableCell
+                            value={preco}
+                            type="currency"
+                            align="right"
+                            display={formatCurrency(preco)}
+                            onSave={(v) => updateItem.mutateAsync({ id: item.id, patch: { preco_venda: Number(v) } })}
                           />
                         </TableCell>
                         <TableCell className="text-center">

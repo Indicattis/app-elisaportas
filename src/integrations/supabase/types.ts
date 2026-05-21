@@ -1869,6 +1869,9 @@ export type Database = {
           quantidade_ideal: number
           quantidade_maxima: number
           subcategoria: string | null
+          taxa_cartao: number
+          taxa_descontos: number
+          taxa_impostos: number
           unidade: string | null
           updated_at: string
         }
@@ -1885,6 +1888,9 @@ export type Database = {
           quantidade_ideal?: number
           quantidade_maxima?: number
           subcategoria?: string | null
+          taxa_cartao?: number
+          taxa_descontos?: number
+          taxa_impostos?: number
           unidade?: string | null
           updated_at?: string
         }
@@ -1901,6 +1907,9 @@ export type Database = {
           quantidade_ideal?: number
           quantidade_maxima?: number
           subcategoria?: string | null
+          taxa_cartao?: number
+          taxa_descontos?: number
+          taxa_impostos?: number
           unidade?: string | null
           updated_at?: string
         }
