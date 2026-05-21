@@ -282,7 +282,7 @@ export default function PlanejamentoPage() {
                         <button
                           onClick={() => {
                             setEditingMes(g.mes);
-                            setMesInput(g.mes.mes.substring(5, 7));
+                            setMesInput(g.mes.mes.substring(0, 7));
                             setMesDialogOpen(true);
                           }}
                           className="p-1 rounded-md text-white/50 hover:text-white hover:bg-white/10 transition"
