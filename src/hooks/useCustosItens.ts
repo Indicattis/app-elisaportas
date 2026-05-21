@@ -37,6 +37,69 @@ export type NewCustoItem = {
 };
 
 const QUERY_KEY = ["custos_itens"] as const;
+const PADROES_KEY = ["custos_itens_padroes"] as const;
+
+export type CustosItensPadroes = {
+  taxa_impostos: number;
+  taxa_descontos: number;
+  taxa_cartao: number;
+};
+
+export function useCustosItensPadroes() {
+  const queryClient = useQueryClient();
+
+  const query = useQuery({
+    queryKey: PADROES_KEY,
+    queryFn: async (): Promise<CustosItensPadroes> => {
+      const { data, error } = await supabase
+        .from("custos_itens_padroes")
+        .select("taxa_impostos, taxa_descontos, taxa_cartao")
+        .eq("singleton", true)
+        .maybeSingle();
+      if (error) throw error;
+      return {
+        taxa_impostos: Number(data?.taxa_impostos ?? 0),
+        taxa_descontos: Number(data?.taxa_descontos ?? 0),
+        taxa_cartao: Number(data?.taxa_cartao ?? 0),
+      };
+    },
+  });
+
+  const aplicarEmTodos = useMutation({
+    mutationFn: async (payload: CustosItensPadroes) => {
+      const { error: updErr } = await supabase
+        .from("custos_itens")
+        .update({
+          taxa_impostos: payload.taxa_impostos,
+          taxa_descontos: payload.taxa_descontos,
+          taxa_cartao: payload.taxa_cartao,
+        })
+        .gte("custo_unitario", -1);
+      if (updErr) throw updErr;
+
+      const { error: upsErr } = await supabase
+        .from("custos_itens_padroes")
+        .upsert(
+          {
+            singleton: true,
+            taxa_impostos: payload.taxa_impostos,
+            taxa_descontos: payload.taxa_descontos,
+            taxa_cartao: payload.taxa_cartao,
+          },
+          { onConflict: "singleton" }
+        );
+      if (upsErr) throw upsErr;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: PADROES_KEY });
+      toast.success("% padrões aplicadas a todos os itens");
+    },
+    onError: (err: any) => toast.error(err?.message ?? "Erro ao aplicar padrões"),
+  });
+
+  return { ...query, padroes: query.data, aplicarEmTodos };
+}
 
 export function useCustosItens() {
   const queryClient = useQueryClient();
