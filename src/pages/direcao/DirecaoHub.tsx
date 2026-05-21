@@ -26,7 +26,7 @@ export default function DirecaoHub() {
   const navigate = useNavigate();
   const [mounted, setMounted] = useState(false);
 
-  const prefixes = menuItems.filter(i => !i.external && i.routePrefix).map(i => i.routePrefix);
+  const prefixes = menuItems.filter(i => !(i as any).external && i.routePrefix).map(i => i.routePrefix);
   const { data: accessMap } = useBulkRouteAccess(prefixes);
 
   useEffect(() => {
@@ -37,8 +37,9 @@ export default function DirecaoHub() {
   const renderButton = (item: typeof menuItems[0], index: number) => {
     const Icon = item.icon;
     const delay = 100 + index * 80;
-    const hasAccess = item.external || !item.routePrefix || accessMap?.[item.routePrefix] !== false;
-    const isDisabled = !item.external && !hasAccess;
+    const external = (item as any).external as boolean | undefined;
+    const hasAccess = external || !item.routePrefix || accessMap?.[item.routePrefix] !== false;
+    const isDisabled = !external && !hasAccess;
     const variant = (item as any).variant as 'gold' | 'slate' | undefined;
 
     return (
