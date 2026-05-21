@@ -153,13 +153,17 @@ export default function EstrategiaItens() {
     unidade: "Un",
     custo_unitario: "0",
     preco_venda: "0",
+    fornecedor: "",
+    quantidade: "0",
+    quantidade_ideal: "0",
+    quantidade_maxima: "0",
   });
 
   const filteredItems = useMemo(() => {
     const term = searchTerm.toLowerCase().trim();
     if (!term) return items;
     return items.filter((it) =>
-      [it.descricao, it.categoria, it.subcategoria, it.unidade]
+      [it.descricao, it.categoria, it.subcategoria, it.unidade, it.fornecedor]
         .filter(Boolean)
         .some((v) => String(v).toLowerCase().includes(term))
     );
@@ -183,12 +187,10 @@ export default function EstrategiaItens() {
 
   const totals = useMemo(() => {
     let custo = 0;
-    let preco = 0;
     for (const it of filteredItems) {
       custo += Number(it.custo_unitario || 0);
-      preco += Number(it.preco_venda || 0);
     }
-    return { custo, preco };
+    return { custo };
   }, [filteredItems]);
 
   const handleCreate = async () => {
@@ -200,8 +202,12 @@ export default function EstrategiaItens() {
       unidade: newItem.unidade || null,
       custo_unitario: Number(newItem.custo_unitario.replace(",", ".")) || 0,
       preco_venda: Number(newItem.preco_venda.replace(",", ".")) || 0,
+      fornecedor: newItem.fornecedor.trim() || null,
+      quantidade: Number(newItem.quantidade.replace(",", ".")) || 0,
+      quantidade_ideal: Number(newItem.quantidade_ideal.replace(",", ".")) || 0,
+      quantidade_maxima: Number(newItem.quantidade_maxima.replace(",", ".")) || 0,
     });
-    setNewItem({ descricao: "", categoria: "", subcategoria: "", unidade: "Un", custo_unitario: "0", preco_venda: "0" });
+    setNewItem({ descricao: "", categoria: "", subcategoria: "", unidade: "Un", custo_unitario: "0", preco_venda: "0", fornecedor: "", quantidade: "0", quantidade_ideal: "0", quantidade_maxima: "0" });
     setDialogOpen(false);
   };
 
