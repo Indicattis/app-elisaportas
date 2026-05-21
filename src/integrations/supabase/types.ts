@@ -1861,9 +1861,13 @@ export type Database = {
           created_at: string
           custo_unitario: number
           descricao: string
+          fornecedor: string | null
           id: string
           ordem: number
           preco_venda: number
+          quantidade: number
+          quantidade_ideal: number
+          quantidade_maxima: number
           subcategoria: string | null
           unidade: string | null
           updated_at: string
@@ -1873,9 +1877,13 @@ export type Database = {
           created_at?: string
           custo_unitario?: number
           descricao: string
+          fornecedor?: string | null
           id?: string
           ordem?: number
           preco_venda?: number
+          quantidade?: number
+          quantidade_ideal?: number
+          quantidade_maxima?: number
           subcategoria?: string | null
           unidade?: string | null
           updated_at?: string
@@ -1885,9 +1893,13 @@ export type Database = {
           created_at?: string
           custo_unitario?: number
           descricao?: string
+          fornecedor?: string | null
           id?: string
           ordem?: number
           preco_venda?: number
+          quantidade?: number
+          quantidade_ideal?: number
+          quantidade_maxima?: number
           subcategoria?: string | null
           unidade?: string | null
           updated_at?: string
