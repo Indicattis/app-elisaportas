@@ -16,12 +16,13 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const formatBRL = (n: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n || 0);
 
 interface Mes { id: string; mes: string }
-interface Item { id: string; mes_id: string; nome: string; valor: number }
+interface Item { id: string; mes_id: string; nome: string; valor: number; data: string | null; pago: boolean }
 
 export default function PlanejamentoPage() {
   const navigate = useNavigate();
@@ -32,7 +33,7 @@ export default function PlanejamentoPage() {
   const [mesInput, setMesInput] = useState(''); // yyyy-MM
 
   const [itemDialogOpen, setItemDialogOpen] = useState(false);
-  const [itemForm, setItemForm] = useState<{ mes_id: string; nome: string; valor: string }>({ mes_id: '', nome: '', valor: '' });
+  const [itemForm, setItemForm] = useState<{ mes_id: string; nome: string; valor: string; data: string }>({ mes_id: '', nome: '', valor: '', data: '' });
   const [editingItem, setEditingItem] = useState<Item | null>(null);
 
   const [confirmDeleteMes, setConfirmDeleteMes] = useState<Mes | null>(null);
