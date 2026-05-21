@@ -257,7 +257,6 @@ import FornecedoresDirecao from "./pages/direcao/estoque/FornecedoresDirecao";
 import DirecaoAprovacoesHub from "./pages/direcao/aprovacoes/DirecaoAprovacoesHub";
 import AprovacoesProducao from "./pages/direcao/aprovacoes/AprovacoesProducao";
 import AprovacoesPedidos from "./pages/direcao/aprovacoes/AprovacoesPedidos";
-import AprovacoesVendas from "./pages/direcao/aprovacoes/AprovacoesVendas";
 import AprovacoesAutorizados from "./pages/direcao/aprovacoes/AprovacoesAutorizados";
 import AprovacoesCompras from "./pages/direcao/aprovacoes/AprovacoesCompras";
 import DirecaoFinanceiroHub from "./pages/direcao/financeiro/DirecaoFinanceiroHub";
