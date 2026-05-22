@@ -551,6 +551,8 @@ export default function EstrategiaItens() {
   const { padroes, aplicarEmTodos } = useCustosItensPadroes();
   const { categoriasOrdem, salvarOrdem } = useCustosItensCategoriasOrdem();
   const renomearCategoria = useRenomearCategoriaItens();
+  const criarCategoria = useCriarCategoriaItens();
+  const excluirCategoria = useExcluirCategoriaItens();
   const { limites: limitesDesconto } = useConfiguracoesVendas();
   const [searchTerm, setSearchTerm] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -558,6 +560,7 @@ export default function EstrategiaItens() {
   const [padroesForm, setPadroesForm] = useState({ taxa_impostos: "0", taxa_descontos: "0", taxa_cartao: "0" });
   const [ordemOpen, setOrdemOpen] = useState(false);
   const [ordemDraft, setOrdemDraft] = useState<string[]>([]);
+  const [novaCategoriaNome, setNovaCategoriaNome] = useState("");
   const [coresOpen, setCoresOpen] = useState(false);
   const [columnColors, setColumnColors] = useState<Record<ColumnKey, string>>(() => {
     if (typeof window === "undefined") return { ...DEFAULT_COLUMN_COLORS };
