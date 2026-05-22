@@ -73,6 +73,7 @@ export default function EstrategiaKitMontagem() {
         { label: "Montagem" },
       ]}
       fullWidth
+      lightTheme
     >
       {isLoadingKit ? (
         <div className="text-slate-500 text-sm">Carregando kit...</div>

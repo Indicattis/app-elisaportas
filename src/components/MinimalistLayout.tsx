@@ -14,6 +14,7 @@ interface MinimalistLayoutProps {
   breadcrumbItems?: BreadcrumbItem[];
   fullWidth?: boolean;
   showBackButton?: boolean;
+  lightTheme?: boolean;
 }
 
 export function MinimalistLayout({ 
@@ -24,7 +25,8 @@ export function MinimalistLayout({
   headerActions,
   breadcrumbItems,
   fullWidth = false,
-  showBackButton = true
+  showBackButton = true,
+  lightTheme = false,
 }: MinimalistLayoutProps) {
   const navigate = useNavigate();
   const [mounted, setMounted] = useState(false);
@@ -99,7 +101,7 @@ export function MinimalistLayout({
   const finalBreadcrumbItems = generateBreadcrumb();
 
   return (
-    <div className="min-h-screen bg-black text-white overflow-hidden relative">
+    <div className={`min-h-screen overflow-hidden relative ${lightTheme ? "bg-slate-50 text-slate-900" : "bg-black text-white"}`}>
       {/* Breadcrumb animado */}
       <AnimatedBreadcrumb items={finalBreadcrumbItems} mounted={mounted} />
 
@@ -126,12 +128,12 @@ export function MinimalistLayout({
         {/* Header minimalista */}
         <header className={`sticky top-0 z-20 py-4 mt-14 ${fullWidth ? "px-4 lg:px-[100px]" : "px-4"}`}>
           <div className={fullWidth ? "w-full" : "max-w-7xl mx-auto"}>
-            <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
+            <div className={`p-1.5 rounded-xl backdrop-blur-xl border ${lightTheme ? "bg-white/80 border-slate-200 shadow-sm" : "bg-white/5 border-white/10"}`}>
               <div className="px-4 py-2 rounded-lg flex items-center justify-between">
                 <div>
-                  <h1 className="text-lg font-semibold text-white">{title}</h1>
+                  <h1 className={`text-lg font-semibold ${lightTheme ? "text-slate-900" : "text-white"}`}>{title}</h1>
                   {subtitle && (
-                    <p className="text-sm text-white/60">{subtitle}</p>
+                    <p className={`text-sm ${lightTheme ? "text-slate-500" : "text-white/60"}`}>{subtitle}</p>
                   )}
                 </div>
                 
