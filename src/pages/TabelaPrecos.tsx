@@ -388,6 +388,8 @@ export default function TabelaPrecos({
                       {!hideLucroColumn && <TableHead className="text-right hidden md:table-cell text-white/60">Lucro</TableHead>}
                       {!hideLucroColumn && <TableHead className="text-right hidden md:table-cell text-white/60">% Lucro</TableHead>}
                       <TableHead className="text-right hidden md:table-cell text-white/60">Valor Instalação</TableHead>
+                      <TableHead className="text-right hidden md:table-cell text-white/60">Lucro Instalação</TableHead>
+                      <TableHead className="text-right hidden md:table-cell text-white/60">% Lucro Inst.</TableHead>
                       <TableHead className="text-right hidden md:table-cell text-white/60">Valor Pintura</TableHead>
                       {!hideTotalColumn && <TableHead className="text-right text-white/60">Total</TableHead>}
                       {!hideAcoesColumn && <TableHead className="text-center text-white/60">Montagem</TableHead>}
@@ -463,6 +465,15 @@ export default function TabelaPrecos({
                               style: 'currency', 
                               currency: 'BRL' 
                             })}
+                          </TableCell>
+                          <TableCell className="text-right hidden md:table-cell text-emerald-400">
+                            {(item.valor_instalacao * 0.8).toLocaleString('pt-BR', {
+                              style: 'currency',
+                              currency: 'BRL'
+                            })}
+                          </TableCell>
+                          <TableCell className="text-right hidden md:table-cell font-medium text-emerald-400">
+                            80,00%
                           </TableCell>
                           <TableCell className="text-right hidden md:table-cell text-white/70">
                             {item.valor_pintura.toLocaleString('pt-BR', { 
