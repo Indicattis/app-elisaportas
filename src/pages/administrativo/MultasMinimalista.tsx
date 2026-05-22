@@ -47,7 +47,7 @@ const ETAPAS: {
   },
   {
     value: 'advertida',
-    label: 'Advertida',
+    label: 'Aguardando advertência',
     icon: AlertTriangle,
     pill: 'bg-amber-500/20 text-amber-400',
     ring: 'data-[state=active]:bg-amber-500/15 data-[state=active]:border-amber-400/50 data-[state=active]:shadow-[0_0_0_1px_rgba(251,191,36,0.3)] hover:border-amber-400/30',
@@ -57,7 +57,7 @@ const ETAPAS: {
   },
   {
     value: 'paga',
-    label: 'Paga',
+    label: 'Aguardando pagamento',
     icon: DollarSign,
     pill: 'bg-green-500/20 text-green-400',
     ring: 'data-[state=active]:bg-green-500/15 data-[state=active]:border-green-400/50 data-[state=active]:shadow-[0_0_0_1px_rgba(74,222,128,0.3)] hover:border-green-400/30',
