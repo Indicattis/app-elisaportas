@@ -75,8 +75,9 @@ const COLUMN_COLOR_OPTIONS: Record<string, { label: string; bg: string; swatch: 
   slate:   { label: "Cinza",     bg: "bg-slate-500/30",   swatch: "bg-slate-500" },
 };
 
-type ColumnKey = "lucro" | "imposto" | "desconto" | "cartao" | "venda";
+type ColumnKey = "custo" | "lucro" | "imposto" | "desconto" | "cartao" | "venda";
 const COLUMN_LABELS: Record<ColumnKey, string> = {
+  custo: "Custo",
   lucro: "Lucro",
   imposto: "Imposto",
   desconto: "Desc. Gerente",
@@ -84,6 +85,7 @@ const COLUMN_LABELS: Record<ColumnKey, string> = {
   venda: "Valor de Venda",
 };
 const DEFAULT_COLUMN_COLORS: Record<ColumnKey, string> = {
+  custo: "rose",
   lucro: "blue",
   imposto: "orange",
   desconto: "yellow",
