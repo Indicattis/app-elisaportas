@@ -13,6 +13,16 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
 
 import { useMultas, Multa } from '@/hooks/useMultas';
@@ -185,6 +195,7 @@ export default function MultasMinimalista() {
   const [dataVencimento, setDataVencimento] = useState<Date>();
   const [statusAtivo, setStatusAtivo] = useState<MultaStatus>('aberta');
   const [respModalEtapa, setRespModalEtapa] = useState<MultaStatus | null>(null);
+  const [confirmAvanco, setConfirmAvanco] = useState<{ multaId: string; proxima: MultaStatus; proximaLabel: string } | null>(null);
 
   const { data: multas, isLoading, refetch, isRefetching, createMulta, updateStatus, deleteMulta } = useMultas();
   const { data: users } = useAllUsers();
@@ -421,7 +432,10 @@ export default function MultasMinimalista() {
                         podeAvancar={podeAvancar && !!proxima}
                         proximaLabel={proximaLabel}
                         responsavelNome={respAtual?.nome || null}
-                        onAvancar={() => proxima && updateStatus.mutate({ id: multa.id, status: proxima })}
+                        onAvancar={() => {
+                          if (!proxima || !proximaLabel) return;
+                          setConfirmAvanco({ multaId: multa.id, proxima, proximaLabel });
+                        }}
                         onExcluir={() => deleteMulta.mutate(multa.id)}
                       />
                     );
@@ -431,6 +445,34 @@ export default function MultasMinimalista() {
             </TabsContent>
           ))}
         </Tabs>
+
+        <AlertDialog open={!!confirmAvanco} onOpenChange={(o) => { if (!o) setConfirmAvanco(null); }}>
+          <AlertDialogContent className="bg-zinc-900 border-white/10 text-white">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirmar avanço de etapa</AlertDialogTitle>
+              <AlertDialogDescription className="text-white/70">
+                Deseja avançar esta multa para <strong className="text-white">{confirmAvanco?.proximaLabel}</strong>?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setConfirmAvanco(null)} className="bg-white/5 border-white/10 text-white hover:bg-white/10 hover:text-white">
+                Cancelar
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  if (confirmAvanco) {
+                    updateStatus.mutate({ id: confirmAvanco.multaId, status: confirmAvanco.proxima }, {
+                      onSuccess: () => setConfirmAvanco(null),
+                    });
+                  }
+                }}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                Confirmar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {respModalEtapa && (
           <SelecionarResponsavelMultaModal
