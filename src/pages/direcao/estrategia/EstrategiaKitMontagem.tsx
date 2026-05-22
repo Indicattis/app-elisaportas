@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Trash2, Check, ChevronsUpDown, Boxes } from "lucide-react";
@@ -43,18 +43,41 @@ export default function EstrategiaKitMontagem() {
   const { items, isLoading, addItem, updateQuantidade, removeItem } = useKitMontagem(kitId ?? null);
   const { items: allCustosItens } = useCustosItens();
 
-  const salvarValor = (campo: "valor_porta" | "valor_instalacao" | "valor_pintura", atual: number) =>
-    async (e: React.FocusEvent<HTMLInputElement>) => {
-      if (!kitId) return;
-      const v = parseFloat(e.target.value);
-      if (isNaN(v) || v < 0 || v === Number(atual)) return;
-      try {
-        await editarItem({ id: kitId, dados: { [campo]: v } as any });
-        queryClient.invalidateQueries({ queryKey: ["tabela-precos-kit", kitId] });
-      } catch {
-        /* toast tratado no hook */
-      }
-    };
+  const [precos, setPrecos] = useState({ valor_porta: 0, valor_instalacao: 0, valor_pintura: 0 });
+  const [salvando, setSalvando] = useState(false);
+
+  useEffect(() => {
+    if (kit) {
+      setPrecos({
+        valor_porta: Number(kit.valor_porta || 0),
+        valor_instalacao: Number(kit.valor_instalacao || 0),
+        valor_pintura: Number(kit.valor_pintura || 0),
+      });
+    }
+  }, [kit?.id, kit?.valor_porta, kit?.valor_instalacao, kit?.valor_pintura]);
+
+  const isDirty = !!kit && (
+    Number(kit.valor_porta || 0) !== precos.valor_porta ||
+    Number(kit.valor_instalacao || 0) !== precos.valor_instalacao ||
+    Number(kit.valor_pintura || 0) !== precos.valor_pintura
+  );
+
+  const salvarPrecos = async () => {
+    if (!kitId || !kit || !isDirty) return;
+    const dados: Record<string, number> = {};
+    if (Number(kit.valor_porta || 0) !== precos.valor_porta) dados.valor_porta = precos.valor_porta;
+    if (Number(kit.valor_instalacao || 0) !== precos.valor_instalacao) dados.valor_instalacao = precos.valor_instalacao;
+    if (Number(kit.valor_pintura || 0) !== precos.valor_pintura) dados.valor_pintura = precos.valor_pintura;
+    try {
+      setSalvando(true);
+      await editarItem({ id: kitId, dados: dados as any });
+      queryClient.invalidateQueries({ queryKey: ["tabela-precos-kit", kitId] });
+    } catch {
+      /* toast tratado no hook */
+    } finally {
+      setSalvando(false);
+    }
+  };
 
   const usedIds = useMemo(() => new Set(items.map((i) => i.custo_item_id)), [items]);
 
@@ -291,24 +314,34 @@ export default function EstrategiaKitMontagem() {
                   <div className="text-xs uppercase tracking-wide text-white/50 mb-3">Preços do kit</div>
                   <div className="space-y-2">
                     {([
-                      { campo: "valor_porta" as const, label: "Valor porta", valor: Number(kit.valor_porta || 0) },
-                      { campo: "valor_instalacao" as const, label: "Valor instalação", valor: Number(kit.valor_instalacao || 0) },
-                      { campo: "valor_pintura" as const, label: "Valor pintura", valor: Number(kit.valor_pintura || 0) },
-                    ]).map(({ campo, label, valor }) => (
+                      { campo: "valor_porta" as const, label: "Valor porta" },
+                      { campo: "valor_instalacao" as const, label: "Valor instalação" },
+                      { campo: "valor_pintura" as const, label: "Valor pintura" },
+                    ]).map(({ campo, label }) => (
                       <div key={campo} className="flex items-center justify-between gap-3 text-sm">
                         <span className="text-white/60">{label}</span>
                         <Input
                           type="number"
                           step="0.01"
                           min="0"
-                          key={`${campo}-${valor}`}
-                          defaultValue={String(valor)}
-                          onBlur={salvarValor(campo, valor)}
+                          value={String(precos[campo])}
+                          onChange={(e) => {
+                            const v = parseFloat(e.target.value);
+                            setPrecos((p) => ({ ...p, [campo]: isNaN(v) ? 0 : v }));
+                          }}
                           className="h-8 w-32 text-right bg-white/5 border-white/10 text-white"
                         />
                       </div>
                     ))}
                     <Row label="Lucro manual" value={fmt(Number(kit.lucro || 0))} />
+                    <Button
+                      onClick={salvarPrecos}
+                      disabled={!isDirty || salvando}
+                      className="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
+                      size="sm"
+                    >
+                      {salvando ? "Salvando..." : "Salvar"}
+                    </Button>
                   </div>
                 </div>
 
