@@ -75,28 +75,28 @@ export default function EstrategiaKitMontagem() {
       fullWidth
     >
       {isLoadingKit ? (
-        <div className="text-white/60 text-sm">Carregando kit...</div>
+        <div className="text-slate-500 text-sm">Carregando kit...</div>
       ) : !kit ? (
-        <div className="rounded-lg border border-white/10 bg-white/5 p-6 text-white/70">
+        <div className="rounded-lg border border-slate-200 bg-white p-6 text-slate-700 shadow-sm">
           Kit não encontrado.
-          <Button variant="ghost" className="ml-3 text-white/80" onClick={() => navigate("/direcao/estrategia/kits")}>
+          <Button variant="ghost" className="ml-3 text-slate-700 hover:bg-slate-100" onClick={() => navigate("/direcao/estrategia/kits")}>
             Voltar
           </Button>
         </div>
       ) : (
         <div className="space-y-4">
           {/* Cabeçalho */}
-          <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl p-4 flex flex-wrap items-center gap-3">
-            <div className="h-10 w-10 rounded-lg bg-blue-500/15 border border-blue-500/30 flex items-center justify-center">
-              <Boxes className="h-5 w-5 text-blue-300" />
+          <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-4 flex flex-wrap items-center gap-3">
+            <div className="h-10 w-10 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-center">
+              <Boxes className="h-5 w-5 text-blue-600" />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-white font-medium truncate">{kit.descricao}</div>
-              <div className="text-xs text-white/50">
+              <div className="text-slate-900 font-medium truncate">{kit.descricao}</div>
+              <div className="text-xs text-slate-500">
                 {kit.largura}m × {kit.altura}m
               </div>
             </div>
-            <Badge className={kit.ativo ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30" : "bg-white/10 text-white/60 border border-white/20"}>
+            <Badge className={kit.ativo ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-slate-100 text-slate-600 border border-slate-200"}>
               {kit.ativo ? "Ativo" : "Inativo"}
             </Badge>
           </div>
@@ -105,7 +105,7 @@ export default function EstrategiaKitMontagem() {
             {/* Tabela */}
             <div className="lg:col-span-3 space-y-3">
               <div className="flex items-center justify-between gap-2">
-                <div className="text-sm text-white/60">
+                <div className="text-sm text-slate-500">
                   {items.length} {items.length === 1 ? "item" : "itens"} na montagem
                 </div>
                 <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
@@ -114,7 +114,7 @@ export default function EstrategiaKitMontagem() {
                       <Plus className="h-4 w-4 mr-2" /> Adicionar item
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-[420px] p-0 bg-slate-900 border-white/10" align="end">
+                  <PopoverContent className="w-[420px] p-0 bg-white border-slate-200" align="end">
                     <Command className="bg-transparent">
                       <CommandInput placeholder="Buscar item por descrição/categoria..." />
                       <CommandList>
@@ -132,18 +132,18 @@ export default function EstrategiaKitMontagem() {
                                   addItem.mutate({ custo_item_id: ci.id, quantidade: 1 });
                                   setPickerOpen(false);
                                 }}
-                                className="text-white data-[selected=true]:bg-white/10"
+                                className="text-slate-900 data-[selected=true]:bg-slate-100"
                               >
                                 <div className="flex-1 min-w-0">
                                   <div className="truncate">{ci.descricao}</div>
-                                  <div className="text-xs text-white/40">
+                                  <div className="text-xs text-slate-500">
                                     {ci.categoria ?? "Sem categoria"} · {ci.unidade ?? "un"}
                                   </div>
                                 </div>
                                 {inUse ? (
-                                  <Check className="h-4 w-4 text-emerald-400" />
+                                  <Check className="h-4 w-4 text-emerald-600" />
                                 ) : (
-                                  <ChevronsUpDown className="h-4 w-4 text-white/40" />
+                                  <ChevronsUpDown className="h-4 w-4 text-slate-400" />
                                 )}
                               </CommandItem>
                             );
@@ -155,28 +155,28 @@ export default function EstrategiaKitMontagem() {
                 </Popover>
               </div>
 
-              <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden">
+              <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
                 <Table>
                   <TableHeader>
-                    <TableRow className="border-white/10 hover:bg-transparent">
-                      <TableHead className="text-white/60 min-w-[260px]">Item</TableHead>
-                      <TableHead className="text-white/60">Unid.</TableHead>
-                      <TableHead className="text-right text-white/60 w-28">Custo un.</TableHead>
-                      <TableHead className="text-right text-white/60 w-24">Imposto</TableHead>
-                      <TableHead className="text-right text-white/60 w-28">Desc. Gerente</TableHead>
-                      <TableHead className="text-right text-white/60 w-24">Cartão</TableHead>
-                      <TableHead className="text-right text-white/60 w-24">Qtd</TableHead>
-                      <TableHead className="text-right text-white/60 w-32">Subtotal custo</TableHead>
-                      <TableHead className="text-right text-white/60 w-28">Lucro un.</TableHead>
-                      <TableHead className="text-right text-white/60 w-32">Subtotal lucro</TableHead>
-                      <TableHead className="text-center text-white/60 w-12"></TableHead>
+                    <TableRow className="border-slate-200 hover:bg-transparent bg-slate-50">
+                      <TableHead className="text-slate-600 min-w-[260px]">Item</TableHead>
+                      <TableHead className="text-slate-600">Unid.</TableHead>
+                      <TableHead className="text-right text-slate-600 w-28">Custo un.</TableHead>
+                      <TableHead className="text-right text-slate-600 w-24">Imposto</TableHead>
+                      <TableHead className="text-right text-slate-600 w-28">Desc. Gerente</TableHead>
+                      <TableHead className="text-right text-slate-600 w-24">Cartão</TableHead>
+                      <TableHead className="text-right text-slate-600 w-24">Qtd</TableHead>
+                      <TableHead className="text-right text-slate-600 w-32">Subtotal custo</TableHead>
+                      <TableHead className="text-right text-slate-600 w-28">Lucro un.</TableHead>
+                      <TableHead className="text-right text-slate-600 w-32">Subtotal lucro</TableHead>
+                      <TableHead className="text-center text-slate-600 w-12"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {isLoading ? (
-                      <TableRow><TableCell colSpan={11} className="text-center text-white/50 py-6">Carregando...</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={11} className="text-center text-slate-500 py-6">Carregando...</TableCell></TableRow>
                     ) : items.length === 0 ? (
-                      <TableRow><TableCell colSpan={11} className="text-center text-white/50 py-6">Nenhum item na montagem</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={11} className="text-center text-slate-500 py-6">Nenhum item na montagem</TableCell></TableRow>
                     ) : (
                       items.map((it) => {
                         const q = Number(it.quantidade || 0);
@@ -194,13 +194,13 @@ export default function EstrategiaKitMontagem() {
                         const pctFmt = (n: number) =>
                           `${n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`;
                         return (
-                          <TableRow key={it.id} className="border-white/10 hover:bg-white/5">
-                            <TableCell className="text-white min-w-[260px]">{it.custo_item?.descricao ?? "—"}</TableCell>
-                            <TableCell className="text-white/60">{it.custo_item?.unidade ?? "un"}</TableCell>
-                            <TableCell className="text-right text-white/80">{fmt(custoUnit)}</TableCell>
-                            <TableCell className="text-right text-white/70"><span title={pctFmt(tImp)}>{fmt(vImp)}</span></TableCell>
-                            <TableCell className="text-right text-white/70"><span title={pctFmt(tDesc)}>{fmt(vDesc)}</span></TableCell>
-                            <TableCell className="text-right text-white/70"><span title={pctFmt(tCart)}>{fmt(vCart)}</span></TableCell>
+                          <TableRow key={it.id} className="border-slate-200 hover:bg-slate-50">
+                            <TableCell className="text-slate-900 min-w-[260px]">{it.custo_item?.descricao ?? "—"}</TableCell>
+                            <TableCell className="text-slate-600">{it.custo_item?.unidade ?? "un"}</TableCell>
+                            <TableCell className="text-right text-slate-800">{fmt(custoUnit)}</TableCell>
+                            <TableCell className="text-right text-slate-700"><span title={pctFmt(tImp)}>{fmt(vImp)}</span></TableCell>
+                            <TableCell className="text-right text-slate-700"><span title={pctFmt(tDesc)}>{fmt(vDesc)}</span></TableCell>
+                            <TableCell className="text-right text-slate-700"><span title={pctFmt(tCart)}>{fmt(vCart)}</span></TableCell>
                             <TableCell className="text-right">
                               <Input
                                 type="number"
@@ -214,17 +214,17 @@ export default function EstrategiaKitMontagem() {
                                     updateQuantidade.mutate({ id: it.id, quantidade: v });
                                   }
                                 }}
-                                className="h-8 w-24 ml-auto text-right bg-white/5 border-white/10 text-white"
+                                className="h-8 w-24 ml-auto text-right bg-white border-slate-200 text-slate-900"
                               />
                             </TableCell>
-                            <TableCell className="text-right text-white">{fmt(subtotalCusto)}</TableCell>
-                            <TableCell className={cn("text-right", lucroUnit >= 0 ? "text-emerald-400" : "text-red-400")}>{fmt(lucroUnit)}</TableCell>
-                            <TableCell className={cn("text-right font-medium", subtotalLucro >= 0 ? "text-emerald-400" : "text-red-400")}>{fmt(subtotalLucro)}</TableCell>
+                            <TableCell className="text-right text-slate-900">{fmt(subtotalCusto)}</TableCell>
+                            <TableCell className={cn("text-right", lucroUnit >= 0 ? "text-emerald-600" : "text-red-600")}>{fmt(lucroUnit)}</TableCell>
+                            <TableCell className={cn("text-right font-medium", subtotalLucro >= 0 ? "text-emerald-600" : "text-red-600")}>{fmt(subtotalLucro)}</TableCell>
                             <TableCell className="text-center">
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 text-red-400 hover:text-red-300 hover:bg-white/10"
+                                className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-slate-100"
                                 onClick={() => removeItem.mutate(it.id)}
                                 title="Remover"
                               >
@@ -240,7 +240,7 @@ export default function EstrategiaKitMontagem() {
               </div>
 
               {items.length === 0 && (
-                <Badge className="bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                <Badge className="bg-amber-50 text-amber-700 border border-amber-200">
                   Sem montagem — o lucro do kit segue editável manualmente
                 </Badge>
               )}
@@ -249,28 +249,28 @@ export default function EstrategiaKitMontagem() {
             {/* Resumo lateral */}
             <aside className="lg:col-span-1">
               <div className="lg:sticky lg:top-4 space-y-3">
-                <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl p-4">
-                  <div className="text-xs uppercase tracking-wide text-white/50 mb-3">Resumo da montagem</div>
+                <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-4">
+                  <div className="text-xs uppercase tracking-wide text-slate-500 mb-3">Resumo da montagem</div>
                   <div className="space-y-2">
                     <Row label="Itens" value={String(items.length)} />
                     <Row label="Custo total" value={fmt(totais.custo)} />
                     <Row label="Venda total" value={fmt(totais.venda)} />
-                    <div className="h-px bg-white/10 my-2" />
+                    <div className="h-px bg-slate-200 my-2" />
                     <Row
                       label="Lucro total"
                       value={fmt(totais.lucro)}
-                      valueClass={totais.lucro >= 0 ? "text-emerald-400 font-semibold" : "text-red-400 font-semibold"}
+                      valueClass={totais.lucro >= 0 ? "text-emerald-600 font-semibold" : "text-red-600 font-semibold"}
                     />
                     <Row
                       label="Margem"
                       value={`${totais.margem.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`}
-                      valueClass={totais.margem >= 0 ? "text-emerald-400" : "text-red-400"}
+                      valueClass={totais.margem >= 0 ? "text-emerald-600" : "text-red-600"}
                     />
                   </div>
                 </div>
 
-                <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl p-4">
-                  <div className="text-xs uppercase tracking-wide text-white/50 mb-3">Preços do kit</div>
+                <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-4">
+                  <div className="text-xs uppercase tracking-wide text-slate-500 mb-3">Preços do kit</div>
                   <div className="space-y-2">
                     <Row label="Valor porta" value={fmt(Number(kit.valor_porta || 0))} />
                     <Row label="Valor instalação" value={fmt(Number(kit.valor_instalacao || 0))} />
@@ -290,8 +290,8 @@ export default function EstrategiaKitMontagem() {
 function Row({ label, value, valueClass }: { label: string; value: string; valueClass?: string }) {
   return (
     <div className="flex items-center justify-between gap-3 text-sm">
-      <span className="text-white/60">{label}</span>
-      <span className={cn("text-white", valueClass)}>{value}</span>
+      <span className="text-slate-500">{label}</span>
+      <span className={cn("text-slate-900", valueClass)}>{value}</span>
     </div>
   );
 }
