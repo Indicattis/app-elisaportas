@@ -675,6 +675,34 @@ export default function EstrategiaItens() {
     } catch { /* ignore */ }
   }, [columnColors]);
 
+  const [columnOrder, setColumnOrder] = useState<ColumnKey[]>(() => {
+    if (typeof window === "undefined") return [...DEFAULT_COLUMN_ORDER];
+    try {
+      const raw = window.localStorage.getItem(COLUMN_ORDER_STORAGE_KEY);
+      if (!raw) return [...DEFAULT_COLUMN_ORDER];
+      const parsed = JSON.parse(raw) as ColumnKey[];
+      const valid = parsed.filter((k): k is ColumnKey => k in COLUMN_LABELS);
+      const missing = DEFAULT_COLUMN_ORDER.filter((k) => !valid.includes(k));
+      return [...valid, ...missing];
+    } catch {
+      return [...DEFAULT_COLUMN_ORDER];
+    }
+  });
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(COLUMN_ORDER_STORAGE_KEY, JSON.stringify(columnOrder));
+    } catch { /* ignore */ }
+  }, [columnOrder]);
+
+  const handleDragEndColumn = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = columnOrder.findIndex((c) => `col-${c}` === active.id);
+    const newIndex = columnOrder.findIndex((c) => `col-${c}` === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
+    setColumnOrder(arrayMove(columnOrder, oldIndex, newIndex));
+  };
+
   useEffect(() => {
     if (padroes) {
       setPadroesForm({
