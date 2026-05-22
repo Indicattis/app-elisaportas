@@ -477,8 +477,9 @@ export default function VendasDirecao() {
         );
       case 'faturada':
         const faturada = isFaturada();
+        const temContrato = !!venda.contrato_url;
         return (
-          <div className="flex justify-center">
+          <div className="flex flex-col items-center gap-1">
             {faturada ? (
               <div className="w-4 h-4 md:w-5 md:h-5 rounded-full bg-green-500/20 flex items-center justify-center">
                 <Check className="w-2.5 h-2.5 md:w-3 md:h-3 text-green-400" />
@@ -487,6 +488,19 @@ export default function VendasDirecao() {
               <div className="w-4 h-4 md:w-5 md:h-5 rounded-full bg-white/5 flex items-center justify-center">
                 <X className="w-2.5 h-2.5 md:w-3 md:h-3 text-white/30" />
               </div>
+            )}
+            {!temContrato && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="text-[9px] text-orange-400 flex items-center gap-0.5 cursor-help">
+                    <FileText className="w-2.5 h-2.5" />
+                    Sem contrato
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent className="bg-zinc-900 border-zinc-700 text-white text-xs">
+                  Venda sem contrato assinado
+                </TooltipContent>
+              </Tooltip>
             )}
           </div>
         );
