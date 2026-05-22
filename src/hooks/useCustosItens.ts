@@ -34,6 +34,9 @@ export type NewCustoItem = {
   quantidade_ideal?: number;
   quantidade_maxima?: number;
   ordem?: number;
+  taxa_impostos?: number;
+  taxa_descontos?: number;
+  taxa_cartao?: number;
 };
 
 const QUERY_KEY = ["custos_itens"] as const;
