@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, CSSProperties } from "react";
-import { Plus, Trash2, Percent, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Check, X, GripVertical } from "lucide-react";
+import { Plus, Trash2, Percent, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Check, X, GripVertical, FolderInput } from "lucide-react";
 import {
   DndContext,
   closestCenter,
@@ -309,15 +309,29 @@ function CategoriaOrdemRow({
 type SortableItemRowProps = {
   item: CustoItem;
   disabled: boolean;
+  categorias: string[];
   onUpdate: (patch: Partial<CustoItem>) => Promise<void> | void;
   onDelete: () => void;
 };
 
-function SortableItemRow({ item, disabled, onUpdate, onDelete }: SortableItemRowProps) {
+function SortableItemRow({ item, disabled, categorias, onUpdate, onDelete }: SortableItemRowProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: item.id,
     disabled,
   });
+  const [moverOpen, setMoverOpen] = useState(false);
+  const [novaCategoria, setNovaCategoria] = useState(item.categoria ?? "");
+  useEffect(() => {
+    if (!moverOpen) setNovaCategoria(item.categoria ?? "");
+  }, [moverOpen, item.categoria]);
+  const handleMover = async () => {
+    const valor = novaCategoria.trim();
+    const atual = (item.categoria ?? "").trim();
+    if (valor === atual) { setMoverOpen(false); return; }
+    await onUpdate({ categoria: (valor || null) as any });
+    toast.success(valor ? `Movido para "${valor}"` : "Item sem categoria");
+    setMoverOpen(false);
+  };
   const style: CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -418,14 +432,56 @@ function SortableItemRow({ item, disabled, onUpdate, onDelete }: SortableItemRow
         />
       </TableCell>
       <TableCell className="text-center">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7 text-muted-foreground/70 hover:text-red-400 hover:bg-red-500/10"
-          onClick={onDelete}
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
+        <div className="flex items-center justify-center gap-1">
+          <Dialog open={moverOpen} onOpenChange={setMoverOpen}>
+            <DialogTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-muted-foreground/70 hover:text-blue-400 hover:bg-blue-500/10"
+                title="Mover de categoria"
+              >
+                <FolderInput className="h-4 w-4" />
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="bg-popover text-popover-foreground border-border text-foreground max-w-sm">
+              <DialogHeader>
+                <DialogTitle>Mover de categoria</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3">
+                <p className="text-xs text-muted-foreground/80 truncate">{item.descricao}</p>
+                <div>
+                  <Label>Categoria</Label>
+                  <Input
+                    list={`mover-categorias-${item.id}`}
+                    value={novaCategoria}
+                    onChange={(e) => setNovaCategoria(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleMover(); } }}
+                    placeholder="Selecione ou digite uma nova"
+                    className="bg-card/60 border-border text-foreground"
+                  />
+                  <datalist id={`mover-categorias-${item.id}`}>
+                    {categorias.map((c) => (
+                      <option key={c} value={c} />
+                    ))}
+                  </datalist>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="ghost" onClick={() => setMoverOpen(false)}>Cancelar</Button>
+                <Button onClick={handleMover}>Mover</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-muted-foreground/70 hover:text-red-400 hover:bg-red-500/10"
+            onClick={onDelete}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
       </TableCell>
     </TableRow>
   );
