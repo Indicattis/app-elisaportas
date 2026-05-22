@@ -95,7 +95,7 @@ export function FreteDialog({ open, onOpenChange, frete }: FreteDialogProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.estado || !formData.cidade || !formData.quilometragem) {
+    if (!formData.estado || !formData.cidade || !formData.valor_frete) {
       return;
     }
 
