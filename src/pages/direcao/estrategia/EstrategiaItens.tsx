@@ -700,6 +700,9 @@ export default function EstrategiaItens() {
       quantidade: Number(newItem.quantidade.replace(",", ".")) || 0,
       quantidade_ideal: Number(newItem.quantidade_ideal.replace(",", ".")) || 0,
       quantidade_maxima: Number(newItem.quantidade_maxima.replace(",", ".")) || 0,
+      taxa_impostos: Number(padroes?.taxa_impostos ?? 0),
+      taxa_descontos: Number(padroes?.taxa_descontos ?? 0),
+      taxa_cartao: Number(padroes?.taxa_cartao ?? 0),
     });
     setNewItem({ descricao: "", categoria: "", unidade: "Un", custo_unitario: "0", preco_venda: "0", fornecedor: "", quantidade: "0", quantidade_ideal: "0", quantidade_maxima: "0" });
     setDialogOpen(false);
