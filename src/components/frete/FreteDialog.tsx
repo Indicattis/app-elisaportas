@@ -95,7 +95,7 @@ export function FreteDialog({ open, onOpenChange, frete }: FreteDialogProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.estado || !formData.cidade || !formData.quilometragem) {
+    if (!formData.estado || !formData.cidade || !formData.valor_frete) {
       return;
     }
 
@@ -178,38 +178,38 @@ export function FreteDialog({ open, onOpenChange, frete }: FreteDialogProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="quilometragem">Quilometragem (km) *</Label>
+            <Label htmlFor="valor_frete">Valor do Frete (R$) *</Label>
             <Input
-              id="quilometragem"
+              id="valor_frete"
               type="number"
               step="0.01"
-              min="0"
-              value={formData.quilometragem}
+              min="1"
+              value={formData.valor_frete}
               onChange={(e) => {
-                const km = formatCurrencyInput(e.target.value);
-                const valor = km ? (parseFloat(km) * 6).toFixed(2) : "";
+                const valor = formatCurrencyInput(e.target.value);
+                const km = valor ? (parseFloat(valor) / 6).toFixed(2) : "";
                 setFormData(prev => ({
                   ...prev,
-                  quilometragem: km,
                   valor_frete: valor,
+                  quilometragem: km,
                 }));
               }}
-              placeholder="0"
+              placeholder="0.00"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="valor_frete">Valor do Frete (R$)</Label>
+            <Label htmlFor="quilometragem">Quilometragem (km)</Label>
             <Input
-              id="valor_frete"
+              id="quilometragem"
               type="number"
-              value={formData.valor_frete}
+              value={formData.quilometragem}
               readOnly
               disabled
               placeholder="0.00"
             />
             <p className="text-xs text-muted-foreground">
-              Calculado automaticamente: quilometragem × R$ 6,00
+              Calculado automaticamente: valor do frete ÷ R$ 6,00
             </p>
           </div>
 
