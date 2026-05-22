@@ -12,6 +12,7 @@ export interface ItemTabelaPreco {
   valor_pintura: number;
   lucro: number;
   ativo: boolean;
+  ordem?: number | null;
   created_at: string;
   updated_at: string;
   created_by: string | null;
@@ -37,6 +38,7 @@ export function useTabelaPrecos(searchTerm: string = '') {
         .from('tabela_precos_portas')
         .select('*')
         .eq('ativo', true)
+        .order('ordem', { ascending: true, nullsFirst: false })
         .order('largura', { ascending: true })
         .order('altura', { ascending: true });
 
@@ -122,11 +124,29 @@ export function useTabelaPrecos(searchTerm: string = '') {
     }
   });
 
+  const reordenarItens = useMutation({
+    mutationFn: async (ids: string[]) => {
+      await Promise.all(
+        ids.map((id, index) =>
+          supabase.from('tabela_precos_portas').update({ ordem: index + 1 }).eq('id', id)
+        )
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tabela-precos'] });
+    },
+    onError: (error) => {
+      console.error('Erro ao reordenar itens:', error);
+      toast.error('Erro ao reordenar itens');
+    }
+  });
+
   return {
     itens,
     isLoading,
     adicionarItem: adicionarItem.mutateAsync,
     editarItem: editarItem.mutateAsync,
-    inativarItem: inativarItem.mutateAsync
+    inativarItem: inativarItem.mutateAsync,
+    reordenarItens: reordenarItens.mutateAsync
   };
 }
