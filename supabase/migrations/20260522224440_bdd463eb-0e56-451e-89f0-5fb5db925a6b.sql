@@ -1,0 +1,1 @@
+UPDATE public.frete_cidades SET quilometragem = valor_frete, valor_frete = quilometragem;
