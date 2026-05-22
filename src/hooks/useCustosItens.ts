@@ -146,6 +146,85 @@ export function useCustosItensCategoriasOrdem() {
   return { ...query, categoriasOrdem: query.data ?? [], salvarOrdem };
 }
 
+export function useCriarCategoriaItens() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (nome: string) => {
+      const nomeTrim = nome.trim();
+      if (!nomeTrim) throw new Error("Nome da categoria não pode ser vazio");
+      if (nomeTrim.toLowerCase() === "sem categoria") {
+        throw new Error("Nome reservado");
+      }
+      const { data: existing } = await supabase
+        .from("custos_itens_categorias_ordem")
+        .select("categoria")
+        .eq("categoria", nomeTrim)
+        .maybeSingle();
+      if (existing) throw new Error("Já existe uma categoria com esse nome");
+
+      const { data: itensExistentes } = await supabase
+        .from("custos_itens")
+        .select("id")
+        .eq("categoria", nomeTrim)
+        .limit(1);
+      if (itensExistentes && itensExistentes.length > 0) {
+        throw new Error("Já existe uma categoria com esse nome");
+      }
+
+      const { data: maxRow } = await supabase
+        .from("custos_itens_categorias_ordem")
+        .select("ordem")
+        .order("ordem", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const proximaOrdem = (maxRow?.ordem ?? -1) + 1;
+
+      const { error } = await supabase
+        .from("custos_itens_categorias_ordem")
+        .insert({ categoria: nomeTrim, ordem: proximaOrdem });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: CATEGORIAS_ORDEM_KEY });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+      toast.success("Categoria criada");
+    },
+    onError: (err: any) => toast.error(err?.message ?? "Erro ao criar categoria"),
+  });
+}
+
+export function useExcluirCategoriaItens() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (nome: string) => {
+      const nomeTrim = nome.trim();
+      if (!nomeTrim) throw new Error("Categoria inválida");
+      if (nomeTrim === "Sem categoria") {
+        throw new Error("A categoria 'Sem categoria' não pode ser excluída");
+      }
+      const { count, error: countErr } = await supabase
+        .from("custos_itens")
+        .select("id", { count: "exact", head: true })
+        .eq("categoria", nomeTrim);
+      if (countErr) throw countErr;
+      if ((count ?? 0) > 0) {
+        throw new Error(`Categoria possui ${count} item(ns). Mova ou exclua os itens antes.`);
+      }
+      const { error } = await supabase
+        .from("custos_itens_categorias_ordem")
+        .delete()
+        .eq("categoria", nomeTrim);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: CATEGORIAS_ORDEM_KEY });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+      toast.success("Categoria excluída");
+    },
+    onError: (err: any) => toast.error(err?.message ?? "Erro ao excluir categoria"),
+  });
+}
+
 export function useRenomearCategoriaItens() {
   const queryClient = useQueryClient();
   return useMutation({
