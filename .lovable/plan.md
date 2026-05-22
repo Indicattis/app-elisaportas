@@ -1,45 +1,15 @@
-## Objetivo
-Permitir exportar a tabela de `/direcao/estrategia/itens` em **PDF** e **Excel**, respeitando a ordenação atual por categorias e o filtro de busca.
+## Problema
 
-## Bibliotecas
-Já instaladas no projeto:
-- `jspdf` + `jspdf-autotable` (PDF)
-- `xlsx` (Excel)
+A página `/logistica/frete/internos` filtra a lista de fretes no client-side. O hook `useFretesCidades` (src/hooks/useFretesCidades.ts) busca `frete_cidades` com `.select('*')` sem paginação, então o Supabase aplica o limite padrão de **1000 linhas**. A tabela já tem **1.159 registros** ordenados por `estado` ascendente, e "São Bento do Sul / SC" cai após o corte — por isso a busca não encontra.
 
-Sem novas dependências.
+## Correção
 
-## Mudanças
+Em `src/hooks/useFretesCidades.ts`, no `queryFn` do `useQuery`:
 
-### 1. Novo utilitário `src/utils/estrategiaItensExport.ts`
-Duas funções puras que recebem os grupos já ordenados (`[categoria, itens][]`):
+- Adicionar `.range(0, 9999)` no select para subir o teto bem acima do volume atual da tabela.
 
-- `exportEstrategiaItensPDF(grupos)`
-  - jsPDF paisagem A4
-  - Título "Itens — Estratégia" + data atual
-  - Uma tabela por categoria (autoTable) com colunas:
-    Descrição · Custo · Lucro · Imposto (R$) · Desc. Gerente (R$) · Cartão (R$) · Valor de Venda
-  - Linha final com totais (custo, lucro, valor de venda)
-  - Salva como `itens-estrategia-YYYY-MM-DD.pdf`
+Mudança pontual, sem alterar UI nem regras. Após o ajuste, a busca por "São Bento do Sul" passa a retornar normalmente.
 
-- `exportEstrategiaItensExcel(grupos)`
-  - Uma aba única com cabeçalho colorido e blocos por categoria, ou uma aba por categoria (vou usar aba única com coluna "Categoria" para facilitar pivots)
-  - Valores numéricos puros (sem "R$") com `z = 'R$ #,##0.00'` para custo/lucro/impostos/etc.
-  - Linha de totais ao final
-  - Salva como `itens-estrategia-YYYY-MM-DD.xlsx`
+## Arquivo alterado
 
-### 2. `src/pages/direcao/estrategia/EstrategiaItens.tsx`
-- Importar `FileText` e `FileSpreadsheet` de `lucide-react`
-- Adicionar dois botões na barra superior, ao lado de "Cores das colunas":
-  - **Exportar PDF** (vermelho suave)
-  - **Exportar Excel** (verde suave)
-- Cada botão chama o util passando `groupedByCategoria` (já filtrado + ordenado).
-- Toast de sucesso/erro.
-
-## Detalhes técnicos
-- Os valores de imposto/desconto/cartão são salvos como **%** no banco — a exportação calculará `preço × % / 100` para mostrar em R$, igual à UI atual.
-- Lucro = `preço − custo − (preço × (tImp+tDesc+tCard)/100)`.
-- Respeita o filtro de busca atual (usa `groupedByCategoria`, não `items` cru).
-
-## Arquivos
-- **Novo:** `src/utils/estrategiaItensExport.ts`
-- **Editado:** `src/pages/direcao/estrategia/EstrategiaItens.tsx`
+- `src/hooks/useFretesCidades.ts`

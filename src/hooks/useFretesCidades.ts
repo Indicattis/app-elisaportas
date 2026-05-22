@@ -34,7 +34,8 @@ export function useFretesCidades() {
         .from('frete_cidades')
         .select('*')
         .order('estado', { ascending: true })
-        .order('cidade', { ascending: true });
+        .order('cidade', { ascending: true })
+        .range(0, 9999);
       
       if (error) throw error;
       return data as FreteCidade[];
