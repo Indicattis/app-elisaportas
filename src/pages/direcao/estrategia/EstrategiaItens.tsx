@@ -1096,15 +1096,6 @@ export default function EstrategiaItens() {
           ))}
         </div>
 
-        {/* Total geral */}
-        {filteredItems.length > 0 && (
-          <div className="rounded-xl bg-card/60 backdrop-blur-xl border border-border p-4 flex items-center justify-end gap-8 text-sm">
-            <div className="flex flex-col items-end">
-              <span className="text-muted-foreground/80 text-xs uppercase">Total custo</span>
-              <span className="text-foreground font-semibold">{formatCurrency(totals.custo)}</span>
-            </div>
-          </div>
-        )}
       </div>
     </MinimalistLayout>
   );
