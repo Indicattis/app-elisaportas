@@ -11,6 +11,7 @@ import {
 import {
   SortableContext,
   verticalListSortingStrategy,
+  horizontalListSortingStrategy,
   useSortable,
   arrayMove,
 } from "@dnd-kit/sortable";
@@ -95,6 +96,60 @@ const DEFAULT_COLUMN_COLORS: Record<ColumnKey, string> = {
   objetivo: "violet",
 };
 const COLUMN_COLORS_STORAGE_KEY = "estrategia-itens-column-colors-v1";
+const COLUMN_ORDER_STORAGE_KEY = "estrategia-itens-column-order-v1";
+const DEFAULT_COLUMN_ORDER: ColumnKey[] = ["custo", "lucro", "imposto", "desconto", "cartao", "venda", "objetivo"];
+const COLUMN_WIDTHS: Record<ColumnKey, string> = {
+  custo: "w-36",
+  lucro: "w-36",
+  imposto: "w-28",
+  desconto: "w-32",
+  cartao: "w-28",
+  venda: "w-40",
+  objetivo: "w-40",
+};
+
+function SortableHeadCell({
+  colKey,
+  colors,
+  children,
+}: {
+  colKey: ColumnKey;
+  colors: Record<ColumnKey, string>;
+  children: React.ReactNode;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: `col-${colKey}` });
+  const style: CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+    position: "relative",
+    zIndex: isDragging ? 10 : "auto",
+  };
+  return (
+    <TableHead
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "text-xs font-medium text-foreground text-right group/col",
+        COLUMN_WIDTHS[colKey],
+        getColumnBg(colors, colKey),
+      )}
+    >
+      <div className="flex items-center justify-end gap-1">
+        <button
+          type="button"
+          className="inline-flex h-5 w-5 items-center justify-center text-muted-foreground/40 hover:text-foreground cursor-grab active:cursor-grabbing touch-none opacity-0 group-hover/col:opacity-100"
+          aria-label="Arrastar coluna"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical className="h-3.5 w-3.5" />
+        </button>
+        <span>{children}</span>
+      </div>
+    </TableHead>
+  );
+}
 
 function getColumnBg(colors: Record<ColumnKey, string>, key: ColumnKey) {
   const c = colors[key] || DEFAULT_COLUMN_COLORS[key];
