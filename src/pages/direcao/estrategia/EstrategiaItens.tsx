@@ -391,7 +391,11 @@ function SortableItemRow({ item, disabled, categorias, colors, onUpdate, onDelet
   const tImp = Number(item.taxa_impostos || 0);
   const tDesc = Number(item.taxa_descontos || 0);
   const tCard = Number(item.taxa_cartao || 0);
-  const deducoes = tImp + tDesc + tCard;
+  const taxas = tImp + tDesc + tCard;
+  const deducoes = preco * (taxas / 100);
+  const vImp = preco * (tImp / 100);
+  const vDesc = preco * (tDesc / 100);
+  const vCard = preco * (tCard / 100);
   const lucro = preco - deducoes - custo;
   const corLucro = lucro > 0 ? "text-emerald-400" : lucro < 0 ? "text-red-400" : "text-muted-foreground";
   return (
@@ -434,27 +438,39 @@ function SortableItemRow({ item, disabled, categorias, colors, onUpdate, onDelet
       <TableCell className={`text-right text-foreground ${getColumnBg(colors, "imposto")}`}>
         <EditableCell
           value={tImp}
-          type="currency"
+          type="number"
           align="right"
-          display={formatCurrency(tImp)}
+          display={
+            <span title={`${tImp.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`}>
+              {formatCurrency(vImp)}
+            </span>
+          }
           onSave={(v) => onUpdate({ taxa_impostos: Number(v) })}
         />
       </TableCell>
       <TableCell className={`text-right text-foreground ${getColumnBg(colors, "desconto")}`}>
         <EditableCell
           value={tDesc}
-          type="currency"
+          type="number"
           align="right"
-          display={formatCurrency(tDesc)}
+          display={
+            <span title={`${tDesc.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`}>
+              {formatCurrency(vDesc)}
+            </span>
+          }
           onSave={(v) => onUpdate({ taxa_descontos: Number(v) })}
         />
       </TableCell>
       <TableCell className={`text-right text-foreground ${getColumnBg(colors, "cartao")}`}>
         <EditableCell
           value={tCard}
-          type="currency"
+          type="number"
           align="right"
-          display={formatCurrency(tCard)}
+          display={
+            <span title={`${tCard.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`}>
+              {formatCurrency(vCard)}
+            </span>
+          }
           onSave={(v) => onUpdate({ taxa_cartao: Number(v) })}
         />
       </TableCell>
