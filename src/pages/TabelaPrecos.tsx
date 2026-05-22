@@ -54,6 +54,7 @@ export default function TabelaPrecos({
   hideCatalogoTab = false,
   hideTotalColumn = false,
   embedded = false,
+  enableReorder = false,
   titleOverride,
   subtitleOverride,
   backPathOverride,
@@ -71,8 +72,34 @@ export default function TabelaPrecos({
   const navigate = useNavigate();
 
   const queryClient = useQueryClient();
-  const { itens, isLoading, adicionarItem, editarItem, inativarItem } = useTabelaPrecos(searchTerm);
+  const { itens, isLoading, adicionarItem, editarItem, inativarItem, reordenarItens } = useTabelaPrecos(searchTerm);
   const { data: resumoMontagem = {} } = useKitsMontagemResumo();
+
+  // Estado local para reordenação otimista
+  const [orderedItens, setOrderedItens] = useState<ItemTabelaPreco[]>([]);
+  useEffect(() => {
+    setOrderedItens(itens);
+  }, [itens]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const canReorder = enableReorder && !searchTerm;
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = orderedItens.findIndex((i) => i.id === active.id);
+    const newIndex = orderedItens.findIndex((i) => i.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+    const next = arrayMove(orderedItens, oldIndex, newIndex);
+    setOrderedItens(next);
+    await reordenarItens(next.map((i) => i.id));
+  };
+
+  const sortableIds = useMemo(() => orderedItens.map((i) => i.id), [orderedItens]);
 
   useEffect(() => {
     if (editingLucroId && lucroInputRef.current) {
