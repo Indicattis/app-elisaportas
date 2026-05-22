@@ -10,6 +10,8 @@ const fmtBRL = (n: number) =>
 
 function calcLinha(item: CustoItem) {
   const custo = Number(item.custo_unitario || 0);
+  const qtd = Number(item.quantidade || 0);
+  const totalCusto = custo * qtd;
   const preco = Number(item.preco_venda || 0);
   const tImp = Number(item.taxa_impostos || 0);
   const tDesc = Number(item.taxa_descontos || 0);
@@ -18,7 +20,7 @@ function calcLinha(item: CustoItem) {
   const vDesc = preco * (tDesc / 100);
   const vCard = preco * (tCard / 100);
   const lucro = preco - custo - (vImp + vDesc + vCard);
-  return { custo, preco, vImp, vDesc, vCard, lucro };
+  return { custo, totalCusto, preco, vImp, vDesc, vCard, lucro };
 }
 
 function hoje() {
