@@ -229,6 +229,9 @@ export function useCustosItens() {
           quantidade_ideal: payload.quantidade_ideal ?? 0,
           quantidade_maxima: payload.quantidade_maxima ?? 0,
           ordem: payload.ordem ?? 0,
+          ...(payload.taxa_impostos !== undefined ? { taxa_impostos: payload.taxa_impostos } : {}),
+          ...(payload.taxa_descontos !== undefined ? { taxa_descontos: payload.taxa_descontos } : {}),
+          ...(payload.taxa_cartao !== undefined ? { taxa_cartao: payload.taxa_cartao } : {}),
         })
         .select()
         .single();
