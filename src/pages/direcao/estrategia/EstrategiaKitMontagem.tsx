@@ -159,7 +159,6 @@ export default function EstrategiaKitMontagem() {
                   <TableHeader>
                     <TableRow className="border-white/10 hover:bg-transparent">
                       <TableHead className="text-white/60 min-w-[260px]">Item</TableHead>
-                      <TableHead className="text-white/60">Categoria</TableHead>
                       <TableHead className="text-white/60">Unid.</TableHead>
                       <TableHead className="text-right text-white/60 w-28">Custo un.</TableHead>
                       <TableHead className="text-right text-white/60 w-20">Imp. %</TableHead>
@@ -174,9 +173,9 @@ export default function EstrategiaKitMontagem() {
                   </TableHeader>
                   <TableBody>
                     {isLoading ? (
-                      <TableRow><TableCell colSpan={12} className="text-center text-white/50 py-6">Carregando...</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={11} className="text-center text-white/50 py-6">Carregando...</TableCell></TableRow>
                     ) : items.length === 0 ? (
-                      <TableRow><TableCell colSpan={12} className="text-center text-white/50 py-6">Nenhum item na montagem</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={11} className="text-center text-white/50 py-6">Nenhum item na montagem</TableCell></TableRow>
                     ) : (
                       items.map((it) => {
                         const q = Number(it.quantidade || 0);
@@ -190,7 +189,6 @@ export default function EstrategiaKitMontagem() {
                         return (
                           <TableRow key={it.id} className="border-white/10 hover:bg-white/5">
                             <TableCell className="text-white min-w-[260px]">{it.custo_item?.descricao ?? "—"}</TableCell>
-                            <TableCell className="text-white/60">{it.custo_item?.categoria ?? "—"}</TableCell>
                             <TableCell className="text-white/60">{it.custo_item?.unidade ?? "un"}</TableCell>
                             <TableCell className="text-right text-white/80">{fmt(custoUnit)}</TableCell>
                             <TableCell className="text-right text-white/70">{tImp.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%</TableCell>
