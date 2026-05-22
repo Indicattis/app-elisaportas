@@ -433,12 +433,13 @@ type SortableItemRowProps = {
   disabled: boolean;
   categorias: string[];
   colors: Record<ColumnKey, string>;
+  order: ColumnKey[];
   padroes: { taxa_impostos: number; taxa_descontos: number; taxa_cartao: number } | null | undefined;
   onUpdate: (patch: Partial<CustoItem>) => Promise<void> | void;
   onDelete: () => void;
 };
 
-function SortableItemRow({ item, disabled, categorias, colors, padroes, onUpdate, onDelete }: SortableItemRowProps) {
+function SortableItemRow({ item, disabled, categorias, colors, order, padroes, onUpdate, onDelete }: SortableItemRowProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: item.id,
     disabled,
@@ -474,7 +475,84 @@ function SortableItemRow({ item, disabled, categorias, colors, padroes, onUpdate
   const vDesc = preco * (tDesc / 100);
   const vCard = preco * (tCard / 100);
   const lucro = preco - deducoes - custo;
-  
+
+  const cellRenderers: Record<ColumnKey, React.ReactNode> = {
+    custo: (
+      <EditableCell
+        value={custo}
+        type="currency"
+        align="right"
+        display={formatCurrency(custo)}
+        onSave={(v) => onUpdate({ custo_unitario: Number(v) })}
+      />
+    ),
+    lucro: <>{formatCurrency(lucro)}</>,
+    imposto: (
+      <span title={`${tImp.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`}>
+        {formatCurrency(vImp)}
+      </span>
+    ),
+    desconto: (
+      <span title={`${tDesc.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`}>
+        {formatCurrency(vDesc)}
+      </span>
+    ),
+    cartao: (
+      <span title={`${tCard.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`}>
+        {formatCurrency(vCard)}
+      </span>
+    ),
+    venda: (
+      <EditableCell
+        value={preco}
+        type="currency"
+        align="right"
+        display={formatCurrency(preco)}
+        onSave={(v) => onUpdate({ preco_venda: Number(v) })}
+      />
+    ),
+    objetivo: item.custo_ok ? (
+      <div className="flex items-center justify-end gap-1 group">
+        <Check className="h-5 w-5 text-emerald-500 dark:text-emerald-400" />
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6 opacity-0 group-hover:opacity-100 text-muted-foreground/70 hover:text-foreground"
+          title="Desfazer OK"
+          onClick={() => onUpdate({ custo_ok: false } as Partial<CustoItem>)}
+        >
+          <X className="h-3.5 w-3.5" />
+        </Button>
+      </div>
+    ) : (
+      <div className="flex items-center justify-end gap-1 group">
+        <div className="flex-1">
+          <EditableCell
+            value={item.preco_objetivo ?? ""}
+            type="currency"
+            align="right"
+            display={item.preco_objetivo == null ? <span className="text-muted-foreground/60">—</span> : formatCurrency(Number(item.preco_objetivo))}
+            onSave={(v) => onUpdate({ preco_objetivo: v === "" || v === null ? null : Number(v) } as Partial<CustoItem>)}
+          />
+        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6 opacity-0 group-hover:opacity-100 text-muted-foreground/70 hover:text-emerald-500"
+          title="Marcar custo como OK"
+          onClick={() => onUpdate({ custo_ok: true, preco_objetivo: null } as Partial<CustoItem>)}
+        >
+          <Check className="h-3.5 w-3.5" />
+        </Button>
+      </div>
+    ),
+  };
+
+  const cellExtraCls: Partial<Record<ColumnKey, string>> = {
+    lucro: "font-medium",
+    venda: "font-medium",
+  };
+
   return (
     <TableRow
       ref={setNodeRef}
@@ -500,79 +578,14 @@ function SortableItemRow({ item, disabled, categorias, colors, padroes, onUpdate
           onSave={(v) => onUpdate({ descricao: String(v) })}
         />
       </TableCell>
-      <TableCell className={`text-right text-foreground ${getColumnBg(colors, "custo")}`}>
-        <EditableCell
-          value={custo}
-          type="currency"
-          align="right"
-          display={formatCurrency(custo)}
-          onSave={(v) => onUpdate({ custo_unitario: Number(v) })}
-        />
-      </TableCell>
-      <TableCell className={`text-right font-medium text-foreground ${getColumnBg(colors, "lucro")}`}>
-        {formatCurrency(lucro)}
-      </TableCell>
-      <TableCell className={`text-right text-foreground ${getColumnBg(colors, "imposto")}`}>
-        <span title={`${tImp.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`}>
-          {formatCurrency(vImp)}
-        </span>
-      </TableCell>
-      <TableCell className={`text-right text-foreground ${getColumnBg(colors, "desconto")}`}>
-        <span title={`${tDesc.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`}>
-          {formatCurrency(vDesc)}
-        </span>
-      </TableCell>
-      <TableCell className={`text-right text-foreground ${getColumnBg(colors, "cartao")}`}>
-        <span title={`${tCard.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`}>
-          {formatCurrency(vCard)}
-        </span>
-      </TableCell>
-      <TableCell className={`text-right font-medium text-foreground ${getColumnBg(colors, "venda")}`}>
-        <EditableCell
-          value={preco}
-          type="currency"
-          align="right"
-          display={formatCurrency(preco)}
-          onSave={(v) => onUpdate({ preco_venda: Number(v) })}
-        />
-      </TableCell>
-      <TableCell className={`text-right text-foreground ${getColumnBg(colors, "objetivo")}`}>
-        {item.custo_ok ? (
-          <div className="flex items-center justify-end gap-1 group">
-            <Check className="h-5 w-5 text-emerald-500 dark:text-emerald-400" />
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6 opacity-0 group-hover:opacity-100 text-muted-foreground/70 hover:text-foreground"
-              title="Desfazer OK"
-              onClick={() => onUpdate({ custo_ok: false } as Partial<CustoItem>)}
-            >
-              <X className="h-3.5 w-3.5" />
-            </Button>
-          </div>
-        ) : (
-          <div className="flex items-center justify-end gap-1 group">
-            <div className="flex-1">
-              <EditableCell
-                value={item.preco_objetivo ?? ""}
-                type="currency"
-                align="right"
-                display={item.preco_objetivo == null ? <span className="text-muted-foreground/60">—</span> : formatCurrency(Number(item.preco_objetivo))}
-                onSave={(v) => onUpdate({ preco_objetivo: v === "" || v === null ? null : Number(v) } as Partial<CustoItem>)}
-              />
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6 opacity-0 group-hover:opacity-100 text-muted-foreground/70 hover:text-emerald-500"
-              title="Marcar custo como OK"
-              onClick={() => onUpdate({ custo_ok: true, preco_objetivo: null } as Partial<CustoItem>)}
-            >
-              <Check className="h-3.5 w-3.5" />
-            </Button>
-          </div>
-        )}
-      </TableCell>
+      {order.map((col) => (
+        <TableCell
+          key={col}
+          className={cn("text-right text-foreground", cellExtraCls[col], getColumnBg(colors, col))}
+        >
+          {cellRenderers[col]}
+        </TableCell>
+      ))}
       <TableCell className="text-center">
         <div className="flex items-center justify-center gap-1">
           <Dialog open={moverOpen} onOpenChange={setMoverOpen}>
