@@ -465,6 +465,15 @@ function SortableItemRow({ item, disabled, categorias, colors, padroes, onUpdate
           onSave={(v) => onUpdate({ preco_venda: Number(v) })}
         />
       </TableCell>
+      <TableCell className={`text-right text-foreground ${getColumnBg(colors, "objetivo")}`}>
+        <EditableCell
+          value={item.preco_objetivo ?? ""}
+          type="currency"
+          align="right"
+          display={item.preco_objetivo == null ? <span className="text-muted-foreground/60">—</span> : formatCurrency(Number(item.preco_objetivo))}
+          onSave={(v) => onUpdate({ preco_objetivo: v === "" || v === null ? null : Number(v) } as Partial<CustoItem>)}
+        />
+      </TableCell>
       <TableCell className="text-center">
         <div className="flex items-center justify-center gap-1">
           <Dialog open={moverOpen} onOpenChange={setMoverOpen}>
