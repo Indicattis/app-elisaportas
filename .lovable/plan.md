@@ -1,61 +1,53 @@
-# Etapas de multas com responsável em /administrativo/multas
+# Página dedicada de Montagem do Kit
 
-## Objetivo
-Substituir a tela atual de multas por uma navegação por **abas de status** no mesmo padrão visual do hub `/direcao/gestao-fabrica` (tabs largos com avatar do responsável, contador colorido e estado ativo destacado). As etapas são, em ordem:
+Substituir o `KitMontagemDialog` (modal) por uma rota dedicada em `/direcao/estrategia/kits/:kitId/montagem`, mantendo o mesmo comportamento (adicionar/remover itens, editar quantidade) e adicionando a coluna **Custo unitário** e **Subtotal custo**.
+
+## Mudanças
+
+### 1. Nova rota e página
+- Criar `src/pages/direcao/estrategia/EstrategiaKitMontagem.tsx`.
+- Registrar rota `/direcao/estrategia/kits/:kitId/montagem` em `src/App.tsx` (mesmo guard das outras rotas de estratégia).
+- Layout via `MinimalistLayout` com breadcrumb: Home › Direção › Estratégia › Tabela de Kits › Montagem do {kit}.
+
+### 2. Estrutura da página (Cabeçalho + Tabela + Resumo lateral)
 
 ```text
-Aberta → Advertida → Paga → Concluída
+┌───────────────────────────────────────────────────────────┐
+│ Cabeçalho do kit (descrição, dimensões, badge ativo)      │
+├──────────────────────────────────────┬────────────────────┤
+│ Toolbar: + Adicionar item            │  Resumo lateral    │
+│                                      │  • Itens: N        │
+│ Tabela de itens:                     │  • Custo total     │
+│  Item | Categoria | Unidade |        │  • Venda total     │
+│  Custo un. | Qtd | Subtotal custo |  │  • Lucro total     │
+│  Lucro un. | Subtotal lucro | 🗑     │  • Margem %        │
+│                                      │                    │
+└──────────────────────────────────────┴────────────────────┘
 ```
 
-Cada aba possui um **responsável** persistido no banco. **Apenas esse responsável pode avançar** uma multa para a próxima etapa.
+Grid: `lg:grid-cols-3` com tabela em `lg:col-span-2` e resumo em `lg:col-span-1` (sticky `top-4`).
 
-## Comportamento
+### 3. Dados
+- Reaproveitar `useKitMontagem(kitId)` (já expõe items, addItem, updateQuantidade, removeItem, computeLucroUnit).
+- Carregar o kit em si via `useTabelaPrecos` (filtrar pelo id) para mostrar descrição/dimensões no cabeçalho.
+- Picker de itens reaproveita `useCustosItens` + `Popover/Command` igual ao modal atual.
 
-- A barra de abas mostra as 4 etapas. Cada trigger renderiza:
-  - Avatar do responsável da etapa (ou ícone neutro quando não atribuído).
-  - Label da etapa.
-  - Pill com a contagem de multas naquela etapa.
-  - Mesmo estilo glassmorphism + ring azul em ativo já usado em `GestaoFabricaDirecao` (linhas 918-973).
-- Clicar no avatar/ícone abre um modal para **atribuir/remover** o responsável da etapa (lista de `admin_users`).
-- O conteúdo da aba ativa lista as multas com aquele status, reutilizando os atuais `MultaCard` (com badges de vencimento como decoração).
-- Cada card mostra um botão **"Avançar"** somente quando:
-  - A etapa atual não é a última (`Concluída`); **e**
-  - `auth.uid()` é igual ao `responsavel_id` da etapa atual.
-  - Caso contrário, o botão aparece desabilitado com tooltip "Somente {nome do responsável} pode avançar".
-- Ações já existentes (cadastrar nova multa, excluir) permanecem.
-- Botões de "Marcar como paga" e o cálculo automático de status por data são removidos — o avanço passa a ser explícito via fluxo de etapas.
+### 4. Coluna nova: Custo
+- `custo_unitario` já vem em `MontagemItem.custo_item.custo_unitario`.
+- Exibir `Custo un.` e `Subtotal custo = qtd × custo_unitario`.
+- Manter `Lucro un.` e `Subtotal lucro` (via `computeLucroUnit`).
 
-## Modelo de dados
+### 5. Remoção do modal
+- Em `src/pages/TabelaPrecos.tsx`:
+  - Remover import e uso de `KitMontagemDialog`, estado `montagemKit`.
+  - Trocar `onClick={() => setMontagemKit(item)}` (linhas 486 e 497) por `navigate(\`/direcao/estrategia/kits/\${item.id}/montagem\`)` usando `useNavigate`.
+- Manter o componente `KitMontagemDialog.tsx` por ora não é necessário — pode ser deletado, já que só é usado aqui.
 
-1. **`multas.status`**: passa a aceitar `aberta | advertida | paga | concluida`. Default vira `aberta`.
-   - Migração de dados: registros com `status = 'pendente'` → `'aberta'`.
-2. **Nova tabela** `public.multas_etapa_responsaveis`:
-   - `id uuid pk default gen_random_uuid()`
-   - `status text not null unique` (com check `in ('aberta','advertida','paga','concluida')`)
-   - `responsavel_id uuid not null` (sem FK para `auth.users`, padrão do projeto)
-   - `created_at`, `updated_at` (trigger `update_updated_at_column`)
-   - RLS habilitada com `USING (auth.uid() IS NOT NULL)` em SELECT/INSERT/UPDATE/DELETE, no mesmo padrão de `etapa_responsaveis`.
+### 6. Estilo
+Seguir glassmorphism do projeto: `bg-white/5`, `backdrop-blur-xl`, `border-white/10`, paleta azul/branco, igual ao modal atual.
 
-Nenhuma RLS extra em `multas` para travar avanço — a restrição de "somente o responsável avança" é validada na UI (igual ao que já acontece em outras telas com `etapa_responsaveis`). Posso adicionar policy de UPDATE condicional se você preferir; me avise.
-
-## Implementação técnica
-
-Arquivos novos:
-- `src/hooks/useMultasEtapaResponsaveis.ts` — análogo a `useEtapaResponsaveis`, porém com `status: 'aberta' | 'advertida' | 'paga' | 'concluida'` como chave.
-- `src/components/multas/SelecionarResponsavelMultaModal.tsx` — modal de busca em `admin_users` com confirmar/remover (versão enxuta do `SelecionarResponsavelEtapaModal`, sem dependência de `EtapaPedido`).
-
-Arquivos editados:
-- `src/hooks/useMultas.ts`:
-  - Tipar `status` como `'aberta' | 'advertida' | 'paga' | 'concluida'`.
-  - Manter `updateStatus` genérico, usado para avançar.
-- `src/pages/administrativo/MultasMinimalista.tsx` (refatorado):
-  - Usar `Tabs` com `value={statusAtivo}` e a `TabsList` no mesmo template visual das abas de `GestaoFabricaDirecao` (mesmas classes do grupo `flex gap-1 border-2 border-...` e do `TabsTrigger` com avatar + label + pill).
-  - Mapa de cores por etapa: Aberta = azul, Advertida = âmbar, Paga = verde, Concluída = emerald/cinza.
-  - Filtrar multas por `m.status === statusAtivo` (sem o cálculo por data atual).
-  - `MultaCard` recebe `podeAvancar` e `proximaEtapaLabel` e renderiza botão "Avançar" (chevron) que chama `updateStatus.mutate({ id, status: proximaEtapa })`.
-  - Resumo no topo é simplificado para "Total pendente" (soma de `aberta+advertida`), "Total" e "Concluídas".
-
-## Fora de escopo
-- Histórico de transições (quem avançou cada multa e quando).
-- Notificação ao responsável quando uma multa cai na sua aba.
-- Permitir retroceder etapa.
+## Detalhes técnicos
+- Hook reutilizado: `useKitMontagem` em `src/hooks/useKitMontagem.ts`.
+- Tipo `MontagemItem.custo_item.custo_unitario` já disponível — sem mudanças no hook nem migration.
+- Sem mudanças no banco.
+- Sem mudanças no `MultasMinimalista.tsx` (escopo separado).
