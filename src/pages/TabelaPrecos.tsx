@@ -257,8 +257,7 @@ export default function TabelaPrecos({
       headerActions={headerActions}
       fullWidth
     >
-      <div className="px-4 lg:px-[100px]">
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'portas' | 'catalogo')} className="space-y-6">
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'portas' | 'catalogo')} className="space-y-6">
         {!hideCatalogoTab && (
           <TabsList className="bg-white/5 border border-white/10">
             <TabsTrigger value="portas" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-white/70">Portas</TabsTrigger>
@@ -543,7 +542,6 @@ export default function TabelaPrecos({
           <CatalogoPrecosTab />
         </TabsContent>
       </Tabs>
-      </div>
 
       {/* Modal de Adicionar/Editar */}
       <ItemModal

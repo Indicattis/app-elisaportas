@@ -124,7 +124,7 @@ export function MinimalistLayout({
       {/* Container principal */}
       <div className="relative z-10 min-h-screen flex flex-col">
         {/* Header minimalista */}
-        <header className="sticky top-0 z-20 px-4 py-4 mt-14">
+        <header className={`sticky top-0 z-20 py-4 mt-14 ${fullWidth ? "px-4 lg:px-[100px]" : "px-4"}`}>
           <div className={fullWidth ? "w-full" : "max-w-7xl mx-auto"}>
             <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
               <div className="px-4 py-2 rounded-lg flex items-center justify-between">
@@ -146,7 +146,7 @@ export function MinimalistLayout({
         </header>
         
         {/* Conteúdo */}
-        <main className="flex-1 px-4 py-6 overflow-auto">
+        <main className={`flex-1 py-6 overflow-auto ${fullWidth ? "px-4 lg:px-[100px]" : "px-4"}`}>
           <div className={fullWidth ? "w-full" : "max-w-7xl mx-auto"}>
             {children}
           </div>
