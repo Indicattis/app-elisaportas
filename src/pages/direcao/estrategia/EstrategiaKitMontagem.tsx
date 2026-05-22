@@ -173,9 +173,9 @@ export default function EstrategiaKitMontagem() {
                   </TableHeader>
                   <TableBody>
                     {isLoading ? (
-                      <TableRow><TableCell colSpan={12} className="text-center text-white/50 py-6">Carregando...</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={11} className="text-center text-white/50 py-6">Carregando...</TableCell></TableRow>
                     ) : items.length === 0 ? (
-                      <TableRow><TableCell colSpan={12} className="text-center text-white/50 py-6">Nenhum item na montagem</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={11} className="text-center text-white/50 py-6">Nenhum item na montagem</TableCell></TableRow>
                     ) : (
                       items.map((it) => {
                         const q = Number(it.quantidade || 0);
