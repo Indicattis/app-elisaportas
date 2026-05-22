@@ -1,25 +1,35 @@
-## Dinâmica da coluna "Preço Objetivo"
+# Reordenar colunas de valores em /direcao/estrategia/itens
 
-Cada linha terá um estado: **OK** (check verde) ou **precisa ajuste** (input manual de valor).
+## Objetivo
+Permitir que o usuário reordene as 7 colunas de valores da tabela arrastando-as horizontalmente, com a ordem persistida localmente.
 
-### Banco
-Migration adiciona coluna `custo_ok boolean not null default false` em `custos_itens`.
+## Colunas afetadas
+Custo, Lucro, Imposto, Desc. Gerente, Cartão, Valor de Venda, Preço Objetivo.
 
-### Hook `useCustosItens.ts`
-- Adicionar `custo_ok: boolean` em `CustoItem` e em `UpsertCustoItemPayload`.
-- Incluir no upsert.
+Colunas fixas (não reordenáveis): handle de arrastar linha, Item, Unidade, e a coluna de ações (lixeira).
 
-### UI `EstrategiaItens.tsx` — célula "Preço Objetivo"
-Comportamento:
-- Se `custo_ok === true`: mostrar **check verde** centralizado (ícone `Check` em verde) + botão pequeno "desfazer" no hover para voltar ao modo input.
-- Se `custo_ok === false`: mostrar o `CurrencyInput` atual com `preco_objetivo` + botão pequeno de check (cinza) ao lado para marcar como OK.
-- Marcar como OK: seta `custo_ok = true` e limpa `preco_objetivo = null`.
-- Desmarcar OK: seta `custo_ok = false`, mantém input vazio para o usuário digitar.
+## Comportamento
+- Cada `<TableHead>` das 7 colunas vira sortable horizontal usando `@dnd-kit` (já instalado no arquivo).
+- Um ícone `GripVertical` aparece no header (sutil, visível no hover) como handle de arrasto.
+- Ao soltar, a ordem é atualizada e todas as `<TableRow>` reordenam suas células correspondentes na mesma sequência.
+- A ordem é persistida em `localStorage` (chave `estrategia-itens-column-order-v1`), análogo ao padrão já usado para cores (`estrategia-itens-column-colors-v1`).
+- Se a chave não existir, usa-se a ordem padrão atual.
+- Validação: ao carregar do storage, mesclar com a lista padrão para tolerar adição/remoção futura de colunas.
 
-Header da coluna permanece "Preço Objetivo".
+## Implementação técnica
+Arquivo único: `src/pages/direcao/estrategia/EstrategiaItens.tsx`.
 
-### Arquivos
-- `supabase/migrations/<novo>.sql` — add column
-- `src/hooks/useCustosItens.ts` — tipo + upsert
-- `src/integrations/supabase/types.ts` — regenerado pela migration
-- `src/pages/direcao/estrategia/EstrategiaItens.tsx` — célula com toggle check/input
+1. Novo estado `columnOrder: ColumnKey[]` com hidratação do localStorage e efeito de persistência (espelha o padrão de `columnColors`).
+2. Novo `DndContext` horizontal (sensor `PointerSensor`, `closestCenter`, sem o modifier vertical) envolvendo apenas a linha de headers das 7 colunas e, em paralelo, o mapeamento das células de cada linha.
+3. `SortableContext` com `horizontalListSortingStrategy` (trocar import de `verticalListSortingStrategy`, mantendo o existente para as linhas) recebendo `columnOrder`.
+4. Refatorar a renderização atual (que hoje declara cada `TableHead`/`TableCell` inline) para mapas indexados por `ColumnKey`:
+   - `headerRenderers: Record<ColumnKey, ReactNode>` para os headers (mantendo sort buttons, popover de cor, etc.).
+   - `cellRenderers: Record<ColumnKey, (item) => ReactNode>` para o conteúdo de cada célula (mantendo `EditableCell`, lógica de `custo_ok` no objetivo, formatação, `getColumnBg`).
+5. Componentes auxiliares `SortableHeadCell` e `SortableBodyCell` (usam `useSortable` com o mesmo `id = ColumnKey`) renderizando `<TableHead>` / `<TableCell>` com `transform`/`transition` aplicados via style.
+6. Handle `GripVertical` no header com `cursor-grab`, `opacity-0 group-hover:opacity-100`, sem interferir nos botões de ordenação e popover existentes.
+7. Nenhuma mudança em hooks, banco ou export PDF/Excel (a ordem visual é apenas no preview da tabela).
+
+## Não incluído
+- Persistência por usuário no banco (fica em localStorage).
+- Reordenar colunas fixas (Item/Unidade/Ações).
+- Aplicar a nova ordem nos exports PDF/Excel.
