@@ -178,23 +178,23 @@ export function FreteDialog({ open, onOpenChange, frete }: FreteDialogProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="quilometragem">Quilometragem (km) *</Label>
+            <Label htmlFor="valor_frete">Valor do Frete (R$) *</Label>
             <Input
-              id="quilometragem"
+              id="valor_frete"
               type="number"
               step="0.01"
-              min="0"
-              value={formData.quilometragem}
+              min="1"
+              value={formData.valor_frete}
               onChange={(e) => {
-                const km = formatCurrencyInput(e.target.value);
-                const valor = km ? (parseFloat(km) * 6).toFixed(2) : "";
+                const valor = formatCurrencyInput(e.target.value);
+                const km = valor ? (parseFloat(valor) / 6).toFixed(2) : "";
                 setFormData(prev => ({
                   ...prev,
-                  quilometragem: km,
                   valor_frete: valor,
+                  quilometragem: km,
                 }));
               }}
-              placeholder="0"
+              placeholder="0.00"
             />
           </div>
 
