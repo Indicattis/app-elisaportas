@@ -162,9 +162,9 @@ export default function EstrategiaKitMontagem() {
                       <TableHead className="text-white/60 min-w-[260px]">Item</TableHead>
                       <TableHead className="text-white/60">Unid.</TableHead>
                       <TableHead className="text-right text-white/60 w-28">Custo un.</TableHead>
-                      <TableHead className="text-right text-white/60 w-20">Imp. %</TableHead>
-                      <TableHead className="text-right text-white/60 w-24">Desc. ger. %</TableHead>
-                      <TableHead className="text-right text-white/60 w-20">Cartão %</TableHead>
+                      <TableHead className="text-right text-white/60 w-24">Imposto</TableHead>
+                      <TableHead className="text-right text-white/60 w-28">Desc. Gerente</TableHead>
+                      <TableHead className="text-right text-white/60 w-24">Cartão</TableHead>
                       <TableHead className="text-right text-white/60 w-24">Qtd</TableHead>
                       <TableHead className="text-right text-white/60 w-32">Subtotal custo</TableHead>
                       <TableHead className="text-right text-white/60 w-28">Lucro un.</TableHead>
@@ -187,14 +187,20 @@ export default function EstrategiaKitMontagem() {
                         const tImp = Number(it.custo_item?.taxa_impostos || 0);
                         const tDesc = Number(it.custo_item?.taxa_descontos || 0);
                         const tCart = Number(it.custo_item?.taxa_cartao || 0);
+                        const preco = Number(it.custo_item?.preco_venda || 0);
+                        const vImp = preco * (tImp / 100);
+                        const vDesc = preco * (tDesc / 100);
+                        const vCart = preco * (tCart / 100);
+                        const pctFmt = (n: number) =>
+                          `${n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`;
                         return (
                           <TableRow key={it.id} className="border-white/10 hover:bg-white/5">
                             <TableCell className="text-white min-w-[260px]">{it.custo_item?.descricao ?? "—"}</TableCell>
                             <TableCell className="text-white/60">{it.custo_item?.unidade ?? "un"}</TableCell>
                             <TableCell className="text-right text-white/80">{fmt(custoUnit)}</TableCell>
-                            <TableCell className="text-right text-white/70">{tImp.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%</TableCell>
-                            <TableCell className="text-right text-white/70">{tDesc.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%</TableCell>
-                            <TableCell className="text-right text-white/70">{tCart.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%</TableCell>
+                            <TableCell className="text-right text-white/70"><span title={pctFmt(tImp)}>{fmt(vImp)}</span></TableCell>
+                            <TableCell className="text-right text-white/70"><span title={pctFmt(tDesc)}>{fmt(vDesc)}</span></TableCell>
+                            <TableCell className="text-right text-white/70"><span title={pctFmt(tCart)}>{fmt(vCart)}</span></TableCell>
                             <TableCell className="text-right">
                               <Input
                                 type="number"
