@@ -96,14 +96,14 @@ export function exportEstrategiaItensPDF(grupos: GrupoItens[]) {
 
   autoTable(doc, {
     startY: cursorY,
-    head: [["TOTAL", "Custo", "Lucro", "", "", "", "Valor de Venda"]],
-    body: [["", fmtBRL(totCusto), fmtBRL(totLucro), "", "", "", fmtBRL(totVenda)]],
+    head: [["TOTAL", "Custo", "Total Custo", "Lucro", "", "", "", "Valor de Venda"]],
+    body: [["", "", fmtBRL(totCusto), fmtBRL(totLucro), "", "", "", fmtBRL(totVenda)]],
     styles: { fontSize: 9, fontStyle: "bold", cellPadding: 2 },
     headStyles: { fillColor: [15, 23, 42], textColor: 255 },
     columnStyles: {
-      1: { halign: "right" },
       2: { halign: "right" },
-      6: { halign: "right" },
+      3: { halign: "right" },
+      7: { halign: "right" },
     },
     margin: { left: 10, right: 10 },
   });
