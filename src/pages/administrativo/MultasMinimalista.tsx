@@ -432,7 +432,10 @@ export default function MultasMinimalista() {
                         podeAvancar={podeAvancar && !!proxima}
                         proximaLabel={proximaLabel}
                         responsavelNome={respAtual?.nome || null}
-                        onAvancar={() => proxima && updateStatus.mutate({ id: multa.id, status: proxima })}
+                        onAvancar={() => {
+                          if (!proxima || !proximaLabel) return;
+                          setConfirmAvanco({ multaId: multa.id, proxima, proximaLabel });
+                        }}
                         onExcluir={() => deleteMulta.mutate(multa.id)}
                       />
                     );
