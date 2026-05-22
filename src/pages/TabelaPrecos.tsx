@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Plus, Pencil, Trash2, Upload, Check, X, Boxes } from "lucide-react";
+import { Search, Plus, Pencil, Trash2, Upload, Check, X, Boxes, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -16,6 +16,24 @@ import { CatalogoPrecosTab } from "@/components/tabela-precos/CatalogoPrecosTab"
 import { useKitsMontagemResumo } from "@/hooks/useKitMontagem";
 import { useQueryClient } from "@tanstack/react-query";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { restrictToVerticalAxis, restrictToParentElement } from "@dnd-kit/modifiers";
 
 interface TabelaPrecosProps {
   hideLucroColumn?: boolean;
@@ -23,6 +41,7 @@ interface TabelaPrecosProps {
   hideCatalogoTab?: boolean;
   hideTotalColumn?: boolean;
   embedded?: boolean;
+  enableReorder?: boolean;
   titleOverride?: string;
   subtitleOverride?: string;
   backPathOverride?: string;
