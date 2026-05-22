@@ -420,7 +420,7 @@ function SortableItemRow({ item, disabled, categorias, colors, onUpdate, onDelet
           </button>
         )}
       </TableCell>
-      <TableCell className="text-foreground">
+      <TableCell className="text-foreground font-bold">
         <EditableCell
           value={item.descricao}
           onSave={(v) => onUpdate({ descricao: String(v) })}
