@@ -117,6 +117,7 @@ export function exportEstrategiaItensExcel(grupos: GrupoItens[]) {
     "Categoria",
     "Descrição",
     "Custo",
+    "Total Custo",
     "Lucro",
     "Imposto (R$)",
     "Desc. Gerente (R$)",
@@ -131,13 +132,14 @@ export function exportEstrategiaItensExcel(grupos: GrupoItens[]) {
   grupos.forEach(([categoria, itens]) => {
     itens.forEach((it) => {
       const c = calcLinha(it);
-      totCusto += c.custo;
+      totCusto += c.totalCusto;
       totLucro += c.lucro;
       totVenda += c.preco;
       rows.push([
         categoria,
         it.descricao,
         c.custo,
+        c.totalCusto,
         c.lucro,
         c.vImp,
         c.vDesc,
@@ -148,7 +150,7 @@ export function exportEstrategiaItensExcel(grupos: GrupoItens[]) {
   });
 
   rows.push([]);
-  rows.push(["TOTAL", "", totCusto, totLucro, "", "", "", totVenda]);
+  rows.push(["TOTAL", "", "", totCusto, totLucro, "", "", "", totVenda]);
 
   const ws = XLSX.utils.aoa_to_sheet(rows);
 
@@ -156,7 +158,7 @@ export function exportEstrategiaItensExcel(grupos: GrupoItens[]) {
   const moneyFmt = 'R$ #,##0.00;[Red](R$ #,##0.00);"-"';
   const range = XLSX.utils.decode_range(ws["!ref"] as string);
   for (let R = 1; R <= range.e.r; ++R) {
-    for (const C of [2, 3, 4, 5, 6, 7]) {
+    for (const C of [2, 3, 4, 5, 6, 7, 8]) {
       const ref = XLSX.utils.encode_cell({ r: R, c: C });
       const cell = ws[ref];
       if (cell && typeof cell.v === "number") {
@@ -169,6 +171,7 @@ export function exportEstrategiaItensExcel(grupos: GrupoItens[]) {
   ws["!cols"] = [
     { wch: 22 },
     { wch: 40 },
+    { wch: 14 },
     { wch: 14 },
     { wch: 14 },
     { wch: 14 },
