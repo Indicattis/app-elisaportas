@@ -371,7 +371,8 @@ export default function TabelaPrecos({
                               );
                             }
                             const lucro = lucroInfo.value;
-                            const pct = total > 0 ? (lucro / total) * 100 : 0;
+                            const precoPorta = Number(item.valor_porta || 0);
+                            const pct = precoPorta > 0 ? (lucro / precoPorta) * 100 : 0;
                             const cor = pct > 0 ? "text-emerald-400" : pct < 0 ? "text-red-400" : "text-white/60";
                             return (
                               <TableCell className={`text-right hidden md:table-cell font-medium ${cor}`}>
