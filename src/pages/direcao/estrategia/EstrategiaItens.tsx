@@ -454,7 +454,7 @@ function SortableItemRow({ item, disabled, categorias, colors, padroes, onUpdate
           onSave={(v) => onUpdate({ custo_unitario: Number(v) })}
         />
       </TableCell>
-      <TableCell className={`text-right font-medium ${getColumnBg(colors, "lucro")} ${corLucro}`}>
+      <TableCell className={`text-right font-medium text-foreground ${getColumnBg(colors, "lucro")}`}>
         {formatCurrency(lucro)}
       </TableCell>
       <TableCell className={`text-right text-foreground ${getColumnBg(colors, "imposto")}`}>
