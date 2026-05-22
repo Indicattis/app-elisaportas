@@ -139,10 +139,12 @@ export default function AdministrativoHub() {
                   className={`w-full h-12 rounded-lg
                              flex items-center gap-4 px-5
                              font-medium border transition-all duration-300
-                             ${item.ativo 
-                               ? 'bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 active:scale-[0.98] text-white shadow-lg shadow-blue-500/20 border-blue-400/30 cursor-pointer' 
-                               : 'bg-white/5 text-white/50 border-white/10 cursor-not-allowed'
-                             }`}
+                             ${!item.ativo 
+                                ? 'bg-white/5 text-white/50 border-white/10 cursor-not-allowed'
+                                : item.label === 'Multas'
+                                  ? 'bg-gradient-to-r from-red-500 to-red-700 hover:from-red-400 hover:to-red-600 active:scale-[0.98] text-white shadow-lg shadow-red-500/20 border-red-400/30 cursor-pointer'
+                                  : 'bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 active:scale-[0.98] text-white shadow-lg shadow-blue-500/20 border-blue-400/30 cursor-pointer'
+                              }`}
                 >
                   <Icon className="w-5 h-5" strokeWidth={1.5} />
                   <span className="text-sm font-medium flex-1 text-left">{item.label}</span>
