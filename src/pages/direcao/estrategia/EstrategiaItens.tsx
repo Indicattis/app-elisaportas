@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, CSSProperties } from "react";
-import { Plus, Trash2, Percent, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Check, X, GripVertical, FolderInput } from "lucide-react";
+import { Plus, Trash2, Percent, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Check, X, GripVertical, FolderInput, Palette } from "lucide-react";
 import {
   DndContext,
   closestCenter,
@@ -49,6 +49,52 @@ import { useCustosItens, CustoItem, useCustosItensPadroes, useCustosItensCategor
 import { cn } from "@/lib/utils";
 
 const UNIDADES = ["Un", "M", "Kg", "L", "M²", "M³", "Cx", "Pç"];
+
+// ============== Cores configuráveis das colunas ==============
+const COLUMN_COLOR_OPTIONS: Record<string, { label: string; bg: string; swatch: string }> = {
+  rose:    { label: "Rosa",      bg: "bg-rose-500/30",    swatch: "bg-rose-500" },
+  red:     { label: "Vermelho",  bg: "bg-red-500/30",     swatch: "bg-red-500" },
+  orange:  { label: "Laranja",   bg: "bg-orange-500/30",  swatch: "bg-orange-500" },
+  amber:   { label: "Âmbar",     bg: "bg-amber-500/30",   swatch: "bg-amber-500" },
+  yellow:  { label: "Amarelo",   bg: "bg-yellow-500/30",  swatch: "bg-yellow-500" },
+  lime:    { label: "Lima",      bg: "bg-lime-500/30",    swatch: "bg-lime-500" },
+  green:   { label: "Verde",     bg: "bg-green-500/30",   swatch: "bg-green-500" },
+  emerald: { label: "Esmeralda", bg: "bg-emerald-500/30", swatch: "bg-emerald-500" },
+  teal:    { label: "Teal",      bg: "bg-teal-500/30",    swatch: "bg-teal-500" },
+  cyan:    { label: "Ciano",     bg: "bg-cyan-500/30",    swatch: "bg-cyan-500" },
+  sky:     { label: "Céu",       bg: "bg-sky-500/30",     swatch: "bg-sky-500" },
+  blue:    { label: "Azul",      bg: "bg-blue-500/30",    swatch: "bg-blue-500" },
+  indigo:  { label: "Índigo",    bg: "bg-indigo-500/30",  swatch: "bg-indigo-500" },
+  violet:  { label: "Violeta",   bg: "bg-violet-500/30",  swatch: "bg-violet-500" },
+  purple:  { label: "Roxo",      bg: "bg-purple-500/30",  swatch: "bg-purple-500" },
+  fuchsia: { label: "Fúcsia",    bg: "bg-fuchsia-500/30", swatch: "bg-fuchsia-500" },
+  pink:    { label: "Pink",      bg: "bg-pink-500/30",    swatch: "bg-pink-500" },
+  slate:   { label: "Cinza",     bg: "bg-slate-500/30",   swatch: "bg-slate-500" },
+};
+
+type ColumnKey = "custo" | "lucro" | "imposto" | "desconto" | "cartao" | "venda";
+const COLUMN_LABELS: Record<ColumnKey, string> = {
+  custo: "Custo",
+  lucro: "Lucro",
+  imposto: "Imposto",
+  desconto: "Desc. Gerente",
+  cartao: "Cartão",
+  venda: "Valor de Venda",
+};
+const DEFAULT_COLUMN_COLORS: Record<ColumnKey, string> = {
+  custo: "rose",
+  lucro: "blue",
+  imposto: "orange",
+  desconto: "yellow",
+  cartao: "teal",
+  venda: "green",
+};
+const COLUMN_COLORS_STORAGE_KEY = "estrategia-itens-column-colors-v1";
+
+function getColumnBg(colors: Record<ColumnKey, string>, key: ColumnKey) {
+  const c = colors[key] || DEFAULT_COLUMN_COLORS[key];
+  return (COLUMN_COLOR_OPTIONS[c] || COLUMN_COLOR_OPTIONS[DEFAULT_COLUMN_COLORS[key]]).bg;
+}
 
 type EditableCellProps = {
   value: string | number | null | undefined;
