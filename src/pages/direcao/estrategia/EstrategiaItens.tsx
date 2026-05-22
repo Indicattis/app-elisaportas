@@ -937,6 +937,7 @@ export default function EstrategiaItens() {
                       key={item.id}
                       item={item}
                       disabled={isDndDisabled}
+                      categorias={todasCategorias}
                       onUpdate={(patch) => updateItem.mutateAsync({ id: item.id, patch })}
                       onDelete={() => {
                         if (confirm(`Excluir "${item.descricao}"?`)) {
