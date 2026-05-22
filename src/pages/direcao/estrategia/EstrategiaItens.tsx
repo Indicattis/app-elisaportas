@@ -75,8 +75,9 @@ const COLUMN_COLOR_OPTIONS: Record<string, { label: string; bg: string; swatch: 
   slate:   { label: "Cinza",     bg: "bg-slate-500/30",   swatch: "bg-slate-500" },
 };
 
-type ColumnKey = "lucro" | "imposto" | "desconto" | "cartao" | "venda";
+type ColumnKey = "custo" | "lucro" | "imposto" | "desconto" | "cartao" | "venda";
 const COLUMN_LABELS: Record<ColumnKey, string> = {
+  custo: "Custo",
   lucro: "Lucro",
   imposto: "Imposto",
   desconto: "Desc. Gerente",
@@ -84,6 +85,7 @@ const COLUMN_LABELS: Record<ColumnKey, string> = {
   venda: "Valor de Venda",
 };
 const DEFAULT_COLUMN_COLORS: Record<ColumnKey, string> = {
+  custo: "rose",
   lucro: "blue",
   imposto: "orange",
   desconto: "yellow",
@@ -422,6 +424,15 @@ function SortableItemRow({ item, disabled, categorias, colors, onUpdate, onDelet
         <EditableCell
           value={item.descricao}
           onSave={(v) => onUpdate({ descricao: String(v) })}
+        />
+      </TableCell>
+      <TableCell className={`text-right text-foreground ${getColumnBg(colors, "custo")}`}>
+        <EditableCell
+          value={custo}
+          type="currency"
+          align="right"
+          display={formatCurrency(custo)}
+          onSave={(v) => onUpdate({ custo_unitario: Number(v) })}
         />
       </TableCell>
       <TableCell className={`text-right font-medium ${getColumnBg(colors, "lucro")} ${corLucro}`}>
@@ -1113,6 +1124,7 @@ export default function EstrategiaItens() {
                    <TableRow className="border-border hover:bg-transparent">
                      <TableHead className="w-8 p-0" />
                      <TableHead className="text-xs font-medium text-muted-foreground">Descrição</TableHead>
+                    <TableHead className={`text-xs font-medium text-foreground text-right w-36 ${getColumnBg(columnColors, "custo")}`}>Custo</TableHead>
                     <TableHead className={`text-xs font-medium text-foreground text-right w-36 ${getColumnBg(columnColors, "lucro")}`}>Lucro</TableHead>
                     <TableHead className={`text-xs font-medium text-foreground text-right w-28 ${getColumnBg(columnColors, "imposto")}`}>Imposto</TableHead>
                     <TableHead className={`text-xs font-medium text-foreground text-right w-32 ${getColumnBg(columnColors, "desconto")}`}>Desc. Gerente</TableHead>
