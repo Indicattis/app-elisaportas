@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, CSSProperties } from "react";
-import { Plus, Trash2, Percent, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Check, X, GripVertical, FolderInput, Palette, FileText, FileSpreadsheet } from "lucide-react";
+import { Plus, Trash2, Percent, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Check, X, GripVertical, FolderInput, Palette, FileText, FileSpreadsheet, BadgePercent } from "lucide-react";
 import {
   DndContext,
   closestCenter,
@@ -48,6 +48,8 @@ import { toast } from "sonner";
 import { useCustosItens, CustoItem, useCustosItensPadroes, useCustosItensCategoriasOrdem, useRenomearCategoriaItens } from "@/hooks/useCustosItens";
 import { cn } from "@/lib/utils";
 import { exportEstrategiaItensPDF, exportEstrategiaItensExcel } from "@/utils/estrategiaItensExport";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useConfiguracoesVendas } from "@/hooks/useConfiguracoesVendas";
 
 const UNIDADES = ["Un", "M", "Kg", "L", "M²", "M³", "Cx", "Pç"];
 
@@ -534,6 +536,7 @@ export default function EstrategiaItens() {
   const { padroes, aplicarEmTodos } = useCustosItensPadroes();
   const { categoriasOrdem, salvarOrdem } = useCustosItensCategoriasOrdem();
   const renomearCategoria = useRenomearCategoriaItens();
+  const { limites: limitesDesconto } = useConfiguracoesVendas();
   const [searchTerm, setSearchTerm] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [padroesOpen, setPadroesOpen] = useState(false);
@@ -1024,6 +1027,54 @@ export default function EstrategiaItens() {
               <FileSpreadsheet className="h-4 w-4" />
               Exportar Excel
             </Button>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="!h-[50px] gap-2 bg-card/60 border-border text-foreground hover:bg-yellow-500/10 hover:text-yellow-300 hover:border-yellow-500/40"
+                >
+                  <BadgePercent className="h-4 w-4" />
+                  Descontos de venda
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-80 bg-card/95 backdrop-blur-xl border-border">
+                <div className="flex flex-col gap-3 text-sm">
+                  <div className="flex items-center gap-2 text-foreground font-semibold">
+                    <BadgePercent className="h-4 w-4 text-yellow-400" />
+                    Limites de desconto em vendas
+                  </div>
+                  <div className="flex flex-col gap-2 text-foreground/90">
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">À vista (não cartão)</span>
+                      <span className="font-medium">{limitesDesconto.avista.toFixed(2)}%</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Adicional venda presencial</span>
+                      <span className="font-medium">+{limitesDesconto.presencial.toFixed(2)}%</span>
+                    </div>
+                    <div className="flex items-center justify-between border-t border-border/60 pt-2">
+                      <span className="text-muted-foreground">Máximo sem senha</span>
+                      <span className="font-medium text-emerald-300">{limitesDesconto.totalSemSenha.toFixed(2)}%</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Adicional com senha responsável</span>
+                      <span className="font-medium">+{limitesDesconto.adicionalResponsavel.toFixed(2)}%</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Máximo com senha responsável</span>
+                      <span className="font-medium text-yellow-300">{limitesDesconto.totalComResponsavel.toFixed(2)}%</span>
+                    </div>
+                    <div className="flex items-center justify-between border-t border-border/60 pt-2">
+                      <span className="text-muted-foreground">Acima disso</span>
+                      <span className="font-medium text-red-300">Senha master</span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Cartão de crédito não tem desconto à vista. Vendas com crédito do cliente não permitem desconto.
+                  </p>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
 
