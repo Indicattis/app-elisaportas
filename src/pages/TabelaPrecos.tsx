@@ -542,7 +542,6 @@ export default function TabelaPrecos({
           <CatalogoPrecosTab />
         </TabsContent>
       </Tabs>
-      </div>
 
       {/* Modal de Adicionar/Editar */}
       <ItemModal
