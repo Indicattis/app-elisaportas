@@ -360,7 +360,7 @@ export default function MultasMinimalista() {
                     key={etapa.value}
                     value={etapa.value}
                     className={cn(
-                      'flex-shrink-0 flex-row items-center justify-start h-full min-w-[150px] px-3 py-2 gap-2.5 rounded-lg bg-white/5 border border-white/10 backdrop-blur-xl text-white/70 transition-all data-[state=active]:text-white',
+                      'flex-1 flex-row items-center justify-start h-full px-3 py-2 gap-2.5 rounded-lg bg-white/5 border border-white/10 backdrop-blur-xl text-white/70 transition-all data-[state=active]:text-white',
                       etapa.ring,
                     )}
                   >
