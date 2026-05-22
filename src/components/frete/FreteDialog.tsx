@@ -199,17 +199,17 @@ export function FreteDialog({ open, onOpenChange, frete }: FreteDialogProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="valor_frete">Valor do Frete (R$)</Label>
+            <Label htmlFor="quilometragem">Quilometragem (km)</Label>
             <Input
-              id="valor_frete"
+              id="quilometragem"
               type="number"
-              value={formData.valor_frete}
+              value={formData.quilometragem}
               readOnly
               disabled
               placeholder="0.00"
             />
             <p className="text-xs text-muted-foreground">
-              Calculado automaticamente: quilometragem × R$ 6,00
+              Calculado automaticamente: valor do frete ÷ R$ 6,00
             </p>
           </div>
 
