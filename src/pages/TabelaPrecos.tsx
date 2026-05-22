@@ -45,8 +45,6 @@ export default function TabelaPrecos({
   const [bulkUploadModalOpen, setBulkUploadModalOpen] = useState(false);
   const [itemEditando, setItemEditando] = useState<ItemTabelaPreco | null>(null);
   const [itemParaInativar, setItemParaInativar] = useState<ItemTabelaPreco | null>(null);
-  const [alturaRapida, setAlturaRapida] = useState('');
-  const [larguraRapida, setLarguraRapida] = useState('');
   const [editingLucroId, setEditingLucroId] = useState<string | null>(null);
   const [editingLucroValue, setEditingLucroValue] = useState('');
   const [activeTab, setActiveTab] = useState<'portas' | 'catalogo'>('portas');
@@ -121,32 +119,6 @@ export default function TabelaPrecos({
     return { value: item.lucro || 0, fromMontagem: false, count: 0 };
   };
 
-  // Busca rápida por dimensões aproximadas
-  const itemEncontrado = (() => {
-    if (!alturaRapida || !larguraRapida) return null;
-    
-    const alturaNum = parseFloat(alturaRapida);
-    const larguraNum = parseFloat(larguraRapida);
-    
-    if (isNaN(alturaNum) || isNaN(larguraNum)) return null;
-    
-    // Encontrar o item com a menor diferença total de dimensões
-    let menorDiferenca = Infinity;
-    let itemMaisProximo: ItemTabelaPreco | null = null;
-    
-    itens.forEach((item) => {
-      const diferencaAltura = Math.abs(item.altura - alturaNum);
-      const diferencaLargura = Math.abs(item.largura - larguraNum);
-      const diferencaTotal = diferencaAltura + diferencaLargura;
-      
-      if (diferencaTotal < menorDiferenca) {
-        menorDiferenca = diferencaTotal;
-        itemMaisProximo = item;
-      }
-    });
-    
-    return itemMaisProximo;
-  })();
 
   const headerActions = activeTab === 'portas' ? (
     <div className="flex gap-2">
@@ -266,82 +238,6 @@ export default function TabelaPrecos({
         )}
 
         <TabsContent value="portas" className="space-y-6 mt-0">
-        {/* Card de Pesquisa Rápida */}
-        <Card className="border border-blue-500/20 bg-blue-500/5">
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2 text-white">
-              <Search className="h-5 w-5" />
-              Pesquisa Rápida de Orçamento
-            </CardTitle>
-            <CardDescription className="text-white/50">
-              Informe as dimensões da porta para calcular o orçamento
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-white/70">Largura (m)</label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  placeholder="Ex: 2.10"
-                  value={larguraRapida}
-                  onChange={(e) => setLarguraRapida(e.target.value)}
-                  className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-white/70">Altura (m)</label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  placeholder="Ex: 0.80"
-                  value={alturaRapida}
-                  onChange={(e) => setAlturaRapida(e.target.value)}
-                  className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-white/70">Resultado</label>
-                {alturaRapida && larguraRapida ? (
-                  itemEncontrado ? (
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-blue-500/30">
-                        <div className="flex flex-col">
-                          <span className="text-sm font-medium text-white">{itemEncontrado.descricao}</span>
-                          <span className="text-xs text-white/50">
-                            {itemEncontrado.largura}m × {itemEncontrado.altura}m
-                          </span>
-                        </div>
-                        <Badge className="text-base font-bold bg-blue-600 text-white">
-                          {calcularTotal(itemEncontrado).toLocaleString('pt-BR', {
-                            style: 'currency',
-                            currency: 'BRL'
-                          })}
-                        </Badge>
-                      </div>
-                      <div className="text-xs text-white/40 px-1">
-                        Porta: {itemEncontrado.valor_porta.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} | 
-                        Instalação: {itemEncontrado.valor_instalacao.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} | 
-                        Pintura: {itemEncontrado.valor_pintura.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} | 
-                        Lucro: {(itemEncontrado.lucro || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-center h-10 px-4 bg-white/5 rounded-lg border border-white/10 border-dashed">
-                      <span className="text-sm text-white/40">Nenhum item cadastrado</span>
-                    </div>
-                  )
-                ) : (
-                  <div className="flex items-center justify-center h-10 px-4 bg-white/5 rounded-lg border border-white/10 border-dashed">
-                    <span className="text-sm text-white/40">Preencha as dimensões</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Card Principal */}
         <Card className="bg-white/5 border-white/10">
           <CardHeader>
