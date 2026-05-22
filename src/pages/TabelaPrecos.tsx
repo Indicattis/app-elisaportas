@@ -323,6 +323,7 @@ export default function TabelaPrecos({
                 <Table>
                   <TableHeader>
                     <TableRow className="border-white/10 hover:bg-white/5">
+                      {enableReorder && <TableHead className="w-10 text-white/60"></TableHead>}
                       <TableHead className="text-white/60">Descrição</TableHead>
                       <TableHead className="text-center text-white/60">Largura</TableHead>
                       <TableHead className="text-center text-white/60">Altura</TableHead>
@@ -340,12 +341,19 @@ export default function TabelaPrecos({
                       {!hideAcoesColumn && <TableHead className="text-center w-24 text-white/60">Ações</TableHead>}
                     </TableRow>
                   </TableHeader>
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    modifiers={[restrictToVerticalAxis, restrictToParentElement]}
+                    onDragEnd={canReorder ? handleDragEnd : undefined}
+                  >
+                    <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
                   <TableBody>
-                    {itens.map((item) => {
+                    {orderedItens.map((item) => {
                       const total = calcularTotal(item);
                       const lucroInfo = getLucroEfetivo(item);
                       return (
-                        <TableRow key={item.id} className="border-white/10 hover:bg-white/5">
+                        <SortableKitRow key={item.id} id={item.id} enabled={canReorder} showHandle={enableReorder}>
                           <TableCell className="font-medium text-white">{item.descricao}</TableCell>
                           <TableCell className="text-center text-white/70">{item.largura}m</TableCell>
                           <TableCell className="text-center text-white/70">{item.altura}m</TableCell>
@@ -499,10 +507,12 @@ export default function TabelaPrecos({
                               </Button>
                             </div>
                           </TableCell>}
-                        </TableRow>
+                        </SortableKitRow>
                       );
                     })}
                   </TableBody>
+                    </SortableContext>
+                  </DndContext>
                 </Table>
               </div>
             )}
