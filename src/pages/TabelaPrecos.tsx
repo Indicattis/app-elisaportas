@@ -384,11 +384,11 @@ export default function TabelaPrecos({
                       <TableHead className="text-center text-white/60">Largura</TableHead>
                       <TableHead className="text-center text-white/60">Altura</TableHead>
                       <TableHead className="text-right text-white/60">Valor Porta</TableHead>
+                      {!hideLucroColumn && <TableHead className="text-right hidden md:table-cell text-white/60">Lucro</TableHead>}
+                      {!hideLucroColumn && <TableHead className="text-right hidden md:table-cell text-white/60">% Lucro</TableHead>}
                       <TableHead className="text-right hidden md:table-cell text-white/60">Valor Instalação</TableHead>
                       <TableHead className="text-right hidden md:table-cell text-white/60">Valor Pintura</TableHead>
                       {!hideTotalColumn && <TableHead className="text-right text-white/60">Total</TableHead>}
-                      {!hideLucroColumn && <TableHead className="text-right hidden md:table-cell text-white/60">Lucro</TableHead>}
-                      {!hideLucroColumn && <TableHead className="text-right hidden md:table-cell text-white/60">% Lucro</TableHead>}
                       {!hideAcoesColumn && <TableHead className="text-center text-white/60">Montagem</TableHead>}
                       {!hideAcoesColumn && <TableHead className="text-center w-24 text-white/60">Ações</TableHead>}
                     </TableRow>
@@ -408,26 +408,6 @@ export default function TabelaPrecos({
                               currency: 'BRL' 
                             })}
                           </TableCell>
-                          <TableCell className="text-right hidden md:table-cell text-white/70">
-                            {item.valor_instalacao.toLocaleString('pt-BR', { 
-                              style: 'currency', 
-                              currency: 'BRL' 
-                            })}
-                          </TableCell>
-                          <TableCell className="text-right hidden md:table-cell text-white/70">
-                            {item.valor_pintura.toLocaleString('pt-BR', { 
-                              style: 'currency', 
-                              currency: 'BRL' 
-                            })}
-                          </TableCell>
-                          {!hideTotalColumn && <TableCell className="text-right">
-                            <Badge className="font-semibold bg-white/10 text-white">
-                              {total.toLocaleString('pt-BR', { 
-                                style: 'currency', 
-                                currency: 'BRL' 
-                              })}
-                            </Badge>
-                          </TableCell>}
                           {!hideLucroColumn && <TableCell className="text-right hidden md:table-cell">
                             {lucroInfo.fromMontagem ? (
                               <span
@@ -477,6 +457,26 @@ export default function TabelaPrecos({
                               </TableCell>
                             );
                           })()}
+                          <TableCell className="text-right hidden md:table-cell text-white/70">
+                            {item.valor_instalacao.toLocaleString('pt-BR', { 
+                              style: 'currency', 
+                              currency: 'BRL' 
+                            })}
+                          </TableCell>
+                          <TableCell className="text-right hidden md:table-cell text-white/70">
+                            {item.valor_pintura.toLocaleString('pt-BR', { 
+                              style: 'currency', 
+                              currency: 'BRL' 
+                            })}
+                          </TableCell>
+                          {!hideTotalColumn && <TableCell className="text-right">
+                            <Badge className="font-semibold bg-white/10 text-white">
+                              {total.toLocaleString('pt-BR', { 
+                                style: 'currency', 
+                                currency: 'BRL' 
+                              })}
+                            </Badge>
+                          </TableCell>}
                           {!hideAcoesColumn && (
                             <TableCell className="text-center">
                               {lucroInfo.fromMontagem ? (
