@@ -1864,6 +1864,7 @@ export type Database = {
           fornecedor: string | null
           id: string
           ordem: number
+          preco_objetivo: number | null
           preco_venda: number
           quantidade: number
           quantidade_ideal: number
@@ -1883,6 +1884,7 @@ export type Database = {
           fornecedor?: string | null
           id?: string
           ordem?: number
+          preco_objetivo?: number | null
           preco_venda?: number
           quantidade?: number
           quantidade_ideal?: number
@@ -1902,6 +1904,7 @@ export type Database = {
           fornecedor?: string | null
           id?: string
           ordem?: number
+          preco_objetivo?: number | null
           preco_venda?: number
           quantidade?: number
           quantidade_ideal?: number

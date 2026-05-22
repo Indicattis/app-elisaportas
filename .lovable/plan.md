@@ -1,9 +1,32 @@
-## Mudança
+# Adicionar coluna "Preço Objetivo" em Itens
 
-Em `src/pages/direcao/estrategia/EstrategiaItens.tsx`, no `handleCreate` (criação de novo item), passar as porcentagens definidas em "Padrões" (`padroes.taxa_impostos`, `padroes.taxa_descontos`, `padroes.taxa_cartao`) ao `createItem.mutateAsync`. Assim, qualquer item novo já nasce com as taxas globais e — assim que o Valor de Venda é digitado — as colunas Imposto, Desc. Gerente e Cartão exibem os valores calculados automaticamente.
+## Objetivo
+Na tela `/direcao/estrategia/itens`, adicionar uma coluna "Preço Objetivo" editável manualmente ao lado das demais colunas financeiras.
 
-Itens existentes continuam com suas taxas individuais (sem alteração).
+## Passos
 
-## Arquivo
+### 1. Migration do banco de dados
+Criar migration para adicionar a coluna `preco_objetivo` (tipo `numeric`, nullable) na tabela `custos_itens`.
 
+### 2. Atualizar hook `useCustosItens.ts`
+- Adicionar `preco_objetivo: number | null` no tipo `CustoItem`
+- Adicionar `preco_objetivo?: number | null` no tipo `NewCustoItem`
+- Incluir o campo no payload do `createItem.mutateAsync`
+
+### 3. Atualizar página `EstrategiaItens.tsx`
+- Adicionar `"objetivo"` ao tipo `ColumnKey`
+- Adicionar entrada em `COLUMN_LABELS` e `DEFAULT_COLUMN_COLORS`
+- No header da tabela (`<TableHead>`), inserir a nova coluna entre "Cartão" e "Valor de Venda" (ou ao lado do "Valor de Venda" — posicionar como coluna editável financeira)
+- No `SortableItemRow`, adicionar `<EditableCell>` para `preco_objetivo` com tipo `currency`, alinhado à direita
+- No diálogo de "Novo item", adicionar campo de input para `preco_objetivo`
+- Adicionar `preco_objetivo` no estado `newItem` e no `handleCreate`
+
+## Arquivos envolvidos
+- Migration Supabase (`custos_itens.preco_objetivo`)
+- `src/hooks/useCustosItens.ts`
 - `src/pages/direcao/estrategia/EstrategiaItens.tsx`
+
+## Notas
+- A coluna será editável manualmente via `EditableCell` (mesmo componente usado em Custo, Valor de Venda, etc.)
+- Não envolve cálculo automático — o usuário digita o valor desejado
+- O campo é nullable no banco para itens existentes
