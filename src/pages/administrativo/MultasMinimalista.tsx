@@ -446,6 +446,34 @@ export default function MultasMinimalista() {
           ))}
         </Tabs>
 
+        <AlertDialog open={!!confirmAvanco} onOpenChange={(o) => { if (!o) setConfirmAvanco(null); }}>
+          <AlertDialogContent className="bg-zinc-900 border-white/10 text-white">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirmar avanço de etapa</AlertDialogTitle>
+              <AlertDialogDescription className="text-white/70">
+                Deseja avançar esta multa para <strong className="text-white">{confirmAvanco?.proximaLabel}</strong>?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setConfirmAvanco(null)} className="bg-white/5 border-white/10 text-white hover:bg-white/10 hover:text-white">
+                Cancelar
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  if (confirmAvanco) {
+                    updateStatus.mutate({ id: confirmAvanco.multaId, status: confirmAvanco.proxima }, {
+                      onSuccess: () => setConfirmAvanco(null),
+                    });
+                  }
+                }}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                Confirmar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
         {respModalEtapa && (
           <SelecionarResponsavelMultaModal
             open={!!respModalEtapa}
