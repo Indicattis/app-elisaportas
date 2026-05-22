@@ -207,7 +207,7 @@ export default function EstrategiaKitMontagem() {
                       <TableHead className="text-right text-white/60 w-24">Cartão</TableHead>
                       <TableHead className="text-right text-white/60 w-24">Qtd</TableHead>
                       <TableHead className="text-right text-white/60 w-32">Subtotal custo</TableHead>
-                      <TableHead className="text-right text-white/60 w-28">Lucro un.</TableHead>
+                      <TableHead className="text-right text-white/60 w-32">Soma preços</TableHead>
                       <TableHead className="text-right text-white/60 w-32">Subtotal lucro</TableHead>
                       <TableHead className="text-right text-white/60 w-28">Preço</TableHead>
                       <TableHead className="text-center text-white/60 w-12"></TableHead>
@@ -225,6 +225,7 @@ export default function EstrategiaKitMontagem() {
                         const subtotalCusto = custoUnit * q;
                         const lucroUnit = it.custo_item ? computeLucroUnit(it.custo_item) : 0;
                         const subtotalLucro = lucroUnit * q;
+                        const somaPrecos = Number(it.custo_item?.preco_venda || 0) * q;
                         const tImp = Number(it.custo_item?.taxa_impostos || 0);
                         const tDesc = Number(it.custo_item?.taxa_descontos || 0);
                         const tCart = Number(it.custo_item?.taxa_cartao || 0);
@@ -259,7 +260,7 @@ export default function EstrategiaKitMontagem() {
                               />
                             </TableCell>
                             <TableCell className="text-right text-white">{fmt(subtotalCusto)}</TableCell>
-                            <TableCell className={cn("text-right", lucroUnit >= 0 ? "text-emerald-400" : "text-red-400")}>{fmt(lucroUnit)}</TableCell>
+                            <TableCell className="text-right text-white">{fmt(somaPrecos)}</TableCell>
                             <TableCell className={cn("text-right font-medium", subtotalLucro >= 0 ? "text-emerald-400" : "text-red-400")}>{fmt(subtotalLucro)}</TableCell>
                             <TableCell className="text-right text-white">{fmt(preco)}</TableCell>
                             <TableCell className="text-center">
