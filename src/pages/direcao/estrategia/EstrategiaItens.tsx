@@ -130,12 +130,12 @@ function SortableHeadCell({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "text-xs font-medium text-foreground text-right group/col",
+        "text-xs font-medium text-foreground text-center group/col",
         COLUMN_WIDTHS[colKey],
         getColumnBg(colors, colKey),
       )}
     >
-      <div className="flex items-center justify-end gap-1">
+      <div className="flex items-center justify-center gap-1">
         <button
           type="button"
           className="inline-flex h-5 w-5 items-center justify-center text-muted-foreground/40 hover:text-foreground cursor-grab active:cursor-grabbing touch-none opacity-0 group-hover/col:opacity-100"
@@ -1315,7 +1315,7 @@ export default function EstrategiaItens() {
                <TableHeader>
                   <TableRow className="border-border hover:bg-transparent">
                     <TableHead className="w-8 p-0" />
-                    <TableHead className="text-xs font-medium text-muted-foreground">Descrição</TableHead>
+                    <TableHead className="text-xs font-medium text-muted-foreground text-center">Descrição</TableHead>
                     <TableHead className="text-xs font-medium text-muted-foreground text-center w-16">Unidade</TableHead>
                     <TableHead className="text-xs font-medium text-muted-foreground text-center w-16">Ações</TableHead>
                    <DndContext
