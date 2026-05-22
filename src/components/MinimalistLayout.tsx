@@ -109,8 +109,11 @@ export function MinimalistLayout({
       {showBackButton && backPath && (
         <button
           onClick={() => navigate(backPath)}
-          className="fixed top-4 left-4 z-50 p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10
-                     hover:bg-white/10 transition-all duration-300"
+          className={`fixed top-4 left-4 z-50 p-1.5 rounded-xl backdrop-blur-xl border transition-all duration-300 ${
+            lightTheme
+              ? "bg-white/80 border-slate-200 shadow-sm hover:bg-white"
+              : "bg-white/5 border-white/10 hover:bg-white/10"
+          }`}
           style={{
             opacity: mounted ? 1 : 0,
             transform: mounted ? 'translateX(0)' : 'translateX(-20px)',
