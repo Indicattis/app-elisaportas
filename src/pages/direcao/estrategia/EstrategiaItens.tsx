@@ -360,11 +360,12 @@ type SortableItemRowProps = {
   disabled: boolean;
   categorias: string[];
   colors: Record<ColumnKey, string>;
+  padroes: { taxa_impostos: number; taxa_descontos: number; taxa_cartao: number } | null | undefined;
   onUpdate: (patch: Partial<CustoItem>) => Promise<void> | void;
   onDelete: () => void;
 };
 
-function SortableItemRow({ item, disabled, categorias, colors, onUpdate, onDelete }: SortableItemRowProps) {
+function SortableItemRow({ item, disabled, categorias, colors, padroes, onUpdate, onDelete }: SortableItemRowProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: item.id,
     disabled,
@@ -391,9 +392,9 @@ function SortableItemRow({ item, disabled, categorias, colors, onUpdate, onDelet
   };
   const custo = Number(item.custo_unitario || 0);
   const preco = Number(item.preco_venda || 0);
-  const tImp = Number(item.taxa_impostos || 0);
-  const tDesc = Number(item.taxa_descontos || 0);
-  const tCard = Number(item.taxa_cartao || 0);
+  const tImp = Number(padroes?.taxa_impostos ?? 0);
+  const tDesc = Number(padroes?.taxa_descontos ?? 0);
+  const tCard = Number(padroes?.taxa_cartao ?? 0);
   const taxas = tImp + tDesc + tCard;
   const deducoes = preco * (taxas / 100);
   const vImp = preco * (tImp / 100);
@@ -439,43 +440,19 @@ function SortableItemRow({ item, disabled, categorias, colors, onUpdate, onDelet
         {formatCurrency(lucro)}
       </TableCell>
       <TableCell className={`text-right text-foreground ${getColumnBg(colors, "imposto")}`}>
-        <EditableCell
-          value={tImp}
-          type="number"
-          align="right"
-          display={
-            <span title={`${tImp.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`}>
-              {formatCurrency(vImp)}
-            </span>
-          }
-          onSave={(v) => onUpdate({ taxa_impostos: Number(v) })}
-        />
+        <span title={`${tImp.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`}>
+          {formatCurrency(vImp)}
+        </span>
       </TableCell>
       <TableCell className={`text-right text-foreground ${getColumnBg(colors, "desconto")}`}>
-        <EditableCell
-          value={tDesc}
-          type="number"
-          align="right"
-          display={
-            <span title={`${tDesc.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`}>
-              {formatCurrency(vDesc)}
-            </span>
-          }
-          onSave={(v) => onUpdate({ taxa_descontos: Number(v) })}
-        />
+        <span title={`${tDesc.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`}>
+          {formatCurrency(vDesc)}
+        </span>
       </TableCell>
       <TableCell className={`text-right text-foreground ${getColumnBg(colors, "cartao")}`}>
-        <EditableCell
-          value={tCard}
-          type="number"
-          align="right"
-          display={
-            <span title={`${tCard.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`}>
-              {formatCurrency(vCard)}
-            </span>
-          }
-          onSave={(v) => onUpdate({ taxa_cartao: Number(v) })}
-        />
+        <span title={`${tCard.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`}>
+          {formatCurrency(vCard)}
+        </span>
       </TableCell>
       <TableCell className={`text-right font-medium text-foreground ${getColumnBg(colors, "venda")}`}>
         <EditableCell
@@ -1145,6 +1122,7 @@ export default function EstrategiaItens() {
                       disabled={isDndDisabled}
                       categorias={todasCategorias}
                       colors={columnColors}
+                      padroes={padroes}
                       onUpdate={(patch) => updateItem.mutateAsync({ id: item.id, patch })}
                       onDelete={() => {
                         if (confirm(`Excluir "${item.descricao}"?`)) {
