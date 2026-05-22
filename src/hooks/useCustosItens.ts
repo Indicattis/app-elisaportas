@@ -12,6 +12,7 @@ export type CustoItem = {
   preco_venda: number;
   preco_objetivo: number | null;
   fornecedor: string | null;
+  custo_ok: boolean;
   quantidade: number;
   quantidade_ideal: number;
   quantidade_maxima: number;
@@ -32,6 +33,7 @@ export type NewCustoItem = {
   preco_venda?: number;
   preco_objetivo?: number | null;
   fornecedor?: string | null;
+  custo_ok?: boolean;
   quantidade?: number;
   quantidade_ideal?: number;
   quantidade_maxima?: number;
@@ -307,6 +309,7 @@ export function useCustosItens() {
           preco_venda: payload.preco_venda ?? 0,
           preco_objetivo: payload.preco_objetivo ?? null,
           fornecedor: payload.fornecedor ?? null,
+          custo_ok: payload.custo_ok ?? false,
           quantidade: payload.quantidade ?? 0,
           quantidade_ideal: payload.quantidade_ideal ?? 0,
           quantidade_maxima: payload.quantidade_maxima ?? 0,

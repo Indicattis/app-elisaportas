@@ -1,28 +1,25 @@
-# Gerenciar Categorias (criar/excluir/renomear/ordenar)
+## Dinâmica da coluna "Preço Objetivo"
 
-## Mudanças
+Cada linha terá um estado: **OK** (check verde) ou **precisa ajuste** (input manual de valor).
 
-### Botão
-- Renomear "Ordenar categorias" → "Gerenciar categorias" em `EstrategiaItens.tsx` (label + título do diálogo).
-
-### Modal "Gerenciar categorias"
-Manter as funções atuais (renomear, mover para cima/baixo) e adicionar:
-
-**Criar categoria:**
-- Campo de input + botão "Adicionar" no topo do diálogo.
-- Valida nome não vazio e não duplicado.
-- Persiste em `custos_itens_categorias_ordem` (upsert com `ordem = max+1`). A categoria aparece como vazia (sem itens) até receber itens via "Mover de categoria" ou edição.
-
-**Excluir categoria:**
-- Botão de lixeira em cada linha de `CategoriaOrdemRow`.
-- **Bloqueio**: se a categoria tiver itens em `custos_itens`, exibe toast de erro pedindo para mover/excluir os itens antes. A categoria "Sem categoria" não pode ser excluída.
-- Se vazia, confirma e remove de `custos_itens_categorias_ordem`, remove do `ordemDraft` local.
+### Banco
+Migration adiciona coluna `custo_ok boolean not null default false` em `custos_itens`.
 
 ### Hook `useCustosItens.ts`
-Adicionar duas mutations em `useCustosItensCategoriasOrdem` (ou hook separado):
-- `criarCategoria(nome)` → insert em `custos_itens_categorias_ordem` com `ordem` = próxima posição.
-- `excluirCategoria(nome)` → verifica `count` em `custos_itens` onde `categoria = nome`; se > 0 lança erro; senão delete em `custos_itens_categorias_ordem`.
+- Adicionar `custo_ok: boolean` em `CustoItem` e em `UpsertCustoItemPayload`.
+- Incluir no upsert.
 
-## Arquivos
-- `src/hooks/useCustosItens.ts`
-- `src/pages/direcao/estrategia/EstrategiaItens.tsx`
+### UI `EstrategiaItens.tsx` — célula "Preço Objetivo"
+Comportamento:
+- Se `custo_ok === true`: mostrar **check verde** centralizado (ícone `Check` em verde) + botão pequeno "desfazer" no hover para voltar ao modo input.
+- Se `custo_ok === false`: mostrar o `CurrencyInput` atual com `preco_objetivo` + botão pequeno de check (cinza) ao lado para marcar como OK.
+- Marcar como OK: seta `custo_ok = true` e limpa `preco_objetivo = null`.
+- Desmarcar OK: seta `custo_ok = false`, mantém input vazio para o usuário digitar.
+
+Header da coluna permanece "Preço Objetivo".
+
+### Arquivos
+- `supabase/migrations/<novo>.sql` — add column
+- `src/hooks/useCustosItens.ts` — tipo + upsert
+- `src/integrations/supabase/types.ts` — regenerado pela migration
+- `src/pages/direcao/estrategia/EstrategiaItens.tsx` — célula com toggle check/input

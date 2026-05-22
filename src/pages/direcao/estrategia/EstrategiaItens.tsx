@@ -482,13 +482,41 @@ function SortableItemRow({ item, disabled, categorias, colors, padroes, onUpdate
         />
       </TableCell>
       <TableCell className={`text-right text-foreground ${getColumnBg(colors, "objetivo")}`}>
-        <EditableCell
-          value={item.preco_objetivo ?? ""}
-          type="currency"
-          align="right"
-          display={item.preco_objetivo == null ? <span className="text-muted-foreground/60">—</span> : formatCurrency(Number(item.preco_objetivo))}
-          onSave={(v) => onUpdate({ preco_objetivo: v === "" || v === null ? null : Number(v) } as Partial<CustoItem>)}
-        />
+        {item.custo_ok ? (
+          <div className="flex items-center justify-end gap-1 group">
+            <Check className="h-5 w-5 text-emerald-500 dark:text-emerald-400" />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 opacity-0 group-hover:opacity-100 text-muted-foreground/70 hover:text-foreground"
+              title="Desfazer OK"
+              onClick={() => onUpdate({ custo_ok: false } as Partial<CustoItem>)}
+            >
+              <X className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        ) : (
+          <div className="flex items-center justify-end gap-1 group">
+            <div className="flex-1">
+              <EditableCell
+                value={item.preco_objetivo ?? ""}
+                type="currency"
+                align="right"
+                display={item.preco_objetivo == null ? <span className="text-muted-foreground/60">—</span> : formatCurrency(Number(item.preco_objetivo))}
+                onSave={(v) => onUpdate({ preco_objetivo: v === "" || v === null ? null : Number(v) } as Partial<CustoItem>)}
+              />
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 opacity-0 group-hover:opacity-100 text-muted-foreground/70 hover:text-emerald-500"
+              title="Marcar custo como OK"
+              onClick={() => onUpdate({ custo_ok: true, preco_objetivo: null } as Partial<CustoItem>)}
+            >
+              <Check className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        )}
       </TableCell>
       <TableCell className="text-center">
         <div className="flex items-center justify-center gap-1">
