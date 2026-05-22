@@ -360,11 +360,12 @@ type SortableItemRowProps = {
   disabled: boolean;
   categorias: string[];
   colors: Record<ColumnKey, string>;
+  padroes: { taxa_impostos: number; taxa_descontos: number; taxa_cartao: number } | null | undefined;
   onUpdate: (patch: Partial<CustoItem>) => Promise<void> | void;
   onDelete: () => void;
 };
 
-function SortableItemRow({ item, disabled, categorias, colors, onUpdate, onDelete }: SortableItemRowProps) {
+function SortableItemRow({ item, disabled, categorias, colors, padroes, onUpdate, onDelete }: SortableItemRowProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: item.id,
     disabled,
@@ -391,9 +392,9 @@ function SortableItemRow({ item, disabled, categorias, colors, onUpdate, onDelet
   };
   const custo = Number(item.custo_unitario || 0);
   const preco = Number(item.preco_venda || 0);
-  const tImp = Number(item.taxa_impostos || 0);
-  const tDesc = Number(item.taxa_descontos || 0);
-  const tCard = Number(item.taxa_cartao || 0);
+  const tImp = Number(padroes?.taxa_impostos ?? 0);
+  const tDesc = Number(padroes?.taxa_descontos ?? 0);
+  const tCard = Number(padroes?.taxa_cartao ?? 0);
   const taxas = tImp + tDesc + tCard;
   const deducoes = preco * (taxas / 100);
   const vImp = preco * (tImp / 100);
