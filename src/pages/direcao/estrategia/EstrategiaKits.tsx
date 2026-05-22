@@ -6,6 +6,7 @@ export default function EstrategiaKits() {
       titleOverride="Tabela de Kits"
       subtitleOverride="Kits e preços"
       backPathOverride="/direcao/estrategia"
+      enableReorder
       breadcrumbItemsOverride={[
         { label: 'Home', path: '/home' },
         { label: 'Direção', path: '/direcao' },

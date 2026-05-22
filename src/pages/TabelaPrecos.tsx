@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Plus, Pencil, Trash2, Upload, Check, X, Boxes } from "lucide-react";
+import { Search, Plus, Pencil, Trash2, Upload, Check, X, Boxes, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -16,6 +16,24 @@ import { CatalogoPrecosTab } from "@/components/tabela-precos/CatalogoPrecosTab"
 import { useKitsMontagemResumo } from "@/hooks/useKitMontagem";
 import { useQueryClient } from "@tanstack/react-query";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { restrictToVerticalAxis, restrictToParentElement } from "@dnd-kit/modifiers";
 
 interface TabelaPrecosProps {
   hideLucroColumn?: boolean;
@@ -23,6 +41,7 @@ interface TabelaPrecosProps {
   hideCatalogoTab?: boolean;
   hideTotalColumn?: boolean;
   embedded?: boolean;
+  enableReorder?: boolean;
   titleOverride?: string;
   subtitleOverride?: string;
   backPathOverride?: string;
@@ -35,6 +54,7 @@ export default function TabelaPrecos({
   hideCatalogoTab = false,
   hideTotalColumn = false,
   embedded = false,
+  enableReorder = false,
   titleOverride,
   subtitleOverride,
   backPathOverride,
@@ -52,8 +72,34 @@ export default function TabelaPrecos({
   const navigate = useNavigate();
 
   const queryClient = useQueryClient();
-  const { itens, isLoading, adicionarItem, editarItem, inativarItem } = useTabelaPrecos(searchTerm);
+  const { itens, isLoading, adicionarItem, editarItem, inativarItem, reordenarItens } = useTabelaPrecos(searchTerm);
   const { data: resumoMontagem = {} } = useKitsMontagemResumo();
+
+  // Estado local para reordenação otimista
+  const [orderedItens, setOrderedItens] = useState<ItemTabelaPreco[]>([]);
+  useEffect(() => {
+    setOrderedItens(itens);
+  }, [itens]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const canReorder = enableReorder && !searchTerm;
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = orderedItens.findIndex((i) => i.id === active.id);
+    const newIndex = orderedItens.findIndex((i) => i.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+    const next = arrayMove(orderedItens, oldIndex, newIndex);
+    setOrderedItens(next);
+    await reordenarItens(next.map((i) => i.id));
+  };
+
+  const sortableIds = useMemo(() => orderedItens.map((i) => i.id), [orderedItens]);
 
   useEffect(() => {
     if (editingLucroId && lucroInputRef.current) {
@@ -277,6 +323,7 @@ export default function TabelaPrecos({
                 <Table>
                   <TableHeader>
                     <TableRow className="border-white/10 hover:bg-white/5">
+                      {enableReorder && <TableHead className="w-10 text-white/60"></TableHead>}
                       <TableHead className="text-white/60">Descrição</TableHead>
                       <TableHead className="text-center text-white/60">Largura</TableHead>
                       <TableHead className="text-center text-white/60">Altura</TableHead>
@@ -294,12 +341,19 @@ export default function TabelaPrecos({
                       {!hideAcoesColumn && <TableHead className="text-center w-24 text-white/60">Ações</TableHead>}
                     </TableRow>
                   </TableHeader>
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    modifiers={[restrictToVerticalAxis, restrictToParentElement]}
+                    onDragEnd={canReorder ? handleDragEnd : undefined}
+                  >
+                    <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
                   <TableBody>
-                    {itens.map((item) => {
+                    {orderedItens.map((item) => {
                       const total = calcularTotal(item);
                       const lucroInfo = getLucroEfetivo(item);
                       return (
-                        <TableRow key={item.id} className="border-white/10 hover:bg-white/5">
+                        <SortableKitRow key={item.id} id={item.id} enabled={canReorder} showHandle={enableReorder}>
                           <TableCell className="font-medium text-white">{item.descricao}</TableCell>
                           <TableCell className="text-center text-white/70">{item.largura}m</TableCell>
                           <TableCell className="text-center text-white/70">{item.altura}m</TableCell>
@@ -453,10 +507,12 @@ export default function TabelaPrecos({
                               </Button>
                             </div>
                           </TableCell>}
-                        </TableRow>
+                        </SortableKitRow>
                       );
                     })}
                   </TableBody>
+                    </SortableContext>
+                  </DndContext>
                 </Table>
               </div>
             )}
@@ -506,5 +562,50 @@ export default function TabelaPrecos({
         </AlertDialogContent>
       </AlertDialog>
     </MinimalistLayout>
+  );
+}
+
+function SortableKitRow({
+  id,
+  enabled,
+  showHandle,
+  children,
+}: {
+  id: string;
+  enabled: boolean;
+  showHandle: boolean;
+  children: React.ReactNode;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id,
+    disabled: !enabled,
+  });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+  };
+  return (
+    <TableRow
+      ref={setNodeRef}
+      style={style}
+      className="border-white/10 hover:bg-white/5"
+    >
+      {showHandle && (
+        <TableCell className="w-10">
+          <button
+            type="button"
+            {...attributes}
+            {...listeners}
+            disabled={!enabled}
+            className={`flex items-center justify-center text-white/40 hover:text-white/80 ${enabled ? "cursor-grab active:cursor-grabbing" : "cursor-not-allowed opacity-40"}`}
+            title={enabled ? "Arraste para reordenar" : "Limpe a busca para reordenar"}
+          >
+            <GripVertical className="h-4 w-4" />
+          </button>
+        </TableCell>
+      )}
+      {children}
+    </TableRow>
   );
 }
