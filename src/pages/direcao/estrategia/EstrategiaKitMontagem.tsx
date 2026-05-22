@@ -100,9 +100,9 @@ export default function EstrategiaKitMontagem() {
             </Badge>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
             {/* Tabela */}
-            <div className="lg:col-span-2 space-y-3">
+            <div className="lg:col-span-3 space-y-3">
               <div className="flex items-center justify-between gap-2">
                 <div className="text-sm text-white/60">
                   {items.length} {items.length === 1 ? "item" : "itens"} na montagem
