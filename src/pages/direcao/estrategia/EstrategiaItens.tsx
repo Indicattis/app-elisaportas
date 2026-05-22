@@ -388,6 +388,8 @@ function SortableItemRow({ item, disabled, categorias, colors, onUpdate, onDelet
     zIndex: isDragging ? 10 : "auto",
   };
   const custo = Number(item.custo_unitario || 0);
+  const qtd = Number(item.quantidade || 0);
+  const totalCusto = custo * qtd;
   const preco = Number(item.preco_venda || 0);
   const tImp = Number(item.taxa_impostos || 0);
   const tDesc = Number(item.taxa_descontos || 0);
