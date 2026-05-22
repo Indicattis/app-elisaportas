@@ -268,12 +268,16 @@ function CategoriaOrdemRow({
   total,
   onMove,
   onRename,
+  onDelete,
+  canDelete,
 }: {
   categoria: string;
   index: number;
   total: number;
   onMove: (dir: -1 | 1) => void;
   onRename: (novo: string) => Promise<void> | void;
+  onDelete?: () => void;
+  canDelete?: boolean;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(categoria);
@@ -351,6 +355,18 @@ function CategoriaOrdemRow({
           >
             <ArrowDown className="h-3.5 w-3.5" />
           </Button>
+          {onDelete && (
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-7 w-7 text-muted-foreground/70 hover:text-red-400 hover:bg-red-500/10 disabled:opacity-30"
+              onClick={onDelete}
+              disabled={!canDelete}
+              title={canDelete ? "Excluir categoria" : "Não é possível excluir (possui itens ou é reservada)"}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          )}
         </>
       )}
     </div>
