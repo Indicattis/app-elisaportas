@@ -72,6 +72,7 @@ export default function EstrategiaKitMontagem() {
         { label: "Tabela de Kits", path: "/direcao/estrategia/kits" },
         { label: "Montagem" },
       ]}
+      fullWidth
     >
       {isLoadingKit ? (
         <div className="text-white/60 text-sm">Carregando kit...</div>
