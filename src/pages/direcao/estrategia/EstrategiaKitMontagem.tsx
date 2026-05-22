@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Trash2, Check, ChevronsUpDown, Boxes } from "lucide-react";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ItemTabelaPreco } from "@/hooks/useTabelaPrecos";
 import { useKitMontagem, computeLucroUnit } from "@/hooks/useKitMontagem";
 import { useCustosItens } from "@/hooks/useCustosItens";
+import { useTabelaPrecos } from "@/hooks/useTabelaPrecos";
 import { cn } from "@/lib/utils";
 
 const fmt = (v: number) =>
@@ -22,6 +23,8 @@ export default function EstrategiaKitMontagem() {
   const { kitId } = useParams<{ kitId: string }>();
   const navigate = useNavigate();
   const [pickerOpen, setPickerOpen] = useState(false);
+  const queryClient = useQueryClient();
+  const { editarItem } = useTabelaPrecos();
 
   const { data: kit, isLoading: isLoadingKit } = useQuery({
     queryKey: ["tabela-precos-kit", kitId],
@@ -39,6 +42,21 @@ export default function EstrategiaKitMontagem() {
 
   const { items, isLoading, addItem, updateQuantidade, removeItem } = useKitMontagem(kitId ?? null);
   const { items: allCustosItens } = useCustosItens();
+
+  const salvarValor = (campo: "valor_porta" | "valor_instalacao" | "valor_pintura", atual: number) =>
+    (e: React.FocusEvent<HTMLInputElement>) => {
+      if (!kitId) return;
+      const v = parseFloat(e.target.value);
+      if (isNaN(v) || v < 0 || v === Number(atual)) return;
+      editarItem.mutate(
+        { id: kitId, dados: { [campo]: v } as any },
+        {
+          onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["tabela-precos-kit", kitId] });
+          },
+        }
+      );
+    };
 
   const usedIds = useMemo(() => new Set(items.map((i) => i.custo_item_id)), [items]);
 
@@ -274,11 +292,56 @@ export default function EstrategiaKitMontagem() {
                 <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl p-4">
                   <div className="text-xs uppercase tracking-wide text-white/50 mb-3">Preços do kit</div>
                   <div className="space-y-2">
-                    <Row label="Valor porta" value={fmt(Number(kit.valor_porta || 0))} />
-                    <Row label="Valor instalação" value={fmt(Number(kit.valor_instalacao || 0))} />
-                    <Row label="Valor pintura" value={fmt(Number(kit.valor_pintura || 0))} />
+                    {([
+                      { campo: "valor_porta" as const, label: "Valor porta", valor: Number(kit.valor_porta || 0) },
+                      { campo: "valor_instalacao" as const, label: "Valor instalação", valor: Number(kit.valor_instalacao || 0) },
+                      { campo: "valor_pintura" as const, label: "Valor pintura", valor: Number(kit.valor_pintura || 0) },
+                    ]).map(({ campo, label, valor }) => (
+                      <div key={campo} className="flex items-center justify-between gap-3 text-sm">
+                        <span className="text-white/60">{label}</span>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          key={`${campo}-${valor}`}
+                          defaultValue={String(valor)}
+                          onBlur={salvarValor(campo, valor)}
+                          className="h-8 w-32 text-right bg-white/5 border-white/10 text-white"
+                        />
+                      </div>
+                    ))}
                     <Row label="Lucro manual" value={fmt(Number(kit.lucro || 0))} />
                   </div>
+                </div>
+
+                {/* Lucro adicional */}
+                <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl p-4">
+                  <div className="text-xs uppercase tracking-wide text-white/50 mb-3">Lucro adicional</div>
+                  {(() => {
+                    const receita =
+                      Number(kit.valor_porta || 0) +
+                      Number(kit.valor_instalacao || 0) +
+                      Number(kit.valor_pintura || 0);
+                    const lucroAdd = receita - totais.custo;
+                    const margemAdd = receita > 0 ? (lucroAdd / receita) * 100 : 0;
+                    return (
+                      <div className="space-y-2">
+                        <Row label="Custo total montagem" value={fmt(totais.custo)} />
+                        <Row label="Receita total" value={fmt(receita)} />
+                        <div className="h-px bg-white/10 my-2" />
+                        <Row
+                          label="Lucro adicional"
+                          value={fmt(lucroAdd)}
+                          valueClass={lucroAdd >= 0 ? "text-emerald-400 font-semibold" : "text-red-400 font-semibold"}
+                        />
+                        <Row
+                          label="Margem"
+                          value={`${margemAdd.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`}
+                          valueClass={margemAdd >= 0 ? "text-emerald-400" : "text-red-400"}
+                        />
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             </aside>
