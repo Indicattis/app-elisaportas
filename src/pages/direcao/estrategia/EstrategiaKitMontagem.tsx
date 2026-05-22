@@ -12,7 +12,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { supabase } from "@/integrations/supabase/client";
 import type { ItemTabelaPreco } from "@/hooks/useTabelaPrecos";
 import { useKitMontagem, computeLucroUnit } from "@/hooks/useKitMontagem";
-import { useCustosItens } from "@/hooks/useCustosItens";
+import { useCustosItens, useCustosItensPadroes } from "@/hooks/useCustosItens";
 import { useTabelaPrecos } from "@/hooks/useTabelaPrecos";
 import { cn } from "@/lib/utils";
 
@@ -42,6 +42,7 @@ export default function EstrategiaKitMontagem() {
 
   const { items, isLoading, addItem, updateQuantidade, removeItem } = useKitMontagem(kitId ?? null);
   const { items: allCustosItens } = useCustosItens();
+  const { padroes } = useCustosItensPadroes();
 
   const [precos, setPrecos] = useState({ valor_porta: 0, valor_instalacao: 0, valor_pintura: 0 });
   const [salvando, setSalvando] = useState(false);
@@ -350,12 +351,21 @@ export default function EstrategiaKitMontagem() {
                   <div className="text-xs uppercase tracking-wide text-white/50 mb-3">Lucro adicional</div>
                   {(() => {
                     const precoPorta = Number(kit.valor_porta || 0);
-                    const lucroAdd = precoPorta - totais.custo;
+                    const tImp = Number(padroes?.taxa_impostos ?? 0);
+                    const tDesc = Number(padroes?.taxa_descontos ?? 0);
+                    const tCard = Number(padroes?.taxa_cartao ?? 0);
+                    const vImp = precoPorta * (tImp / 100);
+                    const vDesc = precoPorta * (tDesc / 100);
+                    const vCard = precoPorta * (tCard / 100);
+                    const lucroAdd = precoPorta - totais.custo - vImp - vDesc - vCard;
                     const margemAdd = precoPorta > 0 ? (lucroAdd / precoPorta) * 100 : 0;
                     return (
                       <div className="space-y-2">
                         <Row label="Custo total montagem" value={fmt(totais.custo)} />
                         <Row label="Preço da porta" value={fmt(precoPorta)} />
+                        <Row label={`Imposto (${tImp}%)`} value={`- ${fmt(vImp)}`} valueClass="text-orange-300" />
+                        <Row label={`Desconto Gerente (${tDesc}%)`} value={`- ${fmt(vDesc)}`} valueClass="text-yellow-300" />
+                        <Row label={`Cartão (${tCard}%)`} value={`- ${fmt(vCard)}`} valueClass="text-teal-300" />
                         <div className="h-px bg-white/10 my-2" />
                         <Row
                           label="Lucro adicional"
