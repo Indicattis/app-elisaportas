@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Search, Plus, Pencil, Trash2, Upload, Check, X } from "lucide-react";
+import { Search, Plus, Pencil, Trash2, Upload, Check, X, Boxes } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -12,6 +12,8 @@ import { useTabelaPrecos, ItemTabelaPreco, ItemTabelaPrecoInput } from "@/hooks/
 import { ItemModal } from "@/components/tabela-precos/ItemModal";
 import { BulkUploadTabelaPrecos } from "@/components/tabela-precos/BulkUploadTabelaPrecos";
 import { CatalogoPrecosTab } from "@/components/tabela-precos/CatalogoPrecosTab";
+import { KitMontagemDialog } from "@/components/tabela-precos/KitMontagemDialog";
+import { useKitsMontagemResumo } from "@/hooks/useKitMontagem";
 import { useQueryClient } from "@tanstack/react-query";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 
@@ -49,9 +51,11 @@ export default function TabelaPrecos({
   const [editingLucroValue, setEditingLucroValue] = useState('');
   const [activeTab, setActiveTab] = useState<'portas' | 'catalogo'>('portas');
   const lucroInputRef = useRef<HTMLInputElement>(null);
+  const [montagemKit, setMontagemKit] = useState<ItemTabelaPreco | null>(null);
 
   const queryClient = useQueryClient();
   const { itens, isLoading, adicionarItem, editarItem, inativarItem } = useTabelaPrecos(searchTerm);
+  const { data: resumoMontagem = {} } = useKitsMontagemResumo();
 
   useEffect(() => {
     if (editingLucroId && lucroInputRef.current) {
@@ -109,6 +113,12 @@ export default function TabelaPrecos({
 
   const calcularTotal = (item: ItemTabelaPreco) => {
     return item.valor_porta + item.valor_instalacao + item.valor_pintura;
+  };
+
+  const getLucroEfetivo = (item: ItemTabelaPreco) => {
+    const r = resumoMontagem[item.id];
+    if (r && r.count > 0) return { value: r.lucroTotal, fromMontagem: true, count: r.count };
+    return { value: item.lucro || 0, fromMontagem: false, count: 0 };
   };
 
   // Busca rápida por dimensões aproximadas
@@ -198,6 +208,7 @@ export default function TabelaPrecos({
                   <TableBody>
                     {itens.map((item) => {
                       const total = calcularTotal(item);
+                      const lucroInfo = getLucroEfetivo(item);
                       return (
                         <TableRow key={item.id} className="border-white/10 hover:bg-white/5">
                           <TableCell className="font-medium text-white">{item.descricao}</TableCell>
@@ -416,7 +427,14 @@ export default function TabelaPrecos({
                             </Badge>
                           </TableCell>}
                           {!hideLucroColumn && <TableCell className="text-right hidden md:table-cell">
-                            {editingLucroId === item.id ? (
+                            {lucroInfo.fromMontagem ? (
+                              <span
+                                className="text-white/80 cursor-not-allowed"
+                                title="Calculado pela montagem do kit"
+                              >
+                                {lucroInfo.value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                              </span>
+                            ) : editingLucroId === item.id ? (
                               <div className="flex items-center justify-end gap-1">
                                 <Input
                                   ref={lucroInputRef}
@@ -448,7 +466,7 @@ export default function TabelaPrecos({
                             )}
                           </TableCell>}
                           {!hideLucroColumn && (() => {
-                            const lucro = item.lucro || 0;
+                            const lucro = lucroInfo.value;
                             const pct = total > 0 ? (lucro / total) * 100 : 0;
                             const cor = pct > 0 ? "text-emerald-400" : pct < 0 ? "text-red-400" : "text-white/60";
                             return (
@@ -457,6 +475,33 @@ export default function TabelaPrecos({
                               </TableCell>
                             );
                           })()}
+                          {!hideAcoesColumn && (
+                            <TableCell className="text-center">
+                              {lucroInfo.fromMontagem ? (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setMontagemKit(item)}
+                                  className="h-7 gap-1.5 text-white/80 hover:text-white hover:bg-white/10"
+                                  title="Editar montagem"
+                                >
+                                  <Boxes className="h-3.5 w-3.5" />
+                                  <span className="text-xs">{lucroInfo.count} {lucroInfo.count === 1 ? 'item' : 'itens'}</span>
+                                </Button>
+                              ) : (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setMontagemKit(item)}
+                                  className="h-7 gap-1.5 text-amber-300 hover:text-amber-200 hover:bg-amber-500/10 border border-amber-500/30"
+                                  title="Configurar montagem"
+                                >
+                                  <Boxes className="h-3.5 w-3.5" />
+                                  <span className="text-xs">Sem montagem</span>
+                                </Button>
+                              )}
+                            </TableCell>
+                          )}
                           {!hideAcoesColumn && <TableCell>
                             <div className="flex items-center justify-center gap-1">
                               <Button
@@ -501,6 +546,12 @@ export default function TabelaPrecos({
         onOpenChange={setModalOpen}
         onSubmit={handleSubmit}
         itemEditando={itemEditando}
+      />
+
+      <KitMontagemDialog
+        kit={montagemKit}
+        open={!!montagemKit}
+        onOpenChange={(v) => !v && setMontagemKit(null)}
       />
 
       {/* Modal de Upload em Massa */}
