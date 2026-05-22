@@ -685,7 +685,7 @@ export default function EstrategiaItens() {
   const totals = useMemo(() => {
     let custo = 0;
     for (const it of filteredItems) {
-      custo += Number(it.custo_unitario || 0);
+      custo += Number(it.custo_unitario || 0) * Number(it.quantidade || 0);
     }
     return { custo };
   }, [filteredItems]);
