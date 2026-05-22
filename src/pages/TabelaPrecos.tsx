@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Search, Plus, Pencil, Trash2, Upload, Check, X, Boxes } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +13,6 @@ import { useTabelaPrecos, ItemTabelaPreco, ItemTabelaPrecoInput } from "@/hooks/
 import { ItemModal } from "@/components/tabela-precos/ItemModal";
 import { BulkUploadTabelaPrecos } from "@/components/tabela-precos/BulkUploadTabelaPrecos";
 import { CatalogoPrecosTab } from "@/components/tabela-precos/CatalogoPrecosTab";
-import { KitMontagemDialog } from "@/components/tabela-precos/KitMontagemDialog";
 import { useKitsMontagemResumo } from "@/hooks/useKitMontagem";
 import { useQueryClient } from "@tanstack/react-query";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
@@ -51,7 +51,7 @@ export default function TabelaPrecos({
   const [editingLucroValue, setEditingLucroValue] = useState('');
   const [activeTab, setActiveTab] = useState<'portas' | 'catalogo'>('portas');
   const lucroInputRef = useRef<HTMLInputElement>(null);
-  const [montagemKit, setMontagemKit] = useState<ItemTabelaPreco | null>(null);
+  const navigate = useNavigate();
 
   const queryClient = useQueryClient();
   const { itens, isLoading, adicionarItem, editarItem, inativarItem } = useTabelaPrecos(searchTerm);
@@ -483,7 +483,7 @@ export default function TabelaPrecos({
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  onClick={() => setMontagemKit(item)}
+                                  onClick={() => navigate(`/direcao/estrategia/kits/${item.id}/montagem`)}
                                   className="h-7 gap-1.5 text-white/80 hover:text-white hover:bg-white/10"
                                   title="Editar montagem"
                                 >
@@ -494,7 +494,7 @@ export default function TabelaPrecos({
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  onClick={() => setMontagemKit(item)}
+                                  onClick={() => navigate(`/direcao/estrategia/kits/${item.id}/montagem`)}
                                   className="h-7 gap-1.5 text-amber-300 hover:text-amber-200 hover:bg-amber-500/10 border border-amber-500/30"
                                   title="Configurar montagem"
                                 >
@@ -548,12 +548,6 @@ export default function TabelaPrecos({
         onOpenChange={setModalOpen}
         onSubmit={handleSubmit}
         itemEditando={itemEditando}
-      />
-
-      <KitMontagemDialog
-        kit={montagemKit}
-        open={!!montagemKit}
-        onOpenChange={(v) => !v && setMontagemKit(null)}
       />
 
       {/* Modal de Upload em Massa */}
