@@ -534,6 +534,23 @@ export default function EstrategiaItens() {
   const [padroesForm, setPadroesForm] = useState({ taxa_impostos: "0", taxa_descontos: "0", taxa_cartao: "0" });
   const [ordemOpen, setOrdemOpen] = useState(false);
   const [ordemDraft, setOrdemDraft] = useState<string[]>([]);
+  const [coresOpen, setCoresOpen] = useState(false);
+  const [columnColors, setColumnColors] = useState<Record<ColumnKey, string>>(() => {
+    if (typeof window === "undefined") return { ...DEFAULT_COLUMN_COLORS };
+    try {
+      const raw = window.localStorage.getItem(COLUMN_COLORS_STORAGE_KEY);
+      if (!raw) return { ...DEFAULT_COLUMN_COLORS };
+      const parsed = JSON.parse(raw);
+      return { ...DEFAULT_COLUMN_COLORS, ...parsed };
+    } catch {
+      return { ...DEFAULT_COLUMN_COLORS };
+    }
+  });
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(COLUMN_COLORS_STORAGE_KEY, JSON.stringify(columnColors));
+    } catch { /* ignore */ }
+  }, [columnColors]);
 
   useEffect(() => {
     if (padroes) {
