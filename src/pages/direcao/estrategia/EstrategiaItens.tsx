@@ -1122,6 +1122,7 @@ export default function EstrategiaItens() {
                       disabled={isDndDisabled}
                       categorias={todasCategorias}
                       colors={columnColors}
+                      padroes={padroes}
                       onUpdate={(patch) => updateItem.mutateAsync({ id: item.id, patch })}
                       onDelete={() => {
                         if (confirm(`Excluir "${item.descricao}"?`)) {
