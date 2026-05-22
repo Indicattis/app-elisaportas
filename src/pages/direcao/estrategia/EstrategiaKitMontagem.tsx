@@ -169,6 +169,7 @@ export default function EstrategiaKitMontagem() {
                       <TableHead className="text-right text-slate-600 w-32">Subtotal custo</TableHead>
                       <TableHead className="text-right text-slate-600 w-28">Lucro un.</TableHead>
                       <TableHead className="text-right text-slate-600 w-32">Subtotal lucro</TableHead>
+                      <TableHead className="text-right text-slate-600 w-28">Preço</TableHead>
                       <TableHead className="text-center text-slate-600 w-12"></TableHead>
                     </TableRow>
                   </TableHeader>
