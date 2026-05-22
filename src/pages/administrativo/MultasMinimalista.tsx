@@ -195,6 +195,7 @@ export default function MultasMinimalista() {
   const [dataVencimento, setDataVencimento] = useState<Date>();
   const [statusAtivo, setStatusAtivo] = useState<MultaStatus>('aberta');
   const [respModalEtapa, setRespModalEtapa] = useState<MultaStatus | null>(null);
+  const [confirmAvanco, setConfirmAvanco] = useState<{ multaId: string; proxima: MultaStatus; proximaLabel: string } | null>(null);
 
   const { data: multas, isLoading, refetch, isRefetching, createMulta, updateStatus, deleteMulta } = useMultas();
   const { data: users } = useAllUsers();
