@@ -564,3 +564,48 @@ export default function TabelaPrecos({
     </MinimalistLayout>
   );
 }
+
+function SortableKitRow({
+  id,
+  enabled,
+  showHandle,
+  children,
+}: {
+  id: string;
+  enabled: boolean;
+  showHandle: boolean;
+  children: React.ReactNode;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id,
+    disabled: !enabled,
+  });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+  };
+  return (
+    <TableRow
+      ref={setNodeRef}
+      style={style}
+      className="border-white/10 hover:bg-white/5"
+    >
+      {showHandle && (
+        <TableCell className="w-10">
+          <button
+            type="button"
+            {...attributes}
+            {...listeners}
+            disabled={!enabled}
+            className={`flex items-center justify-center text-white/40 hover:text-white/80 ${enabled ? "cursor-grab active:cursor-grabbing" : "cursor-not-allowed opacity-40"}`}
+            title={enabled ? "Arraste para reordenar" : "Limpe a busca para reordenar"}
+          >
+            <GripVertical className="h-4 w-4" />
+          </button>
+        </TableCell>
+      )}
+      {children}
+    </TableRow>
+  );
+}
