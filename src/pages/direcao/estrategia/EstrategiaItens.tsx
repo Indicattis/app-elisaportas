@@ -45,7 +45,7 @@ import {
 } from "@/components/ui/table";
 import { formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
-import { useCustosItens, CustoItem, useCustosItensPadroes, useCustosItensCategoriasOrdem, useRenomearCategoriaItens } from "@/hooks/useCustosItens";
+import { useCustosItens, CustoItem, useCustosItensPadroes, useCustosItensCategoriasOrdem, useRenomearCategoriaItens, useCriarCategoriaItens, useExcluirCategoriaItens } from "@/hooks/useCustosItens";
 import { cn } from "@/lib/utils";
 import { exportEstrategiaItensPDF, exportEstrategiaItensExcel } from "@/utils/estrategiaItensExport";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
