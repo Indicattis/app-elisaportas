@@ -344,8 +344,7 @@ function SortableItemRow({ item, disabled, categorias, onUpdate, onDelete }: Sor
   const tImp = Number(item.taxa_impostos || 0);
   const tDesc = Number(item.taxa_descontos || 0);
   const tCard = Number(item.taxa_cartao || 0);
-  const taxas = tImp + tDesc + tCard;
-  const deducoes = preco * (taxas / 100);
+  const deducoes = tImp + tDesc + tCard;
   const lucro = preco - deducoes - custo;
   const corLucro = lucro > 0 ? "text-emerald-400" : lucro < 0 ? "text-red-400" : "text-muted-foreground";
   return (
@@ -388,27 +387,27 @@ function SortableItemRow({ item, disabled, categorias, onUpdate, onDelete }: Sor
       <TableCell className="text-right text-foreground bg-orange-500/10">
         <EditableCell
           value={tImp}
-          type="number"
+          type="currency"
           align="right"
-          display={<span>{tImp.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%</span>}
+          display={formatCurrency(tImp)}
           onSave={(v) => onUpdate({ taxa_impostos: Number(v) })}
         />
       </TableCell>
       <TableCell className="text-right text-foreground bg-yellow-500/10">
         <EditableCell
           value={tDesc}
-          type="number"
+          type="currency"
           align="right"
-          display={<span>{tDesc.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%</span>}
+          display={formatCurrency(tDesc)}
           onSave={(v) => onUpdate({ taxa_descontos: Number(v) })}
         />
       </TableCell>
       <TableCell className="text-right text-foreground bg-teal-500/10">
         <EditableCell
           value={tCard}
-          type="number"
+          type="currency"
           align="right"
-          display={<span>{tCard.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%</span>}
+          display={formatCurrency(tCard)}
           onSave={(v) => onUpdate({ taxa_cartao: Number(v) })}
         />
       </TableCell>
@@ -766,16 +765,16 @@ export default function EstrategiaItens() {
                   className="!h-[50px] gap-2 bg-card/60 border-border text-foreground hover:bg-muted hover:text-foreground"
                 >
                   <Percent className="h-4 w-4" />
-                  Definir % padrões
+                  Definir valores padrões
                 </Button>
               </DialogTrigger>
               <DialogContent className="bg-popover text-popover-foreground border-border text-foreground">
                 <DialogHeader>
-                  <DialogTitle>% padrões dos itens</DialogTitle>
+                  <DialogTitle>Valores padrões dos itens</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-3">
                   <div>
-                    <Label className="text-orange-300">Imposto (%)</Label>
+                    <Label className="text-orange-300">Imposto (R$)</Label>
                     <Input
                       type="number"
                       step="0.01"
@@ -785,7 +784,7 @@ export default function EstrategiaItens() {
                     />
                   </div>
                   <div>
-                    <Label className="text-yellow-300">Desconto Gerente (%)</Label>
+                    <Label className="text-yellow-300">Desconto Gerente (R$)</Label>
                     <Input
                       type="number"
                       step="0.01"
@@ -795,7 +794,7 @@ export default function EstrategiaItens() {
                     />
                   </div>
                   <div>
-                    <Label className="text-teal-300">Cartão (%)</Label>
+                    <Label className="text-teal-300">Cartão (R$)</Label>
                     <Input
                       type="number"
                       step="0.01"
@@ -805,7 +804,7 @@ export default function EstrategiaItens() {
                     />
                   </div>
                   <p className="text-xs text-muted-foreground/80">
-                    Isso vai sobrescrever as % de todos os {items.length} itens cadastrados.
+                    Isso vai sobrescrever os valores de todos os {items.length} itens cadastrados.
                   </p>
                 </div>
                 <DialogFooter>
