@@ -926,6 +926,60 @@ export default function EstrategiaItens() {
                 </DialogFooter>
               </DialogContent>
             </Dialog>
+            <Dialog open={coresOpen} onOpenChange={setCoresOpen}>
+              <DialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="!h-[50px] gap-2 bg-card/60 border-border text-foreground hover:bg-muted hover:text-foreground"
+                >
+                  <Palette className="h-4 w-4" />
+                  Cores das colunas
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="bg-popover text-popover-foreground border-border text-foreground max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Cores das colunas</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-3">
+                  {(Object.keys(COLUMN_LABELS) as ColumnKey[]).map((col) => (
+                    <div key={col} className="flex items-center gap-3">
+                      <span className={cn("inline-block h-4 w-4 rounded-full ring-1 ring-border", COLUMN_COLOR_OPTIONS[columnColors[col]]?.swatch ?? COLUMN_COLOR_OPTIONS[DEFAULT_COLUMN_COLORS[col]].swatch)} />
+                      <Label className="flex-1 text-foreground">{COLUMN_LABELS[col]}</Label>
+                      <Select
+                        value={columnColors[col]}
+                        onValueChange={(v) => setColumnColors((prev) => ({ ...prev, [col]: v }))}
+                      >
+                        <SelectTrigger className="h-9 w-40 bg-card/60 border-border text-foreground">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-popover text-popover-foreground border-border text-foreground">
+                          {Object.entries(COLUMN_COLOR_OPTIONS).map(([key, opt]) => (
+                            <SelectItem key={key} value={key}>
+                              <span className="flex items-center gap-2">
+                                <span className={cn("inline-block h-3 w-3 rounded-full", opt.swatch)} />
+                                {opt.label}
+                              </span>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  ))}
+                  <p className="text-xs text-muted-foreground/80">
+                    As cores ficam salvas no seu navegador.
+                  </p>
+                </div>
+                <DialogFooter>
+                  <Button
+                    variant="ghost"
+                    onClick={() => setColumnColors({ ...DEFAULT_COLUMN_COLORS })}
+                  >
+                    Restaurar padrão
+                  </Button>
+                  <Button onClick={() => setCoresOpen(false)}>Concluir</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
 
