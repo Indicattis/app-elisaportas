@@ -134,7 +134,7 @@ export default function TabelaPrecos({
     return item.valor_porta + item.valor_instalacao + item.valor_pintura;
   };
 
-  const getLucroEfetivo = (item: ItemTabelaPreco) => {
+  const getLucroEfetivo = (item: ItemTabelaPreco): { value: number | null; fromMontagem: boolean; count: number } => {
     const r = resumoMontagem[item.id];
     if (r && r.count > 0) {
       const precoPorta = Number(item.valor_porta || 0);
@@ -145,7 +145,7 @@ export default function TabelaPrecos({
       const lucroAdicional = precoPorta - r.custoTotal - precoPorta * taxas;
       return { value: lucroAdicional, fromMontagem: true, count: r.count };
     }
-    return { value: item.lucro || 0, fromMontagem: false, count: 0 };
+    return { value: null, fromMontagem: false, count: 0 };
   };
 
 
