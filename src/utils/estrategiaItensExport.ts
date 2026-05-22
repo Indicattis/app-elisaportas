@@ -46,12 +46,13 @@ export function exportEstrategiaItensPDF(grupos: GrupoItens[]) {
   grupos.forEach(([categoria, itens]) => {
     const body = itens.map((it) => {
       const c = calcLinha(it);
-      totCusto += c.custo;
+      totCusto += c.totalCusto;
       totLucro += c.lucro;
       totVenda += c.preco;
       return [
         it.descricao,
         fmtBRL(c.custo),
+        fmtBRL(c.totalCusto),
         fmtBRL(c.lucro),
         fmtBRL(c.vImp),
         fmtBRL(c.vDesc),
@@ -63,7 +64,7 @@ export function exportEstrategiaItensPDF(grupos: GrupoItens[]) {
     autoTable(doc, {
       startY: cursorY,
       head: [[
-        { content: `${categoria} (${itens.length})`, colSpan: 7, styles: { halign: "left", fillColor: [30, 41, 59], textColor: 255 } },
+        { content: `${categoria} (${itens.length})`, colSpan: 8, styles: { halign: "left", fillColor: [30, 41, 59], textColor: 255 } },
       ]],
       body: [],
       theme: "plain",
@@ -73,7 +74,7 @@ export function exportEstrategiaItensPDF(grupos: GrupoItens[]) {
 
     autoTable(doc, {
       startY: cursorY,
-      head: [["Descrição", "Custo", "Lucro", "Imposto", "Desc. Gerente", "Cartão", "Valor de Venda"]],
+      head: [["Descrição", "Custo", "Total Custo", "Lucro", "Imposto", "Desc. Gerente", "Cartão", "Valor de Venda"]],
       body,
       styles: { fontSize: 8, cellPadding: 2 },
       headStyles: { fillColor: [51, 65, 85], textColor: 255, fontSize: 8 },
@@ -82,9 +83,10 @@ export function exportEstrategiaItensPDF(grupos: GrupoItens[]) {
         1: { halign: "right", cellWidth: 28 },
         2: { halign: "right", cellWidth: 28 },
         3: { halign: "right", cellWidth: 28 },
-        4: { halign: "right", cellWidth: 32 },
-        5: { halign: "right", cellWidth: 28 },
-        6: { halign: "right", cellWidth: 32 },
+        4: { halign: "right", cellWidth: 28 },
+        5: { halign: "right", cellWidth: 32 },
+        6: { halign: "right", cellWidth: 28 },
+        7: { halign: "right", cellWidth: 32 },
       },
       margin: { left: 10, right: 10 },
       theme: "striped",
