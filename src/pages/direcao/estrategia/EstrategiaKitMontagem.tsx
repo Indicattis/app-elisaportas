@@ -334,7 +334,6 @@ export default function EstrategiaKitMontagem() {
                         />
                       </div>
                     ))}
-                    <Row label="Lucro manual" value={fmt(Number(kit.lucro || 0))} />
                     <Button
                       onClick={salvarPrecos}
                       disabled={!isDirty || salvando}
