@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Plus, Pencil, Trash2, Upload, Check, X, Boxes, GripVertical } from "lucide-react";
+import { Search, Plus, Pencil, Trash2, Upload, Boxes, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -66,10 +66,7 @@ export default function TabelaPrecos({
   const [bulkUploadModalOpen, setBulkUploadModalOpen] = useState(false);
   const [itemEditando, setItemEditando] = useState<ItemTabelaPreco | null>(null);
   const [itemParaInativar, setItemParaInativar] = useState<ItemTabelaPreco | null>(null);
-  const [editingLucroId, setEditingLucroId] = useState<string | null>(null);
-  const [editingLucroValue, setEditingLucroValue] = useState('');
   const [activeTab, setActiveTab] = useState<'portas' | 'catalogo'>('portas');
-  const lucroInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
   const queryClient = useQueryClient();
@@ -102,30 +99,6 @@ export default function TabelaPrecos({
   };
 
   const sortableIds = useMemo(() => orderedItens.map((i) => i.id), [orderedItens]);
-
-  useEffect(() => {
-    if (editingLucroId && lucroInputRef.current) {
-      lucroInputRef.current.focus();
-      lucroInputRef.current.select();
-    }
-  }, [editingLucroId]);
-
-  const handleStartEditLucro = (item: ItemTabelaPreco) => {
-    setEditingLucroId(item.id);
-    setEditingLucroValue(String(item.lucro || 0));
-  };
-
-  const handleSaveLucro = async (id: string) => {
-    const valor = parseFloat(editingLucroValue);
-    if (!isNaN(valor) && valor >= 0) {
-      await editarItem({ id, dados: { lucro: valor } });
-    }
-    setEditingLucroId(null);
-  };
-
-  const handleCancelLucro = () => {
-    setEditingLucroId(null);
-  };
 
   const handleUploadComplete = () => {
     queryClient.invalidateQueries({ queryKey: ['tabela-precos'] });
