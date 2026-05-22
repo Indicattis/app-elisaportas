@@ -95,7 +95,7 @@ export function FreteDialog({ open, onOpenChange, frete }: FreteDialogProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.estado || !formData.cidade || !formData.valor_frete) {
+    if (!formData.estado || !formData.cidade || !formData.quilometragem) {
       return;
     }
 
@@ -178,35 +178,39 @@ export function FreteDialog({ open, onOpenChange, frete }: FreteDialogProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="valor_frete">Valor do Frete (R$) *</Label>
-            <Input
-              id="valor_frete"
-              type="number"
-              step="0.01"
-              min="0"
-              value={formData.valor_frete}
-              onChange={(e) => setFormData(prev => ({ 
-                ...prev, 
-                valor_frete: formatCurrencyInput(e.target.value) 
-              }))}
-              placeholder="0.00"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="quilometragem">Quilometragem (km)</Label>
+            <Label htmlFor="quilometragem">Quilometragem (km) *</Label>
             <Input
               id="quilometragem"
               type="number"
               step="0.01"
               min="0"
               value={formData.quilometragem}
-              onChange={(e) => setFormData(prev => ({
-                ...prev,
-                quilometragem: formatCurrencyInput(e.target.value)
-              }))}
+              onChange={(e) => {
+                const km = formatCurrencyInput(e.target.value);
+                const valor = km ? (parseFloat(km) * 6).toFixed(2) : "";
+                setFormData(prev => ({
+                  ...prev,
+                  quilometragem: km,
+                  valor_frete: valor,
+                }));
+              }}
               placeholder="0"
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="valor_frete">Valor do Frete (R$)</Label>
+            <Input
+              id="valor_frete"
+              type="number"
+              value={formData.valor_frete}
+              readOnly
+              disabled
+              placeholder="0.00"
+            />
+            <p className="text-xs text-muted-foreground">
+              Calculado automaticamente: quilometragem × R$ 6,00
+            </p>
           </div>
 
           <div className="space-y-2">
