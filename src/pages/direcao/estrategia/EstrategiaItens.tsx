@@ -917,13 +917,54 @@ export default function EstrategiaItens() {
                   onClick={openOrdemDialog}
                 >
                   <ArrowUpDown className="h-4 w-4" />
-                  Ordenar categorias
+                  Gerenciar categorias
                 </Button>
               </DialogTrigger>
               <DialogContent className="bg-popover text-popover-foreground border-border text-foreground max-w-md">
                 <DialogHeader>
-                  <DialogTitle>Ordenar categorias</DialogTitle>
+                  <DialogTitle>Gerenciar categorias</DialogTitle>
                 </DialogHeader>
+                <div className="flex items-center gap-2">
+                  <Input
+                    placeholder="Nova categoria..."
+                    value={novaCategoriaNome}
+                    onChange={(e) => setNovaCategoriaNome(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        const nome = novaCategoriaNome.trim();
+                        if (!nome) return;
+                        if (ordemDraft.includes(nome)) { toast.error("Já existe uma categoria com esse nome"); return; }
+                        criarCategoria.mutate(nome, {
+                          onSuccess: () => {
+                            setOrdemDraft((prev) => [...prev, nome]);
+                            setNovaCategoriaNome("");
+                          },
+                        });
+                      }
+                    }}
+                    className="flex-1 h-9 bg-card/60 border-border text-foreground"
+                  />
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      const nome = novaCategoriaNome.trim();
+                      if (!nome) return;
+                      if (ordemDraft.includes(nome)) { toast.error("Já existe uma categoria com esse nome"); return; }
+                      criarCategoria.mutate(nome, {
+                        onSuccess: () => {
+                          setOrdemDraft((prev) => [...prev, nome]);
+                          setNovaCategoriaNome("");
+                        },
+                      });
+                    }}
+                    disabled={!novaCategoriaNome.trim() || criarCategoria.isPending}
+                    className="gap-1"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Adicionar
+                  </Button>
+                </div>
                 <div className="max-h-[60vh] overflow-y-auto space-y-1.5">
                   {ordemDraft.length === 0 && (
                     <p className="text-sm text-muted-foreground/80">Nenhuma categoria cadastrada.</p>
@@ -944,6 +985,16 @@ export default function EstrategiaItens() {
                         }
                         await renomearCategoria.mutateAsync({ from: cat, to: novoTrim });
                         setOrdemDraft((prev) => prev.map((c) => (c === cat ? novoTrim : c)));
+                      }}
+                      canDelete={cat !== "Sem categoria" && !items.some((it) => (it.categoria?.trim() || "Sem categoria") === cat)}
+                      onDelete={() => {
+                        if (cat === "Sem categoria") return;
+                        if (!confirm(`Excluir a categoria "${cat}"?`)) return;
+                        excluirCategoria.mutate(cat, {
+                          onSuccess: () => {
+                            setOrdemDraft((prev) => prev.filter((c) => c !== cat));
+                          },
+                        });
                       }}
                     />
                   ))}
