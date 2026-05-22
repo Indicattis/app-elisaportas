@@ -221,6 +221,7 @@ export default function EstrategiaKitMontagem() {
                             <TableCell className="text-right text-slate-900">{fmt(subtotalCusto)}</TableCell>
                             <TableCell className={cn("text-right", lucroUnit >= 0 ? "text-emerald-600" : "text-red-600")}>{fmt(lucroUnit)}</TableCell>
                             <TableCell className={cn("text-right font-medium", subtotalLucro >= 0 ? "text-emerald-600" : "text-red-600")}>{fmt(subtotalLucro)}</TableCell>
+                            <TableCell className="text-right text-slate-900">{fmt(preco)}</TableCell>
                             <TableCell className="text-center">
                               <Button
                                 variant="ghost"
