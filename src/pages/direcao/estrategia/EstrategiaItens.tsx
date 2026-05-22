@@ -73,9 +73,8 @@ const COLUMN_COLOR_OPTIONS: Record<string, { label: string; bg: string; swatch: 
   slate:   { label: "Cinza",     bg: "bg-slate-500/30",   swatch: "bg-slate-500" },
 };
 
-type ColumnKey = "custo" | "lucro" | "imposto" | "desconto" | "cartao" | "venda";
+type ColumnKey = "lucro" | "imposto" | "desconto" | "cartao" | "venda";
 const COLUMN_LABELS: Record<ColumnKey, string> = {
-  custo: "Custo",
   lucro: "Lucro",
   imposto: "Imposto",
   desconto: "Desc. Gerente",
@@ -83,7 +82,6 @@ const COLUMN_LABELS: Record<ColumnKey, string> = {
   venda: "Valor de Venda",
 };
 const DEFAULT_COLUMN_COLORS: Record<ColumnKey, string> = {
-  custo: "rose",
   lucro: "blue",
   imposto: "orange",
   desconto: "yellow",
@@ -388,8 +386,6 @@ function SortableItemRow({ item, disabled, categorias, colors, onUpdate, onDelet
     zIndex: isDragging ? 10 : "auto",
   };
   const custo = Number(item.custo_unitario || 0);
-  const qtd = Number(item.quantidade || 0);
-  const totalCusto = custo * qtd;
   const preco = Number(item.preco_venda || 0);
   const tImp = Number(item.taxa_impostos || 0);
   const tDesc = Number(item.taxa_descontos || 0);
@@ -425,18 +421,6 @@ function SortableItemRow({ item, disabled, categorias, colors, onUpdate, onDelet
           value={item.descricao}
           onSave={(v) => onUpdate({ descricao: String(v) })}
         />
-      </TableCell>
-      <TableCell className={`text-right text-foreground ${getColumnBg(colors, "custo")}`}>
-        <EditableCell
-          value={custo}
-          type="currency"
-          align="right"
-          display={formatCurrency(custo)}
-          onSave={(v) => onUpdate({ custo_unitario: Number(v) })}
-        />
-      </TableCell>
-      <TableCell className={`text-right text-foreground ${getColumnBg(colors, "custo")}`}>
-        {formatCurrency(totalCusto)}
       </TableCell>
       <TableCell className={`text-right font-medium ${getColumnBg(colors, "lucro")} ${corLucro}`}>
         {formatCurrency(lucro)}
@@ -685,7 +669,7 @@ export default function EstrategiaItens() {
   const totals = useMemo(() => {
     let custo = 0;
     for (const it of filteredItems) {
-      custo += Number(it.custo_unitario || 0) * Number(it.quantidade || 0);
+      custo += Number(it.custo_unitario || 0);
     }
     return { custo };
   }, [filteredItems]);
@@ -1078,14 +1062,12 @@ export default function EstrategiaItens() {
                    <TableRow className="border-border hover:bg-transparent">
                      <TableHead className="w-8 p-0" />
                      <TableHead className="text-xs font-medium text-muted-foreground">Descrição</TableHead>
-                     <TableHead className={`text-xs font-medium text-foreground text-right w-36 ${getColumnBg(columnColors, "custo")}`}>Custo</TableHead>
-                     <TableHead className={`text-xs font-medium text-foreground text-right w-36 ${getColumnBg(columnColors, "custo")}`}>Total Custo</TableHead>
-                     <TableHead className={`text-xs font-medium text-foreground text-right w-36 ${getColumnBg(columnColors, "lucro")}`}>Lucro</TableHead>
-                     <TableHead className={`text-xs font-medium text-foreground text-right w-28 ${getColumnBg(columnColors, "imposto")}`}>Imposto</TableHead>
-                     <TableHead className={`text-xs font-medium text-foreground text-right w-32 ${getColumnBg(columnColors, "desconto")}`}>Desc. Gerente</TableHead>
-                     <TableHead className={`text-xs font-medium text-foreground text-right w-28 ${getColumnBg(columnColors, "cartao")}`}>Cartão</TableHead>
-                     <TableHead className={`text-xs font-medium text-foreground text-right w-40 ${getColumnBg(columnColors, "venda")}`}>Valor de Venda</TableHead>
-                     <TableHead className="text-xs font-medium text-muted-foreground text-center w-16">Ações</TableHead>
+                    <TableHead className={`text-xs font-medium text-foreground text-right w-36 ${getColumnBg(columnColors, "lucro")}`}>Lucro</TableHead>
+                    <TableHead className={`text-xs font-medium text-foreground text-right w-28 ${getColumnBg(columnColors, "imposto")}`}>Imposto</TableHead>
+                    <TableHead className={`text-xs font-medium text-foreground text-right w-32 ${getColumnBg(columnColors, "desconto")}`}>Desc. Gerente</TableHead>
+                    <TableHead className={`text-xs font-medium text-foreground text-right w-28 ${getColumnBg(columnColors, "cartao")}`}>Cartão</TableHead>
+                    <TableHead className={`text-xs font-medium text-foreground text-right w-40 ${getColumnBg(columnColors, "venda")}`}>Valor de Venda</TableHead>
+                    <TableHead className="text-xs font-medium text-muted-foreground text-center w-16">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -1114,15 +1096,6 @@ export default function EstrategiaItens() {
           ))}
         </div>
 
-        {/* Total geral */}
-        {filteredItems.length > 0 && (
-          <div className="rounded-xl bg-card/60 backdrop-blur-xl border border-border p-4 flex items-center justify-end gap-8 text-sm">
-            <div className="flex flex-col items-end">
-              <span className="text-muted-foreground/80 text-xs uppercase">Total custo</span>
-              <span className="text-foreground font-semibold">{formatCurrency(totals.custo)}</span>
-            </div>
-          </div>
-        )}
       </div>
     </MinimalistLayout>
   );

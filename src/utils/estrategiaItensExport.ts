@@ -10,8 +10,6 @@ const fmtBRL = (n: number) =>
 
 function calcLinha(item: CustoItem) {
   const custo = Number(item.custo_unitario || 0);
-  const qtd = Number(item.quantidade || 0);
-  const totalCusto = custo * qtd;
   const preco = Number(item.preco_venda || 0);
   const tImp = Number(item.taxa_impostos || 0);
   const tDesc = Number(item.taxa_descontos || 0);
@@ -20,7 +18,7 @@ function calcLinha(item: CustoItem) {
   const vDesc = preco * (tDesc / 100);
   const vCard = preco * (tCard / 100);
   const lucro = preco - custo - (vImp + vDesc + vCard);
-  return { custo, totalCusto, preco, vImp, vDesc, vCard, lucro };
+  return { custo, preco, vImp, vDesc, vCard, lucro };
 }
 
 function hoje() {
@@ -46,13 +44,12 @@ export function exportEstrategiaItensPDF(grupos: GrupoItens[]) {
   grupos.forEach(([categoria, itens]) => {
     const body = itens.map((it) => {
       const c = calcLinha(it);
-      totCusto += c.totalCusto;
+      totCusto += c.custo;
       totLucro += c.lucro;
       totVenda += c.preco;
       return [
         it.descricao,
         fmtBRL(c.custo),
-        fmtBRL(c.totalCusto),
         fmtBRL(c.lucro),
         fmtBRL(c.vImp),
         fmtBRL(c.vDesc),
@@ -64,7 +61,7 @@ export function exportEstrategiaItensPDF(grupos: GrupoItens[]) {
     autoTable(doc, {
       startY: cursorY,
       head: [[
-        { content: `${categoria} (${itens.length})`, colSpan: 8, styles: { halign: "left", fillColor: [30, 41, 59], textColor: 255 } },
+        { content: `${categoria} (${itens.length})`, colSpan: 7, styles: { halign: "left", fillColor: [30, 41, 59], textColor: 255 } },
       ]],
       body: [],
       theme: "plain",
@@ -74,7 +71,7 @@ export function exportEstrategiaItensPDF(grupos: GrupoItens[]) {
 
     autoTable(doc, {
       startY: cursorY,
-      head: [["Descrição", "Custo", "Total Custo", "Lucro", "Imposto", "Desc. Gerente", "Cartão", "Valor de Venda"]],
+      head: [["Descrição", "Custo", "Lucro", "Imposto", "Desc. Gerente", "Cartão", "Valor de Venda"]],
       body,
       styles: { fontSize: 8, cellPadding: 2 },
       headStyles: { fillColor: [51, 65, 85], textColor: 255, fontSize: 8 },
@@ -83,10 +80,9 @@ export function exportEstrategiaItensPDF(grupos: GrupoItens[]) {
         1: { halign: "right", cellWidth: 28 },
         2: { halign: "right", cellWidth: 28 },
         3: { halign: "right", cellWidth: 28 },
-        4: { halign: "right", cellWidth: 28 },
-        5: { halign: "right", cellWidth: 32 },
-        6: { halign: "right", cellWidth: 28 },
-        7: { halign: "right", cellWidth: 32 },
+        4: { halign: "right", cellWidth: 32 },
+        5: { halign: "right", cellWidth: 28 },
+        6: { halign: "right", cellWidth: 32 },
       },
       margin: { left: 10, right: 10 },
       theme: "striped",
@@ -96,14 +92,14 @@ export function exportEstrategiaItensPDF(grupos: GrupoItens[]) {
 
   autoTable(doc, {
     startY: cursorY,
-    head: [["TOTAL", "Custo", "Total Custo", "Lucro", "", "", "", "Valor de Venda"]],
-    body: [["", "", fmtBRL(totCusto), fmtBRL(totLucro), "", "", "", fmtBRL(totVenda)]],
+    head: [["TOTAL", "Custo", "Lucro", "", "", "", "Valor de Venda"]],
+    body: [["", fmtBRL(totCusto), fmtBRL(totLucro), "", "", "", fmtBRL(totVenda)]],
     styles: { fontSize: 9, fontStyle: "bold", cellPadding: 2 },
     headStyles: { fillColor: [15, 23, 42], textColor: 255 },
     columnStyles: {
+      1: { halign: "right" },
       2: { halign: "right" },
-      3: { halign: "right" },
-      7: { halign: "right" },
+      6: { halign: "right" },
     },
     margin: { left: 10, right: 10 },
   });
@@ -117,7 +113,6 @@ export function exportEstrategiaItensExcel(grupos: GrupoItens[]) {
     "Categoria",
     "Descrição",
     "Custo",
-    "Total Custo",
     "Lucro",
     "Imposto (R$)",
     "Desc. Gerente (R$)",
@@ -132,14 +127,13 @@ export function exportEstrategiaItensExcel(grupos: GrupoItens[]) {
   grupos.forEach(([categoria, itens]) => {
     itens.forEach((it) => {
       const c = calcLinha(it);
-      totCusto += c.totalCusto;
+      totCusto += c.custo;
       totLucro += c.lucro;
       totVenda += c.preco;
       rows.push([
         categoria,
         it.descricao,
         c.custo,
-        c.totalCusto,
         c.lucro,
         c.vImp,
         c.vDesc,
@@ -150,7 +144,7 @@ export function exportEstrategiaItensExcel(grupos: GrupoItens[]) {
   });
 
   rows.push([]);
-  rows.push(["TOTAL", "", "", totCusto, totLucro, "", "", "", totVenda]);
+  rows.push(["TOTAL", "", totCusto, totLucro, "", "", "", totVenda]);
 
   const ws = XLSX.utils.aoa_to_sheet(rows);
 
@@ -158,7 +152,7 @@ export function exportEstrategiaItensExcel(grupos: GrupoItens[]) {
   const moneyFmt = 'R$ #,##0.00;[Red](R$ #,##0.00);"-"';
   const range = XLSX.utils.decode_range(ws["!ref"] as string);
   for (let R = 1; R <= range.e.r; ++R) {
-    for (const C of [2, 3, 4, 5, 6, 7, 8]) {
+    for (const C of [2, 3, 4, 5, 6, 7]) {
       const ref = XLSX.utils.encode_cell({ r: R, c: C });
       const cell = ws[ref];
       if (cell && typeof cell.v === "number") {
@@ -171,7 +165,6 @@ export function exportEstrategiaItensExcel(grupos: GrupoItens[]) {
   ws["!cols"] = [
     { wch: 22 },
     { wch: 40 },
-    { wch: 14 },
     { wch: 14 },
     { wch: 14 },
     { wch: 14 },
