@@ -189,10 +189,10 @@ export default function MultasMinimalista() {
   const { data: multas, isLoading, refetch, isRefetching, createMulta, updateStatus, deleteMulta } = useMultas();
   const { data: users } = useAllUsers();
   const { getResponsavel, atribuirResponsavel, removerResponsavel, isAtribuindo } = useMultasEtapaResponsaveis();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
 
   const respAtual = getResponsavel(statusAtivo);
-  const podeAvancar = !!user && !!respAtual && respAtual.user_id === user.id;
+  const podeAvancar = !!user && (isAdmin || (!!respAtual && respAtual.user_id === user.id));
 
   const filtered = multas?.filter(m => {
     if (!searchTerm) return true;
