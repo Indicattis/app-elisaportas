@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, CSSProperties } from "react";
-import { Plus, Trash2, Percent, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Check, X, GripVertical, FolderInput } from "lucide-react";
+import { Plus, Trash2, Percent, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Check, X, GripVertical, FolderInput, Palette } from "lucide-react";
 import {
   DndContext,
   closestCenter,
@@ -49,6 +49,52 @@ import { useCustosItens, CustoItem, useCustosItensPadroes, useCustosItensCategor
 import { cn } from "@/lib/utils";
 
 const UNIDADES = ["Un", "M", "Kg", "L", "M²", "M³", "Cx", "Pç"];
+
+// ============== Cores configuráveis das colunas ==============
+const COLUMN_COLOR_OPTIONS: Record<string, { label: string; bg: string; swatch: string }> = {
+  rose:    { label: "Rosa",      bg: "bg-rose-500/30",    swatch: "bg-rose-500" },
+  red:     { label: "Vermelho",  bg: "bg-red-500/30",     swatch: "bg-red-500" },
+  orange:  { label: "Laranja",   bg: "bg-orange-500/30",  swatch: "bg-orange-500" },
+  amber:   { label: "Âmbar",     bg: "bg-amber-500/30",   swatch: "bg-amber-500" },
+  yellow:  { label: "Amarelo",   bg: "bg-yellow-500/30",  swatch: "bg-yellow-500" },
+  lime:    { label: "Lima",      bg: "bg-lime-500/30",    swatch: "bg-lime-500" },
+  green:   { label: "Verde",     bg: "bg-green-500/30",   swatch: "bg-green-500" },
+  emerald: { label: "Esmeralda", bg: "bg-emerald-500/30", swatch: "bg-emerald-500" },
+  teal:    { label: "Teal",      bg: "bg-teal-500/30",    swatch: "bg-teal-500" },
+  cyan:    { label: "Ciano",     bg: "bg-cyan-500/30",    swatch: "bg-cyan-500" },
+  sky:     { label: "Céu",       bg: "bg-sky-500/30",     swatch: "bg-sky-500" },
+  blue:    { label: "Azul",      bg: "bg-blue-500/30",    swatch: "bg-blue-500" },
+  indigo:  { label: "Índigo",    bg: "bg-indigo-500/30",  swatch: "bg-indigo-500" },
+  violet:  { label: "Violeta",   bg: "bg-violet-500/30",  swatch: "bg-violet-500" },
+  purple:  { label: "Roxo",      bg: "bg-purple-500/30",  swatch: "bg-purple-500" },
+  fuchsia: { label: "Fúcsia",    bg: "bg-fuchsia-500/30", swatch: "bg-fuchsia-500" },
+  pink:    { label: "Pink",      bg: "bg-pink-500/30",    swatch: "bg-pink-500" },
+  slate:   { label: "Cinza",     bg: "bg-slate-500/30",   swatch: "bg-slate-500" },
+};
+
+type ColumnKey = "custo" | "lucro" | "imposto" | "desconto" | "cartao" | "venda";
+const COLUMN_LABELS: Record<ColumnKey, string> = {
+  custo: "Custo",
+  lucro: "Lucro",
+  imposto: "Imposto",
+  desconto: "Desc. Gerente",
+  cartao: "Cartão",
+  venda: "Valor de Venda",
+};
+const DEFAULT_COLUMN_COLORS: Record<ColumnKey, string> = {
+  custo: "rose",
+  lucro: "blue",
+  imposto: "orange",
+  desconto: "yellow",
+  cartao: "teal",
+  venda: "green",
+};
+const COLUMN_COLORS_STORAGE_KEY = "estrategia-itens-column-colors-v1";
+
+function getColumnBg(colors: Record<ColumnKey, string>, key: ColumnKey) {
+  const c = colors[key] || DEFAULT_COLUMN_COLORS[key];
+  return (COLUMN_COLOR_OPTIONS[c] || COLUMN_COLOR_OPTIONS[DEFAULT_COLUMN_COLORS[key]]).bg;
+}
 
 type EditableCellProps = {
   value: string | number | null | undefined;
@@ -310,11 +356,12 @@ type SortableItemRowProps = {
   item: CustoItem;
   disabled: boolean;
   categorias: string[];
+  colors: Record<ColumnKey, string>;
   onUpdate: (patch: Partial<CustoItem>) => Promise<void> | void;
   onDelete: () => void;
 };
 
-function SortableItemRow({ item, disabled, categorias, onUpdate, onDelete }: SortableItemRowProps) {
+function SortableItemRow({ item, disabled, categorias, colors, onUpdate, onDelete }: SortableItemRowProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: item.id,
     disabled,
@@ -372,7 +419,7 @@ function SortableItemRow({ item, disabled, categorias, onUpdate, onDelete }: Sor
           onSave={(v) => onUpdate({ descricao: String(v) })}
         />
       </TableCell>
-      <TableCell className="text-right text-foreground bg-rose-500/10">
+      <TableCell className={`text-right text-foreground ${getColumnBg(colors, "custo")}`}>
         <EditableCell
           value={custo}
           type="currency"
@@ -381,10 +428,10 @@ function SortableItemRow({ item, disabled, categorias, onUpdate, onDelete }: Sor
           onSave={(v) => onUpdate({ custo_unitario: Number(v) })}
         />
       </TableCell>
-      <TableCell className={`text-right font-medium bg-blue-500/10 ${corLucro}`}>
+      <TableCell className={`text-right font-medium ${getColumnBg(colors, "lucro")} ${corLucro}`}>
         {formatCurrency(lucro)}
       </TableCell>
-      <TableCell className="text-right text-foreground bg-orange-500/10">
+      <TableCell className={`text-right text-foreground ${getColumnBg(colors, "imposto")}`}>
         <EditableCell
           value={tImp}
           type="currency"
@@ -393,7 +440,7 @@ function SortableItemRow({ item, disabled, categorias, onUpdate, onDelete }: Sor
           onSave={(v) => onUpdate({ taxa_impostos: Number(v) })}
         />
       </TableCell>
-      <TableCell className="text-right text-foreground bg-yellow-500/10">
+      <TableCell className={`text-right text-foreground ${getColumnBg(colors, "desconto")}`}>
         <EditableCell
           value={tDesc}
           type="currency"
@@ -402,7 +449,7 @@ function SortableItemRow({ item, disabled, categorias, onUpdate, onDelete }: Sor
           onSave={(v) => onUpdate({ taxa_descontos: Number(v) })}
         />
       </TableCell>
-      <TableCell className="text-right text-foreground bg-teal-500/10">
+      <TableCell className={`text-right text-foreground ${getColumnBg(colors, "cartao")}`}>
         <EditableCell
           value={tCard}
           type="currency"
@@ -411,7 +458,7 @@ function SortableItemRow({ item, disabled, categorias, onUpdate, onDelete }: Sor
           onSave={(v) => onUpdate({ taxa_cartao: Number(v) })}
         />
       </TableCell>
-      <TableCell className="text-right font-medium text-foreground bg-green-500/10">
+      <TableCell className={`text-right font-medium text-foreground ${getColumnBg(colors, "venda")}`}>
         <EditableCell
           value={preco}
           type="currency"
@@ -487,6 +534,23 @@ export default function EstrategiaItens() {
   const [padroesForm, setPadroesForm] = useState({ taxa_impostos: "0", taxa_descontos: "0", taxa_cartao: "0" });
   const [ordemOpen, setOrdemOpen] = useState(false);
   const [ordemDraft, setOrdemDraft] = useState<string[]>([]);
+  const [coresOpen, setCoresOpen] = useState(false);
+  const [columnColors, setColumnColors] = useState<Record<ColumnKey, string>>(() => {
+    if (typeof window === "undefined") return { ...DEFAULT_COLUMN_COLORS };
+    try {
+      const raw = window.localStorage.getItem(COLUMN_COLORS_STORAGE_KEY);
+      if (!raw) return { ...DEFAULT_COLUMN_COLORS };
+      const parsed = JSON.parse(raw);
+      return { ...DEFAULT_COLUMN_COLORS, ...parsed };
+    } catch {
+      return { ...DEFAULT_COLUMN_COLORS };
+    }
+  });
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(COLUMN_COLORS_STORAGE_KEY, JSON.stringify(columnColors));
+    } catch { /* ignore */ }
+  }, [columnColors]);
 
   useEffect(() => {
     if (padroes) {
@@ -862,6 +926,60 @@ export default function EstrategiaItens() {
                 </DialogFooter>
               </DialogContent>
             </Dialog>
+            <Dialog open={coresOpen} onOpenChange={setCoresOpen}>
+              <DialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="!h-[50px] gap-2 bg-card/60 border-border text-foreground hover:bg-muted hover:text-foreground"
+                >
+                  <Palette className="h-4 w-4" />
+                  Cores das colunas
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="bg-popover text-popover-foreground border-border text-foreground max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Cores das colunas</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-3">
+                  {(Object.keys(COLUMN_LABELS) as ColumnKey[]).map((col) => (
+                    <div key={col} className="flex items-center gap-3">
+                      <span className={cn("inline-block h-4 w-4 rounded-full ring-1 ring-border", COLUMN_COLOR_OPTIONS[columnColors[col]]?.swatch ?? COLUMN_COLOR_OPTIONS[DEFAULT_COLUMN_COLORS[col]].swatch)} />
+                      <Label className="flex-1 text-foreground">{COLUMN_LABELS[col]}</Label>
+                      <Select
+                        value={columnColors[col]}
+                        onValueChange={(v) => setColumnColors((prev) => ({ ...prev, [col]: v }))}
+                      >
+                        <SelectTrigger className="h-9 w-40 bg-card/60 border-border text-foreground">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-popover text-popover-foreground border-border text-foreground">
+                          {Object.entries(COLUMN_COLOR_OPTIONS).map(([key, opt]) => (
+                            <SelectItem key={key} value={key}>
+                              <span className="flex items-center gap-2">
+                                <span className={cn("inline-block h-3 w-3 rounded-full", opt.swatch)} />
+                                {opt.label}
+                              </span>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  ))}
+                  <p className="text-xs text-muted-foreground/80">
+                    As cores ficam salvas no seu navegador.
+                  </p>
+                </div>
+                <DialogFooter>
+                  <Button
+                    variant="ghost"
+                    onClick={() => setColumnColors({ ...DEFAULT_COLUMN_COLORS })}
+                  >
+                    Restaurar padrão
+                  </Button>
+                  <Button onClick={() => setCoresOpen(false)}>Concluir</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
 
@@ -900,12 +1018,12 @@ export default function EstrategiaItens() {
                    <TableRow className="border-border hover:bg-transparent">
                      <TableHead className="w-8 p-0" />
                      <TableHead className="text-xs font-medium text-muted-foreground">Descrição</TableHead>
-                    <TableHead className="text-xs font-medium text-foreground text-right w-36 bg-rose-500/10">Custo</TableHead>
-                    <TableHead className="text-xs font-medium text-foreground text-right w-36 bg-blue-500/10">Lucro</TableHead>
-                    <TableHead className="text-xs font-medium text-foreground text-right w-28 bg-orange-500/10">Imposto</TableHead>
-                    <TableHead className="text-xs font-medium text-foreground text-right w-32 bg-yellow-500/10">Desc. Gerente</TableHead>
-                    <TableHead className="text-xs font-medium text-foreground text-right w-28 bg-teal-500/10">Cartão</TableHead>
-                    <TableHead className="text-xs font-medium text-foreground text-right w-40 bg-green-500/10">Valor de Venda</TableHead>
+                    <TableHead className={`text-xs font-medium text-foreground text-right w-36 ${getColumnBg(columnColors, "custo")}`}>Custo</TableHead>
+                    <TableHead className={`text-xs font-medium text-foreground text-right w-36 ${getColumnBg(columnColors, "lucro")}`}>Lucro</TableHead>
+                    <TableHead className={`text-xs font-medium text-foreground text-right w-28 ${getColumnBg(columnColors, "imposto")}`}>Imposto</TableHead>
+                    <TableHead className={`text-xs font-medium text-foreground text-right w-32 ${getColumnBg(columnColors, "desconto")}`}>Desc. Gerente</TableHead>
+                    <TableHead className={`text-xs font-medium text-foreground text-right w-28 ${getColumnBg(columnColors, "cartao")}`}>Cartão</TableHead>
+                    <TableHead className={`text-xs font-medium text-foreground text-right w-40 ${getColumnBg(columnColors, "venda")}`}>Valor de Venda</TableHead>
                     <TableHead className="text-xs font-medium text-muted-foreground text-center w-16">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -917,6 +1035,7 @@ export default function EstrategiaItens() {
                       item={item}
                       disabled={isDndDisabled}
                       categorias={todasCategorias}
+                      colors={columnColors}
                       onUpdate={(patch) => updateItem.mutateAsync({ id: item.id, patch })}
                       onDelete={() => {
                         if (confirm(`Excluir "${item.descricao}"?`)) {
