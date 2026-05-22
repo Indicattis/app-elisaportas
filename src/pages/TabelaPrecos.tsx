@@ -208,7 +208,6 @@ export default function TabelaPrecos({
                   <TableBody>
                     {itens.map((item) => {
                       const total = calcularTotal(item);
-                      const lucroInfo = getLucroEfetivo(item);
                       return (
                         <TableRow key={item.id} className="border-white/10 hover:bg-white/5">
                           <TableCell className="font-medium text-white">{item.descricao}</TableCell>
