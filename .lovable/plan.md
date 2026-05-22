@@ -1,19 +1,15 @@
-# Lucro de instalação na tabela de kits
+## Objetivo
+Adicionar duas colunas de lucro de pintura na tabela de kits (`/direcao/estrategia/kits`), seguindo o padrão já existente para lucro de instalação (80%), mas com **30% de margem para pintura**.
 
-Adicionar duas colunas logo à direita de **Valor Instalação** na tela `/direcao/estrategia/kits`:
+## Alterações
+No arquivo `src/pages/TabelaPrecos.tsx`:
 
-1. **Lucro Instalação** — valor em R$ = `valor_instalacao * 0,80`
-2. **% Lucro Inst.** — sempre `80,00%` (fixo)
+1. **Cabeçalho da tabela** — após a coluna `Valor Pintura`, inserir:
+   - `Lucro Pintura`
+   - `% Lucro Pint.`
 
-## Detalhes
+2. **Células de dados** — para cada linha, após a célula `Valor Pintura`, adicionar:
+   - Lucro Pintura = `item.valor_pintura * 0.30`, formatado em moeda, cor verde (`text-emerald-400`)
+   - % Lucro Pint. = `30,00%`, cor verde (`text-emerald-400`)
 
-- Aplicado apenas na tabela principal de kits em `src/pages/TabelaPrecos.tsx` (header em ~L390 e linhas em ~L461-466).
-- Mesma estética das colunas Lucro/% Lucro já existentes: texto `text-emerald-400`, alinhado à direita, ocultas em mobile (`hidden md:table-cell`).
-- Margem de 80% definida como constante no componente (`LUCRO_INSTALACAO_PCT = 0.8`) para facilitar ajuste futuro.
-- Quando `valor_instalacao = 0`, lucro exibe `R$ 0,00` e a % permanece `80,00%` (ou `—` caso prefira; confirmo abaixo).
-- Sem alterações de banco — cálculo puramente apresentacional.
-
-## Fora de escopo
-
-- Não altera a outra tabela embarcada (`/sobre/precos` em ~L196-237) — apenas a tabela principal de kits.
-- Não altera totais, somas no rodapé nem o cálculo do `total` do kit.
+O estilo visual segue o padrão dark glassmorphic já aplicado nas demais colunas de lucro.
