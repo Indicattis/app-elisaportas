@@ -1859,6 +1859,7 @@ export type Database = {
         Row: {
           categoria: string | null
           created_at: string
+          custo_ok: boolean
           custo_unitario: number
           descricao: string
           fornecedor: string | null
@@ -1879,6 +1880,7 @@ export type Database = {
         Insert: {
           categoria?: string | null
           created_at?: string
+          custo_ok?: boolean
           custo_unitario?: number
           descricao: string
           fornecedor?: string | null
@@ -1899,6 +1901,7 @@ export type Database = {
         Update: {
           categoria?: string | null
           created_at?: string
+          custo_ok?: boolean
           custo_unitario?: number
           descricao?: string
           fornecedor?: string | null

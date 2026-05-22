@@ -1,0 +1,1 @@
+ALTER TABLE public.custos_itens ADD COLUMN IF NOT EXISTS custo_ok boolean NOT NULL DEFAULT false;
