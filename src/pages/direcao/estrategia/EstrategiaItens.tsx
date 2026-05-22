@@ -372,16 +372,6 @@ function SortableItemRow({ item, disabled, categorias, onUpdate, onDelete }: Sor
           value={item.descricao}
           onSave={(v) => onUpdate({ descricao: String(v) })}
         />
-        <EditableCell
-          value={item.subcategoria ?? ""}
-          placeholder="Subcategoria"
-          display={
-            item.subcategoria
-              ? <span className="text-xs text-muted-foreground/80">{item.subcategoria}</span>
-              : <span className="text-xs text-muted-foreground/60">Adicionar subcategoria</span>
-          }
-          onSave={(v) => onUpdate({ subcategoria: (String(v) || null) as any })}
-        />
       </TableCell>
       <TableCell className="text-right text-foreground bg-rose-500/10">
         <EditableCell
@@ -520,7 +510,6 @@ export default function EstrategiaItens() {
   const [newItem, setNewItem] = useState({
     descricao: "",
     categoria: "",
-    subcategoria: "",
     unidade: "Un",
     custo_unitario: "0",
     preco_venda: "0",
@@ -534,7 +523,7 @@ export default function EstrategiaItens() {
     const term = searchTerm.toLowerCase().trim();
     if (!term) return items;
     return items.filter((it) =>
-      [it.descricao, it.categoria, it.subcategoria, it.unidade, it.fornecedor]
+      [it.descricao, it.categoria, it.unidade, it.fornecedor]
         .filter(Boolean)
         .some((v) => String(v).toLowerCase().includes(term))
     );
@@ -621,7 +610,6 @@ export default function EstrategiaItens() {
     await createItem.mutateAsync({
       descricao: newItem.descricao.trim(),
       categoria: newItem.categoria.trim() || null,
-      subcategoria: newItem.subcategoria.trim() || null,
       unidade: newItem.unidade || null,
       custo_unitario: Number(newItem.custo_unitario.replace(",", ".")) || 0,
       preco_venda: Number(newItem.preco_venda.replace(",", ".")) || 0,
@@ -630,7 +618,7 @@ export default function EstrategiaItens() {
       quantidade_ideal: Number(newItem.quantidade_ideal.replace(",", ".")) || 0,
       quantidade_maxima: Number(newItem.quantidade_maxima.replace(",", ".")) || 0,
     });
-    setNewItem({ descricao: "", categoria: "", subcategoria: "", unidade: "Un", custo_unitario: "0", preco_venda: "0", fornecedor: "", quantidade: "0", quantidade_ideal: "0", quantidade_maxima: "0" });
+    setNewItem({ descricao: "", categoria: "", unidade: "Un", custo_unitario: "0", preco_venda: "0", fornecedor: "", quantidade: "0", quantidade_ideal: "0", quantidade_maxima: "0" });
     setDialogOpen(false);
   };
 
@@ -732,14 +720,6 @@ export default function EstrategiaItens() {
                 step="0.01"
                 value={newItem.custo_unitario}
                 onChange={(e) => setNewItem({ ...newItem, custo_unitario: e.target.value })}
-                className="bg-card/60 border-border text-foreground"
-              />
-            </div>
-            <div>
-              <Label>Subcategoria</Label>
-              <Input
-                value={newItem.subcategoria}
-                onChange={(e) => setNewItem({ ...newItem, subcategoria: e.target.value })}
                 className="bg-card/60 border-border text-foreground"
               />
             </div>
