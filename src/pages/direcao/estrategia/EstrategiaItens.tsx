@@ -578,14 +578,13 @@ function SortableItemRow({ item, disabled, categorias, colors, order, padroes, o
           onSave={(v) => onUpdate({ descricao: String(v) })}
         />
       </TableCell>
-      {order.map((col) => (
-        <TableCell
-          key={col}
-          className={cn("text-right text-foreground", cellExtraCls[col], getColumnBg(colors, col))}
-        >
-          {cellRenderers[col]}
-        </TableCell>
-      ))}
+      <TableCell className="text-center text-foreground">
+        <EditableSelectCell
+          value={item.unidade}
+          options={UNIDADES}
+          onSave={(v) => onUpdate({ unidade: v })}
+        />
+      </TableCell>
       <TableCell className="text-center">
         <div className="flex items-center justify-center gap-1">
           <Dialog open={moverOpen} onOpenChange={setMoverOpen}>
@@ -638,6 +637,14 @@ function SortableItemRow({ item, disabled, categorias, colors, order, padroes, o
           </Button>
         </div>
       </TableCell>
+      {order.map((col) => (
+        <TableCell
+          key={col}
+          className={cn("text-right text-foreground", cellExtraCls[col], getColumnBg(colors, col))}
+        >
+          {cellRenderers[col]}
+        </TableCell>
+      ))}
     </TableRow>
   );
 }
