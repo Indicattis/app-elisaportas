@@ -356,11 +356,12 @@ type SortableItemRowProps = {
   item: CustoItem;
   disabled: boolean;
   categorias: string[];
+  colors: Record<ColumnKey, string>;
   onUpdate: (patch: Partial<CustoItem>) => Promise<void> | void;
   onDelete: () => void;
 };
 
-function SortableItemRow({ item, disabled, categorias, onUpdate, onDelete }: SortableItemRowProps) {
+function SortableItemRow({ item, disabled, categorias, colors, onUpdate, onDelete }: SortableItemRowProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: item.id,
     disabled,
@@ -418,7 +419,7 @@ function SortableItemRow({ item, disabled, categorias, onUpdate, onDelete }: Sor
           onSave={(v) => onUpdate({ descricao: String(v) })}
         />
       </TableCell>
-      <TableCell className="text-right text-foreground bg-rose-500/10">
+      <TableCell className={`text-right text-foreground ${getColumnBg(colors, "custo")}`}>
         <EditableCell
           value={custo}
           type="currency"
@@ -427,10 +428,10 @@ function SortableItemRow({ item, disabled, categorias, onUpdate, onDelete }: Sor
           onSave={(v) => onUpdate({ custo_unitario: Number(v) })}
         />
       </TableCell>
-      <TableCell className={`text-right font-medium bg-blue-500/10 ${corLucro}`}>
+      <TableCell className={`text-right font-medium ${getColumnBg(colors, "lucro")} ${corLucro}`}>
         {formatCurrency(lucro)}
       </TableCell>
-      <TableCell className="text-right text-foreground bg-orange-500/10">
+      <TableCell className={`text-right text-foreground ${getColumnBg(colors, "imposto")}`}>
         <EditableCell
           value={tImp}
           type="currency"
@@ -439,7 +440,7 @@ function SortableItemRow({ item, disabled, categorias, onUpdate, onDelete }: Sor
           onSave={(v) => onUpdate({ taxa_impostos: Number(v) })}
         />
       </TableCell>
-      <TableCell className="text-right text-foreground bg-yellow-500/10">
+      <TableCell className={`text-right text-foreground ${getColumnBg(colors, "desconto")}`}>
         <EditableCell
           value={tDesc}
           type="currency"
@@ -448,7 +449,7 @@ function SortableItemRow({ item, disabled, categorias, onUpdate, onDelete }: Sor
           onSave={(v) => onUpdate({ taxa_descontos: Number(v) })}
         />
       </TableCell>
-      <TableCell className="text-right text-foreground bg-teal-500/10">
+      <TableCell className={`text-right text-foreground ${getColumnBg(colors, "cartao")}`}>
         <EditableCell
           value={tCard}
           type="currency"
@@ -457,7 +458,7 @@ function SortableItemRow({ item, disabled, categorias, onUpdate, onDelete }: Sor
           onSave={(v) => onUpdate({ taxa_cartao: Number(v) })}
         />
       </TableCell>
-      <TableCell className="text-right font-medium text-foreground bg-green-500/10">
+      <TableCell className={`text-right font-medium text-foreground ${getColumnBg(colors, "venda")}`}>
         <EditableCell
           value={preco}
           type="currency"
