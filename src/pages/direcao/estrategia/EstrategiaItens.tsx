@@ -997,6 +997,44 @@ export default function EstrategiaItens() {
                 </DialogFooter>
               </DialogContent>
             </Dialog>
+            <Button
+              variant="outline"
+              className="!h-[50px] gap-2 bg-card/60 border-border text-foreground hover:bg-red-500/10 hover:text-red-300 hover:border-red-500/40"
+              onClick={() => {
+                try {
+                  if (groupedByCategoria.length === 0) {
+                    toast.error("Nenhum item para exportar");
+                    return;
+                  }
+                  exportEstrategiaItensPDF(groupedByCategoria);
+                  toast.success("PDF gerado");
+                } catch (e: any) {
+                  toast.error(`Falha ao gerar PDF: ${e?.message ?? e}`);
+                }
+              }}
+            >
+              <FileText className="h-4 w-4" />
+              Exportar PDF
+            </Button>
+            <Button
+              variant="outline"
+              className="!h-[50px] gap-2 bg-card/60 border-border text-foreground hover:bg-emerald-500/10 hover:text-emerald-300 hover:border-emerald-500/40"
+              onClick={() => {
+                try {
+                  if (groupedByCategoria.length === 0) {
+                    toast.error("Nenhum item para exportar");
+                    return;
+                  }
+                  exportEstrategiaItensExcel(groupedByCategoria);
+                  toast.success("Excel gerado");
+                } catch (e: any) {
+                  toast.error(`Falha ao gerar Excel: ${e?.message ?? e}`);
+                }
+              }}
+            >
+              <FileSpreadsheet className="h-4 w-4" />
+              Exportar Excel
+            </Button>
           </div>
         </div>
 
