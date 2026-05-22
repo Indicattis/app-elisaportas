@@ -7511,6 +7511,7 @@ export type Database = {
           id: string
           largura: number
           lucro: number | null
+          ordem: number | null
           updated_at: string
           valor_instalacao: number
           valor_pintura: number
@@ -7525,6 +7526,7 @@ export type Database = {
           id?: string
           largura: number
           lucro?: number | null
+          ordem?: number | null
           updated_at?: string
           valor_instalacao?: number
           valor_pintura?: number
@@ -7539,6 +7541,7 @@ export type Database = {
           id?: string
           largura?: number
           lucro?: number | null
+          ordem?: number | null
           updated_at?: string
           valor_instalacao?: number
           valor_pintura?: number
