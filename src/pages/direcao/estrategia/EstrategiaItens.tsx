@@ -1309,13 +1309,19 @@ export default function EstrategiaItens() {
                    <TableRow className="border-border hover:bg-transparent">
                      <TableHead className="w-8 p-0" />
                      <TableHead className="text-xs font-medium text-muted-foreground">Descrição</TableHead>
-                    <TableHead className={`text-xs font-medium text-foreground text-right w-36 ${getColumnBg(columnColors, "custo")}`}>Custo</TableHead>
-                    <TableHead className={`text-xs font-medium text-foreground text-right w-36 ${getColumnBg(columnColors, "lucro")}`}>Lucro</TableHead>
-                    <TableHead className={`text-xs font-medium text-foreground text-right w-28 ${getColumnBg(columnColors, "imposto")}`}>Imposto</TableHead>
-                    <TableHead className={`text-xs font-medium text-foreground text-right w-32 ${getColumnBg(columnColors, "desconto")}`}>Desc. Gerente</TableHead>
-                    <TableHead className={`text-xs font-medium text-foreground text-right w-28 ${getColumnBg(columnColors, "cartao")}`}>Cartão</TableHead>
-                    <TableHead className={`text-xs font-medium text-foreground text-right w-40 ${getColumnBg(columnColors, "venda")}`}>Valor de Venda</TableHead>
-                    <TableHead className={`text-xs font-medium text-foreground text-right w-40 ${getColumnBg(columnColors, "objetivo")}`}>Preço Objetivo</TableHead>
+                    <DndContext
+                      sensors={dndSensors}
+                      collisionDetection={closestCenter}
+                      onDragEnd={handleDragEndColumn}
+                    >
+                      <SortableContext items={columnOrder.map((c) => `col-${c}`)} strategy={horizontalListSortingStrategy}>
+                        {columnOrder.map((col) => (
+                          <SortableHeadCell key={col} colKey={col} colors={columnColors}>
+                            {COLUMN_LABELS[col]}
+                          </SortableHeadCell>
+                        ))}
+                      </SortableContext>
+                    </DndContext>
                     <TableHead className="text-xs font-medium text-muted-foreground text-center w-16">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -1328,6 +1334,7 @@ export default function EstrategiaItens() {
                       disabled={isDndDisabled}
                       categorias={todasCategorias}
                       colors={columnColors}
+                      order={columnOrder}
                       padroes={padroes}
                       onUpdate={(patch) => updateItem.mutateAsync({ id: item.id, patch })}
                       onDelete={() => {
