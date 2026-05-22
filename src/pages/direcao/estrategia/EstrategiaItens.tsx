@@ -964,12 +964,12 @@ export default function EstrategiaItens() {
                    <TableRow className="border-border hover:bg-transparent">
                      <TableHead className="w-8 p-0" />
                      <TableHead className="text-xs font-medium text-muted-foreground">Descrição</TableHead>
-                    <TableHead className="text-xs font-medium text-foreground text-right w-36 bg-rose-500/10">Custo</TableHead>
-                    <TableHead className="text-xs font-medium text-foreground text-right w-36 bg-blue-500/10">Lucro</TableHead>
-                    <TableHead className="text-xs font-medium text-foreground text-right w-28 bg-orange-500/10">Imposto</TableHead>
-                    <TableHead className="text-xs font-medium text-foreground text-right w-32 bg-yellow-500/10">Desc. Gerente</TableHead>
-                    <TableHead className="text-xs font-medium text-foreground text-right w-28 bg-teal-500/10">Cartão</TableHead>
-                    <TableHead className="text-xs font-medium text-foreground text-right w-40 bg-green-500/10">Valor de Venda</TableHead>
+                    <TableHead className={`text-xs font-medium text-foreground text-right w-36 ${getColumnBg(columnColors, "custo")}`}>Custo</TableHead>
+                    <TableHead className={`text-xs font-medium text-foreground text-right w-36 ${getColumnBg(columnColors, "lucro")}`}>Lucro</TableHead>
+                    <TableHead className={`text-xs font-medium text-foreground text-right w-28 ${getColumnBg(columnColors, "imposto")}`}>Imposto</TableHead>
+                    <TableHead className={`text-xs font-medium text-foreground text-right w-32 ${getColumnBg(columnColors, "desconto")}`}>Desc. Gerente</TableHead>
+                    <TableHead className={`text-xs font-medium text-foreground text-right w-28 ${getColumnBg(columnColors, "cartao")}`}>Cartão</TableHead>
+                    <TableHead className={`text-xs font-medium text-foreground text-right w-40 ${getColumnBg(columnColors, "venda")}`}>Valor de Venda</TableHead>
                     <TableHead className="text-xs font-medium text-muted-foreground text-center w-16">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -981,6 +981,7 @@ export default function EstrategiaItens() {
                       item={item}
                       disabled={isDndDisabled}
                       categorias={todasCategorias}
+                      colors={columnColors}
                       onUpdate={(patch) => updateItem.mutateAsync({ id: item.id, patch })}
                       onDelete={() => {
                         if (confirm(`Excluir "${item.descricao}"?`)) {
