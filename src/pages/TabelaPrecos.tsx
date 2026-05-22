@@ -14,6 +14,7 @@ import { ItemModal } from "@/components/tabela-precos/ItemModal";
 import { BulkUploadTabelaPrecos } from "@/components/tabela-precos/BulkUploadTabelaPrecos";
 import { CatalogoPrecosTab } from "@/components/tabela-precos/CatalogoPrecosTab";
 import { useKitsMontagemResumo } from "@/hooks/useKitMontagem";
+import { useCustosItensPadroes } from "@/hooks/useCustosItens";
 import { useQueryClient } from "@tanstack/react-query";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import {
@@ -74,6 +75,7 @@ export default function TabelaPrecos({
   const queryClient = useQueryClient();
   const { itens, isLoading, adicionarItem, editarItem, inativarItem, reordenarItens } = useTabelaPrecos(searchTerm);
   const { data: resumoMontagem = {} } = useKitsMontagemResumo();
+  const { padroes } = useCustosItensPadroes();
 
   // Estado local para reordenação otimista
   const [orderedItens, setOrderedItens] = useState<ItemTabelaPreco[]>([]);
