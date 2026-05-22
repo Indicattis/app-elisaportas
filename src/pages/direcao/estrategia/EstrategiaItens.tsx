@@ -426,6 +426,15 @@ function SortableItemRow({ item, disabled, categorias, colors, onUpdate, onDelet
           onSave={(v) => onUpdate({ descricao: String(v) })}
         />
       </TableCell>
+      <TableCell className={`text-right text-foreground ${getColumnBg(colors, "custo")}`}>
+        <EditableCell
+          value={custo}
+          type="currency"
+          align="right"
+          display={formatCurrency(custo)}
+          onSave={(v) => onUpdate({ custo_unitario: Number(v) })}
+        />
+      </TableCell>
       <TableCell className={`text-right font-medium ${getColumnBg(colors, "lucro")} ${corLucro}`}>
         {formatCurrency(lucro)}
       </TableCell>
