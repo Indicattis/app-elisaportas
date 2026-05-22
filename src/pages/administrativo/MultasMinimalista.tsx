@@ -160,7 +160,7 @@ function MultaCard({
                     {podeAvancar
                       ? `Avançar para ${proximaLabel}`
                       : responsavelNome
-                        ? `Somente ${responsavelNome} pode avançar`
+                        ? `Somente ${responsavelNome} (ou administrador) pode avançar`
                         : 'Atribua um responsável para avançar'}
                   </TooltipContent>
                 </Tooltip>
