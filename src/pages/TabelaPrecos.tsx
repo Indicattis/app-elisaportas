@@ -384,11 +384,11 @@ export default function TabelaPrecos({
                       <TableHead className="text-center text-white/60">Largura</TableHead>
                       <TableHead className="text-center text-white/60">Altura</TableHead>
                       <TableHead className="text-right text-white/60">Valor Porta</TableHead>
+                      {!hideLucroColumn && <TableHead className="text-right hidden md:table-cell text-white/60">Lucro</TableHead>}
+                      {!hideLucroColumn && <TableHead className="text-right hidden md:table-cell text-white/60">% Lucro</TableHead>}
                       <TableHead className="text-right hidden md:table-cell text-white/60">Valor Instalação</TableHead>
                       <TableHead className="text-right hidden md:table-cell text-white/60">Valor Pintura</TableHead>
                       {!hideTotalColumn && <TableHead className="text-right text-white/60">Total</TableHead>}
-                      {!hideLucroColumn && <TableHead className="text-right hidden md:table-cell text-white/60">Lucro</TableHead>}
-                      {!hideLucroColumn && <TableHead className="text-right hidden md:table-cell text-white/60">% Lucro</TableHead>}
                       {!hideAcoesColumn && <TableHead className="text-center text-white/60">Montagem</TableHead>}
                       {!hideAcoesColumn && <TableHead className="text-center w-24 text-white/60">Ações</TableHead>}
                     </TableRow>
