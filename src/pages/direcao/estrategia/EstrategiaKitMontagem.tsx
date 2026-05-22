@@ -349,16 +349,13 @@ export default function EstrategiaKitMontagem() {
                 <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl p-4">
                   <div className="text-xs uppercase tracking-wide text-white/50 mb-3">Lucro adicional</div>
                   {(() => {
-                    const receita =
-                      Number(kit.valor_porta || 0) +
-                      Number(kit.valor_instalacao || 0) +
-                      Number(kit.valor_pintura || 0);
-                    const lucroAdd = receita - totais.custo;
-                    const margemAdd = receita > 0 ? (lucroAdd / receita) * 100 : 0;
+                    const precoPorta = Number(kit.valor_porta || 0);
+                    const lucroAdd = precoPorta - totais.custo;
+                    const margemAdd = precoPorta > 0 ? (lucroAdd / precoPorta) * 100 : 0;
                     return (
                       <div className="space-y-2">
                         <Row label="Custo total montagem" value={fmt(totais.custo)} />
-                        <Row label="Receita total" value={fmt(receita)} />
+                        <Row label="Preço da porta" value={fmt(precoPorta)} />
                         <div className="h-px bg-white/10 my-2" />
                         <Row
                           label="Lucro adicional"
