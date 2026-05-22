@@ -158,10 +158,13 @@ export default function EstrategiaKitMontagem() {
                 <Table>
                   <TableHeader>
                     <TableRow className="border-white/10 hover:bg-transparent">
-                      <TableHead className="text-white/60">Item</TableHead>
+                      <TableHead className="text-white/60 min-w-[260px]">Item</TableHead>
                       <TableHead className="text-white/60">Categoria</TableHead>
                       <TableHead className="text-white/60">Unid.</TableHead>
                       <TableHead className="text-right text-white/60 w-28">Custo un.</TableHead>
+                      <TableHead className="text-right text-white/60 w-20">Imp. %</TableHead>
+                      <TableHead className="text-right text-white/60 w-24">Desc. ger. %</TableHead>
+                      <TableHead className="text-right text-white/60 w-20">Cartão %</TableHead>
                       <TableHead className="text-right text-white/60 w-24">Qtd</TableHead>
                       <TableHead className="text-right text-white/60 w-32">Subtotal custo</TableHead>
                       <TableHead className="text-right text-white/60 w-28">Lucro un.</TableHead>
@@ -171,9 +174,9 @@ export default function EstrategiaKitMontagem() {
                   </TableHeader>
                   <TableBody>
                     {isLoading ? (
-                      <TableRow><TableCell colSpan={9} className="text-center text-white/50 py-6">Carregando...</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={12} className="text-center text-white/50 py-6">Carregando...</TableCell></TableRow>
                     ) : items.length === 0 ? (
-                      <TableRow><TableCell colSpan={9} className="text-center text-white/50 py-6">Nenhum item na montagem</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={12} className="text-center text-white/50 py-6">Nenhum item na montagem</TableCell></TableRow>
                     ) : (
                       items.map((it) => {
                         const q = Number(it.quantidade || 0);
@@ -181,12 +184,18 @@ export default function EstrategiaKitMontagem() {
                         const subtotalCusto = custoUnit * q;
                         const lucroUnit = it.custo_item ? computeLucroUnit(it.custo_item) : 0;
                         const subtotalLucro = lucroUnit * q;
+                        const tImp = Number(it.custo_item?.taxa_impostos || 0);
+                        const tDesc = Number(it.custo_item?.taxa_descontos || 0);
+                        const tCart = Number(it.custo_item?.taxa_cartao || 0);
                         return (
                           <TableRow key={it.id} className="border-white/10 hover:bg-white/5">
-                            <TableCell className="text-white">{it.custo_item?.descricao ?? "—"}</TableCell>
+                            <TableCell className="text-white min-w-[260px]">{it.custo_item?.descricao ?? "—"}</TableCell>
                             <TableCell className="text-white/60">{it.custo_item?.categoria ?? "—"}</TableCell>
                             <TableCell className="text-white/60">{it.custo_item?.unidade ?? "un"}</TableCell>
                             <TableCell className="text-right text-white/80">{fmt(custoUnit)}</TableCell>
+                            <TableCell className="text-right text-white/70">{tImp.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%</TableCell>
+                            <TableCell className="text-right text-white/70">{tDesc.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%</TableCell>
+                            <TableCell className="text-right text-white/70">{tCart.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%</TableCell>
                             <TableCell className="text-right">
                               <Input
                                 type="number"
