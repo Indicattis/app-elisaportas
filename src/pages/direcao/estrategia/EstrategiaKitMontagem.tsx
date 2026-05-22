@@ -169,14 +169,15 @@ export default function EstrategiaKitMontagem() {
                       <TableHead className="text-right text-slate-600 w-32">Subtotal custo</TableHead>
                       <TableHead className="text-right text-slate-600 w-28">Lucro un.</TableHead>
                       <TableHead className="text-right text-slate-600 w-32">Subtotal lucro</TableHead>
+                      <TableHead className="text-right text-slate-600 w-28">Preço</TableHead>
                       <TableHead className="text-center text-slate-600 w-12"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {isLoading ? (
-                      <TableRow><TableCell colSpan={11} className="text-center text-slate-500 py-6">Carregando...</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={12} className="text-center text-slate-500 py-6">Carregando...</TableCell></TableRow>
                     ) : items.length === 0 ? (
-                      <TableRow><TableCell colSpan={11} className="text-center text-slate-500 py-6">Nenhum item na montagem</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={12} className="text-center text-slate-500 py-6">Nenhum item na montagem</TableCell></TableRow>
                     ) : (
                       items.map((it) => {
                         const q = Number(it.quantidade || 0);
@@ -220,6 +221,7 @@ export default function EstrategiaKitMontagem() {
                             <TableCell className="text-right text-slate-900">{fmt(subtotalCusto)}</TableCell>
                             <TableCell className={cn("text-right", lucroUnit >= 0 ? "text-emerald-600" : "text-red-600")}>{fmt(lucroUnit)}</TableCell>
                             <TableCell className={cn("text-right font-medium", subtotalLucro >= 0 ? "text-emerald-600" : "text-red-600")}>{fmt(subtotalLucro)}</TableCell>
+                            <TableCell className="text-right text-slate-900">{fmt(preco)}</TableCell>
                             <TableCell className="text-center">
                               <Button
                                 variant="ghost"
