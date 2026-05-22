@@ -1121,6 +1121,7 @@ export default function EstrategiaItens() {
                     <TableHead className={`text-xs font-medium text-foreground text-right w-32 ${getColumnBg(columnColors, "desconto")}`}>Desc. Gerente</TableHead>
                     <TableHead className={`text-xs font-medium text-foreground text-right w-28 ${getColumnBg(columnColors, "cartao")}`}>Cartão</TableHead>
                     <TableHead className={`text-xs font-medium text-foreground text-right w-40 ${getColumnBg(columnColors, "venda")}`}>Valor de Venda</TableHead>
+                    <TableHead className={`text-xs font-medium text-foreground text-right w-40 ${getColumnBg(columnColors, "objetivo")}`}>Preço Objetivo</TableHead>
                     <TableHead className="text-xs font-medium text-muted-foreground text-center w-16">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
