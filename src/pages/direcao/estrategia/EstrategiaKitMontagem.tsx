@@ -84,7 +84,7 @@ export default function EstrategiaKitMontagem() {
           </Button>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-4 px-4 lg:px-[100px]">
           {/* Cabeçalho */}
           <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl p-4 flex flex-wrap items-center gap-3">
             <div className="h-10 w-10 rounded-lg bg-blue-500/15 border border-blue-500/30 flex items-center justify-center">
