@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Plus, Pencil, Trash2, Upload, Check, X, Boxes, GripVertical } from "lucide-react";
+import { Search, Plus, Pencil, Trash2, Upload, Boxes, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -66,10 +66,7 @@ export default function TabelaPrecos({
   const [bulkUploadModalOpen, setBulkUploadModalOpen] = useState(false);
   const [itemEditando, setItemEditando] = useState<ItemTabelaPreco | null>(null);
   const [itemParaInativar, setItemParaInativar] = useState<ItemTabelaPreco | null>(null);
-  const [editingLucroId, setEditingLucroId] = useState<string | null>(null);
-  const [editingLucroValue, setEditingLucroValue] = useState('');
   const [activeTab, setActiveTab] = useState<'portas' | 'catalogo'>('portas');
-  const lucroInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
   const queryClient = useQueryClient();
@@ -102,30 +99,6 @@ export default function TabelaPrecos({
   };
 
   const sortableIds = useMemo(() => orderedItens.map((i) => i.id), [orderedItens]);
-
-  useEffect(() => {
-    if (editingLucroId && lucroInputRef.current) {
-      lucroInputRef.current.focus();
-      lucroInputRef.current.select();
-    }
-  }, [editingLucroId]);
-
-  const handleStartEditLucro = (item: ItemTabelaPreco) => {
-    setEditingLucroId(item.id);
-    setEditingLucroValue(String(item.lucro || 0));
-  };
-
-  const handleSaveLucro = async (id: string) => {
-    const valor = parseFloat(editingLucroValue);
-    if (!isNaN(valor) && valor >= 0) {
-      await editarItem({ id, dados: { lucro: valor } });
-    }
-    setEditingLucroId(null);
-  };
-
-  const handleCancelLucro = () => {
-    setEditingLucroId(null);
-  };
 
   const handleUploadComplete = () => {
     queryClient.invalidateQueries({ queryKey: ['tabela-precos'] });
@@ -161,7 +134,7 @@ export default function TabelaPrecos({
     return item.valor_porta + item.valor_instalacao + item.valor_pintura;
   };
 
-  const getLucroEfetivo = (item: ItemTabelaPreco) => {
+  const getLucroEfetivo = (item: ItemTabelaPreco): { value: number | null; fromMontagem: boolean; count: number } => {
     const r = resumoMontagem[item.id];
     if (r && r.count > 0) {
       const precoPorta = Number(item.valor_porta || 0);
@@ -172,7 +145,7 @@ export default function TabelaPrecos({
       const lucroAdicional = precoPorta - r.custoTotal - precoPorta * taxas;
       return { value: lucroAdicional, fromMontagem: true, count: r.count };
     }
-    return { value: item.lucro || 0, fromMontagem: false, count: 0 };
+    return { value: null, fromMontagem: false, count: 0 };
   };
 
 
@@ -374,53 +347,29 @@ export default function TabelaPrecos({
                             })}
                           </TableCell>
                           {!hideLucroColumn && (() => {
+                            if (lucroInfo.value === null) {
+                              return (
+                                <TableCell className="text-right hidden md:table-cell text-white/30">—</TableCell>
+                              );
+                            }
                             const lucro = lucroInfo.value;
                             const totalLocal = calcularTotal(item);
                             const pct = totalLocal > 0 ? (lucro / totalLocal) * 100 : 0;
                             const cor = pct > 0 ? "text-emerald-400" : pct < 0 ? "text-red-400" : "text-white/60";
                             return (
                               <TableCell className={`text-right hidden md:table-cell ${cor}`}>
-                                {lucroInfo.fromMontagem ? (
-                                  <span
-                                    className="cursor-not-allowed"
-                                    title="Calculado pela montagem do kit"
-                                  >
-                                    {lucroInfo.value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                                  </span>
-                                ) : editingLucroId === item.id ? (
-                                  <div className="flex items-center justify-end gap-1">
-                                    <Input
-                                      ref={lucroInputRef}
-                                      type="number"
-                                      step="0.01"
-                                      value={editingLucroValue}
-                                      onChange={(e) => setEditingLucroValue(e.target.value)}
-                                      onKeyDown={(e) => {
-                                        if (e.key === 'Enter') handleSaveLucro(item.id);
-                                        if (e.key === 'Escape') handleCancelLucro();
-                                      }}
-                                      className="w-28 h-7 text-right text-sm bg-white/10 border-white/20 text-white"
-                                    />
-                                    <Button variant="ghost" size="icon" className="h-6 w-6 text-green-400 hover:text-green-300" onClick={() => handleSaveLucro(item.id)}>
-                                      <Check className="h-3 w-3" />
-                                    </Button>
-                                    <Button variant="ghost" size="icon" className="h-6 w-6 text-red-400 hover:text-red-300" onClick={handleCancelLucro}>
-                                      <X className="h-3 w-3" />
-                                    </Button>
-                                  </div>
-                                ) : (
-                                  <span
-                                    className="cursor-pointer hover:underline decoration-dashed underline-offset-4 transition-colors"
-                                    onClick={() => handleStartEditLucro(item)}
-                                    title="Clique para editar"
-                                  >
-                                    {(item.lucro || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                                  </span>
-                                )}
+                                <span title="Calculado pela montagem do kit">
+                                  {lucro.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                </span>
                               </TableCell>
                             );
                           })()}
                           {!hideLucroColumn && (() => {
+                            if (lucroInfo.value === null) {
+                              return (
+                                <TableCell className="text-right hidden md:table-cell text-white/30">—</TableCell>
+                              );
+                            }
                             const lucro = lucroInfo.value;
                             const pct = total > 0 ? (lucro / total) * 100 : 0;
                             const cor = pct > 0 ? "text-emerald-400" : pct < 0 ? "text-red-400" : "text-white/60";
