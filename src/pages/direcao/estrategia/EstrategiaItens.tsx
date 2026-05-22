@@ -440,43 +440,19 @@ function SortableItemRow({ item, disabled, categorias, colors, padroes, onUpdate
         {formatCurrency(lucro)}
       </TableCell>
       <TableCell className={`text-right text-foreground ${getColumnBg(colors, "imposto")}`}>
-        <EditableCell
-          value={tImp}
-          type="number"
-          align="right"
-          display={
-            <span title={`${tImp.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`}>
-              {formatCurrency(vImp)}
-            </span>
-          }
-          onSave={(v) => onUpdate({ taxa_impostos: Number(v) })}
-        />
+        <span title={`${tImp.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`}>
+          {formatCurrency(vImp)}
+        </span>
       </TableCell>
       <TableCell className={`text-right text-foreground ${getColumnBg(colors, "desconto")}`}>
-        <EditableCell
-          value={tDesc}
-          type="number"
-          align="right"
-          display={
-            <span title={`${tDesc.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`}>
-              {formatCurrency(vDesc)}
-            </span>
-          }
-          onSave={(v) => onUpdate({ taxa_descontos: Number(v) })}
-        />
+        <span title={`${tDesc.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`}>
+          {formatCurrency(vDesc)}
+        </span>
       </TableCell>
       <TableCell className={`text-right text-foreground ${getColumnBg(colors, "cartao")}`}>
-        <EditableCell
-          value={tCard}
-          type="number"
-          align="right"
-          display={
-            <span title={`${tCard.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`}>
-              {formatCurrency(vCard)}
-            </span>
-          }
-          onSave={(v) => onUpdate({ taxa_cartao: Number(v) })}
-        />
+        <span title={`${tCard.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`}>
+          {formatCurrency(vCard)}
+        </span>
       </TableCell>
       <TableCell className={`text-right font-medium text-foreground ${getColumnBg(colors, "venda")}`}>
         <EditableCell
