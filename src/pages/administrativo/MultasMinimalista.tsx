@@ -25,11 +25,56 @@ function formatCurrency(value: number): string {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 }
 
-const ETAPAS: { value: MultaStatus; label: string; icon: any; color: string; pill: string; ring: string }[] = [
-  { value: 'aberta', label: 'Aberta', icon: AlertCircle, color: 'blue', pill: 'bg-blue-500/20 text-blue-400', ring: 'data-[state=active]:bg-blue-500/15 data-[state=active]:border-blue-400/50 data-[state=active]:shadow-[0_0_0_1px_rgba(96,165,250,0.3)] hover:border-blue-400/30' },
-  { value: 'advertida', label: 'Advertida', icon: AlertTriangle, color: 'amber', pill: 'bg-amber-500/20 text-amber-400', ring: 'data-[state=active]:bg-amber-500/15 data-[state=active]:border-amber-400/50 data-[state=active]:shadow-[0_0_0_1px_rgba(251,191,36,0.3)] hover:border-amber-400/30' },
-  { value: 'paga', label: 'Paga', icon: DollarSign, color: 'green', pill: 'bg-green-500/20 text-green-400', ring: 'data-[state=active]:bg-green-500/15 data-[state=active]:border-green-400/50 data-[state=active]:shadow-[0_0_0_1px_rgba(74,222,128,0.3)] hover:border-green-400/30' },
-  { value: 'concluida', label: 'Concluída', icon: CheckCircle2, color: 'emerald', pill: 'bg-emerald-500/20 text-emerald-400', ring: 'data-[state=active]:bg-emerald-500/15 data-[state=active]:border-emerald-400/50 data-[state=active]:shadow-[0_0_0_1px_rgba(52,211,153,0.3)] hover:border-emerald-400/30' },
+const ETAPAS: {
+  value: MultaStatus;
+  label: string;
+  icon: any;
+  pill: string;
+  ring: string;
+  avatarBorder: string;
+  iconWrap: string;
+  iconColor: string;
+}[] = [
+  {
+    value: 'aberta',
+    label: 'Aberta',
+    icon: AlertCircle,
+    pill: 'bg-blue-500/20 text-blue-400',
+    ring: 'data-[state=active]:bg-blue-500/15 data-[state=active]:border-blue-400/50 data-[state=active]:shadow-[0_0_0_1px_rgba(96,165,250,0.3)] hover:border-blue-400/30',
+    avatarBorder: 'border-blue-500/30',
+    iconWrap: 'bg-blue-500/10 border-blue-500/30',
+    iconColor: 'text-blue-400',
+  },
+  {
+    value: 'advertida',
+    label: 'Advertida',
+    icon: AlertTriangle,
+    pill: 'bg-amber-500/20 text-amber-400',
+    ring: 'data-[state=active]:bg-amber-500/15 data-[state=active]:border-amber-400/50 data-[state=active]:shadow-[0_0_0_1px_rgba(251,191,36,0.3)] hover:border-amber-400/30',
+    avatarBorder: 'border-amber-500/30',
+    iconWrap: 'bg-amber-500/10 border-amber-500/30',
+    iconColor: 'text-amber-400',
+  },
+  {
+    value: 'paga',
+    label: 'Paga',
+    icon: DollarSign,
+    pill: 'bg-green-500/20 text-green-400',
+    ring: 'data-[state=active]:bg-green-500/15 data-[state=active]:border-green-400/50 data-[state=active]:shadow-[0_0_0_1px_rgba(74,222,128,0.3)] hover:border-green-400/30',
+    avatarBorder: 'border-green-500/30',
+    iconWrap: 'bg-green-500/10 border-green-500/30',
+    iconColor: 'text-green-400',
+  },
+  {
+    value: 'concluida',
+    label: 'Concluída',
+    icon: CheckCircle2,
+    pill: 'bg-emerald-500/20 text-emerald-400',
+    ring: 'data-[state=active]:bg-emerald-500/15 data-[state=active]:border-emerald-400/50 data-[state=active]:shadow-[0_0_0_1px_rgba(52,211,153,0.3)] hover:border-emerald-400/30',
+    avatarBorder: 'border-emerald-500/30',
+    iconWrap: 'bg-emerald-500/10 border-emerald-500/30',
+    iconColor: 'text-emerald-400',
+  },
 ];
 
 function getNextEtapa(status: MultaStatus): MultaStatus | null {
@@ -319,28 +364,29 @@ export default function MultasMinimalista() {
                       etapa.ring,
                     )}
                   >
-                    <button
+                    <span
+                      role="button"
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
                         setRespModalEtapa(etapa.value);
                       }}
-                      className="flex-shrink-0"
+                      className="flex-shrink-0 cursor-pointer"
                       title={resp ? `Responsável: ${resp.nome}` : 'Atribuir responsável'}
                     >
                       {resp ? (
-                        <Avatar className={`h-9 w-9 border border-${etapa.color}-500/30`}>
+                        <Avatar className={cn('h-9 w-9 border', etapa.avatarBorder)}>
                           <AvatarImage src={resp.foto_perfil_url || undefined} />
                           <AvatarFallback className={`text-xs ${etapa.pill}`}>
                             {resp.nome.charAt(0).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                       ) : (
-                        <div className={`h-9 w-9 rounded-full bg-${etapa.color}-500/10 border border-${etapa.color}-500/30 flex items-center justify-center`}>
-                          <Icon className={`h-4 w-4 text-${etapa.color}-400`} />
+                        <div className={cn('h-9 w-9 rounded-full border flex items-center justify-center', etapa.iconWrap)}>
+                          <Icon className={cn('h-4 w-4', etapa.iconColor)} />
                         </div>
                       )}
-                    </button>
+                    </span>
                     <div className="flex flex-col items-start gap-1 min-w-0">
                       <span className="text-xs font-medium leading-tight truncate">{etapa.label}</span>
                       <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-semibold leading-none ${etapa.pill}`}>
