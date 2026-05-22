@@ -189,7 +189,6 @@ export default function EstrategiaKitMontagem() {
                         return (
                           <TableRow key={it.id} className="border-white/10 hover:bg-white/5">
                             <TableCell className="text-white min-w-[260px]">{it.custo_item?.descricao ?? "—"}</TableCell>
-                            <TableCell className="text-white/60">{it.custo_item?.categoria ?? "—"}</TableCell>
                             <TableCell className="text-white/60">{it.custo_item?.unidade ?? "un"}</TableCell>
                             <TableCell className="text-right text-white/80">{fmt(custoUnit)}</TableCell>
                             <TableCell className="text-right text-white/70">{tImp.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%</TableCell>
