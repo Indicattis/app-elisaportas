@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, Plus, AlertCircle, RefreshCw, CheckCircle, Trash2, Calendar, DollarSign } from 'lucide-react';
+import { Search, Plus, AlertCircle, RefreshCw, Trash2, Calendar, DollarSign, AlertTriangle, AlertOctagon, CheckCircle2, ChevronRight } from 'lucide-react';
 import { format, parseISO, isBefore, isToday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -10,43 +10,66 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
 import { useMultas, Multa } from '@/hooks/useMultas';
 import { useAllUsers } from '@/hooks/useAllUsers';
+import { useMultasEtapaResponsaveis, MultaStatus } from '@/hooks/useMultasEtapaResponsaveis';
+import { useAuth } from '@/hooks/useAuth';
+import { SelecionarResponsavelMultaModal } from '@/components/multas/SelecionarResponsavelMultaModal';
 
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 }
 
-function getMultaStatus(multa: Multa): 'paga' | 'vencida' | 'hoje' | 'pendente' {
-  if (multa.status === 'paga') return 'paga';
+const ETAPAS: { value: MultaStatus; label: string; icon: any; color: string; pill: string; ring: string }[] = [
+  { value: 'aberta', label: 'Aberta', icon: AlertCircle, color: 'blue', pill: 'bg-blue-500/20 text-blue-400', ring: 'data-[state=active]:bg-blue-500/15 data-[state=active]:border-blue-400/50 data-[state=active]:shadow-[0_0_0_1px_rgba(96,165,250,0.3)] hover:border-blue-400/30' },
+  { value: 'advertida', label: 'Advertida', icon: AlertTriangle, color: 'amber', pill: 'bg-amber-500/20 text-amber-400', ring: 'data-[state=active]:bg-amber-500/15 data-[state=active]:border-amber-400/50 data-[state=active]:shadow-[0_0_0_1px_rgba(251,191,36,0.3)] hover:border-amber-400/30' },
+  { value: 'paga', label: 'Paga', icon: DollarSign, color: 'green', pill: 'bg-green-500/20 text-green-400', ring: 'data-[state=active]:bg-green-500/15 data-[state=active]:border-green-400/50 data-[state=active]:shadow-[0_0_0_1px_rgba(74,222,128,0.3)] hover:border-green-400/30' },
+  { value: 'concluida', label: 'Concluída', icon: CheckCircle2, color: 'emerald', pill: 'bg-emerald-500/20 text-emerald-400', ring: 'data-[state=active]:bg-emerald-500/15 data-[state=active]:border-emerald-400/50 data-[state=active]:shadow-[0_0_0_1px_rgba(52,211,153,0.3)] hover:border-emerald-400/30' },
+];
+
+function getNextEtapa(status: MultaStatus): MultaStatus | null {
+  const idx = ETAPAS.findIndex((e) => e.value === status);
+  if (idx < 0 || idx >= ETAPAS.length - 1) return null;
+  return ETAPAS[idx + 1].value;
+}
+
+function MultaCard({
+  multa,
+  podeAvancar,
+  proximaLabel,
+  responsavelNome,
+  onAvancar,
+  onExcluir,
+}: {
+  multa: Multa;
+  podeAvancar: boolean;
+  proximaLabel: string | null;
+  responsavelNome: string | null;
+  onAvancar: () => void;
+  onExcluir: () => void;
+}) {
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0);
   const venc = parseISO(multa.data_vencimento + 'T12:00:00');
-  if (isBefore(venc, hoje)) return 'vencida';
-  if (isToday(venc)) return 'hoje';
-  return 'pendente';
-}
-
-const statusConfig = {
-  vencida: { label: 'Vencida', class: 'bg-red-500/20 text-red-400 border-red-500/30' },
-  hoje: { label: 'Vence Hoje', class: 'bg-amber-500/20 text-amber-400 border-amber-500/30' },
-  pendente: { label: 'Pendente', class: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
-  paga: { label: 'Paga', class: 'bg-green-500/20 text-green-400 border-green-500/30' },
-};
-
-function MultaCard({ multa, onPagar, onExcluir }: { multa: Multa; onPagar: () => void; onExcluir: () => void }) {
-  const status = getMultaStatus(multa);
-  const cfg = statusConfig[status];
+  const vencido = isBefore(venc, hoje);
+  const venceHoje = isToday(venc);
 
   return (
     <div className="p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-200">
       <div className="flex flex-col md:flex-row md:items-center gap-4">
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <Badge className={`text-[10px] px-1.5 py-0 ${cfg.class}`}>{cfg.label}</Badge>
-          </div>
+          {(vencido || venceHoje) && multa.status !== 'paga' && multa.status !== 'concluida' && (
+            <div className="flex items-center gap-2 mb-1">
+              <Badge className={`text-[10px] px-1.5 py-0 ${vencido ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'bg-amber-500/20 text-amber-400 border-amber-500/30'}`}>
+                {vencido ? 'Vencida' : 'Vence Hoje'}
+              </Badge>
+            </div>
+          )}
           <h3 className="text-white font-medium truncate">{multa.usuario_nome}</h3>
           {multa.descricao && (
             <p className="text-sm text-white/50 mt-1 truncate">{multa.descricao}</p>
@@ -56,11 +79,9 @@ function MultaCard({ multa, onPagar, onExcluir }: { multa: Multa; onPagar: () =>
         <div className="flex items-center gap-4 md:gap-6">
           <div className="text-center">
             <div className="text-xs text-white/50 mb-0.5">Vencimento</div>
-            <div className={`text-sm font-medium flex items-center gap-1 ${
-              status === 'vencida' ? 'text-red-400' : status === 'hoje' ? 'text-amber-400' : 'text-white'
-            }`}>
+            <div className={`text-sm font-medium flex items-center gap-1 ${vencido ? 'text-red-400' : venceHoje ? 'text-amber-400' : 'text-white'}`}>
               <Calendar className="w-3 h-3" />
-              {format(parseISO(multa.data_vencimento + 'T12:00:00'), 'dd/MM/yyyy', { locale: ptBR })}
+              {format(venc, 'dd/MM/yyyy', { locale: ptBR })}
             </div>
           </div>
 
@@ -73,10 +94,32 @@ function MultaCard({ multa, onPagar, onExcluir }: { multa: Multa; onPagar: () =>
           </div>
 
           <div className="flex items-center gap-2">
-            {status !== 'paga' && (
-              <Button size="icon" variant="ghost" onClick={onPagar} className="text-green-400 hover:text-green-300 hover:bg-green-500/20" title="Marcar como paga">
-                <CheckCircle className="w-4 h-4" />
-              </Button>
+            {proximaLabel && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={onAvancar}
+                        disabled={!podeAvancar}
+                        className="text-white/80 hover:text-white hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        {proximaLabel}
+                        <ChevronRight className="w-4 h-4 ml-1" />
+                      </Button>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {podeAvancar
+                      ? `Avançar para ${proximaLabel}`
+                      : responsavelNome
+                        ? `Somente ${responsavelNome} pode avançar`
+                        : 'Atribua um responsável para avançar'}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
             <Button size="icon" variant="ghost" onClick={onExcluir} className="text-red-400 hover:text-red-300 hover:bg-red-500/20" title="Excluir">
               <Trash2 className="w-4 h-4" />
@@ -95,9 +138,16 @@ export default function MultasMinimalista() {
   const [valor, setValor] = useState('');
   const [descricao, setDescricao] = useState('');
   const [dataVencimento, setDataVencimento] = useState<Date>();
+  const [statusAtivo, setStatusAtivo] = useState<MultaStatus>('aberta');
+  const [respModalEtapa, setRespModalEtapa] = useState<MultaStatus | null>(null);
 
   const { data: multas, isLoading, refetch, isRefetching, createMulta, updateStatus, deleteMulta } = useMultas();
   const { data: users } = useAllUsers();
+  const { getResponsavel, atribuirResponsavel, removerResponsavel, isAtribuindo } = useMultasEtapaResponsaveis();
+  const { user } = useAuth();
+
+  const respAtual = getResponsavel(statusAtivo);
+  const podeAvancar = !!user && !!respAtual && respAtual.user_id === user.id;
 
   const filtered = multas?.filter(m => {
     if (!searchTerm) return true;
@@ -105,8 +155,17 @@ export default function MultasMinimalista() {
     return m.usuario_nome?.toLowerCase().includes(s) || m.descricao?.toLowerCase().includes(s);
   }) || [];
 
-  const totalPendente = filtered.filter(m => getMultaStatus(m) !== 'paga').reduce((sum, m) => sum + Number(m.valor), 0);
-  const vencidas = filtered.filter(m => getMultaStatus(m) === 'vencida').length;
+  const contadores: Record<MultaStatus, number> = {
+    aberta: filtered.filter(m => m.status === 'aberta').length,
+    advertida: filtered.filter(m => m.status === 'advertida').length,
+    paga: filtered.filter(m => m.status === 'paga').length,
+    concluida: filtered.filter(m => m.status === 'concluida').length,
+  };
+  const totalPendente = filtered
+    .filter(m => m.status === 'aberta' || m.status === 'advertida')
+    .reduce((sum, m) => sum + Number(m.valor), 0);
+
+  const multasEtapa = filtered.filter(m => m.status === statusAtivo);
 
   const handleSubmit = () => {
     if (!usuarioId || !valor || !dataVencimento) return;
@@ -228,8 +287,8 @@ export default function MultasMinimalista() {
             <div className="text-xl font-bold text-white">{filtered.length}</div>
           </div>
           <div className="p-4 rounded-xl bg-white/5 border border-white/10">
-            <div className="text-xs text-white/50 mb-1">Vencidas</div>
-            <div className="text-xl font-bold text-red-400">{vencidas}</div>
+            <div className="text-xs text-white/50 mb-1">Concluídas</div>
+            <div className="text-xl font-bold text-emerald-400">{contadores.concluida}</div>
           </div>
         </div>
 
@@ -244,28 +303,100 @@ export default function MultasMinimalista() {
           />
         </div>
 
-        {/* Lista */}
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <RefreshCw className="w-6 h-6 text-white/40 animate-spin" />
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-white/50">
-            <AlertCircle className="w-12 h-12 mb-4 opacity-50" />
-            <p className="text-lg font-medium">Nenhuma multa encontrada</p>
-            <p className="text-sm">Clique em "Nova Multa" para cadastrar</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {filtered.map(multa => (
-              <MultaCard
-                key={multa.id}
-                multa={multa}
-                onPagar={() => updateStatus.mutate({ id: multa.id, status: 'paga' })}
-                onExcluir={() => deleteMulta.mutate(multa.id)}
-              />
-            ))}
-          </div>
+        {/* Tabs de etapas */}
+        <Tabs value={statusAtivo} onValueChange={(v) => setStatusAtivo(v as MultaStatus)}>
+          <TabsList className="w-full justify-start overflow-x-auto flex-nowrap h-[85px] p-1.5 gap-2 bg-white/5 border border-white/10 backdrop-blur-xl rounded-xl">
+            <div className="flex gap-1 border-2 border-blue-500/50 rounded-lg p-1 h-full">
+              {ETAPAS.map((etapa) => {
+                const resp = getResponsavel(etapa.value);
+                const Icon = etapa.icon;
+                return (
+                  <TabsTrigger
+                    key={etapa.value}
+                    value={etapa.value}
+                    className={cn(
+                      'flex-shrink-0 flex-row items-center justify-start h-full min-w-[150px] px-3 py-2 gap-2.5 rounded-lg bg-white/5 border border-white/10 backdrop-blur-xl text-white/70 transition-all data-[state=active]:text-white',
+                      etapa.ring,
+                    )}
+                  >
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setRespModalEtapa(etapa.value);
+                      }}
+                      className="flex-shrink-0"
+                      title={resp ? `Responsável: ${resp.nome}` : 'Atribuir responsável'}
+                    >
+                      {resp ? (
+                        <Avatar className={`h-9 w-9 border border-${etapa.color}-500/30`}>
+                          <AvatarImage src={resp.foto_perfil_url || undefined} />
+                          <AvatarFallback className={`text-xs ${etapa.pill}`}>
+                            {resp.nome.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                      ) : (
+                        <div className={`h-9 w-9 rounded-full bg-${etapa.color}-500/10 border border-${etapa.color}-500/30 flex items-center justify-center`}>
+                          <Icon className={`h-4 w-4 text-${etapa.color}-400`} />
+                        </div>
+                      )}
+                    </button>
+                    <div className="flex flex-col items-start gap-1 min-w-0">
+                      <span className="text-xs font-medium leading-tight truncate">{etapa.label}</span>
+                      <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-semibold leading-none ${etapa.pill}`}>
+                        {contadores[etapa.value]}
+                      </span>
+                    </div>
+                  </TabsTrigger>
+                );
+              })}
+            </div>
+          </TabsList>
+
+          {ETAPAS.map((etapa) => (
+            <TabsContent key={etapa.value} value={etapa.value} className="mt-6">
+              {isLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <RefreshCw className="w-6 h-6 text-white/40 animate-spin" />
+                </div>
+              ) : multasEtapa.length === 0 && statusAtivo === etapa.value ? (
+                <div className="flex flex-col items-center justify-center py-12 text-white/50">
+                  <AlertOctagon className="w-12 h-12 mb-4 opacity-50" />
+                  <p className="text-lg font-medium">Nenhuma multa em "{etapa.label}"</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {multasEtapa.map((multa) => {
+                    const proxima = getNextEtapa(multa.status as MultaStatus);
+                    const proximaLabel = proxima ? ETAPAS.find((e) => e.value === proxima)!.label : null;
+                    return (
+                      <MultaCard
+                        key={multa.id}
+                        multa={multa}
+                        podeAvancar={podeAvancar && !!proxima}
+                        proximaLabel={proximaLabel}
+                        responsavelNome={respAtual?.nome || null}
+                        onAvancar={() => proxima && updateStatus.mutate({ id: multa.id, status: proxima })}
+                        onExcluir={() => deleteMulta.mutate(multa.id)}
+                      />
+                    );
+                  })}
+                </div>
+              )}
+            </TabsContent>
+          ))}
+        </Tabs>
+
+        {respModalEtapa && (
+          <SelecionarResponsavelMultaModal
+            open={!!respModalEtapa}
+            onOpenChange={(o) => { if (!o) setRespModalEtapa(null); }}
+            etapaLabel={ETAPAS.find((e) => e.value === respModalEtapa)!.label}
+            responsavelAtualId={getResponsavel(respModalEtapa)?.user_id || null}
+            onConfirm={(userId) => atribuirResponsavel({ status: respModalEtapa, responsavelId: userId })}
+            onRemover={() => removerResponsavel(respModalEtapa)}
+            isLoading={isAtribuindo}
+          />
         )}
       </div>
     </MinimalistLayout>
