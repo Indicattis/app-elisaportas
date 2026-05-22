@@ -351,7 +351,7 @@ export default function MultasMinimalista() {
         {/* Tabs de etapas */}
         <Tabs value={statusAtivo} onValueChange={(v) => setStatusAtivo(v as MultaStatus)}>
           <TabsList className="w-full justify-start overflow-x-auto flex-nowrap h-[85px] p-1.5 gap-2 bg-white/5 border border-white/10 backdrop-blur-xl rounded-xl">
-            <div className="flex gap-1 border-2 border-blue-500/50 rounded-lg p-1 h-full">
+            <div className="flex w-full gap-1 border-2 border-blue-500/50 rounded-lg p-1 h-full">
               {ETAPAS.map((etapa) => {
                 const resp = getResponsavel(etapa.value);
                 const Icon = etapa.icon;
