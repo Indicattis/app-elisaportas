@@ -45,7 +45,7 @@ import {
 } from "@/components/ui/table";
 import { formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
-import { useCustosItens, CustoItem, useCustosItensPadroes, useCustosItensCategoriasOrdem, useRenomearCategoriaItens } from "@/hooks/useCustosItens";
+import { useCustosItens, CustoItem, useCustosItensPadroes, useCustosItensCategoriasOrdem, useRenomearCategoriaItens, useCriarCategoriaItens, useExcluirCategoriaItens } from "@/hooks/useCustosItens";
 import { cn } from "@/lib/utils";
 import { exportEstrategiaItensPDF, exportEstrategiaItensExcel } from "@/utils/estrategiaItensExport";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -268,12 +268,16 @@ function CategoriaOrdemRow({
   total,
   onMove,
   onRename,
+  onDelete,
+  canDelete,
 }: {
   categoria: string;
   index: number;
   total: number;
   onMove: (dir: -1 | 1) => void;
   onRename: (novo: string) => Promise<void> | void;
+  onDelete?: () => void;
+  canDelete?: boolean;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(categoria);
@@ -351,6 +355,18 @@ function CategoriaOrdemRow({
           >
             <ArrowDown className="h-3.5 w-3.5" />
           </Button>
+          {onDelete && (
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-7 w-7 text-muted-foreground/70 hover:text-red-400 hover:bg-red-500/10 disabled:opacity-30"
+              onClick={onDelete}
+              disabled={!canDelete}
+              title={canDelete ? "Excluir categoria" : "Não é possível excluir (possui itens ou é reservada)"}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          )}
         </>
       )}
     </div>
@@ -535,6 +551,8 @@ export default function EstrategiaItens() {
   const { padroes, aplicarEmTodos } = useCustosItensPadroes();
   const { categoriasOrdem, salvarOrdem } = useCustosItensCategoriasOrdem();
   const renomearCategoria = useRenomearCategoriaItens();
+  const criarCategoria = useCriarCategoriaItens();
+  const excluirCategoria = useExcluirCategoriaItens();
   const { limites: limitesDesconto } = useConfiguracoesVendas();
   const [searchTerm, setSearchTerm] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -542,6 +560,7 @@ export default function EstrategiaItens() {
   const [padroesForm, setPadroesForm] = useState({ taxa_impostos: "0", taxa_descontos: "0", taxa_cartao: "0" });
   const [ordemOpen, setOrdemOpen] = useState(false);
   const [ordemDraft, setOrdemDraft] = useState<string[]>([]);
+  const [novaCategoriaNome, setNovaCategoriaNome] = useState("");
   const [coresOpen, setCoresOpen] = useState(false);
   const [columnColors, setColumnColors] = useState<Record<ColumnKey, string>>(() => {
     if (typeof window === "undefined") return { ...DEFAULT_COLUMN_COLORS };
@@ -898,13 +917,54 @@ export default function EstrategiaItens() {
                   onClick={openOrdemDialog}
                 >
                   <ArrowUpDown className="h-4 w-4" />
-                  Ordenar categorias
+                  Gerenciar categorias
                 </Button>
               </DialogTrigger>
               <DialogContent className="bg-popover text-popover-foreground border-border text-foreground max-w-md">
                 <DialogHeader>
-                  <DialogTitle>Ordenar categorias</DialogTitle>
+                  <DialogTitle>Gerenciar categorias</DialogTitle>
                 </DialogHeader>
+                <div className="flex items-center gap-2">
+                  <Input
+                    placeholder="Nova categoria..."
+                    value={novaCategoriaNome}
+                    onChange={(e) => setNovaCategoriaNome(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        const nome = novaCategoriaNome.trim();
+                        if (!nome) return;
+                        if (ordemDraft.includes(nome)) { toast.error("Já existe uma categoria com esse nome"); return; }
+                        criarCategoria.mutate(nome, {
+                          onSuccess: () => {
+                            setOrdemDraft((prev) => [...prev, nome]);
+                            setNovaCategoriaNome("");
+                          },
+                        });
+                      }
+                    }}
+                    className="flex-1 h-9 bg-card/60 border-border text-foreground"
+                  />
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      const nome = novaCategoriaNome.trim();
+                      if (!nome) return;
+                      if (ordemDraft.includes(nome)) { toast.error("Já existe uma categoria com esse nome"); return; }
+                      criarCategoria.mutate(nome, {
+                        onSuccess: () => {
+                          setOrdemDraft((prev) => [...prev, nome]);
+                          setNovaCategoriaNome("");
+                        },
+                      });
+                    }}
+                    disabled={!novaCategoriaNome.trim() || criarCategoria.isPending}
+                    className="gap-1"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Adicionar
+                  </Button>
+                </div>
                 <div className="max-h-[60vh] overflow-y-auto space-y-1.5">
                   {ordemDraft.length === 0 && (
                     <p className="text-sm text-muted-foreground/80">Nenhuma categoria cadastrada.</p>
@@ -925,6 +985,16 @@ export default function EstrategiaItens() {
                         }
                         await renomearCategoria.mutateAsync({ from: cat, to: novoTrim });
                         setOrdemDraft((prev) => prev.map((c) => (c === cat ? novoTrim : c)));
+                      }}
+                      canDelete={cat !== "Sem categoria" && !items.some((it) => (it.categoria?.trim() || "Sem categoria") === cat)}
+                      onDelete={() => {
+                        if (cat === "Sem categoria") return;
+                        if (!confirm(`Excluir a categoria "${cat}"?`)) return;
+                        excluirCategoria.mutate(cat, {
+                          onSuccess: () => {
+                            setOrdemDraft((prev) => prev.filter((c) => c !== cat));
+                          },
+                        });
                       }}
                     />
                   ))}

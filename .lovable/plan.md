@@ -1,32 +1,28 @@
-# Adicionar coluna "Preço Objetivo" em Itens
+# Gerenciar Categorias (criar/excluir/renomear/ordenar)
 
-## Objetivo
-Na tela `/direcao/estrategia/itens`, adicionar uma coluna "Preço Objetivo" editável manualmente ao lado das demais colunas financeiras.
+## Mudanças
 
-## Passos
+### Botão
+- Renomear "Ordenar categorias" → "Gerenciar categorias" em `EstrategiaItens.tsx` (label + título do diálogo).
 
-### 1. Migration do banco de dados
-Criar migration para adicionar a coluna `preco_objetivo` (tipo `numeric`, nullable) na tabela `custos_itens`.
+### Modal "Gerenciar categorias"
+Manter as funções atuais (renomear, mover para cima/baixo) e adicionar:
 
-### 2. Atualizar hook `useCustosItens.ts`
-- Adicionar `preco_objetivo: number | null` no tipo `CustoItem`
-- Adicionar `preco_objetivo?: number | null` no tipo `NewCustoItem`
-- Incluir o campo no payload do `createItem.mutateAsync`
+**Criar categoria:**
+- Campo de input + botão "Adicionar" no topo do diálogo.
+- Valida nome não vazio e não duplicado.
+- Persiste em `custos_itens_categorias_ordem` (upsert com `ordem = max+1`). A categoria aparece como vazia (sem itens) até receber itens via "Mover de categoria" ou edição.
 
-### 3. Atualizar página `EstrategiaItens.tsx`
-- Adicionar `"objetivo"` ao tipo `ColumnKey`
-- Adicionar entrada em `COLUMN_LABELS` e `DEFAULT_COLUMN_COLORS`
-- No header da tabela (`<TableHead>`), inserir a nova coluna entre "Cartão" e "Valor de Venda" (ou ao lado do "Valor de Venda" — posicionar como coluna editável financeira)
-- No `SortableItemRow`, adicionar `<EditableCell>` para `preco_objetivo` com tipo `currency`, alinhado à direita
-- No diálogo de "Novo item", adicionar campo de input para `preco_objetivo`
-- Adicionar `preco_objetivo` no estado `newItem` e no `handleCreate`
+**Excluir categoria:**
+- Botão de lixeira em cada linha de `CategoriaOrdemRow`.
+- **Bloqueio**: se a categoria tiver itens em `custos_itens`, exibe toast de erro pedindo para mover/excluir os itens antes. A categoria "Sem categoria" não pode ser excluída.
+- Se vazia, confirma e remove de `custos_itens_categorias_ordem`, remove do `ordemDraft` local.
 
-## Arquivos envolvidos
-- Migration Supabase (`custos_itens.preco_objetivo`)
+### Hook `useCustosItens.ts`
+Adicionar duas mutations em `useCustosItensCategoriasOrdem` (ou hook separado):
+- `criarCategoria(nome)` → insert em `custos_itens_categorias_ordem` com `ordem` = próxima posição.
+- `excluirCategoria(nome)` → verifica `count` em `custos_itens` onde `categoria = nome`; se > 0 lança erro; senão delete em `custos_itens_categorias_ordem`.
+
+## Arquivos
 - `src/hooks/useCustosItens.ts`
 - `src/pages/direcao/estrategia/EstrategiaItens.tsx`
-
-## Notas
-- A coluna será editável manualmente via `EditableCell` (mesmo componente usado em Custo, Valor de Venda, etc.)
-- Não envolve cálculo automático — o usuário digita o valor desejado
-- O campo é nullable no banco para itens existentes
