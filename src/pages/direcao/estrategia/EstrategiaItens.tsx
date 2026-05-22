@@ -388,8 +388,6 @@ function SortableItemRow({ item, disabled, categorias, colors, onUpdate, onDelet
     zIndex: isDragging ? 10 : "auto",
   };
   const custo = Number(item.custo_unitario || 0);
-  const qtd = Number(item.quantidade || 0);
-  const totalCusto = custo * qtd;
   const preco = Number(item.preco_venda || 0);
   const tImp = Number(item.taxa_impostos || 0);
   const tDesc = Number(item.taxa_descontos || 0);
@@ -434,9 +432,6 @@ function SortableItemRow({ item, disabled, categorias, colors, onUpdate, onDelet
           display={formatCurrency(custo)}
           onSave={(v) => onUpdate({ custo_unitario: Number(v) })}
         />
-      </TableCell>
-      <TableCell className={`text-right text-foreground ${getColumnBg(colors, "custo")}`}>
-        {formatCurrency(totalCusto)}
       </TableCell>
       <TableCell className={`text-right font-medium ${getColumnBg(colors, "lucro")} ${corLucro}`}>
         {formatCurrency(lucro)}
@@ -685,7 +680,7 @@ export default function EstrategiaItens() {
   const totals = useMemo(() => {
     let custo = 0;
     for (const it of filteredItems) {
-      custo += Number(it.custo_unitario || 0) * Number(it.quantidade || 0);
+      custo += Number(it.custo_unitario || 0);
     }
     return { custo };
   }, [filteredItems]);
@@ -1078,14 +1073,13 @@ export default function EstrategiaItens() {
                    <TableRow className="border-border hover:bg-transparent">
                      <TableHead className="w-8 p-0" />
                      <TableHead className="text-xs font-medium text-muted-foreground">Descrição</TableHead>
-                     <TableHead className={`text-xs font-medium text-foreground text-right w-36 ${getColumnBg(columnColors, "custo")}`}>Custo</TableHead>
-                     <TableHead className={`text-xs font-medium text-foreground text-right w-36 ${getColumnBg(columnColors, "custo")}`}>Total Custo</TableHead>
-                     <TableHead className={`text-xs font-medium text-foreground text-right w-36 ${getColumnBg(columnColors, "lucro")}`}>Lucro</TableHead>
-                     <TableHead className={`text-xs font-medium text-foreground text-right w-28 ${getColumnBg(columnColors, "imposto")}`}>Imposto</TableHead>
-                     <TableHead className={`text-xs font-medium text-foreground text-right w-32 ${getColumnBg(columnColors, "desconto")}`}>Desc. Gerente</TableHead>
-                     <TableHead className={`text-xs font-medium text-foreground text-right w-28 ${getColumnBg(columnColors, "cartao")}`}>Cartão</TableHead>
-                     <TableHead className={`text-xs font-medium text-foreground text-right w-40 ${getColumnBg(columnColors, "venda")}`}>Valor de Venda</TableHead>
-                     <TableHead className="text-xs font-medium text-muted-foreground text-center w-16">Ações</TableHead>
+                    <TableHead className={`text-xs font-medium text-foreground text-right w-36 ${getColumnBg(columnColors, "custo")}`}>Custo</TableHead>
+                    <TableHead className={`text-xs font-medium text-foreground text-right w-36 ${getColumnBg(columnColors, "lucro")}`}>Lucro</TableHead>
+                    <TableHead className={`text-xs font-medium text-foreground text-right w-28 ${getColumnBg(columnColors, "imposto")}`}>Imposto</TableHead>
+                    <TableHead className={`text-xs font-medium text-foreground text-right w-32 ${getColumnBg(columnColors, "desconto")}`}>Desc. Gerente</TableHead>
+                    <TableHead className={`text-xs font-medium text-foreground text-right w-28 ${getColumnBg(columnColors, "cartao")}`}>Cartão</TableHead>
+                    <TableHead className={`text-xs font-medium text-foreground text-right w-40 ${getColumnBg(columnColors, "venda")}`}>Valor de Venda</TableHead>
+                    <TableHead className="text-xs font-medium text-muted-foreground text-center w-16">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
