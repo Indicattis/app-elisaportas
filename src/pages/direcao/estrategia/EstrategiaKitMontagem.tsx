@@ -44,18 +44,16 @@ export default function EstrategiaKitMontagem() {
   const { items: allCustosItens } = useCustosItens();
 
   const salvarValor = (campo: "valor_porta" | "valor_instalacao" | "valor_pintura", atual: number) =>
-    (e: React.FocusEvent<HTMLInputElement>) => {
+    async (e: React.FocusEvent<HTMLInputElement>) => {
       if (!kitId) return;
       const v = parseFloat(e.target.value);
       if (isNaN(v) || v < 0 || v === Number(atual)) return;
-      editarItem.mutate(
-        { id: kitId, dados: { [campo]: v } as any },
-        {
-          onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["tabela-precos-kit", kitId] });
-          },
-        }
-      );
+      try {
+        await editarItem({ id: kitId, dados: { [campo]: v } as any });
+        queryClient.invalidateQueries({ queryKey: ["tabela-precos-kit", kitId] });
+      } catch {
+        /* toast tratado no hook */
+      }
     };
 
   const usedIds = useMemo(() => new Set(items.map((i) => i.custo_item_id)), [items]);
