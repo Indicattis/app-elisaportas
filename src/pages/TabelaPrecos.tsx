@@ -14,6 +14,7 @@ import { ItemModal } from "@/components/tabela-precos/ItemModal";
 import { BulkUploadTabelaPrecos } from "@/components/tabela-precos/BulkUploadTabelaPrecos";
 import { CatalogoPrecosTab } from "@/components/tabela-precos/CatalogoPrecosTab";
 import { useKitsMontagemResumo } from "@/hooks/useKitMontagem";
+import { useCustosItensPadroes } from "@/hooks/useCustosItens";
 import { useQueryClient } from "@tanstack/react-query";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import {
@@ -74,6 +75,7 @@ export default function TabelaPrecos({
   const queryClient = useQueryClient();
   const { itens, isLoading, adicionarItem, editarItem, inativarItem, reordenarItens } = useTabelaPrecos(searchTerm);
   const { data: resumoMontagem = {} } = useKitsMontagemResumo();
+  const { padroes } = useCustosItensPadroes();
 
   // Estado local para reordenação otimista
   const [orderedItens, setOrderedItens] = useState<ItemTabelaPreco[]>([]);
@@ -161,7 +163,15 @@ export default function TabelaPrecos({
 
   const getLucroEfetivo = (item: ItemTabelaPreco) => {
     const r = resumoMontagem[item.id];
-    if (r && r.count > 0) return { value: r.lucroTotal, fromMontagem: true, count: r.count };
+    if (r && r.count > 0) {
+      const precoPorta = Number(item.valor_porta || 0);
+      const taxas =
+        (Number(padroes?.taxa_impostos ?? 0) +
+          Number(padroes?.taxa_descontos ?? 0) +
+          Number(padroes?.taxa_cartao ?? 0)) / 100;
+      const lucroAdicional = precoPorta - r.custoTotal - precoPorta * taxas;
+      return { value: lucroAdicional, fromMontagem: true, count: r.count };
+    }
     return { value: item.lucro || 0, fromMontagem: false, count: 0 };
   };
 
