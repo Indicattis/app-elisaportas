@@ -419,7 +419,7 @@ function SortableItemRow({ item, disabled, categorias, colors, padroes, onUpdate
   const vDesc = preco * (tDesc / 100);
   const vCard = preco * (tCard / 100);
   const lucro = preco - deducoes - custo;
-  const corLucro = lucro > 0 ? "text-emerald-400" : lucro < 0 ? "text-red-400" : "text-muted-foreground";
+  
   return (
     <TableRow
       ref={setNodeRef}
@@ -454,7 +454,7 @@ function SortableItemRow({ item, disabled, categorias, colors, padroes, onUpdate
           onSave={(v) => onUpdate({ custo_unitario: Number(v) })}
         />
       </TableCell>
-      <TableCell className={`text-right font-medium ${getColumnBg(colors, "lucro")} ${corLucro}`}>
+      <TableCell className={`text-right font-medium text-foreground ${getColumnBg(colors, "lucro")}`}>
         {formatCurrency(lucro)}
       </TableCell>
       <TableCell className={`text-right text-foreground ${getColumnBg(colors, "imposto")}`}>
