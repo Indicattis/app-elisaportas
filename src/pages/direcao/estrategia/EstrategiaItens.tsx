@@ -75,7 +75,7 @@ const COLUMN_COLOR_OPTIONS: Record<string, { label: string; bg: string; swatch: 
   slate:   { label: "Cinza",     bg: "bg-slate-500/30",   swatch: "bg-slate-500" },
 };
 
-type ColumnKey = "custo" | "lucro" | "imposto" | "desconto" | "cartao" | "venda";
+type ColumnKey = "custo" | "lucro" | "imposto" | "desconto" | "cartao" | "venda" | "objetivo";
 const COLUMN_LABELS: Record<ColumnKey, string> = {
   custo: "Custo",
   lucro: "Lucro",
@@ -83,6 +83,7 @@ const COLUMN_LABELS: Record<ColumnKey, string> = {
   desconto: "Desc. Gerente",
   cartao: "Cartão",
   venda: "Valor de Venda",
+  objetivo: "Preço Objetivo",
 };
 const DEFAULT_COLUMN_COLORS: Record<ColumnKey, string> = {
   custo: "rose",
@@ -91,6 +92,7 @@ const DEFAULT_COLUMN_COLORS: Record<ColumnKey, string> = {
   desconto: "yellow",
   cartao: "teal",
   venda: "green",
+  objetivo: "violet",
 };
 const COLUMN_COLORS_STORAGE_KEY = "estrategia-itens-column-colors-v1";
 
