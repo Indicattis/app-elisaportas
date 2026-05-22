@@ -366,7 +366,6 @@ export default function MultasMinimalista() {
                   >
                     <span
                       role="button"
-                      type="button"
                       onClick={(e) => {
                         e.stopPropagation();
                         setRespModalEtapa(etapa.value);
