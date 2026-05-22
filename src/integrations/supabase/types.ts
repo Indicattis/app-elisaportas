@@ -4185,6 +4185,30 @@ export type Database = {
           },
         ]
       }
+      multas_etapa_responsaveis: {
+        Row: {
+          created_at: string
+          id: string
+          responsavel_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          responsavel_id: string
+          status: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          responsavel_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       naturezas_operacao: {
         Row: {
           ativo: boolean

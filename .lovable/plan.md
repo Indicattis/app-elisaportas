@@ -1,67 +1,61 @@
-# Montagem de kits em /direcao/estrategia/kits
+# Etapas de multas com responsável em /administrativo/multas
 
 ## Objetivo
-Permitir associar a cada kit (linha da Tabela de Preços de Portas) uma "montagem" — uma lista de itens cadastrados em `/direcao/estrategia/itens` com quantidade. Quando o kit tem montagem, o **Lucro** do kit passa a ser calculado como a soma de `quantidade × lucro_unitário` dos itens da montagem. Quando não tem montagem, o lucro continua editável manualmente como hoje, e o kit fica sinalizado como "Sem montagem".
+Substituir a tela atual de multas por uma navegação por **abas de status** no mesmo padrão visual do hub `/direcao/gestao-fabrica` (tabs largos com avatar do responsável, contador colorido e estado ativo destacado). As etapas são, em ordem:
+
+```text
+Aberta → Advertida → Paga → Concluída
+```
+
+Cada aba possui um **responsável** persistido no banco. **Apenas esse responsável pode avançar** uma multa para a próxima etapa.
 
 ## Comportamento
 
-- Nova coluna **Montagem** na tabela de kits, antes de "Ações":
-  - Kit sem montagem → badge âmbar "Sem montagem" + botão "Configurar".
-  - Kit com montagem → badge "N itens" + botão "Editar".
-- Coluna **Lucro** existente:
-  - Kit sem montagem: edição manual inline (comportamento atual preservado).
-  - Kit com montagem: valor calculado (`Σ qtd × lucro_unit`), exibido como somente leitura com tooltip "Calculado pela montagem". Clique para editar é desabilitado.
-- Card de Pesquisa Rápida: o valor "Lucro" mostrado também usa o lucro calculado quando houver montagem.
+- A barra de abas mostra as 4 etapas. Cada trigger renderiza:
+  - Avatar do responsável da etapa (ou ícone neutro quando não atribuído).
+  - Label da etapa.
+  - Pill com a contagem de multas naquela etapa.
+  - Mesmo estilo glassmorphism + ring azul em ativo já usado em `GestaoFabricaDirecao` (linhas 918-973).
+- Clicar no avatar/ícone abre um modal para **atribuir/remover** o responsável da etapa (lista de `admin_users`).
+- O conteúdo da aba ativa lista as multas com aquele status, reutilizando os atuais `MultaCard` (com badges de vencimento como decoração).
+- Cada card mostra um botão **"Avançar"** somente quando:
+  - A etapa atual não é a última (`Concluída`); **e**
+  - `auth.uid()` é igual ao `responsavel_id` da etapa atual.
+  - Caso contrário, o botão aparece desabilitado com tooltip "Somente {nome do responsável} pode avançar".
+- Ações já existentes (cadastrar nova multa, excluir) permanecem.
+- Botões de "Marcar como paga" e o cálculo automático de status por data são removidos — o avanço passa a ser explícito via fluxo de etapas.
 
-## Modal "Montagem do kit"
-Aberto pelo botão da coluna Montagem. Conteúdo:
-- Cabeçalho com a descrição/medidas do kit.
-- Campo de busca para localizar itens em `custos_itens` por descrição/categoria.
-- Lista da montagem atual: descrição do item, categoria, lucro unitário (calculado), input de quantidade (decimal), subtotal de lucro da linha, botão remover.
-- Botão "Adicionar item" via combobox de busca (insere com quantidade 1).
-- Rodapé com totais: Custo total, Preço de venda total, **Lucro total** (este é o que vai para a coluna Lucro do kit).
-- Alterações são persistidas imediatamente (sem botão Salvar global), com toasts de sucesso/erro.
+## Modelo de dados
 
-## Cálculo do lucro unitário do item
-Replicar a fórmula já usada em `EstrategiaItens.tsx` (linhas 467-477):
+1. **`multas.status`**: passa a aceitar `aberta | advertida | paga | concluida`. Default vira `aberta`.
+   - Migração de dados: registros com `status = 'pendente'` → `'aberta'`.
+2. **Nova tabela** `public.multas_etapa_responsaveis`:
+   - `id uuid pk default gen_random_uuid()`
+   - `status text not null unique` (com check `in ('aberta','advertida','paga','concluida')`)
+   - `responsavel_id uuid not null` (sem FK para `auth.users`, padrão do projeto)
+   - `created_at`, `updated_at` (trigger `update_updated_at_column`)
+   - RLS habilitada com `USING (auth.uid() IS NOT NULL)` em SELECT/INSERT/UPDATE/DELETE, no mesmo padrão de `etapa_responsaveis`.
 
-```text
-lucro_unit = preco_venda − preco_venda × ((taxa_impostos + taxa_descontos + taxa_cartao) / 100) − custo_unitario
-```
-
-Usando as taxas-padrão de `custos_itens_padroes` (hook `useCustosItensPadroes`). Resultado pode ser negativo (exibido normalmente).
-
-## Modelo de dados (migration)
-
-Nova tabela `public.tabela_precos_portas_montagem`:
-- `id uuid pk default gen_random_uuid()`
-- `kit_id uuid not null references tabela_precos_portas(id) on delete cascade`
-- `custo_item_id uuid not null references custos_itens(id) on delete cascade`
-- `quantidade numeric(12,3) not null default 1`
-- `created_at`, `updated_at` (timestamps padrão + trigger `update_updated_at_column`)
-- `unique (kit_id, custo_item_id)` para evitar duplicidade
-- Índices em `kit_id` e `custo_item_id`
-- RLS habilitada; políticas seguindo o padrão das tabelas vizinhas (`tabela_precos_portas`, `custos_itens`) — leitura/escrita para usuários autenticados (ajustar conforme as policies já existentes nessas tabelas).
-
-Nenhuma coluna nova em `tabela_precos_portas`: a presença de montagem é derivada de `count(*) > 0` em `tabela_precos_portas_montagem`.
+Nenhuma RLS extra em `multas` para travar avanço — a restrição de "somente o responsável avança" é validada na UI (igual ao que já acontece em outras telas com `etapa_responsaveis`). Posso adicionar policy de UPDATE condicional se você preferir; me avise.
 
 ## Implementação técnica
-- **Hook novo** `src/hooks/useKitMontagem.ts`:
-  - `useKitsMontagemResumo()` → mapa `{ kit_id → { count, lucroTotal } }` para alimentar a coluna Lucro/Montagem da listagem em uma única query (`select kit_id, quantidade, custos_itens(custo_unitario, preco_venda, taxa_impostos, taxa_descontos, taxa_cartao)` joinada).
-  - `useKitMontagem(kitId)` → CRUD da montagem de um kit específico (`list`, `add`, `updateQuantidade`, `remove`), reaproveitando padrões de `useCustosItens` (React Query + toasts).
-- **`TabelaPrecos.tsx`**:
-  - Adiciona a coluna Montagem (renderizada apenas quando `!hideAcoesColumn`, mesma condição de "edição").
-  - Consome `useKitsMontagemResumo` para decidir, por linha, se `lucro` é calculado ou manual.
-  - Bloqueia `handleStartEditLucro` quando o kit tem montagem; exibe o valor calculado com `cursor-not-allowed` e tooltip.
-  - Importa novo componente `KitMontagemDialog`.
-- **Componente novo** `src/components/tabela-precos/KitMontagemDialog.tsx`:
-  - Recebe `kit: ItemTabelaPreco` e `open/onOpenChange`.
-  - Usa `useCustosItens` (lista para o combobox de busca) + `useCustosItensPadroes` (taxas) + `useKitMontagem(kit.id)`.
-  - Renderiza tabela editável da montagem, combobox `Command`/`Popover` para adicionar itens, e rodapé com totais.
-  - Estilo glassmorphism: `bg-white/5`, `backdrop-blur-xl`, `border-white/10`, paleta azul/branco (memory: glassmorphism unification).
+
+Arquivos novos:
+- `src/hooks/useMultasEtapaResponsaveis.ts` — análogo a `useEtapaResponsaveis`, porém com `status: 'aberta' | 'advertida' | 'paga' | 'concluida'` como chave.
+- `src/components/multas/SelecionarResponsavelMultaModal.tsx` — modal de busca em `admin_users` com confirmar/remover (versão enxuta do `SelecionarResponsavelEtapaModal`, sem dependência de `EtapaPedido`).
+
+Arquivos editados:
+- `src/hooks/useMultas.ts`:
+  - Tipar `status` como `'aberta' | 'advertida' | 'paga' | 'concluida'`.
+  - Manter `updateStatus` genérico, usado para avançar.
+- `src/pages/administrativo/MultasMinimalista.tsx` (refatorado):
+  - Usar `Tabs` com `value={statusAtivo}` e a `TabsList` no mesmo template visual das abas de `GestaoFabricaDirecao` (mesmas classes do grupo `flex gap-1 border-2 border-...` e do `TabsTrigger` com avatar + label + pill).
+  - Mapa de cores por etapa: Aberta = azul, Advertida = âmbar, Paga = verde, Concluída = emerald/cinza.
+  - Filtrar multas por `m.status === statusAtivo` (sem o cálculo por data atual).
+  - `MultaCard` recebe `podeAvancar` e `proximaEtapaLabel` e renderiza botão "Avançar" (chevron) que chama `updateStatus.mutate({ id, status: proximaEtapa })`.
+  - Resumo no topo é simplificado para "Total pendente" (soma de `aberta+advertida`), "Total" e "Concluídas".
 
 ## Fora de escopo
-- Aplicar o lucro calculado em relatórios/PDFs existentes de tabela de preços (não solicitado).
-- Compartilhar a mesma montagem entre kits (cada kit tem a sua própria lista).
-- Reordenar itens dentro da montagem.
-- Edição/criação de itens de `custos_itens` a partir do modal (apenas leitura para seleção).
+- Histórico de transições (quem avançou cada multa e quando).
+- Notificação ao responsável quando uma multa cai na sua aba.
+- Permitir retroceder etapa.
