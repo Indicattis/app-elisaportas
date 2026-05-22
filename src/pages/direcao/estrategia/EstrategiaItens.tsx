@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, CSSProperties } from "react";
-import { Plus, Trash2, Percent, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Check, X, GripVertical, FolderInput, Palette } from "lucide-react";
+import { Plus, Trash2, Percent, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Check, X, GripVertical, FolderInput, Palette, FileText, FileSpreadsheet } from "lucide-react";
 import {
   DndContext,
   closestCenter,
@@ -47,6 +47,7 @@ import { formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
 import { useCustosItens, CustoItem, useCustosItensPadroes, useCustosItensCategoriasOrdem, useRenomearCategoriaItens } from "@/hooks/useCustosItens";
 import { cn } from "@/lib/utils";
+import { exportEstrategiaItensPDF, exportEstrategiaItensExcel } from "@/utils/estrategiaItensExport";
 
 const UNIDADES = ["Un", "M", "Kg", "L", "M²", "M³", "Cx", "Pç"];
 
