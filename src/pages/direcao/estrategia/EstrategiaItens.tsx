@@ -961,15 +961,15 @@ export default function EstrategiaItens() {
 
   return (
     <MinimalistLayout
-      title="Itens"
-      subtitle="Catálogo de itens"
+      title="Custo Objetivo"
+      subtitle="Gerenciamento de custos"
       backPath="/direcao/estrategia"
       headerActions={headerActions}
       breadcrumbItems={[
         { label: "Home", path: "/home" },
         { label: "Direção", path: "/direcao" },
         { label: "Estratégia", path: "/direcao/estrategia" },
-        { label: "Itens" },
+        { label: "Custo Objetivo" },
       ]}
       fullWidth
     >
