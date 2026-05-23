@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Loader2, Printer, ExternalLink } from 'lucide-react';
+import { Loader2, Printer, ExternalLink, CheckCircle2, CircleDashed } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { toast } from 'sonner';
 import logoElisa from '@/assets/logo-elisa-dre.png';
 
 interface FaturamentoProduto {
