@@ -372,7 +372,7 @@ export function CatalogoPrecosTab({ compact = false }: CatalogoPrecosTabProps = 
                     </TableHeader>
                     <TableBody>
                       <SortableContext items={rows.map((r) => r.id)} strategy={verticalListSortingStrategy}>
-                        {rows.map((produto) => (
+                        {rows.map((produto, idx) => (
                           <SortableProdutoRow
                             key={produto.id}
                             produto={produto}
@@ -383,6 +383,7 @@ export function CatalogoPrecosTab({ compact = false }: CatalogoPrecosTabProps = 
                             renderEditableCell={renderEditableCell}
                             padroes={padroes}
                             categorias={todasCategorias}
+                            index={idx}
                             onUpdate={(patch) => editarProduto.mutateAsync({ id: produto.id, ...patch } as any)}
                             onDelete={() => {
                               if (confirm(`Remover "${produto.nome_produto}" do catálogo?`)) {
