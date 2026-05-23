@@ -2252,6 +2252,60 @@ export type Database = {
         }
         Relationships: []
       }
+      dre_realizados: {
+        Row: {
+          created_at: string
+          faturamento_total: number
+          id: string
+          lucro_bruto: number
+          lucro_liquido_final: number
+          mes: string
+          observacoes: string | null
+          perc_bruto: number
+          perc_liquido: number
+          realizado_em: string
+          realizado_por: string | null
+          total_despesas_fixas: number
+          total_despesas_folha: number
+          total_despesas_variaveis: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          faturamento_total?: number
+          id?: string
+          lucro_bruto?: number
+          lucro_liquido_final?: number
+          mes: string
+          observacoes?: string | null
+          perc_bruto?: number
+          perc_liquido?: number
+          realizado_em?: string
+          realizado_por?: string | null
+          total_despesas_fixas?: number
+          total_despesas_folha?: number
+          total_despesas_variaveis?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          faturamento_total?: number
+          id?: string
+          lucro_bruto?: number
+          lucro_liquido_final?: number
+          mes?: string
+          observacoes?: string | null
+          perc_bruto?: number
+          perc_liquido?: number
+          realizado_em?: string
+          realizado_por?: string | null
+          total_despesas_fixas?: number
+          total_despesas_folha?: number
+          total_despesas_variaveis?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       elisaportas_leads: {
         Row: {
           altura_porta: string | null
