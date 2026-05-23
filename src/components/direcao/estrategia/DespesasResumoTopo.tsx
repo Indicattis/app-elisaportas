@@ -10,9 +10,10 @@ const isFolha = (nome: string) => /sal[áa]rio|folha/i.test(nome);
 interface Props {
   mes: string | null;
   ano?: number;
+  onMediaMensalChange?: (media: number) => void;
 }
 
-export default function DespesasResumoTopo({ mes }: Props) {
+export default function DespesasResumoTopo({ mes, onMediaMensalChange }: Props) {
   const [folha, setFolha] = useState<Item[]>([]);
   const [fixas, setFixas] = useState<Item[]>([]);
   const [variaveis, setVariaveis] = useState<Item[]>([]);
@@ -119,6 +120,14 @@ export default function DespesasResumoTopo({ mes }: Props) {
       cancelled = true;
     };
   }, [mes]);
+
+  useEffect(() => {
+    if (loading) return;
+    const totalMensal = folha.reduce((s, i) => s + i.valor, 0)
+      + fixas.reduce((s, i) => s + i.valor, 0)
+      + variaveis.reduce((s, i) => s + i.valor, 0);
+    onMediaMensalChange?.(totalMensal);
+  }, [folha, fixas, variaveis, loading, onMediaMensalChange]);
 
   const rotulo = mes ? `Valores de ${mes}` : 'Configuração padrão';
 

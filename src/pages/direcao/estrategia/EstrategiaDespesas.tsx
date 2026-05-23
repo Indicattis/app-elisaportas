@@ -4,16 +4,18 @@ import { ptBR } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import DespesasResumoTopo from '@/components/direcao/estrategia/DespesasResumoTopo';
+import { formatCurrency } from '@/lib/utils';
 
 export default function EstrategiaDespesas() {
   const anoAtual = new Date().getFullYear();
   const [ano, setAno] = useState(anoAtual);
   const [mesSelecionado, setMesSelecionado] = useState<string | null>(null);
+  const [mediaMensal, setMediaMensal] = useState<number>(0);
 
   return (
     <MinimalistLayout
       title="Despesas"
-      subtitle={`Ano ${ano}`}
+      subtitle={`Ano ${ano} — ${mediaMensal > 1 ? formatCurrency(mediaMensal) + '/mês' : 'Carregando...'}`}
       backPath="/direcao/estrategia"
       breadcrumbItems={[
         { label: 'Home', path: '/home' },
@@ -22,7 +24,7 @@ export default function EstrategiaDespesas() {
         { label: 'Despesas' },
       ]}
     >
-      <DespesasResumoTopo mes={mesSelecionado} ano={ano} />
+      <DespesasResumoTopo mes={mesSelecionado} ano={ano} onMediaMensalChange={setMediaMensal} />
 
       <div className="flex items-center gap-3 mb-4">
         <button
