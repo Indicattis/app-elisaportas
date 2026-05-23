@@ -12,6 +12,8 @@ export interface ProdutoCatalogo {
   unidade: string;
   preco_venda: number;
   custo_produto?: number;
+  preco_objetivo?: number | null;
+  custo_ok?: boolean;
   ativo: boolean;
   imagem_url?: string;
   peso?: number;
@@ -35,6 +37,8 @@ export interface ProdutoCatalogoInput {
   unidade?: string;
   preco_venda: number;
   custo_produto?: number;
+  preco_objetivo?: number | null;
+  custo_ok?: boolean;
   imagem_url?: string;
   peso?: number;
   destaque?: boolean;
