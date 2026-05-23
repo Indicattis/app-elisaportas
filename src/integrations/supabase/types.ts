@@ -8433,6 +8433,7 @@ export type Database = {
           categoria: string | null
           created_at: string | null
           created_by: string | null
+          custo_ok: boolean
           custo_produto: number | null
           descricao_produto: string | null
           destaque: boolean | null
@@ -8442,6 +8443,7 @@ export type Database = {
           nome_produto: string
           ordem: number
           peso: number | null
+          preco_objetivo: number | null
           preco_venda: number
           quantidade: number
           sku: string | null
@@ -8456,6 +8458,7 @@ export type Database = {
           categoria?: string | null
           created_at?: string | null
           created_by?: string | null
+          custo_ok?: boolean
           custo_produto?: number | null
           descricao_produto?: string | null
           destaque?: boolean | null
@@ -8465,6 +8468,7 @@ export type Database = {
           nome_produto: string
           ordem?: number
           peso?: number | null
+          preco_objetivo?: number | null
           preco_venda?: number
           quantidade?: number
           sku?: string | null
@@ -8479,6 +8483,7 @@ export type Database = {
           categoria?: string | null
           created_at?: string | null
           created_by?: string | null
+          custo_ok?: boolean
           custo_produto?: number | null
           descricao_produto?: string | null
           destaque?: boolean | null
@@ -8488,6 +8493,7 @@ export type Database = {
           nome_produto?: string
           ordem?: number
           peso?: number | null
+          preco_objetivo?: number | null
           preco_venda?: number
           quantidade?: number
           sku?: string | null
