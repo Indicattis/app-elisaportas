@@ -197,6 +197,7 @@ export default function TabelaPrecos({
                 <Table>
                   <TableHeader>
                     <TableRow className="border-white/10 hover:bg-white/5">
+                      <TableHead className="text-center text-white/60 w-12">#</TableHead>
                       <TableHead className="text-white/60">Descrição</TableHead>
                       <TableHead className="text-center text-white/60">L</TableHead>
                       <TableHead className="text-center text-white/60">A</TableHead>
@@ -207,11 +208,12 @@ export default function TabelaPrecos({
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {itens.map((item) => {
+                    {itens.map((item, index) => {
                       const total = calcularTotal(item);
                       const lucroInfo = getLucroEfetivo(item);
                       return (
                         <TableRow key={item.id} className="border-white/10 hover:bg-white/5">
+                          <TableCell className="text-center text-white/60">{index + 1}</TableCell>
                           <TableCell className="font-medium text-white">{item.descricao}</TableCell>
                           <TableCell className="text-center text-orange-400">{item.largura}m</TableCell>
                           <TableCell className="text-center text-orange-400">{item.altura}m</TableCell>
@@ -307,6 +309,7 @@ export default function TabelaPrecos({
                   <TableHeader>
                     <TableRow className="border-white/10 hover:bg-white/5">
                       {enableReorder && <TableHead className="w-10 text-white/60"></TableHead>}
+                      <TableHead className="text-center text-white/60 w-12">#</TableHead>
                       <TableHead className="text-white/60">Descrição</TableHead>
                       <TableHead className="text-center text-white/60">Largura</TableHead>
                       <TableHead className="text-center text-white/60">Altura</TableHead>
@@ -332,11 +335,12 @@ export default function TabelaPrecos({
                   >
                     <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
                   <TableBody>
-                    {orderedItens.map((item) => {
+                    {orderedItens.map((item, index) => {
                       const total = calcularTotal(item);
                       const lucroInfo = getLucroEfetivo(item);
                       return (
                         <SortableKitRow key={item.id} id={item.id} enabled={canReorder} showHandle={enableReorder}>
+                          <TableCell className="text-center text-white/60">{index + 1}</TableCell>
                           <TableCell className="font-medium text-white">{item.descricao}</TableCell>
                           <TableCell className="text-center text-orange-400">{item.largura}m</TableCell>
                           <TableCell className="text-center text-orange-400">{item.altura}m</TableCell>
