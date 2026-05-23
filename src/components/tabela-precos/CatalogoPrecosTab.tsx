@@ -414,6 +414,7 @@ function SortableProdutoRow({
   renderEditableCell,
   padroes,
   categorias,
+  index,
   onUpdate,
   onDelete,
 }: {
@@ -425,6 +426,7 @@ function SortableProdutoRow({
   renderEditableCell: (p: ProdutoCatalogo, f: "preco_venda" | "custo_produto") => React.ReactNode;
   padroes: { taxa_impostos: number; taxa_descontos: number; taxa_cartao: number } | null | undefined;
   categorias: string[];
+  index?: number;
   onUpdate: (patch: Partial<ProdutoCatalogo>) => Promise<unknown> | unknown;
   onDelete: () => void;
 }) {
