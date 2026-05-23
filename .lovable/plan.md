@@ -1,26 +1,38 @@
-## Objetivo
-Adicionar botões "Exportar PDF" e "Exportar Excel" em `/direcao/estrategia/precos`, gerando arquivos únicos que combinam as duas tabelas (Kits de portas + Catálogo).
+## Mudanças em `/direcao/estrategia/despesas`
 
-## Implementação
+Reorganizar a página para que o resumo de despesas (Folha Salarial, Fixas, Variáveis) fique sempre visível no topo, acima da grade de meses.
 
-### 1. Novo utilitário `src/utils/estrategiaPrecosExport.ts`
-Funções `exportEstrategiaPrecosPDF(kits, catalogo)` e `exportEstrategiaPrecosExcel(kits, catalogo)`:
+### Comportamento
 
-- **PDF (jsPDF + autoTable, landscape A4)**:
-  - Título "Tabela de Preços — Estratégia" + data
-  - Seção 1: "Kits de Portas" — tabela com colunas Ordem, Item, P, G, GG, Total (P+G+GG)
-  - Seção 2: "Catálogo" — agrupado por categoria, colunas Produto, Unidade, Custo, Preço de Venda
+- **Topo (sempre visível)**: três blocos lado a lado — Folha Salarial, Despesas Fixas, Despesas Variáveis — com subtotal e a lista de itens de cada categoria.
+- **Modo padrão (nenhum mês selecionado)**: os blocos mostram os **valores configurados**:
+  - **Fixas / Variáveis**: itens de `tipos_custos` (ativos), usando `valor_maximo_mensal` como valor.
+  - **Folha Salarial**: soma de `salario` dos colaboradores ativos com `em_folha = true` (consulta em `admin_users`), exibindo cada colaborador como linha.
+  - Rótulo do bloco: "Configuração padrão".
+- **Modo mês selecionado**: os blocos do topo passam a mostrar os **valores reais daquele mês** (mesma fonte usada hoje pelo `DREMesDirecao` em `viewMode='despesas'`: `custos_itens`/`gastos` para fixas/variáveis e `custos_folha_mensais` para folha). Rótulo do bloco passa a "Mês YYYY-MM".
+- **Grade de meses**: permanece abaixo, com toggle de seleção igual ao atual.
+- **Seção embedded do `DREMesDirecao`**: removida — todas as informações de despesas passam a ser renderizadas pelos blocos do topo (evita duplicação).
 
-- **Excel (xlsx)**: duas planilhas — "Kits" e "Catálogo" — com as mesmas colunas/dados acima.
+### Implementação
 
-### 2. `src/pages/direcao/estrategia/EstrategiaPrecos.tsx`
-- Buscar os dados via hooks existentes (`useTabelaPrecos` e `useVendasCatalogo`) no nível da página.
-- Adicionar header com dois botões (mesmo estilo dos de `EstrategiaItens.tsx`: `Exportar PDF` e `Exportar Excel`) com toast de sucesso/erro.
-- Manter o layout atual (grid xl:col-span-2 + xl:col-span-1) abaixo do header.
+1. **Novo componente `src/components/direcao/estrategia/DespesasResumoTopo.tsx`**
+   - Props: `mes: string | null` (formato `yyyy-MM`).
+   - Quando `mes` é `null`:
+     - busca `tipos_custos` (ativos) agrupando por `tipo` (`fixa` / `variavel`).
+     - busca `admin_users` ativos com `em_folha=true` (campos `nome`, `salario`).
+   - Quando `mes` está definido:
+     - reutiliza a mesma lógica de fetch do `DREMesDirecao` (`custos_itens` por mês + isFolha + `custos_folha_mensais`). Para evitar duplicação, extrair essa lógica em um hook `useDespesasMes(mes)` em `src/hooks/useDespesasMes.ts` e usá-lo tanto aqui quanto no `DREMesDirecao`.
+   - Renderiza três `Card`s (Folha, Fixas, Variáveis) com glassmorphism padrão (`bg-white/5 backdrop-blur-xl border-white/10`), cada um com lista de itens (nome + valor) e subtotal no rodapé. Indicador textual "Configuração padrão" ou "Valores de {mes}".
 
-### 3. Sem mudança de lógica de negócio
-Os componentes `TabelaPrecos` e `CatalogoPrecosTab` continuam buscando seus próprios dados normalmente; o fetch na página é só para o export.
+2. **Editar `src/pages/direcao/estrategia/EstrategiaDespesas.tsx`**
+   - Renderizar `<DespesasResumoTopo mes={mesSelecionado} />` antes da grade de meses.
+   - Remover o bloco `{mesSelecionado && <DREMesDirecao ... viewMode="despesas" />}` (informação já contemplada no topo).
+   - Manter título, breadcrumb e grade de meses inalterados (apenas remover o estado visual "ativo" desnecessário? — manter como está, só selecionar/desselecionar).
 
-## Arquivos
-- criar: `src/utils/estrategiaPrecosExport.ts`
-- editar: `src/pages/direcao/estrategia/EstrategiaPrecos.tsx`
+3. **Sem alterações de schema** — apenas leituras de tabelas existentes (`tipos_custos`, `admin_users`, `custos_itens`, `custos_folha_mensais`).
+
+### Arquivos
+- Criar: `src/components/direcao/estrategia/DespesasResumoTopo.tsx`
+- Criar: `src/hooks/useDespesasMes.ts` (extrai fetch já existente em `DREMesDirecao`)
+- Editar: `src/pages/direcao/estrategia/EstrategiaDespesas.tsx`
+- Editar (opcional, refactor): `src/pages/direcao/DREMesDirecao.tsx` para consumir o novo hook — caso traga risco, mantemos sem refactor e duplicamos a lógica apenas no hook novo.
