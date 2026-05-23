@@ -334,7 +334,7 @@ export default function TabelaPrecos({
                       const total = calcularTotal(item);
                       const lucroInfo = getLucroEfetivo(item);
                       return (
-                        <SortableKitRow key={item.id} id={item.id} enabled={canReorder} showHandle={enableReorder}>
+                        <SortableKitRow key={item.id} id={item.id} enabled={canReorder} showHandle={enableReorder} index={index}>
                           <TableCell className="text-center text-white/60">{index + 1}</TableCell>
                           <TableCell className="font-medium text-white">{item.descricao}</TableCell>
                           <TableCell className="text-center text-blue-400">{item.largura}m</TableCell>
