@@ -165,83 +165,77 @@ export default function TabelaPrecos({
   if (embedded) {
     return (
       <>
-        <Card className="bg-white/5 border-white/10">
-          <CardHeader>
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div>
-                <CardTitle className="text-white">Itens Cadastrados</CardTitle>
-                <CardDescription className="text-white/50">
-                  {itens.length} {itens.length === 1 ? 'item cadastrado' : 'itens cadastrados'}
-                </CardDescription>
-              </div>
-              <div className="relative w-full sm:w-64">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-white/40" />
-                <Input
-                  placeholder="Buscar por descrição ou medidas..."
-                  className="pl-8 bg-white/5 border-white/10 text-white placeholder:text-white/30"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <h2 className="text-base font-medium text-foreground">Itens Cadastrados</h2>
+              <p className="text-xs text-muted-foreground">
+                {itens.length} {itens.length === 1 ? 'item cadastrado' : 'itens cadastrados'}
+              </p>
             </div>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="text-center py-8"><p className="text-white/50">Carregando...</p></div>
-            ) : itens.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-white/50">{searchTerm ? 'Nenhum item encontrado' : 'Nenhum item cadastrado'}</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-white/10 hover:bg-white/5">
-                      <TableHead className="text-center text-white/60 w-12">#</TableHead>
-                      <TableHead className="text-white/60">Descrição</TableHead>
-                      <TableHead className="text-center text-white/60">L</TableHead>
-                      <TableHead className="text-center text-white/60">A</TableHead>
-                      <TableHead className="text-right text-white/60">Valor Porta</TableHead>
-                      <TableHead className="text-right text-white/60">Valor Instalação</TableHead>
-                      <TableHead className="text-right text-white/60">Valor Pintura</TableHead>
-                      {!hideTotalColumn && <TableHead className="text-right text-white/60">Total</TableHead>}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {itens.map((item, index) => {
-                      const total = calcularTotal(item);
-                      const lucroInfo = getLucroEfetivo(item);
-                      return (
-                        <TableRow key={item.id} className="border-white/10 hover:bg-white/5">
-                          <TableCell className="text-center text-white/60">{index + 1}</TableCell>
-                          <TableCell className="font-medium text-white">{item.descricao}</TableCell>
-                          <TableCell className="text-center text-blue-400">{item.largura}m</TableCell>
-                          <TableCell className="text-center text-blue-400">{item.altura}m</TableCell>
-                          <TableCell className="text-right text-white/70">
-                            {item.valor_porta.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+            <div className="relative w-full sm:w-72">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por descrição ou medidas..."
+                className="pl-8 bg-card/60 border-border text-foreground placeholder:text-muted-foreground"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {isLoading ? (
+            <div className="text-center py-8"><p className="text-muted-foreground">Carregando...</p></div>
+          ) : itens.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">{searchTerm ? 'Nenhum item encontrado' : 'Nenhum item cadastrado'}</p>
+            </div>
+          ) : (
+            <div className="rounded-xl overflow-hidden bg-card/60 backdrop-blur-xl border border-border">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-border hover:bg-transparent">
+                    <TableHead className="text-center text-xs font-medium text-muted-foreground w-12">#</TableHead>
+                    <TableHead className="text-xs font-medium text-muted-foreground">Descrição</TableHead>
+                    <TableHead className="text-center text-xs font-medium text-muted-foreground">L</TableHead>
+                    <TableHead className="text-center text-xs font-medium text-muted-foreground">A</TableHead>
+                    <TableHead className="text-right text-xs font-medium text-muted-foreground">Valor Porta</TableHead>
+                    <TableHead className="text-right text-xs font-medium text-muted-foreground">Valor Instalação</TableHead>
+                    <TableHead className="text-right text-xs font-medium text-muted-foreground">Valor Pintura</TableHead>
+                    {!hideTotalColumn && <TableHead className="text-right text-xs font-medium text-foreground bg-green-100 dark:bg-green-500/30">Total</TableHead>}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {itens.map((item, index) => {
+                    const total = calcularTotal(item);
+                    return (
+                      <TableRow key={item.id} className="border-border hover:bg-muted/40">
+                        <TableCell className="text-center text-muted-foreground">{index + 1}</TableCell>
+                        <TableCell className="font-medium text-foreground">{item.descricao}</TableCell>
+                        <TableCell className="text-center text-foreground/80">{item.largura}m</TableCell>
+                        <TableCell className="text-center text-foreground/80">{item.altura}m</TableCell>
+                        <TableCell className="text-right text-foreground/80">
+                          {item.valor_porta.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                        </TableCell>
+                        <TableCell className="text-right text-foreground/80">
+                          {item.valor_instalacao.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                        </TableCell>
+                        <TableCell className="text-right text-foreground/80">
+                          {item.valor_pintura.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                        </TableCell>
+                        {!hideTotalColumn && (
+                          <TableCell className="text-right font-semibold text-foreground bg-green-100/60 dark:bg-green-500/20">
+                            {total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                           </TableCell>
-                          <TableCell className="text-right text-white/70">
-                            {item.valor_instalacao.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                          </TableCell>
-                          <TableCell className="text-right text-white/70">
-                            {item.valor_pintura.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                          </TableCell>
-                          {!hideTotalColumn && (
-                            <TableCell className="text-right">
-                              <Badge className="font-semibold bg-white/10 text-white">
-                                {total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                              </Badge>
-                            </TableCell>
-                          )}
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                        )}
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </div>
       </>
     );
   }
