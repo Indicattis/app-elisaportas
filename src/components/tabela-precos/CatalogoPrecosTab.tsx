@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { Search, Check, X, Package } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -66,6 +65,16 @@ export function CatalogoPrecosTab({ compact = false }: CatalogoPrecosTabProps = 
     [produtos]
   );
 
+  const groupedByCategoria = useMemo(() => {
+    const groups = new Map<string, ProdutoCatalogo[]>();
+    for (const p of produtosOrdenados) {
+      const key = (p.categoria || "").trim() || "Sem categoria";
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(p);
+    }
+    return Array.from(groups.entries()).sort(([a], [b]) => a.localeCompare(b));
+  }, [produtosOrdenados]);
+
   const renderEditableCell = (produto: ProdutoCatalogo, field: "preco_venda" | "custo_produto") => {
     const isEditing = editing?.id === produto.id && editing.field === field;
     const value = produto[field] ?? 0;
@@ -82,7 +91,7 @@ export function CatalogoPrecosTab({ compact = false }: CatalogoPrecosTabProps = 
               if (e.key === "Enter") saveEdit();
               if (e.key === "Escape") cancelEdit();
             }}
-            className="w-28 h-7 text-right text-sm bg-white/10 border-white/20 text-white"
+            className="w-28 h-7 text-right text-sm bg-muted border-border text-foreground"
           />
           <Button variant="ghost" size="icon" className="h-6 w-6 text-green-400 hover:text-green-300" onClick={saveEdit}>
             <Check className="h-3 w-3" />
@@ -95,7 +104,7 @@ export function CatalogoPrecosTab({ compact = false }: CatalogoPrecosTabProps = 
     }
     return (
       <span
-        className="cursor-pointer text-white/70 hover:text-white hover:underline decoration-dashed underline-offset-4 transition-colors"
+        className="cursor-pointer text-foreground/80 hover:text-foreground hover:underline decoration-dashed underline-offset-4 transition-colors"
         onClick={() => startEdit(produto, field)}
         title="Clique para editar"
       >
@@ -120,7 +129,7 @@ export function CatalogoPrecosTab({ compact = false }: CatalogoPrecosTabProps = 
             open
             onOpenChange={(o) => { if (!o) setEditing(null); }}
           >
-            <SelectTrigger className="w-32 h-7 bg-white/10 border-white/20 text-white text-xs">
+            <SelectTrigger className="w-32 h-7 bg-muted border-border text-foreground text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -134,7 +143,7 @@ export function CatalogoPrecosTab({ compact = false }: CatalogoPrecosTabProps = 
     }
     return (
       <span
-        className="cursor-pointer text-white/70 hover:text-white hover:underline decoration-dashed underline-offset-4 transition-colors text-xs"
+        className="cursor-pointer text-foreground/80 hover:text-foreground hover:underline decoration-dashed underline-offset-4 transition-colors text-xs"
         onClick={() => startEdit(produto, "unidade")}
         title="Clique para editar"
       >
@@ -144,107 +153,105 @@ export function CatalogoPrecosTab({ compact = false }: CatalogoPrecosTabProps = 
   };
 
   return (
-    <Card className="bg-white/5 border-white/10">
-      <CardHeader>
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <CardTitle className="text-white">Itens do Catálogo</CardTitle>
-            <CardDescription className="text-white/50">
-              {produtosOrdenados.length} {produtosOrdenados.length === 1 ? "produto" : "produtos"} — clique no preço ou custo para editar
-            </CardDescription>
-          </div>
-          <div className="relative w-full sm:w-72">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-white/40" />
-            <Input
-              placeholder="Buscar por nome, descrição ou SKU..."
-              className="pl-8 bg-white/5 border-white/10 text-white placeholder:text-white/30"
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-            />
-          </div>
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 className="text-base font-medium text-foreground">Itens do Catálogo</h2>
+          <p className="text-xs text-muted-foreground">
+            {produtosOrdenados.length} {produtosOrdenados.length === 1 ? "produto" : "produtos"} — clique no preço, custo ou unidade para editar
+          </p>
         </div>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <div className="text-center py-8">
-            <p className="text-white/50">Carregando...</p>
-          </div>
-        ) : produtosOrdenados.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-white/50">{busca ? "Nenhum produto encontrado" : "Catálogo vazio"}</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="border-white/10 hover:bg-white/5">
-                  {!compact && <TableHead className="w-14 text-white/60"></TableHead>}
-                  <TableHead className="text-white/60">Produto</TableHead>
-                  {!compact && <TableHead className="text-white/60 hidden md:table-cell">Categoria</TableHead>}
-                  {!compact && <TableHead className="text-white/60 hidden lg:table-cell">SKU</TableHead>}
-                  {!compact && <TableHead className="text-center text-white/60 hidden md:table-cell">Unidade</TableHead>}
-                  {!compact && <TableHead className="text-right text-white/60">Custo</TableHead>}
-                  <TableHead className="text-right text-white/60">Preço Venda</TableHead>
-                  {!compact && <TableHead className="text-right text-white/60 hidden md:table-cell">Margem</TableHead>}
-                  {!compact && <TableHead className="text-center text-white/60 hidden lg:table-cell">Estoque</TableHead>}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {produtosOrdenados.map((produto) => {
-                  const margem = calcMargem(produto.preco_venda, produto.custo_produto || 0);
-                  return (
-                    <TableRow key={produto.id} className="border-white/10 hover:bg-white/5">
-                      {!compact && <TableCell>
-                        <div className="w-10 h-10 rounded bg-white/5 overflow-hidden flex items-center justify-center">
-                          {produto.imagem_url ? (
-                            <img src={produto.imagem_url} alt={produto.nome_produto} className="w-full h-full object-cover" />
-                          ) : (
-                            <Package className="w-4 h-4 text-white/30" />
-                          )}
-                        </div>
-                      </TableCell>}
-                      <TableCell className="font-medium text-white">{produto.nome_produto}</TableCell>
-                      {!compact && <TableCell className="text-white/60 hidden md:table-cell">{produto.categoria || "—"}</TableCell>}
-                      {!compact && <TableCell className="text-white/60 hidden lg:table-cell">{produto.sku || "—"}</TableCell>}
-                      {!compact && <TableCell className="text-center hidden md:table-cell">{renderUnidadeCell(produto)}</TableCell>}
-                      {!compact && <TableCell className="text-right">{renderEditableCell(produto, "custo_produto")}</TableCell>}
-                      <TableCell className="text-right">{renderEditableCell(produto, "preco_venda")}</TableCell>
-                      {!compact && <TableCell className="text-right hidden md:table-cell">
-                        {margem !== null ? (
-                          <Badge
-                            className={
-                              margem >= 30
-                                ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
-                                : margem >= 10
-                                ? "bg-amber-500/20 text-amber-300 border-amber-500/30"
-                                : "bg-red-500/20 text-red-300 border-red-500/30"
-                            }
-                          >
-                            {margem.toFixed(1)}%
-                          </Badge>
-                        ) : (
-                          <span className="text-white/40">—</span>
-                        )}
-                      </TableCell>}
-                      {!compact && <TableCell className="text-center hidden lg:table-cell">
-                        <span
-                          className={`text-xs px-2 py-0.5 rounded-full ${
-                            produto.quantidade > 0
-                              ? "bg-green-500/20 text-green-400"
-                              : "bg-red-500/20 text-red-400"
-                          }`}
-                        >
-                          {produto.quantidade > 0 ? `${produto.quantidade} ${produto.unidade || "un"}` : "Sem estoque"}
-                        </span>
-                      </TableCell>}
+        <div className="relative w-full sm:w-72">
+          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar por nome ou descrição..."
+            className="pl-8 bg-card/60 border-border text-foreground placeholder:text-muted-foreground"
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+          />
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="text-center py-8">
+          <p className="text-muted-foreground">Carregando...</p>
+        </div>
+      ) : groupedByCategoria.length === 0 ? (
+        <div className="text-center py-8">
+          <p className="text-muted-foreground">{busca ? "Nenhum produto encontrado" : "Catálogo vazio"}</p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-6">
+          {groupedByCategoria.map(([categoria, rows]) => (
+            <div key={categoria} className="flex flex-col gap-2">
+              <div className="flex items-center gap-2 px-1">
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-muted-foreground" />
+                <span className="text-[11px] uppercase tracking-wider font-medium text-muted-foreground">
+                  {categoria}
+                </span>
+                <span className="text-[11px] text-muted-foreground/60">· {rows.length}</span>
+              </div>
+              <div className="rounded-xl overflow-hidden bg-card/60 backdrop-blur-xl border border-border">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-border hover:bg-transparent">
+                      {!compact && <TableHead className="w-14" />}
+                      <TableHead className="text-xs font-medium text-muted-foreground">Produto</TableHead>
+                      {!compact && <TableHead className="text-xs font-medium text-muted-foreground text-center w-24">Unidade</TableHead>}
+                      {!compact && <TableHead className="text-xs font-medium text-muted-foreground text-right w-32">Custo</TableHead>}
+                      <TableHead className="text-xs font-medium text-muted-foreground text-right w-32">Preço Venda</TableHead>
+                      {!compact && <TableHead className="text-xs font-medium text-muted-foreground text-right w-24">Margem</TableHead>}
                     </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+                  </TableHeader>
+                  <TableBody>
+                    {rows.map((produto) => {
+                      const margem = calcMargem(produto.preco_venda, produto.custo_produto || 0);
+                      return (
+                        <TableRow key={produto.id} className="border-border/60 hover:bg-muted/60">
+                          {!compact && (
+                            <TableCell>
+                              <div className="w-10 h-10 rounded bg-muted/40 overflow-hidden flex items-center justify-center">
+                                {produto.imagem_url ? (
+                                  <img src={produto.imagem_url} alt={produto.nome_produto} className="w-full h-full object-cover" />
+                                ) : (
+                                  <Package className="w-4 h-4 text-muted-foreground" />
+                                )}
+                              </div>
+                            </TableCell>
+                          )}
+                          <TableCell className="font-medium text-foreground">{produto.nome_produto}</TableCell>
+                          {!compact && <TableCell className="text-center text-foreground">{renderUnidadeCell(produto)}</TableCell>}
+                          {!compact && <TableCell className="text-right text-foreground">{renderEditableCell(produto, "custo_produto")}</TableCell>}
+                          <TableCell className="text-right text-foreground font-medium">{renderEditableCell(produto, "preco_venda")}</TableCell>
+                          {!compact && (
+                            <TableCell className="text-right">
+                              {margem !== null ? (
+                                <Badge
+                                  className={
+                                    margem >= 30
+                                      ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+                                      : margem >= 10
+                                      ? "bg-amber-500/20 text-amber-300 border-amber-500/30"
+                                      : "bg-red-500/20 text-red-300 border-red-500/30"
+                                  }
+                                >
+                                  {margem.toFixed(1)}%
+                                </Badge>
+                              ) : (
+                                <span className="text-muted-foreground/60">—</span>
+                              )}
+                            </TableCell>
+                          )}
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
