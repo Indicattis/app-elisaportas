@@ -224,7 +224,7 @@ export default function TabelaPrecos({
                           {item.valor_pintura.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                         </TableCell>
                         {!hideTotalColumn && (
-                          <TableCell className="text-right font-semibold text-foreground bg-green-100/60 dark:bg-green-500/20">
+                          <TableCell className="text-right font-semibold text-foreground">
                             {total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                           </TableCell>
                         )}
