@@ -8574,6 +8574,30 @@ export type Database = {
           },
         ]
       }
+      vendas_catalogo_categorias_ordem: {
+        Row: {
+          categoria: string
+          created_at: string
+          id: string
+          ordem: number
+          updated_at: string
+        }
+        Insert: {
+          categoria: string
+          created_at?: string
+          id?: string
+          ordem?: number
+          updated_at?: string
+        }
+        Update: {
+          categoria?: string
+          created_at?: string
+          id?: string
+          ordem?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       visitas_tecnicas: {
         Row: {
           created_at: string
