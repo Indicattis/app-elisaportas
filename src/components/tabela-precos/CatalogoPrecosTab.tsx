@@ -129,7 +129,7 @@ export function CatalogoPrecosTab({ compact = false }: CatalogoPrecosTabProps = 
 
   const startEdit = (produto: ProdutoCatalogo, field: EditField) => {
     setEditing({ id: produto.id, field });
-    setEditValue(String(produto[field] ?? (field === "unidade" ? "Unitário" : 0)));
+    setEditValue(String(produto[field] ?? (field === "unidade" ? "Un" : 0)));
   };
 
   const cancelEdit = () => setEditing(null);
@@ -259,7 +259,7 @@ export function CatalogoPrecosTab({ compact = false }: CatalogoPrecosTabProps = 
 
   const renderUnidadeCell = (produto: ProdutoCatalogo) => {
     const isEditing = editing?.id === produto.id && editing.field === "unidade";
-    const value = produto.unidade || "Unitário";
+    const value = produto.unidade || "Un";
     if (isEditing) {
       return (
         <div className="flex items-center justify-center gap-1">
