@@ -1,16 +1,59 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import DespesasResumoTopo from '@/components/direcao/estrategia/DespesasResumoTopo';
 import { formatCurrency } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function EstrategiaDespesas() {
   const anoAtual = new Date().getFullYear();
   const [ano, setAno] = useState(anoAtual);
   const [mesSelecionado, setMesSelecionado] = useState<string | null>(null);
   const [mediaMensal, setMediaMensal] = useState<number>(0);
+  const [totaisMes, setTotaisMes] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      const start = `${ano}-01-01`;
+      const end = `${ano}-12-31`;
+      const [{ data: gastos }, { data: folha }, { data: tipos }] = await Promise.all([
+        supabase
+          .from('gastos' as any)
+          .select('valor, data, tipo_custo_id')
+          .gte('data', start)
+          .lte('data', end),
+        supabase
+          .from('custos_folha_mensais' as any)
+          .select('valor, mes_referencia')
+          .gte('mes_referencia', start)
+          .lte('mes_referencia', end),
+        supabase
+          .from('tipos_custos' as any)
+          .select('id, aparece_no_dre')
+          .eq('aparece_no_dre', true),
+      ]);
+      if (cancelled) return;
+      const tiposOk = new Set(((tipos || []) as any[]).map((t) => t.id));
+      const acc: Record<string, number> = {};
+      ((gastos || []) as any[]).forEach((g) => {
+        if (!tiposOk.has(g.tipo_custo_id)) return;
+        const key = String(g.data).slice(0, 7);
+        acc[key] = (acc[key] || 0) + (Number(g.valor) || 0);
+      });
+      ((folha || []) as any[]).forEach((f) => {
+        const key = String(f.mes_referencia).slice(0, 7);
+        acc[key] = (acc[key] || 0) + (Number(f.valor) || 0);
+      });
+      setTotaisMes(acc);
+    };
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [ano]);
 
   return (
     <MinimalistLayout
@@ -52,7 +95,9 @@ export default function EstrategiaDespesas() {
                 }`}
               >
                 <p className="text-sm text-white/50 capitalize mb-1">{mesNome}</p>
-                <p className="text-lg font-semibold text-white">{mesKey}</p>
+                <p className="text-lg font-semibold text-white">
+                  {formatCurrency(totaisMes[mesKey] || 0)}
+                </p>
               </button>
             );
           })}
