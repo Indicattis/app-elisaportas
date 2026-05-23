@@ -35,6 +35,7 @@ export default function DespesasResumoTopo({ mes }: Props) {
               .eq('ativo', true)
               .in('tipo_usuario', ['colaborador', 'metamorfo'])
               .eq('visivel_organograma', true)
+              .neq('role', 'administrador')
               .order('nome'),
           ]);
           if (cancelled) return;
