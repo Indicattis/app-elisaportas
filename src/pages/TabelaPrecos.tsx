@@ -338,8 +338,8 @@ export default function TabelaPrecos({
                       return (
                         <SortableKitRow key={item.id} id={item.id} enabled={canReorder} showHandle={enableReorder}>
                           <TableCell className="font-medium text-white">{item.descricao}</TableCell>
-                          <TableCell className="text-center text-white/70">{item.largura}m</TableCell>
-                          <TableCell className="text-center text-white/70">{item.altura}m</TableCell>
+                          <TableCell className="text-center text-orange-400">{item.largura}m</TableCell>
+                          <TableCell className="text-center text-orange-400">{item.altura}m</TableCell>
                           <TableCell className="text-right text-white/70">
                             {item.valor_porta.toLocaleString('pt-BR', { 
                               style: 'currency', 
@@ -373,9 +373,8 @@ export default function TabelaPrecos({
                             const lucro = lucroInfo.value;
                             const precoPorta = Number(item.valor_porta || 0);
                             const pct = precoPorta > 0 ? (lucro / precoPorta) * 100 : 0;
-                            const cor = pct > 0 ? "text-emerald-400" : pct < 0 ? "text-red-400" : "text-white/60";
                             return (
-                              <TableCell className={`text-right hidden md:table-cell font-medium ${cor}`}>
+                              <TableCell className="text-right hidden md:table-cell font-medium text-orange-400">
                                 {pct.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%
                               </TableCell>
                             );
@@ -392,7 +391,7 @@ export default function TabelaPrecos({
                               currency: 'BRL'
                             })}
                           </TableCell>
-                          <TableCell className="text-right hidden md:table-cell font-medium text-emerald-400">
+                          <TableCell className="text-right hidden md:table-cell font-medium text-orange-400">
                             80,00%
                           </TableCell>
                           <TableCell className="text-right hidden md:table-cell text-white/70">
@@ -407,7 +406,7 @@ export default function TabelaPrecos({
                               currency: 'BRL'
                             })}
                           </TableCell>
-                          <TableCell className="text-right hidden md:table-cell font-medium text-emerald-400">
+                          <TableCell className="text-right hidden md:table-cell font-medium text-orange-400">
                             30,00%
                           </TableCell>
                           {!hideTotalColumn && <TableCell className="text-right">
