@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2, Search, DollarSign, ShoppingCart, Package, CalendarIcon, TrendingUp, FileText, X, DoorClosed, Home, FileSignature, Download, Paperclip, Receipt, FileSpreadsheet, Pencil } from 'lucide-react';
+import { Plus, Trash2, Search, DollarSign, ShoppingCart, Package, CalendarIcon, TrendingUp, FileText, X, DoorClosed, Home, FileSignature, Download, Paperclip, Receipt, FileSpreadsheet, Pencil, ExternalLink } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -379,6 +379,10 @@ export default function Vendas() {
           </div>
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
+          <Button variant="outline" onClick={() => window.open('https://crm.elisaportas.com', '_blank')} className="h-8 sm:h-10 text-xs sm:text-sm flex-1 sm:flex-initial">
+            <ExternalLink className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline ml-2">CRM</span>
+          </Button>
           <Button variant="outline" onClick={() => navigate('/dashboard/vendas/contratos')} className="h-8 sm:h-10 text-xs sm:text-sm flex-1 sm:flex-initial">
             <FileSignature className="h-3 w-3 sm:h-4 sm:w-4" />
             <span className="hidden sm:inline ml-2">Contratos</span>
