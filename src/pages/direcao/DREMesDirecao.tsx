@@ -1867,7 +1867,20 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
       ]}
       headerActions={
         !loading ? (
-          <button
+          <div className="flex items-center gap-2 print:hidden">
+            <button
+              onClick={() => setRealizadoDialogOpen(true)}
+              title={realizadoRow ? `Realizado em ${new Date(realizadoRow.realizado_em).toLocaleString('pt-BR')}` : 'Marcar como realizado'}
+              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm transition-colors ${
+                realizadoRow
+                  ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/25'
+                  : 'bg-white/10 border-white/10 text-white hover:bg-white/20'
+              }`}
+            >
+              {realizadoRow ? <CheckCircle2 className="w-4 h-4" strokeWidth={1.8} /> : <CircleDashed className="w-4 h-4" strokeWidth={1.8} />}
+              {realizadoRow ? 'Atualizar realizado' : 'Marcar como realizado'}
+            </button>
+            <button
             onClick={async () => {
               // Pré-carrega o logo antes de imprimir, pois #dre-print-document
               // está em display:none e o Chrome pode não carregar a imagem a tempo.
@@ -1881,11 +1894,12 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
               } catch {}
               window.print();
             }}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/10 border border-white/10 text-white text-sm hover:bg-white/20 transition-colors print:hidden"
-          >
-            <Printer className="w-4 h-4" strokeWidth={1.5} />
-            Imprimir PDF
-          </button>
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/10 border border-white/10 text-white text-sm hover:bg-white/20 transition-colors"
+            >
+              <Printer className="w-4 h-4" strokeWidth={1.5} />
+              Imprimir PDF
+            </button>
+          </div>
         ) : undefined
       }
     >
