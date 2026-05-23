@@ -209,7 +209,7 @@ export default function TabelaPrecos({
                   {itens.map((item, index) => {
                     const total = calcularTotal(item);
                     return (
-                      <TableRow key={item.id} className="border-border hover:bg-muted/40">
+                    <TableRow key={item.id} className={cn("border-border hover:bg-muted/40", index % 2 === 1 && "bg-muted/20")}>
                         <TableCell className="text-center text-muted-foreground">{index + 1}</TableCell>
                         <TableCell className="font-medium text-foreground">{item.descricao}</TableCell>
                         <TableCell className="text-center text-foreground/80">{item.largura}m</TableCell>
