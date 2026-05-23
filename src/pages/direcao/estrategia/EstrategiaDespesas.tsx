@@ -15,7 +15,7 @@ export default function EstrategiaDespesas() {
   return (
     <MinimalistLayout
       title="Despesas"
-      subtitle={`Ano ${ano}`}
+      subtitle={`Ano ${ano} — ${mediaMensal > 1 ? formatCurrency(mediaMensal) + '/mês' : 'Carregando...'}`}
       backPath="/direcao/estrategia"
       breadcrumbItems={[
         { label: 'Home', path: '/home' },
@@ -24,7 +24,7 @@ export default function EstrategiaDespesas() {
         { label: 'Despesas' },
       ]}
     >
-      <DespesasResumoTopo mes={mesSelecionado} ano={ano} />
+      <DespesasResumoTopo mes={mesSelecionado} ano={ano} onMediaMensalChange={setMediaMensal} />
 
       <div className="flex items-center gap-3 mb-4">
         <button
