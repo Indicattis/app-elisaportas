@@ -9,6 +9,7 @@ const isFolha = (nome: string) => /sal[áa]rio|folha/i.test(nome);
 
 interface Props {
   mes: string | null;
+  ano?: number;
 }
 
 export default function DespesasResumoTopo({ mes }: Props) {
