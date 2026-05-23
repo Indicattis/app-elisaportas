@@ -1349,6 +1349,28 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
     fetchData();
   }, [mes]);
 
+  // Buscar status realizado deste mês
+  useEffect(() => {
+    if (!mes) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from('dre_realizados' as any)
+        .select('realizado_em, observacoes')
+        .eq('mes', `${mes}-01`)
+        .maybeSingle();
+      if (cancelled) return;
+      if (data) {
+        setRealizadoRow({ realizado_em: (data as any).realizado_em, observacoes: (data as any).observacoes });
+        setRealizadoObs((data as any).observacoes || '');
+      } else {
+        setRealizadoRow(null);
+        setRealizadoObs('');
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [mes]);
+
   const formatCurrency = (value: number) =>
     value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
