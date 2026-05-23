@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Loader2, Printer, ExternalLink } from 'lucide-react';
+import { Loader2, Printer, ExternalLink, CheckCircle2, CircleDashed } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { toast } from 'sonner';
 import logoElisa from '@/assets/logo-elisa-dre.png';
 
 interface FaturamentoProduto {
@@ -868,6 +870,11 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
   const [avulsosModalOpen, setAvulsosModalOpen] = useState(false);
   const [avulsosDetalhe, setAvulsosDetalhe] = useState<VendaComItensSimplesRow[]>([]);
 
+  const [realizadoRow, setRealizadoRow] = useState<{ realizado_em: string; observacoes: string | null } | null>(null);
+  const [realizadoDialogOpen, setRealizadoDialogOpen] = useState(false);
+  const [realizadoObs, setRealizadoObs] = useState('');
+  const [realizadoSaving, setRealizadoSaving] = useState(false);
+
   const mesDate = mes ? new Date(mes + '-15') : new Date();
   const mesNome = format(mesDate, 'MMMM yyyy', { locale: ptBR });
 
@@ -1342,6 +1349,28 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
     fetchData();
   }, [mes]);
 
+  // Buscar status realizado deste mês
+  useEffect(() => {
+    if (!mes) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from('dre_realizados' as any)
+        .select('realizado_em, observacoes')
+        .eq('mes', `${mes}-01`)
+        .maybeSingle();
+      if (cancelled) return;
+      if (data) {
+        setRealizadoRow({ realizado_em: (data as any).realizado_em, observacoes: (data as any).observacoes });
+        setRealizadoObs((data as any).observacoes || '');
+      } else {
+        setRealizadoRow(null);
+        setRealizadoObs('');
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [mes]);
+
   const formatCurrency = (value: number) =>
     value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -1654,6 +1683,92 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         vendas={avulsosDetalhe}
         formatCurrency={formatCurrency}
       />
+      <Dialog open={realizadoDialogOpen} onOpenChange={setRealizadoDialogOpen}>
+        <DialogContent className="max-w-lg bg-slate-900 border-white/10 text-white">
+          <DialogHeader>
+            <DialogTitle className="text-white">
+              {realizadoRow ? 'Atualizar valores realizados' : 'Marcar DRE como realizado'}
+            </DialogTitle>
+            <DialogDescription className="text-white/60">
+              Snapshot dos valores atuais do mês {mesNome}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 text-sm">
+            {[
+              ['Faturamento total', faturamento.total],
+              ['Lucro bruto', lucro.total],
+              ['Despesas fixas', totalDespFixas],
+              ['Despesas folha', totalDespFolha],
+              ['Despesas variáveis', totalDespVariaveis],
+              ['Lucro líquido final', lucroLiquidoFinal],
+            ].map(([label, value]) => (
+              <div key={label as string} className="flex items-center justify-between border-b border-white/5 py-1.5">
+                <span className="text-white/60">{label}</span>
+                <span className="font-semibold text-white tabular-nums">{formatCurrency(value as number)}</span>
+              </div>
+            ))}
+            <div className="flex items-center justify-between py-1.5">
+              <span className="text-white/60">% Bruto / % Líquido</span>
+              <span className="font-semibold text-white tabular-nums">
+                {percBrutoFinal.toFixed(2)}% / {percLiquidFinal.toFixed(2)}%
+              </span>
+            </div>
+          </div>
+          <div>
+            <label className="text-xs text-white/50 mb-1 block">Observações (opcional)</label>
+            <Textarea
+              value={realizadoObs}
+              onChange={(e) => setRealizadoObs(e.target.value)}
+              placeholder="Notas sobre o fechamento deste mês..."
+              className="bg-white/5 border-white/10 text-white"
+            />
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="ghost" onClick={() => setRealizadoDialogOpen(false)} disabled={realizadoSaving}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={async () => {
+                if (!mes) return;
+                setRealizadoSaving(true);
+                try {
+                  const { data: userData } = await supabase.auth.getUser();
+                  const payload = {
+                    mes: `${mes}-01`,
+                    faturamento_total: faturamento.total,
+                    lucro_bruto: lucro.total,
+                    total_despesas_fixas: totalDespFixas,
+                    total_despesas_folha: totalDespFolha,
+                    total_despesas_variaveis: totalDespVariaveis,
+                    lucro_liquido_final: lucroLiquidoFinal,
+                    perc_bruto: percBrutoFinal,
+                    perc_liquido: percLiquidFinal,
+                    observacoes: realizadoObs || null,
+                    realizado_por: userData.user?.id || null,
+                    realizado_em: new Date().toISOString(),
+                  };
+                  const { error } = await supabase
+                    .from('dre_realizados' as any)
+                    .upsert(payload, { onConflict: 'mes' });
+                  if (error) throw error;
+                  setRealizadoRow({ realizado_em: payload.realizado_em, observacoes: payload.observacoes });
+                  setRealizadoDialogOpen(false);
+                  toast.success(realizadoRow ? 'Valores realizados atualizados' : 'DRE marcado como realizado');
+                } catch (err: any) {
+                  console.error('Erro ao salvar dre_realizados:', err);
+                  toast.error('Erro ao salvar: ' + (err?.message || 'desconhecido'));
+                } finally {
+                  setRealizadoSaving(false);
+                }
+              }}
+              disabled={realizadoSaving}
+              className="bg-emerald-600 hover:bg-emerald-500 text-white"
+            >
+              {realizadoSaving ? 'Salvando...' : realizadoRow ? 'Atualizar' : 'Confirmar'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 
@@ -1752,7 +1867,20 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
       ]}
       headerActions={
         !loading ? (
-          <button
+          <div className="flex items-center gap-2 print:hidden">
+            <button
+              onClick={() => setRealizadoDialogOpen(true)}
+              title={realizadoRow ? `Realizado em ${new Date(realizadoRow.realizado_em).toLocaleString('pt-BR')}` : 'Marcar como realizado'}
+              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm transition-colors ${
+                realizadoRow
+                  ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/25'
+                  : 'bg-white/10 border-white/10 text-white hover:bg-white/20'
+              }`}
+            >
+              {realizadoRow ? <CheckCircle2 className="w-4 h-4" strokeWidth={1.8} /> : <CircleDashed className="w-4 h-4" strokeWidth={1.8} />}
+              {realizadoRow ? 'Atualizar realizado' : 'Marcar como realizado'}
+            </button>
+            <button
             onClick={async () => {
               // Pré-carrega o logo antes de imprimir, pois #dre-print-document
               // está em display:none e o Chrome pode não carregar a imagem a tempo.
@@ -1766,11 +1894,12 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
               } catch {}
               window.print();
             }}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/10 border border-white/10 text-white text-sm hover:bg-white/20 transition-colors print:hidden"
-          >
-            <Printer className="w-4 h-4" strokeWidth={1.5} />
-            Imprimir PDF
-          </button>
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/10 border border-white/10 text-white text-sm hover:bg-white/20 transition-colors"
+            >
+              <Printer className="w-4 h-4" strokeWidth={1.5} />
+              Imprimir PDF
+            </button>
+          </div>
         ) : undefined
       }
     >
