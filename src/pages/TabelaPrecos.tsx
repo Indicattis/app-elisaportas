@@ -213,8 +213,8 @@ export default function TabelaPrecos({
                       return (
                         <TableRow key={item.id} className="border-white/10 hover:bg-white/5">
                           <TableCell className="font-medium text-white">{item.descricao}</TableCell>
-                          <TableCell className="text-center text-white/70">{item.largura}m</TableCell>
-                          <TableCell className="text-center text-white/70">{item.altura}m</TableCell>
+                          <TableCell className="text-center text-orange-400">{item.largura}m</TableCell>
+                          <TableCell className="text-center text-orange-400">{item.altura}m</TableCell>
                           <TableCell className="text-right text-white/70">
                             {item.valor_porta.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                           </TableCell>
