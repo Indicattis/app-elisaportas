@@ -70,6 +70,7 @@ export default function DREDirecao() {
       breadcrumbItems={[
         { label: 'Home', path: '/home' },
         { label: 'Direção', path: '/direcao' },
+        { label: 'Estratégia', path: '/direcao/estrategia' },
         { label: 'DRE' },
       ]}
     >
@@ -88,7 +89,7 @@ export default function DREDirecao() {
               return (
                 <button
                   key={item.mes}
-                  onClick={() => navigate(`/direcao/dre/${mesKey}`)}
+                  onClick={() => navigate(`/direcao/estrategia/dre/${mesKey}`)}
                   className="p-5 rounded-xl bg-white/5 border border-white/10 text-left
                              hover:bg-white/10 transition-all duration-200 group"
                 >
@@ -103,7 +104,7 @@ export default function DREDirecao() {
 
           <div className="flex gap-4 mt-6">
             <button
-              onClick={() => navigate('/direcao/dre/despesas')}
+              onClick={() => navigate('/direcao/estrategia/dre/despesas')}
               className="flex-1 p-4 rounded-xl bg-white/5 border border-white/10 text-left
                          hover:bg-white/10 transition-all duration-200"
             >
@@ -111,7 +112,7 @@ export default function DREDirecao() {
               <p className="text-lg font-semibold text-white">Despesas</p>
             </button>
             <button
-              onClick={() => navigate('/direcao/dre/custos')}
+              onClick={() => navigate('/direcao/estrategia/dre/custos')}
               className="flex-1 p-4 rounded-xl bg-white/5 border border-white/10 text-left
                          hover:bg-white/10 transition-all duration-200"
             >
