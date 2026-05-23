@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from "react";
+import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { Search, Plus, Pencil, Trash2, Upload, Boxes, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -209,7 +210,7 @@ export default function TabelaPrecos({
                   {itens.map((item, index) => {
                     const total = calcularTotal(item);
                     return (
-                      <TableRow key={item.id} className="border-border hover:bg-muted/40">
+                    <TableRow key={item.id} className={cn("border-border hover:bg-muted/40", index % 2 === 1 && "bg-muted/20")}>
                         <TableCell className="text-center text-muted-foreground">{index + 1}</TableCell>
                         <TableCell className="font-medium text-foreground">{item.descricao}</TableCell>
                         <TableCell className="text-center text-foreground/80">{item.largura}m</TableCell>
@@ -333,7 +334,7 @@ export default function TabelaPrecos({
                       const total = calcularTotal(item);
                       const lucroInfo = getLucroEfetivo(item);
                       return (
-                        <SortableKitRow key={item.id} id={item.id} enabled={canReorder} showHandle={enableReorder}>
+                        <SortableKitRow key={item.id} id={item.id} enabled={canReorder} showHandle={enableReorder} index={index}>
                           <TableCell className="text-center text-white/60">{index + 1}</TableCell>
                           <TableCell className="font-medium text-white">{item.descricao}</TableCell>
                           <TableCell className="text-center text-blue-400">{item.largura}m</TableCell>
@@ -526,11 +527,13 @@ function SortableKitRow({
   id,
   enabled,
   showHandle,
+  index,
   children,
 }: {
   id: string;
   enabled: boolean;
   showHandle: boolean;
+  index?: number;
   children: React.ReactNode;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -546,7 +549,7 @@ function SortableKitRow({
     <TableRow
       ref={setNodeRef}
       style={style}
-      className="border-white/10 hover:bg-white/5"
+      className={cn("border-white/10 hover:bg-white/5", typeof index === "number" && index % 2 === 1 && "bg-white/[0.03]")}
     >
       {showHandle && (
         <TableCell className="w-10">

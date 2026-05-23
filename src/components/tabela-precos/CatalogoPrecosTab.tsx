@@ -372,7 +372,7 @@ export function CatalogoPrecosTab({ compact = false }: CatalogoPrecosTabProps = 
                     </TableHeader>
                     <TableBody>
                       <SortableContext items={rows.map((r) => r.id)} strategy={verticalListSortingStrategy}>
-                        {rows.map((produto) => (
+                        {rows.map((produto, idx) => (
                           <SortableProdutoRow
                             key={produto.id}
                             produto={produto}
@@ -383,6 +383,7 @@ export function CatalogoPrecosTab({ compact = false }: CatalogoPrecosTabProps = 
                             renderEditableCell={renderEditableCell}
                             padroes={padroes}
                             categorias={todasCategorias}
+                            index={idx}
                             onUpdate={(patch) => editarProduto.mutateAsync({ id: produto.id, ...patch } as any)}
                             onDelete={() => {
                               if (confirm(`Remover "${produto.nome_produto}" do catálogo?`)) {
@@ -413,6 +414,7 @@ function SortableProdutoRow({
   renderEditableCell,
   padroes,
   categorias,
+  index,
   onUpdate,
   onDelete,
 }: {
@@ -424,6 +426,7 @@ function SortableProdutoRow({
   renderEditableCell: (p: ProdutoCatalogo, f: "preco_venda" | "custo_produto") => React.ReactNode;
   padroes: { taxa_impostos: number; taxa_descontos: number; taxa_cartao: number } | null | undefined;
   categorias: string[];
+  index?: number;
   onUpdate: (patch: Partial<ProdutoCatalogo>) => Promise<unknown> | unknown;
   onDelete: () => void;
 }) {
@@ -565,7 +568,7 @@ function SortableProdutoRow({
     <TableRow
       ref={setNodeRef}
       style={style}
-      className={cn("border-border/60 hover:bg-muted/60", isDragging && "shadow-lg bg-muted/40")}
+      className={cn("border-border/60 hover:bg-muted/60", isDragging && "shadow-lg bg-muted/40", typeof index === "number" && index % 2 === 1 && "bg-muted/20")}
     >
       <TableCell className="w-8 p-0 text-center align-middle">
         {!disabled && (
