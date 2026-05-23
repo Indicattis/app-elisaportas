@@ -57,7 +57,7 @@ const COLUMN_BG: Record<ColumnKey, string> = {
   imposto: "bg-orange-100 dark:bg-orange-500/30",
   desconto: "bg-yellow-100 dark:bg-yellow-500/30",
   cartao: "bg-teal-100 dark:bg-teal-500/30",
-  venda: "bg-green-100 dark:bg-green-500/30",
+  venda: "",
   objetivo: "bg-violet-100 dark:bg-violet-500/30",
 };
 const COLUMN_WIDTHS: Record<ColumnKey, string> = {
