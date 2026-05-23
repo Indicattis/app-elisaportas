@@ -10,9 +10,10 @@ const isFolha = (nome: string) => /sal[áa]rio|folha/i.test(nome);
 interface Props {
   mes: string | null;
   ano?: number;
+  onMediaMensalChange?: (media: number) => void;
 }
 
-export default function DespesasResumoTopo({ mes }: Props) {
+export default function DespesasResumoTopo({ mes, onMediaMensalChange }: Props) {
   const [folha, setFolha] = useState<Item[]>([]);
   const [fixas, setFixas] = useState<Item[]>([]);
   const [variaveis, setVariaveis] = useState<Item[]>([]);
