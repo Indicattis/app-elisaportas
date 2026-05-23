@@ -1,32 +1,26 @@
 ## Objetivo
+Adicionar botões "Exportar PDF" e "Exportar Excel" em `/direcao/estrategia/precos`, gerando arquivos únicos que combinam as duas tabelas (Kits de portas + Catálogo).
 
-Permitir reordenar os kits em `/direcao/estrategia/kits` via drag-and-drop, persistindo a ordem no banco.
+## Implementação
 
-## Mudanças
+### 1. Novo utilitário `src/utils/estrategiaPrecosExport.ts`
+Funções `exportEstrategiaPrecosPDF(kits, catalogo)` e `exportEstrategiaPrecosExcel(kits, catalogo)`:
 
-### 1. Banco (migration)
-- Adicionar coluna `ordem int` em `tabela_precos_portas` (default 0, nullable).
-- Backfill: `ordem = row_number()` ordenado por `largura, altura` para manter a ordem atual.
-- Criar índice em `ordem`.
+- **PDF (jsPDF + autoTable, landscape A4)**:
+  - Título "Tabela de Preços — Estratégia" + data
+  - Seção 1: "Kits de Portas" — tabela com colunas Ordem, Item, P, G, GG, Total (P+G+GG)
+  - Seção 2: "Catálogo" — agrupado por categoria, colunas Produto, Unidade, Custo, Preço de Venda
 
-### 2. Hook `useTabelaPrecos`
-- Trocar `.order('largura').order('altura')` por `.order('ordem', { ascending: true, nullsFirst: false }).order('largura').order('altura')`.
-- Adicionar mutation `reordenarItens(ids: string[])` que faz `update` em lote (uma chamada por id setando `ordem = index`) e invalida `['tabela-precos']`.
+- **Excel (xlsx)**: duas planilhas — "Kits" e "Catálogo" — com as mesmas colunas/dados acima.
 
-### 3. `TabelaPrecos.tsx`
-- Nova prop `enableReorder?: boolean` (default `false`).
-- Quando `true`:
-  - Usar `@dnd-kit/core` + `@dnd-kit/sortable` (já presentes no projeto — confirmar; se faltar, instalar).
-  - Envolver `<TableBody>` em `DndContext` + `SortableContext` (vertical).
-  - Cada `<TableRow>` vira `SortableRow` com handle (ícone `GripVertical`) numa nova primeira coluna estreita.
-  - `onDragEnd` reordena array local (estado otimista) e chama `reordenarItens(novaOrdem)`.
-  - Drag desabilitado quando `searchTerm` está ativo (ordem só faz sentido no conjunto completo) — mostrar handle desabilitado com tooltip.
+### 2. `src/pages/direcao/estrategia/EstrategiaPrecos.tsx`
+- Buscar os dados via hooks existentes (`useTabelaPrecos` e `useVendasCatalogo`) no nível da página.
+- Adicionar header com dois botões (mesmo estilo dos de `EstrategiaItens.tsx`: `Exportar PDF` e `Exportar Excel`) com toast de sucesso/erro.
+- Manter o layout atual (grid xl:col-span-2 + xl:col-span-1) abaixo do header.
 
-### 4. `EstrategiaKits.tsx`
-- Passar `enableReorder` para `TabelaPrecos`. A tela `/tabela-precos` continua sem reordenação.
+### 3. Sem mudança de lógica de negócio
+Os componentes `TabelaPrecos` e `CatalogoPrecosTab` continuam buscando seus próprios dados normalmente; o fetch na página é só para o export.
 
 ## Arquivos
-- `supabase/migrations/<novo>.sql` (novo)
-- `src/hooks/useTabelaPrecos.ts`
-- `src/pages/TabelaPrecos.tsx`
-- `src/pages/direcao/estrategia/EstrategiaKits.tsx`
+- criar: `src/utils/estrategiaPrecosExport.ts`
+- editar: `src/pages/direcao/estrategia/EstrategiaPrecos.tsx`
