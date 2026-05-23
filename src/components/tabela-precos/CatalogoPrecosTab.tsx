@@ -1,11 +1,28 @@
-import { useState, useRef, useEffect, useMemo } from "react";
-import { Search, Check, X, Package } from "lucide-react";
+import { useState, useRef, useEffect, useMemo, CSSProperties } from "react";
+import { Search, Check, X, Package, GripVertical } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useVendasCatalogo, ProdutoCatalogo } from "@/hooks/useVendasCatalogo";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  useSortable,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import { restrictToVerticalAxis, restrictToParentElement } from "@dnd-kit/modifiers";
+import { CSS } from "@dnd-kit/utilities";
+import { cn } from "@/lib/utils";
 
 type EditField = "preco_venda" | "custo_produto" | "unidade";
 
@@ -20,7 +37,7 @@ interface CatalogoPrecosTabProps {
 
 export function CatalogoPrecosTab({ compact = false }: CatalogoPrecosTabProps = {}) {
   const [busca, setBusca] = useState("");
-  const { produtos, isLoading, editarProduto } = useVendasCatalogo({ busca });
+  const { produtos, isLoading, editarProduto, reordenarProdutos } = useVendasCatalogo({ busca });
 
   const [editing, setEditing] = useState<{ id: string; field: EditField } | null>(null);
   const [editValue, setEditValue] = useState("");
@@ -60,10 +77,8 @@ export function CatalogoPrecosTab({ compact = false }: CatalogoPrecosTabProps = 
     return ((preco - (custo || 0)) / preco) * 100;
   };
 
-  const produtosOrdenados = useMemo(
-    () => [...(produtos || [])].sort((a, b) => a.nome_produto.localeCompare(b.nome_produto)),
-    [produtos]
-  );
+  // Mantém a ordem natural do hook (ordem asc, nome asc) para suportar drag-and-drop
+  const produtosOrdenados = useMemo(() => [...(produtos || [])], [produtos]);
 
   const groupedByCategoria = useMemo(() => {
     const groups = new Map<string, ProdutoCatalogo[]>();
@@ -74,6 +89,28 @@ export function CatalogoPrecosTab({ compact = false }: CatalogoPrecosTabProps = 
     }
     return Array.from(groups.entries()).sort(([a], [b]) => a.localeCompare(b));
   }, [produtosOrdenados]);
+
+  const dndSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
+  const isDndDisabled = Boolean(busca.trim());
+
+  const handleDragEndCategoria = (categoria: string, rows: ProdutoCatalogo[]) => (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = rows.findIndex((r) => r.id === active.id);
+    const newIndex = rows.findIndex((r) => r.id === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
+    const reordered = arrayMove(rows, oldIndex, newIndex);
+    // Reconstrói a lista global preservando a ordem das outras categorias
+    const novaListaGlobal: string[] = [];
+    for (const [cat, catRows] of groupedByCategoria) {
+      if (cat === categoria) {
+        novaListaGlobal.push(...reordered.map((r) => r.id));
+      } else {
+        novaListaGlobal.push(...catRows.map((r) => r.id));
+      }
+    }
+    reordenarProdutos.mutate(novaListaGlobal);
+  };
 
   const renderEditableCell = (produto: ProdutoCatalogo, field: "preco_venda" | "custo_produto") => {
     const isEditing = editing?.id === produto.id && editing.field === field;
@@ -192,66 +229,129 @@ export function CatalogoPrecosTab({ compact = false }: CatalogoPrecosTabProps = 
                 <span className="text-[11px] text-muted-foreground/60">· {rows.length}</span>
               </div>
               <div className="rounded-xl overflow-hidden bg-card/60 backdrop-blur-xl border border-border">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-border hover:bg-transparent">
-                      {!compact && <TableHead className="w-14" />}
-                      <TableHead className="text-xs font-medium text-muted-foreground">Produto</TableHead>
-                      {!compact && <TableHead className="text-xs font-medium text-muted-foreground text-center w-24">Unidade</TableHead>}
-                      {!compact && <TableHead className="text-xs font-medium text-muted-foreground text-right w-32">Custo</TableHead>}
-                      <TableHead className="text-xs font-medium text-muted-foreground text-right w-32">Preço Venda</TableHead>
-                      {!compact && <TableHead className="text-xs font-medium text-muted-foreground text-right w-24">Margem</TableHead>}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {rows.map((produto) => {
-                      const margem = calcMargem(produto.preco_venda, produto.custo_produto || 0);
-                      return (
-                        <TableRow key={produto.id} className="border-border/60 hover:bg-muted/60">
-                          {!compact && (
-                            <TableCell>
-                              <div className="w-10 h-10 rounded bg-muted/40 overflow-hidden flex items-center justify-center">
-                                {produto.imagem_url ? (
-                                  <img src={produto.imagem_url} alt={produto.nome_produto} className="w-full h-full object-cover" />
-                                ) : (
-                                  <Package className="w-4 h-4 text-muted-foreground" />
-                                )}
-                              </div>
-                            </TableCell>
-                          )}
-                          <TableCell className="font-medium text-foreground">{produto.nome_produto}</TableCell>
-                          {!compact && <TableCell className="text-center text-foreground">{renderUnidadeCell(produto)}</TableCell>}
-                          {!compact && <TableCell className="text-right text-foreground">{renderEditableCell(produto, "custo_produto")}</TableCell>}
-                          <TableCell className="text-right text-foreground font-medium">{renderEditableCell(produto, "preco_venda")}</TableCell>
-                          {!compact && (
-                            <TableCell className="text-right">
-                              {margem !== null ? (
-                                <Badge
-                                  className={
-                                    margem >= 30
-                                      ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
-                                      : margem >= 10
-                                      ? "bg-amber-500/20 text-amber-300 border-amber-500/30"
-                                      : "bg-red-500/20 text-red-300 border-red-500/30"
-                                  }
-                                >
-                                  {margem.toFixed(1)}%
-                                </Badge>
-                              ) : (
-                                <span className="text-muted-foreground/60">—</span>
-                              )}
-                            </TableCell>
-                          )}
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
+                <DndContext
+                  sensors={dndSensors}
+                  collisionDetection={closestCenter}
+                  modifiers={[restrictToVerticalAxis, restrictToParentElement]}
+                  onDragEnd={handleDragEndCategoria(categoria, rows)}
+                >
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-border hover:bg-transparent">
+                        <TableHead className="w-8 p-0" />
+                        {!compact && <TableHead className="w-14" />}
+                        <TableHead className="text-xs font-medium text-muted-foreground">Produto</TableHead>
+                        {!compact && <TableHead className="text-xs font-medium text-muted-foreground text-center w-24">Unidade</TableHead>}
+                        {!compact && <TableHead className="text-xs font-medium text-muted-foreground text-right w-32">Custo</TableHead>}
+                        <TableHead className="text-xs font-medium text-muted-foreground text-right w-32">Preço Venda</TableHead>
+                        {!compact && <TableHead className="text-xs font-medium text-muted-foreground text-right w-24">Margem</TableHead>}
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      <SortableContext items={rows.map((r) => r.id)} strategy={verticalListSortingStrategy}>
+                        {rows.map((produto) => (
+                          <SortableProdutoRow
+                            key={produto.id}
+                            produto={produto}
+                            disabled={isDndDisabled}
+                            compact={compact}
+                            margem={calcMargem(produto.preco_venda, produto.custo_produto || 0)}
+                            renderUnidadeCell={renderUnidadeCell}
+                            renderEditableCell={renderEditableCell}
+                          />
+                        ))}
+                      </SortableContext>
+                    </TableBody>
+                  </Table>
+                </DndContext>
               </div>
             </div>
           ))}
         </div>
       )}
     </div>
+  );
+}
+
+function SortableProdutoRow({
+  produto,
+  disabled,
+  compact,
+  margem,
+  renderUnidadeCell,
+  renderEditableCell,
+}: {
+  produto: ProdutoCatalogo;
+  disabled: boolean;
+  compact: boolean;
+  margem: number | null;
+  renderUnidadeCell: (p: ProdutoCatalogo) => React.ReactNode;
+  renderEditableCell: (p: ProdutoCatalogo, f: "preco_venda" | "custo_produto") => React.ReactNode;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: produto.id,
+    disabled,
+  });
+  const style: CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+    position: "relative",
+    zIndex: isDragging ? 10 : "auto",
+  };
+  return (
+    <TableRow
+      ref={setNodeRef}
+      style={style}
+      className={cn("border-border/60 hover:bg-muted/60", isDragging && "shadow-lg bg-muted/40")}
+    >
+      <TableCell className="w-8 p-0 text-center align-middle">
+        {!disabled && (
+          <button
+            type="button"
+            className="inline-flex h-7 w-7 items-center justify-center text-muted-foreground/50 hover:text-foreground cursor-grab active:cursor-grabbing touch-none"
+            aria-label="Arrastar para reordenar"
+            {...attributes}
+            {...listeners}
+          >
+            <GripVertical className="h-4 w-4" />
+          </button>
+        )}
+      </TableCell>
+      {!compact && (
+        <TableCell>
+          <div className="w-10 h-10 rounded bg-muted/40 overflow-hidden flex items-center justify-center">
+            {produto.imagem_url ? (
+              <img src={produto.imagem_url} alt={produto.nome_produto} className="w-full h-full object-cover" />
+            ) : (
+              <Package className="w-4 h-4 text-muted-foreground" />
+            )}
+          </div>
+        </TableCell>
+      )}
+      <TableCell className="font-medium text-foreground">{produto.nome_produto}</TableCell>
+      {!compact && <TableCell className="text-center text-foreground">{renderUnidadeCell(produto)}</TableCell>}
+      {!compact && <TableCell className="text-right text-foreground">{renderEditableCell(produto, "custo_produto")}</TableCell>}
+      <TableCell className="text-right text-foreground font-medium">{renderEditableCell(produto, "preco_venda")}</TableCell>
+      {!compact && (
+        <TableCell className="text-right">
+          {margem !== null ? (
+            <Badge
+              className={
+                margem >= 30
+                  ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+                  : margem >= 10
+                  ? "bg-amber-500/20 text-amber-300 border-amber-500/30"
+                  : "bg-red-500/20 text-red-300 border-red-500/30"
+              }
+            >
+              {margem.toFixed(1)}%
+            </Badge>
+          ) : (
+            <span className="text-muted-foreground/60">—</span>
+          )}
+        </TableCell>
+      )}
+    </TableRow>
   );
 }
