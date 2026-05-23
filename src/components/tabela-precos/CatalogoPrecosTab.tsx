@@ -26,6 +26,7 @@ import {
 import {
   SortableContext,
   verticalListSortingStrategy,
+  horizontalListSortingStrategy,
   useSortable,
   arrayMove,
 } from "@dnd-kit/sortable";
@@ -39,6 +40,72 @@ const UNIDADES = ["Un", "M", "Kg", "L", "M²", "M³", "Cx", "Pç"] as const;
 
 const formatCurrency = (value: number) =>
   (value || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+type ColumnKey = "custo" | "lucro" | "imposto" | "desconto" | "cartao" | "venda" | "objetivo";
+const COLUMN_LABELS: Record<ColumnKey, string> = {
+  custo: "Custo",
+  lucro: "Lucro",
+  imposto: "Imposto",
+  desconto: "Desc. Gerente",
+  cartao: "Cartão",
+  venda: "Valor de Venda",
+  objetivo: "Preço Objetivo",
+};
+const COLUMN_BG: Record<ColumnKey, string> = {
+  custo: "bg-rose-100 dark:bg-rose-500/30",
+  lucro: "bg-blue-100 dark:bg-blue-500/30",
+  imposto: "bg-orange-100 dark:bg-orange-500/30",
+  desconto: "bg-yellow-100 dark:bg-yellow-500/30",
+  cartao: "bg-teal-100 dark:bg-teal-500/30",
+  venda: "bg-green-100 dark:bg-green-500/30",
+  objetivo: "bg-violet-100 dark:bg-violet-500/30",
+};
+const COLUMN_WIDTHS: Record<ColumnKey, string> = {
+  custo: "w-36",
+  lucro: "w-36",
+  imposto: "w-28",
+  desconto: "w-32",
+  cartao: "w-28",
+  venda: "w-40",
+  objetivo: "w-40",
+};
+const DEFAULT_COLUMN_ORDER: ColumnKey[] = ["custo", "lucro", "imposto", "desconto", "cartao", "venda", "objetivo"];
+const COLUMN_ORDER_STORAGE_KEY = "catalogo-precos-column-order-v1";
+
+function SortableHeadCell({ colKey, children }: { colKey: ColumnKey; children: React.ReactNode }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: `col-${colKey}` });
+  const style: CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+    position: "relative",
+    zIndex: isDragging ? 10 : "auto",
+  };
+  return (
+    <TableHead
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "text-xs font-medium text-foreground text-center group/col",
+        COLUMN_WIDTHS[colKey],
+        COLUMN_BG[colKey],
+      )}
+    >
+      <div className="flex items-center justify-center gap-1">
+        <button
+          type="button"
+          className="inline-flex h-5 w-5 items-center justify-center text-muted-foreground/40 hover:text-foreground cursor-grab active:cursor-grabbing touch-none opacity-0 group-hover/col:opacity-100"
+          aria-label="Arrastar coluna"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical className="h-3.5 w-3.5" />
+        </button>
+        <span>{children}</span>
+      </div>
+    </TableHead>
+  );
+}
 
 interface CatalogoPrecosTabProps {
   compact?: boolean;
@@ -82,12 +149,6 @@ export function CatalogoPrecosTab({ compact = false }: CatalogoPrecosTabProps = 
     setEditing(null);
   };
 
-  const calcMargem = (preco: number, custo: number) => {
-    if (!preco || preco <= 0) return null;
-    return ((preco - (custo || 0)) / preco) * 100;
-  };
-
-  // Mantém a ordem natural do hook (ordem asc, nome asc) para suportar drag-and-drop
   const produtosOrdenados = useMemo(() => [...(produtos || [])], [produtos]);
 
   const groupedByCategoria = useMemo(() => {
@@ -109,8 +170,36 @@ export function CatalogoPrecosTab({ compact = false }: CatalogoPrecosTabProps = 
     return Array.from(set).sort();
   }, [produtosOrdenados]);
 
+  const [columnOrder, setColumnOrder] = useState<ColumnKey[]>(() => {
+    if (typeof window === "undefined") return [...DEFAULT_COLUMN_ORDER];
+    try {
+      const raw = window.localStorage.getItem(COLUMN_ORDER_STORAGE_KEY);
+      if (!raw) return [...DEFAULT_COLUMN_ORDER];
+      const parsed = JSON.parse(raw) as ColumnKey[];
+      const valid = parsed.filter((k): k is ColumnKey => k in COLUMN_LABELS);
+      const missing = DEFAULT_COLUMN_ORDER.filter((k) => !valid.includes(k));
+      return [...valid, ...missing];
+    } catch {
+      return [...DEFAULT_COLUMN_ORDER];
+    }
+  });
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(COLUMN_ORDER_STORAGE_KEY, JSON.stringify(columnOrder));
+    } catch { /* ignore */ }
+  }, [columnOrder]);
+
   const dndSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
   const isDndDisabled = Boolean(busca.trim());
+
+  const handleDragEndColumn = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = columnOrder.findIndex((c) => `col-${c}` === active.id);
+    const newIndex = columnOrder.findIndex((c) => `col-${c}` === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
+    setColumnOrder(arrayMove(columnOrder, oldIndex, newIndex));
+  };
 
   const handleDragEndCategoria = (categoria: string, rows: ProdutoCatalogo[]) => (event: DragEndEvent) => {
     const { active, over } = event;
@@ -119,7 +208,6 @@ export function CatalogoPrecosTab({ compact = false }: CatalogoPrecosTabProps = 
     const newIndex = rows.findIndex((r) => r.id === over.id);
     if (oldIndex < 0 || newIndex < 0) return;
     const reordered = arrayMove(rows, oldIndex, newIndex);
-    // Reconstrói a lista global preservando a ordem das outras categorias
     const novaListaGlobal: string[] = [];
     for (const [cat, catRows] of groupedByCategoria) {
       if (cat === categoria) {
@@ -261,13 +349,25 @@ export function CatalogoPrecosTab({ compact = false }: CatalogoPrecosTabProps = 
                         <TableHead className="text-xs font-medium text-muted-foreground">Produto</TableHead>
                         {!compact && <TableHead className="text-xs font-medium text-muted-foreground text-center w-16">UN</TableHead>}
                         {!compact && <TableHead className="text-xs font-medium text-muted-foreground text-center w-20">Ações</TableHead>}
-                        {!compact && <TableHead className="text-xs font-medium text-foreground text-center w-36 bg-rose-100 dark:bg-rose-500/30">Custo</TableHead>}
-                        {!compact && <TableHead className="text-xs font-medium text-foreground text-center w-36 bg-blue-100 dark:bg-blue-500/30">Lucro</TableHead>}
-                        {!compact && <TableHead className="text-xs font-medium text-foreground text-center w-28 bg-orange-100 dark:bg-orange-500/30">Imposto</TableHead>}
-                        {!compact && <TableHead className="text-xs font-medium text-foreground text-center w-32 bg-yellow-100 dark:bg-yellow-500/30">Desc. Gerente</TableHead>}
-                        {!compact && <TableHead className="text-xs font-medium text-foreground text-center w-28 bg-teal-100 dark:bg-teal-500/30">Cartão</TableHead>}
-                        <TableHead className="text-xs font-medium text-foreground text-center w-40 bg-green-100 dark:bg-green-500/30">Valor de Venda</TableHead>
-                        {!compact && <TableHead className="text-xs font-medium text-foreground text-center w-40 bg-violet-100 dark:bg-violet-500/30">Preço Objetivo</TableHead>}
+                        {!compact ? (
+                          <DndContext
+                            sensors={dndSensors}
+                            collisionDetection={closestCenter}
+                            onDragEnd={handleDragEndColumn}
+                          >
+                            <SortableContext items={columnOrder.map((c) => `col-${c}`)} strategy={horizontalListSortingStrategy}>
+                              {columnOrder.map((col) => (
+                                <SortableHeadCell key={col} colKey={col}>
+                                  {COLUMN_LABELS[col]}
+                                </SortableHeadCell>
+                              ))}
+                            </SortableContext>
+                          </DndContext>
+                        ) : (
+                          <TableHead className={cn("text-xs font-medium text-foreground text-center", COLUMN_WIDTHS.venda, COLUMN_BG.venda)}>
+                            {COLUMN_LABELS.venda}
+                          </TableHead>
+                        )}
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -278,6 +378,7 @@ export function CatalogoPrecosTab({ compact = false }: CatalogoPrecosTabProps = 
                             produto={produto}
                             disabled={isDndDisabled}
                             compact={compact}
+                            order={columnOrder}
                             renderUnidadeCell={renderUnidadeCell}
                             renderEditableCell={renderEditableCell}
                             padroes={padroes}
@@ -307,6 +408,7 @@ function SortableProdutoRow({
   produto,
   disabled,
   compact,
+  order,
   renderUnidadeCell,
   renderEditableCell,
   padroes,
@@ -317,6 +419,7 @@ function SortableProdutoRow({
   produto: ProdutoCatalogo;
   disabled: boolean;
   compact: boolean;
+  order: ColumnKey[];
   renderUnidadeCell: (p: ProdutoCatalogo) => React.ReactNode;
   renderEditableCell: (p: ProdutoCatalogo, f: "preco_venda" | "custo_produto") => React.ReactNode;
   padroes: { taxa_impostos: number; taxa_descontos: number; taxa_cartao: number } | null | undefined;
@@ -374,6 +477,89 @@ function SortableProdutoRow({
     if (num !== null && Number.isNaN(num)) return;
     await onUpdate({ preco_objetivo: num } as Partial<ProdutoCatalogo>);
   };
+
+  const cellRenderers: Record<ColumnKey, React.ReactNode> = {
+    custo: renderEditableCell(produto, "custo_produto"),
+    lucro: <>{formatCurrency(lucro)}</>,
+    imposto: (
+      <span title={`${tImp.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`}>
+        {formatCurrency(vImp)}
+      </span>
+    ),
+    desconto: (
+      <span title={`${tDesc.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`}>
+        {formatCurrency(vDesc)}
+      </span>
+    ),
+    cartao: (
+      <span title={`${tCard.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`}>
+        {formatCurrency(vCard)}
+      </span>
+    ),
+    venda: renderEditableCell(produto, "preco_venda"),
+    objetivo: produto.custo_ok ? (
+      <div className="flex items-center justify-end gap-1 group">
+        <Check className="h-5 w-5 text-emerald-500 dark:text-emerald-400" />
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6 opacity-0 group-hover:opacity-100 text-muted-foreground/70 hover:text-foreground"
+          title="Desfazer OK"
+          onClick={() => onUpdate({ custo_ok: false } as Partial<ProdutoCatalogo>)}
+        >
+          <X className="h-3.5 w-3.5" />
+        </Button>
+      </div>
+    ) : (
+      <div className="flex items-center justify-end gap-1 group">
+        <div className="flex-1">
+          {objetivoEditing ? (
+            <Input
+              autoFocus
+              type="number"
+              step="0.01"
+              value={objetivoDraft}
+              onChange={(e) => setObjetivoDraft(e.target.value)}
+              onBlur={commitObjetivo}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") { e.preventDefault(); commitObjetivo(); }
+                if (e.key === "Escape") {
+                  setObjetivoEditing(false);
+                  setObjetivoDraft(produto.preco_objetivo == null ? "" : String(produto.preco_objetivo));
+                }
+              }}
+              className="h-7 px-2 text-sm bg-muted border-border text-foreground text-right"
+            />
+          ) : (
+            <div
+              className="text-right cursor-text rounded px-1 py-0.5 hover:bg-muted/60 min-h-[1.5rem]"
+              onClick={() => setObjetivoEditing(true)}
+            >
+              {produto.preco_objetivo == null
+                ? <span className="text-muted-foreground/60">—</span>
+                : formatCurrency(Number(produto.preco_objetivo))}
+            </div>
+          )}
+        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6 opacity-0 group-hover:opacity-100 text-muted-foreground/70 hover:text-emerald-500"
+          title="Marcar custo como OK"
+          onClick={() => onUpdate({ custo_ok: true, preco_objetivo: null } as Partial<ProdutoCatalogo>)}
+        >
+          <Check className="h-3.5 w-3.5" />
+        </Button>
+      </div>
+    ),
+  };
+
+  const cellExtraCls: Partial<Record<ColumnKey, string>> = {
+    lucro: "font-medium",
+    venda: "font-medium",
+  };
+
+  const renderedColumns = compact ? (["venda"] as ColumnKey[]) : order;
 
   return (
     <TableRow
@@ -463,102 +649,14 @@ function SortableProdutoRow({
           </div>
         </TableCell>
       )}
-      {!compact && (
-        <TableCell className="text-right text-foreground bg-rose-100 dark:bg-rose-500/30">
-          {renderEditableCell(produto, "custo_produto")}
-        </TableCell>
-      )}
-      {!compact && (
-        <TableCell className="text-right text-foreground font-medium bg-blue-100 dark:bg-blue-500/30">
-          {formatCurrency(lucro)}
-        </TableCell>
-      )}
-      {!compact && (
+      {renderedColumns.map((col) => (
         <TableCell
-          className="text-right text-foreground bg-orange-100 dark:bg-orange-500/30"
-          title={`${tImp.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`}
+          key={col}
+          className={cn("text-right text-foreground", cellExtraCls[col], COLUMN_BG[col])}
         >
-          {formatCurrency(vImp)}
+          {cellRenderers[col]}
         </TableCell>
-      )}
-      {!compact && (
-        <TableCell
-          className="text-right text-foreground bg-yellow-100 dark:bg-yellow-500/30"
-          title={`${tDesc.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`}
-        >
-          {formatCurrency(vDesc)}
-        </TableCell>
-      )}
-      {!compact && (
-        <TableCell
-          className="text-right text-foreground bg-teal-100 dark:bg-teal-500/30"
-          title={`${tCard.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`}
-        >
-          {formatCurrency(vCard)}
-        </TableCell>
-      )}
-      <TableCell className="text-right text-foreground font-medium bg-green-100 dark:bg-green-500/30">
-        {renderEditableCell(produto, "preco_venda")}
-      </TableCell>
-      {!compact && (
-        <TableCell className="text-right text-foreground bg-violet-100 dark:bg-violet-500/30">
-          {produto.custo_ok ? (
-            <div className="flex items-center justify-end gap-1 group">
-              <Check className="h-5 w-5 text-emerald-500 dark:text-emerald-400" />
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6 opacity-0 group-hover:opacity-100 text-muted-foreground/70 hover:text-foreground"
-                title="Desfazer OK"
-                onClick={() => onUpdate({ custo_ok: false } as Partial<ProdutoCatalogo>)}
-              >
-                <X className="h-3.5 w-3.5" />
-              </Button>
-            </div>
-          ) : (
-            <div className="flex items-center justify-end gap-1 group">
-              <div className="flex-1">
-                {objetivoEditing ? (
-                  <Input
-                    autoFocus
-                    type="number"
-                    step="0.01"
-                    value={objetivoDraft}
-                    onChange={(e) => setObjetivoDraft(e.target.value)}
-                    onBlur={commitObjetivo}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") { e.preventDefault(); commitObjetivo(); }
-                      if (e.key === "Escape") {
-                        setObjetivoEditing(false);
-                        setObjetivoDraft(produto.preco_objetivo == null ? "" : String(produto.preco_objetivo));
-                      }
-                    }}
-                    className="h-7 px-2 text-sm bg-muted border-border text-foreground text-right"
-                  />
-                ) : (
-                  <div
-                    className="text-right cursor-text rounded px-1 py-0.5 hover:bg-muted/60 min-h-[1.5rem]"
-                    onClick={() => setObjetivoEditing(true)}
-                  >
-                    {produto.preco_objetivo == null
-                      ? <span className="text-muted-foreground/60">—</span>
-                      : formatCurrency(Number(produto.preco_objetivo))}
-                  </div>
-                )}
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6 opacity-0 group-hover:opacity-100 text-muted-foreground/70 hover:text-emerald-500"
-                title="Marcar custo como OK"
-                onClick={() => onUpdate({ custo_ok: true, preco_objetivo: null } as Partial<ProdutoCatalogo>)}
-              >
-                <Check className="h-3.5 w-3.5" />
-              </Button>
-            </div>
-          )}
-        </TableCell>
-      )}
+      ))}
     </TableRow>
   );
 }
