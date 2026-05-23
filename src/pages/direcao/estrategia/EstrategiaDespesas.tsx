@@ -4,11 +4,13 @@ import { ptBR } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import DespesasResumoTopo from '@/components/direcao/estrategia/DespesasResumoTopo';
+import { formatCurrency } from '@/lib/utils';
 
 export default function EstrategiaDespesas() {
   const anoAtual = new Date().getFullYear();
   const [ano, setAno] = useState(anoAtual);
   const [mesSelecionado, setMesSelecionado] = useState<string | null>(null);
+  const [mediaMensal, setMediaMensal] = useState<number>(0);
 
   return (
     <MinimalistLayout
