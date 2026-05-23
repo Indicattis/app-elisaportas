@@ -10,6 +10,7 @@ const menuItems = [
   { label: 'Estratégia', icon: Lightbulb, path: '/direcao/estrategia', routePrefix: 'direcao_estrategia', variant: 'gold' as const },
   { label: 'Capital de Giro Elisa', icon: Wallet, path: '/direcao/caixa-elisa', routePrefix: 'direcao_caixa_elisa', variant: 'green' as const },
   { label: 'Vendas', icon: ShoppingCart, path: '/direcao/vendas', routePrefix: 'direcao_vendas' },
+  { label: 'CRM', icon: ExternalLink, path: 'https://crm.elisaportas.com', external: true as const, variant: 'slate' as const },
   { label: 'Financeiro', icon: Banknote, path: '/direcao/financeiro', routePrefix: 'direcao_financeiro' },
   { label: 'Gestão de Fábrica', icon: Factory, path: '/direcao/gestao-fabrica', routePrefix: 'direcao_gestao_fabrica' },
   { label: 'Gestão de Instalações', icon: Truck, path: '/direcao/gestao-instalacao', routePrefix: 'direcao_gestao_instalacao' },
@@ -17,7 +18,6 @@ const menuItems = [
   { label: 'Estoque', icon: Warehouse, path: '/direcao/estoque', routePrefix: 'direcao_estoque' },
   { label: 'Aprovações', icon: ShieldCheck, path: '/direcao/aprovacoes', routePrefix: 'direcao_aprovaco', variant: 'orange' as const },
   { label: 'Organograma RH', icon: Network, path: '/direcao/gestao-colaboradores', routePrefix: 'direcao_gestao_colaboradores' },
-  { label: 'CRM', icon: ExternalLink, path: 'https://crm.elisaportas.com', external: true as const, variant: 'slate' as const },
 ];
 
 export default function DirecaoHub() {
