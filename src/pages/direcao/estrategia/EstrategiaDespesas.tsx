@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import DespesasResumoTopo from '@/components/direcao/estrategia/DespesasResumoTopo';
 
 export default function EstrategiaDespesas() {
   const anoAtual = new Date().getFullYear();
+  const [ano, setAno] = useState(anoAtual);
   const [mesSelecionado, setMesSelecionado] = useState<string | null>(null);
 
   return (
