@@ -1362,6 +1362,10 @@ export default function EstrategiaItens() {
           ))}
         </div>
 
+        {/* Catálogo de Produtos */}
+        <div className="pt-8">
+          <CatalogoPrecosTab />
+        </div>
       </div>
     </MinimalistLayout>
   );
