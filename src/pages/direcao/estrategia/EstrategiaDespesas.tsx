@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
-import DREMesDirecao from '@/pages/direcao/DREMesDirecao';
+import DespesasResumoTopo from '@/components/direcao/estrategia/DespesasResumoTopo';
 
 export default function EstrategiaDespesas() {
   const anoAtual = new Date().getFullYear();
@@ -20,6 +20,8 @@ export default function EstrategiaDespesas() {
         { label: 'Despesas' },
       ]}
     >
+      <DespesasResumoTopo mes={mesSelecionado} />
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {Array.from({ length: 12 }, (_, i) => i).map((mIdx) => {
           const mesDate = new Date(anoAtual, mIdx, 1);
@@ -42,12 +44,6 @@ export default function EstrategiaDespesas() {
           );
         })}
       </div>
-
-      {mesSelecionado && (
-        <div className="mt-8">
-          <DREMesDirecao key={mesSelecionado} mesProp={mesSelecionado} viewMode="despesas" embedded />
-        </div>
-      )}
     </MinimalistLayout>
   );
 }
