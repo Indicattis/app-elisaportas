@@ -527,11 +527,13 @@ function SortableKitRow({
   id,
   enabled,
   showHandle,
+  index,
   children,
 }: {
   id: string;
   enabled: boolean;
   showHandle: boolean;
+  index?: number;
   children: React.ReactNode;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -547,7 +549,7 @@ function SortableKitRow({
     <TableRow
       ref={setNodeRef}
       style={style}
-      className="border-white/10 hover:bg-white/5"
+      className={cn("border-white/10 hover:bg-white/5", typeof index === "number" && index % 2 === 1 && "bg-white/[0.03]")}
     >
       {showHandle && (
         <TableCell className="w-10">
