@@ -7,6 +7,7 @@ export default function EstrategiaKits() {
       subtitleOverride="Kits e preços"
       backPathOverride="/direcao/estrategia"
       enableReorder
+      hideCatalogoTab
       breadcrumbItemsOverride={[
         { label: 'Home', path: '/home' },
         { label: 'Direção', path: '/direcao' },
