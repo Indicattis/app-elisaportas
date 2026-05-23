@@ -202,7 +202,7 @@ export default function TabelaPrecos({
                     <TableHead className="text-right text-xs font-medium text-muted-foreground">Valor Porta</TableHead>
                     <TableHead className="text-right text-xs font-medium text-muted-foreground">Valor Instalação</TableHead>
                     <TableHead className="text-right text-xs font-medium text-muted-foreground">Valor Pintura</TableHead>
-                    {!hideTotalColumn && <TableHead className="text-right text-xs font-medium text-foreground bg-green-100 dark:bg-green-500/30">Total</TableHead>}
+                    {!hideTotalColumn && <TableHead className="text-right text-xs font-medium text-foreground">Total</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -224,7 +224,7 @@ export default function TabelaPrecos({
                           {item.valor_pintura.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                         </TableCell>
                         {!hideTotalColumn && (
-                          <TableCell className="text-right font-semibold text-foreground bg-green-100/60 dark:bg-green-500/20">
+                          <TableCell className="text-right font-semibold text-foreground">
                             {total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                           </TableCell>
                         )}
