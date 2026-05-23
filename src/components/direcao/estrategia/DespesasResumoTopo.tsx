@@ -31,9 +31,11 @@ export default function DespesasResumoTopo({ mes }: Props) {
               .eq('ativo', true),
             supabase
               .from('admin_users')
-              .select('id, nome, salario, em_folha, ativo')
+              .select('id, nome, custo_colaborador, ativo, tipo_usuario, visivel_organograma')
               .eq('ativo', true)
-              .eq('em_folha', true),
+              .in('tipo_usuario', ['colaborador', 'metamorfo'])
+              .eq('visivel_organograma', true)
+              .order('nome'),
           ]);
           if (cancelled) return;
           const tiposList = ((tipos || []) as any[]).filter((t) => !isFolha(t.nome));
@@ -51,7 +53,7 @@ export default function DespesasResumoTopo({ mes }: Props) {
             ((colabs || []) as any[]).map((c) => ({
               id: c.id,
               nome: c.nome,
-              valor: Number(c.salario) || 0,
+              valor: Number(c.custo_colaborador) || 0,
             }))
           );
         } else {
