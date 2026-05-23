@@ -9,7 +9,7 @@ const menuItems = [
   { label: 'Tabela de Lucro Líquido Kits', icon: Table2, path: '/direcao/estrategia/kits' },
   { label: 'Tabela de Preços Vendedores', icon: DollarSign, path: '/direcao/estrategia/precos' },
   { label: 'Despesa fixa, salarial e variável', icon: Wallet, path: '/direcao/estrategia/despesas' },
-  { label: 'D.R.E. Elisa Portas', icon: BarChart3, path: '/direcao/dre' },
+  { label: 'D.R.E. Elisa Portas', icon: BarChart3, path: '/direcao/estrategia/dre' },
 ];
 
 export default function EstrategiaHub() {

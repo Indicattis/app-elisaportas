@@ -1742,11 +1742,11 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
     <MinimalistLayout
       title="D.R.E"
       subtitle={mesNome}
-      backPath="/direcao/dre"
+      backPath="/direcao/estrategia/dre"
       breadcrumbItems={[
         { label: 'Home', path: '/home' },
         { label: 'Direção', path: '/direcao' },
-        { label: 'DRE', path: '/direcao/dre' },
+        { label: 'DRE', path: '/direcao/estrategia/dre' },
         { label: mesNome },
       ]}
       headerActions={

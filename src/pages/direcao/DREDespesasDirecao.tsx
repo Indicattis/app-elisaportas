@@ -58,11 +58,11 @@ export default function DREDespesasDirecao() {
     <MinimalistLayout
       title="Despesas"
       subtitle="Tipos de custos e limites"
-      backPath="/direcao/dre"
+      backPath="/direcao/estrategia/dre"
       breadcrumbItems={[
         { label: 'Home', path: '/home' },
         { label: 'Direção', path: '/direcao' },
-        { label: 'DRE', path: '/direcao/dre' },
+        { label: 'DRE', path: '/direcao/estrategia/dre' },
         { label: 'Despesas' },
       ]}
       headerActions={

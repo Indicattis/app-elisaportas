@@ -160,11 +160,11 @@ export default function DRECustosDirecao() {
     <MinimalistLayout
       title="Custos de Produtos"
       subtitle="Configure custo, lucro e veja o preço sugerido"
-      backPath="/direcao/dre"
+      backPath="/direcao/estrategia/dre"
       breadcrumbItems={[
         { label: "Home", path: "/home" },
         { label: "Direção", path: "/direcao" },
-        { label: "DRE", path: "/direcao/dre" },
+        { label: "DRE", path: "/direcao/estrategia/dre" },
         { label: "Custos" },
       ]}
     >
