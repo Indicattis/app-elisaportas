@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect, useMemo, CSSProperties } from "react";
-import { Search, Check, X, Package, GripVertical, Trash2, FolderInput } from "lucide-react";
+import { useState, useRef, useEffect, useMemo } from "react";
+import { Search, Check, X, Package, Trash2, FolderInput } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -15,23 +15,6 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useVendasCatalogo, ProdutoCatalogo } from "@/hooks/useVendasCatalogo";
 import { useCustosItensPadroes } from "@/hooks/useCustosItens";
-import {
-  DndContext,
-  closestCenter,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-} from "@dnd-kit/core";
-import {
-  SortableContext,
-  verticalListSortingStrategy,
-  horizontalListSortingStrategy,
-  useSortable,
-  arrayMove,
-} from "@dnd-kit/sortable";
-import { restrictToVerticalAxis, restrictToParentElement } from "@dnd-kit/modifiers";
-import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
 
 type EditField = "preco_venda" | "custo_produto" | "unidade";
@@ -70,42 +53,6 @@ const COLUMN_WIDTHS: Record<ColumnKey, string> = {
   objetivo: "w-40",
 };
 const DEFAULT_COLUMN_ORDER: ColumnKey[] = ["custo", "lucro", "imposto", "desconto", "cartao", "venda", "objetivo"];
-const COLUMN_ORDER_STORAGE_KEY = "catalogo-precos-column-order-v1";
-
-function SortableHeadCell({ colKey, children }: { colKey: ColumnKey; children: React.ReactNode }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: `col-${colKey}` });
-  const style: CSSProperties = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.6 : 1,
-    position: "relative",
-    zIndex: isDragging ? 10 : "auto",
-  };
-  return (
-    <TableHead
-      ref={setNodeRef}
-      style={style}
-      className={cn(
-        "text-xs font-medium text-foreground text-center group/col",
-        COLUMN_WIDTHS[colKey],
-        COLUMN_BG[colKey],
-      )}
-    >
-      <div className="flex items-center justify-center gap-1">
-        <button
-          type="button"
-          className="inline-flex h-5 w-5 items-center justify-center text-muted-foreground/40 hover:text-foreground cursor-grab active:cursor-grabbing touch-none opacity-0 group-hover/col:opacity-100"
-          aria-label="Arrastar coluna"
-          {...attributes}
-          {...listeners}
-        >
-          <GripVertical className="h-3.5 w-3.5" />
-        </button>
-        <span>{children}</span>
-      </div>
-    </TableHead>
-  );
-}
 
 interface CatalogoPrecosTabProps {
   compact?: boolean;
@@ -113,7 +60,7 @@ interface CatalogoPrecosTabProps {
 
 export function CatalogoPrecosTab({ compact = false }: CatalogoPrecosTabProps = {}) {
   const [busca, setBusca] = useState("");
-  const { produtos, isLoading, editarProduto, reordenarProdutos, inativarProduto } = useVendasCatalogo({ busca });
+  const { produtos, isLoading, editarProduto, inativarProduto } = useVendasCatalogo({ busca });
   const { padroes } = useCustosItensPadroes();
 
   const [editing, setEditing] = useState<{ id: string; field: EditField } | null>(null);
@@ -169,55 +116,6 @@ export function CatalogoPrecosTab({ compact = false }: CatalogoPrecosTabProps = 
     }
     return Array.from(set).sort();
   }, [produtosOrdenados]);
-
-  const [columnOrder, setColumnOrder] = useState<ColumnKey[]>(() => {
-    if (typeof window === "undefined") return [...DEFAULT_COLUMN_ORDER];
-    try {
-      const raw = window.localStorage.getItem(COLUMN_ORDER_STORAGE_KEY);
-      if (!raw) return [...DEFAULT_COLUMN_ORDER];
-      const parsed = JSON.parse(raw) as ColumnKey[];
-      const valid = parsed.filter((k): k is ColumnKey => k in COLUMN_LABELS);
-      const missing = DEFAULT_COLUMN_ORDER.filter((k) => !valid.includes(k));
-      return [...valid, ...missing];
-    } catch {
-      return [...DEFAULT_COLUMN_ORDER];
-    }
-  });
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(COLUMN_ORDER_STORAGE_KEY, JSON.stringify(columnOrder));
-    } catch { /* ignore */ }
-  }, [columnOrder]);
-
-  const dndSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
-  const isDndDisabled = Boolean(busca.trim());
-
-  const handleDragEndColumn = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-    const oldIndex = columnOrder.findIndex((c) => `col-${c}` === active.id);
-    const newIndex = columnOrder.findIndex((c) => `col-${c}` === over.id);
-    if (oldIndex < 0 || newIndex < 0) return;
-    setColumnOrder(arrayMove(columnOrder, oldIndex, newIndex));
-  };
-
-  const handleDragEndCategoria = (categoria: string, rows: ProdutoCatalogo[]) => (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-    const oldIndex = rows.findIndex((r) => r.id === active.id);
-    const newIndex = rows.findIndex((r) => r.id === over.id);
-    if (oldIndex < 0 || newIndex < 0) return;
-    const reordered = arrayMove(rows, oldIndex, newIndex);
-    const novaListaGlobal: string[] = [];
-    for (const [cat, catRows] of groupedByCategoria) {
-      if (cat === categoria) {
-        novaListaGlobal.push(...reordered.map((r) => r.id));
-      } else {
-        novaListaGlobal.push(...catRows.map((r) => r.id));
-      }
-    }
-    reordenarProdutos.mutate(novaListaGlobal);
-  };
 
   const renderEditableCell = (produto: ProdutoCatalogo, field: "preco_venda" | "custo_produto") => {
     const isEditing = editing?.id === produto.id && editing.field === field;
@@ -296,6 +194,8 @@ export function CatalogoPrecosTab({ compact = false }: CatalogoPrecosTabProps = 
     );
   };
 
+  const columnOrder = DEFAULT_COLUMN_ORDER;
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -336,66 +236,54 @@ export function CatalogoPrecosTab({ compact = false }: CatalogoPrecosTabProps = 
                 <span className="text-[11px] text-muted-foreground/60">· {rows.length}</span>
               </div>
               <div className="rounded-xl overflow-hidden bg-card/60 backdrop-blur-xl border border-border">
-                <DndContext
-                  sensors={dndSensors}
-                  collisionDetection={closestCenter}
-                  modifiers={[restrictToVerticalAxis, restrictToParentElement]}
-                  onDragEnd={handleDragEndCategoria(categoria, rows)}
-                >
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="border-border hover:bg-transparent">
-                        <TableHead className="w-8 p-0" />
-                        <TableHead className="text-xs font-medium text-muted-foreground">Produto</TableHead>
-                        {!compact && <TableHead className="text-xs font-medium text-muted-foreground text-center w-16">UN</TableHead>}
-                        {!compact && <TableHead className="text-xs font-medium text-muted-foreground text-center w-20">Ações</TableHead>}
-                        {!compact ? (
-                          <DndContext
-                            sensors={dndSensors}
-                            collisionDetection={closestCenter}
-                            onDragEnd={handleDragEndColumn}
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-border hover:bg-transparent">
+                      <TableHead className="text-xs font-medium text-muted-foreground">Produto</TableHead>
+                      {!compact && <TableHead className="text-xs font-medium text-muted-foreground text-center w-16">UN</TableHead>}
+                      {!compact && <TableHead className="text-xs font-medium text-muted-foreground text-center w-20">Ações</TableHead>}
+                      {!compact ? (
+                        columnOrder.map((col) => (
+                          <TableHead
+                            key={col}
+                            className={cn(
+                              "text-xs font-medium text-foreground text-center",
+                              COLUMN_WIDTHS[col],
+                              COLUMN_BG[col],
+                            )}
                           >
-                            <SortableContext items={columnOrder.map((c) => `col-${c}`)} strategy={horizontalListSortingStrategy}>
-                              {columnOrder.map((col) => (
-                                <SortableHeadCell key={col} colKey={col}>
-                                  {COLUMN_LABELS[col]}
-                                </SortableHeadCell>
-                              ))}
-                            </SortableContext>
-                          </DndContext>
-                        ) : (
-                          <TableHead className={cn("text-xs font-medium text-foreground text-center", COLUMN_WIDTHS.venda, COLUMN_BG.venda)}>
-                            {COLUMN_LABELS.venda}
+                            {COLUMN_LABELS[col]}
                           </TableHead>
-                        )}
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      <SortableContext items={rows.map((r) => r.id)} strategy={verticalListSortingStrategy}>
-                        {rows.map((produto, idx) => (
-                          <SortableProdutoRow
-                            key={produto.id}
-                            produto={produto}
-                            disabled={isDndDisabled}
-                            compact={compact}
-                            order={columnOrder}
-                            renderUnidadeCell={renderUnidadeCell}
-                            renderEditableCell={renderEditableCell}
-                            padroes={padroes}
-                            categorias={todasCategorias}
-                            index={idx}
-                            onUpdate={(patch) => editarProduto.mutateAsync({ id: produto.id, ...patch } as any)}
-                            onDelete={() => {
-                              if (confirm(`Remover "${produto.nome_produto}" do catálogo?`)) {
-                                inativarProduto.mutate(produto.id);
-                              }
-                            }}
-                          />
-                        ))}
-                      </SortableContext>
-                    </TableBody>
-                  </Table>
-                </DndContext>
+                        ))
+                      ) : (
+                        <TableHead className={cn("text-xs font-medium text-foreground text-center", COLUMN_WIDTHS.venda, COLUMN_BG.venda)}>
+                          {COLUMN_LABELS.venda}
+                        </TableHead>
+                      )}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {rows.map((produto, idx) => (
+                      <ProdutoRow
+                        key={produto.id}
+                        produto={produto}
+                        compact={compact}
+                        order={columnOrder}
+                        renderUnidadeCell={renderUnidadeCell}
+                        renderEditableCell={renderEditableCell}
+                        padroes={padroes}
+                        categorias={todasCategorias}
+                        index={idx}
+                        onUpdate={(patch) => editarProduto.mutateAsync({ id: produto.id, ...patch } as any)}
+                        onDelete={() => {
+                          if (confirm(`Remover "${produto.nome_produto}" do catálogo?`)) {
+                            inativarProduto.mutate(produto.id);
+                          }
+                        }}
+                      />
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
             </div>
           ))}
@@ -405,9 +293,8 @@ export function CatalogoPrecosTab({ compact = false }: CatalogoPrecosTabProps = 
   );
 }
 
-function SortableProdutoRow({
+function ProdutoRow({
   produto,
-  disabled,
   compact,
   order,
   renderUnidadeCell,
@@ -419,7 +306,6 @@ function SortableProdutoRow({
   onDelete,
 }: {
   produto: ProdutoCatalogo;
-  disabled: boolean;
   compact: boolean;
   order: ColumnKey[];
   renderUnidadeCell: (p: ProdutoCatalogo) => React.ReactNode;
@@ -430,10 +316,6 @@ function SortableProdutoRow({
   onUpdate: (patch: Partial<ProdutoCatalogo>) => Promise<unknown> | unknown;
   onDelete: () => void;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: produto.id,
-    disabled,
-  });
   const [moverOpen, setMoverOpen] = useState(false);
   const [novaCategoria, setNovaCategoria] = useState(produto.categoria ?? "");
   const [objetivoEditing, setObjetivoEditing] = useState(false);
@@ -454,13 +336,6 @@ function SortableProdutoRow({
     if (valor === atual) { setMoverOpen(false); return; }
     await onUpdate({ categoria: valor } as Partial<ProdutoCatalogo>);
     setMoverOpen(false);
-  };
-  const style: CSSProperties = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.6 : 1,
-    position: "relative",
-    zIndex: isDragging ? 10 : "auto",
   };
   const custo = Number(produto.custo_produto || 0);
   const preco = Number(produto.preco_venda || 0);
@@ -566,23 +441,8 @@ function SortableProdutoRow({
 
   return (
     <TableRow
-      ref={setNodeRef}
-      style={style}
-      className={cn("border-border/60 hover:bg-muted/60", isDragging && "shadow-lg bg-muted/40", typeof index === "number" && index % 2 === 1 && "bg-muted/20")}
+      className={cn("border-border/60 hover:bg-muted/60", typeof index === "number" && index % 2 === 1 && "bg-muted/20")}
     >
-      <TableCell className="w-8 p-0 text-center align-middle">
-        {!disabled && (
-          <button
-            type="button"
-            className="inline-flex h-7 w-7 items-center justify-center text-muted-foreground/50 hover:text-foreground cursor-grab active:cursor-grabbing touch-none"
-            aria-label="Arrastar para reordenar"
-            {...attributes}
-            {...listeners}
-          >
-            <GripVertical className="h-4 w-4" />
-          </button>
-        )}
-      </TableCell>
       <TableCell className="font-bold text-foreground">
         <div className="flex items-center gap-2">
           {!compact && (
