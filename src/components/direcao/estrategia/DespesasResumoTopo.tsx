@@ -118,7 +118,7 @@ export default function DespesasResumoTopo({ mes }: Props) {
   const rotulo = mes ? `Valores de ${mes}` : 'Configuração padrão';
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <div className="grid grid-cols-1 gap-4 mb-6">
       <Bloco titulo="Folha Salarial" icon={<Users className="w-4 h-4" />} itens={folha} rotulo={rotulo} loading={loading} />
       <Bloco titulo="Despesas Fixas" icon={<Receipt className="w-4 h-4" />} itens={fixas} rotulo={rotulo} loading={loading} />
       <Bloco titulo="Despesas Variáveis" icon={<TrendingDown className="w-4 h-4" />} itens={variaveis} rotulo={rotulo} loading={loading} />
