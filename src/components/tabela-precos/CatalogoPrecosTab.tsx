@@ -57,7 +57,7 @@ const COLUMN_BG: Record<ColumnKey, string> = {
   imposto: "bg-orange-100 dark:bg-orange-500/30",
   desconto: "bg-yellow-100 dark:bg-yellow-500/30",
   cartao: "bg-teal-100 dark:bg-teal-500/30",
-  venda: "bg-green-100 dark:bg-green-500/30",
+  venda: "",
   objetivo: "bg-violet-100 dark:bg-violet-500/30",
 };
 const COLUMN_WIDTHS: Record<ColumnKey, string> = {
@@ -496,7 +496,7 @@ function SortableProdutoRow({
         {formatCurrency(vCard)}
       </span>
     ),
-    venda: renderEditableCell(produto, "preco_venda"),
+    venda: <span>{formatCurrency(preco)}</span>,
     objetivo: produto.custo_ok ? (
       <div className="flex items-center justify-end gap-1 group">
         <Check className="h-5 w-5 text-emerald-500 dark:text-emerald-400" />
