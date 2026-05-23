@@ -568,7 +568,7 @@ function SortableProdutoRow({
     <TableRow
       ref={setNodeRef}
       style={style}
-      className={cn("border-border/60 hover:bg-muted/60", isDragging && "shadow-lg bg-muted/40")}
+      className={cn("border-border/60 hover:bg-muted/60", isDragging && "shadow-lg bg-muted/40", typeof index === "number" && index % 2 === 1 && "bg-muted/20")}
     >
       <TableCell className="w-8 p-0 text-center align-middle">
         {!disabled && (
