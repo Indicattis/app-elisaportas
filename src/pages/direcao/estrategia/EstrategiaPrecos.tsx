@@ -16,14 +16,17 @@ export default function EstrategiaPrecos() {
       ]}
       fullWidth
     >
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        <TabelaPrecos
-          embedded
-          hideLucroColumn
-          hideAcoesColumn
-          hideTotalColumn
-        />
-        <CatalogoPrecosTab compact />
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <div className="xl:col-span-2">
+          <TabelaPrecos
+            embedded
+            hideLucroColumn
+            hideAcoesColumn
+          />
+        </div>
+        <div className="xl:col-span-1">
+          <CatalogoPrecosTab compact />
+        </div>
       </div>
     </MinimalistLayout>
   );
