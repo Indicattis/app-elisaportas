@@ -202,7 +202,7 @@ export default function TabelaPrecos({
                     <TableHead className="text-right text-xs font-medium text-muted-foreground">Valor Porta</TableHead>
                     <TableHead className="text-right text-xs font-medium text-muted-foreground">Valor Instalação</TableHead>
                     <TableHead className="text-right text-xs font-medium text-muted-foreground">Valor Pintura</TableHead>
-                    {!hideTotalColumn && <TableHead className="text-right text-xs font-medium text-foreground bg-green-100 dark:bg-green-500/30">Total</TableHead>}
+                    {!hideTotalColumn && <TableHead className="text-right text-xs font-medium text-foreground">Total</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
