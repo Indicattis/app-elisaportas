@@ -51,6 +51,7 @@ import { cn } from "@/lib/utils";
 import { exportEstrategiaItensPDF, exportEstrategiaItensExcel } from "@/utils/estrategiaItensExport";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useConfiguracoesVendas } from "@/hooks/useConfiguracoesVendas";
+import { CatalogoPrecosTab } from "@/components/tabela-precos/CatalogoPrecosTab";
 
 const UNIDADES = ["Un", "M", "Kg", "L", "M²", "M³", "Cx", "Pç"];
 
@@ -1361,6 +1362,10 @@ export default function EstrategiaItens() {
           ))}
         </div>
 
+        {/* Catálogo de Produtos */}
+        <div className="pt-8">
+          <CatalogoPrecosTab />
+        </div>
       </div>
     </MinimalistLayout>
   );
