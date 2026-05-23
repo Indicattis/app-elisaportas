@@ -27,8 +27,9 @@ export default function DespesasResumoTopo({ mes }: Props) {
           const [{ data: tipos }, { data: colabs }] = await Promise.all([
             supabase
               .from('tipos_custos' as any)
-              .select('id, nome, tipo, valor_maximo_mensal, ativo')
-              .eq('ativo', true),
+              .select('id, nome, tipo, valor_maximo_mensal, ativo, aparece_no_dre')
+              .eq('ativo', true)
+              .eq('aparece_no_dre', true),
             supabase
               .from('admin_users')
               .select('id, nome, custo_colaborador, ativo, tipo_usuario, visivel_organograma')
