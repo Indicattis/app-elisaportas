@@ -149,6 +149,11 @@ function Bloco({
         </div>
         <span className="text-[10px] uppercase tracking-wider text-white/40">{rotulo}</span>
       </div>
+      <div className="grid grid-cols-[1fr_auto_auto] gap-x-4 px-1 pb-2 mb-1 border-b border-white/10 text-[10px] uppercase tracking-wider text-white/40">
+        <span>Item</span>
+        <span className="text-right">Valor mensal</span>
+        <span className="text-right">Valor anual</span>
+      </div>
       <div className="flex-1 max-h-64 overflow-y-auto space-y-1.5 pr-1">
         {loading ? (
           <p className="text-sm text-white/40">Carregando...</p>
@@ -156,16 +161,18 @@ function Bloco({
           <p className="text-sm text-white/40">Sem itens</p>
         ) : (
           itens.map((i) => (
-            <div key={i.id} className="flex justify-between text-sm border-b border-white/5 pb-1">
+            <div key={i.id} className="grid grid-cols-[1fr_auto_auto] gap-x-4 text-sm border-b border-white/5 pb-1">
               <span className="text-white/70 truncate pr-2">{i.nome}</span>
-              <span className="text-white/90 font-medium whitespace-nowrap">{formatCurrency(i.valor)}</span>
+              <span className="text-white/90 font-medium whitespace-nowrap text-right">{formatCurrency(i.valor)}</span>
+              <span className="text-white/60 font-medium whitespace-nowrap text-right">{formatCurrency(i.valor * 12)}</span>
             </div>
           ))
         )}
       </div>
-      <div className="mt-3 pt-3 border-t border-white/10 flex justify-between items-center">
+      <div className="mt-3 pt-3 border-t border-white/10 grid grid-cols-[1fr_auto_auto] gap-x-4 items-center">
         <span className="text-xs text-white/50 uppercase tracking-wider">Total</span>
-        <span className="text-lg font-bold text-white">{formatCurrency(total)}</span>
+        <span className="text-lg font-bold text-white text-right whitespace-nowrap">{formatCurrency(total)}</span>
+        <span className="text-lg font-bold text-white/70 text-right whitespace-nowrap">{formatCurrency(total * 12)}</span>
       </div>
     </div>
   );
