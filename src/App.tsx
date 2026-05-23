@@ -66,6 +66,7 @@ import LtvMinimalista from "./pages/marketing/LtvMinimalista";
 import MidiasMinimalista from "./pages/marketing/MidiasMinimalista";
 import Conversoes from "./pages/marketing/Conversoes";
 import ConversoesMeta from "./pages/marketing/ConversoesMeta";
+import VideosIdeias from "./pages/marketing/VideosIdeias";
 
 import FabricaHome from "./pages/FabricaHome";
 import InstalacoesHome from "./pages/InstalacoesHome";
