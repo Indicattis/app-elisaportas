@@ -149,30 +149,30 @@ function Bloco({
         </div>
         <span className="text-[10px] uppercase tracking-wider text-white/40">{rotulo}</span>
       </div>
-      <div className="grid grid-cols-[1fr_auto_auto] gap-x-4 px-1 pb-2 mb-1 border-b border-white/10 text-[10px] uppercase tracking-wider text-white/40">
-        <span>Item</span>
-        <span className="text-right">Valor mensal</span>
-        <span className="text-right">Valor anual</span>
+      <div className="grid grid-cols-[1fr_110px_110px] gap-x-6 px-2 pb-2 mb-1 border-b border-white/10 text-[10px] uppercase tracking-wider text-white/40">
+        <span className="pl-1">Item</span>
+        <span className="text-right pr-1">Valor mensal</span>
+        <span className="text-right pr-1">Valor anual</span>
       </div>
-      <div className="flex-1 max-h-64 overflow-y-auto space-y-1.5 pr-1">
+      <div className="flex-1 max-h-64 overflow-y-auto space-y-1 pr-1">
         {loading ? (
-          <p className="text-sm text-white/40">Carregando...</p>
+          <p className="text-sm text-white/40 px-2">Carregando...</p>
         ) : itens.length === 0 ? (
-          <p className="text-sm text-white/40">Sem itens</p>
+          <p className="text-sm text-white/40 px-2">Sem itens</p>
         ) : (
           itens.map((i) => (
-            <div key={i.id} className="grid grid-cols-[1fr_auto_auto] gap-x-4 text-sm border-b border-white/5 pb-1">
-              <span className="text-white/70 truncate pr-2">{i.nome}</span>
+            <div key={i.id} className="grid grid-cols-[1fr_110px_110px] gap-x-6 text-sm px-2 py-1.5 rounded-md hover:bg-white/[0.03] transition-colors">
+              <span className="text-white/70 truncate">{i.nome}</span>
               <span className="text-white/90 font-medium whitespace-nowrap text-right">{formatCurrency(i.valor)}</span>
               <span className="text-white/60 font-medium whitespace-nowrap text-right">{formatCurrency(i.valor * 12)}</span>
             </div>
           ))
         )}
       </div>
-      <div className="mt-3 pt-3 border-t border-white/10 grid grid-cols-[1fr_auto_auto] gap-x-4 items-center">
+      <div className="mt-3 pt-3 border-t border-white/10 grid grid-cols-[1fr_110px_110px] gap-x-6 items-center px-2">
         <span className="text-xs text-white/50 uppercase tracking-wider">Total</span>
-        <span className="text-lg font-bold text-white text-right whitespace-nowrap">{formatCurrency(total)}</span>
-        <span className="text-lg font-bold text-white/70 text-right whitespace-nowrap">{formatCurrency(total * 12)}</span>
+        <span className="text-base font-bold text-white text-right whitespace-nowrap">{formatCurrency(total)}</span>
+        <span className="text-base font-bold text-white/70 text-right whitespace-nowrap">{formatCurrency(total * 12)}</span>
       </div>
     </div>
   );
