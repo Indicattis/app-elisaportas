@@ -1746,6 +1746,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
       breadcrumbItems={[
         { label: 'Home', path: '/home' },
         { label: 'Direção', path: '/direcao' },
+        { label: 'Estratégia', path: '/direcao/estrategia' },
         { label: 'DRE', path: '/direcao/estrategia/dre' },
         { label: mesNome },
       ]}
