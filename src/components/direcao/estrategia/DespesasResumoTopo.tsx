@@ -121,6 +121,14 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange }: Props) 
     };
   }, [mes]);
 
+  useEffect(() => {
+    if (loading) return;
+    const totalMensal = folha.reduce((s, i) => s + i.valor, 0)
+      + fixas.reduce((s, i) => s + i.valor, 0)
+      + variaveis.reduce((s, i) => s + i.valor, 0);
+    onMediaMensalChange?.(totalMensal);
+  }, [folha, fixas, variaveis, loading, onMediaMensalChange]);
+
   const rotulo = mes ? `Valores de ${mes}` : 'Configuração padrão';
 
   return (
