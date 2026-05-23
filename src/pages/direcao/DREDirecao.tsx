@@ -104,14 +104,14 @@ export default function DREDirecao() {
       label: 'Futuro',
     },
     a_realizar: {
-      border: 'border-blue-400/50 hover:bg-blue-400/10',
-      badge: 'text-blue-300',
+      border: 'border-yellow-400/50 hover:bg-yellow-400/10',
+      badge: 'text-yellow-300',
       icon: <Clock className="w-3.5 h-3.5" strokeWidth={1.8} />,
       label: 'A realizar',
     },
     nao_realizado: {
-      border: 'border-amber-500/40 hover:bg-amber-500/10',
-      badge: 'text-amber-300',
+      border: 'border-red-500/40 hover:bg-red-500/10',
+      badge: 'text-red-300',
       icon: <AlertCircle className="w-3.5 h-3.5" strokeWidth={1.8} />,
       label: 'Não realizado',
     },
@@ -176,9 +176,9 @@ export default function DREDirecao() {
           </div>
 
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2 mt-5 text-[11px] text-white/40">
-            <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-blue-400/70" /> A realizar</span>
+            <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-yellow-400/70" /> A realizar</span>
             <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500/70" /> Realizado</span>
-            <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-500/70" /> Não realizado</span>
+            <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-red-500/70" /> Não realizado</span>
             <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-white/30" /> Futuro</span>
           </div>
 
