@@ -1,24 +1,41 @@
 ## Objetivo
 
-Permitir edição rápida (inline) dos valores das células da tabela de Folha Salarial em `/direcao/estrategia/despesas/:mes`, incluindo o salário.
+Substituir os botões "Adicionar" (que abrem Dialogs) por uma **linha de adição embutida** no rodapé de cada tabela — Folha Salarial, Despesas Fixas e Despesas Variáveis. O usuário preenche os campos diretamente na linha e clica em um botão de confirmar (ícone de check) para salvar.
 
 ## Comportamento
 
-- Clicar em uma célula (Salário, Combustível, Insalub %, FGTS %, Previsão 13°) transforma a célula em um `<input>` numérico já focado e com valor selecionado.
-- `Enter` ou `blur` confirma → salva no banco (`update` em `despesas_manuais_folha`) e recalcula o `total` da linha. `Esc` cancela.
-- Colunas derivadas (Insalub valor, FGTS valor, Previsão 13° + FGTS 13°, Férias + 1/3 + FGTS, Total) **não** são editáveis — recalculam automaticamente após salvar.
-- Coluna "Colaborador" permanece não editável (chave do lançamento).
-- Indicador visual de hover (cursor pointer + leve highlight) para mostrar que a célula é clicável; spinner discreto enquanto salva; toast de erro se falhar.
-- Após salvar, dispara o `onDataChange` existente para atualizar o total do mês no header.
+### Folha Salarial
+- Última linha da tabela passa a ser uma "linha de cadastro" sempre visível.
+- Colunas:
+  - **Colaborador**: `<Select>` compacto inline (mesma lista de `admin_users` que o Dialog usa hoje). Ao selecionar, pré-preenche os demais campos com os dados do colaborador.
+  - **Salário, Combustível, Insalub %, FGTS %**: `<input>` numéricos inline (mesmo visual da `EditableCell` já em uso).
+  - **Insalub valor, FGTS valor, Previsão 13° + FGTS 13°, Férias + 1/3 + FGTS, Total**: calculados ao vivo enquanto o usuário digita.
+  - Última coluna: botão verde de check (salvar) + botão de limpar (X). Salvar desabilitado enquanto não houver colaborador selecionado.
+- Após salvar com sucesso: limpa a linha e mantém pronta para o próximo cadastro.
+
+### Despesas Fixas / Variáveis
+- Mesma ideia: linha de cadastro fixa no rodapé da tabela.
+- Colunas:
+  - **Tipo**: `<Select>` inline com os `tipos_custos` da categoria correspondente (`fixa`/`variavel`).
+  - **Descrição**: input de texto.
+  - **Data**: input `type="date"` (default = primeiro dia do mês selecionado).
+  - **Valor pago**: input numérico.
+  - Ações: check (salvar) + X (limpar). Salvar desabilitado enquanto Tipo e Valor não estiverem preenchidos.
 
 ## Mudanças de código
 
-- `src/components/direcao/estrategia/DespesasResumoTopo.tsx`:
-  - Novo subcomponente `EditableCell` (numérico, com sufixo opcional `%` ou formatação `BRL`).
-  - `BlocoFolha` passa a renderizar `EditableCell` nas colunas editáveis e chama um handler `onPatch(rowId, patch)`.
-  - Handler de patch no componente pai: faz `update` parcial, recalcula `total` com a `calcTotalFolha` já existente, atualiza estado local otimisticamente e chama `reload()` em caso de erro.
+`src/components/direcao/estrategia/DespesasResumoTopo.tsx`:
+- Remover botão "Adicionar" do header dos 3 blocos, e remover `DialogFolha` / `DialogDespesa` (componentes deixam de ser usados — apagar).
+- Remover estados `openFolha` e `openDespesa` e props relacionadas.
+- `BlocoFolha`: adicionar `tfoot` (ou última `tr`) com a linha de cadastro inline. Componente recebe a lista de colaboradores como prop (carregada no componente pai uma única vez).
+- `BlocoDespesa`: adicionar linha de cadastro inline; componente recebe lista de `tipos_custos` filtrada por categoria.
+- Componente pai (`DespesasResumoTopo`):
+  - Carregar `admin_users` (formato `Colab[]`) e `tipos_custos` uma vez via `useEffect` e passar para os blocos.
+  - Novos handlers `handleInsertFolha(payload)` e `handleInsertLanc(payload)` que executam o `insert` no Supabase, chamam `reload()` e `onDataChange()`.
+- Reaproveitar `calcTotalFolha` para o total ao vivo da linha de cadastro de folha.
+- Manter edição inline já existente nas linhas salvas e a exclusão por ícone de lixeira.
 
 ## Fora de escopo
 
-- Sem mudanças no schema do banco, RLS, ou nas tabelas de Despesas Fixas/Variáveis (apenas Folha, conforme o pedido).
-- Sem mudanças no diálogo de criação de folha.
+- Sem mudanças no schema do banco, RLS, hooks de dados, ou no comportamento da página de meses.
+- Sem mudanças nos cálculos/regras já implementadas.
