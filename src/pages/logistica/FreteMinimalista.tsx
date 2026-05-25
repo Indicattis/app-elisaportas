@@ -139,7 +139,7 @@ export default function FreteMinimalista() {
       id: frete.id,
       estado: frete.estado,
       cidade: frete.cidade,
-      valor_frete: frete.valor_frete,
+      valor_frete: parsed != null ? parsed * 6 : 0,
       observacoes: frete.observacoes,
       ativo: frete.ativo,
       quilometragem: parsed,
@@ -266,26 +266,26 @@ export default function FreteMinimalista() {
               <Table className="text-xs">
                 <TableHeader>
                   <TableRow className="border-blue-500/10 hover:bg-white/5">
-                    <TableHead className="text-xs text-white/70">Estado</TableHead>
+                    <TableHead className="text-xs text-white/70 w-16">Nº</TableHead>
                     <TableHead className="text-xs text-white/70">Cidade</TableHead>
-                    <TableHead className="text-xs text-white/70">Valor do Frete</TableHead>
-                    <TableHead className="text-xs text-white/70">Km</TableHead>
-                    <TableHead className="text-xs text-white/70">Observações</TableHead>
-                    <TableHead className="text-xs text-white/70">Ativo</TableHead>
+                    <TableHead className="text-xs text-white/70">Km (ida)</TableHead>
+                    <TableHead className="text-xs text-white/70">Ida e volta</TableHead>
+                    <TableHead className="text-xs text-white/70">Valor</TableHead>
                     <TableHead className="text-right text-xs text-white/70">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {fretesFiltrados.map((frete) => (
+                  {fretesFiltrados.map((frete, idx) => {
+                    const km = frete.quilometragem ?? 0;
+                    const idaVolta = km * 2;
+                    const valor = km * 6;
+                    return (
                     <TableRow 
                       key={frete.id}
                       className="cursor-pointer border-blue-500/10 hover:bg-white/5 text-white/90"
                     >
-                      <TableCell className="font-medium">{frete.estado}</TableCell>
-                      <TableCell>{frete.cidade}</TableCell>
-                      <TableCell className="font-medium text-green-400">
-                        {formatCurrency(frete.valor_frete)}
-                      </TableCell>
+                      <TableCell className="font-medium text-white/60">{idx + 1}</TableCell>
+                      <TableCell>{frete.cidade} - {frete.estado}</TableCell>
                       <TableCell className="text-white/80">
                         {editingKmId === frete.id ? (
                           <Input
@@ -309,16 +309,11 @@ export default function FreteMinimalista() {
                           </span>
                         )}
                       </TableCell>
-                      <TableCell className="max-w-[200px] truncate text-white/60">
-                        {frete.observacoes || '-'}
+                      <TableCell className="text-white/80">
+                        {frete.quilometragem != null ? `${idaVolta} km` : '-'}
                       </TableCell>
-                      <TableCell>
-                        <Switch
-                          checked={frete.ativo}
-                          onCheckedChange={(checked) => 
-                            toggleAtivo.mutate({ id: frete.id, ativo: checked })
-                          }
-                        />
+                      <TableCell className="font-medium text-green-400">
+                        {frete.quilometragem != null ? formatCurrency(valor) : '-'}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
@@ -341,10 +336,11 @@ export default function FreteMinimalista() {
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))}
+                    );
+                  })}
                   {fretesFiltrados.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center py-8 text-white/50">
+                      <TableCell colSpan={6} className="text-center py-8 text-white/50">
                         <div className="flex flex-col items-center gap-2">
                           <Package className="h-8 w-8 text-white/30" />
                           <span>Nenhum frete cadastrado</span>
