@@ -1,52 +1,41 @@
 ## Objetivo
 
-Criar um "Template padrão de montagem" — uma lista única de itens (custo_item + quantidade) gerenciada à parte, que pode ser aplicada manualmente a qualquer kit na tela de montagem com um clique.
+Adicionar, em todas as linhas da tabela de itens (`/direcao/estrategia/itens`), um botão flutuante posicionado fora da tabela que aparece apenas no hover da linha e abre um modal com um cálculo estático baseado em um preço digitado pelo usuário.
 
-## 1. Banco de dados
+## Comportamento
 
-Nova tabela `tabela_precos_montagem_template`:
-- `custo_item_id` (uuid, FK lógico para `custos_itens`, UNIQUE)
-- `quantidade` (numeric, default 1)
-- timestamps padrão
+- Botão pequeno (ícone calculadora) ancorado à direita da linha, **absolute** em relação à `TableRow`, com `right: -2.25rem` (fora da área visível da tabela) para não ocupar coluna.
+- Oculto por padrão (`opacity-0`), aparece no hover da linha (`group-hover:opacity-100`) com transição suave. A `TableRow` recebe `relative group`.
+- Acessível: `aria-label="Calcular preço da bobina"`, foco-visível mantém o botão visível.
 
-RLS: leitura/escrita pelos mesmos perfis que já gerenciam `tabela_precos_portas_montagem` (admins/diretoria).
+## Modal de cálculo
 
-Seed inicial: copiar os itens do kit `b5a6faef-105f-484b-a10f-42544ce84617` para o template, para que o template já nasça com a sugestão atual.
+Abre um `Dialog` com:
 
-## 2. Nova página: gestão do template
+- **Input** "Preço por kg (R$)" — único campo editável.
+- Bloco de resultado mostrando cada passo da fórmula:
+  ```text
+  230 kg × {preço}        = X
+  X + 3,25% (IPI)         = Y
+  Y + R$ 175,00           = Resultado
+  ```
+- **Resumo final**:
+  ```text
+  230 kg ≡ 300 m
+  Preço por metro = Resultado ÷ 300
+  ```
+- Todos os valores em `formatCurrency`. Recalcula em tempo real conforme o usuário digita. Sem persistência — modal puramente estático/local.
 
-Rota: `/direcao/estrategia/kits/template`
+## Arquivos afetados
 
-UI espelhada da página de montagem do kit (mesmo padrão glassmorphism, mesma tabela), mas sem cálculos de "Lucro adicional"/preço da porta — só:
-- Cabeçalho identificando que é o "Template padrão"
-- Botão "Adicionar item" (mesmo Popover/Command da montagem)
-- Tabela de itens com colunas: Item, Unid., Custo un., Qtd (editável), Subtotal custo, Preço, Preço total, remover
-- Card lateral com totais (itens, custo total, venda total)
+- `src/pages/direcao/estrategia/EstrategiaItens.tsx`
+  - Adicionar ícone `Calculator` ao import de `lucide-react`.
+  - Em `SortableItemRow` (linha ~558): tornar `TableRow` `relative group`; adicionar um `<div className="absolute top-1/2 -translate-y-1/2 right-[-2.25rem] opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity pointer-events-auto">` com o botão; estado local `calcOpen` controlando o `Dialog`.
+  - Novo componente interno `CalculoBobinaDialog` (mesmo arquivo) com input controlado e renderização dos passos.
+- Garantir que o container da tabela tenha `overflow-visible` (verificar wrapper atual; se estiver com `overflow-x-auto`, manter mas usar `overflow-y-visible` ou mover o botão para dentro de uma `TableCell` colapsada com `position: relative` apenas. Decisão final no momento da implementação após confirmar o wrapper).
 
-Hook novo `useMontagemTemplate` espelhando `useKitMontagem` mas sem `kit_id`.
+## Notas técnicas
 
-## 3. Acesso à página do template
-
-Em `/direcao/estrategia/kits` (lista de kits): adicionar um botão no topo "Template padrão" que navega para a nova rota.
-
-## 4. Aplicar template no kit
-
-Em `EstrategiaKitMontagem.tsx`, ao lado do botão "Adicionar item", novo botão **"Aplicar template padrão"**:
-- Abre um dialog de confirmação resumindo quantos itens serão adicionados
-- Ao confirmar: insere em `tabela_precos_portas_montagem` todos os itens do template **que ainda não existem** no kit (filtra por `custo_item_id` já presente). Itens duplicados são pulados silenciosamente; um toast informa "X itens adicionados, Y já existiam".
-- Não altera quantidades de itens já presentes (não sobrescreve trabalho manual).
-
-## 5. Detalhes técnicos
-
-- Inserção em massa via `supabase.from('tabela_precos_portas_montagem').insert([...])` com array filtrado.
-- Invalida queries `kit-montagem/{kitId}` e `kits-montagem-resumo` após aplicar.
-- Tipos atualizados automaticamente após a migração.
-
-## Arquivos
-
-- **migration**: cria `tabela_precos_montagem_template` + RLS + seed do kit b5a6faef
-- **novo** `src/hooks/useMontagemTemplate.ts`
-- **novo** `src/pages/direcao/estrategia/EstrategiaKitsTemplate.tsx`
-- **edit** `src/App.tsx` — rota nova
-- **edit** `src/pages/direcao/estrategia/EstrategiaKits.tsx` (lista) — botão "Template padrão"
-- **edit** `src/pages/direcao/estrategia/EstrategiaKitMontagem.tsx` — botão "Aplicar template padrão" + dialog
+- Não envolve banco de dados, hooks novos nem mudanças de schema.
+- Mantém o padrão glassmorphism (`bg-popover text-popover-foreground border-border`) já usado nos outros diálogos da página.
+- Sem alteração de colunas, ordenação ou exportação PDF/Excel.
