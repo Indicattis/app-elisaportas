@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Plus, Clapperboard, Loader2, GripVertical, Check, ChevronsUpDown, X, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Clapperboard, Loader2, GripVertical, Check, ChevronsUpDown, X, Trash2, Pencil } from "lucide-react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
