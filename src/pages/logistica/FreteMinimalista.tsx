@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { Plus, Edit, Trash2, Search, Package, Upload, Wand2, FileText, FileSpreadsheet } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -39,9 +39,9 @@ const ESTADOS_BR = [
 ];
 
 export default function FreteMinimalista() {
-  const { fretes, isLoading, deleteFrete, toggleAtivo } = useFretesCidades();
+  const { fretes, isLoading, deleteFrete, toggleAtivo, updateFrete } = useFretesCidades();
   const queryClient = useQueryClient();
-  
+
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingFrete, setEditingFrete] = useState<FreteCidade | null>(null);
@@ -49,6 +49,9 @@ export default function FreteMinimalista() {
   const [filterEstado, setFilterEstado] = useState<string>("todos");
   const [bulkOpen, setBulkOpen] = useState(false);
   const [fixingAccents, setFixingAccents] = useState(false);
+  const [editingKmId, setEditingKmId] = useState<string | null>(null);
+  const [kmEditValue, setKmEditValue] = useState("");
+  const kmInputRef = useRef<HTMLInputElement>(null);
 
   const hasBrokenNames = useMemo(
     () => (fretes ?? []).some((f) => f.cidade.includes("\uFFFD")),
@@ -117,6 +120,40 @@ export default function FreteMinimalista() {
       style: 'currency',
       currency: 'BRL'
     }).format(value);
+  };
+
+  const handleStartKmEdit = (frete: FreteCidade) => {
+    setEditingKmId(frete.id);
+    setKmEditValue(frete.quilometragem != null ? String(frete.quilometragem) : "");
+    setTimeout(() => kmInputRef.current?.focus(), 0);
+  };
+
+  const handleSaveKm = (frete: FreteCidade) => {
+    const parsed = kmEditValue.trim() === "" ? null : Number(kmEditValue.replace(/,/g, "."));
+    if (parsed !== null && (isNaN(parsed) || parsed < 0)) {
+      toast.error("KM inválido");
+      setEditingKmId(null);
+      return;
+    }
+    updateFrete.mutate({
+      id: frete.id,
+      estado: frete.estado,
+      cidade: frete.cidade,
+      valor_frete: frete.valor_frete,
+      observacoes: frete.observacoes,
+      ativo: frete.ativo,
+      quilometragem: parsed,
+    });
+    setEditingKmId(null);
+  };
+
+  const handleKmKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, frete: FreteCidade) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleSaveKm(frete);
+    } else if (e.key === "Escape") {
+      setEditingKmId(null);
+    }
   };
 
   const headerActions = (
@@ -250,7 +287,27 @@ export default function FreteMinimalista() {
                         {formatCurrency(frete.valor_frete)}
                       </TableCell>
                       <TableCell className="text-white/80">
-                        {frete.quilometragem != null ? `${frete.quilometragem} km` : '-'}
+                        {editingKmId === frete.id ? (
+                          <Input
+                            ref={kmInputRef}
+                            type="number"
+                            min={ 0}
+                            step={ 0.1}
+                            value={kmEditValue}
+                            onChange={(e) => setKmEditValue(e.target.value)}
+                            onBlur={() => handleSaveKm(frete)}
+                            onKeyDown={(e) => handleKmKeyDown(e, frete)}
+                            className="h-7 w-24 bg-white/10 border-white/20 text-white text-xs px-2 py-0"
+                          />
+                        ) : (
+                          <span
+                            className="cursor-pointer hover:text-blue-400 transition-colors"
+                            onClick={() => handleStartKmEdit(frete)}
+                            title="Clique para editar"
+                          >
+                            {frete.quilometragem != null ? `${frete.quilometragem} km` : '-'}
+                          </span>
+                        )}
                       </TableCell>
                       <TableCell className="max-w-[200px] truncate text-white/60">
                         {frete.observacoes || '-'}
