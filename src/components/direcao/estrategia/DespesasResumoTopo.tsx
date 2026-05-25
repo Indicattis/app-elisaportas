@@ -243,11 +243,13 @@ function NumInput({
   onCommit,
   suffix,
   step = '0.01',
+  valueClassName,
 }: {
   value: number;
   onCommit: (v: number) => void;
   suffix?: string;
   step?: string;
+  valueClassName?: string;
 }) {
   const [local, setLocal] = useState(String(value ?? 0));
   const [editing, setEditing] = useState(false);
@@ -260,7 +262,7 @@ function NumInput({
       <button
         type="button"
         onClick={() => setEditing(true)}
-        className="w-full text-right text-sm text-white/90 px-2 py-1 rounded-md hover:bg-white/5 border border-transparent hover:border-white/10 transition-colors whitespace-nowrap"
+        className={`w-full text-right text-sm px-2 py-1 rounded-md hover:bg-white/5 border border-transparent hover:border-white/10 transition-colors whitespace-nowrap ${valueClassName ?? 'text-white/90'}`}
       >
         {display}
       </button>
