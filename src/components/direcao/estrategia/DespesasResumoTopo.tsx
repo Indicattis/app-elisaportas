@@ -308,7 +308,7 @@ function BlocoFolhaEditavel({
   const linhas = colabs.map((c) => ({ c, ...calcCustos(c) }));
   const totalMensal = linhas.reduce((s, l) => s + l.total, 0);
   return (
-    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-[100px] flex flex-col">
+    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-5 flex flex-col">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2 text-white">
           <Users className="w-4 h-4" />
@@ -430,7 +430,7 @@ function Bloco({
   };
 
   return (
-    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-[100px] flex flex-col">
+    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-5 flex flex-col">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2 text-white">
           {icon}
