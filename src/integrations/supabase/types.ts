@@ -3948,6 +3948,8 @@ export type Database = {
       }
       marketing_videos_ideias: {
         Row: {
+          autores_ids: string[]
+          autores_nomes: string[]
           created_at: string
           criado_por: string | null
           criado_por_nome: string | null
@@ -3958,6 +3960,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          autores_ids?: string[]
+          autores_nomes?: string[]
           created_at?: string
           criado_por?: string | null
           criado_por_nome?: string | null
@@ -3968,6 +3972,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          autores_ids?: string[]
+          autores_nomes?: string[]
           created_at?: string
           criado_por?: string | null
           criado_por_nome?: string | null
