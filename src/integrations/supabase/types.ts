@@ -2237,6 +2237,30 @@ export type Database = {
         }
         Relationships: []
       }
+      despesas_mes_status: {
+        Row: {
+          created_at: string
+          mes_referencia: string
+          status: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          mes_referencia: string
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          mes_referencia?: string
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       despesas_valor_pago_mensal: {
         Row: {
           created_at: string
