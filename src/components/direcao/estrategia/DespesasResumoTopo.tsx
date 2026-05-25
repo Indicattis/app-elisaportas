@@ -179,7 +179,12 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange }: Props) 
 
   const updateColab = async (id: string, patch: Partial<ColabFolha>) => {
     setColabs((prev) => prev.map((c) => (c.id === id ? { ...c, ...patch } : c)));
-    const { error } = await supabase.from('admin_users').update(patch as any).eq('id', id);
+    const dbPatch: any = { ...patch };
+    if ('salario' in dbPatch) {
+      dbPatch.custo_colaborador = dbPatch.salario;
+      delete dbPatch.salario;
+    }
+    const { error } = await supabase.from('admin_users').update(dbPatch).eq('id', id);
     if (error) toast.error('Erro ao salvar: ' + error.message);
   };
 
