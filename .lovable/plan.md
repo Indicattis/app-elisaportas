@@ -1,47 +1,28 @@
 ## Objetivo
 
-Adicionar colunas de cálculo de custo por colaborador no bloco "Folha Salarial" em `/direcao/estrategia/despesas`, com edição inline e somando ao custo mensal exibido.
+Permitir adicionar, editar e excluir despesas (catálogo `tipos_custos`) diretamente dos blocos "Despesas Fixas" e "Despesas Variáveis" em `/direcao/estrategia/despesas`, mantendo a visualização atual.
 
-## Novas colunas
+## Banco
 
-| Coluna | Tipo | Regra |
-|---|---|---|
-| Auxílio Combustível | Valor R$ manual | input numérico |
-| Insalubridade | % manual + valor calculado | valor = salário × % |
-| FGTS | % manual (padrão 8%) | valor = salário × % |
-| Previsão 13º | Valor R$ manual | input numérico |
-| Previsão Férias | Calculado automático | (salário ÷ 3) + (salário × FGTS%) |
+Sem alterações de schema — usa `tipos_custos` existente (`nome`, `tipo`, `valor_maximo_mensal`, `ativo`, `aparece_no_dre`). Hook `useTiposCustos` já cobre CRUD.
 
-Base de % (insalubridade e FGTS) = `custo_colaborador` (salário base atual).
+## UI em `DespesasResumoTopo.tsx`
 
-**Custo total mensal exibido** = salário + combustível + insalubridade + FGTS + 13º + férias.
+Apenas quando `mes === null` (modo configuração), o bloco "Despesas Fixas" e "Despesas Variáveis" ganha:
 
-## Banco de dados
+- **Edição inline do valor mensal**: cada linha existente troca o número estático por input numérico (`bg-white/5`, glassmorphism) que salva em `valor_maximo_mensal` no blur.
+- **Edição inline do nome**: clique no nome abre input de texto que salva no blur.
+- **Botão excluir** (ícone `Trash2`, aparece no hover da linha) — confirma via `AlertDialog` e chama `deleteTipoCusto`.
+- **Linha de "Adicionar despesa"** no fim de cada bloco: input nome + input valor + botão `+`. Cria com `tipo='fixa'` ou `'variavel'` conforme o bloco e `aparece_no_dre=true`, `ativo=true`.
 
-Migration adicionando colunas em `admin_users`:
-- `aux_combustivel numeric default 0`
-- `insalubridade_pct numeric default 0`
-- `fgts_pct numeric default 8`
-- `previsao_13_valor numeric default 0`
+Quando `mes` está selecionado (visão histórica de `gastos`), mantém somente leitura — sem botões de edição/exclusão, sem criação. O CRUD afeta o catálogo, não o histórico.
 
-Previsão Férias é derivada — não persiste.
-
-## UI
-
-Refatorar `DespesasResumoTopo.tsx` — bloco "Folha Salarial" passa a renderizar tabela com colunas:
-
-```text
-Colaborador | Salário | Combustível | Insalub % / R$ | FGTS % / R$ | 13º | Férias | Total mensal | Total anual
-```
-
-- Campos editáveis: inputs inline (`bg-white/5`, glassmorphism) com debounce ~600ms salvando em `admin_users`.
-- Linha do total e total geral somam o "Total mensal" calculado.
-- Blocos "Despesas Fixas" e "Despesas Variáveis" permanecem inalterados.
-- Quando `mes` está selecionado (snapshot histórico via `custos_folha_mensais`), mantém comportamento atual (somente leitura, sem nova tabela).
+A "Folha Salarial" não muda.
 
 ## Detalhes técnicos
 
-- Helper `calcularCustoColaborador(c)` retorna `{ insalubValor, fgtsValor, ferias, totalMensal }`.
-- Persistência: `supabase.from('admin_users').update({...}).eq('id', ...)` com toast de erro.
-- Atualiza `onMediaMensalChange` somando o novo total.
-- Layout responsivo: tabela com `overflow-x-auto` para caber as colunas no card.
+- Reutiliza `useTiposCustos` (`saveTipoCusto`, `updateTipoCusto`, `deleteTipoCusto`).
+- Após qualquer mutação, dispara `refetch` local do bloco recarregando `tipos_custos` (mesma query do `useEffect` atual em modo config).
+- Componente `NumInput` já existe no arquivo; criar `TextInput` similar para o nome.
+- Confirmação de exclusão via `AlertDialog` do shadcn já disponível no projeto.
+- Toda a área editável só renderiza com `!mes` para preservar histórico.
