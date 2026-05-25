@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Plus, Trash2, Check, ChevronsUpDown, Boxes } from "lucide-react";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,6 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ItemTabelaPreco } from "@/hooks/useTabelaPrecos";
 import { useKitMontagem, computeLucroUnit } from "@/hooks/useKitMontagem";
 import { useCustosItens, useCustosItensPadroes } from "@/hooks/useCustosItens";
-import { useTabelaPrecos } from "@/hooks/useTabelaPrecos";
 import { cn } from "@/lib/utils";
 
 const fmt = (v: number) =>
