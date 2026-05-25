@@ -175,7 +175,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange }: Props) 
     return () => {
       cancelled = true;
     };
-  }, [mes]);
+  }, [mes, reloadV]);
 
   useEffect(() => {
     if (loading) return;
@@ -214,8 +214,24 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange }: Props) 
       ) : (
         <Bloco titulo="Folha Salarial" icon={<Users className="w-4 h-4" />} itens={folha} rotulo={rotulo} loading={loading} />
       )}
-      <Bloco titulo="Despesas Fixas" icon={<Receipt className="w-4 h-4" />} itens={fixas} rotulo={rotulo} loading={loading} />
-      <Bloco titulo="Despesas Variáveis" icon={<TrendingDown className="w-4 h-4" />} itens={variaveis} rotulo={rotulo} loading={loading} />
+      <Bloco
+        titulo="Despesas Fixas"
+        icon={<Receipt className="w-4 h-4" />}
+        itens={fixas}
+        rotulo={rotulo}
+        loading={loading}
+        editable={!mes ? 'fixa' : undefined}
+        onChanged={reload}
+      />
+      <Bloco
+        titulo="Despesas Variáveis"
+        icon={<TrendingDown className="w-4 h-4" />}
+        itens={variaveis}
+        rotulo={rotulo}
+        loading={loading}
+        editable={!mes ? 'variavel' : undefined}
+        onChanged={reload}
+      />
     </div>
   );
 }
