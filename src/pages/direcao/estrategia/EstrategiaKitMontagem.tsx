@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Plus, Trash2, Check, ChevronsUpDown, Boxes } from "lucide-react";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,6 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ItemTabelaPreco } from "@/hooks/useTabelaPrecos";
 import { useKitMontagem, computeLucroUnit } from "@/hooks/useKitMontagem";
 import { useCustosItens, useCustosItensPadroes } from "@/hooks/useCustosItens";
-import { useTabelaPrecos } from "@/hooks/useTabelaPrecos";
 import { cn } from "@/lib/utils";
 
 const fmt = (v: number) =>
@@ -23,8 +22,6 @@ export default function EstrategiaKitMontagem() {
   const { kitId } = useParams<{ kitId: string }>();
   const navigate = useNavigate();
   const [pickerOpen, setPickerOpen] = useState(false);
-  const queryClient = useQueryClient();
-  const { editarItem } = useTabelaPrecos();
 
   const { data: kit, isLoading: isLoadingKit } = useQuery({
     queryKey: ["tabela-precos-kit", kitId],
@@ -43,42 +40,6 @@ export default function EstrategiaKitMontagem() {
   const { items, isLoading, addItem, updateQuantidade, removeItem } = useKitMontagem(kitId ?? null);
   const { items: allCustosItens } = useCustosItens();
   const { padroes } = useCustosItensPadroes();
-
-  const [precos, setPrecos] = useState({ valor_porta: 0, valor_instalacao: 0, valor_pintura: 0 });
-  const [salvando, setSalvando] = useState(false);
-
-  useEffect(() => {
-    if (kit) {
-      setPrecos({
-        valor_porta: Number(kit.valor_porta || 0),
-        valor_instalacao: Number(kit.valor_instalacao || 0),
-        valor_pintura: Number(kit.valor_pintura || 0),
-      });
-    }
-  }, [kit?.id, kit?.valor_porta, kit?.valor_instalacao, kit?.valor_pintura]);
-
-  const isDirty = !!kit && (
-    Number(kit.valor_porta || 0) !== precos.valor_porta ||
-    Number(kit.valor_instalacao || 0) !== precos.valor_instalacao ||
-    Number(kit.valor_pintura || 0) !== precos.valor_pintura
-  );
-
-  const salvarPrecos = async () => {
-    if (!kitId || !kit || !isDirty) return;
-    const dados: Record<string, number> = {};
-    if (Number(kit.valor_porta || 0) !== precos.valor_porta) dados.valor_porta = precos.valor_porta;
-    if (Number(kit.valor_instalacao || 0) !== precos.valor_instalacao) dados.valor_instalacao = precos.valor_instalacao;
-    if (Number(kit.valor_pintura || 0) !== precos.valor_pintura) dados.valor_pintura = precos.valor_pintura;
-    try {
-      setSalvando(true);
-      await editarItem({ id: kitId, dados: dados as any });
-      queryClient.invalidateQueries({ queryKey: ["tabela-precos-kit", kitId] });
-    } catch {
-      /* toast tratado no hook */
-    } finally {
-      setSalvando(false);
-    }
-  };
 
   const usedIds = useMemo(() => new Set(items.map((i) => i.custo_item_id)), [items]);
 
@@ -284,11 +245,6 @@ export default function EstrategiaKitMontagem() {
                 </Table>
               </div>
 
-              {items.length === 0 && (
-                <Badge className="bg-amber-500/10 text-amber-300 border border-amber-500/30">
-                  Sem montagem — o lucro do kit segue editável manualmente
-                </Badge>
-              )}
             </div>
 
             {/* Resumo lateral */}
@@ -311,40 +267,6 @@ export default function EstrategiaKitMontagem() {
                       value={`${totais.margem.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`}
                       valueClass={totais.margem >= 0 ? "text-emerald-400" : "text-red-400"}
                     />
-                  </div>
-                </div>
-
-                <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl p-4">
-                  <div className="text-xs uppercase tracking-wide text-white/50 mb-3">Preços do kit</div>
-                  <div className="space-y-2">
-                    {([
-                      { campo: "valor_porta" as const, label: "Valor porta" },
-                      { campo: "valor_instalacao" as const, label: "Valor instalação" },
-                      { campo: "valor_pintura" as const, label: "Valor pintura" },
-                    ]).map(({ campo, label }) => (
-                      <div key={campo} className="flex items-center justify-between gap-3 text-sm">
-                        <span className="text-white/60">{label}</span>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          value={String(precos[campo])}
-                          onChange={(e) => {
-                            const v = parseFloat(e.target.value);
-                            setPrecos((p) => ({ ...p, [campo]: isNaN(v) ? 0 : v }));
-                          }}
-                          className="h-8 w-32 text-right bg-white/5 border-white/10 text-white"
-                        />
-                      </div>
-                    ))}
-                    <Button
-                      onClick={salvarPrecos}
-                      disabled={!isDirty || salvando}
-                      className="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
-                      size="sm"
-                    >
-                      {salvando ? "Salvando..." : "Salvar"}
-                    </Button>
                   </div>
                 </div>
 
