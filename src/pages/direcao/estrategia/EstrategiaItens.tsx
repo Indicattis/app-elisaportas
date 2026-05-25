@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, CSSProperties } from "react";
-import { Plus, Trash2, Percent, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Check, X, GripVertical, FolderInput, Palette, FileText, FileSpreadsheet, BadgePercent, Calculator } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Plus, Trash2, Percent, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Check, X, GripVertical, FolderInput, Palette, FileText, FileSpreadsheet, BadgePercent, Calculator, Boxes } from "lucide-react";
 import {
   DndContext,
   closestCenter,
@@ -741,6 +742,7 @@ function SortableItemRow({ item, disabled, categorias, colors, order, padroes, o
 }
 
 export default function EstrategiaItens() {
+  const navigate = useNavigate();
   const { items, isLoading, createItem, updateItem, deleteItem, reordenarItens } = useCustosItens();
   const { padroes, aplicarEmTodos } = useCustosItensPadroes();
   const { categoriasOrdem, salvarOrdem } = useCustosItensCategoriasOrdem();
@@ -1283,6 +1285,14 @@ export default function EstrategiaItens() {
                 </DialogFooter>
               </DialogContent>
             </Dialog>
+            <Button
+              variant="outline"
+              className="!h-[50px] gap-2 bg-card/60 border-border text-foreground hover:bg-cyan-500/10 hover:text-cyan-300 hover:border-cyan-500/40"
+              onClick={() => navigate("/direcao/estrategia/materias-primas")}
+            >
+              <Boxes className="h-4 w-4" />
+              Matéria Prima
+            </Button>
             <Button
               variant="outline"
               className="!h-[50px] gap-2 bg-card/60 border-border text-foreground hover:bg-red-500/10 hover:text-red-300 hover:border-red-500/40"

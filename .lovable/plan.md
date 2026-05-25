@@ -1,41 +1,85 @@
 ## Objetivo
 
-Adicionar, em todas as linhas da tabela de itens (`/direcao/estrategia/itens`), um botão flutuante posicionado fora da tabela que aparece apenas no hover da linha e abre um modal com um cálculo estático baseado em um preço digitado pelo usuário.
+Adicionar um novo botão **"Matéria Prima"** no header da página `/direcao/estrategia/itens` que leva a uma nova rota `/direcao/estrategia/materias-primas` com a gestão completa de matérias-primas vinculadas aos itens do catálogo da Estratégia.
 
-## Comportamento
+## Conceito
 
-- Botão pequeno (ícone calculadora) ancorado à direita da linha, **absolute** em relação à `TableRow`, com `right: -2.25rem` (fora da área visível da tabela) para não ocupar coluna.
-- Oculto por padrão (`opacity-0`), aparece no hover da linha (`group-hover:opacity-100`) com transição suave. A `TableRow` recebe `relative group`.
-- Acessível: `aria-label="Calcular preço da bobina"`, foco-visível mantém o botão visível.
+Cada **matéria-prima** é uma "receita de compra" de um item de `/direcao/estrategia/itens`:
+- Pertence a um item (`custos_itens`) — o item de referência
+- Possui uma **quantidade** expressa na **unidade de medida do próprio item** (ex: 1 bobina = 250 m do item "Chapa", ou 1 galão = 18 L do item "Tinta")
+- Possui nome, fornecedor opcional, custo da compra e observações
 
-## Modal de cálculo
+Assim a matéria-prima vira a unidade de compra real, enquanto o item continua sendo a unidade de consumo na fábrica.
 
-Abre um `Dialog` com:
+## Importante — distinção em relação à tabela existente
 
-- **Input** "Preço por kg (R$)" — único campo editável.
-- Bloco de resultado mostrando cada passo da fórmula:
-  ```text
-  230 kg × {preço}        = X
-  X + 3,25% (IPI)         = Y
-  Y + R$ 175,00           = Resultado
-  ```
-- **Resumo final**:
-  ```text
-  230 kg ≡ 300 m
-  Preço por metro = Resultado ÷ 300
-  ```
-- Todos os valores em `formatCurrency`. Recalcula em tempo real conforme o usuário digita. Sem persistência — modal puramente estático/local.
+Já existe uma tabela `materias_primas` usada no módulo de **Estoque/Almoxarifado** (com `quantidade em estoque`, `fornecedor_id`, vinculada a `estoque`). Aquela é de controle de estoque e **não** se confunde com este conceito de "interface de compra" da Estratégia.
 
-## Arquivos afetados
+Para evitar acoplar dois domínios diferentes na mesma tabela, será criada uma nova tabela dedicada: **`estrategia_materias_primas`**, ligada por FK a `custos_itens`.
 
-- `src/pages/direcao/estrategia/EstrategiaItens.tsx`
-  - Adicionar ícone `Calculator` ao import de `lucide-react`.
-  - Em `SortableItemRow` (linha ~558): tornar `TableRow` `relative group`; adicionar um `<div className="absolute top-1/2 -translate-y-1/2 right-[-2.25rem] opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity pointer-events-auto">` com o botão; estado local `calcOpen` controlando o `Dialog`.
-  - Novo componente interno `CalculoBobinaDialog` (mesmo arquivo) com input controlado e renderização dos passos.
-- Garantir que o container da tabela tenha `overflow-visible` (verificar wrapper atual; se estiver com `overflow-x-auto`, manter mas usar `overflow-y-visible` ou mover o botão para dentro de uma `TableCell` colapsada com `position: relative` apenas. Decisão final no momento da implementação após confirmar o wrapper).
+## Mudanças
 
-## Notas técnicas
+### 1. Banco de dados (nova migration)
 
-- Não envolve banco de dados, hooks novos nem mudanças de schema.
-- Mantém o padrão glassmorphism (`bg-popover text-popover-foreground border-border`) já usado nos outros diálogos da página.
-- Sem alteração de colunas, ordenação ou exportação PDF/Excel.
+Criar tabela `estrategia_materias_primas`:
+
+| coluna | tipo | notas |
+|---|---|---|
+| `id` | uuid PK | `gen_random_uuid()` |
+| `custo_item_id` | uuid FK → `custos_itens(id)` ON DELETE CASCADE | item de referência |
+| `nome` | text NOT NULL | nome da matéria-prima (ex: "Bobina 250m") |
+| `quantidade_item` | numeric NOT NULL DEFAULT 0 | quanto rende na unidade do item |
+| `custo_total` | numeric NOT NULL DEFAULT 0 | custo de compra da MP |
+| `fornecedor` | text NULL | |
+| `observacoes` | text NULL | |
+| `ordem` | int NOT NULL DEFAULT 0 | |
+| `ativo` | boolean NOT NULL DEFAULT true | soft delete |
+| `created_at` / `updated_at` | timestamptz | trigger padrão |
+
+RLS: políticas equivalentes às de `custos_itens` (acesso para admin / direção, via `has_role(...,'admin'::user_role)`).
+
+### 2. Hook novo `useEstrategiaMateriasPrimas.ts`
+
+CRUD com React Query: `list(custoItemId?)`, `criar`, `editar`, `excluir`, `reordenar`. Filtra por `ativo=true` e ordena por `ordem`.
+
+### 3. Header do `EstrategiaItens.tsx`
+
+Adicionar um botão **"Matéria Prima"** (ícone `Boxes` da lucide) na linha de botões do header, no mesmo estilo dos demais (`!h-[50px]`, `variant="outline"`, hover âmbar/ciano). `onClick` → `navigate("/direcao/estrategia/materias-primas")`.
+
+### 4. Nova página `src/pages/direcao/estrategia/EstrategiaMateriasPrimas.tsx`
+
+Estilo visual idêntico ao restante da Estratégia (glassmorphism, `MinimalistLayout`, `backPath="/direcao/estrategia/itens"`).
+
+Layout:
+- **Filtro/Seletor de Item** no topo (Select com todos os `custos_itens` agrupados por categoria) — mostra a unidade do item escolhido
+- **Card de resumo**: nome do item, unidade, custo unitário atual; mostra "custo unitário calculado" derivado das MPs (média ponderada `Σcusto / Σquantidade_item`)
+- **Tabela de matérias-primas** do item selecionado:
+  - Colunas: `Nome`, `Qtd (na unidade do item)`, `Custo total (R$)`, `Custo/un (calculado)`, `Fornecedor`, `Observações`, `Ações`
+  - Linhas com edição inline + botão "Adicionar matéria-prima"
+  - Drag-and-drop de reordenação (mesmo padrão usado em EstrategiaItens)
+- Vazio: estado guiando "Selecione um item para gerenciar suas matérias-primas"
+
+### 5. Rota
+
+Em `src/App.tsx` adicionar:
+```tsx
+import EstrategiaMateriasPrimas from "./pages/direcao/estrategia/EstrategiaMateriasPrimas";
+...
+<Route path="/direcao/estrategia/materias-primas"
+  element={<ProtectedRoute routeKey="direcao_estrategia"><EstrategiaMateriasPrimas /></ProtectedRoute>} />
+```
+
+### 6. Hub (opcional, recomendado)
+
+Adicionar entrada em `EstrategiaHub.tsx`:
+`{ label: 'Matérias-Primas', icon: Boxes, path: '/direcao/estrategia/materias-primas' }`.
+
+## Fora do escopo (este plano não faz)
+
+- Não altera/usa a tabela `materias_primas` do Estoque
+- Não cria fluxo de compra/pedido de compra automático a partir das MPs
+- Não recalcula automaticamente `custo_unitario` do item a partir das MPs (apenas exibe o calculado como referência) — pode ser uma evolução futura com 1 clique "aplicar custo calculado ao item"
+
+## Pergunta antes de implementar
+
+Confirma que devo criar uma **tabela nova** `estrategia_materias_primas` (separada da `materias_primas` do Estoque)? Se preferir reaproveitar a tabela existente do Estoque (vinculando ao `custos_itens`), me avisa que ajusto o plano.
