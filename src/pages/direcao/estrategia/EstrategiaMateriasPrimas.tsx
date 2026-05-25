@@ -183,6 +183,9 @@ export default function EstrategiaMateriasPrimas() {
                     <TableHead className="text-right text-white/60 w-32">
                       Qtd
                     </TableHead>
+                    <TableHead className="text-right text-white/60 w-40">
+                      Proporção
+                    </TableHead>
                     <TableHead className="text-right text-white/60 w-36">
                       Custo total
                     </TableHead>
@@ -202,7 +205,7 @@ export default function EstrategiaMateriasPrimas() {
                   {materiasPrimas.length === 0 ? (
                     <TableRow>
                       <TableCell
-                        colSpan={8}
+                        colSpan={9}
                         className="text-center text-white/60 py-8"
                       >
                         Nenhuma matéria-prima cadastrada
@@ -265,6 +268,13 @@ export default function EstrategiaMateriasPrimas() {
                               }}
                               className="h-8 w-28 ml-auto text-right bg-white/5 border-white/10 text-white"
                             />
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="text-white text-sm">
+                              1 <span className="text-white/50">un mp</span>{" "}
+                              = {qtd.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 3 })}{" "}
+                              <span className="text-white/50">{un}</span>
+                            </div>
                           </TableCell>
                           <TableCell className="text-right">
                             <Input
