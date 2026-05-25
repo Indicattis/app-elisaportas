@@ -198,12 +198,12 @@ export default function TabelaPrecos({
                   <TableRow className="border-border hover:bg-transparent">
                     <TableHead className="text-center text-xs font-medium text-muted-foreground w-12">#</TableHead>
                     <TableHead className="text-xs font-medium text-muted-foreground">Descrição</TableHead>
-                    <TableHead className="text-center text-xs font-medium text-muted-foreground">L</TableHead>
-                    <TableHead className="text-center text-xs font-medium text-muted-foreground">A</TableHead>
+                    <TableHead className="text-center text-xs font-medium text-blue-400">L</TableHead>
+                    <TableHead className="text-center text-xs font-medium text-blue-400">A</TableHead>
                     <TableHead className="text-right text-xs font-medium text-muted-foreground">Valor Porta</TableHead>
                     <TableHead className="text-right text-xs font-medium text-muted-foreground">Valor Instalação</TableHead>
                     <TableHead className="text-right text-xs font-medium text-muted-foreground">Valor Pintura</TableHead>
-                    {!hideTotalColumn && <TableHead className="text-right text-xs font-medium text-foreground">Total</TableHead>}
+                    {!hideTotalColumn && <TableHead className="text-right text-xs font-medium text-emerald-400">Total</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -213,8 +213,8 @@ export default function TabelaPrecos({
                     <TableRow key={item.id} className={cn("border-border hover:bg-muted/40", index % 2 === 1 && "bg-muted/20")}>
                         <TableCell className="text-center text-muted-foreground">{index + 1}</TableCell>
                         <TableCell className="font-medium text-foreground">{item.descricao}</TableCell>
-                        <TableCell className="text-center text-foreground/80">{item.largura}m</TableCell>
-                        <TableCell className="text-center text-foreground/80">{item.altura}m</TableCell>
+                        <TableCell className="text-center text-blue-400">{item.largura}m</TableCell>
+                        <TableCell className="text-center text-blue-400">{item.altura}m</TableCell>
                         <TableCell className="text-right text-foreground/80">
                           {item.valor_porta.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                         </TableCell>
@@ -225,7 +225,7 @@ export default function TabelaPrecos({
                           {item.valor_pintura.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                         </TableCell>
                         {!hideTotalColumn && (
-                          <TableCell className="text-right font-semibold text-foreground">
+                          <TableCell className="text-right font-semibold text-emerald-400">
                             {total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                           </TableCell>
                         )}
