@@ -2147,6 +2147,41 @@ export type Database = {
         }
         Relationships: []
       }
+      despesas_valor_pago_mensal: {
+        Row: {
+          created_at: string
+          id: string
+          mes_referencia: string
+          tipo_custo_id: string
+          updated_at: string
+          valor_pago: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mes_referencia: string
+          tipo_custo_id: string
+          updated_at?: string
+          valor_pago?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mes_referencia?: string
+          tipo_custo_id?: string
+          updated_at?: string
+          valor_pago?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "despesas_valor_pago_mensal_tipo_custo_id_fkey"
+            columns: ["tipo_custo_id"]
+            isOneToOne: false
+            referencedRelation: "tipos_custos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       documentos: {
         Row: {
           arquivo_url: string

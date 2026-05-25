@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/alert-dialog';
 
 type Item = { id: string; nome: string; valor: number };
+type ValorPagoMap = Record<string, number>;
 type ColabFolha = {
   id: string;
   nome: string;
@@ -48,6 +49,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange }: Props) 
   const [colabs, setColabs] = useState<ColabFolha[]>([]);
   const [fixas, setFixas] = useState<Item[]>([]);
   const [variaveis, setVariaveis] = useState<Item[]>([]);
+  const [valorPagoMap, setValorPagoMap] = useState<ValorPagoMap>({});
   const [loading, setLoading] = useState(false);
   const [reloadV, setReloadV] = useState(0);
   const reload = () => setReloadV((v) => v + 1);
@@ -123,7 +125,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange }: Props) 
           const [y, m] = mes.split('-').map(Number);
           const end = new Date(y, m, 0).toISOString().split('T')[0];
 
-          const [{ data: gastos }, { data: tipos }, { data: folhaItens }] = await Promise.all([
+          const [{ data: gastos }, { data: tipos }, { data: folhaItens }, { data: pagos }] = await Promise.all([
             supabase
               .from('gastos' as any)
               .select('id, valor, tipo_custo_id, descricao, data')
@@ -137,8 +139,18 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange }: Props) 
               .from('custos_folha_mensais' as any)
               .select('id, colaborador_nome, valor')
               .eq('mes_referencia', start),
+            supabase
+              .from('despesas_valor_pago_mensal' as any)
+              .select('tipo_custo_id, valor_pago')
+              .eq('mes_referencia', start),
           ]);
           if (cancelled) return;
+
+          const pagosMap: ValorPagoMap = {};
+          ((pagos || []) as any[]).forEach((p: any) => {
+            pagosMap[p.tipo_custo_id] = Number(p.valor_pago) || 0;
+          });
+          setValorPagoMap(pagosMap);
 
           const tiposMap: Record<string, { nome: string; tipo: string }> = {};
           ((tipos || []) as any[]).forEach((t: any) => {
@@ -193,6 +205,16 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange }: Props) 
 
   const rotulo = mes ? `Valores de ${mes}` : 'Configuração padrão';
 
+  const setValorPago = async (tipoCustoId: string, valor: number) => {
+    if (!mes) return;
+    const start = `${mes}-01`;
+    setValorPagoMap((prev) => ({ ...prev, [tipoCustoId]: valor }));
+    const { error } = await supabase
+      .from('despesas_valor_pago_mensal' as any)
+      .upsert({ tipo_custo_id: tipoCustoId, mes_referencia: start, valor_pago: valor }, { onConflict: 'tipo_custo_id,mes_referencia' });
+    if (error) toast.error('Erro ao salvar valor pago: ' + error.message);
+  };
+
   const updateColab = async (id: string, patch: Partial<ColabFolha>) => {
     setColabs((prev) => prev.map((c) => (c.id === id ? { ...c, ...patch } : c)));
     const dbPatch: any = { ...patch };
@@ -224,6 +246,9 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange }: Props) 
         loading={loading}
         editable={!mes ? 'fixa' : undefined}
         onChanged={reload}
+        mes={mes}
+        valorPagoMap={valorPagoMap}
+        onValorPagoChange={setValorPago}
       />
       <Bloco
         titulo="Despesas Variáveis"
@@ -233,6 +258,9 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange }: Props) 
         loading={loading}
         editable={!mes ? 'variavel' : undefined}
         onChanged={reload}
+        mes={mes}
+        valorPagoMap={valorPagoMap}
+        onValorPagoChange={setValorPago}
       />
     </div>
   );
@@ -386,6 +414,9 @@ function Bloco({
   loading,
   editable,
   onChanged,
+  mes,
+  valorPagoMap,
+  onValorPagoChange,
 }: {
   titulo: string;
   icon: React.ReactNode;
@@ -394,8 +425,12 @@ function Bloco({
   loading: boolean;
   editable?: 'fixa' | 'variavel';
   onChanged?: () => void;
+  mes?: string | null;
+  valorPagoMap?: ValorPagoMap;
+  onValorPagoChange?: (tipoCustoId: string, valor: number) => void;
 }) {
   const total = itens.reduce((s, i) => s + i.valor, 0);
+  const totalPago = mes ? itens.reduce((s, i) => s + (valorPagoMap?.[i.id] || 0), 0) : 0;
   const [novoNome, setNovoNome] = useState('');
   const [novoValor, setNovoValor] = useState('');
 
@@ -438,10 +473,11 @@ function Bloco({
         </div>
         <span className="text-[10px] uppercase tracking-wider text-white/40">{rotulo}</span>
       </div>
-      <div className={`grid ${editable ? 'grid-cols-[1fr_140px_32px]' : 'grid-cols-[1fr_110px]'} gap-x-6 px-2 pb-2 mb-1 border-b border-white/10 text-[10px] uppercase tracking-wider text-white/40`}>
+      <div className={`grid ${editable ? 'grid-cols-[1fr_140px_32px]' : mes ? 'grid-cols-[1fr_110px_140px]' : 'grid-cols-[1fr_110px]'} gap-x-6 px-2 pb-2 mb-1 border-b border-white/10 text-[10px] uppercase tracking-wider text-white/40`}>
         <span className="pl-1">Item</span>
         <span className="text-right pr-1">Valor mensal</span>
         {editable && <span />}
+        {!editable && mes && <span className="text-right pr-1">Valor pago</span>}
       </div>
       <div className="flex-1 max-h-64 overflow-y-auto space-y-1 pr-1">
         {loading ? (
@@ -450,7 +486,7 @@ function Bloco({
           <p className="text-sm text-white/40 px-2">Sem itens</p>
         ) : (
           itens.map((i) => (
-            <div key={i.id} className={`group grid ${editable ? 'grid-cols-[1fr_140px_32px]' : 'grid-cols-[1fr_110px]'} gap-x-6 text-sm px-2 py-1.5 rounded-md hover:bg-white/[0.03] transition-colors items-center`}>
+            <div key={i.id} className={`group grid ${editable ? 'grid-cols-[1fr_140px_32px]' : mes ? 'grid-cols-[1fr_110px_140px]' : 'grid-cols-[1fr_110px]'} gap-x-6 text-sm px-2 py-1.5 rounded-md hover:bg-white/[0.03] transition-colors items-center`}>
               {editable ? (
                 <TextInput value={i.nome} onCommit={(v) => updateTipo(i.id, { nome: v })} />
               ) : (
@@ -480,6 +516,13 @@ function Bloco({
                   </AlertDialogContent>
                 </AlertDialog>
               )}
+              {!editable && mes && (
+                <NumInput
+                  value={valorPagoMap?.[i.id] || 0}
+                  onCommit={(v) => onValorPagoChange?.(i.id, v)}
+                  valueClassName="text-amber-300"
+                />
+              )}
             </div>
           ))
         )}
@@ -507,10 +550,13 @@ function Bloco({
           </div>
         )}
       </div>
-      <div className={`mt-3 pt-3 border-t border-white/10 grid ${editable ? 'grid-cols-[1fr_140px_32px]' : 'grid-cols-[1fr_110px]'} gap-x-6 items-center px-2`}>
+      <div className={`mt-3 pt-3 border-t border-white/10 grid ${editable ? 'grid-cols-[1fr_140px_32px]' : mes ? 'grid-cols-[1fr_110px_140px]' : 'grid-cols-[1fr_110px]'} gap-x-6 items-center px-2`}>
         <span className="text-xs text-white/50 uppercase tracking-wider">Total</span>
         <span className="text-base font-bold text-white text-right whitespace-nowrap">{formatCurrency(total)}</span>
         {editable && <span />}
+        {!editable && mes && (
+          <span className="text-base font-bold text-amber-300 text-right whitespace-nowrap">{formatCurrency(totalPago)}</span>
+        )}
       </div>
     </div>
   );
