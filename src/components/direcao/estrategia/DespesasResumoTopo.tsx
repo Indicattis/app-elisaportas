@@ -32,14 +32,14 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange }: Props) 
               .select('id, nome, tipo, valor_maximo_mensal, ativo, aparece_no_dre')
               .eq('ativo', true)
               .eq('aparece_no_dre', true),
-            supabase
-              .from('admin_users')
-              .select('id, nome, custo_colaborador, ativo, tipo_usuario, visivel_organograma')
-              .eq('ativo', true)
-              .in('tipo_usuario', ['colaborador', 'metamorfo'])
-              .eq('visivel_organograma', true)
-              .neq('role', 'administrador')
-              .order('nome'),
+             supabase
+               .from('admin_users')
+               .select('id, nome, custo_colaborador, ativo, tipo_usuario, visivel_organograma, em_folha')
+               .eq('ativo', true)
+               .in('tipo_usuario', ['colaborador', 'metamorfo'])
+               .eq('visivel_organograma', true)
+               .neq('role', 'administrador')
+               .order('nome'),
           ]);
           if (cancelled) return;
           const tiposList = ((tipos || []) as any[]).filter((t) => !isFolha(t.nome));
