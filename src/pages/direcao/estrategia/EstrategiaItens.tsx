@@ -670,6 +670,8 @@ function SortableItemRow({ item, disabled, categorias, colors, order, padroes, o
           open={calcOpen}
           onOpenChange={setCalcOpen}
           itemDescricao={item.descricao}
+          itemId={item.id}
+          itemUnidade={item.unidade}
         />
         {!disabled && (
           <button
