@@ -23,12 +23,12 @@ const routePrefixMap: Record<string, string> = {
 
 const menuItems = [
   { label: "Direção", icon: Shield, path: "/direcao", isGold: true },
+  { label: "Vídeos de Marketing", icon: Clapperboard, path: "/marketing/videos-ideias" },
   { label: "Marketing", icon: BarChart3, path: "/marketing" },
   { label: "Vendas", icon: ShoppingCart, path: "/vendas" },
   { label: "Fábrica", icon: Factory, path: "/fabrica" },
   { label: "Logística", icon: Truck, path: "/logistica" },
-  { label: "Administrativo", icon: Building2, path: "/administrativo" },
-  { label: "Vídeos de Marketing", icon: Clapperboard, path: "/marketing/videos-ideias" }
+  { label: "Administrativo", icon: Building2, path: "/administrativo" }
 ];
 
 export default function Home() {
