@@ -214,32 +214,43 @@ function BlocoFolha({
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full text-sm min-w-[900px]">
+        <table className="w-full text-sm min-w-[1200px]">
           <thead>
             <tr className="text-[10px] uppercase tracking-wider text-white/40 border-b border-white/10">
               <th className="text-left font-normal pb-2 pl-1">Colaborador</th>
-              <th className="text-right font-normal pb-2 px-2">Salário</th>
+              <th className="text-right font-normal pb-2 px-2 text-emerald-400">Salário</th>
               <th className="text-right font-normal pb-2 px-2">Combustível</th>
               <th className="text-right font-normal pb-2 px-2">Insalub %</th>
+              <th className="text-right font-normal pb-2 px-2">Insalub valor</th>
               <th className="text-right font-normal pb-2 px-2">FGTS %</th>
-              <th className="text-right font-normal pb-2 px-2">Previsão 13°</th>
+              <th className="text-right font-normal pb-2 px-2">FGTS valor</th>
+              <th className="text-right font-normal pb-2 px-2">Previsão 13° + FGTS 13°</th>
+              <th className="text-right font-normal pb-2 px-2">Férias + 1/3 + FGTS</th>
               <th className="text-right font-normal pb-2 px-2">Total</th>
               <th className="pb-2 pr-1"></th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={8} className="text-white/40 px-2 py-3">Carregando...</td></tr>
+              <tr><td colSpan={11} className="text-white/40 px-2 py-3">Carregando...</td></tr>
             ) : rows.length === 0 ? (
-              <tr><td colSpan={8} className="text-white/40 px-2 py-3 text-center">Nenhum lançamento. Clique em Adicionar.</td></tr>
-            ) : rows.map(r => (
+              <tr><td colSpan={11} className="text-white/40 px-2 py-3 text-center">Nenhum lançamento. Clique em Adicionar.</td></tr>
+            ) : rows.map(r => {
+              const insalubVal = Number(r.salario) * Number(r.insalubridade_pct || 0) / 100;
+              const fgtsVal = Number(r.salario) * Number(r.fgts_pct || 0) / 100;
+              const prev13ComFgts = Number(r.previsao_13_valor) * (1 + Number(r.fgts_pct || 0) / 100);
+              const feriasComUmTerco = Number(r.salario) / 3 + fgtsVal;
+              return (
               <tr key={r.id} className="border-b border-white/5 hover:bg-white/[0.03]">
                 <td className="py-2 pl-1 text-white/90">{r.colaborador_nome}</td>
-                <td className="px-2 text-right text-white/80">{formatCurrency(r.salario)}</td>
+                <td className="px-2 text-right text-emerald-400 font-medium">{formatCurrency(r.salario)}</td>
                 <td className="px-2 text-right text-white/60">{formatCurrency(r.aux_combustivel)}</td>
                 <td className="px-2 text-right text-white/60">{Number(r.insalubridade_pct).toFixed(2)}%</td>
+                <td className="px-2 text-right text-white/60">{formatCurrency(insalubVal)}</td>
                 <td className="px-2 text-right text-white/60">{Number(r.fgts_pct).toFixed(2)}%</td>
-                <td className="px-2 text-right text-white/60">{formatCurrency(r.previsao_13_valor)}</td>
+                <td className="px-2 text-right text-white/60">{formatCurrency(fgtsVal)}</td>
+                <td className="px-2 text-right text-white/60">{formatCurrency(prev13ComFgts)}</td>
+                <td className="px-2 text-right text-white/60">{formatCurrency(feriasComUmTerco)}</td>
                 <td className="px-2 text-right text-white font-medium">{formatCurrency(r.total)}</td>
                 <td className="pr-1 text-right">
                   <button
@@ -251,7 +262,8 @@ function BlocoFolha({
                   </button>
                 </td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>
