@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/alert-dialog';
 
 type Item = { id: string; nome: string; valor: number };
+type ValorPagoMap = Record<string, number>;
 type ColabFolha = {
   id: string;
   nome: string;
@@ -48,6 +49,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange }: Props) 
   const [colabs, setColabs] = useState<ColabFolha[]>([]);
   const [fixas, setFixas] = useState<Item[]>([]);
   const [variaveis, setVariaveis] = useState<Item[]>([]);
+  const [valorPagoMap, setValorPagoMap] = useState<ValorPagoMap>({});
   const [loading, setLoading] = useState(false);
   const [reloadV, setReloadV] = useState(0);
   const reload = () => setReloadV((v) => v + 1);
@@ -123,7 +125,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange }: Props) 
           const [y, m] = mes.split('-').map(Number);
           const end = new Date(y, m, 0).toISOString().split('T')[0];
 
-          const [{ data: gastos }, { data: tipos }, { data: folhaItens }] = await Promise.all([
+          const [{ data: gastos }, { data: tipos }, { data: folhaItens }, { data: pagos }] = await Promise.all([
             supabase
               .from('gastos' as any)
               .select('id, valor, tipo_custo_id, descricao, data')
@@ -137,8 +139,18 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange }: Props) 
               .from('custos_folha_mensais' as any)
               .select('id, colaborador_nome, valor')
               .eq('mes_referencia', start),
+            supabase
+              .from('despesas_valor_pago_mensal' as any)
+              .select('tipo_custo_id, valor_pago')
+              .eq('mes_referencia', start),
           ]);
           if (cancelled) return;
+
+          const pagosMap: ValorPagoMap = {};
+          ((pagos || []) as any[]).forEach((p: any) => {
+            pagosMap[p.tipo_custo_id] = Number(p.valor_pago) || 0;
+          });
+          setValorPagoMap(pagosMap);
 
           const tiposMap: Record<string, { nome: string; tipo: string }> = {};
           ((tipos || []) as any[]).forEach((t: any) => {
@@ -193,6 +205,16 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange }: Props) 
 
   const rotulo = mes ? `Valores de ${mes}` : 'Configuração padrão';
 
+  const setValorPago = async (tipoCustoId: string, valor: number) => {
+    if (!mes) return;
+    const start = `${mes}-01`;
+    setValorPagoMap((prev) => ({ ...prev, [tipoCustoId]: valor }));
+    const { error } = await supabase
+      .from('despesas_valor_pago_mensal' as any)
+      .upsert({ tipo_custo_id: tipoCustoId, mes_referencia: start, valor_pago: valor }, { onConflict: 'tipo_custo_id,mes_referencia' });
+    if (error) toast.error('Erro ao salvar valor pago: ' + error.message);
+  };
+
   const updateColab = async (id: string, patch: Partial<ColabFolha>) => {
     setColabs((prev) => prev.map((c) => (c.id === id ? { ...c, ...patch } : c)));
     const dbPatch: any = { ...patch };
@@ -224,6 +246,9 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange }: Props) 
         loading={loading}
         editable={!mes ? 'fixa' : undefined}
         onChanged={reload}
+        mes={mes}
+        valorPagoMap={valorPagoMap}
+        onValorPagoChange={setValorPago}
       />
       <Bloco
         titulo="Despesas Variáveis"
@@ -233,6 +258,9 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange }: Props) 
         loading={loading}
         editable={!mes ? 'variavel' : undefined}
         onChanged={reload}
+        mes={mes}
+        valorPagoMap={valorPagoMap}
+        onValorPagoChange={setValorPago}
       />
     </div>
   );
