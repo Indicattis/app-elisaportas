@@ -348,14 +348,51 @@ function Bloco({
   itens,
   rotulo,
   loading,
+  editable,
+  onChanged,
 }: {
   titulo: string;
   icon: React.ReactNode;
   itens: Item[];
   rotulo: string;
   loading: boolean;
+  editable?: 'fixa' | 'variavel';
+  onChanged?: () => void;
 }) {
   const total = itens.reduce((s, i) => s + i.valor, 0);
+  const [novoNome, setNovoNome] = useState('');
+  const [novoValor, setNovoValor] = useState('');
+
+  const updateTipo = async (id: string, patch: { nome?: string; valor_maximo_mensal?: number }) => {
+    const { error } = await supabase.from('tipos_custos' as any).update(patch as any).eq('id', id);
+    if (error) { toast.error('Erro ao salvar: ' + error.message); return; }
+    onChanged?.();
+  };
+  const deleteTipo = async (id: string) => {
+    const { error } = await supabase.from('tipos_custos' as any).delete().eq('id', id);
+    if (error) { toast.error('Erro ao excluir: ' + error.message); return; }
+    toast.success('Despesa excluída');
+    onChanged?.();
+  };
+  const addTipo = async () => {
+    const nome = novoNome.trim();
+    const valor = Number(novoValor) || 0;
+    if (!nome) { toast.error('Informe o nome'); return; }
+    const { data: userData } = await supabase.auth.getUser();
+    const { error } = await supabase.from('tipos_custos' as any).insert([{
+      nome,
+      tipo: editable,
+      valor_maximo_mensal: valor,
+      ativo: true,
+      aparece_no_dre: true,
+      created_by: userData.user?.id || '',
+    }] as any);
+    if (error) { toast.error('Erro ao criar: ' + error.message); return; }
+    toast.success('Despesa criada');
+    setNovoNome(''); setNovoValor('');
+    onChanged?.();
+  };
+
   return (
     <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-5 flex flex-col">
       <div className="flex items-center justify-between mb-3">
@@ -365,31 +402,97 @@ function Bloco({
         </div>
         <span className="text-[10px] uppercase tracking-wider text-white/40">{rotulo}</span>
       </div>
-      <div className="grid grid-cols-[1fr_110px_110px] gap-x-6 px-2 pb-2 mb-1 border-b border-white/10 text-[10px] uppercase tracking-wider text-white/40">
+      <div className={`grid ${editable ? 'grid-cols-[1fr_140px_110px_32px]' : 'grid-cols-[1fr_110px_110px]'} gap-x-6 px-2 pb-2 mb-1 border-b border-white/10 text-[10px] uppercase tracking-wider text-white/40`}>
         <span className="pl-1">Item</span>
         <span className="text-right pr-1">Valor mensal</span>
         <span className="text-right pr-1">Valor anual</span>
+        {editable && <span />}
       </div>
       <div className="flex-1 max-h-64 overflow-y-auto space-y-1 pr-1">
         {loading ? (
           <p className="text-sm text-white/40 px-2">Carregando...</p>
-        ) : itens.length === 0 ? (
+        ) : itens.length === 0 && !editable ? (
           <p className="text-sm text-white/40 px-2">Sem itens</p>
         ) : (
           itens.map((i) => (
-            <div key={i.id} className="grid grid-cols-[1fr_110px_110px] gap-x-6 text-sm px-2 py-1.5 rounded-md hover:bg-white/[0.03] transition-colors">
-              <span className="text-white/70 truncate">{i.nome}</span>
-              <span className="text-white/90 font-medium whitespace-nowrap text-right">{formatCurrency(i.valor)}</span>
+            <div key={i.id} className={`group grid ${editable ? 'grid-cols-[1fr_140px_110px_32px]' : 'grid-cols-[1fr_110px_110px]'} gap-x-6 text-sm px-2 py-1.5 rounded-md hover:bg-white/[0.03] transition-colors items-center`}>
+              {editable ? (
+                <TextInput value={i.nome} onCommit={(v) => updateTipo(i.id, { nome: v })} />
+              ) : (
+                <span className="text-white/70 truncate">{i.nome}</span>
+              )}
+              {editable ? (
+                <NumInput value={i.valor} onCommit={(v) => updateTipo(i.id, { valor_maximo_mensal: v })} />
+              ) : (
+                <span className="text-white/90 font-medium whitespace-nowrap text-right">{formatCurrency(i.valor)}</span>
+              )}
               <span className="text-white/60 font-medium whitespace-nowrap text-right">{formatCurrency(i.valor * 12)}</span>
+              {editable && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <button className="opacity-0 group-hover:opacity-100 transition text-white/40 hover:text-red-400 flex justify-center" aria-label="Excluir">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Excluir "{i.nome}"?</AlertDialogTitle>
+                      <AlertDialogDescription>Esta ação remove a despesa do catálogo. Lançamentos existentes não são removidos.</AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => deleteTipo(i.id)}>Excluir</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
             </div>
           ))
         )}
+        {editable && (
+          <div className="grid grid-cols-[1fr_140px_110px_32px] gap-x-6 text-sm px-2 py-1.5 items-center mt-2 border-t border-white/5 pt-3">
+            <input
+              type="text"
+              placeholder="Nova despesa..."
+              value={novoNome}
+              onChange={(e) => setNovoNome(e.target.value)}
+              className="bg-white/5 border border-white/10 rounded-md px-2 py-1 text-sm text-white outline-none focus:border-white/30"
+            />
+            <input
+              type="number"
+              step="0.01"
+              placeholder="0,00"
+              value={novoValor}
+              onChange={(e) => setNovoValor(e.target.value)}
+              className="bg-white/5 border border-white/10 rounded-md px-2 py-1 text-sm text-right text-white outline-none focus:border-white/30 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            />
+            <span />
+            <button onClick={addTipo} className="flex justify-center text-white/60 hover:text-white" aria-label="Adicionar">
+              <Plus className="w-4 h-4" />
+            </button>
+          </div>
+        )}
       </div>
-      <div className="mt-3 pt-3 border-t border-white/10 grid grid-cols-[1fr_110px_110px] gap-x-6 items-center px-2">
+      <div className={`mt-3 pt-3 border-t border-white/10 grid ${editable ? 'grid-cols-[1fr_140px_110px_32px]' : 'grid-cols-[1fr_110px_110px]'} gap-x-6 items-center px-2`}>
         <span className="text-xs text-white/50 uppercase tracking-wider">Total</span>
         <span className="text-base font-bold text-white text-right whitespace-nowrap">{formatCurrency(total)}</span>
         <span className="text-base font-bold text-white/70 text-right whitespace-nowrap">{formatCurrency(total * 12)}</span>
+        {editable && <span />}
       </div>
     </div>
+  );
+}
+
+function TextInput({ value, onCommit }: { value: string; onCommit: (v: string) => void }) {
+  const [local, setLocal] = useState(value);
+  useEffect(() => { setLocal(value); }, [value]);
+  return (
+    <input
+      type="text"
+      value={local}
+      onChange={(e) => setLocal(e.target.value)}
+      onBlur={() => { const v = local.trim(); if (v && v !== value) onCommit(v); else setLocal(value); }}
+      className="w-full bg-transparent hover:bg-white/5 focus:bg-white/5 border border-transparent hover:border-white/10 focus:border-white/30 rounded-md px-2 py-1 text-sm text-white/80 outline-none"
+    />
   );
 }
