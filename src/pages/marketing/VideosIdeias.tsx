@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Plus, Clapperboard, Loader2 } from "lucide-react";
+import { ArrowLeft, Plus, Clapperboard, Loader2, GripVertical } from "lucide-react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -18,6 +18,21 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  rectSortingStrategy,
+  useSortable,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 const ideiaSchema = z.object({
   titulo: z.string().trim().min(1, "Título obrigatório").max(120, "Máx. 120 caracteres"),
@@ -34,6 +49,45 @@ interface Ideia {
   descricao: string;
   criado_por_nome: string | null;
   created_at: string;
+  posicao: number | null;
+}
+
+function SortableIdeiaCard({ ideia }: { ideia: Ideia }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id: ideia.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+  };
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="p-4 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 relative"
+    >
+      <button
+        {...attributes}
+        {...listeners}
+        className="absolute top-2 right-2 p-1.5 rounded-md text-white/40 hover:text-white/80 hover:bg-white/10 cursor-grab active:cursor-grabbing touch-none"
+        aria-label="Reordenar"
+      >
+        <GripVertical className="w-4 h-4" />
+      </button>
+      <h3 className="font-semibold text-white mb-2 pr-8">{ideia.titulo}</h3>
+      <p className="text-sm text-white/70 whitespace-pre-wrap mb-3">{ideia.descricao}</p>
+      <div className="flex items-center justify-between text-xs text-white/40">
+        <span>{ideia.criado_por_nome ?? "—"}</span>
+        <span>
+          {new Date(ideia.created_at).toLocaleDateString("pt-BR", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+          })}
+        </span>
+      </div>
+    </div>
+  );
 }
 
 export default function VideosIdeias() {
@@ -52,12 +106,51 @@ export default function VideosIdeias() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("marketing_videos_ideias")
-        .select("id,titulo,descricao,criado_por_nome,created_at")
+        .select("id,titulo,descricao,criado_por_nome,created_at,posicao")
+        .order("posicao", { ascending: true, nullsFirst: false })
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data as Ideia[];
     },
   });
+
+  const reordenar = useMutation({
+    mutationFn: async (items: Ideia[]) => {
+      const updates = items.map((it, i) =>
+        supabase.from("marketing_videos_ideias").update({ posicao: i }).eq("id", it.id)
+      );
+      const results = await Promise.all(updates);
+      const failed = results.find((r) => r.error);
+      if (failed?.error) throw failed.error;
+    },
+    onMutate: async (items) => {
+      await queryClient.cancelQueries({ queryKey: ["marketing-videos-ideias"] });
+      const prev = queryClient.getQueryData<Ideia[]>(["marketing-videos-ideias"]);
+      queryClient.setQueryData(["marketing-videos-ideias"], items);
+      return { prev };
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.prev) queryClient.setQueryData(["marketing-videos-ideias"], ctx.prev);
+      toast.error("Erro ao reordenar");
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["marketing-videos-ideias"] });
+    },
+  });
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id || !ideias) return;
+    const oldIndex = ideias.findIndex((i) => i.id === active.id);
+    const newIndex = ideias.findIndex((i) => i.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+    const next = arrayMove(ideias, oldIndex, newIndex);
+    reordenar.mutate(next);
+  };
 
   const criar = useMutation({
     mutationFn: async () => {
@@ -139,27 +232,15 @@ export default function VideosIdeias() {
             <p className="text-sm">Nenhuma ideia cadastrada ainda.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {ideias.map((ideia) => (
-              <div
-                key={ideia.id}
-                className="p-4 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10"
-              >
-                <h3 className="font-semibold text-white mb-2">{ideia.titulo}</h3>
-                <p className="text-sm text-white/70 whitespace-pre-wrap mb-3">{ideia.descricao}</p>
-                <div className="flex items-center justify-between text-xs text-white/40">
-                  <span>{ideia.criado_por_nome ?? "—"}</span>
-                  <span>
-                    {new Date(ideia.created_at).toLocaleDateString("pt-BR", {
-                      day: "2-digit",
-                      month: "2-digit",
-                      year: "numeric",
-                    })}
-                  </span>
-                </div>
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={ideias.map((i) => i.id)} strategy={rectSortingStrategy}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {ideias.map((ideia) => (
+                  <SortableIdeiaCard key={ideia.id} ideia={ideia} />
+                ))}
               </div>
-            ))}
-          </div>
+            </SortableContext>
+          </DndContext>
         )}
       </div>
 
