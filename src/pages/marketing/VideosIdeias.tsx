@@ -88,7 +88,7 @@ interface Colaborador {
   nome: string;
 }
 
-function SortableIdeiaCard({ ideia, onChangeStatus, onDelete }: { ideia: Ideia; onChangeStatus: (id: string, s: Status) => void; onDelete: (id: string) => void }) {
+function SortableIdeiaCard({ ideia, onChangeStatus, onDelete, onEdit }: { ideia: Ideia; onChangeStatus: (id: string, s: Status) => void; onDelete: (id: string) => void; onEdit: (id: string) => void }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: ideia.id });
   const style = {
@@ -104,6 +104,13 @@ function SortableIdeiaCard({ ideia, onChangeStatus, onDelete }: { ideia: Ideia; 
       className="p-4 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 relative"
     >
       <div className="absolute top-2 right-2 flex items-center gap-1">
+        <button
+          onClick={() => onEdit(ideia.id)}
+          className="p-1.5 rounded-md text-white/40 hover:text-blue-400 hover:bg-blue-500/10 transition-colors"
+          aria-label="Editar ideia"
+        >
+          <Pencil className="w-4 h-4" />
+        </button>
         <button
           {...attributes}
           {...listeners}
