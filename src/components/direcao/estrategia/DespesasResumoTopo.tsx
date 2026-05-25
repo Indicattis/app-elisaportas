@@ -414,6 +414,9 @@ function Bloco({
   loading,
   editable,
   onChanged,
+  mes,
+  valorPagoMap,
+  onValorPagoChange,
 }: {
   titulo: string;
   icon: React.ReactNode;
@@ -422,8 +425,12 @@ function Bloco({
   loading: boolean;
   editable?: 'fixa' | 'variavel';
   onChanged?: () => void;
+  mes?: string | null;
+  valorPagoMap?: ValorPagoMap;
+  onValorPagoChange?: (tipoCustoId: string, valor: number) => void;
 }) {
   const total = itens.reduce((s, i) => s + i.valor, 0);
+  const totalPago = mes ? itens.reduce((s, i) => s + (valorPagoMap?.[i.id] || 0), 0) : 0;
   const [novoNome, setNovoNome] = useState('');
   const [novoValor, setNovoValor] = useState('');
 
@@ -466,10 +473,11 @@ function Bloco({
         </div>
         <span className="text-[10px] uppercase tracking-wider text-white/40">{rotulo}</span>
       </div>
-      <div className={`grid ${editable ? 'grid-cols-[1fr_140px_32px]' : 'grid-cols-[1fr_110px]'} gap-x-6 px-2 pb-2 mb-1 border-b border-white/10 text-[10px] uppercase tracking-wider text-white/40`}>
+      <div className={`grid ${editable ? 'grid-cols-[1fr_140px_32px]' : mes ? 'grid-cols-[1fr_110px_140px]' : 'grid-cols-[1fr_110px]'} gap-x-6 px-2 pb-2 mb-1 border-b border-white/10 text-[10px] uppercase tracking-wider text-white/40`}>
         <span className="pl-1">Item</span>
         <span className="text-right pr-1">Valor mensal</span>
         {editable && <span />}
+        {!editable && mes && <span className="text-right pr-1">Valor pago</span>}
       </div>
       <div className="flex-1 max-h-64 overflow-y-auto space-y-1 pr-1">
         {loading ? (
@@ -478,7 +486,7 @@ function Bloco({
           <p className="text-sm text-white/40 px-2">Sem itens</p>
         ) : (
           itens.map((i) => (
-            <div key={i.id} className={`group grid ${editable ? 'grid-cols-[1fr_140px_32px]' : 'grid-cols-[1fr_110px]'} gap-x-6 text-sm px-2 py-1.5 rounded-md hover:bg-white/[0.03] transition-colors items-center`}>
+            <div key={i.id} className={`group grid ${editable ? 'grid-cols-[1fr_140px_32px]' : mes ? 'grid-cols-[1fr_110px_140px]' : 'grid-cols-[1fr_110px]'} gap-x-6 text-sm px-2 py-1.5 rounded-md hover:bg-white/[0.03] transition-colors items-center`}>
               {editable ? (
                 <TextInput value={i.nome} onCommit={(v) => updateTipo(i.id, { nome: v })} />
               ) : (
@@ -508,6 +516,13 @@ function Bloco({
                   </AlertDialogContent>
                 </AlertDialog>
               )}
+              {!editable && mes && (
+                <NumInput
+                  value={valorPagoMap?.[i.id] || 0}
+                  onCommit={(v) => onValorPagoChange?.(i.id, v)}
+                  valueClassName="text-amber-300"
+                />
+              )}
             </div>
           ))
         )}
@@ -535,10 +550,13 @@ function Bloco({
           </div>
         )}
       </div>
-      <div className={`mt-3 pt-3 border-t border-white/10 grid ${editable ? 'grid-cols-[1fr_140px_32px]' : 'grid-cols-[1fr_110px]'} gap-x-6 items-center px-2`}>
+      <div className={`mt-3 pt-3 border-t border-white/10 grid ${editable ? 'grid-cols-[1fr_140px_32px]' : mes ? 'grid-cols-[1fr_110px_140px]' : 'grid-cols-[1fr_110px]'} gap-x-6 items-center px-2`}>
         <span className="text-xs text-white/50 uppercase tracking-wider">Total</span>
         <span className="text-base font-bold text-white text-right whitespace-nowrap">{formatCurrency(total)}</span>
         {editable && <span />}
+        {!editable && mes && (
+          <span className="text-base font-bold text-amber-300 text-right whitespace-nowrap">{formatCurrency(totalPago)}</span>
+        )}
       </div>
     </div>
   );
