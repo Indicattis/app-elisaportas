@@ -2,18 +2,16 @@ import { useEffect, useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
-import DespesasResumoTopo from '@/components/direcao/estrategia/DespesasResumoTopo';
 import { formatCurrency } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 
 export default function EstrategiaDespesas() {
   const anoAtual = new Date().getFullYear();
   const [ano, setAno] = useState(anoAtual);
-  const [mesSelecionado, setMesSelecionado] = useState<string | null>(null);
-  const [mediaMensal, setMediaMensal] = useState<number>(0);
   const [totaisMes, setTotaisMes] = useState<Record<string, number>>({});
-  const [reloadTotais, setReloadTotais] = useState(0);
+  const navigate = useNavigate();
 
   useEffect(() => {
     let cancelled = false;
@@ -48,7 +46,10 @@ export default function EstrategiaDespesas() {
     return () => {
       cancelled = true;
     };
-  }, [ano, reloadTotais]);
+  }, [ano]);
+
+  const totalAno = Object.values(totaisMes).reduce((s, v) => s + v, 0);
+  const mediaMensal = totalAno / 12;
 
   return (
     <MinimalistLayout
@@ -82,16 +83,11 @@ export default function EstrategiaDespesas() {
             const mesDate = new Date(ano, mIdx, 1);
             const mesKey = format(mesDate, 'yyyy-MM');
             const mesNome = format(mesDate, 'MMMM', { locale: ptBR });
-            const ativo = mesSelecionado === mesKey;
             return (
               <button
                 key={mesKey}
-                onClick={() => setMesSelecionado(ativo ? null : mesKey)}
-                className={`p-5 rounded-xl border text-left transition-all duration-200 ${
-                  ativo
-                    ? 'bg-blue-500/20 border-blue-400/40 text-white'
-                    : 'bg-white/5 border-white/10 hover:bg-white/10'
-                }`}
+                onClick={() => navigate(`/direcao/estrategia/despesas/${mesKey}`)}
+                className="p-5 rounded-xl border text-left transition-all duration-200 bg-white/5 border-white/10 hover:bg-white/10 hover:border-blue-400/40"
               >
                 <p className="text-sm text-white/50 capitalize mb-1">{mesNome}</p>
                 <p className="text-lg font-semibold text-white">
@@ -110,13 +106,6 @@ export default function EstrategiaDespesas() {
           <ChevronRight className="w-5 h-5 text-white/70" />
         </button>
       </div>
-
-      <DespesasResumoTopo
-        mes={mesSelecionado}
-        ano={ano}
-        onMediaMensalChange={setMediaMensal}
-        onDataChange={() => setReloadTotais((v) => v + 1)}
-      />
     </MinimalistLayout>
   );
 }
