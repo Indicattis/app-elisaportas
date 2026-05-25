@@ -183,6 +183,8 @@ export default function VideosIdeias() {
   const [autoresIds, setAutoresIds] = useState<string[]>([]);
   const [autoresPopoverOpen, setAutoresPopoverOpen] = useState(false);
   const [statusFiltro, setStatusFiltro] = useState<"todos" | Status>("todos");
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [ideiaParaExcluir, setIdeiaParaExcluir] = useState<string | null>(null);
 
   const { data: colaboradores } = useQuery({
     queryKey: ["marketing-videos-ideias-colaboradores"],
