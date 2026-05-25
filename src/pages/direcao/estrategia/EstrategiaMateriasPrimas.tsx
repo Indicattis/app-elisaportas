@@ -22,6 +22,11 @@ import { cn } from "@/lib/utils";
 import { useCustosItens } from "@/hooks/useCustosItens";
 import { useEstrategiaMateriasPrimas } from "@/hooks/useEstrategiaMateriasPrimas";
 import { useFornecedores } from "@/hooks/useFornecedores";
+import {
+  UNIDADES_MATERIA_PRIMA,
+  getUnidadeAbreviacao,
+  normalizarUnidade,
+} from "@/utils/unidadesMedida";
 
 const fmt = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -180,6 +185,9 @@ export default function EstrategiaMateriasPrimas() {
                     <TableHead className="text-white/60 min-w-[220px]">
                       Nome
                     </TableHead>
+                    <TableHead className="text-white/60 w-36">
+                      Unidade MP
+                    </TableHead>
                     <TableHead className="text-right text-white/60 w-32">
                       Qtd
                     </TableHead>
@@ -205,7 +213,7 @@ export default function EstrategiaMateriasPrimas() {
                   {materiasPrimas.length === 0 ? (
                     <TableRow>
                       <TableCell
-                        colSpan={9}
+                        colSpan={10}
                         className="text-center text-white/60 py-8"
                       >
                         Nenhuma matéria-prima cadastrada
@@ -218,6 +226,8 @@ export default function EstrategiaMateriasPrimas() {
                       const custoUn = qtd > 0 ? total / qtd : 0;
                       const itRef = itensMap.get(m.custo_item_id);
                       const un = itRef?.unidade || "un";
+                      const unMp = normalizarUnidade(m.unidade);
+                      const unMpAbr = getUnidadeAbreviacao(unMp);
                       return (
                         <TableRow
                           key={m.id}
@@ -250,6 +260,34 @@ export default function EstrategiaMateriasPrimas() {
                               className="h-8 bg-white/5 border-white/10 text-white"
                             />
                           </TableCell>
+                          <TableCell>
+                            <Select
+                              value={unMp}
+                              onValueChange={(v) => {
+                                if (v !== unMp) {
+                                  editar({ id: m.id, patch: { unidade: v } });
+                                }
+                              }}
+                            >
+                              <SelectTrigger className="h-8 bg-white/5 border-white/10 text-white">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent className="bg-slate-900 border-white/10 text-white max-h-[300px]">
+                                {UNIDADES_MATERIA_PRIMA.map((u) => (
+                                  <SelectItem
+                                    key={u.value}
+                                    value={u.value}
+                                    className="text-white"
+                                  >
+                                    {u.label}{" "}
+                                    <span className="text-white/40">
+                                      · {u.abreviacao}
+                                    </span>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
                           <TableCell className="text-right">
                             <Input
                               type="number"
@@ -271,7 +309,7 @@ export default function EstrategiaMateriasPrimas() {
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="text-white text-sm">
-                              1 <span className="text-white/50">un mp</span>{" "}
+                              1 <span className="text-white/50">{unMpAbr}</span>{" "}
                               = {qtd.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 3 })}{" "}
                               <span className="text-white/50">{un}</span>
                             </div>
@@ -301,7 +339,10 @@ export default function EstrategiaMateriasPrimas() {
                               custoUn > 0 ? "text-emerald-300" : "text-white/40",
                             )}
                           >
-                            {fmt(custoUn)}
+                            <div>{fmt(custoUn)}</div>
+                            <div className="text-[10px] text-white/40 font-normal">
+                              por {unMpAbr}
+                            </div>
                           </TableCell>
                           <TableCell>
                             <Select

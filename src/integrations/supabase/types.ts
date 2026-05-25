@@ -3013,6 +3013,7 @@ export type Database = {
           observacoes: string | null
           ordem: number
           quantidade_item: number
+          unidade: string
           updated_at: string
         }
         Insert: {
@@ -3026,6 +3027,7 @@ export type Database = {
           observacoes?: string | null
           ordem?: number
           quantidade_item?: number
+          unidade?: string
           updated_at?: string
         }
         Update: {
@@ -3039,6 +3041,7 @@ export type Database = {
           observacoes?: string | null
           ordem?: number
           quantidade_item?: number
+          unidade?: string
           updated_at?: string
         }
         Relationships: [

@@ -1,0 +1,1 @@
+ALTER TABLE public.estrategia_materias_primas ADD COLUMN IF NOT EXISTS unidade TEXT NOT NULL DEFAULT 'un';

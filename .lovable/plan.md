@@ -1,28 +1,24 @@
-## Modal "Cálculo da bobina" em `/direcao/estrategia/itens`
+## Objetivo
 
-Hoje o modal usa os valores fixos `230 kg ≡ 300 m` e divide o resultado por `300` para obter o "Preço por metro". Vamos manter `230 kg` (entrada do peso da bobina) fixo, mas substituir o `300` (e o rótulo `m`) pelo valor cadastrado na matéria-prima do item em `/direcao/estrategia/materias-primas`.
+Permitir que cada matéria-prima cadastrada em `/direcao/estrategia/materias-primas` tenha sua **própria unidade de medida** (ex.: rolo, bobina, kg, litro), independente da unidade do item que ela compõe. Isso viabiliza cálculos corretos de compra (ex.: comprar em "rolos" mesmo que o item final seja medido em "metros").
 
-### Fonte do valor
+## Mudanças no banco
 
-- Para cada item, buscar as matérias-primas ativas via `useEstrategiaMateriasPrimas(item.id)`.
-- Usar a soma de `quantidade_item` de todas as matérias-primas cadastradas para aquele item como o "rendimento" (substitui o `300`).
-  - Justificativa: cada matéria-prima tem `quantidade_item = quantos [unidade do item] equivalem a 1 un da matéria-prima`. Como há apenas uma MP "bobina" por item de bobina típico, a soma cobre o caso geral sem complicar a UI.
-- A unidade exibida (atualmente `m`) vira `item.unidade` (ex.: `m`, `m²`, `un`), usando `getUnidadeAbreviacao()` de `src/utils/unidadesMedida.ts` para normalizar o rótulo.
+Adicionar coluna `unidade TEXT NOT NULL DEFAULT 'un'` em `estrategia_materias_primas`.
 
-### Comportamento
+## Mudanças no código
 
-- Linha "230 kg ≡ 300 m" passa a ser: `230 kg ≡ {rendimento} {unidadeItem}` (ex.: `230 kg ≡ 280 m`).
-- "Preço por metro" passa a ser: `Preço por {unidadeItem}` = `resultado / rendimento`.
-- Se o item não tiver matéria-prima cadastrada (ou rendimento `0`):
-  - Mostrar um aviso curto no modal: "Cadastre uma matéria-prima em Estratégia › Matérias-primas para calcular o preço por unidade."
-  - Ocultar a linha de "Preço por unidade" (evita divisão por zero).
+### `src/hooks/useEstrategiaMateriasPrimas.ts`
+- Adicionar `unidade: string` no tipo `EstrategiaMateriaPrima` e `NewEstrategiaMateriaPrima`.
+- Passar `unidade` no insert do `criar` (default `"un"`).
 
-### Arquivos afetados
+### `src/pages/direcao/estrategia/EstrategiaMateriasPrimas.tsx`
+- Nova coluna **"Unidade MP"** na tabela (entre "Nome" e "Qtd"), renderizada como `Select` populado por `UNIDADES_MATERIA_PRIMA` de `@/utils/unidadesMedida`.
+- Ao alterar, chamar `editar({ id, patch: { unidade } })`.
+- Atualizar `colSpan` do estado vazio (de 9 para 10).
+- Substituir o literal `"un mp"` da coluna **Proporção** pela abreviação real da unidade da matéria-prima (`getUnidadeAbreviacao(m.unidade)`), mantendo o destino como a unidade do item (ex.: `1 rolo = 50 m`).
+- Coluna **"Custo/un"** passa a mostrar `Custo/{abreviação da unidade MP}` (ex.: `Custo/rolo`).
 
-- `src/pages/direcao/estrategia/EstrategiaItens.tsx`
-  - `CalculoBobinaDialog`: receber `itemId` e `itemUnidade` como props (além de `itemDescricao`).
-  - Dentro do dialog, consumir `useEstrategiaMateriasPrimas(itemId)` para obter o rendimento.
-  - Substituir as ocorrências fixas de `300` e `"m"` pelos valores dinâmicos.
-  - No `SortableItemRow`, passar `item.id` e `item.unidade` ao `CalculoBobinaDialog`.
-
-Sem mudanças de schema, hooks novos ou rotas.
+### Observações
+- Nenhuma mudança em `EstrategiaItens.tsx` — o cálculo de bobina já soma `quantidade_item` (rendimento em unidade do item) e divide o custo total, então continua correto independente da unidade da MP.
+- Registros existentes ficam com `'un'` por padrão; o usuário pode ajustar via o novo Select.
