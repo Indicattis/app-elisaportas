@@ -248,10 +248,26 @@ function NumInput({
   step?: string;
 }) {
   const [local, setLocal] = useState(String(value ?? 0));
+  const [editing, setEditing] = useState(false);
   useEffect(() => { setLocal(String(value ?? 0)); }, [value]);
+  if (!editing) {
+    const display = suffix === '%'
+      ? `${Number(value ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 })}${suffix}`
+      : formatCurrency(Number(value ?? 0));
+    return (
+      <button
+        type="button"
+        onClick={() => setEditing(true)}
+        className="w-full text-right text-sm text-white/90 px-2 py-1 rounded-md hover:bg-white/5 border border-transparent hover:border-white/10 transition-colors whitespace-nowrap"
+      >
+        {display}
+      </button>
+    );
+  }
   return (
     <div className="relative">
       <input
+        autoFocus
         type="number"
         step={step}
         value={local}
@@ -259,6 +275,11 @@ function NumInput({
         onBlur={() => {
           const n = Number(local);
           if (!isNaN(n) && n !== value) onCommit(n);
+          setEditing(false);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+          if (e.key === 'Escape') { setLocal(String(value ?? 0)); setEditing(false); }
         }}
         className="w-full bg-white/5 border border-white/10 rounded-md px-2 py-1 text-right text-sm text-white outline-none focus:border-white/30 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
       />
@@ -485,13 +506,30 @@ function Bloco({
 
 function TextInput({ value, onCommit }: { value: string; onCommit: (v: string) => void }) {
   const [local, setLocal] = useState(value);
+  const [editing, setEditing] = useState(false);
   useEffect(() => { setLocal(value); }, [value]);
+  if (!editing) {
+    return (
+      <button
+        type="button"
+        onClick={() => setEditing(true)}
+        className="w-full text-left text-sm text-white/80 px-2 py-1 rounded-md hover:bg-white/5 border border-transparent hover:border-white/10 transition-colors truncate"
+      >
+        {value}
+      </button>
+    );
+  }
   return (
     <input
+      autoFocus
       type="text"
       value={local}
       onChange={(e) => setLocal(e.target.value)}
-      onBlur={() => { const v = local.trim(); if (v && v !== value) onCommit(v); else setLocal(value); }}
+      onBlur={() => { const v = local.trim(); if (v && v !== value) onCommit(v); else setLocal(value); setEditing(false); }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+        if (e.key === 'Escape') { setLocal(value); setEditing(false); }
+      }}
       className="w-full bg-transparent hover:bg-white/5 focus:bg-white/5 border border-transparent hover:border-white/10 focus:border-white/30 rounded-md px-2 py-1 text-sm text-white/80 outline-none"
     />
   );
