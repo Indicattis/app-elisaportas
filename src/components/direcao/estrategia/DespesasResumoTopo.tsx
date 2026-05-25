@@ -328,7 +328,7 @@ function BlocoFolhaEditavel({
               <th className="text-right font-normal pb-2 px-2">FGTS %</th>
               <th className="text-right font-normal pb-2 px-2">FGTS R$</th>
               <th className="text-right font-normal pb-2 px-2">Previsão 13° + FGTS</th>
-              <th className="text-right font-normal pb-2 px-2">Férias</th>
+              <th className="text-right font-normal pb-2 px-2">Previsão de férias + 1/3 + FGTS</th>
               <th className="text-right font-normal pb-2 px-2">Total mensal</th>
               <th className="text-center font-normal pb-2 pr-1">Na folha</th>
             </tr>
