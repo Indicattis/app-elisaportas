@@ -598,6 +598,41 @@ export default function VideosIdeias() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* AlertDialog de exclusão */}
+      <AlertDialog open={deleteModalOpen} onOpenChange={(v) => { if (!excluirIdeia.isPending) setDeleteModalOpen(v); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              <Trash2 className="h-5 w-5" />
+              Excluir Ideia
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir esta ideia permanentemente? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={excluirIdeia.isPending}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                if (ideiaParaExcluir) excluirIdeia.mutate(ideiaParaExcluir);
+              }}
+              disabled={excluirIdeia.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {excluirIdeia.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Excluindo...
+                </>
+              ) : (
+                "Excluir"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
