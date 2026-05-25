@@ -7585,6 +7585,38 @@ export type Database = {
         }
         Relationships: []
       }
+      tabela_precos_montagem_template: {
+        Row: {
+          created_at: string
+          custo_item_id: string
+          id: string
+          quantidade: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          custo_item_id: string
+          id?: string
+          quantidade?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          custo_item_id?: string
+          id?: string
+          quantidade?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tabela_precos_montagem_template_custo_item_id_fkey"
+            columns: ["custo_item_id"]
+            isOneToOne: true
+            referencedRelation: "custos_itens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tabela_precos_portas: {
         Row: {
           altura: number

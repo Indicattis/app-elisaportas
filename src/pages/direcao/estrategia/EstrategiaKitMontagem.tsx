@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { Plus, Trash2, Check, ChevronsUpDown, Boxes } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Plus, Trash2, Check, ChevronsUpDown, Boxes, LayoutTemplate } from "lucide-react";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,10 +9,22 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { ItemTabelaPreco } from "@/hooks/useTabelaPrecos";
 import { useKitMontagem, computeLucroUnit } from "@/hooks/useKitMontagem";
 import { useCustosItens, useCustosItensPadroes } from "@/hooks/useCustosItens";
+import { applyTemplateToKit } from "@/hooks/useMontagemTemplate";
 import { cn } from "@/lib/utils";
 
 const fmt = (v: number) =>
@@ -21,7 +33,10 @@ const fmt = (v: number) =>
 export default function EstrategiaKitMontagem() {
   const { kitId } = useParams<{ kitId: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [applying, setApplying] = useState(false);
 
   const { data: kit, isLoading: isLoadingKit } = useQuery({
     queryKey: ["tabela-precos-kit", kitId],
@@ -42,6 +57,39 @@ export default function EstrategiaKitMontagem() {
   const { padroes } = useCustosItensPadroes();
 
   const usedIds = useMemo(() => new Set(items.map((i) => i.custo_item_id)), [items]);
+
+  const { data: templateCount = 0 } = useQuery({
+    queryKey: ["montagem-template-count"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("tabela_precos_montagem_template")
+        .select("id", { count: "exact", head: true });
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+
+  const handleApplyTemplate = async () => {
+    if (!kitId) return;
+    setApplying(true);
+    try {
+      const res = await applyTemplateToKit(kitId, usedIds);
+      await queryClient.invalidateQueries({ queryKey: ["kit-montagem", kitId] });
+      await queryClient.invalidateQueries({ queryKey: ["kits-montagem-resumo"] });
+      if (res.added === 0) {
+        toast.info("Todos os itens do template já estão no kit");
+      } else if (res.skipped > 0) {
+        toast.success(`${res.added} itens adicionados · ${res.skipped} já existiam`);
+      } else {
+        toast.success(`${res.added} itens adicionados`);
+      }
+      setConfirmOpen(false);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erro ao aplicar template");
+    } finally {
+      setApplying(false);
+    }
+  };
 
   const totais = useMemo(() => {
     let lucro = 0;
@@ -109,6 +157,17 @@ export default function EstrategiaKitMontagem() {
                 <div className="text-sm text-white/60">
                   {items.length} {items.length === 1 ? "item" : "itens"} na montagem
                 </div>
+                <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="text-white border border-white/10 bg-white/5 hover:bg-white/10"
+                  onClick={() => setConfirmOpen(true)}
+                  disabled={templateCount === 0}
+                  title={templateCount === 0 ? "Template vazio" : "Aplicar template padrão"}
+                >
+                  <LayoutTemplate className="h-4 w-4 mr-2 text-blue-400" /> Aplicar template padrão
+                </Button>
                 <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
                   <PopoverTrigger asChild>
                     <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
@@ -154,6 +213,7 @@ export default function EstrategiaKitMontagem() {
                     </Command>
                   </PopoverContent>
                 </Popover>
+                </div>
               </div>
 
               <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden">
@@ -310,6 +370,27 @@ export default function EstrategiaKitMontagem() {
           </div>
         </div>
       )}
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent className="bg-slate-900 border-white/10 text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">Aplicar template padrão?</AlertDialogTitle>
+            <AlertDialogDescription className="text-white/70">
+              Serão adicionados os {templateCount} itens do template padrão a este kit.
+              Itens já presentes são preservados (não duplica, não sobrescreve quantidades).
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-white/5 border-white/10 text-white hover:bg-white/10">Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); handleApplyTemplate(); }}
+              disabled={applying}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              {applying ? "Aplicando..." : "Aplicar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </MinimalistLayout>
   );
 }
