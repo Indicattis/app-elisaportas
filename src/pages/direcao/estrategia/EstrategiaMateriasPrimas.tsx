@@ -183,6 +183,9 @@ export default function EstrategiaMateriasPrimas() {
                     <TableHead className="text-right text-white/60 w-32">
                       Qtd
                     </TableHead>
+                    <TableHead className="text-right text-white/60 w-40">
+                      Proporção
+                    </TableHead>
                     <TableHead className="text-right text-white/60 w-36">
                       Custo total
                     </TableHead>
