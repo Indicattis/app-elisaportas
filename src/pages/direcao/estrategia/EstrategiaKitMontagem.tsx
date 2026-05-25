@@ -41,42 +41,6 @@ export default function EstrategiaKitMontagem() {
   const { items: allCustosItens } = useCustosItens();
   const { padroes } = useCustosItensPadroes();
 
-  const [precos, setPrecos] = useState({ valor_porta: 0, valor_instalacao: 0, valor_pintura: 0 });
-  const [salvando, setSalvando] = useState(false);
-
-  useEffect(() => {
-    if (kit) {
-      setPrecos({
-        valor_porta: Number(kit.valor_porta || 0),
-        valor_instalacao: Number(kit.valor_instalacao || 0),
-        valor_pintura: Number(kit.valor_pintura || 0),
-      });
-    }
-  }, [kit?.id, kit?.valor_porta, kit?.valor_instalacao, kit?.valor_pintura]);
-
-  const isDirty = !!kit && (
-    Number(kit.valor_porta || 0) !== precos.valor_porta ||
-    Number(kit.valor_instalacao || 0) !== precos.valor_instalacao ||
-    Number(kit.valor_pintura || 0) !== precos.valor_pintura
-  );
-
-  const salvarPrecos = async () => {
-    if (!kitId || !kit || !isDirty) return;
-    const dados: Record<string, number> = {};
-    if (Number(kit.valor_porta || 0) !== precos.valor_porta) dados.valor_porta = precos.valor_porta;
-    if (Number(kit.valor_instalacao || 0) !== precos.valor_instalacao) dados.valor_instalacao = precos.valor_instalacao;
-    if (Number(kit.valor_pintura || 0) !== precos.valor_pintura) dados.valor_pintura = precos.valor_pintura;
-    try {
-      setSalvando(true);
-      await editarItem({ id: kitId, dados: dados as any });
-      queryClient.invalidateQueries({ queryKey: ["tabela-precos-kit", kitId] });
-    } catch {
-      /* toast tratado no hook */
-    } finally {
-      setSalvando(false);
-    }
-  };
-
   const usedIds = useMemo(() => new Set(items.map((i) => i.custo_item_id)), [items]);
 
   const totais = useMemo(() => {
