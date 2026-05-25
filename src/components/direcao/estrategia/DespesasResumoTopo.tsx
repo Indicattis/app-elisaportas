@@ -214,13 +214,18 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
 /* ---------------- Folha block ---------------- */
 
 function BlocoFolha({
-  rows, loading, onAdd, onDelete, onUpdated,
+  rows, loading, onAdd, onDelete, onUpdated, onPatch,
 }: {
   rows: FolhaRow[];
   loading: boolean;
   onAdd: () => void;
   onDelete: (id: string) => void;
   onUpdated: () => void;
+  onPatch: (
+    id: string,
+    field: 'salario' | 'aux_combustivel' | 'insalubridade_pct' | 'fgts_pct' | 'previsao_13_valor',
+    value: number,
+  ) => void | Promise<void>;
 }) {
   const total = rows.reduce((s, r) => s + Number(r.total || 0), 0);
   return (
@@ -266,11 +271,19 @@ function BlocoFolha({
               return (
               <tr key={r.id} className="border-b border-white/5 hover:bg-white/[0.03]">
                 <td className="py-2 pl-1 text-white/90">{r.colaborador_nome}</td>
-                <td className="px-2 text-right text-emerald-400 font-medium">{formatCurrency(r.salario)}</td>
-                <td className="px-2 text-right text-white/60">{formatCurrency(r.aux_combustivel)}</td>
-                <td className="px-2 text-right text-white/60">{Number(r.insalubridade_pct).toFixed(2)}%</td>
+                <td className="px-2 text-right text-emerald-400 font-medium">
+                  <EditableCell value={Number(r.salario)} format="currency" onSave={(v) => onPatch(r.id, 'salario', v)} />
+                </td>
+                <td className="px-2 text-right text-white/60">
+                  <EditableCell value={Number(r.aux_combustivel)} format="currency" onSave={(v) => onPatch(r.id, 'aux_combustivel', v)} />
+                </td>
+                <td className="px-2 text-right text-white/60">
+                  <EditableCell value={Number(r.insalubridade_pct)} format="percent" onSave={(v) => onPatch(r.id, 'insalubridade_pct', v)} />
+                </td>
                 <td className="px-2 text-right text-white/60">{formatCurrency(insalubVal)}</td>
-                <td className="px-2 text-right text-white/60">{Number(r.fgts_pct).toFixed(2)}%</td>
+                <td className="px-2 text-right text-white/60">
+                  <EditableCell value={Number(r.fgts_pct)} format="percent" onSave={(v) => onPatch(r.id, 'fgts_pct', v)} />
+                </td>
                 <td className="px-2 text-right text-white/60">{formatCurrency(fgtsVal)}</td>
                 <td className="px-2 text-right text-white/60">{formatCurrency(prev13ComFgts)}</td>
                 <td className="px-2 text-right text-white/60">{formatCurrency(feriasComUmTerco)}</td>
