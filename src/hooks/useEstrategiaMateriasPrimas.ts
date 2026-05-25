@@ -6,6 +6,7 @@ export type EstrategiaMateriaPrima = {
   id: string;
   custo_item_id: string;
   nome: string;
+  unidade: string;
   quantidade_item: number;
   custo_total: number;
   fornecedor: string | null;
@@ -19,6 +20,7 @@ export type EstrategiaMateriaPrima = {
 export type NewEstrategiaMateriaPrima = {
   custo_item_id: string;
   nome: string;
+  unidade?: string;
   quantidade_item?: number;
   custo_total?: number;
   fornecedor?: string | null;
@@ -60,6 +62,7 @@ export function useEstrategiaMateriasPrimas(custoItemId?: string) {
         .insert({
           custo_item_id: payload.custo_item_id,
           nome: payload.nome,
+          unidade: payload.unidade ?? "un",
           quantidade_item: payload.quantidade_item ?? 0,
           custo_total: payload.custo_total ?? 0,
           fornecedor: payload.fornecedor ?? null,
