@@ -370,6 +370,27 @@ export default function EstrategiaKitMontagem() {
           </div>
         </div>
       )}
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent className="bg-slate-900 border-white/10 text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">Aplicar template padrão?</AlertDialogTitle>
+            <AlertDialogDescription className="text-white/70">
+              Serão adicionados os {templateCount} itens do template padrão a este kit.
+              Itens já presentes são preservados (não duplica, não sobrescreve quantidades).
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-white/5 border-white/10 text-white hover:bg-white/10">Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); handleApplyTemplate(); }}
+              disabled={applying}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              {applying ? "Aplicando..." : "Aplicar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </MinimalistLayout>
   );
 }
