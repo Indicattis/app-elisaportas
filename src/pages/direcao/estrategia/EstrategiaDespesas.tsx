@@ -60,6 +60,7 @@ export default function EstrategiaDespesas() {
       title="Despesas"
       subtitle={`Ano ${ano} — ${mediaMensal > 1 ? formatCurrency(mediaMensal) + '/mês' : 'Carregando...'}`}
       backPath="/direcao/estrategia"
+      fullWidth
       breadcrumbItems={[
         { label: 'Home', path: '/home' },
         { label: 'Direção', path: '/direcao' },
