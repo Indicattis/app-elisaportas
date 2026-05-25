@@ -70,6 +70,14 @@ export function FreteDialog({ open, onOpenChange, frete }: FreteDialogProps) {
     quilometragem: "",
   });
 
+  const cidadesOptions = useMemo(() => {
+    const lista = getCidadesPorEstado(formData.estado);
+    if (formData.cidade && !lista.includes(formData.cidade)) {
+      return [formData.cidade, ...lista];
+    }
+    return lista;
+  }, [formData.estado, formData.cidade]);
+
   useEffect(() => {
     if (frete) {
       setFormData({
@@ -141,7 +149,13 @@ export function FreteDialog({ open, onOpenChange, frete }: FreteDialogProps) {
               <Label htmlFor="estado">Estado *</Label>
               <Select
                 value={formData.estado}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, estado: value, cidade: "" }))}
+                onValueChange={(value) =>
+                  setFormData(prev => ({
+                    ...prev,
+                    estado: value,
+                    cidade: value === prev.estado ? prev.cidade : "",
+                  }))
+                }
               >
                 <SelectTrigger id="estado">
                   <SelectValue placeholder="Selecione" />
@@ -167,7 +181,7 @@ export function FreteDialog({ open, onOpenChange, frete }: FreteDialogProps) {
                   <SelectValue placeholder={formData.estado ? "Selecione a cidade" : "Selecione o estado primeiro"} />
                 </SelectTrigger>
                 <SelectContent>
-                  {getCidadesPorEstado(formData.estado).map(cidade => (
+                  {cidadesOptions.map(cidade => (
                     <SelectItem key={cidade} value={cidade}>
                       {cidade}
                     </SelectItem>
