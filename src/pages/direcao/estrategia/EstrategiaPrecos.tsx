@@ -63,11 +63,7 @@ export default function EstrategiaPrecos() {
       </div>
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <div className="xl:col-span-2">
-          <TabelaPrecos
-            embedded
-            hideLucroColumn
-            hideAcoesColumn
-          />
+          <TabelaPrecos embedded />
         </div>
         <div className="xl:col-span-1">
           <CatalogoPrecosTab compact />
