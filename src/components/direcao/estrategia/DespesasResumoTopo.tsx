@@ -188,11 +188,6 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange }: Props) 
     onMediaMensalChange?.(totalMensal);
   }, [folha, colabs, fixas, variaveis, loading, mes, onMediaMensalChange]);
 
-  // re-run loader on reloadV
-  useEffect(() => {
-    if (reloadV === 0) return;
-    // trigger by toggling mes-effect through state copy
-  }, [reloadV]);
 
   const rotulo = mes ? `Valores de ${mes}` : 'Configuração padrão';
 
