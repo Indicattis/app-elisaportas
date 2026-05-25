@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, CSSProperties } from "react";
-import { Plus, Trash2, Percent, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Check, X, GripVertical, FolderInput, Palette, FileText, FileSpreadsheet, BadgePercent, Calculator } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Plus, Trash2, Percent, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Check, X, GripVertical, FolderInput, Palette, FileText, FileSpreadsheet, BadgePercent, Calculator, Boxes } from "lucide-react";
 import {
   DndContext,
   closestCenter,
