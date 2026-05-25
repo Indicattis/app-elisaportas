@@ -3001,6 +3001,56 @@ export type Database = {
           },
         ]
       }
+      estrategia_materias_primas: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          custo_item_id: string
+          custo_total: number
+          fornecedor: string | null
+          id: string
+          nome: string
+          observacoes: string | null
+          ordem: number
+          quantidade_item: number
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          custo_item_id: string
+          custo_total?: number
+          fornecedor?: string | null
+          id?: string
+          nome: string
+          observacoes?: string | null
+          ordem?: number
+          quantidade_item?: number
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          custo_item_id?: string
+          custo_total?: number
+          fornecedor?: string | null
+          id?: string
+          nome?: string
+          observacoes?: string | null
+          ordem?: number
+          quantidade_item?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estrategia_materias_primas_custo_item_id_fkey"
+            columns: ["custo_item_id"]
+            isOneToOne: false
+            referencedRelation: "custos_itens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       etapa_responsaveis: {
         Row: {
           created_at: string | null
