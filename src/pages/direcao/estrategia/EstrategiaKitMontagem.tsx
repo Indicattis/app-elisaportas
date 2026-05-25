@@ -245,11 +245,6 @@ export default function EstrategiaKitMontagem() {
                 </Table>
               </div>
 
-              {items.length === 0 && (
-                <Badge className="bg-amber-500/10 text-amber-300 border border-amber-500/30">
-                  Sem montagem — o lucro do kit segue editável manualmente
-                </Badge>
-              )}
             </div>
 
             {/* Resumo lateral */}
