@@ -1,8 +1,19 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { formatCurrency } from '@/lib/utils';
-import { Users, Receipt, TrendingDown } from 'lucide-react';
+import { Users, Receipt, TrendingDown, Trash2, Plus } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 type Item = { id: string; nome: string; valor: number };
 type ColabFolha = {
@@ -37,6 +48,8 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange }: Props) 
   const [fixas, setFixas] = useState<Item[]>([]);
   const [variaveis, setVariaveis] = useState<Item[]>([]);
   const [loading, setLoading] = useState(false);
+  const [reloadV, setReloadV] = useState(0);
+  const reload = () => setReloadV((v) => v + 1);
 
   useEffect(() => {
     let cancelled = false;
@@ -174,6 +187,12 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange }: Props) 
       + variaveis.reduce((s, i) => s + i.valor, 0);
     onMediaMensalChange?.(totalMensal);
   }, [folha, colabs, fixas, variaveis, loading, mes, onMediaMensalChange]);
+
+  // re-run loader on reloadV
+  useEffect(() => {
+    if (reloadV === 0) return;
+    // trigger by toggling mes-effect through state copy
+  }, [reloadV]);
 
   const rotulo = mes ? `Valores de ${mes}` : 'Configuração padrão';
 
