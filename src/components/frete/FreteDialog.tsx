@@ -64,7 +64,6 @@ export function FreteDialog({ open, onOpenChange, frete }: FreteDialogProps) {
   const [formData, setFormData] = useState({
     estado: "",
     cidade: "",
-    valor_frete: "",
     observacoes: "",
     ativo: true,
     quilometragem: "",
@@ -83,7 +82,6 @@ export function FreteDialog({ open, onOpenChange, frete }: FreteDialogProps) {
       setFormData({
         estado: frete.estado,
         cidade: frete.cidade,
-        valor_frete: frete.valor_frete.toString(),
         observacoes: frete.observacoes || "",
         ativo: frete.ativo,
         quilometragem: frete.quilometragem != null ? frete.quilometragem.toString() : "",
@@ -92,7 +90,6 @@ export function FreteDialog({ open, onOpenChange, frete }: FreteDialogProps) {
       setFormData({
         estado: "",
         cidade: "",
-        valor_frete: "",
         observacoes: "",
         ativo: true,
         quilometragem: "",
@@ -103,17 +100,18 @@ export function FreteDialog({ open, onOpenChange, frete }: FreteDialogProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.estado || !formData.cidade || !formData.valor_frete) {
+    if (!formData.estado || !formData.cidade || !formData.quilometragem) {
       return;
     }
 
+    const km = parseFloat(formData.quilometragem);
     const data = {
       estado: formData.estado,
       cidade: formData.cidade.trim(),
-      valor_frete: parseFloat(formData.valor_frete),
+      valor_frete: isNaN(km) ? 0 : km * 6,
       observacoes: formData.observacoes.trim() || null,
       ativo: formData.ativo,
-      quilometragem: formData.quilometragem ? parseFloat(formData.quilometragem) : null,
+      quilometragem: isNaN(km) ? null : km,
     };
 
     try {
@@ -126,12 +124,6 @@ export function FreteDialog({ open, onOpenChange, frete }: FreteDialogProps) {
     } catch (error) {
       // Error handled by mutation
     }
-  };
-
-  const formatCurrencyInput = (value: string) => {
-    // Remove tudo exceto números e ponto
-    const cleaned = value.replace(/[^\d.]/g, '');
-    return cleaned;
   };
 
   return (
@@ -192,31 +184,7 @@ export function FreteDialog({ open, onOpenChange, frete }: FreteDialogProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="valor_frete">Valor do Frete (R$) *</Label>
-            <Input
-              id="valor_frete"
-              type="number"
-              step="0.01"
-              min="1"
-              value={formData.valor_frete}
-              onChange={(e) => {
-                const valor = formatCurrencyInput(e.target.value);
-                setFormData(prev => ({
-                  ...prev,
-                  valor_frete: valor,
-                  quilometragem: prev.quilometragem
-                    ? prev.quilometragem
-                    : valor
-                      ? (parseFloat(valor) / 6).toFixed(2)
-                      : "",
-                }));
-              }}
-              placeholder="0.00"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="quilometragem">Quilometragem (km)</Label>
+            <Label htmlFor="quilometragem">Km (ida) *</Label>
             <Input
               id="quilometragem"
               type="number"
@@ -229,7 +197,7 @@ export function FreteDialog({ open, onOpenChange, frete }: FreteDialogProps) {
               placeholder="0.00"
             />
             <p className="text-xs text-muted-foreground">
-              Sugestão automática: valor do frete ÷ R$ 6,00. Pode ser editado manualmente.
+              Ida e volta = km × 2 · Valor = km × 6 (R$ {formData.quilometragem ? (parseFloat(formData.quilometragem) * 6).toFixed(2) : "0.00"})
             </p>
           </div>
 
