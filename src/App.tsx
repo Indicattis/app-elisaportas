@@ -264,6 +264,7 @@ import DirecaoAprovacoesHub from "./pages/direcao/aprovacoes/DirecaoAprovacoesHu
 import AprovacoesProducao from "./pages/direcao/aprovacoes/AprovacoesProducao";
 import AprovacoesPedidos from "./pages/direcao/aprovacoes/AprovacoesPedidos";
 import AprovacoesAutorizados from "./pages/direcao/aprovacoes/AprovacoesAutorizados";
+import AprovacoesRepresentantes from "./pages/direcao/aprovacoes/AprovacoesRepresentantes";
 import AprovacoesCompras from "./pages/direcao/aprovacoes/AprovacoesCompras";
 import DirecaoFinanceiroHub from "./pages/direcao/financeiro/DirecaoFinanceiroHub";
 
