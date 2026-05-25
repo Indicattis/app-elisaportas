@@ -655,18 +655,19 @@ export function CatalogoPrecosTab({ compact = false }: CatalogoPrecosTabProps = 
                         {!compact && <TableHead className="text-xs font-medium text-muted-foreground text-center w-16">UN</TableHead>}
                         {!compact && <TableHead className="text-xs font-medium text-muted-foreground text-center w-20">Ações</TableHead>}
                         {!compact ? (
-                          columnOrder.map((col) => (
-                            <TableHead
-                              key={col}
-                              className={cn(
-                                "text-xs font-medium text-foreground text-center",
-                                COLUMN_WIDTHS[col],
-                                COLUMN_BG[col],
-                              )}
-                            >
-                              {COLUMN_LABELS[col]}
-                            </TableHead>
-                          ))
+                          <DndContext
+                            sensors={dndSensors}
+                            collisionDetection={closestCenter}
+                            onDragEnd={handleDragEndColumn}
+                          >
+                            <SortableContext items={columnOrder.map((c) => `col-${c}`)} strategy={horizontalListSortingStrategy}>
+                              {columnOrder.map((col) => (
+                                <SortableHeadCell key={col} colKey={col}>
+                                  {COLUMN_LABELS[col]}
+                                </SortableHeadCell>
+                              ))}
+                            </SortableContext>
+                          </DndContext>
                         ) : (
                           <TableHead className={cn("text-xs font-medium text-foreground text-center", COLUMN_WIDTHS.venda, COLUMN_BG.venda)}>
                             {COLUMN_LABELS.venda}
