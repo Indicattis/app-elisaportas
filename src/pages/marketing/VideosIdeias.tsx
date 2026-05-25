@@ -401,7 +401,13 @@ export default function VideosIdeias() {
             </div>
           </div>
           <Button
-            onClick={() => setFormOpen(true)}
+            onClick={() => {
+              setEditandoId(null);
+              setTitulo("");
+              setDescricao("");
+              setAutoresIds([]);
+              setFormOpen(true);
+            }}
             className="bg-blue-600 hover:bg-blue-500 text-white gap-2 shrink-0"
           >
             <Plus className="w-4 h-4" />
