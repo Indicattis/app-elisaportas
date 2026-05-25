@@ -1,57 +1,28 @@
 ## Objetivo
 
-Reformular `/direcao/estrategia/despesas` para ser uma tela isolada de **registro manual** de despesas mensais (folha salarial, fixas e variáveis), sem impactar DRE nem outras telas. Os cards de meses passam a mostrar o total dos lançamentos manuais daquele mês.
+Transformar a tela `/direcao/estrategia/despesas` em uma grade de meses (sem blocos de cadastro abaixo). Ao clicar em um mês, o usuário é levado para uma nova página dedicada onde cadastra/edita a Folha Salarial, as Despesas Fixas e as Despesas Variáveis daquele mês — seguindo o padrão visual usado em `/administrativo/financeiro/custos/:mes`.
 
-## Fluxo da tela
+## Mudanças
 
-1. Grade de 12 meses do ano (igual hoje), cada card mostrando o total lançado naquele mês.
-2. Ao clicar num mês, abrem 3 blocos abaixo: **Folha Salarial**, **Despesas Fixas**, **Despesas Variáveis**.
-3. Cada bloco lista os lançamentos do mês com editar/excluir inline e um botão **+ Adicionar**.
+1. **Nova rota e página**
+   - Rota: `/direcao/estrategia/despesas/:mes` (`:mes` no formato `yyyy-MM`).
+   - Arquivo: `src/pages/direcao/estrategia/EstrategiaDespesasMes.tsx`.
+   - Usa `MinimalistLayout` com `backPath="/direcao/estrategia/despesas"` e breadcrumb Home › Direção › Estratégia › Despesas › {Mês/Ano}.
+   - Renderiza os 3 blocos (Folha Salarial, Despesas Fixas, Despesas Variáveis) que hoje vivem em `DespesasResumoTopo.tsx`, com toda a lógica de adicionar/editar/excluir já implementada.
 
-### Folha salarial — formulário de novo lançamento
-- Selecionar colaborador (dropdown com `admin_users` ativos, tipo colaborador/metamorfo).
-- Ao selecionar, puxa automaticamente do cadastro: salário, aux. combustível, insalubridade %, FGTS %, previsão 13º. Todos editáveis.
-- Cálculos derivados visíveis: insalub R$, FGTS R$, férias+1/3+FGTS, total mensal.
-- Botão **Salvar** grava na nova tabela vinculado ao mês.
+2. **`EstrategiaDespesas.tsx` (página atual)**
+   - Remove o uso de `DespesasResumoTopo` e o estado `mesSelecionado`.
+   - Mantém apenas o seletor de ano + grade de 12 meses com os totais.
+   - Cada card de mês passa a navegar (`navigate('/direcao/estrategia/despesas/' + mesKey)`) em vez de alternar bloco interno.
+   - Mantém o `useEffect` que carrega `totaisMes` a partir de `despesas_manuais_folha` + `despesas_manuais_lancamentos`.
 
-### Despesas fixas / variáveis — formulário de novo lançamento
-- Selecionar **tipo de custo** (dropdown de `tipos_custos` filtrado por `tipo='fixa'` ou `'variavel'`, ativos).
-- Campos: valor pago, data (dentro do mês), descrição opcional.
-- Botão **Salvar**.
+3. **`DespesasResumoTopo.tsx`**
+   - Conteúdo é movido tal como está para o novo componente da página de mês (mesmos hooks/queries/Dialogs).
+   - Componente antigo é removido (não é mais usado em nenhum outro lugar — só nesta tela).
 
-## Tabelas novas (isoladas)
-
-```text
-despesas_manuais_folha
-  - id, mes_referencia (date, dia 01)
-  - admin_user_id (fk admin_users)
-  - colaborador_nome (snapshot)
-  - salario, aux_combustivel, insalubridade_pct, fgts_pct, previsao_13_valor (numeric)
-  - total (numeric, calculado no client e salvo)
-  - created_by, created_at, updated_at
-
-despesas_manuais_lancamentos
-  - id, mes_referencia (date, dia 01)
-  - tipo_custo_id (fk tipos_custos)
-  - categoria ('fixa' | 'variavel')  -- snapshot
-  - tipo_nome (snapshot)
-  - valor (numeric), data (date), descricao (text nullable)
-  - created_by, created_at, updated_at
-```
-
-RLS: leitura/escrita para `authenticated` (mesmo padrão de `despesas_valor_pago_mensal`).
-
-## Mudanças de código
-
-- **Substituir** `src/components/direcao/estrategia/DespesasResumoTopo.tsx` por uma nova versão focada em lançamentos manuais (3 blocos, modais de adicionar, edição inline, exclusão).
-- **`src/pages/direcao/estrategia/EstrategiaDespesas.tsx`**: trocar fonte dos totais por mês para somar `despesas_manuais_folha.total` + `despesas_manuais_lancamentos.valor` agrupado por `mes_referencia` do ano selecionado. Remover dependência de `gastos` e `custos_folha_mensais` nesta tela.
-- Novos hooks:
-  - `useDespesasManuaisFolha(mes)` — CRUD da folha do mês.
-  - `useDespesasManuaisLancamentos(mes)` — CRUD de fixas/variáveis do mês.
-  - `useTotaisDespesasManuaisAno(ano)` — totais por mês para os cards.
-- Reaproveitar `NumInput` e estética glassmorphism atual.
+4. **Registrar a rota** em `src/App.tsx` ao lado de `/direcao/estrategia/despesas`, com a mesma `ProtectedRoute`/`routeKey`.
 
 ## Fora de escopo
 
-- DRE, página `/direcao/estrategia/dre/despesas` e tabela `tipos_custos` continuam intactas (são apenas referência de categorias para o dropdown).
-- Nenhuma alteração em `gastos`, `custos_folha_mensais` ou `despesas_valor_pago_mensal`.
+- Sem mudanças no schema do banco, hooks de dados, RLS ou em qualquer outra tela.
+- Sem alteração nos cálculos/regras já implementadas para folha e lançamentos.
