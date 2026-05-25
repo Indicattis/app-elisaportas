@@ -122,6 +122,40 @@ export default function FreteMinimalista() {
     }).format(value);
   };
 
+  const handleStartKmEdit = (frete: FreteCidade) => {
+    setEditingKmId(frete.id);
+    setKmEditValue(frete.quilometragem != null ? String(frete.quilometragem) : "");
+    setTimeout(() => kmInputRef.current?.focus(), 0);
+  };
+
+  const handleSaveKm = (frete: FreteCidade) => {
+    const parsed = kmEditValue.trim() === "" ? null : Number(kmEditValue.replace(/,/g, "."));
+    if (parsed !== null && (isNaN(parsed) || parsed < 0)) {
+      toast.error("KM inválido");
+      setEditingKmId(null);
+      return;
+    }
+    updateFrete.mutate({
+      id: frete.id,
+      estado: frete.estado,
+      cidade: frete.cidade,
+      valor_frete: frete.valor_frete,
+      observacoes: frete.observacoes,
+      ativo: frete.ativo,
+      quilometragem: parsed,
+    });
+    setEditingKmId(null);
+  };
+
+  const handleKmKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, frete: FreteCidade) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleSaveKm(frete);
+    } else if (e.key === "Escape") {
+      setEditingKmId(null);
+    }
+  };
+
   const headerActions = (
     <>
       <div className="relative">
