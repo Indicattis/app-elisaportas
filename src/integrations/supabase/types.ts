@@ -189,6 +189,7 @@ export type Database = {
       admin_users: {
         Row: {
           ativo: boolean
+          aux_combustivel: number
           bypass_permissions: boolean | null
           cpf: string | null
           created_at: string
@@ -198,11 +199,14 @@ export type Database = {
           em_folha: boolean | null
           em_teste: boolean
           email: string
+          fgts_pct: number
           foto_perfil_url: string | null
           id: string
+          insalubridade_pct: number
           modalidade_pagamento: string | null
           nome: string
           ordem: number | null
+          previsao_13_valor: number
           role: string
           salario: number | null
           setor: Database["public"]["Enums"]["setor_type"] | null
@@ -214,6 +218,7 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean
+          aux_combustivel?: number
           bypass_permissions?: boolean | null
           cpf?: string | null
           created_at?: string
@@ -223,11 +228,14 @@ export type Database = {
           em_folha?: boolean | null
           em_teste?: boolean
           email: string
+          fgts_pct?: number
           foto_perfil_url?: string | null
           id?: string
+          insalubridade_pct?: number
           modalidade_pagamento?: string | null
           nome: string
           ordem?: number | null
+          previsao_13_valor?: number
           role: string
           salario?: number | null
           setor?: Database["public"]["Enums"]["setor_type"] | null
@@ -239,6 +247,7 @@ export type Database = {
         }
         Update: {
           ativo?: boolean
+          aux_combustivel?: number
           bypass_permissions?: boolean | null
           cpf?: string | null
           created_at?: string
@@ -248,11 +257,14 @@ export type Database = {
           em_folha?: boolean | null
           em_teste?: boolean
           email?: string
+          fgts_pct?: number
           foto_perfil_url?: string | null
           id?: string
+          insalubridade_pct?: number
           modalidade_pagamento?: string | null
           nome?: string
           ordem?: number | null
+          previsao_13_valor?: number
           role?: string
           salario?: number | null
           setor?: Database["public"]["Enums"]["setor_type"] | null
