@@ -88,7 +88,7 @@ interface Colaborador {
   nome: string;
 }
 
-function SortableIdeiaCard({ ideia, onChangeStatus }: { ideia: Ideia; onChangeStatus: (id: string, s: Status) => void }) {
+function SortableIdeiaCard({ ideia, onChangeStatus, onDelete }: { ideia: Ideia; onChangeStatus: (id: string, s: Status) => void; onDelete: (id: string) => void }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: ideia.id });
   const style = {
@@ -103,15 +103,24 @@ function SortableIdeiaCard({ ideia, onChangeStatus }: { ideia: Ideia; onChangeSt
       style={style}
       className="p-4 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 relative"
     >
-      <button
-        {...attributes}
-        {...listeners}
-        className="absolute top-2 right-2 p-1.5 rounded-md text-white/40 hover:text-white/80 hover:bg-white/10 cursor-grab active:cursor-grabbing touch-none"
-        aria-label="Reordenar"
-      >
-        <GripVertical className="w-4 h-4" />
-      </button>
-      <div className="flex items-start gap-2 mb-2 pr-8">
+      <div className="absolute top-2 right-2 flex items-center gap-1">
+        <button
+          {...attributes}
+          {...listeners}
+          className="p-1.5 rounded-md text-white/40 hover:text-white/80 hover:bg-white/10 cursor-grab active:cursor-grabbing touch-none"
+          aria-label="Reordenar"
+        >
+          <GripVertical className="w-4 h-4" />
+        </button>
+        <button
+          onClick={() => onDelete(ideia.id)}
+          className="p-1.5 rounded-md text-white/40 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+          aria-label="Excluir ideia"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      </div>
+      <div className="flex items-start gap-2 mb-2 pr-16">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
