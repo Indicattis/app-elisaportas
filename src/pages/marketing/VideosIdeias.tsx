@@ -237,6 +237,22 @@ export default function VideosIdeias() {
     },
   });
 
+  const excluirIdeia = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("marketing_videos_ideias").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["marketing-videos-ideias"] });
+      setDeleteModalOpen(false);
+      setIdeiaParaExcluir(null);
+      toast.success("Ideia excluída com sucesso");
+    },
+    onError: () => {
+      toast.error("Erro ao excluir ideia");
+    },
+  });
+
   const atualizarStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: Status }) => {
       const { error } = await supabase.from("marketing_videos_ideias").update({ status }).eq("id", id);
