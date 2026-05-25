@@ -114,6 +114,8 @@ export default function EstrategiaDespesas() {
           <ChevronRight className="w-5 h-5 text-white/70" />
         </button>
       </div>
+
+      <DespesasResumoTopo mes={mesSelecionado} ano={ano} onMediaMensalChange={setMediaMensal} />
     </MinimalistLayout>
   );
 }
