@@ -192,6 +192,7 @@ export default function VideosIdeias() {
   const [statusFiltro, setStatusFiltro] = useState<"todos" | Status>("todos");
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [ideiaParaExcluir, setIdeiaParaExcluir] = useState<string | null>(null);
+  const [editandoId, setEditandoId] = useState<string | null>(null);
 
   const { data: colaboradores } = useQuery({
     queryKey: ["marketing-videos-ideias-colaboradores"],
