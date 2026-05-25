@@ -1,23 +1,44 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { formatCurrency } from '@/lib/utils';
-import { Users, Receipt, TrendingDown, Trash2, Plus } from 'lucide-react';
+import { Users, Receipt, TrendingDown, Trash2, Plus, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 
-type Item = { id: string; nome: string; valor: number };
-type ValorPagoMap = Record<string, number>;
-type ColabFolha = {
+type FolhaRow = {
+  id: string;
+  mes_referencia: string;
+  admin_user_id: string;
+  colaborador_nome: string;
+  salario: number;
+  aux_combustivel: number;
+  insalubridade_pct: number;
+  fgts_pct: number;
+  previsao_13_valor: number;
+  total: number;
+};
+
+type LancRow = {
+  id: string;
+  mes_referencia: string;
+  tipo_custo_id: string | null;
+  categoria: 'fixa' | 'variavel';
+  tipo_nome: string;
+  valor: number;
+  data: string;
+  descricao: string | null;
+};
+
+type Colab = {
   id: string;
   nome: string;
   salario: number;
@@ -25,372 +46,208 @@ type ColabFolha = {
   insalubridade_pct: number;
   fgts_pct: number;
   previsao_13_valor: number;
-  em_folha: boolean;
 };
 
-const isFolha = (nome: string) => /sal[áa]rio|folha/i.test(nome);
+type TipoCusto = { id: string; nome: string; tipo: 'fixa' | 'variavel' };
 
-function calcCustos(c: { salario: number; aux_combustivel: number; insalubridade_pct: number; fgts_pct: number; previsao_13_valor: number; }) {
-  const insalub = c.salario * (c.insalubridade_pct || 0) / 100;
-  const fgts = c.salario * (c.fgts_pct || 0) / 100;
-  const ferias = c.salario / 3 + fgts;
-  const total = c.salario + c.aux_combustivel + insalub + fgts + c.previsao_13_valor + ferias;
-  return { insalub, fgts, ferias, total };
+function calcTotalFolha(f: { salario: number; aux_combustivel: number; insalubridade_pct: number; fgts_pct: number; previsao_13_valor: number }) {
+  const insalub = f.salario * (f.insalubridade_pct || 0) / 100;
+  const fgts = f.salario * (f.fgts_pct || 0) / 100;
+  const ferias = f.salario / 3 + fgts;
+  return f.salario + f.aux_combustivel + insalub + fgts + f.previsao_13_valor + ferias;
 }
 
 interface Props {
-  mes: string | null;
+  mes: string | null; // 'YYYY-MM'
   ano?: number;
   onMediaMensalChange?: (media: number) => void;
+  onDataChange?: () => void;
 }
 
-export default function DespesasResumoTopo({ mes, onMediaMensalChange }: Props) {
-  const [folha, setFolha] = useState<Item[]>([]);
-  const [colabs, setColabs] = useState<ColabFolha[]>([]);
-  const [fixas, setFixas] = useState<Item[]>([]);
-  const [variaveis, setVariaveis] = useState<Item[]>([]);
-  const [valorPagoMap, setValorPagoMap] = useState<ValorPagoMap>({});
+export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataChange }: Props) {
+  const [folha, setFolha] = useState<FolhaRow[]>([]);
+  const [fixas, setFixas] = useState<LancRow[]>([]);
+  const [variaveis, setVariaveis] = useState<LancRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [reloadV, setReloadV] = useState(0);
-  const reload = () => setReloadV((v) => v + 1);
+  const reload = () => { setReloadV(v => v + 1); onDataChange?.(); };
+
+  const [openFolha, setOpenFolha] = useState(false);
+  const [openDespesa, setOpenDespesa] = useState<null | 'fixa' | 'variavel'>(null);
+  const [confirmDel, setConfirmDel] = useState<null | { kind: 'folha' | 'lanc'; id: string }>(null);
+
+  const mesStart = mes ? `${mes}-01` : null;
 
   useEffect(() => {
+    if (!mes || !mesStart) {
+      setFolha([]); setFixas([]); setVariaveis([]);
+      onMediaMensalChange?.(0);
+      return;
+    }
     let cancelled = false;
-    const run = async () => {
+    (async () => {
       setLoading(true);
       try {
-        if (!mes) {
-          // CONFIGURAÇÃO: tipos_custos ativos + colaboradores em_folha
-          const [{ data: tipos }, { data: colabs }] = await Promise.all([
-            supabase
-              .from('tipos_custos' as any)
-              .select('id, nome, tipo, valor_maximo_mensal, ativo, aparece_no_dre')
-              .eq('ativo', true)
-              .eq('aparece_no_dre', true),
-             supabase
-               .from('admin_users')
-               .select('id, nome, custo_colaborador, ativo, tipo_usuario, visivel_organograma, em_folha, aux_combustivel, insalubridade_pct, fgts_pct, previsao_13_valor')
-               .eq('ativo', true)
-               .in('tipo_usuario', ['colaborador', 'metamorfo'])
-               .eq('visivel_organograma', true)
-               .neq('role', 'administrador')
-               .order('nome'),
-          ]);
-          if (cancelled) return;
-          const tiposList = ((tipos || []) as any[]).filter((t) => !isFolha(t.nome));
-          setFixas(
-            tiposList
-              .filter((t) => t.tipo === 'fixa')
-              .map((t) => ({ id: t.id, nome: t.nome, valor: Number(t.valor_maximo_mensal) || 0 }))
-          );
-          setVariaveis(
-            tiposList
-              .filter((t) => t.tipo === 'variavel')
-              .map((t) => ({ id: t.id, nome: t.nome, valor: Number(t.valor_maximo_mensal) || 0 }))
-          );
-           setFolha(
-             ((colabs || []) as any[])
-               .slice()
-               .sort((a, b) => {
-                 if (a.em_folha === b.em_folha) return a.nome.localeCompare(b.nome);
-                 return a.em_folha ? -1 : 1;
-               })
-               .map((c) => ({
-                 id: c.id,
-                 nome: c.nome,
-                 valor: Number(c.custo_colaborador) || 0,
-               }))
-           );
-           setColabs(
-             ((colabs || []) as any[])
-               .slice()
-               .sort((a, b) => {
-                 if (a.em_folha === b.em_folha) return a.nome.localeCompare(b.nome);
-                 return a.em_folha ? -1 : 1;
-               })
-               .map((c: any) => ({
-                 id: c.id,
-                 nome: c.nome,
-                 salario: Number(c.custo_colaborador) || 0,
-                 aux_combustivel: Number(c.aux_combustivel) || 0,
-                 insalubridade_pct: Number(c.insalubridade_pct) || 0,
-                 fgts_pct: c.fgts_pct == null ? 8 : Number(c.fgts_pct),
-                 previsao_13_valor: Number(c.previsao_13_valor) || 0,
-                 em_folha: !!c.em_folha,
-               }))
-           );
-        } else {
-          // MÊS REAL: gastos + custos_folha_mensais
-          const start = `${mes}-01`;
-          const [y, m] = mes.split('-').map(Number);
-          const end = new Date(y, m, 0).toISOString().split('T')[0];
-
-          const [{ data: gastos }, { data: tipos }, { data: folhaItens }, { data: pagos }] = await Promise.all([
-            supabase
-              .from('gastos' as any)
-              .select('id, valor, tipo_custo_id, descricao, data')
-              .gte('data', start)
-              .lte('data', end),
-            supabase
-              .from('tipos_custos' as any)
-              .select('id, nome, tipo, aparece_no_dre')
-              .eq('aparece_no_dre', true),
-            supabase
-              .from('custos_folha_mensais' as any)
-              .select('id, colaborador_nome, valor')
-              .eq('mes_referencia', start),
-            supabase
-              .from('despesas_valor_pago_mensal' as any)
-              .select('tipo_custo_id, valor_pago')
-              .eq('mes_referencia', start),
-          ]);
-          if (cancelled) return;
-
-          const pagosMap: ValorPagoMap = {};
-          ((pagos || []) as any[]).forEach((p: any) => {
-            pagosMap[p.tipo_custo_id] = Number(p.valor_pago) || 0;
-          });
-          setValorPagoMap(pagosMap);
-
-          const tiposMap: Record<string, { nome: string; tipo: string }> = {};
-          ((tipos || []) as any[]).forEach((t: any) => {
-            tiposMap[t.id] = { nome: t.nome, tipo: t.tipo };
-          });
-          const agrupado: Record<string, { nome: string; tipo: string; valor: number }> = {};
-          ((gastos || []) as any[]).forEach((g: any) => {
-            const t = tiposMap[g.tipo_custo_id];
-            if (!t) return;
-            if (!agrupado[g.tipo_custo_id])
-              agrupado[g.tipo_custo_id] = { nome: t.nome, tipo: t.tipo, valor: 0 };
-            agrupado[g.tipo_custo_id].valor += Number(g.valor) || 0;
-          });
-          const items = Object.entries(agrupado).map(([id, v]) => ({
-            id,
-            nome: v.nome,
-            valor: v.valor,
-            tipo: v.tipo,
-          }));
-          setFixas(items.filter((i) => i.tipo === 'fixa' && !isFolha(i.nome)));
-          setVariaveis(items.filter((i) => i.tipo === 'variavel' && !isFolha(i.nome)));
-          setFolha(
-            ((folhaItens || []) as any[]).map((f) => ({
-              id: f.id,
-              nome: f.colaborador_nome,
-              valor: Number(f.valor) || 0,
-            }))
-          );
-          setColabs([]);
-        }
+        const [{ data: f }, { data: l }] = await Promise.all([
+          supabase.from('despesas_manuais_folha' as any).select('*').eq('mes_referencia', mesStart).order('colaborador_nome'),
+          supabase.from('despesas_manuais_lancamentos' as any).select('*').eq('mes_referencia', mesStart).order('data'),
+        ]);
+        if (cancelled) return;
+        const folhaArr = (f || []) as unknown as FolhaRow[];
+        const lancArr = (l || []) as unknown as LancRow[];
+        setFolha(folhaArr);
+        setFixas(lancArr.filter(x => x.categoria === 'fixa'));
+        setVariaveis(lancArr.filter(x => x.categoria === 'variavel'));
+        const total =
+          folhaArr.reduce((s, x) => s + Number(x.total || 0), 0) +
+          lancArr.reduce((s, x) => s + Number(x.valor || 0), 0);
+        onMediaMensalChange?.(total);
       } finally {
         if (!cancelled) setLoading(false);
       }
-    };
-    run();
-    return () => {
-      cancelled = true;
-    };
-  }, [mes, reloadV]);
+    })();
+    return () => { cancelled = true; };
+  }, [mes, mesStart, reloadV]);
 
-  useEffect(() => {
-    if (loading) return;
-    const totalFolha = !mes && colabs.length
-      ? colabs.reduce((s, c) => s + calcCustos(c).total, 0)
-      : folha.reduce((s, i) => s + i.valor, 0);
-    const totalMensal = totalFolha
-      + fixas.reduce((s, i) => s + i.valor, 0)
-      + variaveis.reduce((s, i) => s + i.valor, 0);
-    onMediaMensalChange?.(totalMensal);
-  }, [folha, colabs, fixas, variaveis, loading, mes, onMediaMensalChange]);
-
-
-  const rotulo = mes ? `Valores de ${mes}` : 'Configuração padrão';
-
-  const setValorPago = async (tipoCustoId: string, valor: number) => {
-    if (!mes) return;
-    const start = `${mes}-01`;
-    setValorPagoMap((prev) => ({ ...prev, [tipoCustoId]: valor }));
-    const { error } = await supabase
-      .from('despesas_valor_pago_mensal' as any)
-      .upsert({ tipo_custo_id: tipoCustoId, mes_referencia: start, valor_pago: valor }, { onConflict: 'tipo_custo_id,mes_referencia' });
-    if (error) toast.error('Erro ao salvar valor pago: ' + error.message);
+  const handleDelete = async () => {
+    if (!confirmDel) return;
+    const table = confirmDel.kind === 'folha' ? 'despesas_manuais_folha' : 'despesas_manuais_lancamentos';
+    const { error } = await supabase.from(table as any).delete().eq('id', confirmDel.id);
+    if (error) { toast.error('Erro ao excluir: ' + error.message); return; }
+    setConfirmDel(null);
+    toast.success('Excluído');
+    reload();
   };
 
-  const updateColab = async (id: string, patch: Partial<ColabFolha>) => {
-    setColabs((prev) => prev.map((c) => (c.id === id ? { ...c, ...patch } : c)));
-    const dbPatch: any = { ...patch };
-    if ('salario' in dbPatch) {
-      dbPatch.custo_colaborador = dbPatch.salario;
-      delete dbPatch.salario;
-    }
-    const { error } = await supabase.from('admin_users').update(dbPatch).eq('id', id);
-    if (error) toast.error('Erro ao salvar: ' + error.message);
-  };
+  if (!mes) {
+    return (
+      <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-8 text-center text-white/60">
+        Selecione um mês acima para visualizar e cadastrar lançamentos.
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 gap-4 mb-6">
-      {!mes ? (
-        <BlocoFolhaEditavel
-          colabs={colabs}
-          rotulo={rotulo}
-          loading={loading}
-          onChange={updateColab}
-        />
-      ) : (
-        <Bloco titulo="Folha Salarial" icon={<Users className="w-4 h-4" />} itens={folha} rotulo={rotulo} loading={loading} />
-      )}
-      <Bloco
+      <BlocoFolha
+        rows={folha}
+        loading={loading}
+        onAdd={() => setOpenFolha(true)}
+        onDelete={(id) => setConfirmDel({ kind: 'folha', id })}
+        onUpdated={reload}
+      />
+      <BlocoDespesa
         titulo="Despesas Fixas"
         icon={<Receipt className="w-4 h-4" />}
-        itens={fixas}
-        rotulo={rotulo}
+        rows={fixas}
         loading={loading}
-        editable={!mes ? 'fixa' : undefined}
-        onChanged={reload}
-        mes={mes}
-        valorPagoMap={valorPagoMap}
-        onValorPagoChange={setValorPago}
+        onAdd={() => setOpenDespesa('fixa')}
+        onDelete={(id) => setConfirmDel({ kind: 'lanc', id })}
+        onUpdated={reload}
       />
-      <Bloco
+      <BlocoDespesa
         titulo="Despesas Variáveis"
         icon={<TrendingDown className="w-4 h-4" />}
-        itens={variaveis}
-        rotulo={rotulo}
+        rows={variaveis}
         loading={loading}
-        editable={!mes ? 'variavel' : undefined}
-        onChanged={reload}
-        mes={mes}
-        valorPagoMap={valorPagoMap}
-        onValorPagoChange={setValorPago}
+        onAdd={() => setOpenDespesa('variavel')}
+        onDelete={(id) => setConfirmDel({ kind: 'lanc', id })}
+        onUpdated={reload}
       />
-    </div>
-  );
-}
 
-function NumInput({
-  value,
-  onCommit,
-  suffix,
-  step = '0.01',
-  valueClassName,
-}: {
-  value: number;
-  onCommit: (v: number) => void;
-  suffix?: string;
-  step?: string;
-  valueClassName?: string;
-}) {
-  const [local, setLocal] = useState(String(value ?? 0));
-  const [editing, setEditing] = useState(false);
-  useEffect(() => { setLocal(String(value ?? 0)); }, [value]);
-  if (!editing) {
-    const display = suffix === '%'
-      ? `${Number(value ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 })}${suffix}`
-      : formatCurrency(Number(value ?? 0));
-    return (
-      <button
-        type="button"
-        onClick={() => setEditing(true)}
-        className={`w-full text-right text-sm px-2 py-1 rounded-md hover:bg-white/5 border border-transparent hover:border-white/10 transition-colors whitespace-nowrap ${valueClassName ?? 'text-white/90'}`}
-      >
-        {display}
-      </button>
-    );
-  }
-  return (
-    <div className="relative">
-      <input
-        autoFocus
-        type="number"
-        step={step}
-        value={local}
-        onChange={(e) => setLocal(e.target.value)}
-        onBlur={() => {
-          const n = Number(local);
-          if (!isNaN(n) && n !== value) onCommit(n);
-          setEditing(false);
-        }}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
-          if (e.key === 'Escape') { setLocal(String(value ?? 0)); setEditing(false); }
-        }}
-        className="w-full bg-white/5 border border-white/10 rounded-md px-2 py-1 text-right text-sm text-white outline-none focus:border-white/30 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-      />
-      {suffix && (
-        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-white/40 pointer-events-none">{suffix}</span>
+      {openFolha && mesStart && (
+        <DialogFolha
+          mes={mesStart}
+          onClose={() => setOpenFolha(false)}
+          onSaved={() => { setOpenFolha(false); reload(); }}
+        />
       )}
+
+      {openDespesa && mesStart && (
+        <DialogDespesa
+          mes={mesStart}
+          categoria={openDespesa}
+          onClose={() => setOpenDespesa(null)}
+          onSaved={() => { setOpenDespesa(null); reload(); }}
+        />
+      )}
+
+      <AlertDialog open={!!confirmDel} onOpenChange={(o) => !o && setConfirmDel(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>Esta ação não pode ser desfeita.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">Excluir</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
 
-function BlocoFolhaEditavel({
-  colabs,
-  rotulo,
-  loading,
-  onChange,
+/* ---------------- Folha block ---------------- */
+
+function BlocoFolha({
+  rows, loading, onAdd, onDelete, onUpdated,
 }: {
-  colabs: ColabFolha[];
-  rotulo: string;
+  rows: FolhaRow[];
   loading: boolean;
-  onChange: (id: string, patch: Partial<ColabFolha>) => void;
+  onAdd: () => void;
+  onDelete: (id: string) => void;
+  onUpdated: () => void;
 }) {
-  const linhas = colabs.map((c) => ({ c, ...calcCustos(c) }));
-  const totalMensal = linhas.reduce((s, l) => s + l.total, 0);
+  const total = rows.reduce((s, r) => s + Number(r.total || 0), 0);
   return (
-    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-5 flex flex-col">
+    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-5">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2 text-white">
           <Users className="w-4 h-4" />
           <h3 className="font-semibold">Folha Salarial</h3>
+          <span className="text-white/40 text-sm">({rows.length})</span>
         </div>
-        <span className="text-[10px] uppercase tracking-wider text-white/40">{rotulo}</span>
+        <Button size="sm" onClick={onAdd} className="bg-blue-600 hover:bg-blue-700">
+          <Plus className="w-4 h-4 mr-1" /> Adicionar
+        </Button>
       </div>
+
       <div className="overflow-x-auto">
-        <table className="w-full text-sm min-w-[1100px]">
+        <table className="w-full text-sm min-w-[900px]">
           <thead>
             <tr className="text-[10px] uppercase tracking-wider text-white/40 border-b border-white/10">
               <th className="text-left font-normal pb-2 pl-1">Colaborador</th>
               <th className="text-right font-normal pb-2 px-2">Salário</th>
               <th className="text-right font-normal pb-2 px-2">Combustível</th>
               <th className="text-right font-normal pb-2 px-2">Insalub %</th>
-              <th className="text-right font-normal pb-2 px-2">Insalub R$</th>
               <th className="text-right font-normal pb-2 px-2">FGTS %</th>
-              <th className="text-right font-normal pb-2 px-2">FGTS R$</th>
-              <th className="text-right font-normal pb-2 px-2">Previsão 13° + FGTS</th>
-              <th className="text-right font-normal pb-2 px-2">Previsão de férias + 1/3 + FGTS</th>
-              <th className="text-right font-normal pb-2 px-2">Total mensal</th>
-              <th className="text-center font-normal pb-2 pr-1">Na folha</th>
+              <th className="text-right font-normal pb-2 px-2">Previsão 13°</th>
+              <th className="text-right font-normal pb-2 px-2">Total</th>
+              <th className="pb-2 pr-1"></th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={11} className="text-white/40 px-2 py-3">Carregando...</td></tr>
-            ) : linhas.length === 0 ? (
-              <tr><td colSpan={11} className="text-white/40 px-2 py-3">Sem colaboradores</td></tr>
-            ) : linhas.map(({ c, insalub, fgts, ferias, total }) => (
-              <tr key={c.id} className="border-b border-white/5 hover:bg-white/[0.03]">
-                <td className="py-1.5 pl-1 text-white/80 truncate max-w-[200px]">
-                  <span className="truncate">{c.nome}</span>
-                </td>
-                <td className="px-2"><NumInput value={c.salario} onCommit={(v) => onChange(c.id, { salario: v })} valueClassName="text-emerald-400" /></td>
-                <td className="px-2"><NumInput value={c.aux_combustivel} onCommit={(v) => onChange(c.id, { aux_combustivel: v })} /></td>
-                <td className="px-2"><NumInput value={c.insalubridade_pct} onCommit={(v) => onChange(c.id, { insalubridade_pct: v })} suffix="%" /></td>
-                <td className="px-2 text-right text-white/60 whitespace-nowrap">{formatCurrency(insalub)}</td>
-                <td className="px-2"><NumInput value={c.fgts_pct} onCommit={(v) => onChange(c.id, { fgts_pct: v })} suffix="%" /></td>
-                <td className="px-2 text-right text-white/60 whitespace-nowrap">{formatCurrency(fgts)}</td>
-                <td className="px-2"><NumInput value={c.previsao_13_valor} onCommit={(v) => onChange(c.id, { previsao_13_valor: v })} /></td>
-                <td className="px-2 text-right text-white/60 whitespace-nowrap">{formatCurrency(ferias)}</td>
-                <td className="px-2 text-right text-white font-medium whitespace-nowrap">{formatCurrency(total)}</td>
-                <td className="pr-1 text-center whitespace-nowrap">
+              <tr><td colSpan={8} className="text-white/40 px-2 py-3">Carregando...</td></tr>
+            ) : rows.length === 0 ? (
+              <tr><td colSpan={8} className="text-white/40 px-2 py-3 text-center">Nenhum lançamento. Clique em Adicionar.</td></tr>
+            ) : rows.map(r => (
+              <tr key={r.id} className="border-b border-white/5 hover:bg-white/[0.03]">
+                <td className="py-2 pl-1 text-white/90">{r.colaborador_nome}</td>
+                <td className="px-2 text-right text-white/80">{formatCurrency(r.salario)}</td>
+                <td className="px-2 text-right text-white/60">{formatCurrency(r.aux_combustivel)}</td>
+                <td className="px-2 text-right text-white/60">{Number(r.insalubridade_pct).toFixed(2)}%</td>
+                <td className="px-2 text-right text-white/60">{Number(r.fgts_pct).toFixed(2)}%</td>
+                <td className="px-2 text-right text-white/60">{formatCurrency(r.previsao_13_valor)}</td>
+                <td className="px-2 text-right text-white font-medium">{formatCurrency(r.total)}</td>
+                <td className="pr-1 text-right">
                   <button
-                    type="button"
-                    onClick={() => onChange(c.id, { em_folha: !c.em_folha })}
-                    className={`px-2 py-0.5 rounded-md text-[10px] uppercase tracking-wider font-semibold border transition-colors ${
-                      c.em_folha
-                        ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/25'
-                        : 'bg-red-500/15 text-red-300 border-red-500/30 hover:bg-red-500/25'
-                    }`}
+                    onClick={() => onDelete(r.id)}
+                    className="p-1 rounded hover:bg-red-500/20 text-red-300/70 hover:text-red-300"
+                    aria-label="Excluir"
                   >
-                    {c.em_folha ? 'Sim' : 'Não'}
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 </td>
               </tr>
@@ -398,197 +255,315 @@ function BlocoFolhaEditavel({
           </tbody>
         </table>
       </div>
+
       <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between px-2">
         <span className="text-xs text-white/50 uppercase tracking-wider">Total</span>
-        <span className="text-base font-bold text-white whitespace-nowrap">{formatCurrency(totalMensal)}</span>
+        <span className="text-base font-bold text-white">{formatCurrency(total)}</span>
       </div>
     </div>
   );
 }
 
-function Bloco({
-  titulo,
-  icon,
-  itens,
-  rotulo,
-  loading,
-  editable,
-  onChanged,
-  mes,
-  valorPagoMap,
-  onValorPagoChange,
+/* ---------------- Despesa block ---------------- */
+
+function BlocoDespesa({
+  titulo, icon, rows, loading, onAdd, onDelete, onUpdated,
 }: {
   titulo: string;
   icon: React.ReactNode;
-  itens: Item[];
-  rotulo: string;
+  rows: LancRow[];
   loading: boolean;
-  editable?: 'fixa' | 'variavel';
-  onChanged?: () => void;
-  mes?: string | null;
-  valorPagoMap?: ValorPagoMap;
-  onValorPagoChange?: (tipoCustoId: string, valor: number) => void;
+  onAdd: () => void;
+  onDelete: (id: string) => void;
+  onUpdated: () => void;
 }) {
-  const total = itens.reduce((s, i) => s + i.valor, 0);
-  const totalPago = mes ? itens.reduce((s, i) => s + (valorPagoMap?.[i.id] || 0), 0) : 0;
-  const [novoNome, setNovoNome] = useState('');
-  const [novoValor, setNovoValor] = useState('');
-
-  const updateTipo = async (id: string, patch: { nome?: string; valor_maximo_mensal?: number }) => {
-    const { error } = await supabase.from('tipos_custos' as any).update(patch as any).eq('id', id);
-    if (error) { toast.error('Erro ao salvar: ' + error.message); return; }
-    onChanged?.();
-  };
-  const deleteTipo = async (id: string) => {
-    const { error } = await supabase.from('tipos_custos' as any).delete().eq('id', id);
-    if (error) { toast.error('Erro ao excluir: ' + error.message); return; }
-    toast.success('Despesa excluída');
-    onChanged?.();
-  };
-  const addTipo = async () => {
-    const nome = novoNome.trim();
-    const valor = Number(novoValor) || 0;
-    if (!nome) { toast.error('Informe o nome'); return; }
-    const { data: userData } = await supabase.auth.getUser();
-    const { error } = await supabase.from('tipos_custos' as any).insert([{
-      nome,
-      tipo: editable,
-      valor_maximo_mensal: valor,
-      ativo: true,
-      aparece_no_dre: true,
-      created_by: userData.user?.id || '',
-    }] as any);
-    if (error) { toast.error('Erro ao criar: ' + error.message); return; }
-    toast.success('Despesa criada');
-    setNovoNome(''); setNovoValor('');
-    onChanged?.();
-  };
-
+  const total = rows.reduce((s, r) => s + Number(r.valor || 0), 0);
   return (
-    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-5 flex flex-col">
+    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-5">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2 text-white">
           {icon}
           <h3 className="font-semibold">{titulo}</h3>
+          <span className="text-white/40 text-sm">({rows.length})</span>
         </div>
-        <span className="text-[10px] uppercase tracking-wider text-white/40">{rotulo}</span>
+        <Button size="sm" onClick={onAdd} className="bg-blue-600 hover:bg-blue-700">
+          <Plus className="w-4 h-4 mr-1" /> Adicionar
+        </Button>
       </div>
-      <div className={`grid ${editable ? 'grid-cols-[1fr_140px_32px]' : mes ? 'grid-cols-[1fr_110px_140px]' : 'grid-cols-[1fr_110px]'} gap-x-6 px-2 pb-2 mb-1 border-b border-white/10 text-[10px] uppercase tracking-wider text-white/40`}>
-        <span className="pl-1">Item</span>
-        <span className="text-right pr-1">Valor mensal</span>
-        {editable && <span />}
-        {!editable && mes && <span className="text-right pr-1">Valor pago</span>}
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-[10px] uppercase tracking-wider text-white/40 border-b border-white/10">
+              <th className="text-left font-normal pb-2 pl-1">Tipo</th>
+              <th className="text-left font-normal pb-2 px-2">Descrição</th>
+              <th className="text-left font-normal pb-2 px-2">Data</th>
+              <th className="text-right font-normal pb-2 px-2">Valor pago</th>
+              <th className="pb-2 pr-1"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr><td colSpan={5} className="text-white/40 px-2 py-3">Carregando...</td></tr>
+            ) : rows.length === 0 ? (
+              <tr><td colSpan={5} className="text-white/40 px-2 py-3 text-center">Nenhum lançamento. Clique em Adicionar.</td></tr>
+            ) : rows.map(r => (
+              <tr key={r.id} className="border-b border-white/5 hover:bg-white/[0.03]">
+                <td className="py-2 pl-1 text-white/90">{r.tipo_nome}</td>
+                <td className="px-2 text-white/60">{r.descricao || '—'}</td>
+                <td className="px-2 text-white/60">{r.data.split('-').reverse().join('/')}</td>
+                <td className="px-2 text-right text-white font-medium">{formatCurrency(r.valor)}</td>
+                <td className="pr-1 text-right">
+                  <button
+                    onClick={() => onDelete(r.id)}
+                    className="p-1 rounded hover:bg-red-500/20 text-red-300/70 hover:text-red-300"
+                    aria-label="Excluir"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
-      <div className="flex-1 max-h-64 overflow-y-auto space-y-1 pr-1">
-        {loading ? (
-          <p className="text-sm text-white/40 px-2">Carregando...</p>
-        ) : itens.length === 0 && !editable ? (
-          <p className="text-sm text-white/40 px-2">Sem itens</p>
-        ) : (
-          itens.map((i) => (
-            <div key={i.id} className={`group grid ${editable ? 'grid-cols-[1fr_140px_32px]' : mes ? 'grid-cols-[1fr_110px_140px]' : 'grid-cols-[1fr_110px]'} gap-x-6 text-sm px-2 py-1.5 rounded-md hover:bg-white/[0.03] transition-colors items-center`}>
-              {editable ? (
-                <TextInput value={i.nome} onCommit={(v) => updateTipo(i.id, { nome: v })} />
-              ) : (
-                <span className="text-white/70 truncate">{i.nome}</span>
-              )}
-              {editable ? (
-                <NumInput value={i.valor} onCommit={(v) => updateTipo(i.id, { valor_maximo_mensal: v })} />
-              ) : (
-                <span className="text-white/90 font-medium whitespace-nowrap text-right">{formatCurrency(i.valor)}</span>
-              )}
-              {editable && (
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <button className="opacity-0 group-hover:opacity-100 transition text-white/40 hover:text-red-400 flex justify-center" aria-label="Excluir">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Excluir "{i.nome}"?</AlertDialogTitle>
-                      <AlertDialogDescription>Esta ação remove a despesa do catálogo. Lançamentos existentes não são removidos.</AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => deleteTipo(i.id)}>Excluir</AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              )}
-              {!editable && mes && (
-                <NumInput
-                  value={valorPagoMap?.[i.id] || 0}
-                  onCommit={(v) => onValorPagoChange?.(i.id, v)}
-                  valueClassName="text-amber-300"
-                />
-              )}
-            </div>
-          ))
-        )}
-        {editable && (
-          <div className="grid grid-cols-[1fr_140px_32px] gap-x-6 text-sm px-2 py-1.5 items-center mt-2 border-t border-white/5 pt-3">
-            <input
-              type="text"
-              placeholder="Nova despesa..."
-              value={novoNome}
-              onChange={(e) => setNovoNome(e.target.value)}
-              className="bg-white/5 border border-white/10 rounded-md px-2 py-1 text-sm text-white outline-none focus:border-white/30"
-            />
-            <input
-              type="number"
-              step="0.01"
-              placeholder="0,00"
-              value={novoValor}
-              onChange={(e) => setNovoValor(e.target.value)}
-              className="bg-white/5 border border-white/10 rounded-md px-2 py-1 text-sm text-right text-white outline-none focus:border-white/30 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-            />
-            <span />
-            <button onClick={addTipo} className="flex justify-center text-white/60 hover:text-white" aria-label="Adicionar">
-              <Plus className="w-4 h-4" />
-            </button>
-          </div>
-        )}
-      </div>
-      <div className={`mt-3 pt-3 border-t border-white/10 grid ${editable ? 'grid-cols-[1fr_140px_32px]' : mes ? 'grid-cols-[1fr_110px_140px]' : 'grid-cols-[1fr_110px]'} gap-x-6 items-center px-2`}>
+
+      <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between px-2">
         <span className="text-xs text-white/50 uppercase tracking-wider">Total</span>
-        <span className="text-base font-bold text-white text-right whitespace-nowrap">{formatCurrency(total)}</span>
-        {editable && <span />}
-        {!editable && mes && (
-          <span className="text-base font-bold text-amber-300 text-right whitespace-nowrap">{formatCurrency(totalPago)}</span>
-        )}
+        <span className="text-base font-bold text-white">{formatCurrency(total)}</span>
       </div>
     </div>
   );
 }
 
-function TextInput({ value, onCommit }: { value: string; onCommit: (v: string) => void }) {
-  const [local, setLocal] = useState(value);
-  const [editing, setEditing] = useState(false);
-  useEffect(() => { setLocal(value); }, [value]);
-  if (!editing) {
-    return (
-      <button
-        type="button"
-        onClick={() => setEditing(true)}
-        className="w-full text-left text-sm text-white/80 px-2 py-1 rounded-md hover:bg-white/5 border border-transparent hover:border-white/10 transition-colors truncate"
-      >
-        {value}
-      </button>
-    );
-  }
+/* ---------------- Dialog Folha ---------------- */
+
+function DialogFolha({ mes, onClose, onSaved }: { mes: string; onClose: () => void; onSaved: () => void }) {
+  const [colabs, setColabs] = useState<Colab[]>([]);
+  const [adminUserId, setAdminUserId] = useState<string>('');
+  const [form, setForm] = useState({
+    salario: 0, aux_combustivel: 0, insalubridade_pct: 0,
+    fgts_pct: 8, previsao_13_valor: 0,
+  });
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from('admin_users')
+        .select('id, nome, custo_colaborador, aux_combustivel, insalubridade_pct, fgts_pct, previsao_13_valor')
+        .eq('ativo', true)
+        .in('tipo_usuario', ['colaborador', 'metamorfo'])
+        .order('nome');
+      setColabs(((data || []) as any[]).map(c => ({
+        id: c.id,
+        nome: c.nome,
+        salario: Number(c.custo_colaborador) || 0,
+        aux_combustivel: Number(c.aux_combustivel) || 0,
+        insalubridade_pct: Number(c.insalubridade_pct) || 0,
+        fgts_pct: c.fgts_pct == null ? 8 : Number(c.fgts_pct),
+        previsao_13_valor: Number(c.previsao_13_valor) || 0,
+      })));
+    })();
+  }, []);
+
+  const selected = colabs.find(c => c.id === adminUserId);
+
+  const onSelectColab = (id: string) => {
+    setAdminUserId(id);
+    const c = colabs.find(x => x.id === id);
+    if (c) {
+      setForm({
+        salario: c.salario,
+        aux_combustivel: c.aux_combustivel,
+        insalubridade_pct: c.insalubridade_pct,
+        fgts_pct: c.fgts_pct,
+        previsao_13_valor: c.previsao_13_valor,
+      });
+    }
+  };
+
+  const total = useMemo(() => calcTotalFolha(form), [form]);
+  const insalubR = form.salario * (form.insalubridade_pct || 0) / 100;
+  const fgtsR = form.salario * (form.fgts_pct || 0) / 100;
+  const feriasR = form.salario / 3 + fgtsR;
+
+  const save = async () => {
+    if (!selected) { toast.error('Selecione um colaborador'); return; }
+    setSaving(true);
+    try {
+      const userId = (await supabase.auth.getUser()).data.user?.id || null;
+      const { error } = await supabase.from('despesas_manuais_folha' as any).insert({
+        mes_referencia: mes,
+        admin_user_id: selected.id,
+        colaborador_nome: selected.nome,
+        salario: form.salario,
+        aux_combustivel: form.aux_combustivel,
+        insalubridade_pct: form.insalubridade_pct,
+        fgts_pct: form.fgts_pct,
+        previsao_13_valor: form.previsao_13_valor,
+        total,
+        created_by: userId,
+      } as any);
+      if (error) throw error;
+      toast.success('Lançamento de folha salvo');
+      onSaved();
+    } catch (e: any) {
+      toast.error('Erro ao salvar: ' + e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
-    <input
-      autoFocus
-      type="text"
-      value={local}
-      onChange={(e) => setLocal(e.target.value)}
-      onBlur={() => { const v = local.trim(); if (v && v !== value) onCommit(v); else setLocal(value); setEditing(false); }}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
-        if (e.key === 'Escape') { setLocal(value); setEditing(false); }
-      }}
-      className="w-full bg-transparent hover:bg-white/5 focus:bg-white/5 border border-transparent hover:border-white/10 focus:border-white/30 rounded-md px-2 py-1 text-sm text-white/80 outline-none"
-    />
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="sm:max-w-[640px]">
+        <DialogHeader>
+          <DialogTitle>Novo lançamento de folha</DialogTitle>
+        </DialogHeader>
+        <div className="grid gap-4 py-2">
+          <div className="grid gap-2">
+            <Label>Colaborador</Label>
+            <Select value={adminUserId} onValueChange={onSelectColab}>
+              <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+              <SelectContent>
+                {colabs.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-1">
+              <Label>Salário</Label>
+              <Input type="number" step="0.01" value={form.salario} onChange={e => setForm({ ...form, salario: Number(e.target.value) || 0 })} />
+            </div>
+            <div className="grid gap-1">
+              <Label>Aux. Combustível</Label>
+              <Input type="number" step="0.01" value={form.aux_combustivel} onChange={e => setForm({ ...form, aux_combustivel: Number(e.target.value) || 0 })} />
+            </div>
+            <div className="grid gap-1">
+              <Label>Insalubridade %</Label>
+              <Input type="number" step="0.01" value={form.insalubridade_pct} onChange={e => setForm({ ...form, insalubridade_pct: Number(e.target.value) || 0 })} />
+            </div>
+            <div className="grid gap-1">
+              <Label>FGTS %</Label>
+              <Input type="number" step="0.01" value={form.fgts_pct} onChange={e => setForm({ ...form, fgts_pct: Number(e.target.value) || 0 })} />
+            </div>
+            <div className="grid gap-1 col-span-2">
+              <Label>Previsão 13° + FGTS</Label>
+              <Input type="number" step="0.01" value={form.previsao_13_valor} onChange={e => setForm({ ...form, previsao_13_valor: Number(e.target.value) || 0 })} />
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-white/10 bg-white/5 p-3 text-sm space-y-1">
+            <div className="flex justify-between text-white/60"><span>Insalubridade R$</span><span>{formatCurrency(insalubR)}</span></div>
+            <div className="flex justify-between text-white/60"><span>FGTS R$</span><span>{formatCurrency(fgtsR)}</span></div>
+            <div className="flex justify-between text-white/60"><span>Previsão férias + 1/3 + FGTS</span><span>{formatCurrency(feriasR)}</span></div>
+            <div className="flex justify-between text-white font-semibold pt-1 border-t border-white/10"><span>Total mensal</span><span>{formatCurrency(total)}</span></div>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button onClick={save} disabled={saving || !selected}>Salvar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* ---------------- Dialog Despesa ---------------- */
+
+function DialogDespesa({
+  mes, categoria, onClose, onSaved,
+}: {
+  mes: string;
+  categoria: 'fixa' | 'variavel';
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [tipos, setTipos] = useState<TipoCusto[]>([]);
+  const [tipoCustoId, setTipoCustoId] = useState<string>('');
+  const [valor, setValor] = useState<number>(0);
+  const [data, setData] = useState<string>(mes);
+  const [descricao, setDescricao] = useState<string>('');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from('tipos_custos' as any)
+        .select('id, nome, tipo, ativo')
+        .eq('ativo', true)
+        .eq('tipo', categoria)
+        .order('nome');
+      setTipos(((data || []) as any[]).map((t: any) => ({ id: t.id, nome: t.nome, tipo: t.tipo })));
+    })();
+  }, [categoria]);
+
+  const selected = tipos.find(t => t.id === tipoCustoId);
+
+  const save = async () => {
+    if (!selected) { toast.error('Selecione um tipo de custo'); return; }
+    if (!data) { toast.error('Informe a data'); return; }
+    setSaving(true);
+    try {
+      const userId = (await supabase.auth.getUser()).data.user?.id || null;
+      const { error } = await supabase.from('despesas_manuais_lancamentos' as any).insert({
+        mes_referencia: mes,
+        tipo_custo_id: selected.id,
+        categoria,
+        tipo_nome: selected.nome,
+        valor,
+        data,
+        descricao: descricao || null,
+        created_by: userId,
+      } as any);
+      if (error) throw error;
+      toast.success('Lançamento salvo');
+      onSaved();
+    } catch (e: any) {
+      toast.error('Erro ao salvar: ' + e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="sm:max-w-[520px]">
+        <DialogHeader>
+          <DialogTitle>Nova despesa {categoria === 'fixa' ? 'fixa' : 'variável'}</DialogTitle>
+        </DialogHeader>
+        <div className="grid gap-4 py-2">
+          <div className="grid gap-2">
+            <Label>Tipo de custo</Label>
+            <Select value={tipoCustoId} onValueChange={setTipoCustoId}>
+              <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+              <SelectContent>
+                {tipos.map(t => <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-1">
+              <Label>Valor pago</Label>
+              <Input type="number" step="0.01" value={valor} onChange={e => setValor(Number(e.target.value) || 0)} />
+            </div>
+            <div className="grid gap-1">
+              <Label>Data</Label>
+              <Input type="date" value={data} onChange={e => setData(e.target.value)} />
+            </div>
+          </div>
+          <div className="grid gap-1">
+            <Label>Descrição (opcional)</Label>
+            <Textarea value={descricao} onChange={e => setDescricao(e.target.value)} rows={2} />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button onClick={save} disabled={saving || !selected}>Salvar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

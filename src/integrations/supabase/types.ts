@@ -2102,6 +2102,96 @@ export type Database = {
         }
         Relationships: []
       }
+      despesas_manuais_folha: {
+        Row: {
+          admin_user_id: string
+          aux_combustivel: number
+          colaborador_nome: string
+          created_at: string
+          created_by: string | null
+          fgts_pct: number
+          id: string
+          insalubridade_pct: number
+          mes_referencia: string
+          previsao_13_valor: number
+          salario: number
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          admin_user_id: string
+          aux_combustivel?: number
+          colaborador_nome: string
+          created_at?: string
+          created_by?: string | null
+          fgts_pct?: number
+          id?: string
+          insalubridade_pct?: number
+          mes_referencia: string
+          previsao_13_valor?: number
+          salario?: number
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          admin_user_id?: string
+          aux_combustivel?: number
+          colaborador_nome?: string
+          created_at?: string
+          created_by?: string | null
+          fgts_pct?: number
+          id?: string
+          insalubridade_pct?: number
+          mes_referencia?: string
+          previsao_13_valor?: number
+          salario?: number
+          total?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      despesas_manuais_lancamentos: {
+        Row: {
+          categoria: string
+          created_at: string
+          created_by: string | null
+          data: string
+          descricao: string | null
+          id: string
+          mes_referencia: string
+          tipo_custo_id: string | null
+          tipo_nome: string
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          categoria: string
+          created_at?: string
+          created_by?: string | null
+          data: string
+          descricao?: string | null
+          id?: string
+          mes_referencia: string
+          tipo_custo_id?: string | null
+          tipo_nome: string
+          updated_at?: string
+          valor?: number
+        }
+        Update: {
+          categoria?: string
+          created_at?: string
+          created_by?: string | null
+          data?: string
+          descricao?: string | null
+          id?: string
+          mes_referencia?: string
+          tipo_custo_id?: string | null
+          tipo_nome?: string
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: []
+      }
       despesas_mensais: {
         Row: {
           categoria: string
