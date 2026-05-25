@@ -287,7 +287,27 @@ export default function FreteMinimalista() {
                         {formatCurrency(frete.valor_frete)}
                       </TableCell>
                       <TableCell className="text-white/80">
-                        {frete.quilometragem != null ? `${frete.quilometragem} km` : '-'}
+                        {editingKmId === frete.id ? (
+                          <Input
+                            ref={kmInputRef}
+                            type="number"
+                            min={ 0}
+                            step={ 0.1}
+                            value={kmEditValue}
+                            onChange={(e) => setKmEditValue(e.target.value)}
+                            onBlur={() => handleSaveKm(frete)}
+                            onKeyDown={(e) => handleKmKeyDown(e, frete)}
+                            className="h-7 w-24 bg-white/10 border-white/20 text-white text-xs px-2 py-0"
+                          />
+                        ) : (
+                          <span
+                            className="cursor-pointer hover:text-blue-400 transition-colors"
+                            onClick={() => handleStartKmEdit(frete)}
+                            title="Clique para editar"
+                          >
+                            {frete.quilometragem != null ? `${frete.quilometragem} km` : '-'}
+                          </span>
+                        )}
                       </TableCell>
                       <TableCell className="max-w-[200px] truncate text-white/60">
                         {frete.observacoes || '-'}
