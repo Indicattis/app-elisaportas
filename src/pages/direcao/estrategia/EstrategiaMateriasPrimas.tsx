@@ -205,7 +205,7 @@ export default function EstrategiaMateriasPrimas() {
                   {materiasPrimas.length === 0 ? (
                     <TableRow>
                       <TableCell
-                        colSpan={8}
+                        colSpan={9}
                         className="text-center text-white/60 py-8"
                       >
                         Nenhuma matéria-prima cadastrada
