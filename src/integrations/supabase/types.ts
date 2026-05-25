@@ -3953,6 +3953,7 @@ export type Database = {
           criado_por_nome: string | null
           descricao: string
           id: string
+          posicao: number | null
           titulo: string
           updated_at: string
         }
@@ -3962,6 +3963,7 @@ export type Database = {
           criado_por_nome?: string | null
           descricao: string
           id?: string
+          posicao?: number | null
           titulo: string
           updated_at?: string
         }
@@ -3971,6 +3973,7 @@ export type Database = {
           criado_por_nome?: string | null
           descricao?: string
           id?: string
+          posicao?: number | null
           titulo?: string
           updated_at?: string
         }

@@ -1,24 +1,26 @@
 ## Objetivo
 
-Permitir que cada matéria-prima cadastrada em `/direcao/estrategia/materias-primas` tenha sua **própria unidade de medida** (ex.: rolo, bobina, kg, litro), independente da unidade do item que ela compõe. Isso viabiliza cálculos corretos de compra (ex.: comprar em "rolos" mesmo que o item final seja medido em "metros").
+Adicionar drag-and-drop para reordenar ideias na página `/marketing/videos-ideias`, persistindo a ordem no banco.
 
-## Mudanças no banco
+## Mudanças
 
-Adicionar coluna `unidade TEXT NOT NULL DEFAULT 'un'` em `estrategia_materias_primas`.
+### 1. Banco
+- Migration: adicionar coluna `posicao INTEGER` em `marketing_videos_ideias`.
+- Backfill com a ordem atual (mais recentes primeiro, igual ao listing atual).
+- Index em `posicao`.
 
-## Mudanças no código
+### 2. `src/pages/marketing/VideosIdeias.tsx`
+- Ordenar query por `posicao ASC` (fallback `created_at DESC`).
+- Envolver o grid de cards com `DndContext` + `SortableContext` (`@dnd-kit/core` + `@dnd-kit/sortable`), padrão usado em `VendasPendenteDraggableList.tsx`.
+- Cada card vira um item sortable com handle de arrasto (ícone `GripVertical` no canto, estilo glassmorphism consistente).
+- Ao soltar (`onDragEnd`): reordenar estado local otimisticamente e disparar mutation `reordenar` que faz `upsert` em lote das novas `posicao` de todas as ideias afetadas.
+- Invalidar `marketing-videos-ideias` ao concluir; toast de erro com rollback em falha.
 
-### `src/hooks/useEstrategiaMateriasPrimas.ts`
-- Adicionar `unidade: string` no tipo `EstrategiaMateriaPrima` e `NewEstrategiaMateriaPrima`.
-- Passar `unidade` no insert do `criar` (default `"un"`).
+### 3. UX
+- Cursor `grab`/`grabbing` no handle, leve `opacity` no item em arraste, sem alterar layout responsivo (grid md:grid-cols-2 mantido).
+- Sem mudanças no modal de criação nem na lógica de cadastro.
 
-### `src/pages/direcao/estrategia/EstrategiaMateriasPrimas.tsx`
-- Nova coluna **"Unidade MP"** na tabela (entre "Nome" e "Qtd"), renderizada como `Select` populado por `UNIDADES_MATERIA_PRIMA` de `@/utils/unidadesMedida`.
-- Ao alterar, chamar `editar({ id, patch: { unidade } })`.
-- Atualizar `colSpan` do estado vazio (de 9 para 10).
-- Substituir o literal `"un mp"` da coluna **Proporção** pela abreviação real da unidade da matéria-prima (`getUnidadeAbreviacao(m.unidade)`), mantendo o destino como a unidade do item (ex.: `1 rolo = 50 m`).
-- Coluna **"Custo/un"** passa a mostrar `Custo/{abreviação da unidade MP}` (ex.: `Custo/rolo`).
-
-### Observações
-- Nenhuma mudança em `EstrategiaItens.tsx` — o cálculo de bobina já soma `quantidade_item` (rendimento em unidade do item) e divide o custo total, então continua correto independente da unidade da MP.
-- Registros existentes ficam com `'un'` por padrão; o usuário pode ajustar via o novo Select.
+## Detalhes técnicos
+- Sensores: `PointerSensor` com `activationConstraint: { distance: 8 }`.
+- Estratégia: `rectSortingStrategy` (grid 2 colunas).
+- Persistência: `supabase.from('marketing_videos_ideias').upsert(items.map((it,i)=>({ id: it.id, posicao: i })))`.
