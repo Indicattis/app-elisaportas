@@ -438,10 +438,9 @@ function Bloco({
         </div>
         <span className="text-[10px] uppercase tracking-wider text-white/40">{rotulo}</span>
       </div>
-      <div className={`grid ${editable ? 'grid-cols-[1fr_140px_110px_32px]' : 'grid-cols-[1fr_110px_110px]'} gap-x-6 px-2 pb-2 mb-1 border-b border-white/10 text-[10px] uppercase tracking-wider text-white/40`}>
+      <div className={`grid ${editable ? 'grid-cols-[1fr_140px_32px]' : 'grid-cols-[1fr_110px]'} gap-x-6 px-2 pb-2 mb-1 border-b border-white/10 text-[10px] uppercase tracking-wider text-white/40`}>
         <span className="pl-1">Item</span>
         <span className="text-right pr-1">Valor mensal</span>
-        <span className="text-right pr-1">Valor anual</span>
         {editable && <span />}
       </div>
       <div className="flex-1 max-h-64 overflow-y-auto space-y-1 pr-1">
@@ -451,7 +450,7 @@ function Bloco({
           <p className="text-sm text-white/40 px-2">Sem itens</p>
         ) : (
           itens.map((i) => (
-            <div key={i.id} className={`group grid ${editable ? 'grid-cols-[1fr_140px_110px_32px]' : 'grid-cols-[1fr_110px_110px]'} gap-x-6 text-sm px-2 py-1.5 rounded-md hover:bg-white/[0.03] transition-colors items-center`}>
+            <div key={i.id} className={`group grid ${editable ? 'grid-cols-[1fr_140px_32px]' : 'grid-cols-[1fr_110px]'} gap-x-6 text-sm px-2 py-1.5 rounded-md hover:bg-white/[0.03] transition-colors items-center`}>
               {editable ? (
                 <TextInput value={i.nome} onCommit={(v) => updateTipo(i.id, { nome: v })} />
               ) : (
@@ -462,7 +461,6 @@ function Bloco({
               ) : (
                 <span className="text-white/90 font-medium whitespace-nowrap text-right">{formatCurrency(i.valor)}</span>
               )}
-              <span className="text-white/60 font-medium whitespace-nowrap text-right">{formatCurrency(i.valor * 12)}</span>
               {editable && (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
@@ -486,7 +484,7 @@ function Bloco({
           ))
         )}
         {editable && (
-          <div className="grid grid-cols-[1fr_140px_110px_32px] gap-x-6 text-sm px-2 py-1.5 items-center mt-2 border-t border-white/5 pt-3">
+          <div className="grid grid-cols-[1fr_140px_32px] gap-x-6 text-sm px-2 py-1.5 items-center mt-2 border-t border-white/5 pt-3">
             <input
               type="text"
               placeholder="Nova despesa..."
@@ -509,10 +507,9 @@ function Bloco({
           </div>
         )}
       </div>
-      <div className={`mt-3 pt-3 border-t border-white/10 grid ${editable ? 'grid-cols-[1fr_140px_110px_32px]' : 'grid-cols-[1fr_110px_110px]'} gap-x-6 items-center px-2`}>
+      <div className={`mt-3 pt-3 border-t border-white/10 grid ${editable ? 'grid-cols-[1fr_140px_32px]' : 'grid-cols-[1fr_110px]'} gap-x-6 items-center px-2`}>
         <span className="text-xs text-white/50 uppercase tracking-wider">Total</span>
         <span className="text-base font-bold text-white text-right whitespace-nowrap">{formatCurrency(total)}</span>
-        <span className="text-base font-bold text-white/70 text-right whitespace-nowrap">{formatCurrency(total * 12)}</span>
         {editable && <span />}
       </div>
     </div>
