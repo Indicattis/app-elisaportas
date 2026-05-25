@@ -742,6 +742,7 @@ function SortableItemRow({ item, disabled, categorias, colors, order, padroes, o
 }
 
 export default function EstrategiaItens() {
+  const navigate = useNavigate();
   const { items, isLoading, createItem, updateItem, deleteItem, reordenarItens } = useCustosItens();
   const { padroes, aplicarEmTodos } = useCustosItensPadroes();
   const { categoriasOrdem, salvarOrdem } = useCustosItensCategoriasOrdem();
