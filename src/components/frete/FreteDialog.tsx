@@ -187,11 +187,14 @@ export function FreteDialog({ open, onOpenChange, frete }: FreteDialogProps) {
               value={formData.valor_frete}
               onChange={(e) => {
                 const valor = formatCurrencyInput(e.target.value);
-                const km = valor ? (parseFloat(valor) / 6).toFixed(2) : "";
                 setFormData(prev => ({
                   ...prev,
                   valor_frete: valor,
-                  quilometragem: km,
+                  quilometragem: prev.quilometragem
+                    ? prev.quilometragem
+                    : valor
+                      ? (parseFloat(valor) / 6).toFixed(2)
+                      : "",
                 }));
               }}
               placeholder="0.00"
@@ -203,13 +206,16 @@ export function FreteDialog({ open, onOpenChange, frete }: FreteDialogProps) {
             <Input
               id="quilometragem"
               type="number"
+              step="0.01"
+              min="0"
               value={formData.quilometragem}
-              readOnly
-              disabled
+              onChange={(e) =>
+                setFormData(prev => ({ ...prev, quilometragem: e.target.value }))
+              }
               placeholder="0.00"
             />
             <p className="text-xs text-muted-foreground">
-              Calculado automaticamente: valor do frete ÷ R$ 6,00
+              Sugestão automática: valor do frete ÷ R$ 6,00. Pode ser editado manualmente.
             </p>
           </div>
 
