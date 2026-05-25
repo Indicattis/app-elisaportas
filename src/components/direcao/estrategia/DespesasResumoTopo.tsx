@@ -1,18 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { formatCurrency } from '@/lib/utils';
-import { Users, Receipt, TrendingDown, Trash2, Plus, X } from 'lucide-react';
+import { Users, Receipt, TrendingDown, Trash2, Check, X } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 
 type FolhaRow = {
   id: string;
@@ -58,7 +53,7 @@ function calcTotalFolha(f: { salario: number; aux_combustivel: number; insalubri
 }
 
 interface Props {
-  mes: string | null; // 'YYYY-MM'
+  mes: string | null;
   ano?: number;
   onMediaMensalChange?: (media: number) => void;
   onDataChange?: () => void;
@@ -72,11 +67,39 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
   const [reloadV, setReloadV] = useState(0);
   const reload = () => { setReloadV(v => v + 1); onDataChange?.(); };
 
-  const [openFolha, setOpenFolha] = useState(false);
-  const [openDespesa, setOpenDespesa] = useState<null | 'fixa' | 'variavel'>(null);
+  const [colabs, setColabs] = useState<Colab[]>([]);
+  const [tipos, setTipos] = useState<TipoCusto[]>([]);
   const [confirmDel, setConfirmDel] = useState<null | { kind: 'folha' | 'lanc'; id: string }>(null);
 
   const mesStart = mes ? `${mes}-01` : null;
+
+  useEffect(() => {
+    (async () => {
+      const [{ data: u }, { data: t }] = await Promise.all([
+        supabase
+          .from('admin_users')
+          .select('id, nome, custo_colaborador, aux_combustivel, insalubridade_pct, fgts_pct, previsao_13_valor')
+          .eq('ativo', true)
+          .in('tipo_usuario', ['colaborador', 'metamorfo'])
+          .order('nome'),
+        supabase
+          .from('tipos_custos' as any)
+          .select('id, nome, tipo, ativo')
+          .eq('ativo', true)
+          .order('nome'),
+      ]);
+      setColabs(((u || []) as any[]).map((c: any) => ({
+        id: c.id,
+        nome: c.nome,
+        salario: Number(c.custo_colaborador) || 0,
+        aux_combustivel: Number(c.aux_combustivel) || 0,
+        insalubridade_pct: Number(c.insalubridade_pct) || 0,
+        fgts_pct: c.fgts_pct == null ? 8 : Number(c.fgts_pct),
+        previsao_13_valor: Number(c.previsao_13_valor) || 0,
+      })));
+      setTipos(((t || []) as any[]).map((x: any) => ({ id: x.id, nome: x.nome, tipo: x.tipo })));
+    })();
+  }, []);
 
   useEffect(() => {
     if (!mes || !mesStart) {
@@ -141,6 +164,50 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
     onDataChange?.();
   };
 
+  const handleInsertFolha = async (payload: {
+    colab: Colab;
+    salario: number; aux_combustivel: number; insalubridade_pct: number; fgts_pct: number; previsao_13_valor: number;
+  }) => {
+    if (!mesStart) return;
+    const total = calcTotalFolha(payload);
+    const userId = (await supabase.auth.getUser()).data.user?.id || null;
+    const { error } = await supabase.from('despesas_manuais_folha' as any).insert({
+      mes_referencia: mesStart,
+      admin_user_id: payload.colab.id,
+      colaborador_nome: payload.colab.nome,
+      salario: payload.salario,
+      aux_combustivel: payload.aux_combustivel,
+      insalubridade_pct: payload.insalubridade_pct,
+      fgts_pct: payload.fgts_pct,
+      previsao_13_valor: payload.previsao_13_valor,
+      total,
+      created_by: userId,
+    } as any);
+    if (error) { toast.error('Erro ao salvar: ' + error.message); return; }
+    toast.success('Lançamento de folha adicionado');
+    reload();
+  };
+
+  const handleInsertLanc = async (payload: {
+    tipo: TipoCusto; categoria: 'fixa' | 'variavel'; valor: number; data: string; descricao: string;
+  }) => {
+    if (!mesStart) return;
+    const userId = (await supabase.auth.getUser()).data.user?.id || null;
+    const { error } = await supabase.from('despesas_manuais_lancamentos' as any).insert({
+      mes_referencia: mesStart,
+      tipo_custo_id: payload.tipo.id,
+      categoria: payload.categoria,
+      tipo_nome: payload.tipo.nome,
+      valor: payload.valor,
+      data: payload.data,
+      descricao: payload.descricao || null,
+      created_by: userId,
+    } as any);
+    if (error) { toast.error('Erro ao salvar: ' + error.message); return; }
+    toast.success('Lançamento adicionado');
+    reload();
+  };
+
   if (!mes) {
     return (
       <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-8 text-center text-white/60">
@@ -154,46 +221,33 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
       <BlocoFolha
         rows={folha}
         loading={loading}
-        onAdd={() => setOpenFolha(true)}
+        colabs={colabs}
         onDelete={(id) => setConfirmDel({ kind: 'folha', id })}
-        onUpdated={reload}
         onPatch={handlePatchFolha}
+        onInsert={handleInsertFolha}
       />
       <BlocoDespesa
         titulo="Despesas Fixas"
         icon={<Receipt className="w-4 h-4" />}
         rows={fixas}
         loading={loading}
-        onAdd={() => setOpenDespesa('fixa')}
+        categoria="fixa"
+        tipos={tipos.filter(t => t.tipo === 'fixa')}
+        mesStart={mesStart || ''}
         onDelete={(id) => setConfirmDel({ kind: 'lanc', id })}
-        onUpdated={reload}
+        onInsert={handleInsertLanc}
       />
       <BlocoDespesa
         titulo="Despesas Variáveis"
         icon={<TrendingDown className="w-4 h-4" />}
         rows={variaveis}
         loading={loading}
-        onAdd={() => setOpenDespesa('variavel')}
+        categoria="variavel"
+        tipos={tipos.filter(t => t.tipo === 'variavel')}
+        mesStart={mesStart || ''}
         onDelete={(id) => setConfirmDel({ kind: 'lanc', id })}
-        onUpdated={reload}
+        onInsert={handleInsertLanc}
       />
-
-      {openFolha && mesStart && (
-        <DialogFolha
-          mes={mesStart}
-          onClose={() => setOpenFolha(false)}
-          onSaved={() => { setOpenFolha(false); reload(); }}
-        />
-      )}
-
-      {openDespesa && mesStart && (
-        <DialogDespesa
-          mes={mesStart}
-          categoria={openDespesa}
-          onClose={() => setOpenDespesa(null)}
-          onSaved={() => { setOpenDespesa(null); reload(); }}
-        />
-      )}
 
       <AlertDialog open={!!confirmDel} onOpenChange={(o) => !o && setConfirmDel(null)}>
         <AlertDialogContent>
@@ -211,7 +265,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
   );
 }
 
-/* ---------------- Folha block ---------------- */
+/* ---------------- EditableCell ---------------- */
 
 function EditableCell({
   value, format, onSave,
@@ -270,32 +324,72 @@ function EditableCell({
   );
 }
 
+/* ---------------- Folha block ---------------- */
+
 function BlocoFolha({
-  rows, loading, onAdd, onDelete, onUpdated, onPatch,
+  rows, loading, colabs, onDelete, onPatch, onInsert,
 }: {
   rows: FolhaRow[];
   loading: boolean;
-  onAdd: () => void;
+  colabs: Colab[];
   onDelete: (id: string) => void;
-  onUpdated: () => void;
   onPatch: (
     id: string,
     field: 'salario' | 'aux_combustivel' | 'insalubridade_pct' | 'fgts_pct' | 'previsao_13_valor',
     value: number,
   ) => void | Promise<void>;
+  onInsert: (payload: {
+    colab: Colab;
+    salario: number; aux_combustivel: number; insalubridade_pct: number; fgts_pct: number; previsao_13_valor: number;
+  }) => Promise<void>;
 }) {
   const total = rows.reduce((s, r) => s + Number(r.total || 0), 0);
+
+  // ----- new row state -----
+  const emptyForm = { salario: 0, aux_combustivel: 0, insalubridade_pct: 0, fgts_pct: 8, previsao_13_valor: 0 };
+  const [adminUserId, setAdminUserId] = useState('');
+  const [form, setForm] = useState(emptyForm);
+  const [saving, setSaving] = useState(false);
+
+  const selected = colabs.find(c => c.id === adminUserId);
+
+  const onSelectColab = (id: string) => {
+    setAdminUserId(id);
+    const c = colabs.find(x => x.id === id);
+    if (c) {
+      setForm({
+        salario: c.salario,
+        aux_combustivel: c.aux_combustivel,
+        insalubridade_pct: c.insalubridade_pct,
+        fgts_pct: c.fgts_pct,
+        previsao_13_valor: c.previsao_13_valor,
+      });
+    }
+  };
+
+  const clear = () => { setAdminUserId(''); setForm(emptyForm); };
+
+  const save = async () => {
+    if (!selected) return;
+    setSaving(true);
+    try {
+      await onInsert({ colab: selected, ...form });
+      clear();
+    } finally { setSaving(false); }
+  };
+
+  const insalubValNew = form.salario * (form.insalubridade_pct || 0) / 100;
+  const fgtsValNew = form.salario * (form.fgts_pct || 0) / 100;
+  const prev13NewCom = form.previsao_13_valor * (1 + (form.fgts_pct || 0) / 100);
+  const feriasNew = form.salario / 3 + fgtsValNew;
+  const totalNew = useMemo(() => calcTotalFolha(form), [form]);
+
   return (
     <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-5">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2 text-white">
-          <Users className="w-4 h-4" />
-          <h3 className="font-semibold">Folha Salarial</h3>
-          <span className="text-white/40 text-sm">({rows.length})</span>
-        </div>
-        <Button size="sm" onClick={onAdd} className="bg-blue-600 hover:bg-blue-700">
-          <Plus className="w-4 h-4 mr-1" /> Adicionar
-        </Button>
+      <div className="flex items-center gap-2 text-white mb-3">
+        <Users className="w-4 h-4" />
+        <h3 className="font-semibold">Folha Salarial</h3>
+        <span className="text-white/40 text-sm">({rows.length})</span>
       </div>
 
       <div className="overflow-x-auto">
@@ -319,44 +413,96 @@ function BlocoFolha({
             {loading ? (
               <tr><td colSpan={11} className="text-white/40 px-2 py-3">Carregando...</td></tr>
             ) : rows.length === 0 ? (
-              <tr><td colSpan={11} className="text-white/40 px-2 py-3 text-center">Nenhum lançamento. Clique em Adicionar.</td></tr>
+              <tr><td colSpan={11} className="text-white/40 px-2 py-3 text-center">Nenhum lançamento ainda.</td></tr>
             ) : rows.map(r => {
               const insalubVal = Number(r.salario) * Number(r.insalubridade_pct || 0) / 100;
               const fgtsVal = Number(r.salario) * Number(r.fgts_pct || 0) / 100;
               const prev13ComFgts = Number(r.previsao_13_valor) * (1 + Number(r.fgts_pct || 0) / 100);
               const feriasComUmTerco = Number(r.salario) / 3 + fgtsVal;
               return (
-              <tr key={r.id} className="border-b border-white/5 hover:bg-white/[0.03]">
-                <td className="py-2 pl-1 text-white/90">{r.colaborador_nome}</td>
-                <td className="px-2 text-right text-emerald-400 font-medium">
-                  <EditableCell value={Number(r.salario)} format="currency" onSave={(v) => onPatch(r.id, 'salario', v)} />
-                </td>
-                <td className="px-2 text-right text-white/60">
-                  <EditableCell value={Number(r.aux_combustivel)} format="currency" onSave={(v) => onPatch(r.id, 'aux_combustivel', v)} />
-                </td>
-                <td className="px-2 text-right text-white/60">
-                  <EditableCell value={Number(r.insalubridade_pct)} format="percent" onSave={(v) => onPatch(r.id, 'insalubridade_pct', v)} />
-                </td>
-                <td className="px-2 text-right text-white/60">{formatCurrency(insalubVal)}</td>
-                <td className="px-2 text-right text-white/60">
-                  <EditableCell value={Number(r.fgts_pct)} format="percent" onSave={(v) => onPatch(r.id, 'fgts_pct', v)} />
-                </td>
-                <td className="px-2 text-right text-white/60">{formatCurrency(fgtsVal)}</td>
-                <td className="px-2 text-right text-white/60">{formatCurrency(prev13ComFgts)}</td>
-                <td className="px-2 text-right text-white/60">{formatCurrency(feriasComUmTerco)}</td>
-                <td className="px-2 text-right text-white font-medium">{formatCurrency(r.total)}</td>
-                <td className="pr-1 text-right">
-                  <button
-                    onClick={() => onDelete(r.id)}
-                    className="p-1 rounded hover:bg-red-500/20 text-red-300/70 hover:text-red-300"
-                    aria-label="Excluir"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </td>
-              </tr>
+                <tr key={r.id} className="border-b border-white/5 hover:bg-white/[0.03]">
+                  <td className="py-2 pl-1 text-white/90">{r.colaborador_nome}</td>
+                  <td className="px-2 text-right text-emerald-400 font-medium">
+                    <EditableCell value={Number(r.salario)} format="currency" onSave={(v) => onPatch(r.id, 'salario', v)} />
+                  </td>
+                  <td className="px-2 text-right text-white/60">
+                    <EditableCell value={Number(r.aux_combustivel)} format="currency" onSave={(v) => onPatch(r.id, 'aux_combustivel', v)} />
+                  </td>
+                  <td className="px-2 text-right text-white/60">
+                    <EditableCell value={Number(r.insalubridade_pct)} format="percent" onSave={(v) => onPatch(r.id, 'insalubridade_pct', v)} />
+                  </td>
+                  <td className="px-2 text-right text-white/60">{formatCurrency(insalubVal)}</td>
+                  <td className="px-2 text-right text-white/60">
+                    <EditableCell value={Number(r.fgts_pct)} format="percent" onSave={(v) => onPatch(r.id, 'fgts_pct', v)} />
+                  </td>
+                  <td className="px-2 text-right text-white/60">{formatCurrency(fgtsVal)}</td>
+                  <td className="px-2 text-right text-white/60">{formatCurrency(prev13ComFgts)}</td>
+                  <td className="px-2 text-right text-white/60">{formatCurrency(feriasComUmTerco)}</td>
+                  <td className="px-2 text-right text-white font-medium">{formatCurrency(r.total)}</td>
+                  <td className="pr-1 text-right">
+                    <button
+                      onClick={() => onDelete(r.id)}
+                      className="p-1 rounded hover:bg-red-500/20 text-red-300/70 hover:text-red-300"
+                      aria-label="Excluir"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </td>
+                </tr>
               );
             })}
+
+            {/* ------ Add row ------ */}
+            <tr className="border-t border-white/10 bg-blue-500/5">
+              <td className="py-2 pl-1">
+                <Select value={adminUserId} onValueChange={onSelectColab}>
+                  <SelectTrigger className="h-8 text-xs bg-white/5 border-white/10">
+                    <SelectValue placeholder="Selecione colaborador..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {colabs.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </td>
+              <td className="px-2">
+                <NumInput value={form.salario} onChange={(v) => setForm({ ...form, salario: v })} />
+              </td>
+              <td className="px-2">
+                <NumInput value={form.aux_combustivel} onChange={(v) => setForm({ ...form, aux_combustivel: v })} />
+              </td>
+              <td className="px-2">
+                <NumInput value={form.insalubridade_pct} onChange={(v) => setForm({ ...form, insalubridade_pct: v })} />
+              </td>
+              <td className="px-2 text-right text-white/40 text-xs">{formatCurrency(insalubValNew)}</td>
+              <td className="px-2">
+                <NumInput value={form.fgts_pct} onChange={(v) => setForm({ ...form, fgts_pct: v })} />
+              </td>
+              <td className="px-2 text-right text-white/40 text-xs">{formatCurrency(fgtsValNew)}</td>
+              <td className="px-2 text-right text-white/40 text-xs">{formatCurrency(prev13NewCom)}</td>
+              <td className="px-2 text-right text-white/40 text-xs">{formatCurrency(feriasNew)}</td>
+              <td className="px-2 text-right text-white text-xs font-medium">{formatCurrency(totalNew)}</td>
+              <td className="pr-1">
+                <div className="flex items-center justify-end gap-1">
+                  <button
+                    onClick={save}
+                    disabled={!selected || saving}
+                    className="p-1 rounded bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 disabled:opacity-30 disabled:cursor-not-allowed"
+                    aria-label="Salvar"
+                    title="Salvar"
+                  >
+                    <Check className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={clear}
+                    className="p-1 rounded hover:bg-white/10 text-white/50"
+                    aria-label="Limpar"
+                    title="Limpar"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -372,46 +518,67 @@ function BlocoFolha({
 /* ---------------- Despesa block ---------------- */
 
 function BlocoDespesa({
-  titulo, icon, rows, loading, onAdd, onDelete, onUpdated,
+  titulo, icon, rows, loading, categoria, tipos, mesStart, onDelete, onInsert,
 }: {
   titulo: string;
   icon: React.ReactNode;
   rows: LancRow[];
   loading: boolean;
-  onAdd: () => void;
+  categoria: 'fixa' | 'variavel';
+  tipos: TipoCusto[];
+  mesStart: string;
   onDelete: (id: string) => void;
-  onUpdated: () => void;
+  onInsert: (payload: {
+    tipo: TipoCusto; categoria: 'fixa' | 'variavel'; valor: number; data: string; descricao: string;
+  }) => Promise<void>;
 }) {
   const total = rows.reduce((s, r) => s + Number(r.valor || 0), 0);
+
+  const [tipoId, setTipoId] = useState('');
+  const [descricao, setDescricao] = useState('');
+  const [data, setData] = useState(mesStart);
+  const [valor, setValor] = useState(0);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => { setData(mesStart); }, [mesStart]);
+
+  const selectedTipo = tipos.find(t => t.id === tipoId);
+
+  const clear = () => { setTipoId(''); setDescricao(''); setData(mesStart); setValor(0); };
+
+  const save = async () => {
+    if (!selectedTipo || !data || valor <= 0) return;
+    setSaving(true);
+    try {
+      await onInsert({ tipo: selectedTipo, categoria, valor, data, descricao });
+      clear();
+    } finally { setSaving(false); }
+  };
+
   return (
     <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-5">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2 text-white">
-          {icon}
-          <h3 className="font-semibold">{titulo}</h3>
-          <span className="text-white/40 text-sm">({rows.length})</span>
-        </div>
-        <Button size="sm" onClick={onAdd} className="bg-blue-600 hover:bg-blue-700">
-          <Plus className="w-4 h-4 mr-1" /> Adicionar
-        </Button>
+      <div className="flex items-center gap-2 text-white mb-3">
+        {icon}
+        <h3 className="font-semibold">{titulo}</h3>
+        <span className="text-white/40 text-sm">({rows.length})</span>
       </div>
 
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="text-[10px] uppercase tracking-wider text-white/40 border-b border-white/10">
-              <th className="text-left font-normal pb-2 pl-1">Tipo</th>
+              <th className="text-left font-normal pb-2 pl-1 w-[28%]">Tipo</th>
               <th className="text-left font-normal pb-2 px-2">Descrição</th>
-              <th className="text-left font-normal pb-2 px-2">Data</th>
-              <th className="text-right font-normal pb-2 px-2">Valor pago</th>
-              <th className="pb-2 pr-1"></th>
+              <th className="text-left font-normal pb-2 px-2 w-[140px]">Data</th>
+              <th className="text-right font-normal pb-2 px-2 w-[140px]">Valor pago</th>
+              <th className="pb-2 pr-1 w-[80px]"></th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr><td colSpan={5} className="text-white/40 px-2 py-3">Carregando...</td></tr>
             ) : rows.length === 0 ? (
-              <tr><td colSpan={5} className="text-white/40 px-2 py-3 text-center">Nenhum lançamento. Clique em Adicionar.</td></tr>
+              <tr><td colSpan={5} className="text-white/40 px-2 py-3 text-center">Nenhum lançamento ainda.</td></tr>
             ) : rows.map(r => (
               <tr key={r.id} className="border-b border-white/5 hover:bg-white/[0.03]">
                 <td className="py-2 pl-1 text-white/90">{r.tipo_nome}</td>
@@ -429,6 +596,61 @@ function BlocoDespesa({
                 </td>
               </tr>
             ))}
+
+            {/* ------ Add row ------ */}
+            <tr className="border-t border-white/10 bg-blue-500/5">
+              <td className="py-2 pl-1">
+                <Select value={tipoId} onValueChange={setTipoId}>
+                  <SelectTrigger className="h-8 text-xs bg-white/5 border-white/10">
+                    <SelectValue placeholder="Selecione tipo..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {tipos.map(t => <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </td>
+              <td className="px-2">
+                <input
+                  type="text"
+                  value={descricao}
+                  onChange={(e) => setDescricao(e.target.value)}
+                  placeholder="Opcional"
+                  className="w-full h-8 bg-white/5 border border-white/10 rounded px-2 text-white text-xs outline-none focus:border-blue-400/50"
+                />
+              </td>
+              <td className="px-2">
+                <input
+                  type="date"
+                  value={data}
+                  onChange={(e) => setData(e.target.value)}
+                  className="w-full h-8 bg-white/5 border border-white/10 rounded px-2 text-white text-xs outline-none focus:border-blue-400/50"
+                />
+              </td>
+              <td className="px-2">
+                <NumInput value={valor} onChange={setValor} />
+              </td>
+              <td className="pr-1">
+                <div className="flex items-center justify-end gap-1">
+                  <button
+                    onClick={save}
+                    disabled={!selectedTipo || valor <= 0 || saving}
+                    className="p-1 rounded bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 disabled:opacity-30 disabled:cursor-not-allowed"
+                    aria-label="Salvar"
+                    title="Salvar"
+                  >
+                    <Check className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={clear}
+                    className="p-1 rounded hover:bg-white/10 text-white/50"
+                    aria-label="Limpar"
+                    title="Limpar"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -441,234 +663,18 @@ function BlocoDespesa({
   );
 }
 
-/* ---------------- Dialog Folha ---------------- */
+/* ---------------- NumInput ---------------- */
 
-function DialogFolha({ mes, onClose, onSaved }: { mes: string; onClose: () => void; onSaved: () => void }) {
-  const [colabs, setColabs] = useState<Colab[]>([]);
-  const [adminUserId, setAdminUserId] = useState<string>('');
-  const [form, setForm] = useState({
-    salario: 0, aux_combustivel: 0, insalubridade_pct: 0,
-    fgts_pct: 8, previsao_13_valor: 0,
-  });
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    (async () => {
-      const { data } = await supabase
-        .from('admin_users')
-        .select('id, nome, custo_colaborador, aux_combustivel, insalubridade_pct, fgts_pct, previsao_13_valor')
-        .eq('ativo', true)
-        .in('tipo_usuario', ['colaborador', 'metamorfo'])
-        .order('nome');
-      setColabs(((data || []) as any[]).map(c => ({
-        id: c.id,
-        nome: c.nome,
-        salario: Number(c.custo_colaborador) || 0,
-        aux_combustivel: Number(c.aux_combustivel) || 0,
-        insalubridade_pct: Number(c.insalubridade_pct) || 0,
-        fgts_pct: c.fgts_pct == null ? 8 : Number(c.fgts_pct),
-        previsao_13_valor: Number(c.previsao_13_valor) || 0,
-      })));
-    })();
-  }, []);
-
-  const selected = colabs.find(c => c.id === adminUserId);
-
-  const onSelectColab = (id: string) => {
-    setAdminUserId(id);
-    const c = colabs.find(x => x.id === id);
-    if (c) {
-      setForm({
-        salario: c.salario,
-        aux_combustivel: c.aux_combustivel,
-        insalubridade_pct: c.insalubridade_pct,
-        fgts_pct: c.fgts_pct,
-        previsao_13_valor: c.previsao_13_valor,
-      });
-    }
-  };
-
-  const total = useMemo(() => calcTotalFolha(form), [form]);
-  const insalubR = form.salario * (form.insalubridade_pct || 0) / 100;
-  const fgtsR = form.salario * (form.fgts_pct || 0) / 100;
-  const feriasR = form.salario / 3 + fgtsR;
-
-  const save = async () => {
-    if (!selected) { toast.error('Selecione um colaborador'); return; }
-    setSaving(true);
-    try {
-      const userId = (await supabase.auth.getUser()).data.user?.id || null;
-      const { error } = await supabase.from('despesas_manuais_folha' as any).insert({
-        mes_referencia: mes,
-        admin_user_id: selected.id,
-        colaborador_nome: selected.nome,
-        salario: form.salario,
-        aux_combustivel: form.aux_combustivel,
-        insalubridade_pct: form.insalubridade_pct,
-        fgts_pct: form.fgts_pct,
-        previsao_13_valor: form.previsao_13_valor,
-        total,
-        created_by: userId,
-      } as any);
-      if (error) throw error;
-      toast.success('Lançamento de folha salvo');
-      onSaved();
-    } catch (e: any) {
-      toast.error('Erro ao salvar: ' + e.message);
-    } finally {
-      setSaving(false);
-    }
-  };
-
+function NumInput({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   return (
-    <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-[640px]">
-        <DialogHeader>
-          <DialogTitle>Novo lançamento de folha</DialogTitle>
-        </DialogHeader>
-        <div className="grid gap-4 py-2">
-          <div className="grid gap-2">
-            <Label>Colaborador</Label>
-            <Select value={adminUserId} onValueChange={onSelectColab}>
-              <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-              <SelectContent>
-                {colabs.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="grid gap-1">
-              <Label>Salário</Label>
-              <Input type="number" step="0.01" value={form.salario} onChange={e => setForm({ ...form, salario: Number(e.target.value) || 0 })} />
-            </div>
-            <div className="grid gap-1">
-              <Label>Aux. Combustível</Label>
-              <Input type="number" step="0.01" value={form.aux_combustivel} onChange={e => setForm({ ...form, aux_combustivel: Number(e.target.value) || 0 })} />
-            </div>
-            <div className="grid gap-1">
-              <Label>Insalubridade %</Label>
-              <Input type="number" step="0.01" value={form.insalubridade_pct} onChange={e => setForm({ ...form, insalubridade_pct: Number(e.target.value) || 0 })} />
-            </div>
-            <div className="grid gap-1">
-              <Label>FGTS %</Label>
-              <Input type="number" step="0.01" value={form.fgts_pct} onChange={e => setForm({ ...form, fgts_pct: Number(e.target.value) || 0 })} />
-            </div>
-            <div className="grid gap-1 col-span-2">
-              <Label>Previsão 13° + FGTS</Label>
-              <Input type="number" step="0.01" value={form.previsao_13_valor} onChange={e => setForm({ ...form, previsao_13_valor: Number(e.target.value) || 0 })} />
-            </div>
-          </div>
-
-          <div className="rounded-lg border border-white/10 bg-white/5 p-3 text-sm space-y-1">
-            <div className="flex justify-between text-white/60"><span>Insalubridade R$</span><span>{formatCurrency(insalubR)}</span></div>
-            <div className="flex justify-between text-white/60"><span>FGTS R$</span><span>{formatCurrency(fgtsR)}</span></div>
-            <div className="flex justify-between text-white/60"><span>Previsão férias + 1/3 + FGTS</span><span>{formatCurrency(feriasR)}</span></div>
-            <div className="flex justify-between text-white font-semibold pt-1 border-t border-white/10"><span>Total mensal</span><span>{formatCurrency(total)}</span></div>
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button onClick={save} disabled={saving || !selected}>Salvar</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-/* ---------------- Dialog Despesa ---------------- */
-
-function DialogDespesa({
-  mes, categoria, onClose, onSaved,
-}: {
-  mes: string;
-  categoria: 'fixa' | 'variavel';
-  onClose: () => void;
-  onSaved: () => void;
-}) {
-  const [tipos, setTipos] = useState<TipoCusto[]>([]);
-  const [tipoCustoId, setTipoCustoId] = useState<string>('');
-  const [valor, setValor] = useState<number>(0);
-  const [data, setData] = useState<string>(mes);
-  const [descricao, setDescricao] = useState<string>('');
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    (async () => {
-      const { data } = await supabase
-        .from('tipos_custos' as any)
-        .select('id, nome, tipo, ativo')
-        .eq('ativo', true)
-        .eq('tipo', categoria)
-        .order('nome');
-      setTipos(((data || []) as any[]).map((t: any) => ({ id: t.id, nome: t.nome, tipo: t.tipo })));
-    })();
-  }, [categoria]);
-
-  const selected = tipos.find(t => t.id === tipoCustoId);
-
-  const save = async () => {
-    if (!selected) { toast.error('Selecione um tipo de custo'); return; }
-    if (!data) { toast.error('Informe a data'); return; }
-    setSaving(true);
-    try {
-      const userId = (await supabase.auth.getUser()).data.user?.id || null;
-      const { error } = await supabase.from('despesas_manuais_lancamentos' as any).insert({
-        mes_referencia: mes,
-        tipo_custo_id: selected.id,
-        categoria,
-        tipo_nome: selected.nome,
-        valor,
-        data,
-        descricao: descricao || null,
-        created_by: userId,
-      } as any);
-      if (error) throw error;
-      toast.success('Lançamento salvo');
-      onSaved();
-    } catch (e: any) {
-      toast.error('Erro ao salvar: ' + e.message);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-[520px]">
-        <DialogHeader>
-          <DialogTitle>Nova despesa {categoria === 'fixa' ? 'fixa' : 'variável'}</DialogTitle>
-        </DialogHeader>
-        <div className="grid gap-4 py-2">
-          <div className="grid gap-2">
-            <Label>Tipo de custo</Label>
-            <Select value={tipoCustoId} onValueChange={setTipoCustoId}>
-              <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-              <SelectContent>
-                {tipos.map(t => <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="grid gap-1">
-              <Label>Valor pago</Label>
-              <Input type="number" step="0.01" value={valor} onChange={e => setValor(Number(e.target.value) || 0)} />
-            </div>
-            <div className="grid gap-1">
-              <Label>Data</Label>
-              <Input type="date" value={data} onChange={e => setData(e.target.value)} />
-            </div>
-          </div>
-          <div className="grid gap-1">
-            <Label>Descrição (opcional)</Label>
-            <Textarea value={descricao} onChange={e => setDescricao(e.target.value)} rows={2} />
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button onClick={save} disabled={saving || !selected}>Salvar</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <input
+      type="number"
+      step="0.01"
+      value={value || ''}
+      onChange={(e) => onChange(Number(e.target.value) || 0)}
+      onFocus={(e) => e.currentTarget.select()}
+      placeholder="0"
+      className="w-full h-8 bg-white/5 border border-white/10 rounded px-2 text-white text-xs text-right outline-none focus:border-blue-400/50"
+    />
   );
 }
