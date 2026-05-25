@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Plus, Clapperboard, Loader2, GripVertical, Check, ChevronsUpDown, X, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Clapperboard, Loader2, GripVertical, Check, ChevronsUpDown, X, Trash2, Pencil } from "lucide-react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -88,7 +88,7 @@ interface Colaborador {
   nome: string;
 }
 
-function SortableIdeiaCard({ ideia, onChangeStatus, onDelete }: { ideia: Ideia; onChangeStatus: (id: string, s: Status) => void; onDelete: (id: string) => void }) {
+function SortableIdeiaCard({ ideia, onChangeStatus, onDelete, onEdit }: { ideia: Ideia; onChangeStatus: (id: string, s: Status) => void; onDelete: (id: string) => void; onEdit: (id: string) => void }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: ideia.id });
   const style = {
@@ -104,6 +104,13 @@ function SortableIdeiaCard({ ideia, onChangeStatus, onDelete }: { ideia: Ideia; 
       className="p-4 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 relative"
     >
       <div className="absolute top-2 right-2 flex items-center gap-1">
+        <button
+          onClick={() => onEdit(ideia.id)}
+          className="p-1.5 rounded-md text-white/40 hover:text-blue-400 hover:bg-blue-500/10 transition-colors"
+          aria-label="Editar ideia"
+        >
+          <Pencil className="w-4 h-4" />
+        </button>
         <button
           {...attributes}
           {...listeners}
@@ -185,6 +192,7 @@ export default function VideosIdeias() {
   const [statusFiltro, setStatusFiltro] = useState<"todos" | Status>("todos");
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [ideiaParaExcluir, setIdeiaParaExcluir] = useState<string | null>(null);
+  const [editandoId, setEditandoId] = useState<string | null>(null);
 
   const { data: colaboradores } = useQuery({
     queryKey: ["marketing-videos-ideias-colaboradores"],
@@ -328,6 +336,36 @@ export default function VideosIdeias() {
     },
   });
 
+  const editar = useMutation({
+    mutationFn: async () => {
+      if (!editandoId) throw new Error("ID não definido");
+      const parsed = ideiaSchema.parse({ titulo, descricao, autores_ids: autoresIds });
+      const nomes = (colaboradores ?? [])
+        .filter((c) => parsed.autores_ids.includes(c.id))
+        .map((c) => c.nome);
+      const { error } = await supabase.from("marketing_videos_ideias").update({
+        titulo: parsed.titulo,
+        descricao: parsed.descricao,
+        autores_ids: parsed.autores_ids,
+        autores_nomes: nomes,
+      }).eq("id", editandoId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["marketing-videos-ideias"] });
+      setConfirmOpen(false);
+      setFormOpen(false);
+      setTitulo("");
+      setDescricao("");
+      setAutoresIds([]);
+      setEditandoId(null);
+      setSuccessOpen(true);
+    },
+    onError: (e: any) => {
+      toast.error(e?.message ?? "Erro ao editar ideia");
+    },
+  });
+
   const handleConfirmarForm = () => {
     const result = ideiaSchema.safeParse({ titulo, descricao, autores_ids: autoresIds });
     if (!result.success) {
@@ -363,7 +401,13 @@ export default function VideosIdeias() {
             </div>
           </div>
           <Button
-            onClick={() => setFormOpen(true)}
+            onClick={() => {
+              setEditandoId(null);
+              setTitulo("");
+              setDescricao("");
+              setAutoresIds([]);
+              setFormOpen(true);
+            }}
             className="bg-blue-600 hover:bg-blue-500 text-white gap-2 shrink-0"
           >
             <Plus className="w-4 h-4" />
@@ -410,6 +454,15 @@ export default function VideosIdeias() {
                           setIdeiaParaExcluir(id);
                           setDeleteModalOpen(true);
                         }}
+                        onEdit={(id) => {
+                          const ideia = ideias?.find((i) => i.id === id);
+                          if (!ideia) return;
+                          setEditandoId(id);
+                          setTitulo(ideia.titulo);
+                          setDescricao(ideia.descricao);
+                          setAutoresIds(ideia.autores_ids ?? []);
+                          setFormOpen(true);
+                        }}
                       />
                     ))}
                   </div>
@@ -421,12 +474,12 @@ export default function VideosIdeias() {
       </div>
 
       {/* Modal de formulário */}
-      <Dialog open={formOpen} onOpenChange={setFormOpen}>
+      <Dialog open={formOpen} onOpenChange={(v) => { if (!v) setEditandoId(null); setFormOpen(v); }}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Nova ideia de vídeo</DialogTitle>
+            <DialogTitle>{editandoId ? "Editar ideia" : "Nova ideia de vídeo"}</DialogTitle>
             <DialogDescription>
-              Descreva sua ideia para o time de marketing produzir.
+              {editandoId ? "Atualize os dados da ideia." : "Descreva sua ideia para o time de marketing produzir."}
             </DialogDescription>
           </DialogHeader>
 
@@ -547,32 +600,43 @@ export default function VideosIdeias() {
         </DialogContent>
       </Dialog>
 
-      {/* Modal de confirmação bem-humorada */}
-      <Dialog open={confirmOpen} onOpenChange={(v) => !criar.isPending && setConfirmOpen(v)}>
+      {/* Modal de confirmação */}
+      <Dialog open={confirmOpen} onOpenChange={(v) => { const p = criar.isPending || editar.isPending; if (!p) setConfirmOpen(v); }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="sr-only">Confirmação</DialogTitle>
           </DialogHeader>
           <div className="text-center py-4 space-y-4">
-            <div className="text-6xl">😢</div>
-            <p className="text-base text-foreground leading-relaxed">
-              Tem certeza que quer dar <strong>MAIS</strong> uma demanda para o time de marketing?
-              Os meninos estão cheios de serviço
-            </p>
+            {editandoId ? (
+              <>
+                <div className="text-6xl">✏️</div>
+                <p className="text-base text-foreground leading-relaxed">
+                  Confirma as alterações nesta ideia?
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="text-6xl">😢</div>
+                <p className="text-base text-foreground leading-relaxed">
+                  Tem certeza que quer dar <strong>MAIS</strong> uma demanda para o time de marketing?
+                  Os meninos estão cheios de serviço
+                </p>
+              </>
+            )}
           </div>
           <DialogFooter className="sm:justify-center gap-2">
             <Button
               variant="outline"
               onClick={() => setConfirmOpen(false)}
-              disabled={criar.isPending}
+              disabled={criar.isPending || editar.isPending}
             >
               Cancelar
             </Button>
-            <Button onClick={() => criar.mutate()} disabled={criar.isPending}>
-              {criar.isPending ? (
+            <Button onClick={() => editandoId ? editar.mutate() : criar.mutate()} disabled={criar.isPending || editar.isPending}>
+              {(criar.isPending || editar.isPending) ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Enviando...
+                  {editandoId ? "Salvando..." : "Enviando..."}
                 </>
               ) : (
                 "Sim"
@@ -586,15 +650,17 @@ export default function VideosIdeias() {
       <Dialog open={successOpen} onOpenChange={setSuccessOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="sr-only">Cadastrado</DialogTitle>
+            <DialogTitle className="sr-only">{editandoId ? "Atualizado" : "Cadastrado"}</DialogTitle>
           </DialogHeader>
           <div className="text-center py-4 space-y-4">
             <div className="text-6xl">🎉</div>
             <p className="text-lg font-semibold text-foreground">sem monstro!</p>
-            <p className="text-sm text-muted-foreground">Ideia cadastrada com sucesso.</p>
+            <p className="text-sm text-muted-foreground">
+              {editandoId ? "Ideia atualizada com sucesso." : "Ideia cadastrada com sucesso."}
+            </p>
           </div>
           <DialogFooter className="sm:justify-center">
-            <Button onClick={() => setSuccessOpen(false)}>Fechar</Button>
+            <Button onClick={() => { setSuccessOpen(false); setEditandoId(null); }}>Fechar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
