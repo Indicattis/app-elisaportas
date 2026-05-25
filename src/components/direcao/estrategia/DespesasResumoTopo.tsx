@@ -2,10 +2,28 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { formatCurrency } from '@/lib/utils';
 import { Users, Receipt, TrendingDown } from 'lucide-react';
+import { toast } from 'sonner';
 
 type Item = { id: string; nome: string; valor: number };
+type ColabFolha = {
+  id: string;
+  nome: string;
+  salario: number;
+  aux_combustivel: number;
+  insalubridade_pct: number;
+  fgts_pct: number;
+  previsao_13_valor: number;
+};
 
 const isFolha = (nome: string) => /sal[áa]rio|folha/i.test(nome);
+
+function calcCustos(c: { salario: number; aux_combustivel: number; insalubridade_pct: number; fgts_pct: number; previsao_13_valor: number; }) {
+  const insalub = c.salario * (c.insalubridade_pct || 0) / 100;
+  const fgts = c.salario * (c.fgts_pct || 0) / 100;
+  const ferias = c.salario / 3 + fgts;
+  const total = c.salario + c.aux_combustivel + insalub + fgts + c.previsao_13_valor + ferias;
+  return { insalub, fgts, ferias, total };
+}
 
 interface Props {
   mes: string | null;
@@ -15,6 +33,7 @@ interface Props {
 
 export default function DespesasResumoTopo({ mes, onMediaMensalChange }: Props) {
   const [folha, setFolha] = useState<Item[]>([]);
+  const [colabs, setColabs] = useState<ColabFolha[]>([]);
   const [fixas, setFixas] = useState<Item[]>([]);
   const [variaveis, setVariaveis] = useState<Item[]>([]);
   const [loading, setLoading] = useState(false);
@@ -34,7 +53,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange }: Props) 
               .eq('aparece_no_dre', true),
              supabase
                .from('admin_users')
-               .select('id, nome, custo_colaborador, ativo, tipo_usuario, visivel_organograma, em_folha')
+               .select('id, nome, custo_colaborador, ativo, tipo_usuario, visivel_organograma, em_folha, aux_combustivel, insalubridade_pct, fgts_pct, previsao_13_valor')
                .eq('ativo', true)
                .in('tipo_usuario', ['colaborador', 'metamorfo'])
                .eq('visivel_organograma', true)
@@ -64,6 +83,23 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange }: Props) 
                  id: c.id,
                  nome: c.nome,
                  valor: Number(c.custo_colaborador) || 0,
+               }))
+           );
+           setColabs(
+             ((colabs || []) as any[])
+               .slice()
+               .sort((a, b) => {
+                 if (a.em_folha === b.em_folha) return a.nome.localeCompare(b.nome);
+                 return a.em_folha ? -1 : 1;
+               })
+               .map((c: any) => ({
+                 id: c.id,
+                 nome: c.nome,
+                 salario: Number(c.custo_colaborador) || 0,
+                 aux_combustivel: Number(c.aux_combustivel) || 0,
+                 insalubridade_pct: Number(c.insalubridade_pct) || 0,
+                 fgts_pct: c.fgts_pct == null ? 8 : Number(c.fgts_pct),
+                 previsao_13_valor: Number(c.previsao_13_valor) || 0,
                }))
            );
         } else {
@@ -116,6 +152,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange }: Props) 
               valor: Number(f.valor) || 0,
             }))
           );
+          setColabs([]);
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -129,19 +166,143 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange }: Props) 
 
   useEffect(() => {
     if (loading) return;
-    const totalMensal = folha.reduce((s, i) => s + i.valor, 0)
+    const totalFolha = !mes && colabs.length
+      ? colabs.reduce((s, c) => s + calcCustos(c).total, 0)
+      : folha.reduce((s, i) => s + i.valor, 0);
+    const totalMensal = totalFolha
       + fixas.reduce((s, i) => s + i.valor, 0)
       + variaveis.reduce((s, i) => s + i.valor, 0);
     onMediaMensalChange?.(totalMensal);
-  }, [folha, fixas, variaveis, loading, onMediaMensalChange]);
+  }, [folha, colabs, fixas, variaveis, loading, mes, onMediaMensalChange]);
 
   const rotulo = mes ? `Valores de ${mes}` : 'Configuração padrão';
 
+  const updateColab = async (id: string, patch: Partial<ColabFolha>) => {
+    setColabs((prev) => prev.map((c) => (c.id === id ? { ...c, ...patch } : c)));
+    const { error } = await supabase.from('admin_users').update(patch as any).eq('id', id);
+    if (error) toast.error('Erro ao salvar: ' + error.message);
+  };
+
   return (
     <div className="grid grid-cols-1 gap-4 mb-6">
-      <Bloco titulo="Folha Salarial" icon={<Users className="w-4 h-4" />} itens={folha} rotulo={rotulo} loading={loading} />
+      {!mes ? (
+        <BlocoFolhaEditavel
+          colabs={colabs}
+          rotulo={rotulo}
+          loading={loading}
+          onChange={updateColab}
+        />
+      ) : (
+        <Bloco titulo="Folha Salarial" icon={<Users className="w-4 h-4" />} itens={folha} rotulo={rotulo} loading={loading} />
+      )}
       <Bloco titulo="Despesas Fixas" icon={<Receipt className="w-4 h-4" />} itens={fixas} rotulo={rotulo} loading={loading} />
       <Bloco titulo="Despesas Variáveis" icon={<TrendingDown className="w-4 h-4" />} itens={variaveis} rotulo={rotulo} loading={loading} />
+    </div>
+  );
+}
+
+function NumInput({
+  value,
+  onCommit,
+  suffix,
+  step = '0.01',
+}: {
+  value: number;
+  onCommit: (v: number) => void;
+  suffix?: string;
+  step?: string;
+}) {
+  const [local, setLocal] = useState(String(value ?? 0));
+  useEffect(() => { setLocal(String(value ?? 0)); }, [value]);
+  return (
+    <div className="relative">
+      <input
+        type="number"
+        step={step}
+        value={local}
+        onChange={(e) => setLocal(e.target.value)}
+        onBlur={() => {
+          const n = Number(local);
+          if (!isNaN(n) && n !== value) onCommit(n);
+        }}
+        className="w-full bg-white/5 border border-white/10 rounded-md px-2 py-1 text-right text-sm text-white outline-none focus:border-white/30 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+      />
+      {suffix && (
+        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-white/40 pointer-events-none">{suffix}</span>
+      )}
+    </div>
+  );
+}
+
+function BlocoFolhaEditavel({
+  colabs,
+  rotulo,
+  loading,
+  onChange,
+}: {
+  colabs: ColabFolha[];
+  rotulo: string;
+  loading: boolean;
+  onChange: (id: string, patch: Partial<ColabFolha>) => void;
+}) {
+  const linhas = colabs.map((c) => ({ c, ...calcCustos(c) }));
+  const totalMensal = linhas.reduce((s, l) => s + l.total, 0);
+  return (
+    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-5 flex flex-col">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2 text-white">
+          <Users className="w-4 h-4" />
+          <h3 className="font-semibold">Folha Salarial</h3>
+        </div>
+        <span className="text-[10px] uppercase tracking-wider text-white/40">{rotulo}</span>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm min-w-[1100px]">
+          <thead>
+            <tr className="text-[10px] uppercase tracking-wider text-white/40 border-b border-white/10">
+              <th className="text-left font-normal pb-2 pl-1">Colaborador</th>
+              <th className="text-right font-normal pb-2 px-2">Salário</th>
+              <th className="text-right font-normal pb-2 px-2">Combustível</th>
+              <th className="text-right font-normal pb-2 px-2">Insalub %</th>
+              <th className="text-right font-normal pb-2 px-2">Insalub R$</th>
+              <th className="text-right font-normal pb-2 px-2">FGTS %</th>
+              <th className="text-right font-normal pb-2 px-2">FGTS R$</th>
+              <th className="text-right font-normal pb-2 px-2">13°</th>
+              <th className="text-right font-normal pb-2 px-2">Férias</th>
+              <th className="text-right font-normal pb-2 px-2">Total mensal</th>
+              <th className="text-right font-normal pb-2 pr-1">Total anual</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr><td colSpan={11} className="text-white/40 px-2 py-3">Carregando...</td></tr>
+            ) : linhas.length === 0 ? (
+              <tr><td colSpan={11} className="text-white/40 px-2 py-3">Sem colaboradores</td></tr>
+            ) : linhas.map(({ c, insalub, fgts, ferias, total }) => (
+              <tr key={c.id} className="border-b border-white/5 hover:bg-white/[0.03]">
+                <td className="py-1.5 pl-1 text-white/80 truncate max-w-[180px]">{c.nome}</td>
+                <td className="px-2"><NumInput value={c.salario} onCommit={(v) => onChange(c.id, { salario: v } as any) || onChange(c.id, { } as any)} /></td>
+                <td className="px-2"><NumInput value={c.aux_combustivel} onCommit={(v) => onChange(c.id, { aux_combustivel: v })} /></td>
+                <td className="px-2"><NumInput value={c.insalubridade_pct} onCommit={(v) => onChange(c.id, { insalubridade_pct: v })} suffix="%" /></td>
+                <td className="px-2 text-right text-white/60 whitespace-nowrap">{formatCurrency(insalub)}</td>
+                <td className="px-2"><NumInput value={c.fgts_pct} onCommit={(v) => onChange(c.id, { fgts_pct: v })} suffix="%" /></td>
+                <td className="px-2 text-right text-white/60 whitespace-nowrap">{formatCurrency(fgts)}</td>
+                <td className="px-2"><NumInput value={c.previsao_13_valor} onCommit={(v) => onChange(c.id, { previsao_13_valor: v })} /></td>
+                <td className="px-2 text-right text-white/60 whitespace-nowrap">{formatCurrency(ferias)}</td>
+                <td className="px-2 text-right text-white font-medium whitespace-nowrap">{formatCurrency(total)}</td>
+                <td className="pr-1 text-right text-white/70 font-medium whitespace-nowrap">{formatCurrency(total * 12)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between px-2">
+        <span className="text-xs text-white/50 uppercase tracking-wider">Total</span>
+        <div className="flex gap-8">
+          <span className="text-base font-bold text-white whitespace-nowrap">{formatCurrency(totalMensal)}</span>
+          <span className="text-base font-bold text-white/70 whitespace-nowrap">{formatCurrency(totalMensal * 12)}</span>
+        </div>
+      </div>
     </div>
   );
 }
