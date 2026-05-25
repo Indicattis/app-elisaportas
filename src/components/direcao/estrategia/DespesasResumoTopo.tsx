@@ -453,7 +453,7 @@ function BlocoFolha({
             })}
 
             {/* ------ Add row ------ */}
-            <tr className="border-t border-white/10 bg-blue-500/5">
+            <tr className="border-b border-white/5 hover:bg-white/[0.03]">
               <td className="py-2 pl-1">
                 <Select value={adminUserId} onValueChange={onSelectColab}>
                   <SelectTrigger className="h-8 text-xs bg-white/5 border-white/10">
@@ -598,7 +598,7 @@ function BlocoDespesa({
             ))}
 
             {/* ------ Add row ------ */}
-            <tr className="border-t border-white/10 bg-blue-500/5">
+            <tr className="border-b border-white/5 hover:bg-white/[0.03]">
               <td className="py-2 pl-1">
                 <Select value={tipoId} onValueChange={setTipoId}>
                   <SelectTrigger className="h-8 text-xs bg-white/5 border-white/10">
