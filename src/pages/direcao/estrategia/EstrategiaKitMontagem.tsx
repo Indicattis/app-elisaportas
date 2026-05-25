@@ -210,14 +210,15 @@ export default function EstrategiaKitMontagem() {
                       <TableHead className="text-right text-white/60 w-32">Soma preços</TableHead>
                       <TableHead className="text-right text-white/60 w-32">Subtotal lucro</TableHead>
                       <TableHead className="text-right text-white/60 w-28">Preço</TableHead>
+                      <TableHead className="text-right text-white/60 w-32">Preço total</TableHead>
                       <TableHead className="text-center text-white/60 w-12"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {isLoading ? (
-                      <TableRow><TableCell colSpan={12} className="text-center text-white/60 py-6">Carregando...</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={13} className="text-center text-white/60 py-6">Carregando...</TableCell></TableRow>
                     ) : items.length === 0 ? (
-                      <TableRow><TableCell colSpan={12} className="text-center text-white/60 py-6">Nenhum item na montagem</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={13} className="text-center text-white/60 py-6">Nenhum item na montagem</TableCell></TableRow>
                     ) : (
                       items.map((it) => {
                         const q = Number(it.quantidade || 0);
@@ -263,6 +264,7 @@ export default function EstrategiaKitMontagem() {
                             <TableCell className="text-right text-white">{fmt(somaPrecos)}</TableCell>
                             <TableCell className={cn("text-right font-medium", subtotalLucro >= 0 ? "text-emerald-400" : "text-red-400")}>{fmt(subtotalLucro)}</TableCell>
                             <TableCell className="text-right text-white">{fmt(preco)}</TableCell>
+                            <TableCell className="text-right text-white font-medium">{fmt(somaPrecos)}</TableCell>
                             <TableCell className="text-center">
                               <Button
                                 variant="ghost"
