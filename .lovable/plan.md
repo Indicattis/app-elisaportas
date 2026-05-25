@@ -1,22 +1,21 @@
 ## Objetivo
-Permitir selecionar múltiplos autores (colaboradores ativos) ao cadastrar uma ideia em `/marketing/videos-ideias`. Obrigatório no mínimo 1.
+Adicionar workflow de status com 5 estados em `/marketing/videos-ideias`: **Gravar** (inicial), **Editar**, **Aprovar**, **Postado**, **Rejeitado**. Transições livres por qualquer usuário, com abas de filtro e badge no card.
 
 ## Banco
 Migration:
-- Adicionar coluna `autores_ids UUID[] NOT NULL DEFAULT '{}'` em `marketing_videos_ideias`.
-- Adicionar coluna `autores_nomes TEXT[] NOT NULL DEFAULT '{}'` (snapshot dos nomes para exibição estável, evita join).
+- Adicionar coluna `status TEXT NOT NULL DEFAULT 'gravar'` em `marketing_videos_ideias`.
+- CHECK constraint: status IN ('gravar','editar','aprovar','postado','rejeitado').
+- Index em `status`.
 
 ## Frontend (`src/pages/marketing/VideosIdeias.tsx`)
-- Query nova para buscar colaboradores: `admin_users` com `ativo=true` e `eh_colaborador=true`, ordenados por `nome`.
-- No modal de "Nova ideia":
-  - Campo multi-select com checkboxes (Popover + Command, padrão shadcn) listando colaboradores. Mostrar chips dos selecionados.
-  - Validação Zod: `autores_ids: z.array(z.string().uuid()).min(1, "Selecione ao menos 1 autor")`.
-  - Botão "Confirmar" desabilita se nenhum selecionado.
-- Mutation `criar`: salvar `autores_ids` e `autores_nomes` (resolvidos a partir da lista de colaboradores).
-- Reset do estado de autores ao fechar/limpar.
-
-## Exibição nos cards
-- Substituir/complementar o rodapé `criado_por_nome` com chips ou lista de autores (`autores_nomes`). Mantém data à direita. Se vazio (registros legados), fallback para `criado_por_nome`.
+- Constantes `STATUS_OPTIONS` com label + cor (Tailwind semantic-ish): Gravar=blue, Editar=amber, Aprovar=violet, Postado=emerald, Rejeitado=rose.
+- Abas no topo da lista usando `Tabs` (shadcn): "Todos | Gravar | Editar | Aprovar | Postado | Rejeitado" com contador por status.
+- Estado local `statusFiltro` filtra `ideias` antes de renderizar.
+- Card:
+  - Badge colorida do status no canto superior esquerdo (ao lado do título), seguindo glassmorphism.
+  - Clique na badge abre `DropdownMenu` com os outros 4 status; ao escolher, dispara mutation `atualizarStatus` (otimista, padrão idêntico ao `reordenar`).
+- Query inclui `status` no select.
+- DnD continua funcionando independente do filtro (reordenar persiste posição global).
 
 ## Tipos
-- Atualizar interface `Ideia` com `autores_ids: string[]` e `autores_nomes: string[]`.
+- `Ideia.status: 'gravar' | 'editar' | 'aprovar' | 'postado' | 'rejeitado'`.

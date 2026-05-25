@@ -3956,6 +3956,7 @@ export type Database = {
           descricao: string
           id: string
           posicao: number | null
+          status: string
           titulo: string
           updated_at: string
         }
@@ -3968,6 +3969,7 @@ export type Database = {
           descricao: string
           id?: string
           posicao?: number | null
+          status?: string
           titulo: string
           updated_at?: string
         }
@@ -3980,6 +3982,7 @@ export type Database = {
           descricao?: string
           id?: string
           posicao?: number | null
+          status?: string
           titulo?: string
           updated_at?: string
         }
