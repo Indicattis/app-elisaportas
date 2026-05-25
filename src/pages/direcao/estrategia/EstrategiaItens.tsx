@@ -53,6 +53,8 @@ import { exportEstrategiaItensPDF, exportEstrategiaItensExcel } from "@/utils/es
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useConfiguracoesVendas } from "@/hooks/useConfiguracoesVendas";
 import { CatalogoPrecosTab } from "@/components/tabela-precos/CatalogoPrecosTab";
+import { useEstrategiaMateriasPrimas } from "@/hooks/useEstrategiaMateriasPrimas";
+import { getUnidadeAbreviacao } from "@/utils/unidadesMedida";
 
 const UNIDADES = ["Un", "M", "Kg", "L", "M²", "M³", "Cx", "Pç"];
 
@@ -445,20 +447,27 @@ function CalculoBobinaDialog({
   open,
   onOpenChange,
   itemDescricao,
+  itemId,
+  itemUnidade,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   itemDescricao: string;
+  itemId: string;
+  itemUnidade: string | null | undefined;
 }) {
   const [precoStr, setPrecoStr] = useState("");
   useEffect(() => {
     if (!open) setPrecoStr("");
   }, [open]);
+  const { materiasPrimas } = useEstrategiaMateriasPrimas(open ? itemId : undefined);
+  const rendimento = materiasPrimas.reduce((s, mp) => s + Number(mp.quantidade_item || 0), 0);
+  const unidadeAbrev = getUnidadeAbreviacao(itemUnidade);
   const preco = Number(precoStr.replace(",", ".")) || 0;
   const x = 230 * preco;
   const y = x * 1.0325;
   const resultado = y + 175;
-  const precoMetro = resultado / 300;
+  const precoUnidade = rendimento > 0 ? resultado / rendimento : 0;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-popover text-popover-foreground border-border max-w-md">
@@ -497,11 +506,21 @@ function CalculoBobinaDialog({
           </div>
           <div className="rounded-md border border-blue-500/30 bg-blue-500/10 p-3 space-y-1.5">
             <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Resumo</div>
-            <div className="text-xs text-muted-foreground">230 kg ≡ 300 m</div>
-            <div className="flex justify-between gap-3 text-sm">
-              <span className="text-foreground">Preço por metro</span>
-              <span className="text-blue-400 font-semibold">{formatCurrency(precoMetro)}</span>
-            </div>
+            {rendimento > 0 ? (
+              <>
+                <div className="text-xs text-muted-foreground">
+                  230 kg ≡ {rendimento.toLocaleString("pt-BR", { maximumFractionDigits: 2 })} {unidadeAbrev}
+                </div>
+                <div className="flex justify-between gap-3 text-sm">
+                  <span className="text-foreground">Preço por {unidadeAbrev}</span>
+                  <span className="text-blue-400 font-semibold">{formatCurrency(precoUnidade)}</span>
+                </div>
+              </>
+            ) : (
+              <div className="text-xs text-muted-foreground">
+                Cadastre uma matéria-prima em Estratégia › Matérias-primas para calcular o preço por unidade.
+              </div>
+            )}
           </div>
         </div>
         <DialogFooter>
@@ -651,6 +670,8 @@ function SortableItemRow({ item, disabled, categorias, colors, order, padroes, o
           open={calcOpen}
           onOpenChange={setCalcOpen}
           itemDescricao={item.descricao}
+          itemId={item.id}
+          itemUnidade={item.unidade}
         />
         {!disabled && (
           <button
