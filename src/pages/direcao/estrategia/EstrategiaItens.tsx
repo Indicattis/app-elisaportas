@@ -1395,7 +1395,7 @@ export default function EstrategiaItens() {
                 />
                 <span className="text-[11px] text-muted-foreground/60">· {rows.length}</span>
               </div>
-              <div className="rounded-xl overflow-hidden bg-card/60 backdrop-blur-xl border border-border">
+              <div className="rounded-xl bg-card/60 backdrop-blur-xl border border-border [&>div]:rounded-xl [&>div]:overflow-visible">
               <DndContext
                 sensors={dndSensors}
                 collisionDetection={closestCenter}
