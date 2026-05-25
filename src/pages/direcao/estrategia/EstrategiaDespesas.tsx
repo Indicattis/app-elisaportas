@@ -67,8 +67,6 @@ export default function EstrategiaDespesas() {
         { label: 'Despesas' },
       ]}
     >
-      <DespesasResumoTopo mes={mesSelecionado} ano={ano} onMediaMensalChange={setMediaMensal} />
-
       <div className="text-center mb-2">
         <h2 className="text-3xl font-bold text-white tracking-wide">{ano}</h2>
         <div className="w-16 h-0.5 bg-blue-400/60 mx-auto mt-2 rounded-full" />
@@ -116,6 +114,8 @@ export default function EstrategiaDespesas() {
           <ChevronRight className="w-5 h-5 text-white/70" />
         </button>
       </div>
+
+      <DespesasResumoTopo mes={mesSelecionado} ano={ano} onMediaMensalChange={setMediaMensal} />
     </MinimalistLayout>
   );
 }
