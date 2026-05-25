@@ -341,13 +341,7 @@ function BlocoFolhaEditavel({
             ) : linhas.map(({ c, insalub, fgts, ferias, total }) => (
               <tr key={c.id} className="border-b border-white/5 hover:bg-white/[0.03]">
                 <td className="py-1.5 pl-1 text-white/80 truncate max-w-[200px]">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`w-2 h-2 rounded-full flex-shrink-0 ${c.em_folha ? 'bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.6)]' : 'bg-red-400 shadow-[0_0_6px_rgba(248,113,113,0.6)]'}`}
-                      title={c.em_folha ? 'Na folha' : 'Fora da folha'}
-                    />
-                    <span className="truncate">{c.nome}</span>
-                  </div>
+                  <span className="truncate">{c.nome}</span>
                 </td>
                 <td className="px-2"><NumInput value={c.salario} onCommit={(v) => onChange(c.id, { salario: v })} valueClassName="text-emerald-400" /></td>
                 <td className="px-2"><NumInput value={c.aux_combustivel} onCommit={(v) => onChange(c.id, { aux_combustivel: v })} /></td>
