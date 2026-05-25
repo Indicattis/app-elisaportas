@@ -600,32 +600,43 @@ export default function VideosIdeias() {
         </DialogContent>
       </Dialog>
 
-      {/* Modal de confirmação bem-humorada */}
-      <Dialog open={confirmOpen} onOpenChange={(v) => !criar.isPending && setConfirmOpen(v)}>
+      {/* Modal de confirmação */}
+      <Dialog open={confirmOpen} onOpenChange={(v) => { const p = criar.isPending || editar.isPending; if (!p) setConfirmOpen(v); }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="sr-only">Confirmação</DialogTitle>
           </DialogHeader>
           <div className="text-center py-4 space-y-4">
-            <div className="text-6xl">😢</div>
-            <p className="text-base text-foreground leading-relaxed">
-              Tem certeza que quer dar <strong>MAIS</strong> uma demanda para o time de marketing?
-              Os meninos estão cheios de serviço
-            </p>
+            {editandoId ? (
+              <>
+                <div className="text-6xl">✏️</div>
+                <p className="text-base text-foreground leading-relaxed">
+                  Confirma as alterações nesta ideia?
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="text-6xl">😢</div>
+                <p className="text-base text-foreground leading-relaxed">
+                  Tem certeza que quer dar <strong>MAIS</strong> uma demanda para o time de marketing?
+                  Os meninos estão cheios de serviço
+                </p>
+              </>
+            )}
           </div>
           <DialogFooter className="sm:justify-center gap-2">
             <Button
               variant="outline"
               onClick={() => setConfirmOpen(false)}
-              disabled={criar.isPending}
+              disabled={criar.isPending || editar.isPending}
             >
               Cancelar
             </Button>
-            <Button onClick={() => criar.mutate()} disabled={criar.isPending}>
-              {criar.isPending ? (
+            <Button onClick={() => editandoId ? editar.mutate() : criar.mutate()} disabled={criar.isPending || editar.isPending}>
+              {(criar.isPending || editar.isPending) ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Enviando...
+                  {editandoId ? "Salvando..." : "Enviando..."}
                 </>
               ) : (
                 "Sim"
@@ -639,15 +650,17 @@ export default function VideosIdeias() {
       <Dialog open={successOpen} onOpenChange={setSuccessOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="sr-only">Cadastrado</DialogTitle>
+            <DialogTitle className="sr-only">{editandoId ? "Atualizado" : "Cadastrado"}</DialogTitle>
           </DialogHeader>
           <div className="text-center py-4 space-y-4">
             <div className="text-6xl">🎉</div>
             <p className="text-lg font-semibold text-foreground">sem monstro!</p>
-            <p className="text-sm text-muted-foreground">Ideia cadastrada com sucesso.</p>
+            <p className="text-sm text-muted-foreground">
+              {editandoId ? "Ideia atualizada com sucesso." : "Ideia cadastrada com sucesso."}
+            </p>
           </div>
           <DialogFooter className="sm:justify-center">
-            <Button onClick={() => setSuccessOpen(false)}>Fechar</Button>
+            <Button onClick={() => { setSuccessOpen(false); setEditandoId(null); }}>Fechar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
