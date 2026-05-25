@@ -39,9 +39,9 @@ const ESTADOS_BR = [
 ];
 
 export default function FreteMinimalista() {
-  const { fretes, isLoading, deleteFrete, toggleAtivo } = useFretesCidades();
+  const { fretes, isLoading, deleteFrete, toggleAtivo, updateFrete } = useFretesCidades();
   const queryClient = useQueryClient();
-  
+
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingFrete, setEditingFrete] = useState<FreteCidade | null>(null);
@@ -49,6 +49,9 @@ export default function FreteMinimalista() {
   const [filterEstado, setFilterEstado] = useState<string>("todos");
   const [bulkOpen, setBulkOpen] = useState(false);
   const [fixingAccents, setFixingAccents] = useState(false);
+  const [editingKmId, setEditingKmId] = useState<string | null>(null);
+  const [kmEditValue, setKmEditValue] = useState("");
+  const kmInputRef = useRef<HTMLInputElement>(null);
 
   const hasBrokenNames = useMemo(
     () => (fretes ?? []).some((f) => f.cidade.includes("\uFFFD")),
