@@ -440,6 +440,77 @@ type SortableItemRowProps = {
   onDelete: () => void;
 };
 
+function CalculoBobinaDialog({
+  open,
+  onOpenChange,
+  itemDescricao,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  itemDescricao: string;
+}) {
+  const [precoStr, setPrecoStr] = useState("");
+  useEffect(() => {
+    if (!open) setPrecoStr("");
+  }, [open]);
+  const preco = Number(precoStr.replace(",", ".")) || 0;
+  const x = 230 * preco;
+  const y = x * 1.0325;
+  const resultado = y + 175;
+  const precoMetro = resultado / 300;
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="bg-popover text-popover-foreground border-border max-w-md">
+        <DialogHeader>
+          <DialogTitle>Cálculo da bobina</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <p className="text-xs text-muted-foreground/80 truncate">{itemDescricao}</p>
+          <div className="space-y-1.5">
+            <Label htmlFor={`calc-preco-kg`}>Preço por kg (R$)</Label>
+            <Input
+              id="calc-preco-kg"
+              type="number"
+              step="0.01"
+              min="0"
+              autoFocus
+              value={precoStr}
+              onChange={(e) => setPrecoStr(e.target.value)}
+              placeholder="0,00"
+              className="bg-card/60 border-border text-foreground"
+            />
+          </div>
+          <div className="rounded-md border border-border/60 bg-card/40 p-3 space-y-2 text-sm font-mono">
+            <div className="flex justify-between gap-3">
+              <span className="text-muted-foreground">230 kg × {formatCurrency(preco)}</span>
+              <span className="text-foreground">{formatCurrency(x)}</span>
+            </div>
+            <div className="flex justify-between gap-3">
+              <span className="text-muted-foreground">+ 3,25% (IPI)</span>
+              <span className="text-foreground">{formatCurrency(y)}</span>
+            </div>
+            <div className="flex justify-between gap-3">
+              <span className="text-muted-foreground">+ R$ 175,00</span>
+              <span className="text-foreground font-semibold">{formatCurrency(resultado)}</span>
+            </div>
+          </div>
+          <div className="rounded-md border border-blue-500/30 bg-blue-500/10 p-3 space-y-1.5">
+            <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Resumo</div>
+            <div className="text-xs text-muted-foreground">230 kg ≡ 300 m</div>
+            <div className="flex justify-between gap-3 text-sm">
+              <span className="text-foreground">Preço por metro</span>
+              <span className="text-blue-400 font-semibold">{formatCurrency(precoMetro)}</span>
+            </div>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>Fechar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function SortableItemRow({ item, disabled, categorias, colors, order, padroes, onUpdate, onDelete }: SortableItemRowProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: item.id,
