@@ -13,39 +13,34 @@ export default function EstrategiaDespesas() {
   const [mesSelecionado, setMesSelecionado] = useState<string | null>(null);
   const [mediaMensal, setMediaMensal] = useState<number>(0);
   const [totaisMes, setTotaisMes] = useState<Record<string, number>>({});
+  const [reloadTotais, setReloadTotais] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
     const run = async () => {
       const start = `${ano}-01-01`;
       const end = `${ano}-12-31`;
-      const [{ data: gastos }, { data: folha }, { data: tipos }] = await Promise.all([
+      const [{ data: folhaRows }, { data: lancRows }] = await Promise.all([
         supabase
-          .from('gastos' as any)
-          .select('valor, data, tipo_custo_id')
-          .gte('data', start)
-          .lte('data', end),
-        supabase
-          .from('custos_folha_mensais' as any)
-          .select('valor, mes_referencia')
+          .from('despesas_manuais_folha' as any)
+          .select('total, mes_referencia')
           .gte('mes_referencia', start)
           .lte('mes_referencia', end),
         supabase
-          .from('tipos_custos' as any)
-          .select('id, aparece_no_dre')
-          .eq('aparece_no_dre', true),
+          .from('despesas_manuais_lancamentos' as any)
+          .select('valor, mes_referencia')
+          .gte('mes_referencia', start)
+          .lte('mes_referencia', end),
       ]);
       if (cancelled) return;
-      const tiposOk = new Set(((tipos || []) as any[]).map((t) => t.id));
       const acc: Record<string, number> = {};
-      ((gastos || []) as any[]).forEach((g) => {
-        if (!tiposOk.has(g.tipo_custo_id)) return;
-        const key = String(g.data).slice(0, 7);
-        acc[key] = (acc[key] || 0) + (Number(g.valor) || 0);
-      });
-      ((folha || []) as any[]).forEach((f) => {
+      ((folhaRows || []) as any[]).forEach((f) => {
         const key = String(f.mes_referencia).slice(0, 7);
-        acc[key] = (acc[key] || 0) + (Number(f.valor) || 0);
+        acc[key] = (acc[key] || 0) + (Number(f.total) || 0);
+      });
+      ((lancRows || []) as any[]).forEach((l) => {
+        const key = String(l.mes_referencia).slice(0, 7);
+        acc[key] = (acc[key] || 0) + (Number(l.valor) || 0);
       });
       setTotaisMes(acc);
     };
@@ -53,7 +48,7 @@ export default function EstrategiaDespesas() {
     return () => {
       cancelled = true;
     };
-  }, [ano]);
+  }, [ano, reloadTotais]);
 
   return (
     <MinimalistLayout
@@ -116,7 +111,12 @@ export default function EstrategiaDespesas() {
         </button>
       </div>
 
-      <DespesasResumoTopo mes={mesSelecionado} ano={ano} onMediaMensalChange={setMediaMensal} />
+      <DespesasResumoTopo
+        mes={mesSelecionado}
+        ano={ano}
+        onMediaMensalChange={setMediaMensal}
+        onDataChange={() => setReloadTotais((v) => v + 1)}
+      />
     </MinimalistLayout>
   );
 }
