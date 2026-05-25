@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, CSSProperties } from "react";
-import { Plus, Trash2, Percent, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Check, X, GripVertical, FolderInput, Palette, FileText, FileSpreadsheet, BadgePercent } from "lucide-react";
+import { Plus, Trash2, Percent, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Check, X, GripVertical, FolderInput, Palette, FileText, FileSpreadsheet, BadgePercent, Calculator } from "lucide-react";
 import {
   DndContext,
   closestCenter,
@@ -447,6 +447,7 @@ function SortableItemRow({ item, disabled, categorias, colors, order, padroes, o
   });
   const [moverOpen, setMoverOpen] = useState(false);
   const [novaCategoria, setNovaCategoria] = useState(item.categoria ?? "");
+  const [calcOpen, setCalcOpen] = useState(false);
   useEffect(() => {
     if (!moverOpen) setNovaCategoria(item.categoria ?? "");
   }, [moverOpen, item.categoria]);
@@ -558,9 +559,27 @@ function SortableItemRow({ item, disabled, categorias, colors, order, padroes, o
     <TableRow
       ref={setNodeRef}
       style={style}
-      className={cn("border-border/60 hover:bg-muted/60", isDragging && "shadow-lg bg-muted/40")}
+      className={cn("group border-border/60 hover:bg-muted/60", isDragging && "shadow-lg bg-muted/40")}
     >
       <TableCell className="w-8 p-0 text-center align-middle">
+        <div className="pointer-events-none absolute top-1/2 right-0 -translate-y-1/2 translate-x-[calc(100%+0.5rem)] opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity z-10">
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="pointer-events-auto h-7 w-7 bg-card/80 backdrop-blur-md border-border/60 text-muted-foreground hover:text-blue-400 hover:border-blue-500/40 shadow-sm"
+            onClick={() => setCalcOpen(true)}
+            aria-label="Calcular preço da bobina"
+            title="Calcular preço da bobina"
+          >
+            <Calculator className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+        <CalculoBobinaDialog
+          open={calcOpen}
+          onOpenChange={setCalcOpen}
+          itemDescricao={item.descricao}
+        />
         {!disabled && (
           <button
             type="button"
