@@ -119,6 +119,28 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
     reload();
   };
 
+  const handlePatchFolha = async (
+    id: string,
+    field: 'salario' | 'aux_combustivel' | 'insalubridade_pct' | 'fgts_pct' | 'previsao_13_valor',
+    value: number,
+  ) => {
+    const current = folha.find(r => r.id === id);
+    if (!current) return;
+    const updated = { ...current, [field]: value };
+    const total = calcTotalFolha(updated);
+    setFolha(prev => prev.map(r => r.id === id ? { ...updated, total } : r));
+    const { error } = await supabase
+      .from('despesas_manuais_folha' as any)
+      .update({ [field]: value, total } as any)
+      .eq('id', id);
+    if (error) {
+      toast.error('Erro ao salvar: ' + error.message);
+      reload();
+      return;
+    }
+    onDataChange?.();
+  };
+
   if (!mes) {
     return (
       <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-8 text-center text-white/60">
@@ -135,6 +157,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         onAdd={() => setOpenFolha(true)}
         onDelete={(id) => setConfirmDel({ kind: 'folha', id })}
         onUpdated={reload}
+        onPatch={handlePatchFolha}
       />
       <BlocoDespesa
         titulo="Despesas Fixas"
