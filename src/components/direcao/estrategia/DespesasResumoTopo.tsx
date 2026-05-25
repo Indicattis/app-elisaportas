@@ -281,7 +281,7 @@ function BlocoFolhaEditavel({
             ) : linhas.map(({ c, insalub, fgts, ferias, total }) => (
               <tr key={c.id} className="border-b border-white/5 hover:bg-white/[0.03]">
                 <td className="py-1.5 pl-1 text-white/80 truncate max-w-[180px]">{c.nome}</td>
-                <td className="px-2"><NumInput value={c.salario} onCommit={(v) => onChange(c.id, { salario: v } as any) || onChange(c.id, { } as any)} /></td>
+                <td className="px-2"><NumInput value={c.salario} onCommit={(v) => onChange(c.id, { salario: v })} /></td>
                 <td className="px-2"><NumInput value={c.aux_combustivel} onCommit={(v) => onChange(c.id, { aux_combustivel: v })} /></td>
                 <td className="px-2"><NumInput value={c.insalubridade_pct} onCommit={(v) => onChange(c.id, { insalubridade_pct: v })} suffix="%" /></td>
                 <td className="px-2 text-right text-white/60 whitespace-nowrap">{formatCurrency(insalub)}</td>
