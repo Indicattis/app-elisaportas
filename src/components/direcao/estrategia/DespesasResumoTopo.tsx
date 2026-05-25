@@ -412,42 +412,74 @@ function BlocoFolha({
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={11} className="text-white/40 px-2 py-3">Carregando...</td></tr>
-            ) : rows.length === 0 ? (
-              <tr><td colSpan={11} className="text-white/40 px-2 py-3 text-center">Nenhum lançamento ainda.</td></tr>
-            ) : rows.map(r => {
-              const insalubVal = Number(r.salario) * Number(r.insalubridade_pct || 0) / 100;
-              const fgtsVal = Number(r.salario) * Number(r.fgts_pct || 0) / 100;
-              const prev13ComFgts = Number(r.previsao_13_valor) * (1 + Number(r.fgts_pct || 0) / 100);
-              const feriasComUmTerco = Number(r.salario) / 3 + fgtsVal;
+              <tr><td colSpan={12} className="text-white/40 px-2 py-3">Carregando...</td></tr>
+            ) : colabs.length === 0 ? (
+              <tr><td colSpan={12} className="text-white/40 px-2 py-3 text-center">Nenhum colaborador cadastrado.</td></tr>
+            ) : colabs.map(colab => {
+              const r = rows.find(row => row.admin_user_id === colab.id);
+              const salario = r ? Number(r.salario) : colab.salario;
+              const aux_combustivel = r ? Number(r.aux_combustivel) : colab.aux_combustivel;
+              const insalubridade_pct = r ? Number(r.insalubridade_pct) : colab.insalubridade_pct;
+              const fgts_pct = r ? Number(r.fgts_pct) : colab.fgts_pct;
+              const previsao_13_valor = r ? Number(r.previsao_13_valor) : colab.previsao_13_valor;
+              const insalubVal = salario * (insalubridade_pct || 0) / 100;
+              const fgtsVal = salario * (fgts_pct || 0) / 100;
+              const prev13ComFgts = previsao_13_valor * (1 + (fgts_pct || 0) / 100);
+              const feriasComUmTerco = salario / 3 + fgtsVal;
+              const totalVal = calcTotalFolha({ salario, aux_combustivel, insalubridade_pct, fgts_pct, previsao_13_valor });
               return (
-                <tr key={r.id} className="border-b border-white/5 hover:bg-white/[0.03]">
-                  <td className="py-2 pl-1 text-white/90">{r.colaborador_nome}</td>
-                  <td className="px-2 text-right text-emerald-400 font-medium">
-                    <EditableCell value={Number(r.salario)} format="currency" onSave={(v) => onPatch(r.id, 'salario', v)} />
+                <tr key={colab.id} className="border-b border-white/5 hover:bg-white/[0.03]">
+                  <td className="py-2 pl-1 text-white/90">{colab.nome}</td>
+                  <td className="py-2 px-1 text-center">
+                    {r ? (
+                      <span title="Em folha" className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-400/15 text-emerald-300 text-[10px]">&#9679;</span>
+                    ) : (
+                      <span title="Sem folha" className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-400/15 text-red-300 text-[10px]">&#9679;</span>
+                    )}
                   </td>
-                  <td className="px-2 text-right text-white/60">
-                    <EditableCell value={Number(r.aux_combustivel)} format="currency" onSave={(v) => onPatch(r.id, 'aux_combustivel', v)} />
+                  <td className={`px-2 text-right ${r ? 'text-emerald-400 font-medium' : 'text-white/30'}`}>
+                    {r ? (
+                      <EditableCell value={salario} format="currency" onSave={(v) => onPatch(r.id, 'salario', v)} />
+                    ) : (
+                      <span className="text-white/30">{formatCurrency(salario)}</span>
+                    )}
                   </td>
-                  <td className="px-2 text-right text-white/60">
-                    <EditableCell value={Number(r.insalubridade_pct)} format="percent" onSave={(v) => onPatch(r.id, 'insalubridade_pct', v)} />
+                  <td className={`px-2 text-right ${r ? 'text-white/60' : 'text-white/30'}`}>
+                    {r ? (
+                      <EditableCell value={aux_combustivel} format="currency" onSave={(v) => onPatch(r.id, 'aux_combustivel', v)} />
+                    ) : (
+                      <span className="text-white/30">{formatCurrency(aux_combustivel)}</span>
+                    )}
                   </td>
-                  <td className="px-2 text-right text-white/60">{formatCurrency(insalubVal)}</td>
-                  <td className="px-2 text-right text-white/60">
-                    <EditableCell value={Number(r.fgts_pct)} format="percent" onSave={(v) => onPatch(r.id, 'fgts_pct', v)} />
+                  <td className={`px-2 text-right ${r ? 'text-white/60' : 'text-white/30'}`}>
+                    {r ? (
+                      <EditableCell value={insalubridade_pct} format="percent" onSave={(v) => onPatch(r.id, 'insalubridade_pct', v)} />
+                    ) : (
+                      <span className="text-white/30">{insalubridade_pct.toFixed(2)}%</span>
+                    )}
                   </td>
-                  <td className="px-2 text-right text-white/60">{formatCurrency(fgtsVal)}</td>
-                  <td className="px-2 text-right text-white/60">{formatCurrency(prev13ComFgts)}</td>
-                  <td className="px-2 text-right text-white/60">{formatCurrency(feriasComUmTerco)}</td>
-                  <td className="px-2 text-right text-white font-medium">{formatCurrency(r.total)}</td>
+                  <td className={`px-2 text-right ${r ? 'text-white/60' : 'text-white/30'}`}>{formatCurrency(insalubVal)}</td>
+                  <td className={`px-2 text-right ${r ? 'text-white/60' : 'text-white/30'}`}>
+                    {r ? (
+                      <EditableCell value={fgts_pct} format="percent" onSave={(v) => onPatch(r.id, 'fgts_pct', v)} />
+                    ) : (
+                      <span className="text-white/30">{fgts_pct.toFixed(2)}%</span>
+                    )}
+                  </td>
+                  <td className={`px-2 text-right ${r ? 'text-white/60' : 'text-white/30'}`}>{formatCurrency(fgtsVal)}</td>
+                  <td className={`px-2 text-right ${r ? 'text-white/60' : 'text-white/30'}`}>{formatCurrency(prev13ComFgts)}</td>
+                  <td className={`px-2 text-right ${r ? 'text-white/60' : 'text-white/30'}`}>{formatCurrency(feriasComUmTerco)}</td>
+                  <td className="px-2 text-right text-white font-medium">{formatCurrency(totalVal)}</td>
                   <td className="pr-1 text-right">
-                    <button
-                      onClick={() => onDelete(r.id)}
-                      className="p-1 rounded hover:bg-red-500/20 text-red-300/70 hover:text-red-300"
-                      aria-label="Excluir"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    {r && (
+                      <button
+                        onClick={() => onDelete(r.id)}
+                        className="p-1 rounded hover:bg-red-500/20 text-red-300/70 hover:text-red-300"
+                        aria-label="Excluir"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
                   </td>
                 </tr>
               );
@@ -461,10 +493,13 @@ function BlocoFolha({
                     <SelectValue placeholder="Selecione colaborador..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {colabs.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
+                    {colabs.filter(c => !rows.some(row => row.admin_user_id === c.id)).map(c => (
+                      <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </td>
+              <td className="py-2 px-1"></td>
               <td className="px-2">
                 <NumInput value={form.salario} onChange={(v) => setForm({ ...form, salario: v })} />
               </td>
