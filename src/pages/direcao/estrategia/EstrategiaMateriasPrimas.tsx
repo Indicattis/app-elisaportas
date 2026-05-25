@@ -270,6 +270,13 @@ export default function EstrategiaMateriasPrimas() {
                             />
                           </TableCell>
                           <TableCell className="text-right">
+                            <div className="text-white text-sm">
+                              1 <span className="text-white/50">un mp</span>{" "}
+                              = {qtd.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 3 })}{" "}
+                              <span className="text-white/50">{un}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right">
                             <Input
                               type="number"
                               step="0.01"
