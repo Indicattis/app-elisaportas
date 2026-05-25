@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Factory, ArrowLeft, ShieldCheck, Users, ClipboardCheck, ShoppingBag } from 'lucide-react';
+import { Factory, ArrowLeft, ShieldCheck, Users, ClipboardCheck, ShoppingBag, UserCheck } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -12,6 +12,7 @@ const menuItems = [
   { label: 'Aprovações Fábrica', icon: Factory, path: '/direcao/aprovacoes/fabrica' },
   { label: 'Aprovações Compras', icon: ShoppingBag, path: '/direcao/aprovacoes/compras' },
   { label: 'Aprovações Autorizados', icon: Users, path: '/direcao/aprovacoes/autorizados' },
+  { label: 'Aprovações Representantes', icon: UserCheck, path: '/direcao/aprovacoes/representantes' },
   { label: 'Autorizados', icon: Users, path: '/direcao/autorizados' },
 ];
 
@@ -65,11 +66,24 @@ export default function DirecaoAprovacoesHub() {
     },
   });
 
+  const { data: countRepresentantes } = useQuery({
+    queryKey: ['aprovacoes-representantes-count'],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('admin_users')
+        .select('*', { count: 'exact', head: true })
+        .eq('tipo_usuario', 'representante')
+        .eq('ativo', false);
+      return count || 0;
+    },
+  });
+
   const countsMap: Record<string, number> = {
     '/direcao/aprovacoes/pedidos': countPedidos || 0,
     '/direcao/aprovacoes/fabrica': countFabrica || 0,
     '/direcao/aprovacoes/compras': countCompras || 0,
     '/direcao/aprovacoes/autorizados': (countAutorizados as number) || 0,
+    '/direcao/aprovacoes/representantes': countRepresentantes || 0,
   };
   useEffect(() => {
     const timer = setTimeout(() => setMounted(true), 50);
