@@ -24,6 +24,7 @@ import {
 import {
   SortableContext,
   verticalListSortingStrategy,
+  horizontalListSortingStrategy,
   useSortable,
   arrayMove,
 } from "@dnd-kit/sortable";
@@ -89,6 +90,48 @@ const COLUMN_WIDTHS: Record<ColumnKey, string> = {
   objetivo: "w-40",
 };
 const DEFAULT_COLUMN_ORDER: ColumnKey[] = ["custo", "lucro", "imposto", "desconto", "cartao", "venda", "objetivo"];
+const COLUMN_ORDER_STORAGE_KEY = "catalogo-precos-column-order-v1";
+
+function SortableHeadCell({
+  colKey,
+  children,
+}: {
+  colKey: ColumnKey;
+  children: React.ReactNode;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: `col-${colKey}` });
+  const style: CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+    position: "relative",
+    zIndex: isDragging ? 10 : "auto",
+  };
+  return (
+    <TableHead
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "text-xs font-medium text-foreground text-center group/col",
+        COLUMN_WIDTHS[colKey],
+        COLUMN_BG[colKey],
+      )}
+    >
+      <div className="flex items-center justify-center gap-1">
+        <button
+          type="button"
+          className="inline-flex h-5 w-5 items-center justify-center text-muted-foreground/40 hover:text-foreground cursor-grab active:cursor-grabbing touch-none opacity-0 group-hover/col:opacity-100"
+          aria-label="Arrastar coluna"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical className="h-3.5 w-3.5" />
+        </button>
+        <span>{children}</span>
+      </div>
+    </TableHead>
+  );
+}
 
 interface CatalogoPrecosTabProps {
   compact?: boolean;
@@ -420,7 +463,33 @@ export function CatalogoPrecosTab({ compact = false }: CatalogoPrecosTabProps = 
     );
   };
 
-  const columnOrder = DEFAULT_COLUMN_ORDER;
+  const [columnOrder, setColumnOrder] = useState<ColumnKey[]>(() => {
+    if (typeof window === "undefined") return [...DEFAULT_COLUMN_ORDER];
+    try {
+      const raw = window.localStorage.getItem(COLUMN_ORDER_STORAGE_KEY);
+      if (!raw) return [...DEFAULT_COLUMN_ORDER];
+      const parsed = JSON.parse(raw) as ColumnKey[];
+      const valid = parsed.filter((k): k is ColumnKey => k in COLUMN_LABELS);
+      const missing = DEFAULT_COLUMN_ORDER.filter((k) => !valid.includes(k));
+      return [...valid, ...missing];
+    } catch {
+      return [...DEFAULT_COLUMN_ORDER];
+    }
+  });
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(COLUMN_ORDER_STORAGE_KEY, JSON.stringify(columnOrder));
+    } catch { /* ignore */ }
+  }, [columnOrder]);
+
+  const handleDragEndColumn = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = columnOrder.findIndex((c) => `col-${c}` === active.id);
+    const newIndex = columnOrder.findIndex((c) => `col-${c}` === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
+    setColumnOrder(arrayMove(columnOrder, oldIndex, newIndex));
+  };
 
   return (
     <div className="flex flex-col gap-4">
@@ -586,18 +655,19 @@ export function CatalogoPrecosTab({ compact = false }: CatalogoPrecosTabProps = 
                         {!compact && <TableHead className="text-xs font-medium text-muted-foreground text-center w-16">UN</TableHead>}
                         {!compact && <TableHead className="text-xs font-medium text-muted-foreground text-center w-20">Ações</TableHead>}
                         {!compact ? (
-                          columnOrder.map((col) => (
-                            <TableHead
-                              key={col}
-                              className={cn(
-                                "text-xs font-medium text-foreground text-center",
-                                COLUMN_WIDTHS[col],
-                                COLUMN_BG[col],
-                              )}
-                            >
-                              {COLUMN_LABELS[col]}
-                            </TableHead>
-                          ))
+                          <DndContext
+                            sensors={dndSensors}
+                            collisionDetection={closestCenter}
+                            onDragEnd={handleDragEndColumn}
+                          >
+                            <SortableContext items={columnOrder.map((c) => `col-${c}`)} strategy={horizontalListSortingStrategy}>
+                              {columnOrder.map((col) => (
+                                <SortableHeadCell key={col} colKey={col}>
+                                  {COLUMN_LABELS[col]}
+                                </SortableHeadCell>
+                              ))}
+                            </SortableContext>
+                          </DndContext>
                         ) : (
                           <TableHead className={cn("text-xs font-medium text-foreground text-center", COLUMN_WIDTHS.venda, COLUMN_BG.venda)}>
                             {COLUMN_LABELS.venda}
