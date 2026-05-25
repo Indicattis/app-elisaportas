@@ -270,40 +270,6 @@ export default function EstrategiaKitMontagem() {
                   </div>
                 </div>
 
-                <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl p-4">
-                  <div className="text-xs uppercase tracking-wide text-white/50 mb-3">Preços do kit</div>
-                  <div className="space-y-2">
-                    {([
-                      { campo: "valor_porta" as const, label: "Valor porta" },
-                      { campo: "valor_instalacao" as const, label: "Valor instalação" },
-                      { campo: "valor_pintura" as const, label: "Valor pintura" },
-                    ]).map(({ campo, label }) => (
-                      <div key={campo} className="flex items-center justify-between gap-3 text-sm">
-                        <span className="text-white/60">{label}</span>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          value={String(precos[campo])}
-                          onChange={(e) => {
-                            const v = parseFloat(e.target.value);
-                            setPrecos((p) => ({ ...p, [campo]: isNaN(v) ? 0 : v }));
-                          }}
-                          className="h-8 w-32 text-right bg-white/5 border-white/10 text-white"
-                        />
-                      </div>
-                    ))}
-                    <Button
-                      onClick={salvarPrecos}
-                      disabled={!isDirty || salvando}
-                      className="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
-                      size="sm"
-                    >
-                      {salvando ? "Salvando..." : "Salvar"}
-                    </Button>
-                  </div>
-                </div>
-
                 {/* Lucro adicional */}
                 <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl p-4">
                   <div className="text-xs uppercase tracking-wide text-white/50 mb-3">Lucro adicional</div>
