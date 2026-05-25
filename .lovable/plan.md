@@ -1,26 +1,22 @@
 ## Objetivo
+Permitir selecionar múltiplos autores (colaboradores ativos) ao cadastrar uma ideia em `/marketing/videos-ideias`. Obrigatório no mínimo 1.
 
-Adicionar drag-and-drop para reordenar ideias na página `/marketing/videos-ideias`, persistindo a ordem no banco.
+## Banco
+Migration:
+- Adicionar coluna `autores_ids UUID[] NOT NULL DEFAULT '{}'` em `marketing_videos_ideias`.
+- Adicionar coluna `autores_nomes TEXT[] NOT NULL DEFAULT '{}'` (snapshot dos nomes para exibição estável, evita join).
 
-## Mudanças
+## Frontend (`src/pages/marketing/VideosIdeias.tsx`)
+- Query nova para buscar colaboradores: `admin_users` com `ativo=true` e `eh_colaborador=true`, ordenados por `nome`.
+- No modal de "Nova ideia":
+  - Campo multi-select com checkboxes (Popover + Command, padrão shadcn) listando colaboradores. Mostrar chips dos selecionados.
+  - Validação Zod: `autores_ids: z.array(z.string().uuid()).min(1, "Selecione ao menos 1 autor")`.
+  - Botão "Confirmar" desabilita se nenhum selecionado.
+- Mutation `criar`: salvar `autores_ids` e `autores_nomes` (resolvidos a partir da lista de colaboradores).
+- Reset do estado de autores ao fechar/limpar.
 
-### 1. Banco
-- Migration: adicionar coluna `posicao INTEGER` em `marketing_videos_ideias`.
-- Backfill com a ordem atual (mais recentes primeiro, igual ao listing atual).
-- Index em `posicao`.
+## Exibição nos cards
+- Substituir/complementar o rodapé `criado_por_nome` com chips ou lista de autores (`autores_nomes`). Mantém data à direita. Se vazio (registros legados), fallback para `criado_por_nome`.
 
-### 2. `src/pages/marketing/VideosIdeias.tsx`
-- Ordenar query por `posicao ASC` (fallback `created_at DESC`).
-- Envolver o grid de cards com `DndContext` + `SortableContext` (`@dnd-kit/core` + `@dnd-kit/sortable`), padrão usado em `VendasPendenteDraggableList.tsx`.
-- Cada card vira um item sortable com handle de arrasto (ícone `GripVertical` no canto, estilo glassmorphism consistente).
-- Ao soltar (`onDragEnd`): reordenar estado local otimisticamente e disparar mutation `reordenar` que faz `upsert` em lote das novas `posicao` de todas as ideias afetadas.
-- Invalidar `marketing-videos-ideias` ao concluir; toast de erro com rollback em falha.
-
-### 3. UX
-- Cursor `grab`/`grabbing` no handle, leve `opacity` no item em arraste, sem alterar layout responsivo (grid md:grid-cols-2 mantido).
-- Sem mudanças no modal de criação nem na lógica de cadastro.
-
-## Detalhes técnicos
-- Sensores: `PointerSensor` com `activationConstraint: { distance: 8 }`.
-- Estratégia: `rectSortingStrategy` (grid 2 colunas).
-- Persistência: `supabase.from('marketing_videos_ideias').upsert(items.map((it,i)=>({ id: it.id, posicao: i })))`.
+## Tipos
+- Atualizar interface `Ideia` com `autores_ids: string[]` e `autores_nomes: string[]`.
