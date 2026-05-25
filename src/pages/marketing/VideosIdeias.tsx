@@ -336,6 +336,36 @@ export default function VideosIdeias() {
     },
   });
 
+  const editar = useMutation({
+    mutationFn: async () => {
+      if (!editandoId) throw new Error("ID não definido");
+      const parsed = ideiaSchema.parse({ titulo, descricao, autores_ids: autoresIds });
+      const nomes = (colaboradores ?? [])
+        .filter((c) => parsed.autores_ids.includes(c.id))
+        .map((c) => c.nome);
+      const { error } = await supabase.from("marketing_videos_ideias").update({
+        titulo: parsed.titulo,
+        descricao: parsed.descricao,
+        autores_ids: parsed.autores_ids,
+        autores_nomes: nomes,
+      }).eq("id", editandoId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["marketing-videos-ideias"] });
+      setConfirmOpen(false);
+      setFormOpen(false);
+      setTitulo("");
+      setDescricao("");
+      setAutoresIds([]);
+      setEditandoId(null);
+      setSuccessOpen(true);
+    },
+    onError: (e: any) => {
+      toast.error(e?.message ?? "Erro ao editar ideia");
+    },
+  });
+
   const handleConfirmarForm = () => {
     const result = ideiaSchema.safeParse({ titulo, descricao, autores_ids: autoresIds });
     if (!result.success) {
