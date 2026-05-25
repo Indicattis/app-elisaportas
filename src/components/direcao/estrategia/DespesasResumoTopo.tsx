@@ -119,6 +119,28 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
     reload();
   };
 
+  const handlePatchFolha = async (
+    id: string,
+    field: 'salario' | 'aux_combustivel' | 'insalubridade_pct' | 'fgts_pct' | 'previsao_13_valor',
+    value: number,
+  ) => {
+    const current = folha.find(r => r.id === id);
+    if (!current) return;
+    const updated = { ...current, [field]: value };
+    const total = calcTotalFolha(updated);
+    setFolha(prev => prev.map(r => r.id === id ? { ...updated, total } : r));
+    const { error } = await supabase
+      .from('despesas_manuais_folha' as any)
+      .update({ [field]: value, total } as any)
+      .eq('id', id);
+    if (error) {
+      toast.error('Erro ao salvar: ' + error.message);
+      reload();
+      return;
+    }
+    onDataChange?.();
+  };
+
   if (!mes) {
     return (
       <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-8 text-center text-white/60">
@@ -135,6 +157,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         onAdd={() => setOpenFolha(true)}
         onDelete={(id) => setConfirmDel({ kind: 'folha', id })}
         onUpdated={reload}
+        onPatch={handlePatchFolha}
       />
       <BlocoDespesa
         titulo="Despesas Fixas"
@@ -190,14 +213,76 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
 
 /* ---------------- Folha block ---------------- */
 
+function EditableCell({
+  value, format, onSave,
+}: {
+  value: number;
+  format: 'currency' | 'percent';
+  onSave: (v: number) => void | Promise<void>;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(String(value ?? 0));
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => { if (!editing) setDraft(String(value ?? 0)); }, [value, editing]);
+
+  const display = format === 'currency'
+    ? formatCurrency(Number(value) || 0)
+    : `${(Number(value) || 0).toFixed(2)}%`;
+
+  const commit = async () => {
+    const parsed = Number(String(draft).replace(',', '.'));
+    if (Number.isNaN(parsed)) { setEditing(false); setDraft(String(value)); return; }
+    if (parsed === Number(value)) { setEditing(false); return; }
+    setSaving(true);
+    try { await onSave(parsed); } finally { setSaving(false); setEditing(false); }
+  };
+
+  if (editing) {
+    return (
+      <input
+        autoFocus
+        type="number"
+        step="0.01"
+        value={draft}
+        disabled={saving}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') { e.preventDefault(); (e.target as HTMLInputElement).blur(); }
+          else if (e.key === 'Escape') { setDraft(String(value)); setEditing(false); }
+        }}
+        onFocus={(e) => e.currentTarget.select()}
+        className="w-full bg-white/10 border border-blue-400/50 rounded px-1 py-0.5 text-right text-white text-sm outline-none"
+      />
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => setEditing(true)}
+      className="w-full text-right px-1 py-0.5 rounded hover:bg-white/10 cursor-pointer transition-colors"
+      title="Clique para editar"
+    >
+      {display}
+    </button>
+  );
+}
+
 function BlocoFolha({
-  rows, loading, onAdd, onDelete, onUpdated,
+  rows, loading, onAdd, onDelete, onUpdated, onPatch,
 }: {
   rows: FolhaRow[];
   loading: boolean;
   onAdd: () => void;
   onDelete: (id: string) => void;
   onUpdated: () => void;
+  onPatch: (
+    id: string,
+    field: 'salario' | 'aux_combustivel' | 'insalubridade_pct' | 'fgts_pct' | 'previsao_13_valor',
+    value: number,
+  ) => void | Promise<void>;
 }) {
   const total = rows.reduce((s, r) => s + Number(r.total || 0), 0);
   return (
@@ -243,11 +328,19 @@ function BlocoFolha({
               return (
               <tr key={r.id} className="border-b border-white/5 hover:bg-white/[0.03]">
                 <td className="py-2 pl-1 text-white/90">{r.colaborador_nome}</td>
-                <td className="px-2 text-right text-emerald-400 font-medium">{formatCurrency(r.salario)}</td>
-                <td className="px-2 text-right text-white/60">{formatCurrency(r.aux_combustivel)}</td>
-                <td className="px-2 text-right text-white/60">{Number(r.insalubridade_pct).toFixed(2)}%</td>
+                <td className="px-2 text-right text-emerald-400 font-medium">
+                  <EditableCell value={Number(r.salario)} format="currency" onSave={(v) => onPatch(r.id, 'salario', v)} />
+                </td>
+                <td className="px-2 text-right text-white/60">
+                  <EditableCell value={Number(r.aux_combustivel)} format="currency" onSave={(v) => onPatch(r.id, 'aux_combustivel', v)} />
+                </td>
+                <td className="px-2 text-right text-white/60">
+                  <EditableCell value={Number(r.insalubridade_pct)} format="percent" onSave={(v) => onPatch(r.id, 'insalubridade_pct', v)} />
+                </td>
                 <td className="px-2 text-right text-white/60">{formatCurrency(insalubVal)}</td>
-                <td className="px-2 text-right text-white/60">{Number(r.fgts_pct).toFixed(2)}%</td>
+                <td className="px-2 text-right text-white/60">
+                  <EditableCell value={Number(r.fgts_pct)} format="percent" onSave={(v) => onPatch(r.id, 'fgts_pct', v)} />
+                </td>
                 <td className="px-2 text-right text-white/60">{formatCurrency(fgtsVal)}</td>
                 <td className="px-2 text-right text-white/60">{formatCurrency(prev13ComFgts)}</td>
                 <td className="px-2 text-right text-white/60">{formatCurrency(feriasComUmTerco)}</td>
