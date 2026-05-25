@@ -544,6 +544,7 @@ const App = () => (
                 <Route path="/direcao/estrategia/precos" element={<ProtectedRoute routeKey="direcao_estrategia"><EstrategiaPrecos /></ProtectedRoute>} />
                 <Route path="/direcao/estrategia/materias-primas" element={<ProtectedRoute routeKey="direcao_estrategia"><EstrategiaMateriasPrimas /></ProtectedRoute>} />
                 <Route path="/direcao/estrategia/despesas" element={<ProtectedRoute routeKey="direcao_estrategia"><EstrategiaDespesas /></ProtectedRoute>} />
+                <Route path="/direcao/estrategia/despesas/:mes" element={<ProtectedRoute routeKey="direcao_estrategia"><EstrategiaDespesasMes /></ProtectedRoute>} />
                 <Route path="/direcao/estrategia/resultados" element={<ProtectedRoute routeKey="direcao_estrategia"><EstrategiaResultados /></ProtectedRoute>} />
 
                 {/* Organograma RH */}
