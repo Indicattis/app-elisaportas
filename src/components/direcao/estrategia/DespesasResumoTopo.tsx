@@ -32,14 +32,14 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange }: Props) 
               .select('id, nome, tipo, valor_maximo_mensal, ativo, aparece_no_dre')
               .eq('ativo', true)
               .eq('aparece_no_dre', true),
-            supabase
-              .from('admin_users')
-              .select('id, nome, custo_colaborador, ativo, tipo_usuario, visivel_organograma')
-              .eq('ativo', true)
-              .in('tipo_usuario', ['colaborador', 'metamorfo'])
-              .eq('visivel_organograma', true)
-              .neq('role', 'administrador')
-              .order('nome'),
+             supabase
+               .from('admin_users')
+               .select('id, nome, custo_colaborador, ativo, tipo_usuario, visivel_organograma, em_folha')
+               .eq('ativo', true)
+               .in('tipo_usuario', ['colaborador', 'metamorfo'])
+               .eq('visivel_organograma', true)
+               .neq('role', 'administrador')
+               .order('nome'),
           ]);
           if (cancelled) return;
           const tiposList = ((tipos || []) as any[]).filter((t) => !isFolha(t.nome));
@@ -53,13 +53,19 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange }: Props) 
               .filter((t) => t.tipo === 'variavel')
               .map((t) => ({ id: t.id, nome: t.nome, valor: Number(t.valor_maximo_mensal) || 0 }))
           );
-          setFolha(
-            ((colabs || []) as any[]).map((c) => ({
-              id: c.id,
-              nome: c.nome,
-              valor: Number(c.custo_colaborador) || 0,
-            }))
-          );
+           setFolha(
+             ((colabs || []) as any[])
+               .slice()
+               .sort((a, b) => {
+                 if (a.em_folha === b.em_folha) return a.nome.localeCompare(b.nome);
+                 return a.em_folha ? -1 : 1;
+               })
+               .map((c) => ({
+                 id: c.id,
+                 nome: c.nome,
+                 valor: Number(c.custo_colaborador) || 0,
+               }))
+           );
         } else {
           // MÊS REAL: gastos + custos_folha_mensais
           const start = `${mes}-01`;
