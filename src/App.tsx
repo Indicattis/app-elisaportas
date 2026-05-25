@@ -245,6 +245,7 @@ import EstrategiaKitMontagem from "./pages/direcao/estrategia/EstrategiaKitMonta
 import EstrategiaKitsTemplate from "./pages/direcao/estrategia/EstrategiaKitsTemplate";
 import EstrategiaMateriasPrimas from "./pages/direcao/estrategia/EstrategiaMateriasPrimas";
 import EstrategiaDespesas from "./pages/direcao/estrategia/EstrategiaDespesas";
+import EstrategiaDespesasMes from "./pages/direcao/estrategia/EstrategiaDespesasMes";
 import EstrategiaResultados from "./pages/direcao/estrategia/EstrategiaResultados";
 
 // Hub de Estoque da Direção
