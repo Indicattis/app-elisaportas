@@ -198,12 +198,12 @@ export default function TabelaPrecos({
                   <TableRow className="border-border hover:bg-transparent">
                     <TableHead className="text-center text-xs font-medium text-muted-foreground w-12">#</TableHead>
                     <TableHead className="text-xs font-medium text-muted-foreground">Descrição</TableHead>
-                    <TableHead className="text-center text-xs font-medium text-muted-foreground">L</TableHead>
-                    <TableHead className="text-center text-xs font-medium text-muted-foreground">A</TableHead>
+                    <TableHead className="text-center text-xs font-medium text-blue-400">L</TableHead>
+                    <TableHead className="text-center text-xs font-medium text-blue-400">A</TableHead>
                     <TableHead className="text-right text-xs font-medium text-muted-foreground">Valor Porta</TableHead>
                     <TableHead className="text-right text-xs font-medium text-muted-foreground">Valor Instalação</TableHead>
                     <TableHead className="text-right text-xs font-medium text-muted-foreground">Valor Pintura</TableHead>
-                    {!hideTotalColumn && <TableHead className="text-right text-xs font-medium text-foreground">Total</TableHead>}
+                    {!hideTotalColumn && <TableHead className="text-right text-xs font-medium text-emerald-400">Total</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
