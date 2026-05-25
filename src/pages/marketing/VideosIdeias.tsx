@@ -418,6 +418,15 @@ export default function VideosIdeias() {
                           setIdeiaParaExcluir(id);
                           setDeleteModalOpen(true);
                         }}
+                        onEdit={(id) => {
+                          const ideia = ideias?.find((i) => i.id === id);
+                          if (!ideia) return;
+                          setEditandoId(id);
+                          setTitulo(ideia.titulo);
+                          setDescricao(ideia.descricao);
+                          setAutoresIds(ideia.autores_ids ?? []);
+                          setFormOpen(true);
+                        }}
                       />
                     ))}
                   </div>
