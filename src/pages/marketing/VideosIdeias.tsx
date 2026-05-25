@@ -406,6 +406,10 @@ export default function VideosIdeias() {
                         key={ideia.id}
                         ideia={ideia}
                         onChangeStatus={(id, status) => atualizarStatus.mutate({ id, status })}
+                        onDelete={(id) => {
+                          setIdeiaParaExcluir(id);
+                          setDeleteModalOpen(true);
+                        }}
                       />
                     ))}
                   </div>
