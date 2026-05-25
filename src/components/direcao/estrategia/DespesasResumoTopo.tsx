@@ -213,6 +213,63 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
 
 /* ---------------- Folha block ---------------- */
 
+function EditableCell({
+  value, format, onSave,
+}: {
+  value: number;
+  format: 'currency' | 'percent';
+  onSave: (v: number) => void | Promise<void>;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(String(value ?? 0));
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => { if (!editing) setDraft(String(value ?? 0)); }, [value, editing]);
+
+  const display = format === 'currency'
+    ? formatCurrency(Number(value) || 0)
+    : `${(Number(value) || 0).toFixed(2)}%`;
+
+  const commit = async () => {
+    const parsed = Number(String(draft).replace(',', '.'));
+    if (Number.isNaN(parsed)) { setEditing(false); setDraft(String(value)); return; }
+    if (parsed === Number(value)) { setEditing(false); return; }
+    setSaving(true);
+    try { await onSave(parsed); } finally { setSaving(false); setEditing(false); }
+  };
+
+  if (editing) {
+    return (
+      <input
+        autoFocus
+        type="number"
+        step="0.01"
+        value={draft}
+        disabled={saving}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') { e.preventDefault(); (e.target as HTMLInputElement).blur(); }
+          else if (e.key === 'Escape') { setDraft(String(value)); setEditing(false); }
+        }}
+        onFocus={(e) => e.currentTarget.select()}
+        className="w-full bg-white/10 border border-blue-400/50 rounded px-1 py-0.5 text-right text-white text-sm outline-none"
+      />
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => setEditing(true)}
+      className="w-full text-right px-1 py-0.5 rounded hover:bg-white/10 cursor-pointer transition-colors"
+      title="Clique para editar"
+    >
+      {display}
+    </button>
+  );
+}
+
 function BlocoFolha({
   rows, loading, onAdd, onDelete, onUpdated, onPatch,
 }: {
