@@ -90,6 +90,48 @@ const COLUMN_WIDTHS: Record<ColumnKey, string> = {
   objetivo: "w-40",
 };
 const DEFAULT_COLUMN_ORDER: ColumnKey[] = ["custo", "lucro", "imposto", "desconto", "cartao", "venda", "objetivo"];
+const COLUMN_ORDER_STORAGE_KEY = "catalogo-precos-column-order-v1";
+
+function SortableHeadCell({
+  colKey,
+  children,
+}: {
+  colKey: ColumnKey;
+  children: React.ReactNode;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: `col-${colKey}` });
+  const style: CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+    position: "relative",
+    zIndex: isDragging ? 10 : "auto",
+  };
+  return (
+    <TableHead
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "text-xs font-medium text-foreground text-center group/col",
+        COLUMN_WIDTHS[colKey],
+        COLUMN_BG[colKey],
+      )}
+    >
+      <div className="flex items-center justify-center gap-1">
+        <button
+          type="button"
+          className="inline-flex h-5 w-5 items-center justify-center text-muted-foreground/40 hover:text-foreground cursor-grab active:cursor-grabbing touch-none opacity-0 group-hover/col:opacity-100"
+          aria-label="Arrastar coluna"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical className="h-3.5 w-3.5" />
+        </button>
+        <span>{children}</span>
+      </div>
+    </TableHead>
+  );
+}
 
 interface CatalogoPrecosTabProps {
   compact?: boolean;
