@@ -1,28 +1,18 @@
-## Mudanças em `/logistica/frete/internos`
+## Mudanças em `/direcao/estrategia/materias-primas`
 
-### Novas colunas da tabela
-1. **Número** — índice sequencial da linha (1, 2, 3...) baseado na lista filtrada
-2. **Cidade** — `{cidade} - {estado}`
-3. **Km (ida)** — editável inline (único campo preenchido manualmente)
-4. **Ida e volta** — calculado: `km × 2`
-5. **Valor** — calculado: `km × 2 × 3` = `km × 6` (em verde, formatado R$)
-6. Ações (editar/excluir) — mantidas
+### 1. Listagem global de todas as matérias-primas
+- Em vez de exigir a seleção de um item para mostrar a tabela, a página passa a listar **todas** as matérias-primas cadastradas (de todos os itens) por padrão.
+- O hook `useEstrategiaMateriasPrimas()` já suporta chamada sem `custoItemId` (retorna todas), então será usado nesse modo.
+- Nova coluna **"Item"** na tabela, mostrando `descrição do item · unidade · categoria`, resolvida via lookup em `useCustosItens()`.
+- O seletor de item no topo do header continua existindo, mas só serve para **adicionar nova matéria-prima** ao item escolhido (botão "Adicionar" fica habilitado apenas quando um item é selecionado). Também funciona como filtro opcional da tabela.
+- Resumo lateral (Custo unitário atual, Qtd total, Custo total, Custo/un calculado) só aparece quando há um item selecionado (igual hoje).
 
-Removidas da grade: Estado (vai junto da cidade), Valor do Frete (agora calculado), Observações, Ativo.
+### 2. Fornecedor como Select
+- Substituir o `Input` de texto da coluna **Fornecedor** por um `Select` populado por `useFornecedores()` (tabela `fornecedores`, ativos).
+- Valor salvo permanece em `fornecedor` (texto) por compatibilidade — gravamos o `nome` do fornecedor escolhido. Opção "— Sem fornecedor —" limpa o campo.
+- O mesmo Select é usado para todas as linhas da listagem global.
 
-### Comportamento de salvamento
-- Ao editar o Km inline, além de gravar `quilometragem`, o `valor_frete` será atualizado automaticamente para `km × 6` na mesma chamada `updateFrete`.
-- Dialog "Novo/Editar Frete" (`FreteDialog.tsx`): remover o campo "Valor do Frete" e a sugestão automática invertida; manter apenas Estado, Cidade, Km, Observações, Ativo. Ao salvar, definir `valor_frete = quilometragem × 6` (se km vazio → 0).
+### 3. Arquivos afetados
+- `src/pages/direcao/estrategia/EstrategiaMateriasPrimas.tsx` — refatorar para listagem global, adicionar coluna Item, trocar input por Select de fornecedores.
 
-### Filtros e ações do header
-- Mantidos: busca, filtro por estado, Importar, PDF, Excel, Corrigir Acentos, Novo.
-
-### Exportações (`fretesInternosExport.ts`)
-- Atualizar colunas do PDF e Excel para: Nº, Cidade, Km (ida), Ida e volta, Valor.
-
-### Arquivos a editar
-- `src/pages/logistica/FreteMinimalista.tsx` — colunas, cálculo automático no save inline, formatação verde no valor.
-- `src/components/frete/FreteDialog.tsx` — remover input "Valor do Frete", calcular `valor_frete` a partir do km no submit.
-- `src/utils/fretesInternosExport.ts` — novo layout de colunas.
-
-Nenhuma migração de schema; `valor_frete` continua no banco mas passa a ser sempre derivado de `quilometragem × 6`.
+Sem mudanças de schema, hooks novos ou rotas.
