@@ -210,6 +210,7 @@ export default function EstrategiaKitMontagem() {
                       <TableHead className="text-right text-white/60 w-32">Soma preços</TableHead>
                       <TableHead className="text-right text-white/60 w-32">Subtotal lucro</TableHead>
                       <TableHead className="text-right text-white/60 w-28">Preço</TableHead>
+                      <TableHead className="text-right text-white/60 w-32">Preço total</TableHead>
                       <TableHead className="text-center text-white/60 w-12"></TableHead>
                     </TableRow>
                   </TableHeader>
