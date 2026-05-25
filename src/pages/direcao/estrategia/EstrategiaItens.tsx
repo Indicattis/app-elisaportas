@@ -1287,6 +1287,14 @@ export default function EstrategiaItens() {
             </Dialog>
             <Button
               variant="outline"
+              className="!h-[50px] gap-2 bg-card/60 border-border text-foreground hover:bg-cyan-500/10 hover:text-cyan-300 hover:border-cyan-500/40"
+              onClick={() => navigate("/direcao/estrategia/materias-primas")}
+            >
+              <Boxes className="h-4 w-4" />
+              Matéria Prima
+            </Button>
+            <Button
+              variant="outline"
               className="!h-[50px] gap-2 bg-card/60 border-border text-foreground hover:bg-red-500/10 hover:text-red-300 hover:border-red-500/40"
               onClick={() => {
                 try {
