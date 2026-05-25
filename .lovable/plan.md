@@ -1,21 +1,47 @@
 ## Objetivo
-Adicionar workflow de status com 5 estados em `/marketing/videos-ideias`: **Gravar** (inicial), **Editar**, **Aprovar**, **Postado**, **Rejeitado**. Transições livres por qualquer usuário, com abas de filtro e badge no card.
 
-## Banco
-Migration:
-- Adicionar coluna `status TEXT NOT NULL DEFAULT 'gravar'` em `marketing_videos_ideias`.
-- CHECK constraint: status IN ('gravar','editar','aprovar','postado','rejeitado').
-- Index em `status`.
+Adicionar colunas de cálculo de custo por colaborador no bloco "Folha Salarial" em `/direcao/estrategia/despesas`, com edição inline e somando ao custo mensal exibido.
 
-## Frontend (`src/pages/marketing/VideosIdeias.tsx`)
-- Constantes `STATUS_OPTIONS` com label + cor (Tailwind semantic-ish): Gravar=blue, Editar=amber, Aprovar=violet, Postado=emerald, Rejeitado=rose.
-- Abas no topo da lista usando `Tabs` (shadcn): "Todos | Gravar | Editar | Aprovar | Postado | Rejeitado" com contador por status.
-- Estado local `statusFiltro` filtra `ideias` antes de renderizar.
-- Card:
-  - Badge colorida do status no canto superior esquerdo (ao lado do título), seguindo glassmorphism.
-  - Clique na badge abre `DropdownMenu` com os outros 4 status; ao escolher, dispara mutation `atualizarStatus` (otimista, padrão idêntico ao `reordenar`).
-- Query inclui `status` no select.
-- DnD continua funcionando independente do filtro (reordenar persiste posição global).
+## Novas colunas
 
-## Tipos
-- `Ideia.status: 'gravar' | 'editar' | 'aprovar' | 'postado' | 'rejeitado'`.
+| Coluna | Tipo | Regra |
+|---|---|---|
+| Auxílio Combustível | Valor R$ manual | input numérico |
+| Insalubridade | % manual + valor calculado | valor = salário × % |
+| FGTS | % manual (padrão 8%) | valor = salário × % |
+| Previsão 13º | Valor R$ manual | input numérico |
+| Previsão Férias | Calculado automático | (salário ÷ 3) + (salário × FGTS%) |
+
+Base de % (insalubridade e FGTS) = `custo_colaborador` (salário base atual).
+
+**Custo total mensal exibido** = salário + combustível + insalubridade + FGTS + 13º + férias.
+
+## Banco de dados
+
+Migration adicionando colunas em `admin_users`:
+- `aux_combustivel numeric default 0`
+- `insalubridade_pct numeric default 0`
+- `fgts_pct numeric default 8`
+- `previsao_13_valor numeric default 0`
+
+Previsão Férias é derivada — não persiste.
+
+## UI
+
+Refatorar `DespesasResumoTopo.tsx` — bloco "Folha Salarial" passa a renderizar tabela com colunas:
+
+```text
+Colaborador | Salário | Combustível | Insalub % / R$ | FGTS % / R$ | 13º | Férias | Total mensal | Total anual
+```
+
+- Campos editáveis: inputs inline (`bg-white/5`, glassmorphism) com debounce ~600ms salvando em `admin_users`.
+- Linha do total e total geral somam o "Total mensal" calculado.
+- Blocos "Despesas Fixas" e "Despesas Variáveis" permanecem inalterados.
+- Quando `mes` está selecionado (snapshot histórico via `custos_folha_mensais`), mantém comportamento atual (somente leitura, sem nova tabela).
+
+## Detalhes técnicos
+
+- Helper `calcularCustoColaborador(c)` retorna `{ insalubValor, fgtsValor, ferias, totalMensal }`.
+- Persistência: `supabase.from('admin_users').update({...}).eq('id', ...)` com toast de erro.
+- Atualiza `onMediaMensalChange` somando o novo total.
+- Layout responsivo: tabela com `overflow-x-auto` para caber as colunas no card.
