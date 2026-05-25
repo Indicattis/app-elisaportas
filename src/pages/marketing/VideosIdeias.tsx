@@ -37,6 +37,19 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+type Status = "gravar" | "editar" | "aprovar" | "postado" | "rejeitado";
+
+const STATUS_OPTIONS: { value: Status; label: string; classes: string }[] = [
+  { value: "gravar", label: "Gravar", classes: "bg-blue-500/15 text-blue-300 border-blue-500/30 hover:bg-blue-500/25" },
+  { value: "editar", label: "Editar", classes: "bg-amber-500/15 text-amber-300 border-amber-500/30 hover:bg-amber-500/25" },
+  { value: "aprovar", label: "Aprovar", classes: "bg-violet-500/15 text-violet-300 border-violet-500/30 hover:bg-violet-500/25" },
+  { value: "postado", label: "Postado", classes: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/25" },
+  { value: "rejeitado", label: "Rejeitado", classes: "bg-rose-500/15 text-rose-300 border-rose-500/30 hover:bg-rose-500/25" },
+];
+const STATUS_MAP = Object.fromEntries(STATUS_OPTIONS.map(s => [s.value, s])) as Record<Status, typeof STATUS_OPTIONS[number]>;
 
 const ideiaSchema = z.object({
   titulo: z.string().trim().min(1, "Título obrigatório").max(120, "Máx. 120 caracteres"),
@@ -57,6 +70,7 @@ interface Ideia {
   posicao: number | null;
   autores_ids: string[];
   autores_nomes: string[];
+  status: Status;
 }
 
 interface Colaborador {
@@ -64,7 +78,7 @@ interface Colaborador {
   nome: string;
 }
 
-function SortableIdeiaCard({ ideia }: { ideia: Ideia }) {
+function SortableIdeiaCard({ ideia, onChangeStatus }: { ideia: Ideia; onChangeStatus: (id: string, s: Status) => void }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: ideia.id });
   const style = {
@@ -72,6 +86,7 @@ function SortableIdeiaCard({ ideia }: { ideia: Ideia }) {
     transition,
     opacity: isDragging ? 0.4 : 1,
   };
+  const statusInfo = STATUS_MAP[ideia.status] ?? STATUS_MAP.gravar;
   return (
     <div
       ref={setNodeRef}
@@ -86,7 +101,28 @@ function SortableIdeiaCard({ ideia }: { ideia: Ideia }) {
       >
         <GripVertical className="w-4 h-4" />
       </button>
-      <h3 className="font-semibold text-white mb-2 pr-8">{ideia.titulo}</h3>
+      <div className="flex items-start gap-2 mb-2 pr-8">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              className={cn(
+                "shrink-0 px-2 py-0.5 rounded-md text-[11px] font-medium border transition-colors",
+                statusInfo.classes
+              )}
+            >
+              {statusInfo.label}
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            {STATUS_OPTIONS.filter(s => s.value !== ideia.status).map(s => (
+              <DropdownMenuItem key={s.value} onSelect={() => onChangeStatus(ideia.id, s.value)}>
+                {s.label}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <h3 className="font-semibold text-white">{ideia.titulo}</h3>
+      </div>
       <p className="text-sm text-white/70 whitespace-pre-wrap mb-3">{ideia.descricao}</p>
       {ideia.autores_nomes && ideia.autores_nomes.length > 0 && (
         <div className="flex flex-wrap gap-1 mb-3">
@@ -127,6 +163,7 @@ export default function VideosIdeias() {
   const [descricao, setDescricao] = useState("");
   const [autoresIds, setAutoresIds] = useState<string[]>([]);
   const [autoresPopoverOpen, setAutoresPopoverOpen] = useState(false);
+  const [statusFiltro, setStatusFiltro] = useState<"todos" | Status>("todos");
 
   const { data: colaboradores } = useQuery({
     queryKey: ["marketing-videos-ideias-colaboradores"],
@@ -147,7 +184,7 @@ export default function VideosIdeias() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("marketing_videos_ideias")
-        .select("id,titulo,descricao,criado_por_nome,created_at,posicao,autores_ids,autores_nomes")
+        .select("id,titulo,descricao,criado_por_nome,created_at,posicao,autores_ids,autores_nomes,status")
         .order("posicao", { ascending: true, nullsFirst: false })
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -179,6 +216,31 @@ export default function VideosIdeias() {
     },
   });
 
+  const atualizarStatus = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: Status }) => {
+      const { error } = await supabase.from("marketing_videos_ideias").update({ status }).eq("id", id);
+      if (error) throw error;
+    },
+    onMutate: async ({ id, status }) => {
+      await queryClient.cancelQueries({ queryKey: ["marketing-videos-ideias"] });
+      const prev = queryClient.getQueryData<Ideia[]>(["marketing-videos-ideias"]);
+      if (prev) {
+        queryClient.setQueryData<Ideia[]>(
+          ["marketing-videos-ideias"],
+          prev.map((i) => (i.id === id ? { ...i, status } : i))
+        );
+      }
+      return { prev };
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.prev) queryClient.setQueryData(["marketing-videos-ideias"], ctx.prev);
+      toast.error("Erro ao atualizar status");
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["marketing-videos-ideias"] });
+    },
+  });
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
   );
@@ -192,6 +254,12 @@ export default function VideosIdeias() {
     const next = arrayMove(ideias, oldIndex, newIndex);
     reordenar.mutate(next);
   };
+
+  const counts = (ideias ?? []).reduce<Record<string, number>>((acc, i) => {
+    acc[i.status] = (acc[i.status] ?? 0) + 1;
+    return acc;
+  }, {});
+  const filteredIdeias = (ideias ?? []).filter((i) => statusFiltro === "todos" || i.status === statusFiltro);
 
   const criar = useMutation({
     mutationFn: async () => {
@@ -279,15 +347,35 @@ export default function VideosIdeias() {
             <p className="text-sm">Nenhuma ideia cadastrada ainda.</p>
           </div>
         ) : (
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <SortableContext items={ideias.map((i) => i.id)} strategy={rectSortingStrategy}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {ideias.map((ideia) => (
-                  <SortableIdeiaCard key={ideia.id} ideia={ideia} />
+          <>
+            <Tabs value={statusFiltro} onValueChange={(v) => setStatusFiltro(v as any)} className="mb-4">
+              <TabsList className="bg-white/5 border border-white/10 flex-wrap h-auto">
+                <TabsTrigger value="todos">Todos ({ideias.length})</TabsTrigger>
+                {STATUS_OPTIONS.map((s) => (
+                  <TabsTrigger key={s.value} value={s.value}>
+                    {s.label} ({counts[s.value] ?? 0})
+                  </TabsTrigger>
                 ))}
-              </div>
-            </SortableContext>
-          </DndContext>
+              </TabsList>
+            </Tabs>
+            {filteredIdeias.length === 0 ? (
+              <div className="text-center py-12 text-white/40 text-sm">Nenhuma ideia nesse status.</div>
+            ) : (
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                <SortableContext items={filteredIdeias.map((i) => i.id)} strategy={rectSortingStrategy}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {filteredIdeias.map((ideia) => (
+                      <SortableIdeiaCard
+                        key={ideia.id}
+                        ideia={ideia}
+                        onChangeStatus={(id, status) => atualizarStatus.mutate({ id, status })}
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
+            )}
+          </>
         )}
       </div>
 
