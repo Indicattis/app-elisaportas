@@ -328,7 +328,7 @@ function BlocoFolhaEditavel({
               <th className="text-right font-normal pb-2 px-2">13°</th>
               <th className="text-right font-normal pb-2 px-2">Férias</th>
               <th className="text-right font-normal pb-2 px-2">Total mensal</th>
-              <th className="text-right font-normal pb-2 pr-1">Total anual</th>
+              <th className="text-center font-normal pb-2 pr-1">Na folha</th>
             </tr>
           </thead>
           <tbody>
@@ -338,8 +338,16 @@ function BlocoFolhaEditavel({
               <tr><td colSpan={11} className="text-white/40 px-2 py-3">Sem colaboradores</td></tr>
             ) : linhas.map(({ c, insalub, fgts, ferias, total }) => (
               <tr key={c.id} className="border-b border-white/5 hover:bg-white/[0.03]">
-                <td className="py-1.5 pl-1 text-white/80 truncate max-w-[180px]">{c.nome}</td>
-                <td className="px-2"><NumInput value={c.salario} onCommit={(v) => onChange(c.id, { salario: v })} /></td>
+                <td className="py-1.5 pl-1 text-white/80 truncate max-w-[200px]">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`w-2 h-2 rounded-full flex-shrink-0 ${c.em_folha ? 'bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.6)]' : 'bg-red-400 shadow-[0_0_6px_rgba(248,113,113,0.6)]'}`}
+                      title={c.em_folha ? 'Na folha' : 'Fora da folha'}
+                    />
+                    <span className="truncate">{c.nome}</span>
+                  </div>
+                </td>
+                <td className="px-2"><NumInput value={c.salario} onCommit={(v) => onChange(c.id, { salario: v })} valueClassName="text-emerald-400" /></td>
                 <td className="px-2"><NumInput value={c.aux_combustivel} onCommit={(v) => onChange(c.id, { aux_combustivel: v })} /></td>
                 <td className="px-2"><NumInput value={c.insalubridade_pct} onCommit={(v) => onChange(c.id, { insalubridade_pct: v })} suffix="%" /></td>
                 <td className="px-2 text-right text-white/60 whitespace-nowrap">{formatCurrency(insalub)}</td>
@@ -348,7 +356,19 @@ function BlocoFolhaEditavel({
                 <td className="px-2"><NumInput value={c.previsao_13_valor} onCommit={(v) => onChange(c.id, { previsao_13_valor: v })} /></td>
                 <td className="px-2 text-right text-white/60 whitespace-nowrap">{formatCurrency(ferias)}</td>
                 <td className="px-2 text-right text-white font-medium whitespace-nowrap">{formatCurrency(total)}</td>
-                <td className="pr-1 text-right text-white/70 font-medium whitespace-nowrap">{formatCurrency(total * 12)}</td>
+                <td className="pr-1 text-center whitespace-nowrap">
+                  <button
+                    type="button"
+                    onClick={() => onChange(c.id, { em_folha: !c.em_folha })}
+                    className={`px-2 py-0.5 rounded-md text-[10px] uppercase tracking-wider font-semibold border transition-colors ${
+                      c.em_folha
+                        ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/25'
+                        : 'bg-red-500/15 text-red-300 border-red-500/30 hover:bg-red-500/25'
+                    }`}
+                  >
+                    {c.em_folha ? 'Sim' : 'Não'}
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -356,10 +376,7 @@ function BlocoFolhaEditavel({
       </div>
       <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between px-2">
         <span className="text-xs text-white/50 uppercase tracking-wider">Total</span>
-        <div className="flex gap-8">
-          <span className="text-base font-bold text-white whitespace-nowrap">{formatCurrency(totalMensal)}</span>
-          <span className="text-base font-bold text-white/70 whitespace-nowrap">{formatCurrency(totalMensal * 12)}</span>
-        </div>
+        <span className="text-base font-bold text-white whitespace-nowrap">{formatCurrency(totalMensal)}</span>
       </div>
     </div>
   );
