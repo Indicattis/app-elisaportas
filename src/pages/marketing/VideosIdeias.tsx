@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Plus, Clapperboard, Loader2, GripVertical, Check, ChevronsUpDown, X } from "lucide-react";
+import { ArrowLeft, Plus, Clapperboard, Loader2, GripVertical, Check, ChevronsUpDown, X, Trash2 } from "lucide-react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -17,6 +17,16 @@ import {
   DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import {
   DndContext,
@@ -78,7 +88,7 @@ interface Colaborador {
   nome: string;
 }
 
-function SortableIdeiaCard({ ideia, onChangeStatus }: { ideia: Ideia; onChangeStatus: (id: string, s: Status) => void }) {
+function SortableIdeiaCard({ ideia, onChangeStatus, onDelete }: { ideia: Ideia; onChangeStatus: (id: string, s: Status) => void; onDelete: (id: string) => void }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: ideia.id });
   const style = {
@@ -93,15 +103,24 @@ function SortableIdeiaCard({ ideia, onChangeStatus }: { ideia: Ideia; onChangeSt
       style={style}
       className="p-4 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 relative"
     >
-      <button
-        {...attributes}
-        {...listeners}
-        className="absolute top-2 right-2 p-1.5 rounded-md text-white/40 hover:text-white/80 hover:bg-white/10 cursor-grab active:cursor-grabbing touch-none"
-        aria-label="Reordenar"
-      >
-        <GripVertical className="w-4 h-4" />
-      </button>
-      <div className="flex items-start gap-2 mb-2 pr-8">
+      <div className="absolute top-2 right-2 flex items-center gap-1">
+        <button
+          {...attributes}
+          {...listeners}
+          className="p-1.5 rounded-md text-white/40 hover:text-white/80 hover:bg-white/10 cursor-grab active:cursor-grabbing touch-none"
+          aria-label="Reordenar"
+        >
+          <GripVertical className="w-4 h-4" />
+        </button>
+        <button
+          onClick={() => onDelete(ideia.id)}
+          className="p-1.5 rounded-md text-white/40 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+          aria-label="Excluir ideia"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      </div>
+      <div className="flex items-start gap-2 mb-2 pr-16">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
@@ -164,6 +183,8 @@ export default function VideosIdeias() {
   const [autoresIds, setAutoresIds] = useState<string[]>([]);
   const [autoresPopoverOpen, setAutoresPopoverOpen] = useState(false);
   const [statusFiltro, setStatusFiltro] = useState<"todos" | Status>("todos");
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [ideiaParaExcluir, setIdeiaParaExcluir] = useState<string | null>(null);
 
   const { data: colaboradores } = useQuery({
     queryKey: ["marketing-videos-ideias-colaboradores"],
@@ -213,6 +234,22 @@ export default function VideosIdeias() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["marketing-videos-ideias"] });
+    },
+  });
+
+  const excluirIdeia = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("marketing_videos_ideias").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["marketing-videos-ideias"] });
+      setDeleteModalOpen(false);
+      setIdeiaParaExcluir(null);
+      toast.success("Ideia excluída com sucesso");
+    },
+    onError: () => {
+      toast.error("Erro ao excluir ideia");
     },
   });
 
@@ -369,6 +406,10 @@ export default function VideosIdeias() {
                         key={ideia.id}
                         ideia={ideia}
                         onChangeStatus={(id, status) => atualizarStatus.mutate({ id, status })}
+                        onDelete={(id) => {
+                          setIdeiaParaExcluir(id);
+                          setDeleteModalOpen(true);
+                        }}
                       />
                     ))}
                   </div>
@@ -557,6 +598,41 @@ export default function VideosIdeias() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* AlertDialog de exclusão */}
+      <AlertDialog open={deleteModalOpen} onOpenChange={(v) => { if (!excluirIdeia.isPending) setDeleteModalOpen(v); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              <Trash2 className="h-5 w-5" />
+              Excluir Ideia
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir esta ideia permanentemente? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={excluirIdeia.isPending}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                if (ideiaParaExcluir) excluirIdeia.mutate(ideiaParaExcluir);
+              }}
+              disabled={excluirIdeia.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {excluirIdeia.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Excluindo...
+                </>
+              ) : (
+                "Excluir"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
