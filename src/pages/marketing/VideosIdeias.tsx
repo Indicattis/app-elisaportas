@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Plus, Clapperboard, Loader2, GripVertical } from "lucide-react";
+import { ArrowLeft, Plus, Clapperboard, Loader2, GripVertical, Check, ChevronsUpDown, X } from "lucide-react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -33,6 +33,10 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 const ideiaSchema = z.object({
   titulo: z.string().trim().min(1, "Título obrigatório").max(120, "Máx. 120 caracteres"),
@@ -41,6 +45,7 @@ const ideiaSchema = z.object({
     .trim()
     .min(60, "A descrição deve ter no mínimo 60 caracteres")
     .max(2000, "Máx. 2000 caracteres"),
+  autores_ids: z.array(z.string().uuid()).min(1, "Selecione ao menos 1 autor"),
 });
 
 interface Ideia {
@@ -50,6 +55,13 @@ interface Ideia {
   criado_por_nome: string | null;
   created_at: string;
   posicao: number | null;
+  autores_ids: string[];
+  autores_nomes: string[];
+}
+
+interface Colaborador {
+  id: string;
+  nome: string;
 }
 
 function SortableIdeiaCard({ ideia }: { ideia: Ideia }) {
@@ -76,8 +88,21 @@ function SortableIdeiaCard({ ideia }: { ideia: Ideia }) {
       </button>
       <h3 className="font-semibold text-white mb-2 pr-8">{ideia.titulo}</h3>
       <p className="text-sm text-white/70 whitespace-pre-wrap mb-3">{ideia.descricao}</p>
+      {ideia.autores_nomes && ideia.autores_nomes.length > 0 && (
+        <div className="flex flex-wrap gap-1 mb-3">
+          {ideia.autores_nomes.map((n, i) => (
+            <Badge key={i} variant="secondary" className="bg-white/10 text-white/80 border-white/10 hover:bg-white/10">
+              {n}
+            </Badge>
+          ))}
+        </div>
+      )}
       <div className="flex items-center justify-between text-xs text-white/40">
-        <span>{ideia.criado_por_nome ?? "—"}</span>
+        <span>
+          {ideia.autores_nomes && ideia.autores_nomes.length > 0
+            ? `por ${ideia.criado_por_nome ?? "—"}`
+            : (ideia.criado_por_nome ?? "—")}
+        </span>
         <span>
           {new Date(ideia.created_at).toLocaleDateString("pt-BR", {
             day: "2-digit",
@@ -100,13 +125,29 @@ export default function VideosIdeias() {
   const [successOpen, setSuccessOpen] = useState(false);
   const [titulo, setTitulo] = useState("");
   const [descricao, setDescricao] = useState("");
+  const [autoresIds, setAutoresIds] = useState<string[]>([]);
+  const [autoresPopoverOpen, setAutoresPopoverOpen] = useState(false);
+
+  const { data: colaboradores } = useQuery({
+    queryKey: ["marketing-videos-ideias-colaboradores"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("admin_users")
+        .select("id,nome")
+        .eq("ativo", true)
+        .eq("eh_colaborador", true)
+        .order("nome", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as Colaborador[];
+    },
+  });
 
   const { data: ideias, isLoading } = useQuery({
     queryKey: ["marketing-videos-ideias"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("marketing_videos_ideias")
-        .select("id,titulo,descricao,criado_por_nome,created_at,posicao")
+        .select("id,titulo,descricao,criado_por_nome,created_at,posicao,autores_ids,autores_nomes")
         .order("posicao", { ascending: true, nullsFirst: false })
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -154,12 +195,17 @@ export default function VideosIdeias() {
 
   const criar = useMutation({
     mutationFn: async () => {
-      const parsed = ideiaSchema.parse({ titulo, descricao });
+      const parsed = ideiaSchema.parse({ titulo, descricao, autores_ids: autoresIds });
+      const nomes = (colaboradores ?? [])
+        .filter((c) => parsed.autores_ids.includes(c.id))
+        .map((c) => c.nome);
       const { error } = await supabase.from("marketing_videos_ideias").insert({
         titulo: parsed.titulo,
         descricao: parsed.descricao,
         criado_por: user?.id,
         criado_por_nome: userRole?.nome ?? user?.email ?? null,
+        autores_ids: parsed.autores_ids,
+        autores_nomes: nomes,
       });
       if (error) throw error;
     },
@@ -169,6 +215,7 @@ export default function VideosIdeias() {
       setFormOpen(false);
       setTitulo("");
       setDescricao("");
+      setAutoresIds([]);
       setSuccessOpen(true);
     },
     onError: (e: any) => {
@@ -177,7 +224,7 @@ export default function VideosIdeias() {
   });
 
   const handleConfirmarForm = () => {
-    const result = ideiaSchema.safeParse({ titulo, descricao });
+    const result = ideiaSchema.safeParse({ titulo, descricao, autores_ids: autoresIds });
     if (!result.success) {
       toast.error(result.error.errors[0]?.message ?? "Dados inválidos");
       return;
@@ -284,13 +331,87 @@ export default function VideosIdeias() {
                 maxLength={2000}
               />
             </div>
+
+            <div className="space-y-2">
+              <Label>Autores</Label>
+              <Popover open={autoresPopoverOpen} onOpenChange={setAutoresPopoverOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    role="combobox"
+                    className="w-full justify-between font-normal"
+                  >
+                    <span className="truncate text-left">
+                      {autoresIds.length === 0
+                        ? "Selecione os autores"
+                        : `${autoresIds.length} selecionado${autoresIds.length > 1 ? "s" : ""}`}
+                    </span>
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder="Buscar colaborador..." />
+                    <CommandList>
+                      <CommandEmpty>Nenhum colaborador encontrado.</CommandEmpty>
+                      <CommandGroup>
+                        {(colaboradores ?? []).map((c) => {
+                          const selected = autoresIds.includes(c.id);
+                          return (
+                            <CommandItem
+                              key={c.id}
+                              value={c.nome}
+                              onSelect={() => {
+                                setAutoresIds((prev) =>
+                                  prev.includes(c.id)
+                                    ? prev.filter((id) => id !== c.id)
+                                    : [...prev, c.id]
+                                );
+                              }}
+                            >
+                              <Check className={cn("mr-2 h-4 w-4", selected ? "opacity-100" : "opacity-0")} />
+                              {c.nome}
+                            </CommandItem>
+                          );
+                        })}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+              {autoresIds.length > 0 && (
+                <div className="flex flex-wrap gap-1 pt-1">
+                  {autoresIds.map((id) => {
+                    const c = colaboradores?.find((x) => x.id === id);
+                    if (!c) return null;
+                    return (
+                      <Badge key={id} variant="secondary" className="gap-1 pr-1">
+                        {c.nome}
+                        <button
+                          type="button"
+                          onClick={() => setAutoresIds((prev) => prev.filter((x) => x !== id))}
+                          className="ml-1 rounded-sm hover:bg-foreground/10 p-0.5"
+                          aria-label={`Remover ${c.nome}`}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setFormOpen(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleConfirmarForm} disabled={!titulo.trim() || !descricaoOk}>
+            <Button
+              onClick={handleConfirmarForm}
+              disabled={!titulo.trim() || !descricaoOk || autoresIds.length === 0}
+            >
               Confirmar
             </Button>
           </DialogFooter>
