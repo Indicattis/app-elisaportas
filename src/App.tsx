@@ -243,6 +243,7 @@ import EstrategiaKits from "./pages/direcao/estrategia/EstrategiaKits";
 import EstrategiaPrecos from "./pages/direcao/estrategia/EstrategiaPrecos";
 import EstrategiaKitMontagem from "./pages/direcao/estrategia/EstrategiaKitMontagem";
 import EstrategiaKitsTemplate from "./pages/direcao/estrategia/EstrategiaKitsTemplate";
+import EstrategiaMateriasPrimas from "./pages/direcao/estrategia/EstrategiaMateriasPrimas";
 import EstrategiaDespesas from "./pages/direcao/estrategia/EstrategiaDespesas";
 import EstrategiaResultados from "./pages/direcao/estrategia/EstrategiaResultados";
 
