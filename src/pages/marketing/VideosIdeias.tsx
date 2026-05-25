@@ -474,12 +474,12 @@ export default function VideosIdeias() {
       </div>
 
       {/* Modal de formulário */}
-      <Dialog open={formOpen} onOpenChange={setFormOpen}>
+      <Dialog open={formOpen} onOpenChange={(v) => { if (!v) setEditandoId(null); setFormOpen(v); }}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Nova ideia de vídeo</DialogTitle>
+            <DialogTitle>{editandoId ? "Editar ideia" : "Nova ideia de vídeo"}</DialogTitle>
             <DialogDescription>
-              Descreva sua ideia para o time de marketing produzir.
+              {editandoId ? "Atualize os dados da ideia." : "Descreva sua ideia para o time de marketing produzir."}
             </DialogDescription>
           </DialogHeader>
 
