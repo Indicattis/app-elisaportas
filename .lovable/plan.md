@@ -1,28 +1,27 @@
 ## Objetivo
+Adicionar em `/direcao/aprovacoes` um novo botão "Aprovações Representantes" que abre uma página listando todos os usuários do tipo `representante` em `admin_users`, com toggle para ativar/desativar (`ativo`).
 
-Permitir adicionar, editar e excluir despesas (catálogo `tipos_custos`) diretamente dos blocos "Despesas Fixas" e "Despesas Variáveis" em `/direcao/estrategia/despesas`, mantendo a visualização atual.
+## Mudanças
 
-## Banco
+### 1. Hub `/direcao/aprovacoes`
+Arquivo: `src/pages/direcao/aprovacoes/DirecaoAprovacoesHub.tsx`
+- Adicionar item de menu "Aprovações Representantes" (ícone `UserCheck` da lucide) com path `/direcao/aprovacoes/representantes`, posicionado logo após "Aprovações Autorizados".
+- Adicionar query `useQuery` que conta `admin_users` onde `tipo_usuario = 'representante'` AND `ativo = false` (pendentes), exibindo o badge no botão.
 
-Sem alterações de schema — usa `tipos_custos` existente (`nome`, `tipo`, `valor_maximo_mensal`, `ativo`, `aparece_no_dre`). Hook `useTiposCustos` já cobre CRUD.
+### 2. Nova página `AprovacoesRepresentantes`
+Arquivo novo: `src/pages/direcao/aprovacoes/AprovacoesRepresentantes.tsx`
+- Mesma estética glassmorphism dos outros hubs (bg-black, partículas, AnimatedBreadcrumb, botão voltar).
+- Lista cards com: foto, nome, email, CPF, data de cadastro, status (Ativo/Inativo).
+- Toggle/Switch para alternar `ativo` via `UPDATE admin_users SET ativo = !ativo WHERE id = ...` com invalidação de query.
+- Filtros simples: busca por nome/email e filtro Todos / Ativos / Inativos.
+- Estado vazio amigável quando não há representantes cadastrados (atualmente 0 no banco).
 
-## UI em `DespesasResumoTopo.tsx`
+### 3. Rota
+Arquivo: `src/App.tsx`
+- Registrar `<Route path="/direcao/aprovacoes/representantes" element={<ProtectedRoute routeKey="direcao_aprovacoes"><AprovacoesRepresentantes /></ProtectedRoute>} />` logo após a rota de autorizados.
 
-Apenas quando `mes === null` (modo configuração), o bloco "Despesas Fixas" e "Despesas Variáveis" ganha:
+## Sem migrations
+A coluna `ativo` e o valor `tipo_usuario = 'representante'` já existem. Nada novo no banco.
 
-- **Edição inline do valor mensal**: cada linha existente troca o número estático por input numérico (`bg-white/5`, glassmorphism) que salva em `valor_maximo_mensal` no blur.
-- **Edição inline do nome**: clique no nome abre input de texto que salva no blur.
-- **Botão excluir** (ícone `Trash2`, aparece no hover da linha) — confirma via `AlertDialog` e chama `deleteTipoCusto`.
-- **Linha de "Adicionar despesa"** no fim de cada bloco: input nome + input valor + botão `+`. Cria com `tipo='fixa'` ou `'variavel'` conforme o bloco e `aparece_no_dre=true`, `ativo=true`.
-
-Quando `mes` está selecionado (visão histórica de `gastos`), mantém somente leitura — sem botões de edição/exclusão, sem criação. O CRUD afeta o catálogo, não o histórico.
-
-A "Folha Salarial" não muda.
-
-## Detalhes técnicos
-
-- Reutiliza `useTiposCustos` (`saveTipoCusto`, `updateTipoCusto`, `deleteTipoCusto`).
-- Após qualquer mutação, dispara `refetch` local do bloco recarregando `tipos_custos` (mesma query do `useEffect` atual em modo config).
-- Componente `NumInput` já existe no arquivo; criar `TextInput` similar para o nome.
-- Confirmação de exclusão via `AlertDialog` do shadcn já disponível no projeto.
-- Toda a área editável só renderiza com `!mes` para preservar histórico.
+## Observação
+Hoje não há nenhum registro com `tipo_usuario = 'representante'` no banco — a criação desses usuários acontece em outro fluxo (AddUserDialog). Esta tela apenas gerencia ativação dos que existirem.

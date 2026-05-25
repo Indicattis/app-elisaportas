@@ -264,6 +264,7 @@ import DirecaoAprovacoesHub from "./pages/direcao/aprovacoes/DirecaoAprovacoesHu
 import AprovacoesProducao from "./pages/direcao/aprovacoes/AprovacoesProducao";
 import AprovacoesPedidos from "./pages/direcao/aprovacoes/AprovacoesPedidos";
 import AprovacoesAutorizados from "./pages/direcao/aprovacoes/AprovacoesAutorizados";
+import AprovacoesRepresentantes from "./pages/direcao/aprovacoes/AprovacoesRepresentantes";
 import AprovacoesCompras from "./pages/direcao/aprovacoes/AprovacoesCompras";
 import DirecaoFinanceiroHub from "./pages/direcao/financeiro/DirecaoFinanceiroHub";
 
@@ -552,6 +553,7 @@ const App = () => (
                 <Route path="/direcao/aprovacoes/pedidos" element={<ProtectedRoute routeKey="direcao_aprovacoes_pedidos"><AprovacoesPedidos /></ProtectedRoute>} />
                 <Route path="/direcao/aprovacoes/fabrica" element={<ProtectedRoute routeKey="direcao_aprovacoes"><AprovacoesProducao /></ProtectedRoute>} />
                 <Route path="/direcao/aprovacoes/autorizados" element={<ProtectedRoute routeKey="direcao_aprovacoes"><AprovacoesAutorizados /></ProtectedRoute>} />
+                <Route path="/direcao/aprovacoes/representantes" element={<ProtectedRoute routeKey="direcao_aprovacoes"><AprovacoesRepresentantes /></ProtectedRoute>} />
                 <Route path="/direcao/aprovacoes/compras" element={<ProtectedRoute routeKey="direcao_aprovacoes"><AprovacoesCompras /></ProtectedRoute>} />
 
                 {/* Checklist Liderança */}
