@@ -22,8 +22,6 @@ export default function EstrategiaKitMontagem() {
   const { kitId } = useParams<{ kitId: string }>();
   const navigate = useNavigate();
   const [pickerOpen, setPickerOpen] = useState(false);
-  const queryClient = useQueryClient();
-  const { editarItem } = useTabelaPrecos();
 
   const { data: kit, isLoading: isLoadingKit } = useQuery({
     queryKey: ["tabela-precos-kit", kitId],
