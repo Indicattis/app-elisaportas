@@ -649,6 +649,20 @@ export default function AdminUsersMinimalista() {
             setTogglingUser(user);
           }
         }}
+        onToggleVisivelOrganograma={async (userId, novoStatus) => {
+          const { error } = await supabase
+            .from("admin_users")
+            .update({ visivel_organograma: novoStatus })
+            .eq("id", userId);
+          if (error) {
+            toast({ title: "Erro", description: error.message, variant: "destructive" });
+            return;
+          }
+          setUsers(prev => prev.map(u => u.id === userId ? { ...u, visivel_organograma: novoStatus } : u));
+          setRepresentantes(prev => prev.map(u => u.id === userId ? { ...u, visivel_organograma: novoStatus } : u));
+          setSelectedUser(prev => prev && prev.id === userId ? { ...prev, visivel_organograma: novoStatus } : prev);
+          toast({ title: novoStatus ? "Visível no organograma" : "Removido do organograma" });
+        }}
       />
 
       {resetPasswordUser && (
