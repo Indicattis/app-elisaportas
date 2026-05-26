@@ -114,6 +114,14 @@ export default {
 				'pulse-glow': {
 					'0%, 100%': { boxShadow: '0 0 20px rgba(59, 130, 246, 0.3)' },
 					'50%': { boxShadow: '0 0 40px rgba(59, 130, 246, 0.6)' }
+				},
+				'slide-in-right': {
+					'0%': { opacity: '0', transform: 'translateX(24px)' },
+					'100%': { opacity: '1', transform: 'translateX(0)' }
+				},
+				'slide-in-left': {
+					'0%': { opacity: '0', transform: 'translateX(-24px)' },
+					'100%': { opacity: '1', transform: 'translateX(0)' }
 				}
 			},
 			animation: {
