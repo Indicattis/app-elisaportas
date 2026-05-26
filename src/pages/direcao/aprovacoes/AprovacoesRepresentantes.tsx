@@ -1,12 +1,22 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, UserCheck, Search, User as UserIcon } from 'lucide-react';
+import { ArrowLeft, UserCheck, Search, User as UserIcon, Check, X } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { DelayedParticles } from '@/components/DelayedParticles';
-import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 type Representante = {
   id: string;
@@ -18,15 +28,12 @@ type Representante = {
   created_at: string;
 };
 
-type FilterStatus = 'todos' | 'ativos' | 'inativos';
-
 export default function AprovacoesRepresentantes() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [mounted, setMounted] = useState(false);
   const [search, setSearch] = useState('');
-  const [filter, setFilter] = useState<FilterStatus>('todos');
 
   useEffect(() => {
     const t = setTimeout(() => setMounted(true), 50);
@@ -34,31 +41,49 @@ export default function AprovacoesRepresentantes() {
   }, []);
 
   const { data: representantes = [], isLoading } = useQuery({
-    queryKey: ['representantes-list'],
+    queryKey: ['representantes-aprovacoes'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('representantes')
         .select('id, nome, email, telefone, ativo, foto_perfil_url, created_at')
+        .eq('ativo', false)
+        .eq('reprovado', false)
         .order('created_at', { ascending: false });
       if (error) throw error;
       return (data || []) as Representante[];
     },
   });
 
-  const toggleAtivo = useMutation({
-    mutationFn: async ({ id, ativo }: { id: string; ativo: boolean }) => {
+  const aprovar = useMutation({
+    mutationFn: async (id: string) => {
       const { error } = await supabase
         .from('representantes')
-        .update({ ativo })
+        .update({ ativo: true })
         .eq('id', id);
       if (error) throw error;
     },
-    onSuccess: (_, vars) => {
-      queryClient.invalidateQueries({ queryKey: ['representantes-list'] });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['representantes-aprovacoes'] });
       queryClient.invalidateQueries({ queryKey: ['aprovacoes-representantes-count'] });
-      toast({
-        title: vars.ativo ? 'Representante ativado' : 'Representante desativado',
-      });
+      toast({ title: 'Representante aprovado' });
+    },
+    onError: (e: any) => {
+      toast({ variant: 'destructive', title: 'Erro', description: e.message });
+    },
+  });
+
+  const reprovar = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('representantes')
+        .update({ reprovado: true } as any)
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['representantes-aprovacoes'] });
+      queryClient.invalidateQueries({ queryKey: ['aprovacoes-representantes-count'] });
+      toast({ title: 'Representante reprovado' });
     },
     onError: (e: any) => {
       toast({ variant: 'destructive', title: 'Erro', description: e.message });
@@ -68,8 +93,6 @@ export default function AprovacoesRepresentantes() {
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
     return representantes.filter((r) => {
-      if (filter === 'ativos' && !r.ativo) return false;
-      if (filter === 'inativos' && r.ativo) return false;
       if (!term) return true;
       return (
         r.nome?.toLowerCase().includes(term) ||
@@ -77,7 +100,7 @@ export default function AprovacoesRepresentantes() {
         r.telefone?.toLowerCase().includes(term)
       );
     });
-  }, [representantes, search, filter]);
+  }, [representantes, search]);
 
   return (
     <div className="min-h-screen bg-black overflow-hidden relative">
@@ -120,7 +143,7 @@ export default function AprovacoesRepresentantes() {
           </div>
           <h1 className="text-xl font-semibold text-white">Aprovações Representantes</h1>
           <p className="text-sm text-white/50 mt-1">
-            Ative ou desative usuários representantes
+            Aprove ou reprove o acesso de novos representantes
           </p>
         </div>
 
@@ -134,21 +157,6 @@ export default function AprovacoesRepresentantes() {
               className="w-full h-10 pl-9 pr-3 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-white/30"
             />
           </div>
-          <div className="flex gap-1 p-1 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
-            {(['todos', 'ativos', 'inativos'] as FilterStatus[]).map((f) => (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={`px-3 h-8 rounded-lg text-xs font-medium capitalize transition-all ${
-                  filter === f
-                    ? 'bg-orange-500 text-white'
-                    : 'text-white/60 hover:text-white'
-                }`}
-              >
-                {f}
-              </button>
-            ))}
-          </div>
         </div>
 
         <div className="w-full flex flex-col gap-2">
@@ -160,9 +168,7 @@ export default function AprovacoesRepresentantes() {
             <div className="text-center py-16 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
               <UserIcon className="w-12 h-12 text-white/20 mx-auto mb-3" strokeWidth={1.5} />
               <p className="text-white/60 text-sm">
-                {representantes.length === 0
-                  ? 'Nenhum representante cadastrado ainda.'
-                  : 'Nenhum representante encontrado com esses filtros.'}
+                Nenhum representante pendente de aprovação.
               </p>
             </div>
           )}
@@ -193,21 +199,43 @@ export default function AprovacoesRepresentantes() {
                 )}
               </div>
 
-              <div className="flex flex-col items-end gap-1">
-                <span
-                  className={`text-[10px] font-semibold uppercase tracking-wide ${
-                    r.ativo ? 'text-emerald-400' : 'text-white/40'
-                  }`}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => aprovar.mutate(r.id)}
+                  disabled={aprovar.isPending || reprovar.isPending}
+                  className="flex items-center gap-1.5 px-3 h-9 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 text-xs font-medium transition-all disabled:opacity-50"
                 >
-                  {r.ativo ? 'Ativo' : 'Inativo'}
-                </span>
-                <Switch
-                  checked={r.ativo}
-                  disabled={toggleAtivo.isPending}
-                  onCheckedChange={(checked) =>
-                    toggleAtivo.mutate({ id: r.id, ativo: checked })
-                  }
-                />
+                  <Check className="w-4 h-4" />
+                  Aprovar
+                </button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <button
+                      disabled={aprovar.isPending || reprovar.isPending}
+                      className="flex items-center gap-1.5 px-3 h-9 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 text-red-300 text-xs font-medium transition-all disabled:opacity-50"
+                    >
+                      <X className="w-4 h-4" />
+                      Reprovar
+                    </button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Reprovar acesso?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        {r.nome} ficará inativo e não aparecerá mais nesta tela. Esta ação é definitiva.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => reprovar.mutate(r.id)}
+                        className="bg-red-500 hover:bg-red-600"
+                      >
+                        Reprovar
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             </div>
           ))}
