@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Phone, MapPin, Mail } from 'lucide-react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { ArrowLeft, Phone, MapPin, Mail, Power } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { supabase } from '@/integrations/supabase/client';
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
@@ -45,7 +46,33 @@ function Row({ children }: { children: React.ReactNode }) {
   );
 }
 
+function ToggleAtivoButton({
+  ativo,
+  onToggle,
+  loading,
+}: {
+  ativo: boolean;
+  onToggle: () => void;
+  loading?: boolean;
+}) {
+  return (
+    <button
+      onClick={onToggle}
+      disabled={loading}
+      title={ativo ? 'Desativar' : 'Ativar'}
+      className={`w-8 h-8 rounded-full border flex items-center justify-center transition-all disabled:opacity-50 ${
+        ativo
+          ? 'bg-emerald-500/15 border-emerald-400/20 text-emerald-300 hover:bg-emerald-500/25'
+          : 'bg-white/5 border-white/10 text-white/40 hover:bg-white/10 hover:text-white/70'
+      }`}
+    >
+      <Power className="w-3.5 h-3.5" strokeWidth={1.8} />
+    </button>
+  );
+}
+
 function AutorizadosList({ tipo }: { tipo: 'autorizado' | 'franqueado' }) {
+  const queryClient = useQueryClient();
   const { data, isLoading } = useQuery({
     queryKey: ['parceiros-autorizados', tipo],
     queryFn: async () => {
@@ -57,6 +84,18 @@ function AutorizadosList({ tipo }: { tipo: 'autorizado' | 'franqueado' }) {
       if (error) throw error;
       return data ?? [];
     },
+  });
+
+  const toggleMutation = useMutation({
+    mutationFn: async ({ id, ativo }: { id: string; ativo: boolean }) => {
+      const { error } = await supabase.from('autorizados').update({ ativo }).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: (_d, vars) => {
+      toast.success(vars.ativo ? 'Parceiro ativado' : 'Parceiro desativado');
+      queryClient.invalidateQueries({ queryKey: ['parceiros-autorizados', tipo] });
+    },
+    onError: (e: any) => toast.error(e.message || 'Erro ao atualizar'),
   });
 
   if (isLoading) return <div className="text-center text-white/50 py-10">Carregando...</div>;
@@ -82,6 +121,11 @@ function AutorizadosList({ tipo }: { tipo: 'autorizado' | 'franqueado' }) {
               {p.email && (<><Mail className="w-3 h-3 shrink-0" /><span className="truncate">{p.email}</span></>)}
             </div>
             <StatusBadge ativo={!!p.ativo} />
+            <ToggleAtivoButton
+              ativo={!!p.ativo}
+              loading={toggleMutation.isPending}
+              onToggle={() => toggleMutation.mutate({ id: p.id, ativo: !p.ativo })}
+            />
           </div>
         </Row>
       ))}
@@ -90,6 +134,7 @@ function AutorizadosList({ tipo }: { tipo: 'autorizado' | 'franqueado' }) {
 }
 
 function RepresentantesList() {
+  const queryClient = useQueryClient();
   const { data, isLoading } = useQuery({
     queryKey: ['parceiros-representantes'],
     queryFn: async () => {
@@ -100,6 +145,18 @@ function RepresentantesList() {
       if (error) throw error;
       return data ?? [];
     },
+  });
+
+  const toggleMutation = useMutation({
+    mutationFn: async ({ id, ativo }: { id: string; ativo: boolean }) => {
+      const { error } = await supabase.from('representantes').update({ ativo }).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: (_d, vars) => {
+      toast.success(vars.ativo ? 'Representante ativado' : 'Representante desativado');
+      queryClient.invalidateQueries({ queryKey: ['parceiros-representantes'] });
+    },
+    onError: (e: any) => toast.error(e.message || 'Erro ao atualizar'),
   });
 
   if (isLoading) return <div className="text-center text-white/50 py-10">Carregando...</div>;
@@ -124,6 +181,11 @@ function RepresentantesList() {
               {r.telefone && (<><Phone className="w-3 h-3 shrink-0" /><span className="truncate">{r.telefone}</span></>)}
             </div>
             <StatusBadge ativo={!!r.ativo} reprovado={!!r.reprovado} />
+            <ToggleAtivoButton
+              ativo={!!r.ativo}
+              loading={toggleMutation.isPending}
+              onToggle={() => toggleMutation.mutate({ id: r.id, ativo: !r.ativo })}
+            />
           </div>
         </Row>
       ))}
