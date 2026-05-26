@@ -8,6 +8,8 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useDespesasPadrao } from '@/hooks/useDespesasPadrao';
+import type { DespesaPadrao } from '@/hooks/useDespesasPadrao';
 
 type FolhaRow = {
   id: string;
@@ -71,6 +73,8 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
   const [colabs, setColabs] = useState<Colab[]>([]);
   const [tipos, setTipos] = useState<TipoCusto[]>([]);
   const [confirmDel, setConfirmDel] = useState<null | { kind: 'folha' | 'lanc'; id: string }>(null);
+
+  const { items: padroes } = useDespesasPadrao();
 
   const mesStart = mes ? `${mes}-01` : null;
 
@@ -219,6 +223,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         rows={folha}
         loading={loading}
         colabs={colabs}
+        padroesFolha={padroes.filter(p => p.tipo === 'folha')}
         onDelete={(id) => setConfirmDel({ kind: 'folha', id })}
         onPatch={handlePatchFolha}
         onInsert={handleInsertFolha}
@@ -230,6 +235,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         loading={loading}
         categoria="fixa"
         tipos={tipos.filter(t => t.tipo === 'fixa')}
+        padroes={padroes.filter(p => p.tipo === 'fixa')}
         mesStart={mesStart || ''}
         onDelete={(id) => setConfirmDel({ kind: 'lanc', id })}
         onInsert={handleInsertLanc}
@@ -241,6 +247,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         loading={loading}
         categoria="variavel"
         tipos={tipos.filter(t => t.tipo === 'variavel')}
+        padroes={padroes.filter(p => p.tipo === 'variavel')}
         mesStart={mesStart || ''}
         onDelete={(id) => setConfirmDel({ kind: 'lanc', id })}
         onInsert={handleInsertLanc}
@@ -324,11 +331,12 @@ function EditableCell({
 /* ---------------- Folha block ---------------- */
 
 function BlocoFolha({
-  rows, loading, colabs, onDelete, onPatch, onInsert,
+  rows, loading, colabs, padroesFolha, onDelete, onPatch, onInsert,
 }: {
   rows: FolhaRow[];
   loading: boolean;
   colabs: Colab[];
+  padroesFolha: DespesaPadrao[];
   onDelete: (id: string) => void;
   onPatch: (
     id: string,
@@ -342,7 +350,22 @@ function BlocoFolha({
 }) {
   const total = rows.reduce((s, r) => s + Number(r.total || 0), 0);
 
-  const sortedColabs = [...colabs].sort((a, b) => {
+  // Adiciona padrões de folha que ainda não correspondem a nenhum colaborador cadastrado
+  const colabNomes = new Set(colabs.map(c => c.nome.trim().toLowerCase()));
+  const sugestoes: Colab[] = padroesFolha
+    .filter(p => !colabNomes.has(p.nome.trim().toLowerCase()))
+    .map(p => ({
+      id: p.id,
+      nome: p.nome,
+      salario: p.salario,
+      aux_combustivel: p.aux_combustivel,
+      insalubridade_pct: p.insalubridade_pct,
+      fgts_pct: p.fgts_pct,
+      previsao_13_valor: p.previsao_13_valor,
+      em_folha: true,
+    }));
+
+  const sortedColabs = [...colabs, ...sugestoes].sort((a, b) => {
     if (a.em_folha !== b.em_folha) return a.em_folha ? -1 : 1;
     return a.nome.localeCompare(b.nome);
   });
@@ -492,7 +515,7 @@ function BlocoFolha({
 /* ---------------- Despesa block ---------------- */
 
 function BlocoDespesa({
-  titulo, icon, rows, loading, categoria, tipos, mesStart, onDelete, onInsert,
+  titulo, icon, rows, loading, categoria, tipos, padroes, mesStart, onDelete, onInsert,
 }: {
   titulo: string;
   icon: React.ReactNode;
@@ -500,6 +523,7 @@ function BlocoDespesa({
   loading: boolean;
   categoria: 'fixa' | 'variavel';
   tipos: TipoCusto[];
+  padroes: DespesaPadrao[];
   mesStart: string;
   onDelete: (id: string) => void;
   onInsert: (payload: {
@@ -527,6 +551,16 @@ function BlocoDespesa({
       await onInsert({ tipo: selectedTipo, categoria, valor, data, descricao });
       clear();
     } finally { setSaving(false); }
+  };
+
+  // Sugestões: padrões cujo nome ainda não existe em algum lançamento do mês
+  const nomesExistentes = new Set(rows.map(r => (r.tipo_nome || '').trim().toLowerCase()));
+  const sugestoes = padroes.filter(p => !nomesExistentes.has(p.nome.trim().toLowerCase()));
+
+  const aplicarSugestao = async (sug: DespesaPadrao, novoValor: number) => {
+    if (novoValor <= 0) return;
+    const tipoSugestao: TipoCusto = { id: sug.id, nome: sug.nome, tipo: categoria };
+    await onInsert({ tipo: tipoSugestao, categoria, valor: novoValor, data: mesStart, descricao: '' });
   };
 
   return (
@@ -568,6 +602,22 @@ function BlocoDespesa({
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </td>
+              </tr>
+            ))}
+
+            {/* ------ Sugestões padrão ------ */}
+            {!loading && sugestoes.map(sug => (
+              <tr key={`sug-${sug.id}`} className="border-b border-white/5 hover:bg-white/[0.03]">
+                <td className="py-2 pl-1 text-white/40 italic">
+                  {sug.nome}
+                  <span className="ml-2 text-[9px] uppercase tracking-wider bg-white/5 border border-white/10 text-white/40 px-1.5 py-0.5 rounded">Padrão</span>
+                </td>
+                <td className="px-2 text-white/30">—</td>
+                <td className="px-2 text-white/30">{mesStart.split('-').reverse().join('/')}</td>
+                <td className="px-2 text-right">
+                  <EditableCell value={sug.valor} format="currency" onSave={(v) => aplicarSugestao(sug, v)} />
+                </td>
+                <td className="pr-1" />
               </tr>
             ))}
 

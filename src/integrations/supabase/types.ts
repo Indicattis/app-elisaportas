@@ -2261,6 +2261,54 @@ export type Database = {
         }
         Relationships: []
       }
+      despesas_padrao: {
+        Row: {
+          aux_combustivel: number
+          created_at: string
+          created_by: string | null
+          fgts_pct: number
+          id: string
+          insalubridade_pct: number
+          nome: string
+          ordem: number
+          previsao_13_valor: number
+          salario: number
+          tipo: string
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          aux_combustivel?: number
+          created_at?: string
+          created_by?: string | null
+          fgts_pct?: number
+          id?: string
+          insalubridade_pct?: number
+          nome: string
+          ordem?: number
+          previsao_13_valor?: number
+          salario?: number
+          tipo: string
+          updated_at?: string
+          valor?: number
+        }
+        Update: {
+          aux_combustivel?: number
+          created_at?: string
+          created_by?: string | null
+          fgts_pct?: number
+          id?: string
+          insalubridade_pct?: number
+          nome?: string
+          ordem?: number
+          previsao_13_valor?: number
+          salario?: number
+          tipo?: string
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: []
+      }
       despesas_valor_pago_mensal: {
         Row: {
           created_at: string
