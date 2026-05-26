@@ -83,7 +83,10 @@ export default function AprovacoesRepresentantes() {
         .eq('id', id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, id) => {
+      queryClient.setQueryData<Representante[]>(['representantes-aprovacoes'], (old) =>
+        old ? old.filter((r) => r.id !== id) : old
+      );
       queryClient.invalidateQueries({ queryKey: ['representantes-aprovacoes'] });
       queryClient.invalidateQueries({ queryKey: ['aprovacoes-representantes-count'] });
       toast({ title: 'Representante reprovado' });
