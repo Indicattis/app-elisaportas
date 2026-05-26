@@ -592,7 +592,7 @@ export default function VendasDirecao() {
     return (
       <MinimalistLayout 
         title="Vendas" 
-        backPath="/direcao"
+        backPath="/direcao/vendas"
         breadcrumbItems={[
           { label: "Home", path: "/home" },
           { label: "Direção", path: "/direcao" },
@@ -610,7 +610,7 @@ export default function VendasDirecao() {
     <MinimalistLayout 
       title="Vendas" 
       subtitle="Todas as vendas do período"
-      backPath="/direcao"
+      backPath="/direcao/vendas"
       breadcrumbItems={[
         { label: "Home", path: "/home" },
         { label: "Direção", path: "/direcao" },
