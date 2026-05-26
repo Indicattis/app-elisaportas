@@ -332,25 +332,47 @@ function BlocoFolha({
 }) {
   const total = rows.reduce((s, r) => s + Number(r.total || 0), 0);
 
-  // Adiciona padrões de folha que ainda não correspondem a nenhum colaborador cadastrado
-  const colabNomes = new Set(colabs.map(c => c.nome.trim().toLowerCase()));
-  const sugestoes: Colab[] = padroesFolha
-    .filter(p => !colabNomes.has(p.nome.trim().toLowerCase()))
-    .map(p => ({
-      id: p.id,
-      nome: p.nome,
-      salario: p.salario,
-      aux_combustivel: p.aux_combustivel,
-      insalubridade_pct: p.insalubridade_pct,
-      fgts_pct: p.fgts_pct,
-      previsao_13_valor: p.previsao_13_valor,
-      em_folha: true,
-    }));
+  // Lista unificada por nome: lançamentos salvos + colaboradores cadastrados + padrões.
+  const norm = (s: string) => s.trim().toLowerCase();
+  const colabsByNome = new Map(colabs.map(c => [norm(c.nome), c]));
+  const padroesByNome = new Map(padroesFolha.map(p => [norm(p.nome), p]));
+  const rowsByNome = new Map(rows.map(r => [norm(r.colaborador_nome), r]));
 
-  const sortedColabs = [...colabs, ...sugestoes].sort((a, b) => {
-    if (a.em_folha !== b.em_folha) return a.em_folha ? -1 : 1;
-    return a.nome.localeCompare(b.nome);
-  });
+  const nomes = new Set<string>([
+    ...colabs.map(c => norm(c.nome)),
+    ...padroesFolha.map(p => norm(p.nome)),
+    ...rows.map(r => norm(r.colaborador_nome)),
+  ]);
+
+  const sortedColabs: Colab[] = Array.from(nomes).map((key) => {
+    const c = colabsByNome.get(key);
+    if (c) return c;
+    const p = padroesByNome.get(key);
+    if (p) {
+      return {
+        id: p.id,
+        nome: p.nome,
+        salario: p.salario,
+        aux_combustivel: p.aux_combustivel,
+        insalubridade_pct: p.insalubridade_pct,
+        fgts_pct: p.fgts_pct,
+        previsao_13_valor: p.previsao_13_valor,
+        em_folha: true,
+      };
+    }
+    // Só existe como lançamento salvo (sem padrão nem cadastro)
+    const r = rowsByNome.get(key)!;
+    return {
+      id: r.id,
+      nome: r.colaborador_nome,
+      salario: 0,
+      aux_combustivel: 0,
+      insalubridade_pct: 0,
+      fgts_pct: 8,
+      previsao_13_valor: 0,
+      em_folha: true,
+    };
+  }).sort((a, b) => a.nome.localeCompare(b.nome));
 
   const insertField = async (
     colab: Colab,
@@ -401,7 +423,7 @@ function BlocoFolha({
             ) : sortedColabs.length === 0 ? (
               <tr><td colSpan={13} className="text-white/40 px-2 py-3 text-center">Nenhum padrão cadastrado. Configure em "Configurações padrão".</td></tr>
             ) : sortedColabs.map(colab => {
-              const r = rows.find(row => row.admin_user_id === colab.id);
+              const r = rowsByNome.get(norm(colab.nome));
               const salario = r ? Number(r.salario) : colab.salario;
               const aux_combustivel = r ? Number(r.aux_combustivel) : colab.aux_combustivel;
               const insalubridade_pct = r ? Number(r.insalubridade_pct) : colab.insalubridade_pct;
