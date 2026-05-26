@@ -530,14 +530,24 @@ function BlocoFolha({
                         <Trash2 className="w-4 h-4" />
                       </button>
                     ) : padroesByNome.get(norm(colab.nome)) ? (
-                      <button
-                        onClick={() => onDeletePadrao(colab.id)}
-                        className="p-1 rounded hover:bg-red-500/20 text-red-300/50 hover:text-red-300"
-                        aria-label="Remover sugestão"
-                        title="Remover sugestão padrão"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          onClick={() => onInsert({ colab, salario, aux_combustivel, insalubridade_pct, fgts_pct, previsao_13_valor })}
+                          className="p-1 rounded bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30"
+                          aria-label="Confirmar sugestão"
+                          title="Confirmar sugestão"
+                        >
+                          <Check className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => onDeletePadrao(colab.id)}
+                          className="p-1 rounded hover:bg-red-500/20 text-red-300/50 hover:text-red-300"
+                          aria-label="Remover sugestão"
+                          title="Remover sugestão padrão"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     ) : null}
                   </td>
                 </tr>
