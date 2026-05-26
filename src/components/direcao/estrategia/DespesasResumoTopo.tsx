@@ -505,6 +505,7 @@ function BlocoFolha({
                 </Select>
               </td>
               <td className="py-2 px-1"></td>
+              <td className="py-2 px-1"></td>
               <td className="px-2">
                 <NumInput value={form.salario} onChange={(v) => setForm({ ...form, salario: v })} />
               </td>
