@@ -1,26 +1,34 @@
-## Transformar /direcao/vendas em hub
+## Adicionar botão "Parceiros" no hub /direcao/vendas
 
-### Mudanças
+### 1. Novo botão no hub
+- Em `src/pages/direcao/VendasHubDirecao.tsx`, adicionar item **Parceiros** (ícone `Handshake`) apontando para `/direcao/vendas/parceiros`, usando o mesmo `routePrefix: 'direcao_vendas'`.
 
-**1. Novo arquivo `src/pages/direcao/VendasHubDirecao.tsx`**
-Hub no estilo do `DirecaoHub.tsx` (mesma estética glassmorphism, breadcrumb, partículas, animações), com 5 botões:
-- **Todas as Vendas** (ícone `ShoppingCart`) → `/direcao/vendas/todas`
-- **Tabela de Preços** (ícone `DollarSign`) → `/direcao/vendas/tabela-precos`
-- **Regras de Vendas** (ícone `BookOpen`) → `/direcao/vendas/regras-vendas`
-- **Clientes** (ícone `Users`) → `/direcao/vendas/clientes`
-- **CRM** (ícone `ExternalLink`) → abre `https://crm.elisaportas.com` em nova aba (`external: true`, variant `slate`)
+### 2. Nova página `src/pages/direcao/ParceirosDirecao.tsx`
+Inspirada no print anexado: fundo preto, breadcrumb + botão voltar no topo (estilo glassmorphism do projeto), título "Parceiros", e abaixo um **pill tab nav** centralizado (formato cápsula `rounded-full` em `bg-white/5` com `backdrop-blur`), onde a aba ativa é uma pílula azul (gradient blue 500→700) e as inativas são texto cinza.
 
-Breadcrumb: Home › Direção › Vendas.
+Três abas:
+- **Autorizados** — lista todos de `autorizados` (todos os `tipo_parceiro`, default ativos+inativos com filtro), ordenados por nome.
+- **Representantes** — lista todos de `representantes` (ativos e inativos).
+- **Franqueados** — lista de `autorizados` com `tipo_parceiro = 'franqueado'`. Mostra empty state amigável se vazio (atualmente sem registros).
 
-**2. `src/App.tsx`**
-- Importar `VendasHubDirecao`.
-- Trocar a rota `/direcao/vendas` para renderizar `VendasHubDirecao`.
-- Adicionar nova rota `/direcao/vendas/todas` renderizando `VendasDirecao` (conteúdo atual preservado).
-- Manter inalteradas as rotas `/direcao/vendas/regras-vendas`, `/direcao/vendas/clientes`, `/direcao/vendas/tabela-precos`, `/direcao/vendas/:id` e `/direcao/vendas/:id/editar`.
-  - Observação: como `/direcao/vendas/:id` segue existindo, "todas" funciona como segmento literal e não conflita.
+Cada aba renderiza um grid de cards (estilo glassmorphism: `bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-4`) com:
+- Avatar (logo_url / foto_perfil_url) ou inicial
+- Nome
+- Cidade/Estado (autorizados/franqueados) ou e-mail (representantes)
+- Telefone/WhatsApp
+- Badge de status (ativo/inativo; representantes inativos com `reprovado=true` aparecem como "Reprovado")
 
-**3. `src/pages/direcao/VendasDirecao.tsx` (página "Todas as Vendas")**
-- Remover do `headerActions` os botões Tabela de Preços, Regras de Vendas, Clientes e CRM (agora estão no hub). Manter o botão de exportação (PDF/Excel).
-- Ajustar navegação de "voltar" / breadcrumb para retornar ao novo hub `/direcao/vendas`.
+Loading state mostra "Carregando..." centralizado, igual ao print.
 
-Nenhuma lógica de negócio é alterada — apenas reorganização de navegação/UI.
+Esta página é apenas leitura/visualização — nenhuma edição, criação ou exclusão.
+
+### 3. Rota em `src/App.tsx`
+Adicionar:
+```
+<Route path="/direcao/vendas/parceiros"
+       element={<ProtectedRoute routeKey="direcao_vendas"><ParceirosDirecao /></ProtectedRoute>} />
+```
+
+### Detalhes técnicos
+- Fonte de dados: queries diretas via `supabase.from('autorizados')` e `supabase.from('representantes')` dentro do componente (`useQuery`). Sem novo hook compartilhado para manter o escopo enxuto.
+- Sem alterações de schema/RLS — as policies de leitura dessas tabelas já existem (usadas pelas páginas atuais de autorizados e aprovações).
