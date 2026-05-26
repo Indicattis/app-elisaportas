@@ -60,7 +60,11 @@ export default function RequisicoesRepresentantesDirecao() {
           '*, representantes(nome), orcamentos_app(numero, nome_cliente, cidade, estado, valor_total)'
         )
         .order('created_at', { ascending: false });
-      if (!error && data) setData(data as unknown as Requisicao[]);
+      if (error) {
+        console.error('[RequisicoesRepresentantesDirecao] erro ao buscar:', error);
+      } else if (data) {
+        setData(data as unknown as Requisicao[]);
+      }
       setLoading(false);
     })();
   }, []);
