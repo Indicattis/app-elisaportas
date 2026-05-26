@@ -235,7 +235,6 @@ import PedidoViewDirecao from "./pages/direcao/PedidoViewDirecao";
 import DREDirecao from "./pages/direcao/DREDirecao";
 import DREMesDirecao from "./pages/direcao/DREMesDirecao";
 import DREDespesasDirecao from "./pages/direcao/DREDespesasDirecao";
-import DRECustosDirecao from "./pages/direcao/DRECustosDirecao";
 import CaixaElisaDirecao from "./pages/direcao/CaixaElisaDirecao";
 import CaixaElisaCapitalGiro from "./pages/direcao/caixa-elisa/CapitalGiroPage";
 import CaixaElisaPlanejamento from "./pages/direcao/caixa-elisa/PlanejamentoPage";
@@ -531,7 +530,6 @@ const App = () => (
                 {/* DRE da Direção */}
                 <Route path="/direcao/estrategia/dre" element={<ProtectedRoute routeKey="direcao_dre"><DREDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/estrategia/dre/despesas" element={<ProtectedRoute routeKey="direcao_dre"><DREDespesasDirecao /></ProtectedRoute>} />
-                <Route path="/direcao/estrategia/dre/custos" element={<ProtectedRoute routeKey="direcao_dre"><DRECustosDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/estrategia/dre/:mes" element={<ProtectedRoute routeKey="direcao_dre"><DREMesDirecao /></ProtectedRoute>} />
 
                 {/* Caixa Elisa */}
