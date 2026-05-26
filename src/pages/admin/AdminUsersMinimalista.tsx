@@ -255,8 +255,17 @@ export default function AdminUsersMinimalista() {
             ? `Usuário "${user.nome}" tinha histórico vinculado e foi arquivado com acesso removido`
             : `Usuário "${user.nome}" excluído com sucesso`),
       });
-      fetchUsers();
+
+      // Atualização instantânea do estado local
+      if (user.tipo_usuario === "representante") {
+        setRepresentantes((prev) => prev.filter((u) => u.id !== user.id));
+      } else {
+        setUsers((prev) => prev.filter((u) => u.id !== user.id));
+      }
       if (selectedUser?.id === user.id) setSelectedUser(null);
+
+      // Re-sincroniza com o backend
+      await Promise.all([fetchUsers(), fetchRepresentantes()]);
     } catch (error: any) {
       console.error("Erro ao excluir usuário:", error);
       toast({
