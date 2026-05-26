@@ -767,6 +767,7 @@ function BlocoDespesa({
         <table className="w-full text-sm">
           <thead>
             <tr className="text-[10px] uppercase tracking-wider text-white/40 border-b border-white/10">
+              <th className="text-center font-normal pb-2 px-1 w-10">Status</th>
               <th className="text-left font-normal pb-2 pl-1 w-[28%]">Tipo</th>
               <th className="text-left font-normal pb-2 px-2">Descrição</th>
               <th className="text-left font-normal pb-2 px-2 w-[140px]">Data</th>
@@ -776,9 +777,10 @@ function BlocoDespesa({
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={5} className="text-white/40 px-2 py-3">Carregando...</td></tr>
+              <tr><td colSpan={6} className="text-white/40 px-2 py-3">Carregando...</td></tr>
             ) : rows.map(r => (
               <tr key={r.id} className="border-b border-white/5 hover:bg-white/[0.03]">
+                <td className="py-2 px-1 text-center"><StatusDot row={r} onToggle={onToggleConfirmado} /></td>
                 <td className="py-2 pl-1 text-white/90">{r.tipo_nome}</td>
                 <td className="px-2 text-white/60">{r.descricao || '—'}</td>
                 <td className="px-2 text-white/60">{r.data.split('-').reverse().join('/')}</td>
@@ -798,6 +800,7 @@ function BlocoDespesa({
             {/* ------ Sugestões padrão ------ */}
             {!loading && sugestoes.map(sug => (
               <tr key={`sug-${sug.id}`} className="border-b border-white/5 hover:bg-white/[0.03]">
+                <td className="py-2 px-1 text-center"><StatusDot row={undefined} onToggle={onToggleConfirmado} /></td>
                 <td className="py-2 pl-1 text-white/90">{sug.nome}</td>
                 <td className="px-2 text-white/60">—</td>
                 <td className="px-2 text-white/60">{mesStart.split('-').reverse().join('/')}</td>
