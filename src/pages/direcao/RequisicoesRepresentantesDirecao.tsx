@@ -140,7 +140,7 @@ export default function RequisicoesRepresentantesDirecao() {
                     <th className="px-4 py-3 text-left font-medium">Cliente</th>
                     <th className="px-4 py-3 text-right font-medium">Valor Total</th>
                     <th className="px-4 py-3 text-right font-medium">Frete</th>
-                    <th className="px-4 py-3 text-right font-medium">Comissão</th>
+                    <th className="px-4 py-3 text-right font-medium">Comissão (sem frete)</th>
                     <th className="px-4 py-3 text-center font-medium">Status</th>
                     <th className="px-4 py-3 text-left font-medium">Observações</th>
                   </tr>
@@ -172,7 +172,9 @@ export default function RequisicoesRepresentantesDirecao() {
                         <td className="px-4 py-3 text-right whitespace-nowrap text-white/60">{fmtMoney(r.valor_frete)}</td>
                         <td className="px-4 py-3 text-right whitespace-nowrap">
                           <div>{fmtMoney(r.comissao_valor)}</div>
-                          <div className="text-xs text-white/40">{(r.comissao_pct ?? 0).toFixed(2)}%</div>
+                          <div className="text-xs text-white/40">
+                            {(r.comissao_pct ?? 0).toFixed(2)}% sobre {fmtMoney((r.valor_total ?? 0) - (r.valor_frete ?? 0))}
+                          </div>
                         </td>
                         <td className="px-4 py-3 text-center whitespace-nowrap">
                           <span className={`inline-block px-2 py-1 rounded-md text-xs font-medium border ${badge}`}>
