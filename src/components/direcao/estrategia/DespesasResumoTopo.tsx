@@ -22,6 +22,7 @@ type FolhaRow = {
   fgts_pct: number;
   previsao_13_valor: number;
   total: number;
+  confirmado_por?: 'alana' | 'luan';
 };
 
 type LancRow = {
@@ -33,6 +34,7 @@ type LancRow = {
   valor: number;
   data: string;
   descricao: string | null;
+  confirmado_por?: 'alana' | 'luan';
 };
 
 type Colab = {
