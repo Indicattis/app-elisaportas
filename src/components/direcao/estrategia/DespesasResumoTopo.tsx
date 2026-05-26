@@ -316,7 +316,7 @@ function EditableCell({
 /* ---------------- Folha block ---------------- */
 
 function BlocoFolha({
-  rows, loading, colabs, padroesFolha, onDelete, onPatch, onInsert,
+  rows, loading, colabs, padroesFolha, onDelete, onPatch, onInsert, onDeletePadrao,
 }: {
   rows: FolhaRow[];
   loading: boolean;
@@ -332,6 +332,7 @@ function BlocoFolha({
     colab: Colab;
     salario: number; aux_combustivel: number; insalubridade_pct: number; fgts_pct: number; previsao_13_valor: number;
   }) => Promise<void>;
+  onDeletePadrao: (id: string) => Promise<void> | void;
 }) {
   const total = rows.reduce((s, r) => s + Number(r.total || 0), 0);
 
