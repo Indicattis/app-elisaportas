@@ -7349,6 +7349,7 @@ export type Database = {
           foto_perfil_url: string | null
           id: string
           nome: string
+          reprovado: boolean
           telefone: string | null
           updated_at: string
           user_id: string
@@ -7360,6 +7361,7 @@ export type Database = {
           foto_perfil_url?: string | null
           id?: string
           nome: string
+          reprovado?: boolean
           telefone?: string | null
           updated_at?: string
           user_id: string
@@ -7371,6 +7373,7 @@ export type Database = {
           foto_perfil_url?: string | null
           id?: string
           nome?: string
+          reprovado?: boolean
           telefone?: string | null
           updated_at?: string
           user_id?: string
