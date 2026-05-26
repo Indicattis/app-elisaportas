@@ -410,9 +410,9 @@ function BlocoFolha({
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={12} className="text-white/40 px-2 py-3">Carregando...</td></tr>
+              <tr><td colSpan={13} className="text-white/40 px-2 py-3">Carregando...</td></tr>
             ) : colabs.length === 0 ? (
-              <tr><td colSpan={12} className="text-white/40 px-2 py-3 text-center">Nenhum colaborador cadastrado.</td></tr>
+              <tr><td colSpan={13} className="text-white/40 px-2 py-3 text-center">Nenhum colaborador cadastrado.</td></tr>
             ) : colabs.map(colab => {
               const r = rows.find(row => row.admin_user_id === colab.id);
               const salario = r ? Number(r.salario) : colab.salario;
