@@ -833,6 +833,7 @@ function BlocoDespesa({
 
             {/* ------ Add row ------ */}
             <tr className="border-b border-white/5 hover:bg-white/[0.03]">
+              <td></td>
               <td className="py-2 pl-1">
                 {isCustom ? (
                   <div className="flex items-center gap-1">
