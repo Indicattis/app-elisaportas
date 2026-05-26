@@ -191,14 +191,6 @@ export default function DREDirecao() {
               <p className="text-sm text-white/50 mb-1">Configuração</p>
               <p className="text-lg font-semibold text-white">Despesas</p>
             </button>
-            <button
-              onClick={() => navigate('/direcao/estrategia/dre/custos')}
-              className="flex-1 p-4 rounded-xl bg-white/5 border border-white/10 text-left
-                         hover:bg-white/10 transition-all duration-200"
-            >
-              <p className="text-sm text-white/50 mb-1">Configuração</p>
-              <p className="text-lg font-semibold text-white">Custos</p>
-            </button>
           </div>
         </>
       )}
