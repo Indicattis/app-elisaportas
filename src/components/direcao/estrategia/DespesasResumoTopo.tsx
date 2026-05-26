@@ -592,6 +592,51 @@ function BlocoFolha({
                 </tr>
               );
             })}
+
+            {/* ------ Add colaborador avulso ------ */}
+            <tr className="border-b border-white/5 hover:bg-white/[0.03] bg-white/[0.02]">
+              <td className="py-2 pl-1">
+                <input
+                  type="text"
+                  value={addNome}
+                  onChange={(e) => setAddNome(e.target.value)}
+                  placeholder="Novo colaborador..."
+                  className="w-full h-8 bg-white/5 border border-white/10 rounded px-2 text-white text-xs outline-none focus:border-blue-400/50"
+                />
+              </td>
+              <td></td>
+              <td></td>
+              <td className="px-2"><NumInput value={addSalario} onChange={setAddSalario} /></td>
+              <td className="px-2"><NumInput value={addAux} onChange={setAddAux} /></td>
+              <td className="px-2"><NumInput value={addInsalub} onChange={setAddInsalub} /></td>
+              <td></td>
+              <td className="px-2"><NumInput value={addFgts} onChange={setAddFgts} /></td>
+              <td></td>
+              <td className="px-2"><NumInput value={addPrev13} onChange={setAddPrev13} /></td>
+              <td></td>
+              <td></td>
+              <td className="pr-1">
+                <div className="flex items-center justify-end gap-1">
+                  <button
+                    onClick={addSave}
+                    disabled={!addNome.trim() || addSalario <= 0 || addSaving}
+                    className="p-1 rounded bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 disabled:opacity-30 disabled:cursor-not-allowed"
+                    aria-label="Adicionar"
+                    title="Adicionar"
+                  >
+                    <Check className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={addClear}
+                    className="p-1 rounded hover:bg-white/10 text-white/50"
+                    aria-label="Limpar"
+                    title="Limpar"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
