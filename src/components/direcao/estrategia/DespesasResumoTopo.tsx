@@ -76,12 +76,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
   useEffect(() => {
     (async () => {
       const [{ data: u }, { data: t }] = await Promise.all([
-        supabase
-          .from('admin_users')
-          .select('id, nome, custo_colaborador, aux_combustivel, insalubridade_pct, fgts_pct, previsao_13_valor')
-          .eq('ativo', true)
-          .in('tipo_usuario', ['colaborador', 'metamorfo'])
-          .order('nome'),
+        supabase.rpc('get_colaboradores_folha' as any),
         supabase
           .from('tipos_custos' as any)
           .select('id, nome, tipo, ativo')
