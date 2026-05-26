@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +12,6 @@ import { useToast } from "@/hooks/use-toast";
 import { AvatarUpload } from "@/components/AvatarUpload";
 import { AddUserDialog } from "@/components/AddUserDialog";
 import { ResetPasswordModal } from "@/components/ResetPasswordModal";
-import { UserDetailsModal } from "@/components/admin/UserDetailsModal";
 import { Search, Edit, Save, X, Loader2, KeyRound, FileDown, UserX, UserCheck, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -49,6 +49,7 @@ interface AdminUser {
 
 
 export default function AdminUsersMinimalista() {
+  const navigate = useNavigate();
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [representantes, setRepresentantes] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,10 +57,7 @@ export default function AdminUsersMinimalista() {
   const [filterStatus, setFilterStatus] = useState<string>("todos");
   const [filterSetor, setFilterSetor] = useState<string>("todos");
   const [filterRole, setFilterRole] = useState<string>("todos");
-  const [editingUser, setEditingUser] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState<Partial<AdminUser>>({});
   const [resetPasswordUser, setResetPasswordUser] = useState<AdminUser | null>(null);
-  const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
   const [activeTab, setActiveTab] = useState("colaborador");
   const [togglingUser, setTogglingUser] = useState<AdminUser | null>(null);
   const [deletingUser, setDeletingUser] = useState<AdminUser | null>(null);
@@ -145,61 +143,9 @@ export default function AdminUsersMinimalista() {
     }
   };
 
-  const handleEdit = (user: AdminUser) => {
-    setEditingUser(user.id);
-    setEditForm({
-      nome: user.nome,
-      role: user.role,
-      setor: user.setor,
-      cpf: user.cpf,
-      data_nascimento: user.data_nascimento,
-      ativo: user.ativo,
-      eh_colaborador: user.eh_colaborador,
-      tipo_usuario: user.tipo_usuario,
-    });
-  };
-
-  const handleSave = async (userId: string) => {
-    try {
-      const cpfNumerico = editForm.cpf ? editForm.cpf.replace(/\D/g, "") : null;
-
-      const { error } = await supabase
-        .from("admin_users")
-        .update({
-          nome: editForm.nome,
-          role: editForm.role,
-          setor: editForm.setor,
-          cpf: cpfNumerico,
-          data_nascimento: editForm.data_nascimento,
-          ativo: editForm.ativo,
-          eh_colaborador: editForm.eh_colaborador,
-          tipo_usuario: editForm.tipo_usuario,
-        })
-        .eq("id", userId);
-
-      if (error) throw error;
-
-      setEditingUser(null);
-      setEditForm({});
-      fetchUsers();
-
-      toast({
-        title: "Sucesso",
-        description: "Usuário atualizado com sucesso",
-      });
-    } catch (error) {
-      console.error("Erro ao atualizar usuário:", error);
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: "Erro ao atualizar usuário",
-      });
-    }
-  };
-
-  const handleCancel = () => {
-    setEditingUser(null);
-    setEditForm({});
+  const openEdit = (user: AdminUser) => {
+    const tipo = user.tipo_usuario === "representante" ? "representante" : user.tipo_usuario;
+    navigate(`/admin/users/${user.id}?tipo=${tipo}`);
   };
 
   const handleToggleAtivo = async (user: AdminUser) => {
@@ -217,10 +163,7 @@ export default function AdminUsersMinimalista() {
         description: `Usuário ${novoStatus ? "ativado" : "desativado"} com sucesso`,
       });
       fetchUsers();
-      // Update selectedUser if it's the same
-      if (selectedUser?.id === user.id) {
-        setSelectedUser({ ...user, ativo: novoStatus });
-      }
+      fetchRepresentantes();
     } catch (error) {
       console.error("Erro ao alterar status:", error);
       toast({
@@ -266,8 +209,6 @@ export default function AdminUsersMinimalista() {
       } else {
         setUsers((prev) => prev.filter((u) => u.id !== user.id));
       }
-      if (selectedUser?.id === user.id) setSelectedUser(null);
-
       // Re-sincroniza com o backend
       await Promise.all([fetchUsers(), fetchRepresentantes()]);
     } catch (error: any) {
@@ -374,7 +315,7 @@ export default function AdminUsersMinimalista() {
                   "p-4 hover:bg-white/[0.04] transition-colors cursor-pointer",
                   idx % 2 === 1 && "bg-white/[0.02]"
                 )}
-                onClick={() => setSelectedUser(user)}
+                onClick={() => openEdit(user)}
               >
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 flex-shrink-0">
@@ -389,15 +330,7 @@ export default function AdminUsersMinimalista() {
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    {editingUser === user.id ? (
-                      <Input
-                        value={editForm.nome || ""}
-                        onChange={(e) => setEditForm({ ...editForm, nome: e.target.value })}
-                        className="h-8 bg-white/5 border-white/10 text-white max-w-[200px]"
-                      />
-                    ) : (
-                      <span className="font-medium text-white truncate">{user.nome}</span>
-                    )}
+                    <span className="font-medium text-white truncate">{user.nome}</span>
                     <Badge
                       variant={user.ativo ? "default" : "secondary"}
                       className={
@@ -414,44 +347,12 @@ export default function AdminUsersMinimalista() {
 
                 <div className="hidden md:flex items-center gap-4 text-sm">
                   <div className="text-white/60">
-                    {editingUser === user.id ? (
-                      <Select
-                        value={editForm.role}
-                        onValueChange={(value) => setEditForm({ ...editForm, role: value })}
-                      >
-                        <SelectTrigger className="h-8 w-[150px] bg-white/5 border-white/10 text-white">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {systemRoles.map((role) => (
-                            <SelectItem key={role.key} value={role.key}>
-                              {role.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <Badge variant="outline" className="text-white/60 border-white/20">
-                        {roleLabelsMap[user.role] || user.role}
-                      </Badge>
-                    )}
+                    <Badge variant="outline" className="text-white/60 border-white/20">
+                      {roleLabelsMap[user.role] || user.role}
+                    </Badge>
                   </div>
 
-                  {editingUser === user.id ? (
-                    <Select
-                      value={editForm.tipo_usuario}
-                      onValueChange={(value) => setEditForm({ ...editForm, tipo_usuario: value })}
-                    >
-                      <SelectTrigger className="h-8 w-[150px] bg-white/5 border-white/10 text-white">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="colaborador">Colaborador</SelectItem>
-                        <SelectItem value="representante">Representante</SelectItem>
-                        <SelectItem value="metamorfo">Metamorfo</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  ) : user.setor ? (
+                  {user.setor ? (
                     <Badge variant="secondary" className="capitalize bg-white/10 text-white/60">
                       {user.setor}
                     </Badge>
@@ -459,33 +360,12 @@ export default function AdminUsersMinimalista() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  {editingUser === user.id ? (
-                    <>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => { e.stopPropagation(); handleSave(user.id); }}
-                        className="text-green-400 hover:text-green-300 hover:bg-green-500/10"
-                      >
-                        <Save className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => { e.stopPropagation(); handleCancel(); }}
-                        className="text-white/60 hover:text-white hover:bg-white/10"
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <Button
+                  <Button
                         variant="ghost"
                         size="sm"
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleEdit(user);
+                          openEdit(user);
                         }}
                         className="text-white/60 hover:text-white hover:bg-white/10"
                       >
@@ -529,8 +409,6 @@ export default function AdminUsersMinimalista() {
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
-                    </>
-                  )}
                 </div>
               </div>
               </div>
@@ -660,39 +538,6 @@ export default function AdminUsersMinimalista() {
           </TabsContent>
         </Tabs>
       </div>
-
-      <UserDetailsModal
-        open={!!selectedUser}
-        onOpenChange={(open) => !open && setSelectedUser(null)}
-        user={selectedUser}
-        roleLabel={selectedUser ? (roleLabelsMap[selectedUser.role] || selectedUser.role) : ""}
-        onAvatarUpdate={(userId, url) => {
-          handleAvatarUpdate(userId, url);
-          if (selectedUser && selectedUser.user_id === userId) {
-            setSelectedUser({ ...selectedUser, foto_perfil_url: url });
-          }
-        }}
-        onToggleAtivo={(userId, novoStatus) => {
-          const user = users.find(u => u.id === userId || u.user_id === userId);
-          if (user) {
-            setTogglingUser(user);
-          }
-        }}
-        onToggleVisivelOrganograma={async (userId, novoStatus) => {
-          const { error } = await supabase
-            .from("admin_users")
-            .update({ visivel_organograma: novoStatus })
-            .eq("id", userId);
-          if (error) {
-            toast({ title: "Erro", description: error.message, variant: "destructive" });
-            return;
-          }
-          setUsers(prev => prev.map(u => u.id === userId ? { ...u, visivel_organograma: novoStatus } : u));
-          setRepresentantes(prev => prev.map(u => u.id === userId ? { ...u, visivel_organograma: novoStatus } : u));
-          setSelectedUser(prev => prev && prev.id === userId ? { ...prev, visivel_organograma: novoStatus } : prev);
-          toast({ title: novoStatus ? "Visível no organograma" : "Removido do organograma" });
-        }}
-      />
 
       {resetPasswordUser && (
         <ResetPasswordModal

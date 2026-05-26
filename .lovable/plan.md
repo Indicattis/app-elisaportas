@@ -1,43 +1,40 @@
 ## Objetivo
 
-Aplicar em `/admin/users` (`src/pages/admin/AdminUsersMinimalista.tsx`) a mesma estética visual de `/direcao/estrategia/kits` (página `TabelaPrecos`), mantendo todo o comportamento atual (busca, filtros, edição inline, abas, ações, modais).
+Substituir a edição inline + modal de detalhes por uma página dedicada `/admin/users/:id` que reúne, em um só lugar, todas as informações do usuário (colaborador, representante ou metamorfo) e permite editar tudo a partir dali.
 
-Mudanças apenas de UI/estilo — sem alterar lógica, queries, mutations ou modais.
+## Mudanças
 
-## Mudanças visuais
+### 1. Nova página `src/pages/admin/AdminUserEdit.tsx`
+- Rota: `/admin/users/:id` (param identifica registro em `admin_users` ou `representantes`).
+- Layout `MinimalistLayout` com `backPath="/admin/users"`, mesmo padrão visual (glassmorphism, `bg-white/5`, `border-white/10`) usado em `/direcao/estrategia/kits` e em `AdminCompanyEditMinimalista`.
+- Carrega o usuário com base no `id` e no `tipo_usuario` (query string `?tipo=representante` para diferenciar, ou tenta `admin_users` primeiro e cai em `representantes`).
+- Seções organizadas em `Card`s:
+  1. **Cabeçalho** — `AvatarUpload`, nome, email, badges de status (ativo/inativo) e tipo de usuário, com ações principais à direita: Salvar, Resetar senha, Ativar/Desativar, Excluir.
+  2. **Dados pessoais** — nome, CPF (com máscara), data de nascimento, email (somente leitura).
+  3. **Função e setor** — `role` (do `system_roles`), `setor`, `tipo_usuario` (colaborador / representante / metamorfo), `eh_colaborador`, `visivel_organograma`, `salario` (quando colaborador).
+  4. **Sistema** — datas de criação/atualização (somente leitura).
+- Todos os campos editáveis em um único form controlado; botão "Salvar alterações" persiste em `admin_users` (ou `representantes`, com os campos suportados).
+- Reutiliza `ResetPasswordModal` e o `AlertDialog` de exclusão (mesma lógica já existente em `AdminUsersMinimalista`, incluindo `delete-user` edge function e filtro `@archived.local`).
 
-1. **Abas (TabsList / TabsTrigger)**
-   - Trocar o estado ativo cinza atual (`data-[state=active]:bg-white/10`) pelo padrão azul de kits: `data-[state=active]:bg-blue-600 data-[state=active]:text-white text-white/70`.
-   - Manter `bg-white/5 border border-white/10` na TabsList.
+### 2. Ajustes em `src/pages/admin/AdminUsersMinimalista.tsx`
+- Remove a edição inline (`editingUser`, `editForm`, `handleEdit`, `handleSave`, `handleCancel`, inputs/selects inline na lista) e o `UserDetailsModal`.
+- Clicar em um item da lista (ou no botão de editar) navega para `/admin/users/:id?tipo=<tipo_usuario>` via `useNavigate`.
+- Mantém: filtros, tabs, busca, contadores, PDF, "Adicionar usuário", toggle ativo rápido e exclusão da listagem (opcional manter — mover apenas para a página de edição se preferir; por padrão manter no item da lista).
 
-2. **Bloco de filtros**
-   - Envolver os filtros (busca + selects + botão limpar) em `<Card className="bg-white/5 border-white/10">` com `CardHeader` (título "Filtros") e `CardContent`, no mesmo padrão visual da CardHeader usada em kits.
-   - Manter o contador `{n} colaborador(es)` como `CardDescription`.
+### 3. Rota em `src/App.tsx`
+- Importa `AdminUserEdit` e registra `<Route path="/admin/users/:id" element={<ProtectedRoute><AdminUserEdit /></ProtectedRoute>} />` no mesmo grupo de `/admin/users`, com a mesma proteção/role já aplicada à rota atual.
 
-3. **Lista de usuários → Card + lista estilizada**
-   - Envolver `renderUserList` em `<Card className="bg-white/5 border-white/10">` com `CardHeader` contendo:
-     - `CardTitle` "Usuários Cadastrados"
-     - `CardDescription` com a contagem filtrada
-   - Substituir o wrapper externo `bg-primary/5 border-primary/10` por `CardContent` com `divide-y divide-white/10` (alinhando aos tokens usados em kits: `border-white/10` em vez de `border-primary/10`).
-   - Linhas individuais: trocar `hover:bg-white/5` por `hover:bg-white/[0.03]` e adicionar zebra sutil `even:bg-white/[0.02]` (espelhando o padrão zebrado da `Table` de kits via `index % 2 === 1 && "bg-muted/20"`).
+### 4. (Opcional) Limpeza
+- `src/components/admin/UserDetailsModal.tsx` deixa de ser usado em `/admin/users`. Mantemos o arquivo caso outras telas o consumam (verificar usos antes de remover).
 
-4. **Header actions (PDF + Adicionar)**
-   - Padronizar o botão "PDF" para `variant="outline" size="sm" className="border-white/20 text-white hover:bg-white/10"` (idêntico ao "Upload em Massa" de kits).
-   - Botão primário (Adicionar via `AddUserDialog`) deve renderizar como `bg-blue-600 hover:bg-blue-700 text-white` `size="sm"`. Se o componente já encapsular o estilo, passar props/classe via `className` quando suportado; caso contrário envolver num wrapper sem alterar comportamento.
+## Detalhes técnicos
 
-5. **Badges e cores semânticas**
-   - Manter cores funcionais (verde ativo / vermelho excluir), mas trocar `text-white/40` por `text-white/50` (token usado em kits para CardDescription) e `border-white/20` para outlines, mantendo consistência.
+- `representantes` não possui `role`, `setor`, `cpf`, `data_nascimento`, `salario`, `tipo_usuario`, `eh_colaborador`, `visivel_organograma` — esses campos ficam ocultos/disabled quando o registro é de representante; o save só envia colunas existentes na tabela correspondente.
+- CPF salvo apenas com dígitos (mesma regra atual em `handleSave`).
+- Após salvar, mostra toast e mantém o usuário na página (não navega de volta automaticamente); botão "Voltar" usa o `MinimalistLayout` back.
+- Após excluir, navega para `/admin/users`.
 
-6. **Tokens**
-   - Trocar usos remanescentes de `primary/5` e `primary/10` por `white/5` e `white/10` para alinhar à paleta usada em kits.
-   - Nenhum novo token em `index.css` é necessário — o estilo de kits já usa as classes glass existentes.
+## Arquivos
 
-## Fora de escopo
-
-- Não alterar lógica de busca/filtros/edição.
-- Não alterar `UserDetailsModal`, `ResetPasswordModal`, `AddUserDialog`, `AvatarUpload`, AlertDialogs.
-- Não tocar em outras rotas além de `src/pages/admin/AdminUsersMinimalista.tsx`.
-
-## Arquivos afetados
-
-- `src/pages/admin/AdminUsersMinimalista.tsx` (somente JSX/classes)
+- Criar: `src/pages/admin/AdminUserEdit.tsx`
+- Editar: `src/pages/admin/AdminUsersMinimalista.tsx`, `src/App.tsx`
