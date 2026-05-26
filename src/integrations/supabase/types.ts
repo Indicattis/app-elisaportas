@@ -9279,6 +9279,7 @@ export type Database = {
         Returns: {
           aux_combustivel: number
           custo_colaborador: number
+          em_folha: boolean
           fgts_pct: number
           id: string
           insalubridade_pct: number
