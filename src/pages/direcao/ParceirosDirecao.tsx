@@ -141,6 +141,15 @@ function RepresentantesList() {
 export default function ParceirosDirecao() {
   const navigate = useNavigate();
   const [tab, setTab] = useState<TabKey>('autorizados');
+  const [direction, setDirection] = useState<'left' | 'right'>('right');
+  const tabOrder: Record<TabKey, number> = { autorizados: 0, representantes: 1, franqueados: 2 };
+
+  const handleTabChange = (newTab: TabKey) => {
+    const currentIndex = tabOrder[tab];
+    const newIndex = tabOrder[newTab];
+    setDirection(newIndex > currentIndex ? 'right' : 'left');
+    setTab(newTab);
+  };
 
   return (
     <div className="min-h-screen bg-black text-white">
