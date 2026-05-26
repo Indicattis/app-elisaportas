@@ -7344,6 +7344,7 @@ export type Database = {
       representantes: {
         Row: {
           ativo: boolean
+          comissao_pct: number
           created_at: string
           email: string
           foto_perfil_url: string | null
@@ -7356,6 +7357,7 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean
+          comissao_pct?: number
           created_at?: string
           email: string
           foto_perfil_url?: string | null
@@ -7368,6 +7370,7 @@ export type Database = {
         }
         Update: {
           ativo?: boolean
+          comissao_pct?: number
           created_at?: string
           email?: string
           foto_perfil_url?: string | null
@@ -7613,6 +7616,63 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      requisicoes_venda: {
+        Row: {
+          comissao_pct: number
+          comissao_valor: number
+          created_at: string
+          id: string
+          observacoes: string | null
+          orcamento_app_id: string
+          representante_id: string
+          status: string
+          updated_at: string
+          valor_frete: number
+          valor_total: number
+        }
+        Insert: {
+          comissao_pct?: number
+          comissao_valor?: number
+          created_at?: string
+          id?: string
+          observacoes?: string | null
+          orcamento_app_id: string
+          representante_id: string
+          status?: string
+          updated_at?: string
+          valor_frete?: number
+          valor_total?: number
+        }
+        Update: {
+          comissao_pct?: number
+          comissao_valor?: number
+          created_at?: string
+          id?: string
+          observacoes?: string | null
+          orcamento_app_id?: string
+          representante_id?: string
+          status?: string
+          updated_at?: string
+          valor_frete?: number
+          valor_total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "requisicoes_venda_orcamento_app_id_fkey"
+            columns: ["orcamento_app_id"]
+            isOneToOne: false
+            referencedRelation: "orcamentos_app"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "requisicoes_venda_representante_id_fkey"
+            columns: ["representante_id"]
+            isOneToOne: false
+            referencedRelation: "representantes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       setores_lideres: {
         Row: {
