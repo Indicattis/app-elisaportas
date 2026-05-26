@@ -1,8 +1,14 @@
-## Centralizar tabs na tela /admin/users
+Vou corrigir isso em dois pontos:
 
-Atualmente o componente `TabsList` em `AdminUsersMinimalista.tsx` (linha 448) não possui centralização. Para alinhar as abas ao centro da tela, adicionar classes utilitárias ao `TabsList`:
+1. **Banco / permissões**
+   - A tabela `requisicoes_venda` tem 1 registro, mas os `GRANTs` ainda não aparecem aplicados no banco.
+   - Vou criar/aplicar uma migração garantindo acesso Data API para `requisicoes_venda`, `representantes` e `orcamentos_app`, porque a tela usa joins com essas tabelas.
 
-- `mx-auto w-fit` — centraliza horizontalmente o contêiner de tabs dentro do layout
-- `flex` + `justify-center` — caso necessário para garantir alinhamento interno
+2. **RLS da página da Direção**
+   - A policy atual de `requisicoes_venda` só libera o representante dono ou admin/administrador.
+   - Vou ajustar para também liberar quem tem acesso à rota `direcao_vendas`, mantendo representantes vendo apenas as próprias requisições.
+   - Também vou liberar leitura relacionada em `representantes` e `orcamentos_app` para quem tem `direcao_vendas`, para os dados vinculados aparecerem na tabela.
 
-Aplicar diretamente na linha do `TabsList` sem alterar o conteúdo das abas ou o indicador animado.
+3. **Tratamento no frontend**
+   - A tela hoje engole erro silenciosamente e mostra “Nenhuma requisição encontrada”.
+   - Vou exibir/logar erro real quando a query falhar, para não mascarar problema de permissão novamente.
