@@ -70,10 +70,10 @@ export default function DirecaoAprovacoesHub() {
     queryKey: ['aprovacoes-representantes-count'],
     queryFn: async () => {
       const { count } = await supabase
-        .from('admin_users')
+        .from('representantes')
         .select('*', { count: 'exact', head: true })
-        .eq('tipo_usuario', 'representante')
-        .eq('ativo', false);
+        .eq('ativo', false)
+        .eq('reprovado', false);
       return count || 0;
     },
   });
