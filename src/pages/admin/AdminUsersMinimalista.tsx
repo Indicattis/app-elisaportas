@@ -548,6 +548,7 @@ export default function AdminUsersMinimalista() {
         <div className="flex gap-2">
           <Button
             variant="outline"
+            size="sm"
             onClick={handleDownloadPDF}
             className="border-white/20 text-white hover:bg-white/10"
           >
@@ -561,27 +562,34 @@ export default function AdminUsersMinimalista() {
       <div className="space-y-4">
         <Tabs value={activeTab} onValueChange={(val) => { setActiveTab(val); clearFilters(); }}>
           <TabsList className="bg-white/5 border border-white/10">
-            <TabsTrigger value="colaborador" className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/60">
+            <TabsTrigger value="colaborador" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-white/70">
               Colaboradores ({colaboradoresCount})
             </TabsTrigger>
-            <TabsTrigger value="representante" className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/60">
+            <TabsTrigger value="representante" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-white/70">
               Representantes ({representantesCount})
             </TabsTrigger>
-            <TabsTrigger value="metamorfo" className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/60">
+            <TabsTrigger value="metamorfo" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-white/70">
               Metamorfos ({metamorfosCount})
             </TabsTrigger>
           </TabsList>
 
           {/* Filtros */}
-          <div className="bg-primary/5 border border-primary/10 backdrop-blur-xl rounded-lg p-4 mt-4">
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="relative flex-1 min-w-[200px] max-w-[300px]">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+          <Card className="bg-white/5 border-white/10 mt-4">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-white text-base">Filtros</CardTitle>
+              <CardDescription className="text-white/50">
+                {filteredUsers.length} {activeTab === "colaborador" ? "colaborador(es)" : activeTab === "representante" ? "representante(s)" : "metamorfo(s)"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="relative flex-1 min-w-[200px] max-w-[300px]">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50" />
                 <Input
                   placeholder="Buscar por nome, email..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-white/40"
+                  className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-white/50"
                 />
               </div>
 
@@ -629,18 +637,15 @@ export default function AdminUsersMinimalista() {
                   variant="ghost"
                   size="sm"
                   onClick={clearFilters}
-                  className="text-white/60 hover:text-white hover:bg-white/10"
+                  className="text-white/70 hover:text-white hover:bg-white/10"
                 >
                   <X className="w-4 h-4 mr-1" />
                   Limpar
                 </Button>
               )}
-            </div>
-
-            <div className="mt-3 text-sm text-white/60">
-              {filteredUsers.length} {activeTab === "colaborador" ? "colaborador(es)" : activeTab === "representante" ? "representante(s)" : "metamorfo(s)"}
-            </div>
-          </div>
+              </div>
+            </CardContent>
+          </Card>
 
           <TabsContent value="colaborador" className="mt-4">
             {renderUserList()}
