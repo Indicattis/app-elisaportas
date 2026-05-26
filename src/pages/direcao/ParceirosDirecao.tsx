@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Phone, MapPin, Mail } from 'lucide-react';
 
 import { supabase } from '@/integrations/supabase/client';
+import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 
 type TabKey = 'autorizados' | 'representantes' | 'franqueados';
 
@@ -146,14 +147,22 @@ export default function ParceirosDirecao() {
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-5">
+      <div className="flex items-center justify-between px-6 py-4">
         <button
           onClick={() => navigate('/direcao/vendas')}
           className="w-10 h-10 rounded-full bg-white/5 border border-white/10 backdrop-blur-xl hover:bg-white/10 flex items-center justify-center transition-colors"
         >
           <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
         </button>
-        <h1 className="text-lg font-semibold">Parceiros</h1>
+        <AnimatedBreadcrumb
+          items={[
+            { label: 'Home', path: '/home' },
+            { label: 'Direção', path: '/direcao' },
+            { label: 'Vendas', path: '/direcao/vendas' },
+            { label: 'Parceiros' },
+          ]}
+          mounted={true}
+        />
       </div>
 
       {/* Tabs */}
