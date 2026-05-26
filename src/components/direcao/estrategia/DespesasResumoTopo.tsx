@@ -241,6 +241,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         onPatch={handlePatchFolha}
         onInsert={handleInsertFolha}
         onDeletePadrao={async (id) => { await removePadrao(id); reload(); }}
+        onToggleConfirmado={(id, atual) => toggleConfirmado('folha', id, atual)}
       />
       <BlocoDespesa
         titulo="Despesas Fixas"
@@ -254,6 +255,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         onDelete={(id) => setConfirmDel({ kind: 'lanc', id })}
         onInsert={handleInsertLanc}
         onDeletePadrao={async (id) => { await removePadrao(id); reload(); }}
+        onToggleConfirmado={(id, atual) => toggleConfirmado('lanc', id, atual)}
       />
       <BlocoDespesa
         titulo="Despesas Variáveis"
@@ -267,6 +269,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         onDelete={(id) => setConfirmDel({ kind: 'lanc', id })}
         onInsert={handleInsertLanc}
         onDeletePadrao={async (id) => { await removePadrao(id); reload(); }}
+        onToggleConfirmado={(id, atual) => toggleConfirmado('lanc', id, atual)}
       />
 
       <AlertDialog open={!!confirmDel} onOpenChange={(o) => !o && setConfirmDel(null)}>
