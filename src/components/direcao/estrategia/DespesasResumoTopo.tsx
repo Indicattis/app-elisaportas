@@ -373,7 +373,7 @@ function BlocoFolha({
       <div className="flex items-center gap-2 text-white mb-3">
         <Users className="w-4 h-4" />
         <h3 className="font-semibold">Folha Salarial</h3>
-        <span className="text-white/40 text-sm">({rows.length}/{colabs.length})</span>
+        <span className="text-white/40 text-sm">({rows.length}/{sortedColabs.length})</span>
       </div>
 
       <div className="overflow-x-auto">
@@ -398,8 +398,8 @@ function BlocoFolha({
           <tbody>
             {loading ? (
               <tr><td colSpan={13} className="text-white/40 px-2 py-3">Carregando...</td></tr>
-            ) : colabs.length === 0 ? (
-              <tr><td colSpan={13} className="text-white/40 px-2 py-3 text-center">Nenhum colaborador cadastrado.</td></tr>
+            ) : sortedColabs.length === 0 ? (
+              <tr><td colSpan={13} className="text-white/40 px-2 py-3 text-center">Nenhum padrão cadastrado. Configure em "Configurações padrão".</td></tr>
             ) : sortedColabs.map(colab => {
               const r = rows.find(row => row.admin_user_id === colab.id);
               const salario = r ? Number(r.salario) : colab.salario;
