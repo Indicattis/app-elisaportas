@@ -1,0 +1,1 @@
+CREATE POLICY "Admins can update representantes" ON public.representantes FOR UPDATE TO authenticated USING (has_route_access(auth.uid(), 'users'::text) OR can_manage_permissions(auth.uid()) OR is_admin()) WITH CHECK (has_route_access(auth.uid(), 'users'::text) OR can_manage_permissions(auth.uid()) OR is_admin());
