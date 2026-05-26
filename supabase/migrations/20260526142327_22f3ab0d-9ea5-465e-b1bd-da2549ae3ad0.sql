@@ -1,0 +1,1 @@
+ALTER TABLE public.representantes ADD COLUMN IF NOT EXISTS reprovado BOOLEAN NOT NULL DEFAULT false;
