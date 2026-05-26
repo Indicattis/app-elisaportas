@@ -574,8 +574,6 @@ function BlocoDespesa({
   }) => Promise<void>;
   onDeletePadrao: (id: string) => Promise<void> | void;
 }) {
-  const total = rows.reduce((s, r) => s + Number(r.valor || 0), 0);
-
   const [tipoId, setTipoId] = useState('');
   const [descricao, setDescricao] = useState('');
   const [data, setData] = useState(mesStart);
@@ -600,6 +598,8 @@ function BlocoDespesa({
   // Sugestões: padrões cujo nome ainda não existe em algum lançamento do mês
   const nomesExistentes = new Set(rows.map(r => (r.tipo_nome || '').trim().toLowerCase()));
   const sugestoes = padroes.filter(p => !nomesExistentes.has(p.nome.trim().toLowerCase()));
+  const total = rows.reduce((s, r) => s + Number(r.valor || 0), 0)
+    + sugestoes.reduce((s, p) => s + Number(p.valor || 0), 0);
 
   const aplicarSugestao = async (sug: DespesaPadrao, novoValor: number) => {
     if (novoValor <= 0) return;
