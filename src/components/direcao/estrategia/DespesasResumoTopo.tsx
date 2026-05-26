@@ -420,6 +420,45 @@ function BlocoFolha({
     await onInsert({ colab, ...payload });
   };
 
+  // Form para adicionar colaborador avulso (não vira padrão)
+  const [addNome, setAddNome] = useState('');
+  const [addSalario, setAddSalario] = useState(0);
+  const [addAux, setAddAux] = useState(0);
+  const [addInsalub, setAddInsalub] = useState(0);
+  const [addFgts, setAddFgts] = useState(8);
+  const [addPrev13, setAddPrev13] = useState(0);
+  const [addSaving, setAddSaving] = useState(false);
+
+  const addClear = () => {
+    setAddNome(''); setAddSalario(0); setAddAux(0); setAddInsalub(0); setAddFgts(8); setAddPrev13(0);
+  };
+
+  const addSave = async () => {
+    if (!addNome.trim() || addSalario <= 0) return;
+    setAddSaving(true);
+    try {
+      const adHoc: Colab = {
+        id: crypto.randomUUID(),
+        nome: addNome.trim(),
+        salario: addSalario,
+        aux_combustivel: addAux,
+        insalubridade_pct: addInsalub,
+        fgts_pct: addFgts,
+        previsao_13_valor: addPrev13,
+        em_folha: true,
+      };
+      await onInsert({
+        colab: adHoc,
+        salario: addSalario,
+        aux_combustivel: addAux,
+        insalubridade_pct: addInsalub,
+        fgts_pct: addFgts,
+        previsao_13_valor: addPrev13,
+      });
+      addClear();
+    } finally { setAddSaving(false); }
+  };
+
   return (
     <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-5">
       <div className="flex items-center gap-2 text-white mb-3">
