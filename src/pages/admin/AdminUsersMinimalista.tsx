@@ -120,7 +120,9 @@ export default function AdminUsersMinimalista() {
 
       if (error) throw error;
 
-      const mapped: AdminUser[] = (data || []).map((r: any) => ({
+      const mapped: AdminUser[] = (data || [])
+        .filter((r: any) => !String(r.email ?? '').endsWith('@archived.local'))
+        .map((r: any) => ({
         id: r.id,
         user_id: r.user_id,
         email: r.email,
