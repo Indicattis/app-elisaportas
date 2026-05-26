@@ -568,41 +568,6 @@ export default function VendasDirecao() {
 
   const headerActions = (
     <div className="flex items-center gap-2">
-      <Button 
-        variant="outline" 
-        size="sm" 
-        className="bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white"
-        onClick={() => navigate('/direcao/vendas/tabela-precos')}
-        title="Tabela de Preços"
-      >
-        <DollarSign className="h-4 w-4" />
-      </Button>
-      <Button 
-        variant="outline" 
-        size="sm" 
-        className="bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white"
-        onClick={() => navigate('/direcao/vendas/regras-vendas')}
-        title="Regras de Vendas"
-      >
-        <BookOpen className="h-4 w-4" />
-      </Button>
-      <Button 
-        variant="outline" 
-        size="sm" 
-        className="bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white"
-        onClick={() => navigate('/direcao/vendas/clientes')}
-      >
-        <Users className="h-4 w-4" />
-      </Button>
-      <Button 
-        variant="outline" 
-        size="sm" 
-        className="bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white"
-        onClick={() => window.open('https://crm.elisaportas.com', '_blank')}
-        title="CRM"
-      >
-        <ExternalLink className="h-4 w-4" />
-      </Button>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="sm" className="bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white">
