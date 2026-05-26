@@ -350,7 +350,7 @@ function EditableCell({
 /* ---------------- Folha block ---------------- */
 
 function BlocoFolha({
-  rows, loading, colabs, padroesFolha, onDelete, onPatch, onInsert, onDeletePadrao,
+  rows, loading, colabs, padroesFolha, onDelete, onPatch, onInsert, onDeletePadrao, onToggleConfirmado,
 }: {
   rows: FolhaRow[];
   loading: boolean;
@@ -367,6 +367,7 @@ function BlocoFolha({
     salario: number; aux_combustivel: number; insalubridade_pct: number; fgts_pct: number; previsao_13_valor: number;
   }) => Promise<void>;
   onDeletePadrao: (id: string) => Promise<void> | void;
+  onToggleConfirmado: (id: string, atual: 'alana' | 'luan' | undefined) => void | Promise<void>;
 }) {
   // Lista unificada por nome: lançamentos salvos + colaboradores cadastrados + padrões.
   const colabsByNome = new Map(colabs.map(c => [norm(c.nome), c]));
