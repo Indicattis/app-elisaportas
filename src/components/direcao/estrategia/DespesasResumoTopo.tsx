@@ -125,10 +125,6 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         setFolha(folhaArr);
         setFixas(lancArr.filter(x => x.categoria === 'fixa'));
         setVariaveis(lancArr.filter(x => x.categoria === 'variavel'));
-        const total =
-          folhaArr.reduce((s, x) => s + Number(x.total || 0), 0) +
-          lancArr.reduce((s, x) => s + Number(x.valor || 0), 0);
-        onMediaMensalChange?.(total);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -226,7 +222,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         rows={folha}
         loading={loading}
         colabs={colabs}
-        padroesFolha={padroes.filter(p => p.tipo === 'folha')}
+        padroesFolha={padroesFolha}
         onDelete={(id) => setConfirmDel({ kind: 'folha', id })}
         onPatch={handlePatchFolha}
         onInsert={handleInsertFolha}
@@ -239,7 +235,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         loading={loading}
         categoria="fixa"
         tipos={tipos.filter(t => t.tipo === 'fixa')}
-        padroes={padroes.filter(p => p.tipo === 'fixa')}
+        padroes={padroesFixas}
         mesStart={mesStart || ''}
         onDelete={(id) => setConfirmDel({ kind: 'lanc', id })}
         onInsert={handleInsertLanc}
@@ -252,7 +248,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         loading={loading}
         categoria="variavel"
         tipos={tipos.filter(t => t.tipo === 'variavel')}
-        padroes={padroes.filter(p => p.tipo === 'variavel')}
+        padroes={padroesVariaveis}
         mesStart={mesStart || ''}
         onDelete={(id) => setConfirmDel({ kind: 'lanc', id })}
         onInsert={handleInsertLanc}
