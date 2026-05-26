@@ -209,10 +209,10 @@ serve(async (req) => {
       deletionMode = 'archived';
     }
 
-    if (deletionMode === 'archived') {
+    const disableAuthAccess = async () => {
       const archivedAuthEmail = `deleted+${targetUserId}@archived.local`;
       const randomPassword = crypto.randomUUID() + crypto.randomUUID();
-      const { error: archiveAuthError } = await supabaseAdmin.auth.admin.updateUserById(targetUserId, {
+      return await supabaseAdmin.auth.admin.updateUserById(targetUserId, {
         email: archivedAuthEmail,
         password: randomPassword,
         ban_duration: '876000h',
@@ -222,6 +222,10 @@ serve(async (req) => {
           archived_by: user.id,
         },
       });
+    };
+
+    if (deletionMode === 'archived') {
+      const { error: archiveAuthError } = await disableAuthAccess();
 
       if (archiveAuthError) {
         console.error('[delete-user] Failed disabling archived auth user', archiveAuthError);
@@ -234,11 +238,18 @@ serve(async (req) => {
       const { error: deleteAuthError } = await supabaseAdmin.auth.admin.deleteUser(targetUserId);
 
       if (deleteAuthError) {
-        console.error('[delete-user] Failed deleting auth user', deleteAuthError);
-        return new Response(JSON.stringify({ error: `User data deleted but failed to remove auth account: ${deleteAuthError.message}` }), {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+        console.warn('[delete-user] Auth user could not be deleted, disabling access instead', deleteAuthError);
+        const { error: disableAuthError } = await disableAuthAccess();
+
+        if (disableAuthError) {
+          console.error('[delete-user] Failed disabling auth user after delete failure', disableAuthError);
+          return new Response(JSON.stringify({ error: `Não foi possível remover nem bloquear o acesso do usuário: ${disableAuthError.message}` }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        deletionMode = 'archived';
       }
     }
 
