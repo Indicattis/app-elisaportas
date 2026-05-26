@@ -1,22 +1,26 @@
-## Objetivo
+## Transformar /direcao/vendas em hub
 
-Em `/direcao/aprovacoes/representantes`, mostrar apenas representantes pendentes de aprovação (inativos e ainda não reprovados), permitindo ao diretor **Aprovar** (ativa o representante) ou **Reprovar** (mantém inativo e remove da tela permanentemente).
+### Mudanças
 
-## Mudanças
+**1. Novo arquivo `src/pages/direcao/VendasHubDirecao.tsx`**
+Hub no estilo do `DirecaoHub.tsx` (mesma estética glassmorphism, breadcrumb, partículas, animações), com 5 botões:
+- **Todas as Vendas** (ícone `ShoppingCart`) → `/direcao/vendas/todas`
+- **Tabela de Preços** (ícone `DollarSign`) → `/direcao/vendas/tabela-precos`
+- **Regras de Vendas** (ícone `BookOpen`) → `/direcao/vendas/regras-vendas`
+- **Clientes** (ícone `Users`) → `/direcao/vendas/clientes`
+- **CRM** (ícone `ExternalLink`) → abre `https://crm.elisaportas.com` em nova aba (`external: true`, variant `slate`)
 
-### 1. Banco — nova coluna `representantes.reprovado`
-- Adicionar `reprovado BOOLEAN NOT NULL DEFAULT false` em `public.representantes`.
-- Semântica: quando `reprovado = true`, o representante não aparece mais na tela de aprovações (mas continua inativo no banco, preservando histórico).
+Breadcrumb: Home › Direção › Vendas.
 
-### 2. Página `AprovacoesRepresentantes.tsx`
-- **Query**: buscar apenas `ativo = false AND reprovado = false`, ordenado por `created_at DESC`.
-- **UI**: remover o filtro `todos/ativos/inativos` e o `Switch` de ativar/desativar. Em cada card, substituir por dois botões:
-  - **Aprovar** (verde) → `UPDATE representantes SET ativo = true WHERE id = ?`
-  - **Reprovar** (vermelho) → `UPDATE representantes SET reprovado = true WHERE id = ?` (com `AlertDialog` de confirmação, pois é ação definitiva nessa tela)
-- Após qualquer ação, invalidar `representantes-list` e `aprovacoes-representantes-count` — o card desaparece da lista.
-- Manter cabeçalho, busca por nome/email/telefone, estilo glassmorphism e contador.
-- Estado vazio: "Nenhum representante pendente de aprovação."
+**2. `src/App.tsx`**
+- Importar `VendasHubDirecao`.
+- Trocar a rota `/direcao/vendas` para renderizar `VendasHubDirecao`.
+- Adicionar nova rota `/direcao/vendas/todas` renderizando `VendasDirecao` (conteúdo atual preservado).
+- Manter inalteradas as rotas `/direcao/vendas/regras-vendas`, `/direcao/vendas/clientes`, `/direcao/vendas/tabela-precos`, `/direcao/vendas/:id` e `/direcao/vendas/:id/editar`.
+  - Observação: como `/direcao/vendas/:id` segue existindo, "todas" funciona como segmento literal e não conflita.
 
-### Fora do escopo
-- Nenhuma mudança em outras telas que listam representantes (continuam funcionando normalmente, ignorando `reprovado` salvo se desejado depois).
-- Sem alteração em RLS.
+**3. `src/pages/direcao/VendasDirecao.tsx` (página "Todas as Vendas")**
+- Remover do `headerActions` os botões Tabela de Preços, Regras de Vendas, Clientes e CRM (agora estão no hub). Manter o botão de exportação (PDF/Excel).
+- Ajustar navegação de "voltar" / breadcrumb para retornar ao novo hub `/direcao/vendas`.
+
+Nenhuma lógica de negócio é alterada — apenas reorganização de navegação/UI.

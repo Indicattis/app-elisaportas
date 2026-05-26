@@ -568,41 +568,6 @@ export default function VendasDirecao() {
 
   const headerActions = (
     <div className="flex items-center gap-2">
-      <Button 
-        variant="outline" 
-        size="sm" 
-        className="bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white"
-        onClick={() => navigate('/direcao/vendas/tabela-precos')}
-        title="Tabela de Preços"
-      >
-        <DollarSign className="h-4 w-4" />
-      </Button>
-      <Button 
-        variant="outline" 
-        size="sm" 
-        className="bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white"
-        onClick={() => navigate('/direcao/vendas/regras-vendas')}
-        title="Regras de Vendas"
-      >
-        <BookOpen className="h-4 w-4" />
-      </Button>
-      <Button 
-        variant="outline" 
-        size="sm" 
-        className="bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white"
-        onClick={() => navigate('/direcao/vendas/clientes')}
-      >
-        <Users className="h-4 w-4" />
-      </Button>
-      <Button 
-        variant="outline" 
-        size="sm" 
-        className="bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white"
-        onClick={() => window.open('https://crm.elisaportas.com', '_blank')}
-        title="CRM"
-      >
-        <ExternalLink className="h-4 w-4" />
-      </Button>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="sm" className="bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white">
@@ -627,11 +592,12 @@ export default function VendasDirecao() {
     return (
       <MinimalistLayout 
         title="Vendas" 
-        backPath="/direcao"
+        backPath="/direcao/vendas"
         breadcrumbItems={[
           { label: "Home", path: "/home" },
           { label: "Direção", path: "/direcao" },
-          { label: "Vendas" }
+          { label: "Vendas", path: "/direcao/vendas" },
+          { label: "Todas as Vendas" }
         ]}
       >
         <div className="flex items-center justify-center py-20">
@@ -643,13 +609,14 @@ export default function VendasDirecao() {
 
   return (
     <MinimalistLayout 
-      title="Vendas" 
+      title="Todas as Vendas" 
       subtitle="Todas as vendas do período"
-      backPath="/direcao"
+      backPath="/direcao/vendas"
       breadcrumbItems={[
         { label: "Home", path: "/home" },
         { label: "Direção", path: "/direcao" },
-        { label: "Vendas" }
+        { label: "Vendas", path: "/direcao/vendas" },
+        { label: "Todas as Vendas" }
       ]}
       headerActions={headerActions}
     >
