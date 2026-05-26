@@ -173,7 +173,7 @@ export default function ParceirosDirecao() {
               return (
                 <button
                   key={t.key}
-                  onClick={() => setTab(t.key)}
+                  onClick={() => handleTabChange(t.key)}
                   className={`flex-1 h-10 rounded-full text-sm font-medium transition-all duration-300 ${
                     active
                       ? 'bg-gradient-to-r from-blue-500 to-blue-700 text-white shadow-lg shadow-blue-500/30 border border-blue-400/30'
@@ -191,9 +191,14 @@ export default function ParceirosDirecao() {
       {/* Content */}
       <div className="px-6 py-6">
         <div className="mx-auto max-w-6xl">
-          {tab === 'autorizados' && <AutorizadosList tipo="autorizado" />}
-          {tab === 'representantes' && <RepresentantesList />}
-          {tab === 'franqueados' && <AutorizadosList tipo="franqueado" />}
+          <div
+            key={tab}
+            className={direction === 'right' ? 'animate-slide-in-right' : 'animate-slide-in-left'}
+          >
+            {tab === 'autorizados' && <AutorizadosList tipo="autorizado" />}
+            {tab === 'representantes' && <RepresentantesList />}
+            {tab === 'franqueados' && <AutorizadosList tipo="franqueado" />}
+          </div>
         </div>
       </div>
     </div>
