@@ -1,27 +1,25 @@
-## Objetivo
-Adicionar um botão de status (Pendente / Pronto) no topo da página `/direcao/estrategia/despesas/:mes`, persistido por mês, para sinalizar que todas as despesas daquele mês foram registradas.
+## Contexto
 
-## Banco de dados
-Nova tabela `despesas_mes_status`:
-- `mes_referencia` DATE PRIMARY KEY (sempre dia 01)
-- `status` TEXT NOT NULL DEFAULT `'pendente'` CHECK in (`'pendente'`,`'pronto'`)
-- `updated_by` UUID, `updated_at` timestamptz
+A página `/direcao/aprovacoes/representantes` busca usuários com `.eq('tipo_usuario', 'representante')`, mas o banco de dados não possui nenhum usuário com esse valor. Os "representantes" do sistema são na verdade colaboradores com `role = 'vendedor'`.
 
-RLS: SELECT/INSERT/UPDATE permitido a usuários autenticados (mesmo padrão das demais tabelas `despesas_manuais_*`).
+## Problema
 
-## UI
+1. **Usuários inativos não aparecem**: A query busca `tipo_usuario = 'representante'`, mas no banco todos os representantes/vendedores têm `tipo_usuario = 'colaborador'` (default da tabela). Resultado: nenhum usuário é retornado.
+2. **Ordenação**: O usuário pediu ordem do mais novo ao mais antigo. O código já usa `.order('created_at', { ascending: false })`, que está correto.
 
-### `EstrategiaDespesasMes.tsx`
-- Carregar status do mês via `supabase.from('despesas_mes_status').select().eq('mes_referencia', `${mes}-01`).maybeSingle()`.
-- Renderizar, acima do `<DespesasResumoTopo />`, um botão toggle:
-  - **Pendente** → pill âmbar (`bg-amber-500/10 text-amber-300 border-amber-400/30`) com ícone `Clock`.
-  - **Pronto** → pill verde (`bg-emerald-500/10 text-emerald-300 border-emerald-400/30`) com ícone `CheckCircle2`.
-- Clique faz `upsert` no Supabase, alterna estado e mostra toast.
-- Alinhado à direita, mesmo estilo glassmorphism existente.
+## Solução
 
-### `EstrategiaDespesas.tsx` (lista anual) — opcional leve
-- Carregar `status` por mês junto com totais e exibir um pequeno ponto colorido (âmbar/verde) no canto do card de cada mês, para enxergar de relance quais meses estão `pronto`.
+Alterar a query no `AprovacoesRepresentantes.tsx`:
+
+```diff
+- .eq('tipo_usuario', 'representante')
++ .eq('role', 'vendedor')
+```
+
+Isso buscará todos os colaboradores com papel de vendedor (ativos e inativos), e o filtro local `todos/ativos/inativos` já funciona corretamente.
+
+## Arquivo afetado
+- `src/pages/direcao/aprovacoes/AprovacoesRepresentantes.tsx` — linha 42
 
 ## Fora do escopo
-- Nenhuma mudança em `DespesasResumoTopo.tsx` ou nas tabelas de folha/lançamentos.
-- Sem regras de bloqueio (marcar "Pronto" não impede edições futuras).
+- Nenhuma mudança no layout, filtros, RLS, ou outras funcionalidades da página.
