@@ -267,7 +267,7 @@ export default function AdminUserEdit() {
         mode?: "deleted" | "archived";
         message?: string;
         error?: string;
-      }>("delete-user", { body: { user_id: user.user_id } });
+      }>("delete-user", { body: { user_id: user.user_id, source } });
       if (response.error) throw response.error;
       if (response.data?.error) throw new Error(response.data.error);
       const wasArchived = response.data?.mode === "archived";

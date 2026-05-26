@@ -80,6 +80,9 @@ serve(async (req) => {
 
     const body = await req.json();
     const targetUserId = typeof body?.user_id === 'string' ? body.user_id.trim() : '';
+    const rawSource = typeof body?.source === 'string' ? body.source.trim() : '';
+    const source: 'admin_users' | 'representantes' | null =
+      rawSource === 'admin_users' || rawSource === 'representantes' ? rawSource : null;
 
     if (!targetUserId) {
       return new Response(JSON.stringify({ error: 'user_id is required' }), {
@@ -95,35 +98,61 @@ serve(async (req) => {
       });
     }
 
-    const { data: targetAdminUser, error: targetLookupError } = await supabaseAdmin
-      .from('admin_users')
-      .select('id, user_id, nome, email')
-      .eq('user_id', targetUserId)
-      .maybeSingle();
+    let targetAdminUser: { id: string; user_id: string; nome: string; email: string } | null = null;
+    let targetRepresentante: { id: string; user_id: string; nome: string; email: string } | null = null;
 
-    if (targetLookupError) {
-      console.error('[delete-user] Target lookup failed', targetLookupError);
-      return new Response(JSON.stringify({ error: 'Failed to locate target user' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    if (source === null || source === 'admin_users') {
+      const { data, error } = await supabaseAdmin
+        .from('admin_users')
+        .select('id, user_id, nome, email')
+        .eq('user_id', targetUserId)
+        .maybeSingle();
+      if (error) {
+        console.error('[delete-user] Target lookup failed', error);
+        return new Response(JSON.stringify({ error: 'Failed to locate target user' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      targetAdminUser = data;
+    }
+
+    if (source === null || source === 'representantes') {
+      const { data, error } = await supabaseAdmin
+        .from('representantes')
+        .select('id, user_id, nome, email')
+        .eq('user_id', targetUserId)
+        .maybeSingle();
+      if (error) {
+        console.error('[delete-user] Representante lookup failed', error);
+        return new Response(JSON.stringify({ error: 'Failed to locate target representante' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      targetRepresentante = data;
+    }
+
+    // Decide qual perfil será removido. Se a chamada informou source, respeita.
+    // Caso contrário, mantém compatibilidade antiga (admin_users primeiro).
+    const operateOn: 'admin_users' | 'representantes' | null =
+      source === 'admin_users'
+        ? (targetAdminUser ? 'admin_users' : null)
+        : source === 'representantes'
+          ? (targetRepresentante ? 'representantes' : null)
+          : targetAdminUser
+            ? 'admin_users'
+            : targetRepresentante
+              ? 'representantes'
+              : null;
+
+    if (source === null && targetAdminUser && targetRepresentante) {
+      console.warn('[delete-user] user_id exists in both tables; defaulting to admin_users (no source provided)', {
+        targetUserId,
       });
     }
 
-    const { data: targetRepresentante, error: repLookupError } = await supabaseAdmin
-      .from('representantes')
-      .select('id, user_id, nome, email')
-      .eq('user_id', targetUserId)
-      .maybeSingle();
-
-    if (repLookupError) {
-      console.error('[delete-user] Representante lookup failed', repLookupError);
-      return new Response(JSON.stringify({ error: 'Failed to locate target representante' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    if (!targetAdminUser && !targetRepresentante) {
+    if (!operateOn) {
       return new Response(JSON.stringify({ error: 'Target user not found' }), {
         status: 404,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -133,13 +162,13 @@ serve(async (req) => {
     let deletionMode: 'deleted' | 'archived' = 'deleted';
 
     let deleteAdminError: any = null;
-    if (targetAdminUser) {
+    if (operateOn === 'admin_users') {
       const { error } = await supabaseAdmin
         .from('admin_users')
         .delete()
         .eq('user_id', targetUserId);
       deleteAdminError = error;
-    } else if (targetRepresentante) {
+    } else {
       const { error } = await supabaseAdmin
         .from('representantes')
         .delete()
@@ -148,7 +177,10 @@ serve(async (req) => {
     }
 
     if (deleteAdminError) {
-      if (deleteAdminError.code !== '23503') {
+      // 23503 = FK violation, 23502 = NOT NULL violation (ex.: vendas.atendente_id NOT NULL).
+      // Em ambos os casos o registro tem histórico e deve ser arquivado, não excluído.
+      const archivableCodes = new Set(['23503', '23502']);
+      if (!archivableCodes.has(deleteAdminError.code)) {
         console.error('[delete-user] Failed deleting user row', deleteAdminError);
         return new Response(JSON.stringify({ error: `Failed to delete user data: ${deleteAdminError.message}` }), {
           status: 500,
@@ -158,6 +190,8 @@ serve(async (req) => {
 
       console.warn('[delete-user] User has related records, archiving profile instead', {
         targetUserId,
+        operateOn,
+        code: deleteAdminError.code,
         message: deleteAdminError.message,
       });
 
@@ -165,7 +199,7 @@ serve(async (req) => {
       const archivedName = baseName.includes('(Arquivado)') ? baseName : `${baseName} (Arquivado)`;
       const archivedEmail = `deleted+${targetUserId}@archived.local`;
 
-      if (targetAdminUser) {
+      if (operateOn === 'admin_users') {
         const { error: archiveAdminError } = await supabaseAdmin
           .from('admin_users')
           .update({
@@ -186,7 +220,7 @@ serve(async (req) => {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           });
         }
-      } else if (targetRepresentante) {
+      } else {
         const { error: archiveRepError } = await supabaseAdmin
           .from('representantes')
           .update({
@@ -224,7 +258,27 @@ serve(async (req) => {
       });
     };
 
-    if (deletionMode === 'archived') {
+    // Só bloqueia o acesso do auth user quando NÃO há mais nenhum perfil ativo apontando para ele.
+    // Se removemos apenas o registro de representante mas o usuário ainda existe como admin/colaborador,
+    // o auth user precisa continuar funcional.
+    const { data: remainingAdmin } = await supabaseAdmin
+      .from('admin_users')
+      .select('id, ativo')
+      .eq('user_id', targetUserId)
+      .maybeSingle();
+    const { data: remainingRep } = await supabaseAdmin
+      .from('representantes')
+      .select('id, ativo')
+      .eq('user_id', targetUserId)
+      .maybeSingle();
+    const stillHasActiveProfile =
+      (remainingAdmin && remainingAdmin.ativo) || (remainingRep && remainingRep.ativo);
+
+    if (stillHasActiveProfile) {
+      console.log('[delete-user] Auth user kept active because another profile still references it', {
+        targetUserId,
+      });
+    } else if (deletionMode === 'archived') {
       const { error: archiveAuthError } = await disableAuthAccess();
 
       if (archiveAuthError) {
