@@ -143,61 +143,9 @@ export default function AdminUsersMinimalista() {
     }
   };
 
-  const handleEdit = (user: AdminUser) => {
-    setEditingUser(user.id);
-    setEditForm({
-      nome: user.nome,
-      role: user.role,
-      setor: user.setor,
-      cpf: user.cpf,
-      data_nascimento: user.data_nascimento,
-      ativo: user.ativo,
-      eh_colaborador: user.eh_colaborador,
-      tipo_usuario: user.tipo_usuario,
-    });
-  };
-
-  const handleSave = async (userId: string) => {
-    try {
-      const cpfNumerico = editForm.cpf ? editForm.cpf.replace(/\D/g, "") : null;
-
-      const { error } = await supabase
-        .from("admin_users")
-        .update({
-          nome: editForm.nome,
-          role: editForm.role,
-          setor: editForm.setor,
-          cpf: cpfNumerico,
-          data_nascimento: editForm.data_nascimento,
-          ativo: editForm.ativo,
-          eh_colaborador: editForm.eh_colaborador,
-          tipo_usuario: editForm.tipo_usuario,
-        })
-        .eq("id", userId);
-
-      if (error) throw error;
-
-      setEditingUser(null);
-      setEditForm({});
-      fetchUsers();
-
-      toast({
-        title: "Sucesso",
-        description: "Usuário atualizado com sucesso",
-      });
-    } catch (error) {
-      console.error("Erro ao atualizar usuário:", error);
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: "Erro ao atualizar usuário",
-      });
-    }
-  };
-
-  const handleCancel = () => {
-    setEditingUser(null);
-    setEditForm({});
+  const openEdit = (user: AdminUser) => {
+    const tipo = user.tipo_usuario === "representante" ? "representante" : user.tipo_usuario;
+    navigate(`/admin/users/${user.id}?tipo=${tipo}`);
   };
 
   const handleToggleAtivo = async (user: AdminUser) => {
@@ -215,10 +163,7 @@ export default function AdminUsersMinimalista() {
         description: `Usuário ${novoStatus ? "ativado" : "desativado"} com sucesso`,
       });
       fetchUsers();
-      // Update selectedUser if it's the same
-      if (selectedUser?.id === user.id) {
-        setSelectedUser({ ...user, ativo: novoStatus });
-      }
+      fetchRepresentantes();
     } catch (error) {
       console.error("Erro ao alterar status:", error);
       toast({
@@ -264,8 +209,6 @@ export default function AdminUsersMinimalista() {
       } else {
         setUsers((prev) => prev.filter((u) => u.id !== user.id));
       }
-      if (selectedUser?.id === user.id) setSelectedUser(null);
-
       // Re-sincroniza com o backend
       await Promise.all([fetchUsers(), fetchRepresentantes()]);
     } catch (error: any) {
