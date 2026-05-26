@@ -532,11 +532,7 @@ function BlocoFolha({
                     )}
                   </td>
                   <td className="py-2 px-1 text-center">
-                    {r ? (
-                      <span title="Em folha" className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-400/15 text-emerald-300 text-[10px]">&#9679;</span>
-                    ) : (
-                      <span title="Sem folha" className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-400/15 text-red-300 text-[10px]">&#9679;</span>
-                    )}
+                    <StatusDot row={r} onToggle={onToggleConfirmado} />
                   </td>
                   <td className={`px-2 text-right ${r ? 'text-emerald-400 font-medium' : 'text-white/60'}`}>
                     {r ? (
