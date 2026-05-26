@@ -6,6 +6,82 @@ import { toast } from 'sonner';
 
 import { supabase } from '@/integrations/supabase/client';
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Percent } from 'lucide-react';
+
+function ComissaoEditor({ id, current }: { id: string; current: number | null }) {
+  const queryClient = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [value, setValue] = useState<string>(current != null ? String(current) : '');
+
+  const mutation = useMutation({
+    mutationFn: async (pct: number) => {
+      const { error } = await supabase
+        .from('representantes')
+        .update({ comissao_pct: pct })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success('Comissão atualizada');
+      queryClient.invalidateQueries({ queryKey: ['parceiros-representantes'] });
+      setOpen(false);
+    },
+    onError: (e: any) => toast.error(e.message || 'Erro ao salvar comissão'),
+  });
+
+  const handleSave = () => {
+    const pct = Number(String(value).replace(',', '.'));
+    if (Number.isNaN(pct) || pct < 0 || pct > 100) {
+      toast.error('Informe um valor entre 0 e 100');
+      return;
+    }
+    mutation.mutate(pct);
+  };
+
+  return (
+    <Popover open={open} onOpenChange={(o) => { setOpen(o); if (o) setValue(current != null ? String(current) : ''); }}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-white/70 hover:bg-white/10 hover:text-white transition-colors"
+        >
+          <Percent className="w-3 h-3" />
+          {current != null ? `Comissão: ${Number(current)}%` : 'Definir comissão'}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-56 bg-black/90 backdrop-blur-xl border-white/10 text-white p-3" align="start">
+        <div className="text-xs text-white/60 mb-2">Porcentagem de comissão</div>
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <Input
+              type="number"
+              min={0}
+              max={100}
+              step={0.1}
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleSave(); }}
+              className="h-8 bg-white/5 border-white/10 text-white pr-7"
+              autoFocus
+            />
+            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-white/40">%</span>
+          </div>
+          <Button
+            size="sm"
+            onClick={handleSave}
+            disabled={mutation.isPending}
+            className="h-8 bg-blue-600 hover:bg-blue-500 text-white"
+          >
+            Salvar
+          </Button>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 type TabKey = 'autorizados' | 'representantes' | 'franqueados';
 
@@ -170,9 +246,9 @@ function RepresentantesList() {
             <Avatar src={r.foto_perfil_url} name={r.nome} />
             <div className="flex-1 min-w-0">
               <div className="text-white text-sm font-medium truncate">{r.nome}</div>
-              {r.comissao_pct != null && (
-                <div className="text-white/50 text-xs">Comissão: {Number(r.comissao_pct)}%</div>
-              )}
+              <div className="mt-1">
+                <ComissaoEditor id={r.id} current={r.comissao_pct ?? null} />
+              </div>
             </div>
             <div className="hidden md:flex items-center gap-1.5 text-xs text-white/60 min-w-0 flex-1">
               {r.email && (<><Mail className="w-3 h-3 shrink-0" /><span className="truncate">{r.email}</span></>)}
