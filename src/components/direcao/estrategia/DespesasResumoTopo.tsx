@@ -41,6 +41,7 @@ type Colab = {
   insalubridade_pct: number;
   fgts_pct: number;
   previsao_13_valor: number;
+  em_folha: boolean;
 };
 
 type TipoCusto = { id: string; nome: string; tipo: 'fixa' | 'variavel' };
@@ -91,6 +92,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         insalubridade_pct: Number(c.insalubridade_pct) || 0,
         fgts_pct: c.fgts_pct == null ? 8 : Number(c.fgts_pct),
         previsao_13_valor: Number(c.previsao_13_valor) || 0,
+        em_folha: !!c.em_folha,
       })));
       setTipos(((t || []) as any[]).map((x: any) => ({ id: x.id, nome: x.nome, tipo: x.tipo })));
     })();
