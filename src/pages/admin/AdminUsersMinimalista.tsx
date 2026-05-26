@@ -44,6 +44,7 @@ interface AdminUser {
   tipo_usuario: string;
 }
 
+
 export default function AdminUsersMinimalista() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [representantes, setRepresentantes] = useState<AdminUser[]>([]);
