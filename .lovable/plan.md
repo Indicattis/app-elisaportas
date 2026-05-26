@@ -1,34 +1,19 @@
-## Adicionar botão "Parceiros" no hub /direcao/vendas
+## Objetivo
+Em `/direcao/estrategia/despesas/:mes`, voltar a listar **todos os colaboradores ativos** na Folha Salarial (não filtrar por `em_folha`), e adicionar uma coluna visual indicando se cada um está marcado como "Em folha" no cadastro.
 
-### 1. Novo botão no hub
-- Em `src/pages/direcao/VendasHubDirecao.tsx`, adicionar item **Parceiros** (ícone `Handshake`) apontando para `/direcao/vendas/parceiros`, usando o mesmo `routePrefix: 'direcao_vendas'`.
+## Mudanças
 
-### 2. Nova página `src/pages/direcao/ParceirosDirecao.tsx`
-Inspirada no print anexado: fundo preto, breadcrumb + botão voltar no topo (estilo glassmorphism do projeto), título "Parceiros", e abaixo um **pill tab nav** centralizado (formato cápsula `rounded-full` em `bg-white/5` com `backdrop-blur`), onde a aba ativa é uma pílula azul (gradient blue 500→700) e as inativas são texto cinza.
+### 1. RPC `get_colaboradores_folha`
+- Remover o filtro `AND em_folha = true`.
+- Adicionar `em_folha` no retorno (boolean).
+- Manter `ativo = true` e `tipo_usuario IN ('colaborador','metamorfo')`.
 
-Três abas:
-- **Autorizados** — lista todos de `autorizados` (todos os `tipo_parceiro`, default ativos+inativos com filtro), ordenados por nome.
-- **Representantes** — lista todos de `representantes` (ativos e inativos).
-- **Franqueados** — lista de `autorizados` com `tipo_parceiro = 'franqueado'`. Mostra empty state amigável se vazio (atualmente sem registros).
+### 2. `src/components/direcao/estrategia/DespesasResumoTopo.tsx`
+- Adicionar `em_folha: boolean` no tipo `Colab` e mapear do RPC.
+- Na tabela da Folha Salarial, adicionar uma nova coluna **"Em folha"** (logo após "Colaborador" e antes da coluna "Status" atual, que indica se já tem lançamento no mês):
+  - Badge verde "Sim" quando `em_folha = true`.
+  - Badge cinza "Não" quando `em_folha = false`.
+- Manter o restante (Status do lançamento do mês, edição inline, inserção) inalterado — o colaborador continua podendo ser lançado mesmo sem estar marcado como "em folha", já que agora a coluna é apenas informativa.
 
-Cada aba renderiza um grid de cards (estilo glassmorphism: `bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-4`) com:
-- Avatar (logo_url / foto_perfil_url) ou inicial
-- Nome
-- Cidade/Estado (autorizados/franqueados) ou e-mail (representantes)
-- Telefone/WhatsApp
-- Badge de status (ativo/inativo; representantes inativos com `reprovado=true` aparecem como "Reprovado")
-
-Loading state mostra "Carregando..." centralizado, igual ao print.
-
-Esta página é apenas leitura/visualização — nenhuma edição, criação ou exclusão.
-
-### 3. Rota em `src/App.tsx`
-Adicionar:
-```
-<Route path="/direcao/vendas/parceiros"
-       element={<ProtectedRoute routeKey="direcao_vendas"><ParceirosDirecao /></ProtectedRoute>} />
-```
-
-### Detalhes técnicos
-- Fonte de dados: queries diretas via `supabase.from('autorizados')` e `supabase.from('representantes')` dentro do componente (`useQuery`). Sem novo hook compartilhado para manter o escopo enxuto.
-- Sem alterações de schema/RLS — as policies de leitura dessas tabelas já existem (usadas pelas páginas atuais de autorizados e aprovações).
+## Resultado
+A folha volta a mostrar os 31 colaboradores ativos, com uma coluna clara indicando o status de "Em folha" vindo do cadastro em `/administrativo/rh-dp/colaboradores`.
