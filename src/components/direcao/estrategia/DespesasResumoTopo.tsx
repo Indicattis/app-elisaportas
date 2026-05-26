@@ -79,27 +79,9 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
   const mesStart = mes ? `${mes}-01` : null;
 
   useEffect(() => {
-    (async () => {
-      const [{ data: u }, { data: t }] = await Promise.all([
-        supabase.rpc('get_colaboradores_folha' as any),
-        supabase
-          .from('tipos_custos' as any)
-          .select('id, nome, tipo, ativo')
-          .eq('ativo', true)
-          .order('nome'),
-      ]);
-      setColabs(((u || []) as any[]).map((c: any) => ({
-        id: c.id,
-        nome: c.nome,
-        salario: Number(c.custo_colaborador) || 0,
-        aux_combustivel: Number(c.aux_combustivel) || 0,
-        insalubridade_pct: Number(c.insalubridade_pct) || 0,
-        fgts_pct: c.fgts_pct == null ? 8 : Number(c.fgts_pct),
-        previsao_13_valor: Number(c.previsao_13_valor) || 0,
-        em_folha: !!c.em_folha,
-      })));
-      setTipos(((t || []) as any[]).map((x: any) => ({ id: x.id, nome: x.nome, tipo: x.tipo })));
-    })();
+    // Sem pré-carregamento: a página passa a se basear apenas em "Configurações padrão".
+    setColabs([]);
+    setTipos([]);
   }, []);
 
   useEffect(() => {
@@ -391,7 +373,7 @@ function BlocoFolha({
       <div className="flex items-center gap-2 text-white mb-3">
         <Users className="w-4 h-4" />
         <h3 className="font-semibold">Folha Salarial</h3>
-        <span className="text-white/40 text-sm">({rows.length}/{colabs.length})</span>
+        <span className="text-white/40 text-sm">({rows.length}/{sortedColabs.length})</span>
       </div>
 
       <div className="overflow-x-auto">
@@ -416,8 +398,8 @@ function BlocoFolha({
           <tbody>
             {loading ? (
               <tr><td colSpan={13} className="text-white/40 px-2 py-3">Carregando...</td></tr>
-            ) : colabs.length === 0 ? (
-              <tr><td colSpan={13} className="text-white/40 px-2 py-3 text-center">Nenhum colaborador cadastrado.</td></tr>
+            ) : sortedColabs.length === 0 ? (
+              <tr><td colSpan={13} className="text-white/40 px-2 py-3 text-center">Nenhum padrão cadastrado. Configure em "Configurações padrão".</td></tr>
             ) : sortedColabs.map(colab => {
               const r = rows.find(row => row.admin_user_id === colab.id);
               const salario = r ? Number(r.salario) : colab.salario;
@@ -622,7 +604,7 @@ function BlocoDespesa({
             ))}
 
             {/* ------ Add row ------ */}
-            <tr className="border-b border-white/5 hover:bg-white/[0.03]">
+            {tipos.length > 0 && <tr className="border-b border-white/5 hover:bg-white/[0.03]">
               <td className="py-2 pl-1">
                 <Select value={tipoId} onValueChange={setTipoId}>
                   <SelectTrigger className="h-8 text-xs bg-white/5 border-white/10">
@@ -674,7 +656,7 @@ function BlocoDespesa({
                   </button>
                 </div>
               </td>
-            </tr>
+            </tr>}
           </tbody>
         </table>
       </div>
