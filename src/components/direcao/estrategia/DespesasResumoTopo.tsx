@@ -394,6 +394,7 @@ function BlocoFolha({
           <thead>
             <tr className="text-[10px] uppercase tracking-wider text-white/40 border-b border-white/10">
               <th className="text-left font-normal pb-2 pl-1">Colaborador</th>
+              <th className="text-center font-normal pb-2 px-1">Em folha</th>
               <th className="text-center font-normal pb-2 px-1 w-10">Status</th>
               <th className="text-right font-normal pb-2 px-2 text-emerald-400">Salário</th>
               <th className="text-right font-normal pb-2 px-2">Combustível</th>
