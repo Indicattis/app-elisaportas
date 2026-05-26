@@ -514,7 +514,7 @@ export default function AdminUserEdit() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="colaborador">Colaborador</SelectItem>
-                    <SelectItem value="metamorfo">Metamorfo</SelectItem>
+                    <SelectItem value="metamorfo">Geral</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

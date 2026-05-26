@@ -253,7 +253,7 @@ export function AddUserDialog({ onUserAdded }: AddUserDialogProps) {
                 <SelectContent>
                   <SelectItem value="colaborador">Colaborador</SelectItem>
                   <SelectItem value="representante">Representante</SelectItem>
-                  <SelectItem value="metamorfo">Metamorfo</SelectItem>
+                  <SelectItem value="metamorfo">Geral</SelectItem>
                 </SelectContent>
               </Select>
             </div>

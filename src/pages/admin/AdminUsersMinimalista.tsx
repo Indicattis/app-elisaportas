@@ -302,14 +302,14 @@ export default function AdminUsersMinimalista() {
       <CardHeader>
         <CardTitle className="text-white">Usuários Cadastrados</CardTitle>
         <CardDescription className="text-white/50">
-          {filteredUsers.length} {activeTab === "colaborador" ? "colaborador(es)" : activeTab === "representante" ? "representante(s)" : "metamorfo(s)"}
+          {filteredUsers.length} {activeTab === "colaborador" ? "colaborador(es)" : activeTab === "representante" ? "representante(s)" : "geral"}
         </CardDescription>
       </CardHeader>
       <CardContent className="p-0">
         <div className="divide-y divide-white/10">
           {filteredUsers.length === 0 ? (
             <div className="p-8 text-center text-white/50">
-              Nenhum {activeTab === "colaborador" ? "colaborador" : activeTab === "representante" ? "representante" : "metamorfo"} encontrado
+              Nenhum {activeTab === "colaborador" ? "colaborador" : activeTab === "representante" ? "representante" : "usuário geral"} encontrado
             </div>
           ) : (
             filteredUsers.map((user, idx) => (
@@ -449,7 +449,7 @@ export default function AdminUsersMinimalista() {
             {[
               { value: "colaborador", label: `Colaboradores (${colaboradoresCount})` },
               { value: "representante", label: `Representantes (${representantesCount})` },
-              { value: "metamorfo", label: `Metamorfos (${metamorfosCount})` },
+              { value: "metamorfo", label: `Geral (${metamorfosCount})` },
             ].map((tab) => (
               <TabsTrigger
                 key={tab.value}
@@ -473,7 +473,7 @@ export default function AdminUsersMinimalista() {
             <CardHeader className="pb-3">
               <CardTitle className="text-white text-base">Filtros</CardTitle>
               <CardDescription className="text-white/50">
-                {filteredUsers.length} {activeTab === "colaborador" ? "colaborador(es)" : activeTab === "representante" ? "representante(s)" : "metamorfo(s)"}
+                {filteredUsers.length} {activeTab === "colaborador" ? "colaborador(es)" : activeTab === "representante" ? "representante(s)" : "geral"}
               </CardDescription>
             </CardHeader>
             <CardContent>
