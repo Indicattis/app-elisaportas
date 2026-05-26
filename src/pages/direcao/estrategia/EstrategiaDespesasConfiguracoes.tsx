@@ -4,13 +4,6 @@ import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { formatCurrency } from '@/lib/utils';
 import { useDespesasPadrao, type DespesaPadrao, type DespesaPadraoTipo } from '@/hooks/useDespesasPadrao';
 
-function calcTotalFolha(f: { salario: number; aux_combustivel: number; insalubridade_pct: number; fgts_pct: number; previsao_13_valor: number }) {
-  const insalub = f.salario * (f.insalubridade_pct || 0) / 100;
-  const fgts = f.salario * (f.fgts_pct || 0) / 100;
-  const ferias = f.salario / 3 + fgts;
-  return f.salario + f.aux_combustivel + insalub + fgts + f.previsao_13_valor + ferias;
-}
-
 export default function EstrategiaDespesasConfiguracoes() {
   const { items, loading, insert, update, remove } = useDespesasPadrao();
 
@@ -75,23 +68,16 @@ function FolhaBlock({
 }) {
   const [nome, setNome] = useState('');
   const [salario, setSalario] = useState(0);
-  const [aux, setAux] = useState(0);
-  const [insalub, setInsalub] = useState(0);
-  const [fgts, setFgts] = useState(8);
-  const [prev13, setPrev13] = useState(0);
 
-  const reset = () => { setNome(''); setSalario(0); setAux(0); setInsalub(0); setFgts(8); setPrev13(0); };
+  const reset = () => { setNome(''); setSalario(0); };
 
   const save = async () => {
     if (!nome.trim()) return;
-    const ok = await insert({
-      tipo: 'folha', nome: nome.trim(),
-      salario, aux_combustivel: aux, insalubridade_pct: insalub, fgts_pct: fgts, previsao_13_valor: prev13,
-    });
+    const ok = await insert({ tipo: 'folha', nome: nome.trim(), salario });
     if (ok) reset();
   };
 
-  const total = items.reduce((s, i) => s + calcTotalFolha(i), 0);
+  const totalSalarios = items.reduce((s, i) => s + Number(i.salario || 0), 0);
 
   return (
     <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-5">
@@ -101,16 +87,11 @@ function FolhaBlock({
         <span className="text-white/40 text-sm">({items.length})</span>
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full text-sm min-w-[900px]">
+        <table className="w-full text-sm">
           <thead>
             <tr className="text-[10px] uppercase tracking-wider text-white/40 border-b border-white/10">
               <th className="text-left font-normal pb-2 pl-1">Colaborador</th>
-              <th className="text-right font-normal pb-2 px-2">Salário</th>
-              <th className="text-right font-normal pb-2 px-2">Combustível</th>
-              <th className="text-right font-normal pb-2 px-2">Insalub %</th>
-              <th className="text-right font-normal pb-2 px-2">FGTS %</th>
-              <th className="text-right font-normal pb-2 px-2">Previsão 13°</th>
-              <th className="text-right font-normal pb-2 px-2">Total</th>
+              <th className="text-right font-normal pb-2 px-2 w-[200px]">Salário</th>
               <th className="pb-2 pr-1 w-10"></th>
             </tr>
           </thead>
@@ -124,11 +105,6 @@ function FolhaBlock({
                   className="w-full h-8 bg-white/5 border border-white/10 rounded px-2 text-white text-xs outline-none focus:border-blue-400/50" />
               </td>
               <td className="px-2"><NumCell value={salario} onChange={setSalario} /></td>
-              <td className="px-2"><NumCell value={aux} onChange={setAux} /></td>
-              <td className="px-2"><NumCell value={insalub} onChange={setInsalub} /></td>
-              <td className="px-2"><NumCell value={fgts} onChange={setFgts} /></td>
-              <td className="px-2"><NumCell value={prev13} onChange={setPrev13} /></td>
-              <td className="px-2 text-right text-white/60 text-xs">{formatCurrency(calcTotalFolha({ salario, aux_combustivel: aux, insalubridade_pct: insalub, fgts_pct: fgts, previsao_13_valor: prev13 }))}</td>
               <td className="pr-1 text-right">
                 <button onClick={save} disabled={!nome.trim()}
                   className="p-1 rounded bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 disabled:opacity-30">
@@ -140,8 +116,8 @@ function FolhaBlock({
         </table>
       </div>
       <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between px-2">
-        <span className="text-xs text-white/50 uppercase tracking-wider">Total mensal estimado</span>
-        <span className="text-base font-bold text-white">{formatCurrency(total)}</span>
+        <span className="text-xs text-white/50 uppercase tracking-wider">Total de salários</span>
+        <span className="text-base font-bold text-white">{formatCurrency(totalSalarios)}</span>
       </div>
     </div>
   );
@@ -154,19 +130,14 @@ function FolhaRow({
   update: ReturnType<typeof useDespesasPadrao>['update'];
   remove: ReturnType<typeof useDespesasPadrao>['remove'];
 }) {
-  const patch = (field: keyof DespesaPadrao, value: number) => update(item.id, { [field]: value } as any);
-  const total = calcTotalFolha(item);
   return (
     <tr className="border-b border-white/5 hover:bg-white/[0.03]">
       <td className="py-2 pl-1 text-white/90">
         <InlineText value={item.nome} onSave={(v) => update(item.id, { nome: v })} />
       </td>
-      <td className="px-2 text-right text-emerald-400 font-medium"><InlineNum value={item.salario} onSave={(v) => patch('salario', v)} format="currency" /></td>
-      <td className="px-2 text-right text-white/60"><InlineNum value={item.aux_combustivel} onSave={(v) => patch('aux_combustivel', v)} format="currency" /></td>
-      <td className="px-2 text-right text-white/60"><InlineNum value={item.insalubridade_pct} onSave={(v) => patch('insalubridade_pct', v)} format="percent" /></td>
-      <td className="px-2 text-right text-white/60"><InlineNum value={item.fgts_pct} onSave={(v) => patch('fgts_pct', v)} format="percent" /></td>
-      <td className="px-2 text-right text-white/60"><InlineNum value={item.previsao_13_valor} onSave={(v) => patch('previsao_13_valor', v)} format="currency" /></td>
-      <td className="px-2 text-right text-white font-medium">{formatCurrency(total)}</td>
+      <td className="px-2 text-right text-emerald-400 font-medium">
+        <InlineNum value={item.salario} onSave={(v) => update(item.id, { salario: v })} format="currency" />
+      </td>
       <td className="pr-1 text-right">
         <button onClick={() => remove(item.id)} className="p-1 rounded hover:bg-red-500/20 text-red-300/70 hover:text-red-300">
           <Trash2 className="w-4 h-4" />
