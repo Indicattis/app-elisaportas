@@ -315,7 +315,7 @@ export default function AdminUsersMinimalista() {
                   "p-4 hover:bg-white/[0.04] transition-colors cursor-pointer",
                   idx % 2 === 1 && "bg-white/[0.02]"
                 )}
-                onClick={() => setSelectedUser(user)}
+                onClick={() => openEdit(user)}
               >
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 flex-shrink-0">
@@ -330,15 +330,7 @@ export default function AdminUsersMinimalista() {
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    {editingUser === user.id ? (
-                      <Input
-                        value={editForm.nome || ""}
-                        onChange={(e) => setEditForm({ ...editForm, nome: e.target.value })}
-                        className="h-8 bg-white/5 border-white/10 text-white max-w-[200px]"
-                      />
-                    ) : (
-                      <span className="font-medium text-white truncate">{user.nome}</span>
-                    )}
+                    <span className="font-medium text-white truncate">{user.nome}</span>
                     <Badge
                       variant={user.ativo ? "default" : "secondary"}
                       className={
@@ -355,44 +347,12 @@ export default function AdminUsersMinimalista() {
 
                 <div className="hidden md:flex items-center gap-4 text-sm">
                   <div className="text-white/60">
-                    {editingUser === user.id ? (
-                      <Select
-                        value={editForm.role}
-                        onValueChange={(value) => setEditForm({ ...editForm, role: value })}
-                      >
-                        <SelectTrigger className="h-8 w-[150px] bg-white/5 border-white/10 text-white">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {systemRoles.map((role) => (
-                            <SelectItem key={role.key} value={role.key}>
-                              {role.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <Badge variant="outline" className="text-white/60 border-white/20">
-                        {roleLabelsMap[user.role] || user.role}
-                      </Badge>
-                    )}
+                    <Badge variant="outline" className="text-white/60 border-white/20">
+                      {roleLabelsMap[user.role] || user.role}
+                    </Badge>
                   </div>
 
-                  {editingUser === user.id ? (
-                    <Select
-                      value={editForm.tipo_usuario}
-                      onValueChange={(value) => setEditForm({ ...editForm, tipo_usuario: value })}
-                    >
-                      <SelectTrigger className="h-8 w-[150px] bg-white/5 border-white/10 text-white">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="colaborador">Colaborador</SelectItem>
-                        <SelectItem value="representante">Representante</SelectItem>
-                        <SelectItem value="metamorfo">Metamorfo</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  ) : user.setor ? (
+                  {user.setor ? (
                     <Badge variant="secondary" className="capitalize bg-white/10 text-white/60">
                       {user.setor}
                     </Badge>
@@ -400,33 +360,12 @@ export default function AdminUsersMinimalista() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  {editingUser === user.id ? (
-                    <>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => { e.stopPropagation(); handleSave(user.id); }}
-                        className="text-green-400 hover:text-green-300 hover:bg-green-500/10"
-                      >
-                        <Save className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => { e.stopPropagation(); handleCancel(); }}
-                        className="text-white/60 hover:text-white hover:bg-white/10"
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <Button
+                  <Button
                         variant="ghost"
                         size="sm"
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleEdit(user);
+                          openEdit(user);
                         }}
                         className="text-white/60 hover:text-white hover:bg-white/10"
                       >
@@ -470,8 +409,6 @@ export default function AdminUsersMinimalista() {
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
-                    </>
-                  )}
                 </div>
               </div>
               </div>
