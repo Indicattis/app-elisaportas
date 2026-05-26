@@ -670,7 +670,7 @@ function BlocoFolha({
 /* ---------------- Despesa block ---------------- */
 
 function BlocoDespesa({
-  titulo, icon, rows, loading, categoria, tipos, padroes, mesStart, onDelete, onInsert, onDeletePadrao,
+  titulo, icon, rows, loading, categoria, tipos, padroes, mesStart, onDelete, onInsert, onDeletePadrao, onToggleConfirmado,
 }: {
   titulo: string;
   icon: React.ReactNode;
@@ -685,6 +685,7 @@ function BlocoDespesa({
     tipo: TipoCusto; categoria: 'fixa' | 'variavel'; valor: number; data: string; descricao: string;
   }) => Promise<void>;
   onDeletePadrao: (id: string) => Promise<void> | void;
+  onToggleConfirmado: (id: string, atual: 'alana' | 'luan' | undefined) => void | Promise<void>;
 }) {
   const [tipoId, setTipoId] = useState('');
   const [customNome, setCustomNome] = useState('');
