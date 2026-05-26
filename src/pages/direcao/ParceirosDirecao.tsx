@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Phone, MapPin, Mail } from 'lucide-react';
 
 import { supabase } from '@/integrations/supabase/client';
+import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 
 type TabKey = 'autorizados' | 'representantes' | 'franqueados';
 
