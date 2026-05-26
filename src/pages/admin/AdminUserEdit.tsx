@@ -370,19 +370,17 @@ export default function AdminUserEdit() {
         {/* Cabeçalho */}
         <Card className="bg-white/5 border-white/10">
           <CardContent className="pt-6">
-            <div className="flex flex-col md:flex-row md:items-center gap-4">
-              <div className="w-20 h-20 flex-shrink-0">
-                <AvatarUpload
-                  userId={user.user_id}
-                  currentAvatarUrl={user.foto_perfil_url}
-                  userName={user.nome}
-                  onAvatarUpdate={handleAvatarUpdate}
-                />
-              </div>
-              <div className="flex-1 min-w-0">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+              <AvatarUpload
+                userId={user.user_id}
+                currentAvatarUrl={user.foto_perfil_url}
+                userName={user.nome}
+                onAvatarUpdate={handleAvatarUpdate}
+              />
+              <div className="flex-1 min-w-0 md:text-right">
                 <h2 className="text-xl font-semibold text-white truncate">{user.nome}</h2>
                 <p className="text-sm text-white/60 truncate">{user.email}</p>
-                <div className="flex items-center gap-2 mt-2">
+                <div className="flex flex-wrap items-center gap-2 mt-2 md:justify-end">
                   <Badge
                     className={
                       user.ativo
