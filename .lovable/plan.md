@@ -1,19 +1,32 @@
 ## Objetivo
-Em `/direcao/estrategia/despesas/:mes`, voltar a listar **todos os colaboradores ativos** na Folha Salarial (não filtrar por `em_folha`), e adicionar uma coluna visual indicando se cada um está marcado como "Em folha" no cadastro.
+Em `/direcao/estrategia/despesas/:mes`, na tabela Folha Salarial:
+1. Ordenar os colaboradores com `em_folha = true` no topo, antes dos `em_folha = false`.
+2. Remover a "linha de inserção fantasma" no rodapé (Select + NumInputs + botão salvar).
+3. Permitir adicionar o lançamento direto nas linhas dos colaboradores "fantasmas" (sem lançamento no mês).
 
-## Mudanças
+## Mudanças em `src/components/direcao/estrategia/DespesasResumoTopo.tsx`
 
-### 1. RPC `get_colaboradores_folha`
-- Remover o filtro `AND em_folha = true`.
-- Adicionar `em_folha` no retorno (boolean).
-- Manter `ativo = true` e `tipo_usuario IN ('colaborador','metamorfo')`.
+### 1. Ordenação
+- Antes do `colabs.map`, ordenar: `em_folha=true` primeiro (mantendo ordem alfabética dentro de cada grupo).
 
-### 2. `src/components/direcao/estrategia/DespesasResumoTopo.tsx`
-- Adicionar `em_folha: boolean` no tipo `Colab` e mapear do RPC.
-- Na tabela da Folha Salarial, adicionar uma nova coluna **"Em folha"** (logo após "Colaborador" e antes da coluna "Status" atual, que indica se já tem lançamento no mês):
-  - Badge verde "Sim" quando `em_folha = true`.
-  - Badge cinza "Não" quando `em_folha = false`.
-- Manter o restante (Status do lançamento do mês, edição inline, inserção) inalterado — o colaborador continua podendo ser lançado mesmo sem estar marcado como "em folha", já que agora a coluna é apenas informativa.
+### 2. Remover linha de inserção espectral
+- Apagar todo o `<tr>` "Add row" da `BlocoFolha` (linhas ~494–547).
+- Remover estados/handlers não usados após isso: `adminUserId`, `form`, `saving`, `selected`, `onSelectColab`, `clear`, `save`, `insalubValNew`, `fgtsValNew`, `prev13NewCom`, `feriasNew`, `totalNew`, `emptyForm`, e o import `Select*` se não mais usado nesse bloco.
+- Manter o import de `Select*` apenas se ainda for usado por `BlocoDespesa` (é).
+
+### 3. Inserção inline nos colaboradores sem lançamento
+- Para cada `colab` sem `r` (linha "fantasma"), tornar as células editáveis usando o mesmo padrão de `EditableCell`, mas sem `r.id`:
+  - Criar um novo componente `GhostEditableCell` (ou parametrizar `EditableCell`) que, ao primeiro `onSave`, dispara `onInsert` criando o lançamento daquele colaborador para o mês com os valores default do cadastro + o novo valor do campo editado.
+  - Após inserir, a linha vira "real" (vem do reload).
+- Campos editáveis nas linhas fantasmas: Salário, Combustível, Insalub %, FGTS %, Previsão 13°.
+- Ícone de status à esquerda: manter (vermelho = sem lançamento, verde = com lançamento).
+- Botão de excluir: continua só aparecendo quando já existe `r`.
+
+### 4. Comportamento de UX
+- Clicar em qualquer campo editável de uma linha fantasma cria o lançamento com os defaults do cadastro + a alteração feita, exibindo toast "Lançamento de folha adicionado".
+- Demais edições subsequentes funcionam normalmente via `onPatch` (já existente).
 
 ## Resultado
-A folha volta a mostrar os 31 colaboradores ativos, com uma coluna clara indicando o status de "Em folha" vindo do cadastro em `/administrativo/rh-dp/colaboradores`.
+- Colaboradores "em folha" aparecem primeiro.
+- A linha duplicada de inserção some.
+- Os próprios "fantasmas" se tornam o ponto de entrada — basta clicar e editar qualquer valor para criar o lançamento daquele colaborador no mês.
