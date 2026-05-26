@@ -212,6 +212,7 @@ import CalendarioExpedicaoReadOnly from "./pages/home/CalendarioExpedicaoReadOnl
 // Hub da Direção Minimalista
 import DirecaoHub from "./pages/direcao/DirecaoHub";
 import VendasDirecao from "./pages/direcao/VendasDirecao";
+import VendasHubDirecao from "./pages/direcao/VendasHubDirecao";
 import RegrasVendasDirecao from "./pages/direcao/RegrasVendasDirecao";
 import VendaDetalhesDirecao from "./pages/direcao/VendaDetalhesDirecao";
 import FaturamentoDirecao from "./pages/direcao/FaturamentoDirecao";
@@ -474,7 +475,8 @@ const App = () => (
 
                 {/* Hub da Direção Minimalista */}
                 <Route path="/direcao" element={<ProtectedRoute routeKeyPrefix="direcao_"><DirecaoHub /></ProtectedRoute>} />
-                <Route path="/direcao/vendas" element={<ProtectedRoute routeKey="direcao_hub"><VendasDirecao /></ProtectedRoute>} />
+                <Route path="/direcao/vendas" element={<ProtectedRoute routeKey="direcao_hub"><VendasHubDirecao /></ProtectedRoute>} />
+                <Route path="/direcao/vendas/todas" element={<ProtectedRoute routeKey="direcao_hub"><VendasDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/vendas/regras-vendas" element={<ProtectedRoute routeKey="direcao_regras_vendas"><RegrasVendasDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/vendas/clientes" element={<ProtectedRoute routeKey="direcao_vendas"><ClientesDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/vendas/tabela-precos" element={<ProtectedRoute routeKey="direcao_tabela_precos"><TabelaPrecos /></ProtectedRoute>} />
