@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { AvatarUpload } from "@/components/AvatarUpload";
@@ -444,16 +445,27 @@ export default function AdminUsersMinimalista() {
     >
       <div className="space-y-4">
         <Tabs value={activeTab} onValueChange={(val) => { setActiveTab(val); clearFilters(); }}>
-          <TabsList className="bg-white/5 border border-white/10">
-            <TabsTrigger value="colaborador" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-white/70">
-              Colaboradores ({colaboradoresCount})
-            </TabsTrigger>
-            <TabsTrigger value="representante" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-white/70">
-              Representantes ({representantesCount})
-            </TabsTrigger>
-            <TabsTrigger value="metamorfo" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-white/70">
-              Metamorfos ({metamorfosCount})
-            </TabsTrigger>
+          <TabsList className="relative h-11 p-1 rounded-full bg-[#0b1220]/80 border border-white/10 shadow-inner shadow-black/40 backdrop-blur-md gap-1">
+            {[
+              { value: "colaborador", label: `Colaboradores (${colaboradoresCount})` },
+              { value: "representante", label: `Representantes (${representantesCount})` },
+              { value: "metamorfo", label: `Metamorfos (${metamorfosCount})` },
+            ].map((tab) => (
+              <TabsTrigger
+                key={tab.value}
+                value={tab.value}
+                className="relative z-10 rounded-full px-5 h-9 text-sm font-medium text-white/60 data-[state=active]:text-white data-[state=active]:shadow-none transition-colors hover:text-white/90 bg-transparent data-[state=active]:bg-transparent"
+              >
+                {activeTab === tab.value && (
+                  <motion.span
+                    layoutId="admin-users-tab-indicator"
+                    className="absolute inset-0 rounded-full bg-gradient-to-b from-blue-500 to-blue-600 shadow-[0_4px_20px_-2px_rgba(59,130,246,0.6)] ring-1 ring-blue-400/40"
+                    transition={{ type: "spring", stiffness: 380, damping: 32 }}
+                  />
+                )}
+                <span className="relative z-10">{tab.label}</span>
+              </TabsTrigger>
+            ))}
           </TabsList>
 
           {/* Filtros */}
