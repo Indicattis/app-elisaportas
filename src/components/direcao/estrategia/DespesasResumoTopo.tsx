@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { formatCurrency } from '@/lib/utils';
 import { Users, Receipt, TrendingDown, Trash2, Check, X } from 'lucide-react';
@@ -55,6 +55,8 @@ function calcTotalFolha(f: { salario: number; aux_combustivel: number; insalubri
   return f.salario + f.aux_combustivel + insalub + fgts + f.previsao_13_valor + ferias;
 }
 
+const norm = (s: string | null | undefined) => String(s || '').trim().toLowerCase();
+
 interface Props {
   mes: string | null;
   ano?: number;
@@ -77,6 +79,25 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
   const { items: padroes, remove: removePadrao } = useDespesasPadrao();
 
   const mesStart = mes ? `${mes}-01` : null;
+  const padroesFolha = useMemo(() => padroes.filter(p => p.tipo === 'folha'), [padroes]);
+  const padroesFixas = useMemo(() => padroes.filter(p => p.tipo === 'fixa'), [padroes]);
+  const padroesVariaveis = useMemo(() => padroes.filter(p => p.tipo === 'variavel'), [padroes]);
+  const totalExibido = useMemo(() => {
+    const nomesFolha = new Set(folha.map(r => norm(r.colaborador_nome)));
+    const nomesFixas = new Set(fixas.map(r => norm(r.tipo_nome)));
+    const nomesVariaveis = new Set(variaveis.map(r => norm(r.tipo_nome)));
+
+    return folha.reduce((s, x) => s + Number(x.total || 0), 0)
+      + padroesFolha.filter(p => !nomesFolha.has(norm(p.nome))).reduce((s, p) => s + calcTotalFolha(p), 0)
+      + fixas.reduce((s, x) => s + Number(x.valor || 0), 0)
+      + padroesFixas.filter(p => !nomesFixas.has(norm(p.nome))).reduce((s, p) => s + Number(p.valor || 0), 0)
+      + variaveis.reduce((s, x) => s + Number(x.valor || 0), 0)
+      + padroesVariaveis.filter(p => !nomesVariaveis.has(norm(p.nome))).reduce((s, p) => s + Number(p.valor || 0), 0);
+  }, [folha, fixas, variaveis, padroesFolha, padroesFixas, padroesVariaveis]);
+
+  useEffect(() => {
+    if (mes) onMediaMensalChange?.(totalExibido);
+  }, [mes, totalExibido, onMediaMensalChange]);
 
   useEffect(() => {
     // Sem pré-carregamento: a página passa a se basear apenas em "Configurações padrão".
