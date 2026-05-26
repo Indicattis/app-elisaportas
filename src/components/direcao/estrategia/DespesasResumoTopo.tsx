@@ -629,8 +629,6 @@ function BlocoDespesa({
           <tbody>
             {loading ? (
               <tr><td colSpan={5} className="text-white/40 px-2 py-3">Carregando...</td></tr>
-            ) : rows.length === 0 ? (
-              <tr><td colSpan={5} className="text-white/40 px-2 py-3 text-center">Nenhum lançamento ainda.</td></tr>
             ) : rows.map(r => (
               <tr key={r.id} className="border-b border-white/5 hover:bg-white/[0.03]">
                 <td className="py-2 pl-1 text-white/90">{r.tipo_nome}</td>
