@@ -74,7 +74,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
   const [tipos, setTipos] = useState<TipoCusto[]>([]);
   const [confirmDel, setConfirmDel] = useState<null | { kind: 'folha' | 'lanc'; id: string }>(null);
 
-  const { items: padroes } = useDespesasPadrao();
+  const { items: padroes, remove: removePadrao } = useDespesasPadrao();
 
   const mesStart = mes ? `${mes}-01` : null;
 
@@ -209,6 +209,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         onDelete={(id) => setConfirmDel({ kind: 'folha', id })}
         onPatch={handlePatchFolha}
         onInsert={handleInsertFolha}
+        onDeletePadrao={async (id) => { await removePadrao(id); reload(); }}
       />
       <BlocoDespesa
         titulo="Despesas Fixas"
@@ -221,6 +222,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         mesStart={mesStart || ''}
         onDelete={(id) => setConfirmDel({ kind: 'lanc', id })}
         onInsert={handleInsertLanc}
+        onDeletePadrao={async (id) => { await removePadrao(id); reload(); }}
       />
       <BlocoDespesa
         titulo="Despesas Variáveis"
@@ -233,6 +235,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         mesStart={mesStart || ''}
         onDelete={(id) => setConfirmDel({ kind: 'lanc', id })}
         onInsert={handleInsertLanc}
+        onDeletePadrao={async (id) => { await removePadrao(id); reload(); }}
       />
 
       <AlertDialog open={!!confirmDel} onOpenChange={(o) => !o && setConfirmDel(null)}>
@@ -313,7 +316,7 @@ function EditableCell({
 /* ---------------- Folha block ---------------- */
 
 function BlocoFolha({
-  rows, loading, colabs, padroesFolha, onDelete, onPatch, onInsert,
+  rows, loading, colabs, padroesFolha, onDelete, onPatch, onInsert, onDeletePadrao,
 }: {
   rows: FolhaRow[];
   loading: boolean;
@@ -329,6 +332,7 @@ function BlocoFolha({
     colab: Colab;
     salario: number; aux_combustivel: number; insalubridade_pct: number; fgts_pct: number; previsao_13_valor: number;
   }) => Promise<void>;
+  onDeletePadrao: (id: string) => Promise<void> | void;
 }) {
   const total = rows.reduce((s, r) => s + Number(r.total || 0), 0);
 
@@ -491,7 +495,7 @@ function BlocoFolha({
                   <td className={`px-2 text-right ${r ? 'text-white/60' : 'text-white/30'}`}>{formatCurrency(feriasComUmTerco)}</td>
                   <td className="px-2 text-right text-white font-medium">{formatCurrency(totalVal)}</td>
                   <td className="pr-1 text-right">
-                    {r && (
+                    {r ? (
                       <button
                         onClick={() => onDelete(r.id)}
                         className="p-1 rounded hover:bg-red-500/20 text-red-300/70 hover:text-red-300"
@@ -499,7 +503,16 @@ function BlocoFolha({
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
-                    )}
+                    ) : padroesByNome.get(norm(colab.nome)) ? (
+                      <button
+                        onClick={() => onDeletePadrao(colab.id)}
+                        className="p-1 rounded hover:bg-red-500/20 text-red-300/50 hover:text-red-300"
+                        aria-label="Remover sugestão"
+                        title="Remover sugestão padrão"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    ) : null}
                   </td>
                 </tr>
               );
@@ -519,7 +532,7 @@ function BlocoFolha({
 /* ---------------- Despesa block ---------------- */
 
 function BlocoDespesa({
-  titulo, icon, rows, loading, categoria, tipos, padroes, mesStart, onDelete, onInsert,
+  titulo, icon, rows, loading, categoria, tipos, padroes, mesStart, onDelete, onInsert, onDeletePadrao,
 }: {
   titulo: string;
   icon: React.ReactNode;
@@ -533,6 +546,7 @@ function BlocoDespesa({
   onInsert: (payload: {
     tipo: TipoCusto; categoria: 'fixa' | 'variavel'; valor: number; data: string; descricao: string;
   }) => Promise<void>;
+  onDeletePadrao: (id: string) => Promise<void> | void;
 }) {
   const total = rows.reduce((s, r) => s + Number(r.valor || 0), 0);
 
@@ -612,16 +626,22 @@ function BlocoDespesa({
             {/* ------ Sugestões padrão ------ */}
             {!loading && sugestoes.map(sug => (
               <tr key={`sug-${sug.id}`} className="border-b border-white/5 hover:bg-white/[0.03]">
-                <td className="py-2 pl-1 text-white/40 italic">
-                  {sug.nome}
-                  <span className="ml-2 text-[9px] uppercase tracking-wider bg-white/5 border border-white/10 text-white/40 px-1.5 py-0.5 rounded">Padrão</span>
-                </td>
-                <td className="px-2 text-white/30">—</td>
-                <td className="px-2 text-white/30">{mesStart.split('-').reverse().join('/')}</td>
-                <td className="px-2 text-right">
+                <td className="py-2 pl-1 text-white/90">{sug.nome}</td>
+                <td className="px-2 text-white/60">—</td>
+                <td className="px-2 text-white/60">{mesStart.split('-').reverse().join('/')}</td>
+                <td className="px-2 text-right text-white/60">
                   <EditableCell value={sug.valor} format="currency" onSave={(v) => aplicarSugestao(sug, v)} />
                 </td>
-                <td className="pr-1" />
+                <td className="pr-1 text-right">
+                  <button
+                    onClick={() => onDeletePadrao(sug.id)}
+                    className="p-1 rounded hover:bg-red-500/20 text-red-300/50 hover:text-red-300"
+                    aria-label="Remover sugestão"
+                    title="Remover sugestão padrão"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </td>
               </tr>
             ))}
 
