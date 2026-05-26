@@ -351,10 +351,19 @@ function BlocoFolha({
   }) => Promise<void>;
   onDeletePadrao: (id: string) => Promise<void> | void;
 }) {
-  const total = rows.reduce((s, r) => s + Number(r.total || 0), 0);
+  const total = sortedColabs.reduce((s, colab) => {
+    const r = rowsByNome.get(norm(colab.nome));
+    const valores = r ? r : colab;
+    return s + calcTotalFolha({
+      salario: Number(valores.salario) || 0,
+      aux_combustivel: Number(valores.aux_combustivel) || 0,
+      insalubridade_pct: Number(valores.insalubridade_pct) || 0,
+      fgts_pct: Number(valores.fgts_pct) || 0,
+      previsao_13_valor: Number(valores.previsao_13_valor) || 0,
+    });
+  }, 0);
 
   // Lista unificada por nome: lançamentos salvos + colaboradores cadastrados + padrões.
-  const norm = (s: string) => s.trim().toLowerCase();
   const colabsByNome = new Map(colabs.map(c => [norm(c.nome), c]));
   const padroesByNome = new Map(padroesFolha.map(p => [norm(p.nome), p]));
   const rowsByNome = new Map(rows.map(r => [norm(r.colaborador_nome), r]));
