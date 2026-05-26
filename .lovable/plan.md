@@ -1,25 +1,20 @@
-## Botão de confirmação para sugestões
+## Adicionar itens novos em todos os blocos (sem virar padrão)
 
-Em `src/components/direcao/estrategia/DespesasResumoTopo.tsx`, adicionar um botão de confirmar (✓ verde) ao lado da lixeira nas linhas de sugestão dos 3 blocos (Folha, Fixas, Variáveis). Ao clicar, a sugestão é convertida em lançamento real do mês usando o valor atualmente exibido na célula editável.
+Em `src/components/direcao/estrategia/DespesasResumoTopo.tsx`, adicionar formulário inline ao final de cada um dos 3 blocos para criar lançamentos avulsos no mês, sem persistir como sugestão padrão.
 
-**Folha Salarial** (linhas onde `r` é `undefined` e existe `padroesByNome.get(...)`):
-- Botão ✓ chama `onInsert({ colab, salario, aux_combustivel, insalubridade_pct, fgts_pct, previsao_13_valor })` com os valores atualmente mostrados (vindos do padrão).
+### Folha Salarial (`BlocoFolha`)
+Hoje só renderiza colaboradores vindos de `colabs + padroesFolha + rows`. Adicionar uma linha extra de adicionar ao final da tabela com:
+- Input texto: nome do colaborador
+- Inputs numéricos: salário, combustível, insalub %, FGTS %, previsão 13°
+- Botão ✓ salvar / ✗ limpar
 
-**Despesas Fixas e Variáveis** (linhas `sugestoes.map(...)`):
-- Botão ✓ chama `aplicarSugestao(sug, sug.valor)` — mesma função já existente usada quando o usuário edita o valor.
+Ao salvar, montar um `Colab` ad-hoc (sem registrar em `despesas_padrao`) e chamar o `onInsert` existente — o lançamento vai direto para `despesas_manuais_folha` daquele mês.
 
-Visual: botão `bg-emerald-500/20 text-emerald-300` (mesmo padrão do botão Salvar do formulário inline), ao lado da lixeira existente.
+### Despesas Fixas e Variáveis (`BlocoDespesa`)
+Hoje o formulário inline força escolha de um `tipo` da lista `tipos`. Adicionar um modo "nome livre":
+- Trocar o `Select` por um componente combinado: dropdown com tipos cadastrados + opção "Outro (digitar nome)" que revela um input de texto livre.
+- Quando nome livre, construir `TipoCusto` ad-hoc com `id` gerado (`crypto.randomUUID()`) e `tipo_nome` = texto digitado, passando para `onInsert` igual ao fluxo atual.
+- Nada é gravado em `despesas_padrao` nem em `tipos_custo` — fica apenas no lançamento do mês.
 
-## Status (segunda etapa — não implementar ainda)
-
-A coluna "Status" hoje só existe no bloco Folha (bolinha verde se lançado, vermelha se não). Após confirmar a primeira etapa, faremos:
-
-- 🔴 Vermelho = pendente (sugestão ainda não confirmada)
-- 🟡 Amarelo = "Alana" (confirmada por Alana)
-- 🟢 Verde = "Luan" (confirmada por Luan)
-
-Isso exige decidir:
-1. Adicionar coluna Status também em Fixas/Variáveis? (hoje não tem)
-2. Como diferenciar Alana vs Luan? Pelo usuário autenticado que clicou em confirmar? Por seleção manual? Persistir em qual coluna (ex.: `confirmado_por` em `despesas_manuais_folha` e `despesas_manuais_lancamentos`)?
-
-Vou pedir essas definições quando chegarmos nessa etapa.
+### Observação
+Nenhuma mudança de schema. O parent (`EstrategiaDespesasMes` ou equivalente) já lida com inserts em `despesas_manuais_folha` e `despesas_manuais_lancamentos` — a nova UI apenas usa os mesmos callbacks `onInsert`.
