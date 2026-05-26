@@ -420,6 +420,45 @@ function BlocoFolha({
     await onInsert({ colab, ...payload });
   };
 
+  // Form para adicionar colaborador avulso (não vira padrão)
+  const [addNome, setAddNome] = useState('');
+  const [addSalario, setAddSalario] = useState(0);
+  const [addAux, setAddAux] = useState(0);
+  const [addInsalub, setAddInsalub] = useState(0);
+  const [addFgts, setAddFgts] = useState(8);
+  const [addPrev13, setAddPrev13] = useState(0);
+  const [addSaving, setAddSaving] = useState(false);
+
+  const addClear = () => {
+    setAddNome(''); setAddSalario(0); setAddAux(0); setAddInsalub(0); setAddFgts(8); setAddPrev13(0);
+  };
+
+  const addSave = async () => {
+    if (!addNome.trim() || addSalario <= 0) return;
+    setAddSaving(true);
+    try {
+      const adHoc: Colab = {
+        id: crypto.randomUUID(),
+        nome: addNome.trim(),
+        salario: addSalario,
+        aux_combustivel: addAux,
+        insalubridade_pct: addInsalub,
+        fgts_pct: addFgts,
+        previsao_13_valor: addPrev13,
+        em_folha: true,
+      };
+      await onInsert({
+        colab: adHoc,
+        salario: addSalario,
+        aux_combustivel: addAux,
+        insalubridade_pct: addInsalub,
+        fgts_pct: addFgts,
+        previsao_13_valor: addPrev13,
+      });
+      addClear();
+    } finally { setAddSaving(false); }
+  };
+
   return (
     <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-5">
       <div className="flex items-center gap-2 text-white mb-3">
@@ -553,6 +592,51 @@ function BlocoFolha({
                 </tr>
               );
             })}
+
+            {/* ------ Add colaborador avulso ------ */}
+            <tr className="border-b border-white/5 hover:bg-white/[0.03] bg-white/[0.02]">
+              <td className="py-2 pl-1">
+                <input
+                  type="text"
+                  value={addNome}
+                  onChange={(e) => setAddNome(e.target.value)}
+                  placeholder="Novo colaborador..."
+                  className="w-full h-8 bg-white/5 border border-white/10 rounded px-2 text-white text-xs outline-none focus:border-blue-400/50"
+                />
+              </td>
+              <td></td>
+              <td></td>
+              <td className="px-2"><NumInput value={addSalario} onChange={setAddSalario} /></td>
+              <td className="px-2"><NumInput value={addAux} onChange={setAddAux} /></td>
+              <td className="px-2"><NumInput value={addInsalub} onChange={setAddInsalub} /></td>
+              <td></td>
+              <td className="px-2"><NumInput value={addFgts} onChange={setAddFgts} /></td>
+              <td></td>
+              <td className="px-2"><NumInput value={addPrev13} onChange={setAddPrev13} /></td>
+              <td></td>
+              <td></td>
+              <td className="pr-1">
+                <div className="flex items-center justify-end gap-1">
+                  <button
+                    onClick={addSave}
+                    disabled={!addNome.trim() || addSalario <= 0 || addSaving}
+                    className="p-1 rounded bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 disabled:opacity-30 disabled:cursor-not-allowed"
+                    aria-label="Adicionar"
+                    title="Adicionar"
+                  >
+                    <Check className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={addClear}
+                    className="p-1 rounded hover:bg-white/10 text-white/50"
+                    aria-label="Limpar"
+                    title="Limpar"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -585,6 +669,7 @@ function BlocoDespesa({
   onDeletePadrao: (id: string) => Promise<void> | void;
 }) {
   const [tipoId, setTipoId] = useState('');
+  const [customNome, setCustomNome] = useState('');
   const [descricao, setDescricao] = useState('');
   const [data, setData] = useState(mesStart);
   const [valor, setValor] = useState(0);
@@ -593,14 +678,20 @@ function BlocoDespesa({
   useEffect(() => { setData(mesStart); }, [mesStart]);
 
   const selectedTipo = tipos.find(t => t.id === tipoId);
+  const isCustom = tipoId === '__custom__';
 
-  const clear = () => { setTipoId(''); setDescricao(''); setData(mesStart); setValor(0); };
+  const clear = () => { setTipoId(''); setCustomNome(''); setDescricao(''); setData(mesStart); setValor(0); };
+
+  const canSave = (isCustom ? customNome.trim().length > 0 : !!selectedTipo) && !!data && valor > 0;
 
   const save = async () => {
-    if (!selectedTipo || !data || valor <= 0) return;
+    if (!canSave) return;
     setSaving(true);
     try {
-      await onInsert({ tipo: selectedTipo, categoria, valor, data, descricao });
+      const tipoFinal: TipoCusto = isCustom
+        ? { id: crypto.randomUUID(), nome: customNome.trim(), tipo: categoria }
+        : selectedTipo!;
+      await onInsert({ tipo: tipoFinal, categoria, valor, data, descricao });
       clear();
     } finally { setSaving(false); }
   };
@@ -691,16 +782,37 @@ function BlocoDespesa({
             ))}
 
             {/* ------ Add row ------ */}
-            {tipos.length > 0 && <tr className="border-b border-white/5 hover:bg-white/[0.03]">
+            <tr className="border-b border-white/5 hover:bg-white/[0.03]">
               <td className="py-2 pl-1">
-                <Select value={tipoId} onValueChange={setTipoId}>
-                  <SelectTrigger className="h-8 text-xs bg-white/5 border-white/10">
-                    <SelectValue placeholder="Selecione tipo..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {tipos.map(t => <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                {isCustom ? (
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="text"
+                      autoFocus
+                      value={customNome}
+                      onChange={(e) => setCustomNome(e.target.value)}
+                      placeholder="Nome do item..."
+                      className="flex-1 h-8 bg-white/5 border border-white/10 rounded px-2 text-white text-xs outline-none focus:border-blue-400/50"
+                    />
+                    <button
+                      onClick={() => { setTipoId(''); setCustomNome(''); }}
+                      className="p-1 rounded hover:bg-white/10 text-white/50"
+                      title="Voltar para lista"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <Select value={tipoId} onValueChange={setTipoId}>
+                    <SelectTrigger className="h-8 text-xs bg-white/5 border-white/10">
+                      <SelectValue placeholder="Selecione tipo..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {tipos.map(t => <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>)}
+                      <SelectItem value="__custom__">+ Outro (digitar nome)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
               </td>
               <td className="px-2">
                 <input
@@ -726,7 +838,7 @@ function BlocoDespesa({
                 <div className="flex items-center justify-end gap-1">
                   <button
                     onClick={save}
-                    disabled={!selectedTipo || valor <= 0 || saving}
+                    disabled={!canSave || saving}
                     className="p-1 rounded bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 disabled:opacity-30 disabled:cursor-not-allowed"
                     aria-label="Salvar"
                     title="Salvar"
@@ -743,7 +855,7 @@ function BlocoDespesa({
                   </button>
                 </div>
               </td>
-            </tr>}
+            </tr>
           </tbody>
         </table>
       </div>
