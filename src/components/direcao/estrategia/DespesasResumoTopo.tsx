@@ -698,16 +698,37 @@ function BlocoDespesa({
             ))}
 
             {/* ------ Add row ------ */}
-            {tipos.length > 0 && <tr className="border-b border-white/5 hover:bg-white/[0.03]">
+            <tr className="border-b border-white/5 hover:bg-white/[0.03]">
               <td className="py-2 pl-1">
-                <Select value={tipoId} onValueChange={setTipoId}>
-                  <SelectTrigger className="h-8 text-xs bg-white/5 border-white/10">
-                    <SelectValue placeholder="Selecione tipo..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {tipos.map(t => <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                {isCustom ? (
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="text"
+                      autoFocus
+                      value={customNome}
+                      onChange={(e) => setCustomNome(e.target.value)}
+                      placeholder="Nome do item..."
+                      className="flex-1 h-8 bg-white/5 border border-white/10 rounded px-2 text-white text-xs outline-none focus:border-blue-400/50"
+                    />
+                    <button
+                      onClick={() => { setTipoId(''); setCustomNome(''); }}
+                      className="p-1 rounded hover:bg-white/10 text-white/50"
+                      title="Voltar para lista"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <Select value={tipoId} onValueChange={setTipoId}>
+                    <SelectTrigger className="h-8 text-xs bg-white/5 border-white/10">
+                      <SelectValue placeholder="Selecione tipo..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {tipos.map(t => <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>)}
+                      <SelectItem value="__custom__">+ Outro (digitar nome)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
               </td>
               <td className="px-2">
                 <input
@@ -733,7 +754,7 @@ function BlocoDespesa({
                 <div className="flex items-center justify-end gap-1">
                   <button
                     onClick={save}
-                    disabled={!selectedTipo || valor <= 0 || saving}
+                    disabled={!canSave || saving}
                     className="p-1 rounded bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 disabled:opacity-30 disabled:cursor-not-allowed"
                     aria-label="Salvar"
                     title="Salvar"
@@ -750,7 +771,7 @@ function BlocoDespesa({
                   </button>
                 </div>
               </td>
-            </tr>}
+            </tr>
           </tbody>
         </table>
       </div>
