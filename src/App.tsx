@@ -249,6 +249,7 @@ import EstrategiaKitsTemplate from "./pages/direcao/estrategia/EstrategiaKitsTem
 import EstrategiaMateriasPrimas from "./pages/direcao/estrategia/EstrategiaMateriasPrimas";
 import EstrategiaDespesas from "./pages/direcao/estrategia/EstrategiaDespesas";
 import EstrategiaDespesasMes from "./pages/direcao/estrategia/EstrategiaDespesasMes";
+import EstrategiaDespesasConfiguracoes from "./pages/direcao/estrategia/EstrategiaDespesasConfiguracoes";
 import EstrategiaResultados from "./pages/direcao/estrategia/EstrategiaResultados";
 
 // Hub de Estoque da Direção
