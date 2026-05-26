@@ -209,14 +209,37 @@ serve(async (req) => {
       deletionMode = 'archived';
     }
 
-    const { error: deleteAuthError } = await supabaseAdmin.auth.admin.deleteUser(targetUserId);
-
-    if (deleteAuthError) {
-      console.error('[delete-user] Failed deleting auth user', deleteAuthError);
-      return new Response(JSON.stringify({ error: `User data deleted but failed to remove auth account: ${deleteAuthError.message}` }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    if (deletionMode === 'archived') {
+      const archivedAuthEmail = `deleted+${targetUserId}@archived.local`;
+      const randomPassword = crypto.randomUUID() + crypto.randomUUID();
+      const { error: archiveAuthError } = await supabaseAdmin.auth.admin.updateUserById(targetUserId, {
+        email: archivedAuthEmail,
+        password: randomPassword,
+        ban_duration: '876000h',
+        user_metadata: {
+          archived: true,
+          archived_at: new Date().toISOString(),
+          archived_by: user.id,
+        },
       });
+
+      if (archiveAuthError) {
+        console.error('[delete-user] Failed disabling archived auth user', archiveAuthError);
+        return new Response(JSON.stringify({ error: `Usuário arquivado, mas não foi possível bloquear o acesso: ${archiveAuthError.message}` }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    } else {
+      const { error: deleteAuthError } = await supabaseAdmin.auth.admin.deleteUser(targetUserId);
+
+      if (deleteAuthError) {
+        console.error('[delete-user] Failed deleting auth user', deleteAuthError);
+        return new Response(JSON.stringify({ error: `User data deleted but failed to remove auth account: ${deleteAuthError.message}` }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
     }
 
     console.log('[delete-user] User removed', { targetUserId, deletedBy: user.id, mode: deletionMode });
