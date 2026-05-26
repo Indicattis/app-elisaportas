@@ -1,52 +1,38 @@
-# Investigação: por que o usuário aparece como "representante"
+# Reforçar a exclusão de representantes
 
-## O que está acontecendo
+## O que descobri auditando o fluxo
 
-O usuário `b26c65ad-006f-4f25-9d8a-02162d87d33a` (Marcionir da Silva Escobar) **realmente foi criado como colaborador**, mas existe um trigger no banco que insere TODOS os novos usuários do auth também na tabela `representantes` — o que duplica o cadastro.
+1. **A edge function `delete-user` não sabe de qual aba veio a exclusão.**
+   O frontend (`AdminUsersMinimalista.handleDeleteUser`) envia apenas `user_id`.
+   Dentro da função, ela consulta `admin_users` e `representantes` pelo `user_id` e, se achar nas duas, **prefere `admin_users`** (`if (targetAdminUser) { delete admin_users ... }`). Foi exatamente assim que o Marcionir, listado na aba "Representantes", acabou tendo o cadastro de **colaborador** arquivado.
 
-### Evidências encontradas
+2. **Erro 23502 (NOT NULL) não é tratado como motivo para arquivar.**
+   O log mais recente mostra:
+   ```
+   code: 23502 — null value in column "atendente_id" of relation "vendas" violates not-null constraint
+   ```
+   O código só ramifica para arquivar quando o erro é `23503` (FK). Com `23502`, a função retorna 500 e o cadastro fica num estado inconsistente.
 
-1. Existe uma linha em `admin_users` para esse mesmo `user_id` (78b68a87-…) com nome **"Marcionir da SIlva Escobar (Arquivado)"** e email `deleted+...@archived.local`. Ou seja, ele foi criado como colaborador em `admin_users`, e depois arquivado pelo fluxo de exclusão (porque tinha histórico vinculado).
-2. Existe também uma linha em `representantes` com o mesmo `user_id`, criada **no exato mesmo timestamp** (`2026-03-09 13:15:17`) — o que indica criação automática, não manual.
-3. Existe um trigger ativo:
+3. **Mesmo após a remoção do trigger automático, ainda existem usuários com linhas em ambas as tabelas** (cadastros antigos). Então o risco continua até a função saber explicitamente qual perfil apagar.
 
-```
-CREATE TRIGGER on_auth_user_created
-AFTER INSERT ON auth.users
-FOR EACH ROW EXECUTE FUNCTION handle_new_representante();
-```
+## Plano de correção (somente backend + 1 linha no frontend)
 
-A função `handle_new_representante()` insere incondicionalmente em `public.representantes` toda vez que QUALQUER usuário é criado no `auth.users`, independente de ele ser colaborador, admin, diretor, etc.
+### 1. `supabase/functions/delete-user/index.ts`
+- Aceitar um novo campo opcional no body: `source: 'admin_users' | 'representantes'`.
+- Quando `source` vier preenchido, **operar exclusivamente na tabela indicada** (lookup, delete e archive). Ignorar a outra tabela completamente, mesmo que tenha linha com o mesmo `user_id`.
+- Quando `source` não vier (compatibilidade), manter o comportamento atual (admin_users primeiro), mas se a outra tabela também tiver linha, registrar log de aviso.
+- Tratar `23502` (NOT NULL) igual a `23503` (FK): arquivar em vez de retornar erro 500. Isso cobre o caso de `vendas.atendente_id NOT NULL` apontando para um colaborador com vendas.
+- No ramo "arquivar representante", **não** mexer em `admin_users` desse mesmo user_id.
 
-4. A edge function `create-user` (usada para cadastrar colaborador) chama `supabase.auth.admin.createUser(...)` — o que dispara esse trigger e gera o registro indevido em `representantes`.
+### 2. `src/pages/admin/AdminUsersMinimalista.tsx`
+- Em `handleDeleteUser`, enviar `source: user.tipo_usuario === 'representante' ? 'representantes' : 'admin_users'` no body da chamada `supabase.functions.invoke('delete-user', ...)`.
 
-### Resultado prático
+### 3. `src/pages/admin/AdminUserEdit.tsx`
+- A mesma página de edição (que agora também tem botão de excluir, se aplicável) deve enviar `source: source === 'representantes' ? 'representantes' : 'admin_users'` ao chamar delete-user. Verificarei e ajustarei se houver chamada lá.
 
-- Marcionir foi criado como colaborador → entrou em `admin_users` (corretamente) **e** em `representantes` (indevidamente, pelo trigger).
-- A exclusão arquivou o registro em `admin_users` (não removeu, por causa de FKs), mas a linha em `representantes` continuou ativa.
-- A página `/admin/users` separa usuários por tabela: a aba "Representantes" lê de `representantes`, então ele aparece lá.
+## Verificação após implementar
+- Testar exclusão de um representante de teste e conferir nos logs que: (a) a função filtra por `representantes`; (b) não toca em `admin_users` do mesmo user_id; (c) se houver FK/NOT NULL, arquiva em `representantes`.
+- Testar exclusão de um colaborador comum (sem vínculos) e confirmar deleção real.
+- Testar exclusão de um colaborador com vendas vinculadas e confirmar que o resultado agora é "arquivado" em vez de erro 500.
 
-## Plano de correção
-
-### 1. Remover o trigger automático
-Dropar o trigger `on_auth_user_created` em `auth.users` e a função `handle_new_representante()`. A criação de representantes deve ser **explícita** (via formulário/edge function que insere em `representantes` quando o admin escolhe `tipo = representante`), nunca implícita a partir de qualquer criação no auth.
-
-### 2. Limpar o registro órfão do Marcionir
-Excluir a linha de `representantes` com `id = b26c65ad-006f-4f25-9d8a-02162d87d33a` (ele nunca deveria ter existido lá; o cadastro real está arquivado em `admin_users`).
-
-### 3. Verificação
-Após a migração, confirmar que:
-- novos colaboradores criados pelo fluxo padrão não geram registro em `representantes`;
-- a aba "Representantes" em `/admin/users` só lista quem foi cadastrado intencionalmente como representante.
-
-### Detalhes técnicos (SQL da migração)
-
-```sql
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-DROP FUNCTION IF EXISTS public.handle_new_representante();
-
-DELETE FROM public.representantes
-WHERE id = 'b26c65ad-006f-4f25-9d8a-02162d87d33a';
-```
-
-Nenhuma alteração de UI é necessária — o bug é 100% backend/banco.
+Nenhuma alteração de UI/visual.
