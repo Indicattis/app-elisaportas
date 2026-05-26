@@ -79,27 +79,9 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
   const mesStart = mes ? `${mes}-01` : null;
 
   useEffect(() => {
-    (async () => {
-      const [{ data: u }, { data: t }] = await Promise.all([
-        supabase.rpc('get_colaboradores_folha' as any),
-        supabase
-          .from('tipos_custos' as any)
-          .select('id, nome, tipo, ativo')
-          .eq('ativo', true)
-          .order('nome'),
-      ]);
-      setColabs(((u || []) as any[]).map((c: any) => ({
-        id: c.id,
-        nome: c.nome,
-        salario: Number(c.custo_colaborador) || 0,
-        aux_combustivel: Number(c.aux_combustivel) || 0,
-        insalubridade_pct: Number(c.insalubridade_pct) || 0,
-        fgts_pct: c.fgts_pct == null ? 8 : Number(c.fgts_pct),
-        previsao_13_valor: Number(c.previsao_13_valor) || 0,
-        em_folha: !!c.em_folha,
-      })));
-      setTipos(((t || []) as any[]).map((x: any) => ({ id: x.id, nome: x.nome, tipo: x.tipo })));
-    })();
+    // Sem pré-carregamento: a página passa a se basear apenas em "Configurações padrão".
+    setColabs([]);
+    setTipos([]);
   }, []);
 
   useEffect(() => {
