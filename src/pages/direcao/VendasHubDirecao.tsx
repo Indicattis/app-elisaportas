@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingCart, DollarSign, BookOpen, Users, ExternalLink, ArrowLeft, Lock, Handshake } from 'lucide-react';
+import { ShoppingCart, DollarSign, BookOpen, Users, ExternalLink, ArrowLeft, Lock, Handshake, FileText } from 'lucide-react';
 
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { DelayedParticles } from '@/components/DelayedParticles';
@@ -12,6 +12,7 @@ const menuItems = [
   { label: 'Regras de Vendas', icon: BookOpen, path: '/direcao/vendas/regras-vendas', routePrefix: 'direcao_regras_vendas' },
   { label: 'Clientes', icon: Users, path: '/direcao/vendas/clientes', routePrefix: 'direcao_vendas' },
   { label: 'Parceiros', icon: Handshake, path: '/direcao/vendas/parceiros', routePrefix: 'direcao_vendas' },
+  { label: 'Requisições Representantes', icon: FileText, path: '/direcao/vendas/requisicoes-representantes', routePrefix: 'direcao_vendas', variant: 'orange' as const },
   { label: 'CRM', icon: ExternalLink, path: 'https://crm.elisaportas.com', external: true as const, variant: 'slate' as const },
 ];
 
@@ -33,7 +34,7 @@ export default function VendasHubDirecao() {
     const external = (item as any).external as boolean | undefined;
     const hasAccess = external || !item.routePrefix || accessMap?.[item.routePrefix] !== false;
     const isDisabled = !external && !hasAccess;
-    const variant = (item as any).variant as 'slate' | undefined;
+    const variant = (item as any).variant as 'slate' | 'orange' | undefined;
 
     return (
       <div
@@ -56,7 +57,9 @@ export default function VendasHubDirecao() {
               ? 'bg-gradient-to-r from-gray-700 to-gray-800 text-white/30 cursor-not-allowed border border-gray-600/30'
               : variant === 'slate'
                 ? 'bg-gradient-to-r from-slate-700 to-slate-900 shadow-lg shadow-slate-700/20 border border-slate-500/30 hover:from-slate-600 hover:to-slate-800 text-white active:scale-[0.98]'
-                : 'bg-gradient-to-r from-blue-500 to-blue-700 shadow-lg shadow-blue-500/20 border border-blue-400/30 hover:from-blue-400 hover:to-blue-600 text-white active:scale-[0.98]'
+                : variant === 'orange'
+                  ? 'bg-gradient-to-r from-orange-500 to-orange-700 shadow-lg shadow-orange-500/20 border border-orange-400/30 hover:from-orange-400 hover:to-orange-600 text-white active:scale-[0.98]'
+                  : 'bg-gradient-to-r from-blue-500 to-blue-700 shadow-lg shadow-blue-500/20 border border-blue-400/30 hover:from-blue-400 hover:to-blue-600 text-white active:scale-[0.98]'
           }`}
         >
           {isDisabled ? <Lock className="w-4 h-4" strokeWidth={1.5} /> : <Icon className="w-5 h-5" strokeWidth={1.5} />}
