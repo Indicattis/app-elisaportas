@@ -130,7 +130,9 @@ export default {
 				'fade-in': 'fade-in 1s ease-out',
 				'float': 'float 20s ease-in-out infinite',
 				'orbit-in': 'orbit-in 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
-				'pulse-glow': 'pulse-glow 4s ease-in-out infinite'
+				'pulse-glow': 'pulse-glow 4s ease-in-out infinite',
+				'slide-in-right': 'slide-in-right 0.35s ease-out',
+				'slide-in-left': 'slide-in-left 0.35s ease-out'
 			},
 			backgroundImage: {
 				'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
