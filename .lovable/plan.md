@@ -1,32 +1,28 @@
 ## Objetivo
-Em `/direcao/estrategia/despesas/:mes`, na tabela Folha Salarial:
-1. Ordenar os colaboradores com `em_folha = true` no topo, antes dos `em_folha = false`.
-2. Remover a "linha de inserção fantasma" no rodapé (Select + NumInputs + botão salvar).
-3. Permitir adicionar o lançamento direto nas linhas dos colaboradores "fantasmas" (sem lançamento no mês).
 
-## Mudanças em `src/components/direcao/estrategia/DespesasResumoTopo.tsx`
+Adicionar um novo botão laranja "Requisições Representantes" no hub `/direcao/vendas` que navega para uma nova página exibindo a tabela `requisicoes_venda` com o orçamento vinculado (`orcamentos_app`) e o representante.
 
-### 1. Ordenação
-- Antes do `colabs.map`, ordenar: `em_folha=true` primeiro (mantendo ordem alfabética dentro de cada grupo).
+## Alterações
 
-### 2. Remover linha de inserção espectral
-- Apagar todo o `<tr>` "Add row" da `BlocoFolha` (linhas ~494–547).
-- Remover estados/handlers não usados após isso: `adminUserId`, `form`, `saving`, `selected`, `onSelectColab`, `clear`, `save`, `insalubValNew`, `fgtsValNew`, `prev13NewCom`, `feriasNew`, `totalNew`, `emptyForm`, e o import `Select*` se não mais usado nesse bloco.
-- Manter o import de `Select*` apenas se ainda for usado por `BlocoDespesa` (é).
+### 1. `src/pages/direcao/VendasHubDirecao.tsx`
+- Adicionar novo item no `menuItems` com `label: 'Requisições Representantes'`, ícone `FileText` (lucide), `path: '/direcao/vendas/requisicoes-representantes'`, `routePrefix: 'direcao_vendas'`, `variant: 'orange'`.
+- Estender a lógica de `variant` em `renderButton` para suportar `'orange'` com gradiente `from-orange-500 to-orange-700` (mantendo padrão de sombra/borda do azul atual).
 
-### 3. Inserção inline nos colaboradores sem lançamento
-- Para cada `colab` sem `r` (linha "fantasma"), tornar as células editáveis usando o mesmo padrão de `EditableCell`, mas sem `r.id`:
-  - Criar um novo componente `GhostEditableCell` (ou parametrizar `EditableCell`) que, ao primeiro `onSave`, dispara `onInsert` criando o lançamento daquele colaborador para o mês com os valores default do cadastro + o novo valor do campo editado.
-  - Após inserir, a linha vira "real" (vem do reload).
-- Campos editáveis nas linhas fantasmas: Salário, Combustível, Insalub %, FGTS %, Previsão 13°.
-- Ícone de status à esquerda: manter (vermelho = sem lançamento, verde = com lançamento).
-- Botão de excluir: continua só aparecendo quando já existe `r`.
+### 2. Nova página `src/pages/direcao/RequisicoesRepresentantesDirecao.tsx`
+- Layout no mesmo padrão glassmorphism preto (bg-black, bg-white/5, backdrop-blur-xl, border-white/10).
+- Breadcrumb: Home › Direção › Vendas › Requisições Representantes.
+- Botão voltar para `/direcao/vendas`.
+- Query: `requisicoes_venda` com join em `representantes` (nome) e `orcamentos_app` (número/cliente/valores).
+- Tabela com colunas: Data, Representante, Orçamento (nº + cliente), Valor Total, Frete, Comissão (% e R$), Status, Observações.
+- Filtro simples por status (badges).
+- Click na linha abre detalhes do orçamento vinculado (se rota existir) ou expande observações.
 
-### 4. Comportamento de UX
-- Clicar em qualquer campo editável de uma linha fantasma cria o lançamento com os defaults do cadastro + a alteração feita, exibindo toast "Lançamento de folha adicionado".
-- Demais edições subsequentes funcionam normalmente via `onPatch` (já existente).
+### 3. `src/App.tsx`
+- Adicionar import lazy de `RequisicoesRepresentantesDirecao`.
+- Registrar rota `/direcao/vendas/requisicoes-representantes` dentro do bloco de Direção.
 
-## Resultado
-- Colaboradores "em folha" aparecem primeiro.
-- A linha duplicada de inserção some.
-- Os próprios "fantasmas" se tornam o ponto de entrada — basta clicar e editar qualquer valor para criar o lançamento daquele colaborador no mês.
+## Detalhes técnicos
+
+- Cor laranja: gradiente Tailwind `from-orange-500 to-orange-700`, sombra `shadow-orange-500/20`, borda `border-orange-400/30`, hover `from-orange-400 to-orange-600`.
+- Acesso protegido pelo mesmo `routePrefix: 'direcao_vendas'` já existente — sem nova permissão.
+- Fetch via `supabase.from('requisicoes_venda').select('*, representantes(nome), orcamentos_app(*)')`.
