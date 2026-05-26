@@ -585,6 +585,7 @@ function BlocoDespesa({
   onDeletePadrao: (id: string) => Promise<void> | void;
 }) {
   const [tipoId, setTipoId] = useState('');
+  const [customNome, setCustomNome] = useState('');
   const [descricao, setDescricao] = useState('');
   const [data, setData] = useState(mesStart);
   const [valor, setValor] = useState(0);
@@ -593,14 +594,20 @@ function BlocoDespesa({
   useEffect(() => { setData(mesStart); }, [mesStart]);
 
   const selectedTipo = tipos.find(t => t.id === tipoId);
+  const isCustom = tipoId === '__custom__';
 
-  const clear = () => { setTipoId(''); setDescricao(''); setData(mesStart); setValor(0); };
+  const clear = () => { setTipoId(''); setCustomNome(''); setDescricao(''); setData(mesStart); setValor(0); };
+
+  const canSave = (isCustom ? customNome.trim().length > 0 : !!selectedTipo) && !!data && valor > 0;
 
   const save = async () => {
-    if (!selectedTipo || !data || valor <= 0) return;
+    if (!canSave) return;
     setSaving(true);
     try {
-      await onInsert({ tipo: selectedTipo, categoria, valor, data, descricao });
+      const tipoFinal: TipoCusto = isCustom
+        ? { id: crypto.randomUUID(), nome: customNome.trim(), tipo: categoria }
+        : selectedTipo!;
+      await onInsert({ tipo: tipoFinal, categoria, valor, data, descricao });
       clear();
     } finally { setSaving(false); }
   };
