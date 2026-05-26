@@ -347,6 +347,38 @@ function EditableCell({
   );
 }
 
+/* ---------------- StatusDot (tricolor: vermelho/amarelo/verde) ---------------- */
+
+function StatusDot({
+  row,
+  onToggle,
+}: {
+  row: { id: string; confirmado_por?: 'alana' | 'luan' } | undefined;
+  onToggle: (id: string, atual: 'alana' | 'luan' | undefined) => void | Promise<void>;
+}) {
+  if (!row) {
+    return (
+      <span title="Pendente" className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-400/15 text-red-300 text-[10px]">&#9679;</span>
+    );
+  }
+  const atual = row.confirmado_por || 'alana';
+  const isLuan = atual === 'luan';
+  return (
+    <button
+      type="button"
+      onClick={() => onToggle(row.id, atual)}
+      title={isLuan ? 'Luan (clique para Alana)' : 'Alana (clique para Luan)'}
+      className={`inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] cursor-pointer transition-colors ${
+        isLuan
+          ? 'bg-emerald-400/15 text-emerald-300 hover:bg-emerald-400/25'
+          : 'bg-yellow-400/15 text-yellow-300 hover:bg-yellow-400/25'
+      }`}
+    >
+      &#9679;
+    </button>
+  );
+}
+
 /* ---------------- Folha block ---------------- */
 
 function BlocoFolha({
