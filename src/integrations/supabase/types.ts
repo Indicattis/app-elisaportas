@@ -5186,6 +5186,7 @@ export type Database = {
           estado: string | null
           id: string
           itens: Json
+          nome_cliente: string | null
           numero: number
           origem: string
           representante_id: string | null
@@ -5200,6 +5201,7 @@ export type Database = {
           estado?: string | null
           id?: string
           itens?: Json
+          nome_cliente?: string | null
           numero: number
           origem: string
           representante_id?: string | null
@@ -5214,6 +5216,7 @@ export type Database = {
           estado?: string | null
           id?: string
           itens?: Json
+          nome_cliente?: string | null
           numero?: number
           origem?: string
           representante_id?: string | null
@@ -9269,6 +9272,18 @@ export type Database = {
         Returns: {
           mes: string
           numero: number
+        }[]
+      }
+      get_colaboradores_folha: {
+        Args: never
+        Returns: {
+          aux_combustivel: number
+          custo_colaborador: number
+          fgts_pct: number
+          id: string
+          insalubridade_pct: number
+          nome: string
+          previsao_13_valor: number
         }[]
       }
       get_configuracoes_vendas_publicas: {
