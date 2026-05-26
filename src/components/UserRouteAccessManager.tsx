@@ -268,14 +268,14 @@ export function UserRouteAccessManager() {
                            ? 'bg-gradient-to-r from-amber-500/20 to-amber-600/10 border-2 border-amber-500/40 shadow-lg shadow-amber-500/10'
                            : 'bg-gradient-to-r from-amber-500/10 to-amber-600/5 border-2 border-amber-500/20'
                          : folderHasAccess 
-                           ? 'bg-gradient-to-r from-blue-500/20 to-blue-600/10 border border-blue-500/30' 
-                           : 'bg-white/5 border border-white/10 hover:border-blue-500/30'}`}
+                           ? 'bg-white/10 border border-white/20' 
+                           : 'bg-white/5 border border-white/10 hover:border-white/20'}`}
             style={{ marginLeft: `${paddingLeft}px` }}
           >
             <CollapsibleTrigger className="p-0 hover:bg-transparent" asChild>
               <button className="p-1 rounded hover:bg-white/10 transition-colors">
                 {isOpen ? (
-                  <ChevronDown className={`h-4 w-4 ${isHub ? 'text-amber-400' : 'text-blue-400'}`} />
+                  <ChevronDown className={`h-4 w-4 ${isHub ? 'text-amber-400' : 'text-white/80'}`} />
                 ) : (
                   <ChevronRight className="h-4 w-4 text-white/50" />
                 )}
@@ -288,11 +288,11 @@ export function UserRouteAccessManager() {
               onCheckedChange={(checked) => handleToggleFolder(node, checked as boolean)}
               className={isHub 
                 ? "border-amber-500/50 data-[state=checked]:bg-amber-500 data-[state=checked]:border-amber-500"
-                : "border-blue-500/50 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"}
+                : "border-white/30 data-[state=checked]:bg-white data-[state=checked]:text-black data-[state=checked]:border-white"}
             />
             
             {isOpen ? (
-              <FolderOpen className={`h-4 w-4 ${isHub ? 'text-amber-400' : 'text-blue-400'}`} />
+              <FolderOpen className={`h-4 w-4 ${isHub ? 'text-amber-400' : 'text-white/80'}`} />
             ) : (
               <Folder className="h-4 w-4 text-white/50" />
             )}
@@ -328,7 +328,7 @@ export function UserRouteAccessManager() {
                    ${isHomeRoute
                      ? 'bg-gradient-to-r from-green-500/20 to-emerald-600/10 border border-green-500/30'
                      : routeHasAccess 
-                       ? 'bg-gradient-to-r from-blue-500/15 to-blue-600/5 border border-blue-500/25' 
+                       ? 'bg-white/10 border border-white/20' 
                        : 'bg-white/5 border border-white/10 hover:border-white/20'}`}
         style={{ marginLeft: `${paddingLeft + 28}px` }}
       >
@@ -339,7 +339,7 @@ export function UserRouteAccessManager() {
             id={`route-${node.key}`}
             checked={routeHasAccess}
             onCheckedChange={(checked) => handleToggle(node.key, checked as boolean)}
-            className="border-blue-500/50 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
+            className="border-white/30 data-[state=checked]:bg-white data-[state=checked]:text-black data-[state=checked]:border-white"
           />
         )}
         
