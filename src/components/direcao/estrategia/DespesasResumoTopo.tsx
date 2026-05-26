@@ -41,6 +41,7 @@ type Colab = {
   insalubridade_pct: number;
   fgts_pct: number;
   previsao_13_valor: number;
+  em_folha: boolean;
 };
 
 type TipoCusto = { id: string; nome: string; tipo: 'fixa' | 'variavel' };
@@ -91,6 +92,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         insalubridade_pct: Number(c.insalubridade_pct) || 0,
         fgts_pct: c.fgts_pct == null ? 8 : Number(c.fgts_pct),
         previsao_13_valor: Number(c.previsao_13_valor) || 0,
+        em_folha: !!c.em_folha,
       })));
       setTipos(((t || []) as any[]).map((x: any) => ({ id: x.id, nome: x.nome, tipo: x.tipo })));
     })();
@@ -392,6 +394,7 @@ function BlocoFolha({
           <thead>
             <tr className="text-[10px] uppercase tracking-wider text-white/40 border-b border-white/10">
               <th className="text-left font-normal pb-2 pl-1">Colaborador</th>
+              <th className="text-center font-normal pb-2 px-1">Em folha</th>
               <th className="text-center font-normal pb-2 px-1 w-10">Status</th>
               <th className="text-right font-normal pb-2 px-2 text-emerald-400">Salário</th>
               <th className="text-right font-normal pb-2 px-2">Combustível</th>
@@ -407,9 +410,9 @@ function BlocoFolha({
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={12} className="text-white/40 px-2 py-3">Carregando...</td></tr>
+              <tr><td colSpan={13} className="text-white/40 px-2 py-3">Carregando...</td></tr>
             ) : colabs.length === 0 ? (
-              <tr><td colSpan={12} className="text-white/40 px-2 py-3 text-center">Nenhum colaborador cadastrado.</td></tr>
+              <tr><td colSpan={13} className="text-white/40 px-2 py-3 text-center">Nenhum colaborador cadastrado.</td></tr>
             ) : colabs.map(colab => {
               const r = rows.find(row => row.admin_user_id === colab.id);
               const salario = r ? Number(r.salario) : colab.salario;
@@ -425,6 +428,13 @@ function BlocoFolha({
               return (
                 <tr key={colab.id} className="border-b border-white/5 hover:bg-white/[0.03]">
                   <td className="py-2 pl-1 text-white/90">{colab.nome}</td>
+                  <td className="py-2 px-1 text-center">
+                    {colab.em_folha ? (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-400/15 text-emerald-300 border border-emerald-400/20">Sim</span>
+                    ) : (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-white/10 text-white/50 border border-white/10">Não</span>
+                    )}
+                  </td>
                   <td className="py-2 px-1 text-center">
                     {r ? (
                       <span title="Em folha" className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-400/15 text-emerald-300 text-[10px]">&#9679;</span>
@@ -494,6 +504,7 @@ function BlocoFolha({
                   </SelectContent>
                 </Select>
               </td>
+              <td className="py-2 px-1"></td>
               <td className="py-2 px-1"></td>
               <td className="px-2">
                 <NumInput value={form.salario} onChange={(v) => setForm({ ...form, salario: v })} />
