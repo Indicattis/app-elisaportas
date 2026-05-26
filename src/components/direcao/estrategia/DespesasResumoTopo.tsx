@@ -626,16 +626,22 @@ function BlocoDespesa({
             {/* ------ Sugestões padrão ------ */}
             {!loading && sugestoes.map(sug => (
               <tr key={`sug-${sug.id}`} className="border-b border-white/5 hover:bg-white/[0.03]">
-                <td className="py-2 pl-1 text-white/40 italic">
-                  {sug.nome}
-                  <span className="ml-2 text-[9px] uppercase tracking-wider bg-white/5 border border-white/10 text-white/40 px-1.5 py-0.5 rounded">Padrão</span>
-                </td>
-                <td className="px-2 text-white/30">—</td>
-                <td className="px-2 text-white/30">{mesStart.split('-').reverse().join('/')}</td>
-                <td className="px-2 text-right">
+                <td className="py-2 pl-1 text-white/90">{sug.nome}</td>
+                <td className="px-2 text-white/60">—</td>
+                <td className="px-2 text-white/60">{mesStart.split('-').reverse().join('/')}</td>
+                <td className="px-2 text-right text-white/60">
                   <EditableCell value={sug.valor} format="currency" onSave={(v) => aplicarSugestao(sug, v)} />
                 </td>
-                <td className="pr-1" />
+                <td className="pr-1 text-right">
+                  <button
+                    onClick={() => onDeletePadrao(sug.id)}
+                    className="p-1 rounded hover:bg-red-500/20 text-red-300/50 hover:text-red-300"
+                    aria-label="Remover sugestão"
+                    title="Remover sugestão padrão"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </td>
               </tr>
             ))}
 
