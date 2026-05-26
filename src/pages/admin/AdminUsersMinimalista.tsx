@@ -459,7 +459,7 @@ export default function AdminUsersMinimalista() {
                 {activeTab === tab.value && (
                   <motion.span
                     layoutId="admin-users-tab-indicator"
-                    className="absolute inset-0 rounded-full bg-gradient-to-b from-blue-500 to-blue-600 shadow-[0_4px_20px_-2px_rgba(59,130,246,0.6)] ring-1 ring-blue-400/40"
+                    className="absolute inset-0 rounded-full bg-gradient-to-b from-white/10 to-white/5 shadow-[0_4px_20px_-2px_rgba(255,255,255,0.1)] ring-1 ring-white/20"
                     transition={{ type: "spring", stiffness: 380, damping: 32 }}
                   />
                 )}
