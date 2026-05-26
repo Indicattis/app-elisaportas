@@ -596,7 +596,8 @@ export default function VendasDirecao() {
         breadcrumbItems={[
           { label: "Home", path: "/home" },
           { label: "Direção", path: "/direcao" },
-          { label: "Vendas" }
+          { label: "Vendas", path: "/direcao/vendas" },
+          { label: "Todas as Vendas" }
         ]}
       >
         <div className="flex items-center justify-center py-20">
@@ -608,13 +609,14 @@ export default function VendasDirecao() {
 
   return (
     <MinimalistLayout 
-      title="Vendas" 
+      title="Todas as Vendas" 
       subtitle="Todas as vendas do período"
       backPath="/direcao/vendas"
       breadcrumbItems={[
         { label: "Home", path: "/home" },
         { label: "Direção", path: "/direcao" },
-        { label: "Vendas" }
+        { label: "Vendas", path: "/direcao/vendas" },
+        { label: "Todas as Vendas" }
       ]}
       headerActions={headerActions}
     >
