@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { formatCurrency } from '@/lib/utils';
 import { Users, Receipt, TrendingDown, Trash2, Check, X } from 'lucide-react';
@@ -55,6 +55,8 @@ function calcTotalFolha(f: { salario: number; aux_combustivel: number; insalubri
   return f.salario + f.aux_combustivel + insalub + fgts + f.previsao_13_valor + ferias;
 }
 
+const norm = (s: string | null | undefined) => String(s || '').trim().toLowerCase();
+
 interface Props {
   mes: string | null;
   ano?: number;
@@ -77,6 +79,25 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
   const { items: padroes, remove: removePadrao } = useDespesasPadrao();
 
   const mesStart = mes ? `${mes}-01` : null;
+  const padroesFolha = useMemo(() => padroes.filter(p => p.tipo === 'folha'), [padroes]);
+  const padroesFixas = useMemo(() => padroes.filter(p => p.tipo === 'fixa'), [padroes]);
+  const padroesVariaveis = useMemo(() => padroes.filter(p => p.tipo === 'variavel'), [padroes]);
+  const totalExibido = useMemo(() => {
+    const nomesFolha = new Set(folha.map(r => norm(r.colaborador_nome)));
+    const nomesFixas = new Set(fixas.map(r => norm(r.tipo_nome)));
+    const nomesVariaveis = new Set(variaveis.map(r => norm(r.tipo_nome)));
+
+    return folha.reduce((s, x) => s + Number(x.total || 0), 0)
+      + padroesFolha.filter(p => !nomesFolha.has(norm(p.nome))).reduce((s, p) => s + calcTotalFolha(p), 0)
+      + fixas.reduce((s, x) => s + Number(x.valor || 0), 0)
+      + padroesFixas.filter(p => !nomesFixas.has(norm(p.nome))).reduce((s, p) => s + Number(p.valor || 0), 0)
+      + variaveis.reduce((s, x) => s + Number(x.valor || 0), 0)
+      + padroesVariaveis.filter(p => !nomesVariaveis.has(norm(p.nome))).reduce((s, p) => s + Number(p.valor || 0), 0);
+  }, [folha, fixas, variaveis, padroesFolha, padroesFixas, padroesVariaveis]);
+
+  useEffect(() => {
+    if (mes) onMediaMensalChange?.(totalExibido);
+  }, [mes, totalExibido, onMediaMensalChange]);
 
   useEffect(() => {
     // Sem pré-carregamento: a página passa a se basear apenas em "Configurações padrão".
@@ -104,10 +125,6 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         setFolha(folhaArr);
         setFixas(lancArr.filter(x => x.categoria === 'fixa'));
         setVariaveis(lancArr.filter(x => x.categoria === 'variavel'));
-        const total =
-          folhaArr.reduce((s, x) => s + Number(x.total || 0), 0) +
-          lancArr.reduce((s, x) => s + Number(x.valor || 0), 0);
-        onMediaMensalChange?.(total);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -205,7 +222,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         rows={folha}
         loading={loading}
         colabs={colabs}
-        padroesFolha={padroes.filter(p => p.tipo === 'folha')}
+        padroesFolha={padroesFolha}
         onDelete={(id) => setConfirmDel({ kind: 'folha', id })}
         onPatch={handlePatchFolha}
         onInsert={handleInsertFolha}
@@ -218,7 +235,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         loading={loading}
         categoria="fixa"
         tipos={tipos.filter(t => t.tipo === 'fixa')}
-        padroes={padroes.filter(p => p.tipo === 'fixa')}
+        padroes={padroesFixas}
         mesStart={mesStart || ''}
         onDelete={(id) => setConfirmDel({ kind: 'lanc', id })}
         onInsert={handleInsertLanc}
@@ -231,7 +248,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         loading={loading}
         categoria="variavel"
         tipos={tipos.filter(t => t.tipo === 'variavel')}
-        padroes={padroes.filter(p => p.tipo === 'variavel')}
+        padroes={padroesVariaveis}
         mesStart={mesStart || ''}
         onDelete={(id) => setConfirmDel({ kind: 'lanc', id })}
         onInsert={handleInsertLanc}
@@ -334,10 +351,7 @@ function BlocoFolha({
   }) => Promise<void>;
   onDeletePadrao: (id: string) => Promise<void> | void;
 }) {
-  const total = rows.reduce((s, r) => s + Number(r.total || 0), 0);
-
   // Lista unificada por nome: lançamentos salvos + colaboradores cadastrados + padrões.
-  const norm = (s: string) => s.trim().toLowerCase();
   const colabsByNome = new Map(colabs.map(c => [norm(c.nome), c]));
   const padroesByNome = new Map(padroesFolha.map(p => [norm(p.nome), p]));
   const rowsByNome = new Map(rows.map(r => [norm(r.colaborador_nome), r]));
@@ -377,6 +391,18 @@ function BlocoFolha({
       em_folha: true,
     };
   }).sort((a, b) => a.nome.localeCompare(b.nome));
+
+  const total = sortedColabs.reduce((s, colab) => {
+    const r = rowsByNome.get(norm(colab.nome));
+    const valores = r ? r : colab;
+    return s + calcTotalFolha({
+      salario: Number(valores.salario) || 0,
+      aux_combustivel: Number(valores.aux_combustivel) || 0,
+      insalubridade_pct: Number(valores.insalubridade_pct) || 0,
+      fgts_pct: Number(valores.fgts_pct) || 0,
+      previsao_13_valor: Number(valores.previsao_13_valor) || 0,
+    });
+  }, 0);
 
   const insertField = async (
     colab: Colab,
@@ -548,8 +574,6 @@ function BlocoDespesa({
   }) => Promise<void>;
   onDeletePadrao: (id: string) => Promise<void> | void;
 }) {
-  const total = rows.reduce((s, r) => s + Number(r.valor || 0), 0);
-
   const [tipoId, setTipoId] = useState('');
   const [descricao, setDescricao] = useState('');
   const [data, setData] = useState(mesStart);
@@ -574,6 +598,8 @@ function BlocoDespesa({
   // Sugestões: padrões cujo nome ainda não existe em algum lançamento do mês
   const nomesExistentes = new Set(rows.map(r => (r.tipo_nome || '').trim().toLowerCase()));
   const sugestoes = padroes.filter(p => !nomesExistentes.has(p.nome.trim().toLowerCase()));
+  const total = rows.reduce((s, r) => s + Number(r.valor || 0), 0)
+    + sugestoes.reduce((s, p) => s + Number(p.valor || 0), 0);
 
   const aplicarSugestao = async (sug: DespesaPadrao, novoValor: number) => {
     if (novoValor <= 0) return;
