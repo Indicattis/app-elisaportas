@@ -109,7 +109,21 @@ serve(async (req) => {
       });
     }
 
-    if (!targetAdminUser) {
+    const { data: targetRepresentante, error: repLookupError } = await supabaseAdmin
+      .from('representantes')
+      .select('id, user_id, nome, email')
+      .eq('user_id', targetUserId)
+      .maybeSingle();
+
+    if (repLookupError) {
+      console.error('[delete-user] Representante lookup failed', repLookupError);
+      return new Response(JSON.stringify({ error: 'Failed to locate target representante' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (!targetAdminUser && !targetRepresentante) {
       return new Response(JSON.stringify({ error: 'Target user not found' }), {
         status: 404,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -118,14 +132,24 @@ serve(async (req) => {
 
     let deletionMode: 'deleted' | 'archived' = 'deleted';
 
-    const { error: deleteAdminError } = await supabaseAdmin
-      .from('admin_users')
-      .delete()
-      .eq('user_id', targetUserId);
+    let deleteAdminError: any = null;
+    if (targetAdminUser) {
+      const { error } = await supabaseAdmin
+        .from('admin_users')
+        .delete()
+        .eq('user_id', targetUserId);
+      deleteAdminError = error;
+    } else if (targetRepresentante) {
+      const { error } = await supabaseAdmin
+        .from('representantes')
+        .delete()
+        .eq('user_id', targetUserId);
+      deleteAdminError = error;
+    }
 
     if (deleteAdminError) {
       if (deleteAdminError.code !== '23503') {
-        console.error('[delete-user] Failed deleting admin_users row', deleteAdminError);
+        console.error('[delete-user] Failed deleting user row', deleteAdminError);
         return new Response(JSON.stringify({ error: `Failed to delete user data: ${deleteAdminError.message}` }), {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -137,30 +161,49 @@ serve(async (req) => {
         message: deleteAdminError.message,
       });
 
-      const archivedName = targetAdminUser.nome?.includes('(Arquivado)')
-        ? targetAdminUser.nome
-        : `${targetAdminUser.nome} (Arquivado)`;
+      const baseName = targetAdminUser?.nome ?? targetRepresentante?.nome ?? 'Usuário';
+      const archivedName = baseName.includes('(Arquivado)') ? baseName : `${baseName} (Arquivado)`;
       const archivedEmail = `deleted+${targetUserId}@archived.local`;
 
-      const { error: archiveAdminError } = await supabaseAdmin
-        .from('admin_users')
-        .update({
-          ativo: false,
-          tipo_usuario: 'arquivado',
-          nome: archivedName,
-          email: archivedEmail,
-          cpf: null,
-          foto_perfil_url: null,
-          visivel_organograma: false,
-        })
-        .eq('user_id', targetUserId);
+      if (targetAdminUser) {
+        const { error: archiveAdminError } = await supabaseAdmin
+          .from('admin_users')
+          .update({
+            ativo: false,
+            tipo_usuario: 'arquivado',
+            nome: archivedName,
+            email: archivedEmail,
+            cpf: null,
+            foto_perfil_url: null,
+            visivel_organograma: false,
+          })
+          .eq('user_id', targetUserId);
 
-      if (archiveAdminError) {
-        console.error('[delete-user] Failed archiving referenced user', archiveAdminError);
-        return new Response(JSON.stringify({ error: `Failed to archive referenced user: ${archiveAdminError.message}` }), {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+        if (archiveAdminError) {
+          console.error('[delete-user] Failed archiving referenced user', archiveAdminError);
+          return new Response(JSON.stringify({ error: `Failed to archive referenced user: ${archiveAdminError.message}` }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+      } else if (targetRepresentante) {
+        const { error: archiveRepError } = await supabaseAdmin
+          .from('representantes')
+          .update({
+            ativo: false,
+            nome: archivedName,
+            email: archivedEmail,
+            foto_perfil_url: null,
+          })
+          .eq('user_id', targetUserId);
+
+        if (archiveRepError) {
+          console.error('[delete-user] Failed archiving representante', archiveRepError);
+          return new Response(JSON.stringify({ error: `Failed to archive representante: ${archiveRepError.message}` }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
       }
 
       deletionMode = 'archived';
