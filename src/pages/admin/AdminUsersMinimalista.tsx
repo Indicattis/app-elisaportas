@@ -186,7 +186,10 @@ export default function AdminUsersMinimalista() {
         message?: string;
         error?: string;
       }>("delete-user", {
-        body: { user_id: user.user_id },
+        body: {
+          user_id: user.user_id,
+          source: user.tipo_usuario === "representante" ? "representantes" : "admin_users",
+        },
       });
 
       if (response.error) throw response.error;
