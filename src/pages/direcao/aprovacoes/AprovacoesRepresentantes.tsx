@@ -40,6 +40,20 @@ export default function AprovacoesRepresentantes() {
     return () => clearTimeout(t);
   }, []);
 
+  useEffect(() => {
+    const channel = supabase
+      .channel('representantes-aprovacoes-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'representantes' }, () => {
+        queryClient.invalidateQueries({ queryKey: ['representantes-aprovacoes'] });
+        queryClient.invalidateQueries({ queryKey: ['aprovacoes-representantes-count'] });
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
   const { data: representantes = [], isLoading } = useQuery({
     queryKey: ['representantes-aprovacoes'],
     queryFn: async () => {
@@ -52,6 +66,11 @@ export default function AprovacoesRepresentantes() {
       if (error) throw error;
       return (data || []) as Representante[];
     },
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    refetchInterval: 15000,
   });
 
   const aprovar = useMutation({
