@@ -39,7 +39,7 @@ export default function AprovacoesRepresentantes() {
       const { data, error } = await supabase
         .from('admin_users')
         .select('id, nome, email, cpf, ativo, foto_perfil_url, created_at')
-        .eq('role', 'vendedor')
+        .eq('tipo_usuario', 'representante')
         .order('created_at', { ascending: false });
       if (error) throw error;
       return (data || []) as Representante[];
