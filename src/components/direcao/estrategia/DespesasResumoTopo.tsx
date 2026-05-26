@@ -604,7 +604,7 @@ function BlocoDespesa({
             ))}
 
             {/* ------ Add row ------ */}
-            <tr className="border-b border-white/5 hover:bg-white/[0.03]">
+            {tipos.length > 0 && <tr className="border-b border-white/5 hover:bg-white/[0.03]">
               <td className="py-2 pl-1">
                 <Select value={tipoId} onValueChange={setTipoId}>
                   <SelectTrigger className="h-8 text-xs bg-white/5 border-white/10">
@@ -656,7 +656,7 @@ function BlocoDespesa({
                   </button>
                 </div>
               </td>
-            </tr>
+            </tr>}
           </tbody>
         </table>
       </div>
