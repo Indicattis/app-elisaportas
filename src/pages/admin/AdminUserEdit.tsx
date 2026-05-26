@@ -321,6 +321,12 @@ export default function AdminUserEdit() {
       title="Editar usuário"
       subtitle={user.nome}
       backPath="/admin/users"
+      breadcrumbItems={[
+        { label: "Home", path: "/home" },
+        { label: "Admin", path: "/admin" },
+        { label: "Usuários", path: "/admin/users" },
+        { label: user.nome },
+      ]}
       headerActions={
         <div className="flex flex-wrap gap-2">
           <Button
