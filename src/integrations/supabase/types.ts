@@ -2107,6 +2107,7 @@ export type Database = {
           admin_user_id: string
           aux_combustivel: number
           colaborador_nome: string
+          confirmado_por: string
           created_at: string
           created_by: string | null
           fgts_pct: number
@@ -2122,6 +2123,7 @@ export type Database = {
           admin_user_id: string
           aux_combustivel?: number
           colaborador_nome: string
+          confirmado_por?: string
           created_at?: string
           created_by?: string | null
           fgts_pct?: number
@@ -2137,6 +2139,7 @@ export type Database = {
           admin_user_id?: string
           aux_combustivel?: number
           colaborador_nome?: string
+          confirmado_por?: string
           created_at?: string
           created_by?: string | null
           fgts_pct?: number
@@ -2153,6 +2156,7 @@ export type Database = {
       despesas_manuais_lancamentos: {
         Row: {
           categoria: string
+          confirmado_por: string
           created_at: string
           created_by: string | null
           data: string
@@ -2166,6 +2170,7 @@ export type Database = {
         }
         Insert: {
           categoria: string
+          confirmado_por?: string
           created_at?: string
           created_by?: string | null
           data: string
@@ -2179,6 +2184,7 @@ export type Database = {
         }
         Update: {
           categoria?: string
+          confirmado_por?: string
           created_at?: string
           created_by?: string | null
           data?: string
