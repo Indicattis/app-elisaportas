@@ -351,19 +351,29 @@ export default function AdminUsersMinimalista() {
   }
 
   const renderUserList = () => (
-    <div className="bg-primary/5 border border-primary/10 backdrop-blur-xl rounded-lg overflow-hidden">
-      <div className="divide-y divide-primary/10">
-        {filteredUsers.length === 0 ? (
-          <div className="p-8 text-center text-white/40">
-            Nenhum {activeTab === "colaborador" ? "colaborador" : activeTab === "representante" ? "representante" : "metamorfo"} encontrado
-          </div>
-        ) : (
-          filteredUsers.map((user) => (
-            <div
-              key={user.id}
-              className="p-4 hover:bg-white/5 transition-colors cursor-pointer"
-              onClick={() => setSelectedUser(user)}
-            >
+    <Card className="bg-white/5 border-white/10">
+      <CardHeader>
+        <CardTitle className="text-white">Usuários Cadastrados</CardTitle>
+        <CardDescription className="text-white/50">
+          {filteredUsers.length} {activeTab === "colaborador" ? "colaborador(es)" : activeTab === "representante" ? "representante(s)" : "metamorfo(s)"}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="divide-y divide-white/10">
+          {filteredUsers.length === 0 ? (
+            <div className="p-8 text-center text-white/50">
+              Nenhum {activeTab === "colaborador" ? "colaborador" : activeTab === "representante" ? "representante" : "metamorfo"} encontrado
+            </div>
+          ) : (
+            filteredUsers.map((user, idx) => (
+              <div
+                key={user.id}
+                className={cn(
+                  "p-4 hover:bg-white/[0.04] transition-colors cursor-pointer",
+                  idx % 2 === 1 && "bg-white/[0.02]"
+                )}
+                onClick={() => setSelectedUser(user)}
+              >
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 flex-shrink-0">
                   <AvatarUpload
@@ -521,11 +531,12 @@ export default function AdminUsersMinimalista() {
                   )}
                 </div>
               </div>
-            </div>
-          ))
-        )}
-      </div>
-    </div>
+              </div>
+            ))
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 
   return (
