@@ -1,21 +1,25 @@
-## Objetivo
+## Botão de confirmação para sugestões
 
-Em `/direcao/estrategia/despesas/configuracoes`, simplificar o bloco de Folha Salarial padrão para conter apenas **Nome do colaborador** e **Salário**. Os demais campos (Combustível, Insalubridade %, FGTS %, Previsão 13°) saem da tela de configurações e passam a ser preenchidos somente em `/direcao/estrategia/despesas/{mes}`.
+Em `src/components/direcao/estrategia/DespesasResumoTopo.tsx`, adicionar um botão de confirmar (✓ verde) ao lado da lixeira nas linhas de sugestão dos 3 blocos (Folha, Fixas, Variáveis). Ao clicar, a sugestão é convertida em lançamento real do mês usando o valor atualmente exibido na célula editável.
 
-## Mudanças
+**Folha Salarial** (linhas onde `r` é `undefined` e existe `padroesByNome.get(...)`):
+- Botão ✓ chama `onInsert({ colab, salario, aux_combustivel, insalubridade_pct, fgts_pct, previsao_13_valor })` com os valores atualmente mostrados (vindos do padrão).
 
-**`src/pages/direcao/estrategia/EstrategiaDespesasConfiguracoes.tsx`**
-- `FolhaBlock`: remover state `aux`, `insalub`, `fgts`, `prev13` e seus inputs da linha de adicionar. Inserir somente `salario` (com defaults 0/8 para os demais via hook).
-- Reduzir a tabela para colunas: Colaborador, Salário, Ações. Remover colunas Combustível, Insalub %, FGTS %, Previsão 13°, Total.
-- `FolhaRow`: manter só nome e salário inline-editáveis; remover demais células.
-- Remover `calcTotalFolha` e o rodapé "Total mensal estimado" desse bloco (não faz sentido sem os outros componentes).
+**Despesas Fixas e Variáveis** (linhas `sugestoes.map(...)`):
+- Botão ✓ chama `aplicarSugestao(sug, sug.valor)` — mesma função já existente usada quando o usuário edita o valor.
 
-**Sem mudanças no banco**: a tabela `despesas_padrao` continua tendo as colunas `aux_combustivel`, `insalubridade_pct`, `fgts_pct`, `previsao_13_valor` com default 0/8. Eles continuarão sendo usados como base na tela do mês (que já permite editar inline).
+Visual: botão `bg-emerald-500/20 text-emerald-300` (mesmo padrão do botão Salvar do formulário inline), ao lado da lixeira existente.
 
-## Comportamento em `/despesas/{mes}`
+## Status (segunda etapa — não implementar ainda)
 
-Nenhuma alteração: a sugestão "Padrão" da folha já aparece com os valores cadastrados (apenas salário > 0, demais zerados). O usuário edita inline qualquer campo (Combustível, Insalub, FGTS, 13°) e ao primeiro toque a linha vira lançamento real do mês — fluxo já existente.
+A coluna "Status" hoje só existe no bloco Folha (bolinha verde se lançado, vermelha se não). Após confirmar a primeira etapa, faremos:
 
-## Arquivos afetados
+- 🔴 Vermelho = pendente (sugestão ainda não confirmada)
+- 🟡 Amarelo = "Alana" (confirmada por Alana)
+- 🟢 Verde = "Luan" (confirmada por Luan)
 
-- **edit** `src/pages/direcao/estrategia/EstrategiaDespesasConfiguracoes.tsx`
+Isso exige decidir:
+1. Adicionar coluna Status também em Fixas/Variáveis? (hoje não tem)
+2. Como diferenciar Alana vs Luan? Pelo usuário autenticado que clicou em confirmar? Por seleção manual? Persistir em qual coluna (ex.: `confirmado_por` em `despesas_manuais_folha` e `despesas_manuais_lancamentos`)?
+
+Vou pedir essas definições quando chegarmos nessa etapa.
