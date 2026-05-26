@@ -8,6 +8,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useDespesasPadrao } from '@/hooks/useDespesasPadrao';
 
 type FolhaRow = {
   id: string;
@@ -71,6 +72,8 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
   const [colabs, setColabs] = useState<Colab[]>([]);
   const [tipos, setTipos] = useState<TipoCusto[]>([]);
   const [confirmDel, setConfirmDel] = useState<null | { kind: 'folha' | 'lanc'; id: string }>(null);
+
+  const { items: padroes } = useDespesasPadrao();
 
   const mesStart = mes ? `${mes}-01` : null;
 
@@ -219,6 +222,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         rows={folha}
         loading={loading}
         colabs={colabs}
+        padroesFolha={padroes.filter(p => p.tipo === 'folha')}
         onDelete={(id) => setConfirmDel({ kind: 'folha', id })}
         onPatch={handlePatchFolha}
         onInsert={handleInsertFolha}
@@ -230,6 +234,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         loading={loading}
         categoria="fixa"
         tipos={tipos.filter(t => t.tipo === 'fixa')}
+        padroes={padroes.filter(p => p.tipo === 'fixa')}
         mesStart={mesStart || ''}
         onDelete={(id) => setConfirmDel({ kind: 'lanc', id })}
         onInsert={handleInsertLanc}
@@ -241,6 +246,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         loading={loading}
         categoria="variavel"
         tipos={tipos.filter(t => t.tipo === 'variavel')}
+        padroes={padroes.filter(p => p.tipo === 'variavel')}
         mesStart={mesStart || ''}
         onDelete={(id) => setConfirmDel({ kind: 'lanc', id })}
         onInsert={handleInsertLanc}
