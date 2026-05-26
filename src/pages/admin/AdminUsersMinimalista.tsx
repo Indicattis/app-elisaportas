@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +12,6 @@ import { useToast } from "@/hooks/use-toast";
 import { AvatarUpload } from "@/components/AvatarUpload";
 import { AddUserDialog } from "@/components/AddUserDialog";
 import { ResetPasswordModal } from "@/components/ResetPasswordModal";
-import { UserDetailsModal } from "@/components/admin/UserDetailsModal";
 import { Search, Edit, Save, X, Loader2, KeyRound, FileDown, UserX, UserCheck, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -49,6 +49,7 @@ interface AdminUser {
 
 
 export default function AdminUsersMinimalista() {
+  const navigate = useNavigate();
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [representantes, setRepresentantes] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,10 +57,7 @@ export default function AdminUsersMinimalista() {
   const [filterStatus, setFilterStatus] = useState<string>("todos");
   const [filterSetor, setFilterSetor] = useState<string>("todos");
   const [filterRole, setFilterRole] = useState<string>("todos");
-  const [editingUser, setEditingUser] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState<Partial<AdminUser>>({});
   const [resetPasswordUser, setResetPasswordUser] = useState<AdminUser | null>(null);
-  const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
   const [activeTab, setActiveTab] = useState("colaborador");
   const [togglingUser, setTogglingUser] = useState<AdminUser | null>(null);
   const [deletingUser, setDeletingUser] = useState<AdminUser | null>(null);
