@@ -74,7 +74,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
   const [tipos, setTipos] = useState<TipoCusto[]>([]);
   const [confirmDel, setConfirmDel] = useState<null | { kind: 'folha' | 'lanc'; id: string }>(null);
 
-  const { items: padroes } = useDespesasPadrao();
+  const { items: padroes, remove: removePadrao } = useDespesasPadrao();
 
   const mesStart = mes ? `${mes}-01` : null;
 
@@ -209,6 +209,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         onDelete={(id) => setConfirmDel({ kind: 'folha', id })}
         onPatch={handlePatchFolha}
         onInsert={handleInsertFolha}
+        onDeletePadrao={async (id) => { await removePadrao(id); reload(); }}
       />
       <BlocoDespesa
         titulo="Despesas Fixas"
@@ -221,6 +222,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         mesStart={mesStart || ''}
         onDelete={(id) => setConfirmDel({ kind: 'lanc', id })}
         onInsert={handleInsertLanc}
+        onDeletePadrao={async (id) => { await removePadrao(id); reload(); }}
       />
       <BlocoDespesa
         titulo="Despesas Variáveis"
@@ -233,6 +235,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         mesStart={mesStart || ''}
         onDelete={(id) => setConfirmDel({ kind: 'lanc', id })}
         onInsert={handleInsertLanc}
+        onDeletePadrao={async (id) => { await removePadrao(id); reload(); }}
       />
 
       <AlertDialog open={!!confirmDel} onOpenChange={(o) => !o && setConfirmDel(null)}>
