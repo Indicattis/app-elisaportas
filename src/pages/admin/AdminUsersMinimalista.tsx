@@ -445,7 +445,7 @@ export default function AdminUsersMinimalista() {
     >
       <div className="space-y-4">
         <Tabs value={activeTab} onValueChange={(val) => { setActiveTab(val); clearFilters(); }}>
-          <TabsList className="relative mx-auto flex w-fit h-11 p-1 rounded-full bg-[#0b1220]/80 border border-white/10 shadow-inner shadow-black/40 backdrop-blur-md gap-1">
+          <TabsList className="relative mx-auto flex w-fit h-11 p-1 rounded-full bg-white/5 border border-white/10 shadow-inner shadow-black/40 backdrop-blur-md gap-1">
             {[
               { value: "colaborador", label: `Colaboradores (${colaboradoresCount})` },
               { value: "representante", label: `Representantes (${representantesCount})` },
