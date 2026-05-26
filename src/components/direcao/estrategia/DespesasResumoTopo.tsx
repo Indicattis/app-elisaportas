@@ -495,7 +495,7 @@ function BlocoFolha({
                   <td className={`px-2 text-right ${r ? 'text-white/60' : 'text-white/30'}`}>{formatCurrency(feriasComUmTerco)}</td>
                   <td className="px-2 text-right text-white font-medium">{formatCurrency(totalVal)}</td>
                   <td className="pr-1 text-right">
-                    {r && (
+                    {r ? (
                       <button
                         onClick={() => onDelete(r.id)}
                         className="p-1 rounded hover:bg-red-500/20 text-red-300/70 hover:text-red-300"
@@ -503,7 +503,16 @@ function BlocoFolha({
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
-                    )}
+                    ) : padroesByNome.get(norm(colab.nome)) ? (
+                      <button
+                        onClick={() => onDeletePadrao(colab.id)}
+                        className="p-1 rounded hover:bg-red-500/20 text-red-300/50 hover:text-red-300"
+                        aria-label="Remover sugestão"
+                        title="Remover sugestão padrão"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    ) : null}
                   </td>
                 </tr>
               );
