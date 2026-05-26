@@ -214,6 +214,7 @@ import DirecaoHub from "./pages/direcao/DirecaoHub";
 import VendasDirecao from "./pages/direcao/VendasDirecao";
 import VendasHubDirecao from "./pages/direcao/VendasHubDirecao";
 import ParceirosDirecao from "./pages/direcao/ParceirosDirecao";
+import RequisicoesRepresentantesDirecao from "./pages/direcao/RequisicoesRepresentantesDirecao";
 import RegrasVendasDirecao from "./pages/direcao/RegrasVendasDirecao";
 import VendaDetalhesDirecao from "./pages/direcao/VendaDetalhesDirecao";
 import FaturamentoDirecao from "./pages/direcao/FaturamentoDirecao";
