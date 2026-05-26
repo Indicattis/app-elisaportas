@@ -532,7 +532,7 @@ function BlocoFolha({
 /* ---------------- Despesa block ---------------- */
 
 function BlocoDespesa({
-  titulo, icon, rows, loading, categoria, tipos, padroes, mesStart, onDelete, onInsert,
+  titulo, icon, rows, loading, categoria, tipos, padroes, mesStart, onDelete, onInsert, onDeletePadrao,
 }: {
   titulo: string;
   icon: React.ReactNode;
@@ -546,6 +546,7 @@ function BlocoDespesa({
   onInsert: (payload: {
     tipo: TipoCusto; categoria: 'fixa' | 'variavel'; valor: number; data: string; descricao: string;
   }) => Promise<void>;
+  onDeletePadrao: (id: string) => Promise<void> | void;
 }) {
   const total = rows.reduce((s, r) => s + Number(r.valor || 0), 0);
 
