@@ -429,6 +429,13 @@ function BlocoFolha({
                 <tr key={colab.id} className="border-b border-white/5 hover:bg-white/[0.03]">
                   <td className="py-2 pl-1 text-white/90">{colab.nome}</td>
                   <td className="py-2 px-1 text-center">
+                    {colab.em_folha ? (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-400/15 text-emerald-300 border border-emerald-400/20">Sim</span>
+                    ) : (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-white/10 text-white/50 border border-white/10">Não</span>
+                    )}
+                  </td>
+                  <td className="py-2 px-1 text-center">
                     {r ? (
                       <span title="Em folha" className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-400/15 text-emerald-300 text-[10px]">&#9679;</span>
                     ) : (
