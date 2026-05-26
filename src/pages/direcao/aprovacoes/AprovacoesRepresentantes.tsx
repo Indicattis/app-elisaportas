@@ -12,7 +12,7 @@ type Representante = {
   id: string;
   nome: string;
   email: string | null;
-  cpf: string | null;
+  telefone: string | null;
   ativo: boolean;
   foto_perfil_url: string | null;
   created_at: string;
@@ -37,9 +37,8 @@ export default function AprovacoesRepresentantes() {
     queryKey: ['representantes-list'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('admin_users')
-        .select('id, nome, email, cpf, ativo, foto_perfil_url, created_at')
-        .eq('tipo_usuario', 'representante')
+        .from('representantes')
+        .select('id, nome, email, telefone, ativo, foto_perfil_url, created_at')
         .order('created_at', { ascending: false });
       if (error) throw error;
       return (data || []) as Representante[];
@@ -49,7 +48,7 @@ export default function AprovacoesRepresentantes() {
   const toggleAtivo = useMutation({
     mutationFn: async ({ id, ativo }: { id: string; ativo: boolean }) => {
       const { error } = await supabase
-        .from('admin_users')
+        .from('representantes')
         .update({ ativo })
         .eq('id', id);
       if (error) throw error;
@@ -75,7 +74,7 @@ export default function AprovacoesRepresentantes() {
       return (
         r.nome?.toLowerCase().includes(term) ||
         r.email?.toLowerCase().includes(term) ||
-        r.cpf?.toLowerCase().includes(term)
+        r.telefone?.toLowerCase().includes(term)
       );
     });
   }, [representantes, search, filter]);
@@ -131,7 +130,7 @@ export default function AprovacoesRepresentantes() {
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar por nome, email ou CPF..."
+              placeholder="Buscar por nome, email ou telefone..."
               className="w-full h-10 pl-9 pr-3 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-white/30"
             />
           </div>
@@ -189,8 +188,8 @@ export default function AprovacoesRepresentantes() {
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-white truncate">{r.nome}</p>
                 <p className="text-xs text-white/50 truncate">{r.email || '—'}</p>
-                {r.cpf && (
-                  <p className="text-xs text-white/40 truncate">CPF: {r.cpf}</p>
+                {r.telefone && (
+                  <p className="text-xs text-white/40 truncate">Tel: {r.telefone}</p>
                 )}
               </div>
 
