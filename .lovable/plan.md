@@ -1,40 +1,52 @@
-## Objetivo
+# Investigação: por que o usuário aparece como "representante"
 
-Substituir a edição inline + modal de detalhes por uma página dedicada `/admin/users/:id` que reúne, em um só lugar, todas as informações do usuário (colaborador, representante ou metamorfo) e permite editar tudo a partir dali.
+## O que está acontecendo
 
-## Mudanças
+O usuário `b26c65ad-006f-4f25-9d8a-02162d87d33a` (Marcionir da Silva Escobar) **realmente foi criado como colaborador**, mas existe um trigger no banco que insere TODOS os novos usuários do auth também na tabela `representantes` — o que duplica o cadastro.
 
-### 1. Nova página `src/pages/admin/AdminUserEdit.tsx`
-- Rota: `/admin/users/:id` (param identifica registro em `admin_users` ou `representantes`).
-- Layout `MinimalistLayout` com `backPath="/admin/users"`, mesmo padrão visual (glassmorphism, `bg-white/5`, `border-white/10`) usado em `/direcao/estrategia/kits` e em `AdminCompanyEditMinimalista`.
-- Carrega o usuário com base no `id` e no `tipo_usuario` (query string `?tipo=representante` para diferenciar, ou tenta `admin_users` primeiro e cai em `representantes`).
-- Seções organizadas em `Card`s:
-  1. **Cabeçalho** — `AvatarUpload`, nome, email, badges de status (ativo/inativo) e tipo de usuário, com ações principais à direita: Salvar, Resetar senha, Ativar/Desativar, Excluir.
-  2. **Dados pessoais** — nome, CPF (com máscara), data de nascimento, email (somente leitura).
-  3. **Função e setor** — `role` (do `system_roles`), `setor`, `tipo_usuario` (colaborador / representante / metamorfo), `eh_colaborador`, `visivel_organograma`, `salario` (quando colaborador).
-  4. **Sistema** — datas de criação/atualização (somente leitura).
-- Todos os campos editáveis em um único form controlado; botão "Salvar alterações" persiste em `admin_users` (ou `representantes`, com os campos suportados).
-- Reutiliza `ResetPasswordModal` e o `AlertDialog` de exclusão (mesma lógica já existente em `AdminUsersMinimalista`, incluindo `delete-user` edge function e filtro `@archived.local`).
+### Evidências encontradas
 
-### 2. Ajustes em `src/pages/admin/AdminUsersMinimalista.tsx`
-- Remove a edição inline (`editingUser`, `editForm`, `handleEdit`, `handleSave`, `handleCancel`, inputs/selects inline na lista) e o `UserDetailsModal`.
-- Clicar em um item da lista (ou no botão de editar) navega para `/admin/users/:id?tipo=<tipo_usuario>` via `useNavigate`.
-- Mantém: filtros, tabs, busca, contadores, PDF, "Adicionar usuário", toggle ativo rápido e exclusão da listagem (opcional manter — mover apenas para a página de edição se preferir; por padrão manter no item da lista).
+1. Existe uma linha em `admin_users` para esse mesmo `user_id` (78b68a87-…) com nome **"Marcionir da SIlva Escobar (Arquivado)"** e email `deleted+...@archived.local`. Ou seja, ele foi criado como colaborador em `admin_users`, e depois arquivado pelo fluxo de exclusão (porque tinha histórico vinculado).
+2. Existe também uma linha em `representantes` com o mesmo `user_id`, criada **no exato mesmo timestamp** (`2026-03-09 13:15:17`) — o que indica criação automática, não manual.
+3. Existe um trigger ativo:
 
-### 3. Rota em `src/App.tsx`
-- Importa `AdminUserEdit` e registra `<Route path="/admin/users/:id" element={<ProtectedRoute><AdminUserEdit /></ProtectedRoute>} />` no mesmo grupo de `/admin/users`, com a mesma proteção/role já aplicada à rota atual.
+```
+CREATE TRIGGER on_auth_user_created
+AFTER INSERT ON auth.users
+FOR EACH ROW EXECUTE FUNCTION handle_new_representante();
+```
 
-### 4. (Opcional) Limpeza
-- `src/components/admin/UserDetailsModal.tsx` deixa de ser usado em `/admin/users`. Mantemos o arquivo caso outras telas o consumam (verificar usos antes de remover).
+A função `handle_new_representante()` insere incondicionalmente em `public.representantes` toda vez que QUALQUER usuário é criado no `auth.users`, independente de ele ser colaborador, admin, diretor, etc.
 
-## Detalhes técnicos
+4. A edge function `create-user` (usada para cadastrar colaborador) chama `supabase.auth.admin.createUser(...)` — o que dispara esse trigger e gera o registro indevido em `representantes`.
 
-- `representantes` não possui `role`, `setor`, `cpf`, `data_nascimento`, `salario`, `tipo_usuario`, `eh_colaborador`, `visivel_organograma` — esses campos ficam ocultos/disabled quando o registro é de representante; o save só envia colunas existentes na tabela correspondente.
-- CPF salvo apenas com dígitos (mesma regra atual em `handleSave`).
-- Após salvar, mostra toast e mantém o usuário na página (não navega de volta automaticamente); botão "Voltar" usa o `MinimalistLayout` back.
-- Após excluir, navega para `/admin/users`.
+### Resultado prático
 
-## Arquivos
+- Marcionir foi criado como colaborador → entrou em `admin_users` (corretamente) **e** em `representantes` (indevidamente, pelo trigger).
+- A exclusão arquivou o registro em `admin_users` (não removeu, por causa de FKs), mas a linha em `representantes` continuou ativa.
+- A página `/admin/users` separa usuários por tabela: a aba "Representantes" lê de `representantes`, então ele aparece lá.
 
-- Criar: `src/pages/admin/AdminUserEdit.tsx`
-- Editar: `src/pages/admin/AdminUsersMinimalista.tsx`, `src/App.tsx`
+## Plano de correção
+
+### 1. Remover o trigger automático
+Dropar o trigger `on_auth_user_created` em `auth.users` e a função `handle_new_representante()`. A criação de representantes deve ser **explícita** (via formulário/edge function que insere em `representantes` quando o admin escolhe `tipo = representante`), nunca implícita a partir de qualquer criação no auth.
+
+### 2. Limpar o registro órfão do Marcionir
+Excluir a linha de `representantes` com `id = b26c65ad-006f-4f25-9d8a-02162d87d33a` (ele nunca deveria ter existido lá; o cadastro real está arquivado em `admin_users`).
+
+### 3. Verificação
+Após a migração, confirmar que:
+- novos colaboradores criados pelo fluxo padrão não geram registro em `representantes`;
+- a aba "Representantes" em `/admin/users` só lista quem foi cadastrado intencionalmente como representante.
+
+### Detalhes técnicos (SQL da migração)
+
+```sql
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+DROP FUNCTION IF EXISTS public.handle_new_representante();
+
+DELETE FROM public.representantes
+WHERE id = 'b26c65ad-006f-4f25-9d8a-02162d87d33a';
+```
+
+Nenhuma alteração de UI é necessária — o bug é 100% backend/banco.
