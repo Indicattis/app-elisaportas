@@ -1479,7 +1479,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
               total={totalDespFixas}
               formatCurrency={formatCurrency}
               tiposDisponiveis={tiposCustosFixos.filter(t => !isFolha(t.nome))}
-              onClickTipo={(id, nome) => setTipoModal({ id, nome })}
+              onClickTipo={(_id, nome) => setTipoModal({ nome, categoria: 'fixa' })}
             />
             <DespesaSectionReadOnly
               title="Despesas Variáveis"
@@ -1487,7 +1487,14 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
               total={totalDespVariaveis}
               formatCurrency={formatCurrency}
               tiposDisponiveis={tiposCustosVariaveis}
-              onClickTipo={(id, nome) => setTipoModal({ id, nome })}
+              onClickTipo={(_id, nome) => setTipoModal({ nome, categoria: 'variavel' })}
+            />
+            <DespesaSectionReadOnly
+              title="Despesas de Imposto"
+              despesas={despesasImpostos}
+              total={totalDespImpostos}
+              formatCurrency={formatCurrency}
+              onClickTipo={(_id, nome) => setTipoModal({ nome, categoria: 'imposto' })}
             />
           </div>
           {viewMode === 'full' && (
