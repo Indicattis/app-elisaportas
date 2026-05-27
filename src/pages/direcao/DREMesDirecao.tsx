@@ -823,7 +823,8 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
   const [despesasFixas, setDespesasFixas] = useState<DespesaAgrupada[]>([]);
   const [despesasFolha, setDespesasFolha] = useState<DespesaAgrupada[]>([]);
   const [despesasVariaveis, setDespesasVariaveis] = useState<DespesaAgrupada[]>([]);
-  const [tipoModal, setTipoModal] = useState<{ id: string; nome: string } | null>(null);
+  const [despesasImpostos, setDespesasImpostos] = useState<DespesaAgrupada[]>([]);
+  const [tipoModal, setTipoModal] = useState<{ nome: string; categoria: 'fixa' | 'variavel' | 'imposto' } | null>(null);
   const [tiposCustosFixos, setTiposCustosFixos] = useState<TipoCustoVariavel[]>([]);
   const [tiposCustosVariaveis, setTiposCustosVariaveis] = useState<TipoCustoVariavel[]>([]);
   const [topAcessorios, setTopAcessorios] = useState<{nome: string, qtd: number}[]>([]);
