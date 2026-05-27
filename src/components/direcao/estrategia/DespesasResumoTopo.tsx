@@ -740,7 +740,11 @@ function BlocoDespesa({
   // Sugestões: padrões cujo nome ainda não existe em algum lançamento do mês
   const nomesExistentes = new Set(rows.map(r => (r.tipo_nome || '').trim().toLowerCase()));
   const sugestoes = padroes.filter(p => !nomesExistentes.has(p.nome.trim().toLowerCase()));
+  const padraoByNome = new Map(padroes.map(p => [p.nome.trim().toLowerCase(), Number(p.valor || 0)]));
+  const prevForRow = (nome: string) => padraoByNome.get((nome || '').trim().toLowerCase()) || 0;
   const total = rows.reduce((s, r) => s + Number(r.valor || 0), 0)
+    + sugestoes.reduce((s, p) => s + Number(p.valor || 0), 0);
+  const totalPrevisao = rows.reduce((s, r) => s + prevForRow(r.tipo_nome), 0)
     + sugestoes.reduce((s, p) => s + Number(p.valor || 0), 0);
 
   const aplicarSugestao = async (sug: DespesaPadrao, novoValor: number) => {
@@ -765,18 +769,20 @@ function BlocoDespesa({
               <th className="text-left font-normal pb-2 px-2">Descrição</th>
               <th className="text-left font-normal pb-2 px-2 w-[140px]">Data</th>
               <th className="text-right font-normal pb-2 px-2 w-[140px]">Valor pago</th>
+              <th className="text-right font-normal pb-2 px-2 w-[140px]">Previsão</th>
               <th className="pb-2 pr-1 w-[80px]"></th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={5} className="text-white/40 px-2 py-3">Carregando...</td></tr>
+              <tr><td colSpan={6} className="text-white/40 px-2 py-3">Carregando...</td></tr>
             ) : rows.map(r => (
               <tr key={r.id} className="border-b border-white/5 hover:bg-white/[0.03]">
                 <td className="py-2 pl-1 text-white/90">{r.tipo_nome}</td>
                 <td className="px-2 text-white/60">{r.descricao || '—'}</td>
                 <td className="px-2 text-white/60">{r.data.split('-').reverse().join('/')}</td>
                 <td className="px-2 text-right text-white font-medium">{formatCurrency(r.valor)}</td>
+                <td className="px-2 text-right text-white/50">{prevForRow(r.tipo_nome) > 0 ? formatCurrency(prevForRow(r.tipo_nome)) : '—'}</td>
                 <td className="pr-1 text-right">
                   <button
                     onClick={() => onDelete(r.id)}
@@ -798,6 +804,7 @@ function BlocoDespesa({
                 <td className="px-2 text-right text-white/60">
                   <EditableCell value={sug.valor} format="currency" onSave={(v) => aplicarSugestao(sug, v)} />
                 </td>
+                <td className="px-2 text-right text-white/50">{Number(sug.valor) > 0 ? formatCurrency(Number(sug.valor)) : '—'}</td>
                 <td className="pr-1 text-right">
                   <div className="flex items-center justify-end gap-1">
                     <button
@@ -876,6 +883,7 @@ function BlocoDespesa({
               <td className="px-2">
                 <NumInput value={valor} onChange={setValor} />
               </td>
+              <td></td>
               <td className="pr-1">
                 <div className="flex items-center justify-end gap-1">
                   <button
@@ -916,7 +924,16 @@ function BlocoDespesa({
 
       <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between px-2">
         <span className="text-xs text-white/50 uppercase tracking-wider">Total</span>
-        <span className="text-base font-bold text-white">{formatCurrency(total)}</span>
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] uppercase tracking-wider text-white/40">Previsão</span>
+            <span className="text-sm font-medium text-white/60">{formatCurrency(totalPrevisao)}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] uppercase tracking-wider text-white/40">Pago</span>
+            <span className="text-base font-bold text-white">{formatCurrency(total)}</span>
+          </div>
+        </div>
       </div>
     </div>
   );
