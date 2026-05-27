@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { Investment } from "@/hooks/useInvestments";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { useFaturamentoMensal } from "@/hooks/useFaturamentoMensal";
 
 interface InvestmentChartProps {
   investments: Investment[];
@@ -11,6 +12,7 @@ interface InvestmentChartProps {
 const MONTH_ABBR = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
 export default function InvestmentChart({ investments, year }: InvestmentChartProps) {
+  const { data: faturamento } = useFaturamentoMensal(year);
   const chartData = useMemo(() => {
     return Array.from({ length: 12 }, (_, i) => {
       const month = i + 1;
@@ -28,9 +30,10 @@ export default function InvestmentChart({ investments, year }: InvestmentChartPr
         "Meta Ads": metaAds,
         "LinkedIn Ads": linkedinAds,
         "Outros": outros,
+        "Faturamento": faturamento?.[i]?.valor ?? 0,
       };
     });
-  }, [investments, year]);
+  }, [investments, year, faturamento]);
 
   const formatCurrency = (value: number) => {
     if (value >= 1000) {
@@ -97,6 +100,14 @@ export default function InvestmentChart({ investments, year }: InvestmentChartPr
               stroke="#64748b" 
               strokeWidth={2}
               dot={{ fill: '#64748b', r: 4 }}
+              activeDot={{ r: 6 }}
+            />
+            <Line 
+              type="monotone" 
+              dataKey="Faturamento" 
+              stroke="#22c55e" 
+              strokeWidth={3}
+              dot={{ fill: '#22c55e', r: 4 }}
               activeDot={{ r: 6 }}
             />
           </LineChart>
