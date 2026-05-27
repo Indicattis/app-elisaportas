@@ -30,15 +30,24 @@ export function useFretesCidades() {
   const { data: fretes, isLoading } = useQuery({
     queryKey: ['frete_cidades'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('frete_cidades')
-        .select('*')
-        .order('estado', { ascending: true })
-        .order('cidade', { ascending: true })
-        .range(0, 9999);
-      
-      if (error) throw error;
-      return data as FreteCidade[];
+      const pageSize = 1000;
+      let from = 0;
+      const all: FreteCidade[] = [];
+      // Paginar para contornar o limite máximo de linhas do PostgREST
+      while (true) {
+        const { data, error } = await supabase
+          .from('frete_cidades')
+          .select('*')
+          .order('estado', { ascending: true })
+          .order('cidade', { ascending: true })
+          .range(from, from + pageSize - 1);
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        all.push(...(data as FreteCidade[]));
+        if (data.length < pageSize) break;
+        from += pageSize;
+      }
+      return all;
     }
   });
 
