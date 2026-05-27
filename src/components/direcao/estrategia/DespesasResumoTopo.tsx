@@ -175,33 +175,6 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
     reload();
   };
 
-  const toggleConfirmado = async (
-    kind: 'folha' | 'lanc',
-    id: string,
-    atual: 'alana' | 'luan' | undefined,
-  ) => {
-    const novo = atual === 'luan' ? 'alana' : 'luan';
-    const table = kind === 'folha' ? 'despesas_manuais_folha' : 'despesas_manuais_lancamentos';
-    const { error } = await supabase.from(table as any).update({ confirmado_por: novo } as any).eq('id', id);
-    if (error) { toast.error('Erro ao alterar status: ' + error.message); return; }
-    if (mesStart) {
-      const sourceList = kind === 'folha' ? folha : [...fixas, ...variaveis];
-      const found = sourceList.find((r: any) => r.id === id);
-      const refNome = kind === 'folha'
-        ? (found as FolhaRow | undefined)?.colaborador_nome || '—'
-        : (found as LancRow | undefined)?.tipo_nome || '—';
-      await logStatusChange({
-        mes_referencia: mesStart,
-        escopo: kind,
-        ref_id: id,
-        ref_nome: refNome,
-        status_anterior: atual || 'alana',
-        status_novo: novo,
-      });
-    }
-    reload();
-  };
-
   const handlePatchFolha = async (
     id: string,
     field: 'salario' | 'aux_combustivel' | 'insalubridade_pct' | 'fgts_pct' | 'previsao_13_valor',
