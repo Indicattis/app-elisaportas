@@ -41,6 +41,27 @@ function computeLucroUnit(ci: NonNullable<MontagemItem["custo_item"]>): number {
   return preco - deducoes - custo;
 }
 
+export async function recalcKitValorPorta(kitId: string): Promise<number> {
+  const { data, error } = await supabase
+    .from("tabela_precos_portas_montagem")
+    .select("quantidade, custo_item:custo_item_id (preco_venda)")
+    .eq("kit_id", kitId);
+  if (error) throw error;
+  let total = 0;
+  for (const row of (data ?? []) as any[]) {
+    const q = Number(row.quantidade || 0);
+    const preco = Number(row.custo_item?.preco_venda || 0);
+    total += q * preco;
+  }
+  const novoValor = Math.round(total * 100) / 100;
+  const { error: updErr } = await supabase
+    .from("tabela_precos_portas")
+    .update({ valor_porta: novoValor })
+    .eq("id", kitId);
+  if (updErr) throw updErr;
+  return novoValor;
+}
+
 export function useKitsMontagemResumo() {
   return useQuery({
     queryKey: RESUMO_KEY,
