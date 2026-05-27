@@ -1,0 +1,2 @@
+ALTER TABLE public.despesas_mes_status DROP CONSTRAINT IF EXISTS despesas_mes_status_status_check;
+ALTER TABLE public.despesas_mes_status ADD CONSTRAINT despesas_mes_status_status_check CHECK (status IN ('pendente','alana','luan','pronto'));
