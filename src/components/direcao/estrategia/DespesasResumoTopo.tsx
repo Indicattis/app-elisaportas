@@ -175,33 +175,6 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
     reload();
   };
 
-  const toggleConfirmado = async (
-    kind: 'folha' | 'lanc',
-    id: string,
-    atual: 'alana' | 'luan' | undefined,
-  ) => {
-    const novo = atual === 'luan' ? 'alana' : 'luan';
-    const table = kind === 'folha' ? 'despesas_manuais_folha' : 'despesas_manuais_lancamentos';
-    const { error } = await supabase.from(table as any).update({ confirmado_por: novo } as any).eq('id', id);
-    if (error) { toast.error('Erro ao alterar status: ' + error.message); return; }
-    if (mesStart) {
-      const sourceList = kind === 'folha' ? folha : [...fixas, ...variaveis];
-      const found = sourceList.find((r: any) => r.id === id);
-      const refNome = kind === 'folha'
-        ? (found as FolhaRow | undefined)?.colaborador_nome || '—'
-        : (found as LancRow | undefined)?.tipo_nome || '—';
-      await logStatusChange({
-        mes_referencia: mesStart,
-        escopo: kind,
-        ref_id: id,
-        ref_nome: refNome,
-        status_anterior: atual || 'alana',
-        status_novo: novo,
-      });
-    }
-    reload();
-  };
-
   const handlePatchFolha = async (
     id: string,
     field: 'salario' | 'aux_combustivel' | 'insalubridade_pct' | 'fgts_pct' | 'previsao_13_valor',
@@ -287,7 +260,6 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         onPatch={handlePatchFolha}
         onInsert={handleInsertFolha}
         onDeletePadrao={async (id) => { await removePadrao(id); reload(); }}
-        onToggleConfirmado={(id, atual) => toggleConfirmado('folha', id, atual)}
       />
       <BlocoDespesa
         titulo="Despesas Fixas"
@@ -301,7 +273,6 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         onDelete={(id) => setConfirmDel({ kind: 'lanc', id })}
         onInsert={handleInsertLanc}
         onDeletePadrao={async (id) => { await removePadrao(id); reload(); }}
-        onToggleConfirmado={(id, atual) => toggleConfirmado('lanc', id, atual)}
       />
       <BlocoDespesa
         titulo="Despesas Variáveis"
@@ -315,7 +286,6 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         onDelete={(id) => setConfirmDel({ kind: 'lanc', id })}
         onInsert={handleInsertLanc}
         onDeletePadrao={async (id) => { await removePadrao(id); reload(); }}
-        onToggleConfirmado={(id, atual) => toggleConfirmado('lanc', id, atual)}
       />
 
       <AlertDialog open={!!confirmDel} onOpenChange={(o) => !o && setConfirmDel(null)}>
@@ -393,42 +363,10 @@ function EditableCell({
   );
 }
 
-/* ---------------- StatusDot (tricolor: vermelho/amarelo/verde) ---------------- */
-
-function StatusDot({
-  row,
-  onToggle,
-}: {
-  row: { id: string; confirmado_por?: 'alana' | 'luan' } | undefined;
-  onToggle: (id: string, atual: 'alana' | 'luan' | undefined) => void | Promise<void>;
-}) {
-  if (!row) {
-    return (
-      <span title="Pendente" className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-400/15 text-red-300 text-[10px]">&#9679;</span>
-    );
-  }
-  const atual = row.confirmado_por || 'alana';
-  const isLuan = atual === 'luan';
-  return (
-    <button
-      type="button"
-      onClick={() => onToggle(row.id, atual)}
-      title={isLuan ? 'Luan (clique para Alana)' : 'Alana (clique para Luan)'}
-      className={`inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] cursor-pointer transition-colors ${
-        isLuan
-          ? 'bg-emerald-400/15 text-emerald-300 hover:bg-emerald-400/25'
-          : 'bg-yellow-400/15 text-yellow-300 hover:bg-yellow-400/25'
-      }`}
-    >
-      &#9679;
-    </button>
-  );
-}
-
 /* ---------------- Folha block ---------------- */
 
 function BlocoFolha({
-  rows, loading, colabs, padroesFolha, onDelete, onPatch, onInsert, onDeletePadrao, onToggleConfirmado,
+  rows, loading, colabs, padroesFolha, onDelete, onPatch, onInsert, onDeletePadrao,
 }: {
   rows: FolhaRow[];
   loading: boolean;
@@ -445,7 +383,6 @@ function BlocoFolha({
     salario: number; aux_combustivel: number; insalubridade_pct: number; fgts_pct: number; previsao_13_valor: number;
   }) => Promise<void>;
   onDeletePadrao: (id: string) => Promise<void> | void;
-  onToggleConfirmado: (id: string, atual: 'alana' | 'luan' | undefined) => void | Promise<void>;
 }) {
   // Lista unificada por nome: lançamentos salvos + colaboradores cadastrados + padrões.
   const colabsByNome = new Map(colabs.map(c => [norm(c.nome), c]));
@@ -571,7 +508,6 @@ function BlocoFolha({
             <tr className="text-[10px] uppercase tracking-wider text-white/40 border-b border-white/10">
               <th className="text-left font-normal pb-2 pl-1">Colaborador</th>
               <th className="text-center font-normal pb-2 px-1">Em folha</th>
-              <th className="text-center font-normal pb-2 px-1 w-10">Status</th>
               <th className="text-right font-normal pb-2 px-2 text-emerald-400">Salário</th>
               <th className="text-right font-normal pb-2 px-2">Combustível</th>
               <th className="text-right font-normal pb-2 px-2">Insalub %</th>
@@ -586,9 +522,9 @@ function BlocoFolha({
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={13} className="text-white/40 px-2 py-3">Carregando...</td></tr>
+              <tr><td colSpan={12} className="text-white/40 px-2 py-3">Carregando...</td></tr>
             ) : sortedColabs.length === 0 ? (
-              <tr><td colSpan={13} className="text-white/40 px-2 py-3 text-center">Nenhum padrão cadastrado. Configure em "Configurações padrão".</td></tr>
+              <tr><td colSpan={12} className="text-white/40 px-2 py-3 text-center">Nenhum padrão cadastrado. Configure em "Configurações padrão".</td></tr>
             ) : sortedColabs.map(colab => {
               const r = rowsByNome.get(norm(colab.nome));
               const salario = r ? Number(r.salario) : colab.salario;
@@ -610,9 +546,6 @@ function BlocoFolha({
                     ) : (
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-white/10 text-white/50 border border-white/10">Não</span>
                     )}
-                  </td>
-                  <td className="py-2 px-1 text-center">
-                    <StatusDot row={r} onToggle={onToggleConfirmado} />
                   </td>
                   <td className={`px-2 text-right ${r ? 'text-emerald-400 font-medium' : 'text-white/60'}`}>
                     {r ? (
@@ -700,7 +633,6 @@ function BlocoFolha({
                 />
               </td>
               <td></td>
-              <td></td>
               <td className="px-2"><NumInput value={addSalario} onChange={setAddSalario} /></td>
               <td className="px-2"><NumInput value={addAux} onChange={setAddAux} /></td>
               <td className="px-2"><NumInput value={addInsalub} onChange={setAddInsalub} /></td>
@@ -759,7 +691,7 @@ function BlocoFolha({
 /* ---------------- Despesa block ---------------- */
 
 function BlocoDespesa({
-  titulo, icon, rows, loading, categoria, tipos, padroes, mesStart, onDelete, onInsert, onDeletePadrao, onToggleConfirmado,
+  titulo, icon, rows, loading, categoria, tipos, padroes, mesStart, onDelete, onInsert, onDeletePadrao,
 }: {
   titulo: string;
   icon: React.ReactNode;
@@ -774,7 +706,6 @@ function BlocoDespesa({
     tipo: TipoCusto; categoria: 'fixa' | 'variavel'; valor: number; data: string; descricao: string;
   }) => Promise<void>;
   onDeletePadrao: (id: string) => Promise<void> | void;
-  onToggleConfirmado: (id: string, atual: 'alana' | 'luan' | undefined) => void | Promise<void>;
 }) {
   const [tipoId, setTipoId] = useState('');
   const [customNome, setCustomNome] = useState('');
@@ -830,7 +761,6 @@ function BlocoDespesa({
         <table className="w-full text-sm">
           <thead>
             <tr className="text-[10px] uppercase tracking-wider text-white/40 border-b border-white/10">
-              <th className="text-center font-normal pb-2 px-1 w-10">Status</th>
               <th className="text-left font-normal pb-2 pl-1 w-[28%]">Tipo</th>
               <th className="text-left font-normal pb-2 px-2">Descrição</th>
               <th className="text-left font-normal pb-2 px-2 w-[140px]">Data</th>
@@ -840,10 +770,9 @@ function BlocoDespesa({
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={6} className="text-white/40 px-2 py-3">Carregando...</td></tr>
+              <tr><td colSpan={5} className="text-white/40 px-2 py-3">Carregando...</td></tr>
             ) : rows.map(r => (
               <tr key={r.id} className="border-b border-white/5 hover:bg-white/[0.03]">
-                <td className="py-2 px-1 text-center"><StatusDot row={r} onToggle={onToggleConfirmado} /></td>
                 <td className="py-2 pl-1 text-white/90">{r.tipo_nome}</td>
                 <td className="px-2 text-white/60">{r.descricao || '—'}</td>
                 <td className="px-2 text-white/60">{r.data.split('-').reverse().join('/')}</td>
@@ -863,7 +792,6 @@ function BlocoDespesa({
             {/* ------ Sugestões padrão ------ */}
             {!loading && sugestoes.map(sug => (
               <tr key={`sug-${sug.id}`} className="border-b border-white/5 hover:bg-white/[0.03]">
-                <td className="py-2 px-1 text-center"><StatusDot row={undefined} onToggle={onToggleConfirmado} /></td>
                 <td className="py-2 pl-1 text-white/90">{sug.nome}</td>
                 <td className="px-2 text-white/60">—</td>
                 <td className="px-2 text-white/60">{mesStart.split('-').reverse().join('/')}</td>
@@ -897,7 +825,6 @@ function BlocoDespesa({
             {/* ------ Add row ------ */}
             {showAdd && (
             <tr className="border-b border-white/5 hover:bg-white/[0.03]">
-              <td></td>
               <td className="py-2 pl-1">
                 {isCustom ? (
                   <div className="flex items-center gap-1">
