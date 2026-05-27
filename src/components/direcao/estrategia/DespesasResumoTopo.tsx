@@ -241,6 +241,26 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
     reload();
   };
 
+  const handleUpdateLanc = async (
+    id: string,
+    patch: Partial<{ valor: number; data: string; descricao: string | null; tipo_nome: string }>,
+  ) => {
+    // optimistic update
+    const apply = (arr: LancRow[]) => arr.map(r => r.id === id ? { ...r, ...patch } as LancRow : r);
+    setFixas(prev => apply(prev));
+    setVariaveis(prev => apply(prev));
+    const { error } = await supabase
+      .from('despesas_manuais_lancamentos' as any)
+      .update(patch as any)
+      .eq('id', id);
+    if (error) {
+      toast.error('Erro ao salvar: ' + error.message);
+      reload();
+      return;
+    }
+    onDataChange?.();
+  };
+
   if (!mes) {
     return (
       <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-8 text-center text-white/60">
@@ -272,6 +292,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         mesStart={mesStart || ''}
         onDelete={(id) => setConfirmDel({ kind: 'lanc', id })}
         onInsert={handleInsertLanc}
+        onUpdate={handleUpdateLanc}
         onDeletePadrao={async (id) => { await removePadrao(id); reload(); }}
       />
       <BlocoDespesa
@@ -285,6 +306,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         mesStart={mesStart || ''}
         onDelete={(id) => setConfirmDel({ kind: 'lanc', id })}
         onInsert={handleInsertLanc}
+        onUpdate={handleUpdateLanc}
         onDeletePadrao={async (id) => { await removePadrao(id); reload(); }}
       />
 
