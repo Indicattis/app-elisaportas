@@ -260,7 +260,6 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         onPatch={handlePatchFolha}
         onInsert={handleInsertFolha}
         onDeletePadrao={async (id) => { await removePadrao(id); reload(); }}
-        onToggleConfirmado={(id, atual) => toggleConfirmado('folha', id, atual)}
       />
       <BlocoDespesa
         titulo="Despesas Fixas"
@@ -274,7 +273,6 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         onDelete={(id) => setConfirmDel({ kind: 'lanc', id })}
         onInsert={handleInsertLanc}
         onDeletePadrao={async (id) => { await removePadrao(id); reload(); }}
-        onToggleConfirmado={(id, atual) => toggleConfirmado('lanc', id, atual)}
       />
       <BlocoDespesa
         titulo="Despesas Variáveis"
@@ -288,7 +286,6 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         onDelete={(id) => setConfirmDel({ kind: 'lanc', id })}
         onInsert={handleInsertLanc}
         onDeletePadrao={async (id) => { await removePadrao(id); reload(); }}
-        onToggleConfirmado={(id, atual) => toggleConfirmado('lanc', id, atual)}
       />
 
       <AlertDialog open={!!confirmDel} onOpenChange={(o) => !o && setConfirmDel(null)}>
@@ -366,42 +363,10 @@ function EditableCell({
   );
 }
 
-/* ---------------- StatusDot (tricolor: vermelho/amarelo/verde) ---------------- */
-
-function StatusDot({
-  row,
-  onToggle,
-}: {
-  row: { id: string; confirmado_por?: 'alana' | 'luan' } | undefined;
-  onToggle: (id: string, atual: 'alana' | 'luan' | undefined) => void | Promise<void>;
-}) {
-  if (!row) {
-    return (
-      <span title="Pendente" className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-400/15 text-red-300 text-[10px]">&#9679;</span>
-    );
-  }
-  const atual = row.confirmado_por || 'alana';
-  const isLuan = atual === 'luan';
-  return (
-    <button
-      type="button"
-      onClick={() => onToggle(row.id, atual)}
-      title={isLuan ? 'Luan (clique para Alana)' : 'Alana (clique para Luan)'}
-      className={`inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] cursor-pointer transition-colors ${
-        isLuan
-          ? 'bg-emerald-400/15 text-emerald-300 hover:bg-emerald-400/25'
-          : 'bg-yellow-400/15 text-yellow-300 hover:bg-yellow-400/25'
-      }`}
-    >
-      &#9679;
-    </button>
-  );
-}
-
 /* ---------------- Folha block ---------------- */
 
 function BlocoFolha({
-  rows, loading, colabs, padroesFolha, onDelete, onPatch, onInsert, onDeletePadrao, onToggleConfirmado,
+  rows, loading, colabs, padroesFolha, onDelete, onPatch, onInsert, onDeletePadrao,
 }: {
   rows: FolhaRow[];
   loading: boolean;
@@ -418,7 +383,6 @@ function BlocoFolha({
     salario: number; aux_combustivel: number; insalubridade_pct: number; fgts_pct: number; previsao_13_valor: number;
   }) => Promise<void>;
   onDeletePadrao: (id: string) => Promise<void> | void;
-  onToggleConfirmado: (id: string, atual: 'alana' | 'luan' | undefined) => void | Promise<void>;
 }) {
   // Lista unificada por nome: lançamentos salvos + colaboradores cadastrados + padrões.
   const colabsByNome = new Map(colabs.map(c => [norm(c.nome), c]));
@@ -544,7 +508,6 @@ function BlocoFolha({
             <tr className="text-[10px] uppercase tracking-wider text-white/40 border-b border-white/10">
               <th className="text-left font-normal pb-2 pl-1">Colaborador</th>
               <th className="text-center font-normal pb-2 px-1">Em folha</th>
-              <th className="text-center font-normal pb-2 px-1 w-10">Status</th>
               <th className="text-right font-normal pb-2 px-2 text-emerald-400">Salário</th>
               <th className="text-right font-normal pb-2 px-2">Combustível</th>
               <th className="text-right font-normal pb-2 px-2">Insalub %</th>
@@ -559,9 +522,9 @@ function BlocoFolha({
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={13} className="text-white/40 px-2 py-3">Carregando...</td></tr>
+              <tr><td colSpan={12} className="text-white/40 px-2 py-3">Carregando...</td></tr>
             ) : sortedColabs.length === 0 ? (
-              <tr><td colSpan={13} className="text-white/40 px-2 py-3 text-center">Nenhum padrão cadastrado. Configure em "Configurações padrão".</td></tr>
+              <tr><td colSpan={12} className="text-white/40 px-2 py-3 text-center">Nenhum padrão cadastrado. Configure em "Configurações padrão".</td></tr>
             ) : sortedColabs.map(colab => {
               const r = rowsByNome.get(norm(colab.nome));
               const salario = r ? Number(r.salario) : colab.salario;
