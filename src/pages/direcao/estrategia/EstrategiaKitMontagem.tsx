@@ -72,7 +72,7 @@ export default function EstrategiaKitMontagem() {
         const novo = await recalcKitValorPorta(kitId);
         if (kit && Number(kit.valor_porta || 0) !== novo) {
           queryClient.invalidateQueries({ queryKey: ["tabela-precos-kit", kitId] });
-          queryClient.invalidateQueries({ queryKey: ["tabela-precos-portas"] });
+          queryClient.invalidateQueries({ queryKey: ["tabela-precos"] });
         }
       } catch {
         // silencioso
@@ -101,7 +101,7 @@ export default function EstrategiaKitMontagem() {
       await queryClient.invalidateQueries({ queryKey: ["kit-montagem", kitId] });
       await queryClient.invalidateQueries({ queryKey: ["kits-montagem-resumo"] });
       await queryClient.invalidateQueries({ queryKey: ["tabela-precos-kit", kitId] });
-      await queryClient.invalidateQueries({ queryKey: ["tabela-precos-portas"] });
+      await queryClient.invalidateQueries({ queryKey: ["tabela-precos"] });
       if (res.added === 0) {
         toast.info("Todos os itens do template já estão no kit");
       } else if (res.skipped > 0) {
