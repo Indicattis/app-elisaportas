@@ -169,14 +169,16 @@ function GastosDoTipoDialog({
   open,
   onOpenChange,
   mes,
-  tipoCustoId,
+  tipoNome: tipoNomeFiltro,
+  categoria,
   tipoNome,
   formatCurrency,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   mes: string;
-  tipoCustoId: string | null;
+  tipoNome: string;
+  categoria: 'fixa' | 'variavel' | 'imposto' | 'folha' | null;
   tipoNome: string;
   formatCurrency: (v: number) => string;
 }) {
