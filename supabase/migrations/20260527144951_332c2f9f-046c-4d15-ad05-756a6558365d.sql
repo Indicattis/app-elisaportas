@@ -1,0 +1,2 @@
+ALTER TABLE public.despesas_manuais_lancamentos DROP CONSTRAINT despesas_manuais_lancamentos_categoria_check;
+ALTER TABLE public.despesas_manuais_lancamentos ADD CONSTRAINT despesas_manuais_lancamentos_categoria_check CHECK (categoria = ANY (ARRAY['fixa'::text, 'variavel'::text, 'imposto'::text]));

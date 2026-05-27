@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-export type DespesaPadraoTipo = 'folha' | 'fixa' | 'variavel';
+export type DespesaPadraoTipo = 'folha' | 'fixa' | 'variavel' | 'imposto';
 
 export interface DespesaPadrao {
   id: string;
