@@ -4,7 +4,7 @@ import { format, parse } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { CheckCircle2, Clock } from 'lucide-react';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
-import DespesasResumoTopo from '@/components/direcao/estrategia/DespesasResumoTopo';
+import DespesasResumoTopo, { logStatusChange } from '@/components/direcao/estrategia/DespesasResumoTopo';
 import { formatCurrency } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -65,6 +65,14 @@ export default function EstrategiaDespesasMes() {
       toast.error('Erro ao atualizar status');
       return;
     }
+    await logStatusChange({
+      mes_referencia: `${mesValido}-01`,
+      escopo: 'mes',
+      ref_id: null,
+      ref_nome: 'Mês',
+      status_anterior: status,
+      status_novo: next,
+    });
     setStatus(next);
     toast.success(
       next === 'pendente' ? 'Mês marcado como Pendente' : next === 'alana' ? 'Mês confirmado por Alana' : 'Mês confirmado por Luan',

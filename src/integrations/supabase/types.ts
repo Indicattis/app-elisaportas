@@ -2315,6 +2315,45 @@ export type Database = {
         }
         Relationships: []
       }
+      despesas_status_historico: {
+        Row: {
+          changed_by: string | null
+          changed_by_nome: string | null
+          created_at: string
+          escopo: string
+          id: string
+          mes_referencia: string
+          ref_id: string | null
+          ref_nome: string
+          status_anterior: string
+          status_novo: string
+        }
+        Insert: {
+          changed_by?: string | null
+          changed_by_nome?: string | null
+          created_at?: string
+          escopo: string
+          id?: string
+          mes_referencia: string
+          ref_id?: string | null
+          ref_nome: string
+          status_anterior: string
+          status_novo: string
+        }
+        Update: {
+          changed_by?: string | null
+          changed_by_nome?: string | null
+          created_at?: string
+          escopo?: string
+          id?: string
+          mes_referencia?: string
+          ref_id?: string | null
+          ref_nome?: string
+          status_anterior?: string
+          status_novo?: string
+        }
+        Relationships: []
+      }
       despesas_valor_pago_mensal: {
         Row: {
           created_at: string
