@@ -121,7 +121,7 @@ export function useKitMontagem(kitId: string | null) {
     if (kitId) {
       queryClient.invalidateQueries({ queryKey: ["tabela-precos-kit", kitId] });
     }
-    queryClient.invalidateQueries({ queryKey: ["tabela-precos-portas"] });
+    queryClient.invalidateQueries({ queryKey: ["tabela-precos"] });
   };
 
   const addItem = useMutation({
