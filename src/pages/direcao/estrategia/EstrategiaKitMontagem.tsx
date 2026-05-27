@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Trash2, Check, ChevronsUpDown, Boxes, LayoutTemplate } from "lucide-react";
@@ -22,7 +22,7 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { ItemTabelaPreco } from "@/hooks/useTabelaPrecos";
-import { useKitMontagem, computeLucroUnit } from "@/hooks/useKitMontagem";
+import { useKitMontagem, computeLucroUnit, recalcKitValorPorta } from "@/hooks/useKitMontagem";
 import { useCustosItens, useCustosItensPadroes } from "@/hooks/useCustosItens";
 import { applyTemplateToKit } from "@/hooks/useMontagemTemplate";
 import { cn } from "@/lib/utils";
@@ -55,6 +55,30 @@ export default function EstrategiaKitMontagem() {
   const { items, isLoading, addItem, updateQuantidade, removeItem } = useKitMontagem(kitId ?? null);
   const { items: allCustosItens } = useCustosItens();
   const { padroes } = useCustosItensPadroes();
+
+  // Sincroniza valor_porta com a soma da montagem ao carregar/alterar itens
+  const lastSyncedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!kitId || isLoading) return;
+    const signature = items
+      .map((i) => `${i.id}:${i.quantidade}:${i.custo_item?.preco_venda ?? 0}`)
+      .sort()
+      .join("|");
+    const key = `${kitId}::${signature}`;
+    if (lastSyncedRef.current === key) return;
+    lastSyncedRef.current = key;
+    (async () => {
+      try {
+        const novo = await recalcKitValorPorta(kitId);
+        if (kit && Number(kit.valor_porta || 0) !== novo) {
+          queryClient.invalidateQueries({ queryKey: ["tabela-precos-kit", kitId] });
+          queryClient.invalidateQueries({ queryKey: ["tabela-precos-portas"] });
+        }
+      } catch {
+        // silencioso
+      }
+    })();
+  }, [kitId, isLoading, items, kit, queryClient]);
 
   const usedIds = useMemo(() => new Set(items.map((i) => i.custo_item_id)), [items]);
 
