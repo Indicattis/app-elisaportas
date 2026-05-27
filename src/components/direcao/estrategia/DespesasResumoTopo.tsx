@@ -643,6 +643,7 @@ function BlocoFolha({
             })}
 
             {/* ------ Add colaborador avulso ------ */}
+            {showAdd && (
             <tr className="border-b border-white/5 hover:bg-white/[0.03] bg-white/[0.02]">
               <td className="py-2 pl-1">
                 <input
@@ -676,7 +677,7 @@ function BlocoFolha({
                     <Check className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={addClear}
+                    onClick={() => { addClear(); setShowAdd(false); }}
                     className="p-1 rounded hover:bg-white/10 text-white/50"
                     aria-label="Limpar"
                     title="Limpar"
@@ -686,8 +687,20 @@ function BlocoFolha({
                 </div>
               </td>
             </tr>
+            )}
           </tbody>
         </table>
+      </div>
+
+      <div className="mt-3 flex justify-center">
+        <button
+          type="button"
+          onClick={() => setShowAdd(v => !v)}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 hover:text-white text-xs transition-colors"
+        >
+          {showAdd ? <X className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
+          {showAdd ? 'Cancelar' : 'Adicionar colaborador'}
+        </button>
       </div>
 
       <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between px-2">
