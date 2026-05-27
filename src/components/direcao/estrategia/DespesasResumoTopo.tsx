@@ -11,6 +11,36 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useDespesasPadrao } from '@/hooks/useDespesasPadrao';
 import type { DespesaPadrao } from '@/hooks/useDespesasPadrao';
+import HistoricoStatusBloco from './HistoricoStatusBloco';
+
+async function getCurrentUserInfo(): Promise<{ id: string | null; nome: string | null }> {
+  const { data } = await supabase.auth.getUser();
+  const id = data.user?.id || null;
+  if (!id) return { id: null, nome: null };
+  const { data: au } = await supabase
+    .from('admin_users' as any)
+    .select('nome')
+    .eq('id', id)
+    .maybeSingle();
+  const nome = (au as any)?.nome || data.user?.email || null;
+  return { id, nome };
+}
+
+export async function logStatusChange(payload: {
+  mes_referencia: string;
+  escopo: 'mes' | 'folha' | 'lanc';
+  ref_id: string | null;
+  ref_nome: string;
+  status_anterior: 'pendente' | 'alana' | 'luan';
+  status_novo: 'pendente' | 'alana' | 'luan';
+}) {
+  const { id, nome } = await getCurrentUserInfo();
+  await supabase.from('despesas_status_historico' as any).insert({
+    ...payload,
+    changed_by: id,
+    changed_by_nome: nome,
+  } as any);
+}
 
 type FolhaRow = {
   id: string;
@@ -154,6 +184,21 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
     const table = kind === 'folha' ? 'despesas_manuais_folha' : 'despesas_manuais_lancamentos';
     const { error } = await supabase.from(table as any).update({ confirmado_por: novo } as any).eq('id', id);
     if (error) { toast.error('Erro ao alterar status: ' + error.message); return; }
+    if (mesStart) {
+      const sourceList = kind === 'folha' ? folha : [...fixas, ...variaveis];
+      const found = sourceList.find((r: any) => r.id === id);
+      const refNome = kind === 'folha'
+        ? (found as FolhaRow | undefined)?.colaborador_nome || '—'
+        : (found as LancRow | undefined)?.tipo_nome || '—';
+      await logStatusChange({
+        mes_referencia: mesStart,
+        escopo: kind,
+        ref_id: id,
+        ref_nome: refNome,
+        status_anterior: atual || 'alana',
+        status_novo: novo,
+      });
+    }
     reload();
   };
 
@@ -272,6 +317,8 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         onDeletePadrao={async (id) => { await removePadrao(id); reload(); }}
         onToggleConfirmado={(id, atual) => toggleConfirmado('lanc', id, atual)}
       />
+
+      <HistoricoStatusBloco mesStart={mesStart} reloadKey={reloadV} />
 
       <AlertDialog open={!!confirmDel} onOpenChange={(o) => !o && setConfirmDel(null)}>
         <AlertDialogContent>
