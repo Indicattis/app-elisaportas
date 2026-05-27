@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Trash2, Users, Receipt, TrendingDown } from 'lucide-react';
+import { Plus, Trash2, Users, Receipt, TrendingDown, Landmark } from 'lucide-react';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { formatCurrency } from '@/lib/utils';
 import { useDespesasPadrao, type DespesaPadrao, type DespesaPadraoTipo } from '@/hooks/useDespesasPadrao';
@@ -10,6 +10,7 @@ export default function EstrategiaDespesasConfiguracoes() {
   const folha = items.filter(i => i.tipo === 'folha');
   const fixas = items.filter(i => i.tipo === 'fixa');
   const variaveis = items.filter(i => i.tipo === 'variavel');
+  const impostos = items.filter(i => i.tipo === 'imposto');
 
   return (
     <MinimalistLayout
@@ -46,6 +47,15 @@ export default function EstrategiaDespesasConfiguracoes() {
             icon={<TrendingDown className="w-4 h-4" />}
             tipo="variavel"
             items={variaveis}
+            insert={insert}
+            update={update}
+            remove={remove}
+          />
+          <SimpleBlock
+            titulo="Despesas de Imposto padrão"
+            icon={<Landmark className="w-4 h-4" />}
+            tipo="imposto"
+            items={impostos}
             insert={insert}
             update={update}
             remove={remove}
