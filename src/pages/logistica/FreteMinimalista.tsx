@@ -303,7 +303,7 @@ export default function FreteMinimalista() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {fretesFiltrados.map((frete, idx) => {
+                  {fretesPaginados.map((frete, idx) => {
                     const km = frete.quilometragem ?? 0;
                     const idaVolta = km * 2;
                     const valor = km * 6;
@@ -312,7 +312,7 @@ export default function FreteMinimalista() {
                       key={frete.id}
                       className="cursor-pointer border-blue-500/10 hover:bg-white/5 text-white/90"
                     >
-                      <TableCell className="font-medium text-white/60">{idx + 1}</TableCell>
+                      <TableCell className="font-medium text-white/60">{startIdx + idx + 1}</TableCell>
                       <TableCell>{frete.cidade} - {frete.estado}</TableCell>
                       <TableCell className="text-white/80">
                         {editingKmId === frete.id ? (
@@ -379,6 +379,36 @@ export default function FreteMinimalista() {
                 </TableBody>
               </Table>
             </div>
+            {fretesFiltrados.length > 0 && (
+              <div className="flex items-center justify-between gap-3 px-4 py-3 border-t border-white/10 text-xs text-white/70">
+                <div>
+                  Mostrando {startIdx + 1}–{Math.min(endIdx, fretesFiltrados.length)} de {fretesFiltrados.length}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={safePage <= 1}
+                    className="h-7 px-2 bg-white/5 border-white/10 text-white hover:bg-white/10 disabled:opacity-40"
+                  >
+                    <ChevronLeft className="h-3.5 w-3.5" />
+                  </Button>
+                  <span className="text-white/80">
+                    Página {safePage} de {totalPages}
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={safePage >= totalPages}
+                    className="h-7 px-2 bg-white/5 border-white/10 text-white hover:bg-white/10 disabled:opacity-40"
+                  >
+                    <ChevronRight className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
