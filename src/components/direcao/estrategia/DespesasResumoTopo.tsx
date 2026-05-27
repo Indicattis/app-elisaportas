@@ -988,3 +988,104 @@ function NumInput({ value, onChange }: { value: number; onChange: (v: number) =>
     />
   );
 }
+
+/* ---------------- EditableText / EditableDate ---------------- */
+
+function EditableText({
+  value, placeholder, onSave,
+}: {
+  value: string;
+  placeholder?: string;
+  onSave: (v: string) => void | Promise<void>;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value || '');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => { if (!editing) setDraft(value || ''); }, [value, editing]);
+
+  const commit = async () => {
+    const v = draft.trim();
+    if (v === (value || '').trim()) { setEditing(false); return; }
+    setSaving(true);
+    try { await onSave(v); } finally { setSaving(false); setEditing(false); }
+  };
+
+  if (editing) {
+    return (
+      <input
+        autoFocus
+        type="text"
+        value={draft}
+        disabled={saving}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') { e.preventDefault(); (e.target as HTMLInputElement).blur(); }
+          else if (e.key === 'Escape') { setDraft(value || ''); setEditing(false); }
+        }}
+        onFocus={(e) => e.currentTarget.select()}
+        className="w-full bg-white/10 border border-blue-400/50 rounded px-1 py-0.5 text-white text-sm outline-none"
+      />
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => setEditing(true)}
+      className="w-full text-left px-1 py-0.5 rounded hover:bg-white/10 cursor-pointer transition-colors"
+      title="Clique para editar"
+    >
+      {value || placeholder || '—'}
+    </button>
+  );
+}
+
+function EditableDate({
+  value, onSave,
+}: {
+  value: string;
+  onSave: (v: string) => void | Promise<void>;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => { if (!editing) setDraft(value); }, [value, editing]);
+
+  const commit = async () => {
+    if (!draft || draft === value) { setEditing(false); return; }
+    setSaving(true);
+    try { await onSave(draft); } finally { setSaving(false); setEditing(false); }
+  };
+
+  if (editing) {
+    return (
+      <input
+        autoFocus
+        type="date"
+        value={draft}
+        disabled={saving}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') { e.preventDefault(); (e.target as HTMLInputElement).blur(); }
+          else if (e.key === 'Escape') { setDraft(value); setEditing(false); }
+        }}
+        className="w-full bg-white/10 border border-blue-400/50 rounded px-1 py-0.5 text-white text-sm outline-none"
+      />
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => setEditing(true)}
+      className="w-full text-left px-1 py-0.5 rounded hover:bg-white/10 cursor-pointer transition-colors"
+      title="Clique para editar"
+    >
+      {value ? value.split('-').reverse().join('/') : '—'}
+    </button>
+  );
+}
