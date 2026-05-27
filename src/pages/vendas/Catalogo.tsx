@@ -91,9 +91,10 @@ export default function Catalogo() {
     <MinimalistLayout 
       title="Catálogo" 
       subtitle={`${produtos?.length || 0} produto${(produtos?.length || 0) !== 1 ? 's' : ''}`}
+      backPath="/marketing"
       breadcrumbItems={[
         { label: "Home", path: "/home" },
-        { label: "Vendas", path: "/vendas" },
+        { label: "Marketing", path: "/marketing" },
         { label: "Catálogo" }
       ]}
       headerActions={
