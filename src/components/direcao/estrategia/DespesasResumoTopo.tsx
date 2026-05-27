@@ -318,8 +318,6 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         onToggleConfirmado={(id, atual) => toggleConfirmado('lanc', id, atual)}
       />
 
-      <HistoricoStatusBloco mesStart={mesStart} reloadKey={reloadV} />
-
       <AlertDialog open={!!confirmDel} onOpenChange={(o) => !o && setConfirmDel(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
