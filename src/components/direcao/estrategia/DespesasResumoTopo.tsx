@@ -737,6 +737,7 @@ function BlocoDespesa({
   const [data, setData] = useState(mesStart);
   const [valor, setValor] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [showAdd, setShowAdd] = useState(false);
 
   useEffect(() => { setData(mesStart); }, [mesStart]);
 
@@ -756,6 +757,7 @@ function BlocoDespesa({
         : selectedTipo!;
       await onInsert({ tipo: tipoFinal, categoria, valor, data, descricao });
       clear();
+      setShowAdd(false);
     } finally { setSaving(false); }
   };
 
