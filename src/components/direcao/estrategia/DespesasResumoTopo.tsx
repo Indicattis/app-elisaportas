@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { formatCurrency } from '@/lib/utils';
 import { Users, Receipt, TrendingDown, Trash2, Check, X } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -478,6 +479,7 @@ function BlocoFolha({
   const [addFgts, setAddFgts] = useState(8);
   const [addPrev13, setAddPrev13] = useState(0);
   const [addSaving, setAddSaving] = useState(false);
+  const [showAdd, setShowAdd] = useState(false);
 
   const addClear = () => {
     setAddNome(''); setAddSalario(0); setAddAux(0); setAddInsalub(0); setAddFgts(8); setAddPrev13(0);
@@ -506,6 +508,7 @@ function BlocoFolha({
         previsao_13_valor: addPrev13,
       });
       addClear();
+      setShowAdd(false);
     } finally { setAddSaving(false); }
   };
 
@@ -640,6 +643,7 @@ function BlocoFolha({
             })}
 
             {/* ------ Add colaborador avulso ------ */}
+            {showAdd && (
             <tr className="border-b border-white/5 hover:bg-white/[0.03] bg-white/[0.02]">
               <td className="py-2 pl-1">
                 <input
@@ -673,7 +677,7 @@ function BlocoFolha({
                     <Check className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={addClear}
+                    onClick={() => { addClear(); setShowAdd(false); }}
                     className="p-1 rounded hover:bg-white/10 text-white/50"
                     aria-label="Limpar"
                     title="Limpar"
@@ -683,8 +687,20 @@ function BlocoFolha({
                 </div>
               </td>
             </tr>
+            )}
           </tbody>
         </table>
+      </div>
+
+      <div className="mt-3 flex justify-center">
+        <button
+          type="button"
+          onClick={() => setShowAdd(v => !v)}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 hover:text-white text-xs transition-colors"
+        >
+          {showAdd ? <X className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
+          {showAdd ? 'Cancelar' : 'Adicionar colaborador'}
+        </button>
       </div>
 
       <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between px-2">
@@ -721,6 +737,7 @@ function BlocoDespesa({
   const [data, setData] = useState(mesStart);
   const [valor, setValor] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [showAdd, setShowAdd] = useState(false);
 
   useEffect(() => { setData(mesStart); }, [mesStart]);
 
@@ -740,6 +757,7 @@ function BlocoDespesa({
         : selectedTipo!;
       await onInsert({ tipo: tipoFinal, categoria, valor, data, descricao });
       clear();
+      setShowAdd(false);
     } finally { setSaving(false); }
   };
 
@@ -832,6 +850,7 @@ function BlocoDespesa({
             ))}
 
             {/* ------ Add row ------ */}
+            {showAdd && (
             <tr className="border-b border-white/5 hover:bg-white/[0.03]">
               <td></td>
               <td className="py-2 pl-1">
@@ -897,7 +916,7 @@ function BlocoDespesa({
                     <Check className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={clear}
+                    onClick={() => { clear(); setShowAdd(false); }}
                     className="p-1 rounded hover:bg-white/10 text-white/50"
                     aria-label="Limpar"
                     title="Limpar"
@@ -907,8 +926,20 @@ function BlocoDespesa({
                 </div>
               </td>
             </tr>
+            )}
           </tbody>
         </table>
+      </div>
+
+      <div className="mt-3 flex justify-center">
+        <button
+          type="button"
+          onClick={() => setShowAdd(v => !v)}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 hover:text-white text-xs transition-colors"
+        >
+          {showAdd ? <X className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
+          {showAdd ? 'Cancelar' : 'Adicionar item'}
+        </button>
       </div>
 
       <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between px-2">
