@@ -189,10 +189,11 @@ export default function LtvMinimalista() {
     <MinimalistLayout
       title="LTV"
       subtitle="Lifetime Value dos clientes"
-      backPath="/marketing"
+      backPath="/marketing/conversoes-hub"
       breadcrumbItems={[
         { label: 'Home', path: '/home' },
         { label: 'Marketing', path: '/marketing' },
+        { label: 'Conversões', path: '/marketing/conversoes-hub' },
         { label: 'LTV' },
       ]}
     >

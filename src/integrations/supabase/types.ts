@@ -8280,6 +8280,42 @@ export type Database = {
           },
         ]
       }
+      trabalhos_media: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          sort_order: number
+          storage_bucket: string
+          storage_path: string
+          tipo: string
+          titulo: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          sort_order?: number
+          storage_bucket: string
+          storage_path: string
+          tipo: string
+          titulo?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          sort_order?: number
+          storage_bucket?: string
+          storage_path?: string
+          tipo?: string
+          titulo?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       transportadoras: {
         Row: {
           ativo: boolean
@@ -9611,7 +9647,9 @@ export type Database = {
         Returns: boolean
       }
       increment_whatsapp_clique: { Args: { _id: string }; Returns: undefined }
-      is_admin: { Args: never; Returns: boolean }
+      is_admin:
+        | { Args: never; Returns: boolean }
+        | { Args: { _uid: string }; Returns: boolean }
       is_admin_user:
         | { Args: never; Returns: boolean }
         | { Args: { _user_id: string }; Returns: boolean }
