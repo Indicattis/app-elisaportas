@@ -479,6 +479,7 @@ function BlocoFolha({
   const [addFgts, setAddFgts] = useState(8);
   const [addPrev13, setAddPrev13] = useState(0);
   const [addSaving, setAddSaving] = useState(false);
+  const [showAdd, setShowAdd] = useState(false);
 
   const addClear = () => {
     setAddNome(''); setAddSalario(0); setAddAux(0); setAddInsalub(0); setAddFgts(8); setAddPrev13(0);
@@ -507,6 +508,7 @@ function BlocoFolha({
         previsao_13_valor: addPrev13,
       });
       addClear();
+      setShowAdd(false);
     } finally { setAddSaving(false); }
   };
 
