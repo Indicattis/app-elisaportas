@@ -566,10 +566,20 @@ function PrintReport({
         />
       </div>
 
+      <div className="pdf-page-break" />
+      <div style={{ marginTop: 0 }}>
+        <div style={H2}>6. Despesas de Imposto</div>
+        <PrintDespesaTable
+          items={despesasImpostos}
+          total={totalDespImpostos}
+          formatCurrency={formatCurrency}
+        />
+      </div>
+
       {/* ESTOQUE */}
       <div className="pdf-page-break" />
       <div style={{ marginTop: 0 }}>
-        <div style={H2}>6. Estoque</div>
+        <div style={H2}>7. Estoque</div>
         <div style={{ display: 'flex', gap: 8 }}>
           <div style={{ flex: 1, border: '1px solid #e2e8f0', padding: '10px 12px', background: '#fafbfc' }}>
             <div style={{ fontSize: '7pt', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>
