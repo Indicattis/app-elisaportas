@@ -284,11 +284,13 @@ function PrintReport({
   despesasFixas,
   despesasFolha,
   despesasVariaveis,
+  despesasImpostos,
   tiposCustosFixos,
   tiposCustosVariaveis,
   totalDespFixas,
   totalDespFolha,
   totalDespVariaveis,
+  totalDespImpostos,
   totalProjetadoAnual,
   topAcessorios,
   topAdicionais,
@@ -305,11 +307,13 @@ function PrintReport({
   despesasFixas: DespesaAgrupada[];
   despesasFolha: DespesaAgrupada[];
   despesasVariaveis: DespesaAgrupada[];
+  despesasImpostos: DespesaAgrupada[];
   tiposCustosFixos: TipoCustoVariavel[];
   tiposCustosVariaveis: TipoCustoVariavel[];
   totalDespFixas: number;
   totalDespFolha: number;
   totalDespVariaveis: number;
+  totalDespImpostos: number;
   totalProjetadoAnual: number;
   topAcessorios: { nome: string; qtd: number }[];
   topAdicionais: { nome: string; qtd: number }[];
@@ -482,6 +486,7 @@ function PrintReport({
               { l: '(–) Folha Salarial', v: formatCurrency(totalDespFolha), c: '#b91c1c', b: false },
               { l: '(–) Despesas Fixas', v: formatCurrency(totalDespFixas), c: '#b91c1c', b: false },
               { l: '(–) Despesas Variáveis', v: formatCurrency(totalDespVariaveis), c: '#b91c1c', b: false },
+              { l: '(–) Despesas de Imposto', v: formatCurrency(totalDespImpostos), c: '#b91c1c', b: false },
             ].map((r, i) => (
               <tr key={i} style={trZebra(i)}>
                 <td style={{ ...TD, fontWeight: r.b ? 700 : 500 }}>{r.l}</td>
