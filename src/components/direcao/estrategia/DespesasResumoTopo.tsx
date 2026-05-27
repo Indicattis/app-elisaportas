@@ -241,6 +241,26 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
     reload();
   };
 
+  const handleUpdateLanc = async (
+    id: string,
+    patch: Partial<{ valor: number; data: string; descricao: string | null; tipo_nome: string }>,
+  ) => {
+    // optimistic update
+    const apply = (arr: LancRow[]) => arr.map(r => r.id === id ? { ...r, ...patch } as LancRow : r);
+    setFixas(prev => apply(prev));
+    setVariaveis(prev => apply(prev));
+    const { error } = await supabase
+      .from('despesas_manuais_lancamentos' as any)
+      .update(patch as any)
+      .eq('id', id);
+    if (error) {
+      toast.error('Erro ao salvar: ' + error.message);
+      reload();
+      return;
+    }
+    onDataChange?.();
+  };
+
   if (!mes) {
     return (
       <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-8 text-center text-white/60">
@@ -272,6 +292,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         mesStart={mesStart || ''}
         onDelete={(id) => setConfirmDel({ kind: 'lanc', id })}
         onInsert={handleInsertLanc}
+        onUpdate={handleUpdateLanc}
         onDeletePadrao={async (id) => { await removePadrao(id); reload(); }}
       />
       <BlocoDespesa
@@ -285,6 +306,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         mesStart={mesStart || ''}
         onDelete={(id) => setConfirmDel({ kind: 'lanc', id })}
         onInsert={handleInsertLanc}
+        onUpdate={handleUpdateLanc}
         onDeletePadrao={async (id) => { await removePadrao(id); reload(); }}
       />
 
@@ -691,7 +713,7 @@ function BlocoFolha({
 /* ---------------- Despesa block ---------------- */
 
 function BlocoDespesa({
-  titulo, icon, rows, loading, categoria, tipos, padroes, mesStart, onDelete, onInsert, onDeletePadrao,
+  titulo, icon, rows, loading, categoria, tipos, padroes, mesStart, onDelete, onInsert, onUpdate, onDeletePadrao,
 }: {
   titulo: string;
   icon: React.ReactNode;
@@ -705,6 +727,10 @@ function BlocoDespesa({
   onInsert: (payload: {
     tipo: TipoCusto; categoria: 'fixa' | 'variavel'; valor: number; data: string; descricao: string;
   }) => Promise<void>;
+  onUpdate: (
+    id: string,
+    patch: Partial<{ valor: number; data: string; descricao: string | null; tipo_nome: string }>,
+  ) => Promise<void>;
   onDeletePadrao: (id: string) => Promise<void> | void;
 }) {
   const [tipoId, setTipoId] = useState('');
@@ -778,10 +804,18 @@ function BlocoDespesa({
               <tr><td colSpan={6} className="text-white/40 px-2 py-3">Carregando...</td></tr>
             ) : rows.map(r => (
               <tr key={r.id} className="border-b border-white/5 hover:bg-white/[0.03]">
-                <td className="py-2 pl-1 text-white/90">{r.tipo_nome}</td>
-                <td className="px-2 text-white/60">{r.descricao || '—'}</td>
-                <td className="px-2 text-white/60">{r.data.split('-').reverse().join('/')}</td>
-                <td className="px-2 text-right text-white font-medium">{formatCurrency(r.valor)}</td>
+                <td className="py-2 pl-1 text-white/90">
+                  <EditableText value={r.tipo_nome} onSave={(v) => onUpdate(r.id, { tipo_nome: v })} />
+                </td>
+                <td className="px-2 text-white/60">
+                  <EditableText value={r.descricao || ''} placeholder="—" onSave={(v) => onUpdate(r.id, { descricao: v || null })} />
+                </td>
+                <td className="px-2 text-white/60">
+                  <EditableDate value={r.data} onSave={(v) => onUpdate(r.id, { data: v })} />
+                </td>
+                <td className="px-2 text-right text-white font-medium">
+                  <EditableCell value={r.valor} format="currency" onSave={(v) => onUpdate(r.id, { valor: v })} />
+                </td>
                 <td className="px-2 text-right text-white/50">{prevForRow(r.tipo_nome) > 0 ? formatCurrency(prevForRow(r.tipo_nome)) : '—'}</td>
                 <td className="pr-1 text-right">
                   <button
@@ -952,5 +986,106 @@ function NumInput({ value, onChange }: { value: number; onChange: (v: number) =>
       placeholder="0"
       className="w-full h-8 bg-white/5 border border-white/10 rounded px-2 text-white text-xs text-right outline-none focus:border-blue-400/50"
     />
+  );
+}
+
+/* ---------------- EditableText / EditableDate ---------------- */
+
+function EditableText({
+  value, placeholder, onSave,
+}: {
+  value: string;
+  placeholder?: string;
+  onSave: (v: string) => void | Promise<void>;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value || '');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => { if (!editing) setDraft(value || ''); }, [value, editing]);
+
+  const commit = async () => {
+    const v = draft.trim();
+    if (v === (value || '').trim()) { setEditing(false); return; }
+    setSaving(true);
+    try { await onSave(v); } finally { setSaving(false); setEditing(false); }
+  };
+
+  if (editing) {
+    return (
+      <input
+        autoFocus
+        type="text"
+        value={draft}
+        disabled={saving}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') { e.preventDefault(); (e.target as HTMLInputElement).blur(); }
+          else if (e.key === 'Escape') { setDraft(value || ''); setEditing(false); }
+        }}
+        onFocus={(e) => e.currentTarget.select()}
+        className="w-full bg-white/10 border border-blue-400/50 rounded px-1 py-0.5 text-white text-sm outline-none"
+      />
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => setEditing(true)}
+      className="w-full text-left px-1 py-0.5 rounded hover:bg-white/10 cursor-pointer transition-colors"
+      title="Clique para editar"
+    >
+      {value || placeholder || '—'}
+    </button>
+  );
+}
+
+function EditableDate({
+  value, onSave,
+}: {
+  value: string;
+  onSave: (v: string) => void | Promise<void>;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => { if (!editing) setDraft(value); }, [value, editing]);
+
+  const commit = async () => {
+    if (!draft || draft === value) { setEditing(false); return; }
+    setSaving(true);
+    try { await onSave(draft); } finally { setSaving(false); setEditing(false); }
+  };
+
+  if (editing) {
+    return (
+      <input
+        autoFocus
+        type="date"
+        value={draft}
+        disabled={saving}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') { e.preventDefault(); (e.target as HTMLInputElement).blur(); }
+          else if (e.key === 'Escape') { setDraft(value); setEditing(false); }
+        }}
+        className="w-full bg-white/10 border border-blue-400/50 rounded px-1 py-0.5 text-white text-sm outline-none"
+      />
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => setEditing(true)}
+      className="w-full text-left px-1 py-0.5 rounded hover:bg-white/10 cursor-pointer transition-colors"
+      title="Clique para editar"
+    >
+      {value ? value.split('-').reverse().join('/') : '—'}
+    </button>
   );
 }
