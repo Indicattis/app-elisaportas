@@ -2521,6 +2521,7 @@ export type Database = {
           realizado_por: string | null
           total_despesas_fixas: number
           total_despesas_folha: number
+          total_despesas_imposto: number
           total_despesas_variaveis: number
           updated_at: string
         }
@@ -2538,6 +2539,7 @@ export type Database = {
           realizado_por?: string | null
           total_despesas_fixas?: number
           total_despesas_folha?: number
+          total_despesas_imposto?: number
           total_despesas_variaveis?: number
           updated_at?: string
         }
@@ -2555,6 +2557,7 @@ export type Database = {
           realizado_por?: string | null
           total_despesas_fixas?: number
           total_despesas_folha?: number
+          total_despesas_imposto?: number
           total_despesas_variaveis?: number
           updated_at?: string
         }
