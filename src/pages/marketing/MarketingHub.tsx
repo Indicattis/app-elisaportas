@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { TrendingUp, DollarSign, ArrowLeft, Image, Package, Target } from 'lucide-react';
+import { TrendingUp, DollarSign, ArrowLeft, Image, Package, Target, Download } from 'lucide-react';
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { DelayedParticles } from '@/components/DelayedParticles';
 
@@ -83,6 +83,30 @@ export default function MarketingHub() {
             );
           })}
         </div>
+
+        <a
+          href="/catalogo-elisa-portas.pdf"
+          target="_blank"
+          rel="noopener noreferrer"
+          download
+          className="mt-4 w-full p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 block"
+          style={{
+            opacity: mounted ? 1 : 0,
+            transform: mounted ? 'translateX(0)' : 'translateX(-30px)',
+            transition: `all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) ${100 + menuItems.length * 80}ms`,
+          }}
+        >
+          <div
+            className="w-full h-12 rounded-lg active:scale-[0.98]
+                       flex items-center gap-4 px-5 text-white font-medium
+                       bg-gradient-to-r from-blue-500 to-blue-700
+                       shadow-lg shadow-blue-500/20 border border-blue-400/30
+                       hover:from-blue-400 hover:to-blue-600 transition-all duration-300"
+          >
+            <Download className="w-5 h-5" strokeWidth={1.5} />
+            <span className="text-sm font-medium">Baixar Catálogo (PDF)</span>
+          </div>
+        </a>
       </div>
     </div>
   );
