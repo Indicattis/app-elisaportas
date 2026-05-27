@@ -1,5 +1,8 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Database } from "lucide-react";
 import { useInvestments } from "@/hooks/useInvestments";
 import MonthlyInvestmentGrid from "@/components/investimentos/MonthlyInvestmentGrid";
 import InvestmentModal from "@/components/investimentos/InvestmentModal";
@@ -7,6 +10,7 @@ import InvestmentChart from "@/components/investimentos/InvestmentChart";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 
 export default function InvestimentosMinimalista() {
+  const navigate = useNavigate();
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
   const { investments, loading, saveInvestment } = useInvestments(selectedYear);
@@ -21,6 +25,15 @@ export default function InvestimentosMinimalista() {
         { label: "Marketing", path: "/marketing" },
         { label: "Investimentos" }
       ]}
+      headerActions={
+        <Button
+          onClick={() => navigate('/marketing/canais-aquisicao')}
+          className="bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 text-white border-0"
+        >
+          <Database className="w-4 h-4 mr-2" />
+          Canais de Aquisição
+        </Button>
+      }
     >
       <div className="space-y-6">
         <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
