@@ -33,19 +33,28 @@ export function useFretesCidades() {
       const pageSize = 1000;
       let from = 0;
       const all: FreteCidade[] = [];
+      let expectedTotal: number | null = null;
       // Paginar para contornar o limite máximo de linhas do PostgREST
       while (true) {
-        const { data, error } = await supabase
+        const query = supabase
           .from('frete_cidades')
-          .select('*')
+          .select('*', from === 0 ? { count: 'exact' } : undefined)
           .order('estado', { ascending: true })
           .order('cidade', { ascending: true })
           .range(from, from + pageSize - 1);
+        const { data, error, count } = await query;
         if (error) throw error;
+        if (from === 0 && typeof count === 'number') expectedTotal = count;
         if (!data || data.length === 0) break;
         all.push(...(data as FreteCidade[]));
         if (data.length < pageSize) break;
         from += pageSize;
+        if (expectedTotal !== null && all.length >= expectedTotal) break;
+      }
+      if (expectedTotal !== null && all.length < expectedTotal) {
+        console.warn(
+          `[useFretesCidades] Carregadas ${all.length} de ${expectedTotal} cidades.`,
+        );
       }
       return all;
     }

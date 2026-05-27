@@ -1,5 +1,5 @@
-import { useState, useMemo, useRef } from "react";
-import { Plus, Edit, Trash2, Search, Package, Upload, Wand2, FileText, FileSpreadsheet } from "lucide-react";
+import { useState, useMemo, useRef, useEffect } from "react";
+import { Plus, Edit, Trash2, Search, Package, Upload, Wand2, FileText, FileSpreadsheet, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -38,6 +38,15 @@ const ESTADOS_BR = [
   "RS", "RO", "RR", "SC", "SP", "SE", "TO"
 ];
 
+const PAGE_SIZE = 50;
+
+const normalize = (s: string) =>
+  (s ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+
 export default function FreteMinimalista() {
   const { fretes, isLoading, deleteFrete, toggleAtivo, updateFrete } = useFretesCidades();
   const queryClient = useQueryClient();
@@ -52,6 +61,7 @@ export default function FreteMinimalista() {
   const [editingKmId, setEditingKmId] = useState<string | null>(null);
   const [kmEditValue, setKmEditValue] = useState("");
   const kmInputRef = useRef<HTMLInputElement>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const hasBrokenNames = useMemo(
     () => (fretes ?? []).some((f) => f.cidade.includes("\uFFFD")),
@@ -85,13 +95,31 @@ export default function FreteMinimalista() {
 
   const fretesFiltrados = useMemo(() => {
     if (!fretes) return [];
+    const term = normalize(searchTerm);
     return fretes.filter(frete => {
-      const matchSearch = frete.cidade.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         frete.estado.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchSearch =
+        term === "" ||
+        normalize(frete.cidade).includes(term) ||
+        normalize(frete.estado).includes(term) ||
+        normalize(`${frete.cidade} ${frete.estado}`).includes(term);
       const matchEstado = filterEstado === "todos" || frete.estado === filterEstado;
       return matchSearch && matchEstado;
     });
   }, [fretes, searchTerm, filterEstado]);
+
+  // Resetar página ao mudar busca/filtro
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterEstado]);
+
+  const totalPages = Math.max(1, Math.ceil(fretesFiltrados.length / PAGE_SIZE));
+  const safePage = Math.min(currentPage, totalPages);
+  const startIdx = (safePage - 1) * PAGE_SIZE;
+  const endIdx = startIdx + PAGE_SIZE;
+  const fretesPaginados = useMemo(
+    () => fretesFiltrados.slice(startIdx, endIdx),
+    [fretesFiltrados, startIdx, endIdx],
+  );
 
   const handleDelete = async () => {
     if (deleteId) {
@@ -275,7 +303,7 @@ export default function FreteMinimalista() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {fretesFiltrados.map((frete, idx) => {
+                  {fretesPaginados.map((frete, idx) => {
                     const km = frete.quilometragem ?? 0;
                     const idaVolta = km * 2;
                     const valor = km * 6;
@@ -284,7 +312,7 @@ export default function FreteMinimalista() {
                       key={frete.id}
                       className="cursor-pointer border-blue-500/10 hover:bg-white/5 text-white/90"
                     >
-                      <TableCell className="font-medium text-white/60">{idx + 1}</TableCell>
+                      <TableCell className="font-medium text-white/60">{startIdx + idx + 1}</TableCell>
                       <TableCell>{frete.cidade} - {frete.estado}</TableCell>
                       <TableCell className="text-white/80">
                         {editingKmId === frete.id ? (
@@ -351,6 +379,36 @@ export default function FreteMinimalista() {
                 </TableBody>
               </Table>
             </div>
+            {fretesFiltrados.length > 0 && (
+              <div className="flex items-center justify-between gap-3 px-4 py-3 border-t border-white/10 text-xs text-white/70">
+                <div>
+                  Mostrando {startIdx + 1}–{Math.min(endIdx, fretesFiltrados.length)} de {fretesFiltrados.length}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={safePage <= 1}
+                    className="h-7 px-2 bg-white/5 border-white/10 text-white hover:bg-white/10 disabled:opacity-40"
+                  >
+                    <ChevronLeft className="h-3.5 w-3.5" />
+                  </Button>
+                  <span className="text-white/80">
+                    Página {safePage} de {totalPages}
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={safePage >= totalPages}
+                    className="h-7 px-2 bg-white/5 border-white/10 text-white hover:bg-white/10 disabled:opacity-40"
+                  >
+                    <ChevronRight className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
