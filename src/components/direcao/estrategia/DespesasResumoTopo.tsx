@@ -547,9 +547,6 @@ function BlocoFolha({
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-white/10 text-white/50 border border-white/10">Não</span>
                     )}
                   </td>
-                  <td className="py-2 px-1 text-center">
-                    <StatusDot row={r} onToggle={onToggleConfirmado} />
-                  </td>
                   <td className={`px-2 text-right ${r ? 'text-emerald-400 font-medium' : 'text-white/60'}`}>
                     {r ? (
                       <EditableCell value={salario} format="currency" onSave={(v) => onPatch(r.id, 'salario', v)} />
@@ -636,7 +633,6 @@ function BlocoFolha({
                 />
               </td>
               <td></td>
-              <td></td>
               <td className="px-2"><NumInput value={addSalario} onChange={setAddSalario} /></td>
               <td className="px-2"><NumInput value={addAux} onChange={setAddAux} /></td>
               <td className="px-2"><NumInput value={addInsalub} onChange={setAddInsalub} /></td>
@@ -695,7 +691,7 @@ function BlocoFolha({
 /* ---------------- Despesa block ---------------- */
 
 function BlocoDespesa({
-  titulo, icon, rows, loading, categoria, tipos, padroes, mesStart, onDelete, onInsert, onDeletePadrao, onToggleConfirmado,
+  titulo, icon, rows, loading, categoria, tipos, padroes, mesStart, onDelete, onInsert, onDeletePadrao,
 }: {
   titulo: string;
   icon: React.ReactNode;
@@ -710,7 +706,6 @@ function BlocoDespesa({
     tipo: TipoCusto; categoria: 'fixa' | 'variavel'; valor: number; data: string; descricao: string;
   }) => Promise<void>;
   onDeletePadrao: (id: string) => Promise<void> | void;
-  onToggleConfirmado: (id: string, atual: 'alana' | 'luan' | undefined) => void | Promise<void>;
 }) {
   const [tipoId, setTipoId] = useState('');
   const [customNome, setCustomNome] = useState('');
@@ -766,7 +761,6 @@ function BlocoDespesa({
         <table className="w-full text-sm">
           <thead>
             <tr className="text-[10px] uppercase tracking-wider text-white/40 border-b border-white/10">
-              <th className="text-center font-normal pb-2 px-1 w-10">Status</th>
               <th className="text-left font-normal pb-2 pl-1 w-[28%]">Tipo</th>
               <th className="text-left font-normal pb-2 px-2">Descrição</th>
               <th className="text-left font-normal pb-2 px-2 w-[140px]">Data</th>
@@ -776,10 +770,9 @@ function BlocoDespesa({
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={6} className="text-white/40 px-2 py-3">Carregando...</td></tr>
+              <tr><td colSpan={5} className="text-white/40 px-2 py-3">Carregando...</td></tr>
             ) : rows.map(r => (
               <tr key={r.id} className="border-b border-white/5 hover:bg-white/[0.03]">
-                <td className="py-2 px-1 text-center"><StatusDot row={r} onToggle={onToggleConfirmado} /></td>
                 <td className="py-2 pl-1 text-white/90">{r.tipo_nome}</td>
                 <td className="px-2 text-white/60">{r.descricao || '—'}</td>
                 <td className="px-2 text-white/60">{r.data.split('-').reverse().join('/')}</td>
@@ -799,7 +792,6 @@ function BlocoDespesa({
             {/* ------ Sugestões padrão ------ */}
             {!loading && sugestoes.map(sug => (
               <tr key={`sug-${sug.id}`} className="border-b border-white/5 hover:bg-white/[0.03]">
-                <td className="py-2 px-1 text-center"><StatusDot row={undefined} onToggle={onToggleConfirmado} /></td>
                 <td className="py-2 pl-1 text-white/90">{sug.nome}</td>
                 <td className="px-2 text-white/60">—</td>
                 <td className="px-2 text-white/60">{mesStart.split('-').reverse().join('/')}</td>
@@ -833,7 +825,6 @@ function BlocoDespesa({
             {/* ------ Add row ------ */}
             {showAdd && (
             <tr className="border-b border-white/5 hover:bg-white/[0.03]">
-              <td></td>
               <td className="py-2 pl-1">
                 {isCustom ? (
                   <div className="flex items-center gap-1">
