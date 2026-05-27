@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { formatCurrency } from '@/lib/utils';
-import { Users, Receipt, TrendingDown, Trash2, Check, X } from 'lucide-react';
+import { Users, Receipt, TrendingDown, Trash2, Check, X, Landmark } from 'lucide-react';
 import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -60,7 +60,7 @@ type LancRow = {
   id: string;
   mes_referencia: string;
   tipo_custo_id: string | null;
-  categoria: 'fixa' | 'variavel';
+  categoria: 'fixa' | 'variavel' | 'imposto';
   tipo_nome: string;
   valor: number;
   data: string;
@@ -79,7 +79,7 @@ type Colab = {
   em_folha: boolean;
 };
 
-type TipoCusto = { id: string; nome: string; tipo: 'fixa' | 'variavel' };
+type TipoCusto = { id: string; nome: string; tipo: 'fixa' | 'variavel' | 'imposto' };
 
 function calcTotalFolha(f: { salario: number; aux_combustivel: number; insalubridade_pct: number; fgts_pct: number; previsao_13_valor: number }) {
   const insalub = f.salario * (f.insalubridade_pct || 0) / 100;
@@ -101,6 +101,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
   const [folha, setFolha] = useState<FolhaRow[]>([]);
   const [fixas, setFixas] = useState<LancRow[]>([]);
   const [variaveis, setVariaveis] = useState<LancRow[]>([]);
+  const [impostos, setImpostos] = useState<LancRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [reloadV, setReloadV] = useState(0);
   const reload = () => { setReloadV(v => v + 1); onDataChange?.(); };
@@ -115,18 +116,22 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
   const padroesFolha = useMemo(() => padroes.filter(p => p.tipo === 'folha'), [padroes]);
   const padroesFixas = useMemo(() => padroes.filter(p => p.tipo === 'fixa'), [padroes]);
   const padroesVariaveis = useMemo(() => padroes.filter(p => p.tipo === 'variavel'), [padroes]);
+  const padroesImpostos = useMemo(() => padroes.filter(p => p.tipo === 'imposto'), [padroes]);
   const totalExibido = useMemo(() => {
     const nomesFolha = new Set(folha.map(r => norm(r.colaborador_nome)));
     const nomesFixas = new Set(fixas.map(r => norm(r.tipo_nome)));
     const nomesVariaveis = new Set(variaveis.map(r => norm(r.tipo_nome)));
+    const nomesImpostos = new Set(impostos.map(r => norm(r.tipo_nome)));
 
     return folha.reduce((s, x) => s + Number(x.total || 0), 0)
       + padroesFolha.filter(p => !nomesFolha.has(norm(p.nome))).reduce((s, p) => s + calcTotalFolha(p), 0)
       + fixas.reduce((s, x) => s + Number(x.valor || 0), 0)
       + padroesFixas.filter(p => !nomesFixas.has(norm(p.nome))).reduce((s, p) => s + Number(p.valor || 0), 0)
       + variaveis.reduce((s, x) => s + Number(x.valor || 0), 0)
-      + padroesVariaveis.filter(p => !nomesVariaveis.has(norm(p.nome))).reduce((s, p) => s + Number(p.valor || 0), 0);
-  }, [folha, fixas, variaveis, padroesFolha, padroesFixas, padroesVariaveis]);
+      + padroesVariaveis.filter(p => !nomesVariaveis.has(norm(p.nome))).reduce((s, p) => s + Number(p.valor || 0), 0)
+      + impostos.reduce((s, x) => s + Number(x.valor || 0), 0)
+      + padroesImpostos.filter(p => !nomesImpostos.has(norm(p.nome))).reduce((s, p) => s + Number(p.valor || 0), 0);
+  }, [folha, fixas, variaveis, impostos, padroesFolha, padroesFixas, padroesVariaveis, padroesImpostos]);
 
   useEffect(() => {
     if (mes) onMediaMensalChange?.(totalExibido);
@@ -140,7 +145,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
 
   useEffect(() => {
     if (!mes || !mesStart) {
-      setFolha([]); setFixas([]); setVariaveis([]);
+      setFolha([]); setFixas([]); setVariaveis([]); setImpostos([]);
       onMediaMensalChange?.(0);
       return;
     }
@@ -158,6 +163,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         setFolha(folhaArr);
         setFixas(lancArr.filter(x => x.categoria === 'fixa'));
         setVariaveis(lancArr.filter(x => x.categoria === 'variavel'));
+        setImpostos(lancArr.filter(x => x.categoria === 'imposto'));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -222,7 +228,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
   };
 
   const handleInsertLanc = async (payload: {
-    tipo: TipoCusto; categoria: 'fixa' | 'variavel'; valor: number; data: string; descricao: string;
+    tipo: TipoCusto; categoria: 'fixa' | 'variavel' | 'imposto'; valor: number; data: string; descricao: string;
   }) => {
     if (!mesStart) return;
     const userId = (await supabase.auth.getUser()).data.user?.id || null;
@@ -249,6 +255,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
     const apply = (arr: LancRow[]) => arr.map(r => r.id === id ? { ...r, ...patch } as LancRow : r);
     setFixas(prev => apply(prev));
     setVariaveis(prev => apply(prev));
+    setImpostos(prev => apply(prev));
     const { error } = await supabase
       .from('despesas_manuais_lancamentos' as any)
       .update(patch as any)
@@ -303,6 +310,20 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         categoria="variavel"
         tipos={tipos.filter(t => t.tipo === 'variavel')}
         padroes={padroesVariaveis}
+        mesStart={mesStart || ''}
+        onDelete={(id) => setConfirmDel({ kind: 'lanc', id })}
+        onInsert={handleInsertLanc}
+        onUpdate={handleUpdateLanc}
+        onDeletePadrao={async (id) => { await removePadrao(id); reload(); }}
+      />
+      <BlocoDespesa
+        titulo="Despesas de Imposto"
+        icon={<Landmark className="w-4 h-4" />}
+        rows={impostos}
+        loading={loading}
+        categoria="imposto"
+        tipos={tipos.filter(t => t.tipo === 'imposto')}
+        padroes={padroesImpostos}
         mesStart={mesStart || ''}
         onDelete={(id) => setConfirmDel({ kind: 'lanc', id })}
         onInsert={handleInsertLanc}
@@ -719,13 +740,13 @@ function BlocoDespesa({
   icon: React.ReactNode;
   rows: LancRow[];
   loading: boolean;
-  categoria: 'fixa' | 'variavel';
+  categoria: 'fixa' | 'variavel' | 'imposto';
   tipos: TipoCusto[];
   padroes: DespesaPadrao[];
   mesStart: string;
   onDelete: (id: string) => void;
   onInsert: (payload: {
-    tipo: TipoCusto; categoria: 'fixa' | 'variavel'; valor: number; data: string; descricao: string;
+    tipo: TipoCusto; categoria: 'fixa' | 'variavel' | 'imposto'; valor: number; data: string; descricao: string;
   }) => Promise<void>;
   onUpdate: (
     id: string,
