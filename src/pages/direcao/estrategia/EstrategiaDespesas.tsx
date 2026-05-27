@@ -12,6 +12,7 @@ export default function EstrategiaDespesas() {
   const [ano, setAno] = useState(anoAtual);
   const [totaisMes, setTotaisMes] = useState<Record<string, number>>({});
   const [statusMes, setStatusMes] = useState<Record<string, 'pendente' | 'alana' | 'luan'>>({});
+  const [ultimaAlteracaoMes, setUltimaAlteracaoMes] = useState<Record<string, string>>({});
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -19,7 +20,7 @@ export default function EstrategiaDespesas() {
     const run = async () => {
       const start = `${ano}-01-01`;
       const end = `${ano}-12-31`;
-      const [{ data: folhaRows }, { data: lancRows }, { data: statusRows }] = await Promise.all([
+      const [{ data: folhaRows }, { data: lancRows }, { data: statusRows }, { data: histRows }] = await Promise.all([
         supabase
           .from('despesas_manuais_folha' as any)
           .select('total, mes_referencia')
@@ -35,6 +36,12 @@ export default function EstrategiaDespesas() {
           .select('mes_referencia, status')
           .gte('mes_referencia', start)
           .lte('mes_referencia', end),
+        supabase
+          .from('despesas_status_historico' as any)
+          .select('mes_referencia, created_at')
+          .gte('mes_referencia', start)
+          .lte('mes_referencia', end)
+          .order('created_at', { ascending: false }),
       ]);
       if (cancelled) return;
       const acc: Record<string, number> = {};
@@ -54,6 +61,12 @@ export default function EstrategiaDespesas() {
         st[key] = raw === 'alana' ? 'alana' : raw === 'luan' || raw === 'pronto' ? 'luan' : 'pendente';
       });
       setStatusMes(st);
+      const ult: Record<string, string> = {};
+      ((histRows || []) as any[]).forEach((h) => {
+        const key = String(h.mes_referencia).slice(0, 7);
+        if (!ult[key]) ult[key] = h.created_at;
+      });
+      setUltimaAlteracaoMes(ult);
     };
     run();
     return () => {
@@ -108,6 +121,7 @@ export default function EstrategiaDespesas() {
             const st = statusMes[mesKey] || 'pendente';
             const dotColor = st === 'luan' ? 'bg-emerald-400' : st === 'alana' ? 'bg-yellow-400' : 'bg-red-400';
             const dotTitle = st === 'luan' ? 'Luan' : st === 'alana' ? 'Alana' : 'Pendente';
+            const ultima = ultimaAlteracaoMes[mesKey];
             return (
               <button
                 key={mesKey}
@@ -121,6 +135,11 @@ export default function EstrategiaDespesas() {
                 <p className="text-sm text-white/50 capitalize mb-1">{mesNome}</p>
                 <p className="text-lg font-semibold text-white">
                   {formatCurrency(totaisMes[mesKey] || 0)}
+                </p>
+                <p className="text-[11px] text-white/40 mt-1">
+                  {ultima
+                    ? `Último status: ${new Date(ultima).toLocaleString('pt-BR')}`
+                    : 'Sem alterações de status'}
                 </p>
               </button>
             );
