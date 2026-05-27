@@ -11,7 +11,7 @@ export default function EstrategiaDespesas() {
   const anoAtual = new Date().getFullYear();
   const [ano, setAno] = useState(anoAtual);
   const [totaisMes, setTotaisMes] = useState<Record<string, number>>({});
-  const [statusMes, setStatusMes] = useState<Record<string, 'pendente' | 'pronto'>>({});
+  const [statusMes, setStatusMes] = useState<Record<string, 'pendente' | 'alana' | 'luan'>>({});
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -47,10 +47,11 @@ export default function EstrategiaDespesas() {
         acc[key] = (acc[key] || 0) + (Number(l.valor) || 0);
       });
       setTotaisMes(acc);
-      const st: Record<string, 'pendente' | 'pronto'> = {};
+      const st: Record<string, 'pendente' | 'alana' | 'luan'> = {};
       ((statusRows || []) as any[]).forEach((s) => {
         const key = String(s.mes_referencia).slice(0, 7);
-        st[key] = (s.status as 'pendente' | 'pronto') || 'pendente';
+        const raw = s.status as string;
+        st[key] = raw === 'alana' ? 'alana' : raw === 'luan' || raw === 'pronto' ? 'luan' : 'pendente';
       });
       setStatusMes(st);
     };
@@ -105,6 +106,8 @@ export default function EstrategiaDespesas() {
             const mesKey = format(mesDate, 'yyyy-MM');
             const mesNome = format(mesDate, 'MMMM', { locale: ptBR });
             const st = statusMes[mesKey] || 'pendente';
+            const dotColor = st === 'luan' ? 'bg-emerald-400' : st === 'alana' ? 'bg-yellow-400' : 'bg-red-400';
+            const dotTitle = st === 'luan' ? 'Luan' : st === 'alana' ? 'Alana' : 'Pendente';
             return (
               <button
                 key={mesKey}
@@ -112,10 +115,8 @@ export default function EstrategiaDespesas() {
                 className="relative p-5 rounded-xl border text-left transition-all duration-200 bg-white/5 border-white/10 hover:bg-white/10 hover:border-blue-400/40"
               >
                 <span
-                  className={`absolute top-3 right-3 w-2.5 h-2.5 rounded-full ${
-                    st === 'pronto' ? 'bg-emerald-400' : 'bg-amber-400'
-                  }`}
-                  title={st === 'pronto' ? 'Pronto' : 'Pendente'}
+                  className={`absolute top-3 right-3 w-2.5 h-2.5 rounded-full ${dotColor}`}
+                  title={dotTitle}
                 />
                 <p className="text-sm text-white/50 capitalize mb-1">{mesNome}</p>
                 <p className="text-lg font-semibold text-white">
