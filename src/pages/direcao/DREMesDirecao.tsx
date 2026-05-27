@@ -619,7 +619,7 @@ function PrintReport({
         <>
           <div className="pdf-page-break" />
           <div style={{ marginTop: 0 }}>
-            <div style={H2}>7. Vendas do Mês</div>
+            <div style={H2}>8. Vendas do Mês</div>
             <table>
               <thead style={{ display: 'table-header-group' }}>
                 <tr>
