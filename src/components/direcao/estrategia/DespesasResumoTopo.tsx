@@ -11,7 +11,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useDespesasPadrao } from '@/hooks/useDespesasPadrao';
 import type { DespesaPadrao } from '@/hooks/useDespesasPadrao';
-import HistoricoStatusBloco from './HistoricoStatusBloco';
+
 
 async function getCurrentUserInfo(): Promise<{ id: string | null; nome: string | null }> {
   const { data } = await supabase.auth.getUser();
