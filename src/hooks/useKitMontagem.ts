@@ -118,6 +118,10 @@ export function useKitMontagem(kitId: string | null) {
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: MONT_KEY(kitId ?? "") });
     queryClient.invalidateQueries({ queryKey: RESUMO_KEY });
+    if (kitId) {
+      queryClient.invalidateQueries({ queryKey: ["tabela-precos-kit", kitId] });
+    }
+    queryClient.invalidateQueries({ queryKey: ["tabela-precos-portas"] });
   };
 
   const addItem = useMutation({
@@ -127,6 +131,7 @@ export function useKitMontagem(kitId: string | null) {
         .from("tabela_precos_portas_montagem")
         .insert({ kit_id: kitId, custo_item_id, quantidade: quantidade ?? 1 });
       if (error) throw error;
+      await recalcKitValorPorta(kitId);
     },
     onSuccess: () => {
       invalidate();
@@ -142,6 +147,7 @@ export function useKitMontagem(kitId: string | null) {
         .update({ quantidade })
         .eq("id", id);
       if (error) throw error;
+      if (kitId) await recalcKitValorPorta(kitId);
     },
     onSuccess: invalidate,
     onError: (e: any) => toast.error(e?.message ?? "Erro ao atualizar quantidade"),
@@ -154,6 +160,7 @@ export function useKitMontagem(kitId: string | null) {
         .delete()
         .eq("id", id);
       if (error) throw error;
+      if (kitId) await recalcKitValorPorta(kitId);
     },
     onSuccess: () => {
       invalidate();
