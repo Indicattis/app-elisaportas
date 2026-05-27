@@ -154,32 +154,27 @@ function DespesaSectionReadOnly({
   );
 }
 
-// =============== Modal com gastos do tipo selecionado ===============
+// =============== Modal com lançamentos manuais do tipo selecionado ===============
 interface GastoRow {
   id: string;
   data: string;
   descricao: string | null;
   valor: number;
-  status: string | null;
-  responsavel_nome?: string;
-  banco_nome?: string;
 }
 
 function GastosDoTipoDialog({
   open,
   onOpenChange,
   mes,
-  tipoNome: tipoNomeFiltro,
-  categoria,
   tipoNome,
+  categoria,
   formatCurrency,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   mes: string;
   tipoNome: string;
-  categoria: 'fixa' | 'variavel' | 'imposto' | 'folha' | null;
-  tipoNome: string;
+  categoria: 'fixa' | 'variavel' | 'imposto' | null;
   formatCurrency: (v: number) => string;
 }) {
   const navigate = useNavigate();
@@ -187,57 +182,32 @@ function GastosDoTipoDialog({
   const [rows, setRows] = useState<GastoRow[]>([]);
 
   useEffect(() => {
-    if (!open || !tipoCustoId || !mes) return;
+    if (!open || !tipoNome || !categoria || !mes) return;
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const start = `${mes}-01`;
-      const [y, m] = mes.split('-').map(Number);
-      const end = new Date(y, m, 0).toISOString().split('T')[0];
-
-      const { data: gastos, error } = await supabase
-        .from('gastos' as any)
-        .select('id, data, descricao, valor, status, responsavel_id, banco_id')
-        .eq('tipo_custo_id', tipoCustoId)
-        .gte('data', start)
-        .lte('data', end)
+      const { data, error } = await supabase
+        .from('despesas_manuais_lancamentos' as any)
+        .select('id, data, descricao, valor')
+        .eq('mes_referencia', `${mes}-01`)
+        .eq('categoria', categoria)
+        .eq('tipo_nome', tipoNome)
         .order('data', { ascending: false });
 
-      if (error || !gastos) {
+      if (error || !data) {
         if (!cancelled) { setRows([]); setLoading(false); }
         return;
       }
-
-      const respIds = [...new Set((gastos as any[]).map((g: any) => g.responsavel_id).filter(Boolean))];
-      const bancoIds = [...new Set((gastos as any[]).map((g: any) => g.banco_id).filter(Boolean))];
-
-      const [respRes, bancoRes] = await Promise.all([
-        respIds.length
-          ? supabase.from('admin_users').select('user_id, nome').in('user_id', respIds)
-          : Promise.resolve({ data: [] as any[] }),
-        bancoIds.length
-          ? supabase.from('bancos' as any).select('id, nome').in('id', bancoIds)
-          : Promise.resolve({ data: [] as any[] }),
-      ]);
-
-      const respMap: Record<string, string> = {};
-      ((respRes.data || []) as any[]).forEach((u: any) => { respMap[u.user_id] = u.nome; });
-      const bancoMap: Record<string, string> = {};
-      ((bancoRes.data || []) as any[]).forEach((b: any) => { bancoMap[b.id] = b.nome; });
-
-      const mapped: GastoRow[] = (gastos as any[]).map((g: any) => ({
+      const mapped: GastoRow[] = (data as any[]).map((g: any) => ({
         id: g.id,
         data: g.data,
         descricao: g.descricao,
         valor: Number(g.valor) || 0,
-        status: g.status,
-        responsavel_nome: g.responsavel_id ? respMap[g.responsavel_id] || '—' : '—',
-        banco_nome: g.banco_id ? bancoMap[g.banco_id] || '—' : '—',
       }));
       if (!cancelled) { setRows(mapped); setLoading(false); }
     })();
     return () => { cancelled = true; };
-  }, [open, tipoCustoId, mes]);
+  }, [open, tipoNome, categoria, mes]);
 
   const total = rows.reduce((s, r) => s + r.valor, 0);
 
@@ -247,7 +217,7 @@ function GastosDoTipoDialog({
         <DialogHeader>
           <DialogTitle className="text-white">{tipoNome}</DialogTitle>
           <DialogDescription className="text-white/50">
-            Gastos lançados em {mes} • {rows.length} {rows.length === 1 ? 'lançamento' : 'lançamentos'}
+            Lançamentos em {mes} • {rows.length} {rows.length === 1 ? 'lançamento' : 'lançamentos'}
           </DialogDescription>
         </DialogHeader>
 
@@ -258,7 +228,7 @@ function GastosDoTipoDialog({
             </div>
           ) : rows.length === 0 ? (
             <div className="p-8 text-center text-white/40 text-sm">
-              Nenhum gasto lançado neste tipo para o mês.
+              Nenhum lançamento neste tipo para o mês.
             </div>
           ) : (
             <table className="w-full text-xs">
@@ -266,9 +236,6 @@ function GastosDoTipoDialog({
                 <tr className="border-b border-white/10 text-white/40 uppercase text-[10px]">
                   <th className="text-left p-2 font-medium">Data</th>
                   <th className="text-left p-2 font-medium">Descrição</th>
-                  <th className="text-left p-2 font-medium">Responsável</th>
-                  <th className="text-left p-2 font-medium">Banco</th>
-                  <th className="text-left p-2 font-medium">Status</th>
                   <th className="text-right p-2 font-medium">Valor</th>
                 </tr>
               </thead>
@@ -279,9 +246,6 @@ function GastosDoTipoDialog({
                       {format(new Date(r.data + 'T12:00:00'), 'dd/MM/yyyy')}
                     </td>
                     <td className="p-2 text-white/80">{r.descricao || '—'}</td>
-                    <td className="p-2 text-white/60">{r.responsavel_nome}</td>
-                    <td className="p-2 text-white/60">{r.banco_nome}</td>
-                    <td className="p-2 text-white/60">{r.status || '—'}</td>
                     <td className="p-2 text-right font-medium text-white tabular-nums">
                       {formatCurrency(r.valor)}
                     </td>
@@ -290,7 +254,7 @@ function GastosDoTipoDialog({
               </tbody>
               <tfoot>
                 <tr className="border-t border-white/10 bg-white/5">
-                  <td colSpan={5} className="p-2 text-white/70 font-semibold">Total</td>
+                  <td colSpan={2} className="p-2 text-white/70 font-semibold">Total</td>
                   <td className="p-2 text-right font-bold text-white tabular-nums">{formatCurrency(total)}</td>
                 </tr>
               </tfoot>
@@ -302,9 +266,9 @@ function GastosDoTipoDialog({
           <Button
             variant="outline"
             className="bg-white/5 border-white/20 text-white hover:bg-white/10"
-            onClick={() => navigate(`/administrativo/financeiro/gastos?mes=${mes}`)}
+            onClick={() => navigate(`/direcao/estrategia/despesas/${mes}`)}
           >
-            <ExternalLink className="h-4 w-4 mr-2" />Abrir em Gastos
+            <ExternalLink className="h-4 w-4 mr-2" />Abrir em Despesas
           </Button>
         </div>
       </DialogContent>
