@@ -713,7 +713,7 @@ function BlocoFolha({
 /* ---------------- Despesa block ---------------- */
 
 function BlocoDespesa({
-  titulo, icon, rows, loading, categoria, tipos, padroes, mesStart, onDelete, onInsert, onDeletePadrao,
+  titulo, icon, rows, loading, categoria, tipos, padroes, mesStart, onDelete, onInsert, onUpdate, onDeletePadrao,
 }: {
   titulo: string;
   icon: React.ReactNode;
@@ -727,6 +727,10 @@ function BlocoDespesa({
   onInsert: (payload: {
     tipo: TipoCusto; categoria: 'fixa' | 'variavel'; valor: number; data: string; descricao: string;
   }) => Promise<void>;
+  onUpdate: (
+    id: string,
+    patch: Partial<{ valor: number; data: string; descricao: string | null; tipo_nome: string }>,
+  ) => Promise<void>;
   onDeletePadrao: (id: string) => Promise<void> | void;
 }) {
   const [tipoId, setTipoId] = useState('');
@@ -800,10 +804,18 @@ function BlocoDespesa({
               <tr><td colSpan={6} className="text-white/40 px-2 py-3">Carregando...</td></tr>
             ) : rows.map(r => (
               <tr key={r.id} className="border-b border-white/5 hover:bg-white/[0.03]">
-                <td className="py-2 pl-1 text-white/90">{r.tipo_nome}</td>
-                <td className="px-2 text-white/60">{r.descricao || '—'}</td>
-                <td className="px-2 text-white/60">{r.data.split('-').reverse().join('/')}</td>
-                <td className="px-2 text-right text-white font-medium">{formatCurrency(r.valor)}</td>
+                <td className="py-2 pl-1 text-white/90">
+                  <EditableText value={r.tipo_nome} onSave={(v) => onUpdate(r.id, { tipo_nome: v })} />
+                </td>
+                <td className="px-2 text-white/60">
+                  <EditableText value={r.descricao || ''} placeholder="—" onSave={(v) => onUpdate(r.id, { descricao: v || null })} />
+                </td>
+                <td className="px-2 text-white/60">
+                  <EditableDate value={r.data} onSave={(v) => onUpdate(r.id, { data: v })} />
+                </td>
+                <td className="px-2 text-right text-white font-medium">
+                  <EditableCell value={r.valor} format="currency" onSave={(v) => onUpdate(r.id, { valor: v })} />
+                </td>
                 <td className="px-2 text-right text-white/50">{prevForRow(r.tipo_nome) > 0 ? formatCurrency(prevForRow(r.tipo_nome)) : '—'}</td>
                 <td className="pr-1 text-right">
                   <button
