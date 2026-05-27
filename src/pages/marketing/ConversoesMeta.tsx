@@ -85,12 +85,13 @@ export default function ConversoesMeta() {
         items={[
           { label: 'Home', path: '/home' },
           { label: 'Marketing', path: '/marketing' },
-          { label: 'Conversões Meta' },
+          { label: 'Conversões', path: '/marketing/conversoes-hub' },
+          { label: 'Meta' },
         ]}
         mounted
       />
       <button
-        onClick={() => navigate('/marketing')}
+        onClick={() => navigate('/marketing/conversoes-hub')}
         className="fixed top-4 left-4 z-50 p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 hover:bg-white/10 transition-all duration-300"
       >
         <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-lg shadow-blue-500/20">
