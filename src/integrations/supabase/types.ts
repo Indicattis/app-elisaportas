@@ -8285,6 +8285,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           id: string
+          incluir_orcamento: boolean
           sort_order: number
           storage_bucket: string
           storage_path: string
@@ -8296,6 +8297,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          incluir_orcamento?: boolean
           sort_order?: number
           storage_bucket: string
           storage_path: string
@@ -8307,6 +8309,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          incluir_orcamento?: boolean
           sort_order?: number
           storage_bucket?: string
           storage_path?: string

@@ -498,7 +498,7 @@ function BlocoFolha({
     <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-5">
       <div className="flex items-center gap-2 text-white mb-3">
         <Users className="w-4 h-4" />
-        <h3 className="font-semibold">Folha Salarial</h3>
+        <h3 className="text-xl font-semibold">Folha Salarial</h3>
         <span className="text-white/40 text-sm">({rows.length}/{sortedColabs.length})</span>
       </div>
 
@@ -753,7 +753,7 @@ function BlocoDespesa({
     <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-5">
       <div className="flex items-center gap-2 text-white mb-3">
         {icon}
-        <h3 className="font-semibold">{titulo}</h3>
+        <h3 className="text-xl font-semibold">{titulo}</h3>
         <span className="text-white/40 text-sm">({rows.length})</span>
       </div>
 
