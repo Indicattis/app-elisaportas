@@ -154,30 +154,27 @@ function DespesaSectionReadOnly({
   );
 }
 
-// =============== Modal com gastos do tipo selecionado ===============
+// =============== Modal com lançamentos manuais do tipo selecionado ===============
 interface GastoRow {
   id: string;
   data: string;
   descricao: string | null;
   valor: number;
-  status: string | null;
-  responsavel_nome?: string;
-  banco_nome?: string;
 }
 
 function GastosDoTipoDialog({
   open,
   onOpenChange,
   mes,
-  tipoCustoId,
   tipoNome,
+  categoria,
   formatCurrency,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   mes: string;
-  tipoCustoId: string | null;
   tipoNome: string;
+  categoria: 'fixa' | 'variavel' | 'imposto' | null;
   formatCurrency: (v: number) => string;
 }) {
   const navigate = useNavigate();
@@ -185,57 +182,32 @@ function GastosDoTipoDialog({
   const [rows, setRows] = useState<GastoRow[]>([]);
 
   useEffect(() => {
-    if (!open || !tipoCustoId || !mes) return;
+    if (!open || !tipoNome || !categoria || !mes) return;
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const start = `${mes}-01`;
-      const [y, m] = mes.split('-').map(Number);
-      const end = new Date(y, m, 0).toISOString().split('T')[0];
-
-      const { data: gastos, error } = await supabase
-        .from('gastos' as any)
-        .select('id, data, descricao, valor, status, responsavel_id, banco_id')
-        .eq('tipo_custo_id', tipoCustoId)
-        .gte('data', start)
-        .lte('data', end)
+      const { data, error } = await supabase
+        .from('despesas_manuais_lancamentos' as any)
+        .select('id, data, descricao, valor')
+        .eq('mes_referencia', `${mes}-01`)
+        .eq('categoria', categoria)
+        .eq('tipo_nome', tipoNome)
         .order('data', { ascending: false });
 
-      if (error || !gastos) {
+      if (error || !data) {
         if (!cancelled) { setRows([]); setLoading(false); }
         return;
       }
-
-      const respIds = [...new Set((gastos as any[]).map((g: any) => g.responsavel_id).filter(Boolean))];
-      const bancoIds = [...new Set((gastos as any[]).map((g: any) => g.banco_id).filter(Boolean))];
-
-      const [respRes, bancoRes] = await Promise.all([
-        respIds.length
-          ? supabase.from('admin_users').select('user_id, nome').in('user_id', respIds)
-          : Promise.resolve({ data: [] as any[] }),
-        bancoIds.length
-          ? supabase.from('bancos' as any).select('id, nome').in('id', bancoIds)
-          : Promise.resolve({ data: [] as any[] }),
-      ]);
-
-      const respMap: Record<string, string> = {};
-      ((respRes.data || []) as any[]).forEach((u: any) => { respMap[u.user_id] = u.nome; });
-      const bancoMap: Record<string, string> = {};
-      ((bancoRes.data || []) as any[]).forEach((b: any) => { bancoMap[b.id] = b.nome; });
-
-      const mapped: GastoRow[] = (gastos as any[]).map((g: any) => ({
+      const mapped: GastoRow[] = (data as any[]).map((g: any) => ({
         id: g.id,
         data: g.data,
         descricao: g.descricao,
         valor: Number(g.valor) || 0,
-        status: g.status,
-        responsavel_nome: g.responsavel_id ? respMap[g.responsavel_id] || '—' : '—',
-        banco_nome: g.banco_id ? bancoMap[g.banco_id] || '—' : '—',
       }));
       if (!cancelled) { setRows(mapped); setLoading(false); }
     })();
     return () => { cancelled = true; };
-  }, [open, tipoCustoId, mes]);
+  }, [open, tipoNome, categoria, mes]);
 
   const total = rows.reduce((s, r) => s + r.valor, 0);
 
@@ -245,7 +217,7 @@ function GastosDoTipoDialog({
         <DialogHeader>
           <DialogTitle className="text-white">{tipoNome}</DialogTitle>
           <DialogDescription className="text-white/50">
-            Gastos lançados em {mes} • {rows.length} {rows.length === 1 ? 'lançamento' : 'lançamentos'}
+            Lançamentos em {mes} • {rows.length} {rows.length === 1 ? 'lançamento' : 'lançamentos'}
           </DialogDescription>
         </DialogHeader>
 
@@ -256,7 +228,7 @@ function GastosDoTipoDialog({
             </div>
           ) : rows.length === 0 ? (
             <div className="p-8 text-center text-white/40 text-sm">
-              Nenhum gasto lançado neste tipo para o mês.
+              Nenhum lançamento neste tipo para o mês.
             </div>
           ) : (
             <table className="w-full text-xs">
@@ -264,9 +236,6 @@ function GastosDoTipoDialog({
                 <tr className="border-b border-white/10 text-white/40 uppercase text-[10px]">
                   <th className="text-left p-2 font-medium">Data</th>
                   <th className="text-left p-2 font-medium">Descrição</th>
-                  <th className="text-left p-2 font-medium">Responsável</th>
-                  <th className="text-left p-2 font-medium">Banco</th>
-                  <th className="text-left p-2 font-medium">Status</th>
                   <th className="text-right p-2 font-medium">Valor</th>
                 </tr>
               </thead>
@@ -277,9 +246,6 @@ function GastosDoTipoDialog({
                       {format(new Date(r.data + 'T12:00:00'), 'dd/MM/yyyy')}
                     </td>
                     <td className="p-2 text-white/80">{r.descricao || '—'}</td>
-                    <td className="p-2 text-white/60">{r.responsavel_nome}</td>
-                    <td className="p-2 text-white/60">{r.banco_nome}</td>
-                    <td className="p-2 text-white/60">{r.status || '—'}</td>
                     <td className="p-2 text-right font-medium text-white tabular-nums">
                       {formatCurrency(r.valor)}
                     </td>
@@ -288,7 +254,7 @@ function GastosDoTipoDialog({
               </tbody>
               <tfoot>
                 <tr className="border-t border-white/10 bg-white/5">
-                  <td colSpan={5} className="p-2 text-white/70 font-semibold">Total</td>
+                  <td colSpan={2} className="p-2 text-white/70 font-semibold">Total</td>
                   <td className="p-2 text-right font-bold text-white tabular-nums">{formatCurrency(total)}</td>
                 </tr>
               </tfoot>
@@ -300,9 +266,9 @@ function GastosDoTipoDialog({
           <Button
             variant="outline"
             className="bg-white/5 border-white/20 text-white hover:bg-white/10"
-            onClick={() => navigate(`/administrativo/financeiro/gastos?mes=${mes}`)}
+            onClick={() => navigate(`/direcao/estrategia/despesas/${mes}`)}
           >
-            <ExternalLink className="h-4 w-4 mr-2" />Abrir em Gastos
+            <ExternalLink className="h-4 w-4 mr-2" />Abrir em Despesas
           </Button>
         </div>
       </DialogContent>
@@ -318,11 +284,13 @@ function PrintReport({
   despesasFixas,
   despesasFolha,
   despesasVariaveis,
+  despesasImpostos,
   tiposCustosFixos,
   tiposCustosVariaveis,
   totalDespFixas,
   totalDespFolha,
   totalDespVariaveis,
+  totalDespImpostos,
   totalProjetadoAnual,
   topAcessorios,
   topAdicionais,
@@ -339,11 +307,13 @@ function PrintReport({
   despesasFixas: DespesaAgrupada[];
   despesasFolha: DespesaAgrupada[];
   despesasVariaveis: DespesaAgrupada[];
+  despesasImpostos: DespesaAgrupada[];
   tiposCustosFixos: TipoCustoVariavel[];
   tiposCustosVariaveis: TipoCustoVariavel[];
   totalDespFixas: number;
   totalDespFolha: number;
   totalDespVariaveis: number;
+  totalDespImpostos: number;
   totalProjetadoAnual: number;
   topAcessorios: { nome: string; qtd: number }[];
   topAdicionais: { nome: string; qtd: number }[];
@@ -516,6 +486,7 @@ function PrintReport({
               { l: '(–) Folha Salarial', v: formatCurrency(totalDespFolha), c: '#b91c1c', b: false },
               { l: '(–) Despesas Fixas', v: formatCurrency(totalDespFixas), c: '#b91c1c', b: false },
               { l: '(–) Despesas Variáveis', v: formatCurrency(totalDespVariaveis), c: '#b91c1c', b: false },
+              { l: '(–) Despesas de Imposto', v: formatCurrency(totalDespImpostos), c: '#b91c1c', b: false },
             ].map((r, i) => (
               <tr key={i} style={trZebra(i)}>
                 <td style={{ ...TD, fontWeight: r.b ? 700 : 500 }}>{r.l}</td>
@@ -595,10 +566,20 @@ function PrintReport({
         />
       </div>
 
+      <div className="pdf-page-break" />
+      <div style={{ marginTop: 0 }}>
+        <div style={H2}>6. Despesas de Imposto</div>
+        <PrintDespesaTable
+          items={despesasImpostos}
+          total={totalDespImpostos}
+          formatCurrency={formatCurrency}
+        />
+      </div>
+
       {/* ESTOQUE */}
       <div className="pdf-page-break" />
       <div style={{ marginTop: 0 }}>
-        <div style={H2}>6. Estoque</div>
+        <div style={H2}>7. Estoque</div>
         <div style={{ display: 'flex', gap: 8 }}>
           <div style={{ flex: 1, border: '1px solid #e2e8f0', padding: '10px 12px', background: '#fafbfc' }}>
             <div style={{ fontSize: '7pt', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>
@@ -638,7 +619,7 @@ function PrintReport({
         <>
           <div className="pdf-page-break" />
           <div style={{ marginTop: 0 }}>
-            <div style={H2}>7. Vendas do Mês</div>
+            <div style={H2}>8. Vendas do Mês</div>
             <table>
               <thead style={{ display: 'table-header-group' }}>
                 <tr>
@@ -857,7 +838,8 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
   const [despesasFixas, setDespesasFixas] = useState<DespesaAgrupada[]>([]);
   const [despesasFolha, setDespesasFolha] = useState<DespesaAgrupada[]>([]);
   const [despesasVariaveis, setDespesasVariaveis] = useState<DespesaAgrupada[]>([]);
-  const [tipoModal, setTipoModal] = useState<{ id: string; nome: string } | null>(null);
+  const [despesasImpostos, setDespesasImpostos] = useState<DespesaAgrupada[]>([]);
+  const [tipoModal, setTipoModal] = useState<{ nome: string; categoria: 'fixa' | 'variavel' | 'imposto' } | null>(null);
   const [tiposCustosFixos, setTiposCustosFixos] = useState<TipoCustoVariavel[]>([]);
   const [tiposCustosVariaveis, setTiposCustosVariaveis] = useState<TipoCustoVariavel[]>([]);
   const [topAcessorios, setTopAcessorios] = useState<{nome: string, qtd: number}[]>([]);
@@ -884,82 +866,63 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
   const fetchDespesasFromGastos = async () => {
     if (!mes) return;
     const start = `${mes}-01`;
-    const [y, m] = mes.split('-').map(Number);
-    const end = new Date(y, m, 0).toISOString().split('T')[0];
 
-    // Fetch gastos do mês
-    const { data: gastos, error } = await supabase
-      .from('gastos' as any)
-      .select('id, valor, tipo_custo_id, descricao, data')
-      .gte('data', start)
-      .lte('data', end);
+    // Lançamentos manuais (fixas / variáveis / impostos)
+    const { data: lancs, error } = await supabase
+      .from('despesas_manuais_lancamentos' as any)
+      .select('id, categoria, tipo_nome, valor, descricao, data')
+      .eq('mes_referencia', start);
 
     if (error) {
-      console.error('Erro ao buscar gastos:', error);
-      return;
-    }
-
-    // Fetch tipos_custos que aparecem no DRE
-    const { data: tipos, error: tiposError } = await supabase
-      .from('tipos_custos' as any)
-      .select('id, nome, tipo, aparece_no_dre')
-      .eq('aparece_no_dre', true);
-
-    if (tiposError) {
-      console.error('Erro ao buscar tipos custos:', tiposError);
-      return;
-    }
-
-    const tiposMap: Record<string, { nome: string; tipo: string }> = {};
-    ((tipos || []) as any[]).forEach((t: any) => {
-      tiposMap[t.id] = { nome: t.nome, tipo: t.tipo };
-    });
-
-    // Agrupar gastos por tipo_custo_id
-    const agrupado: Record<string, { nome: string; tipo: string; valor: number; gastos: { id: string; descricao: string | null; data: string; valor: number }[] }> = {};
-    ((gastos || []) as any[]).forEach((g: any) => {
-      const tipo = tiposMap[g.tipo_custo_id];
-      if (!tipo) return;
-      if (!agrupado[g.tipo_custo_id]) {
-        agrupado[g.tipo_custo_id] = { nome: tipo.nome, tipo: tipo.tipo, valor: 0, gastos: [] };
-      }
-      agrupado[g.tipo_custo_id].valor += g.valor || 0;
-      agrupado[g.tipo_custo_id].gastos.push({
-        id: g.id,
-        descricao: g.descricao ?? null,
-        data: g.data,
-        valor: Number(g.valor) || 0,
+      console.error('Erro ao buscar lançamentos manuais:', error);
+      setDespesasFixas([]);
+      setDespesasVariaveis([]);
+      setDespesasImpostos([]);
+    } else {
+      const agrupado: Record<string, { nome: string; categoria: string; valor: number; gastos: { id: string; descricao: string | null; data: string; valor: number }[] }> = {};
+      ((lancs || []) as any[]).forEach((l: any) => {
+        const key = `${l.categoria}::${l.tipo_nome}`;
+        if (!agrupado[key]) {
+          agrupado[key] = { nome: l.tipo_nome, categoria: l.categoria, valor: 0, gastos: [] };
+        }
+        agrupado[key].valor += Number(l.valor) || 0;
+        agrupado[key].gastos.push({
+          id: l.id,
+          descricao: l.descricao ?? null,
+          data: l.data,
+          valor: Number(l.valor) || 0,
+        });
       });
-    });
+      const items = Object.entries(agrupado).map(([key, v]) => ({
+        id: key,
+        nome: v.nome,
+        valor_real: v.valor,
+        categoria: v.categoria,
+        gastos: v.gastos.slice().sort((a, b) => a.data.localeCompare(b.data)),
+      }));
+      setDespesasFixas(items.filter(i => i.categoria === 'fixa').sort((a, b) => a.nome.localeCompare(b.nome)));
+      setDespesasVariaveis(items.filter(i => i.categoria === 'variavel').sort((a, b) => a.nome.localeCompare(b.nome)));
+      setDespesasImpostos(items.filter(i => i.categoria === 'imposto').sort((a, b) => a.nome.localeCompare(b.nome)));
+    }
 
-    const items = Object.entries(agrupado).map(([id, v]) => ({
-      id,
-      nome: v.nome,
-      valor_real: v.valor,
-      tipo: v.tipo,
-      gastos: v.gastos.slice().sort((a, b) => a.data.localeCompare(b.data)),
-    }));
-
-    setDespesasFixas(items.filter(i => i.tipo === 'fixa' && !isFolha(i.nome)));
-    setDespesasVariaveis(items.filter(i => i.tipo === 'variavel' && !isFolha(i.nome)));
-
-    // Folha salarial agora vem da tabela custos_folha_mensais
+    // Folha salarial — fonte: despesas_manuais_folha (total por colaborador)
     const { data: folhaItens, error: folhaErr } = await supabase
-      .from('custos_folha_mensais' as any)
-      .select('id, colaborador_nome, valor')
+      .from('despesas_manuais_folha' as any)
+      .select('id, colaborador_nome, total')
       .eq('mes_referencia', start);
 
     if (folhaErr) {
-      console.error('Erro ao buscar custos de folha:', folhaErr);
+      console.error('Erro ao buscar folha manual:', folhaErr);
       setDespesasFolha([]);
     } else {
       setDespesasFolha(
-        ((folhaItens || []) as any[]).map((f) => ({
-          id: f.id,
-          nome: f.colaborador_nome,
-          valor_real: Number(f.valor) || 0,
-          tipo: 'fixa',
-        }))
+        ((folhaItens || []) as any[])
+          .map((f) => ({
+            id: f.id,
+            nome: f.colaborador_nome,
+            valor_real: Number(f.total) || 0,
+          }))
+          .sort((a, b) => a.nome.localeCompare(b.nome))
       );
     }
   };
@@ -1389,9 +1352,10 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
   const totalDespFixas = despesasFixas.reduce((acc, d) => acc + (d.valor_real || 0), 0);
   const totalDespFolha = despesasFolha.reduce((acc, d) => acc + (d.valor_real || 0), 0);
   const totalDespVariaveis = despesasVariaveis.reduce((acc, d) => acc + (d.valor_real || 0), 0);
+  const totalDespImpostos = despesasImpostos.reduce((acc, d) => acc + (d.valor_real || 0), 0);
   const totalProjetadoAnual = tiposCustosVariaveis.reduce((acc, t) => acc + (t.valor_maximo_mensal * 12), 0);
 
-  const lucroLiquidoFinal = lucro.total - totalDespFixas - totalDespFolha - totalDespVariaveis;
+  const lucroLiquidoFinal = lucro.total - totalDespFixas - totalDespFolha - totalDespVariaveis - totalDespImpostos;
   const percBrutoFinal = faturamento.total > 0 ? (lucro.total / faturamento.total) * 100 : 0;
   const percLiquidFinal = faturamento.total > 0 ? (lucroLiquidoFinal / faturamento.total) * 100 : 0;
 
@@ -1530,7 +1494,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
               total={totalDespFixas}
               formatCurrency={formatCurrency}
               tiposDisponiveis={tiposCustosFixos.filter(t => !isFolha(t.nome))}
-              onClickTipo={(id, nome) => setTipoModal({ id, nome })}
+              onClickTipo={(_id, nome) => setTipoModal({ nome, categoria: 'fixa' })}
             />
             <DespesaSectionReadOnly
               title="Despesas Variáveis"
@@ -1538,7 +1502,14 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
               total={totalDespVariaveis}
               formatCurrency={formatCurrency}
               tiposDisponiveis={tiposCustosVariaveis}
-              onClickTipo={(id, nome) => setTipoModal({ id, nome })}
+              onClickTipo={(_id, nome) => setTipoModal({ nome, categoria: 'variavel' })}
+            />
+            <DespesaSectionReadOnly
+              title="Despesas de Imposto"
+              despesas={despesasImpostos}
+              total={totalDespImpostos}
+              formatCurrency={formatCurrency}
+              onClickTipo={(_id, nome) => setTipoModal({ nome, categoria: 'imposto' })}
             />
           </div>
           {viewMode === 'full' && (
@@ -1601,7 +1572,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         </div>
       )}
       {showResumoFinal && (() => {
-        const lucroLiquido = lucro.total - totalDespFixas - totalDespFolha - totalDespVariaveis;
+        const lucroLiquido = lucro.total - totalDespFixas - totalDespFolha - totalDespVariaveis - totalDespImpostos;
         const percBruto = faturamento.total > 0 ? (lucro.total / faturamento.total) * 100 : 0;
         const percLiquid = faturamento.total > 0 ? (lucroLiquido / faturamento.total) * 100 : 0;
         const colorClass = (v: number) => v >= 0 ? 'text-emerald-400' : 'text-red-400';
@@ -1612,6 +1583,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
           { label: 'Despesas Fixas', value: formatCurrency(totalDespFixas), color: 'text-red-400' },
           { label: 'Folha Salarial', value: formatCurrency(totalDespFolha), color: 'text-red-400' },
           { label: 'Desp. Variáveis', value: formatCurrency(totalDespVariaveis), color: 'text-red-400' },
+          { label: 'Desp. Imposto', value: formatCurrency(totalDespImpostos), color: 'text-red-400' },
           { label: 'Lucro Líquido', value: formatCurrency(lucroLiquido), color: colorClass(lucroLiquido) },
           { label: '% Lucro Líquido', value: `${percLiquid.toFixed(1)}%`, color: colorClass(percLiquid) },
         ];
@@ -1651,8 +1623,8 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         open={!!tipoModal}
         onOpenChange={(o) => { if (!o) setTipoModal(null); }}
         mes={mes || ''}
-        tipoCustoId={tipoModal?.id || null}
         tipoNome={tipoModal?.nome || ''}
+        categoria={tipoModal?.categoria || null}
         formatCurrency={formatCurrency}
       />
       <PortasDetalheDialog
@@ -1825,11 +1797,13 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         despesasFixas={despesasFixas}
         despesasFolha={despesasFolha}
         despesasVariaveis={despesasVariaveis}
+        despesasImpostos={despesasImpostos}
         tiposCustosVariaveis={tiposCustosVariaveis}
         tiposCustosFixos={tiposCustosFixos}
         totalDespFixas={totalDespFixas}
         totalDespFolha={totalDespFolha}
         totalDespVariaveis={totalDespVariaveis}
+        totalDespImpostos={totalDespImpostos}
         totalProjetadoAnual={totalProjetadoAnual}
         topAcessorios={topAcessorios}
         topAdicionais={topAdicionais}
