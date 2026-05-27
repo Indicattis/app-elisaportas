@@ -1,58 +1,39 @@
-# Trocar fonte de Folha e Despesas no DRE para os lançamentos manuais
+## Problema
 
-Substituir, na tela `/direcao/estrategia/dre/:mes`, as fontes atuais das seções **Folha Salarial**, **Despesas Fixas** e **Despesas Variáveis** pelos dados registrados em `/direcao/estrategia/despesas`. Acrescentar também a nova seção **Despesas de Imposto** (criada recentemente naquela tela), para que o DRE espelhe exatamente as despesas do mês.
+Em `/direcao/estrategia/kits/:kitId/montagem`, o card "Lucro adicional" exibe **Preço da porta** a partir de `kit.valor_porta` (coluna persistida em `tabela_precos_portas`). Como esse valor não é recalculado quando os itens da montagem mudam, ele fica estático (R$ 2.704,50). Só o lucro/margem da montagem muda porque dependem de `totais.custo`/`totais.venda` calculados em memória a partir dos itens.
 
-## Fontes — antes e depois
+## Solução
 
-| Seção | Hoje | Passa a usar |
-|---|---|---|
-| Folha Salarial | `custos_folha_mensais` | `despesas_manuais_folha` (campo `total`) |
-| Despesas Fixas | `gastos` + `tipos_custos` (tipo=fixa, não-folha) | `despesas_manuais_lancamentos` `categoria='fixa'` |
-| Despesas Variáveis | `gastos` + `tipos_custos` (tipo=variavel) | `despesas_manuais_lancamentos` `categoria='variavel'` |
-| Despesas de Imposto (nova) | — | `despesas_manuais_lancamentos` `categoria='imposto'` |
+Sempre que a montagem do kit for alterada (adicionar item, alterar quantidade, remover item, aplicar template), recalcular `valor_porta = Σ (preco_venda × quantidade)` dos itens da montagem e gravar em `tabela_precos_portas.valor_porta` do kit corrente.
 
-Critério de seleção em todos os casos: `mes_referencia = '${mes}-01'`. **Apenas valores efetivamente lançados** entram (sem somar sugestões/padrões não materializados — DRE representa realizado).
+### Onde aplicar
 
-## Alterações em `src/pages/direcao/DREMesDirecao.tsx`
+Tudo dentro de `src/hooks/useKitMontagem.ts`:
 
-1. **`fetchDespesasFromGastos`** → renomear para `fetchDespesasManuais` e reescrever:
-   - Query única em `despesas_manuais_lancamentos` filtrando por `mes_referencia`.
-   - Agrupar por `tipo_nome` para gerar `DespesaAgrupada` (id = tipo_nome normalizado; `valor_real` = soma; `gastos` = lista dos lançamentos individuais, mapeando `data`, `descricao`, `valor`).
-   - Separar em `despesasFixas`, `despesasVariaveis`, `despesasImpostos` por `categoria`.
-   - Folha: query em `despesas_manuais_folha`, mapear cada linha (`colaborador_nome`, `total`).
-   - Remover dependência de `tipos_custos` para alimentar as seções; manter `fetchTiposCustosAtivos` apenas se ainda for usado para "Despesas Projetadas do Ano" (mantém o painel lateral como está, é informativo independente).
+1. Criar helper interno `recalcKitValorPorta(kitId: string)`:
+   - `SELECT quantidade, custos_itens(preco_venda) FROM tabela_precos_portas_montagem WHERE kit_id = :kitId`
+   - Soma `Σ q × preco_venda` → `novoValor`
+   - `UPDATE tabela_precos_portas SET valor_porta = novoValor WHERE id = :kitId`
 
-2. **Estado e totais**:
-   - Adicionar `despesasImpostos`/`totalDespImpostos` análogos aos demais.
-   - Incluir `totalDespImpostos` no cálculo de `lucroLiquidoFinal`, em todo lugar que soma despesas (linhas 1394, 1604, e snapshot do `dre_realizados`).
+2. Disparar `recalcKitValorPorta(kitId)` no `onSuccess` (após o insert/update/delete bem-sucedido, antes do `invalidate`) das mutations:
+   - `addItem`
+   - `updateQuantidade`
+   - `removeItem`
 
-3. **Tela (`screenContent`)** — adicionar `<DespesaSectionReadOnly title="Despesas de Imposto" ... />` após Variáveis. Remover o `onClickTipo` que abre `GastosDoTipoDialog` (substituído abaixo) — ou reaproveitar para mostrar os lançamentos manuais.
+3. Em `invalidate()`, adicionar invalidação de `["tabela-precos-kit", kitId]` (chave usada por `EstrategiaKitMontagem.tsx`) e de `["tabela-precos-portas"]` (lista de kits) para refletir o novo `valor_porta` em tela e na listagem.
 
-4. **Drill-down do tipo** (`GastosDoTipoDialog`):
-   - Reescrever para consultar `despesas_manuais_lancamentos` filtrando por `mes_referencia` + `tipo_nome` (passa a receber `tipoNome` em vez de `tipoCustoId`).
-   - Remover joins com `admin_users` e `bancos` (não existem nessa fonte). Manter colunas: Data, Descrição, Valor.
-   - Remover botão "Abrir em Gastos" e substituir por link para `/direcao/estrategia/despesas/${mes}` ("Abrir em Despesas").
-   - Habilitar drill-down também para Folha (lista linhas de `despesas_manuais_folha` com salário + adicionais) e para Imposto.
+4. Em `src/hooks/useMontagemTemplate.ts` → função `applyTemplateToKit`: ao final do apply, chamar a mesma rotina de recálculo para o `kitId`. A página `EstrategiaKitMontagem.tsx` já invalida `["kit-montagem", kitId]` e `["kits-montagem-resumo"]` depois do apply — adicionar invalidação de `["tabela-precos-kit", kitId]` ali também.
 
-5. **PDF (`PrintReport`)**:
-   - Acrescentar seção "6. Despesas de Imposto" entre Variáveis e Estoque (renumerar Estoque para 7 e Vendas do Mês para 8).
-   - Incluir linha "(–) Despesas de Imposto" no "Resumo Final".
+### Sem alterações de UI
 
-6. **Snapshot `dre_realizados`**:
-   - O schema atual tem `total_despesas_fixas/folha/variaveis`. Adicionar coluna `total_despesas_imposto numeric` via migration e gravar no upsert. Linha "Despesas imposto" também aparece no diálogo de confirmação.
+Nenhuma mudança em `EstrategiaKitMontagem.tsx` além das chaves de invalidação já existirem. O card "Lucro adicional" continua lendo `kit.valor_porta`, que agora reflete o valor recalculado.
 
-## Migration (banco)
+### Sem migration
 
-```sql
-ALTER TABLE public.dre_realizados
-  ADD COLUMN IF NOT EXISTS total_despesas_imposto numeric NOT NULL DEFAULT 0;
-```
+A coluna `valor_porta` já existe em `tabela_precos_portas`. Não há mudança de schema.
 
-## Painel "Despesas Projetadas do Ano"
+### Observações
 
-Mantém-se como está (usa `tipos_custos.valor_maximo_mensal`), apenas como referência informativa. Não conflita com a nova fonte de despesas reais. Caso queira no futuro, pode-se trocar essa projeção pelos `despesas_padrao`.
-
-## Itens fora de escopo (confirmação implícita)
-
-- DRE consolidado anual / outras telas (`DREDirecao`, `DREDespesasDirecao`) continuam como estão neste passo.
-- "Despesas Projetadas do Ano" segue da fonte antiga.
+- O recálculo roda no cliente (Supabase JS), em série após cada mutation, para manter consistência sem trigger no banco.
+- Itens sem `custo_item` associado (ou `preco_venda` nulo) contam como 0.
+- A funcionalidade "Sincronizar preço dos kits" eventualmente existente (se houver) continua válida; este recálculo apenas garante atualização automática quando o usuário edita pela tela de montagem.
