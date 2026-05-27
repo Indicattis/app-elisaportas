@@ -76,6 +76,8 @@ export default function EstrategiaKitMontagem() {
       const res = await applyTemplateToKit(kitId, usedIds);
       await queryClient.invalidateQueries({ queryKey: ["kit-montagem", kitId] });
       await queryClient.invalidateQueries({ queryKey: ["kits-montagem-resumo"] });
+      await queryClient.invalidateQueries({ queryKey: ["tabela-precos-kit", kitId] });
+      await queryClient.invalidateQueries({ queryKey: ["tabela-precos-portas"] });
       if (res.added === 0) {
         toast.info("Todos os itens do template já estão no kit");
       } else if (res.skipped > 0) {

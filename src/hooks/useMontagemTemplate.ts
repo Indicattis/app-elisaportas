@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { computeLucroUnit, type MontagemItem } from "./useKitMontagem";
+import { computeLucroUnit, recalcKitValorPorta, type MontagemItem } from "./useKitMontagem";
 
 export type TemplateItem = {
   id: string;
@@ -97,6 +97,7 @@ export async function applyTemplateToKit(kitId: string, existingCustoItemIds: Se
       .from("tabela_precos_portas_montagem")
       .insert(toInsert);
     if (insErr) throw insErr;
+    await recalcKitValorPorta(kitId);
   }
   return { added: toInsert.length, skipped, total: all.length };
 }

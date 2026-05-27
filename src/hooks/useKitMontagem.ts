@@ -41,6 +41,27 @@ function computeLucroUnit(ci: NonNullable<MontagemItem["custo_item"]>): number {
   return preco - deducoes - custo;
 }
 
+export async function recalcKitValorPorta(kitId: string): Promise<number> {
+  const { data, error } = await supabase
+    .from("tabela_precos_portas_montagem")
+    .select("quantidade, custo_item:custo_item_id (preco_venda)")
+    .eq("kit_id", kitId);
+  if (error) throw error;
+  let total = 0;
+  for (const row of (data ?? []) as any[]) {
+    const q = Number(row.quantidade || 0);
+    const preco = Number(row.custo_item?.preco_venda || 0);
+    total += q * preco;
+  }
+  const novoValor = Math.round(total * 100) / 100;
+  const { error: updErr } = await supabase
+    .from("tabela_precos_portas")
+    .update({ valor_porta: novoValor })
+    .eq("id", kitId);
+  if (updErr) throw updErr;
+  return novoValor;
+}
+
 export function useKitsMontagemResumo() {
   return useQuery({
     queryKey: RESUMO_KEY,
@@ -97,6 +118,10 @@ export function useKitMontagem(kitId: string | null) {
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: MONT_KEY(kitId ?? "") });
     queryClient.invalidateQueries({ queryKey: RESUMO_KEY });
+    if (kitId) {
+      queryClient.invalidateQueries({ queryKey: ["tabela-precos-kit", kitId] });
+    }
+    queryClient.invalidateQueries({ queryKey: ["tabela-precos-portas"] });
   };
 
   const addItem = useMutation({
@@ -106,6 +131,7 @@ export function useKitMontagem(kitId: string | null) {
         .from("tabela_precos_portas_montagem")
         .insert({ kit_id: kitId, custo_item_id, quantidade: quantidade ?? 1 });
       if (error) throw error;
+      await recalcKitValorPorta(kitId);
     },
     onSuccess: () => {
       invalidate();
@@ -121,6 +147,7 @@ export function useKitMontagem(kitId: string | null) {
         .update({ quantidade })
         .eq("id", id);
       if (error) throw error;
+      if (kitId) await recalcKitValorPorta(kitId);
     },
     onSuccess: invalidate,
     onError: (e: any) => toast.error(e?.message ?? "Erro ao atualizar quantidade"),
@@ -133,6 +160,7 @@ export function useKitMontagem(kitId: string | null) {
         .delete()
         .eq("id", id);
       if (error) throw error;
+      if (kitId) await recalcKitValorPorta(kitId);
     },
     onSuccess: () => {
       invalidate();
