@@ -149,10 +149,11 @@ export default function CanaisAquisicaoMinimalista() {
     <MinimalistLayout
       title="Canais de Aquisição"
       subtitle="Gerencie os canais de aquisição de clientes"
-      backPath="/marketing"
+      backPath="/marketing/investimentos"
       breadcrumbItems={[
         { label: "Home", path: "/home" },
         { label: "Marketing", path: "/marketing" },
+        { label: "Investimentos", path: "/marketing/investimentos" },
         { label: "Canais de Aquisição" }
       ]}
       headerActions={
