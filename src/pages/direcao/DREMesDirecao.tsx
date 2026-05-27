@@ -1607,8 +1607,8 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         open={!!tipoModal}
         onOpenChange={(o) => { if (!o) setTipoModal(null); }}
         mes={mes || ''}
-        tipoCustoId={tipoModal?.id || null}
         tipoNome={tipoModal?.nome || ''}
+        categoria={tipoModal?.categoria || null}
         formatCurrency={formatCurrency}
       />
       <PortasDetalheDialog
