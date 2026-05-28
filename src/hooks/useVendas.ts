@@ -4,6 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { addDays } from 'date-fns';
 import { PagamentoData } from '@/components/vendas/PagamentoSection';
 import { MetodoPagamento } from '@/components/vendas/MetodoPagamentoCard';
+import { validarDesconto, getTipoAutorizacaoNecessaria } from '@/utils/descontoVendasRules';
 
 export interface ProdutoVenda {
   id?: string;
