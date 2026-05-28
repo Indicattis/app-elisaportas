@@ -4,6 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { addDays } from 'date-fns';
 import { PagamentoData } from '@/components/vendas/PagamentoSection';
 import { MetodoPagamento } from '@/components/vendas/MetodoPagamentoCard';
+import { validarDesconto, getTipoAutorizacaoNecessaria } from '@/utils/descontoVendasRules';
 
 export interface ProdutoVenda {
   id?: string;
@@ -175,6 +176,57 @@ export function useVendas() {
       
       if (!adminUser) {
         throw new Error('Usuário não encontrado no sistema. Por favor, entre em contato com o administrador.');
+      }
+
+      // 2.5. Validação autoritativa de desconto (anti-bypass do frontend)
+      const { data: cfgVendas } = await supabase
+        .from('configuracoes_vendas')
+        .select('limite_desconto_avista, limite_desconto_presencial, limite_adicional_responsavel')
+        .limit(1)
+        .maybeSingle();
+
+      const validacaoServer = validarDesconto(
+        portas,
+        vendaData.forma_pagamento,
+        vendaData.venda_presencial,
+        {
+          avista: cfgVendas?.limite_desconto_avista,
+          presencial: cfgVendas?.limite_desconto_presencial,
+          adicionalResponsavel: cfgVendas?.limite_adicional_responsavel,
+        }
+      );
+      const tipoAutorizacaoRequerido = getTipoAutorizacaoNecessaria(validacaoServer);
+
+      if (tipoAutorizacaoRequerido) {
+        if (!autorizacaoDesconto || !autorizacaoDesconto.senha_usada) {
+          throw new Error(
+            `Desconto de ${validacaoServer.percentualDesconto.toFixed(2)}% excede o limite permitido (${validacaoServer.limitePermitido.toFixed(0)}%). É necessária autorização por senha.`
+          );
+        }
+        if (tipoAutorizacaoRequerido === 'master' && autorizacaoDesconto.tipo_autorizacao !== 'master') {
+          throw new Error(
+            `Desconto de ${validacaoServer.percentualDesconto.toFixed(2)}% excede o limite máximo do responsável. Apenas a senha master pode autorizar.`
+          );
+        }
+        const tipoSenha = autorizacaoDesconto.tipo_autorizacao === 'master' ? 'master' : 'responsavel';
+        const { data: senhaValida, error: rpcErr } = await supabase.rpc('verificar_senha_vendas', {
+          p_senha: autorizacaoDesconto.senha_usada,
+          p_tipo: tipoSenha,
+        });
+        if (rpcErr) {
+          throw new Error('Erro ao validar senha de autorização. Tente novamente.');
+        }
+        if (senhaValida !== true) {
+          throw new Error('Senha de autorização inválida. A venda não pode ser salva.');
+        }
+        // Re-sincronizar o percentual auditado com o cálculo do servidor
+        autorizacaoDesconto = {
+          ...autorizacaoDesconto,
+          percentual_desconto: validacaoServer.percentualDesconto,
+        };
+      } else {
+        // Dentro do limite — descartar qualquer autorização enviada indevidamente
+        autorizacaoDesconto = undefined;
       }
 
       // 3. Calcular totais dos produtos (sem crédito por produto - agora é a nível de venda)

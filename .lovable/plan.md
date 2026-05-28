@@ -1,33 +1,52 @@
 ## Problema
 
-Em `/logistica/frete/internos`:
-1. A lista não carrega todas as 1.159 cidades (mesmo com paginação no fetch, algumas cidades não aparecem na busca).
-2. Não há paginação visual — a tabela tenta renderizar tudo de uma vez.
-3. A busca não encontra cidades digitadas (provavelmente por acentos/caixa).
+A validação de desconto em `/vendas/minhas-vendas/nova` (`VendaNovaMinimalista.tsx`) só acontece no frontend, em `handleSubmit` via `validarDesconto` + `getTipoAutorizacaoNecessaria`. O hook `useVendas.createVenda` recebe `autorizacaoDesconto` como opcional, **sem nenhuma checagem**: insere a venda direto e só grava a autorização se vier. Isso permite que vendas com 28% (ou qualquer %) sejam salvas se:
+
+- o frontend for contornado (DevTools, payload manual),
+- estado de React divergir (ex.: produtos mudados após validação),
+- ou um fluxo legado/edição chamar `createVenda` sem passar pela validação.
+
+Além disso, mesmo quando `autorizacaoDesconto` é enviado, a senha não é re-validada no servidor — basta enviar qualquer string em `senha_usada` para o INSERT passar.
 
 ## Solução
 
-### 1. Busca robusta (acento-insensível)
-Em `src/pages/logistica/FreteMinimalista.tsx`, normalizar tanto o `searchTerm` quanto `frete.cidade`/`frete.estado` removendo acentos antes de comparar:
+Adicionar uma camada de validação **dentro de `useVendas.createVendaMutation`**, antes de qualquer insert em `vendas`, replicando exatamente as regras do frontend mas autoritativa.
 
-```ts
-const normalize = (s: string) =>
-  s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
-```
+### Mudanças
 
-Assim "sao paulo", "São Paulo", "SAO PAULO" e "são paulo" casam.
+**`src/hooks/useVendas.ts` — `createVendaMutation.mutationFn`**
 
-### 2. Garantir carregamento completo
-Em `src/hooks/useFretesCidades.ts`, manter o loop de paginação já adicionado, mas adicionar `console.log` de contagem só durante validação e usar `head: false` + `count: 'exact'` na primeira página para logar o total esperado vs carregado. Se ainda houver discrepância, fazer fallback para `select('*').limit(2000)` sem `.range()`.
+1. Após validar usuário (passo 2) e antes de calcular totais (passo 3), buscar os limites atuais via:
+   ```ts
+   const { data: cfg } = await supabase
+     .from('configuracoes_vendas')
+     .select('limite_desconto_avista, limite_desconto_presencial, limite_adicional_responsavel')
+     .limit(1).maybeSingle();
+   ```
+2. Calcular `percentualDesconto` reaproveitando `validarDesconto(portas, vendaData.forma_pagamento, vendaData.venda_presencial, { avista, presencial, adicionalResponsavel })` de `@/utils/descontoVendasRules`.
+3. Aplicar regras (lançar `Error` com mensagem clara em cada caso):
+   - Se `dentroDoLimite` → seguir normalmente, ignorar `autorizacaoDesconto`.
+   - Se `requerSenha` (acima do limite, dentro do máximo do responsável):
+     - exigir `autorizacaoDesconto` presente,
+     - exigir `tipo_autorizacao` ∈ {`responsavel_setor`, `master`},
+     - re-validar a senha chamando `supabase.rpc('verificar_senha_vendas', { p_senha: autorizacaoDesconto.senha_usada, p_tipo: autorizacaoDesconto.tipo_autorizacao === 'master' ? 'master' : 'responsavel' })`. Se `!== true` → throw "Senha de autorização inválida".
+   - Se `excedeLimiteMaximo` (acima do máximo do responsável, ex.: 28%):
+     - exigir `autorizacaoDesconto.tipo_autorizacao === 'master'`,
+     - re-validar senha master via mesma RPC. Falhou → throw "Desconto acima do limite exige senha master válida".
+4. Garantir que `autorizacaoDesconto.percentual_desconto` salvo seja o `percentualDesconto` recalculado no servidor (não o enviado pelo cliente), evitando divergência de auditoria.
 
-### 3. Paginação visual da tabela
-Adicionar paginação client-side com 50 registros por página:
-- Estado: `currentPage`, constante `PAGE_SIZE = 50`.
-- Resetar `currentPage` para 1 sempre que `searchTerm` ou `filterEstado` mudar.
-- Renderizar apenas `fretesFiltrados.slice((currentPage-1)*PAGE_SIZE, currentPage*PAGE_SIZE)`.
-- Rodapé com: "Mostrando X–Y de Z" + botões Anterior/Próxima + indicador "Página N de M".
-- Estilo glassmorphism existente (`bg-white/5`, `border-white/10`, texto branco).
+### Por que aqui
 
-### Arquivos alterados
-- `src/pages/logistica/FreteMinimalista.tsx` — busca normalizada + paginação visual.
-- `src/hooks/useFretesCidades.ts` — validação do carregamento completo.
+- Centraliza no único caminho de criação (`createVenda`) → protege também `MinhasVendasEditar.tsx` e `VendasNova.tsx` que reusam o mesmo hook.
+- Usa o RPC `verificar_senha_vendas` que já existe (SECURITY DEFINER), então o cliente nunca vê/manipula a senha real.
+- Não muda UI: o fluxo legítimo continua passando pelo `AutorizacaoDescontoModal` e funciona idêntico. Apenas bloqueia o bypass.
+
+### Fora de escopo
+
+- Não mexer no `AutorizacaoDescontoModal` nem no `VendaNovaMinimalista.tsx` (UI já está correta).
+- Não criar trigger no banco (a RPC já encapsula a senha; uma policy de RLS no insert de `vendas` baseada em desconto seria muito invasiva agora).
+- Não tocar fluxo de "Solicitar Aprovação" (esse já passa por `useRequisicaoAprovacaoVenda`).
+
+## Arquivos
+
+- `src/hooks/useVendas.ts` — adicionar bloco de validação no início do `mutationFn` e re-cálculo do `percentual_desconto` no insert de `vendas_autorizacoes_desconto`.
