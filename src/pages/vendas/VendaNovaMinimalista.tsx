@@ -590,6 +590,12 @@ export default function VendaNovaMinimalista() {
       title="Nova Venda" 
       subtitle={isFromOrcamento ? `Convertido do Orçamento #${orcamentoData?.numero_orcamento || orcamentoId?.slice(-8).toUpperCase()}` : undefined}
       backPath="/vendas/minhas-vendas"
+      breadcrumbItems={[
+        { label: 'Home', path: '/home' },
+        { label: 'Vendas', path: '/vendas' },
+        { label: 'Minhas Vendas', path: '/vendas/minhas-vendas' },
+        { label: 'Nova Venda' },
+      ]}
     >
       {isLoadingOrcamento && orcamentoId && (
         <div className="text-center py-8 text-white/60">
