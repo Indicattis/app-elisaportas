@@ -97,6 +97,7 @@ export default function FaturamentoVendaMinimalista() {
   const autoFaturadosRef = useRef<Set<string>>(new Set());
   const [mounted, setMounted] = useState(false);
   const [venda, setVenda] = useState<Venda | null>(null);
+  const [categoriasFat, setCategoriasFat] = useState<Array<{ nome: string; tipos_produto: string[]; cor_hex: string | null }>>([]);
   const [loading, setLoading] = useState(true);
   const [selectedProduto, setSelectedProduto] = useState<any | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -184,6 +185,17 @@ export default function FaturamentoVendaMinimalista() {
   useEffect(() => {
     const timer = setTimeout(() => setMounted(true), 100);
     return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from('categorias_faturamento')
+        .select('nome, tipos_produto, cor_hex')
+        .eq('ativo', true)
+        .order('ordem');
+      if (data) setCategoriasFat(data as any);
+    })();
   }, []);
 
   useEffect(() => {
@@ -1021,6 +1033,14 @@ export default function FaturamentoVendaMinimalista() {
     return tipos[tipo || ''] || tipo || '-';
   };
 
+  const categoriaPorTipo = useMemo(() => {
+    const map = new Map<string, { nome: string; cor_hex: string | null }>();
+    categoriasFat.forEach((c) => {
+      (c.tipos_produto || []).forEach((t) => map.set(t, { nome: c.nome, cor_hex: c.cor_hex }));
+    });
+    return map;
+  }, [categoriasFat]);
+
   const breadcrumbItems = [
     { label: "Home", path: "/home" },
     { label: "Financeiro", path: "/financeiro" },
@@ -1270,7 +1290,24 @@ export default function FaturamentoVendaMinimalista() {
                     const lucroAjustado = temLucro ? (produto.lucro_item! - parcelaExcedenteItem + creditoValorAbs) : null;
                     return (
                       <TableRow key={produto.id} className="border-white/10 hover:bg-white/5">
-                        <TableCell className="text-white/80">{getTipoProdutoLabel(produto.tipo_produto)}</TableCell>
+                        <TableCell className="text-white/80">
+                          {(() => {
+                            const cat = categoriaPorTipo.get(produto.tipo_produto);
+                            if (!cat) return getTipoProdutoLabel(produto.tipo_produto);
+                            return (
+                              <span
+                                className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md border text-xs"
+                                style={{
+                                  backgroundColor: cat.cor_hex ? `${cat.cor_hex}20` : 'transparent',
+                                  borderColor: cat.cor_hex ? `${cat.cor_hex}40` : 'rgba(255,255,255,0.1)',
+                                  color: cat.cor_hex || undefined,
+                                }}
+                              >
+                                {cat.nome}
+                              </span>
+                            );
+                          })()}
+                        </TableCell>
                         <TableCell className="font-medium text-white">
                           <div className="flex flex-col">
                             <span>{produto.descricao}</span>

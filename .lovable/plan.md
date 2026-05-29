@@ -1,37 +1,64 @@
-## Unificar Acessórios + Adicionais em "Itens Avulsos"
+## Categorias de Faturamento (unificadas) + coluna "Tipo" na venda
 
-Em `/financeiro/faturamento/vendas` os cards de **Acessórios** e **Adicionais** serão substituídos por um único indicador chamado **Itens Avulsos**, agregando linhas de `produtos_vendas` com `tipo_produto IN ('acessorio', 'adicional', 'manutencao')` (cobre o histórico legado e os novos itens vinculados a `custos_itens` via `custos_itens_id`).
+Criar uma tabela de **Categorias de Faturamento** alinhada às categorias do DRE, com **Acessórios + Itens Avulso unificadas em "Itens Avulsos"**, e fazer a coluna **Tipo** da página `/financeiro/faturamento/:id` exibir o nome dessa categoria em vez do `tipo_produto` cru.
 
-### Mudanças (apenas frontend — sem alteração de schema)
+### 1. Migration — tabela `categorias_faturamento`
 
-Arquivo: `src/pages/administrativo/FaturamentoVendasMinimalista.tsx`
+Tabela registry com categorias e o conjunto de `tipo_produto` (de `produtos_vendas`) que cada uma agrupa.
 
-1. **Indicadores agregados** (linhas 537–583)
-   - Remover `valorBrutoAcessorios`, `lucroAcessorios`, `valorBrutoAdicionais`, `lucroAdicionais`.
-   - Criar `valorBrutoAvulsos` e `lucroAvulsos` somando linhas com `tipo_produto IN ('acessorio', 'adicional', 'manutencao')`.
+```sql
+CREATE TABLE public.categorias_faturamento (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  nome text NOT NULL UNIQUE,
+  ordem int NOT NULL DEFAULT 0,
+  tipos_produto text[] NOT NULL DEFAULT '{}',
+  cor_hex text,
+  ativo boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
 
-2. **Card de indicador** (linhas 1247–1248)
-   - Substituir os dois cards por um único card `key: 'avulsos'`, label "Itens Avulsos", ícone `Package` (cor neutra, ex.: emerald), quantidade = vendas que contêm qualquer linha avulsa.
-   - Atualizar a soma `faturamentoTotal` (linha 1242) para usar `valorBrutoAvulsos`.
+GRANT SELECT ON public.categorias_faturamento TO anon;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.categorias_faturamento TO authenticated;
+GRANT ALL ON public.categorias_faturamento TO service_role;
 
-3. **Agrupamento ao clicar no card** (linhas 630–654)
-   - Unificar os branches `indicadorAtivo === 'acessorios'` e `'adicionais'` em um único branch `'avulsos'` que percorre todas as linhas avulsas.
-   - Chave de agrupamento: preferir `custos_itens_id`, depois `acessorio_id`/`adicional_id`, depois `descricao`.
-   - Nome exibido: priorizar lookup em `custos_itens` (descricao) via novo Map, com fallback para os Maps existentes (`auxAcessorios`/`auxAdicionais`) e por fim `p.descricao`.
+ALTER TABLE public.categorias_faturamento ENABLE ROW LEVEL SECURITY;
 
-4. **Lookup de nomes de `custos_itens`** (linhas 159–225)
-   - Adicionar `const [auxCustosItens, setAuxCustosItens] = useState<Map<string, string>>(new Map())`.
-   - No `Promise.all` de fetch auxiliar, incluir `supabase.from('custos_itens').select('id, descricao')` e popular o Map.
-   - Manter os Maps de `acessorios`/`adicionais` para resolver nomes do histórico legado.
+-- leitura aberta a authenticated; mutação apenas admin via is_admin()
+CREATE POLICY "categorias_faturamento_select" ON public.categorias_faturamento
+  FOR SELECT TO authenticated USING (true);
+CREATE POLICY "categorias_faturamento_admin_all" ON public.categorias_faturamento
+  FOR ALL TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
 
-5. **Select de `produtos_vendas`** (linha 281)
-   - Garantir que `custos_itens_id` está no select (verificar; adicionar se faltar).
+CREATE TRIGGER trg_categorias_faturamento_updated_at
+  BEFORE UPDATE ON public.categorias_faturamento
+  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
-6. **Detalhe da venda** (linhas 959–1011)
-   - Substituir `valorAcessorios` + `valorAdicionais` por `valorAvulsos` no breakdown da venda selecionada e no array de chips.
+-- Seed alinhado ao DRE
+INSERT INTO public.categorias_faturamento (nome, ordem, tipos_produto, cor_hex) VALUES
+  ('Portas',         1, ARRAY['porta','porta_enrolar','porta_social'], '#60a5fa'),
+  ('Pintura',        2, ARRAY['pintura_epoxi'],                        '#fb923c'),
+  ('Instalações',    3, ARRAY['instalacao'],                           '#22d3ee'),
+  ('Itens Avulsos',  4, ARRAY['acessorio','adicional','manutencao'],   '#34d399');
+```
+
+### 2. Frontend — `src/pages/administrativo/FaturamentoVendaMinimalista.tsx`
+
+- Buscar `categorias_faturamento` (apenas `ativo=true`, ordenado por `ordem`) via React Query/`useEffect`.
+- Construir `Map<tipo_produto, { nome, cor_hex }>` derivado da tabela.
+- Substituir o helper local `getTipoProdutoLabel` (linhas 1011–1022) pela lookup na categoria; fallback no rótulo antigo se nenhum match.
+- Render: `<TableCell>{categoriaPorTipo.get(produto.tipo_produto)?.nome ?? getTipoProdutoLabel(produto.tipo_produto)}</TableCell>` (linha 1273), opcionalmente com chip colorido usando `cor_hex`.
+
+### 3. DRE — `src/pages/direcao/DREMesDirecao.tsx`
+
+Unificar as linhas "Acessórios" e "Itens Avulso" em uma única **Itens Avulsos** para refletir as novas categorias:
+
+- Reduzir `FaturamentoProduto` para `{ portas, pintura, instalacoes, avulsos, total }`.
+- No loop que soma valores, mapear `acessorio | adicional | manutencao` → `avulsos`.
+- Atualizar tabela "Faturamento por Categoria" (linhas 446–450) para 4 linhas.
+- Estados e modais correspondentes (`acessoriosModalOpen`/`avulsosModalOpen`) consolidados em um único `avulsosModal*` que lista todos os `tipo_produto` avulsos.
 
 ### Fora de escopo
 
-- Nenhuma migration: `tipo_produto` continua sendo `'acessorio'` ou `'adicional'` no banco; a unificação é apenas de apresentação.
-- Sem alteração no fluxo de criação/edição de venda (`ProdutoVendaForm`).
-- Sem mudança em outras telas (DRE, faturamento por produto, etc.).
+- Tela de CRUD para `categorias_faturamento` (registro é gerenciado via migration/seed). Pode ser adicionada depois.
+- Nenhuma mudança na criação de venda nem em `produtos_vendas` — apenas mapeamento de apresentação.
