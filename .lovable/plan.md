@@ -1,40 +1,27 @@
-## Showcase abaixo do controlador de abas em `/direcao/estrategia/kits`
+## Aplicar config de Instalações/Pinturas nas colunas do kit de portas
 
-Adicionar, em cada aba, um cartão showcase logo abaixo do TabsBar (e acima do conteúdo principal), respeitando a largura atual do conteúdo e o estilo glassmorphism.
+Hoje a tabela em `src/pages/TabelaPrecos.tsx` calcula as colunas "Lucro Instalação" / "% Lucro Inst." e "Lucro Pintura" / "% Lucro Pint." com percentuais fixos (80% e 30%). Vou trocar por percentuais lidos da configuração ativa (mesma fonte já usada pelo faturamento e pelo showcase).
 
-### Aba Portas — média entre todos os kits ativos
-- Fonte: `tabela_precos_portas` (apenas `ativo = true`).
-- Para cada kit: `lucro_pct = lucro / valor_porta * 100`, `custo_pct = 100 - lucro_pct`. Ignorar linhas com `valor_porta <= 0`.
-- Mostrar:
-  - Ícone `Package` + título "Média dos kits de portas".
-  - Subtítulo: "Baseado em N kits ativos".
-  - Dois blocos lado a lado (mesmo padrão do preview do `ConfigLucroEstatico`):
-    - "Custo médio" — `XX,X%`
-    - "Lucro médio" — `XX,X%` (verde)
+### Fonte dos percentuais
+- Instalação: `useConfigLucro('instalacao')` → `lucroPct = 100 − percentual_custo`.
+- Pintura: `useConfigLucro('pintura_epoxi')`.
+  - Modo `estatico`: `lucroPctKit = 100 − percentual_custo`, aplicado sobre `valor_pintura` de cada kit.
+  - Modo `formula_dimensao`: `lucroKit$ = altura × largura × parametros.valor_m2`; daí `lucroPctKit = lucroKit$ / valor_pintura × 100` (cap em 0–100; se `valor_pintura = 0`, mostrar "—").
 
-### Abas Instalações e Pinturas — config atual + exemplo R$ 1.000
-- Fonte: `config_lucro` via `useConfigLucro(tipo)` (já usado pelo `ConfigLucroEstatico`).
-- Mostrar:
-  - Ícone `Wrench` / `Paintbrush` + título "Configuração ativa — Instalação" / "Pintura epóxi".
-  - Subtítulo curto: "Aplicado no faturamento das vendas vinculadas".
-  - Quatro blocos compactos:
-    - Custo% (config), Lucro% (config), Custo de exemplo (R$ 1.000 × custo%), Lucro de exemplo.
-- Para pintura no modo `formula_dimensao`: mostrar a fórmula "lucro = altura × largura × R$ X,XX" e usar 3,00 × 2,50 m como exemplo (mesmas constantes do preview), ao invés dos cálculos por percentual.
+### Alterações em `TabelaPrecos.tsx`
+1. Importar `useConfigLucro` no topo do componente.
+2. Carregar `cfgInstal = useConfigLucro('instalacao')` e `cfgPintura = useConfigLucro('pintura_epoxi')`.
+3. Computar uma vez:
+   - `instalLucroPct = 100 − (cfgInstal.data?.percentual_custo ?? 20)` (fallback no padrão histórico para não regredir enquanto carrega).
+   - Função `getPinturaLucro(item)` que retorna `{ valor, pct }` com base no modo.
+4. Substituir nas linhas 399–407 (instalação) por `item.valor_instalacao × instalLucroPct/100` e `instalLucroPct` formatado.
+5. Substituir nas linhas 414–422 (pintura) pelos valores retornados por `getPinturaLucro(item)`.
+6. Reaproveitar `text-emerald-400`/`text-orange-400` e o formato em pt-BR; manter "—" quando a config ainda não carregou ou o cálculo for indefinido.
 
-### Estrutura técnica
-- Novo componente `src/components/direcao/KitsShowcaseCard.tsx` com props `{ tab: 'portas' | 'instalacoes' | 'pinturas' }`.
-  - Internamente:
-    - `portas`: query `useQuery(['kits-showcase-medias'], …)` lendo `tabela_precos_portas` (id, valor_porta, lucro, ativo).
-    - `instalacoes`: `useConfigLucro('instalacao')`.
-    - `pinturas`: `useConfigLucro('pintura_epoxi')`.
-  - Estados loading com skeleton suave (mesmo padrão de bg-white/5 com pulse).
-- Em `EstrategiaKits.tsx`:
-  - Renderizar `<KitsShowcaseCard tab={active} />` logo após o `tabsBar`.
-  - Na aba Portas: passar via nova prop `afterTabsBar` (ou reaproveitar `beforeContent` adicionando o showcase junto do TabsBar) para o `TabelaPrecos`.
-  - Nas abas Instalações/Pinturas: inserir entre `{tabsBar}` e o bloco `key={active}` existente, dentro do mesmo `animate-fade-in` (anima junto com a troca).
-- Estilo: cartão único `rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl p-4` com mini-blocos internos `rounded-lg border border-white/10 bg-black/30 p-3`, e variante esmeralda para lucro (igual ao preview existente). Sem novas cores fora do design system.
+### Showcase
+Sem mudanças necessárias — o `KitsShowcaseCard` já lê a mesma `config_lucro`, então qualquer alteração feita nas abas Instalações/Pinturas reflete automaticamente no showcase e agora também nas colunas do kit de portas.
 
 ### Fora do escopo
-- Nenhuma alteração na regra de negócio de cálculo de lucro/custo no faturamento.
-- Sem mudanças no header, breadcrumb ou largura do conteúdo.
-- Sem novas tabelas/migrations.
+- Sem migrations: nenhum campo novo nas tabelas; a tabela continua usando os valores de `valor_instalacao` e `valor_pintura` por kit.
+- Sem alteração na lógica de faturamento (já consome `config_lucro`).
+- Sem mudança no header/abas/largura.
