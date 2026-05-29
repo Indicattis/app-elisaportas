@@ -16,7 +16,6 @@ export interface ProdutoAprovacao {
   valor_instalacao?: number;
   cor?: { nome: string; codigo_hex: string } | null;
   acessorio?: { nome: string } | null;
-  vendas_catalogo?: { nome: string } | null;
 }
 
 export interface PedidoAprovacaoDiretor {
@@ -71,7 +70,7 @@ export function usePedidosAprovacaoDiretor() {
             preco_producao, valor_pintura, valor_instalacao,
             catalogo_cores (nome, codigo_hex),
             acessorios (nome),
-            vendas_catalogo (nome)
+            custos_itens (descricao)
           `)
           .in('venda_id', vendaIds);
 
@@ -93,7 +92,7 @@ export function usePedidosAprovacaoDiretor() {
                 ...p,
                 cor: p.catalogo_cores,
                 acessorio: p.acessorios,
-                vendas_catalogo: p.vendas_catalogo,
+                custos_itens: p.custos_itens,
               });
             }
           });

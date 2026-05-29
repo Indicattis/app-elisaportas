@@ -192,7 +192,6 @@ export default function MinhasVendasEditar() {
     cor_id: p.cor_id || '',
     acessorio_id: p.acessorio_id || '',
     adicional_id: p.adicional_id || '',
-    vendas_catalogo_id: (p as any).vendas_catalogo_id || '',
     valor_produto: p.valor_produto,
     valor_pintura: p.valor_pintura,
     valor_instalacao: p.valor_instalacao,

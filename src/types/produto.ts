@@ -8,7 +8,6 @@ export interface OrcamentoProduto {
   cor_id?: string;
   acessorio_id?: string;
   adicional_id?: string;
-  vendas_catalogo_id?: string;
   descricao?: string;
   descricao_manutencao?: string;
   valor: number;

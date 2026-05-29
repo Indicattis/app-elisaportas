@@ -257,12 +257,12 @@ export function ProdutoVendaForm({
       }
     }
     
-    if (formData.tipo_produto === 'acessorio' && !formData.acessorio_id && !formData.vendas_catalogo_id && !formData.custos_itens_id) {
+    if (formData.tipo_produto === 'acessorio' && !formData.acessorio_id && !formData.custos_itens_id) {
       toast.error('Selecione um acessório');
       return;
     }
     
-    if (formData.tipo_produto === 'adicional' && !formData.adicional_id && !formData.vendas_catalogo_id && !formData.custos_itens_id) {
+    if (formData.tipo_produto === 'adicional' && !formData.adicional_id && !formData.custos_itens_id) {
       toast.error('Selecione um adicional');
       return;
     }
@@ -321,7 +321,6 @@ export function ProdutoVendaForm({
         descricao: acessorio.descricao,
         valor_produto: Number(acessorio.preco_venda),
         custos_itens_id: acessorio.id,
-        vendas_catalogo_id: undefined,
         unidade: acessorio.unidade || undefined,
       }));
     }
@@ -336,7 +335,6 @@ export function ProdutoVendaForm({
         descricao: adicional.descricao,
         valor_produto: Number(adicional.preco_venda),
         custos_itens_id: adicional.id,
-        vendas_catalogo_id: undefined,
         unidade: adicional.unidade || undefined,
       }));
     }
