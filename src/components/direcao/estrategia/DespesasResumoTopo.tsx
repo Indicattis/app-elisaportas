@@ -170,7 +170,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         setFolha(folhaArr);
         setImpostos(lancArr.filter(x => x.categoria === 'imposto'));
 
-        const gastosRows = (g || []) as Array<{ id: string; tipo_custo_id: string; valor: number; data: string }>;
+        const gastosRows = (g || []) as unknown as Array<{ id: string; tipo_custo_id: string; valor: number; data: string }>;
         const tipoIds = Array.from(new Set(gastosRows.map(r => r.tipo_custo_id).filter(Boolean)));
         let tiposMap: Record<string, { nome: string; tipo: 'fixa' | 'variavel' | 'imposto'; aparece_no_dre: boolean }> = {};
         if (tipoIds.length > 0) {
@@ -300,8 +300,6 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
   ) => {
     // optimistic update
     const apply = (arr: LancRow[]) => arr.map(r => r.id === id ? { ...r, ...patch } as LancRow : r);
-    setFixas(prev => apply(prev));
-    setVariaveis(prev => apply(prev));
     setImpostos(prev => apply(prev));
     const { error } = await supabase
       .from('despesas_manuais_lancamentos' as any)
@@ -335,33 +333,17 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         onInsert={handleInsertFolha}
         onDeletePadrao={async (id) => { await removePadrao(id); reload(); }}
       />
-      <BlocoDespesa
+      <BlocoGastosReadonly
         titulo="Despesas Fixas"
         icon={<Receipt className="w-4 h-4" />}
-        rows={fixas}
+        rows={gastosFixas}
         loading={loading}
-        categoria="fixa"
-        tipos={tipos.filter(t => t.tipo === 'fixa')}
-        padroes={padroesFixas}
-        mesStart={mesStart || ''}
-        onDelete={(id) => setConfirmDel({ kind: 'lanc', id })}
-        onInsert={handleInsertLanc}
-        onUpdate={handleUpdateLanc}
-        onDeletePadrao={async (id) => { await removePadrao(id); reload(); }}
       />
-      <BlocoDespesa
+      <BlocoGastosReadonly
         titulo="Despesas Variáveis"
         icon={<TrendingDown className="w-4 h-4" />}
-        rows={variaveis}
+        rows={gastosVariaveis}
         loading={loading}
-        categoria="variavel"
-        tipos={tipos.filter(t => t.tipo === 'variavel')}
-        padroes={padroesVariaveis}
-        mesStart={mesStart || ''}
-        onDelete={(id) => setConfirmDel({ kind: 'lanc', id })}
-        onInsert={handleInsertLanc}
-        onUpdate={handleUpdateLanc}
-        onDeletePadrao={async (id) => { await removePadrao(id); reload(); }}
       />
       <BlocoDespesa
         titulo="Despesas de Imposto"
