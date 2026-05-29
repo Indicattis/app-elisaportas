@@ -127,11 +127,6 @@ export default function EstrategiaKits() {
   }
 
   const isInstal = active === 'instalacoes';
-  const Icon = isInstal ? Wrench : Paintbrush;
-  const headerTitle = isInstal ? 'Lucro de Instalações' : 'Lucro de Pinturas';
-  const headerSubtitle = isInstal
-    ? 'Configuração aplicada no faturamento das vendas com produto do tipo instalação'
-    : 'Configuração aplicada no faturamento das vendas com pintura';
 
   return (
     <MinimalistLayout
