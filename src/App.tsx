@@ -30,7 +30,6 @@ import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Performance from "./pages/Performance";
 import Users from "./pages/Users";
-import VendaNova from "./pages/VendaNova";
 import VendaVinculacao from "./pages/VendaVinculacao";
 import VendaEdit from "./pages/VendaEdit";
 import Orcamentos from "./pages/Orcamentos";
