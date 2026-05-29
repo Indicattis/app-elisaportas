@@ -16,8 +16,7 @@ interface FaturamentoProduto {
   portas: number;
   pintura: number;
   instalacoes: number;
-  acessorios: number;
-  adicionais: number;
+  avulsos: number;
   total: number;
 }
 
@@ -295,8 +294,7 @@ function PrintReport({
   totalDespVariaveis,
   totalDespImpostos,
   totalProjetadoAnual,
-  topAcessorios,
-  topAdicionais,
+  topAvulsos,
   estoqueResumo,
   lucroLiquidoFinal,
   percBrutoFinal,
@@ -318,8 +316,7 @@ function PrintReport({
   totalDespVariaveis: number;
   totalDespImpostos: number;
   totalProjetadoAnual: number;
-  topAcessorios: { nome: string; qtd: number }[];
-  topAdicionais: { nome: string; qtd: number }[];
+  topAvulsos: { nome: string; qtd: number }[];
   estoqueResumo: { valorTotal: number; totalItens: number };
   lucroLiquidoFinal: number;
   percBrutoFinal: number;
@@ -448,12 +445,8 @@ function PrintReport({
               { key: 'instalacoes', label: 'Instalações' },
               { key: 'avulsos', label: 'Itens Avulsos' },
             ].map((c, i) => {
-              const f = c.key === 'avulsos'
-                ? (faturamento.acessorios || 0) + (faturamento.adicionais || 0)
-                : faturamento[c.key as keyof FaturamentoProduto];
-              const l = c.key === 'avulsos'
-                ? (lucro.acessorios || 0) + (lucro.adicionais || 0)
-                : lucro[c.key as keyof FaturamentoProduto];
+              const f = faturamento[c.key as keyof FaturamentoProduto];
+              const l = lucro[c.key as keyof FaturamentoProduto];
               const m = f > 0 ? (l / f) * 100 : 0;
               return (
                 <tr key={c.key} style={trZebra(i)}>
@@ -839,8 +832,8 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
   const showDespesas = viewMode === 'full' || viewMode === 'despesas';
   const showResumoFinal = viewMode === 'full' || viewMode === 'resultados';
   const [loading, setLoading] = useState(true);
-  const [faturamento, setFaturamento] = useState<FaturamentoProduto>({ portas: 0, pintura: 0, instalacoes: 0, acessorios: 0, adicionais: 0, total: 0 });
-  const [lucro, setLucro] = useState<FaturamentoProduto>({ portas: 0, pintura: 0, instalacoes: 0, acessorios: 0, adicionais: 0, total: 0 });
+  const [faturamento, setFaturamento] = useState<FaturamentoProduto>({ portas: 0, pintura: 0, instalacoes: 0, avulsos: 0, total: 0 });
+  const [lucro, setLucro] = useState<FaturamentoProduto>({ portas: 0, pintura: 0, instalacoes: 0, avulsos: 0, total: 0 });
   const [despesasFixas, setDespesasFixas] = useState<DespesaAgrupada[]>([]);
   const [despesasFolha, setDespesasFolha] = useState<DespesaAgrupada[]>([]);
   const [despesasVariaveis, setDespesasVariaveis] = useState<DespesaAgrupada[]>([]);
@@ -848,16 +841,13 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
   const [tipoModal, setTipoModal] = useState<{ id: string; nome: string } | null>(null);
   const [tiposCustosFixos, setTiposCustosFixos] = useState<TipoCustoVariavel[]>([]);
   const [tiposCustosVariaveis, setTiposCustosVariaveis] = useState<TipoCustoVariavel[]>([]);
-  const [topAcessorios, setTopAcessorios] = useState<{nome: string, qtd: number}[]>([]);
-  const [topAdicionais, setTopAdicionais] = useState<{nome: string, qtd: number}[]>([]);
+  const [topAvulsos, setTopAvulsos] = useState<{nome: string, qtd: number}[]>([]);
   const [estoqueResumo, setEstoqueResumo] = useState({ valorTotal: 0, totalItens: 0 });
   const [vendasListagem, setVendasListagem] = useState<{ id: string; data: string; cliente: string; valorTabela: number; valorVenda: number; desconto: number; lucro: number }[]>([]);
   const [portasModalOpen, setPortasModalOpen] = useState(false);
   const [portasDetalhe, setPortasDetalhe] = useState<VendaComPortasRow[]>([]);
   const [pinturaModalOpen, setPinturaModalOpen] = useState(false);
   const [pinturaDetalhe, setPinturaDetalhe] = useState<VendaComItensSimplesRow[]>([]);
-  const [acessoriosModalOpen, setAcessoriosModalOpen] = useState(false);
-  const [acessoriosDetalhe, setAcessoriosDetalhe] = useState<VendaComItensSimplesRow[]>([]);
   const [avulsosModalOpen, setAvulsosModalOpen] = useState(false);
   const [avulsosDetalhe, setAvulsosDetalhe] = useState<VendaComItensSimplesRow[]>([]);
 
