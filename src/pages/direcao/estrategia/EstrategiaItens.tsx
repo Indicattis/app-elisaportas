@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, CSSProperties } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Trash2, Percent, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Check, X, GripVertical, FolderInput, Palette, FileText, FileSpreadsheet, BadgePercent, Calculator, Boxes } from "lucide-react";
+import { Plus, Trash2, Percent, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Check, X, GripVertical, FolderInput, Palette, FileText, FileSpreadsheet, BadgePercent, Calculator, Boxes, Download } from "lucide-react";
 import {
   DndContext,
   closestCenter,
@@ -1314,44 +1314,57 @@ export default function EstrategiaItens() {
               <Boxes className="h-4 w-4" />
               Matéria Prima
             </Button>
-            <Button
-              variant="outline"
-              className="!h-[50px] gap-2 bg-card/60 border-border text-foreground hover:bg-red-500/10 hover:text-red-300 hover:border-red-500/40"
-              onClick={() => {
-                try {
-                  if (groupedByCategoria.length === 0) {
-                    toast.error("Nenhum item para exportar");
-                    return;
-                  }
-                  exportEstrategiaItensPDF(groupedByCategoria);
-                  toast.success("PDF gerado");
-                } catch (e: any) {
-                  toast.error(`Falha ao gerar PDF: ${e?.message ?? e}`);
-                }
-              }}
-            >
-              <FileText className="h-4 w-4" />
-              Exportar PDF
-            </Button>
-            <Button
-              variant="outline"
-              className="!h-[50px] gap-2 bg-card/60 border-border text-foreground hover:bg-emerald-500/10 hover:text-emerald-300 hover:border-emerald-500/40"
-              onClick={() => {
-                try {
-                  if (groupedByCategoria.length === 0) {
-                    toast.error("Nenhum item para exportar");
-                    return;
-                  }
-                  exportEstrategiaItensExcel(groupedByCategoria);
-                  toast.success("Excel gerado");
-                } catch (e: any) {
-                  toast.error(`Falha ao gerar Excel: ${e?.message ?? e}`);
-                }
-              }}
-            >
-              <FileSpreadsheet className="h-4 w-4" />
-              Exportar Excel
-            </Button>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="!h-[50px] gap-2 bg-card/60 border-border text-foreground hover:bg-emerald-500/10 hover:text-emerald-300 hover:border-emerald-500/40"
+                >
+                  <Download className="h-4 w-4" />
+                  Exportar
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-48 p-1 bg-card/95 backdrop-blur-xl border-border">
+                <button
+                  type="button"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground rounded-md hover:bg-red-500/10 hover:text-red-300"
+                  onClick={() => {
+                    try {
+                      if (groupedByCategoria.length === 0) {
+                        toast.error("Nenhum item para exportar");
+                        return;
+                      }
+                      exportEstrategiaItensPDF(groupedByCategoria);
+                      toast.success("PDF gerado");
+                    } catch (e: any) {
+                      toast.error(`Falha ao gerar PDF: ${e?.message ?? e}`);
+                    }
+                  }}
+                >
+                  <FileText className="h-4 w-4" />
+                  Exportar PDF
+                </button>
+                <button
+                  type="button"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground rounded-md hover:bg-emerald-500/10 hover:text-emerald-300"
+                  onClick={() => {
+                    try {
+                      if (groupedByCategoria.length === 0) {
+                        toast.error("Nenhum item para exportar");
+                        return;
+                      }
+                      exportEstrategiaItensExcel(groupedByCategoria);
+                      toast.success("Excel gerado");
+                    } catch (e: any) {
+                      toast.error(`Falha ao gerar Excel: ${e?.message ?? e}`);
+                    }
+                  }}
+                >
+                  <FileSpreadsheet className="h-4 w-4" />
+                  Exportar Excel
+                </button>
+              </PopoverContent>
+            </Popover>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
