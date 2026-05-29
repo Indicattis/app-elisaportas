@@ -28,7 +28,8 @@ import {
   FileText,
   Eye,
   Image,
-  FileSignature
+  FileSignature,
+  AlertTriangle
 } from "lucide-react";
 import { format, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
