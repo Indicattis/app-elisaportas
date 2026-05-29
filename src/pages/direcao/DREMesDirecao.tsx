@@ -1172,8 +1172,11 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
           .select(`
             id, descricao, quantidade, tipo_produto,
             valor_produto, valor_pintura, valor_instalacao,
+            valor_total_sem_frete,
+            altura, largura, tabela_precos_porta_id,
             tipo_desconto, desconto_percentual, desconto_valor,
             lucro_item, lucro_pintura,
+            tabela_precos_portas:tabela_precos_porta_id(descricao, altura, largura),
             vendas!inner(id, data_venda, cliente_nome, valor_venda, valor_frete)
           `)
           .in('tipo_produto', ['pintura_epoxi', 'acessorio', 'adicional', 'manutencao', 'porta_enrolar', 'porta_social'])
@@ -1210,18 +1213,32 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
           buildMap(todosRows, (p) => {
             const qty = p.quantidade || 1;
             if (p.tipo_produto === 'pintura_epoxi') {
-              const bruto = (p.valor_produto || 0) * qty;
+              const valorUnit = (p.valor_pintura ?? 0) > 0
+                ? Number(p.valor_pintura)
+                : Number(p.valor_produto || 0);
+              const bruto = valorUnit * qty;
               let desc = 0;
               if (p.tipo_desconto === 'percentual' && p.desconto_percentual > 0) {
                 desc = bruto * (p.desconto_percentual / 100);
               } else if (p.tipo_desconto === 'valor' && p.desconto_valor > 0) {
                 desc = p.desconto_valor;
               }
+              const fmtNum = (n: number) =>
+                Number(n).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
+              const kitDesc = p.tabela_precos_portas?.descricao;
+              const cor = (p.descricao || '').trim();
+              const dim = p.altura && p.largura
+                ? `${fmtNum(p.altura)} × ${fmtNum(p.largura)} m`
+                : null;
+              const descricaoMontada =
+                [kitDesc && `Kit ${kitDesc}`, cor || null, dim]
+                  .filter(Boolean)
+                  .join(' — ') || 'Pintura Epóxi';
               return {
                 id: p.id,
-                descricao: p.descricao || 'Pintura Epóxi',
+                descricao: descricaoMontada,
                 quantidade: qty,
-                valorUnitario: p.valor_produto || 0,
+                valorUnitario: valorUnit,
                 valorBruto: bruto,
                 descontoLinha: desc,
                 valorLiquido: bruto - desc,
