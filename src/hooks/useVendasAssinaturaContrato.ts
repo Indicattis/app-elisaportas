@@ -74,19 +74,22 @@ export const useVendasAssinaturaContrato = () => {
       }
 
       const pagamentoMetodosPorVenda = new Map<string, string[]>();
-      const parcelasPorVenda = new Map<string, number>();
+      const planosPorVenda = new Map<string, Map<string, number>>();
       const pagoInstalacaoPorVenda = new Map<string, boolean>();
       try {
         const vendaIds = vendas.map((v: any) => v.id).filter(Boolean);
         if (vendaIds.length > 0) {
           const { data: contasReceber } = await supabase
             .from("contas_receber")
-            .select("venda_id, metodo_pagamento, pago_na_instalacao")
+            .select("venda_id, metodo_pagamento, pago_na_instalacao, valor_parcela")
             .in("venda_id", vendaIds);
 
           (contasReceber || []).forEach((conta: any) => {
             if (!conta?.venda_id) return;
-            parcelasPorVenda.set(conta.venda_id, (parcelasPorVenda.get(conta.venda_id) || 0) + 1);
+            const planoKey = `${conta.metodo_pagamento ?? "_"}__${Number(conta.valor_parcela ?? 0)}`;
+            const planos = planosPorVenda.get(conta.venda_id) ?? new Map<string, number>();
+            planos.set(planoKey, (planos.get(planoKey) ?? 0) + 1);
+            planosPorVenda.set(conta.venda_id, planos);
             if (conta.pago_na_instalacao) pagoInstalacaoPorVenda.set(conta.venda_id, true);
             if (conta.metodo_pagamento) {
               const atuais = pagamentoMetodosPorVenda.get(conta.venda_id) || [];
@@ -100,6 +103,12 @@ export const useVendasAssinaturaContrato = () => {
       } catch (e) {
         console.error("Erro ao buscar métodos de pagamento:", e);
       }
+
+      const parcelasPorVenda = new Map<string, number>();
+      planosPorVenda.forEach((planos, vendaId) => {
+        const max = Math.max(0, ...planos.values());
+        if (max > 0) parcelasPorVenda.set(vendaId, max);
+      });
 
       // Filter: NOT faturada + no pedido + not reprovado + sem contrato
       return vendas
