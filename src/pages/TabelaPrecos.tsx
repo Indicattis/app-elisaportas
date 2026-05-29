@@ -48,6 +48,7 @@ interface TabelaPrecosProps {
   subtitleOverride?: string;
   backPathOverride?: string;
   breadcrumbItemsOverride?: { label: string; path?: string }[];
+  extraHeaderActions?: ReactNode;
 }
 
 export default function TabelaPrecos({
