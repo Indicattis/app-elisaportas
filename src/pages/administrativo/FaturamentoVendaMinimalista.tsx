@@ -1322,7 +1322,33 @@ export default function FaturamentoVendaMinimalista() {
                     return (
                       <TableRow key={produto.id} className="border-white/10 hover:bg-white/5">
                         <TableCell className="text-white/80">{getTipoProdutoLabel(produto.tipo_produto)}</TableCell>
-                        <TableCell className="font-medium text-white">{produto.descricao}</TableCell>
+                        <TableCell className="font-medium text-white">
+                          <div className="flex flex-col">
+                            <span>{produto.descricao}</span>
+                            {(() => {
+                              const kit = (produto as any).tabela_precos_porta_id ? kitsRef.get((produto as any).tabela_precos_porta_id) : null;
+                              if (!kit) return null;
+                              return (
+                                <span className="text-[10px] text-white/40">
+                                  Kit: {kit.descricao || `${kit.largura}m × ${kit.altura}m`}
+                                </span>
+                              );
+                            })()}
+                            {(() => {
+                              const div = getDivergenciaKit(produto);
+                              if (!div) return null;
+                              return (
+                                <span
+                                  className="mt-1 inline-flex items-center gap-1 text-[10px] text-amber-400"
+                                  title={`Esperado pelo kit: ${formatCurrency(div.esperado)} · Cobrado: ${formatCurrency(div.cobrado)}`}
+                                >
+                                  <AlertTriangle className="h-3 w-3" />
+                                  Diverge do kit ({formatCurrency(div.esperado)} esperado · {formatCurrency(div.cobrado)} cobrado)
+                                </span>
+                              );
+                            })()}
+                          </div>
+                        </TableCell>
                         <TableCell className="text-white/60">
                           {produto.tamanho
                             ? (['acessorio', 'adicional', 'manutencao'].includes(produto.tipo_produto)
