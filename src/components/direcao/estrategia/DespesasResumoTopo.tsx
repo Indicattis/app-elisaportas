@@ -1139,3 +1139,61 @@ function EditableDate({
     </button>
   );
 }
+
+/* ---------------- Gastos Readonly block (puxa de /administrativo/financeiro/gastos) ---------------- */
+
+function BlocoGastosReadonly({
+  titulo, icon, rows, loading,
+}: {
+  titulo: string;
+  icon: React.ReactNode;
+  rows: GastoAgrupado[];
+  loading: boolean;
+}) {
+  const total = rows.reduce((s, r) => s + Number(r.total || 0), 0);
+  const qtdLanc = rows.reduce((s, r) => s + r.quantidade, 0);
+
+  return (
+    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-5">
+      <div className="flex items-center gap-2 text-white mb-3">
+        {icon}
+        <h3 className="text-xl font-semibold">{titulo}</h3>
+        <span className="text-white/40 text-sm">({rows.length} tipos · {qtdLanc} lançamentos)</span>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-[10px] uppercase tracking-wider text-white/40 border-b border-white/10">
+              <th className="text-left font-normal pb-2 pl-1">Tipo de Custo</th>
+              <th className="text-right font-normal pb-2 px-2 w-[140px]">Lançamentos</th>
+              <th className="text-right font-normal pb-2 px-2 w-[180px]">Valor pago no mês</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr><td colSpan={3} className="text-white/40 px-2 py-3">Carregando...</td></tr>
+            ) : rows.length === 0 ? (
+              <tr>
+                <td colSpan={3} className="text-white/40 px-2 py-6 text-center">
+                  Nenhum gasto registrado neste mês em Administrativo › Financeiro › Gastos.
+                </td>
+              </tr>
+            ) : rows.map(r => (
+              <tr key={r.tipo_custo_id} className="border-b border-white/5 hover:bg-white/[0.03]">
+                <td className="py-2 pl-1 text-white/90">{r.tipo_nome}</td>
+                <td className="px-2 text-right text-white/60">{r.quantidade}</td>
+                <td className="px-2 text-right text-white font-medium">{formatCurrency(r.total)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between px-2">
+        <span className="text-xs text-white/50 uppercase tracking-wider">Total</span>
+        <span className="text-base font-bold text-white">{formatCurrency(total)}</span>
+      </div>
+    </div>
+  );
+}
