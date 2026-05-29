@@ -166,15 +166,15 @@ function GastosDoTipoDialog({
   open,
   onOpenChange,
   mes,
+  tipoCustoId,
   tipoNome,
-  categoria,
   formatCurrency,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   mes: string;
+  tipoCustoId: string | null;
   tipoNome: string;
-  categoria: 'fixa' | 'variavel' | 'imposto' | null;
   formatCurrency: (v: number) => string;
 }) {
   const navigate = useNavigate();
@@ -182,16 +182,19 @@ function GastosDoTipoDialog({
   const [rows, setRows] = useState<GastoRow[]>([]);
 
   useEffect(() => {
-    if (!open || !tipoNome || !categoria || !mes) return;
+    if (!open || !tipoCustoId || !mes) return;
     let cancelled = false;
     (async () => {
       setLoading(true);
+      const start = `${mes}-01`;
+      const [y, m] = mes.split('-').map(Number);
+      const end = new Date(y, m, 0).toISOString().split('T')[0];
       const { data, error } = await supabase
-        .from('despesas_manuais_lancamentos' as any)
+        .from('gastos' as any)
         .select('id, data, descricao, valor')
-        .eq('mes_referencia', `${mes}-01`)
-        .eq('categoria', categoria)
-        .eq('tipo_nome', tipoNome)
+        .eq('tipo_custo_id', tipoCustoId)
+        .gte('data', start)
+        .lte('data', end)
         .order('data', { ascending: false });
 
       if (error || !data) {
@@ -207,7 +210,7 @@ function GastosDoTipoDialog({
       if (!cancelled) { setRows(mapped); setLoading(false); }
     })();
     return () => { cancelled = true; };
-  }, [open, tipoNome, categoria, mes]);
+  }, [open, tipoCustoId, mes]);
 
   const total = rows.reduce((s, r) => s + r.valor, 0);
 
