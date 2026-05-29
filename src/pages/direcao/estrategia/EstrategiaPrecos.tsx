@@ -38,7 +38,7 @@ export default function EstrategiaPrecos() {
       <Button
         variant="outline"
         className="!h-[50px] gap-2 bg-card/60 border-border text-foreground hover:bg-primary/10"
-        onClick={() => navigate('/direcao/vendas/regras-vendas')}
+        onClick={() => navigate('/direcao/estrategia/precos/regras-vendas')}
       >
         <BookOpen className="h-4 w-4" />
         Regras de Vendas
