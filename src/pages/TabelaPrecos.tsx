@@ -203,8 +203,8 @@ export default function TabelaPrecos({
         <div className="flex flex-col gap-4">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <h2 className="text-base font-medium text-foreground">Itens Cadastrados</h2>
-              <p className="text-xs text-muted-foreground">
+              <h2 className="text-base font-medium text-white">Itens Cadastrados</h2>
+              <p className="text-xs text-white/50">
                 {itens.length} {itens.length === 1 ? 'item cadastrado' : 'itens cadastrados'}
               </p>
             </div>
