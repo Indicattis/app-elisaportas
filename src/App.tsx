@@ -132,7 +132,6 @@ import ConfiguracoesFiscais from "./pages/ConfiguracoesFiscais";
 import ColaboradorDetalhes from "./pages/ColaboradorDetalhes";
 import Vagas from "./pages/Vagas";
 import Colaboradores from "./pages/Colaboradores";
-import FolhaPagamentoNova from "./pages/FolhaPagamentoNova";
 import SolicitacoesMudancaCadastro from "./pages/SolicitacoesMudancaCadastro";
 // Etiquetas removido - funcionalidade movida para página de Ordens
 import ProducaoLogin from "./pages/producao/ProducaoLogin";
