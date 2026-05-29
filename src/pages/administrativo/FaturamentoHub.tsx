@@ -9,8 +9,7 @@ const menuItems = [
     label: "Por Venda", 
     icon: Receipt, 
     path: "/financeiro/faturamento/vendas", 
-    ativo: true,
-    description: "Controle individual por venda"
+    ativo: true
   },
   { 
     label: "Por Produto", 
