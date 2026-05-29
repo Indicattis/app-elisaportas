@@ -9087,6 +9087,33 @@ export type Database = {
         }
         Relationships: []
       }
+      vendas_config_lucro: {
+        Row: {
+          id: string
+          modo: string
+          percentual_custo: number
+          tipo: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          id?: string
+          modo?: string
+          percentual_custo?: number
+          tipo: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          id?: string
+          modo?: string
+          percentual_custo?: number
+          tipo?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       visitas_tecnicas: {
         Row: {
           created_at: string
