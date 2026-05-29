@@ -842,7 +842,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
   const [despesasFolha, setDespesasFolha] = useState<DespesaAgrupada[]>([]);
   const [despesasVariaveis, setDespesasVariaveis] = useState<DespesaAgrupada[]>([]);
   const [despesasImpostos, setDespesasImpostos] = useState<DespesaAgrupada[]>([]);
-  const [tipoModal, setTipoModal] = useState<{ nome: string; categoria: 'fixa' | 'variavel' | 'imposto' } | null>(null);
+  const [tipoModal, setTipoModal] = useState<{ id: string; nome: string } | null>(null);
   const [tiposCustosFixos, setTiposCustosFixos] = useState<TipoCustoVariavel[]>([]);
   const [tiposCustosVariaveis, setTiposCustosVariaveis] = useState<TipoCustoVariavel[]>([]);
   const [topAcessorios, setTopAcessorios] = useState<{nome: string, qtd: number}[]>([]);
@@ -1497,7 +1497,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
               total={totalDespFixas}
               formatCurrency={formatCurrency}
               tiposDisponiveis={tiposCustosFixos.filter(t => !isFolha(t.nome))}
-              onClickTipo={(_id, nome) => setTipoModal({ nome, categoria: 'fixa' })}
+              onClickTipo={(id, nome) => setTipoModal({ id, nome })}
             />
             <DespesaSectionReadOnly
               title="Despesas Variáveis"
@@ -1505,14 +1505,14 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
               total={totalDespVariaveis}
               formatCurrency={formatCurrency}
               tiposDisponiveis={tiposCustosVariaveis}
-              onClickTipo={(_id, nome) => setTipoModal({ nome, categoria: 'variavel' })}
+              onClickTipo={(id, nome) => setTipoModal({ id, nome })}
             />
             <DespesaSectionReadOnly
               title="Despesas de Imposto"
               despesas={despesasImpostos}
               total={totalDespImpostos}
               formatCurrency={formatCurrency}
-              onClickTipo={(_id, nome) => setTipoModal({ nome, categoria: 'imposto' })}
+              onClickTipo={(id, nome) => setTipoModal({ id, nome })}
             />
           </div>
           {viewMode === 'full' && (
@@ -1586,8 +1586,8 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         open={!!tipoModal}
         onOpenChange={(o) => { if (!o) setTipoModal(null); }}
         mes={mes || ''}
+        tipoCustoId={tipoModal?.id || null}
         tipoNome={tipoModal?.nome || ''}
-        categoria={tipoModal?.categoria || null}
         formatCurrency={formatCurrency}
       />
       <PortasDetalheDialog
