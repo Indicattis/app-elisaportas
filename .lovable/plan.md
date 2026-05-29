@@ -1,50 +1,71 @@
 
-# Migração de vendas antigas: `vendas_catalogo` → `custos_itens`
+# Migração — vendas antigas (`vendas_catalogo` → `custos_itens`)
 
-## Situação atual no banco
+Tudo mapeado. Pronto para executar.
 
-- `vendas_catalogo`: **42 itens**
-- `custos_itens`: **48 itens**
-- Match exato por nome (case/trim): **14**
-- Sem match exato: **28** (lista abaixo)
-- Linhas em `produtos_vendas` ainda apontando só para `vendas_catalogo` (sem `custos_itens_id`): **56**
+## Mapeamento final (42 itens de `vendas_catalogo` → `custos_itens`)
 
-Objetivo: preencher `produtos_vendas.custos_itens_id` em todas essas 56 linhas, para que (a) consigamos no futuro descontinuar `vendas_catalogo` e (b) lucro/relatórios das vendas antigas passem a usar custo/preço atual de `custos_itens`.
+| # | vendas_catalogo | custos_itens (destino) |
+|---|---|---|
+| 1 | Alçapão | **Alçapão Porta de Enrolar** |
+| 2 | Antiesmagamento até 4,00m | Antiesmagamento de 4 metros |
+| 3 | Antiesmagamento até 6,00m | Antiesmagamento de 6 metros |
+| 4 | Antiesmagamento até 10,00m | Antiesmagamento de 10 metros |
+| 5 | Antiqueda | Antiqueda *(match exato)* |
+| 6 | Barra anti vento | Barra anti vento *(match exato)* |
+| 7 | Caixa de fechamento (1m-3m) | Caixa de fechamento (01m - 03m) |
+| 8 | Caixa de fechamento (3m-6m) | Caixa de fechamento (03m-06m) |
+| 9 | Caixa de fechamento (6m-8m) | Caixa de fechamento (06m - 08m) |
+| 10 | Caixa de fechamento (motor) | Caixa motor ((Avulsa) |
+| 11 | Cantoneira para fechamento lateral | Cantoneira Fechamento Lateral |
+| 12 | Central | **Central c/ 2 Controles** |
+| 13 | Central BLUETOOH | Central BLUETOOH *(exato)* |
+| 14 | Central WI-FI | Central WI-FI *(exato)* |
+| 15 | Controle Avulso | Controle Avulso *(exato)* |
+| 16 | Controle Multi Frequência | Controle Multi Frequência *(exato)* |
+| 17 | Eixo 6 polegadas | **Eixo - 6" 1/2 (165mm) esp. 3,00mm** |
+| 18 | Guia G 200MM | Guia U + Tubo 90mm - Guia Médio (130mm) |
+| 19 | Guia M 135mm | Guia U + Tubo 120mm - Guia Grande (170mm) |
+| 20 | Meia cana lisa - 0,70mm | Meia cana lisa - 0,70mm *(exato)* |
+| 21 | Meia cana lisa - 0,80mm | Meia cana lisa - 0,80mm *(exato)* |
+| 22 | Meia cana micro - 0,80mm | **Meia Cana Micro - 0,70mm** |
+| 23 | Motor 1000kg | Motor AC 1000 Kg |
+| 24 | Motor AC 1000 Kg | Motor AC 1000 Kg *(exato)* |
+| 25 | Motor AC 200 kg | Motor AC 200 Kg |
+| 26 | Motor AC 200 Kg | Motor AC 200 Kg |
+| 27 | Motor AC 300 Kg | Motor AC 300 Kg *(exato)* |
+| 28 | MOTOR AC 500KG | Motor AC 500 Kg |
+| 29 | Motor AC 600 Kg | Motor AC 600 Kg *(exato)* |
+| 30 | Motor AC 800 Kg | Motor AC 800 Kg *(exato)* |
+| 31 | Motor AC/DC 500 Kg | Motor AC/DC 500 Kg *(exato)* |
+| 32 | Motor AC/DC 800 Kg | Motor AC/DC 800 Kg *(exato)* |
+| 33 | Motor DC 300 Kg | Motor AC/DC 300 Kg |
+| 34 | Nobreak | Nobreack até 800Kg |
+| 35 | RETIRADA DO PORTÃO EXISTENTE | **Manutenção** *(criar)* |
+| 36 | Soleira tubular 30x50 | Soleira tubular - 30x50x1,25mm + 2 Ponteiras |
+| 37 | Soleira tubular 60x40 | Soleira tubular - 60x40x1,25mm + 2 Ponteiras |
+| 38 | Soleira tubular 60x40 + 30x30 | Soleira tubular - 60x40x1,25mm + 2 Ponteiras |
+| 39 | Trava Lâminas | Trava lâmina - Valor Par E + D |
+| 40 | Tubo 80x80 | Tubo 80x80 - 2,00mm |
+| 41 | Tubo de afastamento | Tubo de afastamento |
+| 42 | TUBO PARA FIXAR TIRAS FRONTAIS | Tubo para tiras frontais |
 
-## Itens sem match exato (28)
+Atenção a colisões esperadas (mesmo destino para 2 origens, comportamento intencional):
+- "Motor AC 200 kg" e "Motor AC 200 Kg" → ambos para `Motor AC 200 Kg`.
+- "Soleira tubular 60x40" e "Soleira tubular 60x40 + 30x30" → ambos para `Soleira tubular - 60x40x1,25mm + 2 Ponteiras`.
 
-Alçapão · Antiesmagamento até 4,00m / 6,00m / 10,00m · Caixa de fechamento (1m-3m / 3m-6m / 6m-8m / motor) · Cantoneira para fechamento lateral · Central · Eixo 6 polegadas · Guia G 200MM · Guia M 135mm · Meia cana micro - 0,80mm · Motor 1000kg · Motor AC 200 kg · Motor AC 200 Kg · MOTOR AC 500KG · Motor DC 300 Kg · Nobreak · RETIRADA DO PORTÃO EXISTENTE · Soleira tubular 30x50 · Soleira tubular 60x40 · Soleira tubular 60x40 + 30x30 · Trava Lâminas · Tubo 80x80 · Tubo de afastamento · TUBO PARA FIXAR TIRAS FRONTAIS
+## Execução
 
-Muitos parecem existir em `custos_itens` com variação de caixa/acento/espaços (ex.: "Motor AC 200 kg" vs "Motor AC 200 Kg"). Outros podem realmente não existir lá ainda.
+**Passo 1 — Criar item "Manutenção" em `custos_itens`** (insert via Lovable Cloud)
+- categoria: `Itens Avulsos`, unidade: `Un`, preco_venda: `100` (igual ao "Retirada do portão existente").
 
-## Plano
+**Passo 2 — Reapontar `produtos_vendas`**
+Uma única query atualizando todas as 56 linhas, usando um `CASE` por `vendas_catalogo_id` → `custos_itens_id`. Filtra `custos_itens_id IS NULL` para ser idempotente.
 
-### Fase 1 — Mapeamento automático (exato + fuzzy)
-- Rodar query que casa `vendas_catalogo.nome_produto` com `custos_itens.descricao`:
-  - 1º passe: igualdade após `lower(btrim(unaccent(...)))` → resolve as 14 + provavelmente boa parte das 28.
-  - 2º passe (sugestão, não aplica): para os restantes, gerar **CSV de revisão** em `/mnt/documents/` com `nome_produto` → top-3 sugestões de `custos_itens` por similaridade (`pg_trgm`).
-- Entrega: tabela auxiliar `_migracao_vc_ci(vc_id, ci_id, fonte text)` com `fonte='auto'` para os resolvidos.
+**Passo 3 — Verificar**
+`SELECT count(*) FROM produtos_vendas WHERE vendas_catalogo_id IS NOT NULL AND custos_itens_id IS NULL;` → esperado `0`.
 
-### Fase 2 — Revisão manual dos restantes
-Você abre o CSV e, para cada item sem match:
-- **(A)** Indica qual `custos_itens` corresponde (eu adiciono no mapeamento), **ou**
-- **(B)** Marca para criar em `custos_itens` (eu insiro copiando nome/preço/unidade do `vendas_catalogo` correspondente; categoria default a definir — provavelmente "Acessórios").
+## Fora de escopo
 
-Depois desta fase, todo `vendas_catalogo.id` tem um `custos_itens.id` correspondente.
-
-### Fase 3 — Reapontar `produtos_vendas` e limpar
-- `UPDATE produtos_vendas SET custos_itens_id = m.ci_id FROM _migracao_vc_ci m WHERE produtos_vendas.vendas_catalogo_id = m.vc_id AND custos_itens_id IS NULL;` (56 linhas)
-- Verificar que `0` linhas ficaram com `vendas_catalogo_id NOT NULL AND custos_itens_id IS NULL`.
-- **Não** apago `vendas_catalogo_id` nem a tabela `vendas_catalogo` ainda — fica como histórico. Remoção definitiva e da aba "Catálogo de Itens" em UI fica para um passo posterior, quando você confirmar que está tudo certo nos relatórios.
-
-## Detalhes técnicos
-
-- Tudo via `supabase--migration` (DDL para tabela auxiliar) + tool de insert/update para dados.
-- Necessário habilitar extensão `unaccent` e `pg_trgm` (provavelmente já existem; checo na hora).
-- Idempotente: o UPDATE só toca linhas com `custos_itens_id IS NULL`.
-- Nenhuma mudança no código de aplicação nesta etapa — o fallback de leitura já existente continua valendo durante a transição.
-
-## Decisões que preciso confirmar antes de executar
-
-1. **Fase 2 — itens realmente novos**: posso criar automaticamente em `custos_itens` (copiando nome/preço/unidade do `vendas_catalogo`, categoria = "Acessórios"), ou prefere revisar 1 a 1?
-2. **Manter `vendas_catalogo_id` em `produtos_vendas`** como histórico após a migração? (recomendo manter por enquanto)
+- Não vou apagar `vendas_catalogo`, a coluna `vendas_catalogo_id` nem a aba "Catálogo de Itens" agora. Isso fica para depois que você validar os relatórios.
+- Nenhuma mudança em código de aplicação.
