@@ -4,6 +4,7 @@ import { LayoutTemplate, Wrench, Paintbrush, Package } from 'lucide-react';
 import TabelaPrecos from '@/pages/TabelaPrecos';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { ConfigLucroEstatico } from '@/components/direcao/ConfigLucroEstatico';
+import { KitsShowcaseCard } from '@/components/direcao/KitsShowcaseCard';
 
 type TabKey = 'portas' | 'instalacoes' | 'pinturas';
 
@@ -85,6 +86,13 @@ export default function EstrategiaKits() {
   };
 
   const tabsBar = <TabsBar active={active} onChange={setTab} />;
+  const showcase = <KitsShowcaseCard tab={active} />;
+  const beforeContentPortas = (
+    <>
+      {tabsBar}
+      <div key={active} className="mb-4 animate-fade-in">{showcase}</div>
+    </>
+  );
 
   const headerActions = (
     <Link
@@ -112,7 +120,7 @@ export default function EstrategiaKits() {
         enableReorder
         hideCatalogoTab
         extraHeaderActions={headerActions}
-        beforeContent={tabsBar}
+        beforeContent={beforeContentPortas}
         breadcrumbItemsOverride={breadcrumbItems}
       />
     );
@@ -136,6 +144,7 @@ export default function EstrategiaKits() {
     >
       {tabsBar}
       <div key={active} className="space-y-4 animate-fade-in">
+        {showcase}
         <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl p-4 flex flex-wrap items-center gap-3">
           <div className="h-10 w-10 rounded-lg bg-blue-500/10 border border-blue-500/30 flex items-center justify-center">
             <Icon className="h-5 w-5 text-blue-400" />
