@@ -1,8 +1,9 @@
+import { useNavigate } from 'react-router-dom';
 import TabelaPrecos from '@/pages/TabelaPrecos';
 import { CatalogoPrecosTab } from '@/components/tabela-precos/CatalogoPrecosTab';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { Button } from '@/components/ui/button';
-import { FileText, FileSpreadsheet, Menu } from 'lucide-react';
+import { FileText, FileSpreadsheet, Menu, BookOpen } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { toast } from 'sonner';
 import { useTabelaPrecos } from '@/hooks/useTabelaPrecos';
@@ -10,6 +11,7 @@ import { useVendasCatalogo } from '@/hooks/useVendasCatalogo';
 import { exportEstrategiaPrecosPDF, exportEstrategiaPrecosExcel } from '@/utils/estrategiaPrecosExport';
 
 export default function EstrategiaPrecos() {
+  const navigate = useNavigate();
   const { itens: kits } = useTabelaPrecos();
   const { produtos } = useVendasCatalogo();
 
@@ -31,7 +33,16 @@ export default function EstrategiaPrecos() {
     }
   };
 
-  const exportMenu = (
+  const headerActions = (
+    <div className="flex items-center gap-2">
+      <Button
+        variant="outline"
+        className="!h-[50px] gap-2 bg-card/60 border-border text-foreground hover:bg-primary/10"
+        onClick={() => navigate('/direcao/vendas/regras-vendas')}
+      >
+        <BookOpen className="h-4 w-4" />
+        Regras de Vendas
+      </Button>
     <Popover>
       <PopoverTrigger asChild>
         <Button
@@ -59,6 +70,7 @@ export default function EstrategiaPrecos() {
         </button>
       </PopoverContent>
     </Popover>
+    </div>
   );
 
   return (
@@ -73,7 +85,7 @@ export default function EstrategiaPrecos() {
         { label: 'Tabela de Preços' },
       ]}
       fullWidth
-      headerActions={exportMenu}
+      headerActions={headerActions}
     >
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <div className="xl:col-span-2">
