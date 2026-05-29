@@ -1,66 +1,46 @@
-# Vínculo entre produtos da venda e os kits de referência
+# Abas em /direcao/estrategia/kits
 
-## Problema
+Substituir os botões do header por abas no estilo do print (pílulas com a aba ativa em azul sólido).
 
-Hoje, ao cadastrar uma venda, os itens em `produtos_vendas` são gravados apenas com valores numéricos (largura, altura, valor_produto, valor_pintura, valor_instalacao…) **sem nenhum link** para a linha do kit que serviu de referência. Validação atual:
+## Estrutura
 
-| tipo_produto    | linhas | com link p/ catálogo |
-|-----------------|-------:|---------------------:|
-| porta_enrolar   |    546 | 0                    |
-| pintura_epoxi   |    466 | 0                    |
-| instalacao      |    401 | 0                    |
-| porta_social    |     17 | 0                    |
-| manutencao      |     30 | 0                    |
-| adicional       |    397 | 201 (parcial)        |
-| acessorio       |    230 | 31 (parcial)         |
+`EstrategiaKits.tsx` passa a renderizar três abas:
 
-Sem essa referência fica difícil:
-- apurar lucro por item de catálogo;
-- alertar incoerências no faturamento (preço/medidas divergentes da tabela);
-- rastrear qual linha do kit gerou cada venda quando os preços mudam.
+1. **Portas** — conteúdo atual (`TabelaPrecos` via `<TabelaPrecos … />`).
+2. **Instalações** — bloco de cabeçalho + `<ConfigLucroEstatico tipo="instalacao" …>` (extraído de `EstrategiaLucroInstalacoes.tsx`).
+3. **Pinturas** — bloco de cabeçalho + `<ConfigLucroEstatico tipo="pintura_epoxi" modosDisponiveis=["estatico","formula_dimensao"]>` (extraído de `EstrategiaLucroPinturas.tsx`).
 
-## Solução
+A aba ativa é controlada por `?tab=portas|instalacoes|pinturas` para permitir deep-link e preservar o estado no refresh; default = `portas`.
 
-Adicionar uma coluna de referência ao kit em `produtos_vendas` e preenchê-la em todos os fluxos de criação/edição de venda. Tabela de origem para portas, pintura e instalação é `tabela_precos_portas` (já indexa altura × largura e tem `valor_porta`, `valor_pintura`, `valor_instalacao`).
+## UI das abas
 
-### 1. Banco
+Componente local — container `rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-1 flex` com 3 botões:
 
-Migração nova:
-- `ALTER TABLE produtos_vendas ADD COLUMN tabela_precos_porta_id uuid NULL REFERENCES tabela_precos_portas(id) ON DELETE SET NULL;`
-- Índice em `tabela_precos_porta_id`.
-- Backfill: para linhas existentes com `tipo_produto IN ('porta_enrolar','porta_social','pintura_epoxi','instalacao')`, casar por (`largura`,`altura`) na `tabela_precos_portas` com tolerância de 15 cm (regra já usada — ver memória *price-table-tolerance*) e gravar o id do kit mais próximo. Onde não bater, deixar `NULL` (legado).
-- Para `pintura_epoxi` e `instalacao`, herdar o mesmo `tabela_precos_porta_id` da porta irmã da mesma venda (mesmo grupo de medidas), refletindo a memória *instalacao-produto-separado*.
+- Inativo: `text-white/70 hover:text-white px-6 py-2.5 text-sm rounded-xl transition`
+- Ativo: `bg-blue-600 text-white shadow-lg shadow-blue-600/20 px-6 py-2.5 text-sm rounded-xl`
 
-### 2. Criação/edição de venda
+Posicionado entre o header da `MinimalistLayout` e o conteúdo da aba. Ícones (Package / Wrench / Paintbrush) à esquerda do label.
 
-Locais a ajustar (todos já leem `tabela_precos_portas`):
-- `src/pages/vendas/VendaNovaMinimalista.tsx`
-- `src/pages/vendas/VendaEditarMinimalista.tsx`
-- `src/pages/vendas/PedidoCorrecaoNovo.tsx`
-- `src/utils/expandirPortas.ts` (split de quantidade)
+## Rotas legadas
 
-No momento em que o sistema escolhe a linha do kit pela medida (já há lookup com tolerância), guardar o `id` retornado e gravá-lo em `tabela_precos_porta_id` ao inserir/atualizar em `produtos_vendas` — para a porta, para a pintura epóxi gerada e para a instalação separada.
+Mantidas:
 
-### 3. Alertas de incoerência no faturamento
+- `/direcao/estrategia/kits/lucro-instalacoes` → redireciona para `/direcao/estrategia/kits?tab=instalacoes`
+- `/direcao/estrategia/kits/lucro-pinturas` → redireciona para `/direcao/estrategia/kits?tab=pinturas`
 
-Em `src/pages/administrativo/FaturamentoVendaMinimalista.tsx`, quando o item tem `tabela_precos_porta_id`:
-- buscar a linha referenciada;
-- comparar `valor_produto` vs `valor_porta`, `valor_pintura` vs `valor_pintura` do kit, `valor_instalacao` vs `valor_instalacao` do kit;
-- se divergente além de uma tolerância (configurável, padrão 5%), exibir um aviso amarelo "Valor diverge do kit (R$ X esperado, R$ Y cobrado)" ao lado da linha — sem bloquear o faturamento.
+Os arquivos `EstrategiaLucroInstalacoes.tsx` e `EstrategiaLucroPinturas.tsx` viram thin wrappers que apenas chamam `<Navigate replace to=… />` para evitar quebrar bookmarks/links externos.
 
-Também aproveitar o link para mostrar uma pequena "etiqueta" do kit (descrição) ao lado do item, facilitando o rastreio visual.
+## Header
 
-### 4. Detalhamento e cálculo de lucro
+Os botões extra ("Lucro de Instalações", "Lucro de Pinturas", "Template padrão") saem do header de Portas — Lucro vira aba, e o "Template padrão" continua acessível como botão menor exclusivo da aba Portas (não no header global), mantendo o link `/direcao/estrategia/kits/template`.
 
-Quando `tabela_precos_porta_id` estiver presente, o cálculo de `lucro_produto` pode opcionalmente usar o `lucro` cadastrado na linha do kit como referência adicional (sem mudar a regra atual — apenas exibir comparativo). Mudanças de fórmula ficam fora deste plano.
+## Arquivos tocados
+
+- `src/pages/direcao/estrategia/EstrategiaKits.tsx` — refatorado para abas + roteamento por query string.
+- `src/pages/direcao/estrategia/EstrategiaLucroInstalacoes.tsx` — vira redirect.
+- `src/pages/direcao/estrategia/EstrategiaLucroPinturas.tsx` — vira redirect.
 
 ## Fora de escopo
 
-- Recalcular vendas já faturadas.
-- Mudar fórmulas de lucro/custo existentes.
-- Criar tabela própria de kits para pintura/instalação (continuam vindo de `tabela_precos_portas`).
-- Vínculo de `manutencao` (sem tabela de kit equivalente hoje).
-
-## Resultado esperado
-
-Toda nova venda passa a ter, em cada porta/pintura/instalação, um ponteiro direto à linha do kit que a originou — habilitando alertas no faturamento e relatórios de lucro por kit no futuro.
+- Mudar fórmulas/conteúdo dos cards de Instalações e Pinturas.
+- Alterar `TabelaPrecos` (Portas) em si.
