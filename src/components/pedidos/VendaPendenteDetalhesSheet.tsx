@@ -176,7 +176,8 @@ export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaP
             desconto_percentual, desconto_valor, tipo_desconto,
             descricao, faturamento,
             catalogo_cores (nome, codigo_hex),
-            vendas_catalogo (nome_produto)
+            vendas_catalogo (nome_produto),
+            custos_itens (descricao)
           )
         `)
         .eq("id", venda.id)
@@ -413,7 +414,7 @@ export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaP
                         const tipo = produto.tipo_produto;
                         const qtd = produto.quantidade || 1;
                         const cor = produto.catalogo_cores;
-                        const catalogoNome = produto.vendas_catalogo?.nome_produto;
+                        const catalogoNome = produto.custos_itens?.descricao ?? produto.vendas_catalogo?.nome_produto;
                         const nomeMap: Record<string, string> = {
                           porta_enrolar: 'Porta de Enrolar',
                           pintura_epoxi: 'Pintura Epóxi',

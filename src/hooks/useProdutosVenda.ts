@@ -17,7 +17,8 @@ export const useProdutosVenda = (vendaId?: string) => {
         .select(`
           *,
           catalogo_cores(nome, codigo_hex),
-          vendas_catalogo(unidade)
+          vendas_catalogo(unidade),
+          custos_itens(descricao, unidade)
         `)
         .eq('venda_id', vendaId)
         .order('created_at', { ascending: true });
@@ -26,7 +27,7 @@ export const useProdutosVenda = (vendaId?: string) => {
       // Expor unidade do catálogo no nível do produto para renderização.
       return (data || []).map((p: any) => ({
         ...p,
-        unidade: p.vendas_catalogo?.unidade ?? p.unidade ?? null,
+        unidade: p.custos_itens?.unidade ?? p.vendas_catalogo?.unidade ?? p.unidade ?? null,
       }));
     },
     enabled: !!vendaId,
@@ -47,6 +48,7 @@ export const useProdutosVenda = (vendaId?: string) => {
         acessorio_id: produtoSemExtra.acessorio_id || null,
         adicional_id: produtoSemExtra.adicional_id || null,
         vendas_catalogo_id: produtoSemExtra.vendas_catalogo_id || null,
+        custos_itens_id: produtoSemExtra.custos_itens_id || null,
         tabela_precos_porta_id: produtoSemExtra.tabela_precos_porta_id || null,
         descricao: produtoSemExtra.tipo_produto === 'porta_enrolar' ? 'Porta de Enrolar' : (produtoSemExtra.tipo_produto === 'instalacao' ? (produtoSemExtra.descricao || 'Instalação') : (produtoSemExtra.descricao || null)),
         observacao_item: produtoSemExtra.observacao_item ?? null,

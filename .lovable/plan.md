@@ -1,36 +1,30 @@
 ## Objetivo
 
-Linkar `produtos_vendas` (e `orcamentos_produtos`, se aplicável) a `custos_itens` por meio de uma nova coluna `custos_itens_id`, mantendo `vendas_catalogo_id` intacto para compatibilidade. Sem alterações de código nesta etapa.
+Quando o vendedor adiciona um **item avulso** (acessório/adicional) em uma venda, o sistema deve listar e gravar a partir de **`custos_itens`** (tabela de cima em `/direcao/estrategia/itens`), e não mais de `vendas_catalogo` (tabela de baixo).
 
-## Migração (single migration)
+## Arquivos a alterar
 
-1. **Adicionar coluna nullable** `custos_itens_id uuid` em:
-   - `produtos_vendas`
-   - `orcamentos_produtos` (se existir — verificar; tem `vendas_catalogo_id`)
-   - FK `REFERENCES custos_itens(id) ON DELETE SET NULL`
-   - Índice em ambas
+**Cadastro/edição de venda (escrita):**
+- `src/components/vendas/SelecionarAcessoriosModal.tsx` — lista vem de `custos_itens` (ordenada por `categoria` + `ordem`), grava `custos_itens_id` na linha do produto.
+- `src/components/vendas/ProdutoVendaForm.tsx` — dropdowns de acessório e adicional consultam `custos_itens` e gravam `custos_itens_id`.
+- `src/components/orcamentos/NovoOrcamentoForm.tsx` — mesmo tratamento ao converter/criar orçamento.
+- `src/hooks/useVendas.ts` — tipo `ProdutoVenda` ganha `custos_itens_id` (já existe a coluna no banco desde a Fase 1).
 
-2. **Backfill por match exato de nome** (case + trim insensitive):
-   ```sql
-   UPDATE produtos_vendas pv
-   SET custos_itens_id = ci.id
-   FROM vendas_catalogo vc
-   JOIN custos_itens ci
-     ON lower(trim(vc.nome_produto)) = lower(trim(ci.descricao))
-   WHERE pv.vendas_catalogo_id = vc.id;
-   ```
-   Mesma lógica para `orcamentos_produtos`.
+**Exibição (leitura) — para o item avulso aparecer com o nome correto em vendas novas:**
+- `src/hooks/useProdutosVenda.ts` — join muda para `custos_itens(descricao, unidade)` via `custos_itens_id`, com fallback para `vendas_catalogo` quando a venda for antiga.
+- `src/components/pedidos/VendaPendenteDetalhesSheet.tsx` — mesmo fallback.
+- `src/hooks/usePedidosAprovacaoDiretor.ts` — mesmo fallback.
 
-3. **Não tocar** em `vendas_catalogo_id` nem na tabela `vendas_catalogo`. ~56 produtos_vendas ficarão com `custos_itens_id` NULL (esperado).
+## Como diferenciar "acessório" vs "adicional" em `custos_itens`
 
-## Resultado esperado
+`custos_itens` tem `categoria` e `subcategoria` livres (definidos por você na própria tela). Antes de implementar, vou te perguntar quais categorias correspondem a "acessório" e quais a "adicional" (pode ser uma lista, ex.: acessório = ["Acessórios", "Motores"], adicional = ["Serviços", "Instalação extra"]). Se preferir, posso só listar **todos** os itens de `custos_itens` em ambos os dropdowns sem filtrar.
 
-- ~176 de 232 `produtos_vendas` ganharão `custos_itens_id` preenchido.
-- 56 ficam órfãos com `custos_itens_id` NULL, mas continuam funcionando via `vendas_catalogo_id`.
-- Nenhuma quebra de UI/código.
+## O que NÃO faz parte deste plano
 
-## Fora de escopo (próximas etapas, quando você quiser)
+- Vendas antigas continuam exibindo o nome via `vendas_catalogo` (fallback). Nada quebra.
+- A tabela `vendas_catalogo` continua existindo no banco e a aba "Catálogo de Itens" continua visível em `/direcao/estrategia/itens` (podemos remover depois, num passo separado, quando você confirmar que tudo está estável).
+- Sem migrações de banco. A coluna `custos_itens_id` já foi adicionada anteriormente.
 
-- Reescrever hooks/componentes (`useVendasCatalogo`, `ProdutoVendaForm`, `SelecionarAcessoriosModal`, `useProdutosVendidosMes`, `usePedidosAprovacaoDiretor`, etc.) para usar `custos_itens` em vez de `vendas_catalogo`.
-- Resolver os 56 órfãos (ajustar nomes em `custos_itens` ou mapeamento manual).
-- Dropar `vendas_catalogo_id` e a tabela `vendas_catalogo`.
+## Próximo passo
+
+Antes de implementar, me diga: **quais categorias de `custos_itens` são "acessórios" e quais são "adicionais"?** Ou prefere que ambos os dropdowns mostrem todos os itens?

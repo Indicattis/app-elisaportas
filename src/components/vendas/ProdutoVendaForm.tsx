@@ -102,37 +102,24 @@ export function ProdutoVendaForm({
     }
   });
 
-  // Buscar acessórios do catálogo de vendas
-  const { data: acessorios } = useQuery({
-    queryKey: ['catalogo-acessorios'],
+  // Buscar itens da Estratégia de Custos (substitui o antigo vendas_catalogo).
+  // Tanto "Acessórios" quanto "Adicionais" agora vêm da mesma fonte; o vendedor escolhe
+  // pelo dropdown apropriado e o tipo_produto é definido pelo handler.
+  const { data: itensCustos } = useQuery({
+    queryKey: ['custos-itens-venda-form'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('vendas_catalogo')
-        .select('*')
-        .eq('ativo', true)
-        .eq('categoria', 'acessório')
-        .gt('quantidade', 0)
-        .order('nome_produto');
+        .from('custos_itens')
+        .select('id, descricao, preco_venda, categoria, unidade, ordem')
+        .order('categoria', { ascending: true })
+        .order('ordem', { ascending: true })
+        .order('descricao', { ascending: true });
       if (error) throw error;
-      return data;
+      return data || [];
     }
   });
-
-  // Buscar adicionais do catálogo de vendas
-  const { data: adicionais } = useQuery({
-    queryKey: ['catalogo-adicionais'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('vendas_catalogo')
-        .select('*')
-        .eq('ativo', true)
-        .eq('categoria', 'adicional')
-        .gt('quantidade', 0)
-        .order('nome_produto');
-      if (error) throw error;
-      return data;
-    }
-  });
+  const acessorios = itensCustos;
+  const adicionais = itensCustos;
 
   // Zerar valor de pintura se a cor for "Aço galvanizado"
   useEffect(() => {
@@ -270,12 +257,12 @@ export function ProdutoVendaForm({
       }
     }
     
-    if (formData.tipo_produto === 'acessorio' && !formData.acessorio_id && !formData.vendas_catalogo_id) {
+    if (formData.tipo_produto === 'acessorio' && !formData.acessorio_id && !formData.vendas_catalogo_id && !formData.custos_itens_id) {
       toast.error('Selecione um acessório');
       return;
     }
     
-    if (formData.tipo_produto === 'adicional' && !formData.adicional_id && !formData.vendas_catalogo_id) {
+    if (formData.tipo_produto === 'adicional' && !formData.adicional_id && !formData.vendas_catalogo_id && !formData.custos_itens_id) {
       toast.error('Selecione um adicional');
       return;
     }
@@ -331,9 +318,11 @@ export function ProdutoVendaForm({
       setFormData(prev => ({
         ...prev,
         tipo_produto: 'acessorio',
-        descricao: acessorio.nome_produto,
+        descricao: acessorio.descricao,
         valor_produto: Number(acessorio.preco_venda),
-        estoque_id: acessorio.id
+        custos_itens_id: acessorio.id,
+        vendas_catalogo_id: undefined,
+        unidade: acessorio.unidade || undefined,
       }));
     }
   };
@@ -344,9 +333,11 @@ export function ProdutoVendaForm({
       setFormData(prev => ({
         ...prev,
         tipo_produto: 'adicional',
-        descricao: adicional.nome_produto,
+        descricao: adicional.descricao,
         valor_produto: Number(adicional.preco_venda),
-        estoque_id: adicional.id
+        custos_itens_id: adicional.id,
+        vendas_catalogo_id: undefined,
+        unidade: adicional.unidade || undefined,
       }));
     }
   };
@@ -632,7 +623,7 @@ export function ProdutoVendaForm({
             <div className="space-y-2">
               <Label htmlFor="acessorio">Acessório *</Label>
               <Select
-                value={formData.vendas_catalogo_id}
+                value={formData.custos_itens_id}
                 onValueChange={handleAcessorioChange}
                 required
               >
@@ -642,7 +633,7 @@ export function ProdutoVendaForm({
                 <SelectContent>
                   {acessorios?.map((acessorio) => (
                     <SelectItem key={acessorio.id} value={acessorio.id}>
-                      {acessorio.nome_produto} - R$ {Number(acessorio.preco_venda).toFixed(2)}
+                      {acessorio.descricao} - R$ {Number(acessorio.preco_venda).toFixed(2)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -654,7 +645,7 @@ export function ProdutoVendaForm({
             <div className="space-y-2">
               <Label htmlFor="adicional">Adicional *</Label>
               <Select
-                value={formData.vendas_catalogo_id}
+                value={formData.custos_itens_id}
                 onValueChange={handleAdicionalChange}
                 required
               >
@@ -664,7 +655,7 @@ export function ProdutoVendaForm({
                 <SelectContent>
                   {adicionais?.map((adicional) => (
                     <SelectItem key={adicional.id} value={adicional.id}>
-                      {adicional.nome_produto} - R$ {Number(adicional.preco_venda).toFixed(2)}
+                      {adicional.descricao} - R$ {Number(adicional.preco_venda).toFixed(2)}
                     </SelectItem>
                   ))}
                 </SelectContent>

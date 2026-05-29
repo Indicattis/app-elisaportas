@@ -22,6 +22,7 @@ interface LucroItemModalProps {
     lucro_item?: number;
     quantidade: number;
     vendas_catalogo_id?: string | null;
+    custos_itens_id?: string | null;
   };
   onSave: (produtoId: string, lucro: number) => Promise<void>;
   isSaving: boolean;
@@ -51,7 +52,7 @@ export function LucroItemModal({
   const custoCalculado = valorTotal - lucroValido;
   const margem = valorTotal > 0 ? (lucroValido / valorTotal) * 100 : 0;
   const isLucroInvalido = lucroValido > valorTotal || lucroValido < 0;
-  const calculadoDoCatalogo = !!produto.vendas_catalogo_id && (produto.lucro_item ?? 0) > 0;
+  const calculadoDoCatalogo = (!!produto.custos_itens_id || !!produto.vendas_catalogo_id) && (produto.lucro_item ?? 0) > 0;
 
   const handleSave = async () => {
     if (isLucroInvalido) return;
