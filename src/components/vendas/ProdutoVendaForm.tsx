@@ -318,9 +318,11 @@ export function ProdutoVendaForm({
       setFormData(prev => ({
         ...prev,
         tipo_produto: 'acessorio',
-        descricao: acessorio.nome_produto,
+        descricao: acessorio.descricao,
         valor_produto: Number(acessorio.preco_venda),
-        estoque_id: acessorio.id
+        custos_itens_id: acessorio.id,
+        vendas_catalogo_id: undefined,
+        unidade: acessorio.unidade || undefined,
       }));
     }
   };
@@ -331,9 +333,11 @@ export function ProdutoVendaForm({
       setFormData(prev => ({
         ...prev,
         tipo_produto: 'adicional',
-        descricao: adicional.nome_produto,
+        descricao: adicional.descricao,
         valor_produto: Number(adicional.preco_venda),
-        estoque_id: adicional.id
+        custos_itens_id: adicional.id,
+        vendas_catalogo_id: undefined,
+        unidade: adicional.unidade || undefined,
       }));
     }
   };
