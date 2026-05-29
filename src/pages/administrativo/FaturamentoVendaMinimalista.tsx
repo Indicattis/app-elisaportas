@@ -1290,7 +1290,24 @@ export default function FaturamentoVendaMinimalista() {
                     const lucroAjustado = temLucro ? (produto.lucro_item! - parcelaExcedenteItem + creditoValorAbs) : null;
                     return (
                       <TableRow key={produto.id} className="border-white/10 hover:bg-white/5">
-                        <TableCell className="text-white/80">{getTipoProdutoLabel(produto.tipo_produto)}</TableCell>
+                        <TableCell className="text-white/80">
+                          {(() => {
+                            const cat = categoriaPorTipo.get(produto.tipo_produto);
+                            if (!cat) return getTipoProdutoLabel(produto.tipo_produto);
+                            return (
+                              <span
+                                className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md border text-xs"
+                                style={{
+                                  backgroundColor: cat.cor_hex ? `${cat.cor_hex}20` : 'transparent',
+                                  borderColor: cat.cor_hex ? `${cat.cor_hex}40` : 'rgba(255,255,255,0.1)',
+                                  color: cat.cor_hex || undefined,
+                                }}
+                              >
+                                {cat.nome}
+                              </span>
+                            );
+                          })()}
+                        </TableCell>
                         <TableCell className="font-medium text-white">
                           <div className="flex flex-col">
                             <span>{produto.descricao}</span>
