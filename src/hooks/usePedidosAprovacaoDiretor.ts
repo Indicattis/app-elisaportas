@@ -16,6 +16,7 @@ export interface ProdutoAprovacao {
   valor_instalacao?: number;
   cor?: { nome: string; codigo_hex: string } | null;
   acessorio?: { nome: string } | null;
+  custos_itens?: { descricao: string } | null;
 }
 
 export interface PedidoAprovacaoDiretor {
