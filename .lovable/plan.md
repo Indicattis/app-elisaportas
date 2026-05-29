@@ -1,77 +1,45 @@
 ## Objetivo
 
-Adicionar um botão **"Metas"** no hub `/vendas` que abre uma nova página `/vendas/metas` com o **histórico de resultados por período** de cada meta de vendas cadastrada (somente leitura, visível para qualquer vendedor com acesso ao hub).
+Refatorar `/financeiro/gastos` (`src/pages/administrativo/GastosPage.tsx`) para usar o mesmo padrão de header de `/direcao/estrategia/itens` (componente `MinimalistLayout` com `headerActions`), agrupando no header todas as funcionalidades, botões e filtros que hoje vivem soltos no topo da página.
 
 ## Mudanças
 
-### 1. `src/pages/vendas/VendasHub.tsx`
-Adicionar item ao `menuItems`:
-```
-{ label: 'Metas', icon: Target, path: '/vendas/metas' }
-```
-(ícone `Target` do lucide-react). Sem outras mudanças.
+Arquivo único: `src/pages/administrativo/GastosPage.tsx`.
 
-### 2. Nova rota em `src/App.tsx`
-```
-<Route path="/vendas/metas" element={
-  <ProtectedRoute routeKey="vendas_hub"><MetasHistoricoVendas /></ProtectedRoute>
-} />
-```
-Import de `./pages/vendas/MetasHistoricoVendas`.
+1. **Remover o shell custom atual**
+   - Eliminar o `<div className="min-h-screen bg-black ...">`, o `AnimatedBreadcrumb` manual, o botão fixo "Voltar" no canto superior esquerdo e o bloco custom `<h1>Gastos</h1>` + linha de ações.
+   - Remover imports não mais usados: `ArrowLeft`, `AnimatedBreadcrumb`, estado `mounted` e seu `useEffect`.
 
-### 3. Novo hook `src/hooks/useHistoricoMetasVendas.ts`
-- Recebe `metas` de `useMetasVendas()`.
-- Para cada meta, gera a lista de períodos passados dentro da vigência:
-  - Início = `meta.data_inicio_vigencia`.
-  - Fim = `min(meta.data_fim_vigencia ?? hoje, hoje)`.
-  - Itera por `semana` ou `mes` (conforme `meta.periodo`) gerando intervalos `(inicio, fim)`; mantém apenas períodos **já encerrados** (`fim < hoje`).
-- Em **uma única query** por meta, busca `vendas` no intervalo total `[primeiroInicio, ultimoFim]` filtrando por `atendente_id` (se `escopo='individual'`) ou todos (se `global`), traz `atendente_id, data_venda, valor_venda, valor_frete, valor_credito, is_rascunho=false`.
-- Em memória, agrupa por período e por `atendente_id`, calculando `total_vendido` via `calcularFaturamentoLiquido`, `tier_atingido` e `bonificacao_calculada` reutilizando as helpers `calcularTier`/`calcularBonificacao` (extraídas para `src/lib/metasVendasCalc.ts` para reuso entre o hook live e este hook histórico).
-- Retorna estrutura:
-```
-{ meta, periodos: [{ inicio, fim, label, totalGlobal, vendedores: VendedorProgresso[], tier_atingido_global }] }[]
-```
-- Carrega `admin_users` (mesma query do hook live) para resolver nome/foto.
+2. **Adotar `MinimalistLayout`** (mesmo wrapper de `EstrategiaItens.tsx`):
+   - `title="Gastos"`, `subtitle="Controle de despesas do mês"`.
+   - `backPath="/financeiro"`.
+   - `breadcrumbItems`: Home → Financeiro → Gastos.
+   - `fullWidth` para manter a largura útil atual.
 
-### 4. Refator pequeno em `src/hooks/useProgressoMetasVendas.ts`
-Mover `calcularTier` e `calcularBonificacao` para `src/lib/metasVendasCalc.ts` e importar em ambos os hooks (sem mudança de comportamento).
+3. **`headerActions` agrupando tudo**
+   Construir um nó `headerActions` que reúne, da esquerda para a direita:
+   - **Navegador de mês** (ChevronLeft / label do mês com `CalendarIcon` / ChevronRight) — mesma lógica atual de `mesFiltro`.
+   - **Ordenação** (`Select` de `ordenarPor`: Data de Cadastro / Data de Pagamento).
+   - **Filtros** (`Select`): Tipo, Banco, Responsável, DRE — exatamente os mesmos quatro selects de hoje.
+   - Botão "Limpar filtros" (aparece só quando algum filtro está ativo, mesma condição atual).
+   - Botão **PDF** (`gerarPDF`).
+   - Botão **Bancos** (`navigate("/financeiro/bancos")`).
+   - Botão **Novo Gasto** (`openCreate`) — primário.
+   
+   Layout: `flex flex-wrap items-center gap-2` para acomodar todos os controles no header sem quebrar em telas menores. Estilos dos selects/botões alinhados ao padrão claro/escuro do `MinimalistLayout` (usar tokens como `bg-card/60 border-border`, semelhante a `EstrategiaItens`), substituindo as classes `bg-white/5 border-white/20 text-white` que eram específicas do shell preto antigo.
 
-### 5. Nova página `src/pages/vendas/MetasHistoricoVendas.tsx`
-- Layout `MinimalistLayout` com:
-  - `title="Histórico de Metas"`, `subtitle="Resultados passados das metas do setor de vendas"`.
-  - `backPath="/vendas"`, breadcrumb `Home → Vendas → Metas`.
-- Estado de loading/empty consistentes (skeleton glassmorphism `bg-white/5`).
-- Para cada meta retornada pelo hook, renderiza um card (mesmo estilo glass de `MetasVendasDirecao`):
-  - Cabeçalho: nome da meta, badges (`periodo`, `escopo`, `Inativa` se aplicável), vigência.
-  - Lista vertical de **períodos encerrados** (mais recentes primeiro):
-    - Label do período (ex.: "Semana de 12/05 a 18/05" ou "Maio 2025") usando `formatarPeriodo` adaptada.
-    - Para `escopo='global'`: total vendido, tier atingido (chip colorido) e bonificação calculada.
-    - Para `escopo='individual'` sem `vendedor_id`: ranking de todos os vendedores no período (nome + foto + total + tier + bonificação), ordenado por total desc.
-    - Para `escopo='individual'` com `vendedor_id`: linha única daquele vendedor.
-  - Empty state por meta ("Sem períodos encerrados ainda").
-- Sem ações de criar/editar/excluir.
+4. **Corpo da página**
+   - Remover o bloco separado de filtros (linhas ~356-440) já que migrou para `headerActions`.
+   - Manter intactos: tabela de gastos, linha de total, dialogs de criar/editar e alert dialog de exclusão.
+   - Aplicar wrapper `<div className="space-y-4">` (sem `px-[84px]`) para o conteúdo dentro do layout.
 
-### Permissões
-Reaproveita `routeKey="vendas_hub"` (mesma do restante do hub `/vendas`). Sem mudanças de RLS — `metas_vendas`, `metas_vendas_tiers`, `vendas` e `admin_users` já são lidos pelos hubs de vendas existentes.
-
-## Detalhes técnicos
-
-- Datas seguem a regra do projeto: limites de período são serializados via helpers existentes em `src/lib/periodoMeta.ts` (sufixo `T12:00:00.000Z`).
-- Iteração de períodos:
-  - Semanal: avança `+7 dias` a partir do domingo da semana de `data_inicio_vigencia`.
-  - Mensal: avança 1 mês a partir do primeiro dia do mês de `data_inicio_vigencia`.
-- Limite defensivo: máximo de 104 períodos por meta (≈ 2 anos semanal / 8 anos mensal) para evitar loops.
-- Performance: 1 query de `vendas` por meta cobrindo todo o intervalo histórico + 1 query única de `admin_users`. React Query com `staleTime` de 5 min.
-
-## Fora de escopo
-
-- Sem mudanças no banco, RLS, edge functions ou no fluxo de configuração de metas em `/direcao/metas/vendas`.
-- Sem exportação PDF/Excel nesta versão.
-- Sem filtros por vendedor/meta nesta versão (podem ser adicionados depois).
+5. **Sem alterações de lógica**
+   - Hooks (`useGastos`, `useBancos`, `useTiposCustos`), estado de filtros, `gastosFiltrados`, `totalGastos`, `gerarPDF`, `handleSave`, `handleDelete`, sugestões de descrição: todos permanecem inalterados.
+   - Sem mudanças em rotas, banco, RLS ou outros arquivos.
 
 ## Verificação
 
-- Build limpa.
-- `/vendas` mostra o novo botão "Metas" abaixo de "Visitas Técnicas".
-- `/vendas/metas` lista todas as metas com seus períodos encerrados, valores e tiers, sem 404 e sem quebras quando uma meta não tem nenhum período encerrado.
-- Cálculo de tier/bonificação por período idêntico ao do painel ao vivo (mesmas helpers).
+- Build limpo.
+- `/financeiro/gastos` renderiza com o mesmo header de `/direcao/estrategia/itens` (breadcrumb + título + ações à direita).
+- Navegador de mês, ordenação, 4 filtros, "Limpar filtros", PDF, Bancos e Novo Gasto funcionam a partir do header.
+- Tabela, totais, criar/editar/excluir continuam funcionando como antes.
