@@ -9091,6 +9091,7 @@ export type Database = {
         Row: {
           id: string
           modo: string
+          parametros: Json
           percentual_custo: number
           tipo: string
           updated_at: string
@@ -9099,6 +9100,7 @@ export type Database = {
         Insert: {
           id?: string
           modo?: string
+          parametros?: Json
           percentual_custo?: number
           tipo: string
           updated_at?: string
@@ -9107,6 +9109,7 @@ export type Database = {
         Update: {
           id?: string
           modo?: string
+          parametros?: Json
           percentual_custo?: number
           tipo?: string
           updated_at?: string

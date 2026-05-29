@@ -3,102 +3,226 @@ import { Info, Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { useConfigLucro, type ConfigLucroTipo } from "@/hooks/useConfigLucro";
+import {
+  useConfigLucro,
+  type ConfigLucroTipo,
+  type ConfigLucroModo,
+} from "@/hooks/useConfigLucro";
 
 interface Props {
   tipo: ConfigLucroTipo;
   contextoLabel: string;
+  /** Modos disponíveis nesta tela. Default: apenas estático. */
+  modosDisponiveis?: ConfigLucroModo[];
 }
 
-export function ConfigLucroEstatico({ tipo, contextoLabel }: Props) {
+const MODO_INFO: Record<ConfigLucroModo, { label: string; descricao: string }> = {
+  estatico: {
+    label: "Estático (% de custo fixa)",
+    descricao:
+      "Você informa a % de custo. O lucro é calculado automaticamente como (100% − custo%) × valor total.",
+  },
+  formula_dimensao: {
+    label: "Fórmula por dimensão (Epóxi clássica)",
+    descricao:
+      "Lucro = (altura × largura) × valor por m². O custo é o que sobra do valor total da venda.",
+  },
+};
+
+export function ConfigLucroEstatico({
+  tipo,
+  contextoLabel,
+  modosDisponiveis = ["estatico"],
+}: Props) {
   const { toast } = useToast();
   const { data, isLoading, save } = useConfigLucro(tipo);
+
+  const [modo, setModo] = useState<ConfigLucroModo>("estatico");
   const [custoStr, setCustoStr] = useState<string>("");
+  const [valorM2Str, setValorM2Str] = useState<string>("25");
 
   useEffect(() => {
-    if (data) setCustoStr(String(data.percentual_custo));
-  }, [data?.percentual_custo]);
+    if (!data) return;
+    setModo(modosDisponiveis.includes(data.modo) ? data.modo : modosDisponiveis[0]);
+    setCustoStr(String(data.percentual_custo));
+    const v = Number(data.parametros?.valor_m2);
+    setValorM2Str(String(Number.isFinite(v) && v > 0 ? v : 25));
+  }, [data?.modo, data?.percentual_custo, data?.parametros]);
 
   const custoNum = parseFloat(custoStr.replace(",", "."));
-  const valido = !Number.isNaN(custoNum) && custoNum >= 0 && custoNum <= 100;
-  const lucroPct = valido ? Math.round((100 - custoNum) * 10) / 10 : 0;
+  const custoValido = !Number.isNaN(custoNum) && custoNum >= 0 && custoNum <= 100;
+  const lucroPct = custoValido ? Math.round((100 - custoNum) * 10) / 10 : 0;
+
+  const valorM2Num = parseFloat(valorM2Str.replace(",", "."));
+  const valorM2Valido = !Number.isNaN(valorM2Num) && valorM2Num > 0;
+
   const exemploValor = 1000;
-  const exemploCusto = valido ? (exemploValor * custoNum) / 100 : 0;
-  const exemploLucro = valido ? exemploValor - exemploCusto : 0;
+  const exemploCusto = custoValido ? (exemploValor * custoNum) / 100 : 0;
+  const exemploLucro = custoValido ? exemploValor - exemploCusto : 0;
+
+  const exemploAltura = 3;
+  const exemploLargura = 2.5;
+  const exemploLucroFormula = valorM2Valido
+    ? exemploAltura * exemploLargura * valorM2Num
+    : 0;
 
   const handleSave = async () => {
-    if (!valido) {
-      toast({ title: "Valor inválido", description: "Informe um % entre 0 e 100.", variant: "destructive" });
+    if (modo === "estatico") {
+      if (!custoValido) {
+        toast({ title: "Valor inválido", description: "Informe um % entre 0 e 100.", variant: "destructive" });
+        return;
+      }
+      const rounded = Math.round(custoNum * 10) / 10;
+      try {
+        await save.mutateAsync({
+          modo: "estatico",
+          percentual_custo: rounded,
+          parametros: data?.parametros ?? {},
+        });
+        toast({ title: "Configuração salva", description: `Custo ${rounded}% / Lucro ${(100 - rounded).toFixed(1)}%` });
+      } catch (e: any) {
+        toast({ title: "Erro ao salvar", description: e?.message || "", variant: "destructive" });
+      }
       return;
     }
-    const rounded = Math.round(custoNum * 10) / 10;
-    try {
-      await save.mutateAsync(rounded);
-      toast({ title: "Configuração salva", description: `Custo ${rounded}% / Lucro ${(100 - rounded).toFixed(1)}%` });
-    } catch (e: any) {
-      toast({ title: "Erro ao salvar", description: e?.message || "", variant: "destructive" });
+
+    if (modo === "formula_dimensao") {
+      if (!valorM2Valido) {
+        toast({ title: "Valor inválido", description: "Informe um valor por m² maior que zero.", variant: "destructive" });
+        return;
+      }
+      const rounded = Math.round(valorM2Num * 100) / 100;
+      try {
+        await save.mutateAsync({
+          modo: "formula_dimensao",
+          percentual_custo: data?.percentual_custo ?? 60,
+          parametros: { ...(data?.parametros ?? {}), valor_m2: rounded },
+        });
+        toast({
+          title: "Configuração salva",
+          description: `Fórmula ativa: lucro = altura × largura × R$ ${rounded.toFixed(2)}`,
+        });
+      } catch (e: any) {
+        toast({ title: "Erro ao salvar", description: e?.message || "", variant: "destructive" });
+      }
     }
   };
+
+  const podeSalvar =
+    (modo === "estatico" && custoValido) ||
+    (modo === "formula_dimensao" && valorM2Valido);
 
   return (
     <div className="space-y-4">
       {/* Modo de cálculo */}
       <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl p-5 space-y-3">
         <div className="text-sm text-white/80 font-medium">Modo de cálculo</div>
-        <div className="flex items-center gap-3 rounded-lg border border-blue-500/30 bg-blue-500/5 p-3">
-          <div className="h-8 w-8 rounded-md bg-blue-500/20 border border-blue-500/30 flex items-center justify-center">
-            <Check className="h-4 w-4 text-blue-300" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="text-white text-sm font-medium">Estático (% de custo fixa)</div>
-            <div className="text-xs text-white/60">
-              Você informa a % de custo. O lucro é calculado automaticamente como (100% − custo%) × valor total.
-            </div>
-          </div>
-          <div className="text-[10px] uppercase tracking-wide text-blue-300">Padrão</div>
-        </div>
-        <div className="text-[11px] text-white/40">
-          Outros modos de cálculo (por dimensão, por faixa de valor) poderão ser adicionados no futuro.
+        <div className="space-y-2">
+          {modosDisponiveis.map((m) => {
+            const ativo = modo === m;
+            return (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setModo(m)}
+                className={
+                  "w-full flex items-center gap-3 rounded-lg border p-3 text-left transition-colors " +
+                  (ativo
+                    ? "border-blue-500/30 bg-blue-500/5"
+                    : "border-white/10 bg-white/[0.02] hover:bg-white/[0.04]")
+                }
+              >
+                <div
+                  className={
+                    "h-8 w-8 rounded-md border flex items-center justify-center " +
+                    (ativo
+                      ? "bg-blue-500/20 border-blue-500/30"
+                      : "bg-white/5 border-white/10")
+                  }
+                >
+                  {ativo ? <Check className="h-4 w-4 text-blue-300" /> : null}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-white text-sm font-medium">{MODO_INFO[m].label}</div>
+                  <div className="text-xs text-white/60">{MODO_INFO[m].descricao}</div>
+                </div>
+                {ativo ? (
+                  <div className="text-[10px] uppercase tracking-wide text-blue-300">Ativo</div>
+                ) : null}
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Configuração estática */}
+      {/* Configuração */}
       <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl p-5 space-y-4">
-        <div className="text-sm text-white/80 font-medium">Configuração estática</div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <label className="text-xs text-white/60">% de custo</label>
-            <div className="relative">
-              <Input
-                type="number"
-                inputMode="decimal"
-                min={0}
-                max={100}
-                step={0.1}
-                value={custoStr}
-                onChange={(e) => setCustoStr(e.target.value)}
-                disabled={isLoading}
-                className="bg-white/5 border-white/10 text-white pr-8"
-              />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 text-sm">%</span>
-            </div>
-            <div className="text-[11px] text-white/40">Valor entre 0 e 100. Aceita 1 casa decimal.</div>
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs text-white/60">% de lucro (calculada)</label>
-            <div className="rounded-md border border-white/10 bg-black/30 px-3 py-2 text-white font-mono text-sm">
-              {valido ? `${lucroPct.toFixed(1)}%` : "—"}
-            </div>
-            <div className="text-[11px] text-white/40">lucro% = 100% − custo%</div>
-          </div>
+        <div className="text-sm text-white/80 font-medium">
+          Configuração — {MODO_INFO[modo].label}
         </div>
+
+        {modo === "estatico" ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs text-white/60">% de custo</label>
+              <div className="relative">
+                <Input
+                  type="number"
+                  inputMode="decimal"
+                  min={0}
+                  max={100}
+                  step={0.1}
+                  value={custoStr}
+                  onChange={(e) => setCustoStr(e.target.value)}
+                  disabled={isLoading}
+                  className="bg-white/5 border-white/10 text-white pr-8"
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 text-sm">%</span>
+              </div>
+              <div className="text-[11px] text-white/40">Valor entre 0 e 100. Aceita 1 casa decimal.</div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs text-white/60">% de lucro (calculada)</label>
+              <div className="rounded-md border border-white/10 bg-black/30 px-3 py-2 text-white font-mono text-sm">
+                {custoValido ? `${lucroPct.toFixed(1)}%` : "—"}
+              </div>
+              <div className="text-[11px] text-white/40">lucro% = 100% − custo%</div>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <label className="text-xs text-white/60">Valor por m² (R$)</label>
+              <div className="relative max-w-[240px]">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50 text-sm">R$</span>
+                <Input
+                  type="number"
+                  inputMode="decimal"
+                  min={0}
+                  step={0.01}
+                  value={valorM2Str}
+                  onChange={(e) => setValorM2Str(e.target.value)}
+                  disabled={isLoading}
+                  className="bg-white/5 border-white/10 text-white pl-9"
+                />
+              </div>
+              <div className="text-[11px] text-white/40">Padrão histórico: R$ 25,00.</div>
+            </div>
+            <div className="rounded-lg border border-white/10 bg-black/30 p-3 space-y-1">
+              <div className="text-[11px] uppercase tracking-wide text-white/50">Fórmula</div>
+              <div className="font-mono text-sm text-blue-300">
+                lucro = (altura × largura) × R$ {valorM2Valido ? valorM2Num.toFixed(2) : "?"}
+              </div>
+              <div className="font-mono text-sm text-white/70">custo = valor_total − lucro</div>
+            </div>
+          </div>
+        )}
 
         <div className="flex justify-end">
           <Button
             onClick={handleSave}
-            disabled={!valido || save.isPending || isLoading}
+            disabled={!podeSalvar || save.isPending || isLoading}
             className="bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 text-blue-200"
           >
             {save.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
@@ -110,23 +234,45 @@ export function ConfigLucroEstatico({ tipo, contextoLabel }: Props) {
       {/* Preview */}
       <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl p-5 space-y-3">
         <div className="text-sm text-white/80 font-medium">Pré-visualização</div>
-        <div className="text-xs text-white/60">
-          Para um item de {contextoLabel} no valor de <span className="text-white">R$ 1.000,00</span>:
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="rounded-lg border border-white/10 bg-black/30 p-3">
-            <div className="text-[11px] uppercase tracking-wide text-white/50">Custo</div>
-            <div className="text-white font-mono text-base">
-              R$ {exemploCusto.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+
+        {modo === "estatico" ? (
+          <>
+            <div className="text-xs text-white/60">
+              Para um item de {contextoLabel} no valor de{" "}
+              <span className="text-white">R$ 1.000,00</span>:
             </div>
-          </div>
-          <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3">
-            <div className="text-[11px] uppercase tracking-wide text-emerald-300/70">Lucro</div>
-            <div className="text-emerald-200 font-mono text-base">
-              R$ {exemploLucro.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-lg border border-white/10 bg-black/30 p-3">
+                <div className="text-[11px] uppercase tracking-wide text-white/50">Custo</div>
+                <div className="text-white font-mono text-base">
+                  R$ {exemploCusto.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </div>
+              </div>
+              <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3">
+                <div className="text-[11px] uppercase tracking-wide text-emerald-300/70">Lucro</div>
+                <div className="text-emerald-200 font-mono text-base">
+                  R$ {exemploLucro.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          </>
+        ) : (
+          <>
+            <div className="text-xs text-white/60">
+              Para uma {contextoLabel} de{" "}
+              <span className="text-white">3,00 m × 2,50 m</span> (7,5 m²):
+            </div>
+            <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3">
+              <div className="text-[11px] uppercase tracking-wide text-emerald-300/70">Lucro</div>
+              <div className="text-emerald-200 font-mono text-base">
+                R$ {exemploLucroFormula.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </div>
+            </div>
+            <div className="text-[11px] text-white/40">
+              O custo é calculado como <span className="text-white/60">valor_total − lucro</span> no momento do faturamento.
+            </div>
+          </>
+        )}
       </div>
 
       <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 backdrop-blur-xl p-4 flex items-start gap-3">

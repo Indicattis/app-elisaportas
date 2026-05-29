@@ -36,7 +36,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useProdutosVenda } from "@/hooks/useProdutosVenda";
 import { useFaturamento } from "@/hooks/useFaturamento";
-import { fetchPercentualCusto } from "@/hooks/useConfigLucro";
+import { fetchPercentualCusto, fetchConfigLucro } from "@/hooks/useConfigLucro";
 import { LucroItemModal } from "@/components/vendas/LucroItemModal";
 import { ConfirmarFaturamentoDialog } from "@/components/vendas/ConfirmarFaturamentoDialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -566,9 +566,29 @@ export default function FaturamentoVendaMinimalista() {
     produtosPinturaParaAutoFaturar.forEach(async (produto) => {
       autoFaturadosRef.current.add(produto.id);
 
-      const pctCusto = await fetchPercentualCusto('pintura_epoxi');
-      const custoCalculado = produto.valor_total * (pctCusto / 100);
-      const lucroPintura = produto.valor_total - custoCalculado;
+      const cfg = await fetchConfigLucro('pintura_epoxi');
+
+      let lucroPintura = 0;
+      let custoCalculado = 0;
+
+      if (cfg.modo === 'formula_dimensao') {
+        let altura = produto.altura || 0;
+        let largura = produto.largura || 0;
+        if ((!altura || !largura) && produto.tamanho) {
+          const partes = produto.tamanho.split('x');
+          if (partes.length === 2) {
+            largura = parseFloat(partes[0]) || 0;
+            altura = parseFloat(partes[1]) || 0;
+          }
+        }
+        const valorM2 = Number(cfg.parametros?.valor_m2) || 25;
+        lucroPintura = altura * largura * valorM2;
+        custoCalculado = Math.max(0, produto.valor_total - lucroPintura);
+      } else {
+        custoCalculado = produto.valor_total * (cfg.percentual_custo / 100);
+        lucroPintura = produto.valor_total - custoCalculado;
+      }
+
       await updateLucroItem({ 
         produtoId: produto.id, 
         lucroItem: lucroPintura,

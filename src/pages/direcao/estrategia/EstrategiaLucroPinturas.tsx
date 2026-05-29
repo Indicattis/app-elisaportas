@@ -29,7 +29,11 @@ export default function EstrategiaLucroPinturas() {
           </div>
         </div>
 
-        <ConfigLucroEstatico tipo="pintura_epoxi" contextoLabel="pintura epóxi" />
+        <ConfigLucroEstatico
+          tipo="pintura_epoxi"
+          contextoLabel="pintura epóxi"
+          modosDisponiveis={["estatico", "formula_dimensao"]}
+        />
       </div>
     </MinimalistLayout>
   );

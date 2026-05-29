@@ -1,66 +1,54 @@
 
 ## Objetivo
 
-Transformar as páginas `/direcao/estrategia/kits/lucro-pinturas` e `/direcao/estrategia/kits/lucro-instalacoes` em telas de configuração reais, oferecendo como **primeira opção (modo padrão)** o cálculo estático mais simples: o usuário informa a **% de custo** e o sistema calcula automaticamente a **% de lucro** (lucro% = 100% − custo%). O valor configurado passa a ser usado no faturamento da venda.
+Em `/direcao/estrategia/kits/lucro-pinturas`, transformar o card "Modo de cálculo" em uma **lista selecionável** com duas opções, deixando o usuário escolher qual é usada no faturamento:
 
-## O que muda na prática
+1. **Estático (% de custo fixa)** — já existente. Lucro = (100% − custo%) × valor_total.
+2. **Fórmula por dimensão (Epóxi clássica)** — nova. Lucro = (altura × largura) × R$ por m². Custo = valor_total − lucro.
 
-Hoje, no faturamento da venda:
-- Instalação: lucro = 40% do valor total (fixo no código)
-- Pintura Epóxi: lucro = (altura × largura) × 25 (fórmula fixa no código)
+A opção fica em "Instalações" continua exibindo apenas o modo Estático (a fórmula por dimensão não faz sentido lá).
 
-Depois desta mudança:
-- Instalação: lucro = (100% − custo% configurado) × valor total
-- Pintura Epóxi: lucro = (100% − custo% configurado) × valor total
-- Os valores padrão iniciais ficam iguais ao comportamento atual (instalação 60% custo / 40% lucro; pintura também passa a usar o modelo estático, padrão sugerido a definir com o usuário — proposta: 60% custo / 40% lucro).
+## Comportamento da tela
 
-A fórmula antiga da pintura (`altura × largura × 25`) deixa de ser usada nesse modo estático.
-
-## Telas
-
-Ambas as páginas terão a mesma estrutura:
-
-1. **Card "Modo de cálculo"** — exibe a opção ativa. Inicialmente só existe a opção "Estático (% de custo fixa)", já marcada como padrão. Espaço preparado para futuras opções (ex.: fórmula por dimensão).
-2. **Card "Configuração estática"** — campo numérico para informar a **% de custo** (0–100, aceita 1 casa decimal). Ao lado, exibe automaticamente a **% de lucro calculada** (100 − custo). Botão "Salvar".
-3. **Card "Pré-visualização"** — mostra um exemplo: para um valor de R$ 1.000, qual seria o custo e o lucro resultantes com a configuração atual.
+- O card "Modo de cálculo" passa a mostrar dois cards/linhas clicáveis (radio). O selecionado fica destacado em azul como hoje, o outro em estilo neutro.
+- Ao trocar de modo, o card de configuração abaixo muda:
+  - **Estático**: campos atuais (% de custo, % de lucro calculada).
+  - **Fórmula por dimensão**: campo editável `Valor por m² (R$)`, padrão R$ 25,00. Mostra a fórmula como texto: `lucro = (altura × largura) × valor_m²`.
+- O card "Pré-visualização" também se adapta:
+  - **Estático**: mantém exemplo de R$ 1.000.
+  - **Fórmula**: exemplo de uma porta 3,00 m × 2,50 m → mostra lucro = 7,5 × valor_m² e custo (depende do valor_total — exibimos só o lucro absoluto e, se quiser, um valor total de exemplo configurável; proposta: usar 7,5 m² × valor_m² e exibir só o lucro, deixando claro que o custo depende do valor cobrado).
+- Botão "Salvar configuração" persiste o modo ativo e os parâmetros daquele modo.
 
 ## Persistência
 
-Criar tabela `vendas_config_lucro` no Supabase para guardar as configurações por tipo:
+Estender a tabela `vendas_config_lucro`:
 
-- `tipo` (text, único): `'instalacao'` ou `'pintura_epoxi'`
-- `modo` (text): `'estatico'` (único valor por enquanto)
-- `percentual_custo` (numeric): 0–100
-- updated_at / updated_by
+- Adicionar coluna `parametros JSONB NOT NULL DEFAULT '{}'::jsonb` para guardar parâmetros específicos do modo (ex.: `{ "valor_m2": 25 }` para a fórmula).
+- Relaxar o `CHECK` de `modo` para aceitar `'estatico'` e `'formula_dimensao'`.
+- Manter `percentual_custo` (usado apenas no modo estático). Quando o modo for `formula_dimensao`, o valor de `percentual_custo` é ignorado.
 
-Seed inicial:
-- `instalacao` → 60% custo (mantém comportamento atual)
-- `pintura_epoxi` → 60% custo (a confirmar com o usuário)
-
-RLS: leitura para `authenticated`; escrita apenas para perfis com acesso a `direcao_estrategia` (via `has_role` ou helper já usado nas outras telas de estratégia — confirmar padrão existente).
+Sem mudança no registro de instalação — ele continua em modo estático.
 
 ## Integração com o faturamento
 
-No `src/pages/administrativo/FaturamentoVendaMinimalista.tsx`:
+No efeito de auto-faturar pintura em `FaturamentoVendaMinimalista.tsx`:
 
-- **Instalação** (efeito que hoje faz `lucroInstalacao = valor_total * 0.40`): passa a ler `percentual_custo` da config `instalacao` e calcular `lucro = valor_total * (1 - custo/100)`.
-- **Pintura Epóxi** (efeito que hoje faz `lucroPintura = (altura * largura) * 25`): passa a ler `percentual_custo` da config `pintura_epoxi` e calcular `lucro = valor_total * (1 - custo/100)`. O badge "Fórmula" exibido no item passa a ser "Estático".
+- Buscar a config completa (`modo`, `percentual_custo`, `parametros`).
+- Se `modo === 'estatico'`: continua como hoje (custo = valor_total × %custo).
+- Se `modo === 'formula_dimensao'`: extrair altura/largura como antes (campo `tamanho` ou `altura`/`largura`), aplicar `lucro = altura × largura × valor_m2` (default 25), `custo = valor_total − lucro` (clamp em 0 caso o resultado fique negativo).
+- O badge no item mostra "Estático" ou "Fórmula" conforme o modo ativo.
 
-Cache leve via React Query para evitar chamadas repetidas dentro do mesmo faturamento.
+`fetchPercentualCusto` será substituído / acompanhado por uma nova função `fetchConfigLucro(tipo)` que retorna o objeto completo, e o hook `useConfigLucro` passa a expor `parametros` e aceitar salvar `{ modo, percentual_custo, parametros }`.
 
 ## Detalhes técnicos
 
-- Novo hook `useConfigLucro(tipo)` com React Query (`select`/`upsert` em `vendas_config_lucro`).
-- Componente compartilhado `ConfigLucroEstatico` que recebe `tipo` e renderiza os 3 cards acima, reutilizado pelas duas páginas.
-- Validação: custo entre 0 e 100, máximo 1 casa decimal.
-- Estilo seguindo o glassmorphism unificado (bg-white/5, backdrop-blur-xl, border-white/10).
-
-## Itens a confirmar antes de implementar
-
-1. % de custo padrão inicial para **pintura epóxi** no modo estático (sugestão: 60%).
-2. Permissão de edição: liberar para qualquer usuário com acesso à rota `direcao_estrategia`, ou exigir papel específico (ex.: CEO/Diretor)?
+- Tipo `ConfigLucroModo = 'estatico' | 'formula_dimensao'`.
+- `useConfigLucro` retorna `{ modo, percentual_custo, parametros }`; `save` aceita os 3 campos.
+- Componente `ConfigLucroEstatico` é renomeado/refatorado para `ConfigLucro` recebendo `tipo` e `modosDisponiveis`. Para `tipo='instalacao'` passamos `['estatico']`; para `tipo='pintura_epoxi'` passamos `['estatico','formula_dimensao']`.
+- Validação do valor por m²: número > 0, até 2 casas decimais.
 
 ## Fora de escopo
 
-- Outros modos de cálculo (por dimensão, por faixa de valor, por tipo de pintura) — ficam preparados estruturalmente, mas não implementados agora.
-- Recalcular vendas já faturadas com a nova configuração — só passa a valer para faturamentos novos.
+- Recalcular vendas já faturadas.
+- Adicionar a fórmula por dimensão ao card de Instalações.
+- Outros modos (faixa de valor, por tipo de tinta).
