@@ -1258,35 +1258,10 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
           }),
         );
 
-        // ---- Acessórios ----
-        setAcessoriosDetalhe(
-          buildMap(todosRows, (p) => {
-            if (p.tipo_produto !== 'acessorio') return null;
-            const qty = p.quantidade || 1;
-            const bruto = (p.valor_produto || 0) * qty;
-            let desc = 0;
-            if (p.tipo_desconto === 'percentual' && p.desconto_percentual > 0) {
-              desc = bruto * (p.desconto_percentual / 100);
-            } else if (p.tipo_desconto === 'valor' && p.desconto_valor > 0) {
-              desc = p.desconto_valor;
-            }
-            return {
-              id: p.id,
-              descricao: p.descricao || 'Acessório',
-              quantidade: qty,
-              valorUnitario: p.valor_produto || 0,
-              valorBruto: bruto,
-              descontoLinha: desc,
-              valorLiquido: bruto - desc,
-              lucro: p.lucro_item || 0,
-            };
-          }),
-        );
-
-        // ---- Itens Avulso (adicional + manutencao) ----
+        // ---- Itens Avulsos (acessorio + adicional + manutencao) ----
         setAvulsosDetalhe(
           buildMap(todosRows, (p) => {
-            if (!['adicional', 'manutencao'].includes(p.tipo_produto)) return null;
+            if (!['acessorio', 'adicional', 'manutencao'].includes(p.tipo_produto)) return null;
             const qty = p.quantidade || 1;
             const bruto = (p.valor_produto || 0) * qty;
             let desc = 0;
@@ -1346,8 +1321,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
     { key: 'portas', label: 'Portas' },
     { key: 'pintura', label: 'Pintura' },
     { key: 'instalacoes', label: 'Instalações' },
-    { key: 'acessorios', label: 'Acessórios' },
-    { key: 'adicionais', label: 'Itens Avulso' },
+    { key: 'avulsos', label: 'Itens Avulsos' },
     { key: 'total', label: 'Total' },
   ] as const;
 
@@ -1375,20 +1349,17 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
                 <tr className="border-b border-white/10">
                   <th className="text-left p-3 text-white/40 font-medium text-xs uppercase"></th>
                   {columns.map(col => {
-                    const topList = col.key === 'acessorios' ? topAcessorios : col.key === 'adicionais' ? topAdicionais : null;
+                    const topList = col.key === 'avulsos' ? topAvulsos : null;
                     const isPortas = col.key === 'portas';
                     const isPintura = col.key === 'pintura';
-                    const isAcessorios = col.key === 'acessorios';
-                    const isAdicionais = col.key === 'adicionais';
+                    const isAvulsos = col.key === 'avulsos';
                     const onClickHeader = isPortas
                       ? () => setPortasModalOpen(true)
                       : isPintura
                         ? () => setPinturaModalOpen(true)
-                        : isAcessorios
-                          ? () => setAcessoriosModalOpen(true)
-                          : isAdicionais
-                            ? () => setAvulsosModalOpen(true)
-                            : null;
+                        : isAvulsos
+                          ? () => setAvulsosModalOpen(true)
+                          : null;
                     return (
                       <th
                         key={col.key}
