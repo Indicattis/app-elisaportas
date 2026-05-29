@@ -228,11 +228,10 @@ export default function CustoFolhaMensal() {
     <MinimalistLayout
       title="Custo em Folha"
       subtitle="Lançamento mensal por colaborador"
-      backPath="/administrativo/financeiro"
+      backPath="/financeiro"
       breadcrumbItems={[
         { label: "Home", path: "/home" },
-        { label: "Administrativo", path: "/administrativo" },
-        { label: "Financeiro", path: "/administrativo/financeiro" },
+        { label: "Financeiro", path: "/financeiro" },
         { label: "Custo em Folha" },
       ]}
     >

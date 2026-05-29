@@ -8,21 +8,21 @@ const menuItems = [
   { 
     label: "Por Venda", 
     icon: Receipt, 
-    path: "/administrativo/financeiro/faturamento/vendas", 
+    path: "/financeiro/faturamento/vendas", 
     ativo: true,
     description: "Controle individual por venda"
   },
   { 
     label: "Por Produto", 
     icon: Package, 
-    path: "/administrativo/financeiro/faturamento/produtos", 
+    path: "/financeiro/faturamento/produtos", 
     ativo: true,
     description: "Análise por tipo de produto"
   },
   { 
     label: "Por Instalação", 
     icon: Wrench, 
-    path: "/administrativo/financeiro/faturamento/instalacoes", 
+    path: "/financeiro/faturamento/instalacoes", 
     ativo: false,
     description: "Controle por instalação"
   },
@@ -55,8 +55,7 @@ export default function FaturamentoHub() {
       <AnimatedBreadcrumb 
         items={[
           { label: "Home", path: "/home" },
-          { label: "Administrativo", path: "/administrativo" },
-          { label: "Financeiro", path: "/administrativo/financeiro" },
+          { label: "Financeiro", path: "/financeiro" },
           { label: "Faturamento" }
         ]} 
         mounted={mounted} 
@@ -65,7 +64,7 @@ export default function FaturamentoHub() {
       {/* Menu de Perfil Flutuante */}
       {/* Botão Voltar */}
       <button
-        onClick={() => navigate('/administrativo/financeiro')}
+        onClick={() => navigate('/financeiro')}
         className="fixed top-4 left-4 z-50 p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10
                    hover:bg-white/10 transition-all duration-300"
         style={{

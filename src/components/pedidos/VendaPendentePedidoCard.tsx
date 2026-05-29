@@ -643,7 +643,7 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
                     </span>
                   </div>
                 ) : (
-                  <div className="flex items-center justify-center" onClick={(e) => { e.stopPropagation(); navigate(`/administrativo/financeiro/faturamento/${venda.id}`); }}>
+                  <div className="flex items-center justify-center" onClick={(e) => { e.stopPropagation(); navigate(`/financeiro/faturamento/${venda.id}`); }}>
                     <span className="text-[10px] font-medium text-yellow-400/80 hover:text-yellow-400 transition-colors whitespace-nowrap cursor-pointer">
                       Faturar →
                     </span>

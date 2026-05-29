@@ -65,14 +65,13 @@ export default function BancosPage() {
       <AnimatedBreadcrumb
         items={[
           { label: "Home", path: "/home" },
-          { label: "Administrativo", path: "/administrativo" },
-          { label: "Financeiro", path: "/administrativo/financeiro" },
+          { label: "Financeiro", path: "/financeiro" },
           { label: "Bancos" },
         ]}
         mounted
       />
       <button
-        onClick={() => navigate("/administrativo/financeiro")}
+        onClick={() => navigate("/financeiro")}
         className="fixed top-4 left-4 z-50 p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 hover:bg-white/10 transition-all duration-300"
       >
         <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-lg shadow-blue-500/20">

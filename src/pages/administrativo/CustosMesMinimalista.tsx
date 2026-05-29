@@ -75,15 +75,14 @@ export default function CustosMesMinimalista() {
       <AnimatedBreadcrumb
         items={[
           { label: "Home", path: "/home" },
-          { label: "Administrativo", path: "/administrativo" },
-          { label: "Financeiro", path: "/administrativo/financeiro" },
-          { label: "Custos", path: "/administrativo/financeiro/custos" },
+          { label: "Financeiro", path: "/financeiro" },
+          { label: "Custos", path: "/financeiro/custos" },
           { label: `${nomeMes} ${anoMes}` },
         ]}
         mounted={mounted}
       />
       <button
-        onClick={() => navigate("/administrativo/financeiro/custos")}
+        onClick={() => navigate("/financeiro/custos")}
         className="fixed top-4 left-4 z-50 p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 hover:bg-white/10 transition-all duration-300"
         style={{ opacity: mounted ? 1 : 0, transform: mounted ? "translateX(0)" : "translateX(-20px)", transition: "all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 100ms" }}
       >
@@ -99,7 +98,7 @@ export default function CustosMesMinimalista() {
             <p className="text-white/60">Valores agregados automaticamente dos lançamentos em Gastos</p>
           </div>
           <Button
-            onClick={() => navigate(`/administrativo/financeiro/gastos?mes=${mes}`)}
+            onClick={() => navigate(`/financeiro/gastos?mes=${mes}`)}
             className="bg-blue-600 hover:bg-blue-700"
           >
             <ExternalLink className="h-4 w-4 mr-2" />Ver gastos do mês
