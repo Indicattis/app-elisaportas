@@ -262,22 +262,23 @@ export default function GastosPage() {
     filtroDre !== "all";
 
   const headerActions = (
-    <div className="flex items-center gap-2 flex-wrap justify-end">
-      {/* Month Navigator */}
-      <div className="flex items-center gap-1 bg-white/5 border border-white/20 rounded-lg px-1 py-0.5">
+    <div className="flex items-center gap-3 flex-wrap justify-end">
+      {/* Filtros utilitários (menor importância) */}
+      <div className="flex items-center gap-1.5 flex-wrap">
+      <div className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-md px-1 py-0.5">
         <button
           onClick={() => {
             const [y, m] = mesFiltro.split("-").map(Number);
             const prev = new Date(y, m - 2, 1);
             setMesFiltro(`${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, "0")}`);
           }}
-          className="p-1.5 rounded-md hover:bg-white/10 text-white/60 hover:text-white transition-colors"
+          className="p-1 rounded hover:bg-white/10 text-white/50 hover:text-white transition-colors"
         >
-          <ChevronLeft className="w-4 h-4" />
+          <ChevronLeft className="w-3.5 h-3.5" />
         </button>
-        <div className="flex items-center gap-1.5 px-2 min-w-[130px] justify-center">
-          <CalendarIcon className="w-3.5 h-3.5 text-blue-400" />
-          <span className="text-sm text-white font-medium capitalize">
+        <div className="flex items-center gap-1.5 px-2 min-w-[120px] justify-center">
+          <CalendarIcon className="w-3 h-3 text-white/40" />
+          <span className="text-xs text-white/80 font-medium capitalize">
             {(() => {
               const [y, m] = mesFiltro.split("-").map(Number);
               const d = new Date(y, m - 1, 1);
@@ -291,15 +292,15 @@ export default function GastosPage() {
             const next = new Date(y, m, 1);
             setMesFiltro(`${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}`);
           }}
-          className="p-1.5 rounded-md hover:bg-white/10 text-white/60 hover:text-white transition-colors"
+          className="p-1 rounded hover:bg-white/10 text-white/50 hover:text-white transition-colors"
         >
-          <ChevronRight className="w-4 h-4" />
+          <ChevronRight className="w-3.5 h-3.5" />
         </button>
       </div>
 
       <Select value={ordenarPor} onValueChange={(v) => setOrdenarPor(v as GastosOrdenarPor)}>
-        <SelectTrigger className="w-[190px] h-9 bg-white/5 border-white/20 text-white text-sm">
-          <ArrowUpDown className="w-3.5 h-3.5 mr-1.5 text-blue-400" />
+        <SelectTrigger className="w-[170px] h-8 bg-white/5 border-white/10 text-white/80 text-xs">
+          <ArrowUpDown className="w-3 h-3 mr-1.5 text-white/40" />
           <SelectValue />
         </SelectTrigger>
         <SelectContent className="bg-[#1a1a1a] border-white/20">
@@ -309,7 +310,7 @@ export default function GastosPage() {
       </Select>
 
       <Select value={filtroTipo} onValueChange={setFiltroTipo}>
-        <SelectTrigger className="w-[170px] h-9 bg-white/5 border-white/20 text-white text-sm">
+        <SelectTrigger className="w-[150px] h-8 bg-white/5 border-white/10 text-white/80 text-xs">
           <SelectValue placeholder="Todos os tipos" />
         </SelectTrigger>
         <SelectContent className="bg-[#1a1a1a] border-white/20">
@@ -322,7 +323,7 @@ export default function GastosPage() {
         </SelectContent>
       </Select>
       <Select value={filtroBanco} onValueChange={setFiltroBanco}>
-        <SelectTrigger className="w-[170px] h-9 bg-white/5 border-white/20 text-white text-sm">
+        <SelectTrigger className="w-[150px] h-8 bg-white/5 border-white/10 text-white/80 text-xs">
           <SelectValue placeholder="Todos os bancos" />
         </SelectTrigger>
         <SelectContent className="bg-[#1a1a1a] border-white/20">
@@ -335,7 +336,7 @@ export default function GastosPage() {
         </SelectContent>
       </Select>
       <Select value={filtroResponsavel} onValueChange={setFiltroResponsavel}>
-        <SelectTrigger className="w-[180px] h-9 bg-white/5 border-white/20 text-white text-sm">
+        <SelectTrigger className="w-[160px] h-8 bg-white/5 border-white/10 text-white/80 text-xs">
           <SelectValue placeholder="Todos os responsáveis" />
         </SelectTrigger>
         <SelectContent className="bg-[#1a1a1a] border-white/20">
@@ -348,7 +349,7 @@ export default function GastosPage() {
         </SelectContent>
       </Select>
       <Select value={filtroDre} onValueChange={(v) => setFiltroDre(v as "all" | "sim" | "nao")}>
-        <SelectTrigger className="w-[160px] h-9 bg-white/5 border-white/20 text-white text-sm">
+        <SelectTrigger className="w-[140px] h-8 bg-white/5 border-white/10 text-white/80 text-xs">
           <SelectValue />
         </SelectTrigger>
         <SelectContent className="bg-[#1a1a1a] border-white/20">
@@ -363,32 +364,38 @@ export default function GastosPage() {
           variant="ghost"
           size="sm"
           onClick={() => { setFiltroTipo(""); setFiltroBanco(""); setFiltroResponsavel(""); setFiltroDre("all"); }}
-          className="text-white/60 hover:text-white hover:bg-white/10 text-xs"
+          className="h-8 text-white/50 hover:text-white hover:bg-white/10 text-xs px-2"
         >
           Limpar filtros
         </Button>
       ) : null}
+      </div>
 
+      {/* Separador visual */}
+      <div className="h-6 w-px bg-white/10" />
+
+      {/* Ações secundárias */}
       <Button
         onClick={gerarPDF}
-        variant="outline"
+        variant="ghost"
         size="sm"
-        className="border-white/20 text-white hover:bg-white/10 text-sm gap-1.5 bg-transparent"
+        className="h-9 text-white/70 hover:text-white hover:bg-white/10 text-sm gap-1.5"
       >
-        <FileText className="w-4 h-4" /> PDF
+        <FileText className="w-3.5 h-3.5" /> PDF
       </Button>
       <Button
         onClick={() => navigate("/financeiro/bancos")}
-        variant="outline"
+        variant="ghost"
         size="sm"
-        className="border-white/20 text-white hover:bg-white/10 text-sm gap-1.5 bg-transparent"
+        className="h-9 text-white/70 hover:text-white hover:bg-white/10 text-sm gap-1.5"
       >
-        <Landmark className="w-4 h-4" /> Bancos
+        <Landmark className="w-3.5 h-3.5" /> Bancos
       </Button>
+
+      {/* Ação primária */}
       <Button
         onClick={openCreate}
-        size="sm"
-        className="bg-blue-600 hover:bg-blue-700 text-white text-sm gap-1.5"
+        className="h-9 bg-orange-600 hover:bg-orange-500 text-white text-sm font-medium gap-1.5 px-4 shadow-lg shadow-orange-600/20"
       >
         <Plus className="w-4 h-4" /> Novo Gasto
       </Button>
