@@ -248,6 +248,8 @@ import EstrategiaKits from "./pages/direcao/estrategia/EstrategiaKits";
 import EstrategiaPrecos from "./pages/direcao/estrategia/EstrategiaPrecos";
 import EstrategiaKitMontagem from "./pages/direcao/estrategia/EstrategiaKitMontagem";
 import EstrategiaKitsTemplate from "./pages/direcao/estrategia/EstrategiaKitsTemplate";
+import EstrategiaLucroInstalacoes from "./pages/direcao/estrategia/EstrategiaLucroInstalacoes";
+import EstrategiaLucroPinturas from "./pages/direcao/estrategia/EstrategiaLucroPinturas";
 import EstrategiaMateriasPrimas from "./pages/direcao/estrategia/EstrategiaMateriasPrimas";
 import EstrategiaDespesas from "./pages/direcao/estrategia/EstrategiaDespesas";
 import EstrategiaDespesasMes from "./pages/direcao/estrategia/EstrategiaDespesasMes";
