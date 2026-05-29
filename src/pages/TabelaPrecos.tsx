@@ -9,11 +9,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useTabelaPrecos, ItemTabelaPreco, ItemTabelaPrecoInput } from "@/hooks/useTabelaPrecos";
 import { ItemModal } from "@/components/tabela-precos/ItemModal";
 import { BulkUploadTabelaPrecos } from "@/components/tabela-precos/BulkUploadTabelaPrecos";
-import { CatalogoPrecosTab } from "@/components/tabela-precos/CatalogoPrecosTab";
 import { useKitsMontagemResumo } from "@/hooks/useKitMontagem";
 import { useCustosItensPadroes } from "@/hooks/useCustosItens";
 import { useConfigLucro } from "@/hooks/useConfigLucro";
@@ -41,6 +39,7 @@ import { restrictToVerticalAxis, restrictToParentElement } from "@dnd-kit/modifi
 interface TabelaPrecosProps {
   hideLucroColumn?: boolean;
   hideAcoesColumn?: boolean;
+  /** @deprecated catálogo removido */
   hideCatalogoTab?: boolean;
   hideTotalColumn?: boolean;
   embedded?: boolean;
@@ -72,7 +71,6 @@ export default function TabelaPrecos({
   const [bulkUploadModalOpen, setBulkUploadModalOpen] = useState(false);
   const [itemEditando, setItemEditando] = useState<ItemTabelaPreco | null>(null);
   const [itemParaInativar, setItemParaInativar] = useState<ItemTabelaPreco | null>(null);
-  const [activeTab, setActiveTab] = useState<'portas' | 'catalogo'>('portas');
   const navigate = useNavigate();
 
   const queryClient = useQueryClient();

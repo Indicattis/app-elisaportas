@@ -87,12 +87,11 @@ export default function EstrategiaMateriasPrimas() {
     <MinimalistLayout
       title="Matérias-Primas"
       subtitle="Interface de compra dos itens do catálogo da estratégia"
-      backPath="/direcao/estrategia/itens"
+      backPath="/direcao/estrategia"
       breadcrumbItems={[
         { label: "Home", path: "/home" },
         { label: "Direção", path: "/direcao" },
         { label: "Estratégia", path: "/direcao/estrategia" },
-        { label: "Tabela de Custos", path: "/direcao/estrategia/itens" },
         { label: "Matérias-Primas" },
       ]}
       fullWidth

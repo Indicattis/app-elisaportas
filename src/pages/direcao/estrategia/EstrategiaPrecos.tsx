@@ -1,31 +1,28 @@
 import { useNavigate } from 'react-router-dom';
 import TabelaPrecos from '@/pages/TabelaPrecos';
-import { CatalogoPrecosTab } from '@/components/tabela-precos/CatalogoPrecosTab';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { Button } from '@/components/ui/button';
 import { FileText, FileSpreadsheet, Menu, BookOpen } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { toast } from 'sonner';
 import { useTabelaPrecos } from '@/hooks/useTabelaPrecos';
-import { useVendasCatalogo } from '@/hooks/useVendasCatalogo';
 import { exportEstrategiaPrecosPDF, exportEstrategiaPrecosExcel } from '@/utils/estrategiaPrecosExport';
 
 export default function EstrategiaPrecos() {
   const navigate = useNavigate();
   const { itens: kits } = useTabelaPrecos();
-  const { produtos } = useVendasCatalogo();
 
   const handleExport = (kind: 'pdf' | 'excel') => {
     try {
-      if ((!kits || kits.length === 0) && (!produtos || produtos.length === 0)) {
+      if (!kits || kits.length === 0) {
         toast.error('Nada para exportar');
         return;
       }
       if (kind === 'pdf') {
-        exportEstrategiaPrecosPDF(kits || [], produtos || []);
+        exportEstrategiaPrecosPDF(kits || []);
         toast.success('PDF gerado');
       } else {
-        exportEstrategiaPrecosExcel(kits || [], produtos || []);
+        exportEstrategiaPrecosExcel(kits || []);
         toast.success('Excel gerado');
       }
     } catch (e: any) {
@@ -87,14 +84,7 @@ export default function EstrategiaPrecos() {
       fullWidth
       headerActions={headerActions}
     >
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <div className="xl:col-span-2">
-          <TabelaPrecos embedded />
-        </div>
-        <div className="xl:col-span-1">
-          <CatalogoPrecosTab compact />
-        </div>
-      </div>
+      <TabelaPrecos embedded />
     </MinimalistLayout>
   );
 }
