@@ -419,6 +419,12 @@ const RedirectPedidoAdmin = () => {
   return <Navigate to={`/fabrica/montagem-pedidos/${id}`} replace />;
 };
 
+const RedirectFinanceiroLegacy = () => {
+  const location = useLocation();
+  const newPath = location.pathname.replace(/^\/administrativo\/financeiro/, "/financeiro");
+  return <Navigate to={`${newPath}${location.search}${location.hash}`} replace />;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
