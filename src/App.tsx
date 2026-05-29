@@ -346,7 +346,6 @@ import GastosPage from "./pages/administrativo/GastosPage";
 import BancosPage from "./pages/administrativo/BancosPage";
 
 import CaixaHub from "./pages/administrativo/CaixaHub";
-import GestaoCaixaMinimalista from "./pages/administrativo/GestaoCaixaMinimalista";
 import ContasReceberMinimalista from "./pages/administrativo/ContasReceberMinimalista";
 import ContasPagarMinimalista from "./pages/administrativo/ContasPagarMinimalista";
 import DocumentosMinimalista from "./pages/administrativo/DocumentosMinimalista";
