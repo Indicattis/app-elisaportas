@@ -234,6 +234,7 @@ export default function CustoFolhaMensal() {
         { label: "Financeiro", path: "/financeiro" },
         { label: "Custo em Folha" },
       ]}
+      fullWidth
     >
       <div className="space-y-6">
         {/* Seletor de mês */}
