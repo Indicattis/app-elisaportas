@@ -722,14 +722,14 @@ export function CatalogoPrecosTab({ compact = false }: CatalogoPrecosTabProps = 
                           >
                             <SortableContext items={columnOrder.map((c) => `col-${c}`)} strategy={horizontalListSortingStrategy}>
                               {columnOrder.map((col) => (
-                                <SortableHeadCell key={col} colKey={col}>
+                                <SortableHeadCell key={col} colKey={col} columnColors={columnColors}>
                                   {COLUMN_LABELS[col]}
                                 </SortableHeadCell>
                               ))}
                             </SortableContext>
                           </DndContext>
                         ) : (
-                          <TableHead className={cn("text-xs font-medium text-foreground text-center", COLUMN_WIDTHS.venda, COLUMN_BG.venda)}>
+                          <TableHead className={cn("text-xs font-medium text-foreground text-center", COLUMN_WIDTHS.venda, getColumnBg(columnColors, "venda"))}>
                             {COLUMN_LABELS.venda}
                           </TableHead>
                         )}
@@ -744,6 +744,7 @@ export function CatalogoPrecosTab({ compact = false }: CatalogoPrecosTabProps = 
                             compact={compact}
                             dndDisabled={isDndDisabled}
                             order={columnOrder}
+                            columnColors={columnColors}
                             renderUnidadeCell={renderUnidadeCell}
                             renderEditableCell={renderEditableCell}
                             padroes={padroes}
@@ -775,6 +776,7 @@ function ProdutoRow({
   compact,
   dndDisabled,
   order,
+  columnColors,
   renderUnidadeCell,
   renderEditableCell,
   padroes,
@@ -787,6 +789,7 @@ function ProdutoRow({
   compact: boolean;
   dndDisabled: boolean;
   order: ColumnKey[];
+  columnColors: Record<ColumnKey, string>;
   renderUnidadeCell: (p: ProdutoCatalogo) => React.ReactNode;
   renderEditableCell: (p: ProdutoCatalogo, f: "preco_venda" | "custo_produto") => React.ReactNode;
   padroes: { taxa_impostos: number; taxa_descontos: number; taxa_cartao: number } | null | undefined;
