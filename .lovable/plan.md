@@ -1,32 +1,28 @@
-## Objetivo
+## Problemas em `/logistica/frete/internos`
 
-Transformar o bloco "Configuração — Estático (% de custo fixa)" (que hoje aparece embaixo do seletor de modo) em um **modal** que abre ao clicar no modo de cálculo, nas abas Instalações e Pinturas.
+1. O modal de edição (`FreteDialog`) ainda usa o estilo padrão claro do shadcn, destoando do resto do app (glassmorphism preto + branco já usado, ex.: o próprio `AlertDialog` de exclusão na mesma página).
+2. Ao clicar em "Editar", o campo Cidade não aparece preenchido com o valor salvo.
 
-Como ambas as abas usam o mesmo componente `ConfigLucroEstatico`, a mudança é feita em um único lugar e vale para as duas.
+## O que vou fazer
 
-## Mudanças
+**Arquivo único:** `src/components/frete/FreteDialog.tsx`
 
-Arquivo: `src/components/direcao/ConfigLucroEstatico.tsx`
+### 1. Aplicar o aesthetic unificado (glassmorphism)
+- `DialogContent`: `bg-black/90 border-white/10 backdrop-blur-xl text-white`
+- `DialogTitle` em branco; labels em `text-white/80`.
+- `Input`, `Textarea`, `SelectTrigger`: `bg-white/5 border-white/10 text-white placeholder:text-white/40`.
+- `SelectContent`: `bg-black/90 border-white/10 backdrop-blur-xl text-white`, com `SelectItem` em hover branco translúcido.
+- Botão "Cancelar": `variant outline` adaptado (`border-white/20 bg-white/10 text-white hover:bg-white/15`); "Salvar" mantém o azul/primary.
+- Texto de ajuda do cálculo em `text-white/50`.
 
-1. Manter o card "Modo de cálculo" como está, mas fazer com que **clicar em qualquer modo** (estático ou fórmula) abra um `Dialog` ao invés de apenas marcar como ativo inline.
-2. Remover o card de "Configuração — {modo}" da árvore principal e mover seu conteúdo (campos `% de custo` / `% lucro calculada` para estático; `valor por m²` + bloco de fórmula para `formula_dimensao`) para dentro de um `<Dialog>` do shadcn.
-3. O modal contém:
-   - Título: `Configuração — {label do modo}`
-   - Descrição curta (reaproveita `MODO_INFO[modo].descricao`)
-   - Os mesmos inputs já existentes
-   - Footer com `Cancelar` (fecha sem salvar) e `Salvar configuração` (mesma lógica `handleSave`, fecha o modal em caso de sucesso)
-4. Ao abrir o modal, pré-popular os campos com o valor salvo atual (já feito pelo `useEffect` existente — só precisamos garantir que o estado local não seja sobrescrito enquanto o modal está aberto; usar um estado `open` controlado).
-5. O badge "Ativo" no card de modo continua refletindo o modo persistido em `data.modo` (não o estado temporário do modal).
-6. Manter o aviso azul informativo ("A nova configuração é aplicada apenas a faturamentos…") fora do modal, no rodapé.
+### 2. Corrigir preenchimento da Cidade
+Causa: o `Select` de cidade depende de `formData.estado` estar setado **antes** de o `<SelectItem>` da cidade existir. Hoje o `useEffect` faz `setFormData` em um único call, mas o `cidadesOptions` (useMemo) já cobre o caso prepensando a cidade se não estiver na lista — porém o `<Select>` shadcn não exibe valor quando `disabled` é true no mesmo render em que recebe o value. Vou:
 
-## Detalhes técnicos
+- Trocar `disabled={!formData.estado}` para considerar também quando estamos editando (`disabled={!formData.estado && !isEditing}` — irrelevante aqui já que estado é setado junto). O fix real:
+- Garantir que `cidadesOptions` sempre inclua `formData.cidade` quando houver valor (já faz, mas vou reforçar com trim/normalize para evitar mismatch caso o estado no banco esteja em formato diferente).
+- Forçar reset do `Select` apenas quando o usuário troca o estado manualmente (já está), mas **não** zerar a cidade no primeiro render do efeito de prefill.
+- Adicionar um `key={frete?.id ?? "novo"}` no `<Select>` da cidade para forçar remontagem quando o registro em edição muda, garantindo que o `SelectValue` reflita o valor atual.
 
-- Usar `Dialog`, `DialogContent`, `DialogHeader`, `DialogTitle`, `DialogDescription`, `DialogFooter` de `@/components/ui/dialog`.
-- Novo estado: `const [openModo, setOpenModo] = useState<ConfigLucroModo | null>(null)`. Clicar no botão de modo seta esse estado; `onOpenChange(false)` zera para `null`.
-- `handleSave` ganha um `setOpenModo(null)` após sucesso.
-- Nenhuma alteração em `EstrategiaKits.tsx`, hooks, ou banco.
-
-## Fora de escopo
-
-- Não alterar lógica de cálculo, persistência ou regras de negócio.
-- Não mudar a aba de Portas/Kits.
+### Fora do escopo
+- Nenhuma mudança em hooks, banco, ou na página `FreteMinimalista.tsx`.
+- Nenhum ajuste de lógica de cálculo (km × 6) ou validações.
