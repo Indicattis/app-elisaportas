@@ -103,7 +103,7 @@ export default function EstrategiaKits() {
         { label: 'Estratégia', path: '/direcao/estrategia' },
         { label: 'Tabela de Kits' },
       ]}
-      extraHeaderActions={tabsBar}
+      headerActions={tabsBar}
     >
       <div className="space-y-4">
         <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl p-4 flex flex-wrap items-center gap-3">
