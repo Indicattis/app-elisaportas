@@ -29,6 +29,7 @@ export function PinturaRapidaModal({
 }: PinturaRapidaModalProps) {
   const [corId, setCorId] = useState<string>('');
   const [valorPintura, setValorPintura] = useState<number>(0);
+  const [kitId, setKitId] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(false);
 
   const { data: cores } = useQuery({
@@ -54,8 +55,10 @@ export function PinturaRapidaModal({
         const item = await buscarPrecosPorMedidas(largura, altura);
         if (item) {
           setValorPintura(item.valor_pintura);
+          setKitId(item.id);
         } else {
           setValorPintura(0);
+          setKitId(null);
           toast.error('Preço de pintura não encontrado para essas medidas');
         }
       } catch (error) {
@@ -104,7 +107,8 @@ export function PinturaRapidaModal({
       desconto_percentual: 0,
       desconto_valor: 0,
       quantidade: 1,
-      descricao: corSelecionada?.nome || ''
+      descricao: corSelecionada?.nome || '',
+      tabela_precos_porta_id: kitId,
     };
 
     onConfirm(pintura);

@@ -1,54 +1,66 @@
+# Vínculo entre produtos da venda e os kits de referência
 
-## Objetivo
+## Problema
 
-Em `/direcao/estrategia/kits/lucro-pinturas`, transformar o card "Modo de cálculo" em uma **lista selecionável** com duas opções, deixando o usuário escolher qual é usada no faturamento:
+Hoje, ao cadastrar uma venda, os itens em `produtos_vendas` são gravados apenas com valores numéricos (largura, altura, valor_produto, valor_pintura, valor_instalacao…) **sem nenhum link** para a linha do kit que serviu de referência. Validação atual:
 
-1. **Estático (% de custo fixa)** — já existente. Lucro = (100% − custo%) × valor_total.
-2. **Fórmula por dimensão (Epóxi clássica)** — nova. Lucro = (altura × largura) × R$ por m². Custo = valor_total − lucro.
+| tipo_produto    | linhas | com link p/ catálogo |
+|-----------------|-------:|---------------------:|
+| porta_enrolar   |    546 | 0                    |
+| pintura_epoxi   |    466 | 0                    |
+| instalacao      |    401 | 0                    |
+| porta_social    |     17 | 0                    |
+| manutencao      |     30 | 0                    |
+| adicional       |    397 | 201 (parcial)        |
+| acessorio       |    230 | 31 (parcial)         |
 
-A opção fica em "Instalações" continua exibindo apenas o modo Estático (a fórmula por dimensão não faz sentido lá).
+Sem essa referência fica difícil:
+- apurar lucro por item de catálogo;
+- alertar incoerências no faturamento (preço/medidas divergentes da tabela);
+- rastrear qual linha do kit gerou cada venda quando os preços mudam.
 
-## Comportamento da tela
+## Solução
 
-- O card "Modo de cálculo" passa a mostrar dois cards/linhas clicáveis (radio). O selecionado fica destacado em azul como hoje, o outro em estilo neutro.
-- Ao trocar de modo, o card de configuração abaixo muda:
-  - **Estático**: campos atuais (% de custo, % de lucro calculada).
-  - **Fórmula por dimensão**: campo editável `Valor por m² (R$)`, padrão R$ 25,00. Mostra a fórmula como texto: `lucro = (altura × largura) × valor_m²`.
-- O card "Pré-visualização" também se adapta:
-  - **Estático**: mantém exemplo de R$ 1.000.
-  - **Fórmula**: exemplo de uma porta 3,00 m × 2,50 m → mostra lucro = 7,5 × valor_m² e custo (depende do valor_total — exibimos só o lucro absoluto e, se quiser, um valor total de exemplo configurável; proposta: usar 7,5 m² × valor_m² e exibir só o lucro, deixando claro que o custo depende do valor cobrado).
-- Botão "Salvar configuração" persiste o modo ativo e os parâmetros daquele modo.
+Adicionar uma coluna de referência ao kit em `produtos_vendas` e preenchê-la em todos os fluxos de criação/edição de venda. Tabela de origem para portas, pintura e instalação é `tabela_precos_portas` (já indexa altura × largura e tem `valor_porta`, `valor_pintura`, `valor_instalacao`).
 
-## Persistência
+### 1. Banco
 
-Estender a tabela `vendas_config_lucro`:
+Migração nova:
+- `ALTER TABLE produtos_vendas ADD COLUMN tabela_precos_porta_id uuid NULL REFERENCES tabela_precos_portas(id) ON DELETE SET NULL;`
+- Índice em `tabela_precos_porta_id`.
+- Backfill: para linhas existentes com `tipo_produto IN ('porta_enrolar','porta_social','pintura_epoxi','instalacao')`, casar por (`largura`,`altura`) na `tabela_precos_portas` com tolerância de 15 cm (regra já usada — ver memória *price-table-tolerance*) e gravar o id do kit mais próximo. Onde não bater, deixar `NULL` (legado).
+- Para `pintura_epoxi` e `instalacao`, herdar o mesmo `tabela_precos_porta_id` da porta irmã da mesma venda (mesmo grupo de medidas), refletindo a memória *instalacao-produto-separado*.
 
-- Adicionar coluna `parametros JSONB NOT NULL DEFAULT '{}'::jsonb` para guardar parâmetros específicos do modo (ex.: `{ "valor_m2": 25 }` para a fórmula).
-- Relaxar o `CHECK` de `modo` para aceitar `'estatico'` e `'formula_dimensao'`.
-- Manter `percentual_custo` (usado apenas no modo estático). Quando o modo for `formula_dimensao`, o valor de `percentual_custo` é ignorado.
+### 2. Criação/edição de venda
 
-Sem mudança no registro de instalação — ele continua em modo estático.
+Locais a ajustar (todos já leem `tabela_precos_portas`):
+- `src/pages/vendas/VendaNovaMinimalista.tsx`
+- `src/pages/vendas/VendaEditarMinimalista.tsx`
+- `src/pages/vendas/PedidoCorrecaoNovo.tsx`
+- `src/utils/expandirPortas.ts` (split de quantidade)
 
-## Integração com o faturamento
+No momento em que o sistema escolhe a linha do kit pela medida (já há lookup com tolerância), guardar o `id` retornado e gravá-lo em `tabela_precos_porta_id` ao inserir/atualizar em `produtos_vendas` — para a porta, para a pintura epóxi gerada e para a instalação separada.
 
-No efeito de auto-faturar pintura em `FaturamentoVendaMinimalista.tsx`:
+### 3. Alertas de incoerência no faturamento
 
-- Buscar a config completa (`modo`, `percentual_custo`, `parametros`).
-- Se `modo === 'estatico'`: continua como hoje (custo = valor_total × %custo).
-- Se `modo === 'formula_dimensao'`: extrair altura/largura como antes (campo `tamanho` ou `altura`/`largura`), aplicar `lucro = altura × largura × valor_m2` (default 25), `custo = valor_total − lucro` (clamp em 0 caso o resultado fique negativo).
-- O badge no item mostra "Estático" ou "Fórmula" conforme o modo ativo.
+Em `src/pages/administrativo/FaturamentoVendaMinimalista.tsx`, quando o item tem `tabela_precos_porta_id`:
+- buscar a linha referenciada;
+- comparar `valor_produto` vs `valor_porta`, `valor_pintura` vs `valor_pintura` do kit, `valor_instalacao` vs `valor_instalacao` do kit;
+- se divergente além de uma tolerância (configurável, padrão 5%), exibir um aviso amarelo "Valor diverge do kit (R$ X esperado, R$ Y cobrado)" ao lado da linha — sem bloquear o faturamento.
 
-`fetchPercentualCusto` será substituído / acompanhado por uma nova função `fetchConfigLucro(tipo)` que retorna o objeto completo, e o hook `useConfigLucro` passa a expor `parametros` e aceitar salvar `{ modo, percentual_custo, parametros }`.
+Também aproveitar o link para mostrar uma pequena "etiqueta" do kit (descrição) ao lado do item, facilitando o rastreio visual.
 
-## Detalhes técnicos
+### 4. Detalhamento e cálculo de lucro
 
-- Tipo `ConfigLucroModo = 'estatico' | 'formula_dimensao'`.
-- `useConfigLucro` retorna `{ modo, percentual_custo, parametros }`; `save` aceita os 3 campos.
-- Componente `ConfigLucroEstatico` é renomeado/refatorado para `ConfigLucro` recebendo `tipo` e `modosDisponiveis`. Para `tipo='instalacao'` passamos `['estatico']`; para `tipo='pintura_epoxi'` passamos `['estatico','formula_dimensao']`.
-- Validação do valor por m²: número > 0, até 2 casas decimais.
+Quando `tabela_precos_porta_id` estiver presente, o cálculo de `lucro_produto` pode opcionalmente usar o `lucro` cadastrado na linha do kit como referência adicional (sem mudar a regra atual — apenas exibir comparativo). Mudanças de fórmula ficam fora deste plano.
 
 ## Fora de escopo
 
 - Recalcular vendas já faturadas.
-- Adicionar a fórmula por dimensão ao card de Instalações.
-- Outros modos (faixa de valor, por tipo de tinta).
+- Mudar fórmulas de lucro/custo existentes.
+- Criar tabela própria de kits para pintura/instalação (continuam vindo de `tabela_precos_portas`).
+- Vínculo de `manutencao` (sem tabela de kit equivalente hoje).
+
+## Resultado esperado
+
+Toda nova venda passa a ter, em cada porta/pintura/instalação, um ponteiro direto à linha do kit que a originou — habilitando alertas no faturamento e relatórios de lucro por kit no futuro.

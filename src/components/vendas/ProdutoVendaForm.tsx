@@ -200,19 +200,22 @@ export function ProdutoVendaForm({
             ...prev,
             valor_produto: item.valor_porta,
             tamanho,
-            valor_instalacao: incluirInstalacao ? item.valor_instalacao : 0
+            valor_instalacao: incluirInstalacao ? item.valor_instalacao : 0,
+            tabela_precos_porta_id: item.id,
           }));
           toast.success(`Preço encontrado para ${item.largura}x${item.altura}m`);
         } else if (formData.tipo_produto === 'pintura_epoxi') {
           setFormData(prev => ({
             ...prev,
             valor_pintura: item.valor_pintura,
-            tamanho
+            tamanho,
+            tabela_precos_porta_id: item.id,
           }));
           toast.success(`Preço de pintura encontrado para ${item.largura}x${item.altura}m`);
         }
       } else {
         setItemTabelaEncontrado('');
+        setFormData(prev => ({ ...prev, tabela_precos_porta_id: null }));
         toast.error('Preço não encontrado na tabela para essas medidas');
       }
     } catch (error) {

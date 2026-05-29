@@ -18,6 +18,8 @@ export interface ProdutoVenda {
   vendas_catalogo_id?: string;
   tipo_pintura?: string;
   tipo_servico?: string;
+  /** ID da linha de `tabela_precos_portas` (kit) que originou este item */
+  tabela_precos_porta_id?: string | null;
   valor_produto: number;
   valor_pintura: number;
   valor_instalacao: number;
@@ -393,6 +395,7 @@ export function useVendas() {
           cor_id: produto.cor_id || null,
           acessorio_id: produto.acessorio_id || null,
           adicional_id: produto.adicional_id || null,
+          tabela_precos_porta_id: (produto as any).tabela_precos_porta_id || null,
           valor_produto: produto.valor_produto,
           valor_pintura: produto.valor_pintura,
           valor_instalacao: isPorta ? 0 : produto.valor_instalacao,
@@ -428,6 +431,7 @@ export function useVendas() {
             cor_id: null,
             acessorio_id: null,
             adicional_id: null,
+            tabela_precos_porta_id: (produto as any).tabela_precos_porta_id || null,
             valor_produto: valorInstalacao,
             valor_pintura: 0,
             valor_instalacao: 0,
@@ -708,6 +712,7 @@ export function useVendas() {
             cor_id: produto.cor_id || null,
             acessorio_id: produto.acessorio_id || null,
             adicional_id: produto.adicional_id || null,
+            tabela_precos_porta_id: (produto as any).tabela_precos_porta_id || null,
             valor_produto: produto.valor_produto,
             valor_pintura: produto.valor_pintura,
             valor_instalacao: isPorta ? 0 : produto.valor_instalacao,
@@ -743,6 +748,7 @@ export function useVendas() {
               cor_id: null,
               acessorio_id: null,
               adicional_id: null,
+              tabela_precos_porta_id: (produto as any).tabela_precos_porta_id || null,
               valor_produto: valorInstalacao,
               valor_pintura: 0,
               valor_instalacao: 0,

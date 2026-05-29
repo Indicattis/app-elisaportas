@@ -28,7 +28,8 @@ import {
   FileText,
   Eye,
   Image,
-  FileSignature
+  FileSignature,
+  AlertTriangle
 } from "lucide-react";
 import { format, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -128,6 +129,56 @@ export default function FaturamentoVendaMinimalista() {
     finalizarFaturamento,
     isFinalizandoFaturamento,
   } = useProdutosVenda(id);
+
+  // Mapa dos kits (tabela_precos_portas) referenciados pelos produtos da venda,
+  // usado para mostrar divergências de valor no faturamento.
+  const [kitsRef, setKitsRef] = useState<Map<string, { id: string; descricao: string | null; largura: number; altura: number; valor_porta: number; valor_pintura: number; valor_instalacao: number }>>(new Map());
+  useEffect(() => {
+    const ids = Array.from(new Set(
+      (produtos || [])
+        .map((p: any) => p.tabela_precos_porta_id)
+        .filter((v: any): v is string => !!v)
+    ));
+    if (ids.length === 0) { setKitsRef(new Map()); return; }
+    (async () => {
+      const { data, error } = await supabase
+        .from('tabela_precos_portas')
+        .select('id, descricao, largura, altura, valor_porta, valor_pintura, valor_instalacao')
+        .in('id', ids);
+      if (error || !data) return;
+      setKitsRef(new Map(data.map((k: any) => [k.id, k])));
+    })();
+  }, [produtos]);
+
+  /**
+   * Compara o valor unitário cobrado vs o esperado no kit referenciado.
+   * Retorna `null` se não há kit ou os valores batem dentro da tolerância.
+   */
+  const TOLERANCIA_DIVERGENCIA = 0.05; // 5 %
+  const getDivergenciaKit = (produto: any): { esperado: number; cobrado: number } | null => {
+    const kitId = produto?.tabela_precos_porta_id;
+    if (!kitId) return null;
+    const kit = kitsRef.get(kitId);
+    if (!kit) return null;
+    let esperado = 0;
+    let cobrado = 0;
+    if (produto.tipo_produto === 'porta_enrolar' || produto.tipo_produto === 'porta_social') {
+      esperado = Number(kit.valor_porta) || 0;
+      cobrado = Number(produto.valor_produto) || 0;
+    } else if (produto.tipo_produto === 'pintura_epoxi') {
+      esperado = Number(kit.valor_pintura) || 0;
+      cobrado = Number(produto.valor_pintura) || 0;
+    } else if (produto.tipo_produto === 'instalacao') {
+      esperado = Number(kit.valor_instalacao) || 0;
+      cobrado = Number(produto.valor_produto) || 0;
+    } else {
+      return null;
+    }
+    if (esperado <= 0) return null;
+    const diff = Math.abs(esperado - cobrado) / esperado;
+    if (diff <= TOLERANCIA_DIVERGENCIA) return null;
+    return { esperado, cobrado };
+  };
 
   useEffect(() => {
     const timer = setTimeout(() => setMounted(true), 100);
@@ -1271,7 +1322,33 @@ export default function FaturamentoVendaMinimalista() {
                     return (
                       <TableRow key={produto.id} className="border-white/10 hover:bg-white/5">
                         <TableCell className="text-white/80">{getTipoProdutoLabel(produto.tipo_produto)}</TableCell>
-                        <TableCell className="font-medium text-white">{produto.descricao}</TableCell>
+                        <TableCell className="font-medium text-white">
+                          <div className="flex flex-col">
+                            <span>{produto.descricao}</span>
+                            {(() => {
+                              const kit = (produto as any).tabela_precos_porta_id ? kitsRef.get((produto as any).tabela_precos_porta_id) : null;
+                              if (!kit) return null;
+                              return (
+                                <span className="text-[10px] text-white/40">
+                                  Kit: {kit.descricao || `${kit.largura}m × ${kit.altura}m`}
+                                </span>
+                              );
+                            })()}
+                            {(() => {
+                              const div = getDivergenciaKit(produto);
+                              if (!div) return null;
+                              return (
+                                <span
+                                  className="mt-1 inline-flex items-center gap-1 text-[10px] text-amber-400"
+                                  title={`Esperado pelo kit: ${formatCurrency(div.esperado)} · Cobrado: ${formatCurrency(div.cobrado)}`}
+                                >
+                                  <AlertTriangle className="h-3 w-3" />
+                                  Diverge do kit ({formatCurrency(div.esperado)} esperado · {formatCurrency(div.cobrado)} cobrado)
+                                </span>
+                              );
+                            })()}
+                          </div>
+                        </TableCell>
                         <TableCell className="text-white/60">
                           {produto.tamanho
                             ? (['acessorio', 'adicional', 'manutencao'].includes(produto.tipo_produto)

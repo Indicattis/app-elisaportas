@@ -7122,6 +7122,7 @@ export type Database = {
           pedido_correcao_id: string | null
           percentual_credito: number | null
           quantidade: number | null
+          tabela_precos_porta_id: string | null
           tamanho: string
           tipo_desconto: string | null
           tipo_fabricacao: string | null
@@ -7162,6 +7163,7 @@ export type Database = {
           pedido_correcao_id?: string | null
           percentual_credito?: number | null
           quantidade?: number | null
+          tabela_precos_porta_id?: string | null
           tamanho: string
           tipo_desconto?: string | null
           tipo_fabricacao?: string | null
@@ -7202,6 +7204,7 @@ export type Database = {
           pedido_correcao_id?: string | null
           percentual_credito?: number | null
           quantidade?: number | null
+          tabela_precos_porta_id?: string | null
           tamanho?: string
           tipo_desconto?: string | null
           tipo_fabricacao?: string | null
@@ -7259,6 +7262,13 @@ export type Database = {
             columns: ["pedido_correcao_id"]
             isOneToOne: false
             referencedRelation: "pedidos_producao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "produtos_vendas_tabela_precos_porta_id_fkey"
+            columns: ["tabela_precos_porta_id"]
+            isOneToOne: false
+            referencedRelation: "tabela_precos_portas"
             referencedColumns: ["id"]
           },
           {
