@@ -13,27 +13,45 @@ const TABS: Array<{ key: TabKey; label: string; icon: typeof Package }> = [
 ];
 
 function TabsBar({ active, onChange }: { active: TabKey; onChange: (k: TabKey) => void }) {
+  const activeIndex = Math.max(
+    0,
+    TABS.findIndex((t) => t.key === active),
+  );
+  const widthPct = 100 / TABS.length;
+
   return (
-    <div className="mb-6 inline-flex items-center gap-1 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-1">
-      {TABS.map((t) => {
-        const Icon = t.icon;
-        const isActive = active === t.key;
-        return (
-          <button
-            key={t.key}
-            type="button"
-            onClick={() => onChange(t.key)}
-            className={
-              isActive
-                ? 'inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-medium text-white shadow-lg shadow-blue-600/20 transition'
-                : 'inline-flex items-center gap-2 rounded-xl px-6 py-2.5 text-sm font-medium text-white/70 hover:text-white hover:bg-white/5 transition'
-            }
-          >
-            <Icon className="h-4 w-4" />
-            {t.label}
-          </button>
-        );
-      })}
+    <div className="mb-6 flex justify-center">
+      <div className="relative inline-flex items-center rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-1">
+        {/* Indicador deslizante */}
+        <div
+          className="absolute top-1 bottom-1 left-1 rounded-xl bg-blue-600 shadow-lg shadow-blue-600/20 transition-transform duration-300 ease-out"
+          style={{
+            width: `calc(${widthPct}% - ${(2 * (TABS.length - 1)) / TABS.length / 1}px)`,
+            // simpler: use a fraction of the inner row. Use translateX by index of the button width.
+            transform: `translateX(${activeIndex * 100}%)`,
+          }}
+          aria-hidden
+        />
+        {TABS.map((t) => {
+          const Icon = t.icon;
+          const isActive = active === t.key;
+          return (
+            <button
+              key={t.key}
+              type="button"
+              onClick={() => onChange(t.key)}
+              className={
+                'relative z-10 inline-flex items-center justify-center gap-2 rounded-xl px-6 py-2.5 text-sm font-medium transition-colors duration-200 ' +
+                (isActive ? 'text-white' : 'text-white/70 hover:text-white')
+              }
+              style={{ width: `${widthPct}%` }}
+            >
+              <Icon className="h-4 w-4" />
+              {t.label}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
