@@ -1,52 +1,40 @@
-## Problema
+## Objetivo
 
-A validação de desconto em `/vendas/minhas-vendas/nova` (`VendaNovaMinimalista.tsx`) só acontece no frontend, em `handleSubmit` via `validarDesconto` + `getTipoAutorizacaoNecessaria`. O hook `useVendas.createVenda` recebe `autorizacaoDesconto` como opcional, **sem nenhuma checagem**: insere a venda direto e só grava a autorização se vier. Isso permite que vendas com 28% (ou qualquer %) sejam salvas se:
+Em `/direcao/estrategia/despesas/{mes}`, os blocos **Despesas Fixas** e **Despesas Variáveis** voltam a ler diretamente da tabela `gastos` (mesma fonte de `/administrativo/financeiro/gastos`), em modo **somente leitura**. Folha, Impostos e o status do mês continuam como estão hoje.
 
-- o frontend for contornado (DevTools, payload manual),
-- estado de React divergir (ex.: produtos mudados após validação),
-- ou um fluxo legado/edição chamar `createVenda` sem passar pela validação.
+## Escopo
 
-Além disso, mesmo quando `autorizacaoDesconto` é enviado, a senha não é re-validada no servidor — basta enviar qualquer string em `senha_usada` para o INSERT passar.
+Arquivo único alterado: `src/components/direcao/estrategia/DespesasResumoTopo.tsx`.
 
-## Solução
+Nada muda em:
+- `EstrategiaDespesasMes.tsx` (página em si).
+- Blocos de Folha e Impostos (continuam usando `despesas_manuais_folha` e `despesas_manuais_lancamentos` categoria `imposto`, e os Padrões cadastrados).
+- `GastosPage`, `useGastos`, `tipos_custos`, `despesas_padrao`.
 
-Adicionar uma camada de validação **dentro de `useVendas.createVendaMutation`**, antes de qualquer insert em `vendas`, replicando exatamente as regras do frontend mas autoritativa.
+## Comportamento novo de Fixas e Variáveis
 
-### Mudanças
+1. Buscar `gastos` do mês (`data` entre `${mes}-01` e último dia do mês), em paralelo com a consulta atual de `despesas_manuais_folha`/`despesas_manuais_lancamentos`.
+2. Buscar `tipos_custos` (id, nome, tipo, aparece_no_dre) referenciados pelos gastos retornados.
+3. Filtrar apenas gastos cujo `tipo_custo.aparece_no_dre !== false` (mesma regra já usada no DRE) e separar:
+   - `fixasRows`: `tipo_custo.tipo === 'fixa'`
+   - `variaveisRows`: `tipo_custo.tipo === 'variavel'`
+4. Agrupar por `tipo_custo_id` somando `valor`, gerando linhas exibidas com: nome do tipo, valor total do mês, quantidade de lançamentos.
+5. Renderizar dois blocos em modo somente leitura:
+   - Sem botão "Adicionar", sem ícone de lixeira, sem edição inline de valor/data/descrição, sem overlay de Padrões (padrões deixam de aparecer nesses dois blocos).
+   - Linha de total no rodapé do bloco (soma dos valores).
+   - Estado vazio: "Nenhum gasto registrado em /administrativo/financeiro/gastos neste mês."
+6. O `totalExibido` (que alimenta `onMediaMensalChange` e o subtítulo "Total do mês") passa a usar `sum(fixasRows) + sum(variaveisRows)` em vez do mix atual com lançamentos manuais e padrões fixas/variáveis. Folha (lançamentos + padrões) e Impostos (lançamentos + padrões) continuam compondo o total como hoje.
 
-**`src/hooks/useVendas.ts` — `createVendaMutation.mutationFn`**
+## Detalhes técnicos
 
-1. Após validar usuário (passo 2) e antes de calcular totais (passo 3), buscar os limites atuais via:
-   ```ts
-   const { data: cfg } = await supabase
-     .from('configuracoes_vendas')
-     .select('limite_desconto_avista, limite_desconto_presencial, limite_adicional_responsavel')
-     .limit(1).maybeSingle();
-   ```
-2. Calcular `percentualDesconto` reaproveitando `validarDesconto(portas, vendaData.forma_pagamento, vendaData.venda_presencial, { avista, presencial, adicionalResponsavel })` de `@/utils/descontoVendasRules`.
-3. Aplicar regras (lançar `Error` com mensagem clara em cada caso):
-   - Se `dentroDoLimite` → seguir normalmente, ignorar `autorizacaoDesconto`.
-   - Se `requerSenha` (acima do limite, dentro do máximo do responsável):
-     - exigir `autorizacaoDesconto` presente,
-     - exigir `tipo_autorizacao` ∈ {`responsavel_setor`, `master`},
-     - re-validar a senha chamando `supabase.rpc('verificar_senha_vendas', { p_senha: autorizacaoDesconto.senha_usada, p_tipo: autorizacaoDesconto.tipo_autorizacao === 'master' ? 'master' : 'responsavel' })`. Se `!== true` → throw "Senha de autorização inválida".
-   - Se `excedeLimiteMaximo` (acima do máximo do responsável, ex.: 28%):
-     - exigir `autorizacaoDesconto.tipo_autorizacao === 'master'`,
-     - re-validar senha master via mesma RPC. Falhou → throw "Desconto acima do limite exige senha master válida".
-4. Garantir que `autorizacaoDesconto.percentual_desconto` salvo seja o `percentualDesconto` recalculado no servidor (não o enviado pelo cliente), evitando divergência de auditoria.
+- Remover, dentro de `DespesasResumoTopo`, as referências a `padroesFixas`/`padroesVariaveis` no total e nos dois `<BlocoDespesa categoria="fixa"/"variavel">`; manter `padroesFolha` e `padroesImpostos`.
+- Substituir o `BlocoDespesa` usado para Fixas e Variáveis por um novo componente local `BlocoGastosReadonly` (mesmo estilo glassmorphism, sem ações). O `BlocoDespesa` atual continua sendo usado pelo bloco de Impostos.
+- A consulta dos gastos do mês fica isolada em um `useEffect` próprio dependente de `mes` (e do mesmo `reloadV` para acompanhar deletes/edições disparados pelos outros blocos). Reusar `T12:00:00.000Z` na montagem do `start`/`end` quando relevante (aqui basta strings `YYYY-MM-DD`, já que `gastos.data` é `date`).
+- Tipos: `type GastoRow = { id: string; tipo_custo_id: string; valor: number; data: string }` e `type TipoCustoMin = { id: string; nome: string; tipo: 'fixa' | 'variavel' | 'imposto'; aparece_no_dre: boolean }`.
+- Sem alterações de schema, sem migrations.
 
-### Por que aqui
+## Fora do escopo
 
-- Centraliza no único caminho de criação (`createVenda`) → protege também `MinhasVendasEditar.tsx` e `VendasNova.tsx` que reusam o mesmo hook.
-- Usa o RPC `verificar_senha_vendas` que já existe (SECURITY DEFINER), então o cliente nunca vê/manipula a senha real.
-- Não muda UI: o fluxo legítimo continua passando pelo `AutorizacaoDescontoModal` e funciona idêntico. Apenas bloqueia o bypass.
-
-### Fora de escopo
-
-- Não mexer no `AutorizacaoDescontoModal` nem no `VendaNovaMinimalista.tsx` (UI já está correta).
-- Não criar trigger no banco (a RPC já encapsula a senha; uma policy de RLS no insert de `vendas` baseada em desconto seria muito invasiva agora).
-- Não tocar fluxo de "Solicitar Aprovação" (esse já passa por `useRequisicaoAprovacaoVenda`).
-
-## Arquivos
-
-- `src/hooks/useVendas.ts` — adicionar bloco de validação no início do `mutationFn` e re-cálculo do `percentual_desconto` no insert de `vendas_autorizacoes_desconto`.
+- Permitir cadastro/edição de gastos a partir desta tela (decisão do usuário: somente leitura).
+- Mexer no comportamento do bloco Folha e do bloco Impostos.
+- Mexer em `/administrativo/financeiro/gastos` ou em `DREDespesasDirecao`.

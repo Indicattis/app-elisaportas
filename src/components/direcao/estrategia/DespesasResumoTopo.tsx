@@ -81,6 +81,13 @@ type Colab = {
 
 type TipoCusto = { id: string; nome: string; tipo: 'fixa' | 'variavel' | 'imposto' };
 
+type GastoAgrupado = {
+  tipo_custo_id: string;
+  tipo_nome: string;
+  total: number;
+  quantidade: number;
+};
+
 function calcTotalFolha(f: { salario: number; aux_combustivel: number; insalubridade_pct: number; fgts_pct: number; previsao_13_valor: number }) {
   const insalub = f.salario * (f.insalubridade_pct || 0) / 100;
   const fgts = f.salario * (f.fgts_pct || 0) / 100;
@@ -99,9 +106,9 @@ interface Props {
 
 export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataChange }: Props) {
   const [folha, setFolha] = useState<FolhaRow[]>([]);
-  const [fixas, setFixas] = useState<LancRow[]>([]);
-  const [variaveis, setVariaveis] = useState<LancRow[]>([]);
   const [impostos, setImpostos] = useState<LancRow[]>([]);
+  const [gastosFixas, setGastosFixas] = useState<GastoAgrupado[]>([]);
+  const [gastosVariaveis, setGastosVariaveis] = useState<GastoAgrupado[]>([]);
   const [loading, setLoading] = useState(false);
   const [reloadV, setReloadV] = useState(0);
   const reload = () => { setReloadV(v => v + 1); onDataChange?.(); };
@@ -114,24 +121,18 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
 
   const mesStart = mes ? `${mes}-01` : null;
   const padroesFolha = useMemo(() => padroes.filter(p => p.tipo === 'folha'), [padroes]);
-  const padroesFixas = useMemo(() => padroes.filter(p => p.tipo === 'fixa'), [padroes]);
-  const padroesVariaveis = useMemo(() => padroes.filter(p => p.tipo === 'variavel'), [padroes]);
   const padroesImpostos = useMemo(() => padroes.filter(p => p.tipo === 'imposto'), [padroes]);
   const totalExibido = useMemo(() => {
     const nomesFolha = new Set(folha.map(r => norm(r.colaborador_nome)));
-    const nomesFixas = new Set(fixas.map(r => norm(r.tipo_nome)));
-    const nomesVariaveis = new Set(variaveis.map(r => norm(r.tipo_nome)));
     const nomesImpostos = new Set(impostos.map(r => norm(r.tipo_nome)));
 
     return folha.reduce((s, x) => s + Number(x.total || 0), 0)
       + padroesFolha.filter(p => !nomesFolha.has(norm(p.nome))).reduce((s, p) => s + calcTotalFolha(p), 0)
-      + fixas.reduce((s, x) => s + Number(x.valor || 0), 0)
-      + padroesFixas.filter(p => !nomesFixas.has(norm(p.nome))).reduce((s, p) => s + Number(p.valor || 0), 0)
-      + variaveis.reduce((s, x) => s + Number(x.valor || 0), 0)
-      + padroesVariaveis.filter(p => !nomesVariaveis.has(norm(p.nome))).reduce((s, p) => s + Number(p.valor || 0), 0)
+      + gastosFixas.reduce((s, x) => s + Number(x.total || 0), 0)
+      + gastosVariaveis.reduce((s, x) => s + Number(x.total || 0), 0)
       + impostos.reduce((s, x) => s + Number(x.valor || 0), 0)
       + padroesImpostos.filter(p => !nomesImpostos.has(norm(p.nome))).reduce((s, p) => s + Number(p.valor || 0), 0);
-  }, [folha, fixas, variaveis, impostos, padroesFolha, padroesFixas, padroesVariaveis, padroesImpostos]);
+  }, [folha, gastosFixas, gastosVariaveis, impostos, padroesFolha, padroesImpostos]);
 
   useEffect(() => {
     if (mes) onMediaMensalChange?.(totalExibido);
@@ -145,7 +146,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
 
   useEffect(() => {
     if (!mes || !mesStart) {
-      setFolha([]); setFixas([]); setVariaveis([]); setImpostos([]);
+      setFolha([]); setImpostos([]); setGastosFixas([]); setGastosVariaveis([]);
       onMediaMensalChange?.(0);
       return;
     }
@@ -153,17 +154,63 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
     (async () => {
       setLoading(true);
       try {
-        const [{ data: f }, { data: l }] = await Promise.all([
+        // Fim do mês
+        const [y, m] = mes.split('-').map(Number);
+        const lastDay = new Date(y, m, 0).getDate();
+        const mesEnd = `${mes}-${String(lastDay).padStart(2, '0')}`;
+
+        const [{ data: f }, { data: l }, { data: g }] = await Promise.all([
           supabase.from('despesas_manuais_folha' as any).select('*').eq('mes_referencia', mesStart).order('colaborador_nome'),
           supabase.from('despesas_manuais_lancamentos' as any).select('*').eq('mes_referencia', mesStart).order('data'),
+          supabase.from('gastos' as any).select('id, tipo_custo_id, valor, data').gte('data', mesStart).lte('data', mesEnd),
         ]);
         if (cancelled) return;
         const folhaArr = (f || []) as unknown as FolhaRow[];
         const lancArr = (l || []) as unknown as LancRow[];
         setFolha(folhaArr);
-        setFixas(lancArr.filter(x => x.categoria === 'fixa'));
-        setVariaveis(lancArr.filter(x => x.categoria === 'variavel'));
         setImpostos(lancArr.filter(x => x.categoria === 'imposto'));
+
+        const gastosRows = (g || []) as unknown as Array<{ id: string; tipo_custo_id: string; valor: number; data: string }>;
+        const tipoIds = Array.from(new Set(gastosRows.map(r => r.tipo_custo_id).filter(Boolean)));
+        let tiposMap: Record<string, { nome: string; tipo: 'fixa' | 'variavel' | 'imposto'; aparece_no_dre: boolean }> = {};
+        if (tipoIds.length > 0) {
+          const { data: tiposData } = await supabase
+            .from('tipos_custos' as any)
+            .select('id, nome, tipo, aparece_no_dre')
+            .in('id', tipoIds);
+          ((tiposData || []) as any[]).forEach(t => {
+            tiposMap[t.id] = {
+              nome: t.nome,
+              tipo: t.tipo,
+              aparece_no_dre: t.aparece_no_dre !== false,
+            };
+          });
+        }
+
+        const agruparPor = (categoria: 'fixa' | 'variavel'): GastoAgrupado[] => {
+          const acc = new Map<string, GastoAgrupado>();
+          for (const r of gastosRows) {
+            const t = tiposMap[r.tipo_custo_id];
+            if (!t || !t.aparece_no_dre) continue;
+            if (t.tipo !== categoria) continue;
+            const cur = acc.get(r.tipo_custo_id);
+            if (cur) {
+              cur.total += Number(r.valor || 0);
+              cur.quantidade += 1;
+            } else {
+              acc.set(r.tipo_custo_id, {
+                tipo_custo_id: r.tipo_custo_id,
+                tipo_nome: t.nome,
+                total: Number(r.valor || 0),
+                quantidade: 1,
+              });
+            }
+          }
+          return Array.from(acc.values()).sort((a, b) => a.tipo_nome.localeCompare(b.tipo_nome));
+        };
+
+        setGastosFixas(agruparPor('fixa'));
+        setGastosVariaveis(agruparPor('variavel'));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -253,8 +300,6 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
   ) => {
     // optimistic update
     const apply = (arr: LancRow[]) => arr.map(r => r.id === id ? { ...r, ...patch } as LancRow : r);
-    setFixas(prev => apply(prev));
-    setVariaveis(prev => apply(prev));
     setImpostos(prev => apply(prev));
     const { error } = await supabase
       .from('despesas_manuais_lancamentos' as any)
@@ -288,33 +333,17 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         onInsert={handleInsertFolha}
         onDeletePadrao={async (id) => { await removePadrao(id); reload(); }}
       />
-      <BlocoDespesa
+      <BlocoGastosReadonly
         titulo="Despesas Fixas"
         icon={<Receipt className="w-4 h-4" />}
-        rows={fixas}
+        rows={gastosFixas}
         loading={loading}
-        categoria="fixa"
-        tipos={tipos.filter(t => t.tipo === 'fixa')}
-        padroes={padroesFixas}
-        mesStart={mesStart || ''}
-        onDelete={(id) => setConfirmDel({ kind: 'lanc', id })}
-        onInsert={handleInsertLanc}
-        onUpdate={handleUpdateLanc}
-        onDeletePadrao={async (id) => { await removePadrao(id); reload(); }}
       />
-      <BlocoDespesa
+      <BlocoGastosReadonly
         titulo="Despesas Variáveis"
         icon={<TrendingDown className="w-4 h-4" />}
-        rows={variaveis}
+        rows={gastosVariaveis}
         loading={loading}
-        categoria="variavel"
-        tipos={tipos.filter(t => t.tipo === 'variavel')}
-        padroes={padroesVariaveis}
-        mesStart={mesStart || ''}
-        onDelete={(id) => setConfirmDel({ kind: 'lanc', id })}
-        onInsert={handleInsertLanc}
-        onUpdate={handleUpdateLanc}
-        onDeletePadrao={async (id) => { await removePadrao(id); reload(); }}
       />
       <BlocoDespesa
         titulo="Despesas de Imposto"
@@ -1108,5 +1137,63 @@ function EditableDate({
     >
       {value ? value.split('-').reverse().join('/') : '—'}
     </button>
+  );
+}
+
+/* ---------------- Gastos Readonly block (puxa de /administrativo/financeiro/gastos) ---------------- */
+
+function BlocoGastosReadonly({
+  titulo, icon, rows, loading,
+}: {
+  titulo: string;
+  icon: React.ReactNode;
+  rows: GastoAgrupado[];
+  loading: boolean;
+}) {
+  const total = rows.reduce((s, r) => s + Number(r.total || 0), 0);
+  const qtdLanc = rows.reduce((s, r) => s + r.quantidade, 0);
+
+  return (
+    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-5">
+      <div className="flex items-center gap-2 text-white mb-3">
+        {icon}
+        <h3 className="text-xl font-semibold">{titulo}</h3>
+        <span className="text-white/40 text-sm">({rows.length} tipos · {qtdLanc} lançamentos)</span>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-[10px] uppercase tracking-wider text-white/40 border-b border-white/10">
+              <th className="text-left font-normal pb-2 pl-1">Tipo de Custo</th>
+              <th className="text-right font-normal pb-2 px-2 w-[140px]">Lançamentos</th>
+              <th className="text-right font-normal pb-2 px-2 w-[180px]">Valor pago no mês</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr><td colSpan={3} className="text-white/40 px-2 py-3">Carregando...</td></tr>
+            ) : rows.length === 0 ? (
+              <tr>
+                <td colSpan={3} className="text-white/40 px-2 py-6 text-center">
+                  Nenhum gasto registrado neste mês em Administrativo › Financeiro › Gastos.
+                </td>
+              </tr>
+            ) : rows.map(r => (
+              <tr key={r.tipo_custo_id} className="border-b border-white/5 hover:bg-white/[0.03]">
+                <td className="py-2 pl-1 text-white/90">{r.tipo_nome}</td>
+                <td className="px-2 text-right text-white/60">{r.quantidade}</td>
+                <td className="px-2 text-right text-white font-medium">{formatCurrency(r.total)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between px-2">
+        <span className="text-xs text-white/50 uppercase tracking-wider">Total</span>
+        <span className="text-base font-bold text-white">{formatCurrency(total)}</span>
+      </div>
+    </div>
   );
 }
