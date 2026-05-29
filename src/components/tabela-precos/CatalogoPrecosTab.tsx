@@ -729,7 +729,7 @@ export function CatalogoPrecosTab({ compact = false }: CatalogoPrecosTabProps = 
                             </SortableContext>
                           </DndContext>
                         ) : (
-                          <TableHead className={cn("text-xs font-medium text-white text-center", COLUMN_WIDTHS.venda, getColumnBg(columnColors, "venda"))}>
+                          <TableHead className={cn("text-xs font-medium text-white text-center", COLUMN_WIDTHS.venda)}>
                             {COLUMN_LABELS.venda}
                           </TableHead>
                         )}
@@ -1034,7 +1034,7 @@ function ProdutoRow({
       {renderedColumns.map((col) => (
         <TableCell
           key={col}
-          className={cn("text-right text-foreground", cellExtraCls[col], getColumnBg(columnColors, col))}
+          className={cn("text-right text-foreground", cellExtraCls[col], !compact && getColumnBg(columnColors, col))}
         >
           {cellRenderers[col]}
         </TableCell>
