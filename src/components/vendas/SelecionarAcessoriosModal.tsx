@@ -41,25 +41,27 @@ export function SelecionarAcessoriosModal({
   const [tamanhos, setTamanhos] = useState<Record<string, string>>({});
 
   const { data: produtosEstoque = [], isLoading } = useQuery({
-    queryKey: ['vendas-catalogo-modal'],
+    queryKey: ['custos-itens-modal'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('vendas_catalogo')
-        .select('*')
-        .eq('ativo', true)
-        .order('destaque', { ascending: false })
-        .order('nome_produto');
-      
+        .from('custos_itens')
+        .select('id, descricao, preco_venda, categoria, unidade, ordem')
+        .order('categoria', { ascending: true })
+        .order('ordem', { ascending: true })
+        .order('descricao', { ascending: true });
+
       if (error) throw error;
-      return data.map(item => ({
+      return (data || []).map(item => ({
         id: item.id,
-        nome: item.nome_produto,
-        preco: Number(item.preco_venda),
-        tipo: (item.categoria === 'acessório' ? 'acessorio' : 'adicional') as 'acessorio' | 'adicional',
-        descricao: item.descricao_produto,
-        categoria: item.categoria,
-        imagem_url: item.imagem_url,
-        unidade: item.unidade || 'Unitário'
+        nome: item.descricao,
+        preco: Number(item.preco_venda) || 0,
+        // Itens vindos da Estratégia de Custos são tratados como 'acessorio' por padrão.
+        // O vendedor pode trocar pelo dropdown específico de "Adicional" no ProdutoVendaForm.
+        tipo: 'acessorio' as 'acessorio' | 'adicional',
+        descricao: '',
+        categoria: item.categoria || 'Sem categoria',
+        imagem_url: undefined as string | undefined,
+        unidade: item.unidade || 'Unitário',
       }));
     },
     enabled: open
@@ -126,7 +128,7 @@ export function SelecionarAcessoriosModal({
         desconto_valor: 0,
         desconto_percentual: 0,
         tipo_desconto: 'valor' as const,
-        vendas_catalogo_id: item.id,
+        custos_itens_id: item.id,
         unidade: item.unidade
       } as ProdutoVenda;
     });
@@ -154,11 +156,11 @@ export function SelecionarAcessoriosModal({
   }, [itensSelecionados, tamanhos, produtosEstoque]);
 
   const getCategoriaColor = (categoria: string) => {
-    switch (categoria) {
-      case 'acessório': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'adicional': return 'bg-purple-100 text-purple-800 border-purple-200';
-      default: return 'bg-muted text-muted-foreground';
-    }
+    const c = (categoria || '').toLowerCase();
+    if (c.includes('acessório') || c.includes('acessorio')) return 'bg-blue-100 text-blue-800 border-blue-200';
+    if (c.includes('motor')) return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+    if (c.includes('avuls')) return 'bg-purple-100 text-purple-800 border-purple-200';
+    return 'bg-muted text-muted-foreground border-border';
   };
 
   return (
