@@ -7107,6 +7107,7 @@ export type Database = {
           custo_pintura: number | null
           custo_producao: number | null
           custo_produto: number | null
+          custos_itens_id: string | null
           desconto_percentual: number | null
           desconto_valor: number | null
           descricao: string | null
@@ -7148,6 +7149,7 @@ export type Database = {
           custo_pintura?: number | null
           custo_producao?: number | null
           custo_produto?: number | null
+          custos_itens_id?: string | null
           desconto_percentual?: number | null
           desconto_valor?: number | null
           descricao?: string | null
@@ -7189,6 +7191,7 @@ export type Database = {
           custo_pintura?: number | null
           custo_producao?: number | null
           custo_produto?: number | null
+          custos_itens_id?: string | null
           desconto_percentual?: number | null
           desconto_valor?: number | null
           descricao?: string | null
@@ -7248,6 +7251,13 @@ export type Database = {
             columns: ["venda_id"]
             isOneToOne: false
             referencedRelation: "vendas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "produtos_vendas_custos_itens_id_fkey"
+            columns: ["custos_itens_id"]
+            isOneToOne: false
+            referencedRelation: "custos_itens"
             referencedColumns: ["id"]
           },
           {
