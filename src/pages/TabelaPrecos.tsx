@@ -266,6 +266,7 @@ export default function TabelaPrecos({
       headerActions={headerActions}
       fullWidth
     >
+      {beforeContent}
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'portas' | 'catalogo')} className="space-y-6">
         {!hideCatalogoTab && (
           <TabsList className="bg-white/5 border border-white/10">
