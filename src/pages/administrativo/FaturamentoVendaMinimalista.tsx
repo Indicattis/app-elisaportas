@@ -1280,7 +1280,7 @@ export default function FaturamentoVendaMinimalista() {
                           {produto.faturamento ? (
                             <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30"><CheckCircle2 className="w-3 h-3 mr-1" />Faturado</Badge>
                           ) : temLucro ? (
-                            <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">{produto.tipo_produto === 'porta_enrolar' ? 'Tabela' : produto.tipo_produto === 'pintura_epoxi' ? 'Fórmula' : 'Informado'}</Badge>
+                        <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">{produto.tipo_produto === 'porta_enrolar' ? 'Tabela' : produto.tipo_produto === 'pintura_epoxi' ? 'Estático' : 'Informado'}</Badge>
                           ) : (
                             <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">Pendente</Badge>
                           )}
