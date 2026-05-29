@@ -46,6 +46,7 @@ import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 import { useConfiguracoesVendas } from "@/hooks/useConfiguracoesVendas";
 import { PagamentoSection, PagamentoData, createEmptyPagamentoData } from "@/components/vendas/PagamentoSection";
 import { MetodoPagamento, createEmptyMetodo } from "@/components/vendas/MetodoPagamentoCard";
+import { PagamentoResumo } from "@/components/vendas/PagamentoResumo";
 
 const safeParseDate = (dateStr: string | null | undefined): Date | null => {
   if (!dateStr) return null;
@@ -1465,27 +1466,10 @@ export default function FaturamentoVendaMinimalista() {
         </Card>
 
 
-        {/* Forma de Pagamento (sessão dedicada — mesmo padrão de /vendas/minhas-vendas/nova) */}
+        {/* Forma de Pagamento — somente leitura: o que o vendedor cadastrou é a fonte da verdade.
+            Alterações só podem ser feitas em /vendas/minhas-vendas/editar. */}
         {venda && (
-          <div className="space-y-3">
-            <PagamentoSection
-              paymentData={pagamentoData}
-              onChange={setPagamentoData}
-              valorTotal={(venda.valor_venda || 0) + (venda.valor_credito || 0)}
-            />
-            <div className="flex items-center justify-end gap-3">
-              <p className="text-xs text-white/50 mr-auto">
-                Alterações aqui podem regenerar as parcelas. Para ajustes finos, use o card Parcelas abaixo.
-              </p>
-              <Button
-                onClick={handleSalvarFormaPagamento}
-                disabled={salvandoFormaPagamento}
-                className="bg-blue-500 hover:bg-blue-600 text-white"
-              >
-                {salvandoFormaPagamento ? 'Salvando...' : 'Salvar Forma de Pagamento'}
-              </Button>
-            </div>
-          </div>
+          <PagamentoResumo venda={venda} contasReceber={contasReceber} hideComprovante />
         )}
 
         {/* Outras Informações da Venda */}
