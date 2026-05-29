@@ -18,6 +18,8 @@ export interface ProdutoVenda {
   vendas_catalogo_id?: string;
   tipo_pintura?: string;
   tipo_servico?: string;
+  /** ID da linha de `tabela_precos_portas` (kit) que originou este item */
+  tabela_precos_porta_id?: string | null;
   valor_produto: number;
   valor_pintura: number;
   valor_instalacao: number;
