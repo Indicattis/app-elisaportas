@@ -39,6 +39,20 @@ export default function EstrategiaLucroPinturas() {
               Pinturas Epóxi têm lucro travado por fórmula definida no módulo financeiro.
             </li>
           </ul>
+
+          <div className="mt-2 rounded-lg border border-white/10 bg-black/30 p-4 space-y-2">
+            <div className="text-xs uppercase tracking-wide text-white/50">Fórmula — Pintura Epóxi</div>
+            <div className="font-mono text-sm text-blue-300">
+              lucro = (altura × largura) × 25
+            </div>
+            <div className="font-mono text-sm text-white/70">
+              custo = valor_total − lucro
+            </div>
+            <div className="text-xs text-white/50">
+              Altura e largura em metros. O valor é aplicado automaticamente no faturamento
+              para itens do tipo <span className="text-white/70">pintura_epoxi</span>.
+            </div>
+          </div>
         </div>
 
         <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 backdrop-blur-xl p-4 flex items-start gap-3">
