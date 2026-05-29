@@ -20,7 +20,7 @@ import DocumentosPanel, { useDocumentosHeaderActions } from '@/components/market
 
 type TabKey = 'midias' | 'documentos';
 
-const TABS: Array<{ key: TabKey; label: string; icon: typeof Package }> = [
+const TABS: Array<{ key: TabKey; label: string; icon: typeof ImageIcon }> = [
   { key: 'midias', label: 'Mídias', icon: ImageIcon },
   { key: 'documentos', label: 'Documentos', icon: FileText },
 ];
