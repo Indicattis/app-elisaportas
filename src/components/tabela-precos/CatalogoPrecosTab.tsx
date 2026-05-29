@@ -555,8 +555,8 @@ export function CatalogoPrecosTab({ compact = false }: CatalogoPrecosTabProps = 
     <div className="flex flex-col gap-4">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-base font-medium text-foreground">Itens do Catálogo</h2>
-          <p className="text-xs text-muted-foreground">
+          <h2 className="text-base font-medium text-white">Itens do Catálogo</h2>
+          <p className="text-xs text-white/50">
             {produtosOrdenados.length} {produtosOrdenados.length === 1 ? "produto" : "produtos"} — clique no preço, custo ou unidade para editar
           </p>
         </div>
@@ -663,10 +663,10 @@ export function CatalogoPrecosTab({ compact = false }: CatalogoPrecosTabProps = 
             </Dialog>
           )}
           <div className="relative w-full sm:w-72">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-white/40" />
             <Input
               placeholder="Buscar por nome ou descrição..."
-              className="pl-8 bg-card/60 border-border text-foreground placeholder:text-muted-foreground"
+              className="pl-8 bg-white/5 backdrop-blur-xl border-white/10 text-white placeholder:text-white/40"
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
             />
@@ -700,7 +700,7 @@ export function CatalogoPrecosTab({ compact = false }: CatalogoPrecosTabProps = 
                 )}
                 <span className="text-[11px] text-muted-foreground/60">· {rows.length}</span>
               </div>
-              <div className="rounded-xl overflow-hidden bg-card/60 backdrop-blur-xl border border-border">
+              <div className="rounded-xl overflow-hidden bg-white/5 backdrop-blur-xl border border-white/10">
                 <DndContext
                   sensors={dndSensors}
                   collisionDetection={closestCenter}
@@ -709,11 +709,11 @@ export function CatalogoPrecosTab({ compact = false }: CatalogoPrecosTabProps = 
                 >
                   <Table>
                     <TableHeader>
-                      <TableRow className="border-border hover:bg-transparent">
+                      <TableRow className="border-white/10 hover:bg-transparent">
                         {!compact && <TableHead className="w-8 p-0" />}
-                        <TableHead className="text-xs font-medium text-muted-foreground">Produto</TableHead>
-                        {!compact && <TableHead className="text-xs font-medium text-muted-foreground text-center w-16">UN</TableHead>}
-                        {!compact && <TableHead className="text-xs font-medium text-muted-foreground text-center w-20">Ações</TableHead>}
+                        <TableHead className="text-xs font-medium text-white/60">Produto</TableHead>
+                        {!compact && <TableHead className="text-xs font-medium text-white/60 text-center w-16">UN</TableHead>}
+                        {!compact && <TableHead className="text-xs font-medium text-white/60 text-center w-20">Ações</TableHead>}
                         {!compact ? (
                           <DndContext
                             sensors={dndSensors}
@@ -729,7 +729,7 @@ export function CatalogoPrecosTab({ compact = false }: CatalogoPrecosTabProps = 
                             </SortableContext>
                           </DndContext>
                         ) : (
-                          <TableHead className={cn("text-xs font-medium text-foreground text-center", COLUMN_WIDTHS.venda, getColumnBg(columnColors, "venda"))}>
+                          <TableHead className={cn("text-xs font-medium text-white text-center", COLUMN_WIDTHS.venda, getColumnBg(columnColors, "venda"))}>
                             {COLUMN_LABELS.venda}
                           </TableHead>
                         )}
