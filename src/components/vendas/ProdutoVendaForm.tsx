@@ -257,12 +257,12 @@ export function ProdutoVendaForm({
       }
     }
     
-    if (formData.tipo_produto === 'acessorio' && !formData.acessorio_id && !formData.vendas_catalogo_id) {
+    if (formData.tipo_produto === 'acessorio' && !formData.acessorio_id && !formData.vendas_catalogo_id && !formData.custos_itens_id) {
       toast.error('Selecione um acessório');
       return;
     }
     
-    if (formData.tipo_produto === 'adicional' && !formData.adicional_id && !formData.vendas_catalogo_id) {
+    if (formData.tipo_produto === 'adicional' && !formData.adicional_id && !formData.vendas_catalogo_id && !formData.custos_itens_id) {
       toast.error('Selecione um adicional');
       return;
     }
