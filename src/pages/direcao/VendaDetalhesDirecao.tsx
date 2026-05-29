@@ -624,7 +624,7 @@ export default function VendaDetalhesDirecao() {
         </div>
 
         {/* Forma de Pagamento — somente leitura (fonte: cadastro da venda) */}
-        <PagamentoResumo venda={venda} contasReceber={contasReceber} hideComprovante />
+        <PagamentoResumo venda={venda} contasReceber={contasReceber} />
 
         {/* Vendedor */}
         {venda.atendente && (
