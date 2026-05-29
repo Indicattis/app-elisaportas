@@ -6,11 +6,30 @@ import { FileText, FileSpreadsheet, Menu, BookOpen } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { toast } from 'sonner';
 import { useTabelaPrecos } from '@/hooks/useTabelaPrecos';
+import { useCustosItens } from '@/hooks/useCustosItens';
+import { useMemo } from 'react';
+import { Package } from 'lucide-react';
 import { exportEstrategiaPrecosPDF, exportEstrategiaPrecosExcel } from '@/utils/estrategiaPrecosExport';
 
 export default function EstrategiaPrecos() {
   const navigate = useNavigate();
   const { itens: kits } = useTabelaPrecos();
+  const { items: custosItens } = useCustosItens();
+
+  const itensAvulso = useMemo(
+    () =>
+      (custosItens ?? [])
+        .filter((i) => i.vendavel_avulso)
+        .sort((a, b) => {
+          const ca = (a.categoria || 'Sem categoria').localeCompare(b.categoria || 'Sem categoria');
+          if (ca !== 0) return ca;
+          return (a.descricao || '').localeCompare(b.descricao || '');
+        }),
+    [custosItens],
+  );
+
+  const fmtBRL = (v: number | null | undefined) =>
+    Number(v ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
   const handleExport = (kind: 'pdf' | 'excel') => {
     try {
@@ -84,7 +103,48 @@ export default function EstrategiaPrecos() {
       fullWidth
       headerActions={headerActions}
     >
-      <TabelaPrecos embedded />
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-4">
+        <div className="min-w-0">
+          <TabelaPrecos embedded />
+        </div>
+        <aside className="rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 p-4 flex flex-col gap-3 lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-8rem)]">
+          <div className="flex items-center gap-2">
+            <div className="h-9 w-9 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center">
+              <Package className="h-4 w-4 text-emerald-400" />
+            </div>
+            <div className="min-w-0">
+              <div className="text-sm font-medium text-white">Itens Avulso</div>
+              <div className="text-[11px] text-white/50">
+                {itensAvulso.length} {itensAvulso.length === 1 ? 'item' : 'itens'} disponíveis
+              </div>
+            </div>
+          </div>
+          <div className="flex-1 min-h-0 overflow-y-auto -mx-1 px-1">
+            {itensAvulso.length === 0 ? (
+              <div className="text-xs text-white/50 text-center py-8 px-2">
+                Nenhum item marcado como avulso. Ative em Estratégia → Itens.
+              </div>
+            ) : (
+              <ul className="divide-y divide-white/5">
+                {itensAvulso.map((it) => (
+                  <li key={it.id} className="py-2 flex items-start gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm text-white truncate">{it.descricao}</div>
+                      <div className="text-[11px] text-white/40 truncate">
+                        {it.categoria || 'Sem categoria'}
+                        {it.unidade ? ` · ${it.unidade}` : ''}
+                      </div>
+                    </div>
+                    <div className="text-sm tabular-nums text-emerald-300 whitespace-nowrap">
+                      {fmtBRL(it.preco_venda)}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </aside>
+      </div>
     </MinimalistLayout>
   );
 }
