@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { Search, X, Edit, Loader2, FileText, Plus, FileDown } from "lucide-react";
+import { Search, X, Edit, Loader2, Plus, FileDown } from "lucide-react";
 
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Input } from "@/components/ui/input";
@@ -173,17 +173,6 @@ export default function ColaboradoresMinimalista() {
       >
         <FileDown className="h-4 w-4" />
         <span className="hidden sm:inline">PDF</span>
-      </button>
-      <button
-        onClick={() => navigate("/administrativo/rh-dp/colaboradores/folha-pagamento")}
-        className="flex items-center gap-2 px-4 py-1.5 text-sm rounded-lg font-medium
-                   bg-gradient-to-r from-blue-500 to-blue-600 text-white
-                   shadow-lg shadow-blue-500/25 border border-blue-400/30
-                   hover:shadow-blue-500/40 hover:from-blue-400 hover:to-blue-500
-                   transition-all duration-200"
-      >
-        <FileText className="h-4 w-4" />
-        Gerar Folha
       </button>
     </div>
   );

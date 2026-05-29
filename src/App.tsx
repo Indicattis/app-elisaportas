@@ -132,7 +132,6 @@ import ConfiguracoesFiscais from "./pages/ConfiguracoesFiscais";
 import ColaboradorDetalhes from "./pages/ColaboradorDetalhes";
 import Vagas from "./pages/Vagas";
 import Colaboradores from "./pages/Colaboradores";
-import FolhaPagamentoNova from "./pages/FolhaPagamentoNova";
 import SolicitacoesMudancaCadastro from "./pages/SolicitacoesMudancaCadastro";
 // Etiquetas removido - funcionalidade movida para página de Ordens
 import ProducaoLogin from "./pages/producao/ProducaoLogin";
@@ -657,7 +656,6 @@ const App = () => (
                 {/* Hub RH/DP Minimalista */}
                 <Route path="/administrativo/rh-dp" element={<ProtectedRoute routeKey="administrativo_hub"><RhDpHub /></ProtectedRoute>} />
                 <Route path="/administrativo/rh-dp/colaboradores" element={<ProtectedRoute routeKey="administrativo_hub"><ColaboradoresMinimalista /></ProtectedRoute>} />
-                <Route path="/administrativo/rh-dp/colaboradores/folha-pagamento" element={<ProtectedRoute routeKey="admin_rh_dp_folha"><FolhaPagamentoNova /></ProtectedRoute>} />
                 <Route path="/administrativo/rh-dp/colaboradores/novo" element={<ProtectedRoute routeKey="administrativo_hub"><NovoColaborador /></ProtectedRoute>} />
                 <Route path="/administrativo/rh-dp/vagas" element={<ProtectedRoute routeKey="admin_rh_dp_vagas"><VagasPage /></ProtectedRoute>} />
                 <Route path="/administrativo/rh-dp/vagas/preencher/:vagaId" element={<ProtectedRoute routeKey="admin_rh_dp_vagas"><PreencherVagaPage /></ProtectedRoute>} />
