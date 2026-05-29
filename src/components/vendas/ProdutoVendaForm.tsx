@@ -102,37 +102,24 @@ export function ProdutoVendaForm({
     }
   });
 
-  // Buscar acessórios do catálogo de vendas
-  const { data: acessorios } = useQuery({
-    queryKey: ['catalogo-acessorios'],
+  // Buscar itens da Estratégia de Custos (substitui o antigo vendas_catalogo).
+  // Tanto "Acessórios" quanto "Adicionais" agora vêm da mesma fonte; o vendedor escolhe
+  // pelo dropdown apropriado e o tipo_produto é definido pelo handler.
+  const { data: itensCustos } = useQuery({
+    queryKey: ['custos-itens-venda-form'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('vendas_catalogo')
-        .select('*')
-        .eq('ativo', true)
-        .eq('categoria', 'acessório')
-        .gt('quantidade', 0)
-        .order('nome_produto');
+        .from('custos_itens')
+        .select('id, descricao, preco_venda, categoria, unidade, ordem')
+        .order('categoria', { ascending: true })
+        .order('ordem', { ascending: true })
+        .order('descricao', { ascending: true });
       if (error) throw error;
-      return data;
+      return data || [];
     }
   });
-
-  // Buscar adicionais do catálogo de vendas
-  const { data: adicionais } = useQuery({
-    queryKey: ['catalogo-adicionais'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('vendas_catalogo')
-        .select('*')
-        .eq('ativo', true)
-        .eq('categoria', 'adicional')
-        .gt('quantidade', 0)
-        .order('nome_produto');
-      if (error) throw error;
-      return data;
-    }
-  });
+  const acessorios = itensCustos;
+  const adicionais = itensCustos;
 
   // Zerar valor de pintura se a cor for "Aço galvanizado"
   useEffect(() => {
