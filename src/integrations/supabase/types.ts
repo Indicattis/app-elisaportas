@@ -934,6 +934,39 @@ export type Database = {
         }
         Relationships: []
       }
+      categorias_faturamento: {
+        Row: {
+          ativo: boolean
+          cor_hex: string | null
+          created_at: string
+          id: string
+          nome: string
+          ordem: number
+          tipos_produto: string[]
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          cor_hex?: string | null
+          created_at?: string
+          id?: string
+          nome: string
+          ordem?: number
+          tipos_produto?: string[]
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          cor_hex?: string | null
+          created_at?: string
+          id?: string
+          nome?: string
+          ordem?: number
+          tipos_produto?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       chamados_suporte: {
         Row: {
           cpf: string
