@@ -1,18 +1,46 @@
-## Causa
+## Objetivo
 
-Em `src/hooks/useHistoricoMetasVendas.ts` (linhas 121-128), o `userMap` é populado apenas com usuários cujo `role IN ('atendente', 'vendedor')`. Magno Andrigo Siqueira está em `admin_users` com `role = 'gerentedevendas'`, então fica fora do mapa e o nome cai no fallback `u?.nome || 'Vendedor'`.
+Adicionar dois novos botões no header da página `/direcao/estrategia/kits`, ao lado do botão "Template padrão", levando a duas novas páginas de configuração do cálculo de lucro:
 
-## Mudança
+- **Lucro de Instalações** → `/direcao/estrategia/kits/lucro-instalacoes`
+- **Lucro de Pinturas** → `/direcao/estrategia/kits/lucro-pinturas`
 
-Arquivo único: `src/hooks/useHistoricoMetasVendas.ts`.
+O cálculo atual permanece inalterado nesta etapa — as páginas apenas exibirão, de forma somente-leitura, como o lucro é apurado hoje, deixando o terreno pronto para uma futura edição configurável.
 
-- Remover o filtro `.in('role', ['atendente', 'vendedor'])` da consulta a `admin_users`, buscando todos os usuários (`user_id, nome, foto_perfil_url`).
-- Mantém o shape do `userMap` e o fallback `'Vendedor'` (que agora só deve aparecer se o `atendente_id` realmente não existir em `admin_users`).
-- Resultado: qualquer usuário com vendas no período (gerente de vendas, diretor, atendente, vendedor) é exibido com nome e foto reais.
+## Mudanças
 
-Sem alterações no banco, RLS, página ou hook live (`useProgressoMetasVendas`).
+### 1. `src/pages/direcao/estrategia/EstrategiaKits.tsx`
+Trocar o único `Link` "Template padrão" por um grupo com 3 botões (mesmo estilo glassmorphism atual):
 
-## Verificação
+- `Template padrão` → `/direcao/estrategia/kits/template` (ícone `LayoutTemplate`)
+- `Lucro de Instalações` → `/direcao/estrategia/kits/lucro-instalacoes` (ícone `Wrench`)
+- `Lucro de Pinturas` → `/direcao/estrategia/kits/lucro-pinturas` (ícone `Paintbrush`)
 
-- Em `/vendas/metas`, períodos passados com vendas do Magno passam a mostrar "Magno Andrigo Siqueira" com foto.
-- Vendedores/atendentes regulares continuam aparecendo normalmente.
+Container: `fixed top-20 right-6 z-40 flex items-center gap-2`.
+
+### 2. Nova página `src/pages/direcao/estrategia/EstrategiaLucroInstalacoes.tsx`
+Usa `MinimalistLayout` (mesmo padrão de `EstrategiaKitsTemplate`):
+- Título: "Cálculo do lucro de instalações"
+- backPath: `/direcao/estrategia/kits`
+- Conteúdo: card explicando a regra atual em vigor — lucro = 40% do valor total da instalação, custo = 60% do valor total (auto-faturado em `FaturamentoVendaMinimalista.tsx`, linhas 648–673).
+- Sem inputs editáveis nesta etapa; aviso de "Configuração editável em breve".
+
+### 3. Nova página `src/pages/direcao/estrategia/EstrategiaLucroPinturas.tsx`
+Mesmo padrão:
+- Título: "Cálculo do lucro de pinturas"
+- backPath: `/direcao/estrategia/kits`
+- Conteúdo: card descrevendo a regra atual da pintura (lucro fixo conforme já calculado hoje em vendas/faturamento — sem alterar a lógica).
+- Sem inputs editáveis.
+
+### 4. `src/App.tsx`
+Registrar as duas novas rotas logo após a rota `/kits/template`, ambas protegidas com `routeKey="direcao_estrategia"`:
+
+```tsx
+<Route path="/direcao/estrategia/kits/lucro-instalacoes" element={<ProtectedRoute routeKey="direcao_estrategia"><EstrategiaLucroInstalacoes /></ProtectedRoute>} />
+<Route path="/direcao/estrategia/kits/lucro-pinturas" element={<ProtectedRoute routeKey="direcao_estrategia"><EstrategiaLucroPinturas /></ProtectedRoute>} />
+```
+
+## Fora do escopo
+
+- Alterar a fórmula atual de cálculo de lucro de instalações ou pinturas.
+- Persistência de configurações editáveis (será feito numa próxima iteração).
