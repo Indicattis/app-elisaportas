@@ -255,196 +255,170 @@ export default function GastosPage() {
     [gastosFiltrados]
   );
 
-  return (
-    <div className="min-h-screen bg-black flex flex-col items-center overflow-hidden relative">
-      <AnimatedBreadcrumb
-        items={[
-          { label: "Home", path: "/home" },
-          { label: "Financeiro", path: "/financeiro" },
-          { label: "Gastos" },
-        ]}
-        mounted={mounted}
-      />
-      <button
-        onClick={() => navigate("/financeiro")}
-        className="fixed top-4 left-4 z-50 p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 hover:bg-white/10 transition-all duration-300"
-        style={{
-          opacity: mounted ? 1 : 0,
-          transform: mounted ? "translateX(0)" : "translateX(-20px)",
-          transition: "all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 100ms",
-        }}
+  const filtrosAtivos =
+    (filtroTipo && filtroTipo !== "all") ||
+    (filtroBanco && filtroBanco !== "all") ||
+    (filtroResponsavel && filtroResponsavel !== "all") ||
+    filtroDre !== "all";
+
+  const headerActions = (
+    <div className="flex items-center gap-2 flex-wrap justify-end">
+      {/* Month Navigator */}
+      <div className="flex items-center gap-1 bg-white/5 border border-white/20 rounded-lg px-1 py-0.5">
+        <button
+          onClick={() => {
+            const [y, m] = mesFiltro.split("-").map(Number);
+            const prev = new Date(y, m - 2, 1);
+            setMesFiltro(`${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, "0")}`);
+          }}
+          className="p-1.5 rounded-md hover:bg-white/10 text-white/60 hover:text-white transition-colors"
+        >
+          <ChevronLeft className="w-4 h-4" />
+        </button>
+        <div className="flex items-center gap-1.5 px-2 min-w-[130px] justify-center">
+          <CalendarIcon className="w-3.5 h-3.5 text-blue-400" />
+          <span className="text-sm text-white font-medium capitalize">
+            {(() => {
+              const [y, m] = mesFiltro.split("-").map(Number);
+              const d = new Date(y, m - 1, 1);
+              return d.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+            })()}
+          </span>
+        </div>
+        <button
+          onClick={() => {
+            const [y, m] = mesFiltro.split("-").map(Number);
+            const next = new Date(y, m, 1);
+            setMesFiltro(`${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}`);
+          }}
+          className="p-1.5 rounded-md hover:bg-white/10 text-white/60 hover:text-white transition-colors"
+        >
+          <ChevronRight className="w-4 h-4" />
+        </button>
+      </div>
+
+      <Select value={ordenarPor} onValueChange={(v) => setOrdenarPor(v as GastosOrdenarPor)}>
+        <SelectTrigger className="w-[190px] h-9 bg-white/5 border-white/20 text-white text-sm">
+          <ArrowUpDown className="w-3.5 h-3.5 mr-1.5 text-blue-400" />
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent className="bg-[#1a1a1a] border-white/20">
+          <SelectItem value="cadastro" className="text-white hover:bg-white/10">Data de Cadastro</SelectItem>
+          <SelectItem value="pagamento" className="text-white hover:bg-white/10">Data de Pagamento</SelectItem>
+        </SelectContent>
+      </Select>
+
+      <Select value={filtroTipo} onValueChange={setFiltroTipo}>
+        <SelectTrigger className="w-[170px] h-9 bg-white/5 border-white/20 text-white text-sm">
+          <SelectValue placeholder="Todos os tipos" />
+        </SelectTrigger>
+        <SelectContent className="bg-[#1a1a1a] border-white/20">
+          <SelectItem value="all" className="text-white hover:bg-white/10">Todos os tipos</SelectItem>
+          {tiposAtivos.map((t) => (
+            <SelectItem key={t.id} value={t.id} className="text-white hover:bg-white/10">
+              {t.nome}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Select value={filtroBanco} onValueChange={setFiltroBanco}>
+        <SelectTrigger className="w-[170px] h-9 bg-white/5 border-white/20 text-white text-sm">
+          <SelectValue placeholder="Todos os bancos" />
+        </SelectTrigger>
+        <SelectContent className="bg-[#1a1a1a] border-white/20">
+          <SelectItem value="all" className="text-white hover:bg-white/10">Todos os bancos</SelectItem>
+          {bancos.filter(b => b.ativo).map((b) => (
+            <SelectItem key={b.id} value={b.id} className="text-white hover:bg-white/10">
+              {b.nome}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Select value={filtroResponsavel} onValueChange={setFiltroResponsavel}>
+        <SelectTrigger className="w-[180px] h-9 bg-white/5 border-white/20 text-white text-sm">
+          <SelectValue placeholder="Todos os responsáveis" />
+        </SelectTrigger>
+        <SelectContent className="bg-[#1a1a1a] border-white/20">
+          <SelectItem value="all" className="text-white hover:bg-white/10">Todos os responsáveis</SelectItem>
+          {colaboradores.map((c) => (
+            <SelectItem key={c.user_id} value={c.user_id} className="text-white hover:bg-white/10">
+              {c.nome}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Select value={filtroDre} onValueChange={(v) => setFiltroDre(v as "all" | "sim" | "nao")}>
+        <SelectTrigger className="w-[160px] h-9 bg-white/5 border-white/20 text-white text-sm">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent className="bg-[#1a1a1a] border-white/20">
+          <SelectItem value="all" className="text-white hover:bg-white/10">DRE: Todos</SelectItem>
+          <SelectItem value="sim" className="text-white hover:bg-white/10">Aparece no DRE</SelectItem>
+          <SelectItem value="nao" className="text-white hover:bg-white/10">Não aparece no DRE</SelectItem>
+        </SelectContent>
+      </Select>
+
+      {filtrosAtivos ? (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => { setFiltroTipo(""); setFiltroBanco(""); setFiltroResponsavel(""); setFiltroDre("all"); }}
+          className="text-white/60 hover:text-white hover:bg-white/10 text-xs"
+        >
+          Limpar filtros
+        </Button>
+      ) : null}
+
+      <Button
+        onClick={gerarPDF}
+        variant="outline"
+        size="sm"
+        className="border-white/20 text-white hover:bg-white/10 text-sm gap-1.5 bg-transparent"
       >
-        <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-lg shadow-blue-500/20">
-          <ArrowLeft className="w-5 h-5" strokeWidth={1.5} />
-        </div>
-      </button>
+        <FileText className="w-4 h-4" /> PDF
+      </Button>
+      <Button
+        onClick={() => navigate("/financeiro/bancos")}
+        variant="outline"
+        size="sm"
+        className="border-white/20 text-white hover:bg-white/10 text-sm gap-1.5 bg-transparent"
+      >
+        <Landmark className="w-4 h-4" /> Bancos
+      </Button>
+      <Button
+        onClick={openCreate}
+        size="sm"
+        className="bg-blue-600 hover:bg-blue-700 text-white text-sm gap-1.5"
+      >
+        <Plus className="w-4 h-4" /> Novo Gasto
+      </Button>
+    </div>
+  );
 
-      <div className="w-full max-w-6xl px-4 pt-20 pb-10">
-        {/* Header */}
-        <div
-          className="flex items-center justify-between mb-6"
-          style={{
-            opacity: mounted ? 1 : 0,
-            transform: mounted ? "translateY(0)" : "translateY(20px)",
-            transition: "all 0.5s ease 200ms",
-          }}
-        >
-          <h1 className="text-xl font-semibold text-white">Gastos</h1>
-          <div className="flex items-center gap-3">
-            {/* Month Navigator */}
-            <div className="flex items-center gap-1 bg-white/5 border border-white/20 rounded-lg px-1 py-0.5">
-              <button
-                onClick={() => {
-                  const [y, m] = mesFiltro.split("-").map(Number);
-                  const prev = new Date(y, m - 2, 1);
-                  setMesFiltro(`${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, "0")}`);
-                }}
-                className="p-1.5 rounded-md hover:bg-white/10 text-white/60 hover:text-white transition-colors"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <div className="flex items-center gap-1.5 px-2 min-w-[130px] justify-center">
-                <CalendarIcon className="w-3.5 h-3.5 text-blue-400" />
-                <span className="text-sm text-white font-medium capitalize">
-                  {(() => {
-                    const [y, m] = mesFiltro.split("-").map(Number);
-                    const d = new Date(y, m - 1, 1);
-                    return d.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
-                  })()}
-                </span>
-              </div>
-              <button
-                onClick={() => {
-                  const [y, m] = mesFiltro.split("-").map(Number);
-                  const next = new Date(y, m, 1);
-                  setMesFiltro(`${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}`);
-                }}
-                className="p-1.5 rounded-md hover:bg-white/10 text-white/60 hover:text-white transition-colors"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-            <Button
-              onClick={gerarPDF}
-              variant="outline"
-              className="border-white/20 text-white hover:bg-white/10 text-sm gap-1.5"
-            >
-              <FileText className="w-4 h-4" /> PDF
-            </Button>
-            <Button
-              onClick={() => navigate("/financeiro/bancos")}
-              variant="outline"
-              className="border-white/20 text-white hover:bg-white/10 text-sm gap-1.5"
-            >
-              <Landmark className="w-4 h-4" /> Bancos
-            </Button>
-            <Button
-              onClick={openCreate}
-              className="bg-blue-600 hover:bg-blue-700 text-white text-sm gap-1.5"
-            >
-              <Plus className="w-4 h-4" /> Novo Gasto
-            </Button>
-          </div>
-        </div>
-
-        {/* Filtro por tipo */}
-        <div
-          className="mb-4"
-          style={{
-            opacity: mounted ? 1 : 0,
-            transform: mounted ? "translateY(0)" : "translateY(20px)",
-            transition: "all 0.5s ease 250ms",
-          }}
-        >
-          <div className="flex items-center gap-3 flex-wrap">
-            <Select value={filtroTipo} onValueChange={setFiltroTipo}>
-              <SelectTrigger className="w-[200px] bg-white/5 border-white/20 text-white">
-                <SelectValue placeholder="Todos os tipos" />
-              </SelectTrigger>
-              <SelectContent className="bg-[#1a1a1a] border-white/20">
-                <SelectItem value="all" className="text-white hover:bg-white/10">Todos os tipos</SelectItem>
-                {tiposAtivos.map((t) => (
-                  <SelectItem key={t.id} value={t.id} className="text-white hover:bg-white/10">
-                    {t.nome}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={filtroBanco} onValueChange={setFiltroBanco}>
-              <SelectTrigger className="w-[200px] bg-white/5 border-white/20 text-white">
-                <SelectValue placeholder="Todos os bancos" />
-              </SelectTrigger>
-              <SelectContent className="bg-[#1a1a1a] border-white/20">
-                <SelectItem value="all" className="text-white hover:bg-white/10">Todos os bancos</SelectItem>
-                {bancos.filter(b => b.ativo).map((b) => (
-                  <SelectItem key={b.id} value={b.id} className="text-white hover:bg-white/10">
-                    {b.nome}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={filtroResponsavel} onValueChange={setFiltroResponsavel}>
-              <SelectTrigger className="w-[200px] bg-white/5 border-white/20 text-white">
-                <SelectValue placeholder="Todos os responsáveis" />
-              </SelectTrigger>
-              <SelectContent className="bg-[#1a1a1a] border-white/20">
-                <SelectItem value="all" className="text-white hover:bg-white/10">Todos os responsáveis</SelectItem>
-                {colaboradores.map((c) => (
-                  <SelectItem key={c.user_id} value={c.user_id} className="text-white hover:bg-white/10">
-                    {c.nome}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={filtroDre} onValueChange={(v) => setFiltroDre(v as "all" | "sim" | "nao")}>
-              <SelectTrigger className="w-[200px] bg-white/5 border-white/20 text-white">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-[#1a1a1a] border-white/20">
-                <SelectItem value="all" className="text-white hover:bg-white/10">DRE: Todos</SelectItem>
-                <SelectItem value="sim" className="text-white hover:bg-white/10">Aparece no DRE</SelectItem>
-                <SelectItem value="nao" className="text-white hover:bg-white/10">Não aparece no DRE</SelectItem>
-              </SelectContent>
-            </Select>
-            {(filtroTipo && filtroTipo !== "all") || (filtroBanco && filtroBanco !== "all") || (filtroResponsavel && filtroResponsavel !== "all") || filtroDre !== "all" ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => { setFiltroTipo(""); setFiltroBanco(""); setFiltroResponsavel(""); setFiltroDre("all"); }}
-                className="text-white/60 hover:text-white hover:bg-white/10 text-xs"
-              >
-                Limpar filtros
-              </Button>
-            ) : null}
-            <div className="ml-auto flex items-center gap-3">
-              <Select value={ordenarPor} onValueChange={(v) => setOrdenarPor(v as GastosOrdenarPor)}>
-                <SelectTrigger className="w-[210px] bg-white/5 border-white/20 text-white">
-                  <ArrowUpDown className="w-3.5 h-3.5 mr-1.5 text-blue-400" />
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-[#1a1a1a] border-white/20">
-                  <SelectItem value="cadastro" className="text-white hover:bg-white/10">Data de Cadastro</SelectItem>
-                  <SelectItem value="pagamento" className="text-white hover:bg-white/10">Data de Pagamento</SelectItem>
-                </SelectContent>
-              </Select>
-              <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5">
-              <span className="text-xs text-white/50">Total:</span>
-              <span className="text-sm font-bold text-white">{formatCurrency(totalGastos)}</span>
-              <span className="text-xs text-white/40">({gastosFiltrados.length} {gastosFiltrados.length === 1 ? 'registro' : 'registros'})</span>
-              </div>
-            </div>
+  return (
+    <MinimalistLayout
+      title="Gastos"
+      subtitle="Controle de despesas do mês"
+      backPath="/financeiro"
+      headerActions={headerActions}
+      breadcrumbItems={[
+        { label: "Home", path: "/home" },
+        { label: "Financeiro", path: "/financeiro" },
+        { label: "Gastos" },
+      ]}
+      fullWidth
+    >
+      <div className="space-y-4">
+        <div className="flex items-center justify-end">
+          <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5">
+            <span className="text-xs text-white/50">Total:</span>
+            <span className="text-sm font-bold text-white">{formatCurrency(totalGastos)}</span>
+            <span className="text-xs text-white/40">({gastosFiltrados.length} {gastosFiltrados.length === 1 ? 'registro' : 'registros'})</span>
           </div>
         </div>
 
         {/* Table */}
-        <div
-          className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden"
-          style={{
-            opacity: mounted ? 1 : 0,
-            transform: mounted ? "translateY(0)" : "translateY(20px)",
-            transition: "all 0.5s ease 300ms",
-          }}
-        >
+        <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden">
           {loading ? (
             <div className="flex items-center justify-center py-20">
               <Loader2 className="w-6 h-6 text-white/40 animate-spin" />
