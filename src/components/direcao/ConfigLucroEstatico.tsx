@@ -231,50 +231,6 @@ export function ConfigLucroEstatico({
         </div>
       </div>
 
-      {/* Preview */}
-      <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl p-5 space-y-3">
-        <div className="text-sm text-white/80 font-medium">Pré-visualização</div>
-
-        {modo === "estatico" ? (
-          <>
-            <div className="text-xs text-white/60">
-              Para um item de {contextoLabel} no valor de{" "}
-              <span className="text-white">R$ 1.000,00</span>:
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-lg border border-white/10 bg-black/30 p-3">
-                <div className="text-[11px] uppercase tracking-wide text-white/50">Custo</div>
-                <div className="text-white font-mono text-base">
-                  R$ {exemploCusto.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </div>
-              </div>
-              <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3">
-                <div className="text-[11px] uppercase tracking-wide text-emerald-300/70">Lucro</div>
-                <div className="text-emerald-200 font-mono text-base">
-                  R$ {exemploLucro.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </div>
-              </div>
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="text-xs text-white/60">
-              Para uma {contextoLabel} de{" "}
-              <span className="text-white">3,00 m × 2,50 m</span> (7,5 m²):
-            </div>
-            <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3">
-              <div className="text-[11px] uppercase tracking-wide text-emerald-300/70">Lucro</div>
-              <div className="text-emerald-200 font-mono text-base">
-                R$ {exemploLucroFormula.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </div>
-            </div>
-            <div className="text-[11px] text-white/40">
-              O custo é calculado como <span className="text-white/60">valor_total − lucro</span> no momento do faturamento.
-            </div>
-          </>
-        )}
-      </div>
-
       <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 backdrop-blur-xl p-4 flex items-start gap-3">
         <Info className="h-4 w-4 text-blue-400 mt-0.5 flex-shrink-0" />
         <div className="text-xs text-white/70">
