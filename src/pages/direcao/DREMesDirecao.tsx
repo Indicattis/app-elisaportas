@@ -1030,10 +1030,10 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
           } else if (tipo === 'pintura_epoxi') {
             fat.pintura += valorTotal;
             luc.pintura += p.lucro_item || 0;
-          } else if (['acessorio', 'adicional', 'manutencao'].includes(tipo)) {
+          } else if (['acessorio', 'adicional'].includes(tipo)) {
             fat.avulsos += valorTotal;
             luc.avulsos += p.lucro_item || 0;
-          } else if (tipo === 'instalacao') {
+          } else if (['instalacao', 'manutencao'].includes(tipo)) {
             fat.instalacoes += valorTotal;
             luc.instalacoes += p.lucro_item || 0;
           }
@@ -1053,12 +1053,12 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         setFaturamento(fat);
         setLucro(luc);
 
-        // Top 5 itens avulsos (acessórios + adicionais + manutenção)
+        // Top 5 itens avulsos (acessórios + adicionais)
         const avulsosMap: Record<string, number> = {};
         produtos?.forEach((p: any) => {
           const nome = p.descricao || 'Sem descrição';
           const qtd = p.quantidade || 1;
-          if (['acessorio', 'adicional', 'manutencao'].includes(p.tipo_produto)) {
+          if (['acessorio', 'adicional'].includes(p.tipo_produto)) {
             avulsosMap[nome] = (avulsosMap[nome] || 0) + qtd;
           }
         });
@@ -1258,10 +1258,10 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
           }),
         );
 
-        // ---- Itens Avulsos (acessorio + adicional + manutencao) ----
+        // ---- Itens Avulsos (acessorio + adicional) ----
         setAvulsosDetalhe(
           buildMap(todosRows, (p) => {
-            if (!['acessorio', 'adicional', 'manutencao'].includes(p.tipo_produto)) return null;
+            if (!['acessorio', 'adicional'].includes(p.tipo_produto)) return null;
             const qty = p.quantidade || 1;
             const bruto = (p.valor_produto || 0) * qty;
             let desc = 0;
