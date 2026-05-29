@@ -1,11 +1,12 @@
-import { Wrench, Info } from "lucide-react";
+import { Wrench } from "lucide-react";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
+import { ConfigLucroEstatico } from "@/components/direcao/ConfigLucroEstatico";
 
 export default function EstrategiaLucroInstalacoes() {
   return (
     <MinimalistLayout
       title="Cálculo do lucro de instalações"
-      subtitle="Regra utilizada hoje para apurar o lucro das instalações nas vendas"
+      subtitle="Configure como o lucro das instalações é apurado no faturamento das vendas"
       backPath="/direcao/estrategia/kits"
       breadcrumbItems={[
         { label: "Home", path: "/home" },
@@ -28,28 +29,7 @@ export default function EstrategiaLucroInstalacoes() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl p-5 space-y-3">
-          <div className="text-sm text-white/80 font-medium">Regra atual</div>
-          <ul className="text-sm text-white/70 space-y-2 list-disc pl-5">
-            <li>
-              <span className="text-white">Lucro</span> = 40% do valor total da instalação
-            </li>
-            <li>
-              <span className="text-white">Custo</span> = 60% do valor total da instalação
-            </li>
-            <li>
-              O faturamento da instalação é gerado automaticamente quando a venda é processada.
-            </li>
-          </ul>
-        </div>
-
-        <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 backdrop-blur-xl p-4 flex items-start gap-3">
-          <Info className="h-4 w-4 text-blue-400 mt-0.5 flex-shrink-0" />
-          <div className="text-xs text-white/70">
-            A configuração editável dessa fórmula será disponibilizada em breve. Por enquanto a
-            regra acima é aplicada conforme o cálculo atual do sistema.
-          </div>
-        </div>
+        <ConfigLucroEstatico tipo="instalacao" contextoLabel="instalação" />
       </div>
     </MinimalistLayout>
   );

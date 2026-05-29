@@ -36,6 +36,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useProdutosVenda } from "@/hooks/useProdutosVenda";
 import { useFaturamento } from "@/hooks/useFaturamento";
+import { fetchPercentualCusto } from "@/hooks/useConfigLucro";
 import { LucroItemModal } from "@/components/vendas/LucroItemModal";
 import { ConfirmarFaturamentoDialog } from "@/components/vendas/ConfirmarFaturamentoDialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -561,24 +562,13 @@ export default function FaturamentoVendaMinimalista() {
     
     if (produtosPinturaParaAutoFaturar.length === 0) return;
     
-    // Auto-preencher lucro para cada produto de pintura: (altura x largura) x 25
+    // Auto-preencher lucro de pintura usando a % de custo configurada (modo estático)
     produtosPinturaParaAutoFaturar.forEach(async (produto) => {
       autoFaturadosRef.current.add(produto.id);
-      
-      // Extrair dimensoes do campo tamanho (formato "6.35x4.9") quando altura/largura forem nulos
-      let altura = produto.altura || 0;
-      let largura = produto.largura || 0;
-      
-      if ((!altura || !largura) && produto.tamanho) {
-        const partes = produto.tamanho.split('x');
-        if (partes.length === 2) {
-          largura = parseFloat(partes[0]) || 0;
-          altura = parseFloat(partes[1]) || 0;
-        }
-      }
-      
-      const lucroPintura = (altura * largura) * 25;
-      const custoCalculado = produto.valor_total - lucroPintura;
+
+      const pctCusto = await fetchPercentualCusto('pintura_epoxi');
+      const custoCalculado = produto.valor_total * (pctCusto / 100);
+      const lucroPintura = produto.valor_total - custoCalculado;
       await updateLucroItem({ 
         produtoId: produto.id, 
         lucroItem: lucroPintura,
@@ -659,9 +649,10 @@ export default function FaturamentoVendaMinimalista() {
     
     instalacoesParaAutoFaturar.forEach(async (produto) => {
       autoFaturadosRef.current.add(produto.id);
-      
-      const lucroInstalacao = produto.valor_total * 0.40;
-      const custoCalculado = produto.valor_total - lucroInstalacao;
+
+      const pctCusto = await fetchPercentualCusto('instalacao');
+      const custoCalculado = produto.valor_total * (pctCusto / 100);
+      const lucroInstalacao = produto.valor_total - custoCalculado;
       
       await updateLucroItem({ 
         produtoId: produto.id, 
@@ -1289,7 +1280,7 @@ export default function FaturamentoVendaMinimalista() {
                           {produto.faturamento ? (
                             <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30"><CheckCircle2 className="w-3 h-3 mr-1" />Faturado</Badge>
                           ) : temLucro ? (
-                            <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">{produto.tipo_produto === 'porta_enrolar' ? 'Tabela' : produto.tipo_produto === 'pintura_epoxi' ? 'Fórmula' : 'Informado'}</Badge>
+                        <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">{produto.tipo_produto === 'porta_enrolar' ? 'Tabela' : produto.tipo_produto === 'pintura_epoxi' ? 'Estático' : 'Informado'}</Badge>
                           ) : (
                             <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">Pendente</Badge>
                           )}

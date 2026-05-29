@@ -1,46 +1,66 @@
+
 ## Objetivo
 
-Adicionar dois novos botões no header da página `/direcao/estrategia/kits`, ao lado do botão "Template padrão", levando a duas novas páginas de configuração do cálculo de lucro:
+Transformar as páginas `/direcao/estrategia/kits/lucro-pinturas` e `/direcao/estrategia/kits/lucro-instalacoes` em telas de configuração reais, oferecendo como **primeira opção (modo padrão)** o cálculo estático mais simples: o usuário informa a **% de custo** e o sistema calcula automaticamente a **% de lucro** (lucro% = 100% − custo%). O valor configurado passa a ser usado no faturamento da venda.
 
-- **Lucro de Instalações** → `/direcao/estrategia/kits/lucro-instalacoes`
-- **Lucro de Pinturas** → `/direcao/estrategia/kits/lucro-pinturas`
+## O que muda na prática
 
-O cálculo atual permanece inalterado nesta etapa — as páginas apenas exibirão, de forma somente-leitura, como o lucro é apurado hoje, deixando o terreno pronto para uma futura edição configurável.
+Hoje, no faturamento da venda:
+- Instalação: lucro = 40% do valor total (fixo no código)
+- Pintura Epóxi: lucro = (altura × largura) × 25 (fórmula fixa no código)
 
-## Mudanças
+Depois desta mudança:
+- Instalação: lucro = (100% − custo% configurado) × valor total
+- Pintura Epóxi: lucro = (100% − custo% configurado) × valor total
+- Os valores padrão iniciais ficam iguais ao comportamento atual (instalação 60% custo / 40% lucro; pintura também passa a usar o modelo estático, padrão sugerido a definir com o usuário — proposta: 60% custo / 40% lucro).
 
-### 1. `src/pages/direcao/estrategia/EstrategiaKits.tsx`
-Trocar o único `Link` "Template padrão" por um grupo com 3 botões (mesmo estilo glassmorphism atual):
+A fórmula antiga da pintura (`altura × largura × 25`) deixa de ser usada nesse modo estático.
 
-- `Template padrão` → `/direcao/estrategia/kits/template` (ícone `LayoutTemplate`)
-- `Lucro de Instalações` → `/direcao/estrategia/kits/lucro-instalacoes` (ícone `Wrench`)
-- `Lucro de Pinturas` → `/direcao/estrategia/kits/lucro-pinturas` (ícone `Paintbrush`)
+## Telas
 
-Container: `fixed top-20 right-6 z-40 flex items-center gap-2`.
+Ambas as páginas terão a mesma estrutura:
 
-### 2. Nova página `src/pages/direcao/estrategia/EstrategiaLucroInstalacoes.tsx`
-Usa `MinimalistLayout` (mesmo padrão de `EstrategiaKitsTemplate`):
-- Título: "Cálculo do lucro de instalações"
-- backPath: `/direcao/estrategia/kits`
-- Conteúdo: card explicando a regra atual em vigor — lucro = 40% do valor total da instalação, custo = 60% do valor total (auto-faturado em `FaturamentoVendaMinimalista.tsx`, linhas 648–673).
-- Sem inputs editáveis nesta etapa; aviso de "Configuração editável em breve".
+1. **Card "Modo de cálculo"** — exibe a opção ativa. Inicialmente só existe a opção "Estático (% de custo fixa)", já marcada como padrão. Espaço preparado para futuras opções (ex.: fórmula por dimensão).
+2. **Card "Configuração estática"** — campo numérico para informar a **% de custo** (0–100, aceita 1 casa decimal). Ao lado, exibe automaticamente a **% de lucro calculada** (100 − custo). Botão "Salvar".
+3. **Card "Pré-visualização"** — mostra um exemplo: para um valor de R$ 1.000, qual seria o custo e o lucro resultantes com a configuração atual.
 
-### 3. Nova página `src/pages/direcao/estrategia/EstrategiaLucroPinturas.tsx`
-Mesmo padrão:
-- Título: "Cálculo do lucro de pinturas"
-- backPath: `/direcao/estrategia/kits`
-- Conteúdo: card descrevendo a regra atual da pintura (lucro fixo conforme já calculado hoje em vendas/faturamento — sem alterar a lógica).
-- Sem inputs editáveis.
+## Persistência
 
-### 4. `src/App.tsx`
-Registrar as duas novas rotas logo após a rota `/kits/template`, ambas protegidas com `routeKey="direcao_estrategia"`:
+Criar tabela `vendas_config_lucro` no Supabase para guardar as configurações por tipo:
 
-```tsx
-<Route path="/direcao/estrategia/kits/lucro-instalacoes" element={<ProtectedRoute routeKey="direcao_estrategia"><EstrategiaLucroInstalacoes /></ProtectedRoute>} />
-<Route path="/direcao/estrategia/kits/lucro-pinturas" element={<ProtectedRoute routeKey="direcao_estrategia"><EstrategiaLucroPinturas /></ProtectedRoute>} />
-```
+- `tipo` (text, único): `'instalacao'` ou `'pintura_epoxi'`
+- `modo` (text): `'estatico'` (único valor por enquanto)
+- `percentual_custo` (numeric): 0–100
+- updated_at / updated_by
 
-## Fora do escopo
+Seed inicial:
+- `instalacao` → 60% custo (mantém comportamento atual)
+- `pintura_epoxi` → 60% custo (a confirmar com o usuário)
 
-- Alterar a fórmula atual de cálculo de lucro de instalações ou pinturas.
-- Persistência de configurações editáveis (será feito numa próxima iteração).
+RLS: leitura para `authenticated`; escrita apenas para perfis com acesso a `direcao_estrategia` (via `has_role` ou helper já usado nas outras telas de estratégia — confirmar padrão existente).
+
+## Integração com o faturamento
+
+No `src/pages/administrativo/FaturamentoVendaMinimalista.tsx`:
+
+- **Instalação** (efeito que hoje faz `lucroInstalacao = valor_total * 0.40`): passa a ler `percentual_custo` da config `instalacao` e calcular `lucro = valor_total * (1 - custo/100)`.
+- **Pintura Epóxi** (efeito que hoje faz `lucroPintura = (altura * largura) * 25`): passa a ler `percentual_custo` da config `pintura_epoxi` e calcular `lucro = valor_total * (1 - custo/100)`. O badge "Fórmula" exibido no item passa a ser "Estático".
+
+Cache leve via React Query para evitar chamadas repetidas dentro do mesmo faturamento.
+
+## Detalhes técnicos
+
+- Novo hook `useConfigLucro(tipo)` com React Query (`select`/`upsert` em `vendas_config_lucro`).
+- Componente compartilhado `ConfigLucroEstatico` que recebe `tipo` e renderiza os 3 cards acima, reutilizado pelas duas páginas.
+- Validação: custo entre 0 e 100, máximo 1 casa decimal.
+- Estilo seguindo o glassmorphism unificado (bg-white/5, backdrop-blur-xl, border-white/10).
+
+## Itens a confirmar antes de implementar
+
+1. % de custo padrão inicial para **pintura epóxi** no modo estático (sugestão: 60%).
+2. Permissão de edição: liberar para qualquer usuário com acesso à rota `direcao_estrategia`, ou exigir papel específico (ex.: CEO/Diretor)?
+
+## Fora de escopo
+
+- Outros modos de cálculo (por dimensão, por faixa de valor, por tipo de pintura) — ficam preparados estruturalmente, mas não implementados agora.
+- Recalcular vendas já faturadas com a nova configuração — só passa a valer para faturamentos novos.
