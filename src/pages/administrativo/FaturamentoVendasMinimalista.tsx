@@ -943,11 +943,9 @@ export default function FaturamentoMinimalista() {
       .reduce((sum: number, p: any) => sum + (p.valor_produto || 0), 0);
     const valorPintura = portas.filter((p: any) => p.tipo_produto === 'pintura_epoxi')
       .reduce((sum: number, p: any) => sum + (p.valor_pintura || 0), 0);
-    const valorAcessorios = portas.filter((p: any) => p.tipo_produto === 'acessorio')
+    const valorAvulsos = portas.filter((p: any) => ['acessorio', 'adicional', 'manutencao'].includes(p.tipo_produto))
       .reduce((sum: number, p: any) => sum + (p.valor_produto || 0), 0);
-    const valorAdicionais = portas.filter((p: any) => ['adicional', 'manutencao'].includes(p.tipo_produto))
-      .reduce((sum: number, p: any) => sum + (p.valor_produto || 0), 0);
-    return { valorPortas, valorPintura, valorAcessorios, valorAdicionais };
+    return { valorPortas, valorPintura, valorAvulsos };
   };
 
   // Right sidebar content
@@ -988,14 +986,13 @@ export default function FaturamentoMinimalista() {
   );
 
   const selectedVendaContent = selectedVenda ? (() => {
-    const { valorPortas, valorPintura, valorAcessorios, valorAdicionais } = getVendaDetailValues(selectedVenda);
+    const { valorPortas, valorPintura, valorAvulsos } = getVendaDetailValues(selectedVenda);
     const detailItems = [
       { label: 'Vl. Portas', value: valorPortas, icon: <DollarSign className="h-3.5 w-3.5" />, color: 'text-blue-400' },
       { label: 'Vl. Pintura', value: valorPintura, icon: <Paintbrush className="h-3.5 w-3.5" />, color: 'text-orange-400' },
       { label: 'Instalação', value: selectedVenda.valor_instalacao || 0, icon: <Wrench className="h-3.5 w-3.5" />, color: 'text-cyan-400' },
       { label: 'Frete', value: selectedVenda.valor_frete || 0, icon: <Truck className="h-3.5 w-3.5" />, color: 'text-amber-400' },
-      { label: 'Acessórios', value: valorAcessorios, icon: <Package className="h-3.5 w-3.5" />, color: 'text-pink-400' },
-      { label: 'Adicionais', value: valorAdicionais, icon: <PlusCircle className="h-3.5 w-3.5" />, color: 'text-indigo-400' },
+      { label: 'Itens Avulsos', value: valorAvulsos, icon: <Package className="h-3.5 w-3.5" />, color: 'text-emerald-400' },
     ];
     return (
       <div className="space-y-5">
