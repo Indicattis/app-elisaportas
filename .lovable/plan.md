@@ -1,28 +1,28 @@
-## Problemas em `/logistica/frete/internos`
+## Mudanças
 
-1. O modal de edição (`FreteDialog`) ainda usa o estilo padrão claro do shadcn, destoando do resto do app (glassmorphism preto + branco já usado, ex.: o próprio `AlertDialog` de exclusão na mesma página).
-2. Ao clicar em "Editar", o campo Cidade não aparece preenchido com o valor salvo.
+### 1. `src/pages/administrativo/AdministrativoHub.tsx`
+- Remover o item `{ label: "Documentos", ... }` do array `menuItems` (some das versões mobile e desktop, que já compartilham o mesmo array).
+- Remover o import não usado `FolderOpen`.
 
-## O que vou fazer
+### 2. `src/components/marketing/DocumentosPanel.tsx` (novo)
+- Extrair o miolo do `DocumentosMinimalista` (filtros + estados de loading/empty + grid de documentos) em um componente sem `MinimalistLayout`, recebendo nada como prop.
+- Mantém os links de "Novo" / "Adicionar Documento" apontando para `/administrativo/documentos/novo` (rota standalone permanece funcional).
+- Exporta também o `headerActions` (refresh + botão Novo) para ser reutilizado pelo Mídias quando a aba ativa for "Documentos".
 
-**Arquivo único:** `src/components/frete/FreteDialog.tsx`
+### 3. `src/pages/marketing/MidiasMinimalista.tsx`
+- Adicionar sistema de abas copiado de `src/pages/direcao/estrategia/EstrategiaKits.tsx`:
+  - Componente local `TabsBar` idêntico (grid arredondado glassy com indicador azul deslizante e `lastDisplayedIndex` persistido fora do componente).
+  - Abas: `{ key: 'midias', label: 'Mídias', icon: ImageIcon }` e `{ key: 'documentos', label: 'Documentos', icon: FileText }`.
+  - Estado da aba via `useSearchParams` (`?tab=documentos`; sem param = mídias), seguindo o mesmo padrão do Kits.
+- `headerActions` do `MinimalistLayout` muda conforme a aba: na aba Mídias mostra Select de bucket + botão Upload; na aba Documentos mostra os actions vindos do `DocumentosPanel` (refresh + Novo).
+- Renderizar `<TabsBar />` no topo do conteúdo, dentro do `MinimalistLayout`.
+- Quando `tab === 'midias'`: mostrar o conteúdo atual (modais + grid de arquivos). Quando `tab === 'documentos'`: mostrar `<DocumentosPanel />`.
+- Manter `backPath="/marketing"` e o breadcrumb atual.
 
-### 1. Aplicar o aesthetic unificado (glassmorphism)
-- `DialogContent`: `bg-black/90 border-white/10 backdrop-blur-xl text-white`
-- `DialogTitle` em branco; labels em `text-white/80`.
-- `Input`, `Textarea`, `SelectTrigger`: `bg-white/5 border-white/10 text-white placeholder:text-white/40`.
-- `SelectContent`: `bg-black/90 border-white/10 backdrop-blur-xl text-white`, com `SelectItem` em hover branco translúcido.
-- Botão "Cancelar": `variant outline` adaptado (`border-white/20 bg-white/10 text-white hover:bg-white/15`); "Salvar" mantém o azul/primary.
-- Texto de ajuda do cálculo em `text-white/50`.
-
-### 2. Corrigir preenchimento da Cidade
-Causa: o `Select` de cidade depende de `formData.estado` estar setado **antes** de o `<SelectItem>` da cidade existir. Hoje o `useEffect` faz `setFormData` em um único call, mas o `cidadesOptions` (useMemo) já cobre o caso prepensando a cidade se não estiver na lista — porém o `<Select>` shadcn não exibe valor quando `disabled` é true no mesmo render em que recebe o value. Vou:
-
-- Trocar `disabled={!formData.estado}` para considerar também quando estamos editando (`disabled={!formData.estado && !isEditing}` — irrelevante aqui já que estado é setado junto). O fix real:
-- Garantir que `cidadesOptions` sempre inclua `formData.cidade` quando houver valor (já faz, mas vou reforçar com trim/normalize para evitar mismatch caso o estado no banco esteja em formato diferente).
-- Forçar reset do `Select` apenas quando o usuário troca o estado manualmente (já está), mas **não** zerar a cidade no primeiro render do efeito de prefill.
-- Adicionar um `key={frete?.id ?? "novo"}` no `<Select>` da cidade para forçar remontagem quando o registro em edição muda, garantindo que o `SelectValue` reflita o valor atual.
+### 4. `src/pages/administrativo/DocumentosMinimalista.tsx`
+- Refatorar para apenas envelopar o novo `DocumentosPanel` dentro do `MinimalistLayout` existente, preservando título, breadcrumb e `headerActions`. Sem mudança visual da página standalone.
 
 ### Fora do escopo
-- Nenhuma mudança em hooks, banco, ou na página `FreteMinimalista.tsx`.
-- Nenhum ajuste de lógica de cálculo (km × 6) ou validações.
+- Rotas em `App.tsx` (mantém `/administrativo/documentos` e `/administrativo/documentos/novo` ativas).
+- Hooks (`useDocumentos`), banco de dados, permissões/`routeKey`.
+- Estilo/UX do conteúdo interno das duas seções.
