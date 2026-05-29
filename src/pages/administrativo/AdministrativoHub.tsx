@@ -1,13 +1,12 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { DollarSign, Users, ShoppingCart, FileText, Lock, ArrowLeft, FolderOpen, AlertTriangle } from "lucide-react";
+import { Users, ShoppingCart, FileText, Lock, ArrowLeft, FolderOpen, AlertTriangle } from "lucide-react";
 
 import { useToast } from "@/hooks/use-toast";
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { DelayedParticles } from '@/components/DelayedParticles';
 
 const menuItems = [
-  { label: "Financeiro", icon: DollarSign, path: "/administrativo/financeiro", ativo: true },
   { label: "RH/DP", icon: Users, path: "/administrativo/rh-dp", ativo: true },
   { label: "Compras & Suprimentos", icon: ShoppingCart, path: "/administrativo/compras", ativo: true },
   { label: "Fiscal & Contábil", icon: FileText, path: "/administrativo/fiscal", ativo: true },
