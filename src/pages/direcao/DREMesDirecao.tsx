@@ -446,11 +446,14 @@ function PrintReport({
               { key: 'portas', label: 'Portas' },
               { key: 'pintura', label: 'Pintura' },
               { key: 'instalacoes', label: 'Instalações' },
-              { key: 'acessorios', label: 'Acessórios' },
-              { key: 'adicionais', label: 'Itens Avulso' },
+              { key: 'avulsos', label: 'Itens Avulsos' },
             ].map((c, i) => {
-              const f = faturamento[c.key as keyof FaturamentoProduto];
-              const l = lucro[c.key as keyof FaturamentoProduto];
+              const f = c.key === 'avulsos'
+                ? (faturamento.acessorios || 0) + (faturamento.adicionais || 0)
+                : faturamento[c.key as keyof FaturamentoProduto];
+              const l = c.key === 'avulsos'
+                ? (lucro.acessorios || 0) + (lucro.adicionais || 0)
+                : lucro[c.key as keyof FaturamentoProduto];
               const m = f > 0 ? (l / f) * 100 : 0;
               return (
                 <tr key={c.key} style={trZebra(i)}>
