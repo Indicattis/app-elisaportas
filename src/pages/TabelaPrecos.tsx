@@ -49,6 +49,7 @@ interface TabelaPrecosProps {
   backPathOverride?: string;
   breadcrumbItemsOverride?: { label: string; path?: string }[];
   extraHeaderActions?: ReactNode;
+  beforeContent?: ReactNode;
 }
 
 export default function TabelaPrecos({
@@ -63,6 +64,7 @@ export default function TabelaPrecos({
   backPathOverride,
   breadcrumbItemsOverride,
   extraHeaderActions,
+  beforeContent,
 }: TabelaPrecosProps = {}) {
   const [searchTerm, setSearchTerm] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
@@ -264,6 +266,7 @@ export default function TabelaPrecos({
       headerActions={headerActions}
       fullWidth
     >
+      {beforeContent}
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'portas' | 'catalogo')} className="space-y-6">
         {!hideCatalogoTab && (
           <TabsList className="bg-white/5 border border-white/10">
