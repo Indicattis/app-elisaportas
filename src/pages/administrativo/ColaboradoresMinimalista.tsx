@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { Search, X, Edit, Loader2, FileText, Plus, FileDown } from "lucide-react";
+import { Search, X, Edit, Loader2, Plus, FileDown } from "lucide-react";
 
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Input } from "@/components/ui/input";
