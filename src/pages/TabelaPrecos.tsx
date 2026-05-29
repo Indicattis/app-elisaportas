@@ -49,6 +49,7 @@ interface TabelaPrecosProps {
   backPathOverride?: string;
   breadcrumbItemsOverride?: { label: string; path?: string }[];
   extraHeaderActions?: ReactNode;
+  beforeContent?: ReactNode;
 }
 
 export default function TabelaPrecos({
@@ -63,6 +64,7 @@ export default function TabelaPrecos({
   backPathOverride,
   breadcrumbItemsOverride,
   extraHeaderActions,
+  beforeContent,
 }: TabelaPrecosProps = {}) {
   const [searchTerm, setSearchTerm] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
