@@ -166,15 +166,15 @@ function GastosDoTipoDialog({
   open,
   onOpenChange,
   mes,
+  tipoCustoId,
   tipoNome,
-  categoria,
   formatCurrency,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   mes: string;
+  tipoCustoId: string | null;
   tipoNome: string;
-  categoria: 'fixa' | 'variavel' | 'imposto' | null;
   formatCurrency: (v: number) => string;
 }) {
   const navigate = useNavigate();
@@ -182,16 +182,19 @@ function GastosDoTipoDialog({
   const [rows, setRows] = useState<GastoRow[]>([]);
 
   useEffect(() => {
-    if (!open || !tipoNome || !categoria || !mes) return;
+    if (!open || !tipoCustoId || !mes) return;
     let cancelled = false;
     (async () => {
       setLoading(true);
+      const start = `${mes}-01`;
+      const [y, m] = mes.split('-').map(Number);
+      const end = new Date(y, m, 0).toISOString().split('T')[0];
       const { data, error } = await supabase
-        .from('despesas_manuais_lancamentos' as any)
+        .from('gastos' as any)
         .select('id, data, descricao, valor')
-        .eq('mes_referencia', `${mes}-01`)
-        .eq('categoria', categoria)
-        .eq('tipo_nome', tipoNome)
+        .eq('tipo_custo_id', tipoCustoId)
+        .gte('data', start)
+        .lte('data', end)
         .order('data', { ascending: false });
 
       if (error || !data) {
@@ -207,7 +210,7 @@ function GastosDoTipoDialog({
       if (!cancelled) { setRows(mapped); setLoading(false); }
     })();
     return () => { cancelled = true; };
-  }, [open, tipoNome, categoria, mes]);
+  }, [open, tipoCustoId, mes]);
 
   const total = rows.reduce((s, r) => s + r.valor, 0);
 
@@ -839,7 +842,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
   const [despesasFolha, setDespesasFolha] = useState<DespesaAgrupada[]>([]);
   const [despesasVariaveis, setDespesasVariaveis] = useState<DespesaAgrupada[]>([]);
   const [despesasImpostos, setDespesasImpostos] = useState<DespesaAgrupada[]>([]);
-  const [tipoModal, setTipoModal] = useState<{ nome: string; categoria: 'fixa' | 'variavel' | 'imposto' } | null>(null);
+  const [tipoModal, setTipoModal] = useState<{ id: string; nome: string } | null>(null);
   const [tiposCustosFixos, setTiposCustosFixos] = useState<TipoCustoVariavel[]>([]);
   const [tiposCustosVariaveis, setTiposCustosVariaveis] = useState<TipoCustoVariavel[]>([]);
   const [topAcessorios, setTopAcessorios] = useState<{nome: string, qtd: number}[]>([]);
@@ -866,53 +869,71 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
   const fetchDespesasFromGastos = async () => {
     if (!mes) return;
     const start = `${mes}-01`;
+    const [y, m] = mes.split('-').map(Number);
+    const end = new Date(y, m, 0).toISOString().split('T')[0];
 
-    // Lançamentos manuais (fixas / variáveis / impostos)
-    const { data: lancs, error } = await supabase
-      .from('despesas_manuais_lancamentos' as any)
-      .select('id, categoria, tipo_nome, valor, descricao, data')
-      .eq('mes_referencia', start);
+    // Despesas vêm de gastos cruzado com tipos_custos (aparece_no_dre)
+    const [{ data: gastos, error: gErr }, { data: tipos, error: tErr }] = await Promise.all([
+      supabase
+        .from('gastos' as any)
+        .select('valor, tipo_custo_id')
+        .gte('data', start)
+        .lte('data', end),
+      supabase
+        .from('tipos_custos' as any)
+        .select('id, nome, tipo, aparece_no_dre')
+        .eq('aparece_no_dre', true),
+    ]);
 
-    if (error) {
-      console.error('Erro ao buscar lançamentos manuais:', error);
+    if (gErr || tErr) {
+      console.error('Erro ao buscar despesas (gastos/tipos_custos):', gErr || tErr);
       setDespesasFixas([]);
       setDespesasVariaveis([]);
       setDespesasImpostos([]);
     } else {
-      const agrupado: Record<string, { nome: string; categoria: string; valor: number; gastos: { id: string; descricao: string | null; data: string; valor: number }[] }> = {};
-      ((lancs || []) as any[]).forEach((l: any) => {
-        const key = `${l.categoria}::${l.tipo_nome}`;
-        if (!agrupado[key]) {
-          agrupado[key] = { nome: l.tipo_nome, categoria: l.categoria, valor: 0, gastos: [] };
-        }
-        agrupado[key].valor += Number(l.valor) || 0;
-        agrupado[key].gastos.push({
-          id: l.id,
-          descricao: l.descricao ?? null,
-          data: l.data,
-          valor: Number(l.valor) || 0,
-        });
+      const tiposMap: Record<string, { nome: string; tipo: string }> = {};
+      ((tipos || []) as any[]).forEach((t: any) => {
+        tiposMap[t.id] = { nome: t.nome, tipo: t.tipo };
       });
-      const items = Object.entries(agrupado).map(([key, v]) => ({
-        id: key,
+
+      const agrupado: Record<string, { nome: string; tipo: string; valor: number }> = {};
+      ((gastos || []) as any[]).forEach((g: any) => {
+        const tipo = tiposMap[g.tipo_custo_id];
+        if (!tipo) return;
+        if (!agrupado[g.tipo_custo_id]) {
+          agrupado[g.tipo_custo_id] = { nome: tipo.nome, tipo: tipo.tipo, valor: 0 };
+        }
+        agrupado[g.tipo_custo_id].valor += Number(g.valor) || 0;
+      });
+
+      const items = Object.entries(agrupado).map(([id, v]) => ({
+        id,
         nome: v.nome,
         valor_real: v.valor,
-        categoria: v.categoria,
-        gastos: v.gastos.slice().sort((a, b) => a.data.localeCompare(b.data)),
+        tipo: v.tipo,
       }));
-      setDespesasFixas(items.filter(i => i.categoria === 'fixa').sort((a, b) => a.nome.localeCompare(b.nome)));
-      setDespesasVariaveis(items.filter(i => i.categoria === 'variavel').sort((a, b) => a.nome.localeCompare(b.nome)));
-      setDespesasImpostos(items.filter(i => i.categoria === 'imposto').sort((a, b) => a.nome.localeCompare(b.nome)));
+
+      setDespesasFixas(
+        items
+          .filter(i => i.tipo === 'fixa' && !isFolha(i.nome))
+          .sort((a, b) => a.nome.localeCompare(b.nome))
+      );
+      setDespesasVariaveis(
+        items
+          .filter(i => i.tipo === 'variavel' && !isFolha(i.nome))
+          .sort((a, b) => a.nome.localeCompare(b.nome))
+      );
+      setDespesasImpostos([]);
     }
 
-    // Folha salarial — fonte: despesas_manuais_folha (total por colaborador)
+    // Folha salarial — fonte: custos_folha_mensais (total por colaborador)
     const { data: folhaItens, error: folhaErr } = await supabase
-      .from('despesas_manuais_folha' as any)
-      .select('id, colaborador_nome, total')
+      .from('custos_folha_mensais' as any)
+      .select('id, colaborador_nome, valor')
       .eq('mes_referencia', start);
 
     if (folhaErr) {
-      console.error('Erro ao buscar folha manual:', folhaErr);
+      console.error('Erro ao buscar folha:', folhaErr);
       setDespesasFolha([]);
     } else {
       setDespesasFolha(
@@ -920,7 +941,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
           .map((f) => ({
             id: f.id,
             nome: f.colaborador_nome,
-            valor_real: Number(f.total) || 0,
+            valor_real: Number(f.valor) || 0,
           }))
           .sort((a, b) => a.nome.localeCompare(b.nome))
       );
@@ -1494,7 +1515,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
               total={totalDespFixas}
               formatCurrency={formatCurrency}
               tiposDisponiveis={tiposCustosFixos.filter(t => !isFolha(t.nome))}
-              onClickTipo={(_id, nome) => setTipoModal({ nome, categoria: 'fixa' })}
+              onClickTipo={(id, nome) => setTipoModal({ id, nome })}
             />
             <DespesaSectionReadOnly
               title="Despesas Variáveis"
@@ -1502,14 +1523,14 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
               total={totalDespVariaveis}
               formatCurrency={formatCurrency}
               tiposDisponiveis={tiposCustosVariaveis}
-              onClickTipo={(_id, nome) => setTipoModal({ nome, categoria: 'variavel' })}
+              onClickTipo={(id, nome) => setTipoModal({ id, nome })}
             />
             <DespesaSectionReadOnly
               title="Despesas de Imposto"
               despesas={despesasImpostos}
               total={totalDespImpostos}
               formatCurrency={formatCurrency}
-              onClickTipo={(_id, nome) => setTipoModal({ nome, categoria: 'imposto' })}
+              onClickTipo={(id, nome) => setTipoModal({ id, nome })}
             />
           </div>
           {viewMode === 'full' && (
@@ -1583,8 +1604,8 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         open={!!tipoModal}
         onOpenChange={(o) => { if (!o) setTipoModal(null); }}
         mes={mes || ''}
+        tipoCustoId={tipoModal?.id || null}
         tipoNome={tipoModal?.nome || ''}
-        categoria={tipoModal?.categoria || null}
         formatCurrency={formatCurrency}
       />
       <PortasDetalheDialog
