@@ -27,14 +27,7 @@ interface VendaPendentePedidoCardProps {
   mode?: 'pedido' | 'faturamento' | 'contrato';
 }
 
-const FORMAS_PAGAMENTO_LABELS: Record<string, string> = {
-  boleto: "Boleto",
-  a_vista: "À Vista",
-  cartao_credito: "Cartão",
-  dinheiro: "Dinheiro",
-  avista: "À Vista",
-  credito: "Cartão",
-};
+import { formatarMetodoPagamento } from "@/utils/pagamentoResumo";
 
 const isAcoGalvanizado = (corNome: string) => {
   const normalized = corNome.toLowerCase().trim();
@@ -101,10 +94,10 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
   const pagamentoLabel = (() => {
     const methods: string[] = [];
     if (venda.metodo_pagamento) {
-      methods.push(FORMAS_PAGAMENTO_LABELS[venda.metodo_pagamento] || venda.metodo_pagamento);
+      methods.push(formatarMetodoPagamento(venda.metodo_pagamento));
     }
     if (venda.metodo_pagamento_entrega) {
-      const label2 = FORMAS_PAGAMENTO_LABELS[venda.metodo_pagamento_entrega] || venda.metodo_pagamento_entrega;
+      const label2 = formatarMetodoPagamento(venda.metodo_pagamento_entrega);
       if (!methods.includes(label2)) methods.push(label2);
     }
     return methods.length > 0 ? methods.join('/') : null;
