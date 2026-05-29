@@ -16,8 +16,7 @@ interface FaturamentoProduto {
   portas: number;
   pintura: number;
   instalacoes: number;
-  acessorios: number;
-  adicionais: number;
+  avulsos: number;
   total: number;
 }
 
@@ -295,8 +294,7 @@ function PrintReport({
   totalDespVariaveis,
   totalDespImpostos,
   totalProjetadoAnual,
-  topAcessorios,
-  topAdicionais,
+  topAvulsos,
   estoqueResumo,
   lucroLiquidoFinal,
   percBrutoFinal,
@@ -318,8 +316,7 @@ function PrintReport({
   totalDespVariaveis: number;
   totalDespImpostos: number;
   totalProjetadoAnual: number;
-  topAcessorios: { nome: string; qtd: number }[];
-  topAdicionais: { nome: string; qtd: number }[];
+  topAvulsos: { nome: string; qtd: number }[];
   estoqueResumo: { valorTotal: number; totalItens: number };
   lucroLiquidoFinal: number;
   percBrutoFinal: number;
@@ -448,12 +445,8 @@ function PrintReport({
               { key: 'instalacoes', label: 'Instalações' },
               { key: 'avulsos', label: 'Itens Avulsos' },
             ].map((c, i) => {
-              const f = c.key === 'avulsos'
-                ? (faturamento.acessorios || 0) + (faturamento.adicionais || 0)
-                : faturamento[c.key as keyof FaturamentoProduto];
-              const l = c.key === 'avulsos'
-                ? (lucro.acessorios || 0) + (lucro.adicionais || 0)
-                : lucro[c.key as keyof FaturamentoProduto];
+              const f = faturamento[c.key as keyof FaturamentoProduto];
+              const l = lucro[c.key as keyof FaturamentoProduto];
               const m = f > 0 ? (l / f) * 100 : 0;
               return (
                 <tr key={c.key} style={trZebra(i)}>
@@ -839,8 +832,8 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
   const showDespesas = viewMode === 'full' || viewMode === 'despesas';
   const showResumoFinal = viewMode === 'full' || viewMode === 'resultados';
   const [loading, setLoading] = useState(true);
-  const [faturamento, setFaturamento] = useState<FaturamentoProduto>({ portas: 0, pintura: 0, instalacoes: 0, acessorios: 0, adicionais: 0, total: 0 });
-  const [lucro, setLucro] = useState<FaturamentoProduto>({ portas: 0, pintura: 0, instalacoes: 0, acessorios: 0, adicionais: 0, total: 0 });
+  const [faturamento, setFaturamento] = useState<FaturamentoProduto>({ portas: 0, pintura: 0, instalacoes: 0, avulsos: 0, total: 0 });
+  const [lucro, setLucro] = useState<FaturamentoProduto>({ portas: 0, pintura: 0, instalacoes: 0, avulsos: 0, total: 0 });
   const [despesasFixas, setDespesasFixas] = useState<DespesaAgrupada[]>([]);
   const [despesasFolha, setDespesasFolha] = useState<DespesaAgrupada[]>([]);
   const [despesasVariaveis, setDespesasVariaveis] = useState<DespesaAgrupada[]>([]);
@@ -848,16 +841,13 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
   const [tipoModal, setTipoModal] = useState<{ id: string; nome: string } | null>(null);
   const [tiposCustosFixos, setTiposCustosFixos] = useState<TipoCustoVariavel[]>([]);
   const [tiposCustosVariaveis, setTiposCustosVariaveis] = useState<TipoCustoVariavel[]>([]);
-  const [topAcessorios, setTopAcessorios] = useState<{nome: string, qtd: number}[]>([]);
-  const [topAdicionais, setTopAdicionais] = useState<{nome: string, qtd: number}[]>([]);
+  const [topAvulsos, setTopAvulsos] = useState<{nome: string, qtd: number}[]>([]);
   const [estoqueResumo, setEstoqueResumo] = useState({ valorTotal: 0, totalItens: 0 });
   const [vendasListagem, setVendasListagem] = useState<{ id: string; data: string; cliente: string; valorTabela: number; valorVenda: number; desconto: number; lucro: number }[]>([]);
   const [portasModalOpen, setPortasModalOpen] = useState(false);
   const [portasDetalhe, setPortasDetalhe] = useState<VendaComPortasRow[]>([]);
   const [pinturaModalOpen, setPinturaModalOpen] = useState(false);
   const [pinturaDetalhe, setPinturaDetalhe] = useState<VendaComItensSimplesRow[]>([]);
-  const [acessoriosModalOpen, setAcessoriosModalOpen] = useState(false);
-  const [acessoriosDetalhe, setAcessoriosDetalhe] = useState<VendaComItensSimplesRow[]>([]);
   const [avulsosModalOpen, setAvulsosModalOpen] = useState(false);
   const [avulsosDetalhe, setAvulsosDetalhe] = useState<VendaComItensSimplesRow[]>([]);
 
@@ -999,8 +989,8 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
 
         if (prodError) throw prodError;
 
-        const fat: FaturamentoProduto = { portas: 0, pintura: 0, instalacoes: 0, acessorios: 0, adicionais: 0, total: 0 };
-        const luc: FaturamentoProduto = { portas: 0, pintura: 0, instalacoes: 0, acessorios: 0, adicionais: 0, total: 0 };
+        const fat: FaturamentoProduto = { portas: 0, pintura: 0, instalacoes: 0, avulsos: 0, total: 0 };
+        const luc: FaturamentoProduto = { portas: 0, pintura: 0, instalacoes: 0, avulsos: 0, total: 0 };
 
         produtos?.forEach((p: any) => {
           const tipo = p.tipo_produto;
@@ -1040,12 +1030,9 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
           } else if (tipo === 'pintura_epoxi') {
             fat.pintura += valorTotal;
             luc.pintura += p.lucro_item || 0;
-          } else if (tipo === 'acessorio') {
-            fat.acessorios += valorTotal;
-            luc.acessorios += p.lucro_item || 0;
-          } else if (['adicional', 'manutencao'].includes(tipo)) {
-            fat.adicionais += valorTotal;
-            luc.adicionais += p.lucro_item || 0;
+          } else if (['acessorio', 'adicional', 'manutencao'].includes(tipo)) {
+            fat.avulsos += valorTotal;
+            luc.avulsos += p.lucro_item || 0;
           } else if (tipo === 'instalacao') {
             fat.instalacoes += valorTotal;
             luc.instalacoes += p.lucro_item || 0;
@@ -1060,32 +1047,23 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
 
         const totalCredito = vendas?.reduce((sum, v) => sum + ((v as any).valor_credito || 0), 0) || 0;
 
-        fat.total = fat.portas + fat.pintura + fat.instalacoes + fat.acessorios + fat.adicionais + totalCredito;
-        luc.total = luc.portas + luc.pintura + luc.instalacoes + luc.acessorios + luc.adicionais;
+        fat.total = fat.portas + fat.pintura + fat.instalacoes + fat.avulsos + totalCredito;
+        luc.total = luc.portas + luc.pintura + luc.instalacoes + luc.avulsos;
 
         setFaturamento(fat);
         setLucro(luc);
 
-        // Top 5 acessórios e adicionais
-        const acessoriosMap: Record<string, number> = {};
-        const adicionaisMap: Record<string, number> = {};
+        // Top 5 itens avulsos (acessórios + adicionais + manutenção)
+        const avulsosMap: Record<string, number> = {};
         produtos?.forEach((p: any) => {
           const nome = p.descricao || 'Sem descrição';
           const qtd = p.quantidade || 1;
-          if (p.tipo_produto === 'acessorio') {
-            acessoriosMap[nome] = (acessoriosMap[nome] || 0) + qtd;
-          } else if (['adicional', 'manutencao'].includes(p.tipo_produto)) {
-            adicionaisMap[nome] = (adicionaisMap[nome] || 0) + qtd;
+          if (['acessorio', 'adicional', 'manutencao'].includes(p.tipo_produto)) {
+            avulsosMap[nome] = (avulsosMap[nome] || 0) + qtd;
           }
         });
-        setTopAcessorios(
-          Object.entries(acessoriosMap)
-            .map(([nome, qtd]) => ({ nome, qtd }))
-            .sort((a, b) => b.qtd - a.qtd)
-            .slice(0, 5)
-        );
-        setTopAdicionais(
-          Object.entries(adicionaisMap)
+        setTopAvulsos(
+          Object.entries(avulsosMap)
             .map(([nome, qtd]) => ({ nome, qtd }))
             .sort((a, b) => b.qtd - a.qtd)
             .slice(0, 5)
@@ -1280,35 +1258,10 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
           }),
         );
 
-        // ---- Acessórios ----
-        setAcessoriosDetalhe(
-          buildMap(todosRows, (p) => {
-            if (p.tipo_produto !== 'acessorio') return null;
-            const qty = p.quantidade || 1;
-            const bruto = (p.valor_produto || 0) * qty;
-            let desc = 0;
-            if (p.tipo_desconto === 'percentual' && p.desconto_percentual > 0) {
-              desc = bruto * (p.desconto_percentual / 100);
-            } else if (p.tipo_desconto === 'valor' && p.desconto_valor > 0) {
-              desc = p.desconto_valor;
-            }
-            return {
-              id: p.id,
-              descricao: p.descricao || 'Acessório',
-              quantidade: qty,
-              valorUnitario: p.valor_produto || 0,
-              valorBruto: bruto,
-              descontoLinha: desc,
-              valorLiquido: bruto - desc,
-              lucro: p.lucro_item || 0,
-            };
-          }),
-        );
-
-        // ---- Itens Avulso (adicional + manutencao) ----
+        // ---- Itens Avulsos (acessorio + adicional + manutencao) ----
         setAvulsosDetalhe(
           buildMap(todosRows, (p) => {
-            if (!['adicional', 'manutencao'].includes(p.tipo_produto)) return null;
+            if (!['acessorio', 'adicional', 'manutencao'].includes(p.tipo_produto)) return null;
             const qty = p.quantidade || 1;
             const bruto = (p.valor_produto || 0) * qty;
             let desc = 0;
@@ -1368,8 +1321,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
     { key: 'portas', label: 'Portas' },
     { key: 'pintura', label: 'Pintura' },
     { key: 'instalacoes', label: 'Instalações' },
-    { key: 'acessorios', label: 'Acessórios' },
-    { key: 'adicionais', label: 'Itens Avulso' },
+    { key: 'avulsos', label: 'Itens Avulsos' },
     { key: 'total', label: 'Total' },
   ] as const;
 
@@ -1397,20 +1349,17 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
                 <tr className="border-b border-white/10">
                   <th className="text-left p-3 text-white/40 font-medium text-xs uppercase"></th>
                   {columns.map(col => {
-                    const topList = col.key === 'acessorios' ? topAcessorios : col.key === 'adicionais' ? topAdicionais : null;
+                    const topList = col.key === 'avulsos' ? topAvulsos : null;
                     const isPortas = col.key === 'portas';
                     const isPintura = col.key === 'pintura';
-                    const isAcessorios = col.key === 'acessorios';
-                    const isAdicionais = col.key === 'adicionais';
+                    const isAvulsos = col.key === 'avulsos';
                     const onClickHeader = isPortas
                       ? () => setPortasModalOpen(true)
                       : isPintura
                         ? () => setPinturaModalOpen(true)
-                        : isAcessorios
-                          ? () => setAcessoriosModalOpen(true)
-                          : isAdicionais
-                            ? () => setAvulsosModalOpen(true)
-                            : null;
+                        : isAvulsos
+                          ? () => setAvulsosModalOpen(true)
+                          : null;
                     return (
                       <th
                         key={col.key}
@@ -1627,18 +1576,10 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         formatCurrency={formatCurrency}
       />
       <ItensSimplesDetalheDialog
-        open={acessoriosModalOpen}
-        onOpenChange={setAcessoriosModalOpen}
-        titulo={`Vendas com Acessórios — ${mesNome}`}
-        categoriaLabel="Acessórios"
-        vendas={acessoriosDetalhe}
-        formatCurrency={formatCurrency}
-      />
-      <ItensSimplesDetalheDialog
         open={avulsosModalOpen}
         onOpenChange={setAvulsosModalOpen}
-        titulo={`Vendas com Itens Avulso — ${mesNome}`}
-        categoriaLabel="Itens Avulso"
+        titulo={`Vendas com Itens Avulsos — ${mesNome}`}
+        categoriaLabel="Itens Avulsos"
         vendas={avulsosDetalhe}
         formatCurrency={formatCurrency}
       />
@@ -1789,8 +1730,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         totalDespVariaveis={totalDespVariaveis}
         totalDespImpostos={totalDespImpostos}
         totalProjetadoAnual={totalProjetadoAnual}
-        topAcessorios={topAcessorios}
-        topAdicionais={topAdicionais}
+        topAvulsos={topAvulsos}
         estoqueResumo={estoqueResumo}
         lucroLiquidoFinal={lucroLiquidoFinal}
         percBrutoFinal={percBrutoFinal}
