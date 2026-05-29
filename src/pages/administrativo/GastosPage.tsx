@@ -338,6 +338,13 @@ export default function GastosPage() {
               <FileText className="w-4 h-4" /> PDF
             </Button>
             <Button
+              onClick={() => navigate("/financeiro/bancos")}
+              variant="outline"
+              className="border-white/20 text-white hover:bg-white/10 text-sm gap-1.5"
+            >
+              <Landmark className="w-4 h-4" /> Bancos
+            </Button>
+            <Button
               onClick={openCreate}
               className="bg-blue-600 hover:bg-blue-700 text-white text-sm gap-1.5"
             >
