@@ -176,7 +176,8 @@ export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaP
             desconto_percentual, desconto_valor, tipo_desconto,
             descricao, faturamento,
             catalogo_cores (nome, codigo_hex),
-            vendas_catalogo (nome_produto)
+            vendas_catalogo (nome_produto),
+            custos_itens (descricao)
           )
         `)
         .eq("id", venda.id)
