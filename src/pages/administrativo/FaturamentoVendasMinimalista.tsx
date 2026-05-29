@@ -158,6 +158,7 @@ export default function FaturamentoMinimalista() {
   const [auxCores, setAuxCores] = useState<Map<string, { nome: string; hex: string }>>(new Map());
   const [auxAcessorios, setAuxAcessorios] = useState<Map<string, string>>(new Map());
   const [auxAdicionais, setAuxAdicionais] = useState<Map<string, string>>(new Map());
+  const [auxCustosItens, setAuxCustosItens] = useState<Map<string, string>>(new Map());
   const [sortConfig, setSortConfig] = useState<{ column: string | null; direction: 'asc' | 'desc' | null }>({ column: null, direction: null });
   const [justificativaDialog, setJustificativaDialog] = useState<{ open: boolean; vendaId: string; vendaCliente: string; justificativa: string }>({ 
     open: false, vendaId: '', vendaCliente: '', justificativa: '' 
@@ -215,14 +216,16 @@ export default function FaturamentoMinimalista() {
   }, [dateRange]);
 
   const fetchAuxData = async () => {
-    const [{ data: cores }, { data: acessorios }, { data: adicionais }] = await Promise.all([
+    const [{ data: cores }, { data: acessorios }, { data: adicionais }, { data: custosItens }] = await Promise.all([
       supabase.from('catalogo_cores').select('id, nome, codigo_hex'),
       supabase.from('acessorios').select('id, nome'),
       supabase.from('adicionais').select('id, nome'),
+      supabase.from('custos_itens').select('id, descricao'),
     ]);
     if (cores) setAuxCores(new Map(cores.map(c => [c.id, { nome: c.nome, hex: c.codigo_hex }])));
     if (acessorios) setAuxAcessorios(new Map(acessorios.map(a => [a.id, a.nome])));
     if (adicionais) setAuxAdicionais(new Map(adicionais.map(a => [a.id, a.nome])));
+    if (custosItens) setAuxCustosItens(new Map(custosItens.map((c: any) => [c.id, c.descricao])));
   };
 
   const fetchAtendentes = async () => {
@@ -279,7 +282,8 @@ export default function FaturamentoMinimalista() {
             tamanho,
             cor_id,
             acessorio_id,
-            adicional_id
+            adicional_id,
+            custos_itens_id
           )
         `)
         .order("data_venda", { ascending: false });
