@@ -557,6 +557,8 @@ const App = () => (
                 <Route path="/direcao/estrategia/itens" element={<ProtectedRoute routeKey="direcao_estrategia"><EstrategiaItens /></ProtectedRoute>} />
                 <Route path="/direcao/estrategia/kits" element={<ProtectedRoute routeKey="direcao_estrategia"><EstrategiaKits /></ProtectedRoute>} />
                 <Route path="/direcao/estrategia/kits/template" element={<ProtectedRoute routeKey="direcao_estrategia"><EstrategiaKitsTemplate /></ProtectedRoute>} />
+                <Route path="/direcao/estrategia/kits/lucro-instalacoes" element={<ProtectedRoute routeKey="direcao_estrategia"><EstrategiaLucroInstalacoes /></ProtectedRoute>} />
+                <Route path="/direcao/estrategia/kits/lucro-pinturas" element={<ProtectedRoute routeKey="direcao_estrategia"><EstrategiaLucroPinturas /></ProtectedRoute>} />
                 <Route path="/direcao/estrategia/kits/:kitId/montagem" element={<ProtectedRoute routeKey="direcao_estrategia"><EstrategiaKitMontagem /></ProtectedRoute>} />
                 <Route path="/direcao/estrategia/precos" element={<ProtectedRoute routeKey="direcao_estrategia"><EstrategiaPrecos /></ProtectedRoute>} />
                 <Route path="/direcao/estrategia/materias-primas" element={<ProtectedRoute routeKey="direcao_estrategia"><EstrategiaMateriasPrimas /></ProtectedRoute>} />
