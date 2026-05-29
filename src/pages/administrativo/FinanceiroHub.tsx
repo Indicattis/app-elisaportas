@@ -113,6 +113,10 @@ export default function FinanceiroHub() {
           {menuItems.map((item, index) => {
             const Icon = item.icon;
             const delay = 200 + index * 80;
+            const isOrange = (item as any).cor === 'orange';
+            const activeGradient = isOrange
+              ? 'bg-gradient-to-r from-orange-500 to-orange-700 hover:from-orange-400 hover:to-orange-600 shadow-orange-500/20 border-orange-400/30'
+              : 'bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 shadow-blue-500/20 border-blue-400/30';
             
             return (
               <div
@@ -134,7 +138,7 @@ export default function FinanceiroHub() {
                              flex items-center gap-4 px-5
                              font-medium border transition-all duration-300
                              ${item.ativo 
-                               ? 'bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 active:scale-[0.98] text-white shadow-lg shadow-blue-500/20 border-blue-400/30 cursor-pointer' 
+                               ? `${activeGradient} active:scale-[0.98] text-white shadow-lg cursor-pointer` 
                                : 'bg-white/5 text-white/50 border-white/10 cursor-not-allowed'
                              }`}
                 >
