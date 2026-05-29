@@ -125,22 +125,26 @@ export default function EstrategiaPrecos() {
                 Nenhum item marcado como avulso. Ative em Estratégia → Itens.
               </div>
             ) : (
-              <ul className="divide-y divide-white/5">
-                {itensAvulso.map((it) => (
-                  <li key={it.id} className="py-2 flex items-start gap-2">
-                    <div className="min-w-0 flex-1">
-                      <div className="text-sm text-white truncate">{it.descricao}</div>
-                      <div className="text-[11px] text-white/40 truncate">
-                        {it.categoria || 'Sem categoria'}
-                        {it.unidade ? ` · ${it.unidade}` : ''}
-                      </div>
-                    </div>
-                    <div className="text-sm tabular-nums text-emerald-300 whitespace-nowrap">
-                      {fmtBRL(it.preco_venda)}
-                    </div>
-                  </li>
-                ))}
-              </ul>
+              <table className="w-full text-sm">
+                <thead className="sticky top-0 bg-background/60 backdrop-blur-md">
+                  <tr className="text-[11px] uppercase tracking-wide text-white/50">
+                    <th className="text-left font-medium py-2 px-2">Nome</th>
+                    <th className="text-left font-medium py-2 px-2">Un.</th>
+                    <th className="text-right font-medium py-2 px-2">Preço/un</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {itensAvulso.map((it) => (
+                    <tr key={it.id} className="hover:bg-white/5">
+                      <td className="py-2 px-2 text-white truncate max-w-[180px]">{it.descricao}</td>
+                      <td className="py-2 px-2 text-white/60">{it.unidade || '-'}</td>
+                      <td className="py-2 px-2 text-right tabular-nums text-emerald-300 whitespace-nowrap">
+                        {fmtBRL(it.preco_venda)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             )}
           </div>
         </aside>
