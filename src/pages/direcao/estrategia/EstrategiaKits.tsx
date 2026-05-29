@@ -145,16 +145,6 @@ export default function EstrategiaKits() {
       {tabsBar}
       <div key={active} className="space-y-4 animate-fade-in">
         {showcase}
-        <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl p-4 flex flex-wrap items-center gap-3">
-          <div className="h-10 w-10 rounded-lg bg-blue-500/10 border border-blue-500/30 flex items-center justify-center">
-            <Icon className="h-5 w-5 text-blue-400" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="text-white font-medium truncate">{headerTitle}</div>
-            <div className="text-xs text-white/60">{headerSubtitle}</div>
-          </div>
-        </div>
-
         {isInstal ? (
           <ConfigLucroEstatico tipo="instalacao" contextoLabel="instalação" />
         ) : (
