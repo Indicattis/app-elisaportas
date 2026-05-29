@@ -871,7 +871,7 @@ function ProdutoRow({
         {formatCurrency(vCard)}
       </span>
     ),
-    venda: renderEditableCell(produto, "preco_venda"),
+    venda: compact ? <>{formatCurrency(preco)}</> : renderEditableCell(produto, "preco_venda"),
     objetivo: produto.custo_ok ? (
       <div className="flex items-center justify-end gap-1 group">
         <Check className="h-5 w-5 text-emerald-500 dark:text-emerald-400" />
