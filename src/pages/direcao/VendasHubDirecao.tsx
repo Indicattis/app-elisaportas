@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingCart, DollarSign, BookOpen, Users, ExternalLink, ArrowLeft, Lock, Handshake, FileText } from 'lucide-react';
+import { ShoppingCart, DollarSign, Users, ExternalLink, ArrowLeft, Lock, Handshake, FileText } from 'lucide-react';
 
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { DelayedParticles } from '@/components/DelayedParticles';
@@ -9,7 +9,6 @@ import { useBulkRouteAccess } from '@/hooks/useBulkRouteAccess';
 const menuItems = [
   { label: 'Todas as Vendas', icon: ShoppingCart, path: '/direcao/vendas/todas', routePrefix: 'direcao_vendas' },
   { label: 'Tabela de Preços', icon: DollarSign, path: '/direcao/vendas/tabela-precos', routePrefix: 'direcao_tabela_precos' },
-  { label: 'Regras de Vendas', icon: BookOpen, path: '/direcao/vendas/regras-vendas', routePrefix: 'direcao_regras_vendas' },
   { label: 'Clientes', icon: Users, path: '/direcao/vendas/clientes', routePrefix: 'direcao_vendas' },
   { label: 'Parceiros', icon: Handshake, path: '/direcao/vendas/parceiros', routePrefix: 'direcao_vendas' },
   { label: 'Requisições Representantes', icon: FileText, path: '/direcao/vendas/requisicoes-representantes', routePrefix: 'direcao_vendas', variant: 'orange' as const },
