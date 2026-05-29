@@ -1,46 +1,40 @@
-# Abas em /direcao/estrategia/kits
+## Showcase abaixo do controlador de abas em `/direcao/estrategia/kits`
 
-Substituir os botões do header por abas no estilo do print (pílulas com a aba ativa em azul sólido).
+Adicionar, em cada aba, um cartão showcase logo abaixo do TabsBar (e acima do conteúdo principal), respeitando a largura atual do conteúdo e o estilo glassmorphism.
 
-## Estrutura
+### Aba Portas — média entre todos os kits ativos
+- Fonte: `tabela_precos_portas` (apenas `ativo = true`).
+- Para cada kit: `lucro_pct = lucro / valor_porta * 100`, `custo_pct = 100 - lucro_pct`. Ignorar linhas com `valor_porta <= 0`.
+- Mostrar:
+  - Ícone `Package` + título "Média dos kits de portas".
+  - Subtítulo: "Baseado em N kits ativos".
+  - Dois blocos lado a lado (mesmo padrão do preview do `ConfigLucroEstatico`):
+    - "Custo médio" — `XX,X%`
+    - "Lucro médio" — `XX,X%` (verde)
 
-`EstrategiaKits.tsx` passa a renderizar três abas:
+### Abas Instalações e Pinturas — config atual + exemplo R$ 1.000
+- Fonte: `config_lucro` via `useConfigLucro(tipo)` (já usado pelo `ConfigLucroEstatico`).
+- Mostrar:
+  - Ícone `Wrench` / `Paintbrush` + título "Configuração ativa — Instalação" / "Pintura epóxi".
+  - Subtítulo curto: "Aplicado no faturamento das vendas vinculadas".
+  - Quatro blocos compactos:
+    - Custo% (config), Lucro% (config), Custo de exemplo (R$ 1.000 × custo%), Lucro de exemplo.
+- Para pintura no modo `formula_dimensao`: mostrar a fórmula "lucro = altura × largura × R$ X,XX" e usar 3,00 × 2,50 m como exemplo (mesmas constantes do preview), ao invés dos cálculos por percentual.
 
-1. **Portas** — conteúdo atual (`TabelaPrecos` via `<TabelaPrecos … />`).
-2. **Instalações** — bloco de cabeçalho + `<ConfigLucroEstatico tipo="instalacao" …>` (extraído de `EstrategiaLucroInstalacoes.tsx`).
-3. **Pinturas** — bloco de cabeçalho + `<ConfigLucroEstatico tipo="pintura_epoxi" modosDisponiveis=["estatico","formula_dimensao"]>` (extraído de `EstrategiaLucroPinturas.tsx`).
+### Estrutura técnica
+- Novo componente `src/components/direcao/KitsShowcaseCard.tsx` com props `{ tab: 'portas' | 'instalacoes' | 'pinturas' }`.
+  - Internamente:
+    - `portas`: query `useQuery(['kits-showcase-medias'], …)` lendo `tabela_precos_portas` (id, valor_porta, lucro, ativo).
+    - `instalacoes`: `useConfigLucro('instalacao')`.
+    - `pinturas`: `useConfigLucro('pintura_epoxi')`.
+  - Estados loading com skeleton suave (mesmo padrão de bg-white/5 com pulse).
+- Em `EstrategiaKits.tsx`:
+  - Renderizar `<KitsShowcaseCard tab={active} />` logo após o `tabsBar`.
+  - Na aba Portas: passar via nova prop `afterTabsBar` (ou reaproveitar `beforeContent` adicionando o showcase junto do TabsBar) para o `TabelaPrecos`.
+  - Nas abas Instalações/Pinturas: inserir entre `{tabsBar}` e o bloco `key={active}` existente, dentro do mesmo `animate-fade-in` (anima junto com a troca).
+- Estilo: cartão único `rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl p-4` com mini-blocos internos `rounded-lg border border-white/10 bg-black/30 p-3`, e variante esmeralda para lucro (igual ao preview existente). Sem novas cores fora do design system.
 
-A aba ativa é controlada por `?tab=portas|instalacoes|pinturas` para permitir deep-link e preservar o estado no refresh; default = `portas`.
-
-## UI das abas
-
-Componente local — container `rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-1 flex` com 3 botões:
-
-- Inativo: `text-white/70 hover:text-white px-6 py-2.5 text-sm rounded-xl transition`
-- Ativo: `bg-blue-600 text-white shadow-lg shadow-blue-600/20 px-6 py-2.5 text-sm rounded-xl`
-
-Posicionado entre o header da `MinimalistLayout` e o conteúdo da aba. Ícones (Package / Wrench / Paintbrush) à esquerda do label.
-
-## Rotas legadas
-
-Mantidas:
-
-- `/direcao/estrategia/kits/lucro-instalacoes` → redireciona para `/direcao/estrategia/kits?tab=instalacoes`
-- `/direcao/estrategia/kits/lucro-pinturas` → redireciona para `/direcao/estrategia/kits?tab=pinturas`
-
-Os arquivos `EstrategiaLucroInstalacoes.tsx` e `EstrategiaLucroPinturas.tsx` viram thin wrappers que apenas chamam `<Navigate replace to=… />` para evitar quebrar bookmarks/links externos.
-
-## Header
-
-Os botões extra ("Lucro de Instalações", "Lucro de Pinturas", "Template padrão") saem do header de Portas — Lucro vira aba, e o "Template padrão" continua acessível como botão menor exclusivo da aba Portas (não no header global), mantendo o link `/direcao/estrategia/kits/template`.
-
-## Arquivos tocados
-
-- `src/pages/direcao/estrategia/EstrategiaKits.tsx` — refatorado para abas + roteamento por query string.
-- `src/pages/direcao/estrategia/EstrategiaLucroInstalacoes.tsx` — vira redirect.
-- `src/pages/direcao/estrategia/EstrategiaLucroPinturas.tsx` — vira redirect.
-
-## Fora de escopo
-
-- Mudar fórmulas/conteúdo dos cards de Instalações e Pinturas.
-- Alterar `TabelaPrecos` (Portas) em si.
+### Fora do escopo
+- Nenhuma alteração na regra de negócio de cálculo de lucro/custo no faturamento.
+- Sem mudanças no header, breadcrumb ou largura do conteúdo.
+- Sem novas tabelas/migrations.
