@@ -1,71 +1,72 @@
-## Problema
+## Diagnóstico
 
-No DRE (`/direcao/estrategia/dre/{mes}`), ao clicar em **Pintura**, o modal abre mas:
+Na venda **ZANELLA TRANSPORTES** (`/direcao/gestao-fabrica`) a downbar mostra `20x`, mas a venda foi cadastrada como **2 planos de 10x no cartão** (1 plano de 10× R$ 1.000 + 1 plano de 10× R$ 2.200 = 20 registros em `contas_receber`).
 
-1. Não mostra o kit referenciado (ex.: `(0,70) - (M) - (4") - (300Kg)`).
-2. Não mostra as dimensões (`altura × largura`) gravadas na linha.
-3. Mostra **R$ 0,00** em bruto/líquido para várias linhas, porque lê `valor_produto` em vez de `valor_pintura` (em `produtos_vendas` do tipo `pintura_epoxi`, o preço real fica em `valor_pintura`; `valor_produto` quase sempre é 0).
-
-A agregação do card "Pintura" usa `valor_total_sem_frete` e funciona — só o modal está errado.
-
-## Mudanças (somente `src/pages/direcao/DREMesDirecao.tsx`)
-
-### 1. Estender a query de detalhes (linha ~1170)
-
-Adicionar `altura, largura, valor_total_sem_frete` e o relacionamento com a tabela de kits:
+Em `vendas.numero_parcelas` o valor está `NULL`. O número exibido vem de `useVendasPendentePedido.ts` linha 119:
 
 ```ts
-.select(`
-  id, descricao, quantidade, tipo_produto,
-  valor_produto, valor_pintura, valor_instalacao,
-  valor_total_sem_frete,
-  altura, largura, tabela_precos_porta_id,
-  tipo_desconto, desconto_percentual, desconto_valor,
-  lucro_item, lucro_pintura,
-  tabela_precos_portas:tabela_precos_porta_id(descricao, altura, largura),
-  vendas!inner(id, data_venda, cliente_nome, valor_venda, valor_frete)
-`)
+parcelasPorVenda.set(conta.venda_id, (parcelasPorVenda.get(conta.venda_id) || 0) + 1);
 ```
 
-### 2. Corrigir o mapper de `pintura_epoxi` (linhas ~1212–1230)
+Ou seja: ele soma **todas** as linhas de `contas_receber` da venda, ignorando que uma venda pode ter múltiplos planos de parcelamento (até 2 métodos de pagamento). Resultado: 10 + 10 = 20.
 
-- **Valor**: usar `valor_pintura` (com fallback para `valor_produto` em linhas legadas).
-- **Descrição**: montar string composta:
-  - kit (se houver `tabela_precos_portas.descricao`),
-  - cor/descrição da linha (`p.descricao`) quando preenchida,
-  - dimensões em metros (`{altura} × {largura} m`) quando preenchidas.
-  - Fallback final: `'Pintura Epóxi'`.
+O mesmo padrão está em `useVendasPendenteFaturamento.ts` (linha ~) e `useVendasAssinaturaContrato.ts`.
 
-Exemplo de saída: `Kit (0,70) - (M) - (4") - (300Kg) — Branco — 2,63 × 6,06 m`.
+## Correção
+
+Calcular o número de parcelas **por plano** e exibir o maior plano (o que melhor representa "o quanto foi parcelado").
+
+Critério de agrupamento de plano em `contas_receber`: `(venda_id, metodo_pagamento, valor_parcela)`. Cada combinação distinta = um plano. Tamanho do plano = `COUNT(*)`. Exibe-se `MAX(tamanho)` entre os planos da venda.
+
+Para Zanella: planos `{cartao_credito, 1000} → 10` e `{cartao_credito, 2200} → 10`. Max = **10x** ✅.
+
+### Arquivos a alterar
+
+1. `src/hooks/useVendasPendentePedido.ts` (linhas ~104, 119)
+2. `src/hooks/useVendasPendenteFaturamento.ts` (mesma lógica)
+3. `src/hooks/useVendasAssinaturaContrato.ts` (mesma lógica)
+
+### Mudança em cada hook
+
+Substituir o `Map<string, number>` simples por um Map intermediário que agrupa por plano:
 
 ```ts
-if (p.tipo_produto === 'pintura_epoxi') {
-  const valorUnit = (p.valor_pintura ?? 0) > 0 ? p.valor_pintura : (p.valor_produto || 0);
-  const bruto = valorUnit * qty;
-  // desconto: mantém regra atual sobre `bruto`
-  const kit = p.tabela_precos_portas?.descricao;
-  const cor = (p.descricao || '').trim();
-  const dim = (p.altura && p.largura)
-    ? `${fmtNum(p.altura)} × ${fmtNum(p.largura)} m`
-    : null;
-  const descricao = [kit && `Kit ${kit}`, cor || null, dim]
-    .filter(Boolean).join(' — ') || 'Pintura Epóxi';
-  return { ..., valorUnitario: valorUnit, valorBruto: bruto, ... };
-}
+// Antes: const parcelasPorVenda = new Map<string, number>();
+// Conta tudo
+
+// Depois:
+const planosPorVenda = new Map<string, Map<string, number>>();
+// key plano = `${metodo_pagamento}__${valor_parcela}`
+contasReceber.forEach((conta) => {
+  if (!conta?.venda_id) return;
+  const planos = planosPorVenda.get(conta.venda_id) ?? new Map();
+  const planoKey = `${conta.metodo_pagamento ?? '_'}__${Number(conta.valor_parcela ?? 0)}`;
+  planos.set(planoKey, (planos.get(planoKey) ?? 0) + 1);
+  planosPorVenda.set(conta.venda_id, planos);
+  // ... resto (pagoInstalacao, metodos) continua igual
+});
+
+const parcelasPorVenda = new Map<string, number>();
+planosPorVenda.forEach((planos, vendaId) => {
+  const max = Math.max(...planos.values());
+  if (max > 0) parcelasPorVenda.set(vendaId, max);
+});
 ```
 
-`fmtNum` = helper local que formata com vírgula e até 2 casas (`n.toLocaleString('pt-BR', { maximumFractionDigits: 2 })`).
+O `select` em `contas_receber` precisa incluir `valor_parcela`:
 
-### 3. Sem mudanças em
+```ts
+.select("venda_id, metodo_pagamento, pago_na_instalacao, valor_parcela")
+```
 
-- Agregação do card Pintura (continua via `valor_total_sem_frete`).
-- Componente `ItensSimplesDetalheDialog` (já renderiza `descricao` livre).
-- Modal de Portas, Instalações ou Itens Avulsos.
+Resto do código (`numero_parcelas: parcelasPorVenda.get(v.id) || ...`) permanece igual.
+
+### Fora de escopo
+
+- Não muda `vendas.numero_parcelas` no banco.
+- Não muda a UI da downbar (continua `{n}x`).
+- Não muda a aba de detalhes da venda (sheet já lista todas as parcelas individualmente, comportamento correto).
 
 ## Validação
 
-Em `/direcao/estrategia/dre/2026-04` → clicar em **Pintura**:
-
-- Cada linha mostra `Kit … — cor — A × L m` quando os dados existem.
-- Valor unit. / Bruto / Líquido refletem `valor_pintura` (não mais R$ 0,00 em linhas vinculadas a kit).
-- Subtotal do modal bate com o card Pintura.
+Em `/direcao/gestao-fabrica`, a venda da Zanella deve passar a mostrar **10x** na downbar (ou o tamanho do maior plano cadastrado). Vendas com 1 plano único continuam mostrando o número correto.
