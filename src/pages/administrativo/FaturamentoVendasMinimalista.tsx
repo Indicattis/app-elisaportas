@@ -621,22 +621,16 @@ export default function FaturamentoMinimalista() {
         cur.valor_total += v.valor_instalacao || 0;
         map.set(key, cur);
       });
-    } else if (indicadorAtivo === 'acessorios') {
+    } else if (indicadorAtivo === 'avulsos') {
       filteredVendas.forEach(v => {
-        (v.portas || []).filter((p: any) => p.tipo_produto === 'acessorio').forEach((p: any) => {
-          const key = p.acessorio_id || p.descricao || 'sem_id';
-          const nome = p.acessorio_id ? (auxAcessorios.get(p.acessorio_id) || p.descricao || 'Acessório') : (p.descricao || 'Acessório');
-          const cur = map.get(key) || { nome, quantidade: 0, valor_total: 0 };
-          cur.quantidade += p.quantidade || 1;
-          cur.valor_total += p.valor_produto || 0;
-          map.set(key, cur);
-        });
-      });
-    } else if (indicadorAtivo === 'adicionais') {
-      filteredVendas.forEach(v => {
-        (v.portas || []).filter((p: any) => ['adicional', 'manutencao'].includes(p.tipo_produto)).forEach((p: any) => {
-          const key = p.adicional_id || p.descricao || 'sem_id';
-          const nome = p.adicional_id ? (auxAdicionais.get(p.adicional_id) || p.descricao || 'Adicional') : (p.descricao || 'Adicional');
+        (v.portas || []).filter((p: any) => ['acessorio', 'adicional', 'manutencao'].includes(p.tipo_produto)).forEach((p: any) => {
+          const key = p.custos_itens_id || p.acessorio_id || p.adicional_id || p.descricao || 'sem_id';
+          const nome =
+            (p.custos_itens_id && auxCustosItens.get(p.custos_itens_id)) ||
+            (p.acessorio_id && auxAcessorios.get(p.acessorio_id)) ||
+            (p.adicional_id && auxAdicionais.get(p.adicional_id)) ||
+            p.descricao ||
+            'Item avulso';
           const cur = map.get(key) || { nome, quantidade: 0, valor_total: 0 };
           cur.quantidade += p.quantidade || 1;
           cur.valor_total += p.valor_produto || 0;
@@ -645,18 +639,17 @@ export default function FaturamentoMinimalista() {
       });
     }
     return Array.from(map.values()).sort((a, b) => b.quantidade - a.quantidade);
-  }, [filteredVendas, indicadorAtivo, auxCores, auxAcessorios, auxAdicionais]);
+  }, [filteredVendas, indicadorAtivo, auxCores, auxAcessorios, auxAdicionais, auxCustosItens]);
 
   const indicadorTitulos: Record<string, string> = {
     portas: 'Portas', pintura: 'Pintura', instalacoes: 'Instalações',
-    acessorios: 'Acessórios', adicionais: 'Adicionais',
+    avulsos: 'Itens Avulsos',
   };
   const indicadorIcons: Record<string, React.ReactNode> = {
     portas: <DollarSign className="h-4 w-4 text-blue-400" />,
     pintura: <Paintbrush className="h-4 w-4 text-orange-400" />,
     instalacoes: <Wrench className="h-4 w-4 text-cyan-400" />,
-    acessorios: <Package className="h-4 w-4 text-pink-400" />,
-    adicionais: <PlusCircle className="h-4 w-4 text-indigo-400" />,
+    avulsos: <Package className="h-4 w-4 text-emerald-400" />,
   };
 
   const handleGeneratePDF = () => {
