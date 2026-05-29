@@ -1,40 +1,79 @@
 ## Objetivo
 
-Em `/direcao/estrategia/despesas/{mes}`, os blocos **Despesas Fixas** e **Despesas Variáveis** voltam a ler diretamente da tabela `gastos` (mesma fonte de `/administrativo/financeiro/gastos`), em modo **somente leitura**. Folha, Impostos e o status do mês continuam como estão hoje.
+Como o botão "Financeiro" agora vive em `/home` (fora do Administrativo), mover todas as rotas e breadcrumbs do Financeiro de `/administrativo/financeiro/*` para `/financeiro/*`, mantendo redirects para não quebrar links antigos.
 
 ## Escopo
 
-Arquivo único alterado: `src/components/direcao/estrategia/DespesasResumoTopo.tsx`.
+Somente as 14 rotas ativas registradas em `src/App.tsx` sob `/administrativo/financeiro`. Rotas legadas com prefixo `/dashboard/administrativo/financeiro/*` (em `Sidebar.tsx`, `ContasPagar.tsx`, `Faturamento.tsx`, `FinanceiroHome.tsx`, `NotasFiscais.tsx`, `EmitirNfe.tsx`, `EmitirNfse.tsx`, `ConfiguracoesFiscais.tsx`) ficam fora — não estão registradas no App e não são alcançáveis pela navegação atual.
 
-Nada muda em:
-- `EstrategiaDespesasMes.tsx` (página em si).
-- Blocos de Folha e Impostos (continuam usando `despesas_manuais_folha` e `despesas_manuais_lancamentos` categoria `imposto`, e os Padrões cadastrados).
-- `GastosPage`, `useGastos`, `tipos_custos`, `despesas_padrao`.
+## Mapeamento de rotas
 
-## Comportamento novo de Fixas e Variáveis
+```text
+/administrativo/financeiro                          → /financeiro
+/administrativo/financeiro/faturamento              → /financeiro/faturamento
+/administrativo/financeiro/faturamento/vendas       → /financeiro/faturamento/vendas
+/administrativo/financeiro/faturamento/produtos     → /financeiro/faturamento/produtos
+/administrativo/financeiro/faturamento/:id          → /financeiro/faturamento/:id
+/administrativo/financeiro/custos                   → /financeiro/custos
+/administrativo/financeiro/custos/:mes              → /financeiro/custos/:mes
+/administrativo/financeiro/gastos                   → /financeiro/gastos
+/administrativo/financeiro/custo-folha              → /financeiro/custo-folha
+/administrativo/financeiro/bancos                   → /financeiro/bancos
+/administrativo/financeiro/caixa                    → /financeiro/caixa
+/administrativo/financeiro/caixa/gestao             → /financeiro/caixa/gestao
+/administrativo/financeiro/caixa/contas-a-receber   → /financeiro/caixa/contas-a-receber
+/administrativo/financeiro/caixa/contas-a-pagar     → /financeiro/caixa/contas-a-pagar
+```
 
-1. Buscar `gastos` do mês (`data` entre `${mes}-01` e último dia do mês), em paralelo com a consulta atual de `despesas_manuais_folha`/`despesas_manuais_lancamentos`.
-2. Buscar `tipos_custos` (id, nome, tipo, aparece_no_dre) referenciados pelos gastos retornados.
-3. Filtrar apenas gastos cujo `tipo_custo.aparece_no_dre !== false` (mesma regra já usada no DRE) e separar:
-   - `fixasRows`: `tipo_custo.tipo === 'fixa'`
-   - `variaveisRows`: `tipo_custo.tipo === 'variavel'`
-4. Agrupar por `tipo_custo_id` somando `valor`, gerando linhas exibidas com: nome do tipo, valor total do mês, quantidade de lançamentos.
-5. Renderizar dois blocos em modo somente leitura:
-   - Sem botão "Adicionar", sem ícone de lixeira, sem edição inline de valor/data/descrição, sem overlay de Padrões (padrões deixam de aparecer nesses dois blocos).
-   - Linha de total no rodapé do bloco (soma dos valores).
-   - Estado vazio: "Nenhum gasto registrado em /administrativo/financeiro/gastos neste mês."
-6. O `totalExibido` (que alimenta `onMediaMensalChange` e o subtítulo "Total do mês") passa a usar `sum(fixasRows) + sum(variaveisRows)` em vez do mix atual com lançamentos manuais e padrões fixas/variáveis. Folha (lançamentos + padrões) e Impostos (lançamentos + padrões) continuam compondo o total como hoje.
+## Mudanças
 
-## Detalhes técnicos
+**1. `src/App.tsx`**
+- Reapontar as 14 `<Route>` acima para o novo prefixo `/financeiro`.
+- Adicionar uma rota catch-all de compatibilidade:
+  `<Route path="/administrativo/financeiro/*" element={<Navigate to="/financeiro/..." replace />} />`
+  implementada via wrapper que pega `useLocation()` e substitui o prefixo, preservando o resto do path e a query string.
 
-- Remover, dentro de `DespesasResumoTopo`, as referências a `padroesFixas`/`padroesVariaveis` no total e nos dois `<BlocoDespesa categoria="fixa"/"variavel">`; manter `padroesFolha` e `padroesImpostos`.
-- Substituir o `BlocoDespesa` usado para Fixas e Variáveis por um novo componente local `BlocoGastosReadonly` (mesmo estilo glassmorphism, sem ações). O `BlocoDespesa` atual continua sendo usado pelo bloco de Impostos.
-- A consulta dos gastos do mês fica isolada em um `useEffect` próprio dependente de `mes` (e do mesmo `reloadV` para acompanhar deletes/edições disparados pelos outros blocos). Reusar `T12:00:00.000Z` na montagem do `start`/`end` quando relevante (aqui basta strings `YYYY-MM-DD`, já que `gastos.data` é `date`).
-- Tipos: `type GastoRow = { id: string; tipo_custo_id: string; valor: number; data: string }` e `type TipoCustoMin = { id: string; nome: string; tipo: 'fixa' | 'variavel' | 'imposto'; aparece_no_dre: boolean }`.
-- Sem alterações de schema, sem migrations.
+**2. `src/pages/Home.tsx`**
+- Item "Financeiro" passa a apontar para `/financeiro`.
 
-## Fora do escopo
+**3. Hubs e páginas (atualizar `path:` dos cards e itens do `AnimatedBreadcrumb`):**
+- `src/pages/administrativo/FinanceiroHub.tsx` — paths dos 8 cards + breadcrumb `{ label: "Financeiro" }` direto (remove o crumb "Administrativo"); botão voltar passa a navegar para `/home`.
+- `src/pages/administrativo/FaturamentoHub.tsx` — paths internos + breadcrumb `Financeiro → Faturamento` (sem "Administrativo").
+- `src/pages/administrativo/CaixaHub.tsx` — idem.
+- `src/pages/administrativo/FaturamentoVendasMinimalista.tsx`
+- `src/pages/administrativo/FaturamentoProdutosMinimalista.tsx`
+- `src/pages/administrativo/FaturamentoVendaMinimalista.tsx`
+- `src/pages/administrativo/CustosGridMinimalista.tsx`
+- `src/pages/administrativo/CustosMesMinimalista.tsx`
+- `src/pages/administrativo/CustosMinimalista.tsx`
+- `src/pages/administrativo/GastosPage.tsx`
+- `src/pages/administrativo/CustoFolhaMensal.tsx`
+- `src/pages/administrativo/BancosPage.tsx`
+- `src/pages/administrativo/GestaoCaixaMinimalista.tsx`
+- `src/pages/administrativo/ContasReceberMinimalista.tsx`
+- `src/pages/administrativo/ContasPagarMinimalista.tsx`
 
-- Permitir cadastro/edição de gastos a partir desta tela (decisão do usuário: somente leitura).
-- Mexer no comportamento do bloco Folha e do bloco Impostos.
-- Mexer em `/administrativo/financeiro/gastos` ou em `DREDespesasDirecao`.
+Em cada uma:
+- Substituir literais `'/administrativo/financeiro...'` por `'/financeiro...'` em `navigate(...)`, `to=`, e arrays de menu.
+- No `AnimatedBreadcrumb`, remover o item `{ label: "Administrativo", path: "/administrativo" }` e iniciar o trail em `{ label: "Financeiro", path: "/financeiro" }`, mantendo os demais níveis.
+
+**4. Consumidores fora de `/financeiro`** (atualizar literais para o novo prefixo, sem outra mudança):
+- `src/components/faturamento/VendasNaoFaturadasHistorico.tsx`
+- `src/components/pedidos/VendaPendentePedidoCard.tsx`
+- `src/components/pedidos/VendaPendenteFaturamentoCard.tsx`
+- `src/components/pedidos/VendaPendenteDetalhesSheet.tsx`
+
+**5. Comentário em `src/components/direcao/estrategia/DespesasResumoTopo.tsx`** — atualizar texto do comentário para "/financeiro/gastos" (sem mudança funcional).
+
+## Fora de escopo
+
+- `routeKey` em `ProtectedRoute` permanece igual (`administrativo_hub`, `admin_gastos`, `admin_bancos`) — sistema de permissões não muda.
+- Arquivos não permanecem em `src/pages/administrativo/` (sem renomear/mover arquivos) — só os paths das URLs mudam.
+- Nada no banco, nas sidebars legadas ou nas páginas com prefixo `/dashboard/...` muda.
+
+## Verificação
+
+- Build limpa.
+- Navegar `/home → Financeiro` chega em `/financeiro` e cada subpágina abre sem 404.
+- Abrir `/administrativo/financeiro/caixa/gestao` redireciona para `/financeiro/caixa/gestao`.
+- Breadcrumbs nunca mostram "Administrativo" dentro de Financeiro.
