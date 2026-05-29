@@ -538,14 +538,10 @@ export default function FaturamentoMinimalista() {
       // Legado: valor_instalacao da venda
       return acc + valorInstalacaoProdutos + (valorInstalacaoProdutos === 0 ? (v.valor_instalacao || 0) : 0);
     }, 0);
-    const valorBrutoAcessorios = filteredVendas.reduce((acc, v) => {
+    const isAvulso = (p: any) => ['acessorio', 'adicional', 'manutencao'].includes(p.tipo_produto);
+    const valorBrutoAvulsos = filteredVendas.reduce((acc, v) => {
       const portas = v.portas || [];
-      return acc + portas.filter((p: any) => p.tipo_produto === 'acessorio')
-        .reduce((sum: number, p: any) => sum + (p.valor_produto || 0), 0);
-    }, 0);
-    const valorBrutoAdicionais = filteredVendas.reduce((acc, v) => {
-      const portas = v.portas || [];
-      return acc + portas.filter((p: any) => ['adicional', 'manutencao'].includes(p.tipo_produto))
+      return acc + portas.filter(isAvulso)
         .reduce((sum: number, p: any) => sum + (p.valor_produto || 0), 0);
     }, 0);
 
@@ -575,16 +571,10 @@ export default function FaturamentoMinimalista() {
           .reduce((sum: number, p: any) => sum + (p.lucro_item || 0), 0);
         return acc + lucroInstalacaoProdutos + (lucroInstalacaoProdutos === 0 ? (v.lucro_instalacao || 0) : 0);
       }, 0),
-      valorBrutoAcessorios,
-      lucroAcessorios: vendasFaturadas.reduce((acc, v) => {
+      valorBrutoAvulsos,
+      lucroAvulsos: vendasFaturadas.reduce((acc, v) => {
         const portas = v.portas || [];
-        return acc + portas.filter((p: any) => p.tipo_produto === 'acessorio')
-          .reduce((sum: number, p: any) => sum + (p.lucro_item || 0), 0);
-      }, 0),
-      valorBrutoAdicionais,
-      lucroAdicionais: vendasFaturadas.reduce((acc, v) => {
-        const portas = v.portas || [];
-        return acc + portas.filter((p: any) => ['adicional', 'manutencao'].includes(p.tipo_produto))
+        return acc + portas.filter(isAvulso)
           .reduce((sum: number, p: any) => sum + (p.lucro_item || 0), 0);
       }, 0),
       fretesTotais: filteredVendas.reduce((acc, v) => acc + (v.valor_frete || 0), 0),
