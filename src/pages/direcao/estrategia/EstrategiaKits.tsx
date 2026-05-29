@@ -14,7 +14,7 @@ const TABS: Array<{ key: TabKey; label: string; icon: typeof Package }> = [
 
 function TabsBar({ active, onChange }: { active: TabKey; onChange: (k: TabKey) => void }) {
   return (
-    <div className="inline-flex items-center gap-1 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-1">
+    <div className="mb-6 inline-flex items-center gap-1 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-1">
       {TABS.map((t) => {
         const Icon = t.icon;
         const isActive = active === t.key;
@@ -52,21 +52,24 @@ export default function EstrategiaKits() {
 
   const tabsBar = <TabsBar active={active} onChange={setTab} />;
 
-  if (active === 'portas') {
-    const extraHeaderActions = (
-      <div className="flex items-center gap-3">
-        {tabsBar}
-        <div className="h-6 w-px bg-white/10" />
-        <Link
-          to="/direcao/estrategia/kits/template"
-          className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 backdrop-blur-xl px-3 py-2 text-xs text-white/70 hover:text-white transition"
-        >
-          <LayoutTemplate className="h-3.5 w-3.5 text-white/50" />
-          Template padrão
-        </Link>
-      </div>
-    );
+  const headerActions = (
+    <Link
+      to="/direcao/estrategia/kits/template"
+      className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 backdrop-blur-xl px-3 py-2 text-xs text-white/70 hover:text-white transition"
+    >
+      <LayoutTemplate className="h-3.5 w-3.5 text-white/50" />
+      Template padrão
+    </Link>
+  );
 
+  const breadcrumbItems = [
+    { label: 'Home', path: '/home' },
+    { label: 'Direção', path: '/direcao' },
+    { label: 'Estratégia', path: '/direcao/estrategia' },
+    { label: 'Tabela de Kits' },
+  ];
+
+  if (active === 'portas') {
     return (
       <TabelaPrecos
         titleOverride="Tabela de Kits"
@@ -74,13 +77,9 @@ export default function EstrategiaKits() {
         backPathOverride="/direcao/estrategia"
         enableReorder
         hideCatalogoTab
-        extraHeaderActions={extraHeaderActions}
-        breadcrumbItemsOverride={[
-          { label: 'Home', path: '/home' },
-          { label: 'Direção', path: '/direcao' },
-          { label: 'Estratégia', path: '/direcao/estrategia' },
-          { label: 'Tabela de Kits' },
-        ]}
+        extraHeaderActions={headerActions}
+        beforeContent={tabsBar}
+        breadcrumbItemsOverride={breadcrumbItems}
       />
     );
   }
@@ -97,14 +96,11 @@ export default function EstrategiaKits() {
       title="Tabela de Kits"
       subtitle="Kits e preços"
       backPath="/direcao/estrategia"
-      breadcrumbItems={[
-        { label: 'Home', path: '/home' },
-        { label: 'Direção', path: '/direcao' },
-        { label: 'Estratégia', path: '/direcao/estrategia' },
-        { label: 'Tabela de Kits' },
-      ]}
-      headerActions={tabsBar}
+      breadcrumbItems={breadcrumbItems}
+      headerActions={headerActions}
+      fullWidth
     >
+      {tabsBar}
       <div className="space-y-4">
         <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl p-4 flex flex-wrap items-center gap-3">
           <div className="h-10 w-10 rounded-lg bg-blue-500/10 border border-blue-500/30 flex items-center justify-center">
