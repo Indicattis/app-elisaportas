@@ -1576,18 +1576,10 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         formatCurrency={formatCurrency}
       />
       <ItensSimplesDetalheDialog
-        open={acessoriosModalOpen}
-        onOpenChange={setAcessoriosModalOpen}
-        titulo={`Vendas com Acessórios — ${mesNome}`}
-        categoriaLabel="Acessórios"
-        vendas={acessoriosDetalhe}
-        formatCurrency={formatCurrency}
-      />
-      <ItensSimplesDetalheDialog
         open={avulsosModalOpen}
         onOpenChange={setAvulsosModalOpen}
-        titulo={`Vendas com Itens Avulso — ${mesNome}`}
-        categoriaLabel="Itens Avulso"
+        titulo={`Vendas com Itens Avulsos — ${mesNome}`}
+        categoriaLabel="Itens Avulsos"
         vendas={avulsosDetalhe}
         formatCurrency={formatCurrency}
       />
@@ -1738,8 +1730,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         totalDespVariaveis={totalDespVariaveis}
         totalDespImpostos={totalDespImpostos}
         totalProjetadoAnual={totalProjetadoAnual}
-        topAcessorios={topAcessorios}
-        topAdicionais={topAdicionais}
+        topAvulsos={topAvulsos}
         estoqueResumo={estoqueResumo}
         lucroLiquidoFinal={lucroLiquidoFinal}
         percBrutoFinal={percBrutoFinal}
