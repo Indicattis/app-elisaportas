@@ -420,13 +420,13 @@ export default function TabelaPrecos({
                             })}
                           </TableCell>
                           <TableCell className="text-right hidden md:table-cell text-emerald-400">
-                            {(item.valor_instalacao * 0.8).toLocaleString('pt-BR', {
+                            {(item.valor_instalacao * (instalLucroPct / 100)).toLocaleString('pt-BR', {
                               style: 'currency',
                               currency: 'BRL'
                             })}
                           </TableCell>
                           <TableCell className="text-right hidden md:table-cell font-medium text-orange-400">
-                            80,00%
+                            {instalLucroPct.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%
                           </TableCell>
                           <TableCell className="text-right hidden md:table-cell text-white/70">
                             {item.valor_pintura.toLocaleString('pt-BR', { 
@@ -434,15 +434,21 @@ export default function TabelaPrecos({
                               currency: 'BRL' 
                             })}
                           </TableCell>
-                          <TableCell className="text-right hidden md:table-cell text-emerald-400">
-                            {(item.valor_pintura * 0.3).toLocaleString('pt-BR', {
-                              style: 'currency',
-                              currency: 'BRL'
-                            })}
-                          </TableCell>
-                          <TableCell className="text-right hidden md:table-cell font-medium text-orange-400">
-                            30,00%
-                          </TableCell>
+                          {(() => {
+                            const p = getPinturaLucro(item);
+                            return (
+                              <>
+                                <TableCell className="text-right hidden md:table-cell text-emerald-400">
+                                  {p ? p.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '—'}
+                                </TableCell>
+                                <TableCell className="text-right hidden md:table-cell font-medium text-orange-400">
+                                  {p && p.pct != null
+                                    ? `${p.pct.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`
+                                    : '—'}
+                                </TableCell>
+                              </>
+                            );
+                          })()}
                           {!hideTotalColumn && <TableCell className="text-right">
                             <Badge className="font-semibold bg-white/10 text-white">
                               {total.toLocaleString('pt-BR', { 
