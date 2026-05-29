@@ -188,6 +188,17 @@ export default function FaturamentoVendaMinimalista() {
   }, []);
 
   useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from('categorias_faturamento')
+        .select('nome, tipos_produto, cor_hex')
+        .eq('ativo', true)
+        .order('ordem');
+      if (data) setCategoriasFat(data as any);
+    })();
+  }, []);
+
+  useEffect(() => {
     if (id) {
       fetchVenda();
       checkPedidoExistente();
