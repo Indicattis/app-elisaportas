@@ -165,17 +165,11 @@ function ConfigShowcase({ tab }: { tab: "instalacoes" | "pinturas" }) {
               lucro = altura × largura × R$ {valorM2Valido ? valorM2.toFixed(2) : "?"}
             </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <MetricBox
-              label="Exemplo 3,00 × 2,50 m (7,5 m²)"
-              value=""
-            />
-            <MetricBox
-              label="Lucro de exemplo"
-              tone="profit"
-              value={fmtBRL(exemploLucroFormula)}
-            />
-          </div>
+          <MetricBox
+            label="Lucro em 3,00 × 2,50 m (7,5 m²)"
+            tone="profit"
+            value={fmtBRL(exemploLucroFormula)}
+          />
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
