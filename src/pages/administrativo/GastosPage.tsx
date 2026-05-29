@@ -1,6 +1,6 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Plus, Pencil, Trash2, Loader2, ChevronLeft, ChevronRight, CalendarIcon, FileText, ArrowUpDown, Landmark } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, ChevronLeft, ChevronRight, CalendarIcon, FileText, ArrowUpDown, Landmark } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
@@ -8,7 +8,7 @@ import { format } from "date-fns";
 import { useGastos, Gasto, GastosOrdenarPor } from "@/hooks/useGastos";
 import { useBancos } from "@/hooks/useBancos";
 import { useTiposCustos } from "@/hooks/useTiposCustos";
-import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
+import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -36,7 +36,6 @@ interface ColaboradorOption {
 export default function GastosPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [mounted, setMounted] = useState(false);
 
   const now = new Date();
   const mesQuery = searchParams.get("mes");
@@ -78,11 +77,6 @@ export default function GastosPage() {
       .filter((s) => s.toLowerCase().includes(descricao.toLowerCase()) && s.toLowerCase() !== descricao.toLowerCase())
       .slice(0, 5);
   }, [descricao, descricoesUnicas]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setMounted(true), 100);
-    return () => clearTimeout(timer);
-  }, []);
 
   useEffect(() => {
     const fetchColaboradores = async () => {
