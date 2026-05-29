@@ -203,16 +203,16 @@ export default function TabelaPrecos({
         <div className="flex flex-col gap-4">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <h2 className="text-base font-medium text-foreground">Itens Cadastrados</h2>
-              <p className="text-xs text-muted-foreground">
+              <h2 className="text-base font-medium text-white">Itens Cadastrados</h2>
+              <p className="text-xs text-white/50">
                 {itens.length} {itens.length === 1 ? 'item cadastrado' : 'itens cadastrados'}
               </p>
             </div>
             <div className="relative w-full sm:w-72">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-white/40" />
               <Input
                 placeholder="Buscar por descrição ou medidas..."
-                className="pl-8 bg-card/60 border-border text-foreground placeholder:text-muted-foreground"
+                className="pl-8 bg-white/5 backdrop-blur-xl border-white/10 text-white placeholder:text-white/40"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -226,17 +226,17 @@ export default function TabelaPrecos({
               <p className="text-muted-foreground">{searchTerm ? 'Nenhum item encontrado' : 'Nenhum item cadastrado'}</p>
             </div>
           ) : (
-            <div className="rounded-xl overflow-hidden bg-card/60 backdrop-blur-xl border border-border">
+            <div className="rounded-xl overflow-hidden bg-white/5 backdrop-blur-xl border border-white/10">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-border hover:bg-transparent">
-                    <TableHead className="text-center text-xs font-medium text-muted-foreground w-12">#</TableHead>
-                    <TableHead className="text-xs font-medium text-muted-foreground">Descrição</TableHead>
+                  <TableRow className="border-white/10 hover:bg-transparent">
+                    <TableHead className="text-center text-xs font-medium text-white/60 w-12">#</TableHead>
+                    <TableHead className="text-xs font-medium text-white/60">Descrição</TableHead>
                     <TableHead className="text-center text-xs font-medium text-blue-400">L</TableHead>
                     <TableHead className="text-center text-xs font-medium text-blue-400">A</TableHead>
-                    <TableHead className="text-right text-xs font-medium text-muted-foreground">Valor Porta</TableHead>
-                    <TableHead className="text-right text-xs font-medium text-muted-foreground">Valor Instalação</TableHead>
-                    <TableHead className="text-right text-xs font-medium text-muted-foreground">Valor Pintura</TableHead>
+                    <TableHead className="text-right text-xs font-medium text-white/60">Valor Porta</TableHead>
+                    <TableHead className="text-right text-xs font-medium text-white/60">Valor Instalação</TableHead>
+                    <TableHead className="text-right text-xs font-medium text-white/60">Valor Pintura</TableHead>
                     {!hideTotalColumn && <TableHead className="text-right text-xs font-medium text-emerald-400">Total</TableHead>}
                   </TableRow>
                 </TableHeader>
@@ -244,18 +244,18 @@ export default function TabelaPrecos({
                   {itens.map((item, index) => {
                     const total = calcularTotal(item);
                     return (
-                    <TableRow key={item.id} className={cn("border-border hover:bg-muted/40", index % 2 === 1 && "bg-muted/20")}>
-                        <TableCell className="text-center text-muted-foreground">{index + 1}</TableCell>
-                        <TableCell className="font-medium text-foreground">{item.descricao}</TableCell>
+                    <TableRow key={item.id} className={cn("border-white/10 hover:bg-white/5", index % 2 === 1 && "bg-white/[0.02]")}>
+                        <TableCell className="text-center text-white/50">{index + 1}</TableCell>
+                        <TableCell className="font-medium text-white">{item.descricao}</TableCell>
                         <TableCell className="text-center text-blue-400">{item.largura}m</TableCell>
                         <TableCell className="text-center text-blue-400">{item.altura}m</TableCell>
-                        <TableCell className="text-right text-foreground/80">
+                        <TableCell className="text-right text-white/70">
                           {item.valor_porta.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                         </TableCell>
-                        <TableCell className="text-right text-foreground/80">
+                        <TableCell className="text-right text-white/70">
                           {item.valor_instalacao.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                         </TableCell>
-                        <TableCell className="text-right text-foreground/80">
+                        <TableCell className="text-right text-white/70">
                           {item.valor_pintura.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                         </TableCell>
                         {!hideTotalColumn && (
