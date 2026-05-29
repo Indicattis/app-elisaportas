@@ -71,15 +71,52 @@ const COLUMN_LABELS: Record<ColumnKey, string> = {
   venda: "Valor de Venda",
   objetivo: "Preço Objetivo",
 };
-const COLUMN_BG: Record<ColumnKey, string> = {
-  custo: "bg-rose-100 dark:bg-rose-500/30",
-  lucro: "bg-blue-100 dark:bg-blue-500/30",
-  imposto: "bg-orange-100 dark:bg-orange-500/30",
-  desconto: "bg-yellow-100 dark:bg-yellow-500/30",
-  cartao: "bg-teal-100 dark:bg-teal-500/30",
-  venda: "",
-  objetivo: "bg-violet-100 dark:bg-violet-500/30",
+// Espelha o mapa usado em EstrategiaItens.tsx para que as cores sigam
+// a configuração do usuário na tabela acima.
+const COLUMN_COLOR_BG: Record<string, string> = {
+  rose:    "bg-rose-100 dark:bg-rose-500/30",
+  red:     "bg-red-100 dark:bg-red-500/30",
+  orange:  "bg-orange-100 dark:bg-orange-500/30",
+  amber:   "bg-amber-100 dark:bg-amber-500/30",
+  yellow:  "bg-yellow-100 dark:bg-yellow-500/30",
+  lime:    "bg-lime-100 dark:bg-lime-500/30",
+  green:   "bg-green-100 dark:bg-green-500/30",
+  emerald: "bg-emerald-100 dark:bg-emerald-500/30",
+  teal:    "bg-teal-100 dark:bg-teal-500/30",
+  cyan:    "bg-cyan-100 dark:bg-cyan-500/30",
+  sky:     "bg-sky-100 dark:bg-sky-500/30",
+  blue:    "bg-blue-100 dark:bg-blue-500/30",
+  indigo:  "bg-indigo-100 dark:bg-indigo-500/30",
+  violet:  "bg-violet-100 dark:bg-violet-500/30",
+  purple:  "bg-purple-100 dark:bg-purple-500/30",
+  fuchsia: "bg-fuchsia-100 dark:bg-fuchsia-500/30",
+  pink:    "bg-pink-100 dark:bg-pink-500/30",
+  slate:   "bg-slate-100 dark:bg-slate-500/30",
 };
+const DEFAULT_COLUMN_COLORS: Record<ColumnKey, string> = {
+  custo: "rose",
+  lucro: "blue",
+  imposto: "orange",
+  desconto: "yellow",
+  cartao: "teal",
+  venda: "green",
+  objetivo: "violet",
+};
+const ESTRATEGIA_COLUMN_COLORS_KEY = "estrategia-itens-column-colors-v1";
+function readColumnColors(): Record<ColumnKey, string> {
+  if (typeof window === "undefined") return { ...DEFAULT_COLUMN_COLORS };
+  try {
+    const raw = window.localStorage.getItem(ESTRATEGIA_COLUMN_COLORS_KEY);
+    if (!raw) return { ...DEFAULT_COLUMN_COLORS };
+    const parsed = JSON.parse(raw) as Partial<Record<ColumnKey, string>>;
+    return { ...DEFAULT_COLUMN_COLORS, ...parsed };
+  } catch {
+    return { ...DEFAULT_COLUMN_COLORS };
+  }
+}
+function getColumnBg(colors: Record<ColumnKey, string>, col: ColumnKey): string {
+  return COLUMN_COLOR_BG[colors[col]] ?? COLUMN_COLOR_BG[DEFAULT_COLUMN_COLORS[col]];
+}
 const COLUMN_WIDTHS: Record<ColumnKey, string> = {
   custo: "w-36",
   lucro: "w-36",
@@ -94,9 +131,11 @@ const COLUMN_ORDER_STORAGE_KEY = "catalogo-precos-column-order-v1";
 
 function SortableHeadCell({
   colKey,
+  columnColors,
   children,
 }: {
   colKey: ColumnKey;
+  columnColors: Record<ColumnKey, string>;
   children: React.ReactNode;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: `col-${colKey}` });
@@ -114,7 +153,7 @@ function SortableHeadCell({
       className={cn(
         "text-xs font-medium text-foreground text-center group/col",
         COLUMN_WIDTHS[colKey],
-        COLUMN_BG[colKey],
+        getColumnBg(columnColors, colKey),
       )}
     >
       <div className="flex items-center justify-center gap-1">
