@@ -538,6 +538,8 @@ export default function MidiasMinimalista() {
           })}
         </div>
       )}
+        </div>
+      )}
     </MinimalistLayout>
   );
 }
