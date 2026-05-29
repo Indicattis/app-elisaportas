@@ -97,6 +97,7 @@ export default function FaturamentoVendaMinimalista() {
   const autoFaturadosRef = useRef<Set<string>>(new Set());
   const [mounted, setMounted] = useState(false);
   const [venda, setVenda] = useState<Venda | null>(null);
+  const [categoriasFat, setCategoriasFat] = useState<Array<{ nome: string; tipos_produto: string[]; cor_hex: string | null }>>([]);
   const [loading, setLoading] = useState(true);
   const [selectedProduto, setSelectedProduto] = useState<any | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -1020,6 +1021,14 @@ export default function FaturamentoVendaMinimalista() {
     };
     return tipos[tipo || ''] || tipo || '-';
   };
+
+  const categoriaPorTipo = useMemo(() => {
+    const map = new Map<string, { nome: string; cor_hex: string | null }>();
+    categoriasFat.forEach((c) => {
+      (c.tipos_produto || []).forEach((t) => map.set(t, { nome: c.nome, cor_hex: c.cor_hex }));
+    });
+    return map;
+  }, [categoriasFat]);
 
   const breadcrumbItems = [
     { label: "Home", path: "/home" },
