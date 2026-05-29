@@ -62,6 +62,7 @@ export default function TabelaPrecos({
   subtitleOverride,
   backPathOverride,
   breadcrumbItemsOverride,
+  extraHeaderActions,
 }: TabelaPrecosProps = {}) {
   const [searchTerm, setSearchTerm] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
