@@ -7138,7 +7138,6 @@ export type Database = {
           valor_total: number
           valor_total_sem_frete: number
           venda_id: string
-          vendas_catalogo_id: string | null
         }
         Insert: {
           acessorio_id?: string | null
@@ -7180,7 +7179,6 @@ export type Database = {
           valor_total?: number
           valor_total_sem_frete?: number
           venda_id: string
-          vendas_catalogo_id?: string | null
         }
         Update: {
           acessorio_id?: string | null
@@ -7222,7 +7220,6 @@ export type Database = {
           valor_total?: number
           valor_total_sem_frete?: number
           venda_id?: string
-          vendas_catalogo_id?: string | null
         }
         Relationships: [
           {
@@ -7279,13 +7276,6 @@ export type Database = {
             columns: ["tabela_precos_porta_id"]
             isOneToOne: false
             referencedRelation: "tabela_precos_portas"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "produtos_vendas_vendas_catalogo_id_fkey"
-            columns: ["vendas_catalogo_id"]
-            isOneToOne: false
-            referencedRelation: "vendas_catalogo"
             referencedColumns: ["id"]
           },
         ]
@@ -8989,123 +8979,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      vendas_catalogo: {
-        Row: {
-          ativo: boolean | null
-          categoria: string | null
-          created_at: string | null
-          created_by: string | null
-          custo_ok: boolean
-          custo_produto: number | null
-          descricao_produto: string | null
-          destaque: boolean | null
-          estoque_minimo: number | null
-          id: string
-          imagem_url: string | null
-          nome_produto: string
-          ordem: number
-          peso: number | null
-          preco_objetivo: number | null
-          preco_venda: number
-          quantidade: number
-          sku: string | null
-          subcategoria_id: string | null
-          tags: string[] | null
-          tipo_fabricacao: string | null
-          unidade: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          ativo?: boolean | null
-          categoria?: string | null
-          created_at?: string | null
-          created_by?: string | null
-          custo_ok?: boolean
-          custo_produto?: number | null
-          descricao_produto?: string | null
-          destaque?: boolean | null
-          estoque_minimo?: number | null
-          id?: string
-          imagem_url?: string | null
-          nome_produto: string
-          ordem?: number
-          peso?: number | null
-          preco_objetivo?: number | null
-          preco_venda?: number
-          quantidade?: number
-          sku?: string | null
-          subcategoria_id?: string | null
-          tags?: string[] | null
-          tipo_fabricacao?: string | null
-          unidade?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          ativo?: boolean | null
-          categoria?: string | null
-          created_at?: string | null
-          created_by?: string | null
-          custo_ok?: boolean
-          custo_produto?: number | null
-          descricao_produto?: string | null
-          destaque?: boolean | null
-          estoque_minimo?: number | null
-          id?: string
-          imagem_url?: string | null
-          nome_produto?: string
-          ordem?: number
-          peso?: number | null
-          preco_objetivo?: number | null
-          preco_venda?: number
-          quantidade?: number
-          sku?: string | null
-          subcategoria_id?: string | null
-          tags?: string[] | null
-          tipo_fabricacao?: string | null
-          unidade?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "vendas_catalogo_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "admin_users"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "vendas_catalogo_subcategoria_id_fkey"
-            columns: ["subcategoria_id"]
-            isOneToOne: false
-            referencedRelation: "estoque_subcategorias"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      vendas_catalogo_categorias_ordem: {
-        Row: {
-          categoria: string
-          created_at: string
-          id: string
-          ordem: number
-          updated_at: string
-        }
-        Insert: {
-          categoria: string
-          created_at?: string
-          id?: string
-          ordem?: number
-          updated_at?: string
-        }
-        Update: {
-          categoria?: string
-          created_at?: string
-          id?: string
-          ordem?: number
-          updated_at?: string
-        }
-        Relationships: []
       }
       vendas_config_lucro: {
         Row: {
