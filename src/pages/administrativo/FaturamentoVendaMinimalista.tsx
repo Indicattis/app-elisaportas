@@ -562,24 +562,13 @@ export default function FaturamentoVendaMinimalista() {
     
     if (produtosPinturaParaAutoFaturar.length === 0) return;
     
-    // Auto-preencher lucro para cada produto de pintura: (altura x largura) x 25
+    // Auto-preencher lucro de pintura usando a % de custo configurada (modo estático)
     produtosPinturaParaAutoFaturar.forEach(async (produto) => {
       autoFaturadosRef.current.add(produto.id);
-      
-      // Extrair dimensoes do campo tamanho (formato "6.35x4.9") quando altura/largura forem nulos
-      let altura = produto.altura || 0;
-      let largura = produto.largura || 0;
-      
-      if ((!altura || !largura) && produto.tamanho) {
-        const partes = produto.tamanho.split('x');
-        if (partes.length === 2) {
-          largura = parseFloat(partes[0]) || 0;
-          altura = parseFloat(partes[1]) || 0;
-        }
-      }
-      
-      const lucroPintura = (altura * largura) * 25;
-      const custoCalculado = produto.valor_total - lucroPintura;
+
+      const pctCusto = await fetchPercentualCusto('pintura_epoxi');
+      const custoCalculado = produto.valor_total * (pctCusto / 100);
+      const lucroPintura = produto.valor_total - custoCalculado;
       await updateLucroItem({ 
         produtoId: produto.id, 
         lucroItem: lucroPintura,
