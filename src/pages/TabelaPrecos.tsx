@@ -16,6 +16,7 @@ import { BulkUploadTabelaPrecos } from "@/components/tabela-precos/BulkUploadTab
 import { CatalogoPrecosTab } from "@/components/tabela-precos/CatalogoPrecosTab";
 import { useKitsMontagemResumo } from "@/hooks/useKitMontagem";
 import { useCustosItensPadroes } from "@/hooks/useCustosItens";
+import { useConfigLucro } from "@/hooks/useConfigLucro";
 import { useQueryClient } from "@tanstack/react-query";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import {
@@ -78,6 +79,28 @@ export default function TabelaPrecos({
   const { itens, isLoading, adicionarItem, editarItem, inativarItem, reordenarItens } = useTabelaPrecos(searchTerm);
   const { data: resumoMontagem = {} } = useKitsMontagemResumo();
   const { padroes } = useCustosItensPadroes();
+
+  // Percentuais de lucro vindos da config ativa (mesma fonte usada pelo faturamento)
+  const { data: cfgInstal } = useConfigLucro('instalacao');
+  const { data: cfgPintura } = useConfigLucro('pintura_epoxi');
+  const instalLucroPct = Math.max(
+    0,
+    100 - Number(cfgInstal?.percentual_custo ?? 20),
+  );
+  const pinturaModo = cfgPintura?.modo ?? 'estatico';
+  const pinturaCustoPct = Number(cfgPintura?.percentual_custo ?? 70);
+  const pinturaValorM2 = Number(cfgPintura?.parametros?.valor_m2 ?? 25);
+  const getPinturaLucro = (item: ItemTabelaPreco) => {
+    const valorPintura = Number(item.valor_pintura || 0);
+    if (pinturaModo === 'formula_dimensao') {
+      if (!(pinturaValorM2 > 0)) return null;
+      const lucro = Number(item.altura || 0) * Number(item.largura || 0) * pinturaValorM2;
+      const pct = valorPintura > 0 ? (lucro / valorPintura) * 100 : null;
+      return { valor: lucro, pct };
+    }
+    const pct = Math.max(0, 100 - pinturaCustoPct);
+    return { valor: valorPintura * (pct / 100), pct };
+  };
 
   // Estado local para reordenação otimista
   const [orderedItens, setOrderedItens] = useState<ItemTabelaPreco[]>([]);
