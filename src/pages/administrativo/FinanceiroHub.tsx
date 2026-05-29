@@ -4,14 +4,14 @@ import { Receipt, Coins, Wallet, BadgeDollarSign, DollarSign, Lock, Landmark, Ar
 import { useToast } from "@/hooks/use-toast";
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 const menuItems = [
-  { label: "Faturamento", icon: Receipt, path: "/administrativo/financeiro/faturamento", ativo: true },
-  { label: "Custos", icon: Coins, path: "/administrativo/financeiro/custos", ativo: true },
-  { label: "Gestão de Caixa", icon: Wallet, path: "/administrativo/financeiro/caixa/gestao", ativo: true },
-  { label: "Contas a Pagar", icon: BadgeDollarSign, path: "/administrativo/financeiro/caixa/contas-a-pagar", ativo: false },
-  { label: "Contas a Receber", icon: Receipt, path: "/administrativo/financeiro/caixa/contas-a-receber", ativo: true },
-  { label: "Gastos", icon: DollarSign, path: "/administrativo/financeiro/gastos", ativo: true },
-  { label: "Custo em Folha", icon: Users, path: "/administrativo/financeiro/custo-folha", ativo: true },
-  { label: "Bancos", icon: Landmark, path: "/administrativo/financeiro/bancos", ativo: true },
+  { label: "Faturamento", icon: Receipt, path: "/financeiro/faturamento", ativo: true },
+  { label: "Custos", icon: Coins, path: "/financeiro/custos", ativo: true },
+  { label: "Gestão de Caixa", icon: Wallet, path: "/financeiro/caixa/gestao", ativo: true },
+  { label: "Contas a Pagar", icon: BadgeDollarSign, path: "/financeiro/caixa/contas-a-pagar", ativo: false },
+  { label: "Contas a Receber", icon: Receipt, path: "/financeiro/caixa/contas-a-receber", ativo: true },
+  { label: "Gastos", icon: DollarSign, path: "/financeiro/gastos", ativo: true },
+  { label: "Custo em Folha", icon: Users, path: "/financeiro/custo-folha", ativo: true },
+  { label: "Bancos", icon: Landmark, path: "/financeiro/bancos", ativo: true },
 ];
 
 export default function FinanceiroHub() {
@@ -41,7 +41,6 @@ export default function FinanceiroHub() {
       <AnimatedBreadcrumb 
         items={[
           { label: "Home", path: "/home" },
-          { label: "Administrativo", path: "/administrativo" },
           { label: "Financeiro" },
         ]} 
         mounted={mounted} 
@@ -50,7 +49,7 @@ export default function FinanceiroHub() {
       {/* Menu de Perfil Flutuante */}
       {/* Botão Voltar */}
       <button
-        onClick={() => navigate('/administrativo')}
+        onClick={() => navigate('/home')}
         className="fixed top-4 left-4 z-50 p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10
                    hover:bg-white/10 transition-all duration-300"
         style={{
