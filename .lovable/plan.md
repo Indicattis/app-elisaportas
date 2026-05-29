@@ -1,15 +1,24 @@
-# Tornar "Valor de Venda" do catálogo somente leitura em /direcao/estrategia/precos
+## Atualizar rota e breadcrumb de Regras de Vendas
 
-A página `/direcao/estrategia/precos` usa `CatalogoPrecosTab` com a prop `compact`. Nesse modo, a única coluna exibida é "Valor de Venda", que hoje renderiza via `renderEditableCell(produto, "preco_venda")`, permitindo clique para edição. A edição deve permanecer apenas em `/direcao/estrategia/itens`.
+Como o botão "Regras de Vendas" agora vive no header de `/direcao/estrategia/precos`, a rota e o breadcrumb da página devem refletir essa nova posição (sob Estratégia → Tabela de Preços), em vez de Vendas.
 
-## Alteração
+### Mudanças
 
-Em `src/components/tabela-precos/CatalogoPrecosTab.tsx`, no objeto `cellRenderers` da linha do produto, trocar o renderizador da coluna `venda` por uma versão somente leitura quando `compact` for true:
+**1. `src/App.tsx`** — mover o path da rota:
+- De: `/direcao/vendas/regras-vendas`
+- Para: `/direcao/estrategia/precos/regras-vendas`
 
-- `venda: compact ? <>{formatCurrency(preco)}</> : renderEditableCell(produto, "preco_venda")`
+**2. `src/pages/direcao/RegrasVendasDirecao.tsx`** — atualizar layout:
+- `backPath`: `/direcao/estrategia/precos`
+- `breadcrumbItems`:
+  ```
+  Home → Direção → Estratégia → Tabela de Preços → Regras de Vendas
+  ```
 
-Isso mantém o fundo verde da coluna e o valor formatado, mas remove o cursor de edição, o hover sublinhado e o handler `onClick` que abre o input. Nenhuma outra tela é afetada (em `EstrategiaItens` o componente é usado sem `compact`).
+**3. `src/pages/direcao/estrategia/EstrategiaPrecos.tsx`** — atualizar o `navigate()` do botão "Regras de Vendas" para a nova URL.
 
-## Arquivos
+**4. Comentários em `src/pages/administrativo/FaturamentoVendaMinimalista.tsx`** (linhas 120 e 1316) — atualizar referências do path antigo para o novo (apenas comentários).
 
-- `src/components/tabela-precos/CatalogoPrecosTab.tsx` — única alteração.
+### Não incluído
+- A chave de permissão `direcao_regras_vendas` permanece a mesma (não há motivo para renomear; quebraria configurações já salvas).
+- Sem redirect da URL antiga, pois a rota nova substitui a antiga diretamente.

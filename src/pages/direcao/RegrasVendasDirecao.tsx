@@ -108,11 +108,12 @@ export default function RegrasVendasDirecao() {
     <MinimalistLayout
       title="Regras de Vendas"
       subtitle="Manual do sistema de vendas"
-      backPath="/direcao/vendas"
+      backPath="/direcao/estrategia/precos"
       breadcrumbItems={[
         { label: 'Home', path: '/home' },
         { label: 'Direção', path: '/direcao' },
-        { label: 'Vendas', path: '/direcao/vendas' },
+        { label: 'Estratégia', path: '/direcao/estrategia' },
+        { label: 'Tabela de Preços', path: '/direcao/estrategia/precos' },
         { label: 'Regras de Vendas' }
       ]}
     >
