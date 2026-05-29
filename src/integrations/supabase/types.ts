@@ -1888,6 +1888,7 @@ export type Database = {
           taxa_impostos: number
           unidade: string | null
           updated_at: string
+          vendavel_avulso: boolean
         }
         Insert: {
           categoria?: string | null
@@ -1909,6 +1910,7 @@ export type Database = {
           taxa_impostos?: number
           unidade?: string | null
           updated_at?: string
+          vendavel_avulso?: boolean
         }
         Update: {
           categoria?: string | null
@@ -1930,6 +1932,7 @@ export type Database = {
           taxa_impostos?: number
           unidade?: string | null
           updated_at?: string
+          vendavel_avulso?: boolean
         }
         Relationships: []
       }

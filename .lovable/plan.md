@@ -1,61 +1,42 @@
-# Remover Catálogo de Itens legado
+## Objetivo
+1. Em `/direcao/estrategia/itens`, adicionar toggle "Vendável avulso" na coluna **Ações** (padrão: desativado).
+2. Em `/direcao/estrategia/precos`, ao lado da tabela principal, mostrar uma seção lateral com todos os itens marcados como vendáveis avulso.
 
-Migrar 100% para `custos_itens` removendo a interface, a coluna FK em `produtos_vendas` e a tabela `vendas_catalogo` (e a tabela auxiliar `vendas_catalogo_categorias_ordem`).
+## Passos
 
-## Atenção — escopo maior do que parece
-
-Além da página `/direcao/estrategia/itens`, o sistema ainda tem **outras rotas que dependem de `vendas_catalogo`**:
-
-- `/marketing/catalogo` (lista), `/marketing/catalogo/new`, `/marketing/catalogo/editar/:id`
-- Rotas legadas `VendasCatalogo` / `VendasCatalogoNovo`
-- Hooks `useVendasCatalogo`, `useVendasCatalogoCategoriasOrdem`
-- Fallbacks de leitura em vendas, faturamento, orçamentos e aprovações
-
-Como você quer dropar a tabela, **todas essas rotas e fallbacks precisam sair junto**, senão quebram. O plano abaixo já cobre tudo.
-
-## 1. Frontend — remover UI e referências
-
-### Rotas e páginas a deletar
-- `src/pages/direcao/estrategia/EstrategiaItens.tsx`
-- `src/utils/estrategiaItensExport.ts`
-- `src/pages/vendas/Catalogo.tsx`, `CatalogoNovoMinimalista.tsx`, `CatalogoEditMinimalista.tsx`
-- `src/pages/VendasCatalogo.tsx`, `src/pages/VendasCatalogoNovo.tsx`
-- Hooks `src/hooks/useVendasCatalogo.ts` e `src/hooks/useVendasCatalogoCategorias.ts`
-
-### Editar
-- `src/App.tsx` — remover imports e `<Route>` de `estrategia/itens`, `marketing/catalogo*`, `VendasCatalogo*`
-- `src/pages/direcao/estrategia/EstrategiaHub.tsx` — remover item "Tabela de Custos Elisa"
-- `src/pages/direcao/estrategia/EstrategiaMateriasPrimas.tsx` — trocar `backPath`/breadcrumb para a nova âncora (ex.: `/direcao/estrategia`)
-- Limpar campo `vendas_catalogo_id` e leituras `vendas_catalogo(...)` em:
-  - `src/hooks/useProdutosVenda.ts` (select e fallback de unidade)
-  - `src/hooks/useProdutosVendidosMes.ts` (passar a usar `custos_itens_id`)
-  - `src/hooks/useVendas.ts`, `src/hooks/usePedidosAprovacaoDiretor.ts`
-  - `src/types/produto.ts`
-  - `src/pages/VendaNova.tsx`, `src/pages/vendas/MinhasVendasEditar.tsx`
-  - `src/components/vendas/ProdutoVendaForm.tsx`, `src/components/vendas/LucroItemModal.tsx`
-  - `src/components/orcamentos/NovoOrcamentoForm.tsx`
-  - `src/components/pedidos/VendaPendenteDetalhesSheet.tsx`
-  - `src/pages/direcao/aprovacoes/AprovacoesPedidos.tsx`
-  - `src/pages/administrativo/FaturamentoVendaMinimalista.tsx` (bloco "lucroProdutoMap" via `vendas_catalogo` — já há fallback via `custos_itens`, basta remover o ramo legado)
-
-Critério: nenhum `vendas_catalogo` deve restar em `src/` ao final.
-
-## 2. Banco — migration única
-
+### 1. Banco — `custos_itens`
+Migration adicionando a flag:
 ```sql
-ALTER TABLE public.produtos_vendas DROP COLUMN IF EXISTS vendas_catalogo_id;
-DROP TABLE IF EXISTS public.vendas_catalogo_categorias_ordem;
-DROP TABLE IF EXISTS public.vendas_catalogo CASCADE;
+ALTER TABLE public.custos_itens
+  ADD COLUMN vendavel_avulso boolean NOT NULL DEFAULT false;
 ```
 
-`CASCADE` cobre views/policies remanescentes. Como você confirmou que os relatórios já leem corretamente de `custos_itens`, está seguro.
+### 2. Hook `src/hooks/useCustosItens.ts`
+- Adicionar `vendavel_avulso: boolean` ao tipo `CustoItem`.
+- Adicionar `vendavel_avulso?: boolean` em `NewCustoItem` e mapear no `createItem` (default `false`).
+- `updateItem` já aceita `Partial<CustoItem>`, então o toggle funciona sem mudança.
 
-## 3. Verificação pós-mudança
+### 3. Página `src/pages/direcao/estrategia/EstrategiaItens.tsx`
+Dentro de `SortableItemRow` (na célula "Ações", próximo ao botão Trash em ~linha 742):
+- Renderizar um `Switch` (shadcn/ui) compacto, com tooltip "Vendável avulso".
+- `checked={item.vendavel_avulso}` e `onCheckedChange={(v) => onUpdate({ vendavel_avulso: v })}`.
+- Estilo discreto, alinhado aos demais botões da célula.
 
-- `rg "vendas_catalogo" src/` deve retornar vazio (exceto `types.ts`, que é regenerado).
-- Abrir manualmente: nova venda, edição de venda antiga, faturamento de venda antiga, aprovação do diretor, orçamento — todos os itens devem exibir nome/custo via `custos_itens`.
+### 4. Página `src/pages/direcao/estrategia/EstrategiaPrecos.tsx`
+Transformar o conteúdo em layout 2 colunas (`grid lg:grid-cols-[1fr_360px] gap-4`):
+- **Coluna principal**: `<TabelaPrecos embedded />` (inalterado).
+- **Coluna lateral (nova)**: card glassmorphism (`bg-white/5 backdrop-blur-xl border-white/10`) com:
+  - Título "Itens Avulso" + contador.
+  - Lista (scroll vertical) dos itens de `custos_itens` onde `vendavel_avulso = true`, ordenados por categoria e descrição.
+  - Cada linha: descrição, unidade (badge pequeno) e `preco_venda` formatado em BRL alinhado à direita.
+  - Estado vazio: "Nenhum item marcado como avulso. Ative em Estratégia → Itens".
+- Reutilizar o hook existente `useCustosItens` (filtrar no client).
+
+## Notas técnicas
+- Sem mudança nas APIs de venda — esta fase é apenas marcação + visualização.
+- Layout lateral colapsa para coluna única em telas pequenas (`lg` breakpoint).
+- Sem novas dependências.
 
 ## Fora de escopo
-
-- Remoção da memória `mem://features/sales/catalogo-management-v4-sanitized` (atualizo o índice depois).
-- Qualquer ajuste em `custos_itens` em si.
+- Inclusão desses itens em fluxos de venda/orçamento.
+- Edição inline do preço_venda na seção lateral (continua em `/direcao/estrategia/itens`).

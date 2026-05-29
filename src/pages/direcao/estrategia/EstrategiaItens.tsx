@@ -22,6 +22,7 @@ import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -747,6 +748,16 @@ function SortableItemRow({ item, disabled, categorias, colors, order, padroes, o
           >
             <Trash2 className="h-4 w-4" />
           </Button>
+          <div
+            className="flex items-center pl-1"
+            title={item.vendavel_avulso ? "Vendável avulso: ativo" : "Vendável avulso: inativo"}
+          >
+            <Switch
+              checked={!!item.vendavel_avulso}
+              onCheckedChange={(v) => onUpdate({ vendavel_avulso: v })}
+              className="scale-75 data-[state=checked]:bg-emerald-500"
+            />
+          </div>
         </div>
       </TableCell>
       {order.map((col) => (

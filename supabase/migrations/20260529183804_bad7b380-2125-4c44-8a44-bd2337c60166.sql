@@ -1,0 +1,1 @@
+ALTER TABLE public.custos_itens ADD COLUMN IF NOT EXISTS vendavel_avulso boolean NOT NULL DEFAULT false;
