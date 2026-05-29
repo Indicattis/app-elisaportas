@@ -623,7 +623,7 @@ export function ProdutoVendaForm({
             <div className="space-y-2">
               <Label htmlFor="acessorio">Acessório *</Label>
               <Select
-                value={formData.vendas_catalogo_id}
+                value={formData.custos_itens_id}
                 onValueChange={handleAcessorioChange}
                 required
               >
@@ -633,7 +633,7 @@ export function ProdutoVendaForm({
                 <SelectContent>
                   {acessorios?.map((acessorio) => (
                     <SelectItem key={acessorio.id} value={acessorio.id}>
-                      {acessorio.nome_produto} - R$ {Number(acessorio.preco_venda).toFixed(2)}
+                      {acessorio.descricao} - R$ {Number(acessorio.preco_venda).toFixed(2)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -645,7 +645,7 @@ export function ProdutoVendaForm({
             <div className="space-y-2">
               <Label htmlFor="adicional">Adicional *</Label>
               <Select
-                value={formData.vendas_catalogo_id}
+                value={formData.custos_itens_id}
                 onValueChange={handleAdicionalChange}
                 required
               >
@@ -655,7 +655,7 @@ export function ProdutoVendaForm({
                 <SelectContent>
                   {adicionais?.map((adicional) => (
                     <SelectItem key={adicional.id} value={adicional.id}>
-                      {adicional.nome_produto} - R$ {Number(adicional.preco_venda).toFixed(2)}
+                      {adicional.descricao} - R$ {Number(adicional.preco_venda).toFixed(2)}
                     </SelectItem>
                   ))}
                 </SelectContent>
