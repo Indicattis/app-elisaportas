@@ -1,27 +1,32 @@
-## Aplicar config de Instalações/Pinturas nas colunas do kit de portas
+## Objetivo
 
-Hoje a tabela em `src/pages/TabelaPrecos.tsx` calcula as colunas "Lucro Instalação" / "% Lucro Inst." e "Lucro Pintura" / "% Lucro Pint." com percentuais fixos (80% e 30%). Vou trocar por percentuais lidos da configuração ativa (mesma fonte já usada pelo faturamento e pelo showcase).
+Transformar o bloco "Configuração — Estático (% de custo fixa)" (que hoje aparece embaixo do seletor de modo) em um **modal** que abre ao clicar no modo de cálculo, nas abas Instalações e Pinturas.
 
-### Fonte dos percentuais
-- Instalação: `useConfigLucro('instalacao')` → `lucroPct = 100 − percentual_custo`.
-- Pintura: `useConfigLucro('pintura_epoxi')`.
-  - Modo `estatico`: `lucroPctKit = 100 − percentual_custo`, aplicado sobre `valor_pintura` de cada kit.
-  - Modo `formula_dimensao`: `lucroKit$ = altura × largura × parametros.valor_m2`; daí `lucroPctKit = lucroKit$ / valor_pintura × 100` (cap em 0–100; se `valor_pintura = 0`, mostrar "—").
+Como ambas as abas usam o mesmo componente `ConfigLucroEstatico`, a mudança é feita em um único lugar e vale para as duas.
 
-### Alterações em `TabelaPrecos.tsx`
-1. Importar `useConfigLucro` no topo do componente.
-2. Carregar `cfgInstal = useConfigLucro('instalacao')` e `cfgPintura = useConfigLucro('pintura_epoxi')`.
-3. Computar uma vez:
-   - `instalLucroPct = 100 − (cfgInstal.data?.percentual_custo ?? 20)` (fallback no padrão histórico para não regredir enquanto carrega).
-   - Função `getPinturaLucro(item)` que retorna `{ valor, pct }` com base no modo.
-4. Substituir nas linhas 399–407 (instalação) por `item.valor_instalacao × instalLucroPct/100` e `instalLucroPct` formatado.
-5. Substituir nas linhas 414–422 (pintura) pelos valores retornados por `getPinturaLucro(item)`.
-6. Reaproveitar `text-emerald-400`/`text-orange-400` e o formato em pt-BR; manter "—" quando a config ainda não carregou ou o cálculo for indefinido.
+## Mudanças
 
-### Showcase
-Sem mudanças necessárias — o `KitsShowcaseCard` já lê a mesma `config_lucro`, então qualquer alteração feita nas abas Instalações/Pinturas reflete automaticamente no showcase e agora também nas colunas do kit de portas.
+Arquivo: `src/components/direcao/ConfigLucroEstatico.tsx`
 
-### Fora do escopo
-- Sem migrations: nenhum campo novo nas tabelas; a tabela continua usando os valores de `valor_instalacao` e `valor_pintura` por kit.
-- Sem alteração na lógica de faturamento (já consome `config_lucro`).
-- Sem mudança no header/abas/largura.
+1. Manter o card "Modo de cálculo" como está, mas fazer com que **clicar em qualquer modo** (estático ou fórmula) abra um `Dialog` ao invés de apenas marcar como ativo inline.
+2. Remover o card de "Configuração — {modo}" da árvore principal e mover seu conteúdo (campos `% de custo` / `% lucro calculada` para estático; `valor por m²` + bloco de fórmula para `formula_dimensao`) para dentro de um `<Dialog>` do shadcn.
+3. O modal contém:
+   - Título: `Configuração — {label do modo}`
+   - Descrição curta (reaproveita `MODO_INFO[modo].descricao`)
+   - Os mesmos inputs já existentes
+   - Footer com `Cancelar` (fecha sem salvar) e `Salvar configuração` (mesma lógica `handleSave`, fecha o modal em caso de sucesso)
+4. Ao abrir o modal, pré-popular os campos com o valor salvo atual (já feito pelo `useEffect` existente — só precisamos garantir que o estado local não seja sobrescrito enquanto o modal está aberto; usar um estado `open` controlado).
+5. O badge "Ativo" no card de modo continua refletindo o modo persistido em `data.modo` (não o estado temporário do modal).
+6. Manter o aviso azul informativo ("A nova configuração é aplicada apenas a faturamentos…") fora do modal, no rodapé.
+
+## Detalhes técnicos
+
+- Usar `Dialog`, `DialogContent`, `DialogHeader`, `DialogTitle`, `DialogDescription`, `DialogFooter` de `@/components/ui/dialog`.
+- Novo estado: `const [openModo, setOpenModo] = useState<ConfigLucroModo | null>(null)`. Clicar no botão de modo seta esse estado; `onOpenChange(false)` zera para `null`.
+- `handleSave` ganha um `setOpenModo(null)` após sucesso.
+- Nenhuma alteração em `EstrategiaKits.tsx`, hooks, ou banco.
+
+## Fora de escopo
+
+- Não alterar lógica de cálculo, persistência ou regras de negócio.
+- Não mudar a aba de Portas/Kits.
