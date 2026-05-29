@@ -285,6 +285,41 @@ export default function MidiasMinimalista() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  const [searchParams, setSearchParams] = useSearchParams();
+  const rawTab = searchParams.get('tab') as TabKey | null;
+  const activeTab: TabKey = rawTab === 'documentos' ? 'documentos' : 'midias';
+  const setTab = (k: TabKey) => {
+    const next = new URLSearchParams(searchParams);
+    if (k === 'midias') next.delete('tab');
+    else next.set('tab', k);
+    setSearchParams(next, { replace: true });
+  };
+  const documentosHeaderActions = useDocumentosHeaderActions();
+
+  const midiasHeaderActions = (
+    <div className="flex items-center gap-2">
+      <Select value={bucket} onValueChange={setBucket}>
+        <SelectTrigger className="w-[220px] bg-white/5 border-white/10 text-white text-xs">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value={ALL_CATEGORIES}>Todas as categorias</SelectItem>
+          {buckets.map(b => (
+            <SelectItem key={b} value={b}>{b}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Button
+        size="sm"
+        onClick={() => setUploadModalOpen(true)}
+        className="bg-blue-600 hover:bg-blue-500 text-white text-xs"
+      >
+        <Upload className="w-4 h-4" />
+        Upload
+      </Button>
+    </div>
+  );
+
   return (
     <MinimalistLayout
       title="Mídias"
@@ -295,30 +330,16 @@ export default function MidiasMinimalista() {
         { label: 'Marketing', path: '/marketing' },
         { label: 'Mídias' },
       ]}
-      headerActions={
-        <div className="flex items-center gap-2">
-          <Select value={bucket} onValueChange={setBucket}>
-            <SelectTrigger className="w-[220px] bg-white/5 border-white/10 text-white text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL_CATEGORIES}>Todas as categorias</SelectItem>
-              {buckets.map(b => (
-                <SelectItem key={b} value={b}>{b}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button
-            size="sm"
-            onClick={() => setUploadModalOpen(true)}
-            className="bg-blue-600 hover:bg-blue-500 text-white text-xs"
-          >
-            <Upload className="w-4 h-4" />
-            Upload
-          </Button>
-        </div>
-      }
+      headerActions={activeTab === 'midias' ? midiasHeaderActions : documentosHeaderActions}
     >
+      <TabsBar active={activeTab} onChange={setTab} />
+
+      {activeTab === 'documentos' ? (
+        <div key="documentos" className="animate-fade-in">
+          <DocumentosPanel />
+        </div>
+      ) : (
+        <div key="midias" className="animate-fade-in">
       {/* Preview modal */}
       {previewUrl && (
         <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" onClick={() => setPreviewUrl(null)}>
