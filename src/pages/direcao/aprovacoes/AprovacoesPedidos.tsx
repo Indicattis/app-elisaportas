@@ -172,7 +172,7 @@ export default function AprovacoesPedidos() {
                             <div key={p.id} className="flex items-center justify-between text-sm bg-muted/50 rounded-lg px-3 py-2">
                               <div>
                                 <span className="font-medium">
-                                  {p.acessorio?.nome || p.vendas_catalogo?.nome || p.descricao || getLabelTipoProduto(p.tipo_produto)}
+                                  {p.acessorio?.nome || p.custos_itens?.descricao || p.descricao || getLabelTipoProduto(p.tipo_produto)}
                                 </span>
                                 <Badge variant="outline" className="ml-2 text-xs">
                                   {getLabelTipoProduto(p.tipo_produto)}

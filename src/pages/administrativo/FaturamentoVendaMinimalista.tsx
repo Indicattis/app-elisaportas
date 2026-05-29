@@ -735,58 +735,6 @@ export default function FaturamentoVendaMinimalista() {
     });
   }, [produtos]);
 
-  // Auto-calcular lucro de itens de catálogo (acessorio/adicional/manutencao)
-  // baseado em (preco_venda - custo_produto) cadastrados em vendas_catalogo.
-  // Itens sem custo_produto cadastrado ficam pendentes para preenchimento manual.
-  useEffect(() => {
-    if (!produtos || produtos.length === 0 || isUpdatingLucro) return;
-
-    const candidatos = produtos.filter((p: any) =>
-      ['acessorio', 'adicional', 'manutencao'].includes(p.tipo_produto) &&
-      p.vendas_catalogo_id &&
-      !p.faturamento &&
-      (!p.lucro_item || p.lucro_item === 0) &&
-      !autoFaturadosRef.current.has(p.id)
-    );
-
-    if (candidatos.length === 0) return;
-
-    (async () => {
-      const ids = Array.from(new Set(candidatos.map((p: any) => p.vendas_catalogo_id)));
-      const { data: catalogo, error } = await supabase
-        .from('vendas_catalogo')
-        .select('id, preco_venda, custo_produto')
-        .in('id', ids);
-
-      if (error || !catalogo) return;
-
-      const map = new Map(catalogo.map((c: any) => [c.id, c]));
-
-      for (const produto of candidatos) {
-        const cat: any = map.get((produto as any).vendas_catalogo_id);
-        if (!cat || !cat.custo_produto || cat.custo_produto <= 0) continue;
-
-        autoFaturadosRef.current.add(produto.id);
-
-        const quantidade = Number(produto.quantidade) || 1;
-        // Para itens medidos por unidades decimais (Metro/Kg/Litro), o tamanho unitário
-        // é armazenado em `tamanho`. Custo = custo_unitario * quantidade * tamanho.
-        const tamanhoUnit = parseFloat((produto as any).tamanho || '') || 0;
-        const fatorTamanho = tamanhoUnit > 0 ? tamanhoUnit : 1;
-        const custoTotal = Number(cat.custo_produto) * quantidade * fatorTamanho;
-        const valorTotal = Number(produto.valor_total) || 0;
-        const lucroCalculado = Math.max(0, valorTotal - custoTotal);
-
-        await updateLucroItem({
-          produtoId: produto.id,
-          lucroItem: lucroCalculado,
-          custoProducao: custoTotal,
-          faturamento: true,
-        });
-      }
-    })();
-  }, [produtos]);
-
   const fetchVenda = async () => {
     try {
       setLoading(true);

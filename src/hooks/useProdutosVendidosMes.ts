@@ -25,16 +25,17 @@ export function useProdutosVendidosMes(params: UseProdutosVendidosMesParams = {}
   return useQuery({
     queryKey: ["produtos-catalogo-vendidos-mes", inicioMes, fimMes, atendenteId],
     queryFn: async () => {
-      // Buscar produtos vendidos no período que têm vínculo com o catálogo
+      // Buscar produtos vendidos no período vinculados a custos_itens
       let query = supabase
         .from("produtos_vendas")
         .select(`
-          vendas_catalogo_id,
+          custos_itens_id,
           quantidade,
           valor_total,
-          vendas!inner(data_venda, atendente_id)
+          vendas!inner(data_venda, atendente_id),
+          custos_itens(descricao, categoria)
         `)
-        .not("vendas_catalogo_id", "is", null)
+        .not("custos_itens_id", "is", null)
         .gte("vendas.data_venda", inicioMes)
         .lte("vendas.data_venda", fimMes);
 
@@ -43,53 +44,26 @@ export function useProdutosVendidosMes(params: UseProdutosVendidosMesParams = {}
       }
 
       const { data: produtosVendas, error } = await query;
-
       if (error) throw error;
 
-      // Buscar informações dos produtos do catálogo
-      const catalogoIds = [...new Set(
-        produtosVendas?.map(p => p.vendas_catalogo_id).filter(Boolean) || []
-      )];
-
-      if (catalogoIds.length === 0) return [];
-
-      const { data: catalogo } = await supabase
-        .from("vendas_catalogo")
-        .select("id, nome_produto, categoria")
-        .in("id", catalogoIds);
-
-      const catalogoMap = (catalogo || []).reduce((acc, item) => {
-        acc[item.id] = { nome: item.nome_produto, categoria: item.categoria };
-        return acc;
-      }, {} as Record<string, { nome: string; categoria: string | null }>);
-
-      // Agrupar por produto do catálogo
-      const agrupado = (produtosVendas || []).reduce((acc, item) => {
-        const catalogoId = item.vendas_catalogo_id!;
-        const info = catalogoMap[catalogoId];
-        
-        if (!info) return acc;
-        
-        if (!acc[catalogoId]) {
-          acc[catalogoId] = {
-            catalogo_id: catalogoId,
-            nome_produto: info.nome,
-            categoria: info.categoria,
+      const agrupado = (produtosVendas || []).reduce((acc: Record<string, ProdutoVendidoMes>, item: any) => {
+        const id = item.custos_itens_id;
+        if (!id) return acc;
+        if (!acc[id]) {
+          acc[id] = {
+            catalogo_id: id,
+            nome_produto: item.custos_itens?.descricao ?? "",
+            categoria: item.custos_itens?.categoria ?? null,
             quantidade_total: 0,
             valor_total: 0,
           };
         }
-        
-        acc[catalogoId].quantidade_total += item.quantidade || 0;
-        acc[catalogoId].valor_total += item.valor_total || 0;
-        
+        acc[id].quantidade_total += item.quantidade || 0;
+        acc[id].valor_total += item.valor_total || 0;
         return acc;
-      }, {} as Record<string, ProdutoVendidoMes>);
+      }, {});
 
-      // Converter para array e ordenar por quantidade
-      return Object.values(agrupado).sort(
-        (a, b) => b.quantidade_total - a.quantidade_total
-      );
+      return Object.values(agrupado).sort((a, b) => b.quantidade_total - a.quantidade_total);
     },
   });
 }

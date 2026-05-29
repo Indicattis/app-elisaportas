@@ -15,7 +15,6 @@ export interface ProdutoVenda {
   cor_id?: string;
   acessorio_id?: string;
   adicional_id?: string;
-  vendas_catalogo_id?: string;
   custos_itens_id?: string;
   tipo_pintura?: string;
   tipo_servico?: string;

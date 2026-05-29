@@ -30,7 +30,6 @@ import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Performance from "./pages/Performance";
 import Users from "./pages/Users";
-import VendaNova from "./pages/VendaNova";
 import VendaVinculacao from "./pages/VendaVinculacao";
 import VendaEdit from "./pages/VendaEdit";
 import Orcamentos from "./pages/Orcamentos";
@@ -100,9 +99,6 @@ import Estoque from "./pages/Estoque";
 import EstoqueEdit from "./pages/EstoqueEdit";
 import EstoqueGerenciamento from "./pages/EstoqueGerenciamento";
 import RegrasEtiquetasPage from "./pages/RegrasEtiquetasPage";
-import VendasCatalogo from "./pages/VendasCatalogo";
-import VendasCatalogoNovo from "./pages/VendasCatalogoNovo";
-import CatalogoEditMinimalista from "./pages/vendas/CatalogoEditMinimalista";
 import CatalogoCores from "./pages/CatalogoCores";
 import CatalogoCoresMinimalista from "./pages/vendas/CatalogoCores";
 import Representantes from "./pages/Representantes";
@@ -189,8 +185,6 @@ import MetasHistoricoVendas from "./pages/vendas/MetasHistoricoVendas";
 import PedidoCorrecaoNovo from "./pages/vendas/PedidoCorrecaoNovo";
 import MeusClientes from "./pages/vendas/MeusClientes";
 import MeuClienteDetalhe from "./pages/vendas/MeuClienteDetalhe";
-import CatalogoMinimalista from "./pages/vendas/Catalogo";
-import CatalogoNovoMinimalista from "./pages/vendas/CatalogoNovoMinimalista";
 import MeusOrcamentos from "./pages/vendas/MeusOrcamentos";
 import AcompanharPedido from "./pages/vendas/AcompanharPedido";
 import MeusParceiros from "./pages/vendas/MeusParceiros";
@@ -242,7 +236,6 @@ import CaixaElisaDirecao from "./pages/direcao/CaixaElisaDirecao";
 import CaixaElisaCapitalGiro from "./pages/direcao/caixa-elisa/CapitalGiroPage";
 import CaixaElisaPlanejamento from "./pages/direcao/caixa-elisa/PlanejamentoPage";
 import EstrategiaHub from "./pages/direcao/estrategia/EstrategiaHub";
-import EstrategiaItens from "./pages/direcao/estrategia/EstrategiaItens";
 import EstrategiaKits from "./pages/direcao/estrategia/EstrategiaKits";
 import EstrategiaPrecos from "./pages/direcao/estrategia/EstrategiaPrecos";
 import EstrategiaKitMontagem from "./pages/direcao/estrategia/EstrategiaKitMontagem";
@@ -465,13 +458,7 @@ const App = () => (
                 <Route path="/vendas/minhas-vendas/editar/:id" element={<ProtectedRoute routeKey="vendas_hub"><MinhasVendasEditar /></ProtectedRoute>} />
                 <Route path="/vendas/meus-clientes" element={<ProtectedRoute routeKey="vendas_hub"><MeusClientes /></ProtectedRoute>} />
                 <Route path="/vendas/meus-clientes/:id" element={<ProtectedRoute routeKey="vendas_hub"><MeuClienteDetalhe /></ProtectedRoute>} />
-                <Route path="/vendas/catalogo" element={<Navigate to="/marketing/catalogo" replace />} />
-                <Route path="/vendas/catalogo/new" element={<Navigate to="/marketing/catalogo/new" replace />} />
-                <Route path="/vendas/catalogo/editar/:id" element={<Navigate to="/marketing/catalogo/editar/:id" replace />} />
                 <Route path="/vendas/catalogo/cores" element={<Navigate to="/marketing/catalogo/cores" replace />} />
-                <Route path="/marketing/catalogo" element={<ProtectedRoute routeKeyPrefix="marketing_"><CatalogoMinimalista /></ProtectedRoute>} />
-                <Route path="/marketing/catalogo/new" element={<ProtectedRoute routeKeyPrefix="marketing_"><CatalogoNovoMinimalista /></ProtectedRoute>} />
-                <Route path="/marketing/catalogo/editar/:id" element={<ProtectedRoute routeKeyPrefix="marketing_"><CatalogoEditMinimalista /></ProtectedRoute>} />
                 <Route path="/marketing/catalogo/cores" element={<ProtectedRoute routeKeyPrefix="marketing_"><CatalogoCoresMinimalista /></ProtectedRoute>} />
                 <Route path="/vendas/meus-orcamentos" element={<ProtectedRoute routeKey="vendas_hub"><MeusOrcamentos /></ProtectedRoute>} />
                 <Route path="/vendas/meus-parceiros" element={<ProtectedRoute routeKey="vendas_hub"><MeusParceiros /></ProtectedRoute>} />
@@ -553,7 +540,6 @@ const App = () => (
 
                 {/* Estratégia */}
                 <Route path="/direcao/estrategia" element={<ProtectedRoute routeKey="direcao_estrategia"><EstrategiaHub /></ProtectedRoute>} />
-                <Route path="/direcao/estrategia/itens" element={<ProtectedRoute routeKey="direcao_estrategia"><EstrategiaItens /></ProtectedRoute>} />
                 <Route path="/direcao/estrategia/kits" element={<ProtectedRoute routeKey="direcao_estrategia"><EstrategiaKits /></ProtectedRoute>} />
                 <Route path="/direcao/estrategia/kits/template" element={<ProtectedRoute routeKey="direcao_estrategia"><EstrategiaKitsTemplate /></ProtectedRoute>} />
                 <Route path="/direcao/estrategia/kits/lucro-instalacoes" element={<ProtectedRoute routeKey="direcao_estrategia"><EstrategiaLucroInstalacoes /></ProtectedRoute>} />

@@ -9,11 +9,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useTabelaPrecos, ItemTabelaPreco, ItemTabelaPrecoInput } from "@/hooks/useTabelaPrecos";
 import { ItemModal } from "@/components/tabela-precos/ItemModal";
 import { BulkUploadTabelaPrecos } from "@/components/tabela-precos/BulkUploadTabelaPrecos";
-import { CatalogoPrecosTab } from "@/components/tabela-precos/CatalogoPrecosTab";
 import { useKitsMontagemResumo } from "@/hooks/useKitMontagem";
 import { useCustosItensPadroes } from "@/hooks/useCustosItens";
 import { useConfigLucro } from "@/hooks/useConfigLucro";
@@ -41,6 +39,7 @@ import { restrictToVerticalAxis, restrictToParentElement } from "@dnd-kit/modifi
 interface TabelaPrecosProps {
   hideLucroColumn?: boolean;
   hideAcoesColumn?: boolean;
+  /** @deprecated catálogo removido */
   hideCatalogoTab?: boolean;
   hideTotalColumn?: boolean;
   embedded?: boolean;
@@ -72,7 +71,6 @@ export default function TabelaPrecos({
   const [bulkUploadModalOpen, setBulkUploadModalOpen] = useState(false);
   const [itemEditando, setItemEditando] = useState<ItemTabelaPreco | null>(null);
   const [itemParaInativar, setItemParaInativar] = useState<ItemTabelaPreco | null>(null);
-  const [activeTab, setActiveTab] = useState<'portas' | 'catalogo'>('portas');
   const navigate = useNavigate();
 
   const queryClient = useQueryClient();
@@ -177,7 +175,7 @@ export default function TabelaPrecos({
   };
 
 
-  const internalHeaderActions = activeTab === 'portas' ? (
+  const internalHeaderActions = (
     <div className="flex gap-2">
       <Button onClick={() => setBulkUploadModalOpen(true)} variant="outline" size="sm" className="border-white/20 text-white hover:bg-white/10">
         <Upload className="h-4 w-4 mr-2" />
@@ -188,7 +186,7 @@ export default function TabelaPrecos({
         Novo Item
       </Button>
     </div>
-  ) : null;
+  );
 
   const headerActions = (
     <div className="flex items-center gap-2">
@@ -281,15 +279,7 @@ export default function TabelaPrecos({
       fullWidth
     >
       {beforeContent}
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'portas' | 'catalogo')} className="space-y-6">
-        {!hideCatalogoTab && (
-          <TabsList className="bg-white/5 border border-white/10">
-            <TabsTrigger value="portas" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-white/70">Portas</TabsTrigger>
-            <TabsTrigger value="catalogo" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-white/70">Catálogo</TabsTrigger>
-          </TabsList>
-        )}
-
-        <TabsContent value="portas" className="space-y-6 mt-0">
+      <div className="space-y-6">
         {/* Card Principal */}
         <Card className="bg-white/5 border-white/10">
           <CardHeader>
@@ -508,12 +498,7 @@ export default function TabelaPrecos({
             )}
           </CardContent>
         </Card>
-        </TabsContent>
-
-        <TabsContent value="catalogo" className="mt-0">
-          <CatalogoPrecosTab />
-        </TabsContent>
-      </Tabs>
+      </div>
 
       {/* Modal de Adicionar/Editar */}
       <ItemModal
