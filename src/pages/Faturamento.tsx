@@ -587,16 +587,16 @@ export default function Faturamento() {
             Gestão de vendas e controle financeiro
           </p>
         </div>
-        <div className="flex gap-3">
-          <Button onClick={handleGeneratePDF} variant="outline" size="sm">
+        <div className="flex flex-col gap-2 items-end">
+          <Button onClick={handleGeneratePDF} variant="outline" size="sm" className="w-full justify-start">
             <FileText className="w-4 h-4 mr-2" />
             Gerar Relatório PDF
           </Button>
-          <Button onClick={() => navigate("/dashboard/vendas/nova")} size="sm">
+          <Button onClick={() => navigate("/dashboard/vendas/nova")} size="sm" className="w-full justify-start">
             <Plus className="w-4 h-4 mr-2" />
             Nova Venda
           </Button>
-          <Button variant="outline" onClick={() => navigate("/dashboard/vendas/vincular")} size="sm">
+          <Button variant="outline" onClick={() => navigate("/dashboard/vendas/vincular")} size="sm" className="w-full justify-start">
             Vincular Lead
           </Button>
         </div>
