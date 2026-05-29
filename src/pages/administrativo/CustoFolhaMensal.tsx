@@ -375,6 +375,9 @@ export default function CustoFolhaMensal() {
                   <th className="text-left p-3 text-white/40 font-medium text-xs uppercase w-[240px]">
                     Chave PIX
                   </th>
+                  <th className="text-center p-3 text-white/40 font-medium text-xs uppercase w-[90px]">
+                    Ações
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -494,6 +497,21 @@ export default function CustoFolhaMensal() {
                           placeholder="CPF, e-mail, telefone ou aleatória"
                           className="bg-white/5 border-white/10 text-white w-full"
                         />
+                      </td>
+                      <td className="p-3 text-center">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleSaveLinha(c)}
+                          disabled={savingId === c.id || saving}
+                          className="border-white/20 bg-white/10 text-white hover:bg-white/15 hover:text-white"
+                        >
+                          {savingId === c.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Save className="w-4 h-4" />
+                          )}
+                        </Button>
                       </td>
                     </tr>
                   );
