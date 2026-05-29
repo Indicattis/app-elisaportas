@@ -102,43 +102,39 @@ export default function ComprasHub() {
       </div>
 
       {/* ========== VERSÃO DESKTOP ========== */}
-      <div className="hidden md:flex relative z-10 flex-col items-center gap-8">
-        <div className="grid grid-cols-3 gap-4">
+      <div className="hidden md:flex relative z-10 flex-col items-center gap-8 w-full max-w-md px-6">
+        <div className="w-full flex flex-col gap-3">
           {menuItems.map((item, index) => {
             const Icon = item.icon;
             const delay = 200 + index * 100;
-            
+
             return (
               <div
                 key={item.label}
-                className={`p-2 rounded-2xl backdrop-blur-xl border transition-all duration-300
-                           ${item.ativo 
-                             ? 'bg-white/5 border-white/10 hover:bg-white/10' 
+                className={`p-1.5 rounded-xl backdrop-blur-xl border transition-all duration-300
+                           ${item.ativo
+                             ? 'bg-white/5 border-white/10 hover:bg-white/10'
                              : 'bg-white/[0.02] border-white/5'
                            }`}
                 style={{
                   opacity: mounted ? 1 : 0,
-                  transform: mounted ? 'translateY(0)' : 'translateY(30px)',
+                  transform: mounted ? 'translateX(0)' : 'translateX(-30px)',
                   transition: `all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}ms`
                 }}
               >
                 <button
                   onClick={() => handleClick(item)}
-                  className={`w-36 h-28 rounded-xl
-                             flex flex-col items-center justify-center gap-3
+                  className={`w-full h-12 rounded-lg
+                             flex items-center gap-4 px-5
                              font-medium border transition-all duration-300
-                             ${item.ativo 
-                               ? 'bg-gradient-to-br from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 hover:shadow-xl hover:shadow-blue-500/50 text-white shadow-lg shadow-blue-500/30 border-blue-400/30 cursor-pointer' 
+                             ${item.ativo
+                               ? 'bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 active:scale-[0.98] text-white shadow-lg shadow-blue-500/20 border-blue-400/30'
                                : 'bg-white/5 text-white/50 border-white/10 cursor-not-allowed'
                              }`}
                 >
-                  <div className="relative">
-                    <Icon className="w-7 h-7" strokeWidth={1.5} />
-                    {!item.ativo && (
-                      <Lock className="w-3 h-3 absolute -top-1 -right-1" />
-                    )}
-                  </div>
-                  <span className="text-xs font-medium tracking-wide">{item.label}</span>
+                  <Icon className="w-5 h-5" strokeWidth={1.5} />
+                  <span className="text-sm font-medium flex-1 text-left">{item.label}</span>
+                  {!item.ativo && <Lock className="w-4 h-4" />}
                 </button>
               </div>
             );
