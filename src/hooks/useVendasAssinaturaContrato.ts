@@ -30,6 +30,7 @@ export const useVendasAssinaturaContrato = () => {
           quantidade_parcelas,
           pagamento_na_entrega,
           pago_na_instalacao,
+          valor_a_receber,
           cidade,
           estado,
           contrato_url,
