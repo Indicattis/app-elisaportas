@@ -638,7 +638,7 @@ const App = () => (
 
                 {/* Hub de Caixa Minimalista */}
                 <Route path="/financeiro/caixa" element={<ProtectedRoute routeKey="administrativo_hub"><CaixaHub /></ProtectedRoute>} />
-                <Route path="/financeiro/caixa/gestao" element={<ProtectedRoute routeKey="administrativo_hub"><GestaoCaixaMinimalista /></ProtectedRoute>} />
+                <Route path="/financeiro/caixa/gestao" element={<Navigate to="/financeiro" replace />} />
                 <Route path="/financeiro/caixa/contas-a-receber" element={<ProtectedRoute routeKey="administrativo_hub"><ContasReceberMinimalista /></ProtectedRoute>} />
                 <Route path="/financeiro/caixa/contas-a-pagar" element={<ProtectedRoute routeKey="administrativo_hub"><ContasPagarMinimalista /></ProtectedRoute>} />
 
