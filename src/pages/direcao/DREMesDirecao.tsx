@@ -989,8 +989,8 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
 
         if (prodError) throw prodError;
 
-        const fat: FaturamentoProduto = { portas: 0, pintura: 0, instalacoes: 0, acessorios: 0, adicionais: 0, total: 0 };
-        const luc: FaturamentoProduto = { portas: 0, pintura: 0, instalacoes: 0, acessorios: 0, adicionais: 0, total: 0 };
+        const fat: FaturamentoProduto = { portas: 0, pintura: 0, instalacoes: 0, avulsos: 0, total: 0 };
+        const luc: FaturamentoProduto = { portas: 0, pintura: 0, instalacoes: 0, avulsos: 0, total: 0 };
 
         produtos?.forEach((p: any) => {
           const tipo = p.tipo_produto;
@@ -1030,12 +1030,9 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
           } else if (tipo === 'pintura_epoxi') {
             fat.pintura += valorTotal;
             luc.pintura += p.lucro_item || 0;
-          } else if (tipo === 'acessorio') {
-            fat.acessorios += valorTotal;
-            luc.acessorios += p.lucro_item || 0;
-          } else if (['adicional', 'manutencao'].includes(tipo)) {
-            fat.adicionais += valorTotal;
-            luc.adicionais += p.lucro_item || 0;
+          } else if (['acessorio', 'adicional', 'manutencao'].includes(tipo)) {
+            fat.avulsos += valorTotal;
+            luc.avulsos += p.lucro_item || 0;
           } else if (tipo === 'instalacao') {
             fat.instalacoes += valorTotal;
             luc.instalacoes += p.lucro_item || 0;
@@ -1050,32 +1047,23 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
 
         const totalCredito = vendas?.reduce((sum, v) => sum + ((v as any).valor_credito || 0), 0) || 0;
 
-        fat.total = fat.portas + fat.pintura + fat.instalacoes + fat.acessorios + fat.adicionais + totalCredito;
-        luc.total = luc.portas + luc.pintura + luc.instalacoes + luc.acessorios + luc.adicionais;
+        fat.total = fat.portas + fat.pintura + fat.instalacoes + fat.avulsos + totalCredito;
+        luc.total = luc.portas + luc.pintura + luc.instalacoes + luc.avulsos;
 
         setFaturamento(fat);
         setLucro(luc);
 
-        // Top 5 acessórios e adicionais
-        const acessoriosMap: Record<string, number> = {};
-        const adicionaisMap: Record<string, number> = {};
+        // Top 5 itens avulsos (acessórios + adicionais + manutenção)
+        const avulsosMap: Record<string, number> = {};
         produtos?.forEach((p: any) => {
           const nome = p.descricao || 'Sem descrição';
           const qtd = p.quantidade || 1;
-          if (p.tipo_produto === 'acessorio') {
-            acessoriosMap[nome] = (acessoriosMap[nome] || 0) + qtd;
-          } else if (['adicional', 'manutencao'].includes(p.tipo_produto)) {
-            adicionaisMap[nome] = (adicionaisMap[nome] || 0) + qtd;
+          if (['acessorio', 'adicional', 'manutencao'].includes(p.tipo_produto)) {
+            avulsosMap[nome] = (avulsosMap[nome] || 0) + qtd;
           }
         });
-        setTopAcessorios(
-          Object.entries(acessoriosMap)
-            .map(([nome, qtd]) => ({ nome, qtd }))
-            .sort((a, b) => b.qtd - a.qtd)
-            .slice(0, 5)
-        );
-        setTopAdicionais(
-          Object.entries(adicionaisMap)
+        setTopAvulsos(
+          Object.entries(avulsosMap)
             .map(([nome, qtd]) => ({ nome, qtd }))
             .sort((a, b) => b.qtd - a.qtd)
             .slice(0, 5)
