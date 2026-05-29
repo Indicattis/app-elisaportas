@@ -34,6 +34,7 @@ import {
   Settings
 } from "lucide-react";
 import { agruparItensCatalogo } from "@/utils/agruparItensCatalogo";
+import { PagamentoResumo } from "@/components/vendas/PagamentoResumo";
 
 interface Produto {
   id: string;
@@ -96,6 +97,7 @@ interface Venda {
 export default function VendaDetalhesDirecao() {
   const { id } = useParams<{ id: string }>();
   const [venda, setVenda] = useState<any>(null);
+  const [contasReceber, setContasReceber] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [excluirModalOpen, setExcluirModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -192,6 +194,14 @@ export default function VendaDetalhesDirecao() {
 
       if (vendaError) throw vendaError;
       setVenda(vendaData);
+
+      // Buscar parcelas para alimentar o bloco de Forma de Pagamento
+      const { data: parcelas } = await supabase
+        .from("contas_receber")
+        .select("id, venda_id, numero_parcela, metodo_pagamento, valor_parcela, data_vencimento, data_pagamento, status, empresa_receptora_id")
+        .eq("venda_id", id)
+        .order("numero_parcela");
+      setContasReceber(parcelas || []);
     } catch (error) {
       console.error("Erro ao buscar detalhes da venda:", error);
       toast({
@@ -601,13 +611,6 @@ export default function VendaDetalhesDirecao() {
                   <Badge className={`${tipoOp.color} border`}>{tipoOp.label}</Badge>
                 </div>
               )}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-white/60">
-                  <CreditCard className="w-4 h-4" />
-                  Pagamento
-                </div>
-                <p className="text-white">{venda.forma_pagamento || 'Não informado'}</p>
-              </div>
               {venda.publico_alvo && (
                 <div className="flex items-center justify-between">
                   <span className="text-white/60">Público Alvo</span>
@@ -619,6 +622,9 @@ export default function VendaDetalhesDirecao() {
             </div>
           </div>
         </div>
+
+        {/* Forma de Pagamento — somente leitura (fonte: cadastro da venda) */}
+        <PagamentoResumo venda={venda} contasReceber={contasReceber} hideComprovante />
 
         {/* Vendedor */}
         {venda.atendente && (
@@ -641,21 +647,7 @@ export default function VendaDetalhesDirecao() {
           </div>
         )}
 
-        {/* Comprovante */}
-        {venda.comprovante_url && (
-          <div className={cardClass}>
-            <h3 className="text-white font-medium mb-3">Comprovante</h3>
-            <a 
-              href={venda.comprovante_url} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors"
-            >
-              <ExternalLink className="w-4 h-4" />
-              Ver comprovante anexado
-            </a>
-          </div>
-        )}
+        {/* Comprovante renderizado dentro do PagamentoResumo acima. */}
 
         {/* Observações */}
         {venda.observacoes_venda && (
