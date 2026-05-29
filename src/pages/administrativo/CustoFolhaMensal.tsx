@@ -549,6 +549,7 @@ export default function CustoFolhaMensal() {
                   <td className="p-3" />
                   <td className="p-3" />
                   <td className="p-3" />
+                  <td className="p-3" />
                 </tr>
               </tfoot>
             </table>
