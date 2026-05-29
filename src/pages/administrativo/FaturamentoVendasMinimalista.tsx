@@ -158,6 +158,7 @@ export default function FaturamentoMinimalista() {
   const [auxCores, setAuxCores] = useState<Map<string, { nome: string; hex: string }>>(new Map());
   const [auxAcessorios, setAuxAcessorios] = useState<Map<string, string>>(new Map());
   const [auxAdicionais, setAuxAdicionais] = useState<Map<string, string>>(new Map());
+  const [auxCustosItens, setAuxCustosItens] = useState<Map<string, string>>(new Map());
   const [sortConfig, setSortConfig] = useState<{ column: string | null; direction: 'asc' | 'desc' | null }>({ column: null, direction: null });
   const [justificativaDialog, setJustificativaDialog] = useState<{ open: boolean; vendaId: string; vendaCliente: string; justificativa: string }>({ 
     open: false, vendaId: '', vendaCliente: '', justificativa: '' 
@@ -215,14 +216,16 @@ export default function FaturamentoMinimalista() {
   }, [dateRange]);
 
   const fetchAuxData = async () => {
-    const [{ data: cores }, { data: acessorios }, { data: adicionais }] = await Promise.all([
+    const [{ data: cores }, { data: acessorios }, { data: adicionais }, { data: custosItens }] = await Promise.all([
       supabase.from('catalogo_cores').select('id, nome, codigo_hex'),
       supabase.from('acessorios').select('id, nome'),
       supabase.from('adicionais').select('id, nome'),
+      supabase.from('custos_itens').select('id, descricao'),
     ]);
     if (cores) setAuxCores(new Map(cores.map(c => [c.id, { nome: c.nome, hex: c.codigo_hex }])));
     if (acessorios) setAuxAcessorios(new Map(acessorios.map(a => [a.id, a.nome])));
     if (adicionais) setAuxAdicionais(new Map(adicionais.map(a => [a.id, a.nome])));
+    if (custosItens) setAuxCustosItens(new Map(custosItens.map((c: any) => [c.id, c.descricao])));
   };
 
   const fetchAtendentes = async () => {
@@ -279,7 +282,8 @@ export default function FaturamentoMinimalista() {
             tamanho,
             cor_id,
             acessorio_id,
-            adicional_id
+            adicional_id,
+            custos_itens_id
           )
         `)
         .order("data_venda", { ascending: false });
@@ -534,14 +538,10 @@ export default function FaturamentoMinimalista() {
       // Legado: valor_instalacao da venda
       return acc + valorInstalacaoProdutos + (valorInstalacaoProdutos === 0 ? (v.valor_instalacao || 0) : 0);
     }, 0);
-    const valorBrutoAcessorios = filteredVendas.reduce((acc, v) => {
+    const isAvulso = (p: any) => ['acessorio', 'adicional', 'manutencao'].includes(p.tipo_produto);
+    const valorBrutoAvulsos = filteredVendas.reduce((acc, v) => {
       const portas = v.portas || [];
-      return acc + portas.filter((p: any) => p.tipo_produto === 'acessorio')
-        .reduce((sum: number, p: any) => sum + (p.valor_produto || 0), 0);
-    }, 0);
-    const valorBrutoAdicionais = filteredVendas.reduce((acc, v) => {
-      const portas = v.portas || [];
-      return acc + portas.filter((p: any) => ['adicional', 'manutencao'].includes(p.tipo_produto))
+      return acc + portas.filter(isAvulso)
         .reduce((sum: number, p: any) => sum + (p.valor_produto || 0), 0);
     }, 0);
 
@@ -571,16 +571,10 @@ export default function FaturamentoMinimalista() {
           .reduce((sum: number, p: any) => sum + (p.lucro_item || 0), 0);
         return acc + lucroInstalacaoProdutos + (lucroInstalacaoProdutos === 0 ? (v.lucro_instalacao || 0) : 0);
       }, 0),
-      valorBrutoAcessorios,
-      lucroAcessorios: vendasFaturadas.reduce((acc, v) => {
+      valorBrutoAvulsos,
+      lucroAvulsos: vendasFaturadas.reduce((acc, v) => {
         const portas = v.portas || [];
-        return acc + portas.filter((p: any) => p.tipo_produto === 'acessorio')
-          .reduce((sum: number, p: any) => sum + (p.lucro_item || 0), 0);
-      }, 0),
-      valorBrutoAdicionais,
-      lucroAdicionais: vendasFaturadas.reduce((acc, v) => {
-        const portas = v.portas || [];
-        return acc + portas.filter((p: any) => ['adicional', 'manutencao'].includes(p.tipo_produto))
+        return acc + portas.filter(isAvulso)
           .reduce((sum: number, p: any) => sum + (p.lucro_item || 0), 0);
       }, 0),
       fretesTotais: filteredVendas.reduce((acc, v) => acc + (v.valor_frete || 0), 0),
@@ -627,22 +621,16 @@ export default function FaturamentoMinimalista() {
         cur.valor_total += v.valor_instalacao || 0;
         map.set(key, cur);
       });
-    } else if (indicadorAtivo === 'acessorios') {
+    } else if (indicadorAtivo === 'avulsos') {
       filteredVendas.forEach(v => {
-        (v.portas || []).filter((p: any) => p.tipo_produto === 'acessorio').forEach((p: any) => {
-          const key = p.acessorio_id || p.descricao || 'sem_id';
-          const nome = p.acessorio_id ? (auxAcessorios.get(p.acessorio_id) || p.descricao || 'Acessório') : (p.descricao || 'Acessório');
-          const cur = map.get(key) || { nome, quantidade: 0, valor_total: 0 };
-          cur.quantidade += p.quantidade || 1;
-          cur.valor_total += p.valor_produto || 0;
-          map.set(key, cur);
-        });
-      });
-    } else if (indicadorAtivo === 'adicionais') {
-      filteredVendas.forEach(v => {
-        (v.portas || []).filter((p: any) => ['adicional', 'manutencao'].includes(p.tipo_produto)).forEach((p: any) => {
-          const key = p.adicional_id || p.descricao || 'sem_id';
-          const nome = p.adicional_id ? (auxAdicionais.get(p.adicional_id) || p.descricao || 'Adicional') : (p.descricao || 'Adicional');
+        (v.portas || []).filter((p: any) => ['acessorio', 'adicional', 'manutencao'].includes(p.tipo_produto)).forEach((p: any) => {
+          const key = p.custos_itens_id || p.acessorio_id || p.adicional_id || p.descricao || 'sem_id';
+          const nome =
+            (p.custos_itens_id && auxCustosItens.get(p.custos_itens_id)) ||
+            (p.acessorio_id && auxAcessorios.get(p.acessorio_id)) ||
+            (p.adicional_id && auxAdicionais.get(p.adicional_id)) ||
+            p.descricao ||
+            'Item avulso';
           const cur = map.get(key) || { nome, quantidade: 0, valor_total: 0 };
           cur.quantidade += p.quantidade || 1;
           cur.valor_total += p.valor_produto || 0;
@@ -651,18 +639,17 @@ export default function FaturamentoMinimalista() {
       });
     }
     return Array.from(map.values()).sort((a, b) => b.quantidade - a.quantidade);
-  }, [filteredVendas, indicadorAtivo, auxCores, auxAcessorios, auxAdicionais]);
+  }, [filteredVendas, indicadorAtivo, auxCores, auxAcessorios, auxAdicionais, auxCustosItens]);
 
   const indicadorTitulos: Record<string, string> = {
     portas: 'Portas', pintura: 'Pintura', instalacoes: 'Instalações',
-    acessorios: 'Acessórios', adicionais: 'Adicionais',
+    avulsos: 'Itens Avulsos',
   };
   const indicadorIcons: Record<string, React.ReactNode> = {
     portas: <DollarSign className="h-4 w-4 text-blue-400" />,
     pintura: <Paintbrush className="h-4 w-4 text-orange-400" />,
     instalacoes: <Wrench className="h-4 w-4 text-cyan-400" />,
-    acessorios: <Package className="h-4 w-4 text-pink-400" />,
-    adicionais: <PlusCircle className="h-4 w-4 text-indigo-400" />,
+    avulsos: <Package className="h-4 w-4 text-emerald-400" />,
   };
 
   const handleGeneratePDF = () => {
@@ -956,11 +943,9 @@ export default function FaturamentoMinimalista() {
       .reduce((sum: number, p: any) => sum + (p.valor_produto || 0), 0);
     const valorPintura = portas.filter((p: any) => p.tipo_produto === 'pintura_epoxi')
       .reduce((sum: number, p: any) => sum + (p.valor_pintura || 0), 0);
-    const valorAcessorios = portas.filter((p: any) => p.tipo_produto === 'acessorio')
+    const valorAvulsos = portas.filter((p: any) => ['acessorio', 'adicional', 'manutencao'].includes(p.tipo_produto))
       .reduce((sum: number, p: any) => sum + (p.valor_produto || 0), 0);
-    const valorAdicionais = portas.filter((p: any) => ['adicional', 'manutencao'].includes(p.tipo_produto))
-      .reduce((sum: number, p: any) => sum + (p.valor_produto || 0), 0);
-    return { valorPortas, valorPintura, valorAcessorios, valorAdicionais };
+    return { valorPortas, valorPintura, valorAvulsos };
   };
 
   // Right sidebar content
@@ -1001,14 +986,13 @@ export default function FaturamentoMinimalista() {
   );
 
   const selectedVendaContent = selectedVenda ? (() => {
-    const { valorPortas, valorPintura, valorAcessorios, valorAdicionais } = getVendaDetailValues(selectedVenda);
+    const { valorPortas, valorPintura, valorAvulsos } = getVendaDetailValues(selectedVenda);
     const detailItems = [
       { label: 'Vl. Portas', value: valorPortas, icon: <DollarSign className="h-3.5 w-3.5" />, color: 'text-blue-400' },
       { label: 'Vl. Pintura', value: valorPintura, icon: <Paintbrush className="h-3.5 w-3.5" />, color: 'text-orange-400' },
       { label: 'Instalação', value: selectedVenda.valor_instalacao || 0, icon: <Wrench className="h-3.5 w-3.5" />, color: 'text-cyan-400' },
       { label: 'Frete', value: selectedVenda.valor_frete || 0, icon: <Truck className="h-3.5 w-3.5" />, color: 'text-amber-400' },
-      { label: 'Acessórios', value: valorAcessorios, icon: <Package className="h-3.5 w-3.5" />, color: 'text-pink-400' },
-      { label: 'Adicionais', value: valorAdicionais, icon: <PlusCircle className="h-3.5 w-3.5" />, color: 'text-indigo-400' },
+      { label: 'Itens Avulsos', value: valorAvulsos, icon: <Package className="h-3.5 w-3.5" />, color: 'text-emerald-400' },
     ];
     return (
       <div className="space-y-5">
@@ -1239,17 +1223,16 @@ export default function FaturamentoMinimalista() {
             {(() => {
               const calcMargem = (lucro: number, bruto: number) =>
                 bruto > 0 ? ((lucro / bruto) * 100).toFixed(1) + '%' : '0%';
-              const faturamentoTotal = indicadores.valorBrutoPortas + indicadores.valorBrutoPintura + indicadores.valorBrutoInstalacoes + indicadores.valorBrutoAcessorios + indicadores.valorBrutoAdicionais + indicadores.fretesTotais;
+              const faturamentoTotal = indicadores.valorBrutoPortas + indicadores.valorBrutoPintura + indicadores.valorBrutoInstalacoes + indicadores.valorBrutoAvulsos + indicadores.fretesTotais;
               return [
                 { key: 'portas', icon: <DollarSign className="h-3 w-3 text-blue-400" />, label: 'Portas', valor: formatCurrency(indicadores.valorBrutoPortas), lucro: formatCurrency(indicadores.lucroPortas), margemLucro: calcMargem(indicadores.lucroPortas, indicadores.valorBrutoPortas), colorClass: 'text-blue-400', qtd: filteredVendas.filter(v => (v.portas || []).some((p: any) => ['porta', 'porta_enrolar', 'porta_social'].includes(p.tipo_produto))).length },
                 { key: 'pintura', icon: <Paintbrush className="h-3 w-3 text-orange-400" />, label: 'Pintura', valor: formatCurrency(indicadores.valorBrutoPintura), lucro: formatCurrency(indicadores.lucroPintura), margemLucro: calcMargem(indicadores.lucroPintura, indicadores.valorBrutoPintura), colorClass: 'text-orange-400', qtd: filteredVendas.filter(v => (v.portas || []).some((p: any) => p.tipo_produto === 'pintura_epoxi')).length },
                 { key: 'instalacoes', icon: <Wrench className="h-3 w-3 text-cyan-400" />, label: 'Instalações', valor: formatCurrency(indicadores.valorBrutoInstalacoes), lucro: formatCurrency(indicadores.lucroInstalacoes), margemLucro: calcMargem(indicadores.lucroInstalacoes, indicadores.valorBrutoInstalacoes), colorClass: 'text-cyan-400', qtd: filteredVendas.filter(v => (v.valor_instalacao || 0) > 0).length },
-                { key: 'acessorios', icon: <Package className="h-3 w-3 text-pink-400" />, label: 'Acessórios', valor: formatCurrency(indicadores.valorBrutoAcessorios), lucro: formatCurrency(indicadores.lucroAcessorios), margemLucro: calcMargem(indicadores.lucroAcessorios, indicadores.valorBrutoAcessorios), colorClass: 'text-pink-400', qtd: filteredVendas.filter(v => (v.portas || []).some((p: any) => p.tipo_produto === 'acessorio')).length },
-                { key: 'adicionais', icon: <PlusCircle className="h-3 w-3 text-indigo-400" />, label: 'Adicionais', valor: formatCurrency(indicadores.valorBrutoAdicionais), lucro: formatCurrency(indicadores.lucroAdicionais), margemLucro: calcMargem(indicadores.lucroAdicionais, indicadores.valorBrutoAdicionais), colorClass: 'text-indigo-400', qtd: filteredVendas.filter(v => (v.portas || []).some((p: any) => ['adicional', 'manutencao'].includes(p.tipo_produto))).length },
+                { key: 'avulsos', icon: <Package className="h-3 w-3 text-emerald-400" />, label: 'Itens Avulsos', valor: formatCurrency(indicadores.valorBrutoAvulsos), lucro: formatCurrency(indicadores.lucroAvulsos), margemLucro: calcMargem(indicadores.lucroAvulsos, indicadores.valorBrutoAvulsos), colorClass: 'text-emerald-400', qtd: filteredVendas.filter(v => (v.portas || []).some((p: any) => ['acessorio', 'adicional', 'manutencao'].includes(p.tipo_produto))).length },
                 { key: 'fretes', icon: <Truck className="h-3 w-3 text-amber-400" />, label: 'Fretes', valor: formatCurrency(indicadores.fretesTotais), colorClass: 'text-amber-400', qtd: filteredVendas.filter(v => (v.valor_frete || 0) > 0).length },
                 { key: 'lucro', icon: <TrendingUp className="h-3 w-3 text-green-400" />, label: 'Lucro Líquido', valor: formatCurrency(indicadores.lucroLiquidoTotal), margemLucro: calcMargem(indicadores.lucroLiquidoTotal, faturamentoTotal), colorClass: 'text-green-400', qtd: filteredVendas.filter(isFaturada).length },
               ].map((ind) => {
-                const clickableKeys = ['portas', 'pintura', 'instalacoes', 'acessorios', 'adicionais'];
+                const clickableKeys = ['portas', 'pintura', 'instalacoes', 'avulsos'];
                 return (
                   <IndicadorExpandivel
                     key={ind.key}

@@ -1,42 +1,37 @@
-## Objetivo
-1. Em `/direcao/estrategia/itens`, adicionar toggle "Vendável avulso" na coluna **Ações** (padrão: desativado).
-2. Em `/direcao/estrategia/precos`, ao lado da tabela principal, mostrar uma seção lateral com todos os itens marcados como vendáveis avulso.
+## Unificar Acessórios + Adicionais em "Itens Avulsos"
 
-## Passos
+Em `/financeiro/faturamento/vendas` os cards de **Acessórios** e **Adicionais** serão substituídos por um único indicador chamado **Itens Avulsos**, agregando linhas de `produtos_vendas` com `tipo_produto IN ('acessorio', 'adicional', 'manutencao')` (cobre o histórico legado e os novos itens vinculados a `custos_itens` via `custos_itens_id`).
 
-### 1. Banco — `custos_itens`
-Migration adicionando a flag:
-```sql
-ALTER TABLE public.custos_itens
-  ADD COLUMN vendavel_avulso boolean NOT NULL DEFAULT false;
-```
+### Mudanças (apenas frontend — sem alteração de schema)
 
-### 2. Hook `src/hooks/useCustosItens.ts`
-- Adicionar `vendavel_avulso: boolean` ao tipo `CustoItem`.
-- Adicionar `vendavel_avulso?: boolean` em `NewCustoItem` e mapear no `createItem` (default `false`).
-- `updateItem` já aceita `Partial<CustoItem>`, então o toggle funciona sem mudança.
+Arquivo: `src/pages/administrativo/FaturamentoVendasMinimalista.tsx`
 
-### 3. Página `src/pages/direcao/estrategia/EstrategiaItens.tsx`
-Dentro de `SortableItemRow` (na célula "Ações", próximo ao botão Trash em ~linha 742):
-- Renderizar um `Switch` (shadcn/ui) compacto, com tooltip "Vendável avulso".
-- `checked={item.vendavel_avulso}` e `onCheckedChange={(v) => onUpdate({ vendavel_avulso: v })}`.
-- Estilo discreto, alinhado aos demais botões da célula.
+1. **Indicadores agregados** (linhas 537–583)
+   - Remover `valorBrutoAcessorios`, `lucroAcessorios`, `valorBrutoAdicionais`, `lucroAdicionais`.
+   - Criar `valorBrutoAvulsos` e `lucroAvulsos` somando linhas com `tipo_produto IN ('acessorio', 'adicional', 'manutencao')`.
 
-### 4. Página `src/pages/direcao/estrategia/EstrategiaPrecos.tsx`
-Transformar o conteúdo em layout 2 colunas (`grid lg:grid-cols-[1fr_360px] gap-4`):
-- **Coluna principal**: `<TabelaPrecos embedded />` (inalterado).
-- **Coluna lateral (nova)**: card glassmorphism (`bg-white/5 backdrop-blur-xl border-white/10`) com:
-  - Título "Itens Avulso" + contador.
-  - Lista (scroll vertical) dos itens de `custos_itens` onde `vendavel_avulso = true`, ordenados por categoria e descrição.
-  - Cada linha: descrição, unidade (badge pequeno) e `preco_venda` formatado em BRL alinhado à direita.
-  - Estado vazio: "Nenhum item marcado como avulso. Ative em Estratégia → Itens".
-- Reutilizar o hook existente `useCustosItens` (filtrar no client).
+2. **Card de indicador** (linhas 1247–1248)
+   - Substituir os dois cards por um único card `key: 'avulsos'`, label "Itens Avulsos", ícone `Package` (cor neutra, ex.: emerald), quantidade = vendas que contêm qualquer linha avulsa.
+   - Atualizar a soma `faturamentoTotal` (linha 1242) para usar `valorBrutoAvulsos`.
 
-## Notas técnicas
-- Sem mudança nas APIs de venda — esta fase é apenas marcação + visualização.
-- Layout lateral colapsa para coluna única em telas pequenas (`lg` breakpoint).
-- Sem novas dependências.
+3. **Agrupamento ao clicar no card** (linhas 630–654)
+   - Unificar os branches `indicadorAtivo === 'acessorios'` e `'adicionais'` em um único branch `'avulsos'` que percorre todas as linhas avulsas.
+   - Chave de agrupamento: preferir `custos_itens_id`, depois `acessorio_id`/`adicional_id`, depois `descricao`.
+   - Nome exibido: priorizar lookup em `custos_itens` (descricao) via novo Map, com fallback para os Maps existentes (`auxAcessorios`/`auxAdicionais`) e por fim `p.descricao`.
 
-## Fora de escopo
-- Inclusão desses itens em fluxos de venda/orçamento.
-- Edição inline do preço_venda na seção lateral (continua em `/direcao/estrategia/itens`).
+4. **Lookup de nomes de `custos_itens`** (linhas 159–225)
+   - Adicionar `const [auxCustosItens, setAuxCustosItens] = useState<Map<string, string>>(new Map())`.
+   - No `Promise.all` de fetch auxiliar, incluir `supabase.from('custos_itens').select('id, descricao')` e popular o Map.
+   - Manter os Maps de `acessorios`/`adicionais` para resolver nomes do histórico legado.
+
+5. **Select de `produtos_vendas`** (linha 281)
+   - Garantir que `custos_itens_id` está no select (verificar; adicionar se faltar).
+
+6. **Detalhe da venda** (linhas 959–1011)
+   - Substituir `valorAcessorios` + `valorAdicionais` por `valorAvulsos` no breakdown da venda selecionada e no array de chips.
+
+### Fora de escopo
+
+- Nenhuma migration: `tipo_produto` continua sendo `'acessorio'` ou `'adicional'` no banco; a unificação é apenas de apresentação.
+- Sem alteração no fluxo de criação/edição de venda (`ProdutoVendaForm`).
+- Sem mudança em outras telas (DRE, faturamento por produto, etc.).
