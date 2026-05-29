@@ -1,45 +1,31 @@
-## Objetivo
+## Problema
 
-Refatorar `/financeiro/gastos` (`src/pages/administrativo/GastosPage.tsx`) para usar o mesmo padrão de header de `/direcao/estrategia/itens` (componente `MinimalistLayout` com `headerActions`), agrupando no header todas as funcionalidades, botões e filtros que hoje vivem soltos no topo da página.
+Em `/direcao/estrategia/itens`, na aba **Itens do catálogo** (`CatalogoPrecosTab`):
+
+1. A coluna **Valor de Venda** mostra apenas texto (`<span>{formatCurrency(preco)}</span>`) e não pode ser editada.
+2. A cor de fundo da coluna está vazia (`COLUMN_BG.venda = ""`), enquanto na tabela acima (em `EstrategiaItens`) a mesma coluna tem cor verde (`green` em `DEFAULT_COLUMN_COLORS`, podendo ser personalizada pelo usuário e salva em `localStorage["estrategia-itens-column-colors-v1"]`).
 
 ## Mudanças
 
-Arquivo único: `src/pages/administrativo/GastosPage.tsx`.
+Arquivo único: `src/components/tabela-precos/CatalogoPrecosTab.tsx`.
 
-1. **Remover o shell custom atual**
-   - Eliminar o `<div className="min-h-screen bg-black ...">`, o `AnimatedBreadcrumb` manual, o botão fixo "Voltar" no canto superior esquerdo e o bloco custom `<h1>Gastos</h1>` + linha de ações.
-   - Remover imports não mais usados: `ArrowLeft`, `AnimatedBreadcrumb`, estado `mounted` e seu `useEffect`.
+1. **Tornar "Valor de Venda" editável**
+   - Em `cellRenderers.venda` (linha 811), trocar `<span>{formatCurrency(preco)}</span>` por `renderEditableCell(produto, "preco_venda")`.
+   - O helper `renderEditableCell` já suporta o campo `preco_venda` (clique para abrir input, Enter salva, Escape cancela) e usa a mesma mutation `editarProduto`.
 
-2. **Adotar `MinimalistLayout`** (mesmo wrapper de `EstrategiaItens.tsx`):
-   - `title="Gastos"`, `subtitle="Controle de despesas do mês"`.
-   - `backPath="/financeiro"`.
-   - `breadcrumbItems`: Home → Financeiro → Gastos.
-   - `fullWidth` para manter a largura útil atual.
+2. **Espelhar a cor da coluna "Valor de Venda" da tabela acima**
+   - Importar/replicar o mapa `COLUMN_COLOR_OPTIONS` (mesmas chaves usadas em `EstrategiaItens.tsx`: rose, red, orange, amber, …, slate) com as classes `bg-<cor>-100 dark:bg-<cor>-500/30`.
+   - Ler dinamicamente `localStorage["estrategia-itens-column-colors-v1"]` no mount (com fallback para os defaults: `custo: rose, lucro: blue, imposto: orange, desconto: yellow, cartao: teal, venda: green, objetivo: violet`) e armazenar em estado `columnColors`.
+   - Adicionar um listener `window.addEventListener("storage", …)` para refletir mudanças feitas em outra aba/sessão.
+   - Substituir o uso de `COLUMN_BG[col]` (constante estática) pelos backgrounds derivados de `columnColors`, tanto no `SortableHeadCell` quanto nas células do `ProdutoRow`. Para isso, passar `columnColors` por prop ao `ProdutoRow` e aplicar a classe no `<TableCell>` correspondente (atualmente o cell wrapper não recebe background — adicionar `className={cn(COLUMN_WIDTHS[col], getColumnBg(columnColors, col), cellExtraCls[col])}` na célula que renderiza `cellRenderers[col]`).
+   - Resultado: cada coluna (incluindo Valor de Venda) ganha a mesma cor exibida na tabela acima e acompanha mudanças configuradas pelo usuário lá.
 
-3. **`headerActions` agrupando tudo**
-   Construir um nó `headerActions` que reúne, da esquerda para a direita:
-   - **Navegador de mês** (ChevronLeft / label do mês com `CalendarIcon` / ChevronRight) — mesma lógica atual de `mesFiltro`.
-   - **Ordenação** (`Select` de `ordenarPor`: Data de Cadastro / Data de Pagamento).
-   - **Filtros** (`Select`): Tipo, Banco, Responsável, DRE — exatamente os mesmos quatro selects de hoje.
-   - Botão "Limpar filtros" (aparece só quando algum filtro está ativo, mesma condição atual).
-   - Botão **PDF** (`gerarPDF`).
-   - Botão **Bancos** (`navigate("/financeiro/bancos")`).
-   - Botão **Novo Gasto** (`openCreate`) — primário.
-   
-   Layout: `flex flex-wrap items-center gap-2` para acomodar todos os controles no header sem quebrar em telas menores. Estilos dos selects/botões alinhados ao padrão claro/escuro do `MinimalistLayout` (usar tokens como `bg-card/60 border-border`, semelhante a `EstrategiaItens`), substituindo as classes `bg-white/5 border-white/20 text-white` que eram específicas do shell preto antigo.
-
-4. **Corpo da página**
-   - Remover o bloco separado de filtros (linhas ~356-440) já que migrou para `headerActions`.
-   - Manter intactos: tabela de gastos, linha de total, dialogs de criar/editar e alert dialog de exclusão.
-   - Aplicar wrapper `<div className="space-y-4">` (sem `px-[84px]`) para o conteúdo dentro do layout.
-
-5. **Sem alterações de lógica**
-   - Hooks (`useGastos`, `useBancos`, `useTiposCustos`), estado de filtros, `gastosFiltrados`, `totalGastos`, `gerarPDF`, `handleSave`, `handleDelete`, sugestões de descrição: todos permanecem inalterados.
-   - Sem mudanças em rotas, banco, RLS ou outros arquivos.
+3. **Sem mudanças de dados ou lógica**
+   - Sem alterações em hooks (`useCatalogoPrecos`, mutations), banco ou outros arquivos.
+   - Modo `compact` continua mostrando só a coluna `venda` com a mesma cor.
 
 ## Verificação
 
 - Build limpo.
-- `/financeiro/gastos` renderiza com o mesmo header de `/direcao/estrategia/itens` (breadcrumb + título + ações à direita).
-- Navegador de mês, ordenação, 4 filtros, "Limpar filtros", PDF, Bancos e Novo Gasto funcionam a partir do header.
-- Tabela, totais, criar/editar/excluir continuam funcionando como antes.
+- Em `/direcao/estrategia/itens`, aba Itens do catálogo: clicar em qualquer valor da coluna "Valor de Venda" abre o input de edição; Enter salva; o valor persiste após reload.
+- A cor do header e das células das colunas (custo, lucro, imposto, desconto, cartão, venda, preço objetivo) é idêntica à da tabela acima; mudar a cor da coluna "Valor de Venda" na tabela acima (via popover de cores) é refletida no catálogo após reload.
