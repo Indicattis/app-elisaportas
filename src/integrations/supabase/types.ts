@@ -9814,6 +9814,9 @@ export type Database = {
             }
             Returns: Json
           }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
+      unaccent: { Args: { "": string }; Returns: string }
       update_user_avatar: {
         Args: { _new_url: string; _target_user_id: string }
         Returns: boolean
