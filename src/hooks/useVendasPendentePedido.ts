@@ -24,6 +24,7 @@ export interface VendaPendentePedido {
   lucro_total: number | null;
   cidade: string | null;
   estado: string | null;
+  valor_a_receber_entrega: number | null;
   cores: Array<{ nome: string; codigo_hex: string }>;
   portas_info: Array<{ tamanho: 'P' | 'G'; largura: number; altura: number; area: number }>;
 }
@@ -56,6 +57,7 @@ export const useVendasPendentePedido = () => {
           quantidade_parcelas,
           pagamento_na_entrega,
           pago_na_instalacao,
+          valor_a_receber,
           cidade,
           estado,
           produtos_vendas (
@@ -103,6 +105,7 @@ export const useVendasPendentePedido = () => {
       const pagamentoMetodosPorVenda = new Map<string, string[]>();
       const planosPorVenda = new Map<string, Map<string, number>>();
       const pagoInstalacaoPorVenda = new Map<string, boolean>();
+      const totalPorMetodoPorVenda = new Map<string, Map<string, number>>();
       try {
         const vendaIds = vendas.map((v: any) => v.id).filter(Boolean);
 
@@ -121,6 +124,12 @@ export const useVendasPendentePedido = () => {
             const planos = planosPorVenda.get(conta.venda_id) ?? new Map<string, number>();
             planos.set(planoKey, (planos.get(planoKey) ?? 0) + 1);
             planosPorVenda.set(conta.venda_id, planos);
+
+            // Soma por método (para valor a receber na entrega)
+            const metodoKey = conta.metodo_pagamento ?? "_";
+            const totais = totalPorMetodoPorVenda.get(conta.venda_id) ?? new Map<string, number>();
+            totais.set(metodoKey, (totais.get(metodoKey) ?? 0) + Number(conta.valor_parcela ?? 0));
+            totalPorMetodoPorVenda.set(conta.venda_id, totais);
 
             // Pago na instalação
             if (conta.pago_na_instalacao) {
@@ -217,6 +226,18 @@ export const useVendasPendentePedido = () => {
           const metodosExtras = (pagamentoMetodosPorVenda.get(v.id) || []).filter(
             (metodo) => metodo !== v.metodo_pagamento
           );
+          const metodoEntrega = metodosExtras[0] || null;
+          let valorAReceberEntrega: number | null = null;
+          if (v.pagamento_na_entrega) {
+            if (metodoEntrega) {
+              const t = totalPorMetodoPorVenda.get(v.id)?.get(metodoEntrega) ?? 0;
+              if (t > 0) valorAReceberEntrega = t;
+            }
+            if (!valorAReceberEntrega) {
+              const fallback = Number(v.valor_a_receber ?? 0);
+              if (fallback > 0) valorAReceberEntrega = fallback;
+            }
+          }
 
           return {
             id: v.id,
@@ -237,13 +258,14 @@ export const useVendasPendentePedido = () => {
               : null,
             tipo_entrega: v.tipo_entrega || null,
             metodo_pagamento: v.metodo_pagamento || null,
-            metodo_pagamento_entrega: metodosExtras[0] || null,
+            metodo_pagamento_entrega: metodoEntrega,
             numero_parcelas: parcelasPorVenda.get(v.id) || v.quantidade_parcelas || v.numero_parcelas || null,
             pago_na_instalacao: pagoInstalacaoPorVenda.get(v.id) || false,
             pagamento_na_entrega: v.pagamento_na_entrega || false,
             lucro_total: v.lucro_total ?? null,
             cidade: v.cidade || null,
             estado: v.estado || null,
+            valor_a_receber_entrega: valorAReceberEntrega,
             cores: Array.from(coresUnicas.values()),
             portas_info: portasInfo,
           };

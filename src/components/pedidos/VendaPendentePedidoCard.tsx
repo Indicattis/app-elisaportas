@@ -526,9 +526,22 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
             {/* Pago na entrega */}
             <div className="text-center">
               {venda.pagamento_na_entrega ? (
-                <Badge variant="outline" className="text-[8px] px-1 py-0 h-4 bg-emerald-500/10 text-emerald-600 border-emerald-500/50">
-                  Sim
-                </Badge>
+                venda.valor_a_receber_entrega && venda.valor_a_receber_entrega > 0 ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="text-[10px] font-medium text-amber-600 bg-amber-500/10 rounded px-1 py-0.5">
+                        {formatCurrency(venda.valor_a_receber_entrega)}
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-xs">Valor a receber na entrega</p>
+                    </TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <Badge variant="outline" className="text-[8px] px-1 py-0 h-4 bg-emerald-500/10 text-emerald-600 border-emerald-500/50">
+                    Sim
+                  </Badge>
+                )
               ) : (
                 <span className="text-[9px] text-muted-foreground/50">—</span>
               )}
