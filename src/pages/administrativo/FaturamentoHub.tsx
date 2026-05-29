@@ -125,45 +125,43 @@ export default function FaturamentoHub() {
       </div>
 
       {/* ========== VERSÃO DESKTOP ========== */}
-      <div className="hidden md:flex relative z-10 flex-col items-center gap-8">
+      <div className="hidden md:flex relative z-10 flex-col items-center px-6 py-10 w-full max-w-md">
         <h1 className="text-3xl font-bold text-white mb-4">Faturamento</h1>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="w-full flex flex-col gap-3">
           {menuItems.map((item, index) => {
             const Icon = item.icon;
-            const delay = 200 + index * 100;
+            const delay = 200 + index * 80;
             
             return (
               <div
                 key={item.label}
-                className={`p-2 rounded-2xl backdrop-blur-xl border transition-all duration-300
+                className={`p-1.5 rounded-xl backdrop-blur-xl border transition-all duration-300
                            ${item.ativo 
                              ? 'bg-white/5 border-white/10 hover:bg-white/10' 
                              : 'bg-white/[0.02] border-white/5'
                            }`}
                 style={{
                   opacity: mounted ? 1 : 0,
-                  transform: mounted ? 'translateY(0)' : 'translateY(30px)',
-                  transition: `all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}ms`
+                  transform: mounted ? 'translateX(0)' : 'translateX(-30px)',
+                  transition: `all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}ms`
                 }}
               >
                 <button
                   onClick={() => handleClick(item)}
-                  className={`w-40 h-32 rounded-xl
-                             flex flex-col items-center justify-center gap-2
+                  className={`w-full h-14 rounded-lg
+                             flex items-center gap-4 px-5
                              font-medium border transition-all duration-300
                              ${item.ativo 
-                               ? 'bg-gradient-to-br from-green-500 to-green-700 hover:from-green-400 hover:to-green-600 hover:shadow-xl hover:shadow-green-500/50 text-white shadow-lg shadow-green-500/30 border-green-400/30 cursor-pointer' 
+                               ? 'bg-gradient-to-r from-green-500 to-green-700 hover:from-green-400 hover:to-green-600 active:scale-[0.98] text-white shadow-lg shadow-green-500/20 border-green-400/30 cursor-pointer' 
                                : 'bg-white/5 text-white/50 border-white/10 cursor-not-allowed'
                              }`}
                 >
-                  <div className="relative">
-                    <Icon className="w-8 h-8" strokeWidth={1.5} />
-                    {!item.ativo && (
-                      <Lock className="w-3.5 h-3.5 absolute -top-1 -right-1" />
-                    )}
+                  <Icon className="w-5 h-5" strokeWidth={1.5} />
+                  <div className="flex-1 text-left">
+                    <span className="text-sm font-medium">{item.label}</span>
+                    <p className="text-xs opacity-70">{item.description}</p>
                   </div>
-                  <span className="text-sm font-medium tracking-wide">{item.label}</span>
-                  <span className="text-[10px] opacity-70 text-center px-2">{item.description}</span>
+                  {!item.ativo && <Lock className="w-4 h-4" />}
                 </button>
               </div>
             );
