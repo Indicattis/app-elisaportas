@@ -13,27 +13,42 @@ const TABS: Array<{ key: TabKey; label: string; icon: typeof Package }> = [
 ];
 
 function TabsBar({ active, onChange }: { active: TabKey; onChange: (k: TabKey) => void }) {
+  const activeIndex = Math.max(0, TABS.findIndex((t) => t.key === active));
+  const cols = TABS.length;
+
   return (
-    <div className="mb-6 inline-flex items-center gap-1 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-1">
-      {TABS.map((t) => {
-        const Icon = t.icon;
-        const isActive = active === t.key;
-        return (
-          <button
-            key={t.key}
-            type="button"
-            onClick={() => onChange(t.key)}
-            className={
-              isActive
-                ? 'inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-medium text-white shadow-lg shadow-blue-600/20 transition'
-                : 'inline-flex items-center gap-2 rounded-xl px-6 py-2.5 text-sm font-medium text-white/70 hover:text-white hover:bg-white/5 transition'
-            }
-          >
-            <Icon className="h-4 w-4" />
-            {t.label}
-          </button>
-        );
-      })}
+    <div className="mb-6 flex justify-center">
+      <div
+        className="relative inline-grid rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-1"
+        style={{ gridTemplateColumns: `repeat(${cols}, minmax(160px, 1fr))` }}
+      >
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-y-1 left-1 rounded-xl bg-blue-600 shadow-lg shadow-blue-600/20 transition-transform duration-300 ease-out"
+          style={{
+            width: `calc((100% - 0.5rem) / ${cols})`,
+            transform: `translateX(${activeIndex * 100}%)`,
+          }}
+        />
+        {TABS.map((t) => {
+          const Icon = t.icon;
+          const isActive = active === t.key;
+          return (
+            <button
+              key={t.key}
+              type="button"
+              onClick={() => onChange(t.key)}
+              className={
+                'relative z-10 inline-flex items-center justify-center gap-2 rounded-xl px-6 py-2.5 text-sm font-medium transition-colors duration-200 ' +
+                (isActive ? 'text-white' : 'text-white/70 hover:text-white')
+              }
+            >
+              <Icon className="h-4 w-4" />
+              {t.label}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -101,7 +116,7 @@ export default function EstrategiaKits() {
       fullWidth
     >
       {tabsBar}
-      <div className="space-y-4">
+      <div key={active} className="space-y-4 animate-fade-in">
         <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl p-4 flex flex-wrap items-center gap-3">
           <div className="h-10 w-10 rounded-lg bg-blue-500/10 border border-blue-500/30 flex items-center justify-center">
             <Icon className="h-5 w-5 text-blue-400" />
