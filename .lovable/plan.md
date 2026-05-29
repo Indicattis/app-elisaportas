@@ -1,64 +1,55 @@
-## Categorias de Faturamento (unificadas) + coluna "Tipo" na venda
+# Refaturamento global de vendas
 
-Criar uma tabela de **Categorias de Faturamento** alinhada às categorias do DRE, com **Acessórios + Itens Avulso unificadas em "Itens Avulsos"**, e fazer a coluna **Tipo** da página `/financeiro/faturamento/:id` exibir o nome dessa categoria em vez do `tipo_produto` cru.
+Recalcular `lucro_item` e `custo_producao` de **todas** as linhas de `produtos_vendas` usando as novas fontes de verdade, fazendo match automático para legados sem FK.
 
-### 1. Migration — tabela `categorias_faturamento`
+## Fontes de lucro por tipo
 
-Tabela registry com categorias e o conjunto de `tipo_produto` (de `produtos_vendas`) que cada uma agrupa.
+| tipo_produto | Fonte | Regra |
+|---|---|---|
+| `porta_enrolar`, `porta_social` | `tabela_precos_portas` (kits) | `lucro_item = kit.lucro × quantidade` |
+| `pintura_epoxi` | `tabela_precos_portas` | `lucro_item = kit.valor_pintura × quantidade` (ou regra atual de m² caso não haja kit) |
+| `instalacao` | `tabela_precos_portas` | `lucro_item = kit.valor_instalacao × quantidade` |
+| `acessorio`, `adicional`, `manutencao` | `custos_itens` | `lucro_item = valor_total − (custos_itens.custo_unitario × quantidade)` |
 
-```sql
-CREATE TABLE public.categorias_faturamento (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  nome text NOT NULL UNIQUE,
-  ordem int NOT NULL DEFAULT 0,
-  tipos_produto text[] NOT NULL DEFAULT '{}',
-  cor_hex text,
-  ativo boolean NOT NULL DEFAULT true,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
-);
+`custo_producao = valor_total − lucro_item` em todos os casos.
 
-GRANT SELECT ON public.categorias_faturamento TO anon;
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.categorias_faturamento TO authenticated;
-GRANT ALL ON public.categorias_faturamento TO service_role;
+## Estratégia de match (legados sem FK)
 
-ALTER TABLE public.categorias_faturamento ENABLE ROW LEVEL SECURITY;
+Executado em ordem dentro de uma migração SQL única (transação):
 
--- leitura aberta a authenticated; mutação apenas admin via is_admin()
-CREATE POLICY "categorias_faturamento_select" ON public.categorias_faturamento
-  FOR SELECT TO authenticated USING (true);
-CREATE POLICY "categorias_faturamento_admin_all" ON public.categorias_faturamento
-  FOR ALL TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
+1. **Backfill de FKs ausentes**:
+   - Portas/pintura/instalação sem `tabela_precos_porta_id`: match por `descricao` (case-insensitive, trim) + `tamanho` em `tabela_precos_portas` com tolerância de 15 cm em largura/altura quando `tamanho` for `LxA` (regra já documentada em memory). Atualiza `tabela_precos_porta_id`.
+   - Avulsos sem `custos_itens_id`: match por `descricao` normalizada (lower+trim) em `custos_itens`. Atualiza `custos_itens_id`.
 
-CREATE TRIGGER trg_categorias_faturamento_updated_at
-  BEFORE UPDATE ON public.categorias_faturamento
-  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+2. **Recálculo de `lucro_item` / `custo_producao`** com UPDATE … FROM usando as FKs (recém-preenchidas ou existentes). Linhas que continuarem sem match após o passo 1 ficam como fallback:
+   - Pintura sem kit: mantém regra atual (m² × valor configurado) — se não houver config, `lucro_item = valor_total × 0.30`.
+   - Instalação sem kit: `lucro_item = valor_total × 0.40` (regra atual).
+   - Porta sem kit: `lucro_item = 0` (não há base segura).
+   - Avulso sem `custos_itens`: `lucro_item = 0`.
 
--- Seed alinhado ao DRE
-INSERT INTO public.categorias_faturamento (nome, ordem, tipos_produto, cor_hex) VALUES
-  ('Portas',         1, ARRAY['porta','porta_enrolar','porta_social'], '#60a5fa'),
-  ('Pintura',        2, ARRAY['pintura_epoxi'],                        '#fb923c'),
-  ('Instalações',    3, ARRAY['instalacao'],                           '#22d3ee'),
-  ('Itens Avulsos',  4, ARRAY['acessorio','adicional','manutencao'],   '#34d399');
-```
+3. **Atualizar `vendas`**:
+   - `lucro_total = Σ produtos_vendas.lucro_item` da venda + lucro da instalação legada (`valor_instalacao × 0.40` quando não houver produto `instalacao`) + `valor_credito`.
+   - `custo_total = Σ custo_producao`.
+   - Marcar `faturamento = true` em todas as linhas com `lucro_item > 0`.
+   - `instalacao_faturada = true` quando aplicável (vendas legadas com `valor_instalacao > 0`).
 
-### 2. Frontend — `src/pages/administrativo/FaturamentoVendaMinimalista.tsx`
+## Entregáveis
 
-- Buscar `categorias_faturamento` (apenas `ativo=true`, ordenado por `ordem`) via React Query/`useEffect`.
-- Construir `Map<tipo_produto, { nome, cor_hex }>` derivado da tabela.
-- Substituir o helper local `getTipoProdutoLabel` (linhas 1011–1022) pela lookup na categoria; fallback no rótulo antigo se nenhum match.
-- Render: `<TableCell>{categoriaPorTipo.get(produto.tipo_produto)?.nome ?? getTipoProdutoLabel(produto.tipo_produto)}</TableCell>` (linha 1273), opcionalmente com chip colorido usando `cor_hex`.
+- **1 migração SQL** (`supabase/migrations/...`) com:
+  - UPDATEs de backfill de `tabela_precos_porta_id` e `custos_itens_id`.
+  - UPDATEs de `lucro_item` / `custo_producao` por tipo.
+  - Recálculo agregado em `vendas` (`lucro_total`, `custo_total`, flags).
+  - Sem alterações estruturais (apenas dados).
 
-### 3. DRE — `src/pages/direcao/DREMesDirecao.tsx`
+- **Sem mudanças de UI/código**: o frontend já consome `lucro_item` / `lucro_total` existentes.
 
-Unificar as linhas "Acessórios" e "Itens Avulso" em uma única **Itens Avulsos** para refletir as novas categorias:
+## Fora de escopo
 
-- Reduzir `FaturamentoProduto` para `{ portas, pintura, instalacoes, avulsos, total }`.
-- No loop que soma valores, mapear `acessorio | adicional | manutencao` → `avulsos`.
-- Atualizar tabela "Faturamento por Categoria" (linhas 446–450) para 4 linhas.
-- Estados e modais correspondentes (`acessoriosModalOpen`/`avulsosModalOpen`) consolidados em um único `avulsosModal*` que lista todos os `tipo_produto` avulsos.
+- Não cria `contas_receber`/`contas_pagar`.
+- Não altera vendas futuras (a lógica de auto-faturamento ao abrir tela já existe).
+- Não remove campos legados (`valor_instalacao`, `instalacao_faturada`).
 
-### Fora de escopo
+## Riscos
 
-- Tela de CRUD para `categorias_faturamento` (registro é gerenciado via migration/seed). Pode ser adicionada depois.
-- Nenhuma mudança na criação de venda nem em `produtos_vendas` — apenas mapeamento de apresentação.
+- Sobrescreve `lucro_item` ajustado manualmente em vendas já faturadas (decisão confirmada: "Refaturar todas").
+- Recomendado: backup/snapshot antes de aplicar. A migração pode ser disparada uma única vez.
