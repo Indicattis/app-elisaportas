@@ -128,9 +128,9 @@ export function FreteDialog({ open, onOpenChange, frete }: FreteDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md bg-black/90 border-white/10 backdrop-blur-xl text-white">
         <DialogHeader>
-          <DialogTitle>
+          <DialogTitle className="text-white">
             {isEditing ? "Editar Frete" : "Novo Frete"}
           </DialogTitle>
         </DialogHeader>
@@ -138,7 +138,7 @@ export function FreteDialog({ open, onOpenChange, frete }: FreteDialogProps) {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="estado">Estado *</Label>
+              <Label htmlFor="estado" className="text-white/80">Estado *</Label>
               <Select
                 value={formData.estado}
                 onValueChange={(value) =>
@@ -149,12 +149,12 @@ export function FreteDialog({ open, onOpenChange, frete }: FreteDialogProps) {
                   }))
                 }
               >
-                <SelectTrigger id="estado">
+                <SelectTrigger id="estado" className="bg-white/5 border-white/10 text-white">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-black/90 border-white/10 backdrop-blur-xl text-white">
                   {ESTADOS_BR.map(estado => (
-                    <SelectItem key={estado.sigla} value={estado.sigla}>
+                    <SelectItem key={estado.sigla} value={estado.sigla} className="text-white focus:bg-white/10 focus:text-white">
                       {estado.sigla} - {estado.nome}
                     </SelectItem>
                   ))}
@@ -163,18 +163,19 @@ export function FreteDialog({ open, onOpenChange, frete }: FreteDialogProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="cidade">Cidade *</Label>
+              <Label htmlFor="cidade" className="text-white/80">Cidade *</Label>
               <Select
+                key={`${frete?.id ?? "novo"}-${formData.estado}`}
                 value={formData.cidade}
                 onValueChange={(value) => setFormData(prev => ({ ...prev, cidade: value }))}
                 disabled={!formData.estado}
               >
-                <SelectTrigger id="cidade">
+                <SelectTrigger id="cidade" className="bg-white/5 border-white/10 text-white disabled:opacity-50">
                   <SelectValue placeholder={formData.estado ? "Selecione a cidade" : "Selecione o estado primeiro"} />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-black/90 border-white/10 backdrop-blur-xl text-white">
                   {cidadesOptions.map(cidade => (
-                    <SelectItem key={cidade} value={cidade}>
+                    <SelectItem key={cidade} value={cidade} className="text-white focus:bg-white/10 focus:text-white">
                       {cidade}
                     </SelectItem>
                   ))}
@@ -184,7 +185,7 @@ export function FreteDialog({ open, onOpenChange, frete }: FreteDialogProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="quilometragem">Km (ida) *</Label>
+            <Label htmlFor="quilometragem" className="text-white/80">Km (ida) *</Label>
             <Input
               id="quilometragem"
               type="number"
@@ -195,25 +196,27 @@ export function FreteDialog({ open, onOpenChange, frete }: FreteDialogProps) {
                 setFormData(prev => ({ ...prev, quilometragem: e.target.value }))
               }
               placeholder="0.00"
+              className="bg-white/5 border-white/10 text-white placeholder:text-white/40"
             />
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-white/50">
               Ida e volta = km × 2 · Valor = km × 6 (R$ {formData.quilometragem ? (parseFloat(formData.quilometragem) * 6).toFixed(2) : "0.00"})
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="observacoes">Observações</Label>
+            <Label htmlFor="observacoes" className="text-white/80">Observações</Label>
             <Textarea
               id="observacoes"
               value={formData.observacoes}
               onChange={(e) => setFormData(prev => ({ ...prev, observacoes: e.target.value }))}
               placeholder="Observações opcionais..."
               rows={3}
+              className="bg-white/5 border-white/10 text-white placeholder:text-white/40"
             />
           </div>
 
           <div className="flex items-center justify-between">
-            <Label htmlFor="ativo">Ativo</Label>
+            <Label htmlFor="ativo" className="text-white/80">Ativo</Label>
             <Switch
               id="ativo"
               checked={formData.ativo}
@@ -222,7 +225,12 @@ export function FreteDialog({ open, onOpenChange, frete }: FreteDialogProps) {
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              className="border-white/20 bg-white/10 text-white hover:bg-white/15 hover:text-white"
+            >
               Cancelar
             </Button>
             <Button 
