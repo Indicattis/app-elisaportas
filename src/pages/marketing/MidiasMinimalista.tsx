@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Upload, Trash2, Copy, Loader2, FileIcon, ImageIcon, Eye, X, Plus } from 'lucide-react';
+import { Upload, Trash2, Copy, Loader2, FileIcon, ImageIcon, Eye, X, Plus, FileText } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -15,6 +16,67 @@ import {
 } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { format } from 'date-fns';
+import DocumentosPanel, { useDocumentosHeaderActions } from '@/components/marketing/DocumentosPanel';
+
+type TabKey = 'midias' | 'documentos';
+
+const TABS: Array<{ key: TabKey; label: string; icon: typeof Package }> = [
+  { key: 'midias', label: 'Mídias', icon: ImageIcon },
+  { key: 'documentos', label: 'Documentos', icon: FileText },
+];
+
+let lastDisplayedIndex = 0;
+
+function TabsBar({ active, onChange }: { active: TabKey; onChange: (k: TabKey) => void }) {
+  const activeIndex = Math.max(0, TABS.findIndex((t) => t.key === active));
+  const cols = TABS.length;
+  const [displayedIndex, setDisplayedIndex] = useState(lastDisplayedIndex);
+
+  useEffect(() => {
+    if (displayedIndex === activeIndex) return;
+    const id = requestAnimationFrame(() => {
+      setDisplayedIndex(activeIndex);
+      lastDisplayedIndex = activeIndex;
+    });
+    return () => cancelAnimationFrame(id);
+  }, [activeIndex, displayedIndex]);
+
+  return (
+    <div className="mb-6 flex justify-center">
+      <div
+        className="relative inline-grid rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-1"
+        style={{ gridTemplateColumns: `repeat(${cols}, minmax(160px, 1fr))` }}
+      >
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-y-1 left-1 rounded-xl bg-blue-600 shadow-lg shadow-blue-600/20 transition-transform duration-300 ease-out"
+          style={{
+            width: `calc((100% - 0.5rem) / ${cols})`,
+            transform: `translateX(${displayedIndex * 100}%)`,
+          }}
+        />
+        {TABS.map((t) => {
+          const Icon = t.icon;
+          const isActive = active === t.key;
+          return (
+            <button
+              key={t.key}
+              type="button"
+              onClick={() => onChange(t.key)}
+              className={
+                'relative z-10 inline-flex items-center justify-center gap-2 rounded-xl px-6 py-2.5 text-sm font-medium transition-colors duration-200 ' +
+                (isActive ? 'text-white' : 'text-white/70 hover:text-white')
+              }
+            >
+              <Icon className="h-4 w-4" />
+              {t.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 const DEFAULT_BUCKETS = [
   'autorizados-logos', 'catalogo-produtos', 'chamados-suporte-anexos',
