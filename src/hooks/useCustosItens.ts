@@ -20,6 +20,7 @@ export type CustoItem = {
   taxa_descontos: number;
   taxa_cartao: number;
   ordem: number;
+  vendavel_avulso: boolean;
   created_at: string;
   updated_at: string;
 };
