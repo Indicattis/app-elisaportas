@@ -175,7 +175,7 @@ export default function TabelaPrecos({
   };
 
 
-  const internalHeaderActions = activeTab === 'portas' ? (
+  const internalHeaderActions = (
     <div className="flex gap-2">
       <Button onClick={() => setBulkUploadModalOpen(true)} variant="outline" size="sm" className="border-white/20 text-white hover:bg-white/10">
         <Upload className="h-4 w-4 mr-2" />
