@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Plus, Pencil, Trash2, Loader2, ChevronLeft, ChevronRight, CalendarIcon, FileText, ArrowUpDown } from "lucide-react";
+import { ArrowLeft, Plus, Pencil, Trash2, Loader2, ChevronLeft, ChevronRight, CalendarIcon, FileText, ArrowUpDown, Landmark } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
@@ -336,6 +336,13 @@ export default function GastosPage() {
               className="border-white/20 text-white hover:bg-white/10 text-sm gap-1.5"
             >
               <FileText className="w-4 h-4" /> PDF
+            </Button>
+            <Button
+              onClick={() => navigate("/financeiro/bancos")}
+              variant="outline"
+              className="border-white/20 text-white hover:bg-white/10 text-sm gap-1.5"
+            >
+              <Landmark className="w-4 h-4" /> Bancos
             </Button>
             <Button
               onClick={openCreate}
