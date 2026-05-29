@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { LayoutTemplate, Wrench, Paintbrush, Package } from 'lucide-react';
 import TabelaPrecos from '@/pages/TabelaPrecos';
@@ -12,9 +13,27 @@ const TABS: Array<{ key: TabKey; label: string; icon: typeof Package }> = [
   { key: 'pinturas', label: 'Pinturas', icon: Paintbrush },
 ];
 
+// Persistido fora do componente para preservar a posição do indicador
+// quando a TabsBar é desmontada ao trocar entre layouts (Portas usa TabelaPrecos,
+// demais usam MinimalistLayout). Isso permite animar a partir da posição anterior.
+let lastDisplayedIndex = 0;
+
 function TabsBar({ active, onChange }: { active: TabKey; onChange: (k: TabKey) => void }) {
   const activeIndex = Math.max(0, TABS.findIndex((t) => t.key === active));
   const cols = TABS.length;
+
+  // Inicia na posição anterior (módulo persistido), depois transita para a atual
+  const [displayedIndex, setDisplayedIndex] = useState(lastDisplayedIndex);
+
+  useEffect(() => {
+    if (displayedIndex === activeIndex) return;
+    // Pequeno delay para garantir que o transform inicial seja aplicado antes da transição
+    const id = requestAnimationFrame(() => {
+      setDisplayedIndex(activeIndex);
+      lastDisplayedIndex = activeIndex;
+    });
+    return () => cancelAnimationFrame(id);
+  }, [activeIndex, displayedIndex]);
 
   return (
     <div className="mb-6 flex justify-center">
@@ -27,7 +46,7 @@ function TabsBar({ active, onChange }: { active: TabKey; onChange: (k: TabKey) =
           className="pointer-events-none absolute inset-y-1 left-1 rounded-xl bg-blue-600 shadow-lg shadow-blue-600/20 transition-transform duration-300 ease-out"
           style={{
             width: `calc((100% - 0.5rem) / ${cols})`,
-            transform: `translateX(${activeIndex * 100}%)`,
+            transform: `translateX(${displayedIndex * 100}%)`,
           }}
         />
         {TABS.map((t) => {
