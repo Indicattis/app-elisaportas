@@ -430,7 +430,7 @@ export default function MinhasVendas() {
     }
   };
 
-  const cardClass = "p-1.5 rounded-xl bg-gradient-to-br from-blue-500/5 to-blue-900/10 backdrop-blur-xl border border-blue-500/20";
+  const cardClass = "p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10";
   const statCardInner = "p-4 flex items-center gap-4";
 
   return (
@@ -473,7 +473,7 @@ export default function MinhasVendas() {
       {/* Seção de Rascunhos */}
       {rascunhos && rascunhos.length > 0 && (
         <div className="mb-6">
-          <h2 className="text-sm font-semibold text-blue-300/80 uppercase tracking-wider mb-3">
+          <h2 className="text-sm font-semibold text-white/60 uppercase tracking-wider mb-3">
             Rascunhos ({rascunhos.length})
           </h2>
           <div className="px-10">
@@ -486,7 +486,7 @@ export default function MinhasVendas() {
                         <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">
                           Rascunho
                         </span>
-                        <span className="text-xs text-blue-300/50">
+                        <span className="text-xs text-white/40">
                           {format(new Date(rascunho.created_at), 'dd/MM/yy HH:mm')}
                         </span>
                       </div>
@@ -495,7 +495,7 @@ export default function MinhasVendas() {
                           {rascunho.cliente_nome || 'Cliente não informado'}
                         </p>
                         {(rascunho.cidade || rascunho.estado) && (
-                          <p className="text-xs text-blue-300/60 flex items-center gap-1 mt-1">
+                          <p className="text-xs text-white/50 flex items-center gap-1 mt-1">
                             <MapPin className="w-3 h-3" />
                             {[rascunho.cidade, rascunho.estado].filter(Boolean).join('/')}
                           </p>
@@ -507,7 +507,7 @@ export default function MinhasVendas() {
                       <div className="flex gap-2">
                         <button
                           onClick={() => navigate(`/vendas/minhas-vendas/editar/${rascunho.id}`)}
-                          className="flex-1 h-8 rounded-lg text-xs font-medium border border-blue-500/30 bg-blue-500/10 text-blue-300 hover:bg-blue-500/20 hover:border-blue-400/50 transition-all flex items-center justify-center gap-1.5"
+                          className="flex-1 h-8 rounded-lg text-xs font-medium border border-white/10 bg-white/5 text-white/80 hover:bg-white/10 hover:border-white/20 transition-all flex items-center justify-center gap-1.5"
                         >
                           <Edit className="w-3 h-3" />
                           Continuar
@@ -549,11 +549,11 @@ export default function MinhasVendas() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <div className={cardClass}>
           <div className={statCardInner}>
-            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 shadow-lg shadow-blue-500/30">
-              <ShoppingCart className="w-6 h-6 text-white" />
+            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-white/10 border border-white/10">
+              <ShoppingCart className="w-6 h-6 text-white/80" />
             </div>
             <div>
-              <p className="text-xs font-semibold text-blue-300/70 uppercase tracking-wider">Total de Vendas</p>
+              <p className="text-xs font-semibold text-white/60 uppercase tracking-wider">Total de Vendas</p>
               <p className="text-2xl font-bold text-white">{totalVendas}</p>
             </div>
           </div>
@@ -561,11 +561,11 @@ export default function MinhasVendas() {
 
         <div className={cardClass}>
           <div className={statCardInner}>
-            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-green-700 shadow-lg shadow-green-500/30">
-              <DollarSign className="w-6 h-6 text-white" />
+            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-white/10 border border-white/10">
+              <DollarSign className="w-6 h-6 text-white/80" />
             </div>
             <div>
-              <p className="text-xs font-semibold text-blue-300/70 uppercase tracking-wider">Valor Total</p>
+              <p className="text-xs font-semibold text-white/60 uppercase tracking-wider">Valor Total</p>
               <p className="text-2xl font-bold text-white">{formatCurrency(valorTotal)}</p>
             </div>
           </div>
@@ -573,11 +573,11 @@ export default function MinhasVendas() {
 
         <div className={cardClass}>
           <div className={statCardInner}>
-            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-700 shadow-lg shadow-purple-500/30">
-              <FileCheck className="w-6 h-6 text-white" />
+            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-white/10 border border-white/10">
+              <FileCheck className="w-6 h-6 text-white/80" />
             </div>
             <div>
-              <p className="text-xs font-semibold text-blue-300/70 uppercase tracking-wider">Com Comprovante</p>
+              <p className="text-xs font-semibold text-white/60 uppercase tracking-wider">Com Comprovante</p>
               <p className="text-2xl font-bold text-white">{vendasFaturadas}</p>
             </div>
           </div>
@@ -587,18 +587,18 @@ export default function MinhasVendas() {
       {/* Filtros */}
       <div className="flex flex-wrap items-center gap-3 mb-4">
         <div className="relative flex-1 min-w-[200px] max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-300/50" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
           <Input
             placeholder="Buscar cliente, telefone, cidade..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9 bg-blue-500/5 border-blue-500/20 text-white placeholder:text-blue-300/40 focus:border-blue-400/50"
+            className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30"
           />
         </div>
 
         <Popover>
           <PopoverTrigger asChild>
-            <button className="h-10 px-4 rounded-lg border border-blue-500/20 bg-blue-500/5 text-blue-200 hover:bg-blue-500/10 hover:border-blue-400/30 transition-all flex items-center gap-2">
+            <button className="h-10 px-4 rounded-lg border border-white/10 bg-white/5 text-white/80 hover:bg-white/10 hover:border-white/20 transition-all flex items-center gap-2">
               <CalendarIcon className="w-4 h-4" />
               <span className="text-sm">
                 {dataInicio && dataFim 
@@ -608,7 +608,7 @@ export default function MinhasVendas() {
               </span>
             </button>
           </PopoverTrigger>
-          <PopoverContent className="w-auto p-0 bg-slate-900 border-blue-500/20" align="end">
+          <PopoverContent className="w-auto p-0 bg-slate-900 border-white/10" align="end">
             <Calendar
               mode="range"
               selected={{ from: dataInicio, to: dataFim }}
@@ -632,7 +632,7 @@ export default function MinhasVendas() {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="h-10 px-4 rounded-lg border border-blue-500/20 bg-blue-500/5 text-blue-200 hover:bg-blue-500/10 hover:border-blue-400/30 transition-all flex items-center gap-2">
+            <button className="h-10 px-4 rounded-lg border border-white/10 bg-white/5 text-white/80 hover:bg-white/10 hover:border-white/20 transition-all flex items-center gap-2">
               <Download className="w-4 h-4" />
               <span className="text-sm">Exportar</span>
             </button>
@@ -655,22 +655,22 @@ export default function MinhasVendas() {
         {isLoading ? (
           <div className="p-4 space-y-3">
             {Array.from({ length: 5 }).map((_, i) => (
-              <Skeleton key={i} className="h-12 bg-blue-500/5" />
+              <Skeleton key={i} className="h-12 bg-white/5" />
             ))}
           </div>
         ) : vendasFiltradas.length > 0 ? (
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="border-blue-500/10 hover:bg-transparent">
+                <TableRow className="border-white/10 hover:bg-transparent">
                   {visibleColumns.map((col) => {
                     const isSortable = ['data', 'cliente', 'cidade', 'valor', 'previsao'].includes(col.id);
                     return (
                       <TableHead 
                         key={col.id}
                         className={cn(
-                          "text-blue-300/70 font-semibold text-xs uppercase tracking-wider",
-                          isSortable && "cursor-pointer hover:text-blue-200 select-none"
+                          "text-white/60 font-semibold text-xs uppercase tracking-wider",
+                          isSortable && "cursor-pointer hover:text-white select-none"
                         )}
                         onClick={() => isSortable && handleSort(col.id as SortField)}
                       >
@@ -687,11 +687,11 @@ export default function MinhasVendas() {
                 {vendasFiltradas.map((venda) => (
                   <TableRow 
                     key={venda.id}
-                    className="border-blue-500/10 hover:bg-blue-500/10 cursor-pointer transition-colors"
+                    className="border-white/10 hover:bg-white/5 cursor-pointer transition-colors"
                     onClick={() => handleEditVenda(venda)}
                   >
                     {visibleColumns.map((col) => (
-                      <TableCell key={col.id} className="text-blue-100/90">
+                      <TableCell key={col.id} className="text-white/80">
                         {renderCell(venda, col.id)}
                       </TableCell>
                     ))}
@@ -702,14 +702,14 @@ export default function MinhasVendas() {
           </div>
         ) : (
           <div className="text-center py-12">
-            <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-500/10 mx-auto mb-4">
-              <ShoppingCart className="w-8 h-8 text-blue-400/50" />
+            <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-white/10 mx-auto mb-4">
+              <ShoppingCart className="w-8 h-8 text-white/40" />
             </div>
-            <p className="text-blue-200/60 mb-4">Nenhuma venda encontrada</p>
+            <p className="text-white/60 mb-4">Nenhuma venda encontrada</p>
             <button 
               onClick={() => navigate('/vendas/minhas-vendas/nova')}
-              className="h-10 px-5 rounded-lg font-medium border border-blue-500/30 bg-blue-500/10 text-blue-300
-                         hover:bg-blue-500/20 hover:text-blue-200 hover:border-blue-400/50
+              className="h-10 px-5 rounded-lg font-medium border border-white/10 bg-white/5 text-white/80
+                         hover:bg-white/10 hover:text-white hover:border-white/20
                          transition-all duration-200 inline-flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
