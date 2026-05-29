@@ -505,7 +505,6 @@ export default function GastosPage() {
             </Table>
           )}
         </div>
-      </div>
 
       {/* Create/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -670,6 +669,7 @@ export default function GastosPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+      </div>
+    </MinimalistLayout>
   );
 }
