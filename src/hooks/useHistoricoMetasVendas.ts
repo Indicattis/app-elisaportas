@@ -120,8 +120,7 @@ export function useHistoricoMetasVendas() {
       // Resolver usuários (mesma fonte do hook live)
       const { data: usuarios } = await supabase
         .from('admin_users')
-        .select('user_id, nome, foto_perfil_url, role')
-        .in('role', ['atendente', 'vendedor']);
+        .select('user_id, nome, foto_perfil_url');
       const userMap = new Map<string, { nome: string; foto_perfil_url: string | null }>();
       (usuarios || []).forEach((u: any) =>
         userMap.set(u.user_id, { nome: u.nome, foto_perfil_url: u.foto_perfil_url ?? null }),
