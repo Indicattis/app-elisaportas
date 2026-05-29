@@ -1034,7 +1034,7 @@ function ProdutoRow({
       {renderedColumns.map((col) => (
         <TableCell
           key={col}
-          className={cn("text-right text-foreground", cellExtraCls[col], COLUMN_BG[col])}
+          className={cn("text-right text-foreground", cellExtraCls[col], getColumnBg(columnColors, col))}
         >
           {cellRenderers[col]}
         </TableCell>
