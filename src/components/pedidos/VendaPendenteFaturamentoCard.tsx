@@ -15,7 +15,7 @@ export const VendaPendenteFaturamentoCard = ({ venda }: VendaPendenteFaturamento
   const navigate = useNavigate();
 
   const handleClick = () => {
-    navigate(`/administrativo/financeiro/faturamento/${venda.id}`);
+    navigate(`/financeiro/faturamento/${venda.id}`);
   };
 
   const { data: ultimoComentario } = useQuery({

@@ -146,9 +146,8 @@ export default function FaturamentoProdutosMinimalista() {
       <AnimatedBreadcrumb 
         items={[
           { label: "Home", path: "/home" },
-          { label: "Administrativo", path: "/administrativo" },
-          { label: "Financeiro", path: "/administrativo/financeiro" },
-          { label: "Faturamento", path: "/administrativo/financeiro/faturamento" },
+          { label: "Financeiro", path: "/financeiro" },
+          { label: "Faturamento", path: "/financeiro/faturamento" },
           { label: "Por Produto" }
         ]} 
         mounted={mounted} 
@@ -157,7 +156,7 @@ export default function FaturamentoProdutosMinimalista() {
       {/* Menu de Perfil Flutuante */}
       {/* Botão Voltar */}
       <button
-        onClick={() => navigate('/administrativo/financeiro/faturamento')}
+        onClick={() => navigate('/financeiro/faturamento')}
         className="fixed top-4 left-4 z-50 p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10
                    hover:bg-white/10 transition-all duration-300"
         style={{

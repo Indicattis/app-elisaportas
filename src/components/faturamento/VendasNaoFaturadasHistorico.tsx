@@ -212,7 +212,7 @@ export function VendasNaoFaturadasHistorico({ onOpenJustificativa }: Props) {
                 <TableRow 
                   key={venda.id} 
                   className="border-white/10 hover:bg-white/5 cursor-pointer"
-                  onClick={() => navigate(`/administrativo/financeiro/faturamento/${venda.id}?from=vendas`)}
+                  onClick={() => navigate(`/financeiro/faturamento/${venda.id}?from=vendas`)}
                 >
                   <TableCell className="text-white/80">
                     {format(new Date(venda.data_venda), "dd/MM/yyyy", { locale: ptBR })}

@@ -1099,7 +1099,7 @@ export default function FaturamentoMinimalista() {
           className="w-full bg-blue-600 hover:bg-blue-700 text-white disabled:bg-white/5 disabled:text-white/30 disabled:cursor-not-allowed"
           disabled={aguardandoContrato(selectedVenda)}
           title={aguardandoContrato(selectedVenda) ? "Anexe ou dispense o contrato para faturar." : undefined}
-          onClick={() => navigate(`/administrativo/financeiro/faturamento/${selectedVenda.id}?from=vendas`)}
+          onClick={() => navigate(`/financeiro/faturamento/${selectedVenda.id}?from=vendas`)}
         >
           Abrir Faturamento
         </Button>
@@ -1166,12 +1166,11 @@ export default function FaturamentoMinimalista() {
     return (
       <MinimalistLayout 
         title="Faturamento por Venda" 
-        backPath="/administrativo/financeiro/faturamento"
+        backPath="/financeiro/faturamento"
         breadcrumbItems={[
           { label: "Home", path: "/home" },
-          { label: "Administrativo", path: "/administrativo" },
-          { label: "Financeiro", path: "/administrativo/financeiro" },
-          { label: "Faturamento", path: "/administrativo/financeiro/faturamento" },
+          { label: "Financeiro", path: "/financeiro" },
+          { label: "Faturamento", path: "/financeiro/faturamento" },
           { label: "Por Venda" }
         ]}
       >
@@ -1186,13 +1185,12 @@ export default function FaturamentoMinimalista() {
     <MinimalistLayout 
       title="Faturamento por Venda" 
       subtitle="Controle de faturamento individual por venda"
-      backPath="/administrativo/financeiro/faturamento"
+      backPath="/financeiro/faturamento"
       fullWidth
       breadcrumbItems={[
         { label: "Home", path: "/home" },
-        { label: "Administrativo", path: "/administrativo" },
-        { label: "Financeiro", path: "/administrativo/financeiro" },
-        { label: "Faturamento", path: "/administrativo/financeiro/faturamento" },
+        { label: "Financeiro", path: "/financeiro" },
+        { label: "Faturamento", path: "/financeiro/faturamento" },
         { label: "Por Venda" }
       ]}
       headerActions={

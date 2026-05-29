@@ -517,15 +517,14 @@ export default function ContasReceberMinimalista() {
       <AnimatedBreadcrumb
         items={[
           { label: "Home", path: "/home" },
-          { label: "Administrativo", path: "/administrativo" },
-          { label: "Financeiro", path: "/administrativo/financeiro" },
-          { label: "Caixa", path: "/administrativo/financeiro/caixa" },
+          { label: "Financeiro", path: "/financeiro" },
+          { label: "Caixa", path: "/financeiro/caixa" },
           { label: "Contas a Receber" }
         ]}
         mounted={mounted}
       />
       <button
-        onClick={() => navigate('/administrativo/financeiro/caixa')}
+        onClick={() => navigate('/financeiro/caixa')}
         className="fixed top-4 left-4 z-50 p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 hover:bg-white/10 transition-all duration-300"
         style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'translateX(0)' : 'translateX(-20px)', transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 100ms' }}
       >

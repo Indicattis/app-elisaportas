@@ -305,7 +305,7 @@ export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaP
                 className="bg-blue-500/10 border-blue-500/30 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300"
                 onClick={() => {
                   onOpenChange(false);
-                  navigate(`/administrativo/financeiro/faturamento/${venda.id}?from=vendas`);
+                  navigate(`/financeiro/faturamento/${venda.id}?from=vendas`);
                 }}
               >
                 <ExternalLink className="w-4 h-4 mr-2" />

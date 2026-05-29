@@ -1140,7 +1140,7 @@ function EditableDate({
   );
 }
 
-/* ---------------- Gastos Readonly block (puxa de /administrativo/financeiro/gastos) ---------------- */
+/* ---------------- Gastos Readonly block (puxa de /financeiro/gastos) ---------------- */
 
 function BlocoGastosReadonly({
   titulo, icon, rows, loading,
@@ -1176,7 +1176,7 @@ function BlocoGastosReadonly({
             ) : rows.length === 0 ? (
               <tr>
                 <td colSpan={3} className="text-white/40 px-2 py-6 text-center">
-                  Nenhum gasto registrado neste mês em Administrativo › Financeiro › Gastos.
+                  Nenhum gasto registrado neste mês em Financeiro › Gastos.
                 </td>
               </tr>
             ) : rows.map(r => (
