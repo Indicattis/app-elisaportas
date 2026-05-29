@@ -52,7 +52,6 @@ import { cn } from "@/lib/utils";
 import { exportEstrategiaItensPDF, exportEstrategiaItensExcel } from "@/utils/estrategiaItensExport";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useConfiguracoesVendas } from "@/hooks/useConfiguracoesVendas";
-import { CatalogoPrecosTab } from "@/components/tabela-precos/CatalogoPrecosTab";
 import { useEstrategiaMateriasPrimas } from "@/hooks/useEstrategiaMateriasPrimas";
 import { getUnidadeAbreviacao } from "@/utils/unidadesMedida";
 
