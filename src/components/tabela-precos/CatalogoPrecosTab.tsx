@@ -331,6 +331,27 @@ export function CatalogoPrecosTab({ compact = false }: CatalogoPrecosTabProps = 
 
   const [editing, setEditing] = useState<{ id: string; field: EditField } | null>(null);
   const [editValue, setEditValue] = useState("");
+  const [columnColors, setColumnColors] = useState<Record<ColumnKey, string>>(() => readColumnColors());
+
+  useEffect(() => {
+    const handler = (e: StorageEvent) => {
+      if (e.key === ESTRATEGIA_COLUMN_COLORS_KEY) setColumnColors(readColumnColors());
+    };
+    window.addEventListener("storage", handler);
+    const interval = window.setInterval(() => {
+      const next = readColumnColors();
+      setColumnColors((prev) => {
+        for (const k of Object.keys(next) as ColumnKey[]) {
+          if (prev[k] !== next[k]) return next;
+        }
+        return prev;
+      });
+    }, 1500);
+    return () => {
+      window.removeEventListener("storage", handler);
+      window.clearInterval(interval);
+    };
+  }, []);
 
   const [ordemOpen, setOrdemOpen] = useState(false);
   const [ordemDraft, setOrdemDraft] = useState<string[]>([]);
