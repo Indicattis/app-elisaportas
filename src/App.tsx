@@ -243,6 +243,7 @@ import EstrategiaKitsTemplate from "./pages/direcao/estrategia/EstrategiaKitsTem
 import EstrategiaLucroInstalacoes from "./pages/direcao/estrategia/EstrategiaLucroInstalacoes";
 import EstrategiaLucroPinturas from "./pages/direcao/estrategia/EstrategiaLucroPinturas";
 import EstrategiaMateriasPrimas from "./pages/direcao/estrategia/EstrategiaMateriasPrimas";
+import EstrategiaItens from "./pages/direcao/estrategia/EstrategiaItens";
 import EstrategiaDespesas from "./pages/direcao/estrategia/EstrategiaDespesas";
 import EstrategiaDespesasMes from "./pages/direcao/estrategia/EstrategiaDespesasMes";
 import EstrategiaDespesasConfiguracoes from "./pages/direcao/estrategia/EstrategiaDespesasConfiguracoes";
@@ -547,6 +548,7 @@ const App = () => (
                 <Route path="/direcao/estrategia/kits/:kitId/montagem" element={<ProtectedRoute routeKey="direcao_estrategia"><EstrategiaKitMontagem /></ProtectedRoute>} />
                 <Route path="/direcao/estrategia/precos" element={<ProtectedRoute routeKey="direcao_estrategia"><EstrategiaPrecos /></ProtectedRoute>} />
                 <Route path="/direcao/estrategia/materias-primas" element={<ProtectedRoute routeKey="direcao_estrategia"><EstrategiaMateriasPrimas /></ProtectedRoute>} />
+                <Route path="/direcao/estrategia/itens" element={<ProtectedRoute routeKey="direcao_estrategia"><EstrategiaItens /></ProtectedRoute>} />
                 <Route path="/direcao/estrategia/despesas" element={<ProtectedRoute routeKey="direcao_estrategia"><EstrategiaDespesas /></ProtectedRoute>} />
                 <Route path="/direcao/estrategia/despesas/configuracoes" element={<ProtectedRoute routeKey="direcao_estrategia"><EstrategiaDespesasConfiguracoes /></ProtectedRoute>} />
                 <Route path="/direcao/estrategia/despesas/:mes" element={<ProtectedRoute routeKey="direcao_estrategia"><EstrategiaDespesasMes /></ProtectedRoute>} />
