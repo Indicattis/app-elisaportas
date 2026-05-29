@@ -42,6 +42,7 @@ export type NewCustoItem = {
   taxa_impostos?: number;
   taxa_descontos?: number;
   taxa_cartao?: number;
+  vendavel_avulso?: boolean;
 };
 
 const QUERY_KEY = ["custos_itens"] as const;
