@@ -51,6 +51,7 @@ export default function CustoFolhaMensal() {
   const [mesRef, setMesRef] = useState<Date>(today);
   const [valores, setValores] = useState<Record<string, LinhaValores>>({});
   const [saving, setSaving] = useState(false);
+  const [savingId, setSavingId] = useState<string | null>(null);
 
   const mesIso = format(mesRef, "yyyy-MM-dd");
   const mesLabel = format(mesRef, "MMMM 'de' yyyy", { locale: ptBR });
@@ -216,6 +217,67 @@ export default function CustoFolhaMensal() {
       toast.error(e.message || "Erro ao salvar custo em folha");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSaveLinha = async (c: Colaborador) => {
+    setSavingId(c.id);
+    try {
+      const l = getLinha(c.id);
+      const sb = parseNum(l.salarioBase);
+      const ac = parseNum(l.ajudaCusto);
+      const he = parseNum(l.horasExtras);
+      const bn = parseNum(l.bonus);
+      const pa = parseNum(l.pensaoAlimenticia);
+      const v = sb + ac + he + bn - pa;
+      const pv = parseNum(l.previsao);
+      const ad = parseNum(l.adiantamento);
+      const pix = l.chavePix.trim();
+      const hasData =
+        v !== 0 || pv > 0 || ad > 0 || bn > 0 || pa > 0 || pix.length > 0 || l.pago || !!l.dataPagamento;
+
+      if (hasData) {
+        const { error } = await supabase
+          .from("custos_folha_mensais")
+          .upsert(
+            [
+              {
+                mes_referencia: mesIso,
+                colaborador_id: c.id,
+                colaborador_nome: c.nome,
+                valor: v,
+                salario_base: sb,
+                ajuda_custo: ac,
+                horas_extras: he,
+                bonus: bn,
+                pensao_alimenticia: pa,
+                previsao: pv,
+                adiantamento: ad,
+                chave_pix: pix || null,
+                pago: l.pago,
+                data_pagamento: l.dataPagamento || null,
+                created_by: user?.id ?? null,
+              },
+            ],
+            { onConflict: "mes_referencia,colaborador_id" },
+          );
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("custos_folha_mensais")
+          .delete()
+          .eq("mes_referencia", mesIso)
+          .eq("colaborador_id", c.id);
+        if (error) throw error;
+      }
+
+      toast.success(`Salvo: ${c.nome}`);
+      await refetch();
+    } catch (e: any) {
+      console.error(e);
+      toast.error(e.message || "Erro ao salvar linha");
+    } finally {
+      setSavingId(null);
     }
   };
 
