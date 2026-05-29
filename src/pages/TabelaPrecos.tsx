@@ -186,7 +186,7 @@ export default function TabelaPrecos({
         Novo Item
       </Button>
     </div>
-  ) : null;
+  );
 
   const headerActions = (
     <div className="flex items-center gap-2">
@@ -279,15 +279,7 @@ export default function TabelaPrecos({
       fullWidth
     >
       {beforeContent}
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'portas' | 'catalogo')} className="space-y-6">
-        {!hideCatalogoTab && (
-          <TabsList className="bg-white/5 border border-white/10">
-            <TabsTrigger value="portas" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-white/70">Portas</TabsTrigger>
-            <TabsTrigger value="catalogo" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-white/70">Catálogo</TabsTrigger>
-          </TabsList>
-        )}
-
-        <TabsContent value="portas" className="space-y-6 mt-0">
+      <div className="space-y-6">
         {/* Card Principal */}
         <Card className="bg-white/5 border-white/10">
           <CardHeader>
@@ -506,12 +498,7 @@ export default function TabelaPrecos({
             )}
           </CardContent>
         </Card>
-        </TabsContent>
-
-        <TabsContent value="catalogo" className="mt-0">
-          <CatalogoPrecosTab />
-        </TabsContent>
-      </Tabs>
+      </div>
 
       {/* Modal de Adicionar/Editar */}
       <ItemModal
