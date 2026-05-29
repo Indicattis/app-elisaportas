@@ -117,7 +117,7 @@ export default function FaturamentoVendaMinimalista() {
     avista: configVendas?.limite_desconto_avista ?? 3,
     presencial: configVendas?.limite_desconto_presencial ?? 5,
   };
-  // Limite máximo de desconto (com senha do responsável) — definido em /direcao/vendas/regras-vendas.
+  // Limite máximo de desconto (com senha do responsável) — definido em /direcao/estrategia/precos/regras-vendas.
   // Acima desse percentual o excedente é abatido do lucro.
   const LIMITE_DESCONTO_LUCRO = limitesVendas.totalComResponsavel;
 
@@ -1313,7 +1313,7 @@ export default function FaturamentoVendaMinimalista() {
                       return 0;
                     })();
                     // O desconto só abate o lucro na parcela que excede o limite máximo configurado em
-                    // /direcao/vendas/regras-vendas (LIMITE_DESCONTO_LUCRO). Distribui o excedente
+                    // /direcao/estrategia/precos/regras-vendas (LIMITE_DESCONTO_LUCRO). Distribui o excedente
                     // proporcionalmente ao desconto de cada item.
                     const parcelaExcedenteItem = excedenteValor > 0 && totalDescontosCalc > 0
                       ? excedenteValor * (descontoValorAbs / totalDescontosCalc)
