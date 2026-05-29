@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useMetasVendas, type MetaVendas, type MetaVendasTier } from './useMetasVendas';
 import { getInicioFimSemana, getInicioFimMes } from '@/lib/periodoMeta';
 import { calcularFaturamentoLiquido } from '@/utils/faturamentoCalc';
+import { calcularTier, calcularBonificacao } from '@/lib/metasVendasCalc';
 
 export interface VendedorProgresso {
   vendedor_id: string;
@@ -20,18 +21,6 @@ export interface MetaProgresso {
   tiers: MetaVendasTier[];
   vendedores: VendedorProgresso[];
   totalGlobal: number;
-}
-
-function calcularTier(total: number, tiers: MetaVendasTier[]): MetaVendasTier | null {
-  const ordenados = [...tiers].sort((a, b) => Number(b.valor_alvo) - Number(a.valor_alvo));
-  return ordenados.find((t) => total >= Number(t.valor_alvo)) || null;
-}
-
-function calcularBonificacao(total: number, tier: MetaVendasTier | null, atingido: boolean = true): number {
-  if (!tier) return 0;
-  if (tier.bonificacao_tipo === 'fixo') return atingido ? Number(tier.bonificacao_valor) : 0;
-  // Regra: bonificacao_valor é a porcentagem direta (ex.: 0.3 ⇒ 0,3% ⇒ multiplicador 0.003)
-  return total * (Number(tier.bonificacao_valor) / 100);
 }
 
 export function useProgressoMetasVendas() {
