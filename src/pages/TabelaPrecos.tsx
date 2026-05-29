@@ -208,15 +208,6 @@ export default function TabelaPrecos({
                 {itens.length} {itens.length === 1 ? 'item cadastrado' : 'itens cadastrados'}
               </p>
             </div>
-            <div className="relative w-full sm:w-72">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-white/40" />
-              <Input
-                placeholder="Buscar por descrição ou medidas..."
-                className="pl-8 bg-white/5 backdrop-blur-xl border-white/10 text-white placeholder:text-white/40"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
           </div>
 
           {isLoading ? (

@@ -662,15 +662,17 @@ export function CatalogoPrecosTab({ compact = false }: CatalogoPrecosTabProps = 
               </DialogContent>
             </Dialog>
           )}
-          <div className="relative w-full sm:w-72">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-white/40" />
-            <Input
-              placeholder="Buscar por nome ou descrição..."
-              className="pl-8 bg-white/5 backdrop-blur-xl border-white/10 text-white placeholder:text-white/40"
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-            />
-          </div>
+          {!compact && (
+            <div className="relative w-full sm:w-72">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-white/40" />
+              <Input
+                placeholder="Buscar por nome ou descrição..."
+                className="pl-8 bg-white/5 backdrop-blur-xl border-white/10 text-white placeholder:text-white/40"
+                value={busca}
+                onChange={(e) => setBusca(e.target.value)}
+              />
+            </div>
+          )}
         </div>
       </div>
 
@@ -686,20 +688,16 @@ export function CatalogoPrecosTab({ compact = false }: CatalogoPrecosTabProps = 
         <div className="flex flex-col gap-6">
           {groupedByCategoria.map(([categoria, rows]) => (
             <div key={categoria} className="flex flex-col gap-2">
-              <div className="flex items-center gap-2 px-1">
-                <span className="inline-block h-1.5 w-1.5 rounded-full bg-muted-foreground" />
-                {compact ? (
-                  <span className="text-[11px] uppercase tracking-wider font-medium text-muted-foreground">
-                    {categoria}
-                  </span>
-                ) : (
+              {!compact && (
+                <div className="flex items-center gap-2 px-1">
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-muted-foreground" />
                   <CategoriaTitulo
                     categoria={categoria}
                     onRename={(novo) => renomearCategoria.mutateAsync({ from: categoria, to: String(novo) })}
                   />
-                )}
-                <span className="text-[11px] text-muted-foreground/60">· {rows.length}</span>
-              </div>
+                  <span className="text-[11px] text-muted-foreground/60">· {rows.length}</span>
+                </div>
+              )}
               <div className="rounded-xl overflow-hidden bg-white/5 backdrop-blur-xl border border-white/10">
                 <DndContext
                   sensors={dndSensors}
