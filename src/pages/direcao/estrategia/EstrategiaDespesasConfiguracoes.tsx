@@ -171,12 +171,27 @@ function FolhaBlock({
               <th className="text-right font-normal pb-2 px-2 text-emerald-400">Salário</th>
               <th className="text-right font-normal pb-2 px-2">Combustível</th>
               <th className="text-right font-normal pb-2 px-2">Insalub %</th>
-              <th className="text-right font-normal pb-2 px-2">Insalub valor</th>
+              <th className="text-right font-normal pb-2 px-2">
+                <div>Insalub valor</div>
+                <div className="text-[9px] normal-case tracking-normal text-white/30">salário × insalub%</div>
+              </th>
               <th className="text-right font-normal pb-2 px-2">FGTS %</th>
-              <th className="text-right font-normal pb-2 px-2">FGTS valor</th>
-              <th className="text-right font-normal pb-2 px-2">Previsão 13°</th>
-              <th className="text-right font-normal pb-2 px-2">FGTS 13°</th>
-              <th className="text-right font-normal pb-2 px-2">Férias + 1/3</th>
+              <th className="text-right font-normal pb-2 px-2">
+                <div>FGTS valor</div>
+                <div className="text-[9px] normal-case tracking-normal text-white/30">salário × FGTS%</div>
+              </th>
+              <th className="text-right font-normal pb-2 px-2">
+                <div>Previsão 13°</div>
+                <div className="text-[9px] normal-case tracking-normal text-white/30">salário ÷ 12</div>
+              </th>
+              <th className="text-right font-normal pb-2 px-2">
+                <div>FGTS 13°</div>
+                <div className="text-[9px] normal-case tracking-normal text-white/30">FGTS valor ÷ 12</div>
+              </th>
+              <th className="text-right font-normal pb-2 px-2">
+                <div>Férias + 1/3</div>
+                <div className="text-[9px] normal-case tracking-normal text-white/30">salário ÷ 3</div>
+              </th>
               <th className="text-right font-normal pb-2 px-2">Total</th>
               <th className="pb-2 pr-1 w-10"></th>
             </tr>
