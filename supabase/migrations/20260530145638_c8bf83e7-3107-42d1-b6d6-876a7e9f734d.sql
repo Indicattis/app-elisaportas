@@ -1,0 +1,1 @@
+ALTER TYPE public.setor_type ADD VALUE IF NOT EXISTS 'lideranca';

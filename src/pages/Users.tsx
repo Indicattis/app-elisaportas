@@ -32,7 +32,7 @@ interface AdminUser {
   email: string;
   nome: string;
   role: string; // TEXT in database, validated via FK against system_roles.key
-  setor: "vendas" | "marketing" | "instalacoes" | "fabrica" | "administrativo" | null;
+  setor: "vendas" | "marketing" | "instalacoes" | "fabrica" | "administrativo" | "lideranca" | null;
   cpf: string | null;
   data_nascimento: string | null;
   ativo: boolean;

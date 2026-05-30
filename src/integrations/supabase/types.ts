@@ -9828,6 +9828,7 @@ export type Database = {
         | "instalacoes"
         | "fabrica"
         | "administrativo"
+        | "lideranca"
       status_vaga: "em_analise" | "aberta" | "fechada" | "preenchida"
       status_visita: "agendada" | "concluida" | "cancelada"
       suporte_status: "aberto" | "em_andamento" | "resolvido"
@@ -10033,6 +10034,7 @@ export const Constants = {
         "instalacoes",
         "fabrica",
         "administrativo",
+        "lideranca",
       ],
       status_vaga: ["em_analise", "aberta", "fechada", "preenchida"],
       status_visita: ["agendada", "concluida", "cancelada"],
