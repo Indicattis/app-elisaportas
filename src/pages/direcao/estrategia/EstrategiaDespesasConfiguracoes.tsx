@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
 import { GerenciarCategoriasDialog } from '@/components/despesas/GerenciarCategoriasDialog';
+import { GerenciarSetoresDialog } from '@/components/admin/GerenciarSetoresDialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -176,6 +177,7 @@ function FolhaBlock({
   const [addOpen, setAddOpen] = useState(false);
 
   const reset = () => { setNome(''); setEmFolha(true); setSetor(''); setSalario(0); setSalarioMin(1518); setAuxComb(0); setInsalub(0); setFgts(8); setPrev13(0); };
+  const [gerenciarSetoresOpen, setGerenciarSetoresOpen] = useState(false);
 
   const save = async () => {
     if (!nome.trim()) return;
@@ -235,6 +237,13 @@ function FolhaBlock({
         <h3 className="font-semibold">Folha Salarial padrão</h3>
         <span className="text-white/40 text-sm">({items.length})</span>
         <div className="ml-auto flex items-center gap-1.5">
+          <button
+            onClick={() => setGerenciarSetoresOpen(true)}
+            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-white/80 hover:text-white transition-colors"
+          >
+            <FolderPlus className="w-3.5 h-3.5" />
+            Gerenciar setores
+          </button>
           <button
             onClick={() => exportFolhaSalarialPDF(items, SETORES.map(s => ({ value: s.value, label: s.label })))}
             disabled={items.length === 0}
