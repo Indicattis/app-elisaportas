@@ -1024,7 +1024,7 @@ function categoriaSelectClass(_list: CategoriaDespesa[], v?: string | null) {
 }
 
 function CategoriaGroup({
-  cat, palette, rows, categorias, empresasAtivas, update, remove, dragHandle, rename, removeCat, expanded, onToggle,
+  cat, palette, rows, categorias, empresasAtivas, update, remove, dragHandle, rename, removeCat, expanded, onToggle, hideHeader,
 }: {
   cat: CategoriaDespesa | null;
   palette: { color: string; dot: string };
@@ -1038,10 +1038,12 @@ function CategoriaGroup({
   removeCat?: ReturnType<typeof useDespesasCategorias>['removeCategoria'];
   expanded: boolean;
   onToggle: () => void;
+  hideHeader?: boolean;
 }) {
   const subtotal = rows.reduce((s, i) => s + Number(i.valor_maximo_mensal || 0), 0);
   return (
-    <div className={`border-b border-white/[0.06] px-1 ${expanded ? 'pt-2 pb-3' : 'py-2.5'} group/cat transition-colors`}>
+    <div className={`${hideHeader ? '' : 'border-b border-white/[0.06]'} px-1 ${expanded ? 'pt-2 pb-3' : 'py-2.5'} group/cat transition-colors`}>
+      {!hideHeader && (
       <div
         className={`flex items-center gap-2 ${expanded ? 'mb-2' : ''} cursor-pointer select-none`}
         onClick={onToggle}
@@ -1076,6 +1078,7 @@ function CategoriaGroup({
           </button>
         )}
       </div>
+      )}
       {expanded && (
       <table className="w-full text-sm">
         <thead>
