@@ -824,6 +824,8 @@ function TiposCustoBlock({
   const [realocacaoDialog, setRealocacaoDialog] = useState<{ tipo: TipoCusto; count: number } | null>(null);
   const [destinoId, setDestinoId] = useState<string>('');
   const [realocando, setRealocando] = useState(false);
+  const [forcando, setForcando] = useState(false);
+  const [confirmarOrfaos, setConfirmarOrfaos] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
 
   const handleRemoveTipo = async (id: string) => {
@@ -843,7 +845,15 @@ function TiposCustoBlock({
     setRealocando(true);
     const ok = await realocarEExcluir(realocacaoDialog.tipo.id, destinoId);
     setRealocando(false);
-    if (ok) { setRealocacaoDialog(null); setDestinoId(''); }
+    if (ok) { setRealocacaoDialog(null); setDestinoId(''); setConfirmarOrfaos(false); }
+  };
+
+  const confirmarForcarExclusao = async () => {
+    if (!realocacaoDialog) return;
+    setForcando(true);
+    const ok = await forcarExclusao(realocacaoDialog.tipo.id);
+    setForcando(false);
+    if (ok) { setRealocacaoDialog(null); setDestinoId(''); setConfirmarOrfaos(false); }
   };
 
   const destinosPossiveis = allTipos.filter(t =>
