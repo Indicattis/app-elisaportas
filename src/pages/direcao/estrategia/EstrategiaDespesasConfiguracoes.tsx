@@ -90,7 +90,9 @@ function calcTotalFolha(f: { salario: number; aux_combustivel: number; insalubri
   const insalub = f.salario * (f.insalubridade_pct || 0) / 100;
   const fgts = f.salario * (f.fgts_pct || 0) / 100;
   const ferias = f.ferias_valor == null ? calcFeriasDefault(f.salario, f.fgts_pct) : Number(f.ferias_valor) || 0;
-  return f.salario + f.aux_combustivel + insalub + fgts + f.previsao_13_valor + ferias;
+  const prev13 = f.salario / 12;
+  const fgts13 = fgts / 12;
+  return f.salario + f.aux_combustivel + insalub + fgts + prev13 + fgts13 + ferias;
 }
 
 function FolhaBlock({
@@ -159,7 +161,8 @@ function FolhaBlock({
               <th className="text-right font-normal pb-2 px-2">Insalub valor</th>
               <th className="text-right font-normal pb-2 px-2">FGTS %</th>
               <th className="text-right font-normal pb-2 px-2">FGTS valor</th>
-              <th className="text-right font-normal pb-2 px-2">Previsão 13° + FGTS 13°</th>
+              <th className="text-right font-normal pb-2 px-2">Previsão 13°</th>
+              <th className="text-right font-normal pb-2 px-2">FGTS 13°</th>
               <th className="text-right font-normal pb-2 px-2">Férias + 1/3 + FGTS</th>
               <th className="text-right font-normal pb-2 px-2">Total</th>
               <th className="pb-2 pr-1 w-10"></th>
@@ -190,7 +193,8 @@ function FolhaBlock({
               <td className="px-2 text-right text-orange-400 text-xs">{formatCurrency(salario * (insalub || 0) / 100)}</td>
               <td className="px-2"><NumCell value={fgts} onChange={setFgts} /></td>
               <td className="px-2 text-right text-orange-400 text-xs">{formatCurrency(salario * (fgts || 0) / 100)}</td>
-              <td className="px-2"><NumCell value={prev13} onChange={setPrev13} /></td>
+              <td className="px-2 text-right text-orange-400 text-xs">{formatCurrency(salario / 12)}</td>
+              <td className="px-2 text-right text-orange-400 text-xs">{formatCurrency((salario * (fgts || 0) / 100) / 12)}</td>
               <td className="px-2 text-right text-white/40 text-xs">{formatCurrency(salario / 3 + salario * (fgts || 0) / 100)}</td>
               <td className="px-2 text-right text-white/60 text-xs">{formatCurrency(calcTotalFolha({ salario, aux_combustivel: auxComb, insalubridade_pct: insalub, fgts_pct: fgts, previsao_13_valor: prev13, em_folha: emFolha }))}</td>
               <td className="pr-1 text-right">
@@ -228,13 +232,11 @@ function FolhaRow({
   const aux_combustivel = Number(item.aux_combustivel) || 0;
   const insalubridade_pct = Number(item.insalubridade_pct) || 0;
   const fgts_pct = Number(item.fgts_pct) || 0;
-  const previsao_13_valor = Number(item.previsao_13_valor) || 0;
   const insalubVal = salario * insalubridade_pct / 100;
   const fgtsVal = salario * fgts_pct / 100;
-  const prev13ComFgts = previsao_13_valor * (1 + fgts_pct / 100);
   const feriasDefault = calcFeriasDefault(salario, fgts_pct);
   const feriasAtual = item.ferias_valor == null ? feriasDefault : Number(item.ferias_valor) || 0;
-  const total = calcTotalFolha({ salario, aux_combustivel, insalubridade_pct, fgts_pct, previsao_13_valor, em_folha: item.em_folha, ferias_valor: item.ferias_valor });
+  const total = calcTotalFolha({ salario, aux_combustivel, insalubridade_pct, fgts_pct, previsao_13_valor: 0, em_folha: item.em_folha, ferias_valor: item.ferias_valor });
   return (
     <tr className="border-b border-white/5 hover:bg-white/[0.03]">
       <td className="py-2 pl-1 text-white/90">
@@ -264,10 +266,8 @@ function FolhaRow({
         <InlineNum value={item.fgts_pct} onSave={(v) => update(item.id, { fgts_pct: v })} format="percent" />
       </td>
       <td className="px-2 text-right text-orange-400 text-xs">{formatCurrency(fgtsVal)}</td>
-      <td className="px-2 text-right text-white/60">
-        <InlineNum value={item.previsao_13_valor} onSave={(v) => update(item.id, { previsao_13_valor: v })} format="currency" />
-        <div className="text-[10px] text-white/40">c/ FGTS: {formatCurrency(prev13ComFgts)}</div>
-      </td>
+      <td className="px-2 text-right text-orange-400 text-xs">{formatCurrency(salario / 12)}</td>
+      <td className="px-2 text-right text-orange-400 text-xs">{formatCurrency(fgtsVal / 12)}</td>
       <td className="px-2 text-right text-white/70">
         <InlineNum value={feriasAtual} onSave={(v) => update(item.id, { ferias_valor: v })} format="currency" />
         {item.ferias_valor != null && (

@@ -1,22 +1,31 @@
 ## Mudança
 
-Hoje o +5% extra de desconto é liberado quando `venda_presencial === true` (Quente). O usuário quer o oposto: o +5% deve ser liberado quando a venda for **Frio**.
+Em `/direcao/estrategia/despesas/configuracoes`, na tabela "Folha Salarial padrão", a coluna **"Previsão 13° + FGTS 13°"** vira **duas colunas calculadas automaticamente** (não editáveis):
+
+- **Previsão 13°** = `salário / 12`
+- **FGTS 13°** = `FGTS valor / 12` = `(salário × FGTS%) / 12`
 
 ## Arquivo
 
-`src/pages/vendas/VendaNovaMinimalista.tsx` — trocar todas as 5 ocorrências em que se passa `formData.venda_presencial === true` para `validarDesconto(...)` por `formData.venda_presencial === false`.
+`src/pages/direcao/estrategia/EstrategiaDespesasConfiguracoes.tsx`
 
-Linhas afetadas (todas chamadas a `validarDesconto`):
-- 281 (useMemo de validação)
-- 522 (validação no submit)
-- 564 (validação ao avançar)
-- 1071 (badge "dentro do limite")
-- 1140 (cálculo do percentual exibido)
+1. Cabeçalho (`<thead>` linha 162): substituir a coluna única por duas: "Previsão 13°" e "FGTS 13°" (mesmo estilo das outras colunas calculadas em laranja, como Insalub valor / FGTS valor).
+2. Linha de adição (`<tr>` que contém `NumCell value={prev13}`): remover o input `prev13`/`setPrev13`, exibir em duas células os valores calculados `salario/12` e `salario*fgts/100/12` em laranja.
+3. `FolhaRow` (linha 267-270): remover o `InlineNum` de `previsao_13_valor` e o sub-texto "c/ FGTS"; exibir duas células calculadas `salario/12` e `fgtsVal/12` (laranja).
+4. `calcTotalFolha` (linha 88): trocar `f.previsao_13_valor` por `f.salario/12 + (f.salario * (f.fgts_pct||0)/100)/12`. O parâmetro `previsao_13_valor` deixa de ser usado mas o tipo é mantido (compatibilidade com chamadores).
+5. No `save` (insert do novo colaborador), gravar `previsao_13_valor: 0` (campo legado da tabela continua existindo, sem efeito visual).
 
-Também ajustar a prop `vendaPresencial` enviada na linha 1122 (passada a outro componente) para `formData.venda_presencial === false`, mantendo a semântica de "venda com +5%".
+## Consistência com outras telas
+
+Para os totais não divergirem entre a configuração, `/direcao/estrategia/despesas/:mes` e `/direcao/estrategia/dre/:mes`, aplicar a mesma fórmula nos dois `calcTotalFolha` correspondentes:
+
+- `src/components/direcao/estrategia/DespesasResumoTopo.tsx` (função `calcTotalFolha`, ~linha 102).
+- `src/pages/direcao/DREMesDirecao.tsx` (função `calcTotalFolha` interna inserida na alteração anterior).
+
+Nessas duas telas a edição do `previsao_13_valor` (se existir input) passa a ser ignorada no cálculo — manter os campos no banco apenas como legado.
 
 ## Fora do escopo
 
-- Nada muda no banco nem na coluna `venda_presencial` (continua boolean).
-- A regra de obrigatoriedade do radio (Frio/Quente) permanece igual.
-- Nenhuma outra tela é afetada (faturamento, gestão-fábrica continuam só exibindo o rótulo).
+- Sem migrations: coluna `previsao_13_valor` permanece no banco.
+- Nenhuma outra coluna é alterada.
+- Layout/estilo (glassmorphism, cores) preservados.
