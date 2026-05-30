@@ -88,6 +88,46 @@ export const useTiposCustos = () => {
     }
   };
 
+  /**
+   * Verifica quantos gastos estão vinculados a um tipo de custo.
+   */
+  const contarGastosVinculados = async (id: string): Promise<number> => {
+    const { count, error } = await supabase
+      .from("gastos" as any)
+      .select("id", { count: "exact", head: true })
+      .eq("tipo_custo_id", id);
+    if (error) {
+      console.error(error);
+      return 0;
+    }
+    return count ?? 0;
+  };
+
+  /**
+   * Realoca todos os gastos vinculados a `id` para `novoTipoId` e exclui o tipo original.
+   */
+  const realocarEExcluirTipoCusto = async (id: string, novoTipoId: string) => {
+    try {
+      const { error: updErr } = await supabase
+        .from("gastos" as any)
+        .update({ tipo_custo_id: novoTipoId } as any)
+        .eq("tipo_custo_id", id);
+      if (updErr) throw updErr;
+      const { error: delErr } = await supabase
+        .from("tipos_custos" as any)
+        .delete()
+        .eq("id", id);
+      if (delErr) throw delErr;
+      toast.success("Gastos realocados e tipo de custo excluído!");
+      await fetchTiposCustos();
+      return true;
+    } catch (error: any) {
+      toast.error("Erro ao realocar e excluir tipo de custo");
+      console.error(error);
+      return false;
+    }
+  };
+
   useEffect(() => {
     fetchTiposCustos();
   }, []);
@@ -99,5 +139,7 @@ export const useTiposCustos = () => {
     saveTipoCusto,
     updateTipoCusto,
     deleteTipoCusto,
+    contarGastosVinculados,
+    realocarEExcluirTipoCusto,
   };
 };
