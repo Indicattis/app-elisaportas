@@ -168,7 +168,7 @@ export default function VagasPage() {
 
   const rolesBySetor = SETOR_KEYS.map(setor => ({
     setor,
-    label: SETOR_LABELS[setor],
+    label: labelMap[setor] || setor,
     roles: getRolesForSetor(setor).map(key => ({
       key,
       label: (systemRoles || []).find(r => r.key === key)?.label || ROLE_LABELS[key] || key,
