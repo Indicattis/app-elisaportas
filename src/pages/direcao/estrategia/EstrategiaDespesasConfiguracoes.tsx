@@ -4,6 +4,7 @@ import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { formatCurrency } from '@/lib/utils';
 import { useDespesasPadrao, type DespesaPadrao, type DespesaPadraoTipo } from '@/hooks/useDespesasPadrao';
 import { useTiposCustos, type TipoCusto } from '@/hooks/useTiposCustos';
+import { useEmpresasEmissoras } from '@/hooks/useEmpresasEmissoras';
 import { Switch } from '@/components/ui/switch';
 import { exportFolhaSalarialPDF } from '@/utils/folhaSalarialPDFGenerator';
 import { useSetores, getSetorPalette } from '@/hooks/useSetores';
