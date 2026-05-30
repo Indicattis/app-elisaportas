@@ -147,7 +147,6 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
   const padroesImpostos = useMemo(() => padroes.filter(p => p.tipo === 'imposto'), [padroes]);
   const totalExibido = useMemo(() => {
     const nomesFolha = new Set(folha.map(r => norm(r.colaborador_nome)));
-    const nomesImpostos = new Set(impostos.map(r => norm(r.tipo_nome)));
 
     return folha.reduce((s, x) => s + Number(x.total || 0), 0)
       + padroesFolha.filter(p => !nomesFolha.has(norm(p.nome))).reduce((s, p) => s + calcTotalFolha({ ...p, em_folha: p.em_folha }), 0)
