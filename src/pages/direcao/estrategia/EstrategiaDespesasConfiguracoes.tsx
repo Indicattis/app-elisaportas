@@ -90,19 +90,21 @@ function FolhaBlock({
   remove: ReturnType<typeof useDespesasPadrao>['remove'];
 }) {
   const [nome, setNome] = useState('');
+  const [emFolha, setEmFolha] = useState(true);
   const [salario, setSalario] = useState(0);
   const [auxComb, setAuxComb] = useState(0);
   const [insalub, setInsalub] = useState(0);
   const [fgts, setFgts] = useState(8);
   const [prev13, setPrev13] = useState(0);
 
-  const reset = () => { setNome(''); setSalario(0); setAuxComb(0); setInsalub(0); setFgts(8); setPrev13(0); };
+  const reset = () => { setNome(''); setEmFolha(true); setSalario(0); setAuxComb(0); setInsalub(0); setFgts(8); setPrev13(0); };
 
   const save = async () => {
     if (!nome.trim()) return;
     const ok = await insert({
       tipo: 'folha',
       nome: nome.trim(),
+      em_folha: emFolha,
       salario,
       aux_combustivel: auxComb,
       insalubridade_pct: insalub,
@@ -133,6 +135,7 @@ function FolhaBlock({
           <thead>
             <tr className="text-[10px] uppercase tracking-wider text-white/40 border-b border-white/10">
               <th className="text-left font-normal pb-2 pl-1">Colaborador</th>
+              <th className="text-center font-normal pb-2 px-2 w-[90px]">Em folha</th>
               <th className="text-right font-normal pb-2 px-2 text-emerald-400">Salário</th>
               <th className="text-right font-normal pb-2 px-2">Combustível</th>
               <th className="text-right font-normal pb-2 px-2">Insalub %</th>
@@ -153,6 +156,9 @@ function FolhaBlock({
               <td className="py-2 pl-1">
                 <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome do colaborador"
                   className="w-full h-8 bg-white/5 border border-white/10 rounded px-2 text-white text-xs outline-none focus:border-blue-400/50" />
+              </td>
+              <td className="px-2 text-center">
+                <Switch checked={emFolha} onCheckedChange={setEmFolha} />
               </td>
               <td className="px-2"><NumCell value={salario} onChange={setSalario} /></td>
               <td className="px-2"><NumCell value={auxComb} onChange={setAuxComb} /></td>
@@ -208,6 +214,9 @@ function FolhaRow({
     <tr className="border-b border-white/5 hover:bg-white/[0.03]">
       <td className="py-2 pl-1 text-white/90">
         <InlineText value={item.nome} onSave={(v) => update(item.id, { nome: v })} />
+      </td>
+      <td className="px-2 text-center">
+        <Switch checked={item.em_folha} onCheckedChange={(v) => update(item.id, { em_folha: v })} />
       </td>
       <td className="px-2 text-right text-emerald-400 font-medium">
         <InlineNum value={item.salario} onSave={(v) => update(item.id, { salario: v })} format="currency" />

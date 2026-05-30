@@ -2308,6 +2308,7 @@ export type Database = {
           aux_combustivel: number
           created_at: string
           created_by: string | null
+          em_folha: boolean
           fgts_pct: number
           id: string
           insalubridade_pct: number
@@ -2323,6 +2324,7 @@ export type Database = {
           aux_combustivel?: number
           created_at?: string
           created_by?: string | null
+          em_folha?: boolean
           fgts_pct?: number
           id?: string
           insalubridade_pct?: number
@@ -2338,6 +2340,7 @@ export type Database = {
           aux_combustivel?: number
           created_at?: string
           created_by?: string | null
+          em_folha?: boolean
           fgts_pct?: number
           id?: string
           insalubridade_pct?: number
