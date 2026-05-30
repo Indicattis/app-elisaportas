@@ -838,6 +838,15 @@ function TiposCustoBlock({
 
   const semCategoria = items.filter(i => !i.categoria_id);
 
+  const [expandedCategorias, setExpandedCategorias] = useState<Set<string>>(new Set());
+  const toggleCat = (key: string) => {
+    setExpandedCategorias(prev => {
+      const n = new Set(prev);
+      if (n.has(key)) n.delete(key); else n.add(key);
+      return n;
+    });
+  };
+
   return (
     <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-5">
       <div className="flex items-center gap-2 text-white mb-3">
@@ -879,7 +888,7 @@ function TiposCustoBlock({
         )}
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-1.5">
         <DndContext sensors={sensors} collisionDetection={closestCenter} modifiers={[restrictToVerticalAxis]} onDragEnd={onCatDragEnd}>
           <SortableContext items={catIds} strategy={verticalListSortingStrategy}>
             {grupos.map(g => (
@@ -895,6 +904,8 @@ function TiposCustoBlock({
                 remove={handleRemoveTipo}
                 rename={renameCategoria}
                 removeCat={removeCategoria}
+                expanded={expandedCategorias.has(g.cat.id)}
+                onToggle={() => toggleCat(g.cat.id)}
               />
             ))}
           </SortableContext>
@@ -909,10 +920,12 @@ function TiposCustoBlock({
             empresasAtivas={empresasAtivas}
             update={update}
             remove={handleRemoveTipo}
+            expanded={expandedCategorias.has('__sem__')}
+            onToggle={() => toggleCat('__sem__')}
           />
         )}
 
-        <div className="bg-white/[0.03] border border-dashed border-white/15 rounded-xl p-4">
+        <div className="bg-white/[0.03] border border-dashed border-white/15 rounded-xl p-4 mt-3">
           <div className="flex items-center gap-2 mb-3">
             <Plus className="w-3.5 h-3.5 text-emerald-300" />
             <span className="text-[11px] uppercase tracking-wider text-white/60 font-semibold">Adicionar despesa</span>
