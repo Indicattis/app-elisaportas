@@ -113,7 +113,7 @@ export default function EstrategiaPrecos() {
               {itensAvulso.length} {itensAvulso.length === 1 ? 'item disponível' : 'itens disponíveis'}
             </p>
           </div>
-          <div className="flex-1 min-h-0 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 p-4 overflow-y-auto">
+          <div className="flex-1 min-h-0 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 overflow-y-auto">
             {itensAvulso.length === 0 ? (
               <div className="text-xs text-white/50 text-center py-8 px-2">
                 Nenhum item marcado como avulso. Ative em Estratégia → Itens.
@@ -122,17 +122,17 @@ export default function EstrategiaPrecos() {
               <table className="w-full text-sm">
                 <thead className="sticky top-0 bg-background/60 backdrop-blur-md">
                   <tr className="text-[11px] uppercase tracking-wide text-white/50">
-                    <th className="text-left font-medium py-2 px-2">Nome</th>
-                    <th className="text-left font-medium py-2 px-2">Un.</th>
-                    <th className="text-right font-medium py-2 px-2">Preço/un</th>
+                    <th className="text-left font-medium py-3 px-4">Nome</th>
+                    <th className="text-left font-medium py-3 px-4">Un.</th>
+                    <th className="text-right font-medium py-3 px-4">Preço/un</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
                   {itensAvulso.map((it) => (
                     <tr key={it.id} className="hover:bg-white/5">
-                      <td className="py-2 px-2 text-white truncate max-w-[180px]">{it.descricao}</td>
-                      <td className="py-2 px-2 text-white/60">{it.unidade || '-'}</td>
-                      <td className="py-2 px-2 text-right tabular-nums text-emerald-300 whitespace-nowrap">
+                      <td className="py-3 px-4 text-white truncate max-w-[180px]">{it.descricao}</td>
+                      <td className="py-3 px-4 text-white/60">{it.unidade || '-'}</td>
+                      <td className="py-3 px-4 text-right tabular-nums text-emerald-300 whitespace-nowrap">
                         {fmtBRL(it.preco_venda)}
                       </td>
                     </tr>
