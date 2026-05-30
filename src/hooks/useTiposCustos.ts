@@ -13,6 +13,7 @@ export interface TipoCusto {
   empresa_id: string | null;
   categoria_id: string | null;
   ordem: number;
+  marcada_para_eliminar: boolean;
 }
 
 export const useTiposCustos = () => {
@@ -23,7 +24,7 @@ export const useTiposCustos = () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("tipos_custos" as any)
-      .select("id, nome, descricao, valor_maximo_mensal, tipo, ativo, aparece_no_dre, empresa_id, categoria_id, ordem")
+      .select("id, nome, descricao, valor_maximo_mensal, tipo, ativo, aparece_no_dre, empresa_id, categoria_id, ordem, marcada_para_eliminar")
       .order("ordem", { ascending: true })
       .order("nome", { ascending: true });
 
