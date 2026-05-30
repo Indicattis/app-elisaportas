@@ -1564,8 +1564,7 @@ function CategoriaGroupMensal({
               <th className="text-left font-normal pb-2 pl-1 w-[26%]">Nome</th>
               <th className="pb-2 px-2 w-8" title="Descrição"></th>
               <th className="text-left font-normal pb-2 px-2 w-[18%]">Categoria</th>
-              <th className="text-left font-normal pb-2 px-2 w-[16%]">Empresa</th>
-              <th className="text-right font-normal pb-2 px-2 w-[14%]">Valor projetado</th>
+              <th className="text-right font-normal pb-2 px-2 w-[30%]">Valor projetado</th>
               <th className="text-center font-normal pb-2 px-2 w-[6%]">DRE</th>
               <th className="text-right font-normal pb-2 px-2 w-[16%]">Valor pago no mês</th>
             </tr>
