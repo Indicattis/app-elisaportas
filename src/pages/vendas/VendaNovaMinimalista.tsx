@@ -941,7 +941,7 @@ export default function VendaNovaMinimalista() {
                   htmlFor="temp-quente"
                   className={cn(
                     "flex items-center justify-center gap-3 p-4 rounded-lg cursor-pointer transition-all duration-200 border-2",
-                    formData.venda_presencial === false
+                    formData.venda_presencial === true
                       ? "bg-gradient-to-r from-orange-500/20 to-orange-600/10 border-orange-400/50 shadow-lg shadow-orange-500/20"
                       : "bg-orange-500/5 border-orange-500/20 hover:border-orange-400/40 hover:bg-orange-500/10"
                   )}
@@ -950,7 +950,7 @@ export default function VendaNovaMinimalista() {
                   <span className="text-lg">🔥</span>
                   <span className={cn(
                     "text-sm font-medium",
-                    formData.venda_presencial === false ? "text-orange-100" : "text-orange-200/70"
+                    formData.venda_presencial === true ? "text-orange-100" : "text-orange-200/70"
                   )}>Quente</span>
                 </label>
               </RadioGroup>
