@@ -40,7 +40,7 @@ export default function EstrategiaDespesasConfiguracoes() {
   const {
     tiposCustos, loading: loadingTipos,
     saveTipoCusto, updateTipoCusto, deleteTipoCusto,
-    contarGastosVinculados, realocarEExcluirTipoCusto, reorderTiposCustos,
+    contarGastosVinculados, realocarEExcluirTipoCusto, forcarExclusaoTipoCusto, reorderTiposCustos,
   } = useTiposCustos();
 
   // Only show full-page spinner on the very first load. Subsequent refetches
@@ -87,6 +87,7 @@ export default function EstrategiaDespesasConfiguracoes() {
             allTipos={tiposCustos}
             contarGastosVinculados={contarGastosVinculados}
             realocarEExcluir={realocarEExcluirTipoCusto}
+            forcarExclusao={forcarExclusaoTipoCusto}
             reorderTipos={reorderTiposCustos}
           />
           <TiposCustoBlock
@@ -100,6 +101,7 @@ export default function EstrategiaDespesasConfiguracoes() {
             allTipos={tiposCustos}
             contarGastosVinculados={contarGastosVinculados}
             realocarEExcluir={realocarEExcluirTipoCusto}
+            forcarExclusao={forcarExclusaoTipoCusto}
             reorderTipos={reorderTiposCustos}
           />
           <TiposCustoBlock
@@ -113,6 +115,7 @@ export default function EstrategiaDespesasConfiguracoes() {
             allTipos={tiposCustos}
             contarGastosVinculados={contarGastosVinculados}
             realocarEExcluir={realocarEExcluirTipoCusto}
+            forcarExclusao={forcarExclusaoTipoCusto}
             reorderTipos={reorderTiposCustos}
           />
         </div>
@@ -792,7 +795,7 @@ function InlineNum({ value, onSave, format }: { value: number; onSave: (v: numbe
 
 function TiposCustoBlock({
   titulo, icon, tipo, items, save, update, remove,
-  allTipos, contarGastosVinculados, realocarEExcluir, reorderTipos,
+  allTipos, contarGastosVinculados, realocarEExcluir, forcarExclusao, reorderTipos,
 }: {
   titulo: string;
   icon: React.ReactNode;
@@ -804,6 +807,7 @@ function TiposCustoBlock({
   allTipos: TipoCusto[];
   contarGastosVinculados: ReturnType<typeof useTiposCustos>['contarGastosVinculados'];
   realocarEExcluir: ReturnType<typeof useTiposCustos>['realocarEExcluirTipoCusto'];
+  forcarExclusao: ReturnType<typeof useTiposCustos>['forcarExclusaoTipoCusto'];
   reorderTipos: ReturnType<typeof useTiposCustos>['reorderTiposCustos'];
 }) {
   const [nome, setNome] = useState('');
@@ -820,6 +824,8 @@ function TiposCustoBlock({
   const [realocacaoDialog, setRealocacaoDialog] = useState<{ tipo: TipoCusto; count: number } | null>(null);
   const [destinoId, setDestinoId] = useState<string>('');
   const [realocando, setRealocando] = useState(false);
+  const [forcando, setForcando] = useState(false);
+  const [confirmarOrfaos, setConfirmarOrfaos] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
 
   const handleRemoveTipo = async (id: string) => {
@@ -839,7 +845,15 @@ function TiposCustoBlock({
     setRealocando(true);
     const ok = await realocarEExcluir(realocacaoDialog.tipo.id, destinoId);
     setRealocando(false);
-    if (ok) { setRealocacaoDialog(null); setDestinoId(''); }
+    if (ok) { setRealocacaoDialog(null); setDestinoId(''); setConfirmarOrfaos(false); }
+  };
+
+  const confirmarForcarExclusao = async () => {
+    if (!realocacaoDialog) return;
+    setForcando(true);
+    const ok = await forcarExclusao(realocacaoDialog.tipo.id);
+    setForcando(false);
+    if (ok) { setRealocacaoDialog(null); setDestinoId(''); setConfirmarOrfaos(false); }
   };
 
   const destinosPossiveis = allTipos.filter(t =>
@@ -953,7 +967,7 @@ function TiposCustoBlock({
         <span className="text-base font-bold text-white">{formatCurrency(totalAtivos)}</span>
       </div>
 
-      <Dialog open={!!realocacaoDialog} onOpenChange={(open) => { if (!open) { setRealocacaoDialog(null); setDestinoId(''); } }}>
+      <Dialog open={!!realocacaoDialog} onOpenChange={(open) => { if (!open) { setRealocacaoDialog(null); setDestinoId(''); setConfirmarOrfaos(false); } }}>
         <DialogContent className="sm:max-w-[480px]">
           <DialogHeader>
             <DialogTitle>Realocar gastos antes de excluir</DialogTitle>
@@ -977,9 +991,37 @@ function TiposCustoBlock({
               </SelectContent>
             </Select>
           </div>
+          <div className="mt-2 rounded-md border border-amber-400/30 bg-amber-500/10 p-3 space-y-2">
+            {!confirmarOrfaos ? (
+              <button
+                type="button"
+                onClick={() => setConfirmarOrfaos(true)}
+                disabled={realocando || forcando}
+                className="inline-flex items-center gap-1.5 text-xs text-amber-200 hover:text-amber-100 disabled:opacity-50"
+              >
+                <AlertTriangle className="w-3.5 h-3.5" />
+                Excluir mesmo assim (deixar gastos órfãos)
+              </button>
+            ) : (
+              <div className="space-y-2">
+                <p className="text-xs text-amber-100">
+                  Tem certeza? Os <span className="font-semibold">{realocacaoDialog?.count}</span> gasto(s) não serão removidos,
+                  apenas ficarão sem tipo vinculado e somem do agrupamento.
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button size="sm" variant="outline" onClick={() => setConfirmarOrfaos(false)} disabled={forcando}>
+                    Voltar
+                  </Button>
+                  <Button size="sm" onClick={confirmarForcarExclusao} disabled={forcando} className="bg-amber-600 hover:bg-amber-700 text-white">
+                    {forcando ? 'Excluindo…' : 'Confirmar exclusão forçada'}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setRealocacaoDialog(null); setDestinoId(''); }} disabled={realocando}>Cancelar</Button>
-            <Button onClick={confirmarRealocacao} disabled={!destinoId || realocando} className="bg-red-600 hover:bg-red-700">
+            <Button variant="outline" onClick={() => { setRealocacaoDialog(null); setDestinoId(''); setConfirmarOrfaos(false); }} disabled={realocando || forcando}>Cancelar</Button>
+            <Button onClick={confirmarRealocacao} disabled={!destinoId || realocando || forcando} className="bg-red-600 hover:bg-red-700">
               {realocando ? 'Realocando…' : 'Realocar e excluir'}
             </Button>
           </DialogFooter>
