@@ -383,6 +383,8 @@ function FolhaRowCells({
 
 function FolhaTableHeader() {
   return (
+    <>
+    <FolhaColGroup />
     <thead>
       <tr className="text-[10px] uppercase tracking-wider text-white/40 border-b border-white/10">
         <th className="text-left font-normal pb-2 pl-1">Colaborador</th>
@@ -416,6 +418,28 @@ function FolhaTableHeader() {
         <th className="pb-2 pr-1"></th>
       </tr>
     </thead>
+    </>
+  );
+}
+
+function FolhaColGroup() {
+  return (
+    <colgroup>
+      <col style={{ width: '220px' }} />
+      <col style={{ width: '80px' }} />
+      <col style={{ width: '140px' }} />
+      <col style={{ width: '110px' }} />
+      <col style={{ width: '110px' }} />
+      <col style={{ width: '80px' }} />
+      <col style={{ width: '120px' }} />
+      <col style={{ width: '80px' }} />
+      <col style={{ width: '110px' }} />
+      <col style={{ width: '110px' }} />
+      <col style={{ width: '100px' }} />
+      <col style={{ width: '110px' }} />
+      <col style={{ width: '120px' }} />
+      <col style={{ width: '40px' }} />
+    </colgroup>
   );
 }
 
