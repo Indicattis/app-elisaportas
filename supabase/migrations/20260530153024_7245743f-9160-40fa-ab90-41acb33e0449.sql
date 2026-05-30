@@ -1,0 +1,1 @@
+ALTER TABLE public.despesas_padrao ADD COLUMN IF NOT EXISTS salario_minimo numeric NOT NULL DEFAULT 1518;
