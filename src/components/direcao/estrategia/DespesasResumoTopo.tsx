@@ -550,6 +550,7 @@ function BlocoFolha({
       insalubridade_pct: Number(valores.insalubridade_pct) || 0,
       fgts_pct: Number(valores.fgts_pct) || 0,
       previsao_13_valor: Number(valores.previsao_13_valor) || 0,
+      em_folha: colab.em_folha,
     });
   }, 0);
 
@@ -652,7 +653,7 @@ function BlocoFolha({
               const fgtsVal = salario * (fgts_pct || 0) / 100;
               const prev13ComFgts = previsao_13_valor * (1 + (fgts_pct || 0) / 100);
               const feriasComUmTerco = salario / 3 + fgtsVal;
-              const totalVal = calcTotalFolha({ salario, aux_combustivel, insalubridade_pct, fgts_pct, previsao_13_valor });
+              const totalVal = calcTotalFolha({ salario, aux_combustivel, insalubridade_pct, fgts_pct, previsao_13_valor, em_folha: colab.em_folha });
               return (
                 <tr key={colab.id} className="border-b border-white/5 hover:bg-white/[0.03]">
                   <td className="py-2 pl-1 text-white/90">{colab.nome}</td>
