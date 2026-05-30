@@ -85,6 +85,19 @@ type Colab = {
 
 type TipoCusto = { id: string; nome: string; tipo: 'fixa' | 'variavel' | 'imposto' };
 
+type TipoCustoFull = {
+  id: string;
+  nome: string;
+  tipo: 'fixa' | 'variavel' | 'imposto';
+  descricao: string | null;
+  empresa_id: string | null;
+  categoria_id: string | null;
+  valor_maximo_mensal: number;
+  aparece_no_dre: boolean;
+  marcada_para_eliminar: boolean;
+  ordem: number;
+};
+
 type GastoAgrupado = {
   tipo_custo_id: string;
   tipo_nome: string;
