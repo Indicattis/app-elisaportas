@@ -1029,7 +1029,7 @@ function categoriaSelectClass(_list: CategoriaDespesa[], v?: string | null) {
 }
 
 function CategoriaGroup({
-  cat, palette, rows, categorias, empresasAtivas, update, remove, dragHandle, rename, removeCat, expanded, onToggle, hideHeader,
+  cat, palette, rows, categorias, empresasAtivas, update, remove, dragHandle, rename, removeCat, expanded, onToggle, hideHeader, reorderRows,
 }: {
   cat: CategoriaDespesa | null;
   palette: { color: string; dot: string };
@@ -1044,8 +1044,19 @@ function CategoriaGroup({
   expanded: boolean;
   onToggle: () => void;
   hideHeader?: boolean;
+  reorderRows?: (orderedIds: string[]) => void | Promise<any>;
 }) {
   const subtotal = rows.reduce((s, i) => s + Number(i.valor_maximo_mensal || 0), 0);
+  const rowSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
+  const rowIds = rows.map(r => r.id);
+  const onRowDragEnd = (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id || !reorderRows) return;
+    const oldIdx = rowIds.indexOf(String(active.id));
+    const newIdx = rowIds.indexOf(String(over.id));
+    if (oldIdx < 0 || newIdx < 0) return;
+    reorderRows(arrayMove(rowIds, oldIdx, newIdx));
+  };
   return (
     <div className={`${hideHeader ? '' : 'border-b border-white/[0.06]'} px-1 ${expanded ? 'pt-2 pb-3' : 'py-2.5'} group/cat transition-colors`}>
       {!hideHeader && (
