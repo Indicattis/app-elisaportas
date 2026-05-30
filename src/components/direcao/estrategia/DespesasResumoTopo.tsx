@@ -392,12 +392,14 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         icon={<Receipt className="w-4 h-4" />}
         rows={gastosFixas}
         loading={loading}
+        onAddGasto={onRequestNovoGasto ? () => onRequestNovoGasto('fixa') : undefined}
       />
       <BlocoGastosReadonly
         titulo="Despesas Variáveis"
         icon={<TrendingDown className="w-4 h-4" />}
         rows={gastosVariaveis}
         loading={loading}
+        onAddGasto={onRequestNovoGasto ? () => onRequestNovoGasto('variavel') : undefined}
       />
       <BlocoDespesa
         titulo="Despesas de Imposto"
@@ -412,6 +414,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         onInsert={handleInsertLanc}
         onUpdate={handleUpdateLanc}
         onDeletePadrao={async (id) => { await removePadrao(id); reload(); }}
+        onAddGasto={onRequestNovoGasto ? () => onRequestNovoGasto('imposto') : undefined}
       />
 
       <AlertDialog open={!!confirmDel} onOpenChange={(o) => !o && setConfirmDel(null)}>
