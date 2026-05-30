@@ -849,14 +849,6 @@ function TiposCustoBlock({
     });
   };
   const isExpanded = (key: string) => !collapsedCategorias.has(key);
-  // legacy no-op to keep references happy if any
-  const _unused = () => setCollapsedCategorias;
-    setExpandedCategorias(prev => {
-      const n = new Set(prev);
-      if (n.has(key)) n.delete(key); else n.add(key);
-      return n;
-    });
-  };
 
   return (
     <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-5">
