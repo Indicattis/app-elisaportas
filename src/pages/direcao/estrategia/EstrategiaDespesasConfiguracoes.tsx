@@ -68,6 +68,13 @@ export default function EstrategiaDespesasConfiguracoes() {
 
 /* ---------------- Folha ---------------- */
 
+function calcTotalFolha(f: { salario: number; aux_combustivel: number; insalubridade_pct: number; fgts_pct: number; previsao_13_valor: number }) {
+  const insalub = f.salario * (f.insalubridade_pct || 0) / 100;
+  const fgts = f.salario * (f.fgts_pct || 0) / 100;
+  const ferias = f.salario / 3 + fgts;
+  return f.salario + f.aux_combustivel + insalub + fgts + f.previsao_13_valor + ferias;
+}
+
 function FolhaBlock({
   items, insert, update, remove,
 }: {
@@ -78,16 +85,35 @@ function FolhaBlock({
 }) {
   const [nome, setNome] = useState('');
   const [salario, setSalario] = useState(0);
+  const [auxComb, setAuxComb] = useState(0);
+  const [insalub, setInsalub] = useState(0);
+  const [fgts, setFgts] = useState(8);
+  const [prev13, setPrev13] = useState(0);
 
-  const reset = () => { setNome(''); setSalario(0); };
+  const reset = () => { setNome(''); setSalario(0); setAuxComb(0); setInsalub(0); setFgts(8); setPrev13(0); };
 
   const save = async () => {
     if (!nome.trim()) return;
-    const ok = await insert({ tipo: 'folha', nome: nome.trim(), salario });
+    const ok = await insert({
+      tipo: 'folha',
+      nome: nome.trim(),
+      salario,
+      aux_combustivel: auxComb,
+      insalubridade_pct: insalub,
+      fgts_pct: fgts,
+      previsao_13_valor: prev13,
+    });
     if (ok) reset();
   };
 
   const totalSalarios = items.reduce((s, i) => s + Number(i.salario || 0), 0);
+  const totalFolha = items.reduce((s, i) => s + calcTotalFolha({
+    salario: Number(i.salario) || 0,
+    aux_combustivel: Number(i.aux_combustivel) || 0,
+    insalubridade_pct: Number(i.insalubridade_pct) || 0,
+    fgts_pct: Number(i.fgts_pct) || 0,
+    previsao_13_valor: Number(i.previsao_13_valor) || 0,
+  }), 0);
 
   return (
     <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-5">
@@ -97,11 +123,19 @@ function FolhaBlock({
         <span className="text-white/40 text-sm">({items.length})</span>
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+        <table className="w-full text-sm min-w-[1200px]">
           <thead>
             <tr className="text-[10px] uppercase tracking-wider text-white/40 border-b border-white/10">
               <th className="text-left font-normal pb-2 pl-1">Colaborador</th>
-              <th className="text-right font-normal pb-2 px-2 w-[200px]">Salário</th>
+              <th className="text-right font-normal pb-2 px-2 text-emerald-400">Salário</th>
+              <th className="text-right font-normal pb-2 px-2">Combustível</th>
+              <th className="text-right font-normal pb-2 px-2">Insalub %</th>
+              <th className="text-right font-normal pb-2 px-2">Insalub valor</th>
+              <th className="text-right font-normal pb-2 px-2">FGTS %</th>
+              <th className="text-right font-normal pb-2 px-2">FGTS valor</th>
+              <th className="text-right font-normal pb-2 px-2">Previsão 13° + FGTS 13°</th>
+              <th className="text-right font-normal pb-2 px-2">Férias + 1/3 + FGTS</th>
+              <th className="text-right font-normal pb-2 px-2">Total</th>
               <th className="pb-2 pr-1 w-10"></th>
             </tr>
           </thead>
@@ -115,6 +149,14 @@ function FolhaBlock({
                   className="w-full h-8 bg-white/5 border border-white/10 rounded px-2 text-white text-xs outline-none focus:border-blue-400/50" />
               </td>
               <td className="px-2"><NumCell value={salario} onChange={setSalario} /></td>
+              <td className="px-2"><NumCell value={auxComb} onChange={setAuxComb} /></td>
+              <td className="px-2"><NumCell value={insalub} onChange={setInsalub} /></td>
+              <td className="px-2 text-right text-white/40 text-xs">{formatCurrency(salario * (insalub || 0) / 100)}</td>
+              <td className="px-2"><NumCell value={fgts} onChange={setFgts} /></td>
+              <td className="px-2 text-right text-white/40 text-xs">{formatCurrency(salario * (fgts || 0) / 100)}</td>
+              <td className="px-2"><NumCell value={prev13} onChange={setPrev13} /></td>
+              <td className="px-2 text-right text-white/40 text-xs">{formatCurrency(salario / 3 + salario * (fgts || 0) / 100)}</td>
+              <td className="px-2 text-right text-white/60 text-xs">{formatCurrency(calcTotalFolha({ salario, aux_combustivel: auxComb, insalubridade_pct: insalub, fgts_pct: fgts, previsao_13_valor: prev13 }))}</td>
               <td className="pr-1 text-right">
                 <button onClick={save} disabled={!nome.trim()}
                   className="p-1 rounded bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 disabled:opacity-30">
@@ -125,9 +167,15 @@ function FolhaBlock({
           </tbody>
         </table>
       </div>
-      <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between px-2">
-        <span className="text-xs text-white/50 uppercase tracking-wider">Total de salários</span>
-        <span className="text-base font-bold text-white">{formatCurrency(totalSalarios)}</span>
+      <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between px-2 gap-6">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-white/50 uppercase tracking-wider">Total de salários</span>
+          <span className="text-sm font-medium text-white/80">{formatCurrency(totalSalarios)}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-white/50 uppercase tracking-wider">Total da folha</span>
+          <span className="text-base font-bold text-white">{formatCurrency(totalFolha)}</span>
+        </div>
       </div>
     </div>
   );
@@ -140,6 +188,16 @@ function FolhaRow({
   update: ReturnType<typeof useDespesasPadrao>['update'];
   remove: ReturnType<typeof useDespesasPadrao>['remove'];
 }) {
+  const salario = Number(item.salario) || 0;
+  const aux_combustivel = Number(item.aux_combustivel) || 0;
+  const insalubridade_pct = Number(item.insalubridade_pct) || 0;
+  const fgts_pct = Number(item.fgts_pct) || 0;
+  const previsao_13_valor = Number(item.previsao_13_valor) || 0;
+  const insalubVal = salario * insalubridade_pct / 100;
+  const fgtsVal = salario * fgts_pct / 100;
+  const prev13ComFgts = previsao_13_valor * (1 + fgts_pct / 100);
+  const feriasComUmTerco = salario / 3 + fgtsVal;
+  const total = calcTotalFolha({ salario, aux_combustivel, insalubridade_pct, fgts_pct, previsao_13_valor });
   return (
     <tr className="border-b border-white/5 hover:bg-white/[0.03]">
       <td className="py-2 pl-1 text-white/90">
@@ -148,6 +206,23 @@ function FolhaRow({
       <td className="px-2 text-right text-emerald-400 font-medium">
         <InlineNum value={item.salario} onSave={(v) => update(item.id, { salario: v })} format="currency" />
       </td>
+      <td className="px-2 text-right text-white/60">
+        <InlineNum value={item.aux_combustivel} onSave={(v) => update(item.id, { aux_combustivel: v })} format="currency" />
+      </td>
+      <td className="px-2 text-right text-white/60">
+        <InlineNum value={item.insalubridade_pct} onSave={(v) => update(item.id, { insalubridade_pct: v })} format="percent" />
+      </td>
+      <td className="px-2 text-right text-white/50 text-xs">{formatCurrency(insalubVal)}</td>
+      <td className="px-2 text-right text-white/60">
+        <InlineNum value={item.fgts_pct} onSave={(v) => update(item.id, { fgts_pct: v })} format="percent" />
+      </td>
+      <td className="px-2 text-right text-white/50 text-xs">{formatCurrency(fgtsVal)}</td>
+      <td className="px-2 text-right text-white/60">
+        <InlineNum value={item.previsao_13_valor} onSave={(v) => update(item.id, { previsao_13_valor: v })} format="currency" />
+        <div className="text-[10px] text-white/40">c/ FGTS: {formatCurrency(prev13ComFgts)}</div>
+      </td>
+      <td className="px-2 text-right text-white/50 text-xs">{formatCurrency(feriasComUmTerco)}</td>
+      <td className="px-2 text-right text-white font-semibold">{formatCurrency(total)}</td>
       <td className="pr-1 text-right">
         <button onClick={() => remove(item.id)} className="p-1 rounded hover:bg-red-500/20 text-red-300/70 hover:text-red-300">
           <Trash2 className="w-4 h-4" />
