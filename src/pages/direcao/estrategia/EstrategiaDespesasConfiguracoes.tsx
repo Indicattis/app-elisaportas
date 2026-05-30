@@ -739,6 +739,7 @@ function InlineNum({ value, onSave, format }: { value: number; onSave: (v: numbe
 
 function TiposCustoBlock({
   titulo, icon, tipo, items, save, update, remove,
+  allTipos, contarGastosVinculados, realocarEExcluir,
 }: {
   titulo: string;
   icon: React.ReactNode;
@@ -747,6 +748,9 @@ function TiposCustoBlock({
   save: ReturnType<typeof useTiposCustos>['saveTipoCusto'];
   update: ReturnType<typeof useTiposCustos>['updateTipoCusto'];
   remove: ReturnType<typeof useTiposCustos>['deleteTipoCusto'];
+  allTipos: TipoCusto[];
+  contarGastosVinculados: ReturnType<typeof useTiposCustos>['contarGastosVinculados'];
+  realocarEExcluir: ReturnType<typeof useTiposCustos>['realocarEExcluirTipoCusto'];
 }) {
   const [nome, setNome] = useState('');
   const [descricao, setDescricao] = useState('');
@@ -759,6 +763,36 @@ function TiposCustoBlock({
   const { empresas } = useEmpresasEmissoras();
   const empresasAtivas = (empresas || []).filter((e: any) => e.ativo !== false);
   const { categorias, createCategoria, renameCategoria, removeCategoria, reorderCategorias } = useDespesasCategorias();
+
+  const [realocacaoDialog, setRealocacaoDialog] = useState<{ tipo: TipoCusto; count: number } | null>(null);
+  const [destinoId, setDestinoId] = useState<string>('');
+  const [realocando, setRealocando] = useState(false);
+
+  const handleRemoveTipo = async (id: string) => {
+    const alvo = items.find(i => i.id === id);
+    if (!alvo) return;
+    const count = await contarGastosVinculados(id);
+    if (count > 0) {
+      setDestinoId('');
+      setRealocacaoDialog({ tipo: alvo, count });
+      return;
+    }
+    await remove(id);
+  };
+
+  const confirmarRealocacao = async () => {
+    if (!realocacaoDialog || !destinoId) return;
+    setRealocando(true);
+    const ok = await realocarEExcluir(realocacaoDialog.tipo.id, destinoId);
+    setRealocando(false);
+    if (ok) { setRealocacaoDialog(null); setDestinoId(''); }
+  };
+
+  const destinosPossiveis = allTipos.filter(t =>
+    t.tipo === realocacaoDialog?.tipo.tipo &&
+    t.id !== realocacaoDialog?.tipo.id &&
+    t.ativo
+  );
 
   const totalAtivos = items.filter(i => i.ativo).reduce((s, i) => s + Number(i.valor_maximo_mensal || 0), 0);
 
@@ -854,7 +888,7 @@ function TiposCustoBlock({
                 categorias={categorias}
                 empresasAtivas={empresasAtivas}
                 update={update}
-                remove={remove}
+                remove={handleRemoveTipo}
                 rename={renameCategoria}
                 removeCat={removeCategoria}
               />
@@ -870,7 +904,7 @@ function TiposCustoBlock({
             categorias={categorias}
             empresasAtivas={empresasAtivas}
             update={update}
-            remove={remove}
+            remove={handleRemoveTipo}
           />
         )}
 
@@ -927,6 +961,39 @@ function TiposCustoBlock({
         <span className="text-xs text-white/50 uppercase tracking-wider">Total mensal estimado (ativos)</span>
         <span className="text-base font-bold text-white">{formatCurrency(totalAtivos)}</span>
       </div>
+
+      <Dialog open={!!realocacaoDialog} onOpenChange={(open) => { if (!open) { setRealocacaoDialog(null); setDestinoId(''); } }}>
+        <DialogContent className="sm:max-w-[480px]">
+          <DialogHeader>
+            <DialogTitle>Realocar gastos antes de excluir</DialogTitle>
+            <DialogDescription>
+              Existem <span className="font-semibold text-white">{realocacaoDialog?.count}</span> gasto(s) vinculados a{' '}
+              <span className="font-semibold text-white">"{realocacaoDialog?.tipo.nome}"</span>. Escolha outro tipo de custo para receber esses gastos.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-2 space-y-2">
+            <Label className="text-xs text-white/70">Tipo de custo de destino</Label>
+            <Select value={destinoId} onValueChange={setDestinoId}>
+              <SelectTrigger><SelectValue placeholder="Selecione um tipo de custo" /></SelectTrigger>
+              <SelectContent>
+                {destinosPossiveis.length === 0 ? (
+                  <div className="px-3 py-2 text-xs text-muted-foreground">Nenhum outro tipo disponível neste grupo</div>
+                ) : (
+                  destinosPossiveis.map(t => (
+                    <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setRealocacaoDialog(null); setDestinoId(''); }} disabled={realocando}>Cancelar</Button>
+            <Button onClick={confirmarRealocacao} disabled={!destinoId || realocando} className="bg-red-600 hover:bg-red-700">
+              {realocando ? 'Realocando…' : 'Realocar e excluir'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
