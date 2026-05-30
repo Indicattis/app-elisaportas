@@ -413,19 +413,11 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         loading={loading}
         onAddGasto={onRequestNovoGasto ? () => onRequestNovoGasto('variavel') : undefined}
       />
-      <BlocoDespesa
+      <BlocoGastosReadonly
         titulo="Despesas de Imposto"
         icon={<Landmark className="w-4 h-4" />}
-        rows={impostos}
+        rows={gastosImpostos}
         loading={loading}
-        categoria="imposto"
-        tipos={tipos.filter(t => t.tipo === 'imposto')}
-        padroes={padroesImpostos}
-        mesStart={mesStart || ''}
-        onDelete={(id) => setConfirmDel({ kind: 'lanc', id })}
-        onInsert={handleInsertLanc}
-        onUpdate={handleUpdateLanc}
-        onDeletePadrao={async (id) => { await removePadrao(id); reload(); }}
         onAddGasto={onRequestNovoGasto ? () => onRequestNovoGasto('imposto') : undefined}
       />
 
