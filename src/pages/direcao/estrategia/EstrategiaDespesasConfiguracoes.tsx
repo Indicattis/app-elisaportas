@@ -217,12 +217,41 @@ function FolhaBlock({
         </button>
       </div>
       <div className="space-y-3">
-        {[...SETORES, SETOR_SEM]
-          .map(s => ({ meta: s, rows: items.filter(i => (i.setor ?? '') === s.value) }))
-          .filter(g => g.rows.length > 0)
-          .map(g => (
-            <FolhaSetorGroup key={g.meta.value || 'sem'} meta={g.meta} rows={g.rows} setores={SETORES} update={update} remove={remove} />
-          ))}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          modifiers={[restrictToVerticalAxis]}
+          onDragEnd={onSetorDragEnd}
+        >
+          <SortableContext items={setorIds.filter(id => id !== '')} strategy={verticalListSortingStrategy}>
+            {SETORES
+              .map(meta => ({ meta, rows: items.filter(i => (i.setor ?? '') === meta.value) }))
+              .filter(g => g.rows.length > 0)
+              .map(g => (
+                <SortableSetorGroup
+                  key={g.meta.value}
+                  id={g.meta.value}
+                  meta={g.meta}
+                  rows={g.rows}
+                  setores={SETORES}
+                  update={update}
+                  remove={remove}
+                  reorder={reorder}
+                />
+              ))}
+          </SortableContext>
+        </DndContext>
+        {/* "Sem setor" sempre por último e não arrastável como grupo */}
+        {items.some(i => !i.setor) && (
+          <FolhaSetorGroup
+            meta={SETOR_SEM}
+            rows={items.filter(i => !i.setor)}
+            setores={SETORES}
+            update={update}
+            remove={remove}
+            reorder={reorder}
+          />
+        )}
 
         {/* Caixa de adicionar novo colaborador */}
         <div className="bg-white/[0.03] border border-dashed border-white/15 rounded-xl p-4">
