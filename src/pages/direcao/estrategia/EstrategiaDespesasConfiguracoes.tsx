@@ -306,6 +306,44 @@ function FolhaRow({
   );
 }
 
+function FolhaSetorGroup({
+  meta, rows, update, remove,
+}: {
+  meta: { value: string; label: string; color: string; dot: string };
+  rows: DespesaPadrao[];
+  update: ReturnType<typeof useDespesasPadrao>['update'];
+  remove: ReturnType<typeof useDespesasPadrao>['remove'];
+}) {
+  const subtotal = rows.reduce((s, i) => s + calcTotalFolha({
+    salario: Number(i.salario) || 0,
+    aux_combustivel: Number(i.aux_combustivel) || 0,
+    insalubridade_pct: Number(i.insalubridade_pct) || 0,
+    fgts_pct: Number(i.fgts_pct) || 0,
+    previsao_13_valor: Number(i.previsao_13_valor) || 0,
+    em_folha: i.em_folha,
+    ferias_valor: i.ferias_valor,
+  }), 0);
+  return (
+    <>
+      <tr className="bg-white/[0.02]">
+        <td colSpan={14} className="py-2 pl-1">
+          <div className="flex items-center gap-2">
+            <span className={`w-2 h-2 rounded-full ${meta.dot}`} />
+            <span className="text-[11px] uppercase tracking-wider text-white/70 font-semibold">{meta.label}</span>
+            <span className="text-[10px] text-white/40">({rows.length})</span>
+            <div className="flex-1 h-px bg-white/10 ml-2" />
+            <span className="text-[10px] text-white/50 uppercase tracking-wider">Subtotal</span>
+            <span className="text-xs text-white/80 font-medium">{formatCurrency(subtotal)}</span>
+          </div>
+        </td>
+      </tr>
+      {rows.map(i => (
+        <FolhaRow key={i.id} item={i} update={update} remove={remove} />
+      ))}
+    </>
+  );
+}
+
 /* ---------------- Simple (fixa/variavel) ---------------- */
 
 function SimpleBlock({
