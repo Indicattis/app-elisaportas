@@ -1041,39 +1041,38 @@ function CategoriaGroup({
 }) {
   const subtotal = rows.reduce((s, i) => s + Number(i.valor_maximo_mensal || 0), 0);
   return (
-    <div className={`bg-white/[0.04] border border-white/10 rounded-xl ${expanded ? 'p-4' : 'px-3 py-2'} group/cat transition-all`}>
+    <div className={`${expanded ? 'bg-white/[0.03] border border-white/10 rounded-lg p-3' : 'border-b border-white/[0.06] px-1 py-1'} group/cat transition-colors`}>
       <div
-        className={`flex items-center gap-2 ${expanded ? 'mb-3' : ''} cursor-pointer select-none`}
+        className={`flex items-center gap-1.5 ${expanded ? 'mb-2' : ''} cursor-pointer select-none`}
         onClick={onToggle}
       >
         <ChevronRight
-          className={`w-3.5 h-3.5 text-white/50 transition-transform ${expanded ? 'rotate-90' : ''}`}
+          className={`w-3 h-3 text-white/30 transition-transform ${expanded ? 'rotate-90 text-white/50' : ''}`}
         />
         {dragHandle ? (
-          <span onClick={(e) => e.stopPropagation()} className="flex items-center">{dragHandle}</span>
+          <span onClick={(e) => e.stopPropagation()} className="flex items-center opacity-0 group-hover/cat:opacity-100 transition-opacity">{dragHandle}</span>
         ) : null}
-        <span className={`w-2 h-2 rounded-full ${palette.dot}`} />
+        <span className={`w-1.5 h-1.5 rounded-full ${palette.dot}`} />
         {cat && rename ? (
           <div
-            className="text-[11px] uppercase tracking-wider text-white/80 font-semibold"
+            className="text-[11px] text-white/70 font-normal"
             onClick={(e) => e.stopPropagation()}
           >
             <InlineText value={cat.nome} onSave={(v) => rename({ id: cat.id, nome: v })} />
           </div>
         ) : (
-          <span className="text-[11px] uppercase tracking-wider text-white/80 font-semibold">{cat?.nome ?? 'Sem categoria'}</span>
+          <span className="text-[11px] text-white/70 font-normal">{cat?.nome ?? 'Sem categoria'}</span>
         )}
-        <span className="text-[10px] text-white/40">({rows.length})</span>
-        <div className="flex-1 h-px bg-white/10 ml-2" />
-        <span className="text-[10px] text-white/50 uppercase tracking-wider">Subtotal</span>
-        <span className="text-xs text-white/90 font-medium">{formatCurrency(subtotal)}</span>
+        <span className="text-[10px] text-white/30 tabular-nums">{rows.length}</span>
+        <div className="flex-1" />
+        <span className="text-[11px] text-white/60 tabular-nums">{formatCurrency(subtotal)}</span>
         {cat && removeCat && (
           <button
             onClick={(e) => { e.stopPropagation(); removeCat(cat.id); }}
-            className="p-1 rounded hover:bg-red-500/20 text-red-300/60 hover:text-red-300 ml-1 opacity-0 group-hover/cat:opacity-100 transition-opacity"
+            className="p-0.5 rounded hover:bg-red-500/20 text-red-300/50 hover:text-red-300 ml-1 opacity-0 group-hover/cat:opacity-100 transition-opacity"
             title="Excluir categoria"
           >
-            <Trash2 className="w-3.5 h-3.5" />
+            <Trash2 className="w-3 h-3" />
           </button>
         )}
       </div>
