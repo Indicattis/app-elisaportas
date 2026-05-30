@@ -821,7 +821,7 @@ function BlocoFolha({
 /* ---------------- Despesa block ---------------- */
 
 function BlocoDespesa({
-  titulo, icon, rows, loading, categoria, tipos, padroes, mesStart, onDelete, onInsert, onUpdate, onDeletePadrao,
+  titulo, icon, rows, loading, categoria, tipos, padroes, mesStart, onDelete, onInsert, onUpdate, onDeletePadrao, onAddGasto,
 }: {
   titulo: string;
   icon: React.ReactNode;
@@ -840,6 +840,7 @@ function BlocoDespesa({
     patch: Partial<{ valor: number; data: string; descricao: string | null; tipo_nome: string }>,
   ) => Promise<void>;
   onDeletePadrao: (id: string) => Promise<void> | void;
+  onAddGasto?: () => void;
 }) {
   const [tipoId, setTipoId] = useState('');
   const [customNome, setCustomNome] = useState('');
