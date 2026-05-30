@@ -902,43 +902,19 @@ function TiposCustoBlock({
         </div>
       </div>
 
-      <div className="space-y-5">
-        <DndContext sensors={sensors} collisionDetection={closestCenter} modifiers={[restrictToVerticalAxis]} onDragEnd={onCatDragEnd}>
-          <SortableContext items={catIds} strategy={verticalListSortingStrategy}>
-            {grupos.map(g => (
-              <SortableCategoriaGroup
-                key={g.cat.id}
-                id={g.cat.id}
-                cat={g.cat}
-                palette={g.palette}
-                rows={g.rows}
-                categorias={categorias}
-                empresasAtivas={empresasAtivas}
-                update={update}
-                remove={handleRemoveTipo}
-                rename={renameCategoria}
-                removeCat={removeCategoria}
-                expanded={isExpanded(g.cat.id)}
-                onToggle={() => toggleCat(g.cat.id)}
-              />
-            ))}
-          </SortableContext>
-        </DndContext>
-
-        {semCategoria.length > 0 && (
-          <CategoriaGroup
-            cat={null}
-            palette={{ color: 'bg-white/5 border-white/15 text-white/60', dot: 'bg-white/40' }}
-            rows={semCategoria}
-            categorias={categorias}
-            empresasAtivas={empresasAtivas}
-            update={update}
-            remove={handleRemoveTipo}
-            expanded={isExpanded('__sem__')}
-            onToggle={() => toggleCat('__sem__')}
-          />
-        )}
-
+      <div>
+        <CategoriaGroup
+          cat={null}
+          palette={{ color: 'bg-white/5 border-white/15 text-white/60', dot: 'bg-white/40' }}
+          rows={items}
+          categorias={categorias}
+          empresasAtivas={empresasAtivas}
+          update={update}
+          remove={handleRemoveTipo}
+          expanded={true}
+          onToggle={() => {}}
+          hideHeader
+        />
       </div>
 
       <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between px-2">
@@ -1048,7 +1024,7 @@ function categoriaSelectClass(_list: CategoriaDespesa[], v?: string | null) {
 }
 
 function CategoriaGroup({
-  cat, palette, rows, categorias, empresasAtivas, update, remove, dragHandle, rename, removeCat, expanded, onToggle,
+  cat, palette, rows, categorias, empresasAtivas, update, remove, dragHandle, rename, removeCat, expanded, onToggle, hideHeader,
 }: {
   cat: CategoriaDespesa | null;
   palette: { color: string; dot: string };
@@ -1062,10 +1038,12 @@ function CategoriaGroup({
   removeCat?: ReturnType<typeof useDespesasCategorias>['removeCategoria'];
   expanded: boolean;
   onToggle: () => void;
+  hideHeader?: boolean;
 }) {
   const subtotal = rows.reduce((s, i) => s + Number(i.valor_maximo_mensal || 0), 0);
   return (
-    <div className={`border-b border-white/[0.06] px-1 ${expanded ? 'pt-2 pb-3' : 'py-2.5'} group/cat transition-colors`}>
+    <div className={`${hideHeader ? '' : 'border-b border-white/[0.06]'} px-1 ${expanded ? 'pt-2 pb-3' : 'py-2.5'} group/cat transition-colors`}>
+      {!hideHeader && (
       <div
         className={`flex items-center gap-2 ${expanded ? 'mb-2' : ''} cursor-pointer select-none`}
         onClick={onToggle}
@@ -1100,6 +1078,7 @@ function CategoriaGroup({
           </button>
         )}
       </div>
+      )}
       {expanded && (
       <table className="w-full text-sm">
         <thead>
