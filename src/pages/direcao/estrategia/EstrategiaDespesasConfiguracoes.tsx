@@ -440,6 +440,7 @@ function FolhaColGroup() {
       <col style={{ width: '140px' }} />
       <col style={{ width: '110px' }} />
       <col style={{ width: '110px' }} />
+      <col style={{ width: '110px' }} />
       <col style={{ width: '80px' }} />
       <col style={{ width: '120px' }} />
       <col style={{ width: '80px' }} />
