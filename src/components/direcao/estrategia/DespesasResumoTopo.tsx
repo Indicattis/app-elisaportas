@@ -120,12 +120,6 @@ interface Props {
 }
 
 export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataChange, reloadKey }: Props) {
-  // External reload trigger
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    if (reloadKey === undefined) return;
-    setReloadV((v) => v + 1);
-  }, [reloadKey]);
   const [folha, setFolha] = useState<FolhaRow[]>([]);
   const [impostos, setImpostos] = useState<LancRow[]>([]);
   const [gastosFixas, setGastosFixas] = useState<GastoAgrupado[]>([]);
@@ -133,6 +127,12 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
   const [loading, setLoading] = useState(false);
   const [reloadV, setReloadV] = useState(0);
   const reload = () => { setReloadV(v => v + 1); onDataChange?.(); };
+
+  // External reload trigger
+  useEffect(() => {
+    if (reloadKey === undefined) return;
+    setReloadV((v) => v + 1);
+  }, [reloadKey]);
 
   const [colabs, setColabs] = useState<Colab[]>([]);
   const [tipos, setTipos] = useState<TipoCusto[]>([]);
