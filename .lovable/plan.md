@@ -1,47 +1,28 @@
 ## Objetivo
 
-Em `/direcao/estrategia/despesas/configuracoes`, substituir os blocos **"Despesas Fixas padrão"** e **"Despesas Variáveis padrão"** (que hoje usam a tabela `despesas_padrao`) por uma gestão de **tipos de custos** (`tipos_custos`) igual à de `/financeiro/custos`, separados em duas sessões por `tipo` (fixa / variável).
+Em `/direcao/estrategia/despesas/:mes`, nos blocos **Despesas Fixas** e **Despesas Variáveis**, adicionar uma coluna **"Valor projetado"** alimentada por `tipos_custos.valor_maximo_mensal` (o mesmo campo configurado em `/financeiro/custos` e em `/direcao/estrategia/despesas/configuracoes`).
 
-Os blocos **Folha Salarial padrão** e **Despesas de Imposto padrão** permanecem inalterados (continuam em `despesas_padrao`).
+O bloco **Impostos** já tem coluna "Previsão" e não muda.
 
-## Origem dos dados
+## Mudanças
 
-- `useTiposCustos` (`src/hooks/useTiposCustos.ts`) já fornece `tiposCustos`, `saveTipoCusto`, `updateTipoCusto`, `deleteTipoCusto`.
-- Cada `TipoCusto` tem: `nome`, `descricao`, `valor_maximo_mensal`, `tipo` ('fixa' | 'variavel'), `aparece_no_dre`, `ativo`.
+Arquivo único: `src/components/direcao/estrategia/DespesasResumoTopo.tsx`
 
-## Mudanças (somente `src/pages/direcao/estrategia/EstrategiaDespesasConfiguracoes.tsx`)
+1. **Carregamento dos tipos** (efeito de carga do mês, por volta da linha 200):
+   - Ao buscar `tipos_custos`, incluir `valor_maximo_mensal` no `select`.
+   - Estender `tiposMap[t.id]` para guardar `valor_maximo_mensal`.
 
-1. Remover as duas chamadas `<SimpleBlock tipo="fixa" />` e `<SimpleBlock tipo="variavel" />`.
-2. Importar `useTiposCustos` e adicionar dois novos blocos:
-   - **"Tipos de Custos — Fixas"** (filtrando `tipo === 'fixa'`)
-   - **"Tipos de Custos — Variáveis"** (filtrando `tipo === 'variavel'`)
-3. Criar componente local `TiposCustoBlock` reaproveitável (recebe `tipo`, `titulo`, `icon`, lista filtrada + handlers do hook). Estilo glassmorphism igual aos demais blocos.
+2. **Agrupamento `agruparPor`** (linhas 233–265):
+   - Incluir `valor_projetado: Number(t.valor_maximo_mensal || 0)` ao montar cada `GastoAgrupado`.
+   - Adicionar campo `valor_projetado: number` no tipo `GastoAgrupado`.
 
-### Colunas da tabela em cada bloco
+3. **Componente `BlocoGastosReadonly`** (linhas 1200–1303):
+   - Novo `<th>` "Valor projetado" entre "Lançamentos" e "Valor pago no mês".
+   - Nova célula por linha exibindo `formatCurrency(r.valor_projetado)` em tom suave (`text-white/60`).
+   - Ampliar `colSpan` dos estados `Carregando...` e "Nenhum gasto..." de 3 para 4.
+   - No rodapé, manter o "Total" atual (pago) e adicionar um segundo bloco "Total projetado" = soma de `valor_projetado` das linhas exibidas, no mesmo estilo do "Total de salários" do bloco Folha.
 
-| Coluna | Edição |
-|---|---|
-| Nome | inline (text) |
-| Descrição | inline (text) |
-| Valor máximo mensal | inline (currency) |
-| Aparece no DRE | switch |
-| Ativo | switch |
-| Ações | excluir |
+## Fora de escopo
 
-Linha de inserção no rodapé (mesmo padrão visual atual): inputs para Nome / Descrição / Valor + botão `+` que chama `saveTipoCusto({ nome, descricao, valor_maximo_mensal, tipo, aparece_no_dre: true })`. O `tipo` é fixo pela sessão do bloco.
-
-Rodapé do bloco: "Total mensal estimado" = soma de `valor_maximo_mensal` dos itens **ativos** do tipo (espelha o cálculo atual e o de `/financeiro/custos`).
-
-Itens inativos aparecem na lista (com switch desligado) mas não contam no total — igual ao comportamento de `/financeiro/custos`.
-
-4. Manter `FolhaBlock` (Folha) e `SimpleBlock tipo="imposto"` (Impostos) como estão hoje.
-5. Limpar imports não usados (`Receipt`, `TrendingDown` se ainda fizerem sentido; usar `Receipt`/`TrendingDown` nos novos blocos para manter os mesmos ícones).
-
-## Sem mudanças
-- Banco de dados.
-- Hooks `useDespesasPadrao` e `useTiposCustos`.
-- Página `/financeiro/custos` e a página mensal de despesas.
-
-## Observação sobre dados existentes
-
-Os registros atuais em `despesas_padrao` com `tipo IN ('fixa','variavel')` deixarão de aparecer nesta página (mas continuam no banco). Esses padrões já não influenciam diretamente o resumo mensal de Fixas/Variáveis (que se baseia em `gastos` agrupados por `tipos_custos`), então não há perda funcional. Caso queira limpar esses registros legados depois, faço em separado.
+- Não criar linhas para tipos de custo que tenham projeção mas nenhum lançamento no mês (mantém o comportamento atual de só listar tipos com gastos). Caso queira esse comportamento, peço para incluir num próximo passo.
+- Nenhuma alteração de banco de dados, hook ou outras páginas.
