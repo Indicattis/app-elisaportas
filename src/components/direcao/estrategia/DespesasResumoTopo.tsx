@@ -163,7 +163,6 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
   useEffect(() => {
     // Folha sempre derivada de despesas_padrao (configurações).
     setColabs([]);
-    setTipos([]);
   }, []);
 
   useEffect(() => {
@@ -181,10 +180,11 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         const lastDay = new Date(y, m, 0).getDate();
         const mesEnd = `${mes}-${String(lastDay).padStart(2, '0')}`;
 
-        const [{ data: f }, { data: l }, { data: g }] = await Promise.all([
+        const [{ data: f }, { data: l }, { data: g }, { data: tiposAll }] = await Promise.all([
           supabase.from('despesas_manuais_folha' as any).select('*').eq('mes_referencia', mesStart).order('colaborador_nome'),
           supabase.from('despesas_manuais_lancamentos' as any).select('*').eq('mes_referencia', mesStart).order('data'),
           supabase.from('gastos' as any).select('id, tipo_custo_id, valor, data, descricao, responsavel_id, banco_id').gte('data', mesStart).lte('data', mesEnd),
+          supabase.from('tipos_custos' as any).select('id, nome, tipo, aparece_no_dre, valor_maximo_mensal, ativo').eq('ativo', true),
         ]);
         if (cancelled) return;
         const folhaArr = (f || []) as unknown as FolhaRow[];
@@ -193,22 +193,19 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         setImpostos(lancArr.filter(x => x.categoria === 'imposto'));
 
         const gastosRows = (g || []) as unknown as Array<{ id: string; tipo_custo_id: string; valor: number; data: string; descricao: string | null; responsavel_id: string | null; banco_id: string | null }>;
-        const tipoIds = Array.from(new Set(gastosRows.map(r => r.tipo_custo_id).filter(Boolean)));
-        let tiposMap: Record<string, { nome: string; tipo: 'fixa' | 'variavel' | 'imposto'; aparece_no_dre: boolean; valor_maximo_mensal: number }> = {};
-        if (tipoIds.length > 0) {
-          const { data: tiposData } = await supabase
-            .from('tipos_custos' as any)
-            .select('id, nome, tipo, aparece_no_dre, valor_maximo_mensal')
-            .in('id', tipoIds);
-          ((tiposData || []) as any[]).forEach(t => {
-            tiposMap[t.id] = {
-              nome: t.nome,
-              tipo: t.tipo,
-              aparece_no_dre: t.aparece_no_dre !== false,
-              valor_maximo_mensal: Number(t.valor_maximo_mensal || 0),
-            };
-          });
-        }
+        const tiposMap: Record<string, { nome: string; tipo: 'fixa' | 'variavel' | 'imposto'; aparece_no_dre: boolean; valor_maximo_mensal: number }> = {};
+        ((tiposAll || []) as any[]).forEach(t => {
+          tiposMap[t.id] = {
+            nome: t.nome,
+            tipo: t.tipo,
+            aparece_no_dre: t.aparece_no_dre !== false,
+            valor_maximo_mensal: Number(t.valor_maximo_mensal || 0),
+          };
+        });
+        // Atualiza lista de tipos para uso nos blocos (Impostos usa para sugestões)
+        setTipos(((tiposAll || []) as any[])
+          .filter(t => t.aparece_no_dre !== false)
+          .map(t => ({ id: t.id, nome: t.nome, tipo: t.tipo })));
 
         const respIds = Array.from(new Set(gastosRows.map(r => r.responsavel_id).filter(Boolean))) as string[];
         const bancoIds = Array.from(new Set(gastosRows.map(r => r.banco_id).filter(Boolean))) as string[];
@@ -229,6 +226,18 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
 
         const agruparPor = (categoria: 'fixa' | 'variavel'): GastoAgrupado[] => {
           const acc = new Map<string, GastoAgrupado>();
+          // Seed: todos os tipos da categoria aparecem mesmo sem gastos
+          Object.entries(tiposMap).forEach(([id, t]) => {
+            if (!t.aparece_no_dre || t.tipo !== categoria) return;
+            acc.set(id, {
+              tipo_custo_id: id,
+              tipo_nome: t.nome,
+              total: 0,
+              quantidade: 0,
+              valor_projetado: Number(t.valor_maximo_mensal || 0),
+              itens: [],
+            });
+          });
           for (const r of gastosRows) {
             const t = tiposMap[r.tipo_custo_id];
             if (!t || !t.aparece_no_dre) continue;
