@@ -121,9 +121,10 @@ const setorSelectClassFrom = (list: SetorMeta[], v?: string | null) => {
 function calcFeriasDefault(salario: number, _fgts_pct: number) {
   return salario / 3 / 12;
 }
-function calcTotalFolha(f: { salario: number; aux_combustivel: number; insalubridade_pct: number; fgts_pct: number; previsao_13_valor: number; em_folha?: boolean; ferias_valor?: number | null }) {
+function calcTotalFolha(f: { salario: number; salario_minimo?: number; aux_combustivel: number; insalubridade_pct: number; fgts_pct: number; previsao_13_valor: number; em_folha?: boolean; ferias_valor?: number | null }) {
   if (f.em_folha === false) return f.salario;
-  const insalub = f.salario * (f.insalubridade_pct || 0) / 100;
+  const baseInsalub = f.salario_minimo == null ? f.salario : f.salario_minimo;
+  const insalub = baseInsalub * (f.insalubridade_pct || 0) / 100;
   const fgts = f.salario * (f.fgts_pct || 0) / 100;
   const ferias = f.ferias_valor == null ? calcFeriasDefault(f.salario, f.fgts_pct) : Number(f.ferias_valor) || 0;
   const prev13 = f.salario / 12;
@@ -144,12 +145,13 @@ function FolhaBlock({
   const [emFolha, setEmFolha] = useState(true);
   const [setor, setSetor] = useState<string>('');
   const [salario, setSalario] = useState(0);
+  const [salarioMin, setSalarioMin] = useState(1518);
   const [auxComb, setAuxComb] = useState(0);
   const [insalub, setInsalub] = useState(0);
   const [fgts, setFgts] = useState(8);
   const [prev13, setPrev13] = useState(0);
 
-  const reset = () => { setNome(''); setEmFolha(true); setSetor(''); setSalario(0); setAuxComb(0); setInsalub(0); setFgts(8); setPrev13(0); };
+  const reset = () => { setNome(''); setEmFolha(true); setSetor(''); setSalario(0); setSalarioMin(1518); setAuxComb(0); setInsalub(0); setFgts(8); setPrev13(0); };
 
   const save = async () => {
     if (!nome.trim()) return;
@@ -159,6 +161,7 @@ function FolhaBlock({
       em_folha: emFolha,
       setor: setor || null,
       salario,
+      salario_minimo: salarioMin,
       aux_combustivel: auxComb,
       insalubridade_pct: insalub,
       fgts_pct: fgts,
@@ -170,6 +173,7 @@ function FolhaBlock({
   const totalSalarios = items.reduce((s, i) => s + Number(i.salario || 0), 0);
   const totalFolha = items.reduce((s, i) => s + calcTotalFolha({
     salario: Number(i.salario) || 0,
+    salario_minimo: Number(i.salario_minimo) || 0,
     aux_combustivel: Number(i.aux_combustivel) || 0,
     insalubridade_pct: Number(i.insalubridade_pct) || 0,
     fgts_pct: Number(i.fgts_pct) || 0,
@@ -260,7 +264,7 @@ function FolhaBlock({
             <span className="text-[11px] uppercase tracking-wider text-white/60 font-semibold">Adicionar colaborador</span>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm table-fixed min-w-[1530px]">
+            <table className="w-full text-sm table-fixed min-w-[1640px]">
               <FolhaTableHeader />
               <tbody>
                 <tr>
@@ -279,15 +283,16 @@ function FolhaBlock({
                     </select>
                   </td>
                   <td className="px-2"><NumCell value={salario} onChange={setSalario} /></td>
+                  <td className="px-2"><NumCell value={salarioMin} onChange={setSalarioMin} /></td>
                   <td className="px-2"><NumCell value={auxComb} onChange={setAuxComb} /></td>
                   <td className="px-2"><NumCell value={insalub} onChange={setInsalub} /></td>
-                  <td className="px-2 text-right text-orange-400 text-xs">{formatCurrency(salario * (insalub || 0) / 100)}</td>
+                  <td className="px-2 text-right text-orange-400 text-xs">{formatCurrency(salarioMin * (insalub || 0) / 100)}</td>
                   <td className="px-2"><NumCell value={fgts} onChange={setFgts} /></td>
                   <td className="px-2 text-right text-orange-400 text-xs">{formatCurrency(salario * (fgts || 0) / 100)}</td>
                   <td className="px-2 text-right text-orange-400 text-xs">{formatCurrency(salario / 12)}</td>
                   <td className="px-2 text-right text-orange-400 text-xs">{formatCurrency((salario * (fgts || 0) / 100) / 12)}</td>
                   <td className="px-2 text-right text-white/40 text-xs">{formatCurrency(salario / 3)}</td>
-                  <td className="px-2 text-right text-white/60 text-xs">{formatCurrency(calcTotalFolha({ salario, aux_combustivel: auxComb, insalubridade_pct: insalub, fgts_pct: fgts, previsao_13_valor: prev13, em_folha: emFolha }))}</td>
+                  <td className="px-2 text-right text-white/60 text-xs">{formatCurrency(calcTotalFolha({ salario, salario_minimo: salarioMin, aux_combustivel: auxComb, insalubridade_pct: insalub, fgts_pct: fgts, previsao_13_valor: prev13, em_folha: emFolha }))}</td>
                   <td className="pr-1 text-right">
                     <button onClick={save} disabled={!nome.trim()}
                       className="p-1 rounded bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 disabled:opacity-30">
@@ -324,13 +329,14 @@ function FolhaRowCells({
   dragHandle?: React.ReactNode;
 }) {
   const salario = Number(item.salario) || 0;
+  const salario_minimo = Number(item.salario_minimo) || 0;
   const aux_combustivel = Number(item.aux_combustivel) || 0;
   const insalubridade_pct = Number(item.insalubridade_pct) || 0;
   const fgts_pct = Number(item.fgts_pct) || 0;
-  const insalubVal = salario * insalubridade_pct / 100;
+  const insalubVal = salario_minimo * insalubridade_pct / 100;
   const fgtsVal = salario * fgts_pct / 100;
   const feriasDefault = calcFeriasDefault(salario, fgts_pct);
-  const total = calcTotalFolha({ salario, aux_combustivel, insalubridade_pct, fgts_pct, previsao_13_valor: 0, em_folha: item.em_folha, ferias_valor: null });
+  const total = calcTotalFolha({ salario, salario_minimo, aux_combustivel, insalubridade_pct, fgts_pct, previsao_13_valor: 0, em_folha: item.em_folha, ferias_valor: null });
   const desativado = item.em_folha === false;
   const zeroCurr = <span className="text-white/30">{formatCurrency(0)}</span>;
   const zeroPct = <span className="text-white/30">0%</span>;
@@ -354,6 +360,9 @@ function FolhaRowCells({
       </td>
       <td className="px-2 text-right text-emerald-400 font-medium">
         <InlineNum value={item.salario} onSave={(v) => update(item.id, { salario: v })} format="currency" />
+      </td>
+      <td className="px-2 text-right text-white/60">
+        <InlineNum value={item.salario_minimo} onSave={(v) => update(item.id, { salario_minimo: v })} format="currency" />
       </td>
       <td className="px-2 text-right text-white/60">
         {desativado ? zeroCurr : <InlineNum value={item.aux_combustivel} onSave={(v) => update(item.id, { aux_combustivel: v })} format="currency" />}
@@ -391,11 +400,12 @@ function FolhaTableHeader() {
         <th className="text-center font-normal pb-2 px-2">Em folha</th>
         <th className="text-left font-normal pb-2 px-2">Setor</th>
         <th className="text-right font-normal pb-2 px-2 text-emerald-400">Salário</th>
+        <th className="text-right font-normal pb-2 px-2">Salário Mínimo</th>
         <th className="text-right font-normal pb-2 px-2">Combustível</th>
         <th className="text-right font-normal pb-2 px-2">Insalub %</th>
         <th className="text-right font-normal pb-2 px-2">
           <div>Insalub valor</div>
-          <div className="text-[9px] normal-case tracking-normal text-white/30">salário × insalub%</div>
+          <div className="text-[9px] normal-case tracking-normal text-white/30">salário mín. × insalub%</div>
         </th>
         <th className="text-right font-normal pb-2 px-2">FGTS %</th>
         <th className="text-right font-normal pb-2 px-2">
@@ -430,6 +440,7 @@ function FolhaColGroup() {
       <col style={{ width: '140px' }} />
       <col style={{ width: '110px' }} />
       <col style={{ width: '110px' }} />
+      <col style={{ width: '110px' }} />
       <col style={{ width: '80px' }} />
       <col style={{ width: '120px' }} />
       <col style={{ width: '80px' }} />
@@ -456,6 +467,7 @@ function FolhaSetorGroup({
 }) {
   const subtotal = rows.reduce((s, i) => s + calcTotalFolha({
     salario: Number(i.salario) || 0,
+    salario_minimo: Number(i.salario_minimo) || 0,
     aux_combustivel: Number(i.aux_combustivel) || 0,
     insalubridade_pct: Number(i.insalubridade_pct) || 0,
     fgts_pct: Number(i.fgts_pct) || 0,
@@ -486,7 +498,7 @@ function FolhaSetorGroup({
         <span className="text-xs text-white/90 font-medium">{formatCurrency(subtotal)}</span>
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full text-sm table-fixed min-w-[1530px]">
+        <table className="w-full text-sm table-fixed min-w-[1640px]">
           <FolhaTableHeader />
           <DndContext
             sensors={sensors}
