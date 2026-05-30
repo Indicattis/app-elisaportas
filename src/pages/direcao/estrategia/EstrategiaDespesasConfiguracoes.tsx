@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { exportFolhaSalarialPDF } from '@/utils/folhaSalarialPDFGenerator';
+import { exportTiposCustosPDF } from '@/utils/tiposCustosPDFGenerator';
 import { useSetores, getSetorPalette } from '@/hooks/useSetores';
 import {
   DndContext,
@@ -901,6 +902,13 @@ function TiposCustoBlock({
           >
             <FolderPlus className="w-3.5 h-3.5" />
             Gerenciar categorias
+          </button>
+          <button
+            onClick={() => exportTiposCustosPDF(titulo, items, categorias)}
+            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-white/80 hover:text-white transition-colors"
+          >
+            <FileText className="w-3.5 h-3.5" />
+            Exportar PDF
           </button>
           <button
             onClick={() => setAddDialogOpen(true)}
