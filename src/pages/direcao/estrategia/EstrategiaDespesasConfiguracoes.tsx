@@ -771,6 +771,7 @@ function TiposCustoBlock({
   const [realocacaoDialog, setRealocacaoDialog] = useState<{ tipo: TipoCusto; count: number } | null>(null);
   const [destinoId, setDestinoId] = useState<string>('');
   const [realocando, setRealocando] = useState(false);
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
 
   const handleRemoveTipo = async (id: string) => {
     const alvo = items.find(i => i.id === id);
@@ -853,16 +854,26 @@ function TiposCustoBlock({
         {icon}
         <h3 className="font-semibold">{titulo}</h3>
         <span className="text-white/40 text-sm">({items.length})</span>
-        {!criandoCat ? (
-          <button
-            onClick={() => setCriandoCat(true)}
-            className="ml-auto inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-white/80 hover:text-white transition-colors"
-          >
-            <FolderPlus className="w-3.5 h-3.5" />
-            Nova categoria
-          </button>
-        ) : (
-          <div className="ml-auto flex items-center gap-1.5">
+        <div className="ml-auto flex items-center gap-1.5">
+          {!criandoCat ? (
+            <>
+              <button
+                onClick={() => setCriandoCat(true)}
+                className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-white/80 hover:text-white transition-colors"
+              >
+                <FolderPlus className="w-3.5 h-3.5" />
+                Nova categoria
+              </button>
+              <button
+                onClick={() => setAddDialogOpen(true)}
+                className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-400/30 text-xs text-emerald-200 hover:text-emerald-100 transition-colors"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                Nova despesa
+              </button>
+            </>
+          ) : (
+            <>
             <input
               autoFocus
               value={novaCatNome}
@@ -884,8 +895,9 @@ function TiposCustoBlock({
               onClick={() => { setNovaCatNome(''); setCriandoCat(false); }}
               className="p-1.5 rounded hover:bg-white/10 text-white/60"
             ><X className="w-3.5 h-3.5" /></button>
-          </div>
-        )}
+            </>
+          )}
+        </div>
       </div>
 
       <div className="space-y-1.5">
@@ -925,53 +937,6 @@ function TiposCustoBlock({
           />
         )}
 
-        <div className="bg-white/[0.03] border border-dashed border-white/15 rounded-xl p-4 mt-3">
-          <div className="flex items-center gap-2 mb-3">
-            <Plus className="w-3.5 h-3.5 text-emerald-300" />
-            <span className="text-[11px] uppercase tracking-wider text-white/60 font-semibold">Adicionar despesa</span>
-          </div>
-          <table className="w-full text-sm">
-            <tbody>
-              <tr>
-                <td className="py-2 pl-1 w-[22%]">
-                  <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome"
-                    className="w-full h-8 bg-white/5 border border-white/10 rounded px-2 text-white text-xs outline-none focus:border-blue-400/50" />
-                </td>
-                <td className="px-2 w-[24%]">
-                  <input value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Descrição (opcional)"
-                    className="w-full h-8 bg-white/5 border border-white/10 rounded px-2 text-white text-xs outline-none focus:border-blue-400/50" />
-                </td>
-                <td className="px-2 w-[16%]">
-                  <select
-                    value={categoriaId}
-                    onChange={(e) => setCategoriaId(e.target.value)}
-                    className={categoriaSelectClass(categorias, categoriaId)}
-                  >
-                    <option value="" className="bg-slate-900 text-white">— Sem categoria</option>
-                    {categorias.map(c => <option key={c.id} value={c.id} className="bg-slate-900 text-white">{c.nome}</option>)}
-                  </select>
-                </td>
-                <td className="px-2 w-[14%]">
-                  <select value={empresaId} onChange={(e) => setEmpresaId(e.target.value)}
-                    className="w-full h-7 bg-transparent border border-transparent hover:border-white/10 focus:border-white/20 rounded px-1.5 text-white/50 text-xs outline-none transition-colors">
-                    <option value="" className="bg-slate-900">— Empresa</option>
-                    {empresasAtivas.map((e: any) => <option key={e.id} value={e.id} className="bg-slate-900">{e.nome}</option>)}
-                  </select>
-                </td>
-                <td className="px-2 w-[14%]"><NumCell value={valor} onChange={setValor} /></td>
-                <td className="px-2 text-center w-[8%]">
-                  <Switch checked={apareceNoDre} onCheckedChange={setApareceNoDre} />
-                </td>
-                <td className="pr-1 text-right w-[40px]">
-                  <button onClick={onSave} disabled={!nome.trim()}
-                    className="p-1 rounded bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 disabled:opacity-30">
-                    <Plus className="w-4 h-4" />
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
       </div>
 
       <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between px-2">
