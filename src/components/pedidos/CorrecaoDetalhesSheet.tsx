@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Trash2, Save, Loader2 } from "lucide-react";
 import { useCorrecaoDetalhes } from "@/hooks/useCorrecaoDetalhes";
 import { SETOR_LABELS } from "@/utils/setorMapping";
+import { useSetores } from "@/hooks/useSetores";
 import { ETAPAS_CONFIG } from "@/types/pedidoEtapa";
 import type { EtapaPedido } from "@/types/pedidoEtapa";
 
@@ -39,6 +40,10 @@ export function CorrecaoDetalhesSheet({
   nomeCliente,
 }: CorrecaoDetalhesSheetProps) {
   const { correcao, linhas, isLoading, salvarDetalhes, adicionarLinha, removerLinha } = useCorrecaoDetalhes(pedidoId);
+  const { setores: setoresDb } = useSetores();
+  const setoresList = setoresDb.length > 0
+    ? setoresDb.map(s => ({ key: s.key, label: s.label }))
+    : Object.entries(SETOR_LABELS).map(([key, label]) => ({ key, label }));
 
   const [custoCorrecao, setCustoCorrecao] = useState('0');
   const [setorCausador, setSetorCausador] = useState('');
@@ -173,7 +178,7 @@ export function CorrecaoDetalhesSheet({
                   <SelectValue placeholder="Selecione o setor..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {Object.entries(SETOR_LABELS).map(([key, label]) => (
+                  {setoresList.map(({ key, label }) => (
                     <SelectItem key={key} value={key}>{label}</SelectItem>
                   ))}
                 </SelectContent>

@@ -6,6 +6,7 @@ import { useDespesasPadrao, type DespesaPadrao, type DespesaPadraoTipo } from '@
 import { useTiposCustos, type TipoCusto } from '@/hooks/useTiposCustos';
 import { Switch } from '@/components/ui/switch';
 import { exportFolhaSalarialPDF } from '@/utils/folhaSalarialPDFGenerator';
+import { useSetores, getSetorPalette } from '@/hooks/useSetores';
 
 export default function EstrategiaDespesasConfiguracoes() {
   const { items, loading, insert, update, remove } = useDespesasPadrao();
@@ -82,17 +83,22 @@ export default function EstrategiaDespesasConfiguracoes() {
 
 /* ---------------- Folha ---------------- */
 
-const SETORES: { value: string; label: string; color: string; dot: string }[] = [
-  { value: 'vendas',         label: 'Vendas',         color: 'bg-emerald-500/15 border-emerald-400/40 text-emerald-200', dot: 'bg-emerald-400' },
-  { value: 'marketing',      label: 'Marketing',      color: 'bg-pink-500/15 border-pink-400/40 text-pink-200',         dot: 'bg-pink-400' },
-  { value: 'instalacoes',    label: 'Instalações',    color: 'bg-amber-500/15 border-amber-400/40 text-amber-200',      dot: 'bg-amber-400' },
-  { value: 'fabrica',        label: 'Fábrica',        color: 'bg-blue-500/15 border-blue-400/40 text-blue-200',         dot: 'bg-blue-400' },
-  { value: 'administrativo', label: 'Administrativo', color: 'bg-violet-500/15 border-violet-400/40 text-violet-200',   dot: 'bg-violet-400' },
-];
-const SETOR_SEM = { value: '', label: 'Sem setor', color: 'bg-white/5 border-white/15 text-white/60', dot: 'bg-white/40' };
-const getSetorMeta = (v?: string | null) => SETORES.find(s => s.value === v) ?? SETOR_SEM;
-const setorSelectClass = (v?: string | null) => {
-  const m = getSetorMeta(v);
+type SetorMeta = { value: string; label: string; color: string; dot: string };
+const SETOR_SEM: SetorMeta = { value: '', label: 'Sem setor', color: 'bg-white/5 border-white/15 text-white/60', dot: 'bg-white/40' };
+
+function useSetoresMeta(): SetorMeta[] {
+  const { setores } = useSetores();
+  return setores.map((s, idx) => {
+    const p = getSetorPalette(idx);
+    return { value: s.key, label: s.label, color: p.color, dot: p.dot };
+  });
+}
+
+const getSetorMetaFrom = (list: SetorMeta[], v?: string | null) =>
+  list.find(s => s.value === v) ?? SETOR_SEM;
+
+const setorSelectClassFrom = (list: SetorMeta[], v?: string | null) => {
+  const m = getSetorMetaFrom(list, v);
   return `w-full h-8 ${m.color} border rounded-full px-3 text-xs font-medium outline-none focus:ring-2 focus:ring-blue-400/40 appearance-none cursor-pointer transition-colors`;
 };
 
@@ -154,6 +160,7 @@ function FolhaBlock({
     em_folha: i.em_folha,
     ferias_valor: i.ferias_valor,
   }), 0);
+  const SETORES = useSetoresMeta();
 
   return (
     <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-5">
@@ -162,7 +169,7 @@ function FolhaBlock({
         <h3 className="font-semibold">Folha Salarial padrão</h3>
         <span className="text-white/40 text-sm">({items.length})</span>
         <button
-          onClick={() => exportFolhaSalarialPDF(items)}
+          onClick={() => exportFolhaSalarialPDF(items, SETORES.map(s => ({ value: s.value, label: s.label })))}
           disabled={items.length === 0}
           className="ml-auto inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-white/80 hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
           title="Exportar folha salarial em PDF"
@@ -176,7 +183,7 @@ function FolhaBlock({
           .map(s => ({ meta: s, rows: items.filter(i => (i.setor ?? '') === s.value) }))
           .filter(g => g.rows.length > 0)
           .map(g => (
-            <FolhaSetorGroup key={g.meta.value || 'sem'} meta={g.meta} rows={g.rows} update={update} remove={remove} />
+            <FolhaSetorGroup key={g.meta.value || 'sem'} meta={g.meta} rows={g.rows} setores={SETORES} update={update} remove={remove} />
           ))}
 
         {/* Caixa de adicionar novo colaborador */}
@@ -199,7 +206,7 @@ function FolhaBlock({
                   </td>
                   <td className="px-2">
                     <select value={setor} onChange={(e) => setSetor(e.target.value)}
-                      className={setorSelectClass(setor)}>
+                      className={setorSelectClassFrom(SETORES, setor)}>
                       <option value="" className="bg-slate-900 text-white">—</option>
                       {SETORES.map(s => <option key={s.value} value={s.value} className="bg-slate-900 text-white">{s.label}</option>)}
                     </select>
@@ -241,9 +248,10 @@ function FolhaBlock({
 }
 
 function FolhaRow({
-  item, update, remove,
+  item, setores, update, remove,
 }: {
   item: DespesaPadrao;
+  setores: SetorMeta[];
   update: ReturnType<typeof useDespesasPadrao>['update'];
   remove: ReturnType<typeof useDespesasPadrao>['remove'];
 }) {
@@ -269,9 +277,9 @@ function FolhaRow({
       </td>
       <td className="px-2">
         <select value={item.setor ?? ''} onChange={(e) => update(item.id, { setor: e.target.value || null })}
-          className={setorSelectClass(item.setor)}>
+          className={setorSelectClassFrom(setores, item.setor)}>
           <option value="" className="bg-slate-900 text-white">—</option>
-          {SETORES.map(s => <option key={s.value} value={s.value} className="bg-slate-900 text-white">{s.label}</option>)}
+          {setores.map(s => <option key={s.value} value={s.value} className="bg-slate-900 text-white">{s.label}</option>)}
         </select>
       </td>
       <td className="px-2 text-right text-emerald-400 font-medium">
@@ -355,10 +363,11 @@ function FolhaTableHeader() {
 }
 
 function FolhaSetorGroup({
-  meta, rows, update, remove,
+  meta, rows, setores, update, remove,
 }: {
-  meta: { value: string; label: string; color: string; dot: string };
+  meta: SetorMeta;
   rows: DespesaPadrao[];
+  setores: SetorMeta[];
   update: ReturnType<typeof useDespesasPadrao>['update'];
   remove: ReturnType<typeof useDespesasPadrao>['remove'];
 }) {
@@ -386,7 +395,7 @@ function FolhaSetorGroup({
           <FolhaTableHeader />
           <tbody>
             {rows.map(i => (
-              <FolhaRow key={i.id} item={i} update={update} remove={remove} />
+              <FolhaRow key={i.id} item={i} setores={setores} update={update} remove={remove} />
             ))}
           </tbody>
         </table>

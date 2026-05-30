@@ -16,20 +16,23 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAllUsers, type User } from "@/hooks/useAllUsers";
 import { useVagas, type Vaga } from "@/hooks/useVagas";
 import { SETOR_LABELS, SETOR_ROLES } from "@/utils/setorMapping";
+import { useSetores } from "@/hooks/useSetores";
 import { ROLE_LABELS } from "@/types/permissions";
 import { PreencherVagaDialog } from "@/components/vagas/PreencherVagaDialog";
 import { CreateRoleModal } from "@/components/admin/CreateRoleModal";
 import { EditRoleModal } from "@/components/admin/EditRoleModal";
 
 
-const SETOR_KEYS = Object.keys(SETOR_LABELS);
+const FALLBACK_SETOR_KEYS = Object.keys(SETOR_LABELS);
 
 function getInitials(name: string) {
   return name.split(" ").map(n => n[0]).filter(Boolean).slice(0, 2).join("").toUpperCase();
 }
 
 export default function VagasPage() {
-  const [selectedSetor, setSelectedSetor] = useState(SETOR_KEYS[0]);
+  const { setores: setoresDb, labelMap } = useSetores();
+  const SETOR_KEYS = setoresDb.length > 0 ? setoresDb.map(s => s.key) : FALLBACK_SETOR_KEYS;
+  const [selectedSetor, setSelectedSetor] = useState(FALLBACK_SETOR_KEYS[0]);
   const [transferUser, setTransferUser] = useState<User | null>(null);
   const [newRole, setNewRole] = useState("");
   const [transferring, setTransferring] = useState(false);
@@ -165,7 +168,7 @@ export default function VagasPage() {
 
   const rolesBySetor = SETOR_KEYS.map(setor => ({
     setor,
-    label: SETOR_LABELS[setor],
+    label: labelMap[setor] || setor,
     roles: getRolesForSetor(setor).map(key => ({
       key,
       label: (systemRoles || []).find(r => r.key === key)?.label || ROLE_LABELS[key] || key,
@@ -233,7 +236,7 @@ export default function VagasPage() {
                     : "bg-white/5 text-white/60 border border-white/10 hover:bg-white/10"
                   }`}
               >
-                {SETOR_LABELS[setor]}
+                {labelMap[setor] || setor}
                 <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${isFull ? "bg-emerald-500/20 text-emerald-400" : "bg-amber-500/20 text-amber-400"}`}>
                   {counts.current}/{counts.total}
                 </span>
@@ -265,7 +268,7 @@ export default function VagasPage() {
                         : "text-white/60 hover:bg-white/10 hover:text-white"
                       }`}
                   >
-                    {SETOR_LABELS[setor]}
+                    {labelMap[setor] || setor}
                     <div className="flex items-center gap-1.5">
                       {emTesteCount > 0 && (
                         <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-red-500/20 text-red-400">
