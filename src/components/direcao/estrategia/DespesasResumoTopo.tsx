@@ -1209,6 +1209,7 @@ function BlocoGastosReadonly({
   loading: boolean;
 }) {
   const total = rows.reduce((s, r) => s + Number(r.total || 0), 0);
+  const totalProjetado = rows.reduce((s, r) => s + Number(r.valor_projetado || 0), 0);
   const qtdLanc = rows.reduce((s, r) => s + r.quantidade, 0);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
@@ -1231,15 +1232,16 @@ function BlocoGastosReadonly({
             <tr className="text-[10px] uppercase tracking-wider text-white/40 border-b border-white/10">
               <th className="text-left font-normal pb-2 pl-1">Tipo de Custo</th>
               <th className="text-right font-normal pb-2 px-2 w-[140px]">Lançamentos</th>
+              <th className="text-right font-normal pb-2 px-2 w-[160px]">Valor projetado</th>
               <th className="text-right font-normal pb-2 px-2 w-[180px]">Valor pago no mês</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={3} className="text-white/40 px-2 py-3">Carregando...</td></tr>
+              <tr><td colSpan={4} className="text-white/40 px-2 py-3">Carregando...</td></tr>
             ) : rows.length === 0 ? (
               <tr>
-                <td colSpan={3} className="text-white/40 px-2 py-6 text-center">
+                <td colSpan={4} className="text-white/40 px-2 py-6 text-center">
                   Nenhum gasto registrado neste mês em Financeiro › Gastos.
                 </td>
               </tr>
@@ -1260,11 +1262,12 @@ function BlocoGastosReadonly({
                       </span>
                     </td>
                     <td className="px-2 text-right text-white/60">{r.quantidade}</td>
+                    <td className="px-2 text-right text-white/60">{formatCurrency(r.valor_projetado)}</td>
                     <td className="px-2 text-right text-white font-medium">{formatCurrency(r.total)}</td>
                   </tr>
                   {isOpen && (
                     <tr className="bg-white/[0.02]">
-                      <td colSpan={3} className="px-3 py-2">
+                      <td colSpan={4} className="px-3 py-2">
                         <table className="w-full text-xs">
                           <thead>
                             <tr className="text-[10px] uppercase tracking-wider text-white/30">
@@ -1297,9 +1300,15 @@ function BlocoGastosReadonly({
         </table>
       </div>
 
-      <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between px-2">
-        <span className="text-xs text-white/50 uppercase tracking-wider">Total</span>
-        <span className="text-base font-bold text-white">{formatCurrency(total)}</span>
+      <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between px-2 gap-6">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-white/50 uppercase tracking-wider">Total projetado</span>
+          <span className="text-sm font-medium text-white/80">{formatCurrency(totalProjetado)}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-white/50 uppercase tracking-wider">Total pago</span>
+          <span className="text-base font-bold text-white">{formatCurrency(total)}</span>
+        </div>
       </div>
     </div>
   );
