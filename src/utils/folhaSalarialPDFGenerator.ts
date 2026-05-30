@@ -16,7 +16,7 @@ const fmt = (n: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n || 0);
 
 function calcFeriasDefault(salario: number) {
-  return salario / 3;
+  return salario / 3 / 12;
 }
 
 function calcTotalFolha(f: DespesaPadrao) {
