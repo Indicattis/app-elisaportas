@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { formatCurrency } from '@/lib/utils';
-import { Users, Receipt, TrendingDown, Trash2, Check, X, Landmark, ChevronRight, ChevronDown } from 'lucide-react';
+import { Users, Receipt, TrendingDown, Trash2, Check, X, Landmark, ChevronRight, ChevronDown, FileText, AlertTriangle } from 'lucide-react';
 import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -11,6 +11,10 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useDespesasPadrao } from '@/hooks/useDespesasPadrao';
 import type { DespesaPadrao } from '@/hooks/useDespesasPadrao';
+import { useDespesasCategorias, getCategoriaPalette, type CategoriaDespesa } from '@/hooks/useDespesasCategorias';
+import { useEmpresasEmissoras } from '@/hooks/useEmpresasEmissoras';
+import { useSetores, getSetorPalette } from '@/hooks/useSetores';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 
 async function getCurrentUserInfo(): Promise<{ id: string | null; nome: string | null }> {
