@@ -1,0 +1,1 @@
+ALTER TABLE public.tipos_custos ADD COLUMN IF NOT EXISTS marcada_para_eliminar boolean NOT NULL DEFAULT false;

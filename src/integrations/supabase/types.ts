@@ -8321,6 +8321,7 @@ export type Database = {
           descricao: string | null
           empresa_id: string | null
           id: string
+          marcada_para_eliminar: boolean
           nome: string
           ordem: number
           subcategoria_id: string | null
@@ -8337,6 +8338,7 @@ export type Database = {
           descricao?: string | null
           empresa_id?: string | null
           id?: string
+          marcada_para_eliminar?: boolean
           nome: string
           ordem?: number
           subcategoria_id?: string | null
@@ -8353,6 +8355,7 @@ export type Database = {
           descricao?: string | null
           empresa_id?: string | null
           id?: string
+          marcada_para_eliminar?: boolean
           nome?: string
           ordem?: number
           subcategoria_id?: string | null
