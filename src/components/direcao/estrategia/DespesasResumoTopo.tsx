@@ -1227,7 +1227,7 @@ function BlocoGastosReadonly({
             ) : rows.map(r => {
               const isOpen = expandedId === r.tipo_custo_id;
               return (
-                <React.Fragment key={r.tipo_custo_id}>
+                <Fragment key={r.tipo_custo_id}>
                   <tr
                     onClick={() => setExpandedId(prev => prev === r.tipo_custo_id ? null : r.tipo_custo_id)}
                     className="border-b border-white/5 hover:bg-white/[0.03] cursor-pointer transition-colors"
@@ -1271,7 +1271,7 @@ function BlocoGastosReadonly({
                       </td>
                     </tr>
                   )}
-                </React.Fragment>
+                </Fragment>
               );
             })}
           </tbody>
