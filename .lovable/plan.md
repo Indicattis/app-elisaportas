@@ -1,31 +1,23 @@
 ## Mudança
 
-Em `/direcao/estrategia/despesas/configuracoes`, na tabela "Folha Salarial padrão", a coluna **"Previsão 13° + FGTS 13°"** vira **duas colunas calculadas automaticamente** (não editáveis):
+Em `/direcao/estrategia/despesas/configuracoes` → tabela "Folha Salarial padrão", quando `em_folha === false` para um colaborador:
 
-- **Previsão 13°** = `salário / 12`
-- **FGTS 13°** = `FGTS valor / 12` = `(salário × FGTS%) / 12`
+- **Permanecem editáveis/visíveis normalmente:** Colaborador, Em folha, Setor, Salário, Total.
+- **Demais colunas** (Combustível, Insalub %, Insalub valor, FGTS %, FGTS valor, Previsão 13°, FGTS 13°, Férias + 1/3 + FGTS) exibem apenas `0` em cinza claro (`text-white/30`), **sem inputs nem botões** — substituir o conteúdo da célula por um simples `formatCurrency(0)` ou `0%` cinza.
 
 ## Arquivo
 
-`src/pages/direcao/estrategia/EstrategiaDespesasConfiguracoes.tsx`
+`src/pages/direcao/estrategia/EstrategiaDespesasConfiguracoes.tsx` → componente `FolhaRow`:
 
-1. Cabeçalho (`<thead>` linha 162): substituir a coluna única por duas: "Previsão 13°" e "FGTS 13°" (mesmo estilo das outras colunas calculadas em laranja, como Insalub valor / FGTS valor).
-2. Linha de adição (`<tr>` que contém `NumCell value={prev13}`): remover o input `prev13`/`setPrev13`, exibir em duas células os valores calculados `salario/12` e `salario*fgts/100/12` em laranja.
-3. `FolhaRow` (linha 267-270): remover o `InlineNum` de `previsao_13_valor` e o sub-texto "c/ FGTS"; exibir duas células calculadas `salario/12` e `fgtsVal/12` (laranja).
-4. `calcTotalFolha` (linha 88): trocar `f.previsao_13_valor` por `f.salario/12 + (f.salario * (f.fgts_pct||0)/100)/12`. O parâmetro `previsao_13_valor` deixa de ser usado mas o tipo é mantido (compatibilidade com chamadores).
-5. No `save` (insert do novo colaborador), gravar `previsao_13_valor: 0` (campo legado da tabela continua existindo, sem efeito visual).
+- Adicionar `const desativado = item.em_folha === false;`.
+- Para cada `<td>` das 8 colunas afetadas, renderizar condicionalmente:
+  - Se `desativado`: `<td className="px-2 text-right text-white/30 text-xs">{formatCurrency(0)}</td>` (ou `0%` para colunas de percentual).
+  - Senão: manter o conteúdo atual (InlineNum, valor calculado, botão auto, etc).
 
-## Consistência com outras telas
-
-Para os totais não divergirem entre a configuração, `/direcao/estrategia/despesas/:mes` e `/direcao/estrategia/dre/:mes`, aplicar a mesma fórmula nos dois `calcTotalFolha` correspondentes:
-
-- `src/components/direcao/estrategia/DespesasResumoTopo.tsx` (função `calcTotalFolha`, ~linha 102).
-- `src/pages/direcao/DREMesDirecao.tsx` (função `calcTotalFolha` interna inserida na alteração anterior).
-
-Nessas duas telas a edição do `previsao_13_valor` (se existir input) passa a ser ignorada no cálculo — manter os campos no banco apenas como legado.
+Linha do Total continua usando `calcTotalFolha`, que já devolve apenas o salário quando `em_folha === false`.
 
 ## Fora do escopo
 
-- Sem migrations: coluna `previsao_13_valor` permanece no banco.
-- Nenhuma outra coluna é alterada.
-- Layout/estilo (glassmorphism, cores) preservados.
+- Sem alteração no banco.
+- Linha de adição (input de novo colaborador) permanece como está — só linhas existentes mudam.
+- Outras telas (despesas/mês, DRE) não são afetadas.
