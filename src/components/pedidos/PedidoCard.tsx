@@ -1474,6 +1474,16 @@ export function PedidoCard({
                     <p>{venda?.cliente_nome}</p>
                   </TooltipContent>
                 </Tooltip>
+                {venda?.venda_presencial != null && (
+                  <span className={cn(
+                    "inline-flex items-center gap-0.5 text-[9px] px-1 py-0 rounded border w-fit mt-0.5",
+                    venda.venda_presencial
+                      ? "bg-orange-500/10 text-orange-500 border-orange-500/30"
+                      : "bg-cyan-500/10 text-cyan-500 border-cyan-500/30"
+                  )}>
+                    {venda.venda_presencial ? "🔥 Quente" : "❄️ Frio"}
+                  </span>
+                )}
                 {ultimoComentario && (
                   <p className="text-[9px] text-muted-foreground truncate" title={ultimoComentario.comentario}>
                     {ultimoComentario.comentario}
