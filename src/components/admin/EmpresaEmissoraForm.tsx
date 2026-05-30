@@ -8,7 +8,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { EmpresaEmissora, EmpresaEmissoraFormData } from "@/types/empresaEmissora";
-import { Loader2 } from "lucide-react";
+import { Loader2, Search } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 
 const empresaSchema = z.object({
   titulo: z.string().optional(),
@@ -75,6 +77,36 @@ export function EmpresaEmissoraForm({
 
   const ativo = watch("ativo");
   const padrao = watch("padrao");
+  const [buscandoCep, setBuscandoCep] = useState(false);
+
+  const formatCep = (value: string) => {
+    const digits = value.replace(/\D/g, "").slice(0, 8);
+    if (digits.length > 5) return `${digits.slice(0, 5)}-${digits.slice(5)}`;
+    return digits;
+  };
+
+  const buscarCep = async (cepRaw?: string) => {
+    const cep = (cepRaw ?? watch("cep") ?? "").replace(/\D/g, "");
+    if (cep.length !== 8) return;
+    setBuscandoCep(true);
+    try {
+      const resp = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+      const data = await resp.json();
+      if (data?.erro) {
+        toast.error("CEP não encontrado");
+        return;
+      }
+      if (data.logradouro && !watch("endereco")) setValue("endereco", data.logradouro, { shouldValidate: true });
+      if (data.bairro && !watch("bairro")) setValue("bairro", data.bairro, { shouldValidate: true });
+      if (data.localidade && !watch("cidade")) setValue("cidade", data.localidade, { shouldValidate: true });
+      if (data.uf && !watch("estado")) setValue("estado", String(data.uf).toUpperCase(), { shouldValidate: true });
+      setTimeout(() => document.getElementById("numero")?.focus(), 0);
+    } catch {
+      toast.error("Erro ao buscar CEP");
+    } finally {
+      setBuscandoCep(false);
+    }
+  };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
