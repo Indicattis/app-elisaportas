@@ -215,6 +215,9 @@ function FolhaRow({
       <td className="py-2 pl-1 text-white/90">
         <InlineText value={item.nome} onSave={(v) => update(item.id, { nome: v })} />
       </td>
+      <td className="px-2 text-center">
+        <Switch checked={item.em_folha} onCheckedChange={(v) => update(item.id, { em_folha: v })} />
+      </td>
       <td className="px-2 text-right text-emerald-400 font-medium">
         <InlineNum value={item.salario} onSave={(v) => update(item.id, { salario: v })} format="currency" />
       </td>
