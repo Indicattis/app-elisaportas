@@ -181,27 +181,13 @@ function FolhaBlock({
   const { reorderSetores } = useSetores();
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
-  const grupos = useMemo(
-    () =>
-      [...SETORES, SETOR_SEM]
-        .map(s => ({ meta: s, rows: items.filter(i => (i.setor ?? '') === s.value) }))
-        .filter(g => g.rows.length > 0),
-    [SETORES, items]
-  );
-  const setorIds = useMemo(() => SETORES.map(s => s.value), [SETORES]);
-  const setorIdToDbId = useMemo(() => {
-    const m: Record<string, string> = {};
-    (useSetores as any); // type only
-    return m;
-  }, []);
-
-  // Need DB id of each setor for reorder; fetch via useSetores again
   const { setores: setoresFull } = useSetores();
   const keyToId = useMemo(() => {
     const m: Record<string, string> = {};
     setoresFull.forEach(s => { m[s.key] = s.id; });
     return m;
   }, [setoresFull]);
+  const setorIds = useMemo(() => SETORES.map(s => s.value), [SETORES]);
 
   const onSetorDragEnd = (e: DragEndEvent) => {
     const { active, over } = e;
