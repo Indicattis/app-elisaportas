@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Trash2, Save, Loader2 } from "lucide-react";
 import { useCorrecaoDetalhes } from "@/hooks/useCorrecaoDetalhes";
 import { SETOR_LABELS } from "@/utils/setorMapping";
+import { useSetores } from "@/hooks/useSetores";
 import { ETAPAS_CONFIG } from "@/types/pedidoEtapa";
 import type { EtapaPedido } from "@/types/pedidoEtapa";
 
