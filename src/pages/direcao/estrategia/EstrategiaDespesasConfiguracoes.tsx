@@ -362,10 +362,11 @@ function FolhaTableHeader() {
 }
 
 function FolhaSetorGroup({
-  meta, rows, update, remove,
+  meta, rows, setores, update, remove,
 }: {
-  meta: { value: string; label: string; color: string; dot: string };
+  meta: SetorMeta;
   rows: DespesaPadrao[];
+  setores: SetorMeta[];
   update: ReturnType<typeof useDespesasPadrao>['update'];
   remove: ReturnType<typeof useDespesasPadrao>['remove'];
 }) {
@@ -393,7 +394,7 @@ function FolhaSetorGroup({
           <FolhaTableHeader />
           <tbody>
             {rows.map(i => (
-              <FolhaRow key={i.id} item={i} update={update} remove={remove} />
+              <FolhaRow key={i.id} item={i} setores={setores} update={update} remove={remove} />
             ))}
           </tbody>
         </table>
