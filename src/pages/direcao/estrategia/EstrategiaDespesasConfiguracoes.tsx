@@ -415,9 +415,8 @@ function TiposCustoBlock({
             <tr className="text-[10px] uppercase tracking-wider text-white/40 border-b border-white/10">
               <th className="text-left font-normal pb-2 pl-1">Nome</th>
               <th className="text-left font-normal pb-2 px-2">Descrição</th>
-              <th className="text-right font-normal pb-2 px-2 w-[180px]">Valor máximo mensal</th>
+              <th className="text-right font-normal pb-2 px-2 w-[180px]">Valor projetado</th>
               <th className="text-center font-normal pb-2 px-2 w-[110px]">Aparece no DRE</th>
-              <th className="text-center font-normal pb-2 px-2 w-[80px]">Ativo</th>
               <th className="pb-2 pr-1 w-10"></th>
             </tr>
           </thead>
@@ -436,9 +435,6 @@ function TiposCustoBlock({
                 <td className="px-2 text-center">
                   <Switch checked={i.aparece_no_dre} onCheckedChange={(v) => update(i.id, { aparece_no_dre: v })} />
                 </td>
-                <td className="px-2 text-center">
-                  <Switch checked={i.ativo} onCheckedChange={(v) => update(i.id, { ativo: v })} />
-                </td>
                 <td className="pr-1 text-right">
                   <button onClick={() => remove(i.id)} className="p-1 rounded hover:bg-red-500/20 text-red-300/70 hover:text-red-300">
                     <Trash2 className="w-4 h-4" />
@@ -456,7 +452,6 @@ function TiposCustoBlock({
                   className="w-full h-8 bg-white/5 border border-white/10 rounded px-2 text-white text-xs outline-none focus:border-blue-400/50" />
               </td>
               <td className="px-2"><NumCell value={valor} onChange={setValor} /></td>
-              <td className="px-2" />
               <td className="px-2" />
               <td className="pr-1 text-right">
                 <button onClick={onSave} disabled={!nome.trim()}
