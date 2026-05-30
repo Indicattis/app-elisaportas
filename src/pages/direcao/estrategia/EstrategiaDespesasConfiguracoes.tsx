@@ -1208,18 +1208,6 @@ function SortableTipoRow({
           {categorias.map(c => <option key={c.id} value={c.id} className="bg-slate-900 text-white">{c.nome}</option>)}
         </select>
       </td>
-      <td className="px-2 text-white/50">
-        <select
-          value={i.empresa_id || ''}
-          onChange={(e) => update(i.id, { empresa_id: e.target.value || null })}
-          className="w-full h-7 bg-transparent border border-transparent hover:border-white/10 focus:border-white/20 rounded px-1.5 text-white/50 text-xs outline-none transition-colors"
-        >
-          <option value="" className="bg-slate-900">—</option>
-          {empresasAtivas.map((e: any) => (
-            <option key={e.id} value={e.id} className="bg-slate-900">{e.nome}</option>
-          ))}
-        </select>
-      </td>
       <td className={`px-2 text-right font-medium ${i.marcada_para_eliminar ? 'text-red-400 line-through' : 'text-white'}`}>
         <InlineNum value={i.valor_maximo_mensal} onSave={(v) => update(i.id, { valor_maximo_mensal: v })} format="currency" />
       </td>
