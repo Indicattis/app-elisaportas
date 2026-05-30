@@ -232,10 +232,8 @@ function FolhaRow({
   const aux_combustivel = Number(item.aux_combustivel) || 0;
   const insalubridade_pct = Number(item.insalubridade_pct) || 0;
   const fgts_pct = Number(item.fgts_pct) || 0;
-  const previsao_13_valor = Number(item.previsao_13_valor) || 0;
   const insalubVal = salario * insalubridade_pct / 100;
   const fgtsVal = salario * fgts_pct / 100;
-  const prev13ComFgts = previsao_13_valor * (1 + fgts_pct / 100);
   const feriasDefault = calcFeriasDefault(salario, fgts_pct);
   const feriasAtual = item.ferias_valor == null ? feriasDefault : Number(item.ferias_valor) || 0;
   const total = calcTotalFolha({ salario, aux_combustivel, insalubridade_pct, fgts_pct, previsao_13_valor, em_folha: item.em_folha, ferias_valor: item.ferias_valor });
