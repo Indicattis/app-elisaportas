@@ -229,7 +229,7 @@ function FolhaRow({
   const fgtsVal = salario * fgts_pct / 100;
   const prev13ComFgts = previsao_13_valor * (1 + fgts_pct / 100);
   const feriasComUmTerco = salario / 3 + fgtsVal;
-  const total = calcTotalFolha({ salario, aux_combustivel, insalubridade_pct, fgts_pct, previsao_13_valor });
+  const total = calcTotalFolha({ salario, aux_combustivel, insalubridade_pct, fgts_pct, previsao_13_valor, em_folha: item.em_folha });
   return (
     <tr className="border-b border-white/5 hover:bg-white/[0.03]">
       <td className="py-2 pl-1 text-white/90">
@@ -237,6 +237,13 @@ function FolhaRow({
       </td>
       <td className="px-2 text-center">
         <Switch checked={item.em_folha} onCheckedChange={(v) => update(item.id, { em_folha: v })} />
+      </td>
+      <td className="px-2">
+        <select value={item.setor ?? ''} onChange={(e) => update(item.id, { setor: e.target.value || null })}
+          className="w-full h-8 bg-white/5 border border-white/10 rounded px-2 text-white text-xs outline-none focus:border-blue-400/50">
+          <option value="" className="bg-slate-900">—</option>
+          {SETORES.map(s => <option key={s.value} value={s.value} className="bg-slate-900">{s.label}</option>)}
+        </select>
       </td>
       <td className="px-2 text-right text-emerald-400 font-medium">
         <InlineNum value={item.salario} onSave={(v) => update(item.id, { salario: v })} format="currency" />
