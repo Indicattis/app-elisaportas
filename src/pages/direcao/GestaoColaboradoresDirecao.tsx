@@ -317,7 +317,10 @@ function SortableRoleGroup({ group, allUsers, systemRoles, onEditRole, onDeleteR
 }
 
 export default function GestaoColaboradoresDirecao() {
-  const [selectedSetor, setSelectedSetor] = useState(SETOR_KEYS[0]);
+  const [selectedSetor, setSelectedSetor] = useState(FALLBACK_SETOR_KEYS[0]);
+  const { setores: setoresDb } = useSetores();
+  const [setoresDialogOpen, setSetoresDialogOpen] = useState(false);
+  const SETOR_KEYS = setoresDb.length > 0 ? setoresDb.map(s => s.key) : FALLBACK_SETOR_KEYS;
   const { data: allUsers, isLoading } = useAllUsers();
   const { vagas, createVaga, updateVagaStatus } = useVagas();
   const queryClient = useQueryClient();
