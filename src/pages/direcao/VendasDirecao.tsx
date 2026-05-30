@@ -769,7 +769,7 @@ export default function VendasDirecao() {
 
       {/* Tabela */}
       <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
-        <div className="rounded-lg overflow-hidden">
+        <div className="rounded-lg overflow-hidden [&_table]:table-fixed [&_table]:w-full">
           <TooltipProvider delayDuration={200}>
             <Table>
               <TableHeader>
@@ -777,7 +777,7 @@ export default function VendasDirecao() {
                   {visibleColumns.map(column => (
                     <TableHead 
                       key={column.id}
-                      className={`text-[10px] md:text-xs text-white/60 cursor-pointer hover:bg-white/5 transition-colors select-none py-2 px-3 md:px-5 ${getColumnAlignment(column.id)} ${getColumnResponsiveClass(column.id)}`}
+                      className={`text-[10px] md:text-xs text-white/60 cursor-pointer hover:bg-white/5 transition-colors select-none py-2 px-1.5 md:px-2 ${getColumnAlignment(column.id)} ${getColumnResponsiveClass(column.id)}`}
                       onClick={() => handleSort(column.id)}
                     >
                       <div className={`flex items-center gap-0.5 md:gap-1 ${column.id === 'valor' || column.id === 'frete' || column.id === 'instalacao' || column.id === 'desconto' || column.id === 'acrescimo' ? 'justify-end' : column.id === 'faturada' ? 'justify-center' : ''}`}>
@@ -811,7 +811,7 @@ export default function VendasDirecao() {
                       {visibleColumns.map(column => (
                         <TableCell 
                           key={column.id}
-                          className={`py-2.5 px-3 md:px-5 ${getColumnAlignment(column.id)} ${getColumnResponsiveClass(column.id)}`}
+                          className={`py-2.5 px-1.5 md:px-2 text-xs truncate ${getColumnAlignment(column.id)} ${getColumnResponsiveClass(column.id)}`}
                         >
                           {renderCell(venda, column.id)}
                         </TableCell>
