@@ -163,7 +163,6 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
   useEffect(() => {
     // Folha sempre derivada de despesas_padrao (configurações).
     setColabs([]);
-    setTipos([]);
   }, []);
 
   useEffect(() => {
@@ -181,10 +180,11 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         const lastDay = new Date(y, m, 0).getDate();
         const mesEnd = `${mes}-${String(lastDay).padStart(2, '0')}`;
 
-        const [{ data: f }, { data: l }, { data: g }] = await Promise.all([
+        const [{ data: f }, { data: l }, { data: g }, { data: tiposAll }] = await Promise.all([
           supabase.from('despesas_manuais_folha' as any).select('*').eq('mes_referencia', mesStart).order('colaborador_nome'),
           supabase.from('despesas_manuais_lancamentos' as any).select('*').eq('mes_referencia', mesStart).order('data'),
           supabase.from('gastos' as any).select('id, tipo_custo_id, valor, data, descricao, responsavel_id, banco_id').gte('data', mesStart).lte('data', mesEnd),
+          supabase.from('tipos_custos' as any).select('id, nome, tipo, aparece_no_dre, valor_maximo_mensal, ativo').eq('ativo', true),
         ]);
         if (cancelled) return;
         const folhaArr = (f || []) as unknown as FolhaRow[];
@@ -193,22 +193,19 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         setImpostos(lancArr.filter(x => x.categoria === 'imposto'));
 
         const gastosRows = (g || []) as unknown as Array<{ id: string; tipo_custo_id: string; valor: number; data: string; descricao: string | null; responsavel_id: string | null; banco_id: string | null }>;
-        const tipoIds = Array.from(new Set(gastosRows.map(r => r.tipo_custo_id).filter(Boolean)));
-        let tiposMap: Record<string, { nome: string; tipo: 'fixa' | 'variavel' | 'imposto'; aparece_no_dre: boolean; valor_maximo_mensal: number }> = {};
-        if (tipoIds.length > 0) {
-          const { data: tiposData } = await supabase
-            .from('tipos_custos' as any)
-            .select('id, nome, tipo, aparece_no_dre, valor_maximo_mensal')
-            .in('id', tipoIds);
-          ((tiposData || []) as any[]).forEach(t => {
-            tiposMap[t.id] = {
-              nome: t.nome,
-              tipo: t.tipo,
-              aparece_no_dre: t.aparece_no_dre !== false,
-              valor_maximo_mensal: Number(t.valor_maximo_mensal || 0),
-            };
-          });
-        }
+        const tiposMap: Record<string, { nome: string; tipo: 'fixa' | 'variavel' | 'imposto'; aparece_no_dre: boolean; valor_maximo_mensal: number }> = {};
+        ((tiposAll || []) as any[]).forEach(t => {
+          tiposMap[t.id] = {
+            nome: t.nome,
+            tipo: t.tipo,
+            aparece_no_dre: t.aparece_no_dre !== false,
+            valor_maximo_mensal: Number(t.valor_maximo_mensal || 0),
+          };
+        });
+        // Atualiza lista de tipos para uso nos blocos (Impostos usa para sugestões)
+        setTipos(((tiposAll || []) as any[])
+          .filter(t => t.aparece_no_dre !== false)
+          .map(t => ({ id: t.id, nome: t.nome, tipo: t.tipo })));
 
         const respIds = Array.from(new Set(gastosRows.map(r => r.responsavel_id).filter(Boolean))) as string[];
         const bancoIds = Array.from(new Set(gastosRows.map(r => r.banco_id).filter(Boolean))) as string[];
@@ -229,6 +226,18 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
 
         const agruparPor = (categoria: 'fixa' | 'variavel'): GastoAgrupado[] => {
           const acc = new Map<string, GastoAgrupado>();
+          // Seed: todos os tipos da categoria aparecem mesmo sem gastos
+          Object.entries(tiposMap).forEach(([id, t]) => {
+            if (!t.aparece_no_dre || t.tipo !== categoria) return;
+            acc.set(id, {
+              tipo_custo_id: id,
+              tipo_nome: t.nome,
+              total: 0,
+              quantidade: 0,
+              valor_projetado: Number(t.valor_maximo_mensal || 0),
+              itens: [],
+            });
+          });
           for (const r of gastosRows) {
             const t = tiposMap[r.tipo_custo_id];
             if (!t || !t.aparece_no_dre) continue;
@@ -874,7 +883,27 @@ function BlocoDespesa({
 
   // Sugestões: padrões cujo nome ainda não existe em algum lançamento do mês
   const nomesExistentes = new Set(rows.map(r => (r.tipo_nome || '').trim().toLowerCase()));
-  const sugestoes = padroes.filter(p => !nomesExistentes.has(p.nome.trim().toLowerCase()));
+  const sugestoesPadrao = padroes.filter(p => !nomesExistentes.has(p.nome.trim().toLowerCase()));
+  const nomesComSugestao = new Set([
+    ...nomesExistentes,
+    ...sugestoesPadrao.map(p => p.nome.trim().toLowerCase()),
+  ]);
+  // Tipos cadastrados sem lançamento e sem sugestão padrão: aparecem com valor 0
+  const sugestoesTipos: DespesaPadrao[] = tipos
+    .filter(t => !nomesComSugestao.has(t.nome.trim().toLowerCase()))
+    .map(t => ({
+      id: t.id,
+      nome: t.nome,
+      tipo: categoria as any,
+      valor: 0,
+      salario: 0,
+      aux_combustivel: 0,
+      insalubridade_pct: 0,
+      fgts_pct: 0,
+      previsao_13_valor: 0,
+      em_folha: true,
+    } as unknown as DespesaPadrao));
+  const sugestoes = [...sugestoesPadrao, ...sugestoesTipos];
   const padraoByNome = new Map(padroes.map(p => [p.nome.trim().toLowerCase(), Number(p.valor || 0)]));
   const prevForRow = (nome: string) => padraoByNome.get((nome || '').trim().toLowerCase()) || 0;
   const total = rows.reduce((s, r) => s + Number(r.valor || 0), 0)
@@ -969,14 +998,16 @@ function BlocoDespesa({
                     >
                       <Check className="w-4 h-4" />
                     </button>
-                    <button
-                      onClick={() => onDeletePadrao(sug.id)}
-                      className="p-1 rounded hover:bg-red-500/20 text-red-300/50 hover:text-red-300"
-                      aria-label="Remover sugestão"
-                      title="Remover sugestão padrão"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    {padroes.some(p => p.id === sug.id) && (
+                      <button
+                        onClick={() => onDeletePadrao(sug.id)}
+                        className="p-1 rounded hover:bg-red-500/20 text-red-300/50 hover:text-red-300"
+                        aria-label="Remover sugestão"
+                        title="Remover sugestão padrão"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>
