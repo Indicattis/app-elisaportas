@@ -99,7 +99,8 @@ type GastoItem = {
   banco_nome: string;
 };
 
-function calcTotalFolha(f: { salario: number; aux_combustivel: number; insalubridade_pct: number; fgts_pct: number; previsao_13_valor: number }) {
+function calcTotalFolha(f: { salario: number; aux_combustivel: number; insalubridade_pct: number; fgts_pct: number; previsao_13_valor: number; em_folha?: boolean }) {
+  if (f.em_folha === false) return Number(f.salario) || 0;
   const insalub = f.salario * (f.insalubridade_pct || 0) / 100;
   const fgts = f.salario * (f.fgts_pct || 0) / 100;
   const ferias = f.salario / 3 + fgts;
@@ -138,7 +139,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
     const nomesImpostos = new Set(impostos.map(r => norm(r.tipo_nome)));
 
     return folha.reduce((s, x) => s + Number(x.total || 0), 0)
-      + padroesFolha.filter(p => !nomesFolha.has(norm(p.nome))).reduce((s, p) => s + calcTotalFolha(p), 0)
+      + padroesFolha.filter(p => !nomesFolha.has(norm(p.nome))).reduce((s, p) => s + calcTotalFolha({ ...p, em_folha: p.em_folha }), 0)
       + gastosFixas.reduce((s, x) => s + Number(x.total || 0), 0)
       + gastosVariaveis.reduce((s, x) => s + Number(x.total || 0), 0)
       + impostos.reduce((s, x) => s + Number(x.valor || 0), 0)
