@@ -283,15 +283,16 @@ function FolhaBlock({
                     </select>
                   </td>
                   <td className="px-2"><NumCell value={salario} onChange={setSalario} /></td>
+                  <td className="px-2"><NumCell value={salarioMin} onChange={setSalarioMin} /></td>
                   <td className="px-2"><NumCell value={auxComb} onChange={setAuxComb} /></td>
                   <td className="px-2"><NumCell value={insalub} onChange={setInsalub} /></td>
-                  <td className="px-2 text-right text-orange-400 text-xs">{formatCurrency(salario * (insalub || 0) / 100)}</td>
+                  <td className="px-2 text-right text-orange-400 text-xs">{formatCurrency(salarioMin * (insalub || 0) / 100)}</td>
                   <td className="px-2"><NumCell value={fgts} onChange={setFgts} /></td>
                   <td className="px-2 text-right text-orange-400 text-xs">{formatCurrency(salario * (fgts || 0) / 100)}</td>
                   <td className="px-2 text-right text-orange-400 text-xs">{formatCurrency(salario / 12)}</td>
                   <td className="px-2 text-right text-orange-400 text-xs">{formatCurrency((salario * (fgts || 0) / 100) / 12)}</td>
                   <td className="px-2 text-right text-white/40 text-xs">{formatCurrency(salario / 3)}</td>
-                  <td className="px-2 text-right text-white/60 text-xs">{formatCurrency(calcTotalFolha({ salario, aux_combustivel: auxComb, insalubridade_pct: insalub, fgts_pct: fgts, previsao_13_valor: prev13, em_folha: emFolha }))}</td>
+                  <td className="px-2 text-right text-white/60 text-xs">{formatCurrency(calcTotalFolha({ salario, salario_minimo: salarioMin, aux_combustivel: auxComb, insalubridade_pct: insalub, fgts_pct: fgts, previsao_13_valor: prev13, em_folha: emFolha }))}</td>
                   <td className="pr-1 text-right">
                     <button onClick={save} disabled={!nome.trim()}
                       className="p-1 rounded bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 disabled:opacity-30">
