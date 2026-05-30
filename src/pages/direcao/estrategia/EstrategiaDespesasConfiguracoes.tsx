@@ -259,9 +259,9 @@ function FolhaRow({
       </td>
       <td className="px-2">
         <select value={item.setor ?? ''} onChange={(e) => update(item.id, { setor: e.target.value || null })}
-          className="w-full h-8 bg-white/5 border border-white/10 rounded px-2 text-white text-xs outline-none focus:border-blue-400/50">
-          <option value="" className="bg-slate-900">—</option>
-          {SETORES.map(s => <option key={s.value} value={s.value} className="bg-slate-900">{s.label}</option>)}
+          className={setorSelectClass(item.setor)}>
+          <option value="" className="bg-slate-900 text-white">—</option>
+          {SETORES.map(s => <option key={s.value} value={s.value} className="bg-slate-900 text-white">{s.label}</option>)}
         </select>
       </td>
       <td className="px-2 text-right text-emerald-400 font-medium">
