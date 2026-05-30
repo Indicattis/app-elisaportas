@@ -1100,11 +1100,10 @@ function CategoriaGroup({
         <thead>
           <tr className="text-[10px] uppercase tracking-wider text-white/40 border-b border-white/10">
             <th className="pb-2 w-6"></th>
-            <th className="text-left font-normal pb-2 pl-1 w-[22%]">Nome</th>
-            <th className="text-left font-normal pb-2 px-2 w-[24%]">Descrição</th>
-            <th className="text-left font-normal pb-2 px-2 w-[16%]">Categoria</th>
-            <th className="text-left font-normal pb-2 px-2 w-[14%]">Empresa</th>
-            <th className="text-right font-normal pb-2 px-2 w-[14%]">Valor projetado</th>
+            <th className="text-left font-normal pb-2 pl-1 w-[34%]">Nome</th>
+            <th className="text-left font-normal pb-2 px-2 w-[22%]">Categoria</th>
+            <th className="text-left font-normal pb-2 px-2 w-[18%]">Empresa</th>
+            <th className="text-right font-normal pb-2 px-2 w-[18%]">Valor projetado</th>
             <th className="text-center font-normal pb-2 px-2 w-[8%]">DRE</th>
             <th className="pb-2 pr-1 w-10"></th>
           </tr>
@@ -1161,9 +1160,6 @@ function SortableTipoRow({
       </td>
       <td className="py-2 pl-1 text-white/90">
         <InlineText value={i.nome} onSave={(v) => update(i.id, { nome: v })} />
-      </td>
-      <td className="px-2 text-white/70">
-        <InlineText value={i.descricao || ''} onSave={(v) => update(i.id, { descricao: v || null })} />
       </td>
       <td className="px-2">
         <select
