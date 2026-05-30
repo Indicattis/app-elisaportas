@@ -902,7 +902,7 @@ function TiposCustoBlock({
         </div>
       </div>
 
-      <div className="space-y-1.5">
+      <div className="space-y-5">
         <DndContext sensors={sensors} collisionDetection={closestCenter} modifiers={[restrictToVerticalAxis]} onDragEnd={onCatDragEnd}>
           <SortableContext items={catIds} strategy={verticalListSortingStrategy}>
             {grupos.map(g => (
