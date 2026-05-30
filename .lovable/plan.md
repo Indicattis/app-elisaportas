@@ -1,40 +1,41 @@
-## Problema
-
-Em `/direcao/estrategia/despesas/:mes`, o bloco "Folha Salarial" hoje monta a lista unindo três fontes:
-1. `colaboradores` (via RPC `get_colaboradores_folha`)
-2. `despesas_padrao` tipo `'folha'` (configurações)
-3. `despesas_manuais_folha` (lançamentos salvos do mês)
-
-Isso faz aparecer colaboradores que não estão configurados em `/direcao/estrategia/despesas/configuracoes`.
-
 ## Objetivo
 
-A lista de colaboradores da Folha deve vir **exclusivamente** de `despesas_padrao` (tipo `'folha'`). Os valores do mês continuam vindo de `despesas_manuais_folha` (sobrepondo os padrões quando existir lançamento daquele colaborador). A flag "Em folha" passa a vir de `despesas_padrao.em_folha`.
+1. Em `/direcao/estrategia/despesas/configuracoes`, adicionar coluna **"Setor"** por colaborador na Folha Salarial padrão.
+2. Em todos os cálculos de total da folha (Configurações + tela mensal), quando `em_folha = false` o total deve ser igual ao salário (sem somar combustível, insalubridade, FGTS, previsão 13°, férias).
 
 ## Mudanças
 
-Arquivo único: `src/components/direcao/estrategia/DespesasResumoTopo.tsx`
+### 1. Banco — `despesas_padrao`
+Migração (schema):
+- Adicionar coluna `setor public.setor_type NULL` em `public.despesas_padrao`. Sem default, nullable para não impor escolha em registros antigos.
 
-1. **Remover dependência de colaboradores**
-   - Remover o `useEffect` que chama `supabase.rpc('get_colaboradores_folha')` e o estado `colabs` / `setColabs`.
-   - Remover o tipo `Colab` (ou manter apenas como tipo local equivalente a um padrão simplificado, se necessário pelas assinaturas das funções).
-   - Remover `colabs` de toda a árvore de props (`BlocoFolha`, etc.).
+### 2. Hook `src/hooks/useDespesasPadrao.ts`
+- Adicionar `setor: string | null` ao tipo `DespesaPadrao` (string para evitar dependência forte do enum gerado).
+- Mapear `setor: x.setor ?? null` no `fetchAll`.
+- Repassar `setor: payload.setor ?? null` no `insert`.
 
-2. **`BlocoFolha` (linhas ~498–620)**
-   - Substituir a união `colabs + padroesFolha + rows` pela lista derivada apenas de `padroesFolha` + `rows` (lançamentos do mês). Lançamentos cujo nome não esteja em padroes ficam como linha extra readonly só para não perder dados históricos, mas sem qualquer enriquecimento via colaboradores.
-   - Para cada item da lista, montar um `Colab` virtual a partir do `padrao` correspondente, com `em_folha = padrao.em_folha`.
-   - Ajustar `sortedColabs`, `total` e callbacks para refletir essa origem única.
+### 3. UI Configurações — `src/pages/direcao/estrategia/EstrategiaDespesasConfiguracoes.tsx`
+- `calcTotalFolha`: aceitar novo argumento opcional `em_folha`. Quando `em_folha === false`, retornar apenas `salario`.
+- `FolhaBlock`:
+  - Novo estado `setor` no formulário de inserção (default `null`).
+  - Novo `<th>` "Setor" logo após "Em folha".
+  - Nova célula com `<Select>` (shadcn) listando: `vendas`, `marketing`, `instalacoes`, `fabrica`, `administrativo` (rótulos com primeira letra maiúscula).
+  - `reset()` zera `setor`. Inserção envia `setor`.
+  - `totalSalarios` e `totalFolha` agora consideram `em_folha` (passar a flag no `calcTotalFolha`).
+- `FolhaRow`:
+  - Nova célula `<Select>` com o setor atual, salvando via `update(item.id, { setor: v })`.
+  - `total` calculado com `em_folha = item.em_folha`.
+  - Quando `em_folha=false`, manter as células informativas (insalub valor, fgts valor, etc.) — apenas o **total** muda; o usuário ainda consegue visualizar os campos.
 
-3. **`totalExibido` (linhas ~136–146)**
-   - Atualizar para somar: lançamentos do mês + padrões da folha que não têm lançamento (em vez de `colabs`).
-   - A lógica já existe parcialmente; só remover qualquer referência a `colabs`.
-
-4. **Limpeza**
-   - Remover imports/usos não referenciados (`Colab`, RPC, etc.).
-   - Garantir que nenhum outro consumidor do componente quebre.
+### 4. UI Mensal — `src/components/direcao/estrategia/DespesasResumoTopo.tsx`
+- `calcTotalFolha`: mesma alteração (assinatura aceita `em_folha?`); quando `false`, retorna salário.
+- Atualizar todos os call sites para passar `em_folha`:
+  - `totalExibido` (linha ~141): `calcTotalFolha({ ...p, em_folha: p.em_folha })`.
+  - `handlePatchFolha` / `handleInsertFolha` (linhas ~281, ~300): passar `em_folha` do colab/padrão correspondente.
+  - `BlocoFolha` total (linha ~545) e total por linha (linha ~653): passar `colab.em_folha`.
+- Não exibir Setor nessa tela (escopo é só configurações).
 
 ## Fora de escopo
-
-- Não alterar `colaboradores` nem a RPC `get_colaboradores_folha` — outras telas continuam usando.
-- Não alterar tabelas (`despesas_padrao` já tem `em_folha`).
-- Outras páginas (`/colaboradores`, etc.) não são afetadas.
+- Edição/uso do setor em outras telas; nenhum filtro, agrupamento ou regra por setor é adicionado agora.
+- Tabela `colaboradores` não é alterada.
+- Pode haver colaboradores marcados como "Não" em Em folha cujos valores acessórios (FGTS, insalub) continuarão aparecendo nas linhas; apenas a soma final ignora esses valores.

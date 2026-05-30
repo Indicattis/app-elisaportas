@@ -16,6 +16,7 @@ export interface DespesaPadrao {
   previsao_13_valor: number;
   ordem: number;
   em_folha: boolean;
+  setor: string | null;
 }
 
 export function useDespesasPadrao() {
@@ -45,6 +46,7 @@ export function useDespesasPadrao() {
         previsao_13_valor: Number(x.previsao_13_valor) || 0,
         ordem: Number(x.ordem) || 0,
         em_folha: x.em_folha ?? true,
+        setor: x.setor ?? null,
       })));
     }
     setLoading(false);
@@ -65,6 +67,7 @@ export function useDespesasPadrao() {
       previsao_13_valor: payload.previsao_13_valor ?? 0,
       ordem: payload.ordem ?? 0,
       em_folha: payload.em_folha ?? true,
+      setor: payload.setor ?? null,
       created_by: userId,
     } as any);
     if (error) { toast.error('Erro ao salvar: ' + error.message); return false; }

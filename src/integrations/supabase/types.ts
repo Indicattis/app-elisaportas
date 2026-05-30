@@ -2316,6 +2316,7 @@ export type Database = {
           ordem: number
           previsao_13_valor: number
           salario: number
+          setor: Database["public"]["Enums"]["setor_type"] | null
           tipo: string
           updated_at: string
           valor: number
@@ -2332,6 +2333,7 @@ export type Database = {
           ordem?: number
           previsao_13_valor?: number
           salario?: number
+          setor?: Database["public"]["Enums"]["setor_type"] | null
           tipo: string
           updated_at?: string
           valor?: number
@@ -2348,6 +2350,7 @@ export type Database = {
           ordem?: number
           previsao_13_valor?: number
           salario?: number
+          setor?: Database["public"]["Enums"]["setor_type"] | null
           tipo?: string
           updated_at?: string
           valor?: number

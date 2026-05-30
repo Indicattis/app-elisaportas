@@ -74,7 +74,16 @@ export default function EstrategiaDespesasConfiguracoes() {
 
 /* ---------------- Folha ---------------- */
 
-function calcTotalFolha(f: { salario: number; aux_combustivel: number; insalubridade_pct: number; fgts_pct: number; previsao_13_valor: number }) {
+const SETORES: { value: string; label: string }[] = [
+  { value: 'vendas', label: 'Vendas' },
+  { value: 'marketing', label: 'Marketing' },
+  { value: 'instalacoes', label: 'Instalações' },
+  { value: 'fabrica', label: 'Fábrica' },
+  { value: 'administrativo', label: 'Administrativo' },
+];
+
+function calcTotalFolha(f: { salario: number; aux_combustivel: number; insalubridade_pct: number; fgts_pct: number; previsao_13_valor: number; em_folha?: boolean }) {
+  if (f.em_folha === false) return f.salario;
   const insalub = f.salario * (f.insalubridade_pct || 0) / 100;
   const fgts = f.salario * (f.fgts_pct || 0) / 100;
   const ferias = f.salario / 3 + fgts;
@@ -91,13 +100,14 @@ function FolhaBlock({
 }) {
   const [nome, setNome] = useState('');
   const [emFolha, setEmFolha] = useState(true);
+  const [setor, setSetor] = useState<string>('');
   const [salario, setSalario] = useState(0);
   const [auxComb, setAuxComb] = useState(0);
   const [insalub, setInsalub] = useState(0);
   const [fgts, setFgts] = useState(8);
   const [prev13, setPrev13] = useState(0);
 
-  const reset = () => { setNome(''); setEmFolha(true); setSalario(0); setAuxComb(0); setInsalub(0); setFgts(8); setPrev13(0); };
+  const reset = () => { setNome(''); setEmFolha(true); setSetor(''); setSalario(0); setAuxComb(0); setInsalub(0); setFgts(8); setPrev13(0); };
 
   const save = async () => {
     if (!nome.trim()) return;
@@ -105,6 +115,7 @@ function FolhaBlock({
       tipo: 'folha',
       nome: nome.trim(),
       em_folha: emFolha,
+      setor: setor || null,
       salario,
       aux_combustivel: auxComb,
       insalubridade_pct: insalub,
@@ -121,6 +132,7 @@ function FolhaBlock({
     insalubridade_pct: Number(i.insalubridade_pct) || 0,
     fgts_pct: Number(i.fgts_pct) || 0,
     previsao_13_valor: Number(i.previsao_13_valor) || 0,
+    em_folha: i.em_folha,
   }), 0);
 
   return (
@@ -136,6 +148,7 @@ function FolhaBlock({
             <tr className="text-[10px] uppercase tracking-wider text-white/40 border-b border-white/10">
               <th className="text-left font-normal pb-2 pl-1">Colaborador</th>
               <th className="text-center font-normal pb-2 px-2 w-[90px]">Em folha</th>
+              <th className="text-left font-normal pb-2 px-2 w-[140px]">Setor</th>
               <th className="text-right font-normal pb-2 px-2 text-emerald-400">Salário</th>
               <th className="text-right font-normal pb-2 px-2">Combustível</th>
               <th className="text-right font-normal pb-2 px-2">Insalub %</th>
@@ -160,6 +173,13 @@ function FolhaBlock({
               <td className="px-2 text-center">
                 <Switch checked={emFolha} onCheckedChange={setEmFolha} />
               </td>
+              <td className="px-2">
+                <select value={setor} onChange={(e) => setSetor(e.target.value)}
+                  className="w-full h-8 bg-white/5 border border-white/10 rounded px-2 text-white text-xs outline-none focus:border-blue-400/50">
+                  <option value="" className="bg-slate-900">—</option>
+                  {SETORES.map(s => <option key={s.value} value={s.value} className="bg-slate-900">{s.label}</option>)}
+                </select>
+              </td>
               <td className="px-2"><NumCell value={salario} onChange={setSalario} /></td>
               <td className="px-2"><NumCell value={auxComb} onChange={setAuxComb} /></td>
               <td className="px-2"><NumCell value={insalub} onChange={setInsalub} /></td>
@@ -168,7 +188,7 @@ function FolhaBlock({
               <td className="px-2 text-right text-white/40 text-xs">{formatCurrency(salario * (fgts || 0) / 100)}</td>
               <td className="px-2"><NumCell value={prev13} onChange={setPrev13} /></td>
               <td className="px-2 text-right text-white/40 text-xs">{formatCurrency(salario / 3 + salario * (fgts || 0) / 100)}</td>
-              <td className="px-2 text-right text-white/60 text-xs">{formatCurrency(calcTotalFolha({ salario, aux_combustivel: auxComb, insalubridade_pct: insalub, fgts_pct: fgts, previsao_13_valor: prev13 }))}</td>
+              <td className="px-2 text-right text-white/60 text-xs">{formatCurrency(calcTotalFolha({ salario, aux_combustivel: auxComb, insalubridade_pct: insalub, fgts_pct: fgts, previsao_13_valor: prev13, em_folha: emFolha }))}</td>
               <td className="pr-1 text-right">
                 <button onClick={save} disabled={!nome.trim()}
                   className="p-1 rounded bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 disabled:opacity-30">
@@ -209,7 +229,7 @@ function FolhaRow({
   const fgtsVal = salario * fgts_pct / 100;
   const prev13ComFgts = previsao_13_valor * (1 + fgts_pct / 100);
   const feriasComUmTerco = salario / 3 + fgtsVal;
-  const total = calcTotalFolha({ salario, aux_combustivel, insalubridade_pct, fgts_pct, previsao_13_valor });
+  const total = calcTotalFolha({ salario, aux_combustivel, insalubridade_pct, fgts_pct, previsao_13_valor, em_folha: item.em_folha });
   return (
     <tr className="border-b border-white/5 hover:bg-white/[0.03]">
       <td className="py-2 pl-1 text-white/90">
@@ -217,6 +237,13 @@ function FolhaRow({
       </td>
       <td className="px-2 text-center">
         <Switch checked={item.em_folha} onCheckedChange={(v) => update(item.id, { em_folha: v })} />
+      </td>
+      <td className="px-2">
+        <select value={item.setor ?? ''} onChange={(e) => update(item.id, { setor: e.target.value || null })}
+          className="w-full h-8 bg-white/5 border border-white/10 rounded px-2 text-white text-xs outline-none focus:border-blue-400/50">
+          <option value="" className="bg-slate-900">—</option>
+          {SETORES.map(s => <option key={s.value} value={s.value} className="bg-slate-900">{s.label}</option>)}
+        </select>
       </td>
       <td className="px-2 text-right text-emerald-400 font-medium">
         <InlineNum value={item.salario} onSave={(v) => update(item.id, { salario: v })} format="currency" />

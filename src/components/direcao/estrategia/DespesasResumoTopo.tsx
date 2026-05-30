@@ -99,7 +99,8 @@ type GastoItem = {
   banco_nome: string;
 };
 
-function calcTotalFolha(f: { salario: number; aux_combustivel: number; insalubridade_pct: number; fgts_pct: number; previsao_13_valor: number }) {
+function calcTotalFolha(f: { salario: number; aux_combustivel: number; insalubridade_pct: number; fgts_pct: number; previsao_13_valor: number; em_folha?: boolean }) {
+  if (f.em_folha === false) return Number(f.salario) || 0;
   const insalub = f.salario * (f.insalubridade_pct || 0) / 100;
   const fgts = f.salario * (f.fgts_pct || 0) / 100;
   const ferias = f.salario / 3 + fgts;
@@ -138,7 +139,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
     const nomesImpostos = new Set(impostos.map(r => norm(r.tipo_nome)));
 
     return folha.reduce((s, x) => s + Number(x.total || 0), 0)
-      + padroesFolha.filter(p => !nomesFolha.has(norm(p.nome))).reduce((s, p) => s + calcTotalFolha(p), 0)
+      + padroesFolha.filter(p => !nomesFolha.has(norm(p.nome))).reduce((s, p) => s + calcTotalFolha({ ...p, em_folha: p.em_folha }), 0)
       + gastosFixas.reduce((s, x) => s + Number(x.total || 0), 0)
       + gastosVariaveis.reduce((s, x) => s + Number(x.total || 0), 0)
       + impostos.reduce((s, x) => s + Number(x.valor || 0), 0)
@@ -278,7 +279,8 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
     const current = folha.find(r => r.id === id);
     if (!current) return;
     const updated = { ...current, [field]: value };
-    const total = calcTotalFolha(updated);
+    const emFolha = padroesFolha.find(p => norm(p.nome) === norm(current.colaborador_nome))?.em_folha ?? true;
+    const total = calcTotalFolha({ ...updated, em_folha: emFolha });
     setFolha(prev => prev.map(r => r.id === id ? { ...updated, total } : r));
     const { error } = await supabase
       .from('despesas_manuais_folha' as any)
@@ -297,7 +299,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
     salario: number; aux_combustivel: number; insalubridade_pct: number; fgts_pct: number; previsao_13_valor: number;
   }) => {
     if (!mesStart) return;
-    const total = calcTotalFolha(payload);
+    const total = calcTotalFolha({ ...payload, em_folha: payload.colab.em_folha });
     const userId = (await supabase.auth.getUser()).data.user?.id || null;
     const { error } = await supabase.from('despesas_manuais_folha' as any).insert({
       mes_referencia: mesStart,
@@ -548,6 +550,7 @@ function BlocoFolha({
       insalubridade_pct: Number(valores.insalubridade_pct) || 0,
       fgts_pct: Number(valores.fgts_pct) || 0,
       previsao_13_valor: Number(valores.previsao_13_valor) || 0,
+      em_folha: colab.em_folha,
     });
   }, 0);
 
@@ -650,7 +653,7 @@ function BlocoFolha({
               const fgtsVal = salario * (fgts_pct || 0) / 100;
               const prev13ComFgts = previsao_13_valor * (1 + (fgts_pct || 0) / 100);
               const feriasComUmTerco = salario / 3 + fgtsVal;
-              const totalVal = calcTotalFolha({ salario, aux_combustivel, insalubridade_pct, fgts_pct, previsao_13_valor });
+              const totalVal = calcTotalFolha({ salario, aux_combustivel, insalubridade_pct, fgts_pct, previsao_13_valor, em_folha: colab.em_folha });
               return (
                 <tr key={colab.id} className="border-b border-white/5 hover:bg-white/[0.03]">
                   <td className="py-2 pl-1 text-white/90">{colab.nome}</td>
