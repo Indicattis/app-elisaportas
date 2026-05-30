@@ -315,12 +315,13 @@ function FolhaBlock({
 }
 
 function FolhaRow({
-  item, setores, update, remove,
+  item, setores, update, remove, dragHandle,
 }: {
   item: DespesaPadrao;
   setores: SetorMeta[];
   update: ReturnType<typeof useDespesasPadrao>['update'];
   remove: ReturnType<typeof useDespesasPadrao>['remove'];
+  dragHandle?: React.ReactNode;
 }) {
   const salario = Number(item.salario) || 0;
   const aux_combustivel = Number(item.aux_combustivel) || 0;
@@ -336,7 +337,10 @@ function FolhaRow({
   return (
     <tr className="border-b border-white/5 hover:bg-white/[0.03]">
       <td className="py-2 pl-1 text-white/90">
-        <InlineText value={item.nome} onSave={(v) => update(item.id, { nome: v })} />
+        <div className="flex items-center gap-1">
+          {dragHandle}
+          <div className="flex-1"><InlineText value={item.nome} onSave={(v) => update(item.id, { nome: v })} /></div>
+        </div>
       </td>
       <td className="px-2 text-center">
         <Switch checked={item.em_folha} onCheckedChange={(v) => update(item.id, { em_folha: v })} />
