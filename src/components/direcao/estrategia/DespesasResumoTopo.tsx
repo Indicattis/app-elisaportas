@@ -86,6 +86,7 @@ type GastoAgrupado = {
   tipo_nome: string;
   total: number;
   quantidade: number;
+  valor_projetado: number;
   itens: GastoItem[];
 };
 
@@ -198,17 +199,18 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
 
         const gastosRows = (g || []) as unknown as Array<{ id: string; tipo_custo_id: string; valor: number; data: string; descricao: string | null; responsavel_id: string | null; banco_id: string | null }>;
         const tipoIds = Array.from(new Set(gastosRows.map(r => r.tipo_custo_id).filter(Boolean)));
-        let tiposMap: Record<string, { nome: string; tipo: 'fixa' | 'variavel' | 'imposto'; aparece_no_dre: boolean }> = {};
+        let tiposMap: Record<string, { nome: string; tipo: 'fixa' | 'variavel' | 'imposto'; aparece_no_dre: boolean; valor_maximo_mensal: number }> = {};
         if (tipoIds.length > 0) {
           const { data: tiposData } = await supabase
             .from('tipos_custos' as any)
-            .select('id, nome, tipo, aparece_no_dre')
+            .select('id, nome, tipo, aparece_no_dre, valor_maximo_mensal')
             .in('id', tipoIds);
           ((tiposData || []) as any[]).forEach(t => {
             tiposMap[t.id] = {
               nome: t.nome,
               tipo: t.tipo,
               aparece_no_dre: t.aparece_no_dre !== false,
+              valor_maximo_mensal: Number(t.valor_maximo_mensal || 0),
             };
           });
         }
@@ -255,6 +257,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
                 tipo_nome: t.nome,
                 total: item.valor,
                 quantidade: 1,
+                valor_projetado: Number(t.valor_maximo_mensal || 0),
                 itens: [item],
               });
             }
