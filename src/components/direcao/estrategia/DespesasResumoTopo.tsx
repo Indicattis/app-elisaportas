@@ -1784,7 +1784,7 @@ function SetorGroupMensal({
 
   return (
     <div>
-      <div className="flex items-center gap-2 mb-2 px-1">
+      <div className="flex items-center gap-2 mb-1.5 px-1">
         <span className={`w-2 h-2 rounded-full ${meta.dot}`} />
         <span className={`inline-flex items-center h-6 px-2 rounded-full border text-[11px] font-medium ${meta.color}`}>{meta.label}</span>
         <span className="text-xs text-white/40 tabular-nums">{rows.length}</span>
@@ -1798,21 +1798,21 @@ function SetorGroupMensal({
         <table className="w-full text-sm table-fixed min-w-[1640px]">
           <thead>
             <tr className="text-[10px] uppercase tracking-wider text-white/40 border-b border-white/10">
-              <th className="text-left font-normal pb-2 pl-1">Colaborador</th>
-              <th className="text-center font-normal pb-2 px-2">Em folha</th>
-              <th className="text-left font-normal pb-2 px-2">Setor</th>
-              <th className="text-right font-normal pb-2 px-2 text-emerald-400">Salário</th>
-              <th className="text-right font-normal pb-2 px-2">Salário Mínimo</th>
-              <th className="text-right font-normal pb-2 px-2">Combustível</th>
-              <th className="text-right font-normal pb-2 px-2">Insalub %</th>
-              <th className="text-right font-normal pb-2 px-2">Insalub R$</th>
-              <th className="text-right font-normal pb-2 px-2">FGTS %</th>
-              <th className="text-right font-normal pb-2 px-2">FGTS R$</th>
-              <th className="text-right font-normal pb-2 px-2">13º</th>
-              <th className="text-right font-normal pb-2 px-2">FGTS 13º</th>
-              <th className="text-right font-normal pb-2 px-2">Férias</th>
-              <th className="text-right font-normal pb-2 px-2">Total</th>
-              <th className="text-right font-normal pb-2 px-2">Valor pago no mês</th>
+              <th className="text-left font-normal pb-1.5 pl-1 w-[180px]">Colaborador</th>
+              <th className="text-center font-normal pb-1.5 px-2 w-[80px]">Em folha</th>
+              <th className="text-left font-normal pb-1.5 px-2 w-[140px]">Setor</th>
+              <th className="text-right font-normal pb-1.5 px-2 w-[120px] text-emerald-400">Salário</th>
+              <th className="text-right font-normal pb-1.5 px-2 w-[120px]">Sal. Mínimo</th>
+              <th className="text-right font-normal pb-1.5 px-2 w-[110px]">Combustível</th>
+              <th className="text-right font-normal pb-1.5 px-2 w-[90px]">Insalub %</th>
+              <th className="text-right font-normal pb-1.5 px-2 w-[110px]">Insalub R$</th>
+              <th className="text-right font-normal pb-1.5 px-2 w-[80px]">FGTS %</th>
+              <th className="text-right font-normal pb-1.5 px-2 w-[110px]">FGTS R$</th>
+              <th className="text-right font-normal pb-1.5 px-2 w-[100px]">13º</th>
+              <th className="text-right font-normal pb-1.5 px-2 w-[100px]">FGTS 13º</th>
+              <th className="text-right font-normal pb-1.5 px-2 w-[110px]">Férias</th>
+              <th className="text-right font-normal pb-1.5 px-2 w-[130px]">Total</th>
+              <th className="text-right font-normal pb-1.5 px-2 w-[130px]">Pago no mês</th>
             </tr>
           </thead>
           <tbody>
@@ -1838,7 +1838,7 @@ function SetorGroupMensal({
               const zeroCurr = <span className="text-white/30">{formatCurrency(0)}</span>;
               return (
                 <tr key={p.id} className="border-b border-white/5 hover:bg-white/[0.03]">
-                  <td className="py-2 pl-1 text-white/90">{p.nome}</td>
+                  <td className="py-1.5 pl-1 text-white/90 truncate">{p.nome}</td>
                   <td className="px-2 text-center">
                     {p.em_folha ? (
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-400/15 text-emerald-300 border border-emerald-400/20">Sim</span>
@@ -1852,18 +1852,18 @@ function SetorGroupMensal({
                       {meta.label}
                     </span>
                   </td>
-                  <td className="px-2 text-right text-emerald-400 font-medium">{formatCurrency(salario)}</td>
-                  <td className="px-2 text-right text-white/60">{formatCurrency(salario_minimo)}</td>
-                  <td className="px-2 text-right text-white/60">{formatCurrency(aux_combustivel)}</td>
-                  <td className="px-2 text-right text-white/60">{insalubridade_pct.toFixed(2)}%</td>
-                  <td className="px-2 text-right text-xs">{desativado ? zeroCurr : <span className="text-orange-400">{formatCurrency(insalubVal)}</span>}</td>
-                  <td className="px-2 text-right text-white/60">{fgts_pct.toFixed(2)}%</td>
-                  <td className="px-2 text-right text-xs">{desativado ? zeroCurr : <span className="text-orange-400">{formatCurrency(fgtsVal)}</span>}</td>
-                  <td className="px-2 text-right text-xs">{desativado ? zeroCurr : <span className="text-orange-400">{formatCurrency(prev13)}</span>}</td>
-                  <td className="px-2 text-right text-xs">{desativado ? zeroCurr : <span className="text-orange-400">{formatCurrency(fgts13)}</span>}</td>
-                  <td className="px-2 text-right text-xs">{desativado ? zeroCurr : <span className="text-orange-400">{formatCurrency(ferias)}</span>}</td>
-                  <td className="px-2 text-right text-white font-semibold">{formatCurrency(total)}</td>
-                  <td className={`px-2 text-right font-medium ${pago === 0 ? 'text-white/40' : overspent ? 'text-orange-300' : 'text-white'}`}>
+                  <td className="px-2 text-right text-emerald-400 font-medium tabular-nums">{formatCurrency(salario)}</td>
+                  <td className="px-2 text-right text-white/60 tabular-nums">{formatCurrency(salario_minimo)}</td>
+                  <td className="px-2 text-right text-white/60 tabular-nums">{formatCurrency(aux_combustivel)}</td>
+                  <td className="px-2 text-right text-white/60 tabular-nums">{insalubridade_pct.toFixed(2)}%</td>
+                  <td className="px-2 text-right text-xs tabular-nums">{desativado ? zeroCurr : <span className="text-orange-400">{formatCurrency(insalubVal)}</span>}</td>
+                  <td className="px-2 text-right text-white/60 tabular-nums">{fgts_pct.toFixed(2)}%</td>
+                  <td className="px-2 text-right text-xs tabular-nums">{desativado ? zeroCurr : <span className="text-orange-400">{formatCurrency(fgtsVal)}</span>}</td>
+                  <td className="px-2 text-right text-xs tabular-nums">{desativado ? zeroCurr : <span className="text-orange-400">{formatCurrency(prev13)}</span>}</td>
+                  <td className="px-2 text-right text-xs tabular-nums">{desativado ? zeroCurr : <span className="text-orange-400">{formatCurrency(fgts13)}</span>}</td>
+                  <td className="px-2 text-right text-xs tabular-nums">{desativado ? zeroCurr : <span className="text-orange-400">{formatCurrency(ferias)}</span>}</td>
+                  <td className="px-2 text-right text-white font-semibold tabular-nums">{formatCurrency(total)}</td>
+                  <td className={`px-2 text-right font-medium tabular-nums ${pago === 0 ? 'text-white/40' : overspent ? 'text-orange-300' : 'text-white'}`}>
                     {pago > 0 ? formatCurrency(pago) : '—'}
                   </td>
                 </tr>
