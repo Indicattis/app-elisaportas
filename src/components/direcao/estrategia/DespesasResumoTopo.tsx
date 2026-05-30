@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { formatCurrency } from '@/lib/utils';
-import { Users, Receipt, TrendingDown, Trash2, Check, X, Landmark, ChevronRight, ChevronDown } from 'lucide-react';
+import { Users, Receipt, TrendingDown, Trash2, Check, X, Landmark, ChevronRight, ChevronDown, FileText, AlertTriangle } from 'lucide-react';
 import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -11,6 +11,10 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useDespesasPadrao } from '@/hooks/useDespesasPadrao';
 import type { DespesaPadrao } from '@/hooks/useDespesasPadrao';
+import { useDespesasCategorias, getCategoriaPalette, type CategoriaDespesa } from '@/hooks/useDespesasCategorias';
+import { useEmpresasEmissoras } from '@/hooks/useEmpresasEmissoras';
+import { useSetores, getSetorPalette } from '@/hooks/useSetores';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 
 async function getCurrentUserInfo(): Promise<{ id: string | null; nome: string | null }> {
@@ -81,6 +85,19 @@ type Colab = {
 
 type TipoCusto = { id: string; nome: string; tipo: 'fixa' | 'variavel' | 'imposto' };
 
+type TipoCustoFull = {
+  id: string;
+  nome: string;
+  tipo: 'fixa' | 'variavel' | 'imposto';
+  descricao: string | null;
+  empresa_id: string | null;
+  categoria_id: string | null;
+  valor_maximo_mensal: number;
+  aparece_no_dre: boolean;
+  marcada_para_eliminar: boolean;
+  ordem: number;
+};
+
 type GastoAgrupado = {
   tipo_custo_id: string;
   tipo_nome: string;
@@ -138,6 +155,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
 
   const [colabs, setColabs] = useState<Colab[]>([]);
   const [tipos, setTipos] = useState<TipoCusto[]>([]);
+  const [tiposFull, setTiposFull] = useState<TipoCustoFull[]>([]);
   const [confirmDel, setConfirmDel] = useState<null | { kind: 'folha' | 'lanc'; id: string }>(null);
 
   const { items: padroes, remove: removePadrao } = useDespesasPadrao();
@@ -183,7 +201,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
           supabase.from('despesas_manuais_folha' as any).select('*').eq('mes_referencia', mesStart).order('colaborador_nome'),
           supabase.from('despesas_manuais_lancamentos' as any).select('*').eq('mes_referencia', mesStart).order('data'),
           supabase.from('gastos' as any).select('id, tipo_custo_id, valor, data, descricao, responsavel_id, banco_id').gte('data', mesStart).lte('data', mesEnd),
-          supabase.from('tipos_custos' as any).select('id, nome, tipo, aparece_no_dre, valor_maximo_mensal, ativo').eq('ativo', true),
+          supabase.from('tipos_custos' as any).select('id, nome, descricao, tipo, aparece_no_dre, valor_maximo_mensal, ativo, empresa_id, categoria_id, marcada_para_eliminar, ordem').eq('ativo', true).order('ordem'),
         ]);
         if (cancelled) return;
         const folhaArr = (f || []) as unknown as FolhaRow[];
@@ -205,6 +223,20 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         setTipos(((tiposAll || []) as any[])
           .filter(t => t.aparece_no_dre !== false)
           .map(t => ({ id: t.id, nome: t.nome, tipo: t.tipo })));
+        setTiposFull(((tiposAll || []) as any[])
+          .filter(t => t.aparece_no_dre !== false)
+          .map(t => ({
+            id: t.id,
+            nome: t.nome,
+            tipo: t.tipo,
+            descricao: t.descricao ?? null,
+            empresa_id: t.empresa_id ?? null,
+            categoria_id: t.categoria_id ?? null,
+            valor_maximo_mensal: Number(t.valor_maximo_mensal || 0),
+            aparece_no_dre: t.aparece_no_dre !== false,
+            marcada_para_eliminar: !!t.marcada_para_eliminar,
+            ordem: Number(t.ordem || 0),
+          })));
 
         const respIds = Array.from(new Set(gastosRows.map(r => r.responsavel_id).filter(Boolean))) as string[];
         const bancoIds = Array.from(new Set(gastosRows.map(r => r.banco_id).filter(Boolean))) as string[];
@@ -386,34 +418,35 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
 
   return (
     <div className="grid grid-cols-1 gap-4 mb-6">
-      <BlocoFolha
-        rows={folha}
-        loading={loading}
-        colabs={colabs}
+      <FolhaBlockMensal
         padroesFolha={padroesFolha}
-        onDelete={(id) => setConfirmDel({ kind: 'folha', id })}
-        onPatch={handlePatchFolha}
-        onInsert={handleInsertFolha}
-        onDeletePadrao={async (id) => { await removePadrao(id); reload(); }}
+        folhaRows={folha}
+        loading={loading}
       />
-      <BlocoGastosReadonly
+      <TiposCustoBlockMensal
         titulo="Despesas Fixas"
         icon={<Receipt className="w-4 h-4" />}
-        rows={gastosFixas}
+        tipo="fixa"
+        tiposFull={tiposFull.filter(t => t.tipo === 'fixa')}
+        gastos={gastosFixas}
         loading={loading}
         onAddGasto={onRequestNovoGasto ? () => onRequestNovoGasto('fixa') : undefined}
       />
-      <BlocoGastosReadonly
+      <TiposCustoBlockMensal
         titulo="Despesas Variáveis"
         icon={<TrendingDown className="w-4 h-4" />}
-        rows={gastosVariaveis}
+        tipo="variavel"
+        tiposFull={tiposFull.filter(t => t.tipo === 'variavel')}
+        gastos={gastosVariaveis}
         loading={loading}
         onAddGasto={onRequestNovoGasto ? () => onRequestNovoGasto('variavel') : undefined}
       />
-      <BlocoGastosReadonly
+      <TiposCustoBlockMensal
         titulo="Despesas de Imposto"
         icon={<Landmark className="w-4 h-4" />}
-        rows={gastosImpostos}
+        tipo="imposto"
+        tiposFull={tiposFull.filter(t => t.tipo === 'imposto')}
+        gastos={gastosImpostos}
         loading={loading}
         onAddGasto={onRequestNovoGasto ? () => onRequestNovoGasto('imposto') : undefined}
       />
@@ -1354,6 +1387,494 @@ function BlocoGastosReadonly({
           <span className="text-xs text-white/50 uppercase tracking-wider">Total pago</span>
           <span className="text-base font-bold text-white">{formatCurrency(total)}</span>
         </div>
+      </div>
+    </div>
+  );
+}
+
+/* ============ Mensal: layout das Configurações (somente leitura) ============ */
+
+function calcTotalFolhaConfig(f: {
+  salario: number; salario_minimo?: number; aux_combustivel: number;
+  insalubridade_pct: number; fgts_pct: number; em_folha?: boolean;
+  ferias_valor?: number | null;
+}) {
+  if (f.em_folha === false) return Number(f.salario) || 0;
+  const baseInsalub = f.salario_minimo == null ? f.salario : f.salario_minimo;
+  const insalub = baseInsalub * (f.insalubridade_pct || 0) / 100;
+  const fgts = f.salario * (f.fgts_pct || 0) / 100;
+  const ferias = f.ferias_valor == null ? (f.salario / 3 / 12) : Number(f.ferias_valor) || 0;
+  const prev13 = f.salario / 12;
+  const fgts13 = fgts / 12;
+  return f.salario + f.aux_combustivel + insalub + fgts + prev13 + fgts13 + ferias;
+}
+
+function TiposCustoBlockMensal({
+  titulo, icon, tipo, tiposFull, gastos, loading, onAddGasto,
+}: {
+  titulo: string;
+  icon: React.ReactNode;
+  tipo: 'fixa' | 'variavel' | 'imposto';
+  tiposFull: TipoCustoFull[];
+  gastos: GastoAgrupado[];
+  loading: boolean;
+  onAddGasto?: () => void;
+}) {
+  const { categorias } = useDespesasCategorias();
+  const { empresas } = useEmpresasEmissoras();
+  const empresasMap = useMemo(() => {
+    const m: Record<string, string> = {};
+    (empresas || []).forEach((e: any) => { m[e.id] = e.nome; });
+    return m;
+  }, [empresas]);
+
+  const gastosMap = useMemo(() => {
+    const m: Record<string, GastoAgrupado> = {};
+    gastos.forEach(g => { m[g.tipo_custo_id] = g; });
+    return m;
+  }, [gastos]);
+
+  const grupos = useMemo(() => {
+    const out = categorias
+      .map((cat, idx) => ({
+        cat,
+        palette: getCategoriaPalette(idx),
+        rows: tiposFull.filter(t => t.categoria_id === cat.id),
+      }))
+      .filter(g => g.rows.length > 0);
+    const sem = tiposFull.filter(t => !t.categoria_id);
+    if (sem.length > 0) {
+      out.push({
+        cat: null as unknown as CategoriaDespesa,
+        palette: { color: 'bg-white/5 border-white/15 text-white/60', dot: 'bg-white/40' },
+        rows: sem,
+      });
+    }
+    return out;
+  }, [categorias, tiposFull]);
+
+  const totalProjetado = tiposFull.reduce((s, t) => s + Number(t.valor_maximo_mensal || 0), 0);
+  const totalPago = gastos.reduce((s, g) => s + Number(g.total || 0), 0);
+
+  return (
+    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-5">
+      <div className="flex items-center gap-2 text-white mb-3">
+        {icon}
+        <h3 className="font-semibold">{titulo}</h3>
+        <span className="text-white/40 text-sm">({tiposFull.length})</span>
+        {onAddGasto && (
+          <div className="ml-auto">
+            <button
+              type="button"
+              onClick={onAddGasto}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-orange-600 hover:bg-orange-500 text-white shadow-lg shadow-orange-600/20 transition-all"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Novo Gasto
+            </button>
+          </div>
+        )}
+      </div>
+
+      {loading ? (
+        <div className="text-white/40 px-2 py-3">Carregando...</div>
+      ) : tiposFull.length === 0 ? (
+        <div className="text-white/40 px-2 py-6 text-center">Nenhum tipo de custo configurado para esta categoria.</div>
+      ) : (
+        <div>
+          {grupos.map((g, idx) => (
+            <CategoriaGroupMensal
+              key={g.cat?.id ?? `__sem-${idx}`}
+              cat={g.cat}
+              palette={g.palette}
+              rows={g.rows}
+              categorias={categorias}
+              empresasMap={empresasMap}
+              gastosMap={gastosMap}
+            />
+          ))}
+        </div>
+      )}
+
+      <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between px-2 gap-6">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-white/50 uppercase tracking-wider">Total projetado</span>
+          <span className="text-sm font-medium text-white/80">{formatCurrency(totalProjetado)}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-white/50 uppercase tracking-wider">Total pago no mês</span>
+          <span className="text-base font-bold text-white">{formatCurrency(totalPago)}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CategoriaGroupMensal({
+  cat, palette, rows, categorias, empresasMap, gastosMap,
+}: {
+  cat: CategoriaDespesa | null;
+  palette: { color: string; dot: string };
+  rows: TipoCustoFull[];
+  categorias: CategoriaDespesa[];
+  empresasMap: Record<string, string>;
+  gastosMap: Record<string, GastoAgrupado>;
+}) {
+  const [expanded, setExpanded] = useState(true);
+  const [expandedRow, setExpandedRow] = useState<string | null>(null);
+  const subtotalProj = rows.reduce((s, r) => s + Number(r.valor_maximo_mensal || 0), 0);
+  const subtotalPago = rows.reduce((s, r) => s + Number(gastosMap[r.id]?.total || 0), 0);
+
+  const catPillClass = (catId: string | null) => {
+    const base = 'inline-flex items-center gap-1.5 h-6 px-2 rounded-full border text-[11px] font-medium';
+    if (!catId) return `${base} bg-white/5 border-white/15 text-white/60`;
+    const idx = categorias.findIndex(c => c.id === catId);
+    if (idx < 0) return `${base} bg-white/5 border-white/15 text-white/60`;
+    return `${base} ${getCategoriaPalette(idx).color}`;
+  };
+  const catLabel = (catId: string | null) => categorias.find(c => c.id === catId)?.nome ?? 'Sem categoria';
+
+  const fmtData = (iso: string) => {
+    const [, m, d] = iso.split('-');
+    return `${d}/${m}`;
+  };
+
+  return (
+    <div className="border-b border-white/[0.06] px-1 pt-2 pb-3 group/cat transition-colors">
+      <div
+        className={`flex items-center gap-2 ${expanded ? 'mb-2' : ''} cursor-pointer select-none`}
+        onClick={() => setExpanded(v => !v)}
+      >
+        <ChevronRight className={`w-4 h-4 text-white/40 transition-transform ${expanded ? 'rotate-90 text-white/60' : ''}`} />
+        <span className={`w-2 h-2 rounded-full ${palette.dot}`} />
+        <span className="text-sm text-white/90 font-medium">{cat?.nome ?? 'Sem categoria'}</span>
+        <span className="text-xs text-white/40 tabular-nums">{rows.length}</span>
+        <div className="flex-1" />
+        <span className="text-[11px] uppercase tracking-wider text-white/40">Projetado</span>
+        <span className="text-sm text-white/70 font-medium tabular-nums">{formatCurrency(subtotalProj)}</span>
+        <span className="text-[11px] uppercase tracking-wider text-white/40 ml-3">Pago</span>
+        <span className="text-sm text-white font-semibold tabular-nums">{formatCurrency(subtotalPago)}</span>
+      </div>
+
+      {expanded && (
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-[10px] uppercase tracking-wider text-white/40 border-b border-white/10">
+              <th className="pb-2 w-6"></th>
+              <th className="text-left font-normal pb-2 pl-1 w-[26%]">Nome</th>
+              <th className="pb-2 px-2 w-8" title="Descrição"></th>
+              <th className="text-left font-normal pb-2 px-2 w-[18%]">Categoria</th>
+              <th className="text-left font-normal pb-2 px-2 w-[16%]">Empresa</th>
+              <th className="text-right font-normal pb-2 px-2 w-[14%]">Valor projetado</th>
+              <th className="text-center font-normal pb-2 px-2 w-[6%]">DRE</th>
+              <th className="text-right font-normal pb-2 px-2 w-[16%]">Valor pago no mês</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map(t => {
+              const g = gastosMap[t.id];
+              const pago = Number(g?.total || 0);
+              const proj = Number(t.valor_maximo_mensal || 0);
+              const qtd = g?.quantidade || 0;
+              const overspent = proj > 0 && pago > proj;
+              const isOpen = expandedRow === t.id;
+              const canExpand = qtd > 0;
+              return (
+                <Fragment key={t.id}>
+                  <tr
+                    className={`border-b border-white/5 hover:bg-white/[0.03] ${canExpand ? 'cursor-pointer' : ''}`}
+                    onClick={() => canExpand && setExpandedRow(prev => prev === t.id ? null : t.id)}
+                  >
+                    <td className="py-2 w-6 align-middle text-center">
+                      {canExpand ? (
+                        isOpen
+                          ? <ChevronDown className="w-3.5 h-3.5 text-white/50 inline" />
+                          : <ChevronRight className="w-3.5 h-3.5 text-white/50 inline" />
+                      ) : null}
+                    </td>
+                    <td className={`py-2 pl-1 ${t.marcada_para_eliminar ? 'text-red-300/80 line-through' : 'text-white/90'}`}>
+                      <span className="inline-flex items-center gap-1.5">
+                        {t.marcada_para_eliminar && <AlertTriangle className="w-3 h-3 text-red-400" />}
+                        {t.nome}
+                      </span>
+                    </td>
+                    <td className="px-1 text-center">
+                      {t.descricao ? (
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <button
+                              onClick={(e) => e.stopPropagation()}
+                              className="p-0.5 rounded hover:bg-white/10 text-white/40 hover:text-white/70"
+                              title="Ver descrição"
+                            >
+                              <FileText className="w-3.5 h-3.5" />
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-72 text-xs bg-slate-900 border-white/10 text-white/80" align="start">
+                            {t.descricao}
+                          </PopoverContent>
+                        </Popover>
+                      ) : null}
+                    </td>
+                    <td className="px-2">
+                      <span className={catPillClass(t.categoria_id)}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${
+                          t.categoria_id
+                            ? getCategoriaPalette(categorias.findIndex(c => c.id === t.categoria_id)).dot
+                            : 'bg-white/40'
+                        }`} />
+                        {catLabel(t.categoria_id)}
+                      </span>
+                    </td>
+                    <td className="px-2 text-white/50">
+                      {t.empresa_id ? (empresasMap[t.empresa_id] || '—') : '—'}
+                    </td>
+                    <td className={`px-2 text-right font-medium ${t.marcada_para_eliminar ? 'text-red-400 line-through' : 'text-white'}`}>
+                      {formatCurrency(proj)}
+                    </td>
+                    <td className="px-2 text-center">
+                      {t.aparece_no_dre ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-400/15 text-emerald-300 border border-emerald-400/20">Sim</span>
+                      ) : (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-white/10 text-white/50 border border-white/10">Não</span>
+                      )}
+                    </td>
+                    <td className={`px-2 text-right font-medium ${pago === 0 ? 'text-white/40' : overspent ? 'text-orange-300' : 'text-white'}`}>
+                      {pago > 0 ? (
+                        <span className="inline-flex items-baseline gap-1.5">
+                          <span>{formatCurrency(pago)}</span>
+                          {qtd > 0 && <span className="text-[10px] text-white/40">({qtd})</span>}
+                        </span>
+                      ) : '—'}
+                    </td>
+                  </tr>
+                  {isOpen && g && (
+                    <tr className="bg-white/[0.02]">
+                      <td colSpan={8} className="px-3 py-2">
+                        <table className="w-full text-xs">
+                          <thead>
+                            <tr className="text-[10px] uppercase tracking-wider text-white/30">
+                              <th className="text-left font-normal py-1 w-[60px]">Data</th>
+                              <th className="text-left font-normal py-1">Descrição</th>
+                              <th className="text-left font-normal py-1 w-[160px]">Responsável</th>
+                              <th className="text-left font-normal py-1 w-[140px]">Banco</th>
+                              <th className="text-right font-normal py-1 w-[120px]">Valor</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {g.itens.map(it => (
+                              <tr key={it.id} className="border-t border-white/5 text-white/80">
+                                <td className="py-1 text-white/60">{fmtData(it.data)}</td>
+                                <td className="py-1">{it.descricao || '—'}</td>
+                                <td className="py-1 text-white/60">{it.responsavel_nome}</td>
+                                <td className="py-1 text-white/60">{it.banco_nome}</td>
+                                <td className="py-1 text-right text-white font-medium">{formatCurrency(it.valor)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
+              );
+            })}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
+}
+
+function FolhaBlockMensal({
+  padroesFolha, folhaRows, loading,
+}: {
+  padroesFolha: DespesaPadrao[];
+  folhaRows: FolhaRow[];
+  loading: boolean;
+}) {
+  const { setores } = useSetores();
+  const setoresMeta = useMemo(() => setores.map((s, idx) => {
+    const p = getSetorPalette(idx);
+    return { value: s.key, label: s.label, color: p.color, dot: p.dot };
+  }), [setores]);
+  const SEM_SETOR = { value: '', label: 'Sem setor', color: 'bg-white/5 border-white/15 text-white/60', dot: 'bg-white/40' };
+
+  const pagoByNome = useMemo(() => {
+    const m: Record<string, number> = {};
+    folhaRows.forEach(r => { m[norm(r.colaborador_nome)] = Number(r.total || 0); });
+    return m;
+  }, [folhaRows]);
+
+  const grupos = useMemo(() => {
+    const out = setoresMeta
+      .map(meta => ({ meta, rows: padroesFolha.filter(p => (p.setor ?? '') === meta.value) }))
+      .filter(g => g.rows.length > 0);
+    const sem = padroesFolha.filter(p => !p.setor);
+    if (sem.length > 0) out.push({ meta: SEM_SETOR, rows: sem });
+    return out;
+  }, [setoresMeta, padroesFolha]);
+
+  const totalProjetado = padroesFolha.reduce((s, p) => s + calcTotalFolhaConfig({
+    salario: Number(p.salario) || 0,
+    salario_minimo: Number(p.salario_minimo) || 0,
+    aux_combustivel: Number(p.aux_combustivel) || 0,
+    insalubridade_pct: Number(p.insalubridade_pct) || 0,
+    fgts_pct: Number(p.fgts_pct) || 0,
+    em_folha: p.em_folha,
+    ferias_valor: p.ferias_valor,
+  }), 0);
+  const totalSalarios = padroesFolha.reduce((s, p) => s + Number(p.salario || 0), 0);
+  const totalPago = folhaRows.reduce((s, r) => s + Number(r.total || 0), 0);
+
+  return (
+    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-5">
+      <div className="flex items-center gap-2 text-white mb-3">
+        <Users className="w-4 h-4" />
+        <h3 className="font-semibold">Folha Salarial</h3>
+        <span className="text-white/40 text-sm">({padroesFolha.length})</span>
+      </div>
+
+      {loading ? (
+        <div className="text-white/40 px-2 py-3">Carregando...</div>
+      ) : padroesFolha.length === 0 ? (
+        <div className="text-white/40 px-2 py-6 text-center">Nenhum colaborador cadastrado. Configure em "Configurações padrão".</div>
+      ) : (
+        <div className="space-y-3">
+          {grupos.map((g, idx) => (
+            <SetorGroupMensal
+              key={g.meta.value || `__sem-${idx}`}
+              meta={g.meta}
+              rows={g.rows}
+              pagoByNome={pagoByNome}
+            />
+          ))}
+        </div>
+      )}
+
+      <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between px-2 gap-6">
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-white/50 uppercase tracking-wider">Salários</span>
+          <span className="text-sm font-medium text-white/70">{formatCurrency(totalSalarios)}</span>
+          <span className="text-xs text-white/50 uppercase tracking-wider ml-3">Projetado</span>
+          <span className="text-sm font-medium text-white/80">{formatCurrency(totalProjetado)}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-white/50 uppercase tracking-wider">Total pago no mês</span>
+          <span className="text-base font-bold text-white">{formatCurrency(totalPago)}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SetorGroupMensal({
+  meta, rows, pagoByNome,
+}: {
+  meta: { value: string; label: string; color: string; dot: string };
+  rows: DespesaPadrao[];
+  pagoByNome: Record<string, number>;
+}) {
+  const subtotalProj = rows.reduce((s, p) => s + calcTotalFolhaConfig({
+    salario: Number(p.salario) || 0,
+    salario_minimo: Number(p.salario_minimo) || 0,
+    aux_combustivel: Number(p.aux_combustivel) || 0,
+    insalubridade_pct: Number(p.insalubridade_pct) || 0,
+    fgts_pct: Number(p.fgts_pct) || 0,
+    em_folha: p.em_folha,
+    ferias_valor: p.ferias_valor,
+  }), 0);
+  const subtotalPago = rows.reduce((s, p) => s + Number(pagoByNome[norm(p.nome)] || 0), 0);
+
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-2 px-1">
+        <span className={`w-2 h-2 rounded-full ${meta.dot}`} />
+        <span className={`inline-flex items-center h-6 px-2 rounded-full border text-[11px] font-medium ${meta.color}`}>{meta.label}</span>
+        <span className="text-xs text-white/40 tabular-nums">{rows.length}</span>
+        <div className="flex-1" />
+        <span className="text-[11px] uppercase tracking-wider text-white/40">Projetado</span>
+        <span className="text-sm text-white/70 font-medium tabular-nums">{formatCurrency(subtotalProj)}</span>
+        <span className="text-[11px] uppercase tracking-wider text-white/40 ml-3">Pago</span>
+        <span className="text-sm text-white font-semibold tabular-nums">{formatCurrency(subtotalPago)}</span>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm table-fixed min-w-[1640px]">
+          <thead>
+            <tr className="text-[10px] uppercase tracking-wider text-white/40 border-b border-white/10">
+              <th className="text-left font-normal pb-2 pl-1">Colaborador</th>
+              <th className="text-center font-normal pb-2 px-2">Em folha</th>
+              <th className="text-left font-normal pb-2 px-2">Setor</th>
+              <th className="text-right font-normal pb-2 px-2 text-emerald-400">Salário</th>
+              <th className="text-right font-normal pb-2 px-2">Salário Mínimo</th>
+              <th className="text-right font-normal pb-2 px-2">Combustível</th>
+              <th className="text-right font-normal pb-2 px-2">Insalub %</th>
+              <th className="text-right font-normal pb-2 px-2">Insalub R$</th>
+              <th className="text-right font-normal pb-2 px-2">FGTS %</th>
+              <th className="text-right font-normal pb-2 px-2">FGTS R$</th>
+              <th className="text-right font-normal pb-2 px-2">13º</th>
+              <th className="text-right font-normal pb-2 px-2">FGTS 13º</th>
+              <th className="text-right font-normal pb-2 px-2">Férias</th>
+              <th className="text-right font-normal pb-2 px-2">Total</th>
+              <th className="text-right font-normal pb-2 px-2">Valor pago no mês</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map(p => {
+              const salario = Number(p.salario) || 0;
+              const salario_minimo = Number(p.salario_minimo) || 0;
+              const aux_combustivel = Number(p.aux_combustivel) || 0;
+              const insalubridade_pct = Number(p.insalubridade_pct) || 0;
+              const fgts_pct = Number(p.fgts_pct) || 0;
+              const desativado = p.em_folha === false;
+              const baseInsalub = salario_minimo || salario;
+              const insalubVal = desativado ? 0 : baseInsalub * insalubridade_pct / 100;
+              const fgtsVal = desativado ? 0 : salario * fgts_pct / 100;
+              const prev13 = desativado ? 0 : salario / 12;
+              const fgts13 = desativado ? 0 : fgtsVal / 12;
+              const ferias = desativado ? 0 : (p.ferias_valor == null ? salario / 3 / 12 : Number(p.ferias_valor) || 0);
+              const total = calcTotalFolhaConfig({
+                salario, salario_minimo, aux_combustivel, insalubridade_pct, fgts_pct,
+                em_folha: p.em_folha, ferias_valor: p.ferias_valor,
+              });
+              const pago = Number(pagoByNome[norm(p.nome)] || 0);
+              const overspent = total > 0 && pago > total;
+              const zeroCurr = <span className="text-white/30">{formatCurrency(0)}</span>;
+              return (
+                <tr key={p.id} className="border-b border-white/5 hover:bg-white/[0.03]">
+                  <td className="py-2 pl-1 text-white/90">{p.nome}</td>
+                  <td className="px-2 text-center">
+                    {p.em_folha ? (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-400/15 text-emerald-300 border border-emerald-400/20">Sim</span>
+                    ) : (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-white/10 text-white/50 border border-white/10">Não</span>
+                    )}
+                  </td>
+                  <td className="px-2">
+                    <span className={`inline-flex items-center gap-1.5 h-6 px-2 rounded-full border text-[11px] font-medium ${meta.color}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${meta.dot}`} />
+                      {meta.label}
+                    </span>
+                  </td>
+                  <td className="px-2 text-right text-emerald-400 font-medium">{formatCurrency(salario)}</td>
+                  <td className="px-2 text-right text-white/60">{formatCurrency(salario_minimo)}</td>
+                  <td className="px-2 text-right text-white/60">{formatCurrency(aux_combustivel)}</td>
+                  <td className="px-2 text-right text-white/60">{insalubridade_pct.toFixed(2)}%</td>
+                  <td className="px-2 text-right text-xs">{desativado ? zeroCurr : <span className="text-orange-400">{formatCurrency(insalubVal)}</span>}</td>
+                  <td className="px-2 text-right text-white/60">{fgts_pct.toFixed(2)}%</td>
+                  <td className="px-2 text-right text-xs">{desativado ? zeroCurr : <span className="text-orange-400">{formatCurrency(fgtsVal)}</span>}</td>
+                  <td className="px-2 text-right text-xs">{desativado ? zeroCurr : <span className="text-orange-400">{formatCurrency(prev13)}</span>}</td>
+                  <td className="px-2 text-right text-xs">{desativado ? zeroCurr : <span className="text-orange-400">{formatCurrency(fgts13)}</span>}</td>
+                  <td className="px-2 text-right text-xs">{desativado ? zeroCurr : <span className="text-orange-400">{formatCurrency(ferias)}</span>}</td>
+                  <td className="px-2 text-right text-white font-semibold">{formatCurrency(total)}</td>
+                  <td className={`px-2 text-right font-medium ${pago === 0 ? 'text-white/40' : overspent ? 'text-orange-300' : 'text-white'}`}>
+                    {pago > 0 ? formatCurrency(pago) : '—'}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
     </div>
   );
