@@ -919,25 +919,81 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
       setDespesasImpostos([]);
     }
 
-    // Folha salarial — fonte: custos_folha_mensais (total por colaborador)
-    const { data: folhaItens, error: folhaErr } = await supabase
-      .from('custos_folha_mensais' as any)
-      .select('id, colaborador_nome, valor')
-      .eq('mes_referencia', start);
+    // Folha salarial — mesma fonte de /direcao/estrategia/despesas/:mes
+    // despesas_padrao (tipo='folha') sobrescrita por despesas_manuais_folha do mês.
+    const normNome = (s: string) => (s || '').trim().toLowerCase();
+    const calcTotalFolha = (f: {
+      salario: number; aux_combustivel: number; insalubridade_pct: number;
+      fgts_pct: number; previsao_13_valor: number; em_folha?: boolean;
+    }) => {
+      const salario = Number(f.salario) || 0;
+      if (f.em_folha === false) return salario;
+      const aux = Number(f.aux_combustivel) || 0;
+      const insalub = salario * (Number(f.insalubridade_pct) || 0) / 100;
+      const fgts = salario * (Number(f.fgts_pct) || 0) / 100;
+      const prev13 = Number(f.previsao_13_valor) || 0;
+      const ferias = salario / 3 + fgts;
+      return salario + aux + insalub + fgts + prev13 + ferias;
+    };
 
-    if (folhaErr) {
-      console.error('Erro ao buscar folha:', folhaErr);
+    const [{ data: padroes, error: padErr }, { data: manuais, error: manErr }] = await Promise.all([
+      supabase
+        .from('despesas_padrao' as any)
+        .select('id, nome, salario, aux_combustivel, insalubridade_pct, fgts_pct, previsao_13_valor, em_folha, tipo')
+        .eq('tipo', 'folha'),
+      supabase
+        .from('despesas_manuais_folha' as any)
+        .select('id, colaborador_nome, salario, aux_combustivel, insalubridade_pct, fgts_pct, previsao_13_valor')
+        .eq('mes_referencia', start),
+    ]);
+
+    if (padErr || manErr) {
+      console.error('Erro ao buscar folha:', padErr || manErr);
       setDespesasFolha([]);
     } else {
-      setDespesasFolha(
-        ((folhaItens || []) as any[])
-          .map((f) => ({
-            id: f.id,
-            nome: f.colaborador_nome,
-            valor_real: Number(f.valor) || 0,
-          }))
-          .sort((a, b) => a.nome.localeCompare(b.nome))
-      );
+      const manuaisByNome = new Map<string, any>();
+      ((manuais || []) as any[]).forEach(m => manuaisByNome.set(normNome(m.colaborador_nome), m));
+      const usados = new Set<string>();
+      const items: DespesaAgrupada[] = [];
+
+      ((padroes || []) as any[]).forEach(p => {
+        const key = normNome(p.nome);
+        const manual = manuaisByNome.get(key);
+        if (manual) usados.add(key);
+        const src = manual ?? p;
+        items.push({
+          id: manual ? `m:${manual.id}` : `p:${p.id}`,
+          nome: p.nome,
+          valor_real: calcTotalFolha({
+            salario: src.salario,
+            aux_combustivel: src.aux_combustivel,
+            insalubridade_pct: src.insalubridade_pct,
+            fgts_pct: src.fgts_pct,
+            previsao_13_valor: src.previsao_13_valor,
+            em_folha: p.em_folha,
+          }),
+        });
+      });
+
+      // Lançamentos manuais sem padrão correspondente
+      ((manuais || []) as any[]).forEach(m => {
+        const key = normNome(m.colaborador_nome);
+        if (usados.has(key)) return;
+        items.push({
+          id: `m:${m.id}`,
+          nome: m.colaborador_nome,
+          valor_real: calcTotalFolha({
+            salario: m.salario,
+            aux_combustivel: m.aux_combustivel,
+            insalubridade_pct: m.insalubridade_pct,
+            fgts_pct: m.fgts_pct,
+            previsao_13_valor: m.previsao_13_valor,
+            em_folha: true,
+          }),
+        });
+      });
+
+      setDespesasFolha(items.sort((a, b) => a.nome.localeCompare(b.nome)));
     }
   };
 
