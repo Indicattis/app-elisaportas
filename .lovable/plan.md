@@ -1,17 +1,18 @@
 ## Objetivo
-
-Atualizar a tela de erro do `ErrorBoundary` para o branding minimalista atual da aplicação (glassmorphism — `bg-white/5`, `backdrop-blur-xl`, `border-white/10`, paleta azul/branco com fundo escuro gradiente).
+Adicionar botão "Exportar PDF" para cada uma das 3 sessões de Tipos de Custos (Fixas, Variáveis, Impostos) em `/direcao/estrategia/despesas/configuracoes`. A sessão "Folha Salarial" já possui exportação.
 
 ## Mudanças
 
-### `src/components/ErrorBoundary.tsx`
-Reescrever o fallback padrão para:
-- Fundo escuro com gradiente (slate-950 → slate-900) cobrindo viewport.
-- Card central glassmorphism (`bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 max-w-md`).
-- Ícone de alerta (`AlertTriangle` do lucide) num círculo `bg-red-500/15 text-red-300`.
-- Título "Algo deu errado" em branco, semibold.
-- Subtítulo em `text-white/60` mantendo a mensagem atual.
-- Botão "Recarregar página" estilizado com gradiente azul (`bg-blue-500 hover:bg-blue-400 text-white`) com ícone `RefreshCw`.
-- Opcional: bloco discreto mostrando `error.message` em `text-xs text-white/30 font-mono`, truncado, só quando existir.
+### 1. Novo utilitário `src/utils/tiposCustosPDFGenerator.ts`
+Criar `exportTiposCustosPDF(titulo, items, categorias)` usando jsPDF + autoTable (mesmo padrão de `folhaSalarialPDFGenerator` / `estrategiaItensExport`):
+- Cabeçalho: título da sessão (ex.: "Tipos de Custos — Fixas") e data de geração.
+- Agrupar itens por categoria (igual à UI). Itens sem categoria entram em "Sem categoria".
+- Por grupo: linha de cabeçalho com nome da categoria + contagem, e tabela com colunas:
+  Nome | Descrição | Empresa | Valor máx. mensal | DRE (Sim/Não) | Ativo (Sim/Não).
+- Linha final TOTAL somando `valor_maximo_mensal` apenas dos ativos (mesma lógica do `totalAtivos` da UI).
+- Nome do arquivo: `tipos-custos-{slug-do-titulo}-YYYY-MM-DD.pdf`.
 
-Sem mudanças em comportamento, apenas visual.
+### 2. `src/pages/direcao/estrategia/EstrategiaDespesasConfiguracoes.tsx`
+No header do `TiposCustoBlock` (logo antes do botão "Gerenciar categorias"), adicionar botão "Exportar PDF" no mesmo estilo `rounded-full` neutro (bg-white/5) com ícone `FileText`, chamando `exportTiposCustosPDF(titulo, items, categorias)`.
+
+Nenhuma alteração de lógica de negócio; apenas UI + util de exportação.
