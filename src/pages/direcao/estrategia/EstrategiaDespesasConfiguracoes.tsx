@@ -4,6 +4,7 @@ import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { formatCurrency } from '@/lib/utils';
 import { useDespesasPadrao, type DespesaPadrao, type DespesaPadraoTipo } from '@/hooks/useDespesasPadrao';
 import { useTiposCustos, type TipoCusto } from '@/hooks/useTiposCustos';
+import { useEmpresasEmissoras } from '@/hooks/useEmpresasEmissoras';
 import { Switch } from '@/components/ui/switch';
 import { exportFolhaSalarialPDF } from '@/utils/folhaSalarialPDFGenerator';
 import { useSetores, getSetorPalette } from '@/hooks/useSetores';
@@ -740,6 +741,9 @@ function TiposCustoBlock({
   const [descricao, setDescricao] = useState('');
   const [valor, setValor] = useState(0);
   const [apareceNoDre, setApareceNoDre] = useState(true);
+  const [empresaId, setEmpresaId] = useState<string>('');
+  const { empresas } = useEmpresasEmissoras();
+  const empresasAtivas = (empresas || []).filter((e: any) => e.ativo !== false);
 
   const totalAtivos = items.filter(i => i.ativo).reduce((s, i) => s + Number(i.valor_maximo_mensal || 0), 0);
 
@@ -752,8 +756,9 @@ function TiposCustoBlock({
       tipo,
       aparece_no_dre: apareceNoDre,
       ativo: true,
+      empresa_id: empresaId || null,
     });
-    if (ok) { setNome(''); setDescricao(''); setValor(0); setApareceNoDre(true); }
+    if (ok) { setNome(''); setDescricao(''); setValor(0); setApareceNoDre(true); setEmpresaId(''); }
   };
 
   return (
@@ -769,6 +774,7 @@ function TiposCustoBlock({
             <tr className="text-[10px] uppercase tracking-wider text-white/40 border-b border-white/10">
               <th className="text-left font-normal pb-2 pl-1">Nome</th>
               <th className="text-left font-normal pb-2 px-2">Descrição</th>
+              <th className="text-left font-normal pb-2 px-2 w-[180px]">Empresa</th>
               <th className="text-right font-normal pb-2 px-2 w-[180px]">Valor projetado</th>
               <th className="text-center font-normal pb-2 px-2 w-[110px]">Aparece no DRE</th>
               <th className="pb-2 pr-1 w-10"></th>
@@ -782,6 +788,18 @@ function TiposCustoBlock({
                 </td>
                 <td className="px-2 text-white/70">
                   <InlineText value={i.descricao || ''} onSave={(v) => update(i.id, { descricao: v || null })} />
+                </td>
+                <td className="px-2 text-white/80">
+                  <select
+                    value={i.empresa_id || ''}
+                    onChange={(e) => update(i.id, { empresa_id: e.target.value || null })}
+                    className="w-full h-8 bg-white/5 border border-white/10 rounded px-2 text-white text-xs outline-none focus:border-blue-400/50"
+                  >
+                    <option value="" className="bg-slate-900">—</option>
+                    {empresasAtivas.map((e: any) => (
+                      <option key={e.id} value={e.id} className="bg-slate-900">{e.nome}</option>
+                    ))}
+                  </select>
                 </td>
                 <td className="px-2 text-right text-white font-medium">
                   <InlineNum value={i.valor_maximo_mensal} onSave={(v) => update(i.id, { valor_maximo_mensal: v })} format="currency" />
@@ -804,6 +822,18 @@ function TiposCustoBlock({
               <td className="px-2">
                 <input value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Descrição (opcional)"
                   className="w-full h-8 bg-white/5 border border-white/10 rounded px-2 text-white text-xs outline-none focus:border-blue-400/50" />
+              </td>
+              <td className="px-2">
+                <select
+                  value={empresaId}
+                  onChange={(e) => setEmpresaId(e.target.value)}
+                  className="w-full h-8 bg-white/5 border border-white/10 rounded px-2 text-white text-xs outline-none focus:border-blue-400/50"
+                >
+                  <option value="" className="bg-slate-900">— (opcional)</option>
+                  {empresasAtivas.map((e: any) => (
+                    <option key={e.id} value={e.id} className="bg-slate-900">{e.nome}</option>
+                  ))}
+                </select>
               </td>
               <td className="px-2"><NumCell value={valor} onChange={setValor} /></td>
               <td className="px-2 text-center">

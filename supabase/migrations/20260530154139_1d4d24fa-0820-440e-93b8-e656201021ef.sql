@@ -1,0 +1,1 @@
+ALTER TABLE public.tipos_custos ADD COLUMN IF NOT EXISTS empresa_id uuid REFERENCES public.empresas_emissoras(id) ON DELETE SET NULL;
