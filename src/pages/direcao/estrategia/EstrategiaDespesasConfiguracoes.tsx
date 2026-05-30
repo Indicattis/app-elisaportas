@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react';
-import { Plus, Trash2, Users, Receipt, TrendingDown, Landmark, FileDown } from 'lucide-react';
+import { useState, useRef, useMemo } from 'react';
+import { Plus, Trash2, Users, Receipt, TrendingDown, Landmark, FileDown, GripVertical } from 'lucide-react';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { formatCurrency } from '@/lib/utils';
 import { useDespesasPadrao, type DespesaPadrao, type DespesaPadraoTipo } from '@/hooks/useDespesasPadrao';
@@ -7,6 +7,22 @@ import { useTiposCustos, type TipoCusto } from '@/hooks/useTiposCustos';
 import { Switch } from '@/components/ui/switch';
 import { exportFolhaSalarialPDF } from '@/utils/folhaSalarialPDFGenerator';
 import { useSetores, getSetorPalette } from '@/hooks/useSetores';
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  arrayMove,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { restrictToVerticalAxis, restrictToParentElement } from '@dnd-kit/modifiers';
 
 export default function EstrategiaDespesasConfiguracoes() {
   const { items, loading, insert, update, remove } = useDespesasPadrao();
