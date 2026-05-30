@@ -279,7 +279,8 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
     const current = folha.find(r => r.id === id);
     if (!current) return;
     const updated = { ...current, [field]: value };
-    const total = calcTotalFolha(updated);
+    const emFolha = padroesFolha.find(p => norm(p.nome) === norm(current.colaborador_nome))?.em_folha ?? true;
+    const total = calcTotalFolha({ ...updated, em_folha: emFolha });
     setFolha(prev => prev.map(r => r.id === id ? { ...updated, total } : r));
     const { error } = await supabase
       .from('despesas_manuais_folha' as any)
@@ -298,7 +299,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
     salario: number; aux_combustivel: number; insalubridade_pct: number; fgts_pct: number; previsao_13_valor: number;
   }) => {
     if (!mesStart) return;
-    const total = calcTotalFolha(payload);
+    const total = calcTotalFolha({ ...payload, em_folha: payload.colab.em_folha });
     const userId = (await supabase.auth.getUser()).data.user?.id || null;
     const { error } = await supabase.from('despesas_manuais_folha' as any).insert({
       mes_referencia: mesStart,
