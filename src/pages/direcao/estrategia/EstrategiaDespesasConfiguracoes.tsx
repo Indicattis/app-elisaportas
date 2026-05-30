@@ -967,7 +967,7 @@ function TiposCustoBlock({
         <span className="text-base font-bold text-white">{formatCurrency(totalAtivos)}</span>
       </div>
 
-      <Dialog open={!!realocacaoDialog} onOpenChange={(open) => { if (!open) { setRealocacaoDialog(null); setDestinoId(''); } }}>
+      <Dialog open={!!realocacaoDialog} onOpenChange={(open) => { if (!open) { setRealocacaoDialog(null); setDestinoId(''); setConfirmarOrfaos(false); } }}>
         <DialogContent className="sm:max-w-[480px]">
           <DialogHeader>
             <DialogTitle>Realocar gastos antes de excluir</DialogTitle>
@@ -991,9 +991,37 @@ function TiposCustoBlock({
               </SelectContent>
             </Select>
           </div>
+          <div className="mt-2 rounded-md border border-amber-400/30 bg-amber-500/10 p-3 space-y-2">
+            {!confirmarOrfaos ? (
+              <button
+                type="button"
+                onClick={() => setConfirmarOrfaos(true)}
+                disabled={realocando || forcando}
+                className="inline-flex items-center gap-1.5 text-xs text-amber-200 hover:text-amber-100 disabled:opacity-50"
+              >
+                <AlertTriangle className="w-3.5 h-3.5" />
+                Excluir mesmo assim (deixar gastos órfãos)
+              </button>
+            ) : (
+              <div className="space-y-2">
+                <p className="text-xs text-amber-100">
+                  Tem certeza? Os <span className="font-semibold">{realocacaoDialog?.count}</span> gasto(s) não serão removidos,
+                  apenas ficarão sem tipo vinculado e somem do agrupamento.
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button size="sm" variant="outline" onClick={() => setConfirmarOrfaos(false)} disabled={forcando}>
+                    Voltar
+                  </Button>
+                  <Button size="sm" onClick={confirmarForcarExclusao} disabled={forcando} className="bg-amber-600 hover:bg-amber-700 text-white">
+                    {forcando ? 'Excluindo…' : 'Confirmar exclusão forçada'}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setRealocacaoDialog(null); setDestinoId(''); }} disabled={realocando}>Cancelar</Button>
-            <Button onClick={confirmarRealocacao} disabled={!destinoId || realocando} className="bg-red-600 hover:bg-red-700">
+            <Button variant="outline" onClick={() => { setRealocacaoDialog(null); setDestinoId(''); setConfirmarOrfaos(false); }} disabled={realocando || forcando}>Cancelar</Button>
+            <Button onClick={confirmarRealocacao} disabled={!destinoId || realocando || forcando} className="bg-red-600 hover:bg-red-700">
               {realocando ? 'Realocando…' : 'Realocar e excluir'}
             </Button>
           </DialogFooter>
