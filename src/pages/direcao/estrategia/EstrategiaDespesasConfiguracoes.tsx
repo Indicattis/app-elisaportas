@@ -82,11 +82,14 @@ const SETORES: { value: string; label: string }[] = [
   { value: 'administrativo', label: 'Administrativo' },
 ];
 
-function calcTotalFolha(f: { salario: number; aux_combustivel: number; insalubridade_pct: number; fgts_pct: number; previsao_13_valor: number; em_folha?: boolean }) {
+function calcFeriasDefault(salario: number, fgts_pct: number) {
+  return salario / 3 + salario * (fgts_pct || 0) / 100;
+}
+function calcTotalFolha(f: { salario: number; aux_combustivel: number; insalubridade_pct: number; fgts_pct: number; previsao_13_valor: number; em_folha?: boolean; ferias_valor?: number | null }) {
   if (f.em_folha === false) return f.salario;
   const insalub = f.salario * (f.insalubridade_pct || 0) / 100;
   const fgts = f.salario * (f.fgts_pct || 0) / 100;
-  const ferias = f.salario / 3 + fgts;
+  const ferias = f.ferias_valor == null ? calcFeriasDefault(f.salario, f.fgts_pct) : Number(f.ferias_valor) || 0;
   return f.salario + f.aux_combustivel + insalub + fgts + f.previsao_13_valor + ferias;
 }
 
@@ -133,6 +136,7 @@ function FolhaBlock({
     fgts_pct: Number(i.fgts_pct) || 0,
     previsao_13_valor: Number(i.previsao_13_valor) || 0,
     em_folha: i.em_folha,
+    ferias_valor: i.ferias_valor,
   }), 0);
 
   return (
@@ -228,8 +232,9 @@ function FolhaRow({
   const insalubVal = salario * insalubridade_pct / 100;
   const fgtsVal = salario * fgts_pct / 100;
   const prev13ComFgts = previsao_13_valor * (1 + fgts_pct / 100);
-  const feriasComUmTerco = salario / 3 + fgtsVal;
-  const total = calcTotalFolha({ salario, aux_combustivel, insalubridade_pct, fgts_pct, previsao_13_valor, em_folha: item.em_folha });
+  const feriasDefault = calcFeriasDefault(salario, fgts_pct);
+  const feriasAtual = item.ferias_valor == null ? feriasDefault : Number(item.ferias_valor) || 0;
+  const total = calcTotalFolha({ salario, aux_combustivel, insalubridade_pct, fgts_pct, previsao_13_valor, em_folha: item.em_folha, ferias_valor: item.ferias_valor });
   return (
     <tr className="border-b border-white/5 hover:bg-white/[0.03]">
       <td className="py-2 pl-1 text-white/90">
@@ -263,7 +268,18 @@ function FolhaRow({
         <InlineNum value={item.previsao_13_valor} onSave={(v) => update(item.id, { previsao_13_valor: v })} format="currency" />
         <div className="text-[10px] text-white/40">c/ FGTS: {formatCurrency(prev13ComFgts)}</div>
       </td>
-      <td className="px-2 text-right text-white/50 text-xs">{formatCurrency(feriasComUmTerco)}</td>
+      <td className="px-2 text-right text-white/70">
+        <InlineNum value={feriasAtual} onSave={(v) => update(item.id, { ferias_valor: v })} format="currency" />
+        {item.ferias_valor != null && (
+          <button
+            onClick={() => update(item.id, { ferias_valor: null })}
+            className="text-[10px] text-blue-300/70 hover:text-blue-300 underline"
+            title="Voltar ao cálculo automático"
+          >
+            auto: {formatCurrency(feriasDefault)}
+          </button>
+        )}
+      </td>
       <td className="px-2 text-right text-white font-semibold">{formatCurrency(total)}</td>
       <td className="pr-1 text-right">
         <button onClick={() => remove(item.id)} className="p-1 rounded hover:bg-red-500/20 text-red-300/70 hover:text-red-300">

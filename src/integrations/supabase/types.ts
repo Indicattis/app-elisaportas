@@ -2309,6 +2309,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           em_folha: boolean
+          ferias_valor: number | null
           fgts_pct: number
           id: string
           insalubridade_pct: number
@@ -2326,6 +2327,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           em_folha?: boolean
+          ferias_valor?: number | null
           fgts_pct?: number
           id?: string
           insalubridade_pct?: number
@@ -2343,6 +2345,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           em_folha?: boolean
+          ferias_valor?: number | null
           fgts_pct?: number
           id?: string
           insalubridade_pct?: number
