@@ -1,45 +1,36 @@
-# Despesas do mês — expandir tipo para ver gastos individuais
+## Objetivo
 
-Em `/direcao/estrategia/despesas/:mes`, os blocos **Despesas Fixas** e **Despesas Variáveis** mostram hoje uma linha por tipo de custo, com quantidade e total. Vou tornar cada linha clicável para expandir e mostrar, logo abaixo, todos os gastos individuais agregados naquele tipo (do mês atual).
+Destacar a tabela de "Produtos da Venda" em `/direcao/vendas/:id` e garantir que a coluna **Tipo** mostre a mesma categoria de faturamento usada em `/financeiro/faturamento/:id` (Porta de Enrolar, Pintura Epóxi, Instalação, Manutenção, Acessório, Adicional, Serviço, etc.).
 
-## Comportamento
+## Mudanças (apenas `src/pages/direcao/VendaDetalhesDirecao.tsx`)
 
-- Clique na linha do tipo → expande/colapsa uma sub-área dentro da própria tabela mostrando os gastos individuais daquele tipo no mês.
-- Indicador visual: chevron (▶ / ▼) à esquerda do nome do tipo + hover já existente.
-- Apenas um tipo expandido por vez por bloco (estado local `expandedId`). Reclique fecha.
-- Funciona em Despesas Fixas e Despesas Variáveis. Os outros blocos (Folha, Impostos) não mudam.
+### 1. Atualizar o mapa de tipos em `getTipoProdutoBadge`
+Hoje o mapa só cobre 5 tipos (`porta_enrolar`, `porta_seccionada`, `porta_rapida`, `servico`, `acessorio`) e cai no fallback genérico para o resto, o que faz itens como `pintura_epoxi`, `instalacao`, `manutencao`, `adicional` aparecerem com o slug cru. Vou alinhar com `formatTipoProduto` da página de faturamento, cobrindo:
 
-## Conteúdo expandido (por gasto)
+- `porta_enrolar` → "Porta de Enrolar" (azul)
+- `porta_social` → "Porta Social" (índigo)
+- `porta_seccionada` → "Porta Seccionada" (roxo)
+- `porta_rapida` → "Porta Rápida" (laranja)
+- `pintura_epoxi` → "Pintura Epóxi" (amarelo)
+- `instalacao` → "Instalação" (ciano)
+- `manutencao` → "Manutenção" (esmeralda)
+- `servico` → "Serviço" (verde)
+- `acessorio` → "Acessório" (cinza)
+- `adicional` → "Adicional" (rosa)
 
-Para cada gasto: **data**, **descrição** (ou "—"), **responsável**, **banco**, **valor**. Estilo discreto, fundo `bg-white/[0.02]`, fontes menores (`text-xs`/`text-[11px]`), alinhado com o restante da página.
+Assim a coluna Tipo passa a representar exatamente a categoria de faturamento do item.
 
-## Mudanças técnicas
+### 2. Destacar visualmente a tabela de Produtos da Venda
+- Trocar o `Card` atual (`bg-white/5 border-blue-500/10`) por um container com gradiente sutil + borda mais marcante: `bg-gradient-to-br from-blue-500/10 via-white/5 to-transparent border-blue-400/30 shadow-[0_0_40px_-15px_rgba(59,130,246,0.4)]`.
+- Cabeçalho da seção: aumentar tipografia (`text-base` em vez de `text-sm`), ícone `Package` em quadrado destacado (`p-2 rounded-lg bg-blue-500/20`), título com gradiente azul→branco.
+- `TableHeader` com `bg-white/[0.04]`, texto em `text-white/80 uppercase tracking-wider font-semibold`.
+- Linhas (`TableRow`) com `hover:bg-blue-500/10 transition-colors` e divisor mais visível (`border-white/10`).
+- Aumentar densidade tipográfica da tabela de `text-xs` para `text-sm` nas células principais e manter os badges de Tipo com `font-medium`.
+- Coluna **Total** em destaque: `text-base font-semibold text-emerald-400`.
 
-Arquivo único: `src/components/direcao/estrategia/DespesasResumoTopo.tsx`.
+### 3. Sem mudanças em dados/lógica
+Nenhuma alteração de query, schema, RLS, ou regra de negócio. Apenas mapeamento de labels e estilos Tailwind.
 
-1. **Tipo `GastoAgrupado`**: adicionar campo `itens: GastoItem[]` onde
-   ```ts
-   type GastoItem = {
-     id: string;
-     data: string;
-     valor: number;
-     descricao: string | null;
-     responsavel_nome: string;
-     banco_nome: string;
-   };
-   ```
-
-2. **Fetch (useEffect ~linha 162)**:
-   - Ampliar o `select` de `gastos` para incluir `id, tipo_custo_id, valor, data, descricao, responsavel_id, banco_id`.
-   - Depois de carregar `tiposMap`, fazer dois fetches paralelos em `admin_users` (`user_id, nome`) e `bancos` (`id, nome`) para os IDs presentes nos gastos retornados (mesmo padrão de `useGastos.ts`).
-   - Em `agruparPor`, preencher também `itens` (ordenado por `data` desc) com nome resolvido de responsável e banco.
-
-3. **`BlocoGastosReadonly`**:
-   - Estado local: `const [expandedId, setExpandedId] = useState<string | null>(null);`.
-   - A linha do tipo vira um `<tr>` clicável (`onClick={() => setExpandedId(prev => prev === r.tipo_custo_id ? null : r.tipo_custo_id)}`, `cursor-pointer`), com `<ChevronRight />` / `<ChevronDown />` antes do nome.
-   - Quando expandido, renderizar `<tr><td colSpan={3}>` com uma sub-tabela listando `r.itens` (data formatada `dd/MM`, descrição, responsável, banco, valor à direita). Linhas com `border-b border-white/5`, sem zebra forte.
-
-## Fora do escopo
-
-- Sem mudanças em outras páginas, hooks ou banco. Apenas leitura — nenhum write novo.
-- Sem alteração nos blocos de Folha e Impostos.
+## Fora de escopo
+- Página de faturamento permanece intocada.
+- Demais tabelas/cards da página de detalhes ficam como estão.

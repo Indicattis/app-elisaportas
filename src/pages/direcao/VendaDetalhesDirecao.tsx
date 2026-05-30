@@ -227,14 +227,19 @@ export default function VendaDetalhesDirecao() {
 
   const getTipoProdutoBadge = (tipo: string) => {
     const tipos: Record<string, { label: string; color: string }> = {
-      'porta_enrolar': { label: 'Porta Enrolar', color: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
+      'porta_enrolar': { label: 'Porta de Enrolar', color: 'bg-blue-500/20 text-blue-300 border-blue-400/40' },
+      'porta_social': { label: 'Porta Social', color: 'bg-indigo-500/20 text-indigo-300 border-indigo-400/40' },
       'porta_seccionada': { label: 'Porta Seccionada', color: 'bg-purple-500/20 text-purple-400 border-purple-500/30' },
       'porta_rapida': { label: 'Porta Rápida', color: 'bg-orange-500/20 text-orange-400 border-orange-500/30' },
+      'pintura_epoxi': { label: 'Pintura Epóxi', color: 'bg-yellow-500/20 text-yellow-300 border-yellow-400/40' },
+      'instalacao': { label: 'Instalação', color: 'bg-cyan-500/20 text-cyan-300 border-cyan-400/40' },
+      'manutencao': { label: 'Manutenção', color: 'bg-emerald-500/20 text-emerald-300 border-emerald-400/40' },
       'servico': { label: 'Serviço', color: 'bg-green-500/20 text-green-400 border-green-500/30' },
       'acessorio': { label: 'Acessório', color: 'bg-gray-500/20 text-gray-400 border-gray-500/30' },
+      'adicional': { label: 'Adicional', color: 'bg-pink-500/20 text-pink-300 border-pink-400/40' },
     };
     const info = tipos[tipo] || { label: tipo, color: 'bg-gray-500/20 text-gray-400 border-gray-500/30' };
-    return <Badge className={`${info.color} border`}>{info.label}</Badge>;
+    return <Badge className={`${info.color} border font-medium`}>{info.label}</Badge>;
   };
 
   if (loading) {
@@ -414,30 +419,32 @@ export default function VendaDetalhesDirecao() {
 
         {/* Produtos da Venda */}
         <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Package className="h-5 w-5 text-blue-400" />
-            <h2 className="text-sm font-semibold text-white/90 tracking-wide uppercase">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-blue-500/20 border border-blue-400/30">
+              <Package className="h-5 w-5 text-blue-300" />
+            </div>
+            <h2 className="text-base font-semibold tracking-wide uppercase bg-gradient-to-r from-blue-300 to-white bg-clip-text text-transparent">
               Produtos da Venda
             </h2>
-            <span className="text-xs text-white/40 ml-1">
+            <span className="text-xs text-white/50 ml-1">
               ({venda.produtos?.length || 0})
             </span>
           </div>
-          <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl">
+          <Card className="bg-gradient-to-br from-blue-500/10 via-white/5 to-transparent border-blue-400/30 backdrop-blur-xl shadow-[0_0_40px_-15px_rgba(59,130,246,0.4)]">
             <CardContent className="p-0">
               <div className="overflow-x-auto">
-                <Table className="text-xs">
+                <Table className="text-sm">
                   <TableHeader>
-                    <TableRow className="border-blue-500/10 hover:bg-white/5">
-                      <TableHead className="text-xs text-white/70">Tipo</TableHead>
-                      <TableHead className="text-xs text-white/70">Produto</TableHead>
-                      <TableHead className="text-xs text-white/70">Cor</TableHead>
-                      <TableHead className="text-xs text-white/70">Qtd</TableHead>
-                      <TableHead className="text-xs text-white/70">Medidas (L × A)</TableHead>
-                      <TableHead className="text-xs text-white/70 text-right">Valor Unit.</TableHead>
-                      <TableHead className="text-xs text-white/70 text-right">Desconto</TableHead>
-                      <TableHead className="text-xs text-white/70 text-right">Total</TableHead>
-                      <TableHead className="text-xs text-white/70">Observação</TableHead>
+                    <TableRow className="border-white/10 bg-white/[0.04] hover:bg-white/[0.04]">
+                      <TableHead className="text-xs text-white/80 uppercase tracking-wider font-semibold">Tipo</TableHead>
+                      <TableHead className="text-xs text-white/80 uppercase tracking-wider font-semibold">Produto</TableHead>
+                      <TableHead className="text-xs text-white/80 uppercase tracking-wider font-semibold">Cor</TableHead>
+                      <TableHead className="text-xs text-white/80 uppercase tracking-wider font-semibold">Qtd</TableHead>
+                      <TableHead className="text-xs text-white/80 uppercase tracking-wider font-semibold">Medidas (L × A)</TableHead>
+                      <TableHead className="text-xs text-white/80 uppercase tracking-wider font-semibold text-right">Valor Unit.</TableHead>
+                      <TableHead className="text-xs text-white/80 uppercase tracking-wider font-semibold text-right">Desconto</TableHead>
+                      <TableHead className="text-xs text-white/80 uppercase tracking-wider font-semibold text-right">Total</TableHead>
+                      <TableHead className="text-xs text-white/80 uppercase tracking-wider font-semibold">Observação</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -449,7 +456,7 @@ export default function VendaDetalhesDirecao() {
                       </TableRow>
                     )}
                     {agruparItensCatalogo(venda.produtos)?.map((produto: Produto) => (
-                      <TableRow key={produto.id} className="border-blue-500/10 hover:bg-white/5">
+                      <TableRow key={produto.id} className="border-white/10 hover:bg-blue-500/10 transition-colors">
                         <TableCell>{getTipoProdutoBadge(produto.tipo_produto)}</TableCell>
                         <TableCell className="text-white/80 max-w-[260px]">
                           <span className="block truncate" title={produto.descricao || ''}>
@@ -489,7 +496,7 @@ export default function VendaDetalhesDirecao() {
                             <span className="text-white/40">—</span>
                           )}
                         </TableCell>
-                        <TableCell className="text-right text-white font-medium">
+                        <TableCell className="text-right text-emerald-400 font-semibold text-base">
                           {formatCurrency(produto.valor_total)}
                         </TableCell>
                         <TableCell className="text-white/70 max-w-[240px]">
