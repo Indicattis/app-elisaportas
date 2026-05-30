@@ -1482,7 +1482,7 @@ export default function FaturamentoVendaMinimalista() {
                     {venda.venda_presencial ? (
                       <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30">🔥 Venda Quente</Badge>
                     ) : (
-                      <Badge className="bg-cyan-500/20 text-cyan-400 border-cyan-500/30">❄️ Venda Gelo</Badge>
+                      <Badge className="bg-cyan-500/20 text-cyan-400 border-cyan-500/30">❄️ Venda Frio</Badge>
                     )}
                   </p>
                 </div>
