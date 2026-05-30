@@ -400,11 +400,12 @@ function FolhaTableHeader() {
         <th className="text-center font-normal pb-2 px-2">Em folha</th>
         <th className="text-left font-normal pb-2 px-2">Setor</th>
         <th className="text-right font-normal pb-2 px-2 text-emerald-400">Salário</th>
+        <th className="text-right font-normal pb-2 px-2">Salário Mínimo</th>
         <th className="text-right font-normal pb-2 px-2">Combustível</th>
         <th className="text-right font-normal pb-2 px-2">Insalub %</th>
         <th className="text-right font-normal pb-2 px-2">
           <div>Insalub valor</div>
-          <div className="text-[9px] normal-case tracking-normal text-white/30">salário × insalub%</div>
+          <div className="text-[9px] normal-case tracking-normal text-white/30">salário mín. × insalub%</div>
         </th>
         <th className="text-right font-normal pb-2 px-2">FGTS %</th>
         <th className="text-right font-normal pb-2 px-2">
