@@ -268,10 +268,8 @@ function FolhaRow({
         <InlineNum value={item.fgts_pct} onSave={(v) => update(item.id, { fgts_pct: v })} format="percent" />
       </td>
       <td className="px-2 text-right text-orange-400 text-xs">{formatCurrency(fgtsVal)}</td>
-      <td className="px-2 text-right text-white/60">
-        <InlineNum value={item.previsao_13_valor} onSave={(v) => update(item.id, { previsao_13_valor: v })} format="currency" />
-        <div className="text-[10px] text-white/40">c/ FGTS: {formatCurrency(prev13ComFgts)}</div>
-      </td>
+      <td className="px-2 text-right text-orange-400 text-xs">{formatCurrency(salario / 12)}</td>
+      <td className="px-2 text-right text-orange-400 text-xs">{formatCurrency(fgtsVal / 12)}</td>
       <td className="px-2 text-right text-white/70">
         <InlineNum value={feriasAtual} onSave={(v) => update(item.id, { ferias_valor: v })} format="currency" />
         {item.ferias_valor != null && (
