@@ -172,7 +172,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         const [{ data: f }, { data: l }, { data: g }] = await Promise.all([
           supabase.from('despesas_manuais_folha' as any).select('*').eq('mes_referencia', mesStart).order('colaborador_nome'),
           supabase.from('despesas_manuais_lancamentos' as any).select('*').eq('mes_referencia', mesStart).order('data'),
-          supabase.from('gastos' as any).select('id, tipo_custo_id, valor, data').gte('data', mesStart).lte('data', mesEnd),
+          supabase.from('gastos' as any).select('id, tipo_custo_id, valor, data, descricao, responsavel_id, banco_id').gte('data', mesStart).lte('data', mesEnd),
         ]);
         if (cancelled) return;
         const folhaArr = (f || []) as unknown as FolhaRow[];
@@ -180,7 +180,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         setFolha(folhaArr);
         setImpostos(lancArr.filter(x => x.categoria === 'imposto'));
 
-        const gastosRows = (g || []) as unknown as Array<{ id: string; tipo_custo_id: string; valor: number; data: string }>;
+        const gastosRows = (g || []) as unknown as Array<{ id: string; tipo_custo_id: string; valor: number; data: string; descricao: string | null; responsavel_id: string | null; banco_id: string | null }>;
         const tipoIds = Array.from(new Set(gastosRows.map(r => r.tipo_custo_id).filter(Boolean)));
         let tiposMap: Record<string, { nome: string; tipo: 'fixa' | 'variavel' | 'imposto'; aparece_no_dre: boolean }> = {};
         if (tipoIds.length > 0) {
@@ -197,26 +197,55 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
           });
         }
 
+        const respIds = Array.from(new Set(gastosRows.map(r => r.responsavel_id).filter(Boolean))) as string[];
+        const bancoIds = Array.from(new Set(gastosRows.map(r => r.banco_id).filter(Boolean))) as string[];
+        const respMap: Record<string, string> = {};
+        const bancoMap: Record<string, string> = {};
+        await Promise.all([
+          respIds.length
+            ? supabase.from('admin_users').select('user_id, nome').in('user_id', respIds).then(({ data }) => {
+                (data || []).forEach((u: any) => { respMap[u.user_id] = u.nome; });
+              })
+            : Promise.resolve(),
+          bancoIds.length
+            ? supabase.from('bancos' as any).select('id, nome').in('id', bancoIds).then(({ data }) => {
+                (data || []).forEach((b: any) => { bancoMap[b.id] = b.nome; });
+              })
+            : Promise.resolve(),
+        ]);
+
         const agruparPor = (categoria: 'fixa' | 'variavel'): GastoAgrupado[] => {
           const acc = new Map<string, GastoAgrupado>();
           for (const r of gastosRows) {
             const t = tiposMap[r.tipo_custo_id];
             if (!t || !t.aparece_no_dre) continue;
             if (t.tipo !== categoria) continue;
+            const item: GastoItem = {
+              id: r.id,
+              data: r.data,
+              valor: Number(r.valor || 0),
+              descricao: r.descricao,
+              responsavel_nome: r.responsavel_id ? (respMap[r.responsavel_id] || '—') : '—',
+              banco_nome: r.banco_id ? (bancoMap[r.banco_id] || '—') : '—',
+            };
             const cur = acc.get(r.tipo_custo_id);
             if (cur) {
-              cur.total += Number(r.valor || 0);
+              cur.total += item.valor;
               cur.quantidade += 1;
+              cur.itens.push(item);
             } else {
               acc.set(r.tipo_custo_id, {
                 tipo_custo_id: r.tipo_custo_id,
                 tipo_nome: t.nome,
-                total: Number(r.valor || 0),
+                total: item.valor,
                 quantidade: 1,
+                itens: [item],
               });
             }
           }
-          return Array.from(acc.values()).sort((a, b) => a.tipo_nome.localeCompare(b.tipo_nome));
+          const out = Array.from(acc.values()).sort((a, b) => a.tipo_nome.localeCompare(b.tipo_nome));
+          out.forEach(g => g.itens.sort((a, b) => b.data.localeCompare(a.data)));
+          return out;
         };
 
         setGastosFixas(agruparPor('fixa'));
