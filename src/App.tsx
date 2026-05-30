@@ -887,14 +887,6 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/admin/roles"
-                  element={
-                    <ProtectedRoute routeKey="admin_roles">
-                      <AdminRolesMinimalista />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
                   path="/admin/companies"
                   element={
                     <ProtectedRoute routeKey="admin_companies">
