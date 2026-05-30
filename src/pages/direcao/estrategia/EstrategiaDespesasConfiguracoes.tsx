@@ -1003,23 +1003,13 @@ function TiposCustoBlock({
               <input value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Descrição"
                 className="w-full h-9 bg-white/5 border border-white/10 rounded px-3 text-white text-sm outline-none focus:border-blue-400/50" />
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
+            <div className="space-y-1.5">
                 <Label className="text-xs text-white/70">Categoria</Label>
                 <select value={categoriaId} onChange={(e) => setCategoriaId(e.target.value)}
                   className="w-full h-9 bg-white/5 border border-white/10 rounded px-2 text-white text-sm outline-none focus:border-blue-400/50">
                   <option value="" className="bg-slate-900 text-white">— Sem categoria</option>
                   {categorias.map(c => <option key={c.id} value={c.id} className="bg-slate-900 text-white">{c.nome}</option>)}
                 </select>
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs text-white/70">Empresa</Label>
-                <select value={empresaId} onChange={(e) => setEmpresaId(e.target.value)}
-                  className="w-full h-9 bg-white/5 border border-white/10 rounded px-2 text-white text-sm outline-none focus:border-blue-400/50">
-                  <option value="" className="bg-slate-900">— Empresa</option>
-                  {empresasAtivas.map((e: any) => <option key={e.id} value={e.id} className="bg-slate-900">{e.nome}</option>)}
-                </select>
-              </div>
             </div>
             <div className="grid grid-cols-2 gap-3 items-end">
               <div className="space-y-1.5">
