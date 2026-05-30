@@ -25,7 +25,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { restrictToVerticalAxis, restrictToParentElement } from '@dnd-kit/modifiers';
 
 export default function EstrategiaDespesasConfiguracoes() {
-  const { items, loading, insert, update, remove } = useDespesasPadrao();
+  const { items, loading, insert, update, remove, reorder } = useDespesasPadrao();
   const {
     tiposCustos, loading: loadingTipos,
     saveTipoCusto, updateTipoCusto, deleteTipoCusto,
@@ -63,7 +63,7 @@ export default function EstrategiaDespesasConfiguracoes() {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4">
-          <FolhaBlock items={folha} insert={insert} update={update} remove={remove} />
+          <FolhaBlock items={folha} insert={insert} update={update} remove={remove} reorder={reorder} />
           <TiposCustoBlock
             titulo="Tipos de Custos — Fixas"
             icon={<Receipt className="w-4 h-4" />}
