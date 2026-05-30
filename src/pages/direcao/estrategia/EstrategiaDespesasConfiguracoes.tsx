@@ -840,14 +840,15 @@ function TiposCustoBlock({
 
   const semCategoria = items.filter(i => !i.categoria_id);
 
-  const [expandedCategorias, setExpandedCategorias] = useState<Set<string>>(new Set());
+  const [collapsedCategorias, setCollapsedCategorias] = useState<Set<string>>(new Set());
   const toggleCat = (key: string) => {
-    setExpandedCategorias(prev => {
+    setCollapsedCategorias(prev => {
       const n = new Set(prev);
       if (n.has(key)) n.delete(key); else n.add(key);
       return n;
     });
   };
+  const isExpanded = (key: string) => !collapsedCategorias.has(key);
 
   return (
     <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-5">
@@ -917,7 +918,7 @@ function TiposCustoBlock({
                 remove={handleRemoveTipo}
                 rename={renameCategoria}
                 removeCat={removeCategoria}
-                expanded={expandedCategorias.has(g.cat.id)}
+                expanded={isExpanded(g.cat.id)}
                 onToggle={() => toggleCat(g.cat.id)}
               />
             ))}
@@ -933,7 +934,7 @@ function TiposCustoBlock({
             empresasAtivas={empresasAtivas}
             update={update}
             remove={handleRemoveTipo}
-            expanded={expandedCategorias.has('__sem__')}
+            expanded={isExpanded('__sem__')}
             onToggle={() => toggleCat('__sem__')}
           />
         )}
