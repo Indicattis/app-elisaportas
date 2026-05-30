@@ -74,13 +74,19 @@ export default function EstrategiaDespesasConfiguracoes() {
 
 /* ---------------- Folha ---------------- */
 
-const SETORES: { value: string; label: string }[] = [
-  { value: 'vendas', label: 'Vendas' },
-  { value: 'marketing', label: 'Marketing' },
-  { value: 'instalacoes', label: 'Instalações' },
-  { value: 'fabrica', label: 'Fábrica' },
-  { value: 'administrativo', label: 'Administrativo' },
+const SETORES: { value: string; label: string; color: string; dot: string }[] = [
+  { value: 'vendas',         label: 'Vendas',         color: 'bg-emerald-500/15 border-emerald-400/40 text-emerald-200', dot: 'bg-emerald-400' },
+  { value: 'marketing',      label: 'Marketing',      color: 'bg-pink-500/15 border-pink-400/40 text-pink-200',         dot: 'bg-pink-400' },
+  { value: 'instalacoes',    label: 'Instalações',    color: 'bg-amber-500/15 border-amber-400/40 text-amber-200',      dot: 'bg-amber-400' },
+  { value: 'fabrica',        label: 'Fábrica',        color: 'bg-blue-500/15 border-blue-400/40 text-blue-200',         dot: 'bg-blue-400' },
+  { value: 'administrativo', label: 'Administrativo', color: 'bg-violet-500/15 border-violet-400/40 text-violet-200',   dot: 'bg-violet-400' },
 ];
+const SETOR_SEM = { value: '', label: 'Sem setor', color: 'bg-white/5 border-white/15 text-white/60', dot: 'bg-white/40' };
+const getSetorMeta = (v?: string | null) => SETORES.find(s => s.value === v) ?? SETOR_SEM;
+const setorSelectClass = (v?: string | null) => {
+  const m = getSetorMeta(v);
+  return `w-full h-8 ${m.color} border rounded-full px-3 text-xs font-medium outline-none focus:ring-2 focus:ring-blue-400/40 appearance-none cursor-pointer transition-colors`;
+};
 
 function calcFeriasDefault(salario: number, _fgts_pct: number) {
   return salario / 3;
@@ -169,9 +175,12 @@ function FolhaBlock({
             </tr>
           </thead>
           <tbody>
-            {items.map(i => (
-              <FolhaRow key={i.id} item={i} update={update} remove={remove} />
-            ))}
+            {[...SETORES, SETOR_SEM]
+              .map(s => ({ meta: s, rows: items.filter(i => (i.setor ?? '') === s.value) }))
+              .filter(g => g.rows.length > 0)
+              .map(g => (
+                <FolhaSetorGroup key={g.meta.value || 'sem'} meta={g.meta} rows={g.rows} update={update} remove={remove} />
+              ))}
             <tr className="border-b border-white/5">
               <td className="py-2 pl-1">
                 <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome do colaborador"
@@ -182,9 +191,9 @@ function FolhaBlock({
               </td>
               <td className="px-2">
                 <select value={setor} onChange={(e) => setSetor(e.target.value)}
-                  className="w-full h-8 bg-white/5 border border-white/10 rounded px-2 text-white text-xs outline-none focus:border-blue-400/50">
-                  <option value="" className="bg-slate-900">—</option>
-                  {SETORES.map(s => <option key={s.value} value={s.value} className="bg-slate-900">{s.label}</option>)}
+                  className={setorSelectClass(setor)}>
+                  <option value="" className="bg-slate-900 text-white">—</option>
+                  {SETORES.map(s => <option key={s.value} value={s.value} className="bg-slate-900 text-white">{s.label}</option>)}
                 </select>
               </td>
               <td className="px-2"><NumCell value={salario} onChange={setSalario} /></td>
