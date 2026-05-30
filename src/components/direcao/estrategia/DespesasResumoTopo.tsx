@@ -155,6 +155,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
 
   const [colabs, setColabs] = useState<Colab[]>([]);
   const [tipos, setTipos] = useState<TipoCusto[]>([]);
+  const [tiposFull, setTiposFull] = useState<TipoCustoFull[]>([]);
   const [confirmDel, setConfirmDel] = useState<null | { kind: 'folha' | 'lanc'; id: string }>(null);
 
   const { items: padroes, remove: removePadrao } = useDespesasPadrao();
@@ -200,7 +201,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
           supabase.from('despesas_manuais_folha' as any).select('*').eq('mes_referencia', mesStart).order('colaborador_nome'),
           supabase.from('despesas_manuais_lancamentos' as any).select('*').eq('mes_referencia', mesStart).order('data'),
           supabase.from('gastos' as any).select('id, tipo_custo_id, valor, data, descricao, responsavel_id, banco_id').gte('data', mesStart).lte('data', mesEnd),
-          supabase.from('tipos_custos' as any).select('id, nome, tipo, aparece_no_dre, valor_maximo_mensal, ativo').eq('ativo', true),
+          supabase.from('tipos_custos' as any).select('id, nome, descricao, tipo, aparece_no_dre, valor_maximo_mensal, ativo, empresa_id, categoria_id, marcada_para_eliminar, ordem').eq('ativo', true).order('ordem'),
         ]);
         if (cancelled) return;
         const folhaArr = (f || []) as unknown as FolhaRow[];
@@ -222,6 +223,20 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         setTipos(((tiposAll || []) as any[])
           .filter(t => t.aparece_no_dre !== false)
           .map(t => ({ id: t.id, nome: t.nome, tipo: t.tipo })));
+        setTiposFull(((tiposAll || []) as any[])
+          .filter(t => t.aparece_no_dre !== false)
+          .map(t => ({
+            id: t.id,
+            nome: t.nome,
+            tipo: t.tipo,
+            descricao: t.descricao ?? null,
+            empresa_id: t.empresa_id ?? null,
+            categoria_id: t.categoria_id ?? null,
+            valor_maximo_mensal: Number(t.valor_maximo_mensal || 0),
+            aparece_no_dre: t.aparece_no_dre !== false,
+            marcada_para_eliminar: !!t.marcada_para_eliminar,
+            ordem: Number(t.ordem || 0),
+          })));
 
         const respIds = Array.from(new Set(gastosRows.map(r => r.responsavel_id).filter(Boolean))) as string[];
         const bancoIds = Array.from(new Set(gastosRows.map(r => r.banco_id).filter(Boolean))) as string[];
