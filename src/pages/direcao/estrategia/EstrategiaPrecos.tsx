@@ -109,11 +109,13 @@ export default function EstrategiaPrecos() {
           <TabelaPrecos embedded />
         </div>
         <aside className="flex flex-col gap-4 lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-8rem)] min-h-0">
-          <div>
-            <h2 className="text-base font-medium text-white">Itens Avulso</h2>
-            <p className="text-xs text-white/50">
-              {itensAvulso.length} {itensAvulso.length === 1 ? 'item disponível' : 'itens disponíveis'}
-            </p>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <h2 className="text-base font-medium text-white">Itens Avulso</h2>
+              <p className="text-xs text-white/50">
+                {itensAvulso.length} {itensAvulso.length === 1 ? 'item disponível' : 'itens disponíveis'}
+              </p>
+            </div>
           </div>
           {itensAvulso.length === 0 ? (
             <div className="rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 text-center py-8 px-4 text-xs text-white/50">
