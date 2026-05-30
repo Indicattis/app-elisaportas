@@ -411,7 +411,7 @@ export default function FaturamentoMinimalista() {
 
     const pctTotal = (totalDesconto / tabelaTotal) * 100;
     const isCartao = venda.forma_pagamento === 'cartao_credito';
-    const isPresencial = venda.venda_presencial === true;
+    const isFrio = venda.venda_presencial === false;
 
     const limAvista = configLimites.avista;
     const limPresencial = configLimites.presencial;
@@ -424,7 +424,7 @@ export default function FaturamentoMinimalista() {
       pctCartao = Math.min(pctTotal, limAvista);
     }
     const restante1 = pctTotal - pctCartao;
-    if (isPresencial && restante1 > 0) {
+    if (isFrio && restante1 > 0) {
       pctGelo = Math.min(restante1, limPresencial);
     }
     pctResp = Math.max(0, pctTotal - pctCartao - pctGelo);
@@ -1311,7 +1311,7 @@ export default function FaturamentoMinimalista() {
                               </TooltipTrigger>
                               <TooltipContent side="top" className="max-w-[200px] text-xs">
                                 {column.id === 'desc_cartao' && `Desconto à vista (até ${configLimites.avista}%) — pagamento fora do cartão`}
-                                {column.id === 'desc_gelo' && `Desconto presencial (até ${configLimites.presencial}%) — venda presencial`}
+                                {column.id === 'desc_gelo' && `Desconto Frio (até ${configLimites.presencial}%) — venda não presencial (Frio)`}
                                 {column.id === 'desc_responsavel' && `Desconto c/ senha (até ${configLimites.adicionalResponsavel}%) — requer autorização`}
                               </TooltipContent>
                             </Tooltip>

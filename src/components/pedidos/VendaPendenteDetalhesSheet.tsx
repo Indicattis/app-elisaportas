@@ -121,7 +121,7 @@ export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaP
     const totalPct = (descontoTotal / valorTabela) * 100;
     const formaPag = vendaCompleta.forma_pagamento || '';
     const isCartao = formaPag === 'cartao_credito';
-    const isPresencial = vendaCompleta.venda_presencial === true;
+    const isFrio = vendaCompleta.venda_presencial === false;
 
     const limAvista = configLimites?.avista ?? 3;
     const limPresencial = configLimites?.presencial ?? 5;
@@ -135,7 +135,7 @@ export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaP
       pctCartao = Math.min(remaining, limAvista);
       remaining -= pctCartao;
     }
-    if (isPresencial && remaining > 0) {
+    if (isFrio && remaining > 0) {
       pctGelo = Math.min(remaining, limPresencial);
       remaining -= pctGelo;
     }
