@@ -1019,7 +1019,7 @@ function CategoriaGroup({
   categorias: CategoriaDespesa[];
   empresasAtivas: any[];
   update: ReturnType<typeof useTiposCustos>['updateTipoCusto'];
-  remove: ReturnType<typeof useTiposCustos>['deleteTipoCusto'];
+  remove: (id: string) => void | Promise<any>;
   dragHandle?: React.ReactNode;
   rename?: ReturnType<typeof useDespesasCategorias>['renameCategoria'];
   removeCat?: ReturnType<typeof useDespesasCategorias>['removeCategoria'];
@@ -1117,7 +1117,7 @@ function SortableCategoriaGroup(props: {
   categorias: CategoriaDespesa[];
   empresasAtivas: any[];
   update: ReturnType<typeof useTiposCustos>['updateTipoCusto'];
-  remove: ReturnType<typeof useTiposCustos>['deleteTipoCusto'];
+  remove: (id: string) => void | Promise<any>;
   rename: ReturnType<typeof useDespesasCategorias>['renameCategoria'];
   removeCat: ReturnType<typeof useDespesasCategorias>['removeCategoria'];
 }) {
