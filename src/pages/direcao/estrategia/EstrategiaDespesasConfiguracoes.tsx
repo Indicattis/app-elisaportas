@@ -314,7 +314,7 @@ function FolhaBlock({
   );
 }
 
-function FolhaRow({
+function FolhaRowCells({
   item, setores, update, remove, dragHandle,
 }: {
   item: DespesaPadrao;
@@ -335,7 +335,7 @@ function FolhaRow({
   const zeroCurr = <span className="text-white/30">{formatCurrency(0)}</span>;
   const zeroPct = <span className="text-white/30">0%</span>;
   return (
-    <tr className="border-b border-white/5 hover:bg-white/[0.03]">
+    <>
       <td className="py-2 pl-1 text-white/90">
         <div className="flex items-center gap-1">
           {dragHandle}
@@ -377,7 +377,7 @@ function FolhaRow({
           <Trash2 className="w-4 h-4" />
         </button>
       </td>
-    </tr>
+    </>
   );
 }
 
