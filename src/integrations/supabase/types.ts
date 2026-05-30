@@ -8028,6 +8028,36 @@ export type Database = {
         }
         Relationships: []
       }
+      system_setores: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          id: string
+          key: string
+          label: string
+          ordem: number
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          key: string
+          label: string
+          ordem?: number
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          key?: string
+          label?: string
+          ordem?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tabela_precos_montagem_template: {
         Row: {
           created_at: string
