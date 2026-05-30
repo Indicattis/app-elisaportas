@@ -959,6 +959,7 @@ function TiposCustoBlock({
           onToggle={() => {}}
           hideHeader
           reorderRows={reorderTipos}
+          hideCategoria={tipo === 'variavel'}
         />
       </div>
 
@@ -1087,7 +1088,7 @@ function categoriaSelectClass(_list: CategoriaDespesa[], v?: string | null) {
 }
 
 function CategoriaGroup({
-  cat, palette, rows, categorias, empresasAtivas, update, remove, dragHandle, rename, removeCat, expanded, onToggle, hideHeader, reorderRows,
+  cat, palette, rows, categorias, empresasAtivas, update, remove, dragHandle, rename, removeCat, expanded, onToggle, hideHeader, reorderRows, hideCategoria,
 }: {
   cat: CategoriaDespesa | null;
   palette: { color: string; dot: string };
@@ -1103,6 +1104,7 @@ function CategoriaGroup({
   onToggle: () => void;
   hideHeader?: boolean;
   reorderRows?: (orderedIds: string[]) => void | Promise<any>;
+  hideCategoria?: boolean;
 }) {
   const subtotal = rows.reduce((s, i) => s + Number(i.valor_maximo_mensal || 0), 0);
   const rowSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
@@ -1160,7 +1162,9 @@ function CategoriaGroup({
             <th className="pb-2 w-6"></th>
             <th className="text-left font-normal pb-2 pl-1 w-[34%]">Nome</th>
             <th className="pb-2 px-2 w-8" title="Descrição"></th>
-            <th className="text-left font-normal pb-2 px-2 w-[22%]">Categoria</th>
+            {!hideCategoria && (
+              <th className="text-left font-normal pb-2 px-2 w-[22%]">Categoria</th>
+            )}
             <th className="text-right font-normal pb-2 px-2 w-[36%]">Valor projetado</th>
             <th className="text-center font-normal pb-2 px-2 w-[8%]">DRE</th>
             <th className="text-center font-normal pb-2 px-2 w-[8%]" title="Marcar para eliminar essa despesa">Eliminar</th>
@@ -1178,6 +1182,7 @@ function CategoriaGroup({
                   empresasAtivas={empresasAtivas}
                   update={update}
                   remove={remove}
+                  hideCategoria={hideCategoria}
                 />
               ))}
             </tbody>
@@ -1190,13 +1195,14 @@ function CategoriaGroup({
 }
 
 function SortableTipoRow({
-  i, categorias, empresasAtivas, update, remove,
+  i, categorias, empresasAtivas, update, remove, hideCategoria,
 }: {
   i: TipoCusto;
   categorias: CategoriaDespesa[];
   empresasAtivas: any[];
   update: ReturnType<typeof useTiposCustos>['updateTipoCusto'];
   remove: (id: string) => void | Promise<any>;
+  hideCategoria?: boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: i.id });
   const style = {
@@ -1230,16 +1236,18 @@ function SortableTipoRow({
           onSave={(v) => update(i.id, { descricao: v || null })}
         />
       </td>
-      <td className="px-2">
-        <select
-          value={i.categoria_id || ''}
-          onChange={(e) => update(i.id, { categoria_id: e.target.value || null } as any)}
-          className={categoriaSelectClass(categorias, i.categoria_id)}
-        >
-          <option value="" className="bg-slate-900 text-white">— Sem categoria</option>
-          {categorias.map(c => <option key={c.id} value={c.id} className="bg-slate-900 text-white">{c.nome}</option>)}
-        </select>
-      </td>
+      {!hideCategoria && (
+        <td className="px-2">
+          <select
+            value={i.categoria_id || ''}
+            onChange={(e) => update(i.id, { categoria_id: e.target.value || null } as any)}
+            className={categoriaSelectClass(categorias, i.categoria_id)}
+          >
+            <option value="" className="bg-slate-900 text-white">— Sem categoria</option>
+            {categorias.map(c => <option key={c.id} value={c.id} className="bg-slate-900 text-white">{c.nome}</option>)}
+          </select>
+        </td>
+      )}
       <td className={`px-2 text-right font-medium ${i.marcada_para_eliminar ? 'text-red-400 line-through' : 'text-white'}`}>
         <InlineNum value={i.valor_maximo_mensal} onSave={(v) => update(i.id, { valor_maximo_mensal: v })} format="currency" />
       </td>
