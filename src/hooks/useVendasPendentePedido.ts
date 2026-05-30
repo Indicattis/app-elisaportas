@@ -25,7 +25,7 @@ export interface VendaPendentePedido {
   cidade: string | null;
   estado: string | null;
   valor_a_receber_entrega: number | null;
-  venda_presencial: boolean | null;
+  venda_presencial?: boolean | null;
   cores: Array<{ nome: string; codigo_hex: string }>;
   portas_info: Array<{ tamanho: 'P' | 'G'; largura: number; altura: number; area: number }>;
 }
