@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Plus, Trash2, Users, Receipt, TrendingDown, Landmark } from 'lucide-react';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { formatCurrency } from '@/lib/utils';
@@ -12,6 +12,13 @@ export default function EstrategiaDespesasConfiguracoes() {
     tiposCustos, loading: loadingTipos,
     saveTipoCusto, updateTipoCusto, deleteTipoCusto,
   } = useTiposCustos();
+
+  // Only show full-page spinner on the very first load. Subsequent refetches
+  // (triggered by insert/update/remove) must NOT unmount the grid, otherwise
+  // the page scroll resets to the top after every change.
+  const firstLoadedRef = useRef(false);
+  if (!loading && !loadingTipos) firstLoadedRef.current = true;
+  const showSpinner = !firstLoadedRef.current && (loading || loadingTipos);
 
   const folha = items.filter(i => i.tipo === 'folha');
   const impostos = items.filter(i => i.tipo === 'imposto');
@@ -32,7 +39,7 @@ export default function EstrategiaDespesasConfiguracoes() {
         { label: 'Configurações padrão' },
       ]}
     >
-      {(loading || loadingTipos) ? (
+      {showSpinner ? (
         <div className="flex items-center justify-center py-20">
           <div className="w-6 h-6 animate-spin rounded-full border-2 border-white/20 border-t-white/60" />
         </div>
