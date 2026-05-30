@@ -15,6 +15,7 @@ export interface DespesaPadrao {
   fgts_pct: number;
   previsao_13_valor: number;
   ordem: number;
+  em_folha: boolean;
 }
 
 export function useDespesasPadrao() {
@@ -43,6 +44,7 @@ export function useDespesasPadrao() {
         fgts_pct: Number(x.fgts_pct) || 0,
         previsao_13_valor: Number(x.previsao_13_valor) || 0,
         ordem: Number(x.ordem) || 0,
+        em_folha: x.em_folha ?? true,
       })));
     }
     setLoading(false);
@@ -62,6 +64,7 @@ export function useDespesasPadrao() {
       fgts_pct: payload.fgts_pct ?? 8,
       previsao_13_valor: payload.previsao_13_valor ?? 0,
       ordem: payload.ordem ?? 0,
+      em_folha: payload.em_folha ?? true,
       created_by: userId,
     } as any);
     if (error) { toast.error('Erro ao salvar: ' + error.message); return false; }
