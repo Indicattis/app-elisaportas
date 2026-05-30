@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { format, parse } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { CheckCircle2, Clock, Plus } from 'lucide-react';
+import { CheckCircle2, Clock } from 'lucide-react';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import DespesasResumoTopo, { logStatusChange } from '@/components/direcao/estrategia/DespesasResumoTopo';
 import { formatCurrency } from '@/lib/utils';
@@ -18,6 +18,7 @@ export default function EstrategiaDespesasMes() {
   const [savingStatus, setSavingStatus] = useState(false);
   const [gastoDialogOpen, setGastoDialogOpen] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
+  const [dialogCategoria, setDialogCategoria] = useState<'fixa' | 'variavel' | 'imposto' | undefined>(undefined);
 
   const mesValido = useMemo(() => {
     if (!mes || !/^\d{4}-\d{2}$/.test(mes)) return null;
@@ -115,14 +116,6 @@ export default function EstrategiaDespesasMes() {
       <div className="flex justify-end mb-4">
         <div className="flex items-center gap-2">
           <button
-            type="button"
-            onClick={() => setGastoDialogOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-orange-600 hover:bg-orange-500 text-white shadow-lg shadow-orange-600/20 transition-all"
-          >
-            <Plus className="w-4 h-4" />
-            Novo Gasto
-          </button>
-          <button
           type="button"
           onClick={toggleStatus}
           disabled={savingStatus}
@@ -140,12 +133,17 @@ export default function EstrategiaDespesasMes() {
         ano={ano}
         onMediaMensalChange={setTotalMes}
         reloadKey={reloadKey}
+        onRequestNovoGasto={(cat) => {
+          setDialogCategoria(cat);
+          setGastoDialogOpen(true);
+        }}
       />
 
       <GastoFormDialog
         open={gastoDialogOpen}
         onOpenChange={setGastoDialogOpen}
         defaultMes={mesValido}
+        defaultCategoria={dialogCategoria}
         onSaved={() => setReloadKey((k) => k + 1)}
       />
     </MinimalistLayout>

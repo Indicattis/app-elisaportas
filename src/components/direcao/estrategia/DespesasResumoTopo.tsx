@@ -117,9 +117,10 @@ interface Props {
   onMediaMensalChange?: (media: number) => void;
   onDataChange?: () => void;
   reloadKey?: number;
+  onRequestNovoGasto?: (categoria: 'fixa' | 'variavel' | 'imposto') => void;
 }
 
-export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataChange, reloadKey }: Props) {
+export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataChange, reloadKey, onRequestNovoGasto }: Props) {
   const [folha, setFolha] = useState<FolhaRow[]>([]);
   const [impostos, setImpostos] = useState<LancRow[]>([]);
   const [gastosFixas, setGastosFixas] = useState<GastoAgrupado[]>([]);
@@ -391,12 +392,14 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         icon={<Receipt className="w-4 h-4" />}
         rows={gastosFixas}
         loading={loading}
+        onAddGasto={onRequestNovoGasto ? () => onRequestNovoGasto('fixa') : undefined}
       />
       <BlocoGastosReadonly
         titulo="Despesas Variáveis"
         icon={<TrendingDown className="w-4 h-4" />}
         rows={gastosVariaveis}
         loading={loading}
+        onAddGasto={onRequestNovoGasto ? () => onRequestNovoGasto('variavel') : undefined}
       />
       <BlocoDespesa
         titulo="Despesas de Imposto"
@@ -411,6 +414,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         onInsert={handleInsertLanc}
         onUpdate={handleUpdateLanc}
         onDeletePadrao={async (id) => { await removePadrao(id); reload(); }}
+        onAddGasto={onRequestNovoGasto ? () => onRequestNovoGasto('imposto') : undefined}
       />
 
       <AlertDialog open={!!confirmDel} onOpenChange={(o) => !o && setConfirmDel(null)}>
@@ -817,7 +821,7 @@ function BlocoFolha({
 /* ---------------- Despesa block ---------------- */
 
 function BlocoDespesa({
-  titulo, icon, rows, loading, categoria, tipos, padroes, mesStart, onDelete, onInsert, onUpdate, onDeletePadrao,
+  titulo, icon, rows, loading, categoria, tipos, padroes, mesStart, onDelete, onInsert, onUpdate, onDeletePadrao, onAddGasto,
 }: {
   titulo: string;
   icon: React.ReactNode;
@@ -836,6 +840,7 @@ function BlocoDespesa({
     patch: Partial<{ valor: number; data: string; descricao: string | null; tipo_nome: string }>,
   ) => Promise<void>;
   onDeletePadrao: (id: string) => Promise<void> | void;
+  onAddGasto?: () => void;
 }) {
   const [tipoId, setTipoId] = useState('');
   const [customNome, setCustomNome] = useState('');
@@ -889,6 +894,16 @@ function BlocoDespesa({
         {icon}
         <h3 className="text-xl font-semibold">{titulo}</h3>
         <span className="text-white/40 text-sm">({rows.length})</span>
+        {onAddGasto && (
+          <button
+            type="button"
+            onClick={onAddGasto}
+            className="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-orange-600 hover:bg-orange-500 text-white shadow-lg shadow-orange-600/20 transition-all"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Novo Gasto
+          </button>
+        )}
       </div>
 
       <div className="overflow-x-auto">
@@ -1197,12 +1212,13 @@ function EditableDate({
 /* ---------------- Gastos Readonly block (puxa de /financeiro/gastos) ---------------- */
 
 function BlocoGastosReadonly({
-  titulo, icon, rows, loading,
+  titulo, icon, rows, loading, onAddGasto,
 }: {
   titulo: string;
   icon: React.ReactNode;
   rows: GastoAgrupado[];
   loading: boolean;
+  onAddGasto?: () => void;
 }) {
   const total = rows.reduce((s, r) => s + Number(r.total || 0), 0);
   const totalProjetado = rows.reduce((s, r) => s + Number(r.valor_projetado || 0), 0);
@@ -1220,6 +1236,16 @@ function BlocoGastosReadonly({
         {icon}
         <h3 className="text-xl font-semibold">{titulo}</h3>
         <span className="text-white/40 text-sm">({rows.length} tipos · {qtdLanc} lançamentos)</span>
+        {onAddGasto && (
+          <button
+            type="button"
+            onClick={onAddGasto}
+            className="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-orange-600 hover:bg-orange-500 text-white shadow-lg shadow-orange-600/20 transition-all"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Novo Gasto
+          </button>
+        )}
       </div>
 
       <div className="overflow-x-auto">
