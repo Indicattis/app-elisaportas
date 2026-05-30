@@ -931,9 +931,10 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
       const aux = Number(f.aux_combustivel) || 0;
       const insalub = salario * (Number(f.insalubridade_pct) || 0) / 100;
       const fgts = salario * (Number(f.fgts_pct) || 0) / 100;
-      const prev13 = Number(f.previsao_13_valor) || 0;
       const ferias = salario / 3 + fgts;
-      return salario + aux + insalub + fgts + prev13 + ferias;
+      const prev13 = salario / 12;
+      const fgts13 = fgts / 12;
+      return salario + aux + insalub + fgts + prev13 + fgts13 + ferias;
     };
 
     const [{ data: padroes, error: padErr }, { data: manuais, error: manErr }] = await Promise.all([
