@@ -1,36 +1,41 @@
 ## Objetivo
 
-Destacar a tabela de "Produtos da Venda" em `/direcao/vendas/:id` e garantir que a coluna **Tipo** mostre a mesma categoria de faturamento usada em `/financeiro/faturamento/:id` (Porta de Enrolar, Pintura Epóxi, Instalação, Manutenção, Acessório, Adicional, Serviço, etc.).
+Em `/direcao/estrategia/despesas/configuracoes`, expandir o bloco "Folha Salarial padrão" para ter as mesmas colunas usadas no resumo mensal (`/direcao/estrategia/despesas/2026-05`), permitindo definir os valores padrão completos de cada colaborador.
 
-## Mudanças (apenas `src/pages/direcao/VendaDetalhesDirecao.tsx`)
+## Contexto
 
-### 1. Atualizar o mapa de tipos em `getTipoProdutoBadge`
-Hoje o mapa só cobre 5 tipos (`porta_enrolar`, `porta_seccionada`, `porta_rapida`, `servico`, `acessorio`) e cai no fallback genérico para o resto, o que faz itens como `pintura_epoxi`, `instalacao`, `manutencao`, `adicional` aparecerem com o slug cru. Vou alinhar com `formatTipoProduto` da página de faturamento, cobrindo:
+Todos os campos necessários já existem na tabela `despesas_padrao` (`salario`, `aux_combustivel`, `insalubridade_pct`, `fgts_pct`, `previsao_13_valor`) e no hook `useDespesasPadrao`. Hoje o bloco de Folha em Configurações mostra apenas **Colaborador** e **Salário**. Nenhuma alteração de banco é necessária.
 
-- `porta_enrolar` → "Porta de Enrolar" (azul)
-- `porta_social` → "Porta Social" (índigo)
-- `porta_seccionada` → "Porta Seccionada" (roxo)
-- `porta_rapida` → "Porta Rápida" (laranja)
-- `pintura_epoxi` → "Pintura Epóxi" (amarelo)
-- `instalacao` → "Instalação" (ciano)
-- `manutencao` → "Manutenção" (esmeralda)
-- `servico` → "Serviço" (verde)
-- `acessorio` → "Acessório" (cinza)
-- `adicional` → "Adicional" (rosa)
+A coluna "Em folha" da página mensal vem de `admin_users.em_folha`, não de `despesas_padrao` — portanto não faz sentido editá-la no padrão e não será incluída.
 
-Assim a coluna Tipo passa a representar exatamente a categoria de faturamento do item.
+## Mudanças (somente `src/pages/direcao/estrategia/EstrategiaDespesasConfiguracoes.tsx`)
 
-### 2. Destacar visualmente a tabela de Produtos da Venda
-- Trocar o `Card` atual (`bg-white/5 border-blue-500/10`) por um container com gradiente sutil + borda mais marcante: `bg-gradient-to-br from-blue-500/10 via-white/5 to-transparent border-blue-400/30 shadow-[0_0_40px_-15px_rgba(59,130,246,0.4)]`.
-- Cabeçalho da seção: aumentar tipografia (`text-base` em vez de `text-sm`), ícone `Package` em quadrado destacado (`p-2 rounded-lg bg-blue-500/20`), título com gradiente azul→branco.
-- `TableHeader` com `bg-white/[0.04]`, texto em `text-white/80 uppercase tracking-wider font-semibold`.
-- Linhas (`TableRow`) com `hover:bg-blue-500/10 transition-colors` e divisor mais visível (`border-white/10`).
-- Aumentar densidade tipográfica da tabela de `text-xs` para `text-sm` nas células principais e manter os badges de Tipo com `font-medium`.
-- Coluna **Total** em destaque: `text-base font-semibold text-emerald-400`.
+Reformular `FolhaBlock` / `FolhaRow` para refletir as colunas do `BlocoFolha` em `src/components/direcao/estrategia/DespesasResumoTopo.tsx`:
 
-### 3. Sem mudanças em dados/lógica
-Nenhuma alteração de query, schema, RLS, ou regra de negócio. Apenas mapeamento de labels e estilos Tailwind.
+Cabeçalho (na ordem):
+1. Colaborador
+2. Salário (editável, R$)
+3. Combustível (editável, R$)
+4. Insalub % (editável)
+5. Insalub valor (calculado = salário × insalub%)
+6. FGTS % (editável)
+7. FGTS valor (calculado = salário × fgts%)
+8. Previsão 13° + FGTS 13° (editável previsao_13_valor; exibe `previsao_13 × (1 + fgts%/100)`)
+9. Férias + 1/3 + FGTS (calculado = salário/3 + fgts_valor)
+10. Total (calculado pela mesma `calcTotalFolha`)
+11. Ações (excluir)
 
-## Fora de escopo
-- Página de faturamento permanece intocada.
-- Demais tabelas/cards da página de detalhes ficam como estão.
+Comportamento:
+- Reutilizar `InlineNum` para cada campo editável, chamando `update(id, { campo: valor })`.
+- Linha de inserção ganha inputs `NumCell` para os mesmos 5 campos editáveis (fgts default 8) e usa `insert({ tipo: 'folha', nome, salario, aux_combustivel, insalubridade_pct, fgts_pct, previsao_13_valor })`.
+- Rodapé: além do "Total de salários" atual, adicionar "Total da folha" somando `calcTotalFolha` de cada item (espelha o total mensal).
+- Manter overflow-x-auto e `min-w-[1200px]` na tabela para acomodar todas as colunas.
+
+A função `calcTotalFolha` será duplicada localmente (mesma fórmula do componente mensal) para evitar import cruzado, ou extraída para `src/lib/folhaCalc.ts` se preferir — proposta padrão: duplicação local simples por ser pequena.
+
+Os blocos `SimpleBlock` (Fixas/Variáveis/Impostos) permanecem inalterados.
+
+## Sem mudanças necessárias
+- Banco de dados / migrations.
+- Hook `useDespesasPadrao`.
+- Página mensal.
