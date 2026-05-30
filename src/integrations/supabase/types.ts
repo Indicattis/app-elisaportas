@@ -8319,6 +8319,7 @@ export type Database = {
           created_at: string | null
           created_by: string | null
           descricao: string | null
+          empresa_id: string | null
           id: string
           nome: string
           subcategoria_id: string | null
@@ -8333,6 +8334,7 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           descricao?: string | null
+          empresa_id?: string | null
           id?: string
           nome: string
           subcategoria_id?: string | null
@@ -8347,6 +8349,7 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           descricao?: string | null
+          empresa_id?: string | null
           id?: string
           nome?: string
           subcategoria_id?: string | null
@@ -8360,6 +8363,13 @@ export type Database = {
             columns: ["categoria_id"]
             isOneToOne: false
             referencedRelation: "custos_categorias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tipos_custos_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas_emissoras"
             referencedColumns: ["id"]
           },
           {

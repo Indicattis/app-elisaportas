@@ -1,27 +1,26 @@
 ## Objetivo
 
-Em `/direcao/estrategia/despesas/configuracoes`, no bloco "Folha Salarial padrão", adicionar uma nova coluna **Salário Mínimo** por colaborador. A **% de Insalubridade** passa a ser calculada sobre esse valor (e não mais sobre o salário do colaborador).
+Adicionar um campo opcional **Empresa** (referente a uma empresa emissora cadastrada) nas tabelas de **Despesas Fixas**, **Variáveis** e **Impostos** em `/direcao/estrategia/despesas/configuracoes`.
 
 ## Mudanças
 
 ### 1. Banco de dados (migração)
-- Adicionar coluna `salario_minimo numeric NOT NULL DEFAULT 1518` à tabela `despesas_padrao` (R$ 1.518,00 = salário mínimo brasileiro vigente em 2025/2026; valor editável por linha).
-- Backfill: linhas existentes recebem 1518 automaticamente pelo default.
+- `ALTER TABLE public.tipos_custos ADD COLUMN empresa_id uuid REFERENCES public.empresas_emissoras(id) ON DELETE SET NULL;`
+- Campo opcional (nullable). Sem default.
 
-### 2. Hook `src/hooks/useDespesasPadrao.ts`
-- Adicionar `salario_minimo: number` em `DespesaPadrao`.
-- Mapear no `fetchAll` e aceitar em `insert` (default 1518).
+### 2. Hook `src/hooks/useTiposCustos.ts`
+- Adicionar `empresa_id: string | null` em `TipoCusto`.
+- Incluir `empresa_id` no `select(...)`, no `saveTipoCusto` e no `updateTipoCusto`.
 
-### 3. Página `EstrategiaDespesasConfiguracoes.tsx`
-- **Nova coluna "Salário Mínimo"** posicionada logo antes de "Insalub %" (editável via `InlineNum format="currency"`).
-- Atualizar `FolhaTableHeader`, `FolhaColGroup` (mais um `<col>`, ajustar `min-w` da tabela), célula no `FolhaRowCells` e na linha de adicionar.
-- Alterar `calcTotalFolha` para:
-  - `insalub = salario_minimo * (insalubridade_pct / 100)` (antes: `salario × pct`).
-- Atualizar a célula "Insalub valor" e os subtítulos do header ("salário mínimo × insalub%").
-- No formulário de adicionar colaborador, novo estado `salarioMinimo` inicializado em `1518`.
+### 3. UI — `EstrategiaDespesasConfiguracoes.tsx` (componente `TiposCustoBlock`)
+- Carregar lista de empresas via `useEmpresasEmissoras` (somente ativas).
+- Adicionar nova coluna **Empresa** entre "Descrição" e "Valor projetado":
+  - Cabeçalho `Empresa` (~160px).
+  - Célula com `<select>` (estilo glassmorphism igual aos demais inputs) com opção "—" (nenhum) + lista de empresas. Onchange chama `update(i.id, { empresa_id: v || null })`.
+  - Linha de inserção: select adicional para escolher empresa no cadastro inicial; estado local `empresaId` resetado junto com os demais ao salvar.
+- Sem alterações em totais, DRE ou lógicas de cálculo (campo é apenas informativo/opcional).
 
-### 4. PDF `src/utils/folhaSalarialPDFGenerator.ts`
-- Acrescentar coluna "Salário Mínimo" ao head/body, usar `salario_minimo` como base de `insalubVal` e em `calcTotalFolha`.
-
-## Observação
-O default é o salário mínimo nacional (R$ 1.518). Caso algum colaborador tenha base diferente (ex.: piso da categoria), o valor pode ser editado inline na própria linha.
+## Detalhes técnicos
+- Manter padrão `from('tipos_custos' as any)` já usado no hook.
+- Select usa `bg-white/5 border-white/10 text-white text-xs h-8 rounded px-2` para consistência visual.
+- Nenhuma alteração em PDFs, DRE ou outras telas — escopo restrito à página de configurações.
