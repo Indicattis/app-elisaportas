@@ -501,7 +501,6 @@ function SortableSetorGroup(props: {
   };
   const handle = (
     <button
-      ref={setNodeRef as any}
       {...attributes}
       {...listeners}
       className="p-0.5 rounded hover:bg-white/10 text-white/40 hover:text-white/80 cursor-grab active:cursor-grabbing"
