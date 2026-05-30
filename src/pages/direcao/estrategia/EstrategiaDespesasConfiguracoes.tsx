@@ -379,6 +379,7 @@ function FolhaBlock({
           <span className="text-base font-bold text-white">{formatCurrency(totalFolha)}</span>
         </div>
       </div>
+      <GerenciarSetoresDialog open={gerenciarSetoresOpen} onOpenChange={setGerenciarSetoresOpen} />
     </div>
   );
 }
