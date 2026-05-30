@@ -139,7 +139,11 @@ export const useTiposCustos = () => {
       // Otimista: aplica localmente primeiro
       setTiposCustos(prev => {
         const map = new Map(orderedIds.map((id, idx) => [id, idx + 1]));
-        return prev.map(t => map.has(t.id) ? { ...t, ordem: map.get(t.id)! } : t);
+        const updated = prev.map(t => map.has(t.id) ? { ...t, ordem: map.get(t.id)! } : t);
+        return [...updated].sort((a, b) => {
+          if (a.ordem !== b.ordem) return a.ordem - b.ordem;
+          return a.nome.localeCompare(b.nome);
+        });
       });
       await Promise.all(orderedIds.map((id, idx) =>
         supabase.from("tipos_custos" as any).update({ ordem: idx + 1 } as any).eq("id", id)
