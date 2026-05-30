@@ -1191,6 +1191,12 @@ function BlocoGastosReadonly({
 }) {
   const total = rows.reduce((s, r) => s + Number(r.total || 0), 0);
   const qtdLanc = rows.reduce((s, r) => s + r.quantidade, 0);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  const fmtData = (iso: string) => {
+    const [y, m, d] = iso.split('-');
+    return `${d}/${m}`;
+  };
 
   return (
     <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-5">
@@ -1218,13 +1224,57 @@ function BlocoGastosReadonly({
                   Nenhum gasto registrado neste mês em Financeiro › Gastos.
                 </td>
               </tr>
-            ) : rows.map(r => (
-              <tr key={r.tipo_custo_id} className="border-b border-white/5 hover:bg-white/[0.03]">
-                <td className="py-2 pl-1 text-white/90">{r.tipo_nome}</td>
-                <td className="px-2 text-right text-white/60">{r.quantidade}</td>
-                <td className="px-2 text-right text-white font-medium">{formatCurrency(r.total)}</td>
-              </tr>
-            ))}
+            ) : rows.map(r => {
+              const isOpen = expandedId === r.tipo_custo_id;
+              return (
+                <>
+                  <tr
+                    key={r.tipo_custo_id}
+                    onClick={() => setExpandedId(prev => prev === r.tipo_custo_id ? null : r.tipo_custo_id)}
+                    className="border-b border-white/5 hover:bg-white/[0.03] cursor-pointer transition-colors"
+                  >
+                    <td className="py-2 pl-1 text-white/90">
+                      <span className="inline-flex items-center gap-1.5">
+                        {isOpen
+                          ? <ChevronDown className="w-3.5 h-3.5 text-white/50" />
+                          : <ChevronRight className="w-3.5 h-3.5 text-white/50" />}
+                        {r.tipo_nome}
+                      </span>
+                    </td>
+                    <td className="px-2 text-right text-white/60">{r.quantidade}</td>
+                    <td className="px-2 text-right text-white font-medium">{formatCurrency(r.total)}</td>
+                  </tr>
+                  {isOpen && (
+                    <tr key={`${r.tipo_custo_id}-detail`} className="bg-white/[0.02]">
+                      <td colSpan={3} className="px-3 py-2">
+                        <table className="w-full text-xs">
+                          <thead>
+                            <tr className="text-[10px] uppercase tracking-wider text-white/30">
+                              <th className="text-left font-normal py-1 w-[60px]">Data</th>
+                              <th className="text-left font-normal py-1">Descrição</th>
+                              <th className="text-left font-normal py-1 w-[160px]">Responsável</th>
+                              <th className="text-left font-normal py-1 w-[140px]">Banco</th>
+                              <th className="text-right font-normal py-1 w-[120px]">Valor</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {r.itens.map(it => (
+                              <tr key={it.id} className="border-t border-white/5 text-white/80">
+                                <td className="py-1 text-white/60">{fmtData(it.data)}</td>
+                                <td className="py-1">{it.descricao || '—'}</td>
+                                <td className="py-1 text-white/60">{it.responsavel_nome}</td>
+                                <td className="py-1 text-white/60">{it.banco_nome}</td>
+                                <td className="py-1 text-right text-white font-medium">{formatCurrency(it.valor)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </td>
+                    </tr>
+                  )}
+                </>
+              );
+            })}
           </tbody>
         </table>
       </div>
