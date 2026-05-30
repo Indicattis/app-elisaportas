@@ -369,3 +369,109 @@ function InlineNum({ value, onSave, format }: { value: number; onSave: (v: numbe
     </button>
   );
 }
+
+/* ---------------- Tipos de Custos block ---------------- */
+
+function TiposCustoBlock({
+  titulo, icon, tipo, items, save, update, remove,
+}: {
+  titulo: string;
+  icon: React.ReactNode;
+  tipo: 'fixa' | 'variavel';
+  items: TipoCusto[];
+  save: ReturnType<typeof useTiposCustos>['saveTipoCusto'];
+  update: ReturnType<typeof useTiposCustos>['updateTipoCusto'];
+  remove: ReturnType<typeof useTiposCustos>['deleteTipoCusto'];
+}) {
+  const [nome, setNome] = useState('');
+  const [descricao, setDescricao] = useState('');
+  const [valor, setValor] = useState(0);
+
+  const totalAtivos = items.filter(i => i.ativo).reduce((s, i) => s + Number(i.valor_maximo_mensal || 0), 0);
+
+  const onSave = async () => {
+    if (!nome.trim()) return;
+    const ok = await save({
+      nome: nome.trim(),
+      descricao: descricao.trim() || null,
+      valor_maximo_mensal: valor,
+      tipo,
+      aparece_no_dre: true,
+      ativo: true,
+    });
+    if (ok) { setNome(''); setDescricao(''); setValor(0); }
+  };
+
+  return (
+    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-5">
+      <div className="flex items-center gap-2 text-white mb-3">
+        {icon}
+        <h3 className="font-semibold">{titulo}</h3>
+        <span className="text-white/40 text-sm">({items.length})</span>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-[10px] uppercase tracking-wider text-white/40 border-b border-white/10">
+              <th className="text-left font-normal pb-2 pl-1">Nome</th>
+              <th className="text-left font-normal pb-2 px-2">Descrição</th>
+              <th className="text-right font-normal pb-2 px-2 w-[180px]">Valor máximo mensal</th>
+              <th className="text-center font-normal pb-2 px-2 w-[110px]">Aparece no DRE</th>
+              <th className="text-center font-normal pb-2 px-2 w-[80px]">Ativo</th>
+              <th className="pb-2 pr-1 w-10"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.map(i => (
+              <tr key={i.id} className={`border-b border-white/5 hover:bg-white/[0.03] ${!i.ativo ? 'opacity-50' : ''}`}>
+                <td className="py-2 pl-1 text-white/90">
+                  <InlineText value={i.nome} onSave={(v) => update(i.id, { nome: v })} />
+                </td>
+                <td className="px-2 text-white/70">
+                  <InlineText value={i.descricao || ''} onSave={(v) => update(i.id, { descricao: v || null })} />
+                </td>
+                <td className="px-2 text-right text-white font-medium">
+                  <InlineNum value={i.valor_maximo_mensal} onSave={(v) => update(i.id, { valor_maximo_mensal: v })} format="currency" />
+                </td>
+                <td className="px-2 text-center">
+                  <Switch checked={i.aparece_no_dre} onCheckedChange={(v) => update(i.id, { aparece_no_dre: v })} />
+                </td>
+                <td className="px-2 text-center">
+                  <Switch checked={i.ativo} onCheckedChange={(v) => update(i.id, { ativo: v })} />
+                </td>
+                <td className="pr-1 text-right">
+                  <button onClick={() => remove(i.id)} className="p-1 rounded hover:bg-red-500/20 text-red-300/70 hover:text-red-300">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </td>
+              </tr>
+            ))}
+            <tr className="border-b border-white/5">
+              <td className="py-2 pl-1">
+                <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome"
+                  className="w-full h-8 bg-white/5 border border-white/10 rounded px-2 text-white text-xs outline-none focus:border-blue-400/50" />
+              </td>
+              <td className="px-2">
+                <input value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Descrição (opcional)"
+                  className="w-full h-8 bg-white/5 border border-white/10 rounded px-2 text-white text-xs outline-none focus:border-blue-400/50" />
+              </td>
+              <td className="px-2"><NumCell value={valor} onChange={setValor} /></td>
+              <td className="px-2" />
+              <td className="px-2" />
+              <td className="pr-1 text-right">
+                <button onClick={onSave} disabled={!nome.trim()}
+                  className="p-1 rounded bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 disabled:opacity-30">
+                  <Plus className="w-4 h-4" />
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between px-2">
+        <span className="text-xs text-white/50 uppercase tracking-wider">Total mensal estimado (ativos)</span>
+        <span className="text-base font-bold text-white">{formatCurrency(totalAtivos)}</span>
+      </div>
+    </div>
+  );
+}
