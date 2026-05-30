@@ -522,9 +522,20 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
             <div className="flex items-start justify-between gap-4">
               {/* Info Cliente */}
               <div className="flex-1 min-w-0">
-                <h2 className="text-xl font-bold text-white mb-2 truncate">
-                  {venda.cliente_nome}
-                </h2>
+                <div className="flex items-center gap-2 mb-2 flex-wrap">
+                  <h2 className="text-xl font-bold text-white truncate">
+                    {venda.cliente_nome}
+                  </h2>
+                  {venda.venda_presencial != null && (
+                    <span className={
+                      venda.venda_presencial
+                        ? "inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded border bg-orange-500/10 text-orange-400 border-orange-500/30"
+                        : "inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded border bg-cyan-500/10 text-cyan-400 border-cyan-500/30"
+                    }>
+                      {venda.venda_presencial ? "🔥 Quente" : "❄️ Frio"}
+                    </span>
+                  )}
+                </div>
                 <div className="flex flex-wrap items-center gap-3 text-sm text-white/60">
                   {(() => {
                     const rua = pedido.endereco_rua;
