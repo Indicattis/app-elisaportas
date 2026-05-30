@@ -39,9 +39,9 @@ export default function EstrategiaDespesasConfiguracoes() {
   const showSpinner = !firstLoadedRef.current && (loading || loadingTipos);
 
   const folha = items.filter(i => i.tipo === 'folha');
-  const impostos = items.filter(i => i.tipo === 'imposto');
   const tiposFixas = tiposCustos.filter(t => t.tipo === 'fixa');
   const tiposVariaveis = tiposCustos.filter(t => t.tipo === 'variavel');
+  const tiposImpostos = tiposCustos.filter(t => t.tipo === 'imposto');
 
   return (
     <MinimalistLayout
@@ -82,14 +82,14 @@ export default function EstrategiaDespesasConfiguracoes() {
             update={updateTipoCusto}
             remove={deleteTipoCusto}
           />
-          <SimpleBlock
-            titulo="Despesas de Imposto padrão"
+          <TiposCustoBlock
+            titulo="Tipos de Custos — Impostos"
             icon={<Landmark className="w-4 h-4" />}
             tipo="imposto"
-            items={impostos}
-            insert={insert}
-            update={update}
-            remove={remove}
+            items={tiposImpostos}
+            save={saveTipoCusto}
+            update={updateTipoCusto}
+            remove={deleteTipoCusto}
           />
         </div>
       )}
