@@ -1,35 +1,36 @@
-## Diagnóstico
+# Lançar gastos na página mensal de despesas
 
-Encontrei a inconsistência:
+## Objetivo
+Em `/direcao/estrategia/despesas/2026-05` (rota `EstrategiaDespesasMes`), permitir que o usuário cadastre novos gastos com o mesmo formulário usado em `/financeiro/gastos`, já pré-filtrado no mês corrente.
 
-- A **validação na criação da venda** (`src/utils/descontoVendasRules.ts` chamada em `VendaNovaMinimalista.tsx` linha 281) já dá o adicional de 5% para vendas **Frio** (o caller passa `venda_presencial === false`).
-- Mas o **display dos tiers** (Cartão / Gelo / Responsável) faz o oposto: usa `isPresencial = venda_presencial === true` e atribui o "Gelo" a vendas **Quentes**.
+## Abordagem
+Extrair o formulário/diálogo "Novo Gasto" da página `GastosPage` para um componente reutilizável e usá-lo nas duas rotas.
 
-Resultado: a venda Quente da ZANELLA aparece com 5% de "Gelo" no painel, mas na verdade esse adicional só é permitido pela trava para vendas Frio. O display está invertido.
+### 1. Criar componente `GastoFormDialog`
+- Local: `src/components/financeiro/GastoFormDialog.tsx`
+- Props: `open`, `onOpenChange`, `gasto?` (para edição futura), `defaultMes?` (string `YYYY-MM` para sugerir data dentro do mês), `onSaved?`.
+- Encapsula: estados de formulário, busca de colaboradores, autocomplete de descrição, validação e `saveGasto`/`updateGasto` via `useGastos`.
+- Mantém exatamente o mesmo layout/estilo visual do diálogo atual (glassmorphism).
 
-## Padronização adotada
+### 2. Refatorar `GastosPage`
+- Substituir o `<Dialog>` inline pelo novo componente `GastoFormDialog`.
+- Sem mudança visual nem de comportamento.
 
-- **Frio** = venda à distância → recebe o adicional "Gelo" de até 5%.
-- **Quente** = venda presencial → NÃO recebe o adicional "Gelo".
-- A trava existente (`descontoVendasRules.ts`) já segue essa regra; vamos apenas alinhar o display, rótulos e tooltips para a mesma semântica. Vendas existentes recalculam automaticamente ao reabrir (cálculo é em memória, não há valor persistido a corrigir).
+### 3. Atualizar `EstrategiaDespesasMes.tsx`
+- Adicionar botão "Novo Gasto" (estilo laranja como em GastosPage) no canto superior direito, ao lado do botão de status Pendente/Alana/Luan.
+- Ao clicar, abre o `GastoFormDialog` com `defaultMes={mesValido}`.
+- Após salvar, recarregar os dados de `DespesasResumoTopo` (passar um `refreshKey` incrementado via prop, ou expor um `onSaved` que faz `setRefreshKey(k => k+1)`).
 
-## Mudanças
-
-### 1. `src/components/pedidos/VendaPendenteDetalhesSheet.tsx` (linha ~124)
-- Trocar `const isPresencial = vendaCompleta.venda_presencial === true;` por `const isFrio = vendaCompleta.venda_presencial === false;`
-- Usar `if (isFrio && remaining > 0) { pctGelo = ... }` no lugar de `if (isPresencial ...)`.
-
-### 2. `src/pages/administrativo/FaturamentoVendaMinimalista.tsx` (linha ~1009)
-- Mesma inversão: `const isFrio = venda?.venda_presencial === false;` → aplica `pctGelo` só quando `isFrio`.
-
-### 3. `src/pages/administrativo/FaturamentoVendasMinimalista.tsx` (linha ~414)
-- Mesma inversão: `const isFrio = venda.venda_presencial === false;` → aplica `pctGelo` só quando `isFrio`.
-- Atualizar tooltip linha ~1314: trocar `"Desconto presencial (até X%) — venda presencial"` por `"Desconto frio (até X%) — venda não presencial (Frio)"`.
-
-### 4. `src/utils/descontoVendasRules.ts`
-- Atualizar comentário da linha 43-44: substituir "5% adicional para venda presencial" por "5% adicional para venda Frio (não presencial)" — para alinhar o JSDoc com o uso real. Sem mudança de comportamento (a função já aplica corretamente baseada no booleano recebido, e os callers já passam `venda_presencial === false`).
+### 4. Refresh do resumo
+- Em `DespesasResumoTopo`, aceitar prop opcional `refreshKey: number` e incluí-la nas dependências do efeito que busca os dados, para que o resumo do mês atualize após o lançamento.
 
 ## Detalhes técnicos
-- Não há migração ou recálculo persistido — descontos são derivados em runtime a partir de `produtos_vendas`.
-- Trava em `validarDesconto` permanece a mesma; apenas o display estava invertido.
-- Sem alteração de banco, hooks ou rotas.
+- Hook `useGastos` já suporta save/update; usaremos com filtro do mês atual para que o autocomplete e refetch funcionem.
+- Data padrão do gasto: se `defaultMes` for diferente do mês corrente, usar o dia 1 desse mês; senão, hoje.
+- Nenhuma alteração de banco de dados ou RLS é necessária.
+
+## Arquivos alterados
+- `src/components/financeiro/GastoFormDialog.tsx` (novo)
+- `src/pages/administrativo/GastosPage.tsx` (refatorar para usar o novo componente)
+- `src/pages/direcao/estrategia/EstrategiaDespesasMes.tsx` (botão + dialog)
+- `src/components/direcao/estrategia/DespesasResumoTopo.tsx` (prop `refreshKey`)
