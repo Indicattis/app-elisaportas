@@ -34,8 +34,10 @@ import type { User } from '@/hooks/useAllUsers';
 import { PreencherVagaDialog } from '@/components/vagas/PreencherVagaDialog';
 import { SelecionarUsuarioVagaDialog } from '@/components/vagas/SelecionarUsuarioVagaDialog';
 import { TransferirParaVagaDialog } from '@/components/vagas/TransferirParaVagaDialog';
+import { useSetores } from '@/hooks/useSetores';
+import { GerenciarSetoresDialog } from '@/components/admin/GerenciarSetoresDialog';
 
-const SETOR_KEYS = Object.keys(SETOR_LABELS);
+const FALLBACK_SETOR_KEYS = Object.keys(SETOR_LABELS);
 
 function getInitials(name: string) {
   return name.split(' ').map(n => n[0]).filter(Boolean).slice(0, 2).join('').toUpperCase();
