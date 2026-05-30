@@ -918,6 +918,7 @@ function TiposCustoBlock({
           expanded={true}
           onToggle={() => {}}
           hideHeader
+          reorderRows={reorderTipos}
         />
       </div>
 
