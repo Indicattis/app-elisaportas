@@ -1065,31 +1065,31 @@ function CategoriaGroup({
 }) {
   const subtotal = rows.reduce((s, i) => s + Number(i.valor_maximo_mensal || 0), 0);
   return (
-    <div className={`border-b border-white/[0.06] px-1 ${expanded ? 'pt-1 pb-2' : 'py-1'} group/cat transition-colors`}>
+    <div className={`border-b border-white/[0.06] px-1 ${expanded ? 'pt-2 pb-3' : 'py-2.5'} group/cat transition-colors`}>
       <div
-        className={`flex items-center gap-1.5 ${expanded ? 'mb-1' : ''} cursor-pointer select-none`}
+        className={`flex items-center gap-2 ${expanded ? 'mb-2' : ''} cursor-pointer select-none`}
         onClick={onToggle}
       >
         <ChevronRight
-          className={`w-3 h-3 text-white/30 transition-transform ${expanded ? 'rotate-90 text-white/50' : ''}`}
+          className={`w-4 h-4 text-white/40 transition-transform ${expanded ? 'rotate-90 text-white/60' : ''}`}
         />
         {dragHandle ? (
           <span onClick={(e) => e.stopPropagation()} className="flex items-center opacity-0 group-hover/cat:opacity-100 transition-opacity">{dragHandle}</span>
         ) : null}
-        <span className={`w-1.5 h-1.5 rounded-full ${palette.dot}`} />
+        <span className={`w-2 h-2 rounded-full ${palette.dot}`} />
         {cat && rename ? (
           <div
-            className="text-[11px] text-white/70 font-normal"
+            className="text-sm text-white/90 font-medium"
             onClick={(e) => e.stopPropagation()}
           >
             <InlineText value={cat.nome} onSave={(v) => rename({ id: cat.id, nome: v })} />
           </div>
         ) : (
-          <span className="text-[11px] text-white/70 font-normal">{cat?.nome ?? 'Sem categoria'}</span>
+          <span className="text-sm text-white/90 font-medium">{cat?.nome ?? 'Sem categoria'}</span>
         )}
-        <span className="text-[10px] text-white/30 tabular-nums">{rows.length}</span>
+        <span className="text-xs text-white/40 tabular-nums">{rows.length}</span>
         <div className="flex-1" />
-        <span className="text-[11px] text-white/60 tabular-nums">{formatCurrency(subtotal)}</span>
+        <span className="text-sm text-white/90 font-semibold tabular-nums">{formatCurrency(subtotal)}</span>
         {cat && removeCat && (
           <button
             onClick={(e) => { e.stopPropagation(); removeCat(cat.id); }}
