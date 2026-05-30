@@ -278,7 +278,7 @@ export default function VendaNovaMinimalista() {
   }), [configLimites]);
 
   const validacaoDescontoMemo = useMemo(() => {
-    return validarDesconto(portas, formData.forma_pagamento, formData.venda_presencial === true, configLimitesObj);
+    return validarDesconto(portas, formData.forma_pagamento, formData.venda_presencial === false, configLimitesObj);
   }, [portas, formData.forma_pagamento, formData.venda_presencial, configLimitesObj]);
 
   const tipoAutorizacaoNecessariaMemo = useMemo(() => {
@@ -519,7 +519,7 @@ export default function VendaNovaMinimalista() {
     const validacao = validarDesconto(
       portas,
       formData.forma_pagamento,
-      formData.venda_presencial === true,
+      formData.venda_presencial === false,
       configLimitesObj
     );
 
@@ -561,7 +561,7 @@ export default function VendaNovaMinimalista() {
       const validacao = validarDesconto(
         produtosComDesconto,
         formData.forma_pagamento,
-        formData.venda_presencial === true,
+        formData.venda_presencial === false,
         configLimitesObj
       );
 
@@ -941,7 +941,7 @@ export default function VendaNovaMinimalista() {
                   htmlFor="temp-quente"
                   className={cn(
                     "flex items-center justify-center gap-3 p-4 rounded-lg cursor-pointer transition-all duration-200 border-2",
-                    formData.venda_presencial === true
+                    formData.venda_presencial === false
                       ? "bg-gradient-to-r from-orange-500/20 to-orange-600/10 border-orange-400/50 shadow-lg shadow-orange-500/20"
                       : "bg-orange-500/5 border-orange-500/20 hover:border-orange-400/40 hover:bg-orange-500/10"
                   )}
@@ -950,7 +950,7 @@ export default function VendaNovaMinimalista() {
                   <span className="text-lg">🔥</span>
                   <span className={cn(
                     "text-sm font-medium",
-                    formData.venda_presencial === true ? "text-orange-100" : "text-orange-200/70"
+                    formData.venda_presencial === false ? "text-orange-100" : "text-orange-200/70"
                   )}>Quente</span>
                 </label>
               </RadioGroup>
@@ -1068,7 +1068,7 @@ export default function VendaNovaMinimalista() {
             </GradientButton>
           )}
           
-          {portas.length > 0 && validarDesconto(portas, formData.forma_pagamento, formData.venda_presencial === true).dentroDoLimite && !portas.some(p => (p.desconto_valor || 0) > 0 || (p.desconto_percentual || 0) > 0) && (
+          {portas.length > 0 && validarDesconto(portas, formData.forma_pagamento, formData.venda_presencial === false).dentroDoLimite && !portas.some(p => (p.desconto_valor || 0) > 0 || (p.desconto_percentual || 0) > 0) && (
             <GradientButton 
               variant="outline"
               onClick={() => setCreditoModalOpen(true)}
@@ -1119,7 +1119,7 @@ export default function VendaNovaMinimalista() {
         produtos={portas}
         onAplicarDesconto={handleAplicarDesconto}
         formaPagamento={formData.forma_pagamento}
-        vendaPresencial={formData.venda_presencial === true}
+        vendaPresencial={formData.venda_presencial === false}
       />
 
       <CreditoVendaModal
@@ -1137,7 +1137,7 @@ export default function VendaNovaMinimalista() {
           open={autorizacaoDescontoOpen}
           onOpenChange={setAutorizacaoDescontoOpen}
           onAutorizado={handleAutorizacaoDesconto}
-          percentualDesconto={validarDesconto(portas, formData.forma_pagamento, formData.venda_presencial === true).percentualDesconto}
+          percentualDesconto={validarDesconto(portas, formData.forma_pagamento, formData.venda_presencial === false).percentualDesconto}
           tipoAutorizacao={tipoAutorizacaoNecessaria}
           limitePermitido={limitePermitido}
         />
