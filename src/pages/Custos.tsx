@@ -58,7 +58,7 @@ export default function Custos() {
 
   const handleEditTipoCusto = (tipo: TipoCusto) => {
     setEditingTipoCusto(tipo);
-    setTipoCustoForm({ nome: tipo.nome, descricao: tipo.descricao || "", valor_maximo_mensal: tipo.valor_maximo_mensal, tipo: tipo.tipo });
+    setTipoCustoForm({ nome: tipo.nome, descricao: tipo.descricao || "", valor_maximo_mensal: tipo.valor_maximo_mensal, tipo: tipo.tipo as 'fixa' | 'variavel' });
     setTipoCustoDialog(true);
   };
 
