@@ -3727,7 +3727,7 @@ export type Database = {
           observacoes: string | null
           responsavel_id: string
           status: string
-          tipo_custo_id: string
+          tipo_custo_id: string | null
           updated_at: string | null
           valor: number
         }
@@ -3741,7 +3741,7 @@ export type Database = {
           observacoes?: string | null
           responsavel_id: string
           status?: string
-          tipo_custo_id: string
+          tipo_custo_id?: string | null
           updated_at?: string | null
           valor?: number
         }
@@ -3755,7 +3755,7 @@ export type Database = {
           observacoes?: string | null
           responsavel_id?: string
           status?: string
-          tipo_custo_id?: string
+          tipo_custo_id?: string | null
           updated_at?: string | null
           valor?: number
         }
