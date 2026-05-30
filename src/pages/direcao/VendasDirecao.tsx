@@ -593,6 +593,7 @@ export default function VendasDirecao() {
       <MinimalistLayout 
         title="Vendas" 
         backPath="/direcao/vendas"
+        fullWidth
         breadcrumbItems={[
           { label: "Home", path: "/home" },
           { label: "Direção", path: "/direcao" },
@@ -612,6 +613,7 @@ export default function VendasDirecao() {
       title="Todas as Vendas" 
       subtitle="Todas as vendas do período"
       backPath="/direcao/vendas"
+      fullWidth
       breadcrumbItems={[
         { label: "Home", path: "/home" },
         { label: "Direção", path: "/direcao" },
