@@ -161,82 +161,60 @@ function FolhaBlock({
         <h3 className="font-semibold">Folha Salarial padrão</h3>
         <span className="text-white/40 text-sm">({items.length})</span>
       </div>
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm min-w-[1200px]">
-          <thead>
-            <tr className="text-[10px] uppercase tracking-wider text-white/40 border-b border-white/10">
-              <th className="text-left font-normal pb-2 pl-1">Colaborador</th>
-              <th className="text-center font-normal pb-2 px-2 w-[90px]">Em folha</th>
-              <th className="text-left font-normal pb-2 px-2 w-[140px]">Setor</th>
-              <th className="text-right font-normal pb-2 px-2 text-emerald-400">Salário</th>
-              <th className="text-right font-normal pb-2 px-2">Combustível</th>
-              <th className="text-right font-normal pb-2 px-2">Insalub %</th>
-              <th className="text-right font-normal pb-2 px-2">
-                <div>Insalub valor</div>
-                <div className="text-[9px] normal-case tracking-normal text-white/30">salário × insalub%</div>
-              </th>
-              <th className="text-right font-normal pb-2 px-2">FGTS %</th>
-              <th className="text-right font-normal pb-2 px-2">
-                <div>FGTS valor</div>
-                <div className="text-[9px] normal-case tracking-normal text-white/30">salário × FGTS%</div>
-              </th>
-              <th className="text-right font-normal pb-2 px-2">
-                <div>Previsão 13°</div>
-                <div className="text-[9px] normal-case tracking-normal text-white/30">salário ÷ 12</div>
-              </th>
-              <th className="text-right font-normal pb-2 px-2">
-                <div>FGTS 13°</div>
-                <div className="text-[9px] normal-case tracking-normal text-white/30">FGTS valor ÷ 12</div>
-              </th>
-              <th className="text-right font-normal pb-2 px-2">
-                <div>Férias + 1/3</div>
-                <div className="text-[9px] normal-case tracking-normal text-white/30">salário ÷ 3</div>
-              </th>
-              <th className="text-right font-normal pb-2 px-2">Total</th>
-              <th className="pb-2 pr-1 w-10"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {[...SETORES, SETOR_SEM]
-              .map(s => ({ meta: s, rows: items.filter(i => (i.setor ?? '') === s.value) }))
-              .filter(g => g.rows.length > 0)
-              .map(g => (
-                <FolhaSetorGroup key={g.meta.value || 'sem'} meta={g.meta} rows={g.rows} update={update} remove={remove} />
-              ))}
-            <tr className="border-b border-white/5">
-              <td className="py-2 pl-1">
-                <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome do colaborador"
-                  className="w-full h-8 bg-white/5 border border-white/10 rounded px-2 text-white text-xs outline-none focus:border-blue-400/50" />
-              </td>
-              <td className="px-2 text-center">
-                <Switch checked={emFolha} onCheckedChange={setEmFolha} />
-              </td>
-              <td className="px-2">
-                <select value={setor} onChange={(e) => setSetor(e.target.value)}
-                  className={setorSelectClass(setor)}>
-                  <option value="" className="bg-slate-900 text-white">—</option>
-                  {SETORES.map(s => <option key={s.value} value={s.value} className="bg-slate-900 text-white">{s.label}</option>)}
-                </select>
-              </td>
-              <td className="px-2"><NumCell value={salario} onChange={setSalario} /></td>
-              <td className="px-2"><NumCell value={auxComb} onChange={setAuxComb} /></td>
-              <td className="px-2"><NumCell value={insalub} onChange={setInsalub} /></td>
-              <td className="px-2 text-right text-orange-400 text-xs">{formatCurrency(salario * (insalub || 0) / 100)}</td>
-              <td className="px-2"><NumCell value={fgts} onChange={setFgts} /></td>
-              <td className="px-2 text-right text-orange-400 text-xs">{formatCurrency(salario * (fgts || 0) / 100)}</td>
-              <td className="px-2 text-right text-orange-400 text-xs">{formatCurrency(salario / 12)}</td>
-              <td className="px-2 text-right text-orange-400 text-xs">{formatCurrency((salario * (fgts || 0) / 100) / 12)}</td>
-              <td className="px-2 text-right text-white/40 text-xs">{formatCurrency(salario / 3)}</td>
-              <td className="px-2 text-right text-white/60 text-xs">{formatCurrency(calcTotalFolha({ salario, aux_combustivel: auxComb, insalubridade_pct: insalub, fgts_pct: fgts, previsao_13_valor: prev13, em_folha: emFolha }))}</td>
-              <td className="pr-1 text-right">
-                <button onClick={save} disabled={!nome.trim()}
-                  className="p-1 rounded bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 disabled:opacity-30">
-                  <Plus className="w-4 h-4" />
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <div className="space-y-3">
+        {[...SETORES, SETOR_SEM]
+          .map(s => ({ meta: s, rows: items.filter(i => (i.setor ?? '') === s.value) }))
+          .filter(g => g.rows.length > 0)
+          .map(g => (
+            <FolhaSetorGroup key={g.meta.value || 'sem'} meta={g.meta} rows={g.rows} update={update} remove={remove} />
+          ))}
+
+        {/* Caixa de adicionar novo colaborador */}
+        <div className="bg-white/[0.03] border border-dashed border-white/15 rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Plus className="w-3.5 h-3.5 text-emerald-300" />
+            <span className="text-[11px] uppercase tracking-wider text-white/60 font-semibold">Adicionar colaborador</span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[1200px]">
+              <FolhaTableHeader />
+              <tbody>
+                <tr>
+                  <td className="py-2 pl-1">
+                    <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome do colaborador"
+                      className="w-full h-8 bg-white/5 border border-white/10 rounded px-2 text-white text-xs outline-none focus:border-blue-400/50" />
+                  </td>
+                  <td className="px-2 text-center">
+                    <Switch checked={emFolha} onCheckedChange={setEmFolha} />
+                  </td>
+                  <td className="px-2">
+                    <select value={setor} onChange={(e) => setSetor(e.target.value)}
+                      className={setorSelectClass(setor)}>
+                      <option value="" className="bg-slate-900 text-white">—</option>
+                      {SETORES.map(s => <option key={s.value} value={s.value} className="bg-slate-900 text-white">{s.label}</option>)}
+                    </select>
+                  </td>
+                  <td className="px-2"><NumCell value={salario} onChange={setSalario} /></td>
+                  <td className="px-2"><NumCell value={auxComb} onChange={setAuxComb} /></td>
+                  <td className="px-2"><NumCell value={insalub} onChange={setInsalub} /></td>
+                  <td className="px-2 text-right text-orange-400 text-xs">{formatCurrency(salario * (insalub || 0) / 100)}</td>
+                  <td className="px-2"><NumCell value={fgts} onChange={setFgts} /></td>
+                  <td className="px-2 text-right text-orange-400 text-xs">{formatCurrency(salario * (fgts || 0) / 100)}</td>
+                  <td className="px-2 text-right text-orange-400 text-xs">{formatCurrency(salario / 12)}</td>
+                  <td className="px-2 text-right text-orange-400 text-xs">{formatCurrency((salario * (fgts || 0) / 100) / 12)}</td>
+                  <td className="px-2 text-right text-white/40 text-xs">{formatCurrency(salario / 3)}</td>
+                  <td className="px-2 text-right text-white/60 text-xs">{formatCurrency(calcTotalFolha({ salario, aux_combustivel: auxComb, insalubridade_pct: insalub, fgts_pct: fgts, previsao_13_valor: prev13, em_folha: emFolha }))}</td>
+                  <td className="pr-1 text-right">
+                    <button onClick={save} disabled={!nome.trim()}
+                      className="p-1 rounded bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 disabled:opacity-30">
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
       <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between px-2 gap-6">
         <div className="flex items-center gap-2">
@@ -328,6 +306,44 @@ function FolhaRow({
   );
 }
 
+function FolhaTableHeader() {
+  return (
+    <thead>
+      <tr className="text-[10px] uppercase tracking-wider text-white/40 border-b border-white/10">
+        <th className="text-left font-normal pb-2 pl-1">Colaborador</th>
+        <th className="text-center font-normal pb-2 px-2 w-[90px]">Em folha</th>
+        <th className="text-left font-normal pb-2 px-2 w-[140px]">Setor</th>
+        <th className="text-right font-normal pb-2 px-2 text-emerald-400">Salário</th>
+        <th className="text-right font-normal pb-2 px-2">Combustível</th>
+        <th className="text-right font-normal pb-2 px-2">Insalub %</th>
+        <th className="text-right font-normal pb-2 px-2">
+          <div>Insalub valor</div>
+          <div className="text-[9px] normal-case tracking-normal text-white/30">salário × insalub%</div>
+        </th>
+        <th className="text-right font-normal pb-2 px-2">FGTS %</th>
+        <th className="text-right font-normal pb-2 px-2">
+          <div>FGTS valor</div>
+          <div className="text-[9px] normal-case tracking-normal text-white/30">salário × FGTS%</div>
+        </th>
+        <th className="text-right font-normal pb-2 px-2">
+          <div>Previsão 13°</div>
+          <div className="text-[9px] normal-case tracking-normal text-white/30">salário ÷ 12</div>
+        </th>
+        <th className="text-right font-normal pb-2 px-2">
+          <div>FGTS 13°</div>
+          <div className="text-[9px] normal-case tracking-normal text-white/30">FGTS valor ÷ 12</div>
+        </th>
+        <th className="text-right font-normal pb-2 px-2">
+          <div>Férias + 1/3</div>
+          <div className="text-[9px] normal-case tracking-normal text-white/30">salário ÷ 3</div>
+        </th>
+        <th className="text-right font-normal pb-2 px-2">Total</th>
+        <th className="pb-2 pr-1 w-10"></th>
+      </tr>
+    </thead>
+  );
+}
+
 function FolhaSetorGroup({
   meta, rows, update, remove,
 }: {
@@ -346,23 +362,26 @@ function FolhaSetorGroup({
     ferias_valor: i.ferias_valor,
   }), 0);
   return (
-    <>
-      <tr className="bg-white/[0.02]">
-        <td colSpan={14} className="py-2 pl-1">
-          <div className="flex items-center gap-2">
-            <span className={`w-2 h-2 rounded-full ${meta.dot}`} />
-            <span className="text-[11px] uppercase tracking-wider text-white/70 font-semibold">{meta.label}</span>
-            <span className="text-[10px] text-white/40">({rows.length})</span>
-            <div className="flex-1 h-px bg-white/10 ml-2" />
-            <span className="text-[10px] text-white/50 uppercase tracking-wider">Subtotal</span>
-            <span className="text-xs text-white/80 font-medium">{formatCurrency(subtotal)}</span>
-          </div>
-        </td>
-      </tr>
-      {rows.map(i => (
-        <FolhaRow key={i.id} item={i} update={update} remove={remove} />
-      ))}
-    </>
+    <div className="bg-white/[0.04] border border-white/10 rounded-xl p-4">
+      <div className="flex items-center gap-2 mb-3">
+        <span className={`w-2 h-2 rounded-full ${meta.dot}`} />
+        <span className="text-[11px] uppercase tracking-wider text-white/80 font-semibold">{meta.label}</span>
+        <span className="text-[10px] text-white/40">({rows.length})</span>
+        <div className="flex-1 h-px bg-white/10 ml-2" />
+        <span className="text-[10px] text-white/50 uppercase tracking-wider">Subtotal</span>
+        <span className="text-xs text-white/90 font-medium">{formatCurrency(subtotal)}</span>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm min-w-[1200px]">
+          <FolhaTableHeader />
+          <tbody>
+            {rows.map(i => (
+              <FolhaRow key={i.id} item={i} update={update} remove={remove} />
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 }
 
