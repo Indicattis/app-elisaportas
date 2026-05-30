@@ -840,8 +840,17 @@ function TiposCustoBlock({
 
   const semCategoria = items.filter(i => !i.categoria_id);
 
-  const [expandedCategorias, setExpandedCategorias] = useState<Set<string>>(new Set());
+  const [collapsedCategorias, setCollapsedCategorias] = useState<Set<string>>(new Set());
   const toggleCat = (key: string) => {
+    setCollapsedCategorias(prev => {
+      const n = new Set(prev);
+      if (n.has(key)) n.delete(key); else n.add(key);
+      return n;
+    });
+  };
+  const isExpanded = (key: string) => !collapsedCategorias.has(key);
+  // legacy no-op to keep references happy if any
+  const _unused = () => setCollapsedCategorias;
     setExpandedCategorias(prev => {
       const n = new Set(prev);
       if (n.has(key)) n.delete(key); else n.add(key);
