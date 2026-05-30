@@ -1457,17 +1457,17 @@ function TiposCustoBlockMensal({
   const totalPago = gastos.reduce((s, g) => s + Number(g.total || 0), 0);
 
   return (
-    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-5">
-      <div className="flex items-center gap-2 text-white mb-3">
+    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-4">
+      <div className="flex items-center gap-2 text-white mb-2">
         {icon}
         <h3 className="font-semibold">{titulo}</h3>
         <span className="text-white/40 text-sm">({tiposFull.length})</span>
         {onAddGasto && (
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-1.5">
             <button
               type="button"
               onClick={onAddGasto}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-orange-600 hover:bg-orange-500 text-white shadow-lg shadow-orange-600/20 transition-all"
+              className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-orange-500/15 hover:bg-orange-500/25 border border-orange-400/30 text-xs text-orange-200 hover:text-orange-100 transition-colors"
             >
               <Plus className="w-3.5 h-3.5" />
               Novo Gasto
@@ -1481,7 +1481,7 @@ function TiposCustoBlockMensal({
       ) : tiposFull.length === 0 ? (
         <div className="text-white/40 px-2 py-6 text-center">Nenhum tipo de custo configurado para esta categoria.</div>
       ) : (
-        <div>
+        <div className="overflow-x-auto">
           {grupos.map((g, idx) => (
             <CategoriaGroupMensal
               key={g.cat?.id ?? `__sem-${idx}`}
@@ -1496,7 +1496,7 @@ function TiposCustoBlockMensal({
         </div>
       )}
 
-      <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between px-2 gap-6">
+      <div className="mt-2 pt-2 border-t border-white/10 flex items-center justify-between px-2 gap-6">
         <div className="flex items-center gap-2">
           <span className="text-xs text-white/50 uppercase tracking-wider">Total projetado</span>
           <span className="text-sm font-medium text-white/80">{formatCurrency(totalProjetado)}</span>
