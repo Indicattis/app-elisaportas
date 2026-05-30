@@ -33,6 +33,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { SETOR_LABELS } from "@/utils/setorMapping";
+import { useSetores } from "@/hooks/useSetores";
 
 const roleSchema = z.object({
   key: z
