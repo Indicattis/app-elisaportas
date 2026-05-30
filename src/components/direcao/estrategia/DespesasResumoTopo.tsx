@@ -998,14 +998,16 @@ function BlocoDespesa({
                     >
                       <Check className="w-4 h-4" />
                     </button>
-                    <button
-                      onClick={() => onDeletePadrao(sug.id)}
-                      className="p-1 rounded hover:bg-red-500/20 text-red-300/50 hover:text-red-300"
-                      aria-label="Remover sugestão"
-                      title="Remover sugestão padrão"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    {padroes.some(p => p.id === sug.id) && (
+                      <button
+                        onClick={() => onDeletePadrao(sug.id)}
+                        className="p-1 rounded hover:bg-red-500/20 text-red-300/50 hover:text-red-300"
+                        aria-label="Remover sugestão"
+                        title="Remover sugestão padrão"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>
