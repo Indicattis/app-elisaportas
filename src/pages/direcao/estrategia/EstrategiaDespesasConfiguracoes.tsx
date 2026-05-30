@@ -132,12 +132,13 @@ function calcTotalFolha(f: { salario: number; aux_combustivel: number; insalubri
 }
 
 function FolhaBlock({
-  items, insert, update, remove,
+  items, insert, update, remove, reorder,
 }: {
   items: DespesaPadrao[];
   insert: ReturnType<typeof useDespesasPadrao>['insert'];
   update: ReturnType<typeof useDespesasPadrao>['update'];
   remove: ReturnType<typeof useDespesasPadrao>['remove'];
+  reorder: ReturnType<typeof useDespesasPadrao>['reorder'];
 }) {
   const [nome, setNome] = useState('');
   const [emFolha, setEmFolha] = useState(true);
@@ -177,6 +178,41 @@ function FolhaBlock({
     ferias_valor: i.ferias_valor,
   }), 0);
   const SETORES = useSetoresMeta();
+  const { reorderSetores } = useSetores();
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
+
+  const grupos = useMemo(
+    () =>
+      [...SETORES, SETOR_SEM]
+        .map(s => ({ meta: s, rows: items.filter(i => (i.setor ?? '') === s.value) }))
+        .filter(g => g.rows.length > 0),
+    [SETORES, items]
+  );
+  const setorIds = useMemo(() => SETORES.map(s => s.value), [SETORES]);
+  const setorIdToDbId = useMemo(() => {
+    const m: Record<string, string> = {};
+    (useSetores as any); // type only
+    return m;
+  }, []);
+
+  // Need DB id of each setor for reorder; fetch via useSetores again
+  const { setores: setoresFull } = useSetores();
+  const keyToId = useMemo(() => {
+    const m: Record<string, string> = {};
+    setoresFull.forEach(s => { m[s.key] = s.id; });
+    return m;
+  }, [setoresFull]);
+
+  const onSetorDragEnd = (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const ids = setorIds.filter(id => id !== ''); // exclude "sem setor"
+    const oldIdx = ids.indexOf(String(active.id));
+    const newIdx = ids.indexOf(String(over.id));
+    if (oldIdx < 0 || newIdx < 0) return;
+    const next = arrayMove(ids, oldIdx, newIdx);
+    reorderSetores(next.map(k => keyToId[k]).filter(Boolean));
+  };
 
   return (
     <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-5">
