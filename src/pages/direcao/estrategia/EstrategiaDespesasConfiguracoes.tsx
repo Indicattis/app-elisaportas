@@ -8,6 +8,7 @@ import { useEmpresasEmissoras } from '@/hooks/useEmpresasEmissoras';
 import { useDespesasCategorias, getCategoriaPalette, type CategoriaDespesa } from '@/hooks/useDespesasCategorias';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { GerenciarCategoriasDialog } from '@/components/despesas/GerenciarCategoriasDialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -765,8 +766,7 @@ function TiposCustoBlock({
   const [valor, setValor] = useState(0);
   const [apareceNoDre, setApareceNoDre] = useState(true);
   const [empresaId, setEmpresaId] = useState<string>('');
-  const [novaCatNome, setNovaCatNome] = useState('');
-  const [criandoCat, setCriandoCat] = useState(false);
+  const [gerenciarCatOpen, setGerenciarCatOpen] = useState(false);
   const [categoriaId, setCategoriaId] = useState<string>('');
   const { empresas } = useEmpresasEmissoras();
   const empresasAtivas = (empresas || []).filter((e: any) => e.ativo !== false);
@@ -861,50 +861,24 @@ function TiposCustoBlock({
         <h3 className="font-semibold">{titulo}</h3>
         <span className="text-white/40 text-sm">({items.length})</span>
         <div className="ml-auto flex items-center gap-1.5">
-          {!criandoCat ? (
-            <>
-              <button
-                onClick={() => setCriandoCat(true)}
-                className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-white/80 hover:text-white transition-colors"
-              >
-                <FolderPlus className="w-3.5 h-3.5" />
-                Nova categoria
-              </button>
-              <button
-                onClick={() => setAddDialogOpen(true)}
-                className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-400/30 text-xs text-emerald-200 hover:text-emerald-100 transition-colors"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                Nova despesa
-              </button>
-            </>
-          ) : (
-            <>
-            <input
-              autoFocus
-              value={novaCatNome}
-              onChange={(e) => setNovaCatNome(e.target.value)}
-              onKeyDown={async (e) => {
-                if (e.key === 'Enter' && novaCatNome.trim()) {
-                  try { await createCategoria(novaCatNome); setNovaCatNome(''); setCriandoCat(false); } catch {}
-                }
-                if (e.key === 'Escape') { setNovaCatNome(''); setCriandoCat(false); }
-              }}
-              placeholder="Nome da categoria"
-              className="h-8 bg-white/5 border border-white/10 rounded px-2 text-white text-xs outline-none focus:border-blue-400/50 w-48"
-            />
-            <button
-              onClick={async () => { if (!novaCatNome.trim()) return; try { await createCategoria(novaCatNome); setNovaCatNome(''); setCriandoCat(false); } catch {} }}
-              className="p-1.5 rounded bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30"
-            ><Check className="w-3.5 h-3.5" /></button>
-            <button
-              onClick={() => { setNovaCatNome(''); setCriandoCat(false); }}
-              className="p-1.5 rounded hover:bg-white/10 text-white/60"
-            ><X className="w-3.5 h-3.5" /></button>
-            </>
-          )}
+          <button
+            onClick={() => setGerenciarCatOpen(true)}
+            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-white/80 hover:text-white transition-colors"
+          >
+            <FolderPlus className="w-3.5 h-3.5" />
+            Gerenciar categorias
+          </button>
+          <button
+            onClick={() => setAddDialogOpen(true)}
+            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-400/30 text-xs text-emerald-200 hover:text-emerald-100 transition-colors"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Nova despesa
+          </button>
         </div>
       </div>
+
+      <GerenciarCategoriasDialog open={gerenciarCatOpen} onOpenChange={setGerenciarCatOpen} />
 
       <div>
         <CategoriaGroup
