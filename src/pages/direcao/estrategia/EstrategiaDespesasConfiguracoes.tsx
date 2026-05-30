@@ -420,13 +420,15 @@ function FolhaTableHeader() {
 }
 
 function FolhaSetorGroup({
-  meta, rows, setores, update, remove,
+  meta, rows, setores, update, remove, reorder, dragHandle,
 }: {
   meta: SetorMeta;
   rows: DespesaPadrao[];
   setores: SetorMeta[];
   update: ReturnType<typeof useDespesasPadrao>['update'];
   remove: ReturnType<typeof useDespesasPadrao>['remove'];
+  reorder: ReturnType<typeof useDespesasPadrao>['reorder'];
+  dragHandle?: React.ReactNode;
 }) {
   const subtotal = rows.reduce((s, i) => s + calcTotalFolha({
     salario: Number(i.salario) || 0,
@@ -437,9 +439,21 @@ function FolhaSetorGroup({
     em_folha: i.em_folha,
     ferias_valor: i.ferias_valor,
   }), 0);
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
+  const sortedRows = [...rows].sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
+  const rowIds = sortedRows.map(r => r.id);
+  const onRowDragEnd = (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const oldIdx = rowIds.indexOf(String(active.id));
+    const newIdx = rowIds.indexOf(String(over.id));
+    if (oldIdx < 0 || newIdx < 0) return;
+    reorder(arrayMove(rowIds, oldIdx, newIdx));
+  };
   return (
     <div className="bg-white/[0.04] border border-white/10 rounded-xl p-4">
       <div className="flex items-center gap-2 mb-3">
+        {dragHandle}
         <span className={`w-2 h-2 rounded-full ${meta.dot}`} />
         <span className="text-[11px] uppercase tracking-wider text-white/80 font-semibold">{meta.label}</span>
         <span className="text-[10px] text-white/40">({rows.length})</span>
@@ -450,14 +464,95 @@ function FolhaSetorGroup({
       <div className="overflow-x-auto">
         <table className="w-full text-sm min-w-[1200px]">
           <FolhaTableHeader />
-          <tbody>
-            {rows.map(i => (
-              <FolhaRow key={i.id} item={i} setores={setores} update={update} remove={remove} />
-            ))}
-          </tbody>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            modifiers={[restrictToVerticalAxis, restrictToParentElement]}
+            onDragEnd={onRowDragEnd}
+          >
+            <SortableContext items={rowIds} strategy={verticalListSortingStrategy}>
+              <tbody>
+                {sortedRows.map(i => (
+                  <SortableFolhaRow key={i.id} item={i} setores={setores} update={update} remove={remove} />
+                ))}
+              </tbody>
+            </SortableContext>
+          </DndContext>
         </table>
       </div>
     </div>
+  );
+}
+
+function SortableSetorGroup(props: {
+  id: string;
+  meta: SetorMeta;
+  rows: DespesaPadrao[];
+  setores: SetorMeta[];
+  update: ReturnType<typeof useDespesasPadrao>['update'];
+  remove: ReturnType<typeof useDespesasPadrao>['remove'];
+  reorder: ReturnType<typeof useDespesasPadrao>['reorder'];
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: props.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+  const handle = (
+    <button
+      ref={setNodeRef as any}
+      {...attributes}
+      {...listeners}
+      className="p-0.5 rounded hover:bg-white/10 text-white/40 hover:text-white/80 cursor-grab active:cursor-grabbing"
+      title="Arrastar setor"
+      type="button"
+    >
+      <GripVertical className="w-3.5 h-3.5" />
+    </button>
+  );
+  return (
+    <div ref={setNodeRef} style={style}>
+      <FolhaSetorGroup
+        meta={props.meta}
+        rows={props.rows}
+        setores={props.setores}
+        update={props.update}
+        remove={props.remove}
+        reorder={props.reorder}
+        dragHandle={handle}
+      />
+    </div>
+  );
+}
+
+function SortableFolhaRow(props: {
+  item: DespesaPadrao;
+  setores: SetorMeta[];
+  update: ReturnType<typeof useDespesasPadrao>['update'];
+  remove: ReturnType<typeof useDespesasPadrao>['remove'];
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: props.item.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+  const handle = (
+    <button
+      {...attributes}
+      {...listeners}
+      className="p-0.5 rounded hover:bg-white/10 text-white/30 hover:text-white/70 cursor-grab active:cursor-grabbing"
+      title="Arrastar colaborador"
+      type="button"
+    >
+      <GripVertical className="w-3.5 h-3.5" />
+    </button>
+  );
+  return (
+    <tr ref={setNodeRef as any} style={style} className="border-b border-white/5 hover:bg-white/[0.03]">
+      <FolhaRowCells item={props.item} setores={props.setores} update={props.update} remove={props.remove} dragHandle={handle} />
+    </tr>
   );
 }
 
