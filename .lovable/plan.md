@@ -1,28 +1,40 @@
+## Problema
+
+Em `/direcao/estrategia/despesas/:mes`, o bloco "Folha Salarial" hoje monta a lista unindo três fontes:
+1. `colaboradores` (via RPC `get_colaboradores_folha`)
+2. `despesas_padrao` tipo `'folha'` (configurações)
+3. `despesas_manuais_folha` (lançamentos salvos do mês)
+
+Isso faz aparecer colaboradores que não estão configurados em `/direcao/estrategia/despesas/configuracoes`.
+
 ## Objetivo
 
-Em `/direcao/estrategia/despesas/:mes`, nos blocos **Despesas Fixas** e **Despesas Variáveis**, adicionar uma coluna **"Valor projetado"** alimentada por `tipos_custos.valor_maximo_mensal` (o mesmo campo configurado em `/financeiro/custos` e em `/direcao/estrategia/despesas/configuracoes`).
-
-O bloco **Impostos** já tem coluna "Previsão" e não muda.
+A lista de colaboradores da Folha deve vir **exclusivamente** de `despesas_padrao` (tipo `'folha'`). Os valores do mês continuam vindo de `despesas_manuais_folha` (sobrepondo os padrões quando existir lançamento daquele colaborador). A flag "Em folha" passa a vir de `despesas_padrao.em_folha`.
 
 ## Mudanças
 
 Arquivo único: `src/components/direcao/estrategia/DespesasResumoTopo.tsx`
 
-1. **Carregamento dos tipos** (efeito de carga do mês, por volta da linha 200):
-   - Ao buscar `tipos_custos`, incluir `valor_maximo_mensal` no `select`.
-   - Estender `tiposMap[t.id]` para guardar `valor_maximo_mensal`.
+1. **Remover dependência de colaboradores**
+   - Remover o `useEffect` que chama `supabase.rpc('get_colaboradores_folha')` e o estado `colabs` / `setColabs`.
+   - Remover o tipo `Colab` (ou manter apenas como tipo local equivalente a um padrão simplificado, se necessário pelas assinaturas das funções).
+   - Remover `colabs` de toda a árvore de props (`BlocoFolha`, etc.).
 
-2. **Agrupamento `agruparPor`** (linhas 233–265):
-   - Incluir `valor_projetado: Number(t.valor_maximo_mensal || 0)` ao montar cada `GastoAgrupado`.
-   - Adicionar campo `valor_projetado: number` no tipo `GastoAgrupado`.
+2. **`BlocoFolha` (linhas ~498–620)**
+   - Substituir a união `colabs + padroesFolha + rows` pela lista derivada apenas de `padroesFolha` + `rows` (lançamentos do mês). Lançamentos cujo nome não esteja em padroes ficam como linha extra readonly só para não perder dados históricos, mas sem qualquer enriquecimento via colaboradores.
+   - Para cada item da lista, montar um `Colab` virtual a partir do `padrao` correspondente, com `em_folha = padrao.em_folha`.
+   - Ajustar `sortedColabs`, `total` e callbacks para refletir essa origem única.
 
-3. **Componente `BlocoGastosReadonly`** (linhas 1200–1303):
-   - Novo `<th>` "Valor projetado" entre "Lançamentos" e "Valor pago no mês".
-   - Nova célula por linha exibindo `formatCurrency(r.valor_projetado)` em tom suave (`text-white/60`).
-   - Ampliar `colSpan` dos estados `Carregando...` e "Nenhum gasto..." de 3 para 4.
-   - No rodapé, manter o "Total" atual (pago) e adicionar um segundo bloco "Total projetado" = soma de `valor_projetado` das linhas exibidas, no mesmo estilo do "Total de salários" do bloco Folha.
+3. **`totalExibido` (linhas ~136–146)**
+   - Atualizar para somar: lançamentos do mês + padrões da folha que não têm lançamento (em vez de `colabs`).
+   - A lógica já existe parcialmente; só remover qualquer referência a `colabs`.
+
+4. **Limpeza**
+   - Remover imports/usos não referenciados (`Colab`, RPC, etc.).
+   - Garantir que nenhum outro consumidor do componente quebre.
 
 ## Fora de escopo
 
-- Não criar linhas para tipos de custo que tenham projeção mas nenhum lançamento no mês (mantém o comportamento atual de só listar tipos com gastos). Caso queira esse comportamento, peço para incluir num próximo passo.
-- Nenhuma alteração de banco de dados, hook ou outras páginas.
+- Não alterar `colaboradores` nem a RPC `get_colaboradores_folha` — outras telas continuam usando.
+- Não alterar tabelas (`despesas_padrao` já tem `em_folha`).
+- Outras páginas (`/colaboradores`, etc.) não são afetadas.
