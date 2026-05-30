@@ -902,43 +902,19 @@ function TiposCustoBlock({
         </div>
       </div>
 
-      <div className="space-y-5">
-        <DndContext sensors={sensors} collisionDetection={closestCenter} modifiers={[restrictToVerticalAxis]} onDragEnd={onCatDragEnd}>
-          <SortableContext items={catIds} strategy={verticalListSortingStrategy}>
-            {grupos.map(g => (
-              <SortableCategoriaGroup
-                key={g.cat.id}
-                id={g.cat.id}
-                cat={g.cat}
-                palette={g.palette}
-                rows={g.rows}
-                categorias={categorias}
-                empresasAtivas={empresasAtivas}
-                update={update}
-                remove={handleRemoveTipo}
-                rename={renameCategoria}
-                removeCat={removeCategoria}
-                expanded={isExpanded(g.cat.id)}
-                onToggle={() => toggleCat(g.cat.id)}
-              />
-            ))}
-          </SortableContext>
-        </DndContext>
-
-        {semCategoria.length > 0 && (
-          <CategoriaGroup
-            cat={null}
-            palette={{ color: 'bg-white/5 border-white/15 text-white/60', dot: 'bg-white/40' }}
-            rows={semCategoria}
-            categorias={categorias}
-            empresasAtivas={empresasAtivas}
-            update={update}
-            remove={handleRemoveTipo}
-            expanded={isExpanded('__sem__')}
-            onToggle={() => toggleCat('__sem__')}
-          />
-        )}
-
+      <div>
+        <CategoriaGroup
+          cat={null}
+          palette={{ color: 'bg-white/5 border-white/15 text-white/60', dot: 'bg-white/40' }}
+          rows={items}
+          categorias={categorias}
+          empresasAtivas={empresasAtivas}
+          update={update}
+          remove={handleRemoveTipo}
+          expanded={true}
+          onToggle={() => {}}
+          hideHeader
+        />
       </div>
 
       <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between px-2">
