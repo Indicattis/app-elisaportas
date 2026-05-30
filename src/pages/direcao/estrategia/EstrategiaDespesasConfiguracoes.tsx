@@ -169,7 +169,7 @@ function FolhaBlock({
         <h3 className="font-semibold">Folha Salarial padrão</h3>
         <span className="text-white/40 text-sm">({items.length})</span>
         <button
-          onClick={() => exportFolhaSalarialPDF(items)}
+          onClick={() => exportFolhaSalarialPDF(items, SETORES.map(s => ({ value: s.value, label: s.label })))}
           disabled={items.length === 0}
           className="ml-auto inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-white/80 hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
           title="Exportar folha salarial em PDF"
