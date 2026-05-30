@@ -1,10 +1,11 @@
 import { useState, useRef } from 'react';
-import { Plus, Trash2, Users, Receipt, TrendingDown, Landmark } from 'lucide-react';
+import { Plus, Trash2, Users, Receipt, TrendingDown, Landmark, FileDown } from 'lucide-react';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { formatCurrency } from '@/lib/utils';
 import { useDespesasPadrao, type DespesaPadrao, type DespesaPadraoTipo } from '@/hooks/useDespesasPadrao';
 import { useTiposCustos, type TipoCusto } from '@/hooks/useTiposCustos';
 import { Switch } from '@/components/ui/switch';
+import { exportFolhaSalarialPDF } from '@/utils/folhaSalarialPDFGenerator';
 
 export default function EstrategiaDespesasConfiguracoes() {
   const { items, loading, insert, update, remove } = useDespesasPadrao();
@@ -160,6 +161,15 @@ function FolhaBlock({
         <Users className="w-4 h-4" />
         <h3 className="font-semibold">Folha Salarial padrão</h3>
         <span className="text-white/40 text-sm">({items.length})</span>
+        <button
+          onClick={() => exportFolhaSalarialPDF(items)}
+          disabled={items.length === 0}
+          className="ml-auto inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-white/80 hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+          title="Exportar folha salarial em PDF"
+        >
+          <FileDown className="w-3.5 h-3.5" />
+          Exportar PDF
+        </button>
       </div>
       <div className="space-y-3">
         {[...SETORES, SETOR_SEM]
