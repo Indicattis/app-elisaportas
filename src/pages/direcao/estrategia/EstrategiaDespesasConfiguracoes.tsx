@@ -31,6 +31,7 @@ export default function EstrategiaDespesasConfiguracoes() {
   const {
     tiposCustos, loading: loadingTipos,
     saveTipoCusto, updateTipoCusto, deleteTipoCusto,
+    contarGastosVinculados, realocarEExcluirTipoCusto,
   } = useTiposCustos();
 
   // Only show full-page spinner on the very first load. Subsequent refetches
@@ -74,6 +75,9 @@ export default function EstrategiaDespesasConfiguracoes() {
             save={saveTipoCusto}
             update={updateTipoCusto}
             remove={deleteTipoCusto}
+            allTipos={tiposCustos}
+            contarGastosVinculados={contarGastosVinculados}
+            realocarEExcluir={realocarEExcluirTipoCusto}
           />
           <TiposCustoBlock
             titulo="Tipos de Custos — Variáveis"
@@ -83,6 +87,9 @@ export default function EstrategiaDespesasConfiguracoes() {
             save={saveTipoCusto}
             update={updateTipoCusto}
             remove={deleteTipoCusto}
+            allTipos={tiposCustos}
+            contarGastosVinculados={contarGastosVinculados}
+            realocarEExcluir={realocarEExcluirTipoCusto}
           />
           <TiposCustoBlock
             titulo="Tipos de Custos — Impostos"
@@ -92,6 +99,9 @@ export default function EstrategiaDespesasConfiguracoes() {
             save={saveTipoCusto}
             update={updateTipoCusto}
             remove={deleteTipoCusto}
+            allTipos={tiposCustos}
+            contarGastosVinculados={contarGastosVinculados}
+            realocarEExcluir={realocarEExcluirTipoCusto}
           />
         </div>
       )}
