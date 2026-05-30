@@ -1540,9 +1540,9 @@ function CategoriaGroupMensal({
   };
 
   return (
-    <div className="border-b border-white/[0.06] px-1 pt-2 pb-3 group/cat transition-colors">
+    <div className="border-b border-white/[0.06] px-1 pt-1.5 pb-2 group/cat transition-colors min-w-[920px]">
       <div
-        className={`flex items-center gap-2 ${expanded ? 'mb-2' : ''} cursor-pointer select-none`}
+        className={`flex items-center gap-2 ${expanded ? 'mb-1.5' : ''} cursor-pointer select-none`}
         onClick={() => setExpanded(v => !v)}
       >
         <ChevronRight className={`w-4 h-4 text-white/40 transition-transform ${expanded ? 'rotate-90 text-white/60' : ''}`} />
@@ -1557,16 +1557,16 @@ function CategoriaGroupMensal({
       </div>
 
       {expanded && (
-        <table className="w-full text-sm">
+        <table className="w-full text-sm table-fixed">
           <thead>
             <tr className="text-[10px] uppercase tracking-wider text-white/40 border-b border-white/10">
-              <th className="pb-2 w-6"></th>
-              <th className="text-left font-normal pb-2 pl-1 w-[26%]">Nome</th>
-              <th className="pb-2 px-2 w-8" title="Descrição"></th>
-              <th className="text-left font-normal pb-2 px-2 w-[18%]">Categoria</th>
-              <th className="text-right font-normal pb-2 px-2 w-[30%]">Valor projetado</th>
-              <th className="text-center font-normal pb-2 px-2 w-[6%]">DRE</th>
-              <th className="text-right font-normal pb-2 px-2 w-[16%]">Valor pago no mês</th>
+              <th className="pb-1.5 w-6"></th>
+              <th className="text-left font-normal pb-1.5 pl-1 w-[28%]">Nome</th>
+              <th className="pb-1.5 px-2 w-8" title="Descrição"></th>
+              <th className="text-left font-normal pb-1.5 px-3 w-[20%]">Categoria</th>
+              <th className="text-right font-normal pb-1.5 px-3 w-[18%]">Valor projetado</th>
+              <th className="text-center font-normal pb-1.5 px-3 w-[8%]">DRE</th>
+              <th className="text-right font-normal pb-1.5 px-3 w-[20%]">Pago no mês</th>
             </tr>
           </thead>
           <tbody>
@@ -1584,15 +1584,15 @@ function CategoriaGroupMensal({
                     className={`border-b border-white/5 hover:bg-white/[0.03] ${canExpand ? 'cursor-pointer' : ''}`}
                     onClick={() => canExpand && setExpandedRow(prev => prev === t.id ? null : t.id)}
                   >
-                    <td className="py-2 w-6 align-middle text-center">
+                    <td className="py-1.5 w-6 align-middle text-center">
                       {canExpand ? (
                         isOpen
                           ? <ChevronDown className="w-3.5 h-3.5 text-white/50 inline" />
                           : <ChevronRight className="w-3.5 h-3.5 text-white/50 inline" />
                       ) : null}
                     </td>
-                    <td className={`py-2 pl-1 ${t.marcada_para_eliminar ? 'text-red-300/80 line-through' : 'text-white/90'}`}>
-                      <span className="inline-flex items-center gap-1.5">
+                    <td className={`py-1.5 pl-1 truncate ${t.marcada_para_eliminar ? 'text-red-300/80 line-through' : 'text-white/90'}`}>
+                      <span className="inline-flex items-center gap-1.5 truncate">
                         {t.marcada_para_eliminar && <AlertTriangle className="w-3 h-3 text-red-400" />}
                         {t.nome}
                       </span>
@@ -1615,27 +1615,27 @@ function CategoriaGroupMensal({
                         </Popover>
                       ) : null}
                     </td>
-                    <td className="px-2">
+                    <td className="px-3">
                       <span className={catPillClass(t.categoria_id)}>
                         <span className={`w-1.5 h-1.5 rounded-full ${
                           t.categoria_id
                             ? getCategoriaPalette(categorias.findIndex(c => c.id === t.categoria_id)).dot
                             : 'bg-white/40'
                         }`} />
-                        {catLabel(t.categoria_id)}
+                        <span className="truncate">{catLabel(t.categoria_id)}</span>
                       </span>
                     </td>
-                    <td className={`px-2 text-right font-medium ${t.marcada_para_eliminar ? 'text-red-400 line-through' : 'text-white'}`}>
+                    <td className={`px-3 text-right font-medium tabular-nums ${t.marcada_para_eliminar ? 'text-red-400 line-through' : 'text-white'}`}>
                       {formatCurrency(proj)}
                     </td>
-                    <td className="px-2 text-center">
+                    <td className="px-3 text-center">
                       {t.aparece_no_dre ? (
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-400/15 text-emerald-300 border border-emerald-400/20">Sim</span>
                       ) : (
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-white/10 text-white/50 border border-white/10">Não</span>
                       )}
                     </td>
-                    <td className={`px-2 text-right font-medium ${pago === 0 ? 'text-white/40' : overspent ? 'text-orange-300' : 'text-white'}`}>
+                    <td className={`px-3 text-right font-medium tabular-nums ${pago === 0 ? 'text-white/40' : overspent ? 'text-orange-300' : 'text-white'}`}>
                       {pago > 0 ? (
                         <span className="inline-flex items-baseline gap-1.5">
                           <span>{formatCurrency(pago)}</span>
