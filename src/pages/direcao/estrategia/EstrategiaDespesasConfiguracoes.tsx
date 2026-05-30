@@ -746,7 +746,7 @@ function InlineNum({ value, onSave, format }: { value: number; onSave: (v: numbe
 
 function TiposCustoBlock({
   titulo, icon, tipo, items, save, update, remove,
-  allTipos, contarGastosVinculados, realocarEExcluir,
+  allTipos, contarGastosVinculados, realocarEExcluir, reorderTipos,
 }: {
   titulo: string;
   icon: React.ReactNode;
@@ -758,6 +758,7 @@ function TiposCustoBlock({
   allTipos: TipoCusto[];
   contarGastosVinculados: ReturnType<typeof useTiposCustos>['contarGastosVinculados'];
   realocarEExcluir: ReturnType<typeof useTiposCustos>['realocarEExcluirTipoCusto'];
+  reorderTipos: ReturnType<typeof useTiposCustos>['reorderTiposCustos'];
 }) {
   const [nome, setNome] = useState('');
   const [descricao, setDescricao] = useState('');
