@@ -233,15 +233,24 @@ function FolhaBlock({
         <Users className="w-4 h-4" />
         <h3 className="font-semibold">Folha Salarial padrão</h3>
         <span className="text-white/40 text-sm">({items.length})</span>
-        <button
-          onClick={() => exportFolhaSalarialPDF(items, SETORES.map(s => ({ value: s.value, label: s.label })))}
-          disabled={items.length === 0}
-          className="ml-auto inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-white/80 hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-          title="Exportar folha salarial em PDF"
-        >
-          <FileDown className="w-3.5 h-3.5" />
-          Exportar PDF
-        </button>
+        <div className="ml-auto flex items-center gap-1.5">
+          <button
+            onClick={() => exportFolhaSalarialPDF(items, SETORES.map(s => ({ value: s.value, label: s.label })))}
+            disabled={items.length === 0}
+            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-white/80 hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            title="Exportar folha salarial em PDF"
+          >
+            <FileDown className="w-3.5 h-3.5" />
+            Exportar PDF
+          </button>
+          <button
+            onClick={() => setAddOpen(true)}
+            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-400/30 text-xs text-emerald-200 hover:text-emerald-100 transition-colors"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Novo colaborador
+          </button>
+        </div>
       </div>
       <div className="space-y-3">
         <DndContext
