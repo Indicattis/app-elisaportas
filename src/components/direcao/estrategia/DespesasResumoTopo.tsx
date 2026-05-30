@@ -417,7 +417,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 mb-6">
+    <div className="grid grid-cols-1 gap-3 mb-4">
       <FolhaBlockMensal
         padroesFolha={padroesFolha}
         folhaRows={folha}
@@ -1457,17 +1457,17 @@ function TiposCustoBlockMensal({
   const totalPago = gastos.reduce((s, g) => s + Number(g.total || 0), 0);
 
   return (
-    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-5">
-      <div className="flex items-center gap-2 text-white mb-3">
+    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-4">
+      <div className="flex items-center gap-2 text-white mb-2">
         {icon}
         <h3 className="font-semibold">{titulo}</h3>
         <span className="text-white/40 text-sm">({tiposFull.length})</span>
         {onAddGasto && (
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-1.5">
             <button
               type="button"
               onClick={onAddGasto}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-orange-600 hover:bg-orange-500 text-white shadow-lg shadow-orange-600/20 transition-all"
+              className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-orange-500/15 hover:bg-orange-500/25 border border-orange-400/30 text-xs text-orange-200 hover:text-orange-100 transition-colors"
             >
               <Plus className="w-3.5 h-3.5" />
               Novo Gasto
@@ -1481,7 +1481,7 @@ function TiposCustoBlockMensal({
       ) : tiposFull.length === 0 ? (
         <div className="text-white/40 px-2 py-6 text-center">Nenhum tipo de custo configurado para esta categoria.</div>
       ) : (
-        <div>
+        <div className="overflow-x-auto">
           {grupos.map((g, idx) => (
             <CategoriaGroupMensal
               key={g.cat?.id ?? `__sem-${idx}`}
@@ -1496,7 +1496,7 @@ function TiposCustoBlockMensal({
         </div>
       )}
 
-      <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between px-2 gap-6">
+      <div className="mt-2 pt-2 border-t border-white/10 flex items-center justify-between px-2 gap-6">
         <div className="flex items-center gap-2">
           <span className="text-xs text-white/50 uppercase tracking-wider">Total projetado</span>
           <span className="text-sm font-medium text-white/80">{formatCurrency(totalProjetado)}</span>
@@ -1540,9 +1540,9 @@ function CategoriaGroupMensal({
   };
 
   return (
-    <div className="border-b border-white/[0.06] px-1 pt-2 pb-3 group/cat transition-colors">
+    <div className="border-b border-white/[0.06] px-1 pt-1.5 pb-2 group/cat transition-colors min-w-[920px]">
       <div
-        className={`flex items-center gap-2 ${expanded ? 'mb-2' : ''} cursor-pointer select-none`}
+        className={`flex items-center gap-2 ${expanded ? 'mb-1.5' : ''} cursor-pointer select-none`}
         onClick={() => setExpanded(v => !v)}
       >
         <ChevronRight className={`w-4 h-4 text-white/40 transition-transform ${expanded ? 'rotate-90 text-white/60' : ''}`} />
@@ -1557,16 +1557,16 @@ function CategoriaGroupMensal({
       </div>
 
       {expanded && (
-        <table className="w-full text-sm">
+        <table className="w-full text-sm table-fixed">
           <thead>
             <tr className="text-[10px] uppercase tracking-wider text-white/40 border-b border-white/10">
-              <th className="pb-2 w-6"></th>
-              <th className="text-left font-normal pb-2 pl-1 w-[26%]">Nome</th>
-              <th className="pb-2 px-2 w-8" title="Descrição"></th>
-              <th className="text-left font-normal pb-2 px-2 w-[18%]">Categoria</th>
-              <th className="text-right font-normal pb-2 px-2 w-[30%]">Valor projetado</th>
-              <th className="text-center font-normal pb-2 px-2 w-[6%]">DRE</th>
-              <th className="text-right font-normal pb-2 px-2 w-[16%]">Valor pago no mês</th>
+              <th className="pb-1.5 w-6"></th>
+              <th className="text-left font-normal pb-1.5 pl-1 w-[28%]">Nome</th>
+              <th className="pb-1.5 px-2 w-8" title="Descrição"></th>
+              <th className="text-left font-normal pb-1.5 px-3 w-[20%]">Categoria</th>
+              <th className="text-right font-normal pb-1.5 px-3 w-[18%]">Valor projetado</th>
+              <th className="text-center font-normal pb-1.5 px-3 w-[8%]">DRE</th>
+              <th className="text-right font-normal pb-1.5 px-3 w-[20%]">Pago no mês</th>
             </tr>
           </thead>
           <tbody>
@@ -1584,15 +1584,15 @@ function CategoriaGroupMensal({
                     className={`border-b border-white/5 hover:bg-white/[0.03] ${canExpand ? 'cursor-pointer' : ''}`}
                     onClick={() => canExpand && setExpandedRow(prev => prev === t.id ? null : t.id)}
                   >
-                    <td className="py-2 w-6 align-middle text-center">
+                    <td className="py-1.5 w-6 align-middle text-center">
                       {canExpand ? (
                         isOpen
                           ? <ChevronDown className="w-3.5 h-3.5 text-white/50 inline" />
                           : <ChevronRight className="w-3.5 h-3.5 text-white/50 inline" />
                       ) : null}
                     </td>
-                    <td className={`py-2 pl-1 ${t.marcada_para_eliminar ? 'text-red-300/80 line-through' : 'text-white/90'}`}>
-                      <span className="inline-flex items-center gap-1.5">
+                    <td className={`py-1.5 pl-1 truncate ${t.marcada_para_eliminar ? 'text-red-300/80 line-through' : 'text-white/90'}`}>
+                      <span className="inline-flex items-center gap-1.5 truncate">
                         {t.marcada_para_eliminar && <AlertTriangle className="w-3 h-3 text-red-400" />}
                         {t.nome}
                       </span>
@@ -1615,27 +1615,27 @@ function CategoriaGroupMensal({
                         </Popover>
                       ) : null}
                     </td>
-                    <td className="px-2">
+                    <td className="px-3">
                       <span className={catPillClass(t.categoria_id)}>
                         <span className={`w-1.5 h-1.5 rounded-full ${
                           t.categoria_id
                             ? getCategoriaPalette(categorias.findIndex(c => c.id === t.categoria_id)).dot
                             : 'bg-white/40'
                         }`} />
-                        {catLabel(t.categoria_id)}
+                        <span className="truncate">{catLabel(t.categoria_id)}</span>
                       </span>
                     </td>
-                    <td className={`px-2 text-right font-medium ${t.marcada_para_eliminar ? 'text-red-400 line-through' : 'text-white'}`}>
+                    <td className={`px-3 text-right font-medium tabular-nums ${t.marcada_para_eliminar ? 'text-red-400 line-through' : 'text-white'}`}>
                       {formatCurrency(proj)}
                     </td>
-                    <td className="px-2 text-center">
+                    <td className="px-3 text-center">
                       {t.aparece_no_dre ? (
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-400/15 text-emerald-300 border border-emerald-400/20">Sim</span>
                       ) : (
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-white/10 text-white/50 border border-white/10">Não</span>
                       )}
                     </td>
-                    <td className={`px-2 text-right font-medium ${pago === 0 ? 'text-white/40' : overspent ? 'text-orange-300' : 'text-white'}`}>
+                    <td className={`px-3 text-right font-medium tabular-nums ${pago === 0 ? 'text-white/40' : overspent ? 'text-orange-300' : 'text-white'}`}>
                       {pago > 0 ? (
                         <span className="inline-flex items-baseline gap-1.5">
                           <span>{formatCurrency(pago)}</span>
@@ -1724,8 +1724,8 @@ function FolhaBlockMensal({
   const totalPago = folhaRows.reduce((s, r) => s + Number(r.total || 0), 0);
 
   return (
-    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-5">
-      <div className="flex items-center gap-2 text-white mb-3">
+    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-4">
+      <div className="flex items-center gap-2 text-white mb-2">
         <Users className="w-4 h-4" />
         <h3 className="font-semibold">Folha Salarial</h3>
         <span className="text-white/40 text-sm">({padroesFolha.length})</span>
@@ -1736,7 +1736,7 @@ function FolhaBlockMensal({
       ) : padroesFolha.length === 0 ? (
         <div className="text-white/40 px-2 py-6 text-center">Nenhum colaborador cadastrado. Configure em "Configurações padrão".</div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {grupos.map((g, idx) => (
             <SetorGroupMensal
               key={g.meta.value || `__sem-${idx}`}
@@ -1748,7 +1748,7 @@ function FolhaBlockMensal({
         </div>
       )}
 
-      <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between px-2 gap-6">
+      <div className="mt-2 pt-2 border-t border-white/10 flex items-center justify-between px-2 gap-6">
         <div className="flex items-center gap-3">
           <span className="text-xs text-white/50 uppercase tracking-wider">Salários</span>
           <span className="text-sm font-medium text-white/70">{formatCurrency(totalSalarios)}</span>
@@ -1784,7 +1784,7 @@ function SetorGroupMensal({
 
   return (
     <div>
-      <div className="flex items-center gap-2 mb-2 px-1">
+      <div className="flex items-center gap-2 mb-1.5 px-1">
         <span className={`w-2 h-2 rounded-full ${meta.dot}`} />
         <span className={`inline-flex items-center h-6 px-2 rounded-full border text-[11px] font-medium ${meta.color}`}>{meta.label}</span>
         <span className="text-xs text-white/40 tabular-nums">{rows.length}</span>
@@ -1798,21 +1798,21 @@ function SetorGroupMensal({
         <table className="w-full text-sm table-fixed min-w-[1640px]">
           <thead>
             <tr className="text-[10px] uppercase tracking-wider text-white/40 border-b border-white/10">
-              <th className="text-left font-normal pb-2 pl-1">Colaborador</th>
-              <th className="text-center font-normal pb-2 px-2">Em folha</th>
-              <th className="text-left font-normal pb-2 px-2">Setor</th>
-              <th className="text-right font-normal pb-2 px-2 text-emerald-400">Salário</th>
-              <th className="text-right font-normal pb-2 px-2">Salário Mínimo</th>
-              <th className="text-right font-normal pb-2 px-2">Combustível</th>
-              <th className="text-right font-normal pb-2 px-2">Insalub %</th>
-              <th className="text-right font-normal pb-2 px-2">Insalub R$</th>
-              <th className="text-right font-normal pb-2 px-2">FGTS %</th>
-              <th className="text-right font-normal pb-2 px-2">FGTS R$</th>
-              <th className="text-right font-normal pb-2 px-2">13º</th>
-              <th className="text-right font-normal pb-2 px-2">FGTS 13º</th>
-              <th className="text-right font-normal pb-2 px-2">Férias</th>
-              <th className="text-right font-normal pb-2 px-2">Total</th>
-              <th className="text-right font-normal pb-2 px-2">Valor pago no mês</th>
+              <th className="text-left font-normal pb-1.5 pl-1 w-[180px]">Colaborador</th>
+              <th className="text-center font-normal pb-1.5 px-2 w-[80px]">Em folha</th>
+              <th className="text-left font-normal pb-1.5 px-2 w-[140px]">Setor</th>
+              <th className="text-right font-normal pb-1.5 px-2 w-[120px] text-emerald-400">Salário</th>
+              <th className="text-right font-normal pb-1.5 px-2 w-[120px]">Sal. Mínimo</th>
+              <th className="text-right font-normal pb-1.5 px-2 w-[110px]">Combustível</th>
+              <th className="text-right font-normal pb-1.5 px-2 w-[90px]">Insalub %</th>
+              <th className="text-right font-normal pb-1.5 px-2 w-[110px]">Insalub R$</th>
+              <th className="text-right font-normal pb-1.5 px-2 w-[80px]">FGTS %</th>
+              <th className="text-right font-normal pb-1.5 px-2 w-[110px]">FGTS R$</th>
+              <th className="text-right font-normal pb-1.5 px-2 w-[100px]">13º</th>
+              <th className="text-right font-normal pb-1.5 px-2 w-[100px]">FGTS 13º</th>
+              <th className="text-right font-normal pb-1.5 px-2 w-[110px]">Férias</th>
+              <th className="text-right font-normal pb-1.5 px-2 w-[130px]">Total</th>
+              <th className="text-right font-normal pb-1.5 px-2 w-[130px]">Pago no mês</th>
             </tr>
           </thead>
           <tbody>
@@ -1838,7 +1838,7 @@ function SetorGroupMensal({
               const zeroCurr = <span className="text-white/30">{formatCurrency(0)}</span>;
               return (
                 <tr key={p.id} className="border-b border-white/5 hover:bg-white/[0.03]">
-                  <td className="py-2 pl-1 text-white/90">{p.nome}</td>
+                  <td className="py-1.5 pl-1 text-white/90 truncate">{p.nome}</td>
                   <td className="px-2 text-center">
                     {p.em_folha ? (
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-400/15 text-emerald-300 border border-emerald-400/20">Sim</span>
@@ -1852,18 +1852,18 @@ function SetorGroupMensal({
                       {meta.label}
                     </span>
                   </td>
-                  <td className="px-2 text-right text-emerald-400 font-medium">{formatCurrency(salario)}</td>
-                  <td className="px-2 text-right text-white/60">{formatCurrency(salario_minimo)}</td>
-                  <td className="px-2 text-right text-white/60">{formatCurrency(aux_combustivel)}</td>
-                  <td className="px-2 text-right text-white/60">{insalubridade_pct.toFixed(2)}%</td>
-                  <td className="px-2 text-right text-xs">{desativado ? zeroCurr : <span className="text-orange-400">{formatCurrency(insalubVal)}</span>}</td>
-                  <td className="px-2 text-right text-white/60">{fgts_pct.toFixed(2)}%</td>
-                  <td className="px-2 text-right text-xs">{desativado ? zeroCurr : <span className="text-orange-400">{formatCurrency(fgtsVal)}</span>}</td>
-                  <td className="px-2 text-right text-xs">{desativado ? zeroCurr : <span className="text-orange-400">{formatCurrency(prev13)}</span>}</td>
-                  <td className="px-2 text-right text-xs">{desativado ? zeroCurr : <span className="text-orange-400">{formatCurrency(fgts13)}</span>}</td>
-                  <td className="px-2 text-right text-xs">{desativado ? zeroCurr : <span className="text-orange-400">{formatCurrency(ferias)}</span>}</td>
-                  <td className="px-2 text-right text-white font-semibold">{formatCurrency(total)}</td>
-                  <td className={`px-2 text-right font-medium ${pago === 0 ? 'text-white/40' : overspent ? 'text-orange-300' : 'text-white'}`}>
+                  <td className="px-2 text-right text-emerald-400 font-medium tabular-nums">{formatCurrency(salario)}</td>
+                  <td className="px-2 text-right text-white/60 tabular-nums">{formatCurrency(salario_minimo)}</td>
+                  <td className="px-2 text-right text-white/60 tabular-nums">{formatCurrency(aux_combustivel)}</td>
+                  <td className="px-2 text-right text-white/60 tabular-nums">{insalubridade_pct.toFixed(2)}%</td>
+                  <td className="px-2 text-right text-xs tabular-nums">{desativado ? zeroCurr : <span className="text-orange-400">{formatCurrency(insalubVal)}</span>}</td>
+                  <td className="px-2 text-right text-white/60 tabular-nums">{fgts_pct.toFixed(2)}%</td>
+                  <td className="px-2 text-right text-xs tabular-nums">{desativado ? zeroCurr : <span className="text-orange-400">{formatCurrency(fgtsVal)}</span>}</td>
+                  <td className="px-2 text-right text-xs tabular-nums">{desativado ? zeroCurr : <span className="text-orange-400">{formatCurrency(prev13)}</span>}</td>
+                  <td className="px-2 text-right text-xs tabular-nums">{desativado ? zeroCurr : <span className="text-orange-400">{formatCurrency(fgts13)}</span>}</td>
+                  <td className="px-2 text-right text-xs tabular-nums">{desativado ? zeroCurr : <span className="text-orange-400">{formatCurrency(ferias)}</span>}</td>
+                  <td className="px-2 text-right text-white font-semibold tabular-nums">{formatCurrency(total)}</td>
+                  <td className={`px-2 text-right font-medium tabular-nums ${pago === 0 ? 'text-white/40' : overspent ? 'text-orange-300' : 'text-white'}`}>
                     {pago > 0 ? formatCurrency(pago) : '—'}
                   </td>
                 </tr>
