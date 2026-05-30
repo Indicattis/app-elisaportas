@@ -884,7 +884,7 @@ export default function VendaNovaMinimalista() {
               </Popover>
             </div>
 
-            <div className="space-y-2 md:col-span-3">
+            <div className="space-y-2 md:col-span-2">
               <Label className={labelClass}>Tipo de Entrega *</Label>
               <RadioGroup
                 value={formData.tipo_entrega}
@@ -955,7 +955,7 @@ export default function VendaNovaMinimalista() {
               </RadioGroup>
             </div>
 
-            <div className="space-y-2 md:col-span-3">
+            <div className="space-y-2 md:col-span-2">
               <Label htmlFor="observacoes_venda" className={labelClass}>Observações</Label>
               <Textarea
                 id="observacoes_venda"
@@ -967,7 +967,7 @@ export default function VendaNovaMinimalista() {
               />
             </div>
 
-            <div className="md:col-span-3 space-y-2">
+            <div className="md:col-span-2 space-y-2">
               <Label className={labelClass}>Temperatura da venda *</Label>
               <RadioGroup
                 value={formData.venda_presencial === null ? '' : formData.venda_presencial ? 'quente' : 'frio'}
