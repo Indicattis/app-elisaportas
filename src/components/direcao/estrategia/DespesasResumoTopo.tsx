@@ -1724,8 +1724,8 @@ function FolhaBlockMensal({
   const totalPago = folhaRows.reduce((s, r) => s + Number(r.total || 0), 0);
 
   return (
-    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-5">
-      <div className="flex items-center gap-2 text-white mb-3">
+    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-4">
+      <div className="flex items-center gap-2 text-white mb-2">
         <Users className="w-4 h-4" />
         <h3 className="font-semibold">Folha Salarial</h3>
         <span className="text-white/40 text-sm">({padroesFolha.length})</span>
@@ -1736,7 +1736,7 @@ function FolhaBlockMensal({
       ) : padroesFolha.length === 0 ? (
         <div className="text-white/40 px-2 py-6 text-center">Nenhum colaborador cadastrado. Configure em "Configurações padrão".</div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {grupos.map((g, idx) => (
             <SetorGroupMensal
               key={g.meta.value || `__sem-${idx}`}
@@ -1748,7 +1748,7 @@ function FolhaBlockMensal({
         </div>
       )}
 
-      <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between px-2 gap-6">
+      <div className="mt-2 pt-2 border-t border-white/10 flex items-center justify-between px-2 gap-6">
         <div className="flex items-center gap-3">
           <span className="text-xs text-white/50 uppercase tracking-wider">Salários</span>
           <span className="text-sm font-medium text-white/70">{formatCurrency(totalSalarios)}</span>
