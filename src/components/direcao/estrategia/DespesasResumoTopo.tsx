@@ -883,7 +883,27 @@ function BlocoDespesa({
 
   // Sugestões: padrões cujo nome ainda não existe em algum lançamento do mês
   const nomesExistentes = new Set(rows.map(r => (r.tipo_nome || '').trim().toLowerCase()));
-  const sugestoes = padroes.filter(p => !nomesExistentes.has(p.nome.trim().toLowerCase()));
+  const sugestoesPadrao = padroes.filter(p => !nomesExistentes.has(p.nome.trim().toLowerCase()));
+  const nomesComSugestao = new Set([
+    ...nomesExistentes,
+    ...sugestoesPadrao.map(p => p.nome.trim().toLowerCase()),
+  ]);
+  // Tipos cadastrados sem lançamento e sem sugestão padrão: aparecem com valor 0
+  const sugestoesTipos: DespesaPadrao[] = tipos
+    .filter(t => !nomesComSugestao.has(t.nome.trim().toLowerCase()))
+    .map(t => ({
+      id: t.id,
+      nome: t.nome,
+      tipo: categoria as any,
+      valor: 0,
+      salario: 0,
+      aux_combustivel: 0,
+      insalubridade_pct: 0,
+      fgts_pct: 0,
+      previsao_13_valor: 0,
+      em_folha: true,
+    } as unknown as DespesaPadrao));
+  const sugestoes = [...sugestoesPadrao, ...sugestoesTipos];
   const padraoByNome = new Map(padroes.map(p => [p.nome.trim().toLowerCase(), Number(p.valor || 0)]));
   const prevForRow = (nome: string) => padraoByNome.get((nome || '').trim().toLowerCase()) || 0;
   const total = rows.reduce((s, r) => s + Number(r.valor || 0), 0)
