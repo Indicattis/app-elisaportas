@@ -1077,6 +1077,7 @@ function CategoriaGroup({
           <tr className="text-[10px] uppercase tracking-wider text-white/40 border-b border-white/10">
             <th className="pb-2 w-6"></th>
             <th className="text-left font-normal pb-2 pl-1 w-[34%]">Nome</th>
+            <th className="pb-2 px-2 w-8" title="Descrição"></th>
             <th className="text-left font-normal pb-2 px-2 w-[22%]">Categoria</th>
             <th className="text-left font-normal pb-2 px-2 w-[18%]">Empresa</th>
             <th className="text-right font-normal pb-2 px-2 w-[18%]">Valor projetado</th>
@@ -1141,6 +1142,12 @@ function SortableTipoRow({
       </td>
       <td className="py-2 pl-1 text-white/90">
         <InlineText value={i.nome} onSave={(v) => update(i.id, { nome: v })} />
+      </td>
+      <td className="px-1 text-center">
+        <DescricaoPopover
+          value={i.descricao}
+          onSave={(v) => update(i.id, { descricao: v || null })}
+        />
       </td>
       <td className="px-2">
         <select
