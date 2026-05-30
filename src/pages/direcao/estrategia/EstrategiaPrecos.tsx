@@ -9,6 +9,8 @@ import { useTabelaPrecos } from '@/hooks/useTabelaPrecos';
 import { useCustosItens } from '@/hooks/useCustosItens';
 import { useMemo } from 'react';
 import { exportEstrategiaPrecosPDF, exportEstrategiaPrecosExcel } from '@/utils/estrategiaPrecosExport';
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
+import { cn } from '@/lib/utils';
 
 export default function EstrategiaPrecos() {
   const navigate = useNavigate();
@@ -113,34 +115,37 @@ export default function EstrategiaPrecos() {
               {itensAvulso.length} {itensAvulso.length === 1 ? 'item disponível' : 'itens disponíveis'}
             </p>
           </div>
-          <div className="flex-1 min-h-0 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 overflow-y-auto">
-            {itensAvulso.length === 0 ? (
-              <div className="text-xs text-white/50 text-center py-8 px-2">
-                Nenhum item marcado como avulso. Ative em Estratégia → Itens.
-              </div>
-            ) : (
-              <table className="w-full text-sm">
-                <thead className="sticky top-0 bg-background/60 backdrop-blur-md">
-                  <tr className="text-[11px] uppercase tracking-wide text-white/50">
-                    <th className="text-left font-medium py-3 px-4">Nome</th>
-                    <th className="text-left font-medium py-3 px-4">Un.</th>
-                    <th className="text-right font-medium py-3 px-4">Preço/un</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {itensAvulso.map((it) => (
-                    <tr key={it.id} className="hover:bg-white/5">
-                      <td className="py-3 px-4 text-white truncate max-w-[180px]">{it.descricao}</td>
-                      <td className="py-3 px-4 text-white/60">{it.unidade || '-'}</td>
-                      <td className="py-3 px-4 text-right tabular-nums text-emerald-300 whitespace-nowrap">
+          {itensAvulso.length === 0 ? (
+            <div className="rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 text-center py-8 px-4 text-xs text-white/50">
+              Nenhum item marcado como avulso. Ative em Estratégia → Itens.
+            </div>
+          ) : (
+            <div className="flex-1 min-h-0 overflow-y-auto rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-white/10 hover:bg-transparent">
+                    <TableHead className="text-xs font-medium text-white/60">Nome</TableHead>
+                    <TableHead className="text-xs font-medium text-white/60">Un.</TableHead>
+                    <TableHead className="text-right text-xs font-medium text-emerald-400">Preço/un</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {itensAvulso.map((it, index) => (
+                    <TableRow
+                      key={it.id}
+                      className={cn('border-white/10 hover:bg-white/5', index % 2 === 1 && 'bg-white/[0.02]')}
+                    >
+                      <TableCell className="font-medium text-white">{it.descricao}</TableCell>
+                      <TableCell className="text-white/70">{it.unidade || '-'}</TableCell>
+                      <TableCell className="text-right font-semibold text-emerald-400">
                         {fmtBRL(it.preco_venda)}
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
-            )}
-          </div>
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </aside>
       </div>
     </MinimalistLayout>
