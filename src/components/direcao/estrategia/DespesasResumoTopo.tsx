@@ -1236,6 +1236,16 @@ function BlocoGastosReadonly({
         {icon}
         <h3 className="text-xl font-semibold">{titulo}</h3>
         <span className="text-white/40 text-sm">({rows.length} tipos · {qtdLanc} lançamentos)</span>
+        {onAddGasto && (
+          <button
+            type="button"
+            onClick={onAddGasto}
+            className="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-orange-600 hover:bg-orange-500 text-white shadow-lg shadow-orange-600/20 transition-all"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Novo Gasto
+          </button>
+        )}
       </div>
 
       <div className="overflow-x-auto">
