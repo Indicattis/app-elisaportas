@@ -1,0 +1,1 @@
+ALTER TABLE public.despesas_padrao ADD COLUMN IF NOT EXISTS ferias_valor numeric NULL;
