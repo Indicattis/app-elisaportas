@@ -934,6 +934,22 @@ const App = () => (
                     <Navigate to="/admin/companies" replace />
                   }
                 />
+                <Route
+                  path="/administrativo/empresas"
+                  element={
+                    <ProtectedRoute routeKey="admin_companies">
+                      <GestaoEmpresasMinimalista />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/administrativo/empresas/:id"
+                  element={
+                    <ProtectedRoute routeKey="admin_companies">
+                      <GestaoEmpresaEditMinimalista />
+                    </ProtectedRoute>
+                  }
+                />
 
                 {/* Hub de Painéis */}
                 <Route path="/paineis" element={<ProtectedRoute routeKey="paineis"><PaineisHome /></ProtectedRoute>} />
