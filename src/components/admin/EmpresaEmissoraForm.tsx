@@ -8,7 +8,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { EmpresaEmissora, EmpresaEmissoraFormData } from "@/types/empresaEmissora";
-import { Loader2 } from "lucide-react";
+import { Loader2, Search } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 
 const empresaSchema = z.object({
   titulo: z.string().optional(),
@@ -75,6 +77,36 @@ export function EmpresaEmissoraForm({
 
   const ativo = watch("ativo");
   const padrao = watch("padrao");
+  const [buscandoCep, setBuscandoCep] = useState(false);
+
+  const formatCep = (value: string) => {
+    const digits = value.replace(/\D/g, "").slice(0, 8);
+    if (digits.length > 5) return `${digits.slice(0, 5)}-${digits.slice(5)}`;
+    return digits;
+  };
+
+  const buscarCep = async (cepRaw?: string) => {
+    const cep = (cepRaw ?? watch("cep") ?? "").replace(/\D/g, "");
+    if (cep.length !== 8) return;
+    setBuscandoCep(true);
+    try {
+      const resp = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+      const data = await resp.json();
+      if (data?.erro) {
+        toast.error("CEP não encontrado");
+        return;
+      }
+      if (data.logradouro && !watch("endereco")) setValue("endereco", data.logradouro, { shouldValidate: true });
+      if (data.bairro && !watch("bairro")) setValue("bairro", data.bairro, { shouldValidate: true });
+      if (data.localidade && !watch("cidade")) setValue("cidade", data.localidade, { shouldValidate: true });
+      if (data.uf && !watch("estado")) setValue("estado", String(data.uf).toUpperCase(), { shouldValidate: true });
+      setTimeout(() => document.getElementById("numero")?.focus(), 0);
+    } catch {
+      toast.error("Erro ao buscar CEP");
+    } finally {
+      setBuscandoCep(false);
+    }
+  };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -154,7 +186,32 @@ export function EmpresaEmissoraForm({
             </div>
             <div className="space-y-2">
               <Label htmlFor="cep">CEP *</Label>
-              <Input id="cep" {...register("cep")} placeholder="00000-000" />
+              <div className="relative">
+                <Input
+                  id="cep"
+                  {...register("cep")}
+                  placeholder="00000-000"
+                  maxLength={9}
+                  onChange={(e) => {
+                    const formatted = formatCep(e.target.value);
+                    setValue("cep", formatted, { shouldValidate: true });
+                    if (formatted.replace(/\D/g, "").length === 8) {
+                      buscarCep(formatted);
+                    }
+                  }}
+                  onBlur={() => buscarCep()}
+                  className="pr-9"
+                />
+                <button
+                  type="button"
+                  onClick={() => buscarCep()}
+                  disabled={buscandoCep}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground disabled:opacity-50"
+                  title="Buscar endereço pelo CEP"
+                >
+                  {buscandoCep ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                </button>
+              </div>
               {errors.cep && <p className="text-sm text-destructive">{errors.cep.message}</p>}
             </div>
           </div>
