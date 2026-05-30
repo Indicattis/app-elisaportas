@@ -1,33 +1,45 @@
-## Objetivo
+# Despesas do mês — expandir tipo para ver gastos individuais
 
-Em `/direcao/estrategia/precos`, mover o cabeçalho ("Itens Avulso" + contagem de itens) para **fora** do card lateral, igual ao padrão de "Itens Cadastrados" da tabela principal ao lado.
+Em `/direcao/estrategia/despesas/:mes`, os blocos **Despesas Fixas** e **Despesas Variáveis** mostram hoje uma linha por tipo de custo, com quantidade e total. Vou tornar cada linha clicável para expandir e mostrar, logo abaixo, todos os gastos individuais agregados naquele tipo (do mês atual).
 
-## Mudança
+## Comportamento
 
-Arquivo único: `src/pages/direcao/estrategia/EstrategiaPrecos.tsx`
+- Clique na linha do tipo → expande/colapsa uma sub-área dentro da própria tabela mostrando os gastos individuais daquele tipo no mês.
+- Indicador visual: chevron (▶ / ▼) à esquerda do nome do tipo + hover já existente.
+- Apenas um tipo expandido por vez por bloco (estado local `expandedId`). Reclique fecha.
+- Funciona em Despesas Fixas e Despesas Variáveis. Os outros blocos (Folha, Impostos) não mudam.
 
-Reestruturar a coluna `<aside>` (atualmente um único card que envolve título + tabela) em dois blocos verticais:
+## Conteúdo expandido (por gasto)
 
-1. **Cabeçalho fora do card** — `<div>` com:
-   - Título `Itens Avulso` (mesmo tamanho/peso de "Itens Cadastrados": `text-base font-medium text-white`)
-   - Subtítulo `{n} itens disponíveis` (`text-xs text-white/50`)
-   - O ícone `Package` em pill pode ser removido para alinhar com o padrão minimalista do lado esquerdo (que não usa ícone), mantendo o visual consistente.
+Para cada gasto: **data**, **descrição** (ou "—"), **responsável**, **banco**, **valor**. Estilo discreto, fundo `bg-white/[0.02]`, fontes menores (`text-xs`/`text-[11px]`), alinhado com o restante da página.
 
-2. **Card só com a tabela** — `<div className="rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 ...">` contendo apenas a tabela scrollável e o estado vazio.
+## Mudanças técnicas
 
-Wrapper externo `<aside className="flex flex-col gap-4 lg:sticky lg:top-4 ...">` preserva o sticky e o `max-h` da coluna.
+Arquivo único: `src/components/direcao/estrategia/DespesasResumoTopo.tsx`.
 
-```text
-┌─ grid lg:[1fr_360px] ───────────────────────────┐
-│ Itens Cadastrados        │ Itens Avulso         │  ← títulos fora dos cards
-│ ─ subtitle ─             │ ─ subtitle ─         │
-│ ┌──────────────────────┐ │ ┌──────────────────┐ │
-│ │ tabela kits          │ │ │ tabela avulsos   │ │
-│ └──────────────────────┘ │ └──────────────────┘ │
-└─────────────────────────────────────────────────┘
-```
+1. **Tipo `GastoAgrupado`**: adicionar campo `itens: GastoItem[]` onde
+   ```ts
+   type GastoItem = {
+     id: string;
+     data: string;
+     valor: number;
+     descricao: string | null;
+     responsavel_nome: string;
+     banco_nome: string;
+   };
+   ```
 
-## Fora de escopo
+2. **Fetch (useEffect ~linha 162)**:
+   - Ampliar o `select` de `gastos` para incluir `id, tipo_custo_id, valor, data, descricao, responsavel_id, banco_id`.
+   - Depois de carregar `tiposMap`, fazer dois fetches paralelos em `admin_users` (`user_id, nome`) e `bancos` (`id, nome`) para os IDs presentes nos gastos retornados (mesmo padrão de `useGastos.ts`).
+   - Em `agruparPor`, preencher também `itens` (ordenado por `data` desc) com nome resolvido de responsável e banco.
 
-- Nenhuma mudança em `TabelaPrecos.tsx`, hooks ou dados.
-- Sem alterações de lógica, filtros ou export.
+3. **`BlocoGastosReadonly`**:
+   - Estado local: `const [expandedId, setExpandedId] = useState<string | null>(null);`.
+   - A linha do tipo vira um `<tr>` clicável (`onClick={() => setExpandedId(prev => prev === r.tipo_custo_id ? null : r.tipo_custo_id)}`, `cursor-pointer`), com `<ChevronRight />` / `<ChevronDown />` antes do nome.
+   - Quando expandido, renderizar `<tr><td colSpan={3}>` com uma sub-tabela listando `r.itens` (data formatada `dd/MM`, descrição, responsável, banco, valor à direita). Linhas com `border-b border-white/5`, sem zebra forte.
+
+## Fora do escopo
+
+- Sem mudanças em outras páginas, hooks ou banco. Apenas leitura — nenhum write novo.
+- Sem alteração nos blocos de Folha e Impostos.
