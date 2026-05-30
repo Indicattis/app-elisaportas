@@ -1,50 +1,9 @@
-## Problema
+Alterar fórmula de "Férias + 1/3" de `salário ÷ 3` para `(salário ÷ 3) ÷ 12`.
 
-O `INSERT/UPDATE/DELETE` em `system_setores` está restrito a `public.is_admin()`, que só retorna `true` para usuários com `role = 'administrador'` em `admin_users`. Diretores (e demais perfis com acesso a `/direcao/gestao-colaboradores`) caem na RLS e recebem o erro.
-
-## Solução
-
-Substituir as policies de escrita por uma checagem mais ampla: qualquer usuário ativo em `admin_users` com role em (`administrador`, `diretor`) pode criar/editar/excluir setores.
-
-### Migration
-
-```sql
-DROP POLICY IF EXISTS "system_setores_admins_insert" ON public.system_setores;
-DROP POLICY IF EXISTS "system_setores_admins_update" ON public.system_setores;
-DROP POLICY IF EXISTS "system_setores_admins_delete" ON public.system_setores;
-
-CREATE POLICY "system_setores_manage_insert"
-  ON public.system_setores FOR INSERT TO authenticated
-  WITH CHECK (EXISTS (
-    SELECT 1 FROM public.admin_users
-    WHERE user_id = auth.uid()
-      AND COALESCE(ativo, true) = true
-      AND role IN ('administrador','diretor')
-  ));
-
-CREATE POLICY "system_setores_manage_update"
-  ON public.system_setores FOR UPDATE TO authenticated
-  USING (EXISTS (
-    SELECT 1 FROM public.admin_users
-    WHERE user_id = auth.uid()
-      AND COALESCE(ativo, true) = true
-      AND role IN ('administrador','diretor')
-  ))
-  WITH CHECK (EXISTS (
-    SELECT 1 FROM public.admin_users
-    WHERE user_id = auth.uid()
-      AND COALESCE(ativo, true) = true
-      AND role IN ('administrador','diretor')
-  ));
-
-CREATE POLICY "system_setores_manage_delete"
-  ON public.system_setores FOR DELETE TO authenticated
-  USING (EXISTS (
-    SELECT 1 FROM public.admin_users
-    WHERE user_id = auth.uid()
-      AND COALESCE(ativo, true) = true
-      AND role IN ('administrador','diretor')
-  ));
-```
-
-Sem mudanças em código frontend.
+Arquivos:
+- `src/pages/direcao/estrategia/EstrategiaDespesasConfiguracoes.tsx`
+  - `calcFeriasDefault`: `return salario / 3 / 12;`
+  - Label do header: `salário ÷ 3 ÷ 12`
+- `src/utils/folhaSalarialPDFGenerator.ts`
+  - `calcFeriasDefault`: `return salario / 3 / 12;`
+  - Atualizar label/fórmula correspondente no PDF.
