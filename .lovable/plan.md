@@ -1,15 +1,15 @@
 ## Objetivo
 
-Em `/direcao/gestao-fabrica`, mover o badge **🔥 Quente / ❄️ Frio** da listagem compacta (abaixo do nome do cliente, onde está ocupando o espaço do último comentário) para a barra de detalhes (`PedidoDetalhesSheet`) que abre ao clicar no pedido.
+Aplicar o mesmo ajuste das vendas em `/direcao/gestao-fabrica`: mover o badge **🔥 Quente / ❄️ Frio** dos cards de venda pendente para a sheet de detalhes que abre ao clicar.
 
 ## Mudanças
 
-### 1. `src/components/pedidos/PedidoCard.tsx` (~linhas 1477-1486)
-Remover o bloco que renderiza o badge `venda.venda_presencial ? "🔥 Quente" : "❄️ Frio"` dentro da view compacta (list view). Manter `ultimoComentario` no mesmo lugar — ele volta a aparecer normalmente abaixo do nome do cliente.
+### 1. `src/components/pedidos/VendaPendentePedidoCard.tsx` (linhas 366-375)
+Remover o bloco `{venda.venda_presencial != null && (...)}` que renderiza o badge Quente/Frio abaixo do nome do cliente. O último comentário permanece no mesmo lugar.
 
-### 2. `src/components/pedidos/PedidoDetalhesSheet.tsx` (Hero Section, ~linha 525)
-Adicionar o badge **Quente/Frio** ao lado/abaixo do nome do cliente no bloco "Hero Section - Cliente e Valor", usando o mesmo estilo já existente (laranja para presencial/Quente, ciano para Frio). Renderizar apenas quando `venda.venda_presencial != null`.
+### 2. `src/components/pedidos/VendaPendenteDetalhesSheet.tsx` (Hero Section, ~linha 324)
+Adicionar o badge Quente/Frio ao lado do `cliente_nome` no hero, usando `vendaCompleta?.venda_presencial` (já disponível no componente, ver linha 124). Mesmo estilo: laranja para Quente, ciano para Frio.
 
 ## Detalhes técnicos
-- `venda` no Sheet vem de `pedido.vendas` (já contém `venda_presencial`), sem necessidade de novas queries.
-- Sem mudanças em backend, hooks ou outros locais (a versão full-card de `PedidoCard` já não exibia o badge e continua igual).
+- Sem alterações em queries/hooks/backend.
+- Padrão visual idêntico ao já aplicado em `PedidoDetalhesSheet`.

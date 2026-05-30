@@ -321,9 +321,20 @@ export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaP
           <div className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 border border-blue-500/20 rounded-xl p-4">
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1 min-w-0">
-                <h2 className="text-xl font-bold text-white mb-2 truncate">
-                  {venda.cliente_nome || "Cliente não informado"}
-                </h2>
+                <div className="flex items-center gap-2 mb-2 flex-wrap">
+                  <h2 className="text-xl font-bold text-white truncate">
+                    {venda.cliente_nome || "Cliente não informado"}
+                  </h2>
+                  {vendaCompleta?.venda_presencial != null && (
+                    <span className={
+                      vendaCompleta.venda_presencial
+                        ? "inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded border bg-orange-500/10 text-orange-400 border-orange-500/30"
+                        : "inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded border bg-cyan-500/10 text-cyan-400 border-cyan-500/30"
+                    }>
+                      {vendaCompleta.venda_presencial ? "🔥 Quente" : "❄️ Frio"}
+                    </span>
+                  )}
+                </div>
                 <div className="flex flex-wrap items-center gap-3 text-sm text-white/60">
                   {(venda.cidade || venda.estado) && (
                     <span className="flex items-center gap-1">
