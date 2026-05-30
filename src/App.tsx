@@ -153,6 +153,8 @@ import AdminHub from "./pages/admin/AdminHub";
 import AdminPermissionsMinimalista from "./pages/admin/AdminPermissionsMinimalista";
 import AdminCompaniesMinimalista from "./pages/admin/AdminCompaniesMinimalista";
 import AdminCompanyEditMinimalista from "./pages/admin/AdminCompanyEditMinimalista";
+import GestaoEmpresasMinimalista from "./pages/administrativo/GestaoEmpresasMinimalista";
+import GestaoEmpresaEditMinimalista from "./pages/administrativo/GestaoEmpresaEditMinimalista";
 import AdminUsersMinimalista from "./pages/admin/AdminUsersMinimalista";
 import AdminUserEdit from "./pages/admin/AdminUserEdit";
 import AdminLogs from "./pages/admin/AdminLogs";
