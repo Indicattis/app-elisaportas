@@ -807,6 +807,56 @@ export default function VendaNovaMinimalista() {
                 </p>
               )}
             </div>
+
+            <div className="space-y-2">
+              <Label className={labelClass}>Tipo de Entrega *</Label>
+              <RadioGroup
+                value={formData.tipo_entrega}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, tipo_entrega: value }))}
+                className="grid grid-cols-1 md:grid-cols-3 gap-3"
+                required
+              >
+                <label
+                  htmlFor="tipo-instalacao"
+                  className={cn(
+                    "flex items-center justify-center gap-3 p-4 rounded-lg cursor-pointer transition-all duration-200 border-2",
+                    formData.tipo_entrega === "instalacao"
+                      ? "bg-gradient-to-r from-blue-500/20 to-blue-600/10 border-blue-400/50 shadow-lg shadow-blue-500/20"
+                      : "bg-blue-500/5 border-blue-500/20 hover:border-blue-400/40 hover:bg-blue-500/10"
+                  )}
+                >
+                  <RadioGroupItem value="instalacao" id="tipo-instalacao" className="sr-only" />
+                  <Wrench className={cn("w-5 h-5", formData.tipo_entrega === "instalacao" ? "text-blue-400" : "text-blue-300/50")} />
+                  <span className={cn("text-sm font-medium", formData.tipo_entrega === "instalacao" ? "text-blue-100" : "text-blue-200/70")}>Instalação</span>
+                </label>
+                <label
+                  htmlFor="tipo-entrega"
+                  className={cn(
+                    "flex items-center justify-center gap-3 p-4 rounded-lg cursor-pointer transition-all duration-200 border-2",
+                    formData.tipo_entrega === "entrega"
+                      ? "bg-gradient-to-r from-blue-500/20 to-blue-600/10 border-blue-400/50 shadow-lg shadow-blue-500/20"
+                      : "bg-blue-500/5 border-blue-500/20 hover:border-blue-400/40 hover:bg-blue-500/10"
+                  )}
+                >
+                  <RadioGroupItem value="entrega" id="tipo-entrega" className="sr-only" />
+                  <Truck className={cn("w-5 h-5", formData.tipo_entrega === "entrega" ? "text-blue-400" : "text-blue-300/50")} />
+                  <span className={cn("text-sm font-medium", formData.tipo_entrega === "entrega" ? "text-blue-100" : "text-blue-200/70")}>Entrega</span>
+                </label>
+                <label
+                  htmlFor="tipo-manutencao"
+                  className={cn(
+                    "flex items-center justify-center gap-3 p-4 rounded-lg cursor-pointer transition-all duration-200 border-2",
+                    formData.tipo_entrega === "manutencao"
+                      ? "bg-gradient-to-r from-blue-500/20 to-blue-600/10 border-blue-400/50 shadow-lg shadow-blue-500/20"
+                      : "bg-blue-500/5 border-blue-500/20 hover:border-blue-400/40 hover:bg-blue-500/10"
+                  )}
+                >
+                  <RadioGroupItem value="manutencao" id="tipo-manutencao" className="sr-only" />
+                  <Settings className={cn("w-5 h-5", formData.tipo_entrega === "manutencao" ? "text-blue-400" : "text-blue-300/50")} />
+                  <span className={cn("text-sm font-medium", formData.tipo_entrega === "manutencao" ? "text-blue-100" : "text-blue-200/70")}>Manutenção</span>
+                </label>
+              </RadioGroup>
+            </div>
           </div>
         </Section>
 
