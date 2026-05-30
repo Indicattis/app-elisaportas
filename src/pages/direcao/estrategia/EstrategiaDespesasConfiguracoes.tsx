@@ -82,8 +82,8 @@ const SETORES: { value: string; label: string }[] = [
   { value: 'administrativo', label: 'Administrativo' },
 ];
 
-function calcFeriasDefault(salario: number, fgts_pct: number) {
-  return salario / 3 + salario * (fgts_pct || 0) / 100;
+function calcFeriasDefault(salario: number, _fgts_pct: number) {
+  return salario / 3;
 }
 function calcTotalFolha(f: { salario: number; aux_combustivel: number; insalubridade_pct: number; fgts_pct: number; previsao_13_valor: number; em_folha?: boolean; ferias_valor?: number | null }) {
   if (f.em_folha === false) return f.salario;
@@ -163,7 +163,7 @@ function FolhaBlock({
               <th className="text-right font-normal pb-2 px-2">FGTS valor</th>
               <th className="text-right font-normal pb-2 px-2">Previsão 13°</th>
               <th className="text-right font-normal pb-2 px-2">FGTS 13°</th>
-              <th className="text-right font-normal pb-2 px-2">Férias + 1/3 + FGTS</th>
+              <th className="text-right font-normal pb-2 px-2">Férias + 1/3</th>
               <th className="text-right font-normal pb-2 px-2">Total</th>
               <th className="pb-2 pr-1 w-10"></th>
             </tr>
@@ -195,7 +195,7 @@ function FolhaBlock({
               <td className="px-2 text-right text-orange-400 text-xs">{formatCurrency(salario * (fgts || 0) / 100)}</td>
               <td className="px-2 text-right text-orange-400 text-xs">{formatCurrency(salario / 12)}</td>
               <td className="px-2 text-right text-orange-400 text-xs">{formatCurrency((salario * (fgts || 0) / 100) / 12)}</td>
-              <td className="px-2 text-right text-white/40 text-xs">{formatCurrency(salario / 3 + salario * (fgts || 0) / 100)}</td>
+              <td className="px-2 text-right text-white/40 text-xs">{formatCurrency(salario / 3)}</td>
               <td className="px-2 text-right text-white/60 text-xs">{formatCurrency(calcTotalFolha({ salario, aux_combustivel: auxComb, insalubridade_pct: insalub, fgts_pct: fgts, previsao_13_valor: prev13, em_folha: emFolha }))}</td>
               <td className="pr-1 text-right">
                 <button onClick={save} disabled={!nome.trim()}

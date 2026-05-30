@@ -1,23 +1,23 @@
 ## Mudança
 
-Em `/direcao/estrategia/despesas/configuracoes` → tabela "Folha Salarial padrão", quando `em_folha === false` para um colaborador:
+A coluna **"Férias + 1/3 + FGTS"** vira **"Férias + 1/3"**, calculada como `salário / 3` (sem a parcela de FGTS).
 
-- **Permanecem editáveis/visíveis normalmente:** Colaborador, Em folha, Setor, Salário, Total.
-- **Demais colunas** (Combustível, Insalub %, Insalub valor, FGTS %, FGTS valor, Previsão 13°, FGTS 13°, Férias + 1/3 + FGTS) exibem apenas `0` em cinza claro (`text-white/30`), **sem inputs nem botões** — substituir o conteúdo da célula por um simples `formatCurrency(0)` ou `0%` cinza.
+## Arquivos
 
-## Arquivo
+### `src/pages/direcao/estrategia/EstrategiaDespesasConfiguracoes.tsx`
+- `calcFeriasDefault` (linha 85): retornar apenas `salario / 3`.
+- `calcTotalFolha` (linha 88): manter mesma estrutura — usa o valor de `ferias` que agora é só `salario/3`.
+- Cabeçalho da tabela (linha 163): renomear para "Férias + 1/3".
+- Linha de adição (linha 194): exibir `formatCurrency(salario / 3)`.
+- Coluna `FolhaRow` continua usando `feriasDefault` (que já passa a ser `salario/3`).
 
-`src/pages/direcao/estrategia/EstrategiaDespesasConfiguracoes.tsx` → componente `FolhaRow`:
+### `src/components/direcao/estrategia/DespesasResumoTopo.tsx`
+- `calcTotalFolha` (~linha 102): trocar `const ferias = f.salario / 3 + fgts` por `const ferias = f.salario / 3`.
 
-- Adicionar `const desativado = item.em_folha === false;`.
-- Para cada `<td>` das 8 colunas afetadas, renderizar condicionalmente:
-  - Se `desativado`: `<td className="px-2 text-right text-white/30 text-xs">{formatCurrency(0)}</td>` (ou `0%` para colunas de percentual).
-  - Senão: manter o conteúdo atual (InlineNum, valor calculado, botão auto, etc).
-
-Linha do Total continua usando `calcTotalFolha`, que já devolve apenas o salário quando `em_folha === false`.
+### `src/pages/direcao/DREMesDirecao.tsx`
+- `calcTotalFolha` interno: trocar `const ferias = salario / 3 + fgts` por `const ferias = salario / 3`.
 
 ## Fora do escopo
 
-- Sem alteração no banco.
-- Linha de adição (input de novo colaborador) permanece como está — só linhas existentes mudam.
-- Outras telas (despesas/mês, DRE) não são afetadas.
+- Sem migrations; coluna `ferias_valor` continua existindo (override manual permanece válido).
+- Outras colunas/comportamentos intactos.
