@@ -1,5 +1,5 @@
 import { useState, useRef, useMemo } from 'react';
-import { Plus, Trash2, Users, Receipt, TrendingDown, Landmark, FileDown, GripVertical, X, Check, FolderPlus, ChevronRight, AlertTriangle } from 'lucide-react';
+import { Plus, Trash2, Users, Receipt, TrendingDown, Landmark, FileDown, GripVertical, X, Check, FolderPlus, ChevronRight, AlertTriangle, FileText } from 'lucide-react';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { formatCurrency } from '@/lib/utils';
 import { useDespesasPadrao, type DespesaPadrao, type DespesaPadraoTipo } from '@/hooks/useDespesasPadrao';
@@ -8,6 +8,8 @@ import { useEmpresasEmissoras } from '@/hooks/useEmpresasEmissoras';
 import { useDespesasCategorias, getCategoriaPalette, type CategoriaDespesa } from '@/hooks/useDespesasCategorias';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Textarea } from '@/components/ui/textarea';
 import { GerenciarCategoriasDialog } from '@/components/despesas/GerenciarCategoriasDialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
