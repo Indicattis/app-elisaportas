@@ -1207,18 +1207,53 @@ function DescricaoPopover({
   value: string | null;
   onSave: (v: string) => void | Promise<any>;
 }) {
+  const BULLET = '• ';
+
+  const toListMask = (raw: string) => {
+    if (!raw) return '';
+    return raw
+      .split('\n')
+      .map((line) => {
+        const stripped = line.replace(/^[\s]*[•\-\*]\s*/, '');
+        return stripped.length === 0 && line.length === 0 ? '' : BULLET + stripped;
+      })
+      .join('\n');
+  };
+
+  const stripMask = (masked: string) =>
+    masked
+      .split('\n')
+      .map((l) => l.replace(/^[\s]*[•\-\*]\s*/, ''))
+      .join('\n');
+
   const [open, setOpen] = useState(false);
-  const [text, setText] = useState(value || '');
+  const [text, setText] = useState(toListMask(value || ''));
   const hasContent = !!(value && value.trim());
 
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const v = e.target.value;
+    // Garante que toda linha não-vazia comece com bullet
+    const masked = v
+      .split('\n')
+      .map((line) => {
+        if (line.length === 0) return '';
+        if (line.startsWith(BULLET)) return line;
+        const stripped = line.replace(/^[\s]*[•\-\*]\s*/, '');
+        return BULLET + stripped;
+      })
+      .join('\n');
+    setText(masked);
+  };
+
   const handleSave = async () => {
-    if ((text || '') === (value || '')) { setOpen(false); return; }
-    await onSave(text.trim());
+    const clean = stripMask(text).trim();
+    if (clean === (value || '').trim()) { setOpen(false); return; }
+    await onSave(clean);
     setOpen(false);
   };
 
   return (
-    <Popover open={open} onOpenChange={(o) => { setOpen(o); if (o) setText(value || ''); }}>
+    <Popover open={open} onOpenChange={(o) => { setOpen(o); if (o) setText(toListMask(value || '')); }}>
       <PopoverTrigger asChild>
         <button
           type="button"
@@ -1232,15 +1267,19 @@ function DescricaoPopover({
           <FileText className="w-4 h-4" />
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-3 bg-slate-900 border-white/10" align="start">
-        <div className="space-y-2">
-          <div className="text-[11px] uppercase tracking-wider text-white/50">Descrição</div>
+      <PopoverContent className="w-[520px] p-4 bg-slate-900 border-white/10" align="start">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="text-[11px] uppercase tracking-wider text-white/50">Descrição</div>
+            <div className="text-[10px] text-white/30">Cada linha vira um item da lista</div>
+          </div>
           <Textarea
             value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder="Adicione uma descrição para esta despesa..."
-            rows={5}
-            className="bg-white/5 border-white/10 text-white text-sm resize-none"
+            onChange={handleChange}
+            onFocus={() => { if (!text) setText(BULLET); }}
+            placeholder="• Item 1&#10;• Item 2"
+            rows={12}
+            className="bg-white/5 border-white/10 text-white text-sm resize-none min-h-[260px] leading-relaxed"
             autoFocus
           />
           <div className="flex items-center justify-end gap-1.5">
