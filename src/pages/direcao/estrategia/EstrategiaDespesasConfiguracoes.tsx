@@ -1088,7 +1088,7 @@ function categoriaSelectClass(_list: CategoriaDespesa[], v?: string | null) {
 }
 
 function CategoriaGroup({
-  cat, palette, rows, categorias, empresasAtivas, update, remove, dragHandle, rename, removeCat, expanded, onToggle, hideHeader, reorderRows,
+  cat, palette, rows, categorias, empresasAtivas, update, remove, dragHandle, rename, removeCat, expanded, onToggle, hideHeader, reorderRows, hideCategoria,
 }: {
   cat: CategoriaDespesa | null;
   palette: { color: string; dot: string };
@@ -1104,6 +1104,7 @@ function CategoriaGroup({
   onToggle: () => void;
   hideHeader?: boolean;
   reorderRows?: (orderedIds: string[]) => void | Promise<any>;
+  hideCategoria?: boolean;
 }) {
   const subtotal = rows.reduce((s, i) => s + Number(i.valor_maximo_mensal || 0), 0);
   const rowSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
@@ -1161,7 +1162,9 @@ function CategoriaGroup({
             <th className="pb-2 w-6"></th>
             <th className="text-left font-normal pb-2 pl-1 w-[34%]">Nome</th>
             <th className="pb-2 px-2 w-8" title="Descrição"></th>
-            <th className="text-left font-normal pb-2 px-2 w-[22%]">Categoria</th>
+            {!hideCategoria && (
+              <th className="text-left font-normal pb-2 px-2 w-[22%]">Categoria</th>
+            )}
             <th className="text-right font-normal pb-2 px-2 w-[36%]">Valor projetado</th>
             <th className="text-center font-normal pb-2 px-2 w-[8%]">DRE</th>
             <th className="text-center font-normal pb-2 px-2 w-[8%]" title="Marcar para eliminar essa despesa">Eliminar</th>
@@ -1179,6 +1182,7 @@ function CategoriaGroup({
                   empresasAtivas={empresasAtivas}
                   update={update}
                   remove={remove}
+                  hideCategoria={hideCategoria}
                 />
               ))}
             </tbody>
