@@ -125,6 +125,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
   const [impostos, setImpostos] = useState<LancRow[]>([]);
   const [gastosFixas, setGastosFixas] = useState<GastoAgrupado[]>([]);
   const [gastosVariaveis, setGastosVariaveis] = useState<GastoAgrupado[]>([]);
+  const [gastosImpostos, setGastosImpostos] = useState<GastoAgrupado[]>([]);
   const [loading, setLoading] = useState(false);
   const [reloadV, setReloadV] = useState(0);
   const reload = () => { setReloadV(v => v + 1); onDataChange?.(); };
@@ -152,9 +153,10 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
       + padroesFolha.filter(p => !nomesFolha.has(norm(p.nome))).reduce((s, p) => s + calcTotalFolha({ ...p, em_folha: p.em_folha }), 0)
       + gastosFixas.reduce((s, x) => s + Number(x.total || 0), 0)
       + gastosVariaveis.reduce((s, x) => s + Number(x.total || 0), 0)
+      + gastosImpostos.reduce((s, x) => s + Number(x.total || 0), 0)
       + impostos.reduce((s, x) => s + Number(x.valor || 0), 0)
       + padroesImpostos.filter(p => !nomesImpostos.has(norm(p.nome))).reduce((s, p) => s + Number(p.valor || 0), 0);
-  }, [folha, gastosFixas, gastosVariaveis, impostos, padroesFolha, padroesImpostos]);
+  }, [folha, gastosFixas, gastosVariaveis, gastosImpostos, impostos, padroesFolha, padroesImpostos]);
 
   useEffect(() => {
     if (mes) onMediaMensalChange?.(totalExibido);
@@ -167,7 +169,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
 
   useEffect(() => {
     if (!mes || !mesStart) {
-      setFolha([]); setImpostos([]); setGastosFixas([]); setGastosVariaveis([]);
+      setFolha([]); setImpostos([]); setGastosFixas([]); setGastosVariaveis([]); setGastosImpostos([]);
       onMediaMensalChange?.(0);
       return;
     }
@@ -224,7 +226,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
             : Promise.resolve(),
         ]);
 
-        const agruparPor = (categoria: 'fixa' | 'variavel'): GastoAgrupado[] => {
+        const agruparPor = (categoria: 'fixa' | 'variavel' | 'imposto'): GastoAgrupado[] => {
           const acc = new Map<string, GastoAgrupado>();
           // Seed: todos os tipos da categoria aparecem mesmo sem gastos
           Object.entries(tiposMap).forEach(([id, t]) => {
@@ -273,6 +275,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
 
         setGastosFixas(agruparPor('fixa'));
         setGastosVariaveis(agruparPor('variavel'));
+        setGastosImpostos(agruparPor('imposto'));
       } finally {
         if (!cancelled) setLoading(false);
       }
