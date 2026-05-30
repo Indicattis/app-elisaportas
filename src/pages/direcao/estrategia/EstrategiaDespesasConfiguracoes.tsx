@@ -1065,9 +1065,9 @@ function CategoriaGroup({
 }) {
   const subtotal = rows.reduce((s, i) => s + Number(i.valor_maximo_mensal || 0), 0);
   return (
-    <div className={`${expanded ? 'bg-white/[0.03] border border-white/10 rounded-lg p-3' : 'border-b border-white/[0.06] px-1 py-1'} group/cat transition-colors`}>
+    <div className={`border-b border-white/[0.06] px-1 ${expanded ? 'pt-1 pb-2' : 'py-1'} group/cat transition-colors`}>
       <div
-        className={`flex items-center gap-1.5 ${expanded ? 'mb-2' : ''} cursor-pointer select-none`}
+        className={`flex items-center gap-1.5 ${expanded ? 'mb-1' : ''} cursor-pointer select-none`}
         onClick={onToggle}
       >
         <ChevronRight
