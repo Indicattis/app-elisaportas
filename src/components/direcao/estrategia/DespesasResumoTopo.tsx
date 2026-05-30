@@ -149,9 +149,25 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
   }, [mes, totalExibido, onMediaMensalChange]);
 
   useEffect(() => {
-    // Sem pré-carregamento: a página passa a se basear apenas em "Configurações padrão".
-    setColabs([]);
+    // Carrega colaboradores ativos para resolver "Em folha" por nome.
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase.rpc('get_colaboradores_folha' as any);
+      if (cancelled) return;
+      const list = ((data || []) as any[]).map((c) => ({
+        id: c.id,
+        nome: c.nome,
+        salario: Number(c.custo_colaborador) || 0,
+        aux_combustivel: Number(c.aux_combustivel) || 0,
+        insalubridade_pct: Number(c.insalubridade_pct) || 0,
+        fgts_pct: Number(c.fgts_pct) || 8,
+        previsao_13_valor: Number(c.previsao_13_valor) || 0,
+        em_folha: !!c.em_folha,
+      })) as Colab[];
+      setColabs(list);
+    })();
     setTipos([]);
+    return () => { cancelled = true; };
   }, []);
 
   useEffect(() => {
@@ -519,7 +535,7 @@ function BlocoFolha({
         insalubridade_pct: p.insalubridade_pct,
         fgts_pct: p.fgts_pct,
         previsao_13_valor: p.previsao_13_valor,
-        em_folha: true,
+        em_folha: colabsByNome.get(key)?.em_folha ?? true,
       };
     }
     // Só existe como lançamento salvo (sem padrão nem cadastro)
