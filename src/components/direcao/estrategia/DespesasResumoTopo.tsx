@@ -103,7 +103,7 @@ function calcTotalFolha(f: { salario: number; aux_combustivel: number; insalubri
   if (f.em_folha === false) return Number(f.salario) || 0;
   const insalub = f.salario * (f.insalubridade_pct || 0) / 100;
   const fgts = f.salario * (f.fgts_pct || 0) / 100;
-  const ferias = f.salario / 3 + fgts;
+  const ferias = f.salario / 3;
   const prev13 = f.salario / 12;
   const fgts13 = fgts / 12;
   return f.salario + f.aux_combustivel + insalub + fgts + prev13 + fgts13 + ferias;
