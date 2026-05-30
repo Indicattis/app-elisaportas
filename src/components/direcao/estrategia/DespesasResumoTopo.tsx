@@ -535,7 +535,7 @@ function BlocoFolha({
         insalubridade_pct: p.insalubridade_pct,
         fgts_pct: p.fgts_pct,
         previsao_13_valor: p.previsao_13_valor,
-        em_folha: true,
+        em_folha: colabsByNome.get(key)?.em_folha ?? true,
       };
     }
     // Só existe como lançamento salvo (sem padrão nem cadastro)
