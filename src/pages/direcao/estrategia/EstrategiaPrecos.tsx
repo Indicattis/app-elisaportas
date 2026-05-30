@@ -8,7 +8,6 @@ import { toast } from 'sonner';
 import { useTabelaPrecos } from '@/hooks/useTabelaPrecos';
 import { useCustosItens } from '@/hooks/useCustosItens';
 import { useMemo } from 'react';
-import { Package } from 'lucide-react';
 import { exportEstrategiaPrecosPDF, exportEstrategiaPrecosExcel } from '@/utils/estrategiaPrecosExport';
 
 export default function EstrategiaPrecos() {
@@ -107,19 +106,14 @@ export default function EstrategiaPrecos() {
         <div className="min-w-0">
           <TabelaPrecos embedded />
         </div>
-        <aside className="rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 p-4 flex flex-col gap-3 lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-8rem)]">
-          <div className="flex items-center gap-2">
-            <div className="h-9 w-9 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center">
-              <Package className="h-4 w-4 text-emerald-400" />
-            </div>
-            <div className="min-w-0">
-              <div className="text-sm font-medium text-white">Itens Avulso</div>
-              <div className="text-[11px] text-white/50">
-                {itensAvulso.length} {itensAvulso.length === 1 ? 'item' : 'itens'} disponíveis
-              </div>
-            </div>
+        <aside className="flex flex-col gap-4 lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-8rem)] min-h-0">
+          <div>
+            <h2 className="text-base font-medium text-white">Itens Avulso</h2>
+            <p className="text-xs text-white/50">
+              {itensAvulso.length} {itensAvulso.length === 1 ? 'item disponível' : 'itens disponíveis'}
+            </p>
           </div>
-          <div className="flex-1 min-h-0 overflow-y-auto -mx-1 px-1">
+          <div className="flex-1 min-h-0 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 p-4 overflow-y-auto">
             {itensAvulso.length === 0 ? (
               <div className="text-xs text-white/50 text-center py-8 px-2">
                 Nenhum item marcado como avulso. Ative em Estratégia → Itens.
