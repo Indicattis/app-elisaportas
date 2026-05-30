@@ -918,7 +918,7 @@ function TiposCustoBlock({
                 remove={handleRemoveTipo}
                 rename={renameCategoria}
                 removeCat={removeCategoria}
-                expanded={expandedCategorias.has(g.cat.id)}
+                expanded={isExpanded(g.cat.id)}
                 onToggle={() => toggleCat(g.cat.id)}
               />
             ))}
@@ -934,7 +934,7 @@ function TiposCustoBlock({
             empresasAtivas={empresasAtivas}
             update={update}
             remove={handleRemoveTipo}
-            expanded={expandedCategorias.has('__sem__')}
+            expanded={isExpanded('__sem__')}
             onToggle={() => toggleCat('__sem__')}
           />
         )}
