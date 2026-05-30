@@ -13,7 +13,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Badge } from '@/components/ui/badge';
-import { Plus, CalendarIcon, Percent, CheckCircle2, ShieldCheck, Lock, Package, CreditCard, FileText, Truck, Wrench, Settings } from 'lucide-react';
+import { Plus, CalendarIcon, Percent, CheckCircle2, ShieldCheck, Lock, Package, CreditCard, FileText, Truck, Wrench, Settings, Building2 } from 'lucide-react';
 import { ProdutoVendaForm } from '@/components/vendas/ProdutoVendaForm';
 import { ProdutosVendaTable } from '@/components/vendas/ProdutosVendaTable';
 import { VendaResumo } from '@/components/vendas/VendaResumo';
@@ -138,6 +138,7 @@ export default function VendaNovaMinimalista() {
     valor_a_receber: 0,
     data_prevista_entrega: '',
     tipo_entrega: 'instalacao',
+    tipo_frete: 'interno',
     venda_presencial: null as boolean | null
   });
 
@@ -297,10 +298,10 @@ export default function VendaNovaMinimalista() {
 
   // Auto-preenche o valor do frete quando há frete cadastrado para a cidade/estado
   useEffect(() => {
-    if (freteSugerido && formData.valor_frete !== freteSugerido.valor_frete) {
+    if (formData.tipo_frete === 'interno' && freteSugerido && formData.valor_frete !== freteSugerido.valor_frete) {
       setFormData(prev => ({ ...prev, valor_frete: freteSugerido.valor_frete }));
     }
-  }, [freteSugerido?.valor_frete]);
+  }, [freteSugerido?.valor_frete, formData.tipo_frete]);
 
   const handleAddPorta = (produto: ProdutoVenda) => {
     setPortas(prev => {
