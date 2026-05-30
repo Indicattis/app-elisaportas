@@ -38,9 +38,9 @@ export function calcularLimitesDesconto(
   const limitePresencialConfig = config?.presencial ?? 5;
   const limiteAdicionalResponsavel = config?.adicionalResponsavel ?? 5;
   
-  // 3% para pagamento que não seja cartão de crédito (à vista, boleto, dinheiro)
   const limiteBase = formaPagamento !== 'cartao_credito' ? limiteAvista : 0;
-  // 5% adicional para venda presencial
+  // 3% para pagamento que não seja cartão de crédito (à vista, boleto, dinheiro)
+  // 5% adicional para venda Frio (não presencial). Callers passam `venda_presencial === false`.
   const limitePresencial = vendaPresencial ? limitePresencialConfig : 0;
   const limiteTotal = limiteBase + limitePresencial;
   // Máximo com senha do responsável = 11% (6% base + 5% adicional)
