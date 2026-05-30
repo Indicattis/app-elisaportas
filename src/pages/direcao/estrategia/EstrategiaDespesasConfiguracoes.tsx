@@ -160,6 +160,7 @@ function FolhaBlock({
     em_folha: i.em_folha,
     ferias_valor: i.ferias_valor,
   }), 0);
+  const SETORES = useSetoresMeta();
 
   return (
     <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-5">
@@ -182,7 +183,7 @@ function FolhaBlock({
           .map(s => ({ meta: s, rows: items.filter(i => (i.setor ?? '') === s.value) }))
           .filter(g => g.rows.length > 0)
           .map(g => (
-            <FolhaSetorGroup key={g.meta.value || 'sem'} meta={g.meta} rows={g.rows} update={update} remove={remove} />
+            <FolhaSetorGroup key={g.meta.value || 'sem'} meta={g.meta} rows={g.rows} setores={SETORES} update={update} remove={remove} />
           ))}
 
         {/* Caixa de adicionar novo colaborador */}
@@ -205,7 +206,7 @@ function FolhaBlock({
                   </td>
                   <td className="px-2">
                     <select value={setor} onChange={(e) => setSetor(e.target.value)}
-                      className={setorSelectClass(setor)}>
+                      className={setorSelectClassFrom(SETORES, setor)}>
                       <option value="" className="bg-slate-900 text-white">—</option>
                       {SETORES.map(s => <option key={s.value} value={s.value} className="bg-slate-900 text-white">{s.label}</option>)}
                     </select>
