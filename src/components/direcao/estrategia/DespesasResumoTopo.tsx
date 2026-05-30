@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { formatCurrency } from '@/lib/utils';
-import { Users, Receipt, TrendingDown, Trash2, Check, X, Landmark } from 'lucide-react';
+import { Users, Receipt, TrendingDown, Trash2, Check, X, Landmark, ChevronRight, ChevronDown } from 'lucide-react';
 import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -86,6 +86,16 @@ type GastoAgrupado = {
   tipo_nome: string;
   total: number;
   quantidade: number;
+  itens: GastoItem[];
+};
+
+type GastoItem = {
+  id: string;
+  data: string;
+  valor: number;
+  descricao: string | null;
+  responsavel_nome: string;
+  banco_nome: string;
 };
 
 function calcTotalFolha(f: { salario: number; aux_combustivel: number; insalubridade_pct: number; fgts_pct: number; previsao_13_valor: number }) {
