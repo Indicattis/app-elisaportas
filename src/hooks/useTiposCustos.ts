@@ -132,6 +132,27 @@ export const useTiposCustos = () => {
   };
 
   /**
+   * Exclui o tipo de custo deixando os gastos vinculados órfãos
+   * (FK gastos.tipo_custo_id é ON DELETE SET NULL).
+   */
+  const forcarExclusaoTipoCusto = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from("tipos_custos" as any)
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+      toast.success("Tipo excluído. Gastos vinculados ficaram órfãos.");
+      await fetchTiposCustos();
+      return true;
+    } catch (error: any) {
+      toast.error("Erro ao excluir tipo de custo");
+      console.error(error);
+      return false;
+    }
+  };
+
+  /**
    * Reordena tipos dentro de um grupo (`fixa` | `variavel` | `imposto`).
    * Recebe a lista ordenada de IDs e grava `ordem` 1..n.
    */
@@ -169,6 +190,7 @@ export const useTiposCustos = () => {
     deleteTipoCusto,
     contarGastosVinculados,
     realocarEExcluirTipoCusto,
+    forcarExclusaoTipoCusto,
     reorderTiposCustos,
   };
 };
