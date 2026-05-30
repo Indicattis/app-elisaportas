@@ -145,12 +145,13 @@ function FolhaBlock({
   const [emFolha, setEmFolha] = useState(true);
   const [setor, setSetor] = useState<string>('');
   const [salario, setSalario] = useState(0);
+  const [salarioMin, setSalarioMin] = useState(1518);
   const [auxComb, setAuxComb] = useState(0);
   const [insalub, setInsalub] = useState(0);
   const [fgts, setFgts] = useState(8);
   const [prev13, setPrev13] = useState(0);
 
-  const reset = () => { setNome(''); setEmFolha(true); setSetor(''); setSalario(0); setAuxComb(0); setInsalub(0); setFgts(8); setPrev13(0); };
+  const reset = () => { setNome(''); setEmFolha(true); setSetor(''); setSalario(0); setSalarioMin(1518); setAuxComb(0); setInsalub(0); setFgts(8); setPrev13(0); };
 
   const save = async () => {
     if (!nome.trim()) return;
@@ -160,6 +161,7 @@ function FolhaBlock({
       em_folha: emFolha,
       setor: setor || null,
       salario,
+      salario_minimo: salarioMin,
       aux_combustivel: auxComb,
       insalubridade_pct: insalub,
       fgts_pct: fgts,
@@ -171,6 +173,7 @@ function FolhaBlock({
   const totalSalarios = items.reduce((s, i) => s + Number(i.salario || 0), 0);
   const totalFolha = items.reduce((s, i) => s + calcTotalFolha({
     salario: Number(i.salario) || 0,
+    salario_minimo: Number(i.salario_minimo) || 0,
     aux_combustivel: Number(i.aux_combustivel) || 0,
     insalubridade_pct: Number(i.insalubridade_pct) || 0,
     fgts_pct: Number(i.fgts_pct) || 0,
