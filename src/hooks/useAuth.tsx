@@ -8,7 +8,7 @@ interface AdminUser {
   id: string;
   email: string;
   role: string;
-  setor: 'vendas' | 'marketing' | 'instalacoes' | 'fabrica' | 'administrativo' | 'lideranca' | 'afastados' | null;
+  setor: 'vendas' | 'marketing' | 'instalacoes' | 'fabrica' | 'administrativo' | 'lideranca' | 'afastados' | 'medidor' | null;
   created_at: string;
   ativo: boolean;
   nome: string;
