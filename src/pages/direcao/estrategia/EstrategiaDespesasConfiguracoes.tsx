@@ -959,6 +959,7 @@ function TiposCustoBlock({
           onToggle={() => {}}
           hideHeader
           reorderRows={reorderTipos}
+          hideCategoria={tipo === 'variavel'}
         />
       </div>
 
