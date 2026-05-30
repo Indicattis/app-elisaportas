@@ -13,7 +13,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Badge } from '@/components/ui/badge';
-import { Plus, CalendarIcon, Percent, CheckCircle2, ShieldCheck, Lock, Package, CreditCard, FileText, Truck, Wrench, Settings } from 'lucide-react';
+import { Plus, CalendarIcon, Percent, CheckCircle2, ShieldCheck, Lock, Package, CreditCard, FileText, Truck, Wrench, Settings, Building2 } from 'lucide-react';
 import { ProdutoVendaForm } from '@/components/vendas/ProdutoVendaForm';
 import { ProdutosVendaTable } from '@/components/vendas/ProdutosVendaTable';
 import { VendaResumo } from '@/components/vendas/VendaResumo';
@@ -138,6 +138,7 @@ export default function VendaNovaMinimalista() {
     valor_a_receber: 0,
     data_prevista_entrega: '',
     tipo_entrega: 'instalacao',
+    tipo_frete: 'interno',
     venda_presencial: null as boolean | null
   });
 
@@ -297,10 +298,10 @@ export default function VendaNovaMinimalista() {
 
   // Auto-preenche o valor do frete quando há frete cadastrado para a cidade/estado
   useEffect(() => {
-    if (freteSugerido && formData.valor_frete !== freteSugerido.valor_frete) {
+    if (formData.tipo_frete === 'interno' && freteSugerido && formData.valor_frete !== freteSugerido.valor_frete) {
       setFormData(prev => ({ ...prev, valor_frete: freteSugerido.valor_frete }));
     }
-  }, [freteSugerido?.valor_frete]);
+  }, [freteSugerido?.valor_frete, formData.tipo_frete]);
 
   const handleAddPorta = (produto: ProdutoVenda) => {
     setPortas(prev => {
@@ -721,9 +722,97 @@ export default function VendaNovaMinimalista() {
           valorTotal={valorTotalMemo}
         />
 
+        {/* Informações de Entrega */}
+        <Section title="Informações de Entrega" icon={Truck}>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label className={labelClass}>Tipo de Frete *</Label>
+              <RadioGroup
+                value={formData.tipo_frete || 'interno'}
+                onValueChange={(value) => setFormData(prev => ({
+                  ...prev,
+                  tipo_frete: value as 'interno' | 'transportadora',
+                  // Ao trocar para transportadora, zera para preenchimento manual
+                  valor_frete: value === 'transportadora' ? 0 : prev.valor_frete,
+                }))}
+                className="grid grid-cols-1 md:grid-cols-2 gap-3"
+                required
+              >
+                <label
+                  htmlFor="frete-interno"
+                  className={cn(
+                    "flex items-center justify-center gap-3 p-4 rounded-lg cursor-pointer transition-all duration-200 border-2",
+                    (formData.tipo_frete || 'interno') === 'interno'
+                      ? "bg-gradient-to-r from-blue-500/20 to-blue-600/10 border-blue-400/50 shadow-lg shadow-blue-500/20"
+                      : "bg-blue-500/5 border-blue-500/20 hover:border-blue-400/40 hover:bg-blue-500/10"
+                  )}
+                >
+                  <RadioGroupItem value="interno" id="frete-interno" className="sr-only" />
+                  <Truck className={cn("w-5 h-5", (formData.tipo_frete || 'interno') === 'interno' ? "text-blue-400" : "text-blue-300/50")} />
+                  <span className={cn("text-sm font-medium", (formData.tipo_frete || 'interno') === 'interno' ? "text-blue-100" : "text-blue-200/70")}>Frete Interno</span>
+                </label>
+                <label
+                  htmlFor="frete-transportadora"
+                  className={cn(
+                    "flex items-center justify-center gap-3 p-4 rounded-lg cursor-pointer transition-all duration-200 border-2",
+                    formData.tipo_frete === 'transportadora'
+                      ? "bg-gradient-to-r from-blue-500/20 to-blue-600/10 border-blue-400/50 shadow-lg shadow-blue-500/20"
+                      : "bg-blue-500/5 border-blue-500/20 hover:border-blue-400/40 hover:bg-blue-500/10"
+                  )}
+                >
+                  <RadioGroupItem value="transportadora" id="frete-transportadora" className="sr-only" />
+                  <Building2 className={cn("w-5 h-5", formData.tipo_frete === 'transportadora' ? "text-blue-400" : "text-blue-300/50")} />
+                  <span className={cn("text-sm font-medium", formData.tipo_frete === 'transportadora' ? "text-blue-100" : "text-blue-200/70")}>Frete por Transportadora</span>
+                </label>
+              </RadioGroup>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="valor_frete" className={labelClass}>Valor do Frete (R$)</Label>
+              <div className="relative">
+                <Truck className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-blue-400/60" />
+                <Input
+                  id="valor_frete"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={formData.valor_frete}
+                  onChange={(e) => setFormData(prev => ({ ...prev, valor_frete: parseFloat(e.target.value) || 0 }))}
+                  placeholder="0,00"
+                  disabled={formData.tipo_frete === 'interno' && !!freteSugerido}
+                  readOnly={formData.tipo_frete === 'interno' && !!freteSugerido}
+                  className={cn(
+                    inputClass,
+                    "pl-10",
+                    formData.tipo_frete === 'interno' && freteSugerido && "cursor-not-allowed opacity-80"
+                  )}
+                />
+                {formData.tipo_frete === 'interno' && freteSugerido && (
+                  <Lock className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-blue-400/60" />
+                )}
+              </div>
+              {formData.tipo_frete === 'interno' ? (
+                freteSugerido ? (
+                  <Badge variant="outline" className="bg-blue-500/10 border-blue-500/30 text-blue-300 text-xs">
+                    🔒 Frete automático para {formData.cidade}/{formData.estado}
+                  </Badge>
+                ) : formData.cidade && formData.estado ? (
+                  <p className="text-xs text-amber-300/80">
+                    Sem frete cadastrado para esta cidade — preencha manualmente.
+                  </p>
+                ) : null
+              ) : (
+                <p className="text-xs text-blue-300/70">
+                  Informe manualmente o valor cobrado pela transportadora.
+                </p>
+              )}
+            </div>
+          </div>
+        </Section>
+
         {/* Dados Adicionais */}
         <Section title="Dados Adicionais" icon={FileText}>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Campo de Data da Venda */}
             <div className="space-y-2">
               <Label className={labelClass}>Data da Venda *</Label>
@@ -752,42 +841,6 @@ export default function VendaNovaMinimalista() {
                   />
                 </PopoverContent>
               </Popover>
-            </div>
-
-            {/* Campo de Frete - Auto-preenchido a partir de /logistica/frete/internos */}
-            <div className="space-y-2">
-              <Label htmlFor="valor_frete" className={labelClass}>Frete (R$)</Label>
-              <div className="relative">
-                <Truck className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-blue-400/60" />
-                <Input
-                  id="valor_frete"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={formData.valor_frete}
-                  onChange={(e) => setFormData(prev => ({ ...prev, valor_frete: parseFloat(e.target.value) || 0 }))}
-                  placeholder="0,00"
-                  disabled={!!freteSugerido}
-                  readOnly={!!freteSugerido}
-                  className={cn(
-                    inputClass,
-                    "pl-10",
-                    freteSugerido && "cursor-not-allowed opacity-80"
-                  )}
-                />
-                {freteSugerido && (
-                  <Lock className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-blue-400/60" />
-                )}
-              </div>
-              {freteSugerido ? (
-                <Badge variant="outline" className="bg-blue-500/10 border-blue-500/30 text-blue-300 text-xs">
-                  🔒 Frete automático para {formData.cidade}/{formData.estado}
-                </Badge>
-              ) : formData.cidade && formData.estado ? (
-                <p className="text-xs text-amber-300/80">
-                  Sem frete cadastrado para esta cidade — preencha manualmente.
-                </p>
-              ) : null}
             </div>
 
             {/* Campo de Previsão de Entrega com Calendar Popover */}
@@ -831,7 +884,7 @@ export default function VendaNovaMinimalista() {
               </Popover>
             </div>
 
-            <div className="space-y-2 md:col-span-3">
+            <div className="space-y-2 md:col-span-2">
               <Label className={labelClass}>Tipo de Entrega *</Label>
               <RadioGroup
                 value={formData.tipo_entrega}
@@ -902,7 +955,7 @@ export default function VendaNovaMinimalista() {
               </RadioGroup>
             </div>
 
-            <div className="space-y-2 md:col-span-3">
+            <div className="space-y-2 md:col-span-2">
               <Label htmlFor="observacoes_venda" className={labelClass}>Observações</Label>
               <Textarea
                 id="observacoes_venda"
@@ -914,7 +967,7 @@ export default function VendaNovaMinimalista() {
               />
             </div>
 
-            <div className="md:col-span-3 space-y-2">
+            <div className="md:col-span-2 space-y-2">
               <Label className={labelClass}>Temperatura da venda *</Label>
               <RadioGroup
                 value={formData.venda_presencial === null ? '' : formData.venda_presencial ? 'quente' : 'frio'}

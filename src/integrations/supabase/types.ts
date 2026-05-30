@@ -8851,6 +8851,7 @@ export type Database = {
           restante_na_instalacao: boolean | null
           status_aprovacao: string
           tipo_entrega: string | null
+          tipo_frete: string
           updated_at: string
           valor_a_receber: number | null
           valor_a_receber_faturamento: boolean
@@ -8912,6 +8913,7 @@ export type Database = {
           restante_na_instalacao?: boolean | null
           status_aprovacao?: string
           tipo_entrega?: string | null
+          tipo_frete?: string
           updated_at?: string
           valor_a_receber?: number | null
           valor_a_receber_faturamento?: boolean
@@ -8973,6 +8975,7 @@ export type Database = {
           restante_na_instalacao?: boolean | null
           status_aprovacao?: string
           tipo_entrega?: string | null
+          tipo_frete?: string
           updated_at?: string
           valor_a_receber?: number | null
           valor_a_receber_faturamento?: boolean
