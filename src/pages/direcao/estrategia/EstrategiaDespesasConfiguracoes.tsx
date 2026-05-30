@@ -236,7 +236,7 @@ function FolhaRow({
   const fgtsVal = salario * fgts_pct / 100;
   const feriasDefault = calcFeriasDefault(salario, fgts_pct);
   const feriasAtual = item.ferias_valor == null ? feriasDefault : Number(item.ferias_valor) || 0;
-  const total = calcTotalFolha({ salario, aux_combustivel, insalubridade_pct, fgts_pct, previsao_13_valor, em_folha: item.em_folha, ferias_valor: item.ferias_valor });
+  const total = calcTotalFolha({ salario, aux_combustivel, insalubridade_pct, fgts_pct, previsao_13_valor: 0, em_folha: item.em_folha, ferias_valor: item.ferias_valor });
   return (
     <tr className="border-b border-white/5 hover:bg-white/[0.03]">
       <td className="py-2 pl-1 text-white/90">
