@@ -277,6 +277,7 @@ export default function VendaDetalhesDirecao() {
       title="Detalhes da Venda" 
       subtitle={venda.cliente_nome}
       backPath="/direcao/vendas"
+      fullWidth
       breadcrumbItems={[
         { label: "Home", path: "/home" },
         { label: "Direção", path: "/direcao" },
