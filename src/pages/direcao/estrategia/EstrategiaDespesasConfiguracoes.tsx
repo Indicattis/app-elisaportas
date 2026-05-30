@@ -1099,6 +1099,7 @@ function CategoriaGroup({
       <table className="w-full text-sm">
         <thead>
           <tr className="text-[10px] uppercase tracking-wider text-white/40 border-b border-white/10">
+            <th className="pb-2 w-6"></th>
             <th className="text-left font-normal pb-2 pl-1 w-[22%]">Nome</th>
             <th className="text-left font-normal pb-2 px-2 w-[24%]">Descrição</th>
             <th className="text-left font-normal pb-2 px-2 w-[16%]">Categoria</th>
@@ -1108,54 +1109,96 @@ function CategoriaGroup({
             <th className="pb-2 pr-1 w-10"></th>
           </tr>
         </thead>
-        <tbody>
-          {rows.map(i => (
-            <tr key={i.id} className={`border-b border-white/5 hover:bg-white/[0.03] ${!i.ativo ? 'opacity-50' : ''}`}>
-              <td className="py-2 pl-1 text-white/90">
-                <InlineText value={i.nome} onSave={(v) => update(i.id, { nome: v })} />
-              </td>
-              <td className="px-2 text-white/70">
-                <InlineText value={i.descricao || ''} onSave={(v) => update(i.id, { descricao: v || null })} />
-              </td>
-              <td className="px-2">
-                <select
-                  value={i.categoria_id || ''}
-                  onChange={(e) => update(i.id, { categoria_id: e.target.value || null } as any)}
-                  className={categoriaSelectClass(categorias, i.categoria_id)}
-                >
-                  <option value="" className="bg-slate-900 text-white">— Sem categoria</option>
-                  {categorias.map(c => <option key={c.id} value={c.id} className="bg-slate-900 text-white">{c.nome}</option>)}
-                </select>
-              </td>
-              <td className="px-2 text-white/50">
-                <select
-                  value={i.empresa_id || ''}
-                  onChange={(e) => update(i.id, { empresa_id: e.target.value || null })}
-                  className="w-full h-7 bg-transparent border border-transparent hover:border-white/10 focus:border-white/20 rounded px-1.5 text-white/50 text-xs outline-none transition-colors"
-                >
-                  <option value="" className="bg-slate-900">—</option>
-                  {empresasAtivas.map((e: any) => (
-                    <option key={e.id} value={e.id} className="bg-slate-900">{e.nome}</option>
-                  ))}
-                </select>
-              </td>
-              <td className="px-2 text-right text-white font-medium">
-                <InlineNum value={i.valor_maximo_mensal} onSave={(v) => update(i.id, { valor_maximo_mensal: v })} format="currency" />
-              </td>
-              <td className="px-2 text-center">
-                <Switch checked={i.aparece_no_dre} onCheckedChange={(v) => update(i.id, { aparece_no_dre: v })} />
-              </td>
-              <td className="pr-1 text-right">
-                <button onClick={() => remove(i.id)} className="p-1 rounded hover:bg-red-500/20 text-red-300/70 hover:text-red-300">
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
+        <DndContext sensors={rowSensors} collisionDetection={closestCenter} modifiers={[restrictToVerticalAxis, restrictToParentElement]} onDragEnd={onRowDragEnd}>
+          <SortableContext items={rowIds} strategy={verticalListSortingStrategy}>
+            <tbody>
+              {rows.map(i => (
+                <SortableTipoRow
+                  key={i.id}
+                  i={i}
+                  categorias={categorias}
+                  empresasAtivas={empresasAtivas}
+                  update={update}
+                  remove={remove}
+                />
+              ))}
+            </tbody>
+          </SortableContext>
+        </DndContext>
       </table>
       )}
     </div>
+  );
+}
+
+function SortableTipoRow({
+  i, categorias, empresasAtivas, update, remove,
+}: {
+  i: TipoCusto;
+  categorias: CategoriaDespesa[];
+  empresasAtivas: any[];
+  update: ReturnType<typeof useTiposCustos>['updateTipoCusto'];
+  remove: (id: string) => void | Promise<any>;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: i.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  } as React.CSSProperties;
+  return (
+    <tr ref={setNodeRef} style={style} className={`border-b border-white/5 hover:bg-white/[0.03] group/row ${!i.ativo ? 'opacity-50' : ''}`}>
+      <td className="py-2 w-6 align-middle">
+        <button
+          {...attributes}
+          {...listeners}
+          type="button"
+          className="p-0.5 rounded hover:bg-white/10 text-white/30 hover:text-white/70 cursor-grab active:cursor-grabbing opacity-0 group-hover/row:opacity-100 transition-opacity"
+          title="Arrastar para reordenar"
+        >
+          <GripVertical className="w-3.5 h-3.5" />
+        </button>
+      </td>
+      <td className="py-2 pl-1 text-white/90">
+        <InlineText value={i.nome} onSave={(v) => update(i.id, { nome: v })} />
+      </td>
+      <td className="px-2 text-white/70">
+        <InlineText value={i.descricao || ''} onSave={(v) => update(i.id, { descricao: v || null })} />
+      </td>
+      <td className="px-2">
+        <select
+          value={i.categoria_id || ''}
+          onChange={(e) => update(i.id, { categoria_id: e.target.value || null } as any)}
+          className={categoriaSelectClass(categorias, i.categoria_id)}
+        >
+          <option value="" className="bg-slate-900 text-white">— Sem categoria</option>
+          {categorias.map(c => <option key={c.id} value={c.id} className="bg-slate-900 text-white">{c.nome}</option>)}
+        </select>
+      </td>
+      <td className="px-2 text-white/50">
+        <select
+          value={i.empresa_id || ''}
+          onChange={(e) => update(i.id, { empresa_id: e.target.value || null })}
+          className="w-full h-7 bg-transparent border border-transparent hover:border-white/10 focus:border-white/20 rounded px-1.5 text-white/50 text-xs outline-none transition-colors"
+        >
+          <option value="" className="bg-slate-900">—</option>
+          {empresasAtivas.map((e: any) => (
+            <option key={e.id} value={e.id} className="bg-slate-900">{e.nome}</option>
+          ))}
+        </select>
+      </td>
+      <td className="px-2 text-right text-white font-medium">
+        <InlineNum value={i.valor_maximo_mensal} onSave={(v) => update(i.id, { valor_maximo_mensal: v })} format="currency" />
+      </td>
+      <td className="px-2 text-center">
+        <Switch checked={i.aparece_no_dre} onCheckedChange={(v) => update(i.id, { aparece_no_dre: v })} />
+      </td>
+      <td className="pr-1 text-right">
+        <button onClick={() => remove(i.id)} className="p-1 rounded hover:bg-red-500/20 text-red-300/70 hover:text-red-300">
+          <Trash2 className="w-4 h-4" />
+        </button>
+      </td>
+    </tr>
   );
 }
 
