@@ -121,9 +121,10 @@ const setorSelectClassFrom = (list: SetorMeta[], v?: string | null) => {
 function calcFeriasDefault(salario: number, _fgts_pct: number) {
   return salario / 3 / 12;
 }
-function calcTotalFolha(f: { salario: number; aux_combustivel: number; insalubridade_pct: number; fgts_pct: number; previsao_13_valor: number; em_folha?: boolean; ferias_valor?: number | null }) {
+function calcTotalFolha(f: { salario: number; salario_minimo?: number; aux_combustivel: number; insalubridade_pct: number; fgts_pct: number; previsao_13_valor: number; em_folha?: boolean; ferias_valor?: number | null }) {
   if (f.em_folha === false) return f.salario;
-  const insalub = f.salario * (f.insalubridade_pct || 0) / 100;
+  const baseInsalub = f.salario_minimo == null ? f.salario : f.salario_minimo;
+  const insalub = baseInsalub * (f.insalubridade_pct || 0) / 100;
   const fgts = f.salario * (f.fgts_pct || 0) / 100;
   const ferias = f.ferias_valor == null ? calcFeriasDefault(f.salario, f.fgts_pct) : Number(f.ferias_valor) || 0;
   const prev13 = f.salario / 12;
