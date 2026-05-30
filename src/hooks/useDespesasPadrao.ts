@@ -17,6 +17,7 @@ export interface DespesaPadrao {
   ordem: number;
   em_folha: boolean;
   setor: string | null;
+  ferias_valor: number | null;
 }
 
 export function useDespesasPadrao() {
@@ -47,6 +48,7 @@ export function useDespesasPadrao() {
         ordem: Number(x.ordem) || 0,
         em_folha: x.em_folha ?? true,
         setor: x.setor ?? null,
+        ferias_valor: x.ferias_valor == null ? null : Number(x.ferias_valor),
       })));
     }
     setLoading(false);
@@ -68,6 +70,7 @@ export function useDespesasPadrao() {
       ordem: payload.ordem ?? 0,
       em_folha: payload.em_folha ?? true,
       setor: payload.setor ?? null,
+      ferias_valor: payload.ferias_valor ?? null,
       created_by: userId,
     } as any);
     if (error) { toast.error('Erro ao salvar: ' + error.message); return false; }
