@@ -153,10 +153,8 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
       + padroesFolha.filter(p => !nomesFolha.has(norm(p.nome))).reduce((s, p) => s + calcTotalFolha({ ...p, em_folha: p.em_folha }), 0)
       + gastosFixas.reduce((s, x) => s + Number(x.total || 0), 0)
       + gastosVariaveis.reduce((s, x) => s + Number(x.total || 0), 0)
-      + gastosImpostos.reduce((s, x) => s + Number(x.total || 0), 0)
-      + impostos.reduce((s, x) => s + Number(x.valor || 0), 0)
-      + padroesImpostos.filter(p => !nomesImpostos.has(norm(p.nome))).reduce((s, p) => s + Number(p.valor || 0), 0);
-  }, [folha, gastosFixas, gastosVariaveis, gastosImpostos, impostos, padroesFolha, padroesImpostos]);
+      + gastosImpostos.reduce((s, x) => s + Number(x.total || 0), 0);
+  }, [folha, gastosFixas, gastosVariaveis, gastosImpostos, padroesFolha]);
 
   useEffect(() => {
     if (mes) onMediaMensalChange?.(totalExibido);
