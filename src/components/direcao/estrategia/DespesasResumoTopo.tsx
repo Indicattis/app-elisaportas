@@ -116,9 +116,10 @@ interface Props {
   ano?: number;
   onMediaMensalChange?: (media: number) => void;
   onDataChange?: () => void;
+  reloadKey?: number;
 }
 
-export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataChange }: Props) {
+export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataChange, reloadKey }: Props) {
   const [folha, setFolha] = useState<FolhaRow[]>([]);
   const [impostos, setImpostos] = useState<LancRow[]>([]);
   const [gastosFixas, setGastosFixas] = useState<GastoAgrupado[]>([]);
@@ -126,6 +127,12 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
   const [loading, setLoading] = useState(false);
   const [reloadV, setReloadV] = useState(0);
   const reload = () => { setReloadV(v => v + 1); onDataChange?.(); };
+
+  // External reload trigger
+  useEffect(() => {
+    if (reloadKey === undefined) return;
+    setReloadV((v) => v + 1);
+  }, [reloadKey]);
 
   const [colabs, setColabs] = useState<Colab[]>([]);
   const [tipos, setTipos] = useState<TipoCusto[]>([]);
