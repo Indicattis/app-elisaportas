@@ -1006,11 +1006,11 @@ export default function FaturamentoVendaMinimalista() {
     if (totalDesc === 0 || valorTabela === 0) return { cartao: 0, gelo: 0, responsavel: 0, total: totalDesc };
     const pctTotal = (totalDesc / valorTabela) * 100;
     const isCartao = venda?.forma_pagamento === 'cartao_credito';
-    const isPresencial = venda?.venda_presencial === true;
+    const isFrio = venda?.venda_presencial === false;
     let pctCartao = 0, pctGelo = 0;
     if (!isCartao) pctCartao = Math.min(pctTotal, configLimites.avista);
     const restante1 = pctTotal - pctCartao;
-    if (isPresencial && restante1 > 0) pctGelo = Math.min(restante1, configLimites.presencial);
+    if (isFrio && restante1 > 0) pctGelo = Math.min(restante1, configLimites.presencial);
     const pctResp = Math.max(0, pctTotal - pctCartao - pctGelo);
     return {
       cartao: valorTabela * (pctCartao / 100),
