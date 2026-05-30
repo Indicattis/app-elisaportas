@@ -1202,12 +1202,13 @@ function EditableDate({
 /* ---------------- Gastos Readonly block (puxa de /financeiro/gastos) ---------------- */
 
 function BlocoGastosReadonly({
-  titulo, icon, rows, loading,
+  titulo, icon, rows, loading, onAddGasto,
 }: {
   titulo: string;
   icon: React.ReactNode;
   rows: GastoAgrupado[];
   loading: boolean;
+  onAddGasto?: () => void;
 }) {
   const total = rows.reduce((s, r) => s + Number(r.total || 0), 0);
   const totalProjetado = rows.reduce((s, r) => s + Number(r.valor_projetado || 0), 0);
