@@ -1646,7 +1646,7 @@ function CategoriaGroupMensal({
                   </tr>
                   {isOpen && g && (
                     <tr className="bg-white/[0.02]">
-                      <td colSpan={8} className="px-3 py-2">
+                      <td colSpan={7} className="px-3 py-2">
                         <table className="w-full text-xs">
                           <thead>
                             <tr className="text-[10px] uppercase tracking-wider text-white/30">
