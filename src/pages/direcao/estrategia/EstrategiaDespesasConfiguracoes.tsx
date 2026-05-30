@@ -467,6 +467,7 @@ function FolhaSetorGroup({
 }) {
   const subtotal = rows.reduce((s, i) => s + calcTotalFolha({
     salario: Number(i.salario) || 0,
+    salario_minimo: Number(i.salario_minimo) || 0,
     aux_combustivel: Number(i.aux_combustivel) || 0,
     insalubridade_pct: Number(i.insalubridade_pct) || 0,
     fgts_pct: Number(i.fgts_pct) || 0,
