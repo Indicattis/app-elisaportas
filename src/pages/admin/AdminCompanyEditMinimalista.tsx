@@ -90,7 +90,7 @@ export default function AdminCompanyEditMinimalista() {
         { label: isNewCompany ? "Nova" : "Editar" }
       ]}
     >
-      <div className="bg-primary/5 border border-primary/10 backdrop-blur-xl rounded-lg p-6">
+      <div className="bg-white/5 border border-white/10 backdrop-blur-xl rounded-lg p-6">
         <div className="[&_label]:text-white/80 [&_input]:bg-white/5 [&_input]:border-white/10 [&_input]:text-white [&_input]:placeholder:text-white/40 [&_select]:bg-white/5 [&_select]:border-white/10 [&_select]:text-white [&_h3]:text-white [&_h4]:text-white [&_.card]:bg-transparent [&_.card]:border-white/10">
           <EmpresaEmissoraForm
             empresa={empresa}
