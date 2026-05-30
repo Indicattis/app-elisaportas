@@ -1,31 +1,25 @@
-# Mover botão "Novo Gasto" para dentro das seções
+# Autocompletar endereço via CEP no formulário de empresa
 
 ## Objetivo
-Tirar o botão laranja "Novo Gasto" do topo de `/direcao/estrategia/despesas/:mes` e replicá-lo dentro do cabeçalho de cada uma das três seções: **Despesas Fixas**, **Despesas Variáveis** e **Despesas de Imposto**. Cada botão abre o mesmo `GastoFormDialog`, já filtrando os tipos de custo pela categoria correspondente.
+Em `/administrativo/empresas/nova` (e edição), ao digitar o CEP completo, buscar automaticamente o endereço via ViaCEP e preencher os campos Logradouro, Bairro, Cidade e Estado.
 
 ## Passos
 
-### 1. `src/pages/direcao/estrategia/EstrategiaDespesasMes.tsx`
-- Remover o `<button>` "Novo Gasto" do header (e o ícone `Plus` se ficar sem uso).
-- Manter o `GastoFormDialog` montado, agora com estado adicional `dialogCategoria: 'fixa' | 'variavel' | 'imposto' | null`.
-- Passar para `<DespesasResumoTopo>` uma nova prop `onRequestNovoGasto(categoria)` que abre o dialog e guarda a categoria selecionada.
-
-### 2. `src/components/financeiro/GastoFormDialog.tsx`
-- Adicionar prop opcional `defaultCategoria?: 'fixa' | 'variavel' | 'imposto'`.
-- Filtrar `tiposAtivos` por essa categoria quando informada (mantendo comportamento atual quando ausente).
-- Resetar/aplicar o filtro sempre que o dialog abrir.
-
-### 3. `src/components/direcao/estrategia/DespesasResumoTopo.tsx`
-- Receber a nova prop `onRequestNovoGasto?: (categoria: 'fixa' | 'variavel' | 'imposto') => void`.
-- Repassá-la para os três blocos (`BlocoGastosReadonly` das fixas/variáveis e `BlocoDespesa` dos impostos) como callback `onAddGasto`.
-- Em cada componente de seção, renderizar no cabeçalho (ao lado do título/ícone) um botão compacto "Novo Gasto" no mesmo estilo laranja, que chama `onAddGasto()`. Manter os toggles internos existentes (quick-add inline) intactos.
+### `src/components/admin/EmpresaEmissoraForm.tsx`
+1. Adicionar função `buscarCep(cep)` que:
+   - Remove não-dígitos; só dispara se `length === 8`.
+   - Faz `fetch('https://viacep.com.br/ws/{cep}/json/')`.
+   - Em sucesso, usa `setValue` para preencher `endereco` (logradouro), `bairro`, `cidade`, `estado` (uppercase) — apenas se o campo estiver vazio (não sobrescreve o que o usuário já digitou).
+   - Mostra `toast.error` se CEP não encontrado / falha de rede.
+   - Estado `buscandoCep` para feedback visual.
+2. Adicionar máscara `formatCep` no `onChange` do input de CEP (formato `00000-000`).
+3. Disparar `buscarCep` automaticamente no `onBlur` do input e também quando 8 dígitos forem digitados.
+4. Foco depois move para o campo `numero` após sucesso (UX padrão).
 
 ## Detalhes técnicos
-- Sem mudanças de banco, hooks ou lógica de cálculo.
-- A categoria é apenas dica de UX para pré-filtrar o select de tipos no diálogo; o usuário ainda pode finalizar normalmente.
-- `reloadKey` continua sendo incrementado no `onSaved` do dialog, o que já atualiza as três seções.
+- Reutiliza o padrão já usado em `src/components/instalacoes/InstalacaoForm.tsx`.
+- Sem mudanças de banco, edge function ou tipos.
+- ViaCEP é API pública gratuita, sem chave.
 
 ## Arquivos alterados
-- `src/pages/direcao/estrategia/EstrategiaDespesasMes.tsx`
-- `src/components/financeiro/GastoFormDialog.tsx`
-- `src/components/direcao/estrategia/DespesasResumoTopo.tsx`
+- `src/components/admin/EmpresaEmissoraForm.tsx`
