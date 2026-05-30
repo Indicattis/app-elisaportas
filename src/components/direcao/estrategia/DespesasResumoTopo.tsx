@@ -104,7 +104,9 @@ function calcTotalFolha(f: { salario: number; aux_combustivel: number; insalubri
   const insalub = f.salario * (f.insalubridade_pct || 0) / 100;
   const fgts = f.salario * (f.fgts_pct || 0) / 100;
   const ferias = f.salario / 3 + fgts;
-  return f.salario + f.aux_combustivel + insalub + fgts + f.previsao_13_valor + ferias;
+  const prev13 = f.salario / 12;
+  const fgts13 = fgts / 12;
+  return f.salario + f.aux_combustivel + insalub + fgts + prev13 + fgts13 + ferias;
 }
 
 const norm = (s: string | null | undefined) => String(s || '').trim().toLowerCase();
