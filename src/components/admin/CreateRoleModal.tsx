@@ -63,6 +63,10 @@ interface CreateRoleModalProps {
 export function CreateRoleModal({ open, onOpenChange }: CreateRoleModalProps) {
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { setores: setoresDb } = useSetores();
+  const setoresList = setoresDb.length > 0
+    ? setoresDb.map(s => ({ key: s.key, label: s.label }))
+    : Object.entries(SETOR_LABELS).map(([key, label]) => ({ key, label }));
 
   const form = useForm<RoleFormData>({
     resolver: zodResolver(roleSchema),
@@ -196,7 +200,7 @@ export function CreateRoleModal({ open, onOpenChange }: CreateRoleModalProps) {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent className="bg-black/95 border-white/10">
-                      {Object.entries(SETOR_LABELS).map(([key, label]) => (
+                      {setoresList.map(({ key, label }) => (
                         <SelectItem key={key} value={key} className="text-white/80 focus:bg-white/10 focus:text-white">
                           {label}
                         </SelectItem>
