@@ -1,5 +1,5 @@
 import { useState, useRef, useMemo } from 'react';
-import { Plus, Trash2, Users, Receipt, TrendingDown, Landmark, FileDown, GripVertical, X, Check, FolderPlus, ChevronRight, AlertTriangle } from 'lucide-react';
+import { Plus, Trash2, Users, Receipt, TrendingDown, Landmark, FileDown, GripVertical, X, Check, FolderPlus, ChevronRight, AlertTriangle, FileText } from 'lucide-react';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { formatCurrency } from '@/lib/utils';
 import { useDespesasPadrao, type DespesaPadrao, type DespesaPadraoTipo } from '@/hooks/useDespesasPadrao';
@@ -8,6 +8,8 @@ import { useEmpresasEmissoras } from '@/hooks/useEmpresasEmissoras';
 import { useDespesasCategorias, getCategoriaPalette, type CategoriaDespesa } from '@/hooks/useDespesasCategorias';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Textarea } from '@/components/ui/textarea';
 import { GerenciarCategoriasDialog } from '@/components/despesas/GerenciarCategoriasDialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
@@ -1075,6 +1077,7 @@ function CategoriaGroup({
           <tr className="text-[10px] uppercase tracking-wider text-white/40 border-b border-white/10">
             <th className="pb-2 w-6"></th>
             <th className="text-left font-normal pb-2 pl-1 w-[34%]">Nome</th>
+            <th className="pb-2 px-2 w-8" title="Descrição"></th>
             <th className="text-left font-normal pb-2 px-2 w-[22%]">Categoria</th>
             <th className="text-left font-normal pb-2 px-2 w-[18%]">Empresa</th>
             <th className="text-right font-normal pb-2 px-2 w-[18%]">Valor projetado</th>
@@ -1140,6 +1143,12 @@ function SortableTipoRow({
       <td className="py-2 pl-1 text-white/90">
         <InlineText value={i.nome} onSave={(v) => update(i.id, { nome: v })} />
       </td>
+      <td className="px-1 text-center">
+        <DescricaoPopover
+          value={i.descricao}
+          onSave={(v) => update(i.id, { descricao: v || null })}
+        />
+      </td>
       <td className="px-2">
         <select
           value={i.categoria_id || ''}
@@ -1188,6 +1197,71 @@ function SortableTipoRow({
         </button>
       </td>
     </tr>
+  );
+}
+
+function DescricaoPopover({
+  value,
+  onSave,
+}: {
+  value: string | null;
+  onSave: (v: string) => void | Promise<any>;
+}) {
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState(value || '');
+  const hasContent = !!(value && value.trim());
+
+  const handleSave = async () => {
+    if ((text || '') === (value || '')) { setOpen(false); return; }
+    await onSave(text.trim());
+    setOpen(false);
+  };
+
+  return (
+    <Popover open={open} onOpenChange={(o) => { setOpen(o); if (o) setText(value || ''); }}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          title={hasContent ? 'Ver/editar descrição' : 'Adicionar descrição'}
+          className={`inline-flex items-center justify-center w-7 h-7 rounded transition-colors ${
+            hasContent
+              ? 'text-blue-300 hover:bg-blue-500/15'
+              : 'text-white/30 hover:text-white/70 hover:bg-white/5'
+          }`}
+        >
+          <FileText className="w-4 h-4" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-80 p-3 bg-slate-900 border-white/10" align="start">
+        <div className="space-y-2">
+          <div className="text-[11px] uppercase tracking-wider text-white/50">Descrição</div>
+          <Textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="Adicione uma descrição para esta despesa..."
+            rows={5}
+            className="bg-white/5 border-white/10 text-white text-sm resize-none"
+            autoFocus
+          />
+          <div className="flex items-center justify-end gap-1.5">
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="px-3 h-8 text-xs rounded hover:bg-white/10 text-white/60"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={handleSave}
+              className="px-3 h-8 text-xs rounded bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30"
+            >
+              Salvar
+            </button>
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
 
