@@ -262,8 +262,7 @@ function FolhaRow({
   const insalubVal = salario * insalubridade_pct / 100;
   const fgtsVal = salario * fgts_pct / 100;
   const feriasDefault = calcFeriasDefault(salario, fgts_pct);
-  const feriasAtual = item.ferias_valor == null ? feriasDefault : Number(item.ferias_valor) || 0;
-  const total = calcTotalFolha({ salario, aux_combustivel, insalubridade_pct, fgts_pct, previsao_13_valor: 0, em_folha: item.em_folha, ferias_valor: item.ferias_valor });
+  const total = calcTotalFolha({ salario, aux_combustivel, insalubridade_pct, fgts_pct, previsao_13_valor: 0, em_folha: item.em_folha, ferias_valor: null });
   const desativado = item.em_folha === false;
   const zeroCurr = <span className="text-white/30">{formatCurrency(0)}</span>;
   const zeroPct = <span className="text-white/30">0%</span>;
@@ -298,21 +297,8 @@ function FolhaRow({
       <td className="px-2 text-right text-xs">{desativado ? zeroCurr : <span className="text-orange-400">{formatCurrency(fgtsVal)}</span>}</td>
       <td className="px-2 text-right text-xs">{desativado ? zeroCurr : <span className="text-orange-400">{formatCurrency(salario / 12)}</span>}</td>
       <td className="px-2 text-right text-xs">{desativado ? zeroCurr : <span className="text-orange-400">{formatCurrency(fgtsVal / 12)}</span>}</td>
-      <td className="px-2 text-right text-white/70">
-        {desativado ? zeroCurr : (
-          <>
-            <InlineNum value={feriasAtual} onSave={(v) => update(item.id, { ferias_valor: v })} format="currency" />
-            {item.ferias_valor != null && (
-              <button
-                onClick={() => update(item.id, { ferias_valor: null })}
-                className="text-[10px] text-blue-300/70 hover:text-blue-300 underline"
-                title="Voltar ao cálculo automático"
-              >
-                auto: {formatCurrency(feriasDefault)}
-              </button>
-            )}
-          </>
-        )}
+      <td className="px-2 text-right text-xs">
+        {desativado ? zeroCurr : <span className="text-orange-400">{formatCurrency(feriasDefault)}</span>}
       </td>
       <td className="px-2 text-right text-white font-semibold">{formatCurrency(total)}</td>
       <td className="pr-1 text-right">
