@@ -802,7 +802,7 @@ function TiposCustoBlock({
   const totalAtivos = items.filter(i => i.ativo).reduce((s, i) => s + Number(i.valor_maximo_mensal || 0), 0);
 
   const onSave = async () => {
-    if (!nome.trim()) return;
+    if (!nome.trim()) return false;
     const ok = await save({
       nome: nome.trim(),
       descricao: descricao.trim() || null,
@@ -814,6 +814,7 @@ function TiposCustoBlock({
       categoria_id: categoriaId || null,
     } as any);
     if (ok) { setNome(''); setDescricao(''); setValor(0); setApareceNoDre(true); setEmpresaId(''); setCategoriaId(''); }
+    return ok;
   };
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
@@ -973,6 +974,63 @@ function TiposCustoBlock({
             <Button onClick={confirmarRealocacao} disabled={!destinoId || realocando} className="bg-red-600 hover:bg-red-700">
               {realocando ? 'Realocando…' : 'Realocar e excluir'}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={addDialogOpen} onOpenChange={(open) => { if (!open) setAddDialogOpen(false); }}>
+        <DialogContent className="sm:max-w-[520px]">
+          <DialogHeader>
+            <DialogTitle>Nova despesa — {titulo}</DialogTitle>
+            <DialogDescription>Preencha os dados da nova despesa.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs text-white/70">Nome</Label>
+              <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Ex.: Aluguel"
+                className="w-full h-9 bg-white/5 border border-white/10 rounded px-3 text-white text-sm outline-none focus:border-blue-400/50" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-white/70">Descrição (opcional)</Label>
+              <input value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Descrição"
+                className="w-full h-9 bg-white/5 border border-white/10 rounded px-3 text-white text-sm outline-none focus:border-blue-400/50" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs text-white/70">Categoria</Label>
+                <select value={categoriaId} onChange={(e) => setCategoriaId(e.target.value)}
+                  className="w-full h-9 bg-white/5 border border-white/10 rounded px-2 text-white text-sm outline-none focus:border-blue-400/50">
+                  <option value="" className="bg-slate-900 text-white">— Sem categoria</option>
+                  {categorias.map(c => <option key={c.id} value={c.id} className="bg-slate-900 text-white">{c.nome}</option>)}
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-white/70">Empresa</Label>
+                <select value={empresaId} onChange={(e) => setEmpresaId(e.target.value)}
+                  className="w-full h-9 bg-white/5 border border-white/10 rounded px-2 text-white text-sm outline-none focus:border-blue-400/50">
+                  <option value="" className="bg-slate-900">— Empresa</option>
+                  {empresasAtivas.map((e: any) => <option key={e.id} value={e.id} className="bg-slate-900">{e.nome}</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3 items-end">
+              <div className="space-y-1.5">
+                <Label className="text-xs text-white/70">Valor projetado mensal</Label>
+                <NumCell value={valor} onChange={setValor} />
+              </div>
+              <div className="flex items-center gap-2 h-9">
+                <Switch checked={apareceNoDre} onCheckedChange={setApareceNoDre} />
+                <Label className="text-xs text-white/70">Aparecer no DRE</Label>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddDialogOpen(false)}>Cancelar</Button>
+            <Button
+              onClick={async () => { const ok = await onSave(); if (ok) setAddDialogOpen(false); }}
+              disabled={!nome.trim()}
+              className="bg-emerald-600 hover:bg-emerald-700"
+            >Adicionar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
