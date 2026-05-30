@@ -1625,9 +1625,6 @@ function CategoriaGroupMensal({
                         {catLabel(t.categoria_id)}
                       </span>
                     </td>
-                    <td className="px-2 text-white/50">
-                      {t.empresa_id ? (empresasMap[t.empresa_id] || '—') : '—'}
-                    </td>
                     <td className={`px-2 text-right font-medium ${t.marcada_para_eliminar ? 'text-red-400 line-through' : 'text-white'}`}>
                       {formatCurrency(proj)}
                     </td>
