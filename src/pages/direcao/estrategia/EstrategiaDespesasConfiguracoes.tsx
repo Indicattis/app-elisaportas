@@ -1200,6 +1200,71 @@ function SortableTipoRow({
   );
 }
 
+function DescricaoPopover({
+  value,
+  onSave,
+}: {
+  value: string | null;
+  onSave: (v: string) => void | Promise<any>;
+}) {
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState(value || '');
+  const hasContent = !!(value && value.trim());
+
+  const handleSave = async () => {
+    if ((text || '') === (value || '')) { setOpen(false); return; }
+    await onSave(text.trim());
+    setOpen(false);
+  };
+
+  return (
+    <Popover open={open} onOpenChange={(o) => { setOpen(o); if (o) setText(value || ''); }}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          title={hasContent ? 'Ver/editar descrição' : 'Adicionar descrição'}
+          className={`inline-flex items-center justify-center w-7 h-7 rounded transition-colors ${
+            hasContent
+              ? 'text-blue-300 hover:bg-blue-500/15'
+              : 'text-white/30 hover:text-white/70 hover:bg-white/5'
+          }`}
+        >
+          <FileText className="w-4 h-4" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-80 p-3 bg-slate-900 border-white/10" align="start">
+        <div className="space-y-2">
+          <div className="text-[11px] uppercase tracking-wider text-white/50">Descrição</div>
+          <Textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="Adicione uma descrição para esta despesa..."
+            rows={5}
+            className="bg-white/5 border-white/10 text-white text-sm resize-none"
+            autoFocus
+          />
+          <div className="flex items-center justify-end gap-1.5">
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="px-3 h-8 text-xs rounded hover:bg-white/10 text-white/60"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={handleSave}
+              className="px-3 h-8 text-xs rounded bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30"
+            >
+              Salvar
+            </button>
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 function SortableCategoriaGroup(props: {
   id: string;
   cat: CategoriaDespesa;
