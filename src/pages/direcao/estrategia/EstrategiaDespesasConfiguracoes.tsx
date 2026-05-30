@@ -743,8 +743,12 @@ function TiposCustoBlock({
   const [valor, setValor] = useState(0);
   const [apareceNoDre, setApareceNoDre] = useState(true);
   const [empresaId, setEmpresaId] = useState<string>('');
+  const [novaCatNome, setNovaCatNome] = useState('');
+  const [criandoCat, setCriandoCat] = useState(false);
+  const [categoriaId, setCategoriaId] = useState<string>('');
   const { empresas } = useEmpresasEmissoras();
   const empresasAtivas = (empresas || []).filter((e: any) => e.ativo !== false);
+  const { categorias, createCategoria, renameCategoria, removeCategoria, reorderCategorias } = useDespesasCategorias();
 
   const totalAtivos = items.filter(i => i.ativo).reduce((s, i) => s + Number(i.valor_maximo_mensal || 0), 0);
 
@@ -758,9 +762,33 @@ function TiposCustoBlock({
       aparece_no_dre: apareceNoDre,
       ativo: true,
       empresa_id: empresaId || null,
-    });
-    if (ok) { setNome(''); setDescricao(''); setValor(0); setApareceNoDre(true); setEmpresaId(''); }
+      categoria_id: categoriaId || null,
+    } as any);
+    if (ok) { setNome(''); setDescricao(''); setValor(0); setApareceNoDre(true); setEmpresaId(''); setCategoriaId(''); }
   };
+
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
+  const catIds = useMemo(() => categorias.map(c => c.id), [categorias]);
+  const onCatDragEnd = (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const oldIdx = catIds.indexOf(String(active.id));
+    const newIdx = catIds.indexOf(String(over.id));
+    if (oldIdx < 0 || newIdx < 0) return;
+    reorderCategorias(arrayMove(catIds, oldIdx, newIdx));
+  };
+
+  const grupos = useMemo(() => {
+    return categorias
+      .map((cat, idx) => ({
+        cat,
+        palette: getCategoriaPalette(idx),
+        rows: items.filter(i => i.categoria_id === cat.id),
+      }))
+      .filter(g => g.rows.length > 0);
+  }, [categorias, items]);
+
+  const semCategoria = items.filter(i => !i.categoria_id);
 
   return (
     <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-5">
@@ -768,92 +796,281 @@ function TiposCustoBlock({
         {icon}
         <h3 className="font-semibold">{titulo}</h3>
         <span className="text-white/40 text-sm">({items.length})</span>
+        {!criandoCat ? (
+          <button
+            onClick={() => setCriandoCat(true)}
+            className="ml-auto inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-white/80 hover:text-white transition-colors"
+          >
+            <FolderPlus className="w-3.5 h-3.5" />
+            Nova categoria
+          </button>
+        ) : (
+          <div className="ml-auto flex items-center gap-1.5">
+            <input
+              autoFocus
+              value={novaCatNome}
+              onChange={(e) => setNovaCatNome(e.target.value)}
+              onKeyDown={async (e) => {
+                if (e.key === 'Enter' && novaCatNome.trim()) {
+                  try { await createCategoria(novaCatNome); setNovaCatNome(''); setCriandoCat(false); } catch {}
+                }
+                if (e.key === 'Escape') { setNovaCatNome(''); setCriandoCat(false); }
+              }}
+              placeholder="Nome da categoria"
+              className="h-8 bg-white/5 border border-white/10 rounded px-2 text-white text-xs outline-none focus:border-blue-400/50 w-48"
+            />
+            <button
+              onClick={async () => { if (!novaCatNome.trim()) return; try { await createCategoria(novaCatNome); setNovaCatNome(''); setCriandoCat(false); } catch {} }}
+              className="p-1.5 rounded bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30"
+            ><Check className="w-3.5 h-3.5" /></button>
+            <button
+              onClick={() => { setNovaCatNome(''); setCriandoCat(false); }}
+              className="p-1.5 rounded hover:bg-white/10 text-white/60"
+            ><X className="w-3.5 h-3.5" /></button>
+          </div>
+        )}
       </div>
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-[10px] uppercase tracking-wider text-white/40 border-b border-white/10">
-              <th className="text-left font-normal pb-2 pl-1">Nome</th>
-              <th className="text-left font-normal pb-2 px-2">Descrição</th>
-              <th className="text-left font-normal pb-2 px-2 w-[180px]">Empresa</th>
-              <th className="text-right font-normal pb-2 px-2 w-[180px]">Valor projetado</th>
-              <th className="text-center font-normal pb-2 px-2 w-[110px]">Aparece no DRE</th>
-              <th className="pb-2 pr-1 w-10"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map(i => (
-              <tr key={i.id} className={`border-b border-white/5 hover:bg-white/[0.03] ${!i.ativo ? 'opacity-50' : ''}`}>
-                <td className="py-2 pl-1 text-white/90">
-                  <InlineText value={i.nome} onSave={(v) => update(i.id, { nome: v })} />
+
+      <div className="space-y-3">
+        <DndContext sensors={sensors} collisionDetection={closestCenter} modifiers={[restrictToVerticalAxis]} onDragEnd={onCatDragEnd}>
+          <SortableContext items={catIds} strategy={verticalListSortingStrategy}>
+            {grupos.map(g => (
+              <SortableCategoriaGroup
+                key={g.cat.id}
+                id={g.cat.id}
+                cat={g.cat}
+                palette={g.palette}
+                rows={g.rows}
+                categorias={categorias}
+                empresasAtivas={empresasAtivas}
+                update={update}
+                remove={remove}
+                rename={renameCategoria}
+                removeCat={removeCategoria}
+              />
+            ))}
+          </SortableContext>
+        </DndContext>
+
+        {semCategoria.length > 0 && (
+          <CategoriaGroup
+            cat={null}
+            palette={{ color: 'bg-white/5 border-white/15 text-white/60', dot: 'bg-white/40' }}
+            rows={semCategoria}
+            categorias={categorias}
+            empresasAtivas={empresasAtivas}
+            update={update}
+            remove={remove}
+          />
+        )}
+
+        <div className="bg-white/[0.03] border border-dashed border-white/15 rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Plus className="w-3.5 h-3.5 text-emerald-300" />
+            <span className="text-[11px] uppercase tracking-wider text-white/60 font-semibold">Adicionar despesa</span>
+          </div>
+          <table className="w-full text-sm">
+            <tbody>
+              <tr>
+                <td className="py-2 pl-1 w-[22%]">
+                  <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome"
+                    className="w-full h-8 bg-white/5 border border-white/10 rounded px-2 text-white text-xs outline-none focus:border-blue-400/50" />
                 </td>
-                <td className="px-2 text-white/70">
-                  <InlineText value={i.descricao || ''} onSave={(v) => update(i.id, { descricao: v || null })} />
+                <td className="px-2 w-[24%]">
+                  <input value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Descrição (opcional)"
+                    className="w-full h-8 bg-white/5 border border-white/10 rounded px-2 text-white text-xs outline-none focus:border-blue-400/50" />
                 </td>
-                <td className="px-2 text-white/50">
+                <td className="px-2 w-[16%]">
                   <select
-                    value={i.empresa_id || ''}
-                    onChange={(e) => update(i.id, { empresa_id: e.target.value || null })}
-                    className="w-full h-7 bg-transparent border border-transparent hover:border-white/10 focus:border-white/20 rounded px-1.5 text-white/50 text-xs outline-none transition-colors"
+                    value={categoriaId}
+                    onChange={(e) => setCategoriaId(e.target.value)}
+                    className={categoriaSelectClass(categorias, categoriaId)}
                   >
-                    <option value="" className="bg-slate-900">—</option>
-                    {empresasAtivas.map((e: any) => (
-                      <option key={e.id} value={e.id} className="bg-slate-900">{e.nome}</option>
-                    ))}
+                    <option value="" className="bg-slate-900 text-white">— Sem categoria</option>
+                    {categorias.map(c => <option key={c.id} value={c.id} className="bg-slate-900 text-white">{c.nome}</option>)}
                   </select>
                 </td>
-                <td className="px-2 text-right text-white font-medium">
-                  <InlineNum value={i.valor_maximo_mensal} onSave={(v) => update(i.id, { valor_maximo_mensal: v })} format="currency" />
+                <td className="px-2 w-[14%]">
+                  <select value={empresaId} onChange={(e) => setEmpresaId(e.target.value)}
+                    className="w-full h-7 bg-transparent border border-transparent hover:border-white/10 focus:border-white/20 rounded px-1.5 text-white/50 text-xs outline-none transition-colors">
+                    <option value="" className="bg-slate-900">— Empresa</option>
+                    {empresasAtivas.map((e: any) => <option key={e.id} value={e.id} className="bg-slate-900">{e.nome}</option>)}
+                  </select>
                 </td>
-                <td className="px-2 text-center">
-                  <Switch checked={i.aparece_no_dre} onCheckedChange={(v) => update(i.id, { aparece_no_dre: v })} />
+                <td className="px-2 w-[14%]"><NumCell value={valor} onChange={setValor} /></td>
+                <td className="px-2 text-center w-[8%]">
+                  <Switch checked={apareceNoDre} onCheckedChange={setApareceNoDre} />
                 </td>
-                <td className="pr-1 text-right">
-                  <button onClick={() => remove(i.id)} className="p-1 rounded hover:bg-red-500/20 text-red-300/70 hover:text-red-300">
-                    <Trash2 className="w-4 h-4" />
+                <td className="pr-1 text-right w-[40px]">
+                  <button onClick={onSave} disabled={!nome.trim()}
+                    className="p-1 rounded bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 disabled:opacity-30">
+                    <Plus className="w-4 h-4" />
                   </button>
                 </td>
               </tr>
-            ))}
-            <tr className="border-b border-white/5">
-              <td className="py-2 pl-1">
-                <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome"
-                  className="w-full h-8 bg-white/5 border border-white/10 rounded px-2 text-white text-xs outline-none focus:border-blue-400/50" />
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between px-2">
+        <span className="text-xs text-white/50 uppercase tracking-wider">Total mensal estimado (ativos)</span>
+        <span className="text-base font-bold text-white">{formatCurrency(totalAtivos)}</span>
+      </div>
+    </div>
+  );
+}
+
+function categoriaSelectClass(_list: CategoriaDespesa[], v?: string | null) {
+  const base = 'w-full h-8 border rounded-full px-3 text-xs font-medium outline-none focus:ring-2 focus:ring-blue-400/40 appearance-none cursor-pointer transition-colors';
+  if (!v) return `${base} bg-white/5 border-white/15 text-white/60`;
+  const idx = _list.findIndex(c => c.id === v);
+  const p = getCategoriaPalette(Math.max(0, idx));
+  return `${base} ${p.color}`;
+}
+
+function CategoriaGroup({
+  cat, palette, rows, categorias, empresasAtivas, update, remove, dragHandle, rename, removeCat,
+}: {
+  cat: CategoriaDespesa | null;
+  palette: { color: string; dot: string };
+  rows: TipoCusto[];
+  categorias: CategoriaDespesa[];
+  empresasAtivas: any[];
+  update: ReturnType<typeof useTiposCustos>['updateTipoCusto'];
+  remove: ReturnType<typeof useTiposCustos>['deleteTipoCusto'];
+  dragHandle?: React.ReactNode;
+  rename?: ReturnType<typeof useDespesasCategorias>['renameCategoria'];
+  removeCat?: ReturnType<typeof useDespesasCategorias>['removeCategoria'];
+}) {
+  const subtotal = rows.reduce((s, i) => s + Number(i.valor_maximo_mensal || 0), 0);
+  return (
+    <div className="bg-white/[0.04] border border-white/10 rounded-xl p-4">
+      <div className="flex items-center gap-2 mb-3">
+        {dragHandle}
+        <span className={`w-2 h-2 rounded-full ${palette.dot}`} />
+        {cat && rename ? (
+          <div className="text-[11px] uppercase tracking-wider text-white/80 font-semibold">
+            <InlineText value={cat.nome} onSave={(v) => rename({ id: cat.id, nome: v })} />
+          </div>
+        ) : (
+          <span className="text-[11px] uppercase tracking-wider text-white/80 font-semibold">{cat?.nome ?? 'Sem categoria'}</span>
+        )}
+        <span className="text-[10px] text-white/40">({rows.length})</span>
+        <div className="flex-1 h-px bg-white/10 ml-2" />
+        <span className="text-[10px] text-white/50 uppercase tracking-wider">Subtotal</span>
+        <span className="text-xs text-white/90 font-medium">{formatCurrency(subtotal)}</span>
+        {cat && removeCat && (
+          <button onClick={() => removeCat(cat.id)} className="p-1 rounded hover:bg-red-500/20 text-red-300/60 hover:text-red-300 ml-1" title="Excluir categoria">
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        )}
+      </div>
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="text-[10px] uppercase tracking-wider text-white/40 border-b border-white/10">
+            <th className="text-left font-normal pb-2 pl-1 w-[22%]">Nome</th>
+            <th className="text-left font-normal pb-2 px-2 w-[24%]">Descrição</th>
+            <th className="text-left font-normal pb-2 px-2 w-[16%]">Categoria</th>
+            <th className="text-left font-normal pb-2 px-2 w-[14%]">Empresa</th>
+            <th className="text-right font-normal pb-2 px-2 w-[14%]">Valor projetado</th>
+            <th className="text-center font-normal pb-2 px-2 w-[8%]">DRE</th>
+            <th className="pb-2 pr-1 w-10"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map(i => (
+            <tr key={i.id} className={`border-b border-white/5 hover:bg-white/[0.03] ${!i.ativo ? 'opacity-50' : ''}`}>
+              <td className="py-2 pl-1 text-white/90">
+                <InlineText value={i.nome} onSave={(v) => update(i.id, { nome: v })} />
               </td>
-              <td className="px-2">
-                <input value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Descrição (opcional)"
-                  className="w-full h-8 bg-white/5 border border-white/10 rounded px-2 text-white text-xs outline-none focus:border-blue-400/50" />
+              <td className="px-2 text-white/70">
+                <InlineText value={i.descricao || ''} onSave={(v) => update(i.id, { descricao: v || null })} />
               </td>
               <td className="px-2">
                 <select
-                  value={empresaId}
-                  onChange={(e) => setEmpresaId(e.target.value)}
+                  value={i.categoria_id || ''}
+                  onChange={(e) => update(i.id, { categoria_id: e.target.value || null } as any)}
+                  className={categoriaSelectClass(categorias, i.categoria_id)}
+                >
+                  <option value="" className="bg-slate-900 text-white">— Sem categoria</option>
+                  {categorias.map(c => <option key={c.id} value={c.id} className="bg-slate-900 text-white">{c.nome}</option>)}
+                </select>
+              </td>
+              <td className="px-2 text-white/50">
+                <select
+                  value={i.empresa_id || ''}
+                  onChange={(e) => update(i.id, { empresa_id: e.target.value || null })}
                   className="w-full h-7 bg-transparent border border-transparent hover:border-white/10 focus:border-white/20 rounded px-1.5 text-white/50 text-xs outline-none transition-colors"
                 >
-                  <option value="" className="bg-slate-900">— (opcional)</option>
+                  <option value="" className="bg-slate-900">—</option>
                   {empresasAtivas.map((e: any) => (
                     <option key={e.id} value={e.id} className="bg-slate-900">{e.nome}</option>
                   ))}
                 </select>
               </td>
-              <td className="px-2"><NumCell value={valor} onChange={setValor} /></td>
+              <td className="px-2 text-right text-white font-medium">
+                <InlineNum value={i.valor_maximo_mensal} onSave={(v) => update(i.id, { valor_maximo_mensal: v })} format="currency" />
+              </td>
               <td className="px-2 text-center">
-                <Switch checked={apareceNoDre} onCheckedChange={setApareceNoDre} />
+                <Switch checked={i.aparece_no_dre} onCheckedChange={(v) => update(i.id, { aparece_no_dre: v })} />
               </td>
               <td className="pr-1 text-right">
-                <button onClick={onSave} disabled={!nome.trim()}
-                  className="p-1 rounded bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 disabled:opacity-30">
-                  <Plus className="w-4 h-4" />
+                <button onClick={() => remove(i.id)} className="p-1 rounded hover:bg-red-500/20 text-red-300/70 hover:text-red-300">
+                  <Trash2 className="w-4 h-4" />
                 </button>
               </td>
             </tr>
-          </tbody>
-        </table>
-      </div>
-      <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between px-2">
-        <span className="text-xs text-white/50 uppercase tracking-wider">Total mensal estimado (ativos)</span>
-        <span className="text-base font-bold text-white">{formatCurrency(totalAtivos)}</span>
-      </div>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function SortableCategoriaGroup(props: {
+  id: string;
+  cat: CategoriaDespesa;
+  palette: { color: string; dot: string };
+  rows: TipoCusto[];
+  categorias: CategoriaDespesa[];
+  empresasAtivas: any[];
+  update: ReturnType<typeof useTiposCustos>['updateTipoCusto'];
+  remove: ReturnType<typeof useTiposCustos>['deleteTipoCusto'];
+  rename: ReturnType<typeof useDespesasCategorias>['renameCategoria'];
+  removeCat: ReturnType<typeof useDespesasCategorias>['removeCategoria'];
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: props.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+  const handle = (
+    <button
+      {...attributes}
+      {...listeners}
+      className="p-0.5 rounded hover:bg-white/10 text-white/40 hover:text-white/80 cursor-grab active:cursor-grabbing"
+      title="Arrastar categoria"
+      type="button"
+    >
+      <GripVertical className="w-3.5 h-3.5" />
+    </button>
+  );
+  return (
+    <div ref={setNodeRef} style={style}>
+      <CategoriaGroup
+        cat={props.cat}
+        palette={props.palette}
+        rows={props.rows}
+        categorias={props.categorias}
+        empresasAtivas={props.empresasAtivas}
+        update={props.update}
+        remove={props.remove}
+        rename={props.rename}
+        removeCat={props.removeCat}
+        dragHandle={handle}
+      />
     </div>
   );
 }
