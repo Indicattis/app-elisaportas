@@ -187,9 +187,9 @@ function FolhaBlock({
               <td className="px-2"><NumCell value={salario} onChange={setSalario} /></td>
               <td className="px-2"><NumCell value={auxComb} onChange={setAuxComb} /></td>
               <td className="px-2"><NumCell value={insalub} onChange={setInsalub} /></td>
-              <td className="px-2 text-right text-white/40 text-xs">{formatCurrency(salario * (insalub || 0) / 100)}</td>
+              <td className="px-2 text-right text-orange-400 text-xs">{formatCurrency(salario * (insalub || 0) / 100)}</td>
               <td className="px-2"><NumCell value={fgts} onChange={setFgts} /></td>
-              <td className="px-2 text-right text-white/40 text-xs">{formatCurrency(salario * (fgts || 0) / 100)}</td>
+              <td className="px-2 text-right text-orange-400 text-xs">{formatCurrency(salario * (fgts || 0) / 100)}</td>
               <td className="px-2"><NumCell value={prev13} onChange={setPrev13} /></td>
               <td className="px-2 text-right text-white/40 text-xs">{formatCurrency(salario / 3 + salario * (fgts || 0) / 100)}</td>
               <td className="px-2 text-right text-white/60 text-xs">{formatCurrency(calcTotalFolha({ salario, aux_combustivel: auxComb, insalubridade_pct: insalub, fgts_pct: fgts, previsao_13_valor: prev13, em_folha: emFolha }))}</td>
@@ -259,11 +259,11 @@ function FolhaRow({
       <td className="px-2 text-right text-white/60">
         <InlineNum value={item.insalubridade_pct} onSave={(v) => update(item.id, { insalubridade_pct: v })} format="percent" />
       </td>
-      <td className="px-2 text-right text-white/50 text-xs">{formatCurrency(insalubVal)}</td>
+      <td className="px-2 text-right text-orange-400 text-xs">{formatCurrency(insalubVal)}</td>
       <td className="px-2 text-right text-white/60">
         <InlineNum value={item.fgts_pct} onSave={(v) => update(item.id, { fgts_pct: v })} format="percent" />
       </td>
-      <td className="px-2 text-right text-white/50 text-xs">{formatCurrency(fgtsVal)}</td>
+      <td className="px-2 text-right text-orange-400 text-xs">{formatCurrency(fgtsVal)}</td>
       <td className="px-2 text-right text-white/60">
         <InlineNum value={item.previsao_13_valor} onSave={(v) => update(item.id, { previsao_13_valor: v })} format="currency" />
         <div className="text-[10px] text-white/40">c/ FGTS: {formatCurrency(prev13ComFgts)}</div>
