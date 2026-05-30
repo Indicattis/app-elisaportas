@@ -6,6 +6,7 @@ import { useDespesasPadrao, type DespesaPadrao, type DespesaPadraoTipo } from '@
 import { useTiposCustos, type TipoCusto } from '@/hooks/useTiposCustos';
 import { Switch } from '@/components/ui/switch';
 import { exportFolhaSalarialPDF } from '@/utils/folhaSalarialPDFGenerator';
+import { useSetores, getSetorPalette } from '@/hooks/useSetores';
 
 export default function EstrategiaDespesasConfiguracoes() {
   const { items, loading, insert, update, remove } = useDespesasPadrao();
@@ -82,17 +83,22 @@ export default function EstrategiaDespesasConfiguracoes() {
 
 /* ---------------- Folha ---------------- */
 
-const SETORES: { value: string; label: string; color: string; dot: string }[] = [
-  { value: 'vendas',         label: 'Vendas',         color: 'bg-emerald-500/15 border-emerald-400/40 text-emerald-200', dot: 'bg-emerald-400' },
-  { value: 'marketing',      label: 'Marketing',      color: 'bg-pink-500/15 border-pink-400/40 text-pink-200',         dot: 'bg-pink-400' },
-  { value: 'instalacoes',    label: 'Instalações',    color: 'bg-amber-500/15 border-amber-400/40 text-amber-200',      dot: 'bg-amber-400' },
-  { value: 'fabrica',        label: 'Fábrica',        color: 'bg-blue-500/15 border-blue-400/40 text-blue-200',         dot: 'bg-blue-400' },
-  { value: 'administrativo', label: 'Administrativo', color: 'bg-violet-500/15 border-violet-400/40 text-violet-200',   dot: 'bg-violet-400' },
-];
-const SETOR_SEM = { value: '', label: 'Sem setor', color: 'bg-white/5 border-white/15 text-white/60', dot: 'bg-white/40' };
-const getSetorMeta = (v?: string | null) => SETORES.find(s => s.value === v) ?? SETOR_SEM;
-const setorSelectClass = (v?: string | null) => {
-  const m = getSetorMeta(v);
+type SetorMeta = { value: string; label: string; color: string; dot: string };
+const SETOR_SEM: SetorMeta = { value: '', label: 'Sem setor', color: 'bg-white/5 border-white/15 text-white/60', dot: 'bg-white/40' };
+
+function useSetoresMeta(): SetorMeta[] {
+  const { setores } = useSetores();
+  return setores.map((s, idx) => {
+    const p = getSetorPalette(idx);
+    return { value: s.key, label: s.label, color: p.color, dot: p.dot };
+  });
+}
+
+const getSetorMetaFrom = (list: SetorMeta[], v?: string | null) =>
+  list.find(s => s.value === v) ?? SETOR_SEM;
+
+const setorSelectClassFrom = (list: SetorMeta[], v?: string | null) => {
+  const m = getSetorMetaFrom(list, v);
   return `w-full h-8 ${m.color} border rounded-full px-3 text-xs font-medium outline-none focus:ring-2 focus:ring-blue-400/40 appearance-none cursor-pointer transition-colors`;
 };
 
