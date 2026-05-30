@@ -1,33 +1,38 @@
-## Diagnóstico
+## Objetivo
 
-Confirmado: `gastos.tipo_custo_id` tem FK para `tipos_custos` sem `ON DELETE`, então qualquer tentativa de excluir um tipo de custo com gastos vinculados retorna 409 (`23503`).
-
-## Solução
-
-Antes de excluir, verificar se existem gastos vinculados. Se houver, abrir um diálogo de **realocação** onde o usuário escolhe outro tipo de custo de destino (do mesmo `tipo` — fixa/variavel/imposto), reatribuir todos os gastos e então excluir o tipo original.
+Tornar o layout dos blocos de despesas (Fixas, Variáveis, Impostos) em `/direcao/estrategia/despesas/configuracoes` mais enxuto, transformando cada categoria em uma linha colapsável que expande para mostrar seus tipos ao clicar.
 
 ## Mudanças
 
-**`src/hooks/useTiposCustos.ts`**
-- Nova função `deleteTipoCustoComRealocacao(id, novoTipoId?)`:
-  - `SELECT count` em `gastos` filtrado por `tipo_custo_id = id`.
-  - Se `count > 0` e `novoTipoId` ausente → retorna `{ needsRealocacao: true, count }` sem excluir.
-  - Se `novoTipoId` informado → `UPDATE gastos SET tipo_custo_id = novoTipoId WHERE tipo_custo_id = id`, depois `DELETE`.
-  - Se `count === 0` → `DELETE` direto.
-- Manter `deleteTipoCusto` atual para chamadas legadas, ou substituir por essa nova implementação.
+Arquivo único: `src/pages/direcao/estrategia/EstrategiaDespesasConfiguracoes.tsx`
 
-**`src/pages/direcao/estrategia/EstrategiaDespesasConfiguracoes.tsx`**
-- Novo estado local `realocacaoDialog: { tipo: TipoCusto; count: number } | null` no nível do componente da página (ou no `TiposCustoBlock`).
-- Ao clicar no botão de excluir de uma linha de tipo de custo:
-  1. Chamar a verificação. Se `needsRealocacao`, abrir o diálogo; senão excluir direto.
-- Diálogo (usando `Dialog` do shadcn já presente no projeto):
-  - Título: "Realocar gastos antes de excluir".
-  - Texto: "Existem N gasto(s) vinculados a '{nome}'. Escolha outro tipo de custo para receber esses gastos."
-  - `Select` com tipos do mesmo `tipo` (fixa/variavel/imposto), excluindo o atual.
-  - Botões: Cancelar / Realocar e excluir (desabilitado até escolher destino).
+### 1. Estado de expansão por categoria
+- Adicionar `expandedCategorias: Set<string>` no `TiposCustoBlock` (chave = `categoria.id` ou `"__sem__"` para a pseudo-categoria "Sem categoria").
+- Por padrão, todas colapsadas (mais slim). Persistir opcionalmente em `useState` apenas (sem localStorage).
 
-**Sem mudanças no banco** — apenas no app.
+### 2. Cabeçalho da categoria (linha slim, sempre visível)
+Substituir o header atual por uma linha compacta com:
+- Chevron (right/down) indicando estado
+- Bolinha colorida da categoria
+- Nome da categoria (clique = renomear inline, como hoje)
+- Contador `(N)` de tipos
+- Subtotal R$ à direita
+- Ações à direita (drag handle, adicionar tipo nesta categoria, excluir categoria) — visíveis em hover para reduzir ruído visual
 
-## Resultado
+A linha inteira (área neutra) dispara o toggle expand/collapse. Clique nos controles internos (input de rename, botões, drag handle) faz `stopPropagation`.
 
-A exclusão de um tipo de custo com gastos vinculados abre um diálogo para escolher o tipo de destino; após realocação automática (`UPDATE` em `gastos`), o tipo original é excluído sem violar a FK. Tipos sem gastos continuam sendo excluídos direto.
+### 3. Conteúdo expandido
+- Lista de tipos da categoria + o form "Adicionar despesa" aparecem apenas quando `expanded === true`.
+- Quando colapsada: nada além do header slim.
+
+### 4. Densidade
+- Reduzir padding vertical do header (`py-2` em vez de `py-3/4`).
+- Manter o restante da UI (drag-and-drop de categorias, dialog de realocação ao excluir tipo, etc.) inalterado.
+
+### 5. "Sem categoria"
+- Mesmo tratamento: linha slim colapsável, sem drag handle nem botão de excluir categoria.
+
+## Fora do escopo
+
+- Nenhuma mudança em hooks, banco, ou lógica de negócio.
+- Sem alteração nos blocos de Folha/Setores.
