@@ -417,7 +417,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 mb-6">
+    <div className="grid grid-cols-1 gap-3 mb-4">
       <FolhaBlockMensal
         padroesFolha={padroesFolha}
         folhaRows={folha}
