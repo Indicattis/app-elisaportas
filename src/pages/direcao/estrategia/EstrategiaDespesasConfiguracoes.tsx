@@ -82,11 +82,14 @@ const SETORES: { value: string; label: string }[] = [
   { value: 'administrativo', label: 'Administrativo' },
 ];
 
-function calcTotalFolha(f: { salario: number; aux_combustivel: number; insalubridade_pct: number; fgts_pct: number; previsao_13_valor: number; em_folha?: boolean }) {
+function calcFeriasDefault(salario: number, fgts_pct: number) {
+  return salario / 3 + salario * (fgts_pct || 0) / 100;
+}
+function calcTotalFolha(f: { salario: number; aux_combustivel: number; insalubridade_pct: number; fgts_pct: number; previsao_13_valor: number; em_folha?: boolean; ferias_valor?: number | null }) {
   if (f.em_folha === false) return f.salario;
   const insalub = f.salario * (f.insalubridade_pct || 0) / 100;
   const fgts = f.salario * (f.fgts_pct || 0) / 100;
-  const ferias = f.salario / 3 + fgts;
+  const ferias = f.ferias_valor == null ? calcFeriasDefault(f.salario, f.fgts_pct) : Number(f.ferias_valor) || 0;
   return f.salario + f.aux_combustivel + insalub + fgts + f.previsao_13_valor + ferias;
 }
 
@@ -133,6 +136,7 @@ function FolhaBlock({
     fgts_pct: Number(i.fgts_pct) || 0,
     previsao_13_valor: Number(i.previsao_13_valor) || 0,
     em_folha: i.em_folha,
+    ferias_valor: i.ferias_valor,
   }), 0);
 
   return (
