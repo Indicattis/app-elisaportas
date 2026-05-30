@@ -1,38 +1,30 @@
 ## Objetivo
 
-Tornar o layout dos blocos de despesas (Fixas, Variáveis, Impostos) em `/direcao/estrategia/despesas/configuracoes` mais enxuto, transformando cada categoria em uma linha colapsável que expande para mostrar seus tipos ao clicar.
+Permitir marcar uma despesa como "a eliminar" em `/direcao/estrategia/despesas/configuracoes`. Quando marcada, o valor projetado aparece em vermelho na tabela, sinalizando que existe intenção de cortar essa despesa.
 
 ## Mudanças
 
-Arquivo único: `src/pages/direcao/estrategia/EstrategiaDespesasConfiguracoes.tsx`
+### 1. Banco de dados
+- Adicionar coluna `marcada_para_eliminar boolean NOT NULL DEFAULT false` na tabela `public.tipos_custos` (via migration).
 
-### 1. Estado de expansão por categoria
-- Adicionar `expandedCategorias: Set<string>` no `TiposCustoBlock` (chave = `categoria.id` ou `"__sem__"` para a pseudo-categoria "Sem categoria").
-- Por padrão, todas colapsadas (mais slim). Persistir opcionalmente em `useState` apenas (sem localStorage).
+### 2. Hook `useTiposCustos`
+- Incluir `marcada_para_eliminar` na interface `TipoCusto` e no `select` do fetch.
 
-### 2. Cabeçalho da categoria (linha slim, sempre visível)
-Substituir o header atual por uma linha compacta com:
-- Chevron (right/down) indicando estado
-- Bolinha colorida da categoria
-- Nome da categoria (clique = renomear inline, como hoje)
-- Contador `(N)` de tipos
-- Subtotal R$ à direita
-- Ações à direita (drag handle, adicionar tipo nesta categoria, excluir categoria) — visíveis em hover para reduzir ruído visual
+### 3. Página `EstrategiaDespesasConfiguracoes.tsx`
+- Nova coluna na tabela (ao lado do toggle DRE) com um pequeno toggle/flag rotulada como "Eliminar" (ícone alvo/AlertTriangle + tooltip "Marcar para eliminar essa despesa"), persistindo via `update(id, { marcada_para_eliminar })`.
+- Quando `marcada_para_eliminar = true`:
+  - O valor projetado da linha é exibido em vermelho (`text-red-400`) com leve `line-through` opcional.
+  - Indicador visual sutil na linha (borda esquerda vermelha fina) para chamar atenção.
+- No total mensal estimado do bloco, os valores marcados continuam somando (não muda o cálculo), apenas o estilo da linha muda. Confirmar essa premissa abaixo.
 
-A linha inteira (área neutra) dispara o toggle expand/collapse. Clique nos controles internos (input de rename, botões, drag handle) faz `stopPropagation`.
+## Detalhes técnicos
 
-### 3. Conteúdo expandido
-- Lista de tipos da categoria + o form "Adicionar despesa" aparecem apenas quando `expanded === true`.
-- Quando colapsada: nada além do header slim.
+- Tabela alvo: `public.tipos_custos` — campo novo persistido por linha.
+- UI: `SortableTipoRow` recebe a flag e aplica classe condicional no `<td>` do valor.
+- Sem mudanças em `gastos`/DRE — é apenas um marcador estratégico de intenção.
 
-### 4. Densidade
-- Reduzir padding vertical do header (`py-2` em vez de `py-3/4`).
-- Manter o restante da UI (drag-and-drop de categorias, dialog de realocação ao excluir tipo, etc.) inalterado.
+## Pergunta antes de implementar
 
-### 5. "Sem categoria"
-- Mesmo tratamento: linha slim colapsável, sem drag handle nem botão de excluir categoria.
-
-## Fora do escopo
-
-- Nenhuma mudança em hooks, banco, ou lógica de negócio.
-- Sem alteração nos blocos de Folha/Setores.
+O valor marcado para eliminar deve:
+- (A) Continuar somando no "Total mensal estimado (ativos)" — apenas estilo vermelho, ou
+- (B) Ser descontado/subtotal separado mostrando "economia potencial ao eliminar"?
