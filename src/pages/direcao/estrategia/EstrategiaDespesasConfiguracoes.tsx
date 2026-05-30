@@ -90,7 +90,9 @@ function calcTotalFolha(f: { salario: number; aux_combustivel: number; insalubri
   const insalub = f.salario * (f.insalubridade_pct || 0) / 100;
   const fgts = f.salario * (f.fgts_pct || 0) / 100;
   const ferias = f.ferias_valor == null ? calcFeriasDefault(f.salario, f.fgts_pct) : Number(f.ferias_valor) || 0;
-  return f.salario + f.aux_combustivel + insalub + fgts + f.previsao_13_valor + ferias;
+  const prev13 = f.salario / 12;
+  const fgts13 = fgts / 12;
+  return f.salario + f.aux_combustivel + insalub + fgts + prev13 + fgts13 + ferias;
 }
 
 function FolhaBlock({
@@ -159,7 +161,8 @@ function FolhaBlock({
               <th className="text-right font-normal pb-2 px-2">Insalub valor</th>
               <th className="text-right font-normal pb-2 px-2">FGTS %</th>
               <th className="text-right font-normal pb-2 px-2">FGTS valor</th>
-              <th className="text-right font-normal pb-2 px-2">Previsão 13° + FGTS 13°</th>
+              <th className="text-right font-normal pb-2 px-2">Previsão 13°</th>
+              <th className="text-right font-normal pb-2 px-2">FGTS 13°</th>
               <th className="text-right font-normal pb-2 px-2">Férias + 1/3 + FGTS</th>
               <th className="text-right font-normal pb-2 px-2">Total</th>
               <th className="pb-2 pr-1 w-10"></th>
@@ -190,7 +193,8 @@ function FolhaBlock({
               <td className="px-2 text-right text-orange-400 text-xs">{formatCurrency(salario * (insalub || 0) / 100)}</td>
               <td className="px-2"><NumCell value={fgts} onChange={setFgts} /></td>
               <td className="px-2 text-right text-orange-400 text-xs">{formatCurrency(salario * (fgts || 0) / 100)}</td>
-              <td className="px-2"><NumCell value={prev13} onChange={setPrev13} /></td>
+              <td className="px-2 text-right text-orange-400 text-xs">{formatCurrency(salario / 12)}</td>
+              <td className="px-2 text-right text-orange-400 text-xs">{formatCurrency((salario * (fgts || 0) / 100) / 12)}</td>
               <td className="px-2 text-right text-white/40 text-xs">{formatCurrency(salario / 3 + salario * (fgts || 0) / 100)}</td>
               <td className="px-2 text-right text-white/60 text-xs">{formatCurrency(calcTotalFolha({ salario, aux_combustivel: auxComb, insalubridade_pct: insalub, fgts_pct: fgts, previsao_13_valor: prev13, em_folha: emFolha }))}</td>
               <td className="pr-1 text-right">
