@@ -1024,7 +1024,7 @@ function categoriaSelectClass(_list: CategoriaDespesa[], v?: string | null) {
 }
 
 function CategoriaGroup({
-  cat, palette, rows, categorias, empresasAtivas, update, remove, dragHandle, rename, removeCat,
+  cat, palette, rows, categorias, empresasAtivas, update, remove, dragHandle, rename, removeCat, expanded, onToggle,
 }: {
   cat: CategoriaDespesa | null;
   palette: { color: string; dot: string };
@@ -1036,15 +1036,28 @@ function CategoriaGroup({
   dragHandle?: React.ReactNode;
   rename?: ReturnType<typeof useDespesasCategorias>['renameCategoria'];
   removeCat?: ReturnType<typeof useDespesasCategorias>['removeCategoria'];
+  expanded: boolean;
+  onToggle: () => void;
 }) {
   const subtotal = rows.reduce((s, i) => s + Number(i.valor_maximo_mensal || 0), 0);
   return (
-    <div className="bg-white/[0.04] border border-white/10 rounded-xl p-4">
-      <div className="flex items-center gap-2 mb-3">
-        {dragHandle}
+    <div className={`bg-white/[0.04] border border-white/10 rounded-xl ${expanded ? 'p-4' : 'px-3 py-2'} group/cat transition-all`}>
+      <div
+        className={`flex items-center gap-2 ${expanded ? 'mb-3' : ''} cursor-pointer select-none`}
+        onClick={onToggle}
+      >
+        <ChevronRight
+          className={`w-3.5 h-3.5 text-white/50 transition-transform ${expanded ? 'rotate-90' : ''}`}
+        />
+        {dragHandle ? (
+          <span onClick={(e) => e.stopPropagation()} className="flex items-center">{dragHandle}</span>
+        ) : null}
         <span className={`w-2 h-2 rounded-full ${palette.dot}`} />
         {cat && rename ? (
-          <div className="text-[11px] uppercase tracking-wider text-white/80 font-semibold">
+          <div
+            className="text-[11px] uppercase tracking-wider text-white/80 font-semibold"
+            onClick={(e) => e.stopPropagation()}
+          >
             <InlineText value={cat.nome} onSave={(v) => rename({ id: cat.id, nome: v })} />
           </div>
         ) : (
@@ -1055,11 +1068,16 @@ function CategoriaGroup({
         <span className="text-[10px] text-white/50 uppercase tracking-wider">Subtotal</span>
         <span className="text-xs text-white/90 font-medium">{formatCurrency(subtotal)}</span>
         {cat && removeCat && (
-          <button onClick={() => removeCat(cat.id)} className="p-1 rounded hover:bg-red-500/20 text-red-300/60 hover:text-red-300 ml-1" title="Excluir categoria">
+          <button
+            onClick={(e) => { e.stopPropagation(); removeCat(cat.id); }}
+            className="p-1 rounded hover:bg-red-500/20 text-red-300/60 hover:text-red-300 ml-1 opacity-0 group-hover/cat:opacity-100 transition-opacity"
+            title="Excluir categoria"
+          >
             <Trash2 className="w-3.5 h-3.5" />
           </button>
         )}
       </div>
+      {expanded && (
       <table className="w-full text-sm">
         <thead>
           <tr className="text-[10px] uppercase tracking-wider text-white/40 border-b border-white/10">
@@ -1118,6 +1136,7 @@ function CategoriaGroup({
           ))}
         </tbody>
       </table>
+      )}
     </div>
   );
 }
@@ -1133,6 +1152,8 @@ function SortableCategoriaGroup(props: {
   remove: (id: string) => void | Promise<any>;
   rename: ReturnType<typeof useDespesasCategorias>['renameCategoria'];
   removeCat: ReturnType<typeof useDespesasCategorias>['removeCategoria'];
+  expanded: boolean;
+  onToggle: () => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: props.id });
   const style = {
@@ -1164,6 +1185,8 @@ function SortableCategoriaGroup(props: {
         rename={props.rename}
         removeCat={props.removeCat}
         dragHandle={handle}
+        expanded={props.expanded}
+        onToggle={props.onToggle}
       />
     </div>
   );
