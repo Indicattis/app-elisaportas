@@ -1,27 +1,12 @@
-Vou corrigir a causa real do 403 ao criar setor.
+## Problema
+PATCH em `despesas_padrao` falha com 400 ao trocar o setor para "Afastados" porque o enum `setor_type` do Postgres não contém o valor `'afastados'`.
 
-O que encontrei:
-- A tabela `system_setores` já tem permissões de Data API, então não é problema de GRANT.
-- O bloqueio vem da política RLS: hoje só `administrador` e `diretor` podem criar/editar/excluir setores.
-- Pelos logs/usuários recentes, quem está tentando usar a tela está com papel como `gerentedevendas` ou outro papel operacional, então a inserção é barrada.
+## Mudanças
 
-Plano de correção:
-1. Atualizar as políticas RLS de `system_setores` para permitir gestão de setores também para os papéis de gestão usados nas telas de Direção/RH:
-   - `administrador`
-   - `diretor`
-   - `gerentefabrica`
-   - `gerentedevendas`
-   - `gerente_comercial`
-   - `gerente_marketing`
-   - `gerente_instalacoes`
-   - `analista_administrativo`
-   - `analista_rh`
-   - `pcp`
+1. **Migração SQL** — `ALTER TYPE public.setor_type ADD VALUE IF NOT EXISTS 'afastados';`
 
-2. Aplicar a mesma regra para criar, renomear, excluir e reordenar setores, porque a tela usa a mesma tabela para todas essas ações.
+2. **`src/hooks/useAuth.tsx`** — Incluir `'afastados'` na união de tipos de `AdminUser.setor`.
 
-3. Manter leitura pública/autenticada como está, sem abrir escrita para todos os usuários.
+3. **`src/pages/Users.tsx`** — Incluir `'afastados'` na união de tipos de `setor` no `AdminUser`.
 
-Detalhe técnico:
-- Vou recriar as políticas `system_setores_manage_insert`, `system_setores_manage_update` e `system_setores_manage_delete` usando `public.admin_users.user_id = auth.uid()`, `ativo = true` e a lista de papéis acima.
-- Não vou alterar frontend, porque o erro é exclusivamente de RLS no banco.
+Nenhuma alteração de UI/lógica é necessária — o botão "Afastados" já existe e envia o valor correto; apenas o enum do banco precisa aceitá-lo.
