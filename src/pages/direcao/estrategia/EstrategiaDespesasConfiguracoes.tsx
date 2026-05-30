@@ -172,6 +172,7 @@ function FolhaBlock({
   const [insalub, setInsalub] = useState(0);
   const [fgts, setFgts] = useState(8);
   const [prev13, setPrev13] = useState(0);
+  const [addOpen, setAddOpen] = useState(false);
 
   const reset = () => { setNome(''); setEmFolha(true); setSetor(''); setSalario(0); setSalarioMin(1518); setAuxComb(0); setInsalub(0); setFgts(8); setPrev13(0); };
 
@@ -189,7 +190,7 @@ function FolhaBlock({
       fgts_pct: fgts,
       previsao_13_valor: prev13,
     });
-    if (ok) reset();
+    if (ok) { reset(); setAddOpen(false); }
   };
 
   const totalSalarios = items.reduce((s, i) => s + Number(i.salario || 0), 0);
@@ -232,15 +233,24 @@ function FolhaBlock({
         <Users className="w-4 h-4" />
         <h3 className="font-semibold">Folha Salarial padrão</h3>
         <span className="text-white/40 text-sm">({items.length})</span>
-        <button
-          onClick={() => exportFolhaSalarialPDF(items, SETORES.map(s => ({ value: s.value, label: s.label })))}
-          disabled={items.length === 0}
-          className="ml-auto inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-white/80 hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-          title="Exportar folha salarial em PDF"
-        >
-          <FileDown className="w-3.5 h-3.5" />
-          Exportar PDF
-        </button>
+        <div className="ml-auto flex items-center gap-1.5">
+          <button
+            onClick={() => exportFolhaSalarialPDF(items, SETORES.map(s => ({ value: s.value, label: s.label })))}
+            disabled={items.length === 0}
+            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-white/80 hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            title="Exportar folha salarial em PDF"
+          >
+            <FileDown className="w-3.5 h-3.5" />
+            Exportar PDF
+          </button>
+          <button
+            onClick={() => setAddOpen(true)}
+            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-400/30 text-xs text-emerald-200 hover:text-emerald-100 transition-colors"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Novo colaborador
+          </button>
+        </div>
       </div>
       <div className="space-y-3">
         <DndContext
@@ -279,54 +289,76 @@ function FolhaBlock({
           />
         )}
 
-        {/* Caixa de adicionar novo colaborador */}
-        <div className="bg-white/[0.03] border border-dashed border-white/15 rounded-xl p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <Plus className="w-3.5 h-3.5 text-emerald-300" />
-            <span className="text-[11px] uppercase tracking-wider text-white/60 font-semibold">Adicionar colaborador</span>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm table-fixed min-w-[1640px]">
-              <FolhaTableHeader />
-              <tbody>
-                <tr>
-                  <td className="py-2 pl-1">
-                    <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome do colaborador"
-                      className="w-full h-8 bg-white/5 border border-white/10 rounded px-2 text-white text-xs outline-none focus:border-blue-400/50" />
-                  </td>
-                  <td className="px-2 text-center">
-                    <Switch checked={emFolha} onCheckedChange={setEmFolha} />
-                  </td>
-                  <td className="px-2">
-                    <select value={setor} onChange={(e) => setSetor(e.target.value)}
-                      className={setorSelectClassFrom(SETORES, setor)}>
-                      <option value="" className="bg-slate-900 text-white">—</option>
-                      {SETORES.map(s => <option key={s.value} value={s.value} className="bg-slate-900 text-white">{s.label}</option>)}
-                    </select>
-                  </td>
-                  <td className="px-2"><NumCell value={salario} onChange={setSalario} /></td>
-                  <td className="px-2"><NumCell value={salarioMin} onChange={setSalarioMin} /></td>
-                  <td className="px-2"><NumCell value={auxComb} onChange={setAuxComb} /></td>
-                  <td className="px-2"><NumCell value={insalub} onChange={setInsalub} /></td>
-                  <td className="px-2 text-right text-orange-400 text-xs">{formatCurrency(salarioMin * (insalub || 0) / 100)}</td>
-                  <td className="px-2"><NumCell value={fgts} onChange={setFgts} /></td>
-                  <td className="px-2 text-right text-orange-400 text-xs">{formatCurrency(salario * (fgts || 0) / 100)}</td>
-                  <td className="px-2 text-right text-orange-400 text-xs">{formatCurrency(salario / 12)}</td>
-                  <td className="px-2 text-right text-orange-400 text-xs">{formatCurrency((salario * (fgts || 0) / 100) / 12)}</td>
-                  <td className="px-2 text-right text-white/40 text-xs">{formatCurrency(salario / 3)}</td>
-                  <td className="px-2 text-right text-white/60 text-xs">{formatCurrency(calcTotalFolha({ salario, salario_minimo: salarioMin, aux_combustivel: auxComb, insalubridade_pct: insalub, fgts_pct: fgts, previsao_13_valor: prev13, em_folha: emFolha }))}</td>
-                  <td className="pr-1 text-right">
-                    <button onClick={save} disabled={!nome.trim()}
-                      className="p-1 rounded bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 disabled:opacity-30">
-                      <Plus className="w-4 h-4" />
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
       </div>
+
+      <Dialog open={addOpen} onOpenChange={setAddOpen}>
+        <DialogContent className="sm:max-w-[560px]">
+          <DialogHeader>
+            <DialogTitle>Novo colaborador</DialogTitle>
+            <DialogDescription>Preencha os dados do colaborador.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs text-white/70">Nome</Label>
+              <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome do colaborador"
+                className="w-full h-9 bg-white/5 border border-white/10 rounded px-3 text-white text-sm outline-none focus:border-blue-400/50" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs text-white/70">Setor</Label>
+                <select value={setor} onChange={(e) => setSetor(e.target.value)}
+                  className={setorSelectClassFrom(SETORES, setor)}>
+                  <option value="" className="bg-slate-900 text-white">—</option>
+                  {SETORES.map(s => <option key={s.value} value={s.value} className="bg-slate-900 text-white">{s.label}</option>)}
+                </select>
+              </div>
+              <div className="flex items-center gap-2 h-9 mt-5">
+                <Switch checked={emFolha} onCheckedChange={setEmFolha} />
+                <Label className="text-xs text-white/70">Em folha</Label>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs text-white/70">Salário</Label>
+                <NumCell value={salario} onChange={setSalario} />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-white/70">Salário mínimo</Label>
+                <NumCell value={salarioMin} onChange={setSalarioMin} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs text-white/70">Aux. combustível</Label>
+                <NumCell value={auxComb} onChange={setAuxComb} />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-white/70">Insalubridade %</Label>
+                <NumCell value={insalub} onChange={setInsalub} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs text-white/70">FGTS %</Label>
+                <NumCell value={fgts} onChange={setFgts} />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-white/70">Total estimado</Label>
+                <div className="h-9 flex items-center justify-end px-3 bg-white/5 border border-white/10 rounded text-sm text-white/80">
+                  {formatCurrency(calcTotalFolha({ salario, salario_minimo: salarioMin, aux_combustivel: auxComb, insalubridade_pct: insalub, fgts_pct: fgts, previsao_13_valor: prev13, em_folha: emFolha }))}
+                </div>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddOpen(false)}>Cancelar</Button>
+            <Button onClick={save} disabled={!nome.trim()} className="bg-emerald-600 hover:bg-emerald-700">
+              Adicionar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between px-2 gap-6">
         <div className="flex items-center gap-2">
           <span className="text-xs text-white/50 uppercase tracking-wider">Total de salários</span>
