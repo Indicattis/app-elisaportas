@@ -615,6 +615,13 @@ export default function GestaoColaboradoresDirecao() {
               </button>
             );
           })}
+          <button
+            onClick={() => setSetoresDialogOpen(true)}
+            title="Gerenciar setores"
+            className="shrink-0 inline-flex items-center justify-center w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 hover:text-white transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+          </button>
         </div>
         {/* Mobile: custo do setor */}
         <div className="md:hidden flex items-center gap-2 px-1 text-xs">
@@ -656,6 +663,14 @@ export default function GestaoColaboradoresDirecao() {
                   </button>
                 );
               })}
+              <button
+                onClick={() => setSetoresDialogOpen(true)}
+                title="Gerenciar setores"
+                className="mt-1 w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-medium text-white/60 hover:text-white bg-white/[0.03] hover:bg-white/10 border border-dashed border-white/15 transition-colors"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                Gerenciar setores
+              </button>
             </div>
           </div>
           {/* Sidebar: custo do setor e índices */}
