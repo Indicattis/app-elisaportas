@@ -419,30 +419,32 @@ export default function VendaDetalhesDirecao() {
 
         {/* Produtos da Venda */}
         <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Package className="h-5 w-5 text-blue-400" />
-            <h2 className="text-sm font-semibold text-white/90 tracking-wide uppercase">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-blue-500/20 border border-blue-400/30">
+              <Package className="h-5 w-5 text-blue-300" />
+            </div>
+            <h2 className="text-base font-semibold tracking-wide uppercase bg-gradient-to-r from-blue-300 to-white bg-clip-text text-transparent">
               Produtos da Venda
             </h2>
-            <span className="text-xs text-white/40 ml-1">
+            <span className="text-xs text-white/50 ml-1">
               ({venda.produtos?.length || 0})
             </span>
           </div>
-          <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl">
+          <Card className="bg-gradient-to-br from-blue-500/10 via-white/5 to-transparent border-blue-400/30 backdrop-blur-xl shadow-[0_0_40px_-15px_rgba(59,130,246,0.4)]">
             <CardContent className="p-0">
               <div className="overflow-x-auto">
-                <Table className="text-xs">
+                <Table className="text-sm">
                   <TableHeader>
-                    <TableRow className="border-blue-500/10 hover:bg-white/5">
-                      <TableHead className="text-xs text-white/70">Tipo</TableHead>
-                      <TableHead className="text-xs text-white/70">Produto</TableHead>
-                      <TableHead className="text-xs text-white/70">Cor</TableHead>
-                      <TableHead className="text-xs text-white/70">Qtd</TableHead>
-                      <TableHead className="text-xs text-white/70">Medidas (L × A)</TableHead>
-                      <TableHead className="text-xs text-white/70 text-right">Valor Unit.</TableHead>
-                      <TableHead className="text-xs text-white/70 text-right">Desconto</TableHead>
-                      <TableHead className="text-xs text-white/70 text-right">Total</TableHead>
-                      <TableHead className="text-xs text-white/70">Observação</TableHead>
+                    <TableRow className="border-white/10 bg-white/[0.04] hover:bg-white/[0.04]">
+                      <TableHead className="text-xs text-white/80 uppercase tracking-wider font-semibold">Tipo</TableHead>
+                      <TableHead className="text-xs text-white/80 uppercase tracking-wider font-semibold">Produto</TableHead>
+                      <TableHead className="text-xs text-white/80 uppercase tracking-wider font-semibold">Cor</TableHead>
+                      <TableHead className="text-xs text-white/80 uppercase tracking-wider font-semibold">Qtd</TableHead>
+                      <TableHead className="text-xs text-white/80 uppercase tracking-wider font-semibold">Medidas (L × A)</TableHead>
+                      <TableHead className="text-xs text-white/80 uppercase tracking-wider font-semibold text-right">Valor Unit.</TableHead>
+                      <TableHead className="text-xs text-white/80 uppercase tracking-wider font-semibold text-right">Desconto</TableHead>
+                      <TableHead className="text-xs text-white/80 uppercase tracking-wider font-semibold text-right">Total</TableHead>
+                      <TableHead className="text-xs text-white/80 uppercase tracking-wider font-semibold">Observação</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -454,7 +456,7 @@ export default function VendaDetalhesDirecao() {
                       </TableRow>
                     )}
                     {agruparItensCatalogo(venda.produtos)?.map((produto: Produto) => (
-                      <TableRow key={produto.id} className="border-blue-500/10 hover:bg-white/5">
+                      <TableRow key={produto.id} className="border-white/10 hover:bg-blue-500/10 transition-colors">
                         <TableCell>{getTipoProdutoBadge(produto.tipo_produto)}</TableCell>
                         <TableCell className="text-white/80 max-w-[260px]">
                           <span className="block truncate" title={produto.descricao || ''}>
@@ -494,7 +496,7 @@ export default function VendaDetalhesDirecao() {
                             <span className="text-white/40">—</span>
                           )}
                         </TableCell>
-                        <TableCell className="text-right text-white font-medium">
+                        <TableCell className="text-right text-emerald-400 font-semibold text-base">
                           {formatCurrency(produto.valor_total)}
                         </TableCell>
                         <TableCell className="text-white/70 max-w-[240px]">
