@@ -116,9 +116,16 @@ interface Props {
   ano?: number;
   onMediaMensalChange?: (media: number) => void;
   onDataChange?: () => void;
+  reloadKey?: number;
 }
 
-export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataChange }: Props) {
+export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataChange, reloadKey }: Props) {
+  // External reload trigger
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (reloadKey === undefined) return;
+    setReloadV((v) => v + 1);
+  }, [reloadKey]);
   const [folha, setFolha] = useState<FolhaRow[]>([]);
   const [impostos, setImpostos] = useState<LancRow[]>([]);
   const [gastosFixas, setGastosFixas] = useState<GastoAgrupado[]>([]);
