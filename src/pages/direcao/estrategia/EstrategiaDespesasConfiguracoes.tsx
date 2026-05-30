@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react';
-import { Plus, Trash2, Users, Receipt, TrendingDown, Landmark, FileDown } from 'lucide-react';
+import { useState, useRef, useMemo } from 'react';
+import { Plus, Trash2, Users, Receipt, TrendingDown, Landmark, FileDown, GripVertical } from 'lucide-react';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { formatCurrency } from '@/lib/utils';
 import { useDespesasPadrao, type DespesaPadrao, type DespesaPadraoTipo } from '@/hooks/useDespesasPadrao';
@@ -7,9 +7,25 @@ import { useTiposCustos, type TipoCusto } from '@/hooks/useTiposCustos';
 import { Switch } from '@/components/ui/switch';
 import { exportFolhaSalarialPDF } from '@/utils/folhaSalarialPDFGenerator';
 import { useSetores, getSetorPalette } from '@/hooks/useSetores';
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  arrayMove,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { restrictToVerticalAxis, restrictToParentElement } from '@dnd-kit/modifiers';
 
 export default function EstrategiaDespesasConfiguracoes() {
-  const { items, loading, insert, update, remove } = useDespesasPadrao();
+  const { items, loading, insert, update, remove, reorder } = useDespesasPadrao();
   const {
     tiposCustos, loading: loadingTipos,
     saveTipoCusto, updateTipoCusto, deleteTipoCusto,
@@ -47,7 +63,7 @@ export default function EstrategiaDespesasConfiguracoes() {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4">
-          <FolhaBlock items={folha} insert={insert} update={update} remove={remove} />
+          <FolhaBlock items={folha} insert={insert} update={update} remove={remove} reorder={reorder} />
           <TiposCustoBlock
             titulo="Tipos de Custos — Fixas"
             icon={<Receipt className="w-4 h-4" />}
@@ -116,12 +132,13 @@ function calcTotalFolha(f: { salario: number; aux_combustivel: number; insalubri
 }
 
 function FolhaBlock({
-  items, insert, update, remove,
+  items, insert, update, remove, reorder,
 }: {
   items: DespesaPadrao[];
   insert: ReturnType<typeof useDespesasPadrao>['insert'];
   update: ReturnType<typeof useDespesasPadrao>['update'];
   remove: ReturnType<typeof useDespesasPadrao>['remove'];
+  reorder: ReturnType<typeof useDespesasPadrao>['reorder'];
 }) {
   const [nome, setNome] = useState('');
   const [emFolha, setEmFolha] = useState(true);
@@ -161,6 +178,27 @@ function FolhaBlock({
     ferias_valor: i.ferias_valor,
   }), 0);
   const SETORES = useSetoresMeta();
+  const { reorderSetores } = useSetores();
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
+
+  const { setores: setoresFull } = useSetores();
+  const keyToId = useMemo(() => {
+    const m: Record<string, string> = {};
+    setoresFull.forEach(s => { m[s.key] = s.id; });
+    return m;
+  }, [setoresFull]);
+  const setorIds = useMemo(() => SETORES.map(s => s.value), [SETORES]);
+
+  const onSetorDragEnd = (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const ids = setorIds.filter(id => id !== ''); // exclude "sem setor"
+    const oldIdx = ids.indexOf(String(active.id));
+    const newIdx = ids.indexOf(String(over.id));
+    if (oldIdx < 0 || newIdx < 0) return;
+    const next = arrayMove(ids, oldIdx, newIdx);
+    reorderSetores(next.map(k => keyToId[k]).filter(Boolean));
+  };
 
   return (
     <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-5">
@@ -179,12 +217,41 @@ function FolhaBlock({
         </button>
       </div>
       <div className="space-y-3">
-        {[...SETORES, SETOR_SEM]
-          .map(s => ({ meta: s, rows: items.filter(i => (i.setor ?? '') === s.value) }))
-          .filter(g => g.rows.length > 0)
-          .map(g => (
-            <FolhaSetorGroup key={g.meta.value || 'sem'} meta={g.meta} rows={g.rows} setores={SETORES} update={update} remove={remove} />
-          ))}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          modifiers={[restrictToVerticalAxis]}
+          onDragEnd={onSetorDragEnd}
+        >
+          <SortableContext items={setorIds.filter(id => id !== '')} strategy={verticalListSortingStrategy}>
+            {SETORES
+              .map(meta => ({ meta, rows: items.filter(i => (i.setor ?? '') === meta.value) }))
+              .filter(g => g.rows.length > 0)
+              .map(g => (
+                <SortableSetorGroup
+                  key={g.meta.value}
+                  id={g.meta.value}
+                  meta={g.meta}
+                  rows={g.rows}
+                  setores={SETORES}
+                  update={update}
+                  remove={remove}
+                  reorder={reorder}
+                />
+              ))}
+          </SortableContext>
+        </DndContext>
+        {/* "Sem setor" sempre por último e não arrastável como grupo */}
+        {items.some(i => !i.setor) && (
+          <FolhaSetorGroup
+            meta={SETOR_SEM}
+            rows={items.filter(i => !i.setor)}
+            setores={SETORES}
+            update={update}
+            remove={remove}
+            reorder={reorder}
+          />
+        )}
 
         {/* Caixa de adicionar novo colaborador */}
         <div className="bg-white/[0.03] border border-dashed border-white/15 rounded-xl p-4">
@@ -247,13 +314,14 @@ function FolhaBlock({
   );
 }
 
-function FolhaRow({
-  item, setores, update, remove,
+function FolhaRowCells({
+  item, setores, update, remove, dragHandle,
 }: {
   item: DespesaPadrao;
   setores: SetorMeta[];
   update: ReturnType<typeof useDespesasPadrao>['update'];
   remove: ReturnType<typeof useDespesasPadrao>['remove'];
+  dragHandle?: React.ReactNode;
 }) {
   const salario = Number(item.salario) || 0;
   const aux_combustivel = Number(item.aux_combustivel) || 0;
@@ -267,9 +335,12 @@ function FolhaRow({
   const zeroCurr = <span className="text-white/30">{formatCurrency(0)}</span>;
   const zeroPct = <span className="text-white/30">0%</span>;
   return (
-    <tr className="border-b border-white/5 hover:bg-white/[0.03]">
+    <>
       <td className="py-2 pl-1 text-white/90">
-        <InlineText value={item.nome} onSave={(v) => update(item.id, { nome: v })} />
+        <div className="flex items-center gap-1">
+          {dragHandle}
+          <div className="flex-1"><InlineText value={item.nome} onSave={(v) => update(item.id, { nome: v })} /></div>
+        </div>
       </td>
       <td className="px-2 text-center">
         <Switch checked={item.em_folha} onCheckedChange={(v) => update(item.id, { em_folha: v })} />
@@ -306,7 +377,7 @@ function FolhaRow({
           <Trash2 className="w-4 h-4" />
         </button>
       </td>
-    </tr>
+    </>
   );
 }
 
@@ -349,13 +420,15 @@ function FolhaTableHeader() {
 }
 
 function FolhaSetorGroup({
-  meta, rows, setores, update, remove,
+  meta, rows, setores, update, remove, reorder, dragHandle,
 }: {
   meta: SetorMeta;
   rows: DespesaPadrao[];
   setores: SetorMeta[];
   update: ReturnType<typeof useDespesasPadrao>['update'];
   remove: ReturnType<typeof useDespesasPadrao>['remove'];
+  reorder: ReturnType<typeof useDespesasPadrao>['reorder'];
+  dragHandle?: React.ReactNode;
 }) {
   const subtotal = rows.reduce((s, i) => s + calcTotalFolha({
     salario: Number(i.salario) || 0,
@@ -366,9 +439,21 @@ function FolhaSetorGroup({
     em_folha: i.em_folha,
     ferias_valor: i.ferias_valor,
   }), 0);
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
+  const sortedRows = [...rows].sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
+  const rowIds = sortedRows.map(r => r.id);
+  const onRowDragEnd = (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const oldIdx = rowIds.indexOf(String(active.id));
+    const newIdx = rowIds.indexOf(String(over.id));
+    if (oldIdx < 0 || newIdx < 0) return;
+    reorder(arrayMove(rowIds, oldIdx, newIdx));
+  };
   return (
     <div className="bg-white/[0.04] border border-white/10 rounded-xl p-4">
       <div className="flex items-center gap-2 mb-3">
+        {dragHandle}
         <span className={`w-2 h-2 rounded-full ${meta.dot}`} />
         <span className="text-[11px] uppercase tracking-wider text-white/80 font-semibold">{meta.label}</span>
         <span className="text-[10px] text-white/40">({rows.length})</span>
@@ -379,14 +464,94 @@ function FolhaSetorGroup({
       <div className="overflow-x-auto">
         <table className="w-full text-sm min-w-[1200px]">
           <FolhaTableHeader />
-          <tbody>
-            {rows.map(i => (
-              <FolhaRow key={i.id} item={i} setores={setores} update={update} remove={remove} />
-            ))}
-          </tbody>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            modifiers={[restrictToVerticalAxis, restrictToParentElement]}
+            onDragEnd={onRowDragEnd}
+          >
+            <SortableContext items={rowIds} strategy={verticalListSortingStrategy}>
+              <tbody>
+                {sortedRows.map(i => (
+                  <SortableFolhaRow key={i.id} item={i} setores={setores} update={update} remove={remove} />
+                ))}
+              </tbody>
+            </SortableContext>
+          </DndContext>
         </table>
       </div>
     </div>
+  );
+}
+
+function SortableSetorGroup(props: {
+  id: string;
+  meta: SetorMeta;
+  rows: DespesaPadrao[];
+  setores: SetorMeta[];
+  update: ReturnType<typeof useDespesasPadrao>['update'];
+  remove: ReturnType<typeof useDespesasPadrao>['remove'];
+  reorder: ReturnType<typeof useDespesasPadrao>['reorder'];
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: props.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+  const handle = (
+    <button
+      {...attributes}
+      {...listeners}
+      className="p-0.5 rounded hover:bg-white/10 text-white/40 hover:text-white/80 cursor-grab active:cursor-grabbing"
+      title="Arrastar setor"
+      type="button"
+    >
+      <GripVertical className="w-3.5 h-3.5" />
+    </button>
+  );
+  return (
+    <div ref={setNodeRef} style={style}>
+      <FolhaSetorGroup
+        meta={props.meta}
+        rows={props.rows}
+        setores={props.setores}
+        update={props.update}
+        remove={props.remove}
+        reorder={props.reorder}
+        dragHandle={handle}
+      />
+    </div>
+  );
+}
+
+function SortableFolhaRow(props: {
+  item: DespesaPadrao;
+  setores: SetorMeta[];
+  update: ReturnType<typeof useDespesasPadrao>['update'];
+  remove: ReturnType<typeof useDespesasPadrao>['remove'];
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: props.item.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+  const handle = (
+    <button
+      {...attributes}
+      {...listeners}
+      className="p-0.5 rounded hover:bg-white/10 text-white/30 hover:text-white/70 cursor-grab active:cursor-grabbing"
+      title="Arrastar colaborador"
+      type="button"
+    >
+      <GripVertical className="w-3.5 h-3.5" />
+    </button>
+  );
+  return (
+    <tr ref={setNodeRef as any} style={style} className="border-b border-white/5 hover:bg-white/[0.03]">
+      <FolhaRowCells item={props.item} setores={props.setores} update={props.update} remove={props.remove} dragHandle={handle} />
+    </tr>
   );
 }
 

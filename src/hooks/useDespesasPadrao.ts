@@ -92,5 +92,21 @@ export function useDespesasPadrao() {
     return true;
   };
 
-  return { items, loading, refetch: fetchAll, insert, update, remove };
+  const reorder = async (ids: string[]) => {
+    // Optimistic local update
+    setItems(prev => {
+      const order = new Map(ids.map((id, idx) => [id, (idx + 1) * 10]));
+      return prev.map(it => order.has(it.id) ? { ...it, ordem: order.get(it.id)! } : it);
+    });
+    const results = await Promise.all(
+      ids.map((id, idx) =>
+        supabase.from('despesas_padrao' as any).update({ ordem: (idx + 1) * 10 }).eq('id', id)
+      )
+    );
+    const err = results.find(r => r.error)?.error;
+    if (err) { toast.error('Erro ao reordenar: ' + err.message); await fetchAll(); return false; }
+    return true;
+  };
+
+  return { items, loading, refetch: fetchAll, insert, update, remove, reorder };
 }

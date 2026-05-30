@@ -134,6 +134,31 @@ export function useSetores() {
     onError: (e: Error) => toast.error(e.message || 'Erro ao excluir setor'),
   });
 
+  const reorder = useMutation({
+    mutationFn: async (ids: string[]) => {
+      await Promise.all(
+        ids.map((id, idx) =>
+          supabase.from('system_setores').update({ ordem: (idx + 1) * 10 }).eq('id', id)
+        )
+      );
+    },
+    onMutate: async (ids: string[]) => {
+      await qc.cancelQueries({ queryKey: ['system-setores'] });
+      const prev = qc.getQueryData<Setor[]>(['system-setores']);
+      if (prev) {
+        const map = new Map(prev.map(s => [s.id, s]));
+        const next = ids.map((id, idx) => ({ ...(map.get(id) as Setor), ordem: (idx + 1) * 10 }));
+        qc.setQueryData(['system-setores'], next);
+      }
+      return { prev };
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.prev) qc.setQueryData(['system-setores'], ctx.prev);
+      toast.error('Erro ao reordenar setores');
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ['system-setores'] }),
+  });
+
   return {
     setores,
     labelMap,
@@ -141,6 +166,7 @@ export function useSetores() {
     createSetor: create.mutateAsync,
     renameSetor: rename.mutateAsync,
     removeSetor: remove.mutateAsync,
+    reorderSetores: reorder.mutate,
     creating: create.isPending,
   };
 }
