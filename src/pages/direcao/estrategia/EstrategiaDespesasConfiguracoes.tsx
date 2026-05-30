@@ -329,13 +329,14 @@ function FolhaRowCells({
   dragHandle?: React.ReactNode;
 }) {
   const salario = Number(item.salario) || 0;
+  const salario_minimo = Number(item.salario_minimo) || 0;
   const aux_combustivel = Number(item.aux_combustivel) || 0;
   const insalubridade_pct = Number(item.insalubridade_pct) || 0;
   const fgts_pct = Number(item.fgts_pct) || 0;
-  const insalubVal = salario * insalubridade_pct / 100;
+  const insalubVal = salario_minimo * insalubridade_pct / 100;
   const fgtsVal = salario * fgts_pct / 100;
   const feriasDefault = calcFeriasDefault(salario, fgts_pct);
-  const total = calcTotalFolha({ salario, aux_combustivel, insalubridade_pct, fgts_pct, previsao_13_valor: 0, em_folha: item.em_folha, ferias_valor: null });
+  const total = calcTotalFolha({ salario, salario_minimo, aux_combustivel, insalubridade_pct, fgts_pct, previsao_13_valor: 0, em_folha: item.em_folha, ferias_valor: null });
   const desativado = item.em_folha === false;
   const zeroCurr = <span className="text-white/30">{formatCurrency(0)}</span>;
   const zeroPct = <span className="text-white/30">0%</span>;
@@ -359,6 +360,9 @@ function FolhaRowCells({
       </td>
       <td className="px-2 text-right text-emerald-400 font-medium">
         <InlineNum value={item.salario} onSave={(v) => update(item.id, { salario: v })} format="currency" />
+      </td>
+      <td className="px-2 text-right text-white/60">
+        <InlineNum value={item.salario_minimo} onSave={(v) => update(item.id, { salario_minimo: v })} format="currency" />
       </td>
       <td className="px-2 text-right text-white/60">
         {desativado ? zeroCurr : <InlineNum value={item.aux_combustivel} onSave={(v) => update(item.id, { aux_combustivel: v })} format="currency" />}
