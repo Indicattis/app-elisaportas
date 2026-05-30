@@ -1129,8 +1129,7 @@ function CategoriaGroup({
             <th className="text-left font-normal pb-2 pl-1 w-[34%]">Nome</th>
             <th className="pb-2 px-2 w-8" title="Descrição"></th>
             <th className="text-left font-normal pb-2 px-2 w-[22%]">Categoria</th>
-            <th className="text-left font-normal pb-2 px-2 w-[18%]">Empresa</th>
-            <th className="text-right font-normal pb-2 px-2 w-[18%]">Valor projetado</th>
+            <th className="text-right font-normal pb-2 px-2 w-[36%]">Valor projetado</th>
             <th className="text-center font-normal pb-2 px-2 w-[8%]">DRE</th>
             <th className="text-center font-normal pb-2 px-2 w-[8%]" title="Marcar para eliminar essa despesa">Eliminar</th>
             <th className="pb-2 pr-1 w-10"></th>
