@@ -12,6 +12,7 @@ export interface TipoCusto {
   aparece_no_dre: boolean;
   empresa_id: string | null;
   categoria_id: string | null;
+  ordem: number;
 }
 
 export const useTiposCustos = () => {
@@ -22,7 +23,8 @@ export const useTiposCustos = () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("tipos_custos" as any)
-      .select("id, nome, descricao, valor_maximo_mensal, tipo, ativo, aparece_no_dre, empresa_id, categoria_id")
+      .select("id, nome, descricao, valor_maximo_mensal, tipo, ativo, aparece_no_dre, empresa_id, categoria_id, ordem")
+      .order("ordem", { ascending: true })
       .order("nome", { ascending: true });
 
     if (error) {
@@ -128,6 +130,27 @@ export const useTiposCustos = () => {
     }
   };
 
+  /**
+   * Reordena tipos dentro de um grupo (`fixa` | `variavel` | `imposto`).
+   * Recebe a lista ordenada de IDs e grava `ordem` 1..n.
+   */
+  const reorderTiposCustos = async (orderedIds: string[]) => {
+    try {
+      // Otimista: aplica localmente primeiro
+      setTiposCustos(prev => {
+        const map = new Map(orderedIds.map((id, idx) => [id, idx + 1]));
+        return prev.map(t => map.has(t.id) ? { ...t, ordem: map.get(t.id)! } : t);
+      });
+      await Promise.all(orderedIds.map((id, idx) =>
+        supabase.from("tipos_custos" as any).update({ ordem: idx + 1 } as any).eq("id", id)
+      ));
+    } catch (e) {
+      toast.error("Erro ao reordenar despesas");
+      console.error(e);
+      await fetchTiposCustos();
+    }
+  };
+
   useEffect(() => {
     fetchTiposCustos();
   }, []);
@@ -141,5 +164,6 @@ export const useTiposCustos = () => {
     deleteTipoCusto,
     contarGastosVinculados,
     realocarEExcluirTipoCusto,
+    reorderTiposCustos,
   };
 };
