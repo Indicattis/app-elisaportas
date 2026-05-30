@@ -3,14 +3,20 @@ import { Plus, Trash2, Users, Receipt, TrendingDown, Landmark } from 'lucide-rea
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { formatCurrency } from '@/lib/utils';
 import { useDespesasPadrao, type DespesaPadrao, type DespesaPadraoTipo } from '@/hooks/useDespesasPadrao';
+import { useTiposCustos, type TipoCusto } from '@/hooks/useTiposCustos';
+import { Switch } from '@/components/ui/switch';
 
 export default function EstrategiaDespesasConfiguracoes() {
   const { items, loading, insert, update, remove } = useDespesasPadrao();
+  const {
+    tiposCustos, loading: loadingTipos,
+    saveTipoCusto, updateTipoCusto, deleteTipoCusto,
+  } = useTiposCustos();
 
   const folha = items.filter(i => i.tipo === 'folha');
-  const fixas = items.filter(i => i.tipo === 'fixa');
-  const variaveis = items.filter(i => i.tipo === 'variavel');
   const impostos = items.filter(i => i.tipo === 'imposto');
+  const tiposFixas = tiposCustos.filter(t => t.tipo === 'fixa');
+  const tiposVariaveis = tiposCustos.filter(t => t.tipo === 'variavel');
 
   return (
     <MinimalistLayout
@@ -26,30 +32,30 @@ export default function EstrategiaDespesasConfiguracoes() {
         { label: 'Configurações padrão' },
       ]}
     >
-      {loading ? (
+      {(loading || loadingTipos) ? (
         <div className="flex items-center justify-center py-20">
           <div className="w-6 h-6 animate-spin rounded-full border-2 border-white/20 border-t-white/60" />
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4">
           <FolhaBlock items={folha} insert={insert} update={update} remove={remove} />
-          <SimpleBlock
-            titulo="Despesas Fixas padrão"
+          <TiposCustoBlock
+            titulo="Tipos de Custos — Fixas"
             icon={<Receipt className="w-4 h-4" />}
             tipo="fixa"
-            items={fixas}
-            insert={insert}
-            update={update}
-            remove={remove}
+            items={tiposFixas}
+            save={saveTipoCusto}
+            update={updateTipoCusto}
+            remove={deleteTipoCusto}
           />
-          <SimpleBlock
-            titulo="Despesas Variáveis padrão"
+          <TiposCustoBlock
+            titulo="Tipos de Custos — Variáveis"
             icon={<TrendingDown className="w-4 h-4" />}
             tipo="variavel"
-            items={variaveis}
-            insert={insert}
-            update={update}
-            remove={remove}
+            items={tiposVariaveis}
+            save={saveTipoCusto}
+            update={updateTipoCusto}
+            remove={deleteTipoCusto}
           />
           <SimpleBlock
             titulo="Despesas de Imposto padrão"
