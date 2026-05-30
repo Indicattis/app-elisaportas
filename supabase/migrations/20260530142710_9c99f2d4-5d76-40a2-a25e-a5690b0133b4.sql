@@ -1,14 +1,3 @@
-## Problema
-
-O `INSERT/UPDATE/DELETE` em `system_setores` está restrito a `public.is_admin()`, que só retorna `true` para usuários com `role = 'administrador'` em `admin_users`. Diretores (e demais perfis com acesso a `/direcao/gestao-colaboradores`) caem na RLS e recebem o erro.
-
-## Solução
-
-Substituir as policies de escrita por uma checagem mais ampla: qualquer usuário ativo em `admin_users` com role em (`administrador`, `diretor`) pode criar/editar/excluir setores.
-
-### Migration
-
-```sql
 DROP POLICY IF EXISTS "system_setores_admins_insert" ON public.system_setores;
 DROP POLICY IF EXISTS "system_setores_admins_update" ON public.system_setores;
 DROP POLICY IF EXISTS "system_setores_admins_delete" ON public.system_setores;
@@ -45,6 +34,3 @@ CREATE POLICY "system_setores_manage_delete"
       AND COALESCE(ativo, true) = true
       AND role IN ('administrador','diretor')
   ));
-```
-
-Sem mudanças em código frontend.
