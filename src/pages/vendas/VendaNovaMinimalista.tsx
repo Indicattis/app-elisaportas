@@ -278,7 +278,7 @@ export default function VendaNovaMinimalista() {
   }), [configLimites]);
 
   const validacaoDescontoMemo = useMemo(() => {
-    return validarDesconto(portas, formData.forma_pagamento, formData.venda_presencial === true, configLimitesObj);
+    return validarDesconto(portas, formData.forma_pagamento, formData.venda_presencial === false, configLimitesObj);
   }, [portas, formData.forma_pagamento, formData.venda_presencial, configLimitesObj]);
 
   const tipoAutorizacaoNecessariaMemo = useMemo(() => {
@@ -519,7 +519,7 @@ export default function VendaNovaMinimalista() {
     const validacao = validarDesconto(
       portas,
       formData.forma_pagamento,
-      formData.venda_presencial === true,
+      formData.venda_presencial === false,
       configLimitesObj
     );
 
@@ -561,7 +561,7 @@ export default function VendaNovaMinimalista() {
       const validacao = validarDesconto(
         produtosComDesconto,
         formData.forma_pagamento,
-        formData.venda_presencial === true,
+        formData.venda_presencial === false,
         configLimitesObj
       );
 
@@ -1068,7 +1068,7 @@ export default function VendaNovaMinimalista() {
             </GradientButton>
           )}
           
-          {portas.length > 0 && validarDesconto(portas, formData.forma_pagamento, formData.venda_presencial === true).dentroDoLimite && !portas.some(p => (p.desconto_valor || 0) > 0 || (p.desconto_percentual || 0) > 0) && (
+          {portas.length > 0 && validarDesconto(portas, formData.forma_pagamento, formData.venda_presencial === false).dentroDoLimite && !portas.some(p => (p.desconto_valor || 0) > 0 || (p.desconto_percentual || 0) > 0) && (
             <GradientButton 
               variant="outline"
               onClick={() => setCreditoModalOpen(true)}
@@ -1119,7 +1119,7 @@ export default function VendaNovaMinimalista() {
         produtos={portas}
         onAplicarDesconto={handleAplicarDesconto}
         formaPagamento={formData.forma_pagamento}
-        vendaPresencial={formData.venda_presencial === true}
+        vendaPresencial={formData.venda_presencial === false}
       />
 
       <CreditoVendaModal
@@ -1137,7 +1137,7 @@ export default function VendaNovaMinimalista() {
           open={autorizacaoDescontoOpen}
           onOpenChange={setAutorizacaoDescontoOpen}
           onAutorizado={handleAutorizacaoDesconto}
-          percentualDesconto={validarDesconto(portas, formData.forma_pagamento, formData.venda_presencial === true).percentualDesconto}
+          percentualDesconto={validarDesconto(portas, formData.forma_pagamento, formData.venda_presencial === false).percentualDesconto}
           tipoAutorizacao={tipoAutorizacaoNecessaria}
           limitePermitido={limitePermitido}
         />
