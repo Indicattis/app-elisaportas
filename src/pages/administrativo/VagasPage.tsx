@@ -236,7 +236,7 @@ export default function VagasPage() {
                     : "bg-white/5 text-white/60 border border-white/10 hover:bg-white/10"
                   }`}
               >
-                {SETOR_LABELS[setor]}
+                {labelMap[setor] || setor}
                 <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${isFull ? "bg-emerald-500/20 text-emerald-400" : "bg-amber-500/20 text-amber-400"}`}>
                   {counts.current}/{counts.total}
                 </span>
@@ -268,7 +268,7 @@ export default function VagasPage() {
                         : "text-white/60 hover:bg-white/10 hover:text-white"
                       }`}
                   >
-                    {SETOR_LABELS[setor]}
+                    {labelMap[setor] || setor}
                     <div className="flex items-center gap-1.5">
                       {emTesteCount > 0 && (
                         <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-red-500/20 text-red-400">
