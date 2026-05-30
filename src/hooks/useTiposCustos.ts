@@ -7,7 +7,7 @@ export interface TipoCusto {
   nome: string;
   descricao: string | null;
   valor_maximo_mensal: number;
-  tipo: 'fixa' | 'variavel';
+  tipo: 'fixa' | 'variavel' | 'imposto';
   ativo: boolean;
   aparece_no_dre: boolean;
 }

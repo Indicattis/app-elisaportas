@@ -48,7 +48,7 @@ export default function DREDespesasDirecao() {
 
   const handleEditTipoCusto = (tipo: TipoCusto) => {
     setEditingTipoCusto(tipo);
-    setTipoCustoForm({ nome: tipo.nome, descricao: tipo.descricao || "", valor_maximo_mensal: tipo.valor_maximo_mensal, tipo: tipo.tipo, aparece_no_dre: tipo.aparece_no_dre });
+    setTipoCustoForm({ nome: tipo.nome, descricao: tipo.descricao || "", valor_maximo_mensal: tipo.valor_maximo_mensal, tipo: tipo.tipo as 'fixa' | 'variavel', aparece_no_dre: tipo.aparece_no_dre });
     setTipoCustoDialog(true);
   };
 

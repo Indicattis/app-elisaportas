@@ -1,33 +1,46 @@
-Adicionar drag-and-drop em `/direcao/estrategia/despesas/configurações` para reordenar setores e colaboradores dentro de cada setor, usando `@dnd-kit` (já no projeto).
+Unificar cadastro de despesas em `tipos_custos`, alinhando os formulários de Fixas/Variáveis com os campos de `/financeiro/custos` e migrando Impostos de `despesas_padrao` para `tipos_custos` com novo `tipo='imposto'`.
 
 ## Backend
 
-Persistência via campo `ordem` já existente nas duas tabelas:
-- `system_setores.ordem` (já usado em `useSetores`)
-- `despesas_padrao.ordem` (já existe no schema/hook)
+### Migration (schema)
+- Em `public.tipos_custos`: dropar `tipos_custos_tipo_check` e recriar permitindo `'imposto'`:
+  ```sql
+  ALTER TABLE public.tipos_custos DROP CONSTRAINT tipos_custos_tipo_check;
+  ALTER TABLE public.tipos_custos ADD CONSTRAINT tipos_custos_tipo_check
+    CHECK (tipo = ANY (ARRAY['fixa','variavel','imposto']));
+  ```
 
-Nenhuma migration necessária.
+### Data (via insert tool, após a migration)
+- Para cada uma das 13 linhas em `despesas_padrao` com `tipo='imposto'`:
+  - INSERT em `tipos_custos` com `nome`, `valor_maximo_mensal=valor`, `tipo='imposto'`, `aparece_no_dre=true`, `ativo=true`, `created_by=<criador da linha original quando disponível>`.
+- DELETE das mesmas linhas em `despesas_padrao`.
 
 ## Frontend
 
-### `src/hooks/useSetores.ts`
-- Adicionar mutation `reorderSetores(ids: string[])` que recalcula `ordem` (10, 20, 30…) e faz `update` em batch via múltiplos `update().eq('id', …)` em paralelo.
-
-### `src/hooks/useDespesasPadrao.ts`
-- Adicionar `reorderItems(ids: string[])` que atualiza `ordem` em batch nas linhas alvo.
+### `src/hooks/useTiposCustos.ts`
+- Alargar `TipoCusto.tipo` para `'fixa' | 'variavel' | 'imposto'`.
 
 ### `src/pages/direcao/estrategia/EstrategiaDespesasConfiguracoes.tsx`
-- Envolver a lista de grupos de setor da `FolhaBlock` em `DndContext` + `SortableContext` (vertical) para reordenar **setores**. Cada `FolhaSetorGroup` vira `useSortable` com handle (ícone GripVertical à esquerda do título do setor).
-- Dentro de cada `FolhaSetorGroup`, envolver as `<tr>` em outro `DndContext` + `SortableContext` para reordenar **colaboradores**; handle (GripVertical) numa nova coluna à esquerda do nome.
-- Ordenar `items` por `ordem` ao agrupar (já vem ordenado do hook).
-- Linha "Sem setor" permanece fixa no fim e não é arrastável (nem como grupo, nem itens dela — ou permitir reordenar só dentro dela; vou permitir só dentro dela e manter o grupo fixo no fim).
-
-Ao soltar:
-- Setores: chamar `reorderSetores` com nova ordem dos `setor.id` e atualizar cache otimisticamente.
-- Colaboradores: chamar `reorderItems` com IDs do grupo reordenado.
+- Remover o `SimpleBlock` de "Despesas de Imposto padrão" (que escrevia em `despesas_padrao`).
+- Adicionar um terceiro `TiposCustoBlock` para impostos:
+  ```tsx
+  <TiposCustoBlock
+    titulo="Tipos de Custos — Impostos"
+    icon={<Landmark className="w-4 h-4" />}
+    tipo="imposto"
+    items={tiposCustos.filter(t => t.tipo === 'imposto')}
+    save={saveTipoCusto}
+    update={updateTipoCusto}
+    remove={deleteTipoCusto}
+  />
+  ```
+- No `TiposCustoBlock`, completar a linha de criação para casar com os campos do dialog de `/financeiro/custos`:
+  - Campos atuais já presentes: **Nome**, **Descrição**, **Valor projetado** (`valor_maximo_mensal`).
+  - Adicionar Switch **Aparece no DRE** na célula vazia da coluna correspondente (estado local, default `true`, enviado no `save`).
+  - Tipo continua fixado pelo bloco (não exibido — equivalente ao Select do dialog).
+- Manter edição inline existente (já cobre todos os campos).
 
 ## Detalhes técnicos
-
-- Usar `@dnd-kit/core`, `@dnd-kit/sortable`, `@dnd-kit/utilities` (verificar instalação; instalar se faltar).
-- `restrictToVerticalAxis` para ambos.
-- Handle dedicado (`<GripVertical>`) para não conflitar com inputs/selects existentes.
+- `useDespesasPadrao` continua sem mudanças; a aba Impostos simplesmente deixa de usá-lo.
+- `DespesasResumoTopo.tsx` já trata `t.tipo === 'imposto'` em `tipos_custos`; o filtro de `padroes` para impostos passa a vir vazio (compatível, sem refatoração necessária).
+- O dialog em `/financeiro/custos` continua intacto e segue restrito a `'fixa' | 'variavel'`.

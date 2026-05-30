@@ -39,9 +39,9 @@ export default function EstrategiaDespesasConfiguracoes() {
   const showSpinner = !firstLoadedRef.current && (loading || loadingTipos);
 
   const folha = items.filter(i => i.tipo === 'folha');
-  const impostos = items.filter(i => i.tipo === 'imposto');
   const tiposFixas = tiposCustos.filter(t => t.tipo === 'fixa');
   const tiposVariaveis = tiposCustos.filter(t => t.tipo === 'variavel');
+  const tiposImpostos = tiposCustos.filter(t => t.tipo === 'imposto');
 
   return (
     <MinimalistLayout
@@ -82,14 +82,14 @@ export default function EstrategiaDespesasConfiguracoes() {
             update={updateTipoCusto}
             remove={deleteTipoCusto}
           />
-          <SimpleBlock
-            titulo="Despesas de Imposto padrão"
+          <TiposCustoBlock
+            titulo="Tipos de Custos — Impostos"
             icon={<Landmark className="w-4 h-4" />}
             tipo="imposto"
-            items={impostos}
-            insert={insert}
-            update={update}
-            remove={remove}
+            items={tiposImpostos}
+            save={saveTipoCusto}
+            update={updateTipoCusto}
+            remove={deleteTipoCusto}
           />
         </div>
       )}
@@ -694,7 +694,7 @@ function TiposCustoBlock({
 }: {
   titulo: string;
   icon: React.ReactNode;
-  tipo: 'fixa' | 'variavel';
+  tipo: 'fixa' | 'variavel' | 'imposto';
   items: TipoCusto[];
   save: ReturnType<typeof useTiposCustos>['saveTipoCusto'];
   update: ReturnType<typeof useTiposCustos>['updateTipoCusto'];
@@ -703,6 +703,7 @@ function TiposCustoBlock({
   const [nome, setNome] = useState('');
   const [descricao, setDescricao] = useState('');
   const [valor, setValor] = useState(0);
+  const [apareceNoDre, setApareceNoDre] = useState(true);
 
   const totalAtivos = items.filter(i => i.ativo).reduce((s, i) => s + Number(i.valor_maximo_mensal || 0), 0);
 
@@ -713,10 +714,10 @@ function TiposCustoBlock({
       descricao: descricao.trim() || null,
       valor_maximo_mensal: valor,
       tipo,
-      aparece_no_dre: true,
+      aparece_no_dre: apareceNoDre,
       ativo: true,
     });
-    if (ok) { setNome(''); setDescricao(''); setValor(0); }
+    if (ok) { setNome(''); setDescricao(''); setValor(0); setApareceNoDre(true); }
   };
 
   return (
@@ -769,7 +770,9 @@ function TiposCustoBlock({
                   className="w-full h-8 bg-white/5 border border-white/10 rounded px-2 text-white text-xs outline-none focus:border-blue-400/50" />
               </td>
               <td className="px-2"><NumCell value={valor} onChange={setValor} /></td>
-              <td className="px-2" />
+              <td className="px-2 text-center">
+                <Switch checked={apareceNoDre} onCheckedChange={setApareceNoDre} />
+              </td>
               <td className="pr-1 text-right">
                 <button onClick={onSave} disabled={!nome.trim()}
                   className="p-1 rounded bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 disabled:opacity-30">
