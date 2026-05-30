@@ -1003,23 +1003,13 @@ function TiposCustoBlock({
               <input value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Descrição"
                 className="w-full h-9 bg-white/5 border border-white/10 rounded px-3 text-white text-sm outline-none focus:border-blue-400/50" />
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
+            <div className="space-y-1.5">
                 <Label className="text-xs text-white/70">Categoria</Label>
                 <select value={categoriaId} onChange={(e) => setCategoriaId(e.target.value)}
                   className="w-full h-9 bg-white/5 border border-white/10 rounded px-2 text-white text-sm outline-none focus:border-blue-400/50">
                   <option value="" className="bg-slate-900 text-white">— Sem categoria</option>
                   {categorias.map(c => <option key={c.id} value={c.id} className="bg-slate-900 text-white">{c.nome}</option>)}
                 </select>
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs text-white/70">Empresa</Label>
-                <select value={empresaId} onChange={(e) => setEmpresaId(e.target.value)}
-                  className="w-full h-9 bg-white/5 border border-white/10 rounded px-2 text-white text-sm outline-none focus:border-blue-400/50">
-                  <option value="" className="bg-slate-900">— Empresa</option>
-                  {empresasAtivas.map((e: any) => <option key={e.id} value={e.id} className="bg-slate-900">{e.nome}</option>)}
-                </select>
-              </div>
             </div>
             <div className="grid grid-cols-2 gap-3 items-end">
               <div className="space-y-1.5">
@@ -1129,8 +1119,7 @@ function CategoriaGroup({
             <th className="text-left font-normal pb-2 pl-1 w-[34%]">Nome</th>
             <th className="pb-2 px-2 w-8" title="Descrição"></th>
             <th className="text-left font-normal pb-2 px-2 w-[22%]">Categoria</th>
-            <th className="text-left font-normal pb-2 px-2 w-[18%]">Empresa</th>
-            <th className="text-right font-normal pb-2 px-2 w-[18%]">Valor projetado</th>
+            <th className="text-right font-normal pb-2 px-2 w-[36%]">Valor projetado</th>
             <th className="text-center font-normal pb-2 px-2 w-[8%]">DRE</th>
             <th className="text-center font-normal pb-2 px-2 w-[8%]" title="Marcar para eliminar essa despesa">Eliminar</th>
             <th className="pb-2 pr-1 w-10"></th>
@@ -1207,18 +1196,6 @@ function SortableTipoRow({
         >
           <option value="" className="bg-slate-900 text-white">— Sem categoria</option>
           {categorias.map(c => <option key={c.id} value={c.id} className="bg-slate-900 text-white">{c.nome}</option>)}
-        </select>
-      </td>
-      <td className="px-2 text-white/50">
-        <select
-          value={i.empresa_id || ''}
-          onChange={(e) => update(i.id, { empresa_id: e.target.value || null })}
-          className="w-full h-7 bg-transparent border border-transparent hover:border-white/10 focus:border-white/20 rounded px-1.5 text-white/50 text-xs outline-none transition-colors"
-        >
-          <option value="" className="bg-slate-900">—</option>
-          {empresasAtivas.map((e: any) => (
-            <option key={e.id} value={e.id} className="bg-slate-900">{e.nome}</option>
-          ))}
         </select>
       </td>
       <td className={`px-2 text-right font-medium ${i.marcada_para_eliminar ? 'text-red-400 line-through' : 'text-white'}`}>

@@ -1564,8 +1564,7 @@ function CategoriaGroupMensal({
               <th className="text-left font-normal pb-2 pl-1 w-[26%]">Nome</th>
               <th className="pb-2 px-2 w-8" title="Descrição"></th>
               <th className="text-left font-normal pb-2 px-2 w-[18%]">Categoria</th>
-              <th className="text-left font-normal pb-2 px-2 w-[16%]">Empresa</th>
-              <th className="text-right font-normal pb-2 px-2 w-[14%]">Valor projetado</th>
+              <th className="text-right font-normal pb-2 px-2 w-[30%]">Valor projetado</th>
               <th className="text-center font-normal pb-2 px-2 w-[6%]">DRE</th>
               <th className="text-right font-normal pb-2 px-2 w-[16%]">Valor pago no mês</th>
             </tr>
@@ -1626,9 +1625,6 @@ function CategoriaGroupMensal({
                         {catLabel(t.categoria_id)}
                       </span>
                     </td>
-                    <td className="px-2 text-white/50">
-                      {t.empresa_id ? (empresasMap[t.empresa_id] || '—') : '—'}
-                    </td>
                     <td className={`px-2 text-right font-medium ${t.marcada_para_eliminar ? 'text-red-400 line-through' : 'text-white'}`}>
                       {formatCurrency(proj)}
                     </td>
@@ -1650,7 +1646,7 @@ function CategoriaGroupMensal({
                   </tr>
                   {isOpen && g && (
                     <tr className="bg-white/[0.02]">
-                      <td colSpan={8} className="px-3 py-2">
+                      <td colSpan={7} className="px-3 py-2">
                         <table className="w-full text-xs">
                           <thead>
                             <tr className="text-[10px] uppercase tracking-wider text-white/30">
