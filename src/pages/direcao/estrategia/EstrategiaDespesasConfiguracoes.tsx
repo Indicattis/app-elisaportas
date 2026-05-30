@@ -318,10 +318,6 @@ function SimpleBlock({
 /* ---------------- Inline editors ---------------- */
 
 function NumCell({ value, onChange }: { value: number; onChange: (v: number) => void }) {
-  return _NumCell({ value, onChange });
-}
-
-function _NumCell({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   return (
     <input type="number" step="0.01" value={value || ''}
       onChange={(e) => onChange(Number(e.target.value) || 0)}
