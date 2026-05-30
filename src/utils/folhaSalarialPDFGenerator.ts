@@ -4,13 +4,12 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { DespesaPadrao } from '@/hooks/useDespesasPadrao';
 
-const SETORES_ORDEM: { value: string; label: string }[] = [
+const DEFAULT_SETORES_ORDEM: { value: string; label: string }[] = [
   { value: 'vendas',         label: 'Vendas' },
   { value: 'marketing',      label: 'Marketing' },
   { value: 'instalacoes',    label: 'Instalações' },
   { value: 'fabrica',        label: 'Fábrica' },
   { value: 'administrativo', label: 'Administrativo' },
-  { value: '',               label: 'Sem setor' },
 ];
 
 const fmt = (n: number) =>
@@ -32,7 +31,14 @@ function calcTotalFolha(f: DespesaPadrao) {
   return salario + aux + insalub + fgts + prev13 + fgts13 + ferias;
 }
 
-export function exportFolhaSalarialPDF(items: DespesaPadrao[]) {
+export function exportFolhaSalarialPDF(
+  items: DespesaPadrao[],
+  setoresDinamicos?: { value: string; label: string }[],
+) {
+  const base = (setoresDinamicos && setoresDinamicos.length > 0)
+    ? setoresDinamicos
+    : DEFAULT_SETORES_ORDEM;
+  const SETORES_ORDEM = [...base, { value: '', label: 'Sem setor' }];
   const pdf = new jsPDF('l', 'mm', 'a4');
   const pageWidth = pdf.internal.pageSize.width;
   const pageHeight = pdf.internal.pageSize.height;
