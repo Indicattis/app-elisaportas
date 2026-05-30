@@ -1,5 +1,5 @@
 import { useState, useRef, useMemo } from 'react';
-import { Plus, Trash2, Users, Receipt, TrendingDown, Landmark, FileDown, GripVertical, X, Check, FolderPlus, ChevronRight } from 'lucide-react';
+import { Plus, Trash2, Users, Receipt, TrendingDown, Landmark, FileDown, GripVertical, X, Check, FolderPlus, ChevronRight, AlertTriangle } from 'lucide-react';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { formatCurrency } from '@/lib/utils';
 import { useDespesasPadrao, type DespesaPadrao, type DespesaPadraoTipo } from '@/hooks/useDespesasPadrao';
@@ -1079,6 +1079,7 @@ function CategoriaGroup({
             <th className="text-left font-normal pb-2 px-2 w-[18%]">Empresa</th>
             <th className="text-right font-normal pb-2 px-2 w-[18%]">Valor projetado</th>
             <th className="text-center font-normal pb-2 px-2 w-[8%]">DRE</th>
+            <th className="text-center font-normal pb-2 px-2 w-[8%]" title="Marcar para eliminar essa despesa">Eliminar</th>
             <th className="pb-2 pr-1 w-10"></th>
           </tr>
         </thead>
@@ -1120,7 +1121,11 @@ function SortableTipoRow({
     opacity: isDragging ? 0.5 : 1,
   } as React.CSSProperties;
   return (
-    <tr ref={setNodeRef} style={style} className={`border-b border-white/5 hover:bg-white/[0.03] group/row ${!i.ativo ? 'opacity-50' : ''}`}>
+    <tr
+      ref={setNodeRef}
+      style={style}
+      className={`border-b border-white/5 hover:bg-white/[0.03] group/row ${!i.ativo ? 'opacity-50' : ''} ${i.marcada_para_eliminar ? 'border-l-2 border-l-red-500/60' : ''}`}
+    >
       <td className="py-2 w-6 align-middle">
         <button
           {...attributes}
@@ -1157,11 +1162,25 @@ function SortableTipoRow({
           ))}
         </select>
       </td>
-      <td className="px-2 text-right text-white font-medium">
+      <td className={`px-2 text-right font-medium ${i.marcada_para_eliminar ? 'text-red-400 line-through' : 'text-white'}`}>
         <InlineNum value={i.valor_maximo_mensal} onSave={(v) => update(i.id, { valor_maximo_mensal: v })} format="currency" />
       </td>
       <td className="px-2 text-center">
         <Switch checked={i.aparece_no_dre} onCheckedChange={(v) => update(i.id, { aparece_no_dre: v })} />
+      </td>
+      <td className="px-2 text-center">
+        <button
+          type="button"
+          onClick={() => update(i.id, { marcada_para_eliminar: !i.marcada_para_eliminar } as any)}
+          title={i.marcada_para_eliminar ? 'Desmarcar — manter despesa' : 'Marcar para eliminar essa despesa'}
+          className={`inline-flex items-center justify-center w-7 h-7 rounded transition-colors ${
+            i.marcada_para_eliminar
+              ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30'
+              : 'text-white/30 hover:text-red-300 hover:bg-red-500/10'
+          }`}
+        >
+          <AlertTriangle className="w-4 h-4" />
+        </button>
       </td>
       <td className="pr-1 text-right">
         <button onClick={() => remove(i.id)} className="p-1 rounded hover:bg-red-500/20 text-red-300/70 hover:text-red-300">
