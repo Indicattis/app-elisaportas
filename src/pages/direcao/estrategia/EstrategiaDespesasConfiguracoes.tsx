@@ -172,6 +172,7 @@ function FolhaBlock({
   const [insalub, setInsalub] = useState(0);
   const [fgts, setFgts] = useState(8);
   const [prev13, setPrev13] = useState(0);
+  const [addOpen, setAddOpen] = useState(false);
 
   const reset = () => { setNome(''); setEmFolha(true); setSetor(''); setSalario(0); setSalarioMin(1518); setAuxComb(0); setInsalub(0); setFgts(8); setPrev13(0); };
 
@@ -189,7 +190,7 @@ function FolhaBlock({
       fgts_pct: fgts,
       previsao_13_valor: prev13,
     });
-    if (ok) reset();
+    if (ok) { reset(); setAddOpen(false); }
   };
 
   const totalSalarios = items.reduce((s, i) => s + Number(i.salario || 0), 0);
