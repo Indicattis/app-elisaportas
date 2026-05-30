@@ -27,6 +27,8 @@ interface Props {
   defaultMes?: string;
   gasto?: Gasto | null;
   onSaved?: () => void;
+  /** When provided, pre-filters tipos by category (UX hint when opening from a section). */
+  defaultCategoria?: 'fixa' | 'variavel' | 'imposto';
 }
 
 function defaultDateFor(mes?: string) {
@@ -36,7 +38,7 @@ function defaultDateFor(mes?: string) {
   return `${mes}-01`;
 }
 
-export default function GastoFormDialog({ open, onOpenChange, defaultMes, gasto, onSaved }: Props) {
+export default function GastoFormDialog({ open, onOpenChange, defaultMes, gasto, onSaved, defaultCategoria }: Props) {
   const { gastos, saveGasto, updateGasto } = useGastos(defaultMes);
   const { tiposCustos } = useTiposCustos();
   const { bancos } = useBancos();
@@ -52,7 +54,13 @@ export default function GastoFormDialog({ open, onOpenChange, defaultMes, gasto,
   const [saving, setSaving] = useState(false);
   const [showSugestoes, setShowSugestoes] = useState(false);
 
-  const tiposAtivos = useMemo(() => tiposCustos.filter((t) => t.ativo), [tiposCustos]);
+  const tiposAtivos = useMemo(() => {
+    const ativos = tiposCustos.filter((t) => t.ativo);
+    if (defaultCategoria && !gasto) {
+      return ativos.filter((t) => t.tipo === defaultCategoria);
+    }
+    return ativos;
+  }, [tiposCustos, defaultCategoria, gasto]);
 
   const descricoesUnicas = useMemo(
     () => Array.from(new Set(gastos.map((g) => g.descricao).filter(Boolean))) as string[],
