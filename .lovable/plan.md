@@ -1,41 +1,47 @@
 ## Objetivo
 
-Em `/direcao/estrategia/despesas/configuracoes`, expandir o bloco "Folha Salarial padrão" para ter as mesmas colunas usadas no resumo mensal (`/direcao/estrategia/despesas/2026-05`), permitindo definir os valores padrão completos de cada colaborador.
+Em `/direcao/estrategia/despesas/configuracoes`, substituir os blocos **"Despesas Fixas padrão"** e **"Despesas Variáveis padrão"** (que hoje usam a tabela `despesas_padrao`) por uma gestão de **tipos de custos** (`tipos_custos`) igual à de `/financeiro/custos`, separados em duas sessões por `tipo` (fixa / variável).
 
-## Contexto
+Os blocos **Folha Salarial padrão** e **Despesas de Imposto padrão** permanecem inalterados (continuam em `despesas_padrao`).
 
-Todos os campos necessários já existem na tabela `despesas_padrao` (`salario`, `aux_combustivel`, `insalubridade_pct`, `fgts_pct`, `previsao_13_valor`) e no hook `useDespesasPadrao`. Hoje o bloco de Folha em Configurações mostra apenas **Colaborador** e **Salário**. Nenhuma alteração de banco é necessária.
+## Origem dos dados
 
-A coluna "Em folha" da página mensal vem de `admin_users.em_folha`, não de `despesas_padrao` — portanto não faz sentido editá-la no padrão e não será incluída.
+- `useTiposCustos` (`src/hooks/useTiposCustos.ts`) já fornece `tiposCustos`, `saveTipoCusto`, `updateTipoCusto`, `deleteTipoCusto`.
+- Cada `TipoCusto` tem: `nome`, `descricao`, `valor_maximo_mensal`, `tipo` ('fixa' | 'variavel'), `aparece_no_dre`, `ativo`.
 
 ## Mudanças (somente `src/pages/direcao/estrategia/EstrategiaDespesasConfiguracoes.tsx`)
 
-Reformular `FolhaBlock` / `FolhaRow` para refletir as colunas do `BlocoFolha` em `src/components/direcao/estrategia/DespesasResumoTopo.tsx`:
+1. Remover as duas chamadas `<SimpleBlock tipo="fixa" />` e `<SimpleBlock tipo="variavel" />`.
+2. Importar `useTiposCustos` e adicionar dois novos blocos:
+   - **"Tipos de Custos — Fixas"** (filtrando `tipo === 'fixa'`)
+   - **"Tipos de Custos — Variáveis"** (filtrando `tipo === 'variavel'`)
+3. Criar componente local `TiposCustoBlock` reaproveitável (recebe `tipo`, `titulo`, `icon`, lista filtrada + handlers do hook). Estilo glassmorphism igual aos demais blocos.
 
-Cabeçalho (na ordem):
-1. Colaborador
-2. Salário (editável, R$)
-3. Combustível (editável, R$)
-4. Insalub % (editável)
-5. Insalub valor (calculado = salário × insalub%)
-6. FGTS % (editável)
-7. FGTS valor (calculado = salário × fgts%)
-8. Previsão 13° + FGTS 13° (editável previsao_13_valor; exibe `previsao_13 × (1 + fgts%/100)`)
-9. Férias + 1/3 + FGTS (calculado = salário/3 + fgts_valor)
-10. Total (calculado pela mesma `calcTotalFolha`)
-11. Ações (excluir)
+### Colunas da tabela em cada bloco
 
-Comportamento:
-- Reutilizar `InlineNum` para cada campo editável, chamando `update(id, { campo: valor })`.
-- Linha de inserção ganha inputs `NumCell` para os mesmos 5 campos editáveis (fgts default 8) e usa `insert({ tipo: 'folha', nome, salario, aux_combustivel, insalubridade_pct, fgts_pct, previsao_13_valor })`.
-- Rodapé: além do "Total de salários" atual, adicionar "Total da folha" somando `calcTotalFolha` de cada item (espelha o total mensal).
-- Manter overflow-x-auto e `min-w-[1200px]` na tabela para acomodar todas as colunas.
+| Coluna | Edição |
+|---|---|
+| Nome | inline (text) |
+| Descrição | inline (text) |
+| Valor máximo mensal | inline (currency) |
+| Aparece no DRE | switch |
+| Ativo | switch |
+| Ações | excluir |
 
-A função `calcTotalFolha` será duplicada localmente (mesma fórmula do componente mensal) para evitar import cruzado, ou extraída para `src/lib/folhaCalc.ts` se preferir — proposta padrão: duplicação local simples por ser pequena.
+Linha de inserção no rodapé (mesmo padrão visual atual): inputs para Nome / Descrição / Valor + botão `+` que chama `saveTipoCusto({ nome, descricao, valor_maximo_mensal, tipo, aparece_no_dre: true })`. O `tipo` é fixo pela sessão do bloco.
 
-Os blocos `SimpleBlock` (Fixas/Variáveis/Impostos) permanecem inalterados.
+Rodapé do bloco: "Total mensal estimado" = soma de `valor_maximo_mensal` dos itens **ativos** do tipo (espelha o cálculo atual e o de `/financeiro/custos`).
 
-## Sem mudanças necessárias
-- Banco de dados / migrations.
-- Hook `useDespesasPadrao`.
-- Página mensal.
+Itens inativos aparecem na lista (com switch desligado) mas não contam no total — igual ao comportamento de `/financeiro/custos`.
+
+4. Manter `FolhaBlock` (Folha) e `SimpleBlock tipo="imposto"` (Impostos) como estão hoje.
+5. Limpar imports não usados (`Receipt`, `TrendingDown` se ainda fizerem sentido; usar `Receipt`/`TrendingDown` nos novos blocos para manter os mesmos ícones).
+
+## Sem mudanças
+- Banco de dados.
+- Hooks `useDespesasPadrao` e `useTiposCustos`.
+- Página `/financeiro/custos` e a página mensal de despesas.
+
+## Observação sobre dados existentes
+
+Os registros atuais em `despesas_padrao` com `tipo IN ('fixa','variavel')` deixarão de aparecer nesta página (mas continuam no banco). Esses padrões já não influenciam diretamente o resumo mensal de Fixas/Variáveis (que se baseia em `gastos` agrupados por `tipos_custos`), então não há perda funcional. Caso queira limpar esses registros legados depois, faço em separado.
