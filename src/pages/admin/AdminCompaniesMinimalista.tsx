@@ -62,7 +62,7 @@ export default function AdminCompaniesMinimalista() {
       }
     >
       {empresas && empresas.length === 0 ? (
-        <div className="flex flex-col items-center justify-center min-h-[400px] text-center bg-primary/5 border border-dashed border-primary/20 rounded-lg backdrop-blur-xl">
+        <div className="flex flex-col items-center justify-center min-h-[400px] text-center bg-white/5 border border-dashed border-white/20 rounded-lg backdrop-blur-xl">
           <Building2 className="w-16 h-16 text-white/30 mb-4" />
           <h3 className="text-lg font-semibold mb-2 text-white">Nenhuma empresa cadastrada</h3>
           <p className="text-white/60 mb-4">
@@ -81,7 +81,7 @@ export default function AdminCompaniesMinimalista() {
           {empresas?.map((empresa) => (
             <div
               key={empresa.id}
-              className="bg-primary/5 border border-primary/10 backdrop-blur-xl rounded-lg p-4 hover:bg-primary/10 transition-colors"
+              className="bg-white/5 border border-white/10 backdrop-blur-xl rounded-lg p-4 hover:bg-white/10 transition-colors"
             >
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
@@ -118,7 +118,7 @@ export default function AdminCompaniesMinimalista() {
                 )}
               </div>
 
-              <div className="flex items-center justify-between pt-3 border-t border-primary/10">
+              <div className="flex items-center justify-between pt-3 border-t border-white/10">
                 <Badge
                   variant={empresa.ativo ? "default" : "secondary"}
                   className={empresa.ativo ? "bg-green-500/20 text-green-400" : "bg-white/10 text-white/40"}

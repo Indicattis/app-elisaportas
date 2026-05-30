@@ -151,7 +151,6 @@ import ConferenciaAlmoxExecucao from "./pages/producao/ConferenciaAlmoxExecucao"
 import Ordens from "./pages/Ordens";
 import AdminHub from "./pages/admin/AdminHub";
 import AdminPermissionsMinimalista from "./pages/admin/AdminPermissionsMinimalista";
-import AdminRolesMinimalista from "./pages/admin/AdminRolesMinimalista";
 import AdminCompaniesMinimalista from "./pages/admin/AdminCompaniesMinimalista";
 import AdminCompanyEditMinimalista from "./pages/admin/AdminCompanyEditMinimalista";
 import AdminUsersMinimalista from "./pages/admin/AdminUsersMinimalista";
@@ -884,14 +883,6 @@ const App = () => (
                   element={
                     <ProtectedRoute routeKey="admin_permissions">
                       <AdminPermissionsMinimalista />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/admin/roles"
-                  element={
-                    <ProtectedRoute routeKey="admin_roles">
-                      <AdminRolesMinimalista />
                     </ProtectedRoute>
                   }
                 />

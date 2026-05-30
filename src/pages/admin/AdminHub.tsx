@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Shield, Briefcase, Building2, Users, ArrowLeft, FileText } from "lucide-react";
+import { Shield, Building2, Users, ArrowLeft } from "lucide-react";
 
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 import { ProfileDropdownMenu } from "@/components/ProfileDropdownMenu";
@@ -8,9 +8,7 @@ import { ProfileDropdownMenu } from "@/components/ProfileDropdownMenu";
 const menuItems = [
   { label: "Usuários", icon: Users, path: "/admin/users" },
   { label: "Permissões", icon: Shield, path: "/admin/permissions" },
-  { label: "Cargos", icon: Briefcase, path: "/admin/roles" },
   { label: "Empresas", icon: Building2, path: "/admin/companies" },
-  { label: "Logs", icon: FileText, path: "/admin/logs" },
 ];
 
 export default function AdminHub() {
