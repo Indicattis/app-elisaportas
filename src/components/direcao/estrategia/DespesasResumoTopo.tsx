@@ -685,7 +685,7 @@ function BlocoFolha({
                       <EditableCell value={insalubridade_pct} format="percent" onSave={(v) => insertField(colab, 'insalubridade_pct', v)} />
                     )}
                   </td>
-                  <td className={`px-2 text-right ${r ? 'text-white/60' : 'text-white/30'}`}>{formatCurrency(insalubVal)}</td>
+                  <td className="px-2 text-right text-orange-400">{formatCurrency(insalubVal)}</td>
                   <td className={`px-2 text-right text-white/60`}>
                     {r ? (
                       <EditableCell value={fgts_pct} format="percent" onSave={(v) => onPatch(r.id, 'fgts_pct', v)} />
@@ -693,7 +693,7 @@ function BlocoFolha({
                       <EditableCell value={fgts_pct} format="percent" onSave={(v) => insertField(colab, 'fgts_pct', v)} />
                     )}
                   </td>
-                  <td className={`px-2 text-right ${r ? 'text-white/60' : 'text-white/30'}`}>{formatCurrency(fgtsVal)}</td>
+                  <td className="px-2 text-right text-orange-400">{formatCurrency(fgtsVal)}</td>
                   <td className={`px-2 text-right text-white/60`}>
                     {r ? (
                       <EditableCell value={previsao_13_valor} format="currency" onSave={(v) => onPatch(r.id, 'previsao_13_valor', v)} />
