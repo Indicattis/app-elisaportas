@@ -33,6 +33,7 @@ export const useVendasAssinaturaContrato = () => {
           valor_a_receber,
           cidade,
           estado,
+          venda_presencial,
           contrato_url,
           produtos_vendas (
             id,
@@ -207,6 +208,7 @@ export const useVendasAssinaturaContrato = () => {
             cidade: v.cidade || null,
             estado: v.estado || null,
             valor_a_receber_entrega: valorAReceberEntrega,
+            venda_presencial: v.venda_presencial ?? null,
             cores: Array.from(coresUnicas.values()),
             portas_info: portasInfo,
           };

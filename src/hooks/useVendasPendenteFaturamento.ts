@@ -36,6 +36,7 @@ export const useVendasPendenteFaturamento = () => {
           valor_a_receber,
           cidade,
           estado,
+          venda_presencial,
           produtos_vendas (
             id,
             faturamento,
@@ -212,6 +213,7 @@ export const useVendasPendenteFaturamento = () => {
             cidade: v.cidade || null,
             estado: v.estado || null,
             valor_a_receber_entrega: valorAReceberEntrega,
+            venda_presencial: v.venda_presencial ?? null,
             cores: Array.from(coresUnicas.values()),
             portas_info: portasInfo,
           };
