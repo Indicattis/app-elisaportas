@@ -1227,9 +1227,8 @@ function BlocoGastosReadonly({
             ) : rows.map(r => {
               const isOpen = expandedId === r.tipo_custo_id;
               return (
-                <>
+                <React.Fragment key={r.tipo_custo_id}>
                   <tr
-                    key={r.tipo_custo_id}
                     onClick={() => setExpandedId(prev => prev === r.tipo_custo_id ? null : r.tipo_custo_id)}
                     className="border-b border-white/5 hover:bg-white/[0.03] cursor-pointer transition-colors"
                   >
@@ -1245,7 +1244,7 @@ function BlocoGastosReadonly({
                     <td className="px-2 text-right text-white font-medium">{formatCurrency(r.total)}</td>
                   </tr>
                   {isOpen && (
-                    <tr key={`${r.tipo_custo_id}-detail`} className="bg-white/[0.02]">
+                    <tr className="bg-white/[0.02]">
                       <td colSpan={3} className="px-3 py-2">
                         <table className="w-full text-xs">
                           <thead>
@@ -1272,7 +1271,7 @@ function BlocoGastosReadonly({
                       </td>
                     </tr>
                   )}
-                </>
+                </React.Fragment>
               );
             })}
           </tbody>
