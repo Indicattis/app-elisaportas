@@ -386,8 +386,8 @@ function FolhaTableHeader() {
     <thead>
       <tr className="text-[10px] uppercase tracking-wider text-white/40 border-b border-white/10">
         <th className="text-left font-normal pb-2 pl-1">Colaborador</th>
-        <th className="text-center font-normal pb-2 px-2 w-[90px]">Em folha</th>
-        <th className="text-left font-normal pb-2 px-2 w-[140px]">Setor</th>
+        <th className="text-center font-normal pb-2 px-2">Em folha</th>
+        <th className="text-left font-normal pb-2 px-2">Setor</th>
         <th className="text-right font-normal pb-2 px-2 text-emerald-400">Salário</th>
         <th className="text-right font-normal pb-2 px-2">Combustível</th>
         <th className="text-right font-normal pb-2 px-2">Insalub %</th>
@@ -413,7 +413,7 @@ function FolhaTableHeader() {
           <div className="text-[9px] normal-case tracking-normal text-white/30">(salário ÷ 3) ÷ 12</div>
         </th>
         <th className="text-right font-normal pb-2 px-2">Total</th>
-        <th className="pb-2 pr-1 w-10"></th>
+        <th className="pb-2 pr-1"></th>
       </tr>
     </thead>
   );
