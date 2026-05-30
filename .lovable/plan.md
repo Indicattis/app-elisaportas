@@ -1,36 +1,42 @@
-# Lançar gastos na página mensal de despesas
+# Adicionar "Gestão de Empresas" no /administrativo
 
 ## Objetivo
-Em `/direcao/estrategia/despesas/2026-05` (rota `EstrategiaDespesasMes`), permitir que o usuário cadastre novos gastos com o mesmo formulário usado em `/financeiro/gastos`, já pré-filtrado no mês corrente.
+Disponibilizar a mesma página `AdminCompaniesMinimalista` (hoje em `/admin/companies`) também a partir do hub `/administrativo`, com um novo botão "Gestão de Empresas" e rotas próprias dentro de `/administrativo`.
 
 ## Abordagem
-Extrair o formulário/diálogo "Novo Gasto" da página `GastosPage` para um componente reutilizável e usá-lo nas duas rotas.
+Clonar as duas páginas (lista e edição) para `src/pages/administrativo/`, ajustando apenas paths/breadcrumbs para o novo escopo. As rotas antigas em `/admin/companies` permanecem intactas.
 
-### 1. Criar componente `GastoFormDialog`
-- Local: `src/components/financeiro/GastoFormDialog.tsx`
-- Props: `open`, `onOpenChange`, `gasto?` (para edição futura), `defaultMes?` (string `YYYY-MM` para sugerir data dentro do mês), `onSaved?`.
-- Encapsula: estados de formulário, busca de colaboradores, autocomplete de descrição, validação e `saveGasto`/`updateGasto` via `useGastos`.
-- Mantém exatamente o mesmo layout/estilo visual do diálogo atual (glassmorphism).
+## Passos
 
-### 2. Refatorar `GastosPage`
-- Substituir o `<Dialog>` inline pelo novo componente `GastoFormDialog`.
-- Sem mudança visual nem de comportamento.
+### 1. Clonar páginas
+- `src/pages/administrativo/GestaoEmpresasMinimalista.tsx` — cópia de `AdminCompaniesMinimalista.tsx` com:
+  - `backPath="/administrativo"`
+  - breadcrumb: Home → Administrativo → Empresas
+  - navegação para criar/editar: `/administrativo/empresas/nova` e `/administrativo/empresas/:id`
+- `src/pages/administrativo/GestaoEmpresaEditMinimalista.tsx` — cópia de `AdminCompanyEditMinimalista.tsx` com:
+  - `backPath="/administrativo/empresas"`
+  - breadcrumb: Home → Administrativo → Empresas → Nova/Editar
+  - redireciona pós-salvar para `/administrativo/empresas`
 
-### 3. Atualizar `EstrategiaDespesasMes.tsx`
-- Adicionar botão "Novo Gasto" (estilo laranja como em GastosPage) no canto superior direito, ao lado do botão de status Pendente/Alana/Luan.
-- Ao clicar, abre o `GastoFormDialog` com `defaultMes={mesValido}`.
-- Após salvar, recarregar os dados de `DespesasResumoTopo` (passar um `refreshKey` incrementado via prop, ou expor um `onSaved` que faz `setRefreshKey(k => k+1)`).
+### 2. Registrar rotas em `src/App.tsx`
+Adicionar duas novas rotas protegidas (reutilizando o `routeKey="admin_companies"` para não exigir nova permissão):
+- `/administrativo/empresas` → `GestaoEmpresasMinimalista`
+- `/administrativo/empresas/:id` → `GestaoEmpresaEditMinimalista`
 
-### 4. Refresh do resumo
-- Em `DespesasResumoTopo`, aceitar prop opcional `refreshKey: number` e incluí-la nas dependências do efeito que busca os dados, para que o resumo do mês atualize após o lançamento.
+### 3. Adicionar botão no hub
+Em `src/pages/administrativo/AdministrativoHub.tsx`, incluir novo item:
+```
+{ label: "Gestão de Empresas", icon: Building2, path: "/administrativo/empresas", ativo: true }
+```
+posicionado junto aos demais botões (ex.: após "Multas").
 
 ## Detalhes técnicos
-- Hook `useGastos` já suporta save/update; usaremos com filtro do mês atual para que o autocomplete e refetch funcionem.
-- Data padrão do gasto: se `defaultMes` for diferente do mês corrente, usar o dia 1 desse mês; senão, hoje.
-- Nenhuma alteração de banco de dados ou RLS é necessária.
+- Mantemos o hook compartilhado `useEmpresasEmissoras` (sem duplicar lógica de dados).
+- Sem mudanças de banco ou RLS.
+- Permissão: usa `admin_companies` existente; se quiser controle independente futuramente, basta criar nova chave.
 
 ## Arquivos alterados
-- `src/components/financeiro/GastoFormDialog.tsx` (novo)
-- `src/pages/administrativo/GastosPage.tsx` (refatorar para usar o novo componente)
-- `src/pages/direcao/estrategia/EstrategiaDespesasMes.tsx` (botão + dialog)
-- `src/components/direcao/estrategia/DespesasResumoTopo.tsx` (prop `refreshKey`)
+- `src/pages/administrativo/GestaoEmpresasMinimalista.tsx` (novo)
+- `src/pages/administrativo/GestaoEmpresaEditMinimalista.tsx` (novo)
+- `src/App.tsx` (2 rotas novas)
+- `src/pages/administrativo/AdministrativoHub.tsx` (novo item no menu)
