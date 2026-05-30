@@ -8322,6 +8322,7 @@ export type Database = {
           empresa_id: string | null
           id: string
           nome: string
+          ordem: number
           subcategoria_id: string | null
           tipo: string | null
           updated_at: string | null
@@ -8337,6 +8338,7 @@ export type Database = {
           empresa_id?: string | null
           id?: string
           nome: string
+          ordem?: number
           subcategoria_id?: string | null
           tipo?: string | null
           updated_at?: string | null
@@ -8352,6 +8354,7 @@ export type Database = {
           empresa_id?: string | null
           id?: string
           nome?: string
+          ordem?: number
           subcategoria_id?: string | null
           tipo?: string | null
           updated_at?: string | null
