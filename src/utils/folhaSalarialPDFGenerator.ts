@@ -22,8 +22,9 @@ function calcFeriasDefault(salario: number) {
 function calcTotalFolha(f: DespesaPadrao) {
   const salario = Number(f.salario) || 0;
   if (f.em_folha === false) return salario;
+  const baseInsalub = Number(f.salario_minimo) || salario;
   const aux = Number(f.aux_combustivel) || 0;
-  const insalub = salario * (Number(f.insalubridade_pct) || 0) / 100;
+  const insalub = baseInsalub * (Number(f.insalubridade_pct) || 0) / 100;
   const fgts = salario * (Number(f.fgts_pct) || 0) / 100;
   const ferias = f.ferias_valor == null ? calcFeriasDefault(salario) : Number(f.ferias_valor) || 0;
   const prev13 = salario / 12;
@@ -83,21 +84,22 @@ export function exportFolhaSalarialPDF(
   y += 14;
 
   const head = [[
-    'Colaborador', 'Em folha', 'Salário', 'Combustível',
+    'Colaborador', 'Em folha', 'Salário', 'Sal. Mínimo', 'Combustível',
     'Insalub valor', 'FGTS valor', 'Previsão 13°', 'FGTS 13°', 'Férias + 1/3', 'Total',
   ]];
 
   const columnStyles: Record<number, any> = {
-    0: { cellWidth: 50 },
+    0: { cellWidth: 46 },
     1: { cellWidth: 16, halign: 'center' },
-    2: { cellWidth: 26, halign: 'right' },
-    3: { cellWidth: 26, halign: 'right' },
-    4: { cellWidth: 26, halign: 'right' },
-    5: { cellWidth: 26, halign: 'right' },
-    6: { cellWidth: 26, halign: 'right' },
-    7: { cellWidth: 26, halign: 'right' },
-    8: { cellWidth: 26, halign: 'right' },
-    9: { cellWidth: 28, halign: 'right' },
+    2: { cellWidth: 24, halign: 'right' },
+    3: { cellWidth: 24, halign: 'right' },
+    4: { cellWidth: 24, halign: 'right' },
+    5: { cellWidth: 24, halign: 'right' },
+    6: { cellWidth: 24, halign: 'right' },
+    7: { cellWidth: 24, halign: 'right' },
+    8: { cellWidth: 24, halign: 'right' },
+    9: { cellWidth: 24, halign: 'right' },
+    10: { cellWidth: 26, halign: 'right' },
   };
 
   let totalSalarios = 0;
@@ -118,8 +120,9 @@ export function exportFolhaSalarialPDF(
     let subtotal = 0;
     const body = rows.map((i) => {
       const salario = Number(i.salario) || 0;
+      const salarioMin = Number(i.salario_minimo) || salario;
       const desativado = i.em_folha === false;
-      const insalubVal = desativado ? 0 : salario * (Number(i.insalubridade_pct) || 0) / 100;
+      const insalubVal = desativado ? 0 : salarioMin * (Number(i.insalubridade_pct) || 0) / 100;
       const fgtsVal = desativado ? 0 : salario * (Number(i.fgts_pct) || 0) / 100;
       const prev13 = desativado ? 0 : salario / 12;
       const fgts13 = desativado ? 0 : fgtsVal / 12;
@@ -135,6 +138,7 @@ export function exportFolhaSalarialPDF(
         i.nome,
         desativado ? 'Não' : 'Sim',
         fmt(salario),
+        fmt(salarioMin),
         fmt(aux),
         fmt(insalubVal),
         fmt(fgtsVal),
@@ -146,7 +150,7 @@ export function exportFolhaSalarialPDF(
     });
 
     body.push([
-      { content: 'Subtotal do setor', colSpan: 9, styles: { halign: 'right', fontStyle: 'bold', fillColor: [240, 240, 240] } } as any,
+      { content: 'Subtotal do setor', colSpan: 10, styles: { halign: 'right', fontStyle: 'bold', fillColor: [240, 240, 240] } } as any,
       { content: fmt(subtotal), styles: { halign: 'right', fontStyle: 'bold', fillColor: [240, 240, 240] } } as any,
     ]);
 
