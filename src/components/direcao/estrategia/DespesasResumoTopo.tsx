@@ -418,34 +418,35 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
 
   return (
     <div className="grid grid-cols-1 gap-4 mb-6">
-      <BlocoFolha
-        rows={folha}
-        loading={loading}
-        colabs={colabs}
+      <FolhaBlockMensal
         padroesFolha={padroesFolha}
-        onDelete={(id) => setConfirmDel({ kind: 'folha', id })}
-        onPatch={handlePatchFolha}
-        onInsert={handleInsertFolha}
-        onDeletePadrao={async (id) => { await removePadrao(id); reload(); }}
+        folhaRows={folha}
+        loading={loading}
       />
-      <BlocoGastosReadonly
+      <TiposCustoBlockMensal
         titulo="Despesas Fixas"
         icon={<Receipt className="w-4 h-4" />}
-        rows={gastosFixas}
+        tipo="fixa"
+        tiposFull={tiposFull.filter(t => t.tipo === 'fixa')}
+        gastos={gastosFixas}
         loading={loading}
         onAddGasto={onRequestNovoGasto ? () => onRequestNovoGasto('fixa') : undefined}
       />
-      <BlocoGastosReadonly
+      <TiposCustoBlockMensal
         titulo="Despesas Variáveis"
         icon={<TrendingDown className="w-4 h-4" />}
-        rows={gastosVariaveis}
+        tipo="variavel"
+        tiposFull={tiposFull.filter(t => t.tipo === 'variavel')}
+        gastos={gastosVariaveis}
         loading={loading}
         onAddGasto={onRequestNovoGasto ? () => onRequestNovoGasto('variavel') : undefined}
       />
-      <BlocoGastosReadonly
+      <TiposCustoBlockMensal
         titulo="Despesas de Imposto"
         icon={<Landmark className="w-4 h-4" />}
-        rows={gastosImpostos}
+        tipo="imposto"
+        tiposFull={tiposFull.filter(t => t.tipo === 'imposto')}
+        gastos={gastosImpostos}
         loading={loading}
         onAddGasto={onRequestNovoGasto ? () => onRequestNovoGasto('imposto') : undefined}
       />
