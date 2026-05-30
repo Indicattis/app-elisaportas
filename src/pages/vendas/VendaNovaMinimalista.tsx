@@ -138,7 +138,7 @@ export default function VendaNovaMinimalista() {
     valor_a_receber: 0,
     data_prevista_entrega: '',
     tipo_entrega: 'instalacao',
-    venda_presencial: false
+    venda_presencial: null as boolean | null
   });
 
   const [portas, setPortas] = useState<ProdutoVenda[]>([]);
@@ -493,6 +493,11 @@ export default function VendaNovaMinimalista() {
       faltantes.push('Forma de pagamento');
     }
 
+    // Temperatura da venda (Frio/Quente)
+    if (formData.venda_presencial === null || formData.venda_presencial === undefined) {
+      faltantes.push('Temperatura da venda (Frio ou Quente)');
+    }
+
     if (faltantes.length > 0) {
       sonnerToast.error('Campos obrigatórios não preenchidos', {
         description: (
@@ -514,7 +519,7 @@ export default function VendaNovaMinimalista() {
     const validacao = validarDesconto(
       portas,
       formData.forma_pagamento,
-      formData.venda_presencial,
+      formData.venda_presencial === true,
       configLimitesObj
     );
 
@@ -556,7 +561,7 @@ export default function VendaNovaMinimalista() {
       const validacao = validarDesconto(
         produtosComDesconto,
         formData.forma_pagamento,
-        formData.venda_presencial,
+        formData.venda_presencial === true,
         configLimitesObj
       );
 
