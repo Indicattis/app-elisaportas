@@ -1027,6 +1027,10 @@ export default function GestaoColaboradoresDirecao() {
         user={userToTransfer}
         systemRoles={systemRoles || []}
       />
+      <GerenciarSetoresDialog
+        open={setoresDialogOpen}
+        onOpenChange={setSetoresDialogOpen}
+      />
     </MinimalistLayout>
   );
 }
