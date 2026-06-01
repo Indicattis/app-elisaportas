@@ -10,6 +10,7 @@ import { MetodoPagamentoCard, MetodoPagamento, createEmptyMetodo } from "./Metod
 import { useEffect } from "react";
 import { Info } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   aplicarRegraBoleto,
   pagamentoTemBoleto,
@@ -35,9 +36,11 @@ interface PagamentoSectionProps {
   paymentData: PagamentoData;
   onChange: (data: PagamentoData) => void;
   valorTotal: number;
+  vendaPresencial?: boolean | null;
+  onVendaPresencialChange?: (value: boolean) => void;
 }
 
-export function PagamentoSection({ paymentData, onChange, valorTotal }: PagamentoSectionProps) {
+export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPresencial, onVendaPresencialChange }: PagamentoSectionProps) {
   const { data: empresas = [], isLoading: isLoadingEmpresas } = useQuery({
     queryKey: ['empresas-emissoras-ativas'],
     queryFn: async () => {
