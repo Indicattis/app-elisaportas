@@ -9,6 +9,7 @@ import { ptBR } from "date-fns/locale";
 import { MetodoPagamentoCard, MetodoPagamento, createEmptyMetodo } from "./MetodoPagamentoCard";
 import { useEffect } from "react";
 import { Info } from "lucide-react";
+import { cn } from "@/lib/utils";
 import {
   aplicarRegraBoleto,
   pagamentoTemBoleto,
