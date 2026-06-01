@@ -84,6 +84,8 @@ export function DespesasGridContent({
   const tipoClearOverride = mode === 'mes' ? mesTipos.clearOverride : undefined;
   const tipoHasOverride = mode === 'mes' ? mesTipos.hasOverride : undefined;
 
+  const { contagem: contagemGastos } = useContagemGastosPorTipoMes(mode === 'mes' ? (mesReferencia ?? null) : null);
+
   const readOnly = mode === 'mes';
 
   const firstLoadedRef = useRef(false);
