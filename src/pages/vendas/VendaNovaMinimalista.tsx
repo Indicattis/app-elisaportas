@@ -731,52 +731,9 @@ export default function VendaNovaMinimalista() {
           paymentData={pagamentoData}
           onChange={setPagamentoData}
           valorTotal={valorTotalMemo}
+          vendaPresencial={formData.venda_presencial}
+          onVendaPresencialChange={(v) => setFormData(prev => ({ ...prev, venda_presencial: v }))}
         />
-
-        {/* Temperatura da Venda */}
-        <Section title="Temperatura da Venda" icon={CreditCard}>
-            <div className="space-y-2">
-              <Label className={labelClass}>Temperatura da venda *</Label>
-              <RadioGroup
-                value={formData.venda_presencial === null ? '' : formData.venda_presencial ? 'quente' : 'frio'}
-                onValueChange={(v) => setFormData(prev => ({ ...prev, venda_presencial: v === 'quente' }))}
-                className="grid grid-cols-2 gap-3"
-              >
-                <label
-                  htmlFor="temp-frio"
-                  className={cn(
-                    "flex items-center justify-center gap-3 p-4 rounded-lg cursor-pointer transition-all duration-200 border-2",
-                    formData.venda_presencial === false
-                      ? "bg-gradient-to-r from-cyan-500/20 to-cyan-600/10 border-cyan-400/50 shadow-lg shadow-cyan-500/20"
-                      : "bg-cyan-500/5 border-cyan-500/20 hover:border-cyan-400/40 hover:bg-cyan-500/10"
-                  )}
-                >
-                  <RadioGroupItem value="frio" id="temp-frio" className="sr-only" />
-                  <span className="text-lg">❄️</span>
-                  <span className={cn(
-                    "text-sm font-medium",
-                    formData.venda_presencial === false ? "text-cyan-100" : "text-cyan-200/70"
-                  )}>Frio</span>
-                </label>
-                <label
-                  htmlFor="temp-quente"
-                  className={cn(
-                    "flex items-center justify-center gap-3 p-4 rounded-lg cursor-pointer transition-all duration-200 border-2",
-                    formData.venda_presencial === true
-                      ? "bg-gradient-to-r from-orange-500/20 to-orange-600/10 border-orange-400/50 shadow-lg shadow-orange-500/20"
-                      : "bg-orange-500/5 border-orange-500/20 hover:border-orange-400/40 hover:bg-orange-500/10"
-                  )}
-                >
-                  <RadioGroupItem value="quente" id="temp-quente" className="sr-only" />
-                  <span className="text-lg">🔥</span>
-                  <span className={cn(
-                    "text-sm font-medium",
-                    formData.venda_presencial === true ? "text-orange-100" : "text-orange-200/70"
-                  )}>Quente</span>
-                </label>
-              </RadioGroup>
-            </div>
-        </Section>
 
         {/* Informações de Entrega */}
         <Section title="Informações de Entrega" icon={Truck}>
