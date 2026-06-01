@@ -21,7 +21,7 @@ export function exportTiposCustosPDF(
   items: TipoCusto[],
   categorias: CategoriaDespesa[],
 ) {
-  const pdf = new jsPDF("l", "mm", "a4");
+  const pdf = new jsPDF("p", "mm", "a4");
   const pageWidth = pdf.internal.pageSize.width;
   const pageHeight = pdf.internal.pageSize.height;
   const margin = 10;
@@ -85,11 +85,11 @@ export function exportTiposCustosPDF(
 
   const head = [["Nome", "Descrição", "Valor projetado", "DRE", "Ativo"]];
   const columnStyles: Record<number, any> = {
-    0: { cellWidth: 70 },
+    0: { cellWidth: 55 },
     1: { cellWidth: "auto" },
-    2: { cellWidth: 38, halign: "right" },
-    3: { cellWidth: 20, halign: "center" },
-    4: { cellWidth: 20, halign: "center" },
+    2: { cellWidth: 32, halign: "right" },
+    3: { cellWidth: 16, halign: "center" },
+    4: { cellWidth: 16, halign: "center" },
   };
 
   let totalGeral = 0;
@@ -142,7 +142,7 @@ export function exportTiposCustosPDF(
       startY: y + 2,
       styles: {
         fontSize: 8,
-        cellPadding: 2,
+        cellPadding: 1.6,
         valign: "middle",
         lineColor: [220, 220, 220],
         lineWidth: 0.2,

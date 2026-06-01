@@ -40,7 +40,7 @@ export function exportFolhaSalarialPDF(
     ? setoresDinamicos
     : DEFAULT_SETORES_ORDEM;
   const SETORES_ORDEM = [...base, { value: '', label: 'Sem setor' }];
-  const pdf = new jsPDF('l', 'mm', 'a4');
+  const pdf = new jsPDF('p', 'mm', 'a4');
   const pageWidth = pdf.internal.pageSize.width;
   const pageHeight = pdf.internal.pageSize.height;
   const margin = 10;
@@ -84,22 +84,22 @@ export function exportFolhaSalarialPDF(
   y += 14;
 
   const head = [[
-    'Colaborador', 'Em folha', 'Salário', 'Sal. Mínimo', 'Combustível',
-    'Insalub valor', 'FGTS valor', 'Previsão 13°', 'FGTS 13°', 'Férias + 1/3', 'Total',
+    'Colaborador', 'Em folha', 'Salário', 'Sal. Mín.', 'Comb.',
+    'Insalub.', 'FGTS', 'Prev. 13°', 'FGTS 13°', 'Férias', 'Total',
   ]];
 
   const columnStyles: Record<number, any> = {
-    0: { cellWidth: 46 },
-    1: { cellWidth: 16, halign: 'center' },
-    2: { cellWidth: 24, halign: 'right' },
-    3: { cellWidth: 24, halign: 'right' },
-    4: { cellWidth: 24, halign: 'right' },
-    5: { cellWidth: 24, halign: 'right' },
-    6: { cellWidth: 24, halign: 'right' },
-    7: { cellWidth: 24, halign: 'right' },
-    8: { cellWidth: 24, halign: 'right' },
-    9: { cellWidth: 24, halign: 'right' },
-    10: { cellWidth: 26, halign: 'right' },
+    0: { cellWidth: 36 },
+    1: { cellWidth: 11, halign: 'center' },
+    2: { cellWidth: 17, halign: 'right' },
+    3: { cellWidth: 17, halign: 'right' },
+    4: { cellWidth: 15, halign: 'right' },
+    5: { cellWidth: 16, halign: 'right' },
+    6: { cellWidth: 16, halign: 'right' },
+    7: { cellWidth: 16, halign: 'right' },
+    8: { cellWidth: 16, halign: 'right' },
+    9: { cellWidth: 16, halign: 'right' },
+    10: { cellWidth: 18, halign: 'right' },
   };
 
   let totalSalarios = 0;
@@ -158,8 +158,8 @@ export function exportFolhaSalarialPDF(
       head,
       body,
       startY: y + 2,
-      styles: { fontSize: 7.5, cellPadding: 1.8, valign: 'middle', lineColor: [220, 220, 220], lineWidth: 0.2 },
-      headStyles: { fillColor: primaryColor, textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 7.5, halign: 'center' },
+      styles: { fontSize: 6.8, cellPadding: 1.4, valign: 'middle', lineColor: [220, 220, 220], lineWidth: 0.2 },
+      headStyles: { fillColor: primaryColor, textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 6.8, halign: 'center' },
       columnStyles,
       margin: { left: margin, right: margin },
       theme: 'striped',
