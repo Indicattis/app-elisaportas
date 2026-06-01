@@ -363,7 +363,7 @@ export default function TabelaPrecos({
                               currency: 'BRL' 
                             })}
                           </TableCell>
-                          {!hideLucroColumn && (() => {
+                          {!hideLucroColumn && !readOnly && (() => {
                             if (lucroInfo.value === null) {
                               return (
                                 <TableCell className="text-right hidden md:table-cell text-white/30">—</TableCell>
@@ -381,7 +381,7 @@ export default function TabelaPrecos({
                               </TableCell>
                             );
                           })()}
-                          {!hideLucroColumn && (() => {
+                          {!hideLucroColumn && !readOnly && (() => {
                             if (lucroInfo.value === null) {
                               return (
                                 <TableCell className="text-right hidden md:table-cell text-white/30">—</TableCell>
