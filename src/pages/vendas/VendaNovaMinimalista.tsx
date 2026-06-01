@@ -26,6 +26,7 @@ import { SelecionarAcessoriosModal } from '@/components/vendas/SelecionarAcessor
 import { DescontoVendaModal } from '@/components/vendas/DescontoVendaModal';
 import { CreditoVendaModal } from '@/components/vendas/CreditoVendaModal';
 import { AutorizacaoDescontoModal } from '@/components/vendas/AutorizacaoDescontoModal';
+import { DescontoAcrescimoSection, AjusteGlobal } from '@/components/vendas/DescontoAcrescimoSection';
 import { PinturaRapidaModal } from '@/components/vendas/PinturaRapidaModal';
 import { PinturaItemCatalogoModal } from '@/components/vendas/PinturaItemCatalogoModal';
 import { validarDesconto, getTipoAutorizacaoNecessaria, ConfigLimites } from '@/utils/descontoVendasRules';
