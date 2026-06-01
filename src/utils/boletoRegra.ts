@@ -10,6 +10,19 @@ import type { PagamentoData } from "@/components/vendas/PagamentoSection";
 export const BOLETO_ENTRADA_PERCENTUAL = 70;
 export const BOLETO_INTERVALO_DIAS = 21;
 
+/**
+ * Acima deste valor (R$), o intervalo entre boletos pode ser
+ * escolhido entre as opções flexíveis abaixo. Caso contrário, fica travado em 21 dias.
+ */
+export const BOLETO_LIMITE_INTERVALO_FLEXIVEL = 60000;
+export const BOLETO_INTERVALOS_FLEXIVEIS = [21, 36, 42];
+
+export function getIntervalosBoletoPermitidos(valorTotal: number): number[] {
+  return valorTotal > BOLETO_LIMITE_INTERVALO_FLEXIVEL
+    ? BOLETO_INTERVALOS_FLEXIVEIS
+    : [BOLETO_INTERVALO_DIAS];
+}
+
 const round2 = (v: number) => Math.round(v * 100) / 100;
 
 export function pagamentoTemBoleto(p: PagamentoData): boolean {
@@ -38,6 +51,12 @@ export function aplicarRegraBoleto(p: PagamentoData, valorTotal: number): Pagame
   // Origem dos dados do boleto: o método que já era boleto
   const sourceBoleto: MetodoPagamento = m2?.tipo === "boleto" ? m2 : m1;
 
+  const intervalosPermitidos = getIntervalosBoletoPermitidos(valorTotal);
+  const intervaloAtual = sourceBoleto?.intervalo_boletos;
+  const intervaloFinal = intervalosPermitidos.includes(intervaloAtual)
+    ? intervaloAtual
+    : BOLETO_INTERVALO_DIAS;
+
   const novoM1: MetodoPagamento = {
     ...createEmptyMetodo(),
     tipo: "a_vista",
@@ -54,7 +73,7 @@ export function aplicarRegraBoleto(p: PagamentoData, valorTotal: number): Pagame
     data_pagamento: sourceBoleto?.data_pagamento,
     empresa_receptora_id: sourceBoleto?.empresa_receptora_id || novoM1.empresa_receptora_id || "",
     parcelas_boleto: sourceBoleto?.parcelas_boleto && sourceBoleto.parcelas_boleto > 0 ? sourceBoleto.parcelas_boleto : 1,
-    intervalo_boletos: BOLETO_INTERVALO_DIAS,
+    intervalo_boletos: intervaloFinal,
     ja_pago: sourceBoleto?.ja_pago ?? false,
     comprovante_file: sourceBoleto?.comprovante_file ?? null,
   };
@@ -72,7 +91,7 @@ export function aplicarRegraBoleto(p: PagamentoData, valorTotal: number): Pagame
     Math.abs((m1?.valor || 0) - novoM1.valor) < 0.01 &&
     m2?.tipo === novoM2.tipo &&
     Math.abs((m2?.valor || 0) - novoM2.valor) < 0.01 &&
-    m2?.intervalo_boletos === BOLETO_INTERVALO_DIAS
+    m2?.intervalo_boletos === novoM2.intervalo_boletos
   ) {
     return p;
   }
@@ -95,8 +114,15 @@ export function validarRegraBoleto(
   if (Math.abs((m1.valor || 0) - entrada) > 0.02 || Math.abs((m2.valor || 0) - restante) > 0.02) {
     return { ok: false, mensagem: `Boleto exige ${BOLETO_ENTRADA_PERCENTUAL}% de entrada à vista e ${100 - BOLETO_ENTRADA_PERCENTUAL}% no boleto.` };
   }
-  if (m2.intervalo_boletos !== BOLETO_INTERVALO_DIAS) {
-    return { ok: false, mensagem: `Boleto exige intervalo de ${BOLETO_INTERVALO_DIAS} dias entre parcelas.` };
+  const intervalosPermitidos = getIntervalosBoletoPermitidos(valorTotal);
+  if (!intervalosPermitidos.includes(m2.intervalo_boletos)) {
+    const lista = intervalosPermitidos.join(', ');
+    return {
+      ok: false,
+      mensagem: valorTotal > BOLETO_LIMITE_INTERVALO_FLEXIVEL
+        ? `Para vendas acima de R$ ${BOLETO_LIMITE_INTERVALO_FLEXIVEL.toLocaleString('pt-BR')}, o intervalo do boleto deve ser ${lista} dias.`
+        : `Boleto exige intervalo de ${BOLETO_INTERVALO_DIAS} dias entre parcelas.`,
+    };
   }
   return { ok: true };
 }
