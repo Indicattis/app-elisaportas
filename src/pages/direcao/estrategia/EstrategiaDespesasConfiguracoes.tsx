@@ -1,5 +1,7 @@
 import { useState, useRef, useMemo } from 'react';
 import { Plus, Trash2, Users, Receipt, TrendingDown, Landmark, FileDown, GripVertical, X, Check, FolderPlus, ChevronRight, AlertTriangle, FileText, RotateCcw } from 'lucide-react';
+import GastoFormDialog from '@/components/financeiro/GastoFormDialog';
+import { useGastosPorTipoMes } from '@/hooks/useGastosPorTipoMes';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { formatCurrency } from '@/lib/utils';
 import { useDespesasPadrao, type DespesaPadrao, type DespesaPadraoTipo } from '@/hooks/useDespesasPadrao';
@@ -124,6 +126,7 @@ export function DespesasGridContent({
             readOnly={readOnly}
             clearOverride={tipoClearOverride}
             hasOverride={tipoHasOverride}
+            mesReferencia={mesReferencia ?? null}
           />
           <TiposCustoBlock
             titulo="Tipos de Custos — Variáveis"
@@ -141,6 +144,7 @@ export function DespesasGridContent({
             readOnly={readOnly}
             clearOverride={tipoClearOverride}
             hasOverride={tipoHasOverride}
+            mesReferencia={mesReferencia ?? null}
           />
           <TiposCustoBlock
             titulo="Tipos de Custos — Impostos"
@@ -158,6 +162,7 @@ export function DespesasGridContent({
             readOnly={readOnly}
             clearOverride={tipoClearOverride}
             hasOverride={tipoHasOverride}
+            mesReferencia={mesReferencia ?? null}
           />
         </div>
       );
@@ -472,7 +477,7 @@ function FolhaRowCells({
         </div>
       </td>
       <td className="px-2 text-center">
-        <Switch checked={item.em_folha} onCheckedChange={(v) => update(item.id, { em_folha: v })} />
+        <Switch checked={item.em_folha} disabled={readOnly} onCheckedChange={(v) => update(item.id, { em_folha: v })} />
       </td>
       <td className="px-2">
         <select value={item.setor ?? ''} disabled={readOnly}
@@ -894,7 +899,7 @@ function InlineNum({ value, onSave, format }: { value: number; onSave: (v: numbe
 function TiposCustoBlock({
   titulo, icon, tipo, items, save, update, remove,
   allTipos, contarGastosVinculados, realocarEExcluir, forcarExclusao, reorderTipos,
-  readOnly, clearOverride, hasOverride,
+  readOnly, clearOverride, hasOverride, mesReferencia,
 }: {
   titulo: string;
   icon: React.ReactNode;
@@ -911,6 +916,7 @@ function TiposCustoBlock({
   readOnly?: boolean;
   clearOverride?: (id: string) => Promise<boolean>;
   hasOverride?: (id: string) => boolean;
+  mesReferencia?: string | null;
 }) {
   const [nome, setNome] = useState('');
   const [descricao, setDescricao] = useState('');
@@ -1062,6 +1068,10 @@ function TiposCustoBlock({
           hideHeader
           reorderRows={reorderTipos}
           hideCategoria={tipo === 'variavel'}
+          readOnly={readOnly}
+          mesReferencia={mesReferencia ?? null}
+          clearOverride={clearOverride}
+          hasOverride={hasOverride}
         />
       </div>
 
@@ -1191,6 +1201,7 @@ function categoriaSelectClass(_list: CategoriaDespesa[], v?: string | null) {
 
 function CategoriaGroup({
   cat, palette, rows, categorias, empresasAtivas, update, remove, dragHandle, rename, removeCat, expanded, onToggle, hideHeader, reorderRows, hideCategoria,
+  readOnly, mesReferencia, clearOverride, hasOverride,
 }: {
   cat: CategoriaDespesa | null;
   palette: { color: string; dot: string };
@@ -1207,6 +1218,10 @@ function CategoriaGroup({
   hideHeader?: boolean;
   reorderRows?: (orderedIds: string[]) => void | Promise<any>;
   hideCategoria?: boolean;
+  readOnly?: boolean;
+  mesReferencia?: string | null;
+  clearOverride?: (id: string) => Promise<boolean>;
+  hasOverride?: (id: string) => boolean;
 }) {
   const subtotal = rows.reduce((s, i) => s + Number(i.valor_maximo_mensal || 0), 0);
   const rowSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
@@ -1285,6 +1300,10 @@ function CategoriaGroup({
                   update={update}
                   remove={remove}
                   hideCategoria={hideCategoria}
+                  readOnly={readOnly}
+                  mesReferencia={mesReferencia ?? null}
+                  clearOverride={clearOverride}
+                  hasOverride={hasOverride}
                 />
               ))}
             </tbody>
@@ -1298,6 +1317,7 @@ function CategoriaGroup({
 
 function SortableTipoRow({
   i, categorias, empresasAtivas, update, remove, hideCategoria,
+  readOnly, mesReferencia, clearOverride, hasOverride,
 }: {
   i: TipoCusto;
   categorias: CategoriaDespesa[];
@@ -1305,6 +1325,10 @@ function SortableTipoRow({
   update: ReturnType<typeof useTiposCustos>['updateTipoCusto'];
   remove: (id: string) => void | Promise<any>;
   hideCategoria?: boolean;
+  readOnly?: boolean;
+  mesReferencia?: string | null;
+  clearOverride?: (id: string) => Promise<boolean>;
+  hasOverride?: (id: string) => boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: i.id });
   const style = {
@@ -1312,38 +1336,62 @@ function SortableTipoRow({
     transition,
     opacity: isDragging ? 0.5 : 1,
   } as React.CSSProperties;
+  const [expanded, setExpanded] = useState(false);
+  const colCount = 1 /* drag */ + 1 /* nome */ + 1 /* desc */ + (hideCategoria ? 0 : 1) + 1 /* valor */ + 1 /* DRE */ + 1 /* elim */ + 1 /* actions */;
   return (
+    <>
     <tr
       ref={setNodeRef}
       style={style}
-      className={`border-b border-white/5 hover:bg-white/[0.03] group/row ${!i.ativo ? 'opacity-50' : ''} ${i.marcada_para_eliminar ? 'border-l-2 border-l-red-500/60' : ''}`}
+      className={`border-b border-white/5 hover:bg-white/[0.03] group/row ${!i.ativo ? 'opacity-50' : ''} ${i.marcada_para_eliminar ? 'border-l-2 border-l-red-500/60' : ''} ${readOnly ? 'cursor-pointer' : ''}`}
+      onClick={readOnly ? () => setExpanded(v => !v) : undefined}
     >
       <td className="py-2 w-6 align-middle">
-        <button
-          {...attributes}
-          {...listeners}
-          type="button"
-          className="p-0.5 rounded hover:bg-white/10 text-white/30 hover:text-white/70 cursor-grab active:cursor-grabbing opacity-0 group-hover/row:opacity-100 transition-opacity"
-          title="Arrastar para reordenar"
-        >
-          <GripVertical className="w-3.5 h-3.5" />
-        </button>
+        {readOnly ? (
+          <ChevronRight className={`w-4 h-4 text-white/40 transition-transform ${expanded ? 'rotate-90 text-white/70' : ''}`} />
+        ) : (
+          <button
+            {...attributes}
+            {...listeners}
+            type="button"
+            className="p-0.5 rounded hover:bg-white/10 text-white/30 hover:text-white/70 cursor-grab active:cursor-grabbing opacity-0 group-hover/row:opacity-100 transition-opacity"
+            title="Arrastar para reordenar"
+          >
+            <GripVertical className="w-3.5 h-3.5" />
+          </button>
+        )}
       </td>
       <td className="py-2 pl-1 text-white/90">
-        <InlineText value={i.nome} onSave={(v) => update(i.id, { nome: v })} />
+        {readOnly
+          ? <span className="px-1 py-0.5">{i.nome}</span>
+          : <InlineText value={i.nome} onSave={(v) => update(i.id, { nome: v })} />}
       </td>
       <td className="px-1 text-center">
-        <DescricaoPopover
-          value={i.descricao}
-          onSave={(v) => update(i.id, { descricao: v || null })}
-        />
+        {readOnly ? (
+          i.descricao ? (
+            <span title={i.descricao} className="inline-flex items-center justify-center w-7 h-7 text-blue-300/70">
+              <FileText className="w-4 h-4" />
+            </span>
+          ) : (
+            <span className="inline-flex items-center justify-center w-7 h-7 text-white/15">
+              <FileText className="w-4 h-4" />
+            </span>
+          )
+        ) : (
+          <DescricaoPopover
+            value={i.descricao}
+            onSave={(v) => update(i.id, { descricao: v || null })}
+          />
+        )}
       </td>
       {!hideCategoria && (
         <td className="px-2">
           <select
             value={i.categoria_id || ''}
+            disabled={readOnly}
             onChange={(e) => update(i.id, { categoria_id: e.target.value || null } as any)}
             className={categoriaSelectClass(categorias, i.categoria_id)}
+            onClick={(e) => e.stopPropagation()}
           >
             <option value="" className="bg-slate-900 text-white">— Sem categoria</option>
             {categorias.map(c => <option key={c.id} value={c.id} className="bg-slate-900 text-white">{c.nome}</option>)}
@@ -1351,17 +1399,20 @@ function SortableTipoRow({
         </td>
       )}
       <td className={`px-2 text-right font-medium ${i.marcada_para_eliminar ? 'text-red-400 line-through' : 'text-white'}`}>
-        <InlineNum value={i.valor_maximo_mensal} onSave={(v) => update(i.id, { valor_maximo_mensal: v })} format="currency" />
+        {readOnly
+          ? <span className="px-1 py-0.5">{formatCurrency(Number(i.valor_maximo_mensal) || 0)}</span>
+          : <InlineNum value={i.valor_maximo_mensal} onSave={(v) => update(i.id, { valor_maximo_mensal: v })} format="currency" />}
       </td>
       <td className="px-2 text-center">
-        <Switch checked={i.aparece_no_dre} onCheckedChange={(v) => update(i.id, { aparece_no_dre: v })} />
+        <Switch checked={i.aparece_no_dre} disabled={readOnly} onCheckedChange={(v) => update(i.id, { aparece_no_dre: v })} />
       </td>
       <td className="px-2 text-center">
         <button
           type="button"
-          onClick={() => update(i.id, { marcada_para_eliminar: !i.marcada_para_eliminar } as any)}
+          disabled={readOnly}
+          onClick={(e) => { e.stopPropagation(); if (!readOnly) update(i.id, { marcada_para_eliminar: !i.marcada_para_eliminar } as any); }}
           title={i.marcada_para_eliminar ? 'Desmarcar — manter despesa' : 'Marcar para eliminar essa despesa'}
-          className={`inline-flex items-center justify-center w-7 h-7 rounded transition-colors ${
+          className={`inline-flex items-center justify-center w-7 h-7 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
             i.marcada_para_eliminar
               ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30'
               : 'text-white/30 hover:text-red-300 hover:bg-red-500/10'
@@ -1371,11 +1422,31 @@ function SortableTipoRow({
         </button>
       </td>
       <td className="pr-1 text-right">
-        <button onClick={() => remove(i.id)} className="p-1 rounded hover:bg-red-500/20 text-red-300/70 hover:text-red-300">
-          <Trash2 className="w-4 h-4" />
-        </button>
+        {readOnly ? (
+          hasOverride?.(i.id) && clearOverride ? (
+            <button
+              onClick={(e) => { e.stopPropagation(); clearOverride(i.id); }}
+              title="Restaurar valor do padrão"
+              className="p-1 rounded hover:bg-blue-500/20 text-blue-300/70 hover:text-blue-300"
+            >
+              <RotateCcw className="w-4 h-4" />
+            </button>
+          ) : null
+        ) : (
+          <button onClick={() => remove(i.id)} className="p-1 rounded hover:bg-red-500/20 text-red-300/70 hover:text-red-300">
+            <Trash2 className="w-4 h-4" />
+          </button>
+        )}
       </td>
     </tr>
+    {readOnly && expanded && (
+      <tr className="bg-white/[0.02]">
+        <td colSpan={colCount} className="px-4 py-3">
+          <GastosDoTipoExpand tipoCustoId={i.id} tipoNome={i.nome} categoria={i.tipo} mes={mesReferencia ?? null} />
+        </td>
+      </tr>
+    )}
+    </>
   );
 }
 
@@ -1530,6 +1601,92 @@ function SortableCategoriaGroup(props: {
         expanded={props.expanded}
         onToggle={props.onToggle}
       />
+    </div>
+  );
+}
+
+/* ---------------- Gastos do tipo (apenas modo mês) ---------------- */
+
+function GastosDoTipoExpand({
+  tipoCustoId, tipoNome, categoria, mes,
+}: {
+  tipoCustoId: string;
+  tipoNome: string;
+  categoria: 'fixa' | 'variavel' | 'imposto';
+  mes: string | null;
+}) {
+  const { gastos, loading, refetch, deleteGasto } = useGastosPorTipoMes(tipoCustoId, mes, !!mes);
+  const [open, setOpen] = useState(false);
+  const total = gastos.reduce((s, g) => s + Number(g.valor || 0), 0);
+
+  return (
+    <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
+      <div className="flex items-center justify-between">
+        <div className="text-xs text-white/60">
+          Gastos vinculados a <span className="text-white/90 font-medium">{tipoNome}</span> no mês
+        </div>
+        {mes && (
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-400/30 text-xs text-emerald-200 hover:text-emerald-100 transition-colors"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Novo gasto
+          </button>
+        )}
+      </div>
+
+      {loading ? (
+        <div className="text-xs text-white/40 py-2">Carregando…</div>
+      ) : gastos.length === 0 ? (
+        <div className="text-xs text-white/40 py-2">Nenhum gasto registrado neste mês.</div>
+      ) : (
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-[10px] uppercase tracking-wider text-white/40 border-b border-white/10">
+              <th className="text-left font-normal pb-1.5 pl-1 w-[110px]">Data</th>
+              <th className="text-left font-normal pb-1.5 px-2">Descrição</th>
+              <th className="text-right font-normal pb-1.5 px-2 w-[140px]">Valor</th>
+              <th className="pb-1.5 pr-1 w-10"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {gastos.map(g => (
+              <tr key={g.id} className="border-b border-white/5">
+                <td className="py-1.5 pl-1 text-white/70 tabular-nums">{g.data.split('-').reverse().join('/')}</td>
+                <td className="px-2 text-white/80">{g.descricao || '—'}</td>
+                <td className="px-2 text-right text-white tabular-nums">{formatCurrency(Number(g.valor) || 0)}</td>
+                <td className="pr-1 text-right">
+                  <button
+                    onClick={() => deleteGasto(g.id)}
+                    className="p-1 rounded hover:bg-red-500/20 text-red-300/70 hover:text-red-300"
+                    title="Excluir gasto"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </td>
+              </tr>
+            ))}
+            <tr>
+              <td colSpan={2} className="pt-2 text-right text-[11px] uppercase tracking-wider text-white/50">Total no mês</td>
+              <td className="pt-2 text-right text-white font-semibold tabular-nums">{formatCurrency(total)}</td>
+              <td />
+            </tr>
+          </tbody>
+        </table>
+      )}
+
+      {mes && (
+        <GastoFormDialog
+          open={open}
+          onOpenChange={setOpen}
+          defaultMes={mes}
+          defaultTipoCustoId={tipoCustoId}
+          defaultCategoria={categoria}
+          onSaved={refetch}
+        />
+      )}
     </div>
   );
 }
