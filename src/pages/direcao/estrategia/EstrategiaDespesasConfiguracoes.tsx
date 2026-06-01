@@ -84,7 +84,7 @@ export function DespesasGridContent({
   const tipoClearOverride = mode === 'mes' ? mesTipos.clearOverride : undefined;
   const tipoHasOverride = mode === 'mes' ? mesTipos.hasOverride : undefined;
 
-  const { contagem: contagemGastos } = useContagemGastosPorTipoMes(mode === 'mes' ? (mesReferencia ?? null) : null);
+  const { contagem: contagemGastos, totais: totaisGastos } = useContagemGastosPorTipoMes(mode === 'mes' ? (mesReferencia ?? null) : null);
 
   const readOnly = mode === 'mes';
 
@@ -131,6 +131,7 @@ export function DespesasGridContent({
             hasOverride={tipoHasOverride}
             mesReferencia={mesReferencia ?? null}
             contagemGastos={contagemGastos}
+            totaisGastos={totaisGastos}
           />
           <TiposCustoBlock
             titulo="Tipos de Custos — Variáveis"
@@ -150,6 +151,7 @@ export function DespesasGridContent({
             hasOverride={tipoHasOverride}
             mesReferencia={mesReferencia ?? null}
             contagemGastos={contagemGastos}
+            totaisGastos={totaisGastos}
           />
           <TiposCustoBlock
             titulo="Tipos de Custos — Impostos"
@@ -169,6 +171,7 @@ export function DespesasGridContent({
             hasOverride={tipoHasOverride}
             mesReferencia={mesReferencia ?? null}
             contagemGastos={contagemGastos}
+            totaisGastos={totaisGastos}
           />
         </div>
       );
