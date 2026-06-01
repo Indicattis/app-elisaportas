@@ -1632,8 +1632,8 @@ function GastosDoTipoExpand({
   const [open, setOpen] = useState(false);
   const total = gastos.reduce((s, g) => s + Number(g.valor || 0), 0);
   const catCols = hideCategoria ? 0 : 1;
-  // Parent columns: drag(1) nome(1) desc(1) [cat] valor(1) DRE(1) elim(1) gastos(1) actions(1)
-  // Slim row layout: empty(1) data(nome col) descricao(desc col) [cat empty] valor(valor col) empty(DRE) empty(elim) empty(gastos) actions(1)
+  // Parent columns: drag(1) nome(1) desc(1) [cat] gastos(1) totalGasto(1) valor(1) actions(1)
+  // Slim row layout: empty(1) data(nome col) descricao(desc col) [cat empty] empty(gastos) empty(totalGasto) valor(valor col) actions(1)
   const stop = (e: React.MouseEvent) => e.stopPropagation();
   return (
     <>
