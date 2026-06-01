@@ -84,7 +84,7 @@ export function DespesasGridContent({
   const tipoClearOverride = mode === 'mes' ? mesTipos.clearOverride : undefined;
   const tipoHasOverride = mode === 'mes' ? mesTipos.hasOverride : undefined;
 
-  const { contagem: contagemGastos } = useContagemGastosPorTipoMes(mode === 'mes' ? (mesReferencia ?? null) : null);
+  const { contagem: contagemGastos, totais: totaisGastos } = useContagemGastosPorTipoMes(mode === 'mes' ? (mesReferencia ?? null) : null);
 
   const readOnly = mode === 'mes';
 
@@ -131,6 +131,7 @@ export function DespesasGridContent({
             hasOverride={tipoHasOverride}
             mesReferencia={mesReferencia ?? null}
             contagemGastos={contagemGastos}
+            totaisGastos={totaisGastos}
           />
           <TiposCustoBlock
             titulo="Tipos de Custos — Variáveis"
@@ -150,6 +151,7 @@ export function DespesasGridContent({
             hasOverride={tipoHasOverride}
             mesReferencia={mesReferencia ?? null}
             contagemGastos={contagemGastos}
+            totaisGastos={totaisGastos}
           />
           <TiposCustoBlock
             titulo="Tipos de Custos — Impostos"
@@ -169,6 +171,7 @@ export function DespesasGridContent({
             hasOverride={tipoHasOverride}
             mesReferencia={mesReferencia ?? null}
             contagemGastos={contagemGastos}
+            totaisGastos={totaisGastos}
           />
         </div>
       );
@@ -905,7 +908,7 @@ function InlineNum({ value, onSave, format }: { value: number; onSave: (v: numbe
 function TiposCustoBlock({
   titulo, icon, tipo, items, save, update, remove,
   allTipos, contarGastosVinculados, realocarEExcluir, forcarExclusao, reorderTipos,
-  readOnly, clearOverride, hasOverride, mesReferencia,
+  readOnly, clearOverride, hasOverride, mesReferencia, contagemGastos, totaisGastos,
 }: {
   titulo: string;
   icon: React.ReactNode;
@@ -924,6 +927,7 @@ function TiposCustoBlock({
   hasOverride?: (id: string) => boolean;
   mesReferencia?: string | null;
   contagemGastos?: Record<string, number>;
+  totaisGastos?: Record<string, number>;
 }) {
   const [nome, setNome] = useState('');
   const [descricao, setDescricao] = useState('');
@@ -1078,6 +1082,8 @@ function TiposCustoBlock({
           mesReferencia={mesReferencia ?? null}
           clearOverride={clearOverride}
           hasOverride={hasOverride}
+          contagemGastos={contagemGastos}
+          totaisGastos={totaisGastos}
         />
       </div>
 
@@ -1207,7 +1213,7 @@ function categoriaSelectClass(_list: CategoriaDespesa[], v?: string | null) {
 
 function CategoriaGroup({
   cat, palette, rows, categorias, empresasAtivas, update, remove, dragHandle, rename, removeCat, expanded, onToggle, hideHeader, reorderRows, hideCategoria,
-  readOnly, mesReferencia, clearOverride, hasOverride, contagemGastos,
+  readOnly, mesReferencia, clearOverride, hasOverride, contagemGastos, totaisGastos,
 }: {
   cat: CategoriaDespesa | null;
   palette: { color: string; dot: string };
@@ -1229,6 +1235,7 @@ function CategoriaGroup({
   clearOverride?: (id: string) => Promise<boolean>;
   hasOverride?: (id: string) => boolean;
   contagemGastos?: Record<string, number>;
+  totaisGastos?: Record<string, number>;
 }) {
   const subtotal = rows.reduce((s, i) => s + Number(i.valor_maximo_mensal || 0), 0);
   const rowSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
@@ -1293,6 +1300,7 @@ function CategoriaGroup({
             <th className="text-center font-normal pb-2 px-2 w-[8%]">DRE</th>
             <th className="text-center font-normal pb-2 px-2 w-[8%]" title="Marcar para eliminar essa despesa">Eliminar</th>
             <th className="text-center font-normal pb-2 px-2 w-[8%]">Gastos</th>
+            <th className="text-right font-normal pb-2 px-2 w-[12%]">Total gasto</th>
             <th className="pb-2 pr-1 w-10"></th>
           </tr>
         </thead>
@@ -1313,6 +1321,7 @@ function CategoriaGroup({
                   clearOverride={clearOverride}
                   hasOverride={hasOverride}
                   contagemGastos={contagemGastos}
+                  totaisGastos={totaisGastos}
                 />
               ))}
             </tbody>
@@ -1326,7 +1335,7 @@ function CategoriaGroup({
 
 function SortableTipoRow({
   i, categorias, empresasAtivas, update, remove, hideCategoria,
-  readOnly, mesReferencia, clearOverride, hasOverride, contagemGastos,
+  readOnly, mesReferencia, clearOverride, hasOverride, contagemGastos, totaisGastos,
 }: {
   i: TipoCusto;
   categorias: CategoriaDespesa[];
@@ -1339,6 +1348,7 @@ function SortableTipoRow({
   clearOverride?: (id: string) => Promise<boolean>;
   hasOverride?: (id: string) => boolean;
   contagemGastos?: Record<string, number>;
+  totaisGastos?: Record<string, number>;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: i.id });
   const style = {
@@ -1347,7 +1357,7 @@ function SortableTipoRow({
     opacity: isDragging ? 0.5 : 1,
   } as React.CSSProperties;
   const [expanded, setExpanded] = useState(false);
-  const colCount = 1 /* drag */ + 1 /* nome */ + 1 /* desc */ + (hideCategoria ? 0 : 1) + 1 /* valor */ + 1 /* DRE */ + 1 /* elim */ + 1 /* gastos */ + 1 /* actions */;
+  const colCount = 1 /* drag */ + 1 /* nome */ + 1 /* desc */ + (hideCategoria ? 0 : 1) + 1 /* valor */ + 1 /* DRE */ + 1 /* elim */ + 1 /* gastos */ + 1 /* total */ + 1 /* actions */;
   return (
     <>
     <tr
@@ -1434,6 +1444,11 @@ function SortableTipoRow({
       <td className="px-2 text-center">
         <span className={`text-xs tabular-nums ${(contagemGastos?.[i.id] || 0) > 0 ? 'text-white/80 font-medium' : 'text-white/30'}`}>
           {contagemGastos?.[i.id] ?? '—'}
+        </span>
+      </td>
+      <td className="px-2 text-right">
+        <span className={`text-xs tabular-nums ${(totaisGastos?.[i.id] || 0) > 0 ? 'text-emerald-300/90 font-medium' : 'text-white/30'}`}>
+          {totaisGastos && totaisGastos[i.id] != null ? formatCurrency(totaisGastos[i.id]) : '—'}
         </span>
       </td>
       <td className="pr-1 text-right">
@@ -1645,12 +1660,12 @@ function GastosDoTipoExpand({
       {loading ? (
         <tr className="bg-white/[0.015]">
           <td />
-          <td colSpan={3 + catCols + 4} className="py-2 pl-1 text-xs text-white/40">Carregando…</td>
+          <td colSpan={3 + catCols + 5} className="py-2 pl-1 text-xs text-white/40">Carregando…</td>
         </tr>
       ) : gastos.length === 0 ? (
         <tr className="bg-white/[0.015]">
           <td />
-          <td colSpan={3 + catCols + 4} className="py-2 pl-1 text-xs text-white/40">Nenhum gasto registrado neste mês.</td>
+          <td colSpan={3 + catCols + 5} className="py-2 pl-1 text-xs text-white/40">Nenhum gasto registrado neste mês.</td>
         </tr>
       ) : (
         <>
@@ -1660,6 +1675,7 @@ function GastosDoTipoExpand({
               <td className="py-1 pl-1 text-white/70 tabular-nums whitespace-nowrap">{g.data.split('-').reverse().join('/')}</td>
               <td className="px-1 text-white/70 truncate" colSpan={1 + catCols}>{g.descricao || '—'}</td>
               <td className="px-2 text-right text-white/85 tabular-nums">{formatCurrency(Number(g.valor) || 0)}</td>
+              <td />
               <td />
               <td />
               <td />
@@ -1678,15 +1694,19 @@ function GastosDoTipoExpand({
             <td />
             <td colSpan={1 + catCols} className="py-1 pl-1 text-white/40 uppercase tracking-wider">Total</td>
             <td className="px-1" />
-            <td className="px-2 text-right text-white/80 font-semibold tabular-nums">{formatCurrency(total)}</td>
-            <td colSpan={4} />
+            <td className="px-2 text-right text-white/40" />
+            <td />
+            <td />
+            <td />
+            <td className="px-2 text-right text-emerald-300/90 font-semibold tabular-nums">{formatCurrency(total)}</td>
+            <td />
           </tr>
         </>
       )}
       {mes && (
         <tr className="bg-white/[0.015] border-b border-white/10" onClick={stop}>
           <td />
-          <td colSpan={3 + catCols + 3} className="py-1.5 pl-1">
+          <td colSpan={3 + catCols + 4} className="py-1.5 pl-1">
             <button
               type="button"
               onClick={() => setOpen(true)}
