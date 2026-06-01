@@ -1,5 +1,7 @@
 import { useState, useRef, useMemo } from 'react';
 import { Plus, Trash2, Users, Receipt, TrendingDown, Landmark, FileDown, GripVertical, X, Check, FolderPlus, ChevronRight, AlertTriangle, FileText, RotateCcw } from 'lucide-react';
+import GastoFormDialog from '@/components/financeiro/GastoFormDialog';
+import { useGastosPorTipoMes } from '@/hooks/useGastosPorTipoMes';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { formatCurrency } from '@/lib/utils';
 import { useDespesasPadrao, type DespesaPadrao, type DespesaPadraoTipo } from '@/hooks/useDespesasPadrao';
@@ -124,6 +126,7 @@ export function DespesasGridContent({
             readOnly={readOnly}
             clearOverride={tipoClearOverride}
             hasOverride={tipoHasOverride}
+            mesReferencia={mesReferencia ?? null}
           />
           <TiposCustoBlock
             titulo="Tipos de Custos — Variáveis"
@@ -141,6 +144,7 @@ export function DespesasGridContent({
             readOnly={readOnly}
             clearOverride={tipoClearOverride}
             hasOverride={tipoHasOverride}
+            mesReferencia={mesReferencia ?? null}
           />
           <TiposCustoBlock
             titulo="Tipos de Custos — Impostos"
@@ -158,6 +162,7 @@ export function DespesasGridContent({
             readOnly={readOnly}
             clearOverride={tipoClearOverride}
             hasOverride={tipoHasOverride}
+            mesReferencia={mesReferencia ?? null}
           />
         </div>
       );
