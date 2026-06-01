@@ -156,6 +156,23 @@ export default function VendaNovaMinimalista() {
   const [autorizadorId, setAutorizadorId] = useState<string | null>(null);
   const [tipoAutorizacaoNecessaria, setTipoAutorizacaoNecessaria] = useState<'responsavel_setor' | 'master' | null>(null);
   const [limitePermitido, setLimitePermitido] = useState<number>(10);
+
+  // Autorização concedida ao APLICAR o ajuste global (evita re-prompt no submit).
+  const [autorizacaoAjuste, setAutorizacaoAjuste] = useState<{
+    autorizadorId: string;
+    senha: string;
+    tipo: 'responsavel_setor' | 'master';
+    percentualAutorizado: number;
+  } | null>(null);
+
+  // Modal de autorização disparado pela seção de Desconto/Acréscimo.
+  const [aplicarAjusteAutorizacaoOpen, setAplicarAjusteAutorizacaoOpen] = useState(false);
+  const [pendingAjusteRascunho, setPendingAjusteRascunho] = useState<AjusteGlobal | null>(null);
+  const [pendingAjusteValidacao, setPendingAjusteValidacao] = useState<{
+    percentual: number;
+    limite: number;
+    tipo: 'responsavel_setor' | 'master';
+  } | null>(null);
   
   const [valorCredito, setValorCredito] = useState<number>(0);
   const [percentualCredito, setPercentualCredito] = useState<number>(0);
