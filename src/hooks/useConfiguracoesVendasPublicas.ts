@@ -9,6 +9,7 @@ export interface ConfiguracoesVendasPublicas {
   /** Mantido por retrocompatibilidade — corresponde a `limite_desconto_fria` em `regras_vendas`. */
   limite_desconto_presencial: number;
   limite_adicional_responsavel: number;
+  limite_desconto_master_lucro: number;
 }
 
 /**
@@ -27,7 +28,7 @@ export function useConfiguracoesVendasPublicas() {
           supabase
             .from("regras_vendas")
             .select(
-              "id, limite_desconto_avista, limite_desconto_fria, limite_adicional_responsavel"
+              "id, limite_desconto_avista, limite_desconto_fria, limite_adicional_responsavel, limite_desconto_master_lucro"
             )
             .order("created_at", { ascending: true })
             .limit(1)
@@ -50,6 +51,8 @@ export function useConfiguracoesVendasPublicas() {
         limite_desconto_avista: regras.limite_desconto_avista,
         limite_desconto_presencial: regras.limite_desconto_fria,
         limite_adicional_responsavel: regras.limite_adicional_responsavel,
+        limite_desconto_master_lucro:
+          (regras as any).limite_desconto_master_lucro ?? 15,
       } as ConfiguracoesVendasPublicas;
     },
   });
@@ -64,6 +67,7 @@ export function useConfiguracoesVendasPublicas() {
       (data?.limite_desconto_avista ?? 3) +
       (data?.limite_desconto_presencial ?? 5) +
       (data?.limite_adicional_responsavel ?? 5),
+    masterLucro: data?.limite_desconto_master_lucro ?? 15,
   };
 
   return {
