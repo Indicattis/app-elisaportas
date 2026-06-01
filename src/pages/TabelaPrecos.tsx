@@ -327,17 +327,17 @@ export default function TabelaPrecos({
                       <TableHead className="text-center text-white/60">Largura</TableHead>
                       <TableHead className="text-center text-white/60">Altura</TableHead>
                       <TableHead className="text-right text-white/60">Valor Porta</TableHead>
-                      {!hideLucroColumn && <TableHead className="text-right hidden md:table-cell text-white/60">Lucro</TableHead>}
-                      {!hideLucroColumn && <TableHead className="text-right hidden md:table-cell text-white/60">% Lucro</TableHead>}
+                      {!hideLucroColumn && !readOnly && <TableHead className="text-right hidden md:table-cell text-white/60">Lucro</TableHead>}
+                      {!hideLucroColumn && !readOnly && <TableHead className="text-right hidden md:table-cell text-white/60">% Lucro</TableHead>}
                       <TableHead className="text-right hidden md:table-cell text-white/60">Valor Instalação</TableHead>
-                      <TableHead className="text-right hidden md:table-cell text-white/60">Lucro Instalação</TableHead>
-                      <TableHead className="text-right hidden md:table-cell text-white/60">% Lucro Inst.</TableHead>
+                      {!readOnly && <TableHead className="text-right hidden md:table-cell text-white/60">Lucro Instalação</TableHead>}
+                      {!readOnly && <TableHead className="text-right hidden md:table-cell text-white/60">% Lucro Inst.</TableHead>}
                       <TableHead className="text-right hidden md:table-cell text-white/60">Valor Pintura</TableHead>
-                      <TableHead className="text-right hidden md:table-cell text-white/60">Lucro Pintura</TableHead>
-                      <TableHead className="text-right hidden md:table-cell text-white/60">% Lucro Pint.</TableHead>
+                      {!readOnly && <TableHead className="text-right hidden md:table-cell text-white/60">Lucro Pintura</TableHead>}
+                      {!readOnly && <TableHead className="text-right hidden md:table-cell text-white/60">% Lucro Pint.</TableHead>}
                       {!hideTotalColumn && <TableHead className="text-right text-white/60">Total</TableHead>}
                       {!hideAcoesColumn && <TableHead className="text-center text-white/60">Montagem</TableHead>}
-                      {!hideAcoesColumn && <TableHead className="text-center w-24 text-white/60">Ações</TableHead>}
+                      {!hideAcoesColumn && !readOnly && <TableHead className="text-center w-24 text-white/60">Ações</TableHead>}
                     </TableRow>
                   </TableHeader>
                   <DndContext
