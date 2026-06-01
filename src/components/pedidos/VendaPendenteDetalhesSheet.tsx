@@ -11,7 +11,7 @@ import { ptBR } from "date-fns/locale";
 import {
   Package, Phone, MapPin, Calendar, DollarSign,
   ShoppingCart, ChevronDown, User, Hammer, Truck, Wrench, Clock, CreditCard, ExternalLink,
-  MessageSquare, Send, Percent
+  MessageSquare, Send, Percent, Flame, Snowflake
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
