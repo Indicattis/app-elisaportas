@@ -1335,7 +1335,7 @@ function CategoriaGroup({
 
 function SortableTipoRow({
   i, categorias, empresasAtivas, update, remove, hideCategoria,
-  readOnly, mesReferencia, clearOverride, hasOverride, contagemGastos,
+  readOnly, mesReferencia, clearOverride, hasOverride, contagemGastos, totaisGastos,
 }: {
   i: TipoCusto;
   categorias: CategoriaDespesa[];
@@ -1348,6 +1348,7 @@ function SortableTipoRow({
   clearOverride?: (id: string) => Promise<boolean>;
   hasOverride?: (id: string) => boolean;
   contagemGastos?: Record<string, number>;
+  totaisGastos?: Record<string, number>;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: i.id });
   const style = {
@@ -1356,7 +1357,7 @@ function SortableTipoRow({
     opacity: isDragging ? 0.5 : 1,
   } as React.CSSProperties;
   const [expanded, setExpanded] = useState(false);
-  const colCount = 1 /* drag */ + 1 /* nome */ + 1 /* desc */ + (hideCategoria ? 0 : 1) + 1 /* valor */ + 1 /* DRE */ + 1 /* elim */ + 1 /* gastos */ + 1 /* actions */;
+  const colCount = 1 /* drag */ + 1 /* nome */ + 1 /* desc */ + (hideCategoria ? 0 : 1) + 1 /* valor */ + 1 /* DRE */ + 1 /* elim */ + 1 /* gastos */ + 1 /* total */ + 1 /* actions */;
   return (
     <>
     <tr
@@ -1443,6 +1444,11 @@ function SortableTipoRow({
       <td className="px-2 text-center">
         <span className={`text-xs tabular-nums ${(contagemGastos?.[i.id] || 0) > 0 ? 'text-white/80 font-medium' : 'text-white/30'}`}>
           {contagemGastos?.[i.id] ?? '—'}
+        </span>
+      </td>
+      <td className="px-2 text-right">
+        <span className={`text-xs tabular-nums ${(totaisGastos?.[i.id] || 0) > 0 ? 'text-emerald-300/90 font-medium' : 'text-white/30'}`}>
+          {totaisGastos && totaisGastos[i.id] != null ? formatCurrency(totaisGastos[i.id]) : '—'}
         </span>
       </td>
       <td className="pr-1 text-right">
