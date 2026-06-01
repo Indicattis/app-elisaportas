@@ -436,13 +436,16 @@ function FolhaBlock({
 }
 
 function FolhaRowCells({
-  item, setores, update, remove, dragHandle,
+  item, setores, update, remove, dragHandle, readOnly, clearOverride, hasOverride,
 }: {
   item: DespesaPadrao;
   setores: SetorMeta[];
   update: ReturnType<typeof useDespesasPadrao>['update'];
   remove: ReturnType<typeof useDespesasPadrao>['remove'];
   dragHandle?: React.ReactNode;
+  readOnly?: boolean;
+  clearOverride?: (id: string) => Promise<boolean>;
+  hasOverride?: (id: string) => boolean;
 }) {
   const salario = Number(item.salario) || 0;
   const salario_minimo = Number(item.salario_minimo) || 0;
@@ -461,14 +464,19 @@ function FolhaRowCells({
       <td className="py-2 pl-1 text-white/90">
         <div className="flex items-center gap-1">
           {dragHandle}
-          <div className="flex-1"><InlineText value={item.nome} onSave={(v) => update(item.id, { nome: v })} /></div>
+          <div className="flex-1">
+            {readOnly
+              ? <span className="px-1 py-0.5">{item.nome}</span>
+              : <InlineText value={item.nome} onSave={(v) => update(item.id, { nome: v })} />}
+          </div>
         </div>
       </td>
       <td className="px-2 text-center">
         <Switch checked={item.em_folha} onCheckedChange={(v) => update(item.id, { em_folha: v })} />
       </td>
       <td className="px-2">
-        <select value={item.setor ?? ''} onChange={(e) => update(item.id, { setor: e.target.value || null })}
+        <select value={item.setor ?? ''} disabled={readOnly}
+          onChange={(e) => update(item.id, { setor: e.target.value || null })}
           className={setorSelectClassFrom(setores, item.setor)}>
           <option value="" className="bg-slate-900 text-white">—</option>
           {setores.map(s => <option key={s.value} value={s.value} className="bg-slate-900 text-white">{s.label}</option>)}
@@ -498,9 +506,21 @@ function FolhaRowCells({
       </td>
       <td className="px-2 text-right text-white font-semibold">{formatCurrency(total)}</td>
       <td className="pr-1 text-right">
-        <button onClick={() => remove(item.id)} className="p-1 rounded hover:bg-red-500/20 text-red-300/70 hover:text-red-300">
-          <Trash2 className="w-4 h-4" />
-        </button>
+        {readOnly ? (
+          hasOverride?.(item.id) && clearOverride ? (
+            <button
+              onClick={() => clearOverride(item.id)}
+              title="Restaurar valores do padrão"
+              className="p-1 rounded hover:bg-blue-500/20 text-blue-300/70 hover:text-blue-300"
+            >
+              <RotateCcw className="w-4 h-4" />
+            </button>
+          ) : null
+        ) : (
+          <button onClick={() => remove(item.id)} className="p-1 rounded hover:bg-red-500/20 text-red-300/70 hover:text-red-300">
+            <Trash2 className="w-4 h-4" />
+          </button>
+        )}
       </td>
     </>
   );
