@@ -50,6 +50,11 @@ interface MetodoPagamentoCardProps {
   valorLabel?: string;
   tipoTravado?: MetodoPagamento['tipo'];
   intervaloBoletoTravado?: number;
+  /**
+   * Quando definido, restringe o select de intervalo de boletos a esses valores.
+   * Se contiver 1 item, o select fica travado nesse valor.
+   */
+  intervalosBoletoPermitidos?: number[];
 }
 
 export function MetodoPagamentoCard({
@@ -62,6 +67,7 @@ export function MetodoPagamentoCard({
   valorLabel = "Valor *",
   tipoTravado,
   intervaloBoletoTravado,
+  intervalosBoletoPermitidos,
 }: MetodoPagamentoCardProps) {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -271,23 +277,27 @@ export function MetodoPagamentoCard({
                 <Select
                   value={metodo.intervalo_boletos.toString()}
                   onValueChange={(value) => onChange({ ...metodo, intervalo_boletos: parseInt(value) })}
-                  disabled={!!intervaloBoletoTravado}
+                  disabled={!!intervaloBoletoTravado || (intervalosBoletoPermitidos?.length === 1)}
                 >
                   <SelectTrigger className={cn("h-9", inputClass)}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="7">7 dias</SelectItem>
-                    <SelectItem value="14">14 dias</SelectItem>
-                    <SelectItem value="15">15 dias</SelectItem>
-                    <SelectItem value="21">21 dias</SelectItem>
-                    <SelectItem value="28">28 dias</SelectItem>
-                    <SelectItem value="30">30 dias</SelectItem>
+                    {(intervalosBoletoPermitidos ?? [7, 14, 15, 21, 28, 30]).map((dias) => (
+                      <SelectItem key={dias} value={dias.toString()}>
+                        {dias} dias
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 {intervaloBoletoTravado && (
                   <p className="text-[10px] text-blue-300/80 mt-1">
                     Intervalo travado em {intervaloBoletoTravado} dias pela regra de boleto.
+                  </p>
+                )}
+                {!intervaloBoletoTravado && intervalosBoletoPermitidos && intervalosBoletoPermitidos.length > 1 && (
+                  <p className="text-[10px] text-blue-300/80 mt-1">
+                    Opções permitidas: {intervalosBoletoPermitidos.join(', ')} dias.
                   </p>
                 )}
               </div>
