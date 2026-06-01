@@ -1326,7 +1326,7 @@ function CategoriaGroup({
 
 function SortableTipoRow({
   i, categorias, empresasAtivas, update, remove, hideCategoria,
-  readOnly, mesReferencia, clearOverride, hasOverride,
+  readOnly, mesReferencia, clearOverride, hasOverride, contagemGastos,
 }: {
   i: TipoCusto;
   categorias: CategoriaDespesa[];
@@ -1338,6 +1338,7 @@ function SortableTipoRow({
   mesReferencia?: string | null;
   clearOverride?: (id: string) => Promise<boolean>;
   hasOverride?: (id: string) => boolean;
+  contagemGastos?: Record<string, number>;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: i.id });
   const style = {
