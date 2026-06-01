@@ -121,6 +121,43 @@ export default function RegrasVendasVisualizacao() {
             </CardContent>
           </Card>
 
+          {/* Desconto Master — débito no lucro */}
+          <Card className="bg-gradient-to-br from-red-500/10 to-red-900/20 border-red-500/20">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-white">
+                <Shield className="h-5 w-5 text-red-400" />
+                Desconto Master — débito no lucro
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Row
+                icon={Percent}
+                label="Limite máximo sem débito no lucro"
+                value={
+                  <Badge className="bg-red-500/20 text-red-300 border-red-500/30">
+                    {limites.masterLucro.toFixed(1)}%
+                  </Badge>
+                }
+              />
+              <div className="p-3 rounded-lg bg-white/5 border border-white/10 text-white/70 text-sm leading-relaxed">
+                Quando o desconto autorizado por senha master ultrapassa{' '}
+                <span className="text-white font-medium">
+                  {limites.masterLucro.toFixed(1)}%
+                </span>
+                , o valor excedente (em R$) é{' '}
+                <span className="text-red-300 font-medium">
+                  debitado do lucro da venda
+                </span>{' '}
+                no faturamento.
+                <br />
+                <span className="text-white/50 text-xs">
+                  Exemplo: venda de R$ 10.000 com desconto de 20% → excedente
+                  de 5% = R$ 500 debitados do lucro.
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Formas de pagamento */}
           <Card className="bg-gradient-to-br from-emerald-500/10 to-emerald-900/20 border-emerald-500/20">
             <CardHeader className="pb-2">
