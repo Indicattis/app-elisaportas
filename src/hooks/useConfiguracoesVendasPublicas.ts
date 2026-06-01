@@ -6,13 +6,15 @@ export interface ConfiguracoesVendasPublicas {
   responsavel_senha_responsavel_id: string | null;
   responsavel_senha_master_id: string | null;
   limite_desconto_avista: number;
+  /** Mantido por retrocompatibilidade — corresponde a `limite_desconto_fria` em `regras_vendas`. */
   limite_desconto_presencial: number;
   limite_adicional_responsavel: number;
 }
 
 /**
- * Hook que retorna apenas dados públicos de configurações_vendas (sem senhas).
- * Usa RPC SECURITY DEFINER, acessível a qualquer usuário autenticado.
+ * Hook que retorna os limites públicos de vendas.
+ * Lê de `regras_vendas` (nova tabela canônica) e mantém o mesmo formato dos
+ * consumidores antigos para evitar refator em cascata.
  */
 export function useConfiguracoesVendasPublicas() {
   const { data, isLoading, error, refetch } = useQuery({
@@ -20,10 +22,35 @@ export function useConfiguracoesVendasPublicas() {
     staleTime: 0,
     refetchOnMount: "always",
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_configuracoes_vendas_publicas");
-      if (error) throw error;
-      const row = Array.isArray(data) ? data[0] : data;
-      return (row || null) as ConfiguracoesVendasPublicas | null;
+      const [{ data: regras, error: errRegras }, { data: cfg, error: errCfg }] =
+        await Promise.all([
+          supabase
+            .from("regras_vendas")
+            .select(
+              "id, limite_desconto_avista, limite_desconto_fria, limite_adicional_responsavel"
+            )
+            .order("created_at", { ascending: true })
+            .limit(1)
+            .maybeSingle(),
+          supabase.rpc("get_configuracoes_vendas_publicas"),
+        ]);
+
+      if (errRegras) throw errRegras;
+      if (errCfg) throw errCfg;
+
+      const cfgRow = Array.isArray(cfg) ? cfg[0] : cfg;
+      if (!regras) return (cfgRow || null) as ConfiguracoesVendasPublicas | null;
+
+      return {
+        id: (cfgRow as any)?.id ?? regras.id,
+        responsavel_senha_responsavel_id:
+          (cfgRow as any)?.responsavel_senha_responsavel_id ?? null,
+        responsavel_senha_master_id:
+          (cfgRow as any)?.responsavel_senha_master_id ?? null,
+        limite_desconto_avista: regras.limite_desconto_avista,
+        limite_desconto_presencial: regras.limite_desconto_fria,
+        limite_adicional_responsavel: regras.limite_adicional_responsavel,
+      } as ConfiguracoesVendasPublicas;
     },
   });
 

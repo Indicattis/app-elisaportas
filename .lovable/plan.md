@@ -1,27 +1,59 @@
 ## Objetivo
 
-Mudar a orientação dos PDFs exportados em `/direcao/estrategia/despesas/configuracoes` (Folha Salarial e Tipos de Custos — Fixas/Variáveis/Impostos) de **paisagem (`l`) para retrato (`p`)** e reajustar as larguras de coluna/fontes para caberem na largura útil A4 retrato (~190 mm).
+Hoje a página `/direcao/estrategia/precos/regras` mistura dados editáveis (limites de desconto, senhas) salvos em `configuracoes_vendas` com várias regras hardcoded no JSX (intervalos de boleto, parcelas de cartão, regra de crédito, campos obrigatórios). A proposta cria uma tabela dedicada **`regras_vendas`** que armazena todas as regras de negócio de vendas em um único lugar, deixando `configuracoes_vendas` apenas para credenciais (senhas + responsáveis).
 
-## Mudanças
+## Nova tabela `regras_vendas` (linha única, singleton)
 
-### `src/utils/folhaSalarialPDFGenerator.ts`
-- `new jsPDF('l', 'mm', 'a4')` → `new jsPDF('p', 'mm', 'a4')`.
-- Reduzir font da tabela de 7.5 → 6.8 pt e `cellPadding` de 1.8 → 1.4.
-- Reajustar `columnStyles` das 11 colunas para somar ~190 mm (Colaborador 36, Em folha 11, Salário 17, Sal.Mín 17, Combustível 15, Insalub 16, FGTS 16, Prev 13° 16, FGTS 13° 16, Férias 16, Total 18).
-- Encolher cabeçalhos longos via `headStyles.fontSize` 6.8 e abreviar rótulos quando necessário ("Combustível" → "Comb.", "Insalub valor" → "Insalub.", "FGTS valor" → "FGTS", "Previsão 13°" → "Prev. 13°", "Férias + 1/3" → "Férias").
-- Posição do bloco de endereço no topo recalculada com base no novo `pageWidth` (já usa `pageWidth - margin - 60`, mantém).
-- Linha de totais inferiores: continuar usando `pageWidth - margin` (auto-ajusta).
+Colunas:
 
-### `src/utils/tiposCustosPDFGenerator.ts`
-- `new jsPDF("l", "mm", "a4")` → `new jsPDF("p", "mm", "a4")`.
-- Reajustar `columnStyles`: Nome 55, Descrição `auto`, Valor projetado 32, DRE 16, Ativo 16 (totais fixos = 119, sobra ~71 para Descrição).
-- Reduzir `cellPadding` 2 → 1.6 para folga.
-- Atualizar o `colSpan` do subtotal e células vazias seguintes — quantidade de colunas não muda (5), apenas larguras, então o array de subtotal permanece igual.
+- **Limites de desconto**
+  - `limite_desconto_avista` numeric (default 3)
+  - `limite_desconto_fria` numeric (default 5)  *(renomeado de `presencial`)*
+  - `limite_adicional_responsavel` numeric (default 5)
 
-### Notas
-- Lógica de paginação (`y + 25 > pageHeight - 20`) continua funcionando porque lê `pageHeight` dinamicamente — só haverá mais quebras de página, o que é esperado em retrato.
-- Cabeçalho (logo + endereço + título) e rodapé não mudam de estrutura; apenas o canvas fica mais estreito e mais alto.
+- **Regras de acréscimo (crédito)**
+  - `acrescimo_permite_com_desconto` boolean (default false)
+  - `acrescimo_descricao` text
 
-## Arquivos afetados
-- `src/utils/folhaSalarialPDFGenerator.ts`
-- `src/utils/tiposCustosPDFGenerator.ts`
+- **Boleto**
+  - `boleto_intervalos_dias` integer[] (default `{7,15,21,28,30,45,60}`)
+
+- **Cartão de crédito**
+  - `cartao_parcelas_min` integer (default 1)
+  - `cartao_parcelas_max` integer (default 12)
+  - `cartao_habilita_desconto_avista` boolean (default false)
+
+- **Pagamento à vista / dinheiro**
+  - `avista_exige_comprovante` boolean (default true)
+
+- **Campos obrigatórios (cliente / endereço / produtos)**
+  - `obrigatorio_nome` / `obrigatorio_telefone` / `obrigatorio_estado` / `obrigatorio_cidade` / `obrigatorio_cep` boolean
+  - `obrigatorio_bairro_min_chars` / `obrigatorio_endereco_min_chars` integer (default 2)
+  - `produto_minimo_quantidade` integer (default 1)
+  - `cpf_digitos` / `cnpj_digitos` integer (default 11 / 14)
+
+- **Outras regras já presentes no projeto** (deixar editáveis aqui também)
+  - `max_formas_pagamento` integer (default 2)
+  - `pagamento_imediato_exige_comprovante` boolean (default true)
+  - `bloqueia_desconto_com_credito` boolean (default true)
+
+Trigger de `updated_at`, RLS (admin/CEO via `is_admin`/`has_role` editam, demais autenticados só leem), GRANTs corretos.
+
+## Migração de dados
+
+1. Criar `public.regras_vendas` com 1 linha default.
+2. Copiar os valores atuais de `limite_desconto_avista`, `limite_desconto_presencial` (→ `limite_desconto_fria`) e `limite_adicional_responsavel` de `configuracoes_vendas` para `regras_vendas`.
+3. **Manter** as colunas em `configuracoes_vendas` por ora (fallback), mas o código passa a ler/gravar em `regras_vendas`.
+
+## Mudanças de código
+
+- Novo hook `useRegrasVendas` (substitui a parte de "limites" do `useConfiguracoesVendas`), expondo `regras`, `updateRegras`, e os limites calculados (`totalSemSenha`, `totalComResponsavel`).
+- `useConfiguracoesVendas` passa a ser apenas para senhas/responsáveis.
+- `useConfiguracoesVendasPublicas` lê os limites da nova tabela.
+- `RegrasVendasDirecao.tsx`: cada seção (Acréscimo, Boleto, Cartão, À vista, Campos obrigatórios) vira editável e persiste em `regras_vendas`.
+- Atualizar consumidores dos limites: `DescontoVendaModal`, `FaturamentoVendaMinimalista`, `FaturamentoVendasMinimalista`, `VendaPendenteDetalhesSheet`, `EstrategiaItens`, `descontoVendasRules`, `useVendas`.
+
+## Fora do escopo
+
+- Remover de fato as colunas de limites de `configuracoes_vendas` (faremos numa migração posterior, após confirmar que tudo lê da nova tabela).
+- Aplicar as regras editáveis novas (ex.: parcelas máx, intervalos de boleto dinâmicos) nos formulários de venda — esta etapa cobre apenas armazenamento + edição na página de regras; integração nos formulários pode vir em seguida.
