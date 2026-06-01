@@ -843,6 +843,17 @@ export default function ProdutosFabrica({
         <Printer className="w-4 h-4" />
         Imprimir
       </button>
+      <button
+        onClick={handleGerarListaTeste}
+        className="h-10 px-5 rounded-lg font-medium text-white border
+                   bg-gradient-to-r from-emerald-500 to-emerald-700 border-emerald-400/30
+                   shadow-lg shadow-emerald-500/30
+                   hover:scale-[1.02] hover:shadow-xl hover:shadow-emerald-500/40
+                   transition-all duration-200 flex items-center gap-2"
+      >
+        <FileText className="w-4 h-4" />
+        Lista de Materiais
+      </button>
       <Dialog open={novoModal} onOpenChange={setNovoModal}>
         <DialogTrigger asChild>
           <button
