@@ -168,6 +168,12 @@ export default function VendaNovaMinimalista() {
 
   const [pagamentoData, setPagamentoData] = useState<PagamentoData>(createEmptyPagamentoData());
 
+  const [ajusteGlobal, setAjusteGlobal] = useState<AjusteGlobal>({
+    tipo: 'desconto',
+    unidade: '%',
+    valor: 0,
+  });
+
   const { data: cores } = useQuery({
     queryKey: ['cores-catalogo'],
     queryFn: async () => {
