@@ -1604,3 +1604,89 @@ function SortableCategoriaGroup(props: {
     </div>
   );
 }
+
+/* ---------------- Gastos do tipo (apenas modo mês) ---------------- */
+
+function GastosDoTipoExpand({
+  tipoCustoId, tipoNome, categoria, mes,
+}: {
+  tipoCustoId: string;
+  tipoNome: string;
+  categoria: 'fixa' | 'variavel' | 'imposto';
+  mes: string | null;
+}) {
+  const { gastos, loading, refetch, deleteGasto } = useGastosPorTipoMes(tipoCustoId, mes, !!mes);
+  const [open, setOpen] = useState(false);
+  const total = gastos.reduce((s, g) => s + Number(g.valor || 0), 0);
+
+  return (
+    <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
+      <div className="flex items-center justify-between">
+        <div className="text-xs text-white/60">
+          Gastos vinculados a <span className="text-white/90 font-medium">{tipoNome}</span> no mês
+        </div>
+        {mes && (
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-400/30 text-xs text-emerald-200 hover:text-emerald-100 transition-colors"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Novo gasto
+          </button>
+        )}
+      </div>
+
+      {loading ? (
+        <div className="text-xs text-white/40 py-2">Carregando…</div>
+      ) : gastos.length === 0 ? (
+        <div className="text-xs text-white/40 py-2">Nenhum gasto registrado neste mês.</div>
+      ) : (
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-[10px] uppercase tracking-wider text-white/40 border-b border-white/10">
+              <th className="text-left font-normal pb-1.5 pl-1 w-[110px]">Data</th>
+              <th className="text-left font-normal pb-1.5 px-2">Descrição</th>
+              <th className="text-right font-normal pb-1.5 px-2 w-[140px]">Valor</th>
+              <th className="pb-1.5 pr-1 w-10"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {gastos.map(g => (
+              <tr key={g.id} className="border-b border-white/5">
+                <td className="py-1.5 pl-1 text-white/70 tabular-nums">{g.data.split('-').reverse().join('/')}</td>
+                <td className="px-2 text-white/80">{g.descricao || '—'}</td>
+                <td className="px-2 text-right text-white tabular-nums">{formatCurrency(Number(g.valor) || 0)}</td>
+                <td className="pr-1 text-right">
+                  <button
+                    onClick={() => deleteGasto(g.id)}
+                    className="p-1 rounded hover:bg-red-500/20 text-red-300/70 hover:text-red-300"
+                    title="Excluir gasto"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </td>
+              </tr>
+            ))}
+            <tr>
+              <td colSpan={2} className="pt-2 text-right text-[11px] uppercase tracking-wider text-white/50">Total no mês</td>
+              <td className="pt-2 text-right text-white font-semibold tabular-nums">{formatCurrency(total)}</td>
+              <td />
+            </tr>
+          </tbody>
+        </table>
+      )}
+
+      {mes && (
+        <GastoFormDialog
+          open={open}
+          onOpenChange={setOpen}
+          defaultMes={mes}
+          defaultTipoCustoId={tipoCustoId}
+          defaultCategoria={categoria}
+          onSaved={refetch}
+        />
+      )}
+    </div>
+  );
+}
