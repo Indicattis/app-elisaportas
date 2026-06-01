@@ -17,7 +17,7 @@ import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 
 export interface MetodoPagamento {
-  tipo: 'boleto' | 'a_vista' | 'cartao_credito' | 'dinheiro' | '';
+  tipo: 'boleto' | 'a_vista' | 'cartao_credito' | '';
   valor: number;
   data_pagamento: Date | undefined;
   empresa_receptora_id: string;
@@ -93,7 +93,6 @@ export function MetodoPagamentoCard({
     { value: 'boleto', label: 'Boleto', icon: QrCode },
     { value: 'a_vista', label: 'À Vista', icon: Banknote },
     { value: 'cartao_credito', label: 'Cartão', icon: CreditCard },
-    { value: 'dinheiro', label: 'Dinheiro', icon: Wallet },
   ];
 
   const inputClass = "bg-white/5 border-white/10 text-white placeholder:text-white/40";
@@ -104,7 +103,7 @@ export function MetodoPagamentoCard({
       <h4 className="font-medium text-xs text-white/50">{titulo}</h4>
       
       {/* Seleção do tipo de pagamento */}
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-3 gap-2">
         {metodos.map((m) => {
           const Icon = m.icon;
           const travado = !!tipoTravado;
