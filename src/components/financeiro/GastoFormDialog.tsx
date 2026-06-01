@@ -29,6 +29,8 @@ interface Props {
   onSaved?: () => void;
   /** When provided, pre-filters tipos by category (UX hint when opening from a section). */
   defaultCategoria?: 'fixa' | 'variavel' | 'imposto';
+  /** When provided and creating, pre-selects the tipo de custo. */
+  defaultTipoCustoId?: string;
 }
 
 function defaultDateFor(mes?: string) {
@@ -38,7 +40,7 @@ function defaultDateFor(mes?: string) {
   return `${mes}-01`;
 }
 
-export default function GastoFormDialog({ open, onOpenChange, defaultMes, gasto, onSaved, defaultCategoria }: Props) {
+export default function GastoFormDialog({ open, onOpenChange, defaultMes, gasto, onSaved, defaultCategoria, defaultTipoCustoId }: Props) {
   const { gastos, saveGasto, updateGasto } = useGastos(defaultMes);
   const { tiposCustos } = useTiposCustos();
   const { bancos } = useBancos();
@@ -100,7 +102,7 @@ export default function GastoFormDialog({ open, onOpenChange, defaultMes, gasto,
       setBancoId(gasto.banco_id || "");
       setObservacoes(gasto.observacoes || "");
     } else {
-      setTipoCustoId("");
+      setTipoCustoId(defaultTipoCustoId || "");
       setDescricao("");
       setValor("");
       setData(defaultDateFor(defaultMes));
@@ -108,7 +110,7 @@ export default function GastoFormDialog({ open, onOpenChange, defaultMes, gasto,
       setBancoId("");
       setObservacoes("");
     }
-  }, [open, gasto, defaultMes]);
+  }, [open, gasto, defaultMes, defaultTipoCustoId]);
 
   const handleTipoCustoChange = (id: string) => {
     setTipoCustoId(id);
