@@ -187,6 +187,26 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-semibold text-white">Forma de Pagamento</CardTitle>
           <div className="flex items-center gap-2">
+            {descontoInfo && (() => {
+              const { percentualAplicado, limitePermitido, limiteMaximo } = descontoInfo;
+              const disponivel = Math.max(0, limitePermitido - percentualAplicado);
+              const disponivelMax = Math.max(0, limiteMaximo - percentualAplicado);
+              const acumuladoExcede = percentualAplicado > limitePermitido;
+              return (
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "border text-xs",
+                    acumuladoExcede
+                      ? "bg-amber-500/15 border-amber-400/40 text-amber-100"
+                      : "bg-emerald-500/15 border-emerald-400/40 text-emerald-100"
+                  )}
+                  title={`Aplicado ${percentualAplicado.toFixed(1)}% • Limite ${limitePermitido}% • Máx c/ senha ${limiteMaximo}%`}
+                >
+                  Desconto: {percentualAplicado.toFixed(1)}% / {limitePermitido}% (+{disponivel.toFixed(1)}% disp. • máx {disponivelMax.toFixed(1)}%)
+                </Badge>
+              );
+            })()}
             <Button
               type="button"
               variant="outline"
