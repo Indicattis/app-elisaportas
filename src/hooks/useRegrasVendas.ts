@@ -8,6 +8,7 @@ export interface RegrasVendas {
   limite_desconto_avista: number;
   limite_desconto_fria: number;
   limite_adicional_responsavel: number;
+  limite_desconto_master_lucro: number;
 
   acrescimo_permite_com_desconto: boolean;
   acrescimo_descricao: string;
@@ -107,6 +108,7 @@ export function useRegrasVendas() {
   const avista = regras?.limite_desconto_avista ?? 3;
   const fria = regras?.limite_desconto_fria ?? 5;
   const adicionalResponsavel = regras?.limite_adicional_responsavel ?? 5;
+  const masterLucro = regras?.limite_desconto_master_lucro ?? 15;
 
   const limites = {
     avista,
@@ -116,6 +118,7 @@ export function useRegrasVendas() {
     adicionalResponsavel,
     totalSemSenha: avista + fria,
     totalComResponsavel: avista + fria + adicionalResponsavel,
+    masterLucro,
   };
 
   return {
