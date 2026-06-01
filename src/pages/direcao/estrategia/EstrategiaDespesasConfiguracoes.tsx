@@ -2,6 +2,7 @@ import { useState, useRef, useMemo } from 'react';
 import { Plus, Trash2, Users, Receipt, TrendingDown, Landmark, FileDown, GripVertical, X, Check, FolderPlus, ChevronRight, AlertTriangle, FileText, RotateCcw } from 'lucide-react';
 import GastoFormDialog from '@/components/financeiro/GastoFormDialog';
 import { useGastosPorTipoMes } from '@/hooks/useGastosPorTipoMes';
+import { useContagemGastosPorTipoMes } from '@/hooks/useContagemGastosPorTipoMes';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { formatCurrency } from '@/lib/utils';
 import { useDespesasPadrao, type DespesaPadrao, type DespesaPadraoTipo } from '@/hooks/useDespesasPadrao';
@@ -83,6 +84,8 @@ export function DespesasGridContent({
   const tipoClearOverride = mode === 'mes' ? mesTipos.clearOverride : undefined;
   const tipoHasOverride = mode === 'mes' ? mesTipos.hasOverride : undefined;
 
+  const { contagem: contagemGastos } = useContagemGastosPorTipoMes(mode === 'mes' ? (mesReferencia ?? null) : null);
+
   const readOnly = mode === 'mes';
 
   const firstLoadedRef = useRef(false);
@@ -127,6 +130,7 @@ export function DespesasGridContent({
             clearOverride={tipoClearOverride}
             hasOverride={tipoHasOverride}
             mesReferencia={mesReferencia ?? null}
+            contagemGastos={contagemGastos}
           />
           <TiposCustoBlock
             titulo="Tipos de Custos — Variáveis"
@@ -145,6 +149,7 @@ export function DespesasGridContent({
             clearOverride={tipoClearOverride}
             hasOverride={tipoHasOverride}
             mesReferencia={mesReferencia ?? null}
+            contagemGastos={contagemGastos}
           />
           <TiposCustoBlock
             titulo="Tipos de Custos — Impostos"
@@ -163,6 +168,7 @@ export function DespesasGridContent({
             clearOverride={tipoClearOverride}
             hasOverride={tipoHasOverride}
             mesReferencia={mesReferencia ?? null}
+            contagemGastos={contagemGastos}
           />
         </div>
       );
@@ -917,6 +923,7 @@ function TiposCustoBlock({
   clearOverride?: (id: string) => Promise<boolean>;
   hasOverride?: (id: string) => boolean;
   mesReferencia?: string | null;
+  contagemGastos?: Record<string, number>;
 }) {
   const [nome, setNome] = useState('');
   const [descricao, setDescricao] = useState('');
@@ -1200,7 +1207,7 @@ function categoriaSelectClass(_list: CategoriaDespesa[], v?: string | null) {
 
 function CategoriaGroup({
   cat, palette, rows, categorias, empresasAtivas, update, remove, dragHandle, rename, removeCat, expanded, onToggle, hideHeader, reorderRows, hideCategoria,
-  readOnly, mesReferencia, clearOverride, hasOverride,
+  readOnly, mesReferencia, clearOverride, hasOverride, contagemGastos,
 }: {
   cat: CategoriaDespesa | null;
   palette: { color: string; dot: string };
@@ -1221,6 +1228,7 @@ function CategoriaGroup({
   mesReferencia?: string | null;
   clearOverride?: (id: string) => Promise<boolean>;
   hasOverride?: (id: string) => boolean;
+  contagemGastos?: Record<string, number>;
 }) {
   const subtotal = rows.reduce((s, i) => s + Number(i.valor_maximo_mensal || 0), 0);
   const rowSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
@@ -1276,14 +1284,15 @@ function CategoriaGroup({
         <thead>
           <tr className="text-[10px] uppercase tracking-wider text-white/40 border-b border-white/10">
             <th className="pb-2 w-6"></th>
-            <th className="text-left font-normal pb-2 pl-1 w-[34%]">Nome</th>
+            <th className="text-left font-normal pb-2 pl-1 w-[30%]">Nome</th>
             <th className="pb-2 px-2 w-8" title="Descrição"></th>
             {!hideCategoria && (
-              <th className="text-left font-normal pb-2 px-2 w-[22%]">Categoria</th>
+              <th className="text-left font-normal pb-2 px-2 w-[18%]">Categoria</th>
             )}
-            <th className="text-right font-normal pb-2 px-2 w-[36%]">Valor projetado</th>
+            <th className="text-right font-normal pb-2 px-2 w-[32%]">Valor projetado</th>
             <th className="text-center font-normal pb-2 px-2 w-[8%]">DRE</th>
             <th className="text-center font-normal pb-2 px-2 w-[8%]" title="Marcar para eliminar essa despesa">Eliminar</th>
+            <th className="text-center font-normal pb-2 px-2 w-[8%]">Gastos</th>
             <th className="pb-2 pr-1 w-10"></th>
           </tr>
         </thead>
@@ -1303,6 +1312,7 @@ function CategoriaGroup({
                   mesReferencia={mesReferencia ?? null}
                   clearOverride={clearOverride}
                   hasOverride={hasOverride}
+                  contagemGastos={contagemGastos}
                 />
               ))}
             </tbody>
@@ -1316,7 +1326,7 @@ function CategoriaGroup({
 
 function SortableTipoRow({
   i, categorias, empresasAtivas, update, remove, hideCategoria,
-  readOnly, mesReferencia, clearOverride, hasOverride,
+  readOnly, mesReferencia, clearOverride, hasOverride, contagemGastos,
 }: {
   i: TipoCusto;
   categorias: CategoriaDespesa[];
@@ -1328,6 +1338,7 @@ function SortableTipoRow({
   mesReferencia?: string | null;
   clearOverride?: (id: string) => Promise<boolean>;
   hasOverride?: (id: string) => boolean;
+  contagemGastos?: Record<string, number>;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: i.id });
   const style = {
@@ -1336,7 +1347,7 @@ function SortableTipoRow({
     opacity: isDragging ? 0.5 : 1,
   } as React.CSSProperties;
   const [expanded, setExpanded] = useState(false);
-  const colCount = 1 /* drag */ + 1 /* nome */ + 1 /* desc */ + (hideCategoria ? 0 : 1) + 1 /* valor */ + 1 /* DRE */ + 1 /* elim */ + 1 /* actions */;
+  const colCount = 1 /* drag */ + 1 /* nome */ + 1 /* desc */ + (hideCategoria ? 0 : 1) + 1 /* valor */ + 1 /* DRE */ + 1 /* elim */ + 1 /* gastos */ + 1 /* actions */;
   return (
     <>
     <tr
@@ -1419,6 +1430,11 @@ function SortableTipoRow({
         >
           <AlertTriangle className="w-4 h-4" />
         </button>
+      </td>
+      <td className="px-2 text-center">
+        <span className={`text-xs tabular-nums ${(contagemGastos?.[i.id] || 0) > 0 ? 'text-white/80 font-medium' : 'text-white/30'}`}>
+          {contagemGastos?.[i.id] ?? '—'}
+        </span>
       </td>
       <td className="pr-1 text-right">
         {readOnly ? (
