@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useRegrasVendas } from "./useRegrasVendas";
 
 export interface ConfiguracoesVendas {
   id: string;
@@ -27,6 +28,7 @@ export interface ConfiguracoesVendasUpdate {
 
 export function useConfiguracoesVendas() {
   const queryClient = useQueryClient();
+  const { regras, limites: limitesRegras, updateRegras } = useRegrasVendas();
 
   const { data: configuracoes, isLoading, error, refetch } = useQuery({
     queryKey: ["configuracoes-vendas"],
@@ -62,10 +64,45 @@ export function useConfiguracoesVendas() {
         throw new Error("Configurações não encontradas");
       }
 
+      // Roteia limites para a tabela canônica `regras_vendas`
+      const {
+        limite_desconto_avista,
+        limite_desconto_presencial,
+        limite_adicional_responsavel,
+        ...restoUpdates
+      } = updates;
+
+      const limitesUpdate: Record<string, number> = {};
+      if (limite_desconto_avista !== undefined)
+        limitesUpdate.limite_desconto_avista = limite_desconto_avista;
+      if (limite_desconto_presencial !== undefined)
+        limitesUpdate.limite_desconto_fria = limite_desconto_presencial;
+      if (limite_adicional_responsavel !== undefined)
+        limitesUpdate.limite_adicional_responsavel = limite_adicional_responsavel;
+
+      if (Object.keys(limitesUpdate).length > 0 && regras?.id) {
+        const { error: regErr } = await supabase
+          .from("regras_vendas")
+          .update({ ...limitesUpdate, updated_at: new Date().toISOString() })
+          .eq("id", regras.id);
+        if (regErr) {
+          if (regErr.code === "42501") {
+            throw new Error(
+              "Você não tem permissão para atualizar as regras de vendas. Apenas administradores podem fazer isso."
+            );
+          }
+          throw regErr;
+        }
+      }
+
+      if (Object.keys(restoUpdates).length === 0) {
+        return configuracoes;
+      }
+
       const { data, error } = await supabase
         .from("configuracoes_vendas")
         .update({
-          ...updates,
+          ...restoUpdates,
           updated_at: new Date().toISOString(),
         })
         .eq("id", configuracoes.id)
@@ -87,6 +124,8 @@ export function useConfiguracoesVendas() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["configuracoes-vendas"] });
+      queryClient.invalidateQueries({ queryKey: ["regras-vendas"] });
+      queryClient.invalidateQueries({ queryKey: ["configuracoes-vendas-publicas"] });
       toast.success("Configurações atualizadas com sucesso!");
     },
     onError: (error: Error) => {
@@ -119,17 +158,21 @@ export function useConfiguracoesVendas() {
     return data === true;
   };
 
-  // Limites calculados
-  const limites = {
-    avista: configuracoes?.limite_desconto_avista ?? 3,
-    presencial: configuracoes?.limite_desconto_presencial ?? 5,
-    adicionalResponsavel: configuracoes?.limite_adicional_responsavel ?? 5,
-    totalSemSenha: (configuracoes?.limite_desconto_avista ?? 3) + (configuracoes?.limite_desconto_presencial ?? 5),
-    totalComResponsavel: (configuracoes?.limite_desconto_avista ?? 3) + (configuracoes?.limite_desconto_presencial ?? 5) + (configuracoes?.limite_adicional_responsavel ?? 5),
-  };
+  // Limites calculados — vêm da tabela canônica `regras_vendas`
+  const limites = limitesRegras;
+
+  // Sobrescreve os campos de limite no objeto `configuracoes` para refletir a fonte canônica
+  const configuracoesMescladas = configuracoes
+    ? {
+        ...configuracoes,
+        limite_desconto_avista: limitesRegras.avista,
+        limite_desconto_presencial: limitesRegras.presencial,
+        limite_adicional_responsavel: limitesRegras.adicionalResponsavel,
+      }
+    : configuracoes;
 
   return {
-    configuracoes,
+    configuracoes: configuracoesMescladas,
     isLoading,
     error,
     limites,
