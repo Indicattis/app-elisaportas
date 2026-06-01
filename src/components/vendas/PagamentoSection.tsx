@@ -421,7 +421,7 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
                       {paymentData.usar_dois_metodos ? 'Método 1' : 'Pagamento'} ({
                         metodo1.tipo === 'boleto' ? `Boleto ${metodo1.parcelas_boleto}x` :
                         metodo1.tipo === 'cartao_credito' ? `Cartão ${metodo1.parcelas_cartao}x` :
-                        metodo1.tipo === 'a_vista' ? 'À Vista' : 'Dinheiro'
+                        'À Vista'
                       }):
                     </span>
                     <span className="text-white">
@@ -441,7 +441,7 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
                       Método 2 ({
                         metodo2.tipo === 'boleto' ? `Boleto ${metodo2.parcelas_boleto}x` :
                         metodo2.tipo === 'cartao_credito' ? `Cartão ${metodo2.parcelas_cartao}x` :
-                        metodo2.tipo === 'a_vista' ? 'À Vista' : 'Dinheiro'
+                        'À Vista'
                       }):
                     </span>
                     <span className="text-white">
