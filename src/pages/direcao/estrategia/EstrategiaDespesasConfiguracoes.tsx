@@ -1625,85 +1625,90 @@ function SortableCategoriaGroup(props: {
 /* ---------------- Gastos do tipo (apenas modo mês) ---------------- */
 
 function GastosDoTipoExpand({
-  tipoCustoId, tipoNome, categoria, mes,
+  tipoCustoId, tipoNome, categoria, mes, hideCategoria,
 }: {
   tipoCustoId: string;
   tipoNome: string;
   categoria: 'fixa' | 'variavel' | 'imposto';
   mes: string | null;
+  hideCategoria?: boolean;
 }) {
   const { gastos, loading, refetch, deleteGasto } = useGastosPorTipoMes(tipoCustoId, mes, !!mes);
   const [open, setOpen] = useState(false);
   const total = gastos.reduce((s, g) => s + Number(g.valor || 0), 0);
-
+  const catCols = hideCategoria ? 0 : 1;
+  // Parent columns: drag(1) nome(1) desc(1) [cat] valor(1) DRE(1) elim(1) gastos(1) actions(1)
+  // Slim row layout: empty(1) data(nome col) descricao(desc col) [cat empty] valor(valor col) empty(DRE) empty(elim) empty(gastos) actions(1)
+  const stop = (e: React.MouseEvent) => e.stopPropagation();
   return (
-    <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
-      <div className="flex items-center justify-between">
-        <div className="text-xs text-white/60">
-          Gastos vinculados a <span className="text-white/90 font-medium">{tipoNome}</span> no mês
-        </div>
-        {mes && (
-          <button
-            type="button"
-            onClick={() => setOpen(true)}
-            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-400/30 text-xs text-emerald-200 hover:text-emerald-100 transition-colors"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            Novo gasto
-          </button>
-        )}
-      </div>
-
+    <>
       {loading ? (
-        <div className="text-xs text-white/40 py-2">Carregando…</div>
+        <tr className="bg-white/[0.015]">
+          <td />
+          <td colSpan={3 + catCols + 4} className="py-2 pl-1 text-xs text-white/40">Carregando…</td>
+        </tr>
       ) : gastos.length === 0 ? (
-        <div className="text-xs text-white/40 py-2">Nenhum gasto registrado neste mês.</div>
+        <tr className="bg-white/[0.015]">
+          <td />
+          <td colSpan={3 + catCols + 4} className="py-2 pl-1 text-xs text-white/40">Nenhum gasto registrado neste mês.</td>
+        </tr>
       ) : (
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-[10px] uppercase tracking-wider text-white/40 border-b border-white/10">
-              <th className="text-left font-normal pb-1.5 pl-1 w-[110px]">Data</th>
-              <th className="text-left font-normal pb-1.5 px-2">Descrição</th>
-              <th className="text-right font-normal pb-1.5 px-2 w-[140px]">Valor</th>
-              <th className="pb-1.5 pr-1 w-10"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {gastos.map(g => (
-              <tr key={g.id} className="border-b border-white/5">
-                <td className="py-1.5 pl-1 text-white/70 tabular-nums">{g.data.split('-').reverse().join('/')}</td>
-                <td className="px-2 text-white/80">{g.descricao || '—'}</td>
-                <td className="px-2 text-right text-white tabular-nums">{formatCurrency(Number(g.valor) || 0)}</td>
-                <td className="pr-1 text-right">
-                  <button
-                    onClick={() => deleteGasto(g.id)}
-                    className="p-1 rounded hover:bg-red-500/20 text-red-300/70 hover:text-red-300"
-                    title="Excluir gasto"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </td>
-              </tr>
-            ))}
-            <tr>
-              <td colSpan={2} className="pt-2 text-right text-[11px] uppercase tracking-wider text-white/50">Total no mês</td>
-              <td className="pt-2 text-right text-white font-semibold tabular-nums">{formatCurrency(total)}</td>
+        <>
+          {gastos.map(g => (
+            <tr key={g.id} className="bg-white/[0.015] border-b border-white/[0.04] text-xs" onClick={stop}>
               <td />
+              <td className="py-1 pl-1 text-white/70 tabular-nums whitespace-nowrap">{g.data.split('-').reverse().join('/')}</td>
+              <td className="px-1 text-white/70 truncate" colSpan={1 + catCols}>{g.descricao || '—'}</td>
+              <td className="px-2 text-right text-white/85 tabular-nums">{formatCurrency(Number(g.valor) || 0)}</td>
+              <td />
+              <td />
+              <td />
+              <td className="pr-1 text-right">
+                <button
+                  onClick={() => deleteGasto(g.id)}
+                  className="p-1 rounded hover:bg-red-500/20 text-red-300/50 hover:text-red-300"
+                  title="Excluir gasto"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </td>
             </tr>
-          </tbody>
-        </table>
+          ))}
+          <tr className="bg-white/[0.015] text-[11px]" onClick={stop}>
+            <td />
+            <td colSpan={1 + catCols} className="py-1 pl-1 text-white/40 uppercase tracking-wider">Total</td>
+            <td className="px-1" />
+            <td className="px-2 text-right text-white/80 font-semibold tabular-nums">{formatCurrency(total)}</td>
+            <td colSpan={4} />
+          </tr>
+        </>
       )}
-
       {mes && (
-        <GastoFormDialog
-          open={open}
-          onOpenChange={setOpen}
-          defaultMes={mes}
-          defaultTipoCustoId={tipoCustoId}
-          defaultCategoria={categoria}
-          onSaved={refetch}
-        />
+        <tr className="bg-white/[0.015] border-b border-white/10" onClick={stop}>
+          <td />
+          <td colSpan={3 + catCols + 3} className="py-1.5 pl-1">
+            <button
+              type="button"
+              onClick={() => setOpen(true)}
+              className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-400/20 text-[11px] text-emerald-200/90 hover:text-emerald-100 transition-colors"
+            >
+              <Plus className="w-3 h-3" />
+              Novo gasto
+            </button>
+          </td>
+          <td />
+          {mes && (
+            <GastoFormDialog
+              open={open}
+              onOpenChange={setOpen}
+              defaultMes={mes}
+              defaultTipoCustoId={tipoCustoId}
+              defaultCategoria={categoria}
+              onSaved={refetch}
+            />
+          )}
+        </tr>
       )}
-    </div>
+    </>
   );
 }
