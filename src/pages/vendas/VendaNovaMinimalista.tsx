@@ -795,7 +795,7 @@ export default function VendaNovaMinimalista() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-8">
         {/* Cliente - Buscar ou Cadastrar */}
         <ClienteVendaSection
           dados={{
