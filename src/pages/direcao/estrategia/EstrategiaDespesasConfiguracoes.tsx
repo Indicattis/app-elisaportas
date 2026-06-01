@@ -314,13 +314,13 @@ function FolhaBlock({
             <FileDown className="w-3.5 h-3.5" />
             Exportar PDF
           </button>
-          {!readOnly && (<button
+          <button
             onClick={() => setAddOpen(true)}
             className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-400/30 text-xs text-emerald-200 hover:text-emerald-100 transition-colors"
           >
             <Plus className="w-3.5 h-3.5" />
             Novo colaborador
-          </button>)}
+          </button>
         </div>
       </div>
       <div className="space-y-3">
