@@ -797,6 +797,15 @@ export default function VendaNovaMinimalista() {
           }}
         />
 
+        {/* Desconto / Acréscimo Global */}
+        <DescontoAcrescimoSection
+          ajuste={ajusteGlobal}
+          onChange={setAjusteGlobal}
+          valorBase={subtotalProdutosMemo}
+          disabled={valorCredito > 0 && ajusteGlobal.tipo === 'desconto'}
+          disabledReason={valorCredito > 0 ? 'Desconto indisponível: existe crédito aplicado à venda.' : undefined}
+        />
+
         {/* Informações de Entrega */}
         <Section title="Informações de Entrega" icon={Truck}>
           <div className="space-y-4">
