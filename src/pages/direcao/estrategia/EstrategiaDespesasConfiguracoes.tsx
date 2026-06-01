@@ -1455,11 +1455,13 @@ function SortableTipoRow({
       </td>
     </tr>
     {readOnly && expanded && (
-      <tr className="bg-white/[0.02]">
-        <td colSpan={colCount} className="px-4 py-3">
-          <GastosDoTipoExpand tipoCustoId={i.id} tipoNome={i.nome} categoria={i.tipo} mes={mesReferencia ?? null} />
-        </td>
-      </tr>
+      <GastosDoTipoExpand
+        tipoCustoId={i.id}
+        tipoNome={i.nome}
+        categoria={i.tipo}
+        mes={mesReferencia ?? null}
+        hideCategoria={hideCategoria}
+      />
     )}
     </>
   );
