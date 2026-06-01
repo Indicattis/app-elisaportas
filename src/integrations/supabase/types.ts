@@ -2279,6 +2279,65 @@ export type Database = {
         }
         Relationships: []
       }
+      despesas_mes_folha_override: {
+        Row: {
+          aux_combustivel: number | null
+          created_at: string
+          created_by: string | null
+          despesa_padrao_id: string
+          em_folha: boolean | null
+          ferias_valor: number | null
+          fgts_pct: number | null
+          id: string
+          insalubridade_pct: number | null
+          mes_referencia: string
+          previsao_13_valor: number | null
+          salario: number | null
+          salario_minimo: number | null
+          updated_at: string
+        }
+        Insert: {
+          aux_combustivel?: number | null
+          created_at?: string
+          created_by?: string | null
+          despesa_padrao_id: string
+          em_folha?: boolean | null
+          ferias_valor?: number | null
+          fgts_pct?: number | null
+          id?: string
+          insalubridade_pct?: number | null
+          mes_referencia: string
+          previsao_13_valor?: number | null
+          salario?: number | null
+          salario_minimo?: number | null
+          updated_at?: string
+        }
+        Update: {
+          aux_combustivel?: number | null
+          created_at?: string
+          created_by?: string | null
+          despesa_padrao_id?: string
+          em_folha?: boolean | null
+          ferias_valor?: number | null
+          fgts_pct?: number | null
+          id?: string
+          insalubridade_pct?: number | null
+          mes_referencia?: string
+          previsao_13_valor?: number | null
+          salario?: number | null
+          salario_minimo?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "despesas_mes_folha_override_despesa_padrao_id_fkey"
+            columns: ["despesa_padrao_id"]
+            isOneToOne: false
+            referencedRelation: "despesas_padrao"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       despesas_mes_status: {
         Row: {
           created_at: string
@@ -2302,6 +2361,44 @@ export type Database = {
           updated_by?: string | null
         }
         Relationships: []
+      }
+      despesas_mes_tipo_custo_override: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          mes_referencia: string
+          tipo_custo_id: string
+          updated_at: string
+          valor_maximo_mensal: number | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          mes_referencia: string
+          tipo_custo_id: string
+          updated_at?: string
+          valor_maximo_mensal?: number | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          mes_referencia?: string
+          tipo_custo_id?: string
+          updated_at?: string
+          valor_maximo_mensal?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "despesas_mes_tipo_custo_override_tipo_custo_id_fkey"
+            columns: ["tipo_custo_id"]
+            isOneToOne: false
+            referencedRelation: "tipos_custos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       despesas_padrao: {
         Row: {

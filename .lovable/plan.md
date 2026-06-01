@@ -1,44 +1,95 @@
+# Despesas mensais como clone das Configurações padrão
+
 ## Objetivo
 
-Criar uma seção dedicada **"Informações de Entrega"** em `/vendas/minhas-vendas/nova` com escolha entre **Frete Interno** e **Frete por Transportadora**, persistindo o tipo escolhido.
+A página `/direcao/estrategia/despesas/2026-05` (e qualquer mês) terá a mesma UI rica de `/direcao/estrategia/despesas/configuracoes`, com a diferença de que:
 
-## Mudanças
+- Os valores editados ficam **apenas no mês** (override) — Configurações padrão continuam intactas.
+- Não há criar/excluir colaborador ou tipo de custo no mês: a tela mensal herda automaticamente tudo do padrão.
+- Cada colaborador/tipo pode ter seus valores ajustados, **inclusive zerados**.
+- Gastos continuam usando a tabela `gastos` (igual hoje).
 
-### 1. Banco — nova coluna `tipo_frete` em `vendas`
+## Modelo de dados (novo, recomeçando a folha mensal)
 
-- Coluna `tipo_frete text not null default 'interno'` com check `in ('interno','transportadora')`.
-- Backfill: registros existentes ficam como `'interno'` (default).
-- Sem alteração de RLS/grants (tabela já configurada).
+Criar duas tabelas de override por mês. Toda linha representa "este campo deste item, neste mês, vale X" — quando não existir override, a tela usa o valor de `despesas_padrao` / `tipos_custos`.
 
-### 2. UI — `src/pages/vendas/VendaNovaMinimalista.tsx`
+```text
+despesas_mes_folha_override
+  id, mes_referencia (date, dia 01), despesa_padrao_id (fk),
+  salario, salario_minimo, aux_combustivel,
+  insalubridade_pct, fgts_pct, previsao_13_valor, ferias_valor,
+  em_folha (bool, override opcional),
+  UNIQUE (mes_referencia, despesa_padrao_id)
 
-Nova `Section` "Informações de Entrega" (ícone `Truck`), posicionada logo após **Forma de Pagamento** e antes de **Dados Adicionais**. Remove o campo "Frete (R$)" do bloco Dados Adicionais (que mantém Data da Venda, Previsão de Entrega e Tipo de Entrega).
+despesas_mes_tipo_custo_override
+  id, mes_referencia (date, dia 01), tipo_custo_id (fk),
+  valor_maximo_mensal,
+  UNIQUE (mes_referencia, tipo_custo_id)
+```
 
-Conteúdo da nova seção:
+Tabela legada `despesas_manuais_folha` deixa de ser usada pelos novos componentes (mantida no banco por enquanto para não quebrar histórico). `despesas_manuais_lancamentos` continua sendo usada só para o caso de impostos avulsos já existentes — não vamos remover.
 
-- **Tipo de Frete** — dois cards radio no mesmo padrão visual dos cards de "Tipo de Entrega":
-  - **Frete Interno** (ícone `Truck`) — valor auto‑preenchido a partir de `useFretesCidades` quando há cadastro para a cidade/estado; readonly + badge "Frete automático" quando há sugestão, editável manualmente quando não há.
-  - **Frete por Transportadora** (ícone `Package`/`Building2`) — valor sempre editável manualmente, sem auto‑preenchimento por cidade.
-- **Valor do Frete (R$)** — mesmo input atual, com lógica condicional ao tipo.
-- Ao trocar de "interno" → "transportadora", o lock por cidade é desativado e o valor permanece editável (mantém o valor digitado/sugerido até alteração manual).
+Migration inclui `GRANT SELECT, INSERT, UPDATE, DELETE` para `authenticated`, `GRANT ALL` para `service_role`, RLS ligado e policies permitindo leitura/escrita para autenticados (mesmo padrão das tabelas atuais de despesas).
 
-### 3. Persistência
+## UI
 
-- `VendaFormData` ganha `tipo_frete: 'interno' | 'transportadora'` (default `'interno'`).
-- `createVenda` / `createRascunho` enviam `tipo_frete` junto.
-- Carregamento por `orcamento_id` lê `tipo_frete` quando existir (fallback `'interno'`).
+### Refator dos componentes
+
+Extrair de `EstrategiaDespesasConfiguracoes.tsx` os blocos `FolhaBlock` e `TiposCustoBlock` para arquivos reutilizáveis:
+
+```text
+src/components/direcao/estrategia/despesas/FolhaBlock.tsx
+src/components/direcao/estrategia/despesas/TiposCustoBlock.tsx
+```
+
+Cada bloco ganha uma prop `mode: 'config' | 'mes'` e (quando `mes`) `mesReferencia: string`.
+
+### Diferenças quando `mode === 'mes'`
+
+Folha:
+- Lista vem 100% de `despesas_padrao` (`tipo='folha'`), mesclada com overrides do mês.
+- Botões "Novo colaborador", "Gerenciar setores", drag-and-drop de setores e exclusão **ficam ocultos**.
+- Edição inline dos campos numéricos (salário, aux, %, etc.) grava em `despesas_mes_folha_override` via upsert pela chave `(mes_referencia, despesa_padrao_id)`.
+- Permite zerar qualquer campo (valor 0 é um override válido).
+- Botão "Restaurar padrão" por linha (ícone discreto) que apaga o override daquele colaborador no mês.
+
+Tipos de Custos (Fixas / Variáveis / Impostos):
+- Lista vem de `tipos_custos` ativos, mesclada com override de `valor_maximo_mensal`.
+- Sem criar/excluir/reordenar tipos no modo mês.
+- Edição do "valor mensal" grava em `despesas_mes_tipo_custo_override`.
+- Botão "Restaurar padrão" por linha.
+- Coluna de gastos do mês (somatório de `gastos` com `tipo_custo_id` e `data` no mês) fica visível, com botão "+ Novo gasto" abrindo `GastoFormDialog` já existente.
+
+### Página `EstrategiaDespesasMes.tsx`
+
+Substitui o uso atual de `DespesasResumoTopo` pelos novos blocos:
+
+```text
+<FolhaBlock mode="mes" mesReferencia={mes} />
+<TiposCustoBlock mode="mes" mesReferencia={mes} tipo="fixa" />
+<TiposCustoBlock mode="mes" mesReferencia={mes} tipo="variavel" />
+<TiposCustoBlock mode="mes" mesReferencia={mes} tipo="imposto" />
+```
+
+Mantém: botão de status (Pendente/Alana/Luan), breadcrumb, `MinimalistLayout`, totalização do mês (calculada a partir dos blocos via callback).
+
+`DespesasResumoTopo.tsx` deixa de ser usado por essa página (mantido caso outras telas usem, mas se nenhuma usar é removido).
+
+## Hooks novos
+
+```text
+src/hooks/useDespesasMesFolhaOverrides.ts
+src/hooks/useDespesasMesTipoCustoOverrides.ts
+```
+
+Cada um faz fetch dos overrides do mês, expõe `upsert(campo, valor)` e `clear(itemId)` (restaurar padrão).
+
+## Cálculo do total do mês
+
+`FolhaBlock` em modo mês emite o total efetivo (após overrides) via callback. `TiposCustoBlock` idem para gastos reais do mês (não a previsão). A página soma e exibe no subtítulo do `MinimalistLayout` e atualiza o cartão do mês na listagem anual.
 
 ## Fora de escopo
 
-- Página de edição (`VendaEditarMinimalista`), detalhes, faturamento — não tocadas neste passo.
-- Cadastro/seleção de transportadora específica — neste momento o usuário só informa o valor manualmente.
-
-## Detalhes técnicos
-
-```text
-public.vendas
-  + tipo_frete text not null default 'interno'
-    check (tipo_frete in ('interno','transportadora'))
-```
-
-Componente: nova `<Section title="Informações de Entrega" icon={Truck}>` com grid 2 colunas (tipo de frete em col‑span‑2, valor em col‑span‑1, status/sugestão abaixo). Reaproveita `freteSugerido` apenas quando `tipo_frete === 'interno'`.
+- Não vamos alterar `EstrategiaDespesasConfiguracoes.tsx` em comportamento, apenas extrair os blocos reutilizáveis.
+- Migração de dados de `despesas_manuais_folha` para o novo modelo não é necessária — meses antigos passam a exibir o padrão atual; se precisar resgatar, fazemos depois.
+- Sem mudanças no DRE, faturamento ou outros consumidores das tabelas existentes.
