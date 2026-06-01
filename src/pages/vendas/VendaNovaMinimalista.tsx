@@ -586,7 +586,7 @@ export default function VendaNovaMinimalista() {
     }
 
     const validacao = validarDesconto(
-      portas,
+      portasComAjusteGlobal,
       formData.forma_pagamento,
       formData.venda_presencial === false,
       configLimitesObj
@@ -594,7 +594,7 @@ export default function VendaNovaMinimalista() {
 
     const tipoAutorizacao = getTipoAutorizacaoNecessaria(validacao);
     if (tipoAutorizacao) {
-      setProdutosComDesconto(portas);
+      setProdutosComDesconto(portasComAjusteGlobal);
       setTipoAutorizacaoNecessaria(tipoAutorizacao);
       setLimitePermitido(validacao.limitePermitido);
       setAutorizacaoDescontoOpen(true);
@@ -608,7 +608,7 @@ export default function VendaNovaMinimalista() {
           forma_pagamento: pagamentoData.metodos[0]?.tipo || '',
           data_venda: `${format(dataVenda, 'yyyy-MM-dd')}T12:00:00.000Z`,
         },
-        portas,
+        portas: portasComAjusteGlobal,
         pagamentoData,
         creditoVenda: { valorCredito, percentualCredito }
       });
