@@ -4,11 +4,11 @@ import { format, parse } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { CheckCircle2, Clock } from 'lucide-react';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
-import DespesasResumoTopo, { logStatusChange } from '@/components/direcao/estrategia/DespesasResumoTopo';
+import { logStatusChange } from '@/components/direcao/estrategia/DespesasResumoTopo';
+import { DespesasGridContent } from './EstrategiaDespesasConfiguracoes';
 import { formatCurrency } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import GastoFormDialog from '@/components/financeiro/GastoFormDialog';
 
 export default function EstrategiaDespesasMes() {
   const { mes } = useParams<{ mes: string }>();
@@ -16,9 +16,6 @@ export default function EstrategiaDespesasMes() {
   const [totalMes, setTotalMes] = useState(0);
   const [status, setStatus] = useState<'pendente' | 'alana' | 'luan'>('pendente');
   const [savingStatus, setSavingStatus] = useState(false);
-  const [gastoDialogOpen, setGastoDialogOpen] = useState(false);
-  const [reloadKey, setReloadKey] = useState(0);
-  const [dialogCategoria, setDialogCategoria] = useState<'fixa' | 'variavel' | 'imposto' | undefined>(undefined);
 
   const mesValido = useMemo(() => {
     if (!mes || !/^\d{4}-\d{2}$/.test(mes)) return null;
@@ -128,24 +125,7 @@ export default function EstrategiaDespesasMes() {
         </div>
       </div>
 
-      <DespesasResumoTopo
-        mes={mesValido}
-        ano={ano}
-        onMediaMensalChange={setTotalMes}
-        reloadKey={reloadKey}
-        onRequestNovoGasto={(cat) => {
-          setDialogCategoria(cat);
-          setGastoDialogOpen(true);
-        }}
-      />
-
-      <GastoFormDialog
-        open={gastoDialogOpen}
-        onOpenChange={setGastoDialogOpen}
-        defaultMes={mesValido}
-        defaultCategoria={dialogCategoria}
-        onSaved={() => setReloadKey((k) => k + 1)}
-      />
+      <DespesasGridContent mode="mes" mesReferencia={mesValido} />
     </MinimalistLayout>
   );
 }
