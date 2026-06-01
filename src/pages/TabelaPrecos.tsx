@@ -44,6 +44,7 @@ interface TabelaPrecosProps {
   hideTotalColumn?: boolean;
   embedded?: boolean;
   enableReorder?: boolean;
+  readOnly?: boolean;
   titleOverride?: string;
   subtitleOverride?: string;
   backPathOverride?: string;
