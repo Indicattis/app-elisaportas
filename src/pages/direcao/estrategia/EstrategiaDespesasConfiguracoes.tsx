@@ -1296,11 +1296,9 @@ function CategoriaGroup({
             {!hideCategoria && (
               <th className="text-left font-normal pb-2 px-2 w-[18%]">Categoria</th>
             )}
-            <th className="text-right font-normal pb-2 px-2 w-[32%]">Valor projetado</th>
-            <th className="text-center font-normal pb-2 px-2 w-[8%]">DRE</th>
-            <th className="text-center font-normal pb-2 px-2 w-[8%]" title="Marcar para eliminar essa despesa">Eliminar</th>
             <th className="text-center font-normal pb-2 px-2 w-[8%]">Gastos</th>
             <th className="text-right font-normal pb-2 px-2 w-[12%]">Total gasto</th>
+            <th className="text-right font-normal pb-2 px-2 w-[32%]">Valor projetado</th>
             <th className="pb-2 pr-1 w-10"></th>
           </tr>
         </thead>
