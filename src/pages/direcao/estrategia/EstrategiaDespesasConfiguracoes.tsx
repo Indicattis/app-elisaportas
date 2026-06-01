@@ -1431,6 +1431,11 @@ function SortableTipoRow({
           <AlertTriangle className="w-4 h-4" />
         </button>
       </td>
+      <td className="px-2 text-center">
+        <span className={`text-xs tabular-nums ${(contagemGastos?.[i.id] || 0) > 0 ? 'text-white/80 font-medium' : 'text-white/30'}`}>
+          {contagemGastos?.[i.id] ?? '—'}
+        </span>
+      </td>
       <td className="pr-1 text-right">
         {readOnly ? (
           hasOverride?.(i.id) && clearOverride ? (
