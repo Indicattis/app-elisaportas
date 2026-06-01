@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Search, Package } from 'lucide-react';
 import type { ProdutoVenda } from '@/hooks/useVendas';
 import { toast } from 'sonner';
+import { getUnidade } from '@/utils/unidadesMedida';
 
 interface SelecionarAcessoriosModalProps {
   open: boolean;
@@ -93,7 +94,7 @@ export function SelecionarAcessoriosModal({
 
     // Validar tamanho obrigatório para itens decimais (metro/kg/litro)
     const semTamanho = itensSelecionadosArray.filter(item => {
-      const isDecimal = ['metro', 'kg', 'litro'].includes((item.unidade || '').toLowerCase());
+      const isDecimal = !getUnidade(item.unidade).discreta;
       const tam = parseFloat(tamanhos[item.id] || '') || 0;
       return isDecimal && tam <= 0;
     });
@@ -106,7 +107,7 @@ export function SelecionarAcessoriosModal({
     }
     
     const produtos: ProdutoVenda[] = itensSelecionadosArray.map(item => {
-      const isDecimal = ['metro', 'kg', 'litro'].includes((item.unidade || '').toLowerCase());
+      const isDecimal = !getUnidade(item.unidade).discreta;
       const qtd = quantidades[item.id] ?? 1;
       const tam = isDecimal ? (tamanhos[item.id] || '') : '';
       const tamanhoNum = isDecimal ? (parseFloat(tam) || 0) : 0;
@@ -148,7 +149,7 @@ export function SelecionarAcessoriosModal({
   const temItemDecimalSemTamanho = useMemo(() => {
     return produtosEstoque.some(item => {
       if (!itensSelecionados.has(item.id)) return false;
-      const isDecimal = ['metro', 'kg', 'litro'].includes((item.unidade || '').toLowerCase());
+      const isDecimal = !getUnidade(item.unidade).discreta;
       if (!isDecimal) return false;
       const tam = parseFloat(tamanhos[item.id] || '') || 0;
       return tam <= 0;
@@ -220,12 +221,10 @@ export function SelecionarAcessoriosModal({
               </TableHeader>
               <TableBody>
                 {produtosFiltrados.map((item) => {
-                  const isDecimal = ['metro', 'kg', 'litro'].includes((item.unidade || '').toLowerCase());
+                  const unidadeInfo = getUnidade(item.unidade);
+                  const isDecimal = !unidadeInfo.discreta;
                   const selected = itensSelecionados.has(item.id);
-                  const unidadeLabel = (item.unidade || '').toLowerCase() === 'metro' ? 'm'
-                    : (item.unidade || '').toLowerCase() === 'kg' ? 'kg'
-                    : (item.unidade || '').toLowerCase() === 'litro' ? 'L'
-                    : '';
+                  const unidadeLabel = isDecimal ? unidadeInfo.abreviacao : '';
                   return (
                   <TableRow
                     key={item.id} 
