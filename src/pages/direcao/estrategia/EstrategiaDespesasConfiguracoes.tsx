@@ -1296,11 +1296,9 @@ function CategoriaGroup({
             {!hideCategoria && (
               <th className="text-left font-normal pb-2 px-2 w-[18%]">Categoria</th>
             )}
-            <th className="text-right font-normal pb-2 px-2 w-[32%]">Valor projetado</th>
-            <th className="text-center font-normal pb-2 px-2 w-[8%]">DRE</th>
-            <th className="text-center font-normal pb-2 px-2 w-[8%]" title="Marcar para eliminar essa despesa">Eliminar</th>
             <th className="text-center font-normal pb-2 px-2 w-[8%]">Gastos</th>
             <th className="text-right font-normal pb-2 px-2 w-[12%]">Total gasto</th>
+            <th className="text-right font-normal pb-2 px-2 w-[32%]">Valor projetado</th>
             <th className="pb-2 pr-1 w-10"></th>
           </tr>
         </thead>
@@ -1357,7 +1355,7 @@ function SortableTipoRow({
     opacity: isDragging ? 0.5 : 1,
   } as React.CSSProperties;
   const [expanded, setExpanded] = useState(false);
-  const colCount = 1 /* drag */ + 1 /* nome */ + 1 /* desc */ + (hideCategoria ? 0 : 1) + 1 /* valor */ + 1 /* DRE */ + 1 /* elim */ + 1 /* gastos */ + 1 /* total */ + 1 /* actions */;
+  const colCount = 1 /* drag */ + 1 /* nome */ + 1 /* desc */ + (hideCategoria ? 0 : 1) + 1 /* gastos */ + 1 /* total */ + 1 /* valor */ + 1 /* actions */;
   return (
     <>
     <tr
@@ -1418,29 +1416,6 @@ function SortableTipoRow({
           </select>
         </td>
       )}
-      <td className={`px-2 text-right font-medium ${i.marcada_para_eliminar ? 'text-red-400 line-through' : 'text-white'}`}>
-        {readOnly
-          ? <span className="px-1 py-0.5">{formatCurrency(Number(i.valor_maximo_mensal) || 0)}</span>
-          : <InlineNum value={i.valor_maximo_mensal} onSave={(v) => update(i.id, { valor_maximo_mensal: v })} format="currency" />}
-      </td>
-      <td className="px-2 text-center">
-        <Switch checked={i.aparece_no_dre} disabled={readOnly} onCheckedChange={(v) => update(i.id, { aparece_no_dre: v })} />
-      </td>
-      <td className="px-2 text-center">
-        <button
-          type="button"
-          disabled={readOnly}
-          onClick={(e) => { e.stopPropagation(); if (!readOnly) update(i.id, { marcada_para_eliminar: !i.marcada_para_eliminar } as any); }}
-          title={i.marcada_para_eliminar ? 'Desmarcar — manter despesa' : 'Marcar para eliminar essa despesa'}
-          className={`inline-flex items-center justify-center w-7 h-7 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-            i.marcada_para_eliminar
-              ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30'
-              : 'text-white/30 hover:text-red-300 hover:bg-red-500/10'
-          }`}
-        >
-          <AlertTriangle className="w-4 h-4" />
-        </button>
-      </td>
       <td className="px-2 text-center">
         <span className={`text-xs tabular-nums ${(contagemGastos?.[i.id] || 0) > 0 ? 'text-white/80 font-medium' : 'text-white/30'}`}>
           {contagemGastos?.[i.id] ?? '—'}
@@ -1450,6 +1425,11 @@ function SortableTipoRow({
         <span className={`text-xs tabular-nums ${(totaisGastos?.[i.id] || 0) > 0 ? 'text-emerald-300/90 font-medium' : 'text-white/30'}`}>
           {totaisGastos && totaisGastos[i.id] != null ? formatCurrency(totaisGastos[i.id]) : '—'}
         </span>
+      </td>
+      <td className={`px-2 text-right font-medium ${i.marcada_para_eliminar ? 'text-red-400 line-through' : 'text-white'}`}>
+        {readOnly
+          ? <span className="px-1 py-0.5">{formatCurrency(Number(i.valor_maximo_mensal) || 0)}</span>
+          : <InlineNum value={i.valor_maximo_mensal} onSave={(v) => update(i.id, { valor_maximo_mensal: v })} format="currency" />}
       </td>
       <td className="pr-1 text-right">
         {readOnly ? (
@@ -1652,20 +1632,20 @@ function GastosDoTipoExpand({
   const [open, setOpen] = useState(false);
   const total = gastos.reduce((s, g) => s + Number(g.valor || 0), 0);
   const catCols = hideCategoria ? 0 : 1;
-  // Parent columns: drag(1) nome(1) desc(1) [cat] valor(1) DRE(1) elim(1) gastos(1) actions(1)
-  // Slim row layout: empty(1) data(nome col) descricao(desc col) [cat empty] valor(valor col) empty(DRE) empty(elim) empty(gastos) actions(1)
+  // Parent columns: drag(1) nome(1) desc(1) [cat] gastos(1) totalGasto(1) valor(1) actions(1)
+  // Slim row layout: empty(1) data(nome col) descricao(desc col) [cat empty] empty(gastos) empty(totalGasto) valor(valor col) actions(1)
   const stop = (e: React.MouseEvent) => e.stopPropagation();
   return (
     <>
       {loading ? (
         <tr className="bg-white/[0.015]">
           <td />
-          <td colSpan={3 + catCols + 5} className="py-2 pl-1 text-xs text-white/40">Carregando…</td>
+          <td colSpan={6 + catCols} className="py-2 pl-1 text-xs text-white/40">Carregando…</td>
         </tr>
       ) : gastos.length === 0 ? (
         <tr className="bg-white/[0.015]">
           <td />
-          <td colSpan={3 + catCols + 5} className="py-2 pl-1 text-xs text-white/40">Nenhum gasto registrado neste mês.</td>
+          <td colSpan={6 + catCols} className="py-2 pl-1 text-xs text-white/40">Nenhum gasto registrado neste mês.</td>
         </tr>
       ) : (
         <>
@@ -1674,8 +1654,6 @@ function GastosDoTipoExpand({
               <td />
               <td className="py-1 pl-1 text-white/70 tabular-nums whitespace-nowrap">{g.data.split('-').reverse().join('/')}</td>
               <td className="px-1 text-white/70 truncate" colSpan={1 + catCols}>{g.descricao || '—'}</td>
-              <td className="px-2 text-right text-white/85 tabular-nums">{formatCurrency(Number(g.valor) || 0)}</td>
-              <td />
               <td />
               <td />
               <td />
@@ -1692,12 +1670,8 @@ function GastosDoTipoExpand({
           ))}
           <tr className="bg-white/[0.015] text-[11px]" onClick={stop}>
             <td />
-            <td colSpan={1 + catCols} className="py-1 pl-1 text-white/40 uppercase tracking-wider">Total</td>
-            <td className="px-1" />
-            <td className="px-2 text-right text-white/40" />
-            <td />
-            <td />
-            <td />
+            <td className="py-1 pl-1 text-white/40 uppercase tracking-wider">Total</td>
+            <td colSpan={3 + catCols} />
             <td className="px-2 text-right text-emerald-300/90 font-semibold tabular-nums">{formatCurrency(total)}</td>
             <td />
           </tr>
@@ -1706,7 +1680,7 @@ function GastosDoTipoExpand({
       {mes && (
         <tr className="bg-white/[0.015] border-b border-white/10" onClick={stop}>
           <td />
-          <td colSpan={3 + catCols + 4} className="py-1.5 pl-1">
+          <td colSpan={5 + catCols} className="py-1.5 pl-1">
             <button
               type="button"
               onClick={() => setOpen(true)}
