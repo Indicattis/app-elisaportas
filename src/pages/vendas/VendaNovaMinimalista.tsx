@@ -457,20 +457,6 @@ export default function VendaNovaMinimalista() {
     });
   };
 
-  const handleAplicarDesconto = (produtosAtualizados: ProdutoVenda[]) => {
-    setPortas(produtosAtualizados);
-    
-    setValorCredito(0);
-    setPercentualCredito(0);
-    
-    const valorTotal = recalcularValorTotal(produtosAtualizados, 0);
-    
-    setFormData(prev => ({
-      ...prev,
-      valor_a_receber: valorTotal - (prev.valor_entrada || 0)
-    }));
-  };
-
   const handleAplicarCredito = (novoValorCredito: number, novoPercentualCredito: number) => {
     setValorCredito(novoValorCredito);
     setPercentualCredito(novoPercentualCredito);
