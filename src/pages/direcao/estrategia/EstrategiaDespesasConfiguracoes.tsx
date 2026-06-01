@@ -477,7 +477,7 @@ function FolhaRowCells({
         </div>
       </td>
       <td className="px-2 text-center">
-        <Switch checked={item.em_folha} onCheckedChange={(v) => update(item.id, { em_folha: v })} />
+        <Switch checked={item.em_folha} disabled={readOnly} onCheckedChange={(v) => update(item.id, { em_folha: v })} />
       </td>
       <td className="px-2">
         <select value={item.setor ?? ''} disabled={readOnly}
