@@ -1347,7 +1347,7 @@ function SortableTipoRow({
     opacity: isDragging ? 0.5 : 1,
   } as React.CSSProperties;
   const [expanded, setExpanded] = useState(false);
-  const colCount = 1 /* drag */ + 1 /* nome */ + 1 /* desc */ + (hideCategoria ? 0 : 1) + 1 /* valor */ + 1 /* DRE */ + 1 /* elim */ + 1 /* actions */;
+  const colCount = 1 /* drag */ + 1 /* nome */ + 1 /* desc */ + (hideCategoria ? 0 : 1) + 1 /* valor */ + 1 /* DRE */ + 1 /* elim */ + 1 /* gastos */ + 1 /* actions */;
   return (
     <>
     <tr
