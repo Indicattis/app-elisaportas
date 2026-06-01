@@ -733,6 +733,11 @@ export default function VendaNovaMinimalista() {
           valorTotal={valorTotalMemo}
           vendaPresencial={formData.venda_presencial}
           onVendaPresencialChange={(v) => setFormData(prev => ({ ...prev, venda_presencial: v }))}
+          descontoInfo={{
+            percentualAplicado: validacaoDescontoMemo.percentualDesconto,
+            limitePermitido: validacaoDescontoMemo.limitePermitido,
+            limiteMaximo: validacaoDescontoMemo.limiteMaximoResponsavel ?? validacaoDescontoMemo.limitePermitido,
+          }}
         />
 
         {/* Informações de Entrega */}
