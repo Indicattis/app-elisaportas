@@ -351,9 +351,17 @@ export default function VendaNovaMinimalista() {
     adicionalResponsavel: configLimites.adicionalResponsavel
   }), [configLimites]);
 
+  // A forma de pagamento exibida/escolhida pelo usuário vive em `pagamentoData.metodos[0]`.
+  // `formData.forma_pagamento` só é preenchido no submit, então a validação de desconto
+  // precisa derivar da seleção atual para refletir mudanças em tempo real.
+  const formaPagamentoAtual = useMemo(
+    () => pagamentoData.metodos[0]?.tipo || formData.forma_pagamento || '',
+    [pagamentoData.metodos, formData.forma_pagamento]
+  );
+
   const validacaoDescontoMemo = useMemo(() => {
-    return validarDesconto(portasComAjusteGlobal, formData.forma_pagamento, formData.venda_presencial === false, configLimitesObj);
-  }, [portasComAjusteGlobal, formData.forma_pagamento, formData.venda_presencial, configLimitesObj]);
+    return validarDesconto(portasComAjusteGlobal, formaPagamentoAtual, formData.venda_presencial === false, configLimitesObj);
+  }, [portasComAjusteGlobal, formaPagamentoAtual, formData.venda_presencial, configLimitesObj]);
 
   const tipoAutorizacaoNecessariaMemo = useMemo(() => {
     return getTipoAutorizacaoNecessaria(validacaoDescontoMemo);
@@ -391,7 +399,7 @@ export default function VendaNovaMinimalista() {
 
     const validacao = validarDesconto(
       portasSimuladas,
-      formData.forma_pagamento,
+      formaPagamentoAtual,
       formData.venda_presencial === false,
       configLimitesObj
     );
