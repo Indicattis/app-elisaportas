@@ -1300,6 +1300,7 @@ function CategoriaGroup({
             <th className="text-center font-normal pb-2 px-2 w-[8%]">DRE</th>
             <th className="text-center font-normal pb-2 px-2 w-[8%]" title="Marcar para eliminar essa despesa">Eliminar</th>
             <th className="text-center font-normal pb-2 px-2 w-[8%]">Gastos</th>
+            <th className="text-right font-normal pb-2 px-2 w-[12%]">Total gasto</th>
             <th className="pb-2 pr-1 w-10"></th>
           </tr>
         </thead>
@@ -1320,6 +1321,7 @@ function CategoriaGroup({
                   clearOverride={clearOverride}
                   hasOverride={hasOverride}
                   contagemGastos={contagemGastos}
+                  totaisGastos={totaisGastos}
                 />
               ))}
             </tbody>
