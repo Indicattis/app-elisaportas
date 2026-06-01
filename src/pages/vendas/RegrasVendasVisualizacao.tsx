@@ -177,12 +177,13 @@ export default function RegrasVendasVisualizacao() {
                 icon={Receipt}
                 label="Boleto — intervalos (dias)"
                 value={
-                  <div className="flex flex-wrap gap-1 justify-end max-w-[260px]">
-                    {(regras.boleto_intervalos_dias ?? []).map((d) => (
-                      <Badge key={d} className="bg-white/10 text-white border-white/20">
-                        {d}
-                      </Badge>
-                    ))}
+                  <div className="flex flex-wrap gap-1 justify-end max-w-[320px]">
+                    <Badge className="bg-white/10 text-white border-white/20">
+                      {BOLETO_INTERVALO_DIAS} (padrão)
+                    </Badge>
+                    <Badge className="bg-blue-500/20 text-blue-100 border-blue-500/30">
+                      {BOLETO_INTERVALOS_FLEXIVEIS.join(' / ')} (acima de R$ {BOLETO_LIMITE_INTERVALO_FLEXIVEL.toLocaleString('pt-BR')})
+                    </Badge>
                   </div>
                 }
               />
