@@ -5,6 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
@@ -21,6 +23,7 @@ import {
   AlertCircle,
   CheckCircle2,
   XCircle,
+  X,
   Banknote,
   Receipt,
   Clock,
@@ -34,9 +37,11 @@ import {
   Save,
   Loader2,
   Shield,
-  Infinity
+  Infinity,
+  Settings
 } from 'lucide-react';
 import { useConfiguracoesVendas } from '@/hooks/useConfiguracoesVendas';
+import { useRegrasVendas, type RegrasVendasUpdate } from '@/hooks/useRegrasVendas';
 import { useAllUsers } from '@/hooks/useAllUsers';
 
 export default function RegrasVendasDirecao() {
