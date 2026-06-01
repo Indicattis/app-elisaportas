@@ -1,0 +1,1 @@
+UPDATE public.produtos_vendas SET cor_id = 'cc180842-8fcd-4a9f-a98b-946f15928293' WHERE id = '8dcf13f9-c982-4bab-8137-f6f343053e72';
