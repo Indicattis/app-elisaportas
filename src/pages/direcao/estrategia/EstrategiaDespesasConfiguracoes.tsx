@@ -1,9 +1,11 @@
 import { useState, useRef, useMemo } from 'react';
-import { Plus, Trash2, Users, Receipt, TrendingDown, Landmark, FileDown, GripVertical, X, Check, FolderPlus, ChevronRight, AlertTriangle, FileText } from 'lucide-react';
+import { Plus, Trash2, Users, Receipt, TrendingDown, Landmark, FileDown, GripVertical, X, Check, FolderPlus, ChevronRight, AlertTriangle, FileText, RotateCcw } from 'lucide-react';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { formatCurrency } from '@/lib/utils';
 import { useDespesasPadrao, type DespesaPadrao, type DespesaPadraoTipo } from '@/hooks/useDespesasPadrao';
 import { useTiposCustos, type TipoCusto } from '@/hooks/useTiposCustos';
+import { useDespesasPadraoMes } from '@/hooks/useDespesasPadraoMes';
+import { useTiposCustosMes } from '@/hooks/useTiposCustosMes';
 import { useEmpresasEmissoras } from '@/hooks/useEmpresasEmissoras';
 import { useDespesasCategorias, getCategoriaPalette, type CategoriaDespesa } from '@/hooks/useDespesasCategorias';
 import { Switch } from '@/components/ui/switch';
@@ -36,25 +38,6 @@ import { CSS } from '@dnd-kit/utilities';
 import { restrictToVerticalAxis, restrictToParentElement } from '@dnd-kit/modifiers';
 
 export default function EstrategiaDespesasConfiguracoes() {
-  const { items, loading, insert, update, remove, reorder } = useDespesasPadrao();
-  const {
-    tiposCustos, loading: loadingTipos,
-    saveTipoCusto, updateTipoCusto, deleteTipoCusto,
-    contarGastosVinculados, realocarEExcluirTipoCusto, forcarExclusaoTipoCusto, reorderTiposCustos,
-  } = useTiposCustos();
-
-  // Only show full-page spinner on the very first load. Subsequent refetches
-  // (triggered by insert/update/remove) must NOT unmount the grid, otherwise
-  // the page scroll resets to the top after every change.
-  const firstLoadedRef = useRef(false);
-  if (!loading && !loadingTipos) firstLoadedRef.current = true;
-  const showSpinner = !firstLoadedRef.current && (loading || loadingTipos);
-
-  const folha = items.filter(i => i.tipo === 'folha');
-  const tiposFixas = tiposCustos.filter(t => t.tipo === 'fixa');
-  const tiposVariaveis = tiposCustos.filter(t => t.tipo === 'variavel');
-  const tiposImpostos = tiposCustos.filter(t => t.tipo === 'imposto');
-
   return (
     <MinimalistLayout
       title="Configurações padrão"
@@ -69,13 +52,62 @@ export default function EstrategiaDespesasConfiguracoes() {
         { label: 'Configurações padrão' },
       ]}
     >
-      {showSpinner ? (
+      <DespesasGridContent mode="config" />
+    </MinimalistLayout>
+  );
+}
+
+export function DespesasGridContent({
+  mode = 'config',
+  mesReferencia,
+}: {
+  mode?: 'config' | 'mes';
+  mesReferencia?: string | null;
+}) {
+  const baseHook = useDespesasPadrao();
+  const mesHook = useDespesasPadraoMes(mode === 'mes' ? (mesReferencia ?? null) : null);
+  const { items, loading, insert, update, remove, reorder } = mode === 'mes' ? mesHook : baseHook;
+
+  const baseTipos = useTiposCustos();
+  const mesTipos = useTiposCustosMes(mode === 'mes' ? (mesReferencia ?? null) : null);
+  const {
+    tiposCustos, loading: loadingTipos,
+    saveTipoCusto, updateTipoCusto, deleteTipoCusto,
+    contarGastosVinculados, realocarEExcluirTipoCusto, forcarExclusaoTipoCusto, reorderTiposCustos,
+  } = mode === 'mes' ? mesTipos : baseTipos;
+
+  const folhaClearOverride = mode === 'mes' ? mesHook.clearOverride : undefined;
+  const folhaHasOverride = mode === 'mes' ? mesHook.hasOverride : undefined;
+  const tipoClearOverride = mode === 'mes' ? mesTipos.clearOverride : undefined;
+  const tipoHasOverride = mode === 'mes' ? mesTipos.hasOverride : undefined;
+
+  const readOnly = mode === 'mes';
+
+  const firstLoadedRef = useRef(false);
+  if (!loading && !loadingTipos) firstLoadedRef.current = true;
+  const showSpinner = !firstLoadedRef.current && (loading || loadingTipos);
+
+  const folha = items.filter(i => i.tipo === 'folha');
+  const tiposFixas = tiposCustos.filter(t => t.tipo === 'fixa');
+  const tiposVariaveis = tiposCustos.filter(t => t.tipo === 'variavel');
+  const tiposImpostos = tiposCustos.filter(t => t.tipo === 'imposto');
+
+  return showSpinner ? (
         <div className="flex items-center justify-center py-20">
           <div className="w-6 h-6 animate-spin rounded-full border-2 border-white/20 border-t-white/60" />
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4">
-          <FolhaBlock items={folha} insert={insert} update={update} remove={remove} reorder={reorder} />
+          <FolhaBlock
+            items={folha}
+            insert={insert}
+            update={update}
+            remove={remove}
+            reorder={reorder}
+            readOnly={readOnly}
+            clearOverride={folhaClearOverride}
+            hasOverride={folhaHasOverride}
+          />
           <TiposCustoBlock
             titulo="Tipos de Custos — Fixas"
             icon={<Receipt className="w-4 h-4" />}
@@ -89,6 +121,9 @@ export default function EstrategiaDespesasConfiguracoes() {
             realocarEExcluir={realocarEExcluirTipoCusto}
             forcarExclusao={forcarExclusaoTipoCusto}
             reorderTipos={reorderTiposCustos}
+            readOnly={readOnly}
+            clearOverride={tipoClearOverride}
+            hasOverride={tipoHasOverride}
           />
           <TiposCustoBlock
             titulo="Tipos de Custos — Variáveis"
@@ -103,6 +138,9 @@ export default function EstrategiaDespesasConfiguracoes() {
             realocarEExcluir={realocarEExcluirTipoCusto}
             forcarExclusao={forcarExclusaoTipoCusto}
             reorderTipos={reorderTiposCustos}
+            readOnly={readOnly}
+            clearOverride={tipoClearOverride}
+            hasOverride={tipoHasOverride}
           />
           <TiposCustoBlock
             titulo="Tipos de Custos — Impostos"
@@ -117,11 +155,12 @@ export default function EstrategiaDespesasConfiguracoes() {
             realocarEExcluir={realocarEExcluirTipoCusto}
             forcarExclusao={forcarExclusaoTipoCusto}
             reorderTipos={reorderTiposCustos}
+            readOnly={readOnly}
+            clearOverride={tipoClearOverride}
+            hasOverride={tipoHasOverride}
           />
         </div>
-      )}
-    </MinimalistLayout>
-  );
+      );
 }
 
 /* ---------------- Folha ---------------- */
@@ -160,13 +199,16 @@ function calcTotalFolha(f: { salario: number; salario_minimo?: number; aux_combu
 }
 
 function FolhaBlock({
-  items, insert, update, remove, reorder,
+  items, insert, update, remove, reorder, readOnly, clearOverride, hasOverride,
 }: {
   items: DespesaPadrao[];
   insert: ReturnType<typeof useDespesasPadrao>['insert'];
   update: ReturnType<typeof useDespesasPadrao>['update'];
   remove: ReturnType<typeof useDespesasPadrao>['remove'];
   reorder: ReturnType<typeof useDespesasPadrao>['reorder'];
+  readOnly?: boolean;
+  clearOverride?: (id: string) => Promise<boolean>;
+  hasOverride?: (id: string) => boolean;
 }) {
   const [nome, setNome] = useState('');
   const [emFolha, setEmFolha] = useState(true);
@@ -240,13 +282,13 @@ function FolhaBlock({
         <h3 className="font-semibold">Folha Salarial padrão</h3>
         <span className="text-white/40 text-sm">({items.length})</span>
         <div className="ml-auto flex items-center gap-1.5">
-          <button
+          {!readOnly && (<button
             onClick={() => setGerenciarSetoresOpen(true)}
             className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-white/80 hover:text-white transition-colors"
           >
             <FolderPlus className="w-3.5 h-3.5" />
             Gerenciar setores
-          </button>
+          </button>)}
           <button
             onClick={() => exportFolhaSalarialPDF(items, SETORES.map(s => ({ value: s.value, label: s.label })))}
             disabled={items.length === 0}
@@ -256,13 +298,13 @@ function FolhaBlock({
             <FileDown className="w-3.5 h-3.5" />
             Exportar PDF
           </button>
-          <button
+          {!readOnly && (<button
             onClick={() => setAddOpen(true)}
             className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-400/30 text-xs text-emerald-200 hover:text-emerald-100 transition-colors"
           >
             <Plus className="w-3.5 h-3.5" />
             Novo colaborador
-          </button>
+          </button>)}
         </div>
       </div>
       <div className="space-y-3">
@@ -286,6 +328,9 @@ function FolhaBlock({
                   update={update}
                   remove={remove}
                   reorder={reorder}
+                  readOnly={readOnly}
+                  clearOverride={clearOverride}
+                  hasOverride={hasOverride}
                 />
               ))}
           </SortableContext>
@@ -299,6 +344,9 @@ function FolhaBlock({
             update={update}
             remove={remove}
             reorder={reorder}
+            readOnly={readOnly}
+            clearOverride={clearOverride}
+            hasOverride={hasOverride}
           />
         )}
 
@@ -388,13 +436,16 @@ function FolhaBlock({
 }
 
 function FolhaRowCells({
-  item, setores, update, remove, dragHandle,
+  item, setores, update, remove, dragHandle, readOnly, clearOverride, hasOverride,
 }: {
   item: DespesaPadrao;
   setores: SetorMeta[];
   update: ReturnType<typeof useDespesasPadrao>['update'];
   remove: ReturnType<typeof useDespesasPadrao>['remove'];
   dragHandle?: React.ReactNode;
+  readOnly?: boolean;
+  clearOverride?: (id: string) => Promise<boolean>;
+  hasOverride?: (id: string) => boolean;
 }) {
   const salario = Number(item.salario) || 0;
   const salario_minimo = Number(item.salario_minimo) || 0;
@@ -413,14 +464,19 @@ function FolhaRowCells({
       <td className="py-2 pl-1 text-white/90">
         <div className="flex items-center gap-1">
           {dragHandle}
-          <div className="flex-1"><InlineText value={item.nome} onSave={(v) => update(item.id, { nome: v })} /></div>
+          <div className="flex-1">
+            {readOnly
+              ? <span className="px-1 py-0.5">{item.nome}</span>
+              : <InlineText value={item.nome} onSave={(v) => update(item.id, { nome: v })} />}
+          </div>
         </div>
       </td>
       <td className="px-2 text-center">
         <Switch checked={item.em_folha} onCheckedChange={(v) => update(item.id, { em_folha: v })} />
       </td>
       <td className="px-2">
-        <select value={item.setor ?? ''} onChange={(e) => update(item.id, { setor: e.target.value || null })}
+        <select value={item.setor ?? ''} disabled={readOnly}
+          onChange={(e) => update(item.id, { setor: e.target.value || null })}
           className={setorSelectClassFrom(setores, item.setor)}>
           <option value="" className="bg-slate-900 text-white">—</option>
           {setores.map(s => <option key={s.value} value={s.value} className="bg-slate-900 text-white">{s.label}</option>)}
@@ -450,9 +506,21 @@ function FolhaRowCells({
       </td>
       <td className="px-2 text-right text-white font-semibold">{formatCurrency(total)}</td>
       <td className="pr-1 text-right">
-        <button onClick={() => remove(item.id)} className="p-1 rounded hover:bg-red-500/20 text-red-300/70 hover:text-red-300">
-          <Trash2 className="w-4 h-4" />
-        </button>
+        {readOnly ? (
+          hasOverride?.(item.id) && clearOverride ? (
+            <button
+              onClick={() => clearOverride(item.id)}
+              title="Restaurar valores do padrão"
+              className="p-1 rounded hover:bg-blue-500/20 text-blue-300/70 hover:text-blue-300"
+            >
+              <RotateCcw className="w-4 h-4" />
+            </button>
+          ) : null
+        ) : (
+          <button onClick={() => remove(item.id)} className="p-1 rounded hover:bg-red-500/20 text-red-300/70 hover:text-red-300">
+            <Trash2 className="w-4 h-4" />
+          </button>
+        )}
       </td>
     </>
   );
@@ -523,7 +591,7 @@ function FolhaColGroup() {
 }
 
 function FolhaSetorGroup({
-  meta, rows, setores, update, remove, reorder, dragHandle,
+  meta, rows, setores, update, remove, reorder, dragHandle, readOnly, clearOverride, hasOverride,
 }: {
   meta: SetorMeta;
   rows: DespesaPadrao[];
@@ -532,6 +600,9 @@ function FolhaSetorGroup({
   remove: ReturnType<typeof useDespesasPadrao>['remove'];
   reorder: ReturnType<typeof useDespesasPadrao>['reorder'];
   dragHandle?: React.ReactNode;
+  readOnly?: boolean;
+  clearOverride?: (id: string) => Promise<boolean>;
+  hasOverride?: (id: string) => boolean;
 }) {
   const subtotal = rows.reduce((s, i) => s + calcTotalFolha({
     salario: Number(i.salario) || 0,
@@ -577,7 +648,16 @@ function FolhaSetorGroup({
             <SortableContext items={rowIds} strategy={verticalListSortingStrategy}>
               <tbody>
                 {sortedRows.map(i => (
-                  <SortableFolhaRow key={i.id} item={i} setores={setores} update={update} remove={remove} />
+                  <SortableFolhaRow
+                    key={i.id}
+                    item={i}
+                    setores={setores}
+                    update={update}
+                    remove={remove}
+                    readOnly={readOnly}
+                    clearOverride={clearOverride}
+                    hasOverride={hasOverride}
+                  />
                 ))}
               </tbody>
             </SortableContext>
@@ -596,6 +676,9 @@ function SortableSetorGroup(props: {
   update: ReturnType<typeof useDespesasPadrao>['update'];
   remove: ReturnType<typeof useDespesasPadrao>['remove'];
   reorder: ReturnType<typeof useDespesasPadrao>['reorder'];
+  readOnly?: boolean;
+  clearOverride?: (id: string) => Promise<boolean>;
+  hasOverride?: (id: string) => boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: props.id });
   const style = {
@@ -603,7 +686,7 @@ function SortableSetorGroup(props: {
     transition,
     opacity: isDragging ? 0.5 : 1,
   };
-  const handle = (
+  const handle = props.readOnly ? null : (
     <button
       {...attributes}
       {...listeners}
@@ -624,6 +707,9 @@ function SortableSetorGroup(props: {
         remove={props.remove}
         reorder={props.reorder}
         dragHandle={handle}
+        readOnly={props.readOnly}
+        clearOverride={props.clearOverride}
+        hasOverride={props.hasOverride}
       />
     </div>
   );
@@ -634,6 +720,9 @@ function SortableFolhaRow(props: {
   setores: SetorMeta[];
   update: ReturnType<typeof useDespesasPadrao>['update'];
   remove: ReturnType<typeof useDespesasPadrao>['remove'];
+  readOnly?: boolean;
+  clearOverride?: (id: string) => Promise<boolean>;
+  hasOverride?: (id: string) => boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: props.item.id });
   const style = {
@@ -641,7 +730,7 @@ function SortableFolhaRow(props: {
     transition,
     opacity: isDragging ? 0.5 : 1,
   };
-  const handle = (
+  const handle = props.readOnly ? null : (
     <button
       {...attributes}
       {...listeners}
@@ -654,7 +743,16 @@ function SortableFolhaRow(props: {
   );
   return (
     <tr ref={setNodeRef as any} style={style} className="border-b border-white/5 hover:bg-white/[0.03]">
-      <FolhaRowCells item={props.item} setores={props.setores} update={props.update} remove={props.remove} dragHandle={handle} />
+      <FolhaRowCells
+        item={props.item}
+        setores={props.setores}
+        update={props.update}
+        remove={props.remove}
+        dragHandle={handle}
+        readOnly={props.readOnly}
+        clearOverride={props.clearOverride}
+        hasOverride={props.hasOverride}
+      />
     </tr>
   );
 }
@@ -796,6 +894,7 @@ function InlineNum({ value, onSave, format }: { value: number; onSave: (v: numbe
 function TiposCustoBlock({
   titulo, icon, tipo, items, save, update, remove,
   allTipos, contarGastosVinculados, realocarEExcluir, forcarExclusao, reorderTipos,
+  readOnly, clearOverride, hasOverride,
 }: {
   titulo: string;
   icon: React.ReactNode;
@@ -809,6 +908,9 @@ function TiposCustoBlock({
   realocarEExcluir: ReturnType<typeof useTiposCustos>['realocarEExcluirTipoCusto'];
   forcarExclusao: ReturnType<typeof useTiposCustos>['forcarExclusaoTipoCusto'];
   reorderTipos: ReturnType<typeof useTiposCustos>['reorderTiposCustos'];
+  readOnly?: boolean;
+  clearOverride?: (id: string) => Promise<boolean>;
+  hasOverride?: (id: string) => boolean;
 }) {
   const [nome, setNome] = useState('');
   const [descricao, setDescricao] = useState('');
@@ -920,13 +1022,13 @@ function TiposCustoBlock({
         <h3 className="font-semibold">{titulo}</h3>
         <span className="text-white/40 text-sm">({items.length})</span>
         <div className="ml-auto flex items-center gap-1.5">
-          <button
+          {!readOnly && (<button
             onClick={() => setGerenciarCatOpen(true)}
             className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-white/80 hover:text-white transition-colors"
           >
             <FolderPlus className="w-3.5 h-3.5" />
             Gerenciar categorias
-          </button>
+          </button>)}
           <button
             onClick={() => exportTiposCustosPDF(titulo, items, categorias)}
             className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-white/80 hover:text-white transition-colors"
@@ -934,13 +1036,13 @@ function TiposCustoBlock({
             <FileText className="w-3.5 h-3.5" />
             Exportar PDF
           </button>
-          <button
+          {!readOnly && (<button
             onClick={() => setAddDialogOpen(true)}
             className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-400/30 text-xs text-emerald-200 hover:text-emerald-100 transition-colors"
           >
             <Plus className="w-3.5 h-3.5" />
             Nova despesa
-          </button>
+          </button>)}
         </div>
       </div>
 
