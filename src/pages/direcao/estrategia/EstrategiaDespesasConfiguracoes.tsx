@@ -1660,12 +1660,12 @@ function GastosDoTipoExpand({
       {loading ? (
         <tr className="bg-white/[0.015]">
           <td />
-          <td colSpan={3 + catCols + 4} className="py-2 pl-1 text-xs text-white/40">Carregando…</td>
+          <td colSpan={3 + catCols + 5} className="py-2 pl-1 text-xs text-white/40">Carregando…</td>
         </tr>
       ) : gastos.length === 0 ? (
         <tr className="bg-white/[0.015]">
           <td />
-          <td colSpan={3 + catCols + 4} className="py-2 pl-1 text-xs text-white/40">Nenhum gasto registrado neste mês.</td>
+          <td colSpan={3 + catCols + 5} className="py-2 pl-1 text-xs text-white/40">Nenhum gasto registrado neste mês.</td>
         </tr>
       ) : (
         <>
@@ -1675,6 +1675,7 @@ function GastosDoTipoExpand({
               <td className="py-1 pl-1 text-white/70 tabular-nums whitespace-nowrap">{g.data.split('-').reverse().join('/')}</td>
               <td className="px-1 text-white/70 truncate" colSpan={1 + catCols}>{g.descricao || '—'}</td>
               <td className="px-2 text-right text-white/85 tabular-nums">{formatCurrency(Number(g.valor) || 0)}</td>
+              <td />
               <td />
               <td />
               <td />
@@ -1693,15 +1694,19 @@ function GastosDoTipoExpand({
             <td />
             <td colSpan={1 + catCols} className="py-1 pl-1 text-white/40 uppercase tracking-wider">Total</td>
             <td className="px-1" />
-            <td className="px-2 text-right text-white/80 font-semibold tabular-nums">{formatCurrency(total)}</td>
-            <td colSpan={4} />
+            <td className="px-2 text-right text-white/40" />
+            <td />
+            <td />
+            <td />
+            <td className="px-2 text-right text-emerald-300/90 font-semibold tabular-nums">{formatCurrency(total)}</td>
+            <td />
           </tr>
         </>
       )}
       {mes && (
         <tr className="bg-white/[0.015] border-b border-white/10" onClick={stop}>
           <td />
-          <td colSpan={3 + catCols + 3} className="py-1.5 pl-1">
+          <td colSpan={3 + catCols + 4} className="py-1.5 pl-1">
             <button
               type="button"
               onClick={() => setOpen(true)}
