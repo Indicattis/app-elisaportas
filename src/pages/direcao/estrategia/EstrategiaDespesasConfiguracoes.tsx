@@ -1416,29 +1416,6 @@ function SortableTipoRow({
           </select>
         </td>
       )}
-      <td className={`px-2 text-right font-medium ${i.marcada_para_eliminar ? 'text-red-400 line-through' : 'text-white'}`}>
-        {readOnly
-          ? <span className="px-1 py-0.5">{formatCurrency(Number(i.valor_maximo_mensal) || 0)}</span>
-          : <InlineNum value={i.valor_maximo_mensal} onSave={(v) => update(i.id, { valor_maximo_mensal: v })} format="currency" />}
-      </td>
-      <td className="px-2 text-center">
-        <Switch checked={i.aparece_no_dre} disabled={readOnly} onCheckedChange={(v) => update(i.id, { aparece_no_dre: v })} />
-      </td>
-      <td className="px-2 text-center">
-        <button
-          type="button"
-          disabled={readOnly}
-          onClick={(e) => { e.stopPropagation(); if (!readOnly) update(i.id, { marcada_para_eliminar: !i.marcada_para_eliminar } as any); }}
-          title={i.marcada_para_eliminar ? 'Desmarcar — manter despesa' : 'Marcar para eliminar essa despesa'}
-          className={`inline-flex items-center justify-center w-7 h-7 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-            i.marcada_para_eliminar
-              ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30'
-              : 'text-white/30 hover:text-red-300 hover:bg-red-500/10'
-          }`}
-        >
-          <AlertTriangle className="w-4 h-4" />
-        </button>
-      </td>
       <td className="px-2 text-center">
         <span className={`text-xs tabular-nums ${(contagemGastos?.[i.id] || 0) > 0 ? 'text-white/80 font-medium' : 'text-white/30'}`}>
           {contagemGastos?.[i.id] ?? '—'}
@@ -1448,6 +1425,11 @@ function SortableTipoRow({
         <span className={`text-xs tabular-nums ${(totaisGastos?.[i.id] || 0) > 0 ? 'text-emerald-300/90 font-medium' : 'text-white/30'}`}>
           {totaisGastos && totaisGastos[i.id] != null ? formatCurrency(totaisGastos[i.id]) : '—'}
         </span>
+      </td>
+      <td className={`px-2 text-right font-medium ${i.marcada_para_eliminar ? 'text-red-400 line-through' : 'text-white'}`}>
+        {readOnly
+          ? <span className="px-1 py-0.5">{formatCurrency(Number(i.valor_maximo_mensal) || 0)}</span>
+          : <InlineNum value={i.valor_maximo_mensal} onSave={(v) => update(i.id, { valor_maximo_mensal: v })} format="currency" />}
       </td>
       <td className="pr-1 text-right">
         {readOnly ? (
