@@ -673,7 +673,7 @@ export default function VendaNovaMinimalista() {
 
     const validacao = validarDesconto(
       portasComAjusteGlobal,
-      formData.forma_pagamento,
+      formaPagamentoAtual,
       formData.venda_presencial === false,
       configLimitesObj
     );
@@ -747,7 +747,7 @@ export default function VendaNovaMinimalista() {
     try {
       const validacao = validarDesconto(
         produtosComDesconto,
-        formData.forma_pagamento,
+        formaPagamentoAtual,
         formData.venda_presencial === false,
         configLimitesObj
       );
