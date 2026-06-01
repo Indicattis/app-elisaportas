@@ -1,17 +1,51 @@
-## Diagnóstico
+## Nova regra de vendas
 
-Pedido **Sidinei Carrão da Silva** (`b2130df9-797b-43d1-bc01-20ea51a96211`, etapa `aprovacao_ceo`) tem uma única linha em `produtos_vendas` (venda `fd43d904-ac7b-4677-b8b8-f5f986fb5483`):
+Quando uma venda usa **senha master** (desconto total acima do limite configurado, padrão **15%**), o **valor excedente em R$** é abatido do **lucro da venda** no faturamento.
 
-- `Caixa de fechamento (3m-6m)` (tipo_produto = `adicional`)
-- `cor_id = NULL` → o sistema exibe como "Aço galvanizado" (cor padrão quando sem cor).
-- `observacao_item = "MEDIDA 3,34 - COR BRANCO"` → confirma que o correto é **Branco**.
+Fórmula:
+```text
+desconto_excedente_pct = max(0, %_desconto_total - limite_master)
+valor_excedente_R$     = total_bruto_venda * (desconto_excedente_pct / 100)
+lucro_liquido_venda    = soma(lucro_item dos faturados) + lucro_instalacao - valor_excedente_R$
+```
 
-A cor exibida no card do pedido vem de `produtos_vendas.cor_id` → `catalogo_cores.nome`.
+Onde `total_bruto_venda = soma((valor_produto + valor_pintura + valor_instalacao) * qtd)` (mesma base usada hoje em `calcularTotalVenda` / `validarDesconto`).
 
-## Correção (data fix via migração)
+## Mudanças
 
-`UPDATE produtos_vendas SET cor_id = '<id_branco>' WHERE id = '8dcf13f9-c982-4bab-8137-f6f343053e72';`
+### 1. Página de Regras (`/vendas/regras`)
+- Nova seção **"Desconto Master"** explicando:
+  - Acima do limite (15% por padrão), exige senha master.
+  - O valor excedente em R$ é **debitado do lucro** da venda no faturamento.
+- Mostrar o valor configurado (puxado de `regras_vendas.limite_desconto_master_lucro`).
 
-Onde `<id_branco>` = `cc180842-8fcd-4a9f-a98b-946f15928293` (cor "Branco" no catálogo).
+### 2. Banco — `regras_vendas`
+Adicionar coluna:
+- `limite_desconto_master_lucro NUMERIC NOT NULL DEFAULT 15` — % acima do qual o excedente é debitado do lucro.
 
-Não alterar `valor_pintura`, `tipo_pintura` nem outros campos — o pedido segue sem cobrança de pintura, apenas a cor referenciada vira "Branco".
+(Migração separada via `supabase--migration` antes do código.)
+
+### 3. Cálculo no Faturamento
+Criar util `src/utils/descontoMasterLucro.ts`:
+```ts
+calcularDebitoMasterLucro(venda, produtos, limitePct) -> {
+  percentualDesconto, percentualExcedente, valorExcedente
+}
+```
+
+Integrar em:
+- `src/pages/direcao/FaturamentoVendaDirecao.tsx` — subtrair `valorExcedente` de `lucroBruto`; exibir linha "Excedente desconto master (>15%) — débito no lucro: -R$ X" no card de lucro.
+- `src/hooks/useFaturamentoDetalhado.ts` e `src/hooks/useFaturamentoPorProduto.ts` — descontar o excedente do `lucro_total` agregado por venda (rateado proporcionalmente entre produtos faturados para não distorcer agrupamento por tipo).
+- `src/utils/faturamentoPDFGenerator.ts` — mesmo ajuste no PDF de faturamento.
+- `src/hooks/useDRE.ts` — refletir lucro líquido após débito.
+
+### 4. Hook
+Adicionar `limite_desconto_master_lucro` em `useRegrasVendas` (interface + `limites`) e expor via `useConfiguracoesVendasPublicas` para uso no faturamento.
+
+## Fora do escopo
+- Não altera o fluxo de autorização do desconto (modais, RPC `verificar_senha_vendas`, gravação em `vendas_autorizacoes_desconto`).
+- Não altera o `lucro_item` salvo por produto — o débito é aplicado **na exibição/agregação** do faturamento, mantendo rastreabilidade.
+
+## Pontos a confirmar
+1. **Limite fixo configurável (15%) ou usar `avista + fria + adicionalResponsavel` já existente?** Proposta: nova coluna dedicada `limite_desconto_master_lucro` (padrão 15%), independente dos limites de autorização — assim você pode mover o gatilho do débito sem mexer nas regras de senha.
+2. **Base do excedente:** total bruto antes de descontos (proposta acima) — confirma?

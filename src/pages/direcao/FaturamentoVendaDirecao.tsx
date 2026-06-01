@@ -26,6 +26,11 @@ import {
   Package
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useConfiguracoesVendasPublicas } from '@/hooks/useConfiguracoesVendasPublicas';
+import {
+  calcularDebitoMasterLucro,
+  obterPercentualMaster,
+} from '@/utils/descontoMasterLucro';
 
 interface VendaDetalhes {
   id: string;
@@ -55,6 +60,7 @@ interface ProdutoVenda {
   quantidade: number;
   valor_produto: number;
   valor_pintura: number;
+  valor_instalacao: number;
   valor_total: number;
   desconto_valor: number;
   custo_producao: number;
@@ -87,6 +93,7 @@ export default function FaturamentoVendaDirecao() {
   const [venda, setVenda] = useState<VendaDetalhes | null>(null);
   const [atendente, setAtendente] = useState<Atendente | null>(null);
   const [loading, setLoading] = useState(true);
+  const { limites: limitesPublicos } = useConfiguracoesVendasPublicas();
 
   useEffect(() => {
     if (id) {
@@ -122,6 +129,7 @@ export default function FaturamentoVendaDirecao() {
             quantidade,
             valor_produto,
             valor_pintura,
+            valor_instalacao,
             valor_total,
             desconto_valor,
             custo_producao,
@@ -212,7 +220,23 @@ export default function FaturamentoVendaDirecao() {
   // Legado: lucro_instalacao separado. Para vendas novas, instalação é produto com lucro_item
   const lucroInstalacao = venda.lucro_instalacao || 0;
   const lucroBruto = lucroItens + lucroInstalacao;
-  const margemLucro = valorTotal > 0 ? (lucroBruto / valorTotal) * 100 : 0;
+
+  // Débito do excedente quando houve senha master acima do limite
+  const produtosBruto = venda.produtos_vendas.reduce(
+    (acc, p) =>
+      acc +
+      ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) *
+        (p.quantidade || 1),
+    0
+  );
+  const percentualMaster = obterPercentualMaster(venda.autorizacao_desconto as any);
+  const debitoMaster = calcularDebitoMasterLucro({
+    produtosBruto,
+    percentualMaster,
+    limiteMaster: limitesPublicos.masterLucro,
+  });
+  const lucroLiquido = lucroBruto - debitoMaster.valorExcedente;
+  const margemLucro = valorTotal > 0 ? (lucroLiquido / valorTotal) * 100 : 0;
 
   const produtosFaturados = venda.produtos_vendas.filter(p => p.faturamento).length;
   const totalProdutos = venda.produtos_vendas.length;
@@ -288,8 +312,27 @@ export default function FaturamentoVendaDirecao() {
                     <TrendingUp className="w-5 h-5 text-green-400" />
                   </div>
                   <div>
-                    <p className="text-xs text-white/50 uppercase">Lucro Bruto</p>
-                    <p className="text-lg font-semibold text-green-400">{formatCurrency(lucroBruto)}</p>
+                    <p className="text-xs text-white/50 uppercase">
+                      {debitoMaster.valorExcedente > 0 ? 'Lucro Líquido' : 'Lucro Bruto'}
+                    </p>
+                    <p className="text-lg font-semibold text-green-400">
+                      {formatCurrency(lucroLiquido)}
+                    </p>
+                    {debitoMaster.valorExcedente > 0 && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <p className="text-[10px] text-red-300 mt-0.5 cursor-help">
+                            -{formatCurrency(debitoMaster.valorExcedente)} (desconto master)
+                          </p>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          Desconto master de {debitoMaster.percentualMaster.toFixed(1)}%
+                          excedeu o limite de {debitoMaster.limiteMaster.toFixed(1)}%
+                          ({debitoMaster.excedentePct.toFixed(1)}% excedente). O valor
+                          em R$ é debitado do lucro da venda.
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
                   </div>
                 </div>
               </CardContent>
