@@ -7672,6 +7672,93 @@ export type Database = {
           },
         ]
       }
+      regras_vendas: {
+        Row: {
+          acrescimo_descricao: string
+          acrescimo_permite_com_desconto: boolean
+          avista_exige_comprovante: boolean
+          bloqueia_desconto_com_credito: boolean
+          boleto_intervalos_dias: number[]
+          cartao_habilita_desconto_avista: boolean
+          cartao_parcelas_max: number
+          cartao_parcelas_min: number
+          cnpj_digitos: number
+          cpf_digitos: number
+          created_at: string
+          id: string
+          limite_adicional_responsavel: number
+          limite_desconto_avista: number
+          limite_desconto_fria: number
+          max_formas_pagamento: number
+          obrigatorio_bairro_min_chars: number
+          obrigatorio_cep: boolean
+          obrigatorio_cidade: boolean
+          obrigatorio_endereco_min_chars: number
+          obrigatorio_estado: boolean
+          obrigatorio_nome: boolean
+          obrigatorio_telefone: boolean
+          pagamento_imediato_exige_comprovante: boolean
+          produto_minimo_quantidade: number
+          updated_at: string
+        }
+        Insert: {
+          acrescimo_descricao?: string
+          acrescimo_permite_com_desconto?: boolean
+          avista_exige_comprovante?: boolean
+          bloqueia_desconto_com_credito?: boolean
+          boleto_intervalos_dias?: number[]
+          cartao_habilita_desconto_avista?: boolean
+          cartao_parcelas_max?: number
+          cartao_parcelas_min?: number
+          cnpj_digitos?: number
+          cpf_digitos?: number
+          created_at?: string
+          id?: string
+          limite_adicional_responsavel?: number
+          limite_desconto_avista?: number
+          limite_desconto_fria?: number
+          max_formas_pagamento?: number
+          obrigatorio_bairro_min_chars?: number
+          obrigatorio_cep?: boolean
+          obrigatorio_cidade?: boolean
+          obrigatorio_endereco_min_chars?: number
+          obrigatorio_estado?: boolean
+          obrigatorio_nome?: boolean
+          obrigatorio_telefone?: boolean
+          pagamento_imediato_exige_comprovante?: boolean
+          produto_minimo_quantidade?: number
+          updated_at?: string
+        }
+        Update: {
+          acrescimo_descricao?: string
+          acrescimo_permite_com_desconto?: boolean
+          avista_exige_comprovante?: boolean
+          bloqueia_desconto_com_credito?: boolean
+          boleto_intervalos_dias?: number[]
+          cartao_habilita_desconto_avista?: boolean
+          cartao_parcelas_max?: number
+          cartao_parcelas_min?: number
+          cnpj_digitos?: number
+          cpf_digitos?: number
+          created_at?: string
+          id?: string
+          limite_adicional_responsavel?: number
+          limite_desconto_avista?: number
+          limite_desconto_fria?: number
+          max_formas_pagamento?: number
+          obrigatorio_bairro_min_chars?: number
+          obrigatorio_cep?: boolean
+          obrigatorio_cidade?: boolean
+          obrigatorio_endereco_min_chars?: number
+          obrigatorio_estado?: boolean
+          obrigatorio_nome?: boolean
+          obrigatorio_telefone?: boolean
+          pagamento_imediato_exige_comprovante?: boolean
+          produto_minimo_quantidade?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       representantes: {
         Row: {
           ativo: boolean
