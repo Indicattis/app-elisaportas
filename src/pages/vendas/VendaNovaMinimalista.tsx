@@ -1287,7 +1287,7 @@ export default function VendaNovaMinimalista() {
           open={autorizacaoDescontoOpen}
           onOpenChange={setAutorizacaoDescontoOpen}
           onAutorizado={handleAutorizacaoDesconto}
-          percentualDesconto={validarDesconto(portas, formData.forma_pagamento, formData.venda_presencial === false).percentualDesconto}
+          percentualDesconto={validarDesconto(portas, formaPagamentoAtual, formData.venda_presencial === false).percentualDesconto}
           tipoAutorizacao={tipoAutorizacaoNecessaria}
           limitePermitido={limitePermitido}
         />
