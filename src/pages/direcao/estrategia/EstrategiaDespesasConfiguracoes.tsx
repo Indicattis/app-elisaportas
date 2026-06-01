@@ -23,6 +23,7 @@ import { Label } from '@/components/ui/label';
 import { exportFolhaSalarialPDF } from '@/utils/folhaSalarialPDFGenerator';
 import { exportTiposCustosPDF } from '@/utils/tiposCustosPDFGenerator';
 import { useSetores, getSetorPalette } from '@/hooks/useSetores';
+import { AutorizadosTerceirosBlock } from '@/components/direcao/estrategia/AutorizadosTerceirosBlock';
 import {
   DndContext,
   closestCenter,
