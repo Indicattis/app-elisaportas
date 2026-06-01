@@ -113,7 +113,7 @@ export default function VendaNovaMinimalista() {
   const [searchParams] = useSearchParams();
   const orcamentoId = searchParams.get('orcamento_id');
   const { toast } = useToast();
-  const { createVenda, createRascunho, isCreating, isCreatingRascunho } = useVendas();
+  const { createVenda, isCreating } = useVendas();
   const { user } = useAuth();
   const { limites: configLimites } = useConfiguracoesVendas();
   const { fretes } = useFretesCidades();
@@ -1126,31 +1126,7 @@ export default function VendaNovaMinimalista() {
             </GradientButton>
           )}
 
-          <GradientButton 
-            variant="outline"
-            disabled={isCreatingRascunho || !formData.cliente_nome}
-            onClick={async () => {
-              try {
-                await createRascunho({
-                  vendaData: {
-                    ...formData,
-                    forma_pagamento: pagamentoData.metodos[0]?.tipo || '',
-                    data_venda: `${format(dataVenda, 'yyyy-MM-dd')}T12:00:00.000Z`,
-                  },
-                  portas,
-                  pagamentoData,
-                  creditoVenda: { valorCredito, percentualCredito }
-                });
-                navigate('/vendas/minhas-vendas');
-              } catch (error) {
-                console.error('Erro ao salvar rascunho:', error);
-              }
-            }}
-          >
-            {isCreatingRascunho ? 'Salvando...' : 'Salvar Rascunho'}
-          </GradientButton>
-          
-          <GradientButton 
+          <GradientButton
             type="submit" 
             variant="blue"
             disabled={isCreating || portas.length === 0}
