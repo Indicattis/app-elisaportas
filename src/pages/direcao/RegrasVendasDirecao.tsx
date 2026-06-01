@@ -46,7 +46,29 @@ import { useAllUsers } from '@/hooks/useAllUsers';
 
 export default function RegrasVendasDirecao() {
   const { configuracoes, isLoading, limites, updateConfiguracoes, isUpdating } = useConfiguracoesVendas();
+  const { regras, updateRegras, isUpdating: isUpdatingRegras } = useRegrasVendas();
   const { data: usuarios = [] } = useAllUsers();
+
+  // Estado local para as regras editáveis (acréscimo / boleto / cartão / à vista / obrigatórios / gerais)
+  const [draftRegras, setDraftRegras] = useState<RegrasVendasUpdate>({});
+  const [novoIntervaloBoleto, setNovoIntervaloBoleto] = useState<string>('');
+
+  useEffect(() => {
+    if (regras) setDraftRegras({});
+  }, [regras?.id]);
+
+  const getRegra = <K extends keyof RegrasVendasUpdate>(key: K): RegrasVendasUpdate[K] => {
+    if (draftRegras[key] !== undefined) return draftRegras[key];
+    return (regras as any)?.[key];
+  };
+  const setRegra = <K extends keyof RegrasVendasUpdate>(key: K, value: RegrasVendasUpdate[K]) => {
+    setDraftRegras(prev => ({ ...prev, [key]: value }));
+  };
+  const hasDraftChanges = Object.keys(draftRegras).length > 0;
+  const salvarRegrasGerais = () => {
+    if (!hasDraftChanges) return;
+    updateRegras(draftRegras, { onSuccess: () => setDraftRegras({}) });
+  };
   
   const [senhaResponsavel, setSenhaResponsavel] = useState('');
   const [senhaMaster, setSenhaMaster] = useState('');
