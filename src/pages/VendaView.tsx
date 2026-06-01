@@ -449,7 +449,7 @@ export default function VendaView() {
               </div>
             )}
             <div>
-              <p className="text-sm text-muted-foreground">Venda Presencial</p>
+              <p className="text-sm text-muted-foreground">Venda Fria</p>
               <Badge variant={venda.venda_presencial ? "default" : "secondary"} className="mt-1">
                 {venda.venda_presencial ? "Sim" : "Não"}
               </Badge>

@@ -1397,7 +1397,7 @@ export default function EstrategiaItens() {
                       <span className="font-medium">{limitesDesconto.avista.toFixed(2)}%</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Adicional venda presencial</span>
+                      <span className="text-muted-foreground">Adicional venda fria</span>
                       <span className="font-medium">+{limitesDesconto.presencial.toFixed(2)}%</span>
                     </div>
                     <div className="flex items-center justify-between border-t border-border/60 pt-2">

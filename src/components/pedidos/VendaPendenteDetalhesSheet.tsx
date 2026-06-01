@@ -328,10 +328,10 @@ export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaP
                   {vendaCompleta?.venda_presencial != null && (
                     <span className={
                       vendaCompleta.venda_presencial
-                        ? "inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded border bg-orange-500/10 text-orange-400 border-orange-500/30"
-                        : "inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded border bg-cyan-500/10 text-cyan-400 border-cyan-500/30"
+                        ? "inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded border bg-cyan-500/10 text-cyan-400 border-cyan-500/30"
+                        : "inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded border bg-orange-500/10 text-orange-400 border-orange-500/30"
                     }>
-                      {vendaCompleta.venda_presencial ? "🔥 Quente" : "❄️ Frio"}
+                      {vendaCompleta.venda_presencial ? "❄️ Fria" : "🔥 Quente"}
                     </span>
                   )}
                 </div>
@@ -689,9 +689,9 @@ export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaP
             <div className="bg-white/5 rounded-xl border border-white/10 p-3 text-center">
               {vendaCompleta?.venda_presencial != null ? (
                 vendaCompleta.venda_presencial ? (
-                  <Flame className="h-4 w-4 text-orange-400 mx-auto mb-1" />
-                ) : (
                   <Snowflake className="h-4 w-4 text-sky-400 mx-auto mb-1" />
+                ) : (
+                  <Flame className="h-4 w-4 text-orange-400 mx-auto mb-1" />
                 )
               ) : (
                 <Flame className="h-4 w-4 text-white/30 mx-auto mb-1" />
@@ -702,12 +702,12 @@ export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaP
                 vendaCompleta?.venda_presencial == null
                   ? "text-white/40"
                   : vendaCompleta.venda_presencial
-                    ? "text-orange-400"
-                    : "text-sky-400"
+                    ? "text-sky-400"
+                    : "text-orange-400"
               )}>
                 {vendaCompleta?.venda_presencial == null
                   ? '—'
-                  : vendaCompleta.venda_presencial ? 'Quente' : 'Fria'}
+                  : vendaCompleta.venda_presencial ? 'Fria' : 'Quente'}
               </p>
             </div>
           </div>
@@ -730,7 +730,7 @@ export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaP
                   )}
                 </div>
                 <div className="bg-white/5 rounded-lg border border-white/10 p-2.5 text-center">
-                  <p className="text-[9px] text-white/40 uppercase font-medium mb-1">Frio</p>
+                  <p className="text-[9px] text-white/40 uppercase font-medium mb-1">Quente</p>
                   <p className={cn("text-sm font-bold", descontoTiers.gelo.pct > 0 ? "text-red-400" : "text-white/20")}>
                     {descontoTiers.gelo.pct > 0 ? `${descontoTiers.gelo.pct.toFixed(1)}%` : '—'}
                   </p>
