@@ -18,8 +18,8 @@ interface Props {
   disabledReason?: string;
 }
 
-const sectionWrapperClass = "p-1.5 rounded-xl bg-gradient-to-br from-blue-500/5 to-blue-900/10 backdrop-blur-xl border border-blue-500/20";
-const labelClass = "text-xs font-semibold text-blue-300/80 uppercase tracking-wider";
+const sectionWrapperClass = "p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10";
+const labelClass = "text-xs font-semibold text-white/60 uppercase tracking-wider";
 
 export function DescontoAcrescimoSection({ ajusteAplicado, onAplicar, onLimpar, valorBase, disabled, disabledReason }: Props) {
   const [rascunho, setRascunho] = useState<AjusteGlobal>(ajusteAplicado);
@@ -47,19 +47,19 @@ export function DescontoAcrescimoSection({ ajusteAplicado, onAplicar, onLimpar, 
 
   return (
     <div className={sectionWrapperClass}>
-      <div className="px-4 py-3 border-b border-blue-500/10 bg-gradient-to-r from-blue-500/10 to-transparent">
+      <div className="px-5 py-4 border-b border-white/10 bg-gradient-to-r from-white/5 to-transparent">
         <div className="flex items-center justify-between gap-2.5">
           <div className="flex items-center gap-2.5">
             <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 shadow-lg shadow-blue-500/30">
               <Percent className="w-4 h-4 text-white" />
             </div>
-            <h3 className="text-sm font-semibold text-blue-100 tracking-wide">Desconto / Acréscimo</h3>
+            <h3 className="text-sm font-semibold text-white tracking-wide">Desconto / Acréscimo</h3>
           </div>
           {isAplicado && (
             <button
               type="button"
               onClick={onLimpar}
-              className="flex items-center gap-1 text-xs text-blue-300/70 hover:text-white transition-colors"
+              className="flex items-center gap-1 text-xs text-white/60 hover:text-white transition-colors"
             >
               <X className="w-3.5 h-3.5" /> Limpar
             </button>
@@ -67,7 +67,7 @@ export function DescontoAcrescimoSection({ ajusteAplicado, onAplicar, onLimpar, 
         </div>
       </div>
 
-      <div className="p-4 space-y-3">
+      <div className="p-5 space-y-4">
         {disabled && (
           <div className="text-xs text-amber-300/80 bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-2">
             {disabledReason || 'Ajuste indisponível.'}
@@ -106,7 +106,7 @@ export function DescontoAcrescimoSection({ ajusteAplicado, onAplicar, onLimpar, 
           {/* Tipo: Desconto / Acréscimo */}
           <div className="space-y-1">
             <span className={labelClass}>Tipo</span>
-            <div className="flex rounded-lg overflow-hidden border border-blue-500/25 bg-blue-500/5">
+            <div className="flex rounded-lg overflow-hidden border border-white/10 bg-white/5">
               <button
                 type="button"
                 disabled={disabled}
@@ -115,7 +115,7 @@ export function DescontoAcrescimoSection({ ajusteAplicado, onAplicar, onLimpar, 
                   "flex items-center gap-1.5 px-3 h-10 text-sm font-medium transition-all",
                   rascunho.tipo === 'desconto'
                     ? "bg-gradient-to-r from-emerald-500/30 to-emerald-700/20 text-emerald-100"
-                    : "text-blue-200/70 hover:bg-blue-500/10"
+                    : "text-white/70 hover:bg-white/10"
                 )}
               >
                 <Minus className="w-3.5 h-3.5" /> Desconto
@@ -125,10 +125,10 @@ export function DescontoAcrescimoSection({ ajusteAplicado, onAplicar, onLimpar, 
                 disabled={disabled}
                 onClick={() => setRascunho(prev => ({ ...prev, tipo: 'acrescimo' }))}
                 className={cn(
-                  "flex items-center gap-1.5 px-3 h-10 text-sm font-medium transition-all border-l border-blue-500/25",
+                  "flex items-center gap-1.5 px-3 h-10 text-sm font-medium transition-all border-l border-white/10",
                   rascunho.tipo === 'acrescimo'
                     ? "bg-gradient-to-r from-amber-500/30 to-amber-700/20 text-amber-100"
-                    : "text-blue-200/70 hover:bg-blue-500/10"
+                    : "text-white/70 hover:bg-white/10"
                 )}
               >
                 <Plus className="w-3.5 h-3.5" /> Acréscimo
@@ -139,14 +139,14 @@ export function DescontoAcrescimoSection({ ajusteAplicado, onAplicar, onLimpar, 
           {/* Unidade % / R$ */}
           <div className="space-y-1">
             <span className={labelClass}>Unidade</span>
-            <div className="flex rounded-lg overflow-hidden border border-blue-500/25 bg-blue-500/5">
+            <div className="flex rounded-lg overflow-hidden border border-white/10 bg-white/5">
               <button
                 type="button"
                 disabled={disabled}
                 onClick={() => setRascunho(prev => ({ ...prev, unidade: '%' }))}
                 className={cn(
                   "px-3 h-10 text-sm font-medium transition-all",
-                  rascunho.unidade === '%' ? "bg-blue-500/30 text-white" : "text-blue-200/70 hover:bg-blue-500/10"
+                  rascunho.unidade === '%' ? "bg-blue-500/30 text-white" : "text-white/70 hover:bg-white/10"
                 )}
               >
                 %
@@ -156,8 +156,8 @@ export function DescontoAcrescimoSection({ ajusteAplicado, onAplicar, onLimpar, 
                 disabled={disabled}
                 onClick={() => setRascunho(prev => ({ ...prev, unidade: 'R$' }))}
                 className={cn(
-                  "px-3 h-10 text-sm font-medium transition-all border-l border-blue-500/25",
-                  rascunho.unidade === 'R$' ? "bg-blue-500/30 text-white" : "text-blue-200/70 hover:bg-blue-500/10"
+                  "px-3 h-10 text-sm font-medium transition-all border-l border-white/10",
+                  rascunho.unidade === 'R$' ? "bg-blue-500/30 text-white" : "text-white/70 hover:bg-white/10"
                 )}
               >
                 R$
@@ -176,7 +176,7 @@ export function DescontoAcrescimoSection({ ajusteAplicado, onAplicar, onLimpar, 
               disabled={disabled}
               onChange={(e) => setRascunho(prev => ({ ...prev, valor: Math.max(0, parseFloat(e.target.value) || 0) }))}
               placeholder={rascunho.unidade === '%' ? '0,0' : '0,00'}
-              className="h-10 bg-blue-500/5 border-blue-500/20 text-white placeholder:text-blue-200/30 rounded-lg focus:border-blue-400 focus:ring-2 focus:ring-blue-500/30"
+              className="h-10 bg-white/5 border-white/10 text-white placeholder:text-white/30 rounded-lg focus:border-white/30 focus:ring-2 focus:ring-white/20"
             />
           </div>
 
@@ -192,7 +192,7 @@ export function DescontoAcrescimoSection({ ajusteAplicado, onAplicar, onLimpar, 
                 "h-10 px-4 rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-1.5",
                 podeAplicar
                   ? "bg-gradient-to-r from-blue-500 to-blue-700 text-white shadow-lg shadow-blue-500/30 hover:from-blue-400 hover:to-blue-600"
-                  : "bg-blue-500/10 text-blue-200/40 cursor-not-allowed border border-blue-500/20"
+                  : "bg-white/10 text-white/40 cursor-not-allowed border border-white/10"
               )}
             >
               <Check className="w-4 h-4" /> Aplicar
@@ -201,7 +201,7 @@ export function DescontoAcrescimoSection({ ajusteAplicado, onAplicar, onLimpar, 
         </div>
 
         {/* Impacto previsto do rascunho */}
-        <div className="flex items-center justify-between border-t border-blue-500/10 pt-2">
+        <div className="flex items-center justify-between border-t border-white/10 pt-2">
           <span className={labelClass}>Impacto previsto</span>
           <p className={cn("text-base font-bold", corValor)}>
             {sinalLabel} R$ {valorAjusteAbs.toFixed(2)}
