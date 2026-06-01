@@ -1300,6 +1300,10 @@ function CategoriaGroup({
                   update={update}
                   remove={remove}
                   hideCategoria={hideCategoria}
+                  readOnly={readOnly}
+                  mesReferencia={mesReferencia ?? null}
+                  clearOverride={clearOverride}
+                  hasOverride={hasOverride}
                 />
               ))}
             </tbody>
