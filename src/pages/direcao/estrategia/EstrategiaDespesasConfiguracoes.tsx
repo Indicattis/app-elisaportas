@@ -130,6 +130,7 @@ export function DespesasGridContent({
             clearOverride={tipoClearOverride}
             hasOverride={tipoHasOverride}
             mesReferencia={mesReferencia ?? null}
+            contagemGastos={contagemGastos}
           />
           <TiposCustoBlock
             titulo="Tipos de Custos — Variáveis"
