@@ -856,21 +856,6 @@ async function gerarContasReceberPorMetodo(
       break;
     }
     
-    case 'dinheiro': {
-      const dataVenc = dataBase.toISOString().split('T')[0];
-      parcelas.push({
-        venda_id: vendaId,
-        numero_parcela: offset + 1,
-        valor_parcela: metodo.valor,
-        data_vencimento: dataVenc,
-        metodo_pagamento: 'dinheiro',
-        empresa_receptora_id: metodo.empresa_receptora_id || null,
-        status: metodo.ja_pago ? 'pago' : 'pendente',
-        ...(metodo.ja_pago ? { data_pagamento: dataVenc, valor_pago: metodo.valor } : {})
-      });
-      break;
-    }
-    
     case 'a_vista': {
       // À vista gera 1 conta já paga
       parcelas.push({
