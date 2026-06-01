@@ -34,6 +34,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useFretesCidades } from '@/hooks/useFretesCidades';
 import { Checkbox } from '@/components/ui/checkbox';
 import { PagamentoSection, PagamentoData, createEmptyPagamentoData } from '@/components/vendas/PagamentoSection';
+import { validarRegraBoleto } from '@/utils/boletoRegra';
 import { ClienteVendaSection } from '@/components/vendas/ClienteVendaSection';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 
