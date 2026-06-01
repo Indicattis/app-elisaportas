@@ -1286,7 +1286,7 @@ export default function ProdutosFabrica({
                             />
                           ))}
                         </TableBody>
-                      </React.Fragment>
+                      </Fragment>
                     ))}
                     <TableFooter className="bg-white/5 border-t border-white/20">
                       <TableRow className="border-white/10 hover:bg-transparent">
