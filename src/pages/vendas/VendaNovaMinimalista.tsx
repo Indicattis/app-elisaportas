@@ -518,6 +518,16 @@ export default function VendaNovaMinimalista() {
       return;
     }
 
+    // Regra do boleto: 70% entrada à vista + 30% boleto com 21 dias
+    const regraBoleto = validarRegraBoleto(pagamentoData, valorTotalMemo);
+    if (!regraBoleto.ok) {
+      sonnerToast.error('Regra do boleto não atendida', {
+        description: regraBoleto.mensagem,
+        duration: 6000,
+      });
+      return;
+    }
+
     const validacao = validarDesconto(
       portas,
       formData.forma_pagamento,
