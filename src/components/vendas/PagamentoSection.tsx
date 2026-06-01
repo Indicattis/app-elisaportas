@@ -11,6 +11,8 @@ import { useEffect } from "react";
 import { Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Button } from "@/components/ui/button";
+import { RotateCcw } from "lucide-react";
 import {
   aplicarRegraBoleto,
   pagamentoTemBoleto,
@@ -179,9 +181,21 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
       <CardHeader className="pb-3 pt-4">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-semibold text-white">Forma de Pagamento</CardTitle>
-          <Badge variant="outline" className="bg-white/10 border-white/20 text-white">
-            Total: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valorTotal)}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => onChange(createEmptyPagamentoData())}
+              className="h-7 gap-1.5 bg-white/5 border-white/20 text-white/80 hover:bg-white/10 hover:text-white"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              Recomeçar
+            </Button>
+            <Badge variant="outline" className="bg-white/10 border-white/20 text-white">
+              Total: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valorTotal)}
+            </Badge>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-4 pb-4">
