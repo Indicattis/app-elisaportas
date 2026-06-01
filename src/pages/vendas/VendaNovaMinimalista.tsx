@@ -520,7 +520,7 @@ export default function VendaNovaMinimalista() {
 
     // Regra do boleto: 70% entrada à vista + 30% boleto com 21 dias
     const regraBoleto = validarRegraBoleto(pagamentoData, valorTotalMemo);
-    if (!regraBoleto.ok) {
+    if (regraBoleto.ok === false) {
       sonnerToast.error('Regra do boleto não atendida', {
         description: regraBoleto.mensagem,
         duration: 6000,
