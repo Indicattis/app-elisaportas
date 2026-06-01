@@ -781,15 +781,31 @@ export default function ProdutosFabrica({
   const handleGerarListaTeste = async () => {
     const categoriasMap: Record<string, string> = {};
     categorias.forEach(cat => { categoriasMap[cat.id] = cat.nome; });
+
+    // Unidades possíveis para randomização realista
+    const unidadesDiscretas = ["un", "rolo", "bobina", "cx", "pc"];
+    const unidadesContinuas = ["kg", "g", "m", "cm", "m2", "l", "ml"];
+
     const itens: ItemListaCompras[] = filteredProdutos.map(p => {
       const qtdPadrao = Number(p.quantidade_padrao) || 1;
+      // Escolhe unidade aleatória realista com base no tipo original (discreta/continua)
+      const uNorm = String(p.unidade || "un").trim().toLowerCase();
+      const isDiscreta = ["un", "rolo", "bobina", "cx", "pc", "pç", "unidade", "rolos"].includes(uNorm);
+      const unidadeAleatoria = isDiscreta
+        ? unidadesDiscretas[Math.floor(Math.random() * unidadesDiscretas.length)]
+        : unidadesContinuas[Math.floor(Math.random() * unidadesContinuas.length)];
+
+      const necessario = isDiscreta
+        ? Math.max(1, Math.floor(Math.random() * 20) + 1)
+        : Math.max(0.5, parseFloat((Math.random() * 49.5 + 0.5).toFixed(2)));
+
       return {
         estoque_id: p.id,
         nome_produto: p.nome_produto,
         categoria: categoriasMap[p.categoria] || p.categoria || "Sem categoria",
-        unidade: p.unidade,
+        unidade: unidadeAleatoria,
         quantidade_padrao: qtdPadrao,
-        necessario: qtdPadrao,
+        necessario,
       };
     });
     if (itens.length === 0) {
