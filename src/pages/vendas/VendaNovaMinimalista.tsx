@@ -38,24 +38,24 @@ import { validarRegraBoleto } from '@/utils/boletoRegra';
 import { ClienteVendaSection } from '@/components/vendas/ClienteVendaSection';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 
-// Estilos sofisticados (fora do componente para estabilidade de referência)
-const sectionWrapperClass = "p-1.5 rounded-xl bg-gradient-to-br from-blue-500/5 to-blue-900/10 backdrop-blur-xl border border-blue-500/20";
+// Estilos alinhados ao padrão de /vendas/minhas-vendas (glass branco neutro).
+const sectionWrapperClass = "p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10";
 const cardClass = "bg-transparent border-0 shadow-none";
-const labelClass = "text-xs font-semibold text-blue-300/80 uppercase tracking-wider";
-const inputClass = "h-10 bg-blue-500/5 border-blue-500/20 text-white placeholder:text-blue-200/30 rounded-lg focus:border-blue-400 focus:ring-2 focus:ring-blue-500/30 focus:bg-blue-500/10 transition-all";
-const textareaClass = "bg-blue-500/5 border-blue-500/20 text-white placeholder:text-blue-200/30 rounded-lg focus:border-blue-400 focus:ring-2 focus:ring-blue-500/30 focus:bg-blue-500/10 transition-all resize-none";
+const labelClass = "text-xs font-semibold text-white/60 uppercase tracking-wider";
+const inputClass = "h-10 bg-white/5 border-white/10 text-white placeholder:text-white/30 rounded-lg focus:border-white/30 focus:ring-2 focus:ring-white/20 focus:bg-white/10 transition-all";
+const textareaClass = "bg-white/5 border-white/10 text-white placeholder:text-white/30 rounded-lg focus:border-white/30 focus:ring-2 focus:ring-white/20 focus:bg-white/10 transition-all resize-none";
 
 const Section = ({ title, icon: Icon, children }: { title: string; icon: React.ElementType; children: React.ReactNode }) => (
   <div className={sectionWrapperClass}>
-    <div className="px-4 py-3 border-b border-blue-500/10 bg-gradient-to-r from-blue-500/10 to-transparent">
+    <div className="px-5 py-4 border-b border-white/10 bg-gradient-to-r from-white/5 to-transparent">
       <div className="flex items-center gap-2.5">
         <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 shadow-lg shadow-blue-500/30">
           <Icon className="w-4 h-4 text-white" />
         </div>
-        <h3 className="text-sm font-semibold text-blue-100 tracking-wide">{title}</h3>
+        <h3 className="text-sm font-semibold text-white tracking-wide">{title}</h3>
       </div>
     </div>
-    <div className="p-4">{children}</div>
+    <div className="p-5">{children}</div>
   </div>
 );
 
@@ -63,7 +63,7 @@ const ProductButton = ({ label, onClick }: { label: string; onClick: () => void 
   <button
     type="button"
     onClick={onClick}
-    className="group flex items-center justify-center gap-2 h-10 px-4 rounded-lg bg-gradient-to-r from-blue-500/10 to-blue-600/5 border border-blue-500/25 text-blue-200 hover:from-blue-500/20 hover:to-blue-600/10 hover:text-white hover:border-blue-400/40 hover:shadow-lg hover:shadow-blue-500/10 transition-all duration-200 w-full"
+    className="group flex items-center justify-center gap-2 h-10 px-4 rounded-lg bg-white/5 border border-white/10 text-white/80 hover:bg-white/10 hover:text-white hover:border-white/20 hover:shadow-lg hover:shadow-blue-500/10 transition-all duration-200 w-full"
   >
     <Plus className="w-4 h-4 text-blue-400 group-hover:text-blue-300 shrink-0" />
     <span className="text-sm font-medium">{label}</span>
@@ -76,20 +76,20 @@ const SophisticatedCheckbox = ({ id, checked, onCheckedChange, label, descriptio
     className={cn(
       "flex items-center gap-3 p-4 rounded-lg cursor-pointer transition-all duration-200 border-2",
       checked
-        ? "bg-gradient-to-r from-blue-500/20 to-blue-600/10 border-blue-400/50 shadow-lg shadow-blue-500/10"
-        : "bg-blue-500/5 border-blue-500/20 hover:border-blue-400/40 hover:bg-blue-500/10"
+        ? "bg-blue-500/15 border-blue-400/40 shadow-lg shadow-blue-500/10"
+        : "bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10"
     )}
   >
     <div className={cn(
       "flex items-center justify-center w-5 h-5 rounded border-2 transition-all",
-      checked ? "bg-gradient-to-br from-blue-500 to-blue-700 border-blue-400 shadow-lg shadow-blue-500/50" : "bg-transparent border-blue-400/40"
+      checked ? "bg-gradient-to-br from-blue-500 to-blue-700 border-blue-400 shadow-lg shadow-blue-500/50" : "bg-transparent border-white/30"
     )}>
       {checked && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
     </div>
     <Checkbox id={id} checked={checked} onCheckedChange={onCheckedChange} className="sr-only" />
     <div className="flex-1">
-      <span className="text-sm font-medium text-blue-100">{label}</span>
-      {description && <span className="text-xs text-blue-300/60 ml-2">{description}</span>}
+      <span className="text-sm font-medium text-white">{label}</span>
+      {description && <span className="text-xs text-white/60 ml-2">{description}</span>}
     </div>
   </label>
 );
