@@ -778,6 +778,25 @@ export default function ProdutosFabrica({
     });
   };
 
+  const handleGerarListaTeste = async () => {
+    const itens: ItemListaCompras[] = [
+      { estoque_id: "ex-1", nome_produto: "Chapa de Aço Galvanizado 1.2mm", categoria: "Matéria-Prima", unidade: "m2", quantidade_padrao: 1, necessario: 12.5 },
+      { estoque_id: "ex-2", nome_produto: "Tubo Quadrado 40x40", categoria: "Matéria-Prima", unidade: "m", quantidade_padrao: 1, necessario: 48 },
+      { estoque_id: "ex-3", nome_produto: "Parafuso Sextavado M8 x 25", categoria: "Fixação", unidade: "un", quantidade_padrao: 1, necessario: 240 },
+      { estoque_id: "ex-4", nome_produto: "Rebite Pop 4.8 x 12", categoria: "Fixação", unidade: "un", quantidade_padrao: 1, necessario: 500 },
+      { estoque_id: "ex-5", nome_produto: "Tinta Epóxi Cinza RAL 7035", categoria: "Pintura", unidade: "kg", quantidade_padrao: 1, necessario: 6.75 },
+      { estoque_id: "ex-6", nome_produto: "Solvente para Epóxi", categoria: "Pintura", unidade: "L", quantidade_padrao: 1, necessario: 3 },
+      { estoque_id: "ex-7", nome_produto: "Roldana 60mm com Rolamento", categoria: "Componentes", unidade: "un", quantidade_padrao: 1, necessario: 32 },
+      { estoque_id: "ex-8", nome_produto: "Trilho Superior 3m", categoria: "Componentes", unidade: "un", quantidade_padrao: 1, necessario: 8 },
+    ];
+    try {
+      await gerarListaComprasPDF("Exemplo - Teste", itens);
+      toast.success("Lista de materiais (exemplo) gerada!");
+    } catch (err: any) {
+      toast.error(err?.message || "Falha ao gerar lista");
+    }
+  };
+
   const headerActions = (
     <div className="flex items-center gap-2 flex-wrap">
       <button
