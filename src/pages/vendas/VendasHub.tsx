@@ -8,7 +8,8 @@ import {
   ArrowLeft,
   Search,
   ClipboardCheck,
-  Target
+  Target,
+  BookOpen
 } from 'lucide-react';
 
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
@@ -22,6 +23,7 @@ const menuItems = [
   { label: 'Acompanhar Pedido', icon: Search, path: '/vendas/acompanhar-pedido' },
   { label: 'Visitas Técnicas', icon: ClipboardCheck, path: '/vendas/visitas-tecnicas' },
   { label: 'Metas', icon: Target, path: '/vendas/metas' },
+  { label: 'Regras de Vendas', icon: BookOpen, path: '/vendas/regras' },
 ];
 
 export default function VendasHub() {
