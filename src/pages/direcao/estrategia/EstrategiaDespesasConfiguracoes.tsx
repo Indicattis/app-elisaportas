@@ -1312,6 +1312,7 @@ function CategoriaGroup({
                   mesReferencia={mesReferencia ?? null}
                   clearOverride={clearOverride}
                   hasOverride={hasOverride}
+                  contagemGastos={contagemGastos}
                 />
               ))}
             </tbody>
