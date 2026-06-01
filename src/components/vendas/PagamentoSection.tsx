@@ -40,9 +40,14 @@ interface PagamentoSectionProps {
   valorTotal: number;
   vendaPresencial?: boolean | null;
   onVendaPresencialChange?: (value: boolean) => void;
+  descontoInfo?: {
+    percentualAplicado: number;
+    limitePermitido: number;
+    limiteMaximo: number;
+  };
 }
 
-export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPresencial, onVendaPresencialChange }: PagamentoSectionProps) {
+export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPresencial, onVendaPresencialChange, descontoInfo }: PagamentoSectionProps) {
   const { data: empresas = [], isLoading: isLoadingEmpresas } = useQuery({
     queryKey: ['empresas-emissoras-ativas'],
     queryFn: async () => {
