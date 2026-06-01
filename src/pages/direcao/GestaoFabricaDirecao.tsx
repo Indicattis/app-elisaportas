@@ -159,14 +159,33 @@ export default function GestaoFabricaDirecao() {
         if (!linha.estoque) return;
         const e = linha.estoque;
         const qtd = Number(linha.quantidade) || 0;
+        const unidadeNorm = String(e.unidade || 'un').trim().toLowerCase();
+        const qtdPadrao = Number(e.quantidade_padrao) > 0 ? Number(e.quantidade_padrao) : 1;
+        const largura = Number(linha.largura) || 0;
+        const altura = Number(linha.altura) || 0;
+        const tamanhoNum = linha.tamanho
+          ? parseFloat(String(linha.tamanho).replace(',', '.'))
+          : NaN;
+
         let necessario = 0;
-        if (linha.largura && linha.altura) {
-          necessario = qtd * Number(linha.largura) * Number(linha.altura);
-        } else if (linha.tamanho) {
-          const t = parseFloat(String(linha.tamanho).replace(',', '.'));
-          necessario = !isNaN(t) ? qtd * t : qtd;
+        if (unidadeNorm === 'm2' || unidadeNorm === 'm²') {
+          // Área: usa largura × altura quando disponível, senão tamanho, senão qtd_padrao
+          if (largura && altura) necessario = qtd * largura * altura;
+          else if (!isNaN(tamanhoNum)) necessario = qtd * tamanhoNum;
+          else necessario = qtd * qtdPadrao;
+        } else if (
+          unidadeNorm === 'm' ||
+          unidadeNorm === 'ml' ||
+          unidadeNorm === 'metro' ||
+          unidadeNorm === 'metros' ||
+          unidadeNorm === 'cm'
+        ) {
+          // Comprimento: prioriza tamanho; senão largura ou altura
+          const comprimento = !isNaN(tamanhoNum) ? tamanhoNum : largura || altura;
+          necessario = comprimento > 0 ? qtd * comprimento : qtd * qtdPadrao;
         } else {
-          necessario = qtd;
+          // UN / PC / kit / par / qualquer outra: usa quantidade_padrao por porta
+          necessario = qtd * qtdPadrao;
         }
         if (map.has(e.id)) {
           map.get(e.id)!.necessario += necessario;
