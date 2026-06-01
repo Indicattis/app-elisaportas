@@ -23,7 +23,6 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { SelecionarAcessoriosModal } from '@/components/vendas/SelecionarAcessoriosModal';
-import { DescontoVendaModal } from '@/components/vendas/DescontoVendaModal';
 import { CreditoVendaModal } from '@/components/vendas/CreditoVendaModal';
 import { AutorizacaoDescontoModal } from '@/components/vendas/AutorizacaoDescontoModal';
 import { DescontoAcrescimoSection, AjusteGlobal } from '@/components/vendas/DescontoAcrescimoSection';
@@ -151,7 +150,6 @@ export default function VendaNovaMinimalista() {
   const [indexEditando, setIndexEditando] = useState<number | undefined>(undefined);
   const [tipoInicial, setTipoInicial] = useState<'porta_enrolar' | 'porta_social' | 'pintura_epoxi' | 'acessorio' | 'adicional' | 'manutencao' | undefined>(undefined);
   const [permitirTrocaTipo, setPermitirTrocaTipo] = useState(true);
-  const [descontoModalOpen, setDescontoModalOpen] = useState(false);
   const [creditoModalOpen, setCreditoModalOpen] = useState(false);
   const [autorizacaoDescontoOpen, setAutorizacaoDescontoOpen] = useState(false);
   const [produtosComDesconto, setProdutosComDesconto] = useState<ProdutoVenda[]>([]);
