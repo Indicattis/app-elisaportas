@@ -450,8 +450,8 @@ export default function VendasDirecao() {
                       <p className="text-white/70">
                         <span className="text-white/50">Tipo:</span>{' '}
                         {autorizacao.tipo_autorizacao === 'master' 
-                          ? 'Senha Master' 
-                          : 'Responsável do Setor'}
+                          ? 'Senha Master (Diretor)' 
+                          : 'Senha do Gerente'}
                       </p>
                       <p className="text-white/70">
                         <span className="text-white/50">Autorizado por:</span>{' '}
