@@ -838,6 +838,7 @@ function InlineNum({ value, onSave, format }: { value: number; onSave: (v: numbe
 function TiposCustoBlock({
   titulo, icon, tipo, items, save, update, remove,
   allTipos, contarGastosVinculados, realocarEExcluir, forcarExclusao, reorderTipos,
+  readOnly, clearOverride, hasOverride,
 }: {
   titulo: string;
   icon: React.ReactNode;
@@ -851,6 +852,9 @@ function TiposCustoBlock({
   realocarEExcluir: ReturnType<typeof useTiposCustos>['realocarEExcluirTipoCusto'];
   forcarExclusao: ReturnType<typeof useTiposCustos>['forcarExclusaoTipoCusto'];
   reorderTipos: ReturnType<typeof useTiposCustos>['reorderTiposCustos'];
+  readOnly?: boolean;
+  clearOverride?: (id: string) => Promise<boolean>;
+  hasOverride?: (id: string) => boolean;
 }) {
   const [nome, setNome] = useState('');
   const [descricao, setDescricao] = useState('');
