@@ -13,7 +13,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Badge } from '@/components/ui/badge';
-import { Plus, CalendarIcon, Percent, CheckCircle2, ShieldCheck, Lock, Package, CreditCard, FileText, Truck, Wrench, Settings, Building2 } from 'lucide-react';
+import { Plus, CalendarIcon, CheckCircle2, ShieldCheck, Lock, Package, CreditCard, FileText, Truck, Wrench, Settings, Building2 } from 'lucide-react';
 import { ProdutoVendaForm } from '@/components/vendas/ProdutoVendaForm';
 import { ProdutosVendaTable } from '@/components/vendas/ProdutosVendaTable';
 import { VendaResumo } from '@/components/vendas/VendaResumo';
@@ -23,9 +23,9 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { SelecionarAcessoriosModal } from '@/components/vendas/SelecionarAcessoriosModal';
-import { DescontoVendaModal } from '@/components/vendas/DescontoVendaModal';
 import { CreditoVendaModal } from '@/components/vendas/CreditoVendaModal';
 import { AutorizacaoDescontoModal } from '@/components/vendas/AutorizacaoDescontoModal';
+import { DescontoAcrescimoSection, AjusteGlobal } from '@/components/vendas/DescontoAcrescimoSection';
 import { PinturaRapidaModal } from '@/components/vendas/PinturaRapidaModal';
 import { PinturaItemCatalogoModal } from '@/components/vendas/PinturaItemCatalogoModal';
 import { validarDesconto, getTipoAutorizacaoNecessaria, ConfigLimites } from '@/utils/descontoVendasRules';
@@ -150,7 +150,6 @@ export default function VendaNovaMinimalista() {
   const [indexEditando, setIndexEditando] = useState<number | undefined>(undefined);
   const [tipoInicial, setTipoInicial] = useState<'porta_enrolar' | 'porta_social' | 'pintura_epoxi' | 'acessorio' | 'adicional' | 'manutencao' | undefined>(undefined);
   const [permitirTrocaTipo, setPermitirTrocaTipo] = useState(true);
-  const [descontoModalOpen, setDescontoModalOpen] = useState(false);
   const [creditoModalOpen, setCreditoModalOpen] = useState(false);
   const [autorizacaoDescontoOpen, setAutorizacaoDescontoOpen] = useState(false);
   const [produtosComDesconto, setProdutosComDesconto] = useState<ProdutoVenda[]>([]);
@@ -166,6 +165,12 @@ export default function VendaNovaMinimalista() {
   const [pinturaItemModalOpen, setPinturaItemModalOpen] = useState(false);
 
   const [pagamentoData, setPagamentoData] = useState<PagamentoData>(createEmptyPagamentoData());
+
+  const [ajusteGlobal, setAjusteGlobal] = useState<AjusteGlobal>({
+    tipo: 'desconto',
+    unidade: '%',
+    valor: 0,
+  });
 
   const { data: cores } = useQuery({
     queryKey: ['cores-catalogo'],
@@ -264,14 +269,64 @@ export default function VendaNovaMinimalista() {
   };
 
   // Memoized values to prevent re-renders that cause focus loss
-  const valorTotalMemo = useMemo(() => {
+  const subtotalProdutosMemo = useMemo(() => {
     return portas.reduce((acc, p) => {
       const valorBase = (p.valor_produto + p.valor_pintura + p.valor_instalacao) * (p.quantidade || 1);
       const desconto = p.tipo_desconto === 'valor' ? (p.desconto_valor || 0) : valorBase * ((p.desconto_percentual || 0) / 100);
       const credito = (p.valor_credito || 0) * (p.quantidade || 1);
       return acc + valorBase - desconto + credito;
-    }, 0) + (formData.valor_frete || 0) + valorCredito;
-  }, [portas, formData.valor_frete, valorCredito]);
+    }, 0);
+  }, [portas]);
+
+  // Aplica o ajuste global (desconto/acréscimo) sobre o subtotal de produtos
+  const valorAjusteGlobalSigned = useMemo(() => {
+    if (!ajusteGlobal.valor || ajusteGlobal.valor <= 0) return 0;
+    const abs = ajusteGlobal.unidade === '%'
+      ? Math.max(0, subtotalProdutosMemo) * (ajusteGlobal.valor / 100)
+      : ajusteGlobal.valor;
+    return ajusteGlobal.tipo === 'desconto' ? -abs : abs;
+  }, [ajusteGlobal, subtotalProdutosMemo]);
+
+  const valorTotalMemo = useMemo(() => {
+    return subtotalProdutosMemo + valorAjusteGlobalSigned + (formData.valor_frete || 0) + valorCredito;
+  }, [subtotalProdutosMemo, valorAjusteGlobalSigned, formData.valor_frete, valorCredito]);
+
+  // Distribui o ajuste global proporcionalmente entre as portas (usado em validação e submit)
+  const portasComAjusteGlobal = useMemo<ProdutoVenda[]>(() => {
+    if (!ajusteGlobal.valor || ajusteGlobal.valor <= 0 || portas.length === 0) return portas;
+    const ajusteAbs = ajusteGlobal.unidade === '%'
+      ? Math.max(0, subtotalProdutosMemo) * (ajusteGlobal.valor / 100)
+      : ajusteGlobal.valor;
+    const sinal = ajusteGlobal.tipo === 'desconto' ? 1 : -1; // soma positiva ao desconto = desconto; negativo = acréscimo
+    const ajusteSigned = ajusteAbs * sinal;
+
+    // pesos proporcionais por valor base (sem desconto)
+    const bases = portas.map(p => (p.valor_produto + p.valor_pintura + p.valor_instalacao) * (p.quantidade || 1));
+    const totalBase = bases.reduce((a, b) => a + b, 0);
+    if (totalBase <= 0) return portas;
+
+    return portas.map((p, i) => {
+      const parcela = ajusteSigned * (bases[i] / totalBase);
+      const descontoBase = p.tipo_desconto === 'valor'
+        ? (p.desconto_valor || 0)
+        : bases[i] * ((p.desconto_percentual || 0) / 100);
+      return {
+        ...p,
+        tipo_desconto: 'valor' as const,
+        desconto_percentual: 0,
+        desconto_valor: descontoBase + parcela,
+      };
+    });
+  }, [portas, ajusteGlobal, subtotalProdutosMemo]);
+
+  // Mantém valor_a_receber alinhado com o total (cobre alterações do ajuste global)
+  useEffect(() => {
+    setFormData(prev => {
+      const novo = valorTotalMemo - (prev.valor_entrada || 0);
+      if (prev.valor_a_receber === novo) return prev;
+      return { ...prev, valor_a_receber: novo };
+    });
+  }, [valorTotalMemo]);
 
   const configLimitesObj: ConfigLimites = useMemo(() => ({
     avista: configLimites.avista,
@@ -280,8 +335,8 @@ export default function VendaNovaMinimalista() {
   }), [configLimites]);
 
   const validacaoDescontoMemo = useMemo(() => {
-    return validarDesconto(portas, formData.forma_pagamento, formData.venda_presencial === false, configLimitesObj);
-  }, [portas, formData.forma_pagamento, formData.venda_presencial, configLimitesObj]);
+    return validarDesconto(portasComAjusteGlobal, formData.forma_pagamento, formData.venda_presencial === false, configLimitesObj);
+  }, [portasComAjusteGlobal, formData.forma_pagamento, formData.venda_presencial, configLimitesObj]);
 
   const tipoAutorizacaoNecessariaMemo = useMemo(() => {
     return getTipoAutorizacaoNecessaria(validacaoDescontoMemo);
@@ -402,20 +457,6 @@ export default function VendaNovaMinimalista() {
     });
   };
 
-  const handleAplicarDesconto = (produtosAtualizados: ProdutoVenda[]) => {
-    setPortas(produtosAtualizados);
-    
-    setValorCredito(0);
-    setPercentualCredito(0);
-    
-    const valorTotal = recalcularValorTotal(produtosAtualizados, 0);
-    
-    setFormData(prev => ({
-      ...prev,
-      valor_a_receber: valorTotal - (prev.valor_entrada || 0)
-    }));
-  };
-
   const handleAplicarCredito = (novoValorCredito: number, novoPercentualCredito: number) => {
     setValorCredito(novoValorCredito);
     setPercentualCredito(novoPercentualCredito);
@@ -529,7 +570,7 @@ export default function VendaNovaMinimalista() {
     }
 
     const validacao = validarDesconto(
-      portas,
+      portasComAjusteGlobal,
       formData.forma_pagamento,
       formData.venda_presencial === false,
       configLimitesObj
@@ -537,7 +578,7 @@ export default function VendaNovaMinimalista() {
 
     const tipoAutorizacao = getTipoAutorizacaoNecessaria(validacao);
     if (tipoAutorizacao) {
-      setProdutosComDesconto(portas);
+      setProdutosComDesconto(portasComAjusteGlobal);
       setTipoAutorizacaoNecessaria(tipoAutorizacao);
       setLimitePermitido(validacao.limitePermitido);
       setAutorizacaoDescontoOpen(true);
@@ -551,7 +592,7 @@ export default function VendaNovaMinimalista() {
           forma_pagamento: pagamentoData.metodos[0]?.tipo || '',
           data_venda: `${format(dataVenda, 'yyyy-MM-dd')}T12:00:00.000Z`,
         },
-        portas,
+        portas: portasComAjusteGlobal,
         pagamentoData,
         creditoVenda: { valorCredito, percentualCredito }
       });
@@ -738,6 +779,15 @@ export default function VendaNovaMinimalista() {
             limitePermitido: validacaoDescontoMemo.limitePermitido,
             limiteMaximo: validacaoDescontoMemo.limiteMaximoResponsavel ?? validacaoDescontoMemo.limitePermitido,
           }}
+        />
+
+        {/* Desconto / Acréscimo Global */}
+        <DescontoAcrescimoSection
+          ajuste={ajusteGlobal}
+          onChange={setAjusteGlobal}
+          valorBase={subtotalProdutosMemo}
+          disabled={valorCredito > 0 && ajusteGlobal.tipo === 'desconto'}
+          disabledReason={valorCredito > 0 ? 'Desconto indisponível: existe crédito aplicado à venda.' : undefined}
         />
 
         {/* Informações de Entrega */}
@@ -1066,17 +1116,7 @@ export default function VendaNovaMinimalista() {
             Cancelar
           </GradientButton>
           
-          {portas.length > 0 && valorCredito === 0 && (
-            <GradientButton 
-              variant="outline"
-              onClick={() => setDescontoModalOpen(true)}
-            >
-              <Percent className="w-4 h-4 mr-2" />
-              Adicionar Desconto
-            </GradientButton>
-          )}
-          
-          {portas.length > 0 && validarDesconto(portas, formData.forma_pagamento, formData.venda_presencial === false).dentroDoLimite && !portas.some(p => (p.desconto_valor || 0) > 0 || (p.desconto_percentual || 0) > 0) && (
+          {portas.length > 0 && validacaoDescontoMemo.dentroDoLimite && ajusteGlobal.valor === 0 && (
             <GradientButton 
               variant="outline"
               onClick={() => setCreditoModalOpen(true)}
@@ -1121,20 +1161,11 @@ export default function VendaNovaMinimalista() {
       </form>
 
       {/* Modais */}
-      <DescontoVendaModal
-        open={descontoModalOpen}
-        onOpenChange={setDescontoModalOpen}
-        produtos={portas}
-        onAplicarDesconto={handleAplicarDesconto}
-        formaPagamento={formData.forma_pagamento}
-        vendaPresencial={formData.venda_presencial === false}
-      />
-
       <CreditoVendaModal
         open={creditoModalOpen}
         onOpenChange={setCreditoModalOpen}
         valorTotalVenda={recalcularValorTotal(portas, 0) - (formData.valor_frete || 0)}
-        temDesconto={portas.some(p => (p.desconto_valor || 0) > 0 || (p.desconto_percentual || 0) > 0)}
+        temDesconto={ajusteGlobal.valor > 0 && ajusteGlobal.tipo === 'desconto'}
         valorCreditoAtual={valorCredito}
         percentualCreditoAtual={percentualCredito}
         onAplicarCredito={handleAplicarCredito}
