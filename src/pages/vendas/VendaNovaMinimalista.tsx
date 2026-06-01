@@ -1177,20 +1177,11 @@ export default function VendaNovaMinimalista() {
       </form>
 
       {/* Modais */}
-      <DescontoVendaModal
-        open={descontoModalOpen}
-        onOpenChange={setDescontoModalOpen}
-        produtos={portas}
-        onAplicarDesconto={handleAplicarDesconto}
-        formaPagamento={formData.forma_pagamento}
-        vendaPresencial={formData.venda_presencial === false}
-      />
-
       <CreditoVendaModal
         open={creditoModalOpen}
         onOpenChange={setCreditoModalOpen}
         valorTotalVenda={recalcularValorTotal(portas, 0) - (formData.valor_frete || 0)}
-        temDesconto={portas.some(p => (p.desconto_valor || 0) > 0 || (p.desconto_percentual || 0) > 0)}
+        temDesconto={ajusteGlobal.valor > 0 && ajusteGlobal.tipo === 'desconto'}
         valorCreditoAtual={valorCredito}
         percentualCreditoAtual={percentualCredito}
         onAplicarCredito={handleAplicarCredito}
