@@ -446,7 +446,15 @@ export default function TabelaPrecos({
                           </TableCell>}
                           {!hideAcoesColumn && (
                             <TableCell className="text-center">
-                              {lucroInfo.fromMontagem ? (
+                              {readOnly ? (
+                                lucroInfo.fromMontagem ? (
+                                  <span className="text-xs text-white/60">
+                                    {lucroInfo.count} {lucroInfo.count === 1 ? 'item' : 'itens'}
+                                  </span>
+                                ) : (
+                                  <span className="text-xs text-white/30">—</span>
+                                )
+                              ) : lucroInfo.fromMontagem ? (
                                 <Button
                                   variant="ghost"
                                   size="sm"
@@ -471,7 +479,7 @@ export default function TabelaPrecos({
                               )}
                             </TableCell>
                           )}
-                          {!hideAcoesColumn && <TableCell>
+                          {!hideAcoesColumn && !readOnly && <TableCell>
                             <div className="flex items-center justify-center gap-1">
                               <Button
                                 variant="ghost"
