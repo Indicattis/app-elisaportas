@@ -672,6 +672,38 @@ export default function VendaNovaMinimalista() {
 
     const tipoAutorizacao = getTipoAutorizacaoNecessaria(validacao);
     if (tipoAutorizacao) {
+      // Se o usuário já autorizou esse desconto no momento de Aplicar, reusa.
+      if (
+        autorizacaoAjuste &&
+        user &&
+        validacao.percentualDesconto <= autorizacaoAjuste.percentualAutorizado + 0.01 &&
+        (autorizacaoAjuste.tipo === tipoAutorizacao || autorizacaoAjuste.tipo === 'master')
+      ) {
+        try {
+          await createVenda({
+            vendaData: {
+              ...formData,
+              forma_pagamento: pagamentoData.metodos[0]?.tipo || '',
+              data_venda: `${format(dataVenda, 'yyyy-MM-dd')}T12:00:00.000Z`,
+            },
+            portas: portasComAjusteGlobal,
+            pagamentoData,
+            autorizacaoDesconto: {
+              autorizado_por: autorizacaoAjuste.autorizadorId,
+              solicitado_por: user.id,
+              percentual_desconto: validacao.percentualDesconto,
+              senha_usada: autorizacaoAjuste.senha,
+              tipo_autorizacao: autorizacaoAjuste.tipo,
+            },
+            creditoVenda: { valorCredito: 0, percentualCredito: 0 },
+          });
+          navigate('/vendas/minhas-vendas');
+        } catch (error) {
+          console.error('Erro ao criar venda:', error);
+        }
+        return;
+      }
+
       setProdutosComDesconto(portasComAjusteGlobal);
       setTipoAutorizacaoNecessaria(tipoAutorizacao);
       setLimitePermitido(validacao.limitePermitido);
