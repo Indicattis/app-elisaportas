@@ -175,7 +175,7 @@ export default function RegrasVendasVisualizacao() {
             <CardContent className="space-y-3">
               <Row
                 icon={Receipt}
-                label="Boleto — intervalos (dias)"
+                label="Boleto — 70% de entrada, intervalos (dias)"
                 value={
                   <div className="flex flex-wrap gap-1 justify-end max-w-[320px]">
                     <Badge className="bg-white/10 text-white border-white/20">
