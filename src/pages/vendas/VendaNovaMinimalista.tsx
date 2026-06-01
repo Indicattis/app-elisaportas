@@ -1132,17 +1132,7 @@ export default function VendaNovaMinimalista() {
             Cancelar
           </GradientButton>
           
-          {portas.length > 0 && valorCredito === 0 && (
-            <GradientButton 
-              variant="outline"
-              onClick={() => setDescontoModalOpen(true)}
-            >
-              <Percent className="w-4 h-4 mr-2" />
-              Adicionar Desconto
-            </GradientButton>
-          )}
-          
-          {portas.length > 0 && validarDesconto(portas, formData.forma_pagamento, formData.venda_presencial === false).dentroDoLimite && !portas.some(p => (p.desconto_valor || 0) > 0 || (p.desconto_percentual || 0) > 0) && (
+          {portas.length > 0 && validacaoDescontoMemo.dentroDoLimite && ajusteGlobal.valor === 0 && (
             <GradientButton 
               variant="outline"
               onClick={() => setCreditoModalOpen(true)}
