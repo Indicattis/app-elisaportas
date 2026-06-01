@@ -687,7 +687,7 @@ export default function VendaNovaMinimalista() {
         {/* Produtos */}
         <Section title="Produtos" icon={Package}>
           <div className="space-y-4">
-            <div className="flex gap-2 flex-wrap">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
               <ProductButton 
                 label="Porta de Enrolar"
                 onClick={() => {
