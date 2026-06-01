@@ -23,6 +23,7 @@ import { Label } from '@/components/ui/label';
 import { exportFolhaSalarialPDF } from '@/utils/folhaSalarialPDFGenerator';
 import { exportTiposCustosPDF } from '@/utils/tiposCustosPDFGenerator';
 import { useSetores, getSetorPalette } from '@/hooks/useSetores';
+import { AutorizadosTerceirosBlock } from '@/components/direcao/estrategia/AutorizadosTerceirosBlock';
 import {
   DndContext,
   closestCenter,
@@ -173,6 +174,7 @@ export function DespesasGridContent({
             contagemGastos={contagemGastos}
             totaisGastos={totaisGastos}
           />
+          <AutorizadosTerceirosBlock mode={mode} mesReferencia={mesReferencia ?? null} />
         </div>
       );
 }

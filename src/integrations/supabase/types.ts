@@ -647,6 +647,45 @@ export type Database = {
           },
         ]
       }
+      autorizados_terceiros: {
+        Row: {
+          ativo: boolean
+          cidade: string
+          created_at: string
+          estado: string
+          id: string
+          nome: string
+          ordem: number
+          quilometragem: number | null
+          updated_at: string
+          valor_estipulado: number
+        }
+        Insert: {
+          ativo?: boolean
+          cidade: string
+          created_at?: string
+          estado: string
+          id?: string
+          nome: string
+          ordem?: number
+          quilometragem?: number | null
+          updated_at?: string
+          valor_estipulado?: number
+        }
+        Update: {
+          ativo?: boolean
+          cidade?: string
+          created_at?: string
+          estado?: string
+          id?: string
+          nome?: string
+          ordem?: number
+          quilometragem?: number | null
+          updated_at?: string
+          valor_estipulado?: number
+        }
+        Relationships: []
+      }
       avaliacoes: {
         Row: {
           aprovado: boolean | null
@@ -6372,6 +6411,44 @@ export type Database = {
             columns: ["produto_venda_id"]
             isOneToOne: false
             referencedRelation: "produtos_vendas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pagamentos_autorizados_terceiros_mes: {
+        Row: {
+          autorizado_id: string
+          created_at: string
+          id: string
+          mes_referencia: string
+          pago_em: string | null
+          updated_at: string
+          valor_pago: number
+        }
+        Insert: {
+          autorizado_id: string
+          created_at?: string
+          id?: string
+          mes_referencia: string
+          pago_em?: string | null
+          updated_at?: string
+          valor_pago?: number
+        }
+        Update: {
+          autorizado_id?: string
+          created_at?: string
+          id?: string
+          mes_referencia?: string
+          pago_em?: string | null
+          updated_at?: string
+          valor_pago?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pagamentos_autorizados_terceiros_mes_autorizado_id_fkey"
+            columns: ["autorizado_id"]
+            isOneToOne: false
+            referencedRelation: "autorizados_terceiros"
             referencedColumns: ["id"]
           },
         ]
