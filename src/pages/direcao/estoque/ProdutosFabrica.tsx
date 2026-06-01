@@ -1248,7 +1248,7 @@ export default function ProdutosFabrica({
                   <Table>
                     {renderHeader()}
                     {groups.map((g) => (
-                      <>
+                      <Fragment key={g.key}>
                         <tbody>
                           <TableRow className="border-none hover:bg-transparent">
                             <TableCell colSpan={colSpanCount} className="py-2 px-1">
