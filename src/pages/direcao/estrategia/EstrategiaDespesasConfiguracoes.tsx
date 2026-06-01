@@ -1213,7 +1213,7 @@ function categoriaSelectClass(_list: CategoriaDespesa[], v?: string | null) {
 
 function CategoriaGroup({
   cat, palette, rows, categorias, empresasAtivas, update, remove, dragHandle, rename, removeCat, expanded, onToggle, hideHeader, reorderRows, hideCategoria,
-  readOnly, mesReferencia, clearOverride, hasOverride, contagemGastos,
+  readOnly, mesReferencia, clearOverride, hasOverride, contagemGastos, totaisGastos,
 }: {
   cat: CategoriaDespesa | null;
   palette: { color: string; dot: string };
@@ -1235,6 +1235,7 @@ function CategoriaGroup({
   clearOverride?: (id: string) => Promise<boolean>;
   hasOverride?: (id: string) => boolean;
   contagemGastos?: Record<string, number>;
+  totaisGastos?: Record<string, number>;
 }) {
   const subtotal = rows.reduce((s, i) => s + Number(i.valor_maximo_mensal || 0), 0);
   const rowSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
