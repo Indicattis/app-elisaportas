@@ -359,6 +359,83 @@ export default function VendaNovaMinimalista() {
     return getTipoAutorizacaoNecessaria(validacaoDescontoMemo);
   }, [validacaoDescontoMemo]);
 
+  // Aplica um rascunho de ajuste global. Se exigir autorização, abre o modal.
+  const aplicarAjusteGlobal = (rascunho: AjusteGlobal) => {
+    // Acréscimo, ou valor zero — sem validação.
+    if (rascunho.tipo === 'acrescimo' || !rascunho.valor || rascunho.valor <= 0) {
+      setAjusteGlobal(rascunho);
+      setAutorizacaoAjuste(null);
+      return;
+    }
+
+    // Simula portas com o rascunho aplicado para validar percentual real.
+    const ajusteAbs = rascunho.unidade === '%'
+      ? Math.max(0, subtotalProdutosMemo) * (rascunho.valor / 100)
+      : rascunho.valor;
+    const bases = portas.map(p => (p.valor_produto + p.valor_pintura + p.valor_instalacao) * (p.quantidade || 1));
+    const totalBase = bases.reduce((a, b) => a + b, 0);
+    const portasSimuladas: ProdutoVenda[] = totalBase > 0
+      ? portas.map((p, i) => {
+          const parcela = ajusteAbs * (bases[i] / totalBase);
+          const descontoBase = p.tipo_desconto === 'valor'
+            ? (p.desconto_valor || 0)
+            : bases[i] * ((p.desconto_percentual || 0) / 100);
+          return {
+            ...p,
+            tipo_desconto: 'valor' as const,
+            desconto_percentual: 0,
+            desconto_valor: descontoBase + parcela,
+          };
+        })
+      : portas;
+
+    const validacao = validarDesconto(
+      portasSimuladas,
+      formData.forma_pagamento,
+      formData.venda_presencial === false,
+      configLimitesObj
+    );
+
+    if (validacao.dentroDoLimite) {
+      setAjusteGlobal(rascunho);
+      setAutorizacaoAjuste(null);
+      return;
+    }
+
+    const tipoAuth = getTipoAutorizacaoNecessaria(validacao);
+    if (!tipoAuth) {
+      setAjusteGlobal(rascunho);
+      setAutorizacaoAjuste(null);
+      return;
+    }
+
+    setPendingAjusteRascunho(rascunho);
+    setPendingAjusteValidacao({
+      percentual: validacao.percentualDesconto,
+      limite: validacao.limitePermitido,
+      tipo: tipoAuth,
+    });
+    setAplicarAjusteAutorizacaoOpen(true);
+  };
+
+  const limparAjusteGlobal = () => {
+    setAjusteGlobal({ tipo: 'desconto', unidade: '%', valor: 0 });
+    setAutorizacaoAjuste(null);
+  };
+
+  const handleAjusteAutorizado = (autorizadorUserId: string, senhaDigitada: string) => {
+    if (!pendingAjusteRascunho || !pendingAjusteValidacao) return;
+    setAjusteGlobal(pendingAjusteRascunho);
+    setAutorizacaoAjuste({
+      autorizadorId: autorizadorUserId,
+      senha: senhaDigitada,
+      tipo: pendingAjusteValidacao.tipo,
+      percentualAutorizado: pendingAjusteValidacao.percentual,
+    });
+    setPendingAjusteRascunho(null);
+    setPendingAjusteValidacao(null);
+  };
+
   // Sugestão de frete baseada na cidade/estado
   const freteSugerido = useMemo(() => {
     if (!formData.estado || !formData.cidade || !fretes) return null;
