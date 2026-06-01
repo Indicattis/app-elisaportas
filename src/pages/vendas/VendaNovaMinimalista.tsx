@@ -271,14 +271,64 @@ export default function VendaNovaMinimalista() {
   };
 
   // Memoized values to prevent re-renders that cause focus loss
-  const valorTotalMemo = useMemo(() => {
+  const subtotalProdutosMemo = useMemo(() => {
     return portas.reduce((acc, p) => {
       const valorBase = (p.valor_produto + p.valor_pintura + p.valor_instalacao) * (p.quantidade || 1);
       const desconto = p.tipo_desconto === 'valor' ? (p.desconto_valor || 0) : valorBase * ((p.desconto_percentual || 0) / 100);
       const credito = (p.valor_credito || 0) * (p.quantidade || 1);
       return acc + valorBase - desconto + credito;
-    }, 0) + (formData.valor_frete || 0) + valorCredito;
-  }, [portas, formData.valor_frete, valorCredito]);
+    }, 0);
+  }, [portas]);
+
+  // Aplica o ajuste global (desconto/acréscimo) sobre o subtotal de produtos
+  const valorAjusteGlobalSigned = useMemo(() => {
+    if (!ajusteGlobal.valor || ajusteGlobal.valor <= 0) return 0;
+    const abs = ajusteGlobal.unidade === '%'
+      ? Math.max(0, subtotalProdutosMemo) * (ajusteGlobal.valor / 100)
+      : ajusteGlobal.valor;
+    return ajusteGlobal.tipo === 'desconto' ? -abs : abs;
+  }, [ajusteGlobal, subtotalProdutosMemo]);
+
+  const valorTotalMemo = useMemo(() => {
+    return subtotalProdutosMemo + valorAjusteGlobalSigned + (formData.valor_frete || 0) + valorCredito;
+  }, [subtotalProdutosMemo, valorAjusteGlobalSigned, formData.valor_frete, valorCredito]);
+
+  // Distribui o ajuste global proporcionalmente entre as portas (usado em validação e submit)
+  const portasComAjusteGlobal = useMemo<ProdutoVenda[]>(() => {
+    if (!ajusteGlobal.valor || ajusteGlobal.valor <= 0 || portas.length === 0) return portas;
+    const ajusteAbs = ajusteGlobal.unidade === '%'
+      ? Math.max(0, subtotalProdutosMemo) * (ajusteGlobal.valor / 100)
+      : ajusteGlobal.valor;
+    const sinal = ajusteGlobal.tipo === 'desconto' ? 1 : -1; // soma positiva ao desconto = desconto; negativo = acréscimo
+    const ajusteSigned = ajusteAbs * sinal;
+
+    // pesos proporcionais por valor base (sem desconto)
+    const bases = portas.map(p => (p.valor_produto + p.valor_pintura + p.valor_instalacao) * (p.quantidade || 1));
+    const totalBase = bases.reduce((a, b) => a + b, 0);
+    if (totalBase <= 0) return portas;
+
+    return portas.map((p, i) => {
+      const parcela = ajusteSigned * (bases[i] / totalBase);
+      const descontoBase = p.tipo_desconto === 'valor'
+        ? (p.desconto_valor || 0)
+        : bases[i] * ((p.desconto_percentual || 0) / 100);
+      return {
+        ...p,
+        tipo_desconto: 'valor' as const,
+        desconto_percentual: 0,
+        desconto_valor: descontoBase + parcela,
+      };
+    });
+  }, [portas, ajusteGlobal, subtotalProdutosMemo]);
+
+  // Mantém valor_a_receber alinhado com o total (cobre alterações do ajuste global)
+  useEffect(() => {
+    setFormData(prev => {
+      const novo = valorTotalMemo - (prev.valor_entrada || 0);
+      if (prev.valor_a_receber === novo) return prev;
+      return { ...prev, valor_a_receber: novo };
+    });
+  }, [valorTotalMemo]);
 
   const configLimitesObj: ConfigLimites = useMemo(() => ({
     avista: configLimites.avista,
