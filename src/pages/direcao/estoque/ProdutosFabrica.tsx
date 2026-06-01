@@ -1244,92 +1244,87 @@ export default function ProdutosFabrica({
               })();
 
               return (
-                <div className="flex flex-col gap-6">
-                  {groups.map((g) => (
-                    <div key={g.key} className="flex flex-col gap-2">
-                      <div className="flex items-center gap-2 px-1">
-                        <span
-                          className="inline-block h-1.5 w-1.5 rounded-full"
-                          style={{ background: g.cor ? `hsl(var(--${g.cor}-500, 0 0% 60%))` : "rgba(255,255,255,0.4)" }}
-                        />
-                        <span className="text-[11px] uppercase tracking-wider font-medium text-white/60">{g.label}</span>
-                        <span className="text-[11px] text-white/30">· {g.items.length}</span>
-                      </div>
-                      <div className="rounded-xl overflow-hidden bg-white/5 backdrop-blur-xl border border-white/10">
-                        <Table>
-                          {renderHeader()}
-                          <TableBody>
-                            {g.items.map((produto) => (
-                              <SortableProductRow
-                                key={produto.id}
-                                produto={produto}
-                                onDoubleClick={handleDoubleClick}
-                                isDragDisabled={isDragDisabled}
-                                pedidosCount={pedidosCountMap[produto.id] || 0}
-                                onToggleConferir={handleToggleConferir}
-                                onExcluir={handleExcluir}
-                                onUpdateField={handleUpdateField}
-                                categorias={categorias}
-                                fornecedores={fornecedores}
-                                materiasPrimas={materiasPrimas}
-                                hideSku={hideSku}
-                                hideMateriaPrima={hideMateriaPrima}
-                                hidePedidos={hidePedidos}
-                                hideConferir={hideConferir}
-                                hideStockColumns={hideStockColumns}
-                                showPrecoVenda={showPrecoVenda}
-                              />
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </div>
-                    </div>
-                  ))}
-
-                  {/* TOTAL geral */}
-                  <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
-                    <div className="rounded-lg overflow-hidden">
-                      <Table>
-                        {renderHeader()}
-                        <TableFooter className="bg-white/5 border-t border-white/20">
-                          <TableRow className="border-white/10 hover:bg-transparent">
-                            <TableCell className="w-10 px-1" />
-                            <TableCell className="font-bold text-white">
-                              TOTAL ({filteredProdutos.length} itens)
+                <div className="rounded-xl overflow-hidden bg-white/5 backdrop-blur-xl border border-white/10">
+                  <Table>
+                    {renderHeader()}
+                    {groups.map((g) => (
+                      <React.Fragment key={g.key}>
+                        <tbody>
+                          <TableRow className="border-none hover:bg-transparent">
+                            <TableCell colSpan={colSpanCount} className="py-2 px-1">
+                              <div className="flex items-center gap-2">
+                                <span
+                                  className="inline-block h-1.5 w-1.5 rounded-full"
+                                  style={{ background: g.cor ? `hsl(var(--${g.cor}-500, 0 0% 60%))` : "rgba(255,255,255,0.4)" }}
+                                />
+                                <span className="text-[11px] uppercase tracking-wider font-medium text-white/60">{g.label}</span>
+                                <span className="text-[11px] text-white/30">· {g.items.length}</span>
+                              </div>
                             </TableCell>
-                            {!hideSku && <TableCell />}
-                            {!hideStockColumns && <TableCell />}
-                            {!hideMateriaPrima && <TableCell />}
-                            {!hideStockColumns && <TableCell />}
-                            {!hideStockColumns && (
-                              <TableCell className="text-center font-bold text-white">{totals.ideal}</TableCell>
-                            )}
-                            {!hideStockColumns && (
-                              <TableCell className="text-center font-bold text-white">{totals.maxima}</TableCell>
-                            )}
-                            {!hideStockColumns && (
-                              <TableCell className="text-center font-bold text-white">{totals.atual}</TableCell>
-                            )}
-                            {!hidePedidos && <TableCell />}
-                            {!hideConferir && <TableCell />}
-                            <TableCell className="text-right font-bold text-white/50">---</TableCell>
-                            {!hideStockColumns && <TableCell />}
-                            {showPrecoVenda && <TableCell className="bg-blue-500/10" />}
-                            {showPrecoVenda && <TableCell className="bg-orange-500/10" />}
-                            {showPrecoVenda && <TableCell className="bg-yellow-500/10" />}
-                            {showPrecoVenda && <TableCell className="bg-teal-500/10" />}
-                            {showPrecoVenda && <TableCell className="bg-green-500/10" />}
-                            {!hideStockColumns && (
-                              <TableCell className="text-right font-bold text-white">
-                                {formatCurrency(totals.valor)}
-                              </TableCell>
-                            )}
-                            <TableCell />
                           </TableRow>
-                        </TableFooter>
-                      </Table>
-                    </div>
-                  </div>
+                        </tbody>
+                        <TableBody>
+                          {g.items.map((produto) => (
+                            <SortableProductRow
+                              key={produto.id}
+                              produto={produto}
+                              onDoubleClick={handleDoubleClick}
+                              isDragDisabled={isDragDisabled}
+                              pedidosCount={pedidosCountMap[produto.id] || 0}
+                              onToggleConferir={handleToggleConferir}
+                              onExcluir={handleExcluir}
+                              onUpdateField={handleUpdateField}
+                              categorias={categorias}
+                              fornecedores={fornecedores}
+                              materiasPrimas={materiasPrimas}
+                              hideSku={hideSku}
+                              hideMateriaPrima={hideMateriaPrima}
+                              hidePedidos={hidePedidos}
+                              hideConferir={hideConferir}
+                              hideStockColumns={hideStockColumns}
+                              showPrecoVenda={showPrecoVenda}
+                            />
+                          ))}
+                        </TableBody>
+                      </React.Fragment>
+                    ))}
+                    <TableFooter className="bg-white/5 border-t border-white/20">
+                      <TableRow className="border-white/10 hover:bg-transparent">
+                        <TableCell className="w-10 px-1" />
+                        <TableCell className="font-bold text-white">
+                          TOTAL ({filteredProdutos.length} itens)
+                        </TableCell>
+                        {!hideSku && <TableCell />}
+                        {!hideStockColumns && <TableCell />}
+                        {!hideMateriaPrima && <TableCell />}
+                        {!hideStockColumns && <TableCell />}
+                        {!hideStockColumns && (
+                          <TableCell className="text-center font-bold text-white">{totals.ideal}</TableCell>
+                        )}
+                        {!hideStockColumns && (
+                          <TableCell className="text-center font-bold text-white">{totals.maxima}</TableCell>
+                        )}
+                        {!hideStockColumns && (
+                          <TableCell className="text-center font-bold text-white">{totals.atual}</TableCell>
+                        )}
+                        {!hidePedidos && <TableCell />}
+                        {!hideConferir && <TableCell />}
+                        <TableCell className="text-right font-bold text-white/50">---</TableCell>
+                        {!hideStockColumns && <TableCell />}
+                        {showPrecoVenda && <TableCell className="bg-blue-500/10" />}
+                        {showPrecoVenda && <TableCell className="bg-orange-500/10" />}
+                        {showPrecoVenda && <TableCell className="bg-yellow-500/10" />}
+                        {showPrecoVenda && <TableCell className="bg-teal-500/10" />}
+                        {showPrecoVenda && <TableCell className="bg-green-500/10" />}
+                        {!hideStockColumns && (
+                          <TableCell className="text-right font-bold text-white">
+                            {formatCurrency(totals.valor)}
+                          </TableCell>
+                        )}
+                        <TableCell />
+                      </TableRow>
+                    </TableFooter>
+                  </Table>
                 </div>
               );
             })()}
