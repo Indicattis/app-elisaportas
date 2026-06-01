@@ -17,7 +17,12 @@ import {
   MapPin,
 } from 'lucide-react';
 import { useRegrasVendas } from '@/hooks/useRegrasVendas';
-import { BOLETO_ENTRADA_PERCENTUAL, BOLETO_INTERVALO_DIAS } from '@/utils/boletoRegra';
+import {
+  BOLETO_ENTRADA_PERCENTUAL,
+  BOLETO_INTERVALO_DIAS,
+  BOLETO_LIMITE_INTERVALO_FLEXIVEL,
+  BOLETO_INTERVALOS_FLEXIVEIS,
+} from '@/utils/boletoRegra';
 
 function BoolBadge({ value }: { value: boolean }) {
   return value ? (
@@ -290,6 +295,12 @@ export default function RegrasVendasVisualizacao() {
                     <strong className="text-blue-200">{100 - BOLETO_ENTRADA_PERCENTUAL}%</strong> restante e
                     intervalo fixo de{' '}
                     <strong className="text-blue-200">{BOLETO_INTERVALO_DIAS} dias</strong> entre parcelas.
+                  </li>
+                  <li>
+                    <strong className="text-white">Exceção:</strong> vendas acima de{' '}
+                    <strong className="text-blue-200">R$ {BOLETO_LIMITE_INTERVALO_FLEXIVEL.toLocaleString('pt-BR')}</strong>{' '}
+                    permitem escolher o intervalo entre{' '}
+                    <strong className="text-blue-200">{BOLETO_INTERVALOS_FLEXIVEIS.join(', ')} dias</strong>.
                   </li>
                 </ul>
                 <p className="text-xs text-white/50">
