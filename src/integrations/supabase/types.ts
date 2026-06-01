@@ -7689,6 +7689,7 @@ export type Database = {
           limite_adicional_responsavel: number
           limite_desconto_avista: number
           limite_desconto_fria: number
+          limite_desconto_master_lucro: number
           max_formas_pagamento: number
           obrigatorio_bairro_min_chars: number
           obrigatorio_cep: boolean
@@ -7717,6 +7718,7 @@ export type Database = {
           limite_adicional_responsavel?: number
           limite_desconto_avista?: number
           limite_desconto_fria?: number
+          limite_desconto_master_lucro?: number
           max_formas_pagamento?: number
           obrigatorio_bairro_min_chars?: number
           obrigatorio_cep?: boolean
@@ -7745,6 +7747,7 @@ export type Database = {
           limite_adicional_responsavel?: number
           limite_desconto_avista?: number
           limite_desconto_fria?: number
+          limite_desconto_master_lucro?: number
           max_formas_pagamento?: number
           obrigatorio_bairro_min_chars?: number
           obrigatorio_cep?: boolean

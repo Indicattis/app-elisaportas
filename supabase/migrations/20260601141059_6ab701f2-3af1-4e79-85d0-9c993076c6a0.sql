@@ -1,0 +1,1 @@
+ALTER TABLE public.regras_vendas ADD COLUMN IF NOT EXISTS limite_desconto_master_lucro NUMERIC NOT NULL DEFAULT 15;
