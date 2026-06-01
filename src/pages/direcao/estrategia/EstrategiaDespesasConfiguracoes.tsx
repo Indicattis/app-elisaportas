@@ -1317,6 +1317,7 @@ function CategoriaGroup({
 
 function SortableTipoRow({
   i, categorias, empresasAtivas, update, remove, hideCategoria,
+  readOnly, mesReferencia, clearOverride, hasOverride,
 }: {
   i: TipoCusto;
   categorias: CategoriaDespesa[];
@@ -1324,6 +1325,10 @@ function SortableTipoRow({
   update: ReturnType<typeof useTiposCustos>['updateTipoCusto'];
   remove: (id: string) => void | Promise<any>;
   hideCategoria?: boolean;
+  readOnly?: boolean;
+  mesReferencia?: string | null;
+  clearOverride?: (id: string) => Promise<boolean>;
+  hasOverride?: (id: string) => boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: i.id });
   const style = {
@@ -1331,38 +1336,62 @@ function SortableTipoRow({
     transition,
     opacity: isDragging ? 0.5 : 1,
   } as React.CSSProperties;
+  const [expanded, setExpanded] = useState(false);
+  const colCount = 1 /* drag */ + 1 /* nome */ + 1 /* desc */ + (hideCategoria ? 0 : 1) + 1 /* valor */ + 1 /* DRE */ + 1 /* elim */ + 1 /* actions */;
   return (
+    <>
     <tr
       ref={setNodeRef}
       style={style}
-      className={`border-b border-white/5 hover:bg-white/[0.03] group/row ${!i.ativo ? 'opacity-50' : ''} ${i.marcada_para_eliminar ? 'border-l-2 border-l-red-500/60' : ''}`}
+      className={`border-b border-white/5 hover:bg-white/[0.03] group/row ${!i.ativo ? 'opacity-50' : ''} ${i.marcada_para_eliminar ? 'border-l-2 border-l-red-500/60' : ''} ${readOnly ? 'cursor-pointer' : ''}`}
+      onClick={readOnly ? () => setExpanded(v => !v) : undefined}
     >
       <td className="py-2 w-6 align-middle">
-        <button
-          {...attributes}
-          {...listeners}
-          type="button"
-          className="p-0.5 rounded hover:bg-white/10 text-white/30 hover:text-white/70 cursor-grab active:cursor-grabbing opacity-0 group-hover/row:opacity-100 transition-opacity"
-          title="Arrastar para reordenar"
-        >
-          <GripVertical className="w-3.5 h-3.5" />
-        </button>
+        {readOnly ? (
+          <ChevronRight className={`w-4 h-4 text-white/40 transition-transform ${expanded ? 'rotate-90 text-white/70' : ''}`} />
+        ) : (
+          <button
+            {...attributes}
+            {...listeners}
+            type="button"
+            className="p-0.5 rounded hover:bg-white/10 text-white/30 hover:text-white/70 cursor-grab active:cursor-grabbing opacity-0 group-hover/row:opacity-100 transition-opacity"
+            title="Arrastar para reordenar"
+          >
+            <GripVertical className="w-3.5 h-3.5" />
+          </button>
+        )}
       </td>
       <td className="py-2 pl-1 text-white/90">
-        <InlineText value={i.nome} onSave={(v) => update(i.id, { nome: v })} />
+        {readOnly
+          ? <span className="px-1 py-0.5">{i.nome}</span>
+          : <InlineText value={i.nome} onSave={(v) => update(i.id, { nome: v })} />}
       </td>
       <td className="px-1 text-center">
-        <DescricaoPopover
-          value={i.descricao}
-          onSave={(v) => update(i.id, { descricao: v || null })}
-        />
+        {readOnly ? (
+          i.descricao ? (
+            <span title={i.descricao} className="inline-flex items-center justify-center w-7 h-7 text-blue-300/70">
+              <FileText className="w-4 h-4" />
+            </span>
+          ) : (
+            <span className="inline-flex items-center justify-center w-7 h-7 text-white/15">
+              <FileText className="w-4 h-4" />
+            </span>
+          )
+        ) : (
+          <DescricaoPopover
+            value={i.descricao}
+            onSave={(v) => update(i.id, { descricao: v || null })}
+          />
+        )}
       </td>
       {!hideCategoria && (
         <td className="px-2">
           <select
             value={i.categoria_id || ''}
+            disabled={readOnly}
             onChange={(e) => update(i.id, { categoria_id: e.target.value || null } as any)}
             className={categoriaSelectClass(categorias, i.categoria_id)}
+            onClick={(e) => e.stopPropagation()}
           >
             <option value="" className="bg-slate-900 text-white">— Sem categoria</option>
             {categorias.map(c => <option key={c.id} value={c.id} className="bg-slate-900 text-white">{c.nome}</option>)}
@@ -1370,17 +1399,20 @@ function SortableTipoRow({
         </td>
       )}
       <td className={`px-2 text-right font-medium ${i.marcada_para_eliminar ? 'text-red-400 line-through' : 'text-white'}`}>
-        <InlineNum value={i.valor_maximo_mensal} onSave={(v) => update(i.id, { valor_maximo_mensal: v })} format="currency" />
+        {readOnly
+          ? <span className="px-1 py-0.5">{formatCurrency(Number(i.valor_maximo_mensal) || 0)}</span>
+          : <InlineNum value={i.valor_maximo_mensal} onSave={(v) => update(i.id, { valor_maximo_mensal: v })} format="currency" />}
       </td>
       <td className="px-2 text-center">
-        <Switch checked={i.aparece_no_dre} onCheckedChange={(v) => update(i.id, { aparece_no_dre: v })} />
+        <Switch checked={i.aparece_no_dre} disabled={readOnly} onCheckedChange={(v) => update(i.id, { aparece_no_dre: v })} />
       </td>
       <td className="px-2 text-center">
         <button
           type="button"
-          onClick={() => update(i.id, { marcada_para_eliminar: !i.marcada_para_eliminar } as any)}
+          disabled={readOnly}
+          onClick={(e) => { e.stopPropagation(); if (!readOnly) update(i.id, { marcada_para_eliminar: !i.marcada_para_eliminar } as any); }}
           title={i.marcada_para_eliminar ? 'Desmarcar — manter despesa' : 'Marcar para eliminar essa despesa'}
-          className={`inline-flex items-center justify-center w-7 h-7 rounded transition-colors ${
+          className={`inline-flex items-center justify-center w-7 h-7 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
             i.marcada_para_eliminar
               ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30'
               : 'text-white/30 hover:text-red-300 hover:bg-red-500/10'
@@ -1390,11 +1422,31 @@ function SortableTipoRow({
         </button>
       </td>
       <td className="pr-1 text-right">
-        <button onClick={() => remove(i.id)} className="p-1 rounded hover:bg-red-500/20 text-red-300/70 hover:text-red-300">
-          <Trash2 className="w-4 h-4" />
-        </button>
+        {readOnly ? (
+          hasOverride?.(i.id) && clearOverride ? (
+            <button
+              onClick={(e) => { e.stopPropagation(); clearOverride(i.id); }}
+              title="Restaurar valor do padrão"
+              className="p-1 rounded hover:bg-blue-500/20 text-blue-300/70 hover:text-blue-300"
+            >
+              <RotateCcw className="w-4 h-4" />
+            </button>
+          ) : null
+        ) : (
+          <button onClick={() => remove(i.id)} className="p-1 rounded hover:bg-red-500/20 text-red-300/70 hover:text-red-300">
+            <Trash2 className="w-4 h-4" />
+          </button>
+        )}
       </td>
     </tr>
+    {readOnly && expanded && (
+      <tr className="bg-white/[0.02]">
+        <td colSpan={colCount} className="px-4 py-3">
+          <GastosDoTipoExpand tipoCustoId={i.id} tipoNome={i.nome} categoria={i.tipo} mes={mesReferencia ?? null} />
+        </td>
+      </tr>
+    )}
+    </>
   );
 }
 
