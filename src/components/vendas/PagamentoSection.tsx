@@ -15,6 +15,8 @@ import {
   pagamentoTemBoleto,
   BOLETO_ENTRADA_PERCENTUAL,
   BOLETO_INTERVALO_DIAS,
+  BOLETO_LIMITE_INTERVALO_FLEXIVEL,
+  getIntervalosBoletoPermitidos,
 } from "@/utils/boletoRegra";
 
 export interface PagamentoData {
@@ -86,6 +88,7 @@ export function PagamentoSection({ paymentData, onChange, valorTotal }: Pagament
   ]);
 
   const regraBoletoAtiva = pagamentoTemBoleto(paymentData);
+  const intervalosBoletoPermitidos = getIntervalosBoletoPermitidos(valorTotal);
 
   const handleMetodo1Change = (metodo: MetodoPagamento) => {
     const newMetodos: [MetodoPagamento, MetodoPagamento] = [metodo, paymentData.metodos[1]];
@@ -187,7 +190,9 @@ export function PagamentoSection({ paymentData, onChange, valorTotal }: Pagament
               <strong className="text-blue-200">Regra do boleto:</strong> a venda foi
               ajustada automaticamente para {BOLETO_ENTRADA_PERCENTUAL}% de entrada
               à vista no Método 1 e os {100 - BOLETO_ENTRADA_PERCENTUAL}% restantes
-              em boleto no Método 2 com intervalo fixo de {BOLETO_INTERVALO_DIAS} dias.
+              em boleto no Método 2 {intervalosBoletoPermitidos.length === 1
+                ? `com intervalo fixo de ${BOLETO_INTERVALO_DIAS} dias`
+                : `com intervalo selecionável entre ${intervalosBoletoPermitidos.join(', ')} dias (venda acima de R$ ${BOLETO_LIMITE_INTERVALO_FLEXIVEL.toLocaleString('pt-BR')})`}.
             </div>
           </div>
         )}
@@ -282,7 +287,7 @@ export function PagamentoSection({ paymentData, onChange, valorTotal }: Pagament
               valorFixo={true}
               valorLabel="Valor Restante"
               tipoTravado={regraBoletoAtiva ? "boleto" : undefined}
-              intervaloBoletoTravado={regraBoletoAtiva ? BOLETO_INTERVALO_DIAS : undefined}
+              intervalosBoletoPermitidos={regraBoletoAtiva ? intervalosBoletoPermitidos : undefined}
             />
 
             {/* Preview parcelas método 2 */}
