@@ -44,11 +44,9 @@ export function calcularLimitesDesconto(
   const limiteBase = formaSelecionada && formaSelecionada !== 'cartao_credito'
     ? limiteAvista
     : 0;
-  // Venda presencial e venda fria seguem a MESMA regra: somam o adicional
-  // (`limite_desconto_fria`). O parâmetro `vendaPresencial` é mantido na
-  // assinatura apenas por retrocompatibilidade — ele não altera o resultado.
-  void vendaPresencial;
-  const limitePresencial = limitePresencialConfig;
+  // O parâmetro `vendaPresencial` representa "venda fria": quando true,
+  // soma o adicional configurado em `limite_desconto_fria`.
+  const limitePresencial = vendaPresencial ? limitePresencialConfig : 0;
   const limiteTotal = limiteBase + limitePresencial;
   // Máximo com senha do responsável = 11% (6% base + 5% adicional)
   const limiteMaximo = limiteTotal + limiteAdicionalResponsavel;

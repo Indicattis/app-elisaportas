@@ -1,34 +1,42 @@
-## Problema
+## Objetivo
 
-O modal de autorização de desconto em `/vendas/minhas-vendas/nova` mostra **Daiane Lucrécio (desativada)** como autorizadora para descontos entre 8% e 15%. Isso acontece porque a tela usa `useLiderVendas()` (líder do setor "vendas" em `setores_lideres`), que aponta para a Daiane — independente de quem está configurado como Gerente em `/direcao/regras-vendas`.
+Reverter a unificação anterior e voltar à regra original de limites de desconto, onde **venda fria** e **método de pagamento** influenciam o limite sem senha, e a senha do **Gerente** libera até +7% adicionais.
 
-## Comportamento desejado
+## Regras corretas
 
-- **8%–15% (responsavel_setor)** → mostrar o **Gerente** configurado em Regras de Vendas (`configuracoes_vendas.responsavel_senha_responsavel_id`).
-- **Acima de 15% (master)** → mostrar o **Diretor** configurado em Regras de Vendas (`configuracoes_vendas.responsavel_senha_master_id`). *(já é assim hoje.)*
-- Se o autorizador configurado estiver ausente OU desativado → mostrar alerta destrutivo com link para `/direcao/regras-vendas`, esconder o input de senha e desabilitar "Autorizar". O botão "Solicitar Aprovação" continua disponível quando aplicável.
+| Componente | Quando aplica | Valor (config atual) |
+|---|---|---|
+| Base | Qualquer método ≠ cartão de crédito | +3% (`limite_desconto_avista`) |
+| Fria | Venda marcada como fria | +5% (`limite_desconto_fria`) |
+| Gerente | Senha do Gerente | +7% (`limite_adicional_responsavel`) |
+| Diretor | Senha master | sem limite |
 
-## Arquivos alterados
+### Cenários resultantes (com config atual 3 / 5 / 7)
 
-### `src/components/vendas/AutorizacaoDescontoModal.tsx`
-- Remover dependência de `useLiderVendas`.
-- Para `tipoAutorizacao === 'responsavel_setor'`: buscar `admin_users` por `responsavel_senha_responsavel_id` (incluir `ativo`).
-- Para `tipoAutorizacao === 'master'`: já busca por `responsavel_senha_master_id`; adicionar `ativo` no select.
-- Se `!autorizadorConfigurado` OU `autorizadorConfigurado.ativo === false`:
-  - Substituir o card "Quem está autorizando?" por `<Alert variant="destructive">` explicando o problema (não configurado / desativado) com `<Link to="/direcao/regras-vendas">Configurar agora</Link>` (usar `react-router-dom`).
-  - Não renderizar o input de senha.
-  - Desabilitar "Autorizar".
-- Atualizar labels:
-  - `responsavel_setor` → título "Autorização do Gerente Necessária", senha "Senha do Gerente *".
-  - `master` → título "Autorização do Diretor Necessária", senha "Senha do Diretor *".
-- Atualizar a validação local em `handleAutorizar` que hoje compara com `liderVendas.user_id` — passar a comparar com o `autorizadorConfigurado.id` (gerente ou diretor) e usar mensagens "Gerente"/"Diretor".
+| Cenário | Sem senha | Gerente (até) | Diretor (acima de) |
+|---|---|---|---|
+| Quente + cartão de crédito | 0% | 7% | 7% |
+| Quente + outro método | 3% | 10% | 10% |
+| Fria + cartão de crédito | 5% | 12% | 12% |
+| Fria + outro método | 8% | 15% | 15% |
 
-### Sem mudanças no backend
-- Tabela `configuracoes_vendas` já tem as duas colunas. O RPC `verificar_senha_vendas` recebe `'responsavel' | 'master'` — mantemos esses tipos (apenas a UI muda o rótulo para Gerente/Diretor).
-- Não mexer em `useLiderVendas` (continua usado em outros lugares, ex. ranking).
+## Alteração
+
+**Arquivo:** `src/utils/descontoVendasRules.ts` — função `calcularLimitesDesconto`
+
+Restaurar o comportamento condicional do parâmetro `vendaPresencial` (que representa "venda fria"):
+
+```ts
+const limitePresencial = vendaPresencial ? limitePresencialConfig : 0;
+```
+
+Remover o `void vendaPresencial` e o comentário que dizia que o parâmetro não tinha efeito. O restante (`limiteBase`, `limiteTotal`, `limiteMaximo`) continua igual e já corresponde às regras acima.
+
+Nenhuma outra mudança: o modal (`AutorizacaoDescontoModal`) e a função `getTipoAutorizacaoNecessaria` já tratam corretamente os tipos `responsavel_setor` (Gerente) e `master` (Diretor) a partir do resultado de `validarDesconto`.
 
 ## Verificação
 
-1. Abrir venda nova, aplicar desconto 10% → modal abre com "Autorização do Gerente" e mostra o usuário configurado em `responsavel_senha_responsavel_id`. Se desativado, mostra alerta com link.
-2. Aplicar desconto 20% → modal abre com "Autorização do Diretor" mostrando `responsavel_senha_master_id`.
-3. Limpar a configuração em Regras de Vendas → modal mostra alerta e botão Autorizar fica desabilitado.
+Conferir mentalmente os 4 cenários da tabela após a mudança, garantindo que:
+- Dentro do limite sem senha → nenhum modal
+- Entre limite sem senha e limite + 7% → modal do Gerente
+- Acima de limite + 7% → modal do Diretor
