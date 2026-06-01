@@ -1,51 +1,39 @@
-## Nova regra de vendas
+## Nova regra: pagamento em boleto
 
-Quando uma venda usa **senha master** (desconto total acima do limite configurado, padrão **15%**), o **valor excedente em R$** é abatido do **lucro da venda** no faturamento.
+Sempre que QUALQUER método de pagamento for **boleto**, o sistema passa a exigir:
 
-Fórmula:
-```text
-desconto_excedente_pct = max(0, %_desconto_total - limite_master)
-valor_excedente_R$     = total_bruto_venda * (desconto_excedente_pct / 100)
-lucro_liquido_venda    = soma(lucro_item dos faturados) + lucro_instalacao - valor_excedente_R$
-```
+1. **Método 1 obrigatoriamente "À Vista"** com valor = **70% do total**
+2. **Método 2 obrigatoriamente "Boleto"** com valor = **30% restante** e **intervalo de 21 dias**
 
-Onde `total_bruto_venda = soma((valor_produto + valor_pintura + valor_instalacao) * qtd)` (mesma base usada hoje em `calcularTotalVenda` / `validarDesconto`).
+Valores fixos no código (não configuráveis em Regras de Vendas).
 
 ## Mudanças
 
-### 1. Página de Regras (`/vendas/regras`)
-- Nova seção **"Desconto Master"** explicando:
-  - Acima do limite (15% por padrão), exige senha master.
-  - O valor excedente em R$ é **debitado do lucro** da venda no faturamento.
-- Mostrar o valor configurado (puxado de `regras_vendas.limite_desconto_master_lucro`).
+### `src/components/vendas/PagamentoSection.tsx`
+- Detectar quando algum método é `boleto`.
+- Se método único for boleto → forçar ativação de 2 métodos automaticamente:
+  - Método 1 = `a_vista`, valor = `valorTotal * 0.7`, travado
+  - Método 2 = `boleto`, valor = `valorTotal * 0.3`, `intervalo_boletos = 21`
+- Se 2 métodos ativos e método 2 = boleto → travar método 1 como `a_vista` 70% e método 2 com intervalo 21 dias.
+- Recalcular automaticamente valores quando `valorTotal` mudar.
+- Adicionar aviso visual (badge azul informativo): "Regra do boleto: 70% à vista + 30% em boleto (intervalo 21 dias)".
 
-### 2. Banco — `regras_vendas`
-Adicionar coluna:
-- `limite_desconto_master_lucro NUMERIC NOT NULL DEFAULT 15` — % acima do qual o excedente é debitado do lucro.
+### `src/components/vendas/MetodoPagamentoCard.tsx`
+- Adicionar props opcionais `tipoTravado?: MetodoPagamento['tipo']` e `intervaloBoletoTravado?: number` que, quando passados:
+  - Desabilitam os botões de seleção de tipo (mantém visível mas sem clique)
+  - Desabilitam o select de "Intervalo entre Boletos"
+- Mantém demais campos (data, empresa, comprovante) editáveis.
 
-(Migração separada via `supabase--migration` antes do código.)
+### `src/pages/vendas/RegrasVendasVisualizacao.tsx`
+- Adicionar nova seção "Regra do Boleto" explicando o comportamento 70/30 + 21 dias.
 
-### 3. Cálculo no Faturamento
-Criar util `src/utils/descontoMasterLucro.ts`:
-```ts
-calcularDebitoMasterLucro(venda, produtos, limitePct) -> {
-  percentualDesconto, percentualExcedente, valorExcedente
-}
-```
+### Validação no submit (`VendaNovaMinimalista.tsx`)
+- Bloquear envio se houver boleto sem respeitar 70/30 (defesa em profundidade caso UI seja contornada).
 
-Integrar em:
-- `src/pages/direcao/FaturamentoVendaDirecao.tsx` — subtrair `valorExcedente` de `lucroBruto`; exibir linha "Excedente desconto master (>15%) — débito no lucro: -R$ X" no card de lucro.
-- `src/hooks/useFaturamentoDetalhado.ts` e `src/hooks/useFaturamentoPorProduto.ts` — descontar o excedente do `lucro_total` agregado por venda (rateado proporcionalmente entre produtos faturados para não distorcer agrupamento por tipo).
-- `src/utils/faturamentoPDFGenerator.ts` — mesmo ajuste no PDF de faturamento.
-- `src/hooks/useDRE.ts` — refletir lucro líquido após débito.
+## Fora de escopo
+- Sem alteração de banco (valores fixos no código).
+- Sem alteração no fluxo de faturamento, contas a receber ou aprovações.
+- Edição de vendas já criadas (legado) não é alterada retroativamente — a regra vale na criação/edição.
 
-### 4. Hook
-Adicionar `limite_desconto_master_lucro` em `useRegrasVendas` (interface + `limites`) e expor via `useConfiguracoesVendasPublicas` para uso no faturamento.
-
-## Fora do escopo
-- Não altera o fluxo de autorização do desconto (modais, RPC `verificar_senha_vendas`, gravação em `vendas_autorizacoes_desconto`).
-- Não altera o `lucro_item` salvo por produto — o débito é aplicado **na exibição/agregação** do faturamento, mantendo rastreabilidade.
-
-## Pontos a confirmar
-1. **Limite fixo configurável (15%) ou usar `avista + fria + adicionalResponsavel` já existente?** Proposta: nova coluna dedicada `limite_desconto_master_lucro` (padrão 15%), independente dos limites de autorização — assim você pode mover o gatilho do débito sem mexer nas regras de senha.
-2. **Base do excedente:** total bruto antes de descontos (proposta acima) — confirma?
+## Memória
+Salvar `mem://business-rules/sales/boleto-70-30-21d` com a regra.

@@ -17,6 +17,7 @@ import {
   MapPin,
 } from 'lucide-react';
 import { useRegrasVendas } from '@/hooks/useRegrasVendas';
+import { BOLETO_ENTRADA_PERCENTUAL, BOLETO_INTERVALO_DIAS } from '@/utils/boletoRegra';
 
 function BoolBadge({ value }: { value: boolean }) {
   return value ? (
@@ -261,6 +262,41 @@ export default function RegrasVendasVisualizacao() {
               />
               <Row icon={FileText} label="Dígitos do CPF" value={regras.cpf_digitos} />
               <Row icon={FileText} label="Dígitos do CNPJ" value={regras.cnpj_digitos} />
+            </CardContent>
+          </Card>
+
+          {/* Regra do Boleto */}
+          <Card className="bg-gradient-to-br from-blue-500/10 to-blue-900/20 border-blue-500/20 md:col-span-2">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-white">
+                <Receipt className="h-5 w-5 text-blue-300" />
+                Regra do Boleto
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="p-3 rounded-lg bg-white/5 border border-white/10 text-sm text-white/80 space-y-2">
+                <p>
+                  Sempre que qualquer método de pagamento for <strong className="text-blue-200">Boleto</strong>,
+                  o sistema aplica automaticamente:
+                </p>
+                <ul className="list-disc pl-5 space-y-1 text-white/70">
+                  <li>
+                    <strong className="text-white">Método 1:</strong> À Vista, com{' '}
+                    <strong className="text-blue-200">{BOLETO_ENTRADA_PERCENTUAL}%</strong> do valor total
+                    (entrada).
+                  </li>
+                  <li>
+                    <strong className="text-white">Método 2:</strong> Boleto, com{' '}
+                    <strong className="text-blue-200">{100 - BOLETO_ENTRADA_PERCENTUAL}%</strong> restante e
+                    intervalo fixo de{' '}
+                    <strong className="text-blue-200">{BOLETO_INTERVALO_DIAS} dias</strong> entre parcelas.
+                  </li>
+                </ul>
+                <p className="text-xs text-white/50">
+                  Os campos de tipo e intervalo ficam travados no formulário; a divisão dos valores é
+                  recalculada automaticamente quando o total da venda muda.
+                </p>
+              </div>
             </CardContent>
           </Card>
         </div>

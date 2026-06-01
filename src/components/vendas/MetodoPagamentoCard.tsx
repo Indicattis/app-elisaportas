@@ -48,6 +48,8 @@ interface MetodoPagamentoCardProps {
   titulo: string;
   valorFixo?: boolean;
   valorLabel?: string;
+  tipoTravado?: MetodoPagamento['tipo'];
+  intervaloBoletoTravado?: number;
 }
 
 export function MetodoPagamentoCard({
@@ -57,7 +59,9 @@ export function MetodoPagamentoCard({
   isLoadingEmpresas,
   titulo,
   valorFixo = false,
-  valorLabel = "Valor *"
+  valorLabel = "Valor *",
+  tipoTravado,
+  intervaloBoletoTravado,
 }: MetodoPagamentoCardProps) {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -97,18 +101,26 @@ export function MetodoPagamentoCard({
       <div className="grid grid-cols-4 gap-2">
         {metodos.map((m) => {
           const Icon = m.icon;
+          const travado = !!tipoTravado;
+          const isAtivo = metodo.tipo === m.value;
+          const desabilitado = travado && !isAtivo;
           return (
             <Button
               key={m.value}
               type="button"
               variant="outline"
+              disabled={desabilitado}
               className={cn(
                 "flex flex-col h-auto py-3 gap-1 border-white/20",
                 metodo.tipo === m.value 
                   ? "bg-white/20 border-white/40 text-white" 
-                  : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
+                  : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white",
+                desabilitado && "opacity-40 cursor-not-allowed"
               )}
-              onClick={() => onChange({ ...metodo, tipo: m.value as MetodoPagamento['tipo'] })}
+              onClick={() => {
+                if (travado) return;
+                onChange({ ...metodo, tipo: m.value as MetodoPagamento['tipo'] });
+              }}
             >
               <Icon className="h-5 w-5" />
               <span className="text-xs">{m.label}</span>
@@ -259,6 +271,7 @@ export function MetodoPagamentoCard({
                 <Select
                   value={metodo.intervalo_boletos.toString()}
                   onValueChange={(value) => onChange({ ...metodo, intervalo_boletos: parseInt(value) })}
+                  disabled={!!intervaloBoletoTravado}
                 >
                   <SelectTrigger className={cn("h-9", inputClass)}>
                     <SelectValue />
@@ -272,6 +285,11 @@ export function MetodoPagamentoCard({
                     <SelectItem value="30">30 dias</SelectItem>
                   </SelectContent>
                 </Select>
+                {intervaloBoletoTravado && (
+                  <p className="text-[10px] text-blue-300/80 mt-1">
+                    Intervalo travado em {intervaloBoletoTravado} dias pela regra de boleto.
+                  </p>
+                )}
               </div>
             </div>
           )}

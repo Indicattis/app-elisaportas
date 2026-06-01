@@ -34,6 +34,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useFretesCidades } from '@/hooks/useFretesCidades';
 import { Checkbox } from '@/components/ui/checkbox';
 import { PagamentoSection, PagamentoData, createEmptyPagamentoData } from '@/components/vendas/PagamentoSection';
+import { validarRegraBoleto } from '@/utils/boletoRegra';
 import { ClienteVendaSection } from '@/components/vendas/ClienteVendaSection';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 
@@ -514,6 +515,16 @@ export default function VendaNovaMinimalista() {
       try {
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } catch {}
+      return;
+    }
+
+    // Regra do boleto: 70% entrada à vista + 30% boleto com 21 dias
+    const regraBoleto = validarRegraBoleto(pagamentoData, valorTotalMemo);
+    if (regraBoleto.ok === false) {
+      sonnerToast.error('Regra do boleto não atendida', {
+        description: regraBoleto.mensagem,
+        duration: 6000,
+      });
       return;
     }
 

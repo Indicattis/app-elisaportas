@@ -8,6 +8,14 @@ import { format, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { MetodoPagamentoCard, MetodoPagamento, createEmptyMetodo } from "./MetodoPagamentoCard";
 import { useEffect } from "react";
+import { Info } from "lucide-react";
+import { cn } from "@/lib/utils";
+import {
+  aplicarRegraBoleto,
+  pagamentoTemBoleto,
+  BOLETO_ENTRADA_PERCENTUAL,
+  BOLETO_INTERVALO_DIAS,
+} from "@/utils/boletoRegra";
 
 export interface PagamentoData {
   usar_dois_metodos: boolean;
@@ -62,6 +70,22 @@ export function PagamentoSection({ paymentData, onChange, valorTotal }: Pagament
       }
     }
   }, [empresas, paymentData.metodos[0].tipo, paymentData.metodos[1].tipo]);
+
+  // Aplica a regra do boleto (70% à vista + 30% boleto com intervalo de 21 dias)
+  // sempre que houver boleto em qualquer método.
+  useEffect(() => {
+    const normalizado = aplicarRegraBoleto(paymentData, valorTotal);
+    if (normalizado !== paymentData) {
+      onChange(normalizado);
+    }
+  }, [
+    paymentData.metodos[0].tipo,
+    paymentData.metodos[1].tipo,
+    paymentData.usar_dois_metodos,
+    valorTotal,
+  ]);
+
+  const regraBoletoAtiva = pagamentoTemBoleto(paymentData);
 
   const handleMetodo1Change = (metodo: MetodoPagamento) => {
     const newMetodos: [MetodoPagamento, MetodoPagamento] = [metodo, paymentData.metodos[1]];
@@ -155,6 +179,19 @@ export function PagamentoSection({ paymentData, onChange, valorTotal }: Pagament
         </div>
       </CardHeader>
       <CardContent className="space-y-4 pb-4">
+        {/* Aviso da regra do boleto */}
+        {regraBoletoAtiva && (
+          <div className="flex items-start gap-2 p-3 rounded-lg border border-blue-500/30 bg-blue-500/10">
+            <Info className="h-4 w-4 text-blue-300 mt-0.5 shrink-0" />
+            <div className="text-xs text-blue-100/90">
+              <strong className="text-blue-200">Regra do boleto:</strong> a venda foi
+              ajustada automaticamente para {BOLETO_ENTRADA_PERCENTUAL}% de entrada
+              à vista no Método 1 e os {100 - BOLETO_ENTRADA_PERCENTUAL}% restantes
+              em boleto no Método 2 com intervalo fixo de {BOLETO_INTERVALO_DIAS} dias.
+            </div>
+          </div>
+        )}
+
         {/* Checkbox Pagamento na Entrega */}
         <div 
           className={`flex items-start space-x-3 p-3 border rounded-lg transition-all ${
@@ -180,11 +217,15 @@ export function PagamentoSection({ paymentData, onChange, valorTotal }: Pagament
         </div>
 
         {/* Toggle para 2 métodos */}
-        <div className="flex items-center space-x-2 p-2.5 border rounded-md border-white/10 bg-white/5">
+        <div className={cn(
+          "flex items-center space-x-2 p-2.5 border rounded-md border-white/10 bg-white/5",
+          regraBoletoAtiva && "opacity-60"
+        )}>
           <Checkbox
             id="usar-dois-metodos"
             checked={paymentData.usar_dois_metodos}
             onCheckedChange={handleToggleDoisMetodos}
+            disabled={regraBoletoAtiva}
           />
           <Label htmlFor="usar-dois-metodos" className="cursor-pointer text-xs text-white/70">
             Usar 2 formas de pagamento (ex: entrada + restante)
@@ -197,9 +238,18 @@ export function PagamentoSection({ paymentData, onChange, valorTotal }: Pagament
           onChange={handleMetodo1Change}
           empresas={empresas}
           isLoadingEmpresas={isLoadingEmpresas}
-          titulo={paymentData.usar_dois_metodos ? "Método 1 (Entrada)" : "Método de Pagamento"}
-          valorFixo={!paymentData.usar_dois_metodos}
-          valorLabel={paymentData.usar_dois_metodos ? "Valor da Entrada *" : "Valor Total"}
+          titulo={
+            regraBoletoAtiva
+              ? `Método 1 (Entrada ${BOLETO_ENTRADA_PERCENTUAL}% — À Vista)`
+              : paymentData.usar_dois_metodos ? "Método 1 (Entrada)" : "Método de Pagamento"
+          }
+          valorFixo={!paymentData.usar_dois_metodos || regraBoletoAtiva}
+          valorLabel={
+            regraBoletoAtiva
+              ? `Entrada (${BOLETO_ENTRADA_PERCENTUAL}%)`
+              : paymentData.usar_dois_metodos ? "Valor da Entrada *" : "Valor Total"
+          }
+          tipoTravado={regraBoletoAtiva ? "a_vista" : undefined}
         />
 
         {/* Preview parcelas método 1 */}
@@ -228,9 +278,11 @@ export function PagamentoSection({ paymentData, onChange, valorTotal }: Pagament
               onChange={handleMetodo2Change}
               empresas={empresas}
               isLoadingEmpresas={isLoadingEmpresas}
-              titulo="Método 2 (Restante)"
+              titulo={regraBoletoAtiva ? `Método 2 (Boleto — ${100 - BOLETO_ENTRADA_PERCENTUAL}%)` : "Método 2 (Restante)"}
               valorFixo={true}
               valorLabel="Valor Restante"
+              tipoTravado={regraBoletoAtiva ? "boleto" : undefined}
+              intervaloBoletoTravado={regraBoletoAtiva ? BOLETO_INTERVALO_DIAS : undefined}
             />
 
             {/* Preview parcelas método 2 */}
