@@ -174,6 +174,7 @@ export function DespesasGridContent({
             contagemGastos={contagemGastos}
             totaisGastos={totaisGastos}
           />
+          <AutorizadosTerceirosBlock mode={mode} mesReferencia={mesReferencia ?? null} />
         </div>
       );
 }
