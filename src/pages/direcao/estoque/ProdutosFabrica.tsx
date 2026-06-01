@@ -779,19 +779,26 @@ export default function ProdutosFabrica({
   };
 
   const handleGerarListaTeste = async () => {
-    const itens: ItemListaCompras[] = [
-      { estoque_id: "ex-1", nome_produto: "Chapa de Aço Galvanizado 1.2mm", categoria: "Matéria-Prima", unidade: "m2", quantidade_padrao: 1, necessario: 12.5 },
-      { estoque_id: "ex-2", nome_produto: "Tubo Quadrado 40x40", categoria: "Matéria-Prima", unidade: "m", quantidade_padrao: 1, necessario: 48 },
-      { estoque_id: "ex-3", nome_produto: "Parafuso Sextavado M8 x 25", categoria: "Fixação", unidade: "un", quantidade_padrao: 1, necessario: 240 },
-      { estoque_id: "ex-4", nome_produto: "Rebite Pop 4.8 x 12", categoria: "Fixação", unidade: "un", quantidade_padrao: 1, necessario: 500 },
-      { estoque_id: "ex-5", nome_produto: "Tinta Epóxi Cinza RAL 7035", categoria: "Pintura", unidade: "kg", quantidade_padrao: 1, necessario: 6.75 },
-      { estoque_id: "ex-6", nome_produto: "Solvente para Epóxi", categoria: "Pintura", unidade: "L", quantidade_padrao: 1, necessario: 3 },
-      { estoque_id: "ex-7", nome_produto: "Roldana 60mm com Rolamento", categoria: "Componentes", unidade: "un", quantidade_padrao: 1, necessario: 32 },
-      { estoque_id: "ex-8", nome_produto: "Trilho Superior 3m", categoria: "Componentes", unidade: "un", quantidade_padrao: 1, necessario: 8 },
-    ];
+    const categoriasMap: Record<string, string> = {};
+    categorias.forEach(cat => { categoriasMap[cat.id] = cat.nome; });
+    const itens: ItemListaCompras[] = filteredProdutos.map(p => {
+      const qtdPadrao = Number(p.quantidade_padrao) || 1;
+      return {
+        estoque_id: p.id,
+        nome_produto: p.nome_produto,
+        categoria: categoriasMap[p.categoria] || p.categoria || "Sem categoria",
+        unidade: p.unidade,
+        quantidade_padrao: qtdPadrao,
+        necessario: qtdPadrao,
+      };
+    });
+    if (itens.length === 0) {
+      toast.error("Nenhum produto disponível para gerar a lista.");
+      return;
+    }
     try {
       await gerarListaComprasPDF("Exemplo - Teste", itens);
-      toast.success("Lista de materiais (exemplo) gerada!");
+      toast.success("Lista de materiais gerada!");
     } catch (err: any) {
       toast.error(err?.message || "Falha ao gerar lista");
     }
