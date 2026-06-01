@@ -1285,6 +1285,23 @@ export default function VendaNovaMinimalista() {
         />
       )}
 
+      {pendingAjusteValidacao && (
+        <AutorizacaoDescontoModal
+          open={aplicarAjusteAutorizacaoOpen}
+          onOpenChange={(open) => {
+            setAplicarAjusteAutorizacaoOpen(open);
+            if (!open) {
+              setPendingAjusteRascunho(null);
+              setPendingAjusteValidacao(null);
+            }
+          }}
+          onAutorizado={handleAjusteAutorizado}
+          percentualDesconto={pendingAjusteValidacao.percentual}
+          tipoAutorizacao={pendingAjusteValidacao.tipo}
+          limitePermitido={pendingAjusteValidacao.limite}
+        />
+      )}
+
       {portaRecemAdicionada && (
         <PinturaRapidaModal
           open={pinturaRapidaOpen}
