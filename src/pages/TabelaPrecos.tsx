@@ -60,6 +60,7 @@ export default function TabelaPrecos({
   hideTotalColumn = false,
   embedded = false,
   enableReorder = false,
+  readOnly = false,
   titleOverride,
   subtitleOverride,
   backPathOverride,
