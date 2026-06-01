@@ -421,7 +421,7 @@ export default function TabelaPrecos({
                               currency: 'BRL' 
                             })}
                           </TableCell>
-                          {(() => {
+                          {!readOnly && (() => {
                             const p = getPinturaLucro(item);
                             return (
                               <>
