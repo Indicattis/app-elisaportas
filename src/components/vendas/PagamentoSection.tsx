@@ -300,67 +300,38 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
           </Label>
         </div>
 
-        {/* Método 1 */}
-        <MetodoPagamentoCard
-          metodo={{ ...metodo1, valor: valorMetodo1 }}
-          onChange={handleMetodo1Change}
-          empresas={empresas}
-          isLoadingEmpresas={isLoadingEmpresas}
-          titulo={
-            regraBoletoAtiva
-              ? `Método 1 (Entrada ${BOLETO_ENTRADA_PERCENTUAL}% — À Vista)`
-              : paymentData.usar_dois_metodos ? "Método 1 (Entrada)" : "Método de Pagamento"
-          }
-          valorFixo={!paymentData.usar_dois_metodos || regraBoletoAtiva}
-          valorLabel={
-            regraBoletoAtiva
-              ? `Entrada (${BOLETO_ENTRADA_PERCENTUAL}%)`
-              : paymentData.usar_dois_metodos ? "Valor da Entrada *" : "Valor Total"
-          }
-          tipoTravado={regraBoletoAtiva ? "a_vista" : undefined}
-        />
-
-        {/* Preview parcelas método 1 */}
-        {(metodo1.tipo === 'boleto' || metodo1.tipo === 'cartao_credito') && metodo1.data_pagamento && valorMetodo1 > 0 && (
-          <div className="border rounded-lg p-3 border-white/10 bg-white/5">
-            <p className="text-xs font-medium mb-2 text-white/70">
-              Parcelas {metodo1.tipo === 'boleto' ? 'do Boleto' : 'do Cartão'} (Método 1):
-            </p>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-              {calcularPreviewParcelas({ ...metodo1, valor: valorMetodo1 }).map((p) => (
-                <div key={p.numero} className="text-xs p-2 bg-white/5 rounded border border-white/10 text-white/60">
-                  <span className="font-medium text-white">{p.numero}ª:</span>{' '}
-                  {format(p.data, "dd/MM/yy", { locale: ptBR })} -{' '}
-                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.valor)}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Método 2 (se ativo) */}
-        {paymentData.usar_dois_metodos && (
-          <>
+        {/* Métodos de Pagamento */}
+        <div className={cn(
+          "grid gap-4",
+          paymentData.usar_dois_metodos ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"
+        )}>
+          <div className="space-y-3">
             <MetodoPagamentoCard
-              metodo={{ ...metodo2, valor: valorMetodo2 }}
-              onChange={handleMetodo2Change}
+              metodo={{ ...metodo1, valor: valorMetodo1 }}
+              onChange={handleMetodo1Change}
               empresas={empresas}
               isLoadingEmpresas={isLoadingEmpresas}
-              titulo={regraBoletoAtiva ? `Método 2 (Boleto — ${100 - BOLETO_ENTRADA_PERCENTUAL}%)` : "Método 2 (Restante)"}
-              valorFixo={true}
-              valorLabel="Valor Restante"
-              tipoTravado={regraBoletoAtiva ? "boleto" : undefined}
-              intervalosBoletoPermitidos={regraBoletoAtiva ? intervalosBoletoPermitidos : undefined}
+              titulo={
+                regraBoletoAtiva
+                  ? `Método 1 (Entrada ${BOLETO_ENTRADA_PERCENTUAL}% — À Vista)`
+                  : paymentData.usar_dois_metodos ? "Método 1 (Entrada)" : "Método de Pagamento"
+              }
+              valorFixo={!paymentData.usar_dois_metodos || regraBoletoAtiva}
+              valorLabel={
+                regraBoletoAtiva
+                  ? `Entrada (${BOLETO_ENTRADA_PERCENTUAL}%)`
+                  : paymentData.usar_dois_metodos ? "Valor da Entrada *" : "Valor Total"
+              }
+              tipoTravado={regraBoletoAtiva ? "a_vista" : undefined}
             />
 
-            {/* Preview parcelas método 2 */}
-            {(metodo2.tipo === 'boleto' || metodo2.tipo === 'cartao_credito') && metodo2.data_pagamento && valorMetodo2 > 0 && (
+            {(metodo1.tipo === 'boleto' || metodo1.tipo === 'cartao_credito') && metodo1.data_pagamento && valorMetodo1 > 0 && (
               <div className="border rounded-lg p-3 border-white/10 bg-white/5">
                 <p className="text-xs font-medium mb-2 text-white/70">
-                  Parcelas {metodo2.tipo === 'boleto' ? 'do Boleto' : 'do Cartão'} (Método 2):
+                  Parcelas {metodo1.tipo === 'boleto' ? 'do Boleto' : 'do Cartão'} (Método 1):
                 </p>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                  {calcularPreviewParcelas({ ...metodo2, valor: valorMetodo2 }).map((p) => (
+                <div className="grid grid-cols-2 gap-2">
+                  {calcularPreviewParcelas({ ...metodo1, valor: valorMetodo1 }).map((p) => (
                     <div key={p.numero} className="text-xs p-2 bg-white/5 rounded border border-white/10 text-white/60">
                       <span className="font-medium text-white">{p.numero}ª:</span>{' '}
                       {format(p.data, "dd/MM/yy", { locale: ptBR })} -{' '}
@@ -370,8 +341,41 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
                 </div>
               </div>
             )}
-          </>
-        )}
+          </div>
+
+          {paymentData.usar_dois_metodos && (
+            <div className="space-y-3">
+              <MetodoPagamentoCard
+                metodo={{ ...metodo2, valor: valorMetodo2 }}
+                onChange={handleMetodo2Change}
+                empresas={empresas}
+                isLoadingEmpresas={isLoadingEmpresas}
+                titulo={regraBoletoAtiva ? `Método 2 (Boleto — ${100 - BOLETO_ENTRADA_PERCENTUAL}%)` : "Método 2 (Restante)"}
+                valorFixo={true}
+                valorLabel="Valor Restante"
+                tipoTravado={regraBoletoAtiva ? "boleto" : undefined}
+                intervalosBoletoPermitidos={regraBoletoAtiva ? intervalosBoletoPermitidos : undefined}
+              />
+
+              {(metodo2.tipo === 'boleto' || metodo2.tipo === 'cartao_credito') && metodo2.data_pagamento && valorMetodo2 > 0 && (
+                <div className="border rounded-lg p-3 border-white/10 bg-white/5">
+                  <p className="text-xs font-medium mb-2 text-white/70">
+                    Parcelas {metodo2.tipo === 'boleto' ? 'do Boleto' : 'do Cartão'} (Método 2):
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {calcularPreviewParcelas({ ...metodo2, valor: valorMetodo2 }).map((p) => (
+                      <div key={p.numero} className="text-xs p-2 bg-white/5 rounded border border-white/10 text-white/60">
+                        <span className="font-medium text-white">{p.numero}ª:</span>{' '}
+                        {format(p.data, "dd/MM/yy", { locale: ptBR })} -{' '}
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.valor)}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* Checkbox Pagamento na Entrega */}
         <div 
@@ -417,7 +421,7 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
                       {paymentData.usar_dois_metodos ? 'Método 1' : 'Pagamento'} ({
                         metodo1.tipo === 'boleto' ? `Boleto ${metodo1.parcelas_boleto}x` :
                         metodo1.tipo === 'cartao_credito' ? `Cartão ${metodo1.parcelas_cartao}x` :
-                        metodo1.tipo === 'a_vista' ? 'À Vista' : 'Dinheiro'
+                        'À Vista'
                       }):
                     </span>
                     <span className="text-white">
@@ -437,7 +441,7 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
                       Método 2 ({
                         metodo2.tipo === 'boleto' ? `Boleto ${metodo2.parcelas_boleto}x` :
                         metodo2.tipo === 'cartao_credito' ? `Cartão ${metodo2.parcelas_cartao}x` :
-                        metodo2.tipo === 'a_vista' ? 'À Vista' : 'Dinheiro'
+                        'À Vista'
                       }):
                     </span>
                     <span className="text-white">
