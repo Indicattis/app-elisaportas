@@ -1,38 +1,17 @@
 ## Diagnóstico
 
-Na lista de materiais de `/direcao/gestao-fabrica` (função `gerarListaParaPedidos` em `src/pages/direcao/GestaoFabricaDirecao.tsx`, linhas 158–185) o "necessário" é calculado sempre como:
+Pedido **Sidinei Carrão da Silva** (`b2130df9-797b-43d1-bc01-20ea51a96211`, etapa `aprovacao_ceo`) tem uma única linha em `produtos_vendas` (venda `fd43d904-ac7b-4677-b8b8-f5f986fb5483`):
 
-```ts
-if (linha.largura && linha.altura) {
-  necessario = qtd * largura * altura;
-} else if (linha.tamanho) {
-  necessario = qtd * tamanho;
-} else {
-  necessario = qtd;
-}
-```
+- `Caixa de fechamento (3m-6m)` (tipo_produto = `adicional`)
+- `cor_id = NULL` → o sistema exibe como "Aço galvanizado" (cor padrão quando sem cor).
+- `observacao_item = "MEDIDA 3,34 - COR BRANCO"` → confirma que o correto é **Branco**.
 
-A regra ignora completamente a **unidade do item de estoque**. O item **"Antiqueda"** está cadastrado como `unidade = 'UN'`, `quantidade_padrao = 1` (verificado no banco). Como ele está vinculado em linhas de portas que têm largura/altura preenchidas, o cálculo vira `qtd × largura × altura`, gerando o "600" que apareceu (ex.: 200 portas × 2m × 1,5m).
+A cor exibida no card do pedido vem de `produtos_vendas.cor_id` → `catalogo_cores.nome`.
 
-O mesmo bug existe em `src/hooks/useMateriaisNecessariosProducao.ts` (linhas 62–71), mas a tela atual exibe a lista do utilitário acima.
+## Correção (data fix via migração)
 
-## Correção proposta
+`UPDATE produtos_vendas SET cor_id = '<id_branco>' WHERE id = '8dcf13f9-c982-4bab-8137-f6f343053e72';`
 
-Ajustar a função `gerarListaParaPedidos` para escolher a fórmula de acordo com a unidade do estoque:
+Onde `<id_branco>` = `cc180842-8fcd-4a9f-a98b-946f15928293` (cor "Branco" no catálogo).
 
-- **m² / M2**: `qtd × largura × altura`
-- **m / ml / metro / cm**: `qtd × (tamanho || largura || altura)` (com conversão cm→m quando aplicável)
-- **un / pc / pç / kit / par** (padrão para qualquer outro caso): `qtd × (quantidade_padrao || 1)`
-
-Tratamento auxiliar:
-- Normalizar `unidade` (trim + lowercase) antes de comparar.
-- Quando a unidade é "un" e `quantidade_padrao` existir e for > 0, multiplicar por ela (cobre casos tipo "kit com 4 parafusos").
-- Manter o agrupamento por `estoque_id` e o enriquecimento por matéria-prima já existentes.
-
-Escopo:
-- Editar somente `src/pages/direcao/GestaoFabricaDirecao.tsx` (função `gerarListaParaPedidos`).
-- Não alterar o PDF nem o hook `useMateriaisNecessariosProducao` neste passo (posso fazer em seguida se quiser — mesma raiz de bug, mas alimenta outra tela).
-
-## Validação
-
-Após a correção, gerar a lista numa etapa que contenha portas com "Antiqueda" e conferir que a quantidade vira `nº de portas × quantidade_padrao` (tipicamente igual ao nº de portas), e não mais a área total.
+Não alterar `valor_pintura`, `tipo_pintura` nem outros campos — o pedido segue sem cobrança de pintura, apenas a cor referenciada vira "Branco".
