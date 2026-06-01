@@ -1068,6 +1068,10 @@ function TiposCustoBlock({
           hideHeader
           reorderRows={reorderTipos}
           hideCategoria={tipo === 'variavel'}
+          readOnly={readOnly}
+          mesReferencia={mesReferencia ?? null}
+          clearOverride={clearOverride}
+          hasOverride={hasOverride}
         />
       </div>
 
