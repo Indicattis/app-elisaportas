@@ -1285,8 +1285,15 @@ export default function ProdutosFabrica({
                 <div className="rounded-xl overflow-hidden bg-white/5 backdrop-blur-xl border border-white/10">
                   <Table>
                     {renderHeader()}
-                    {groups.map((g) => (
+                    {groups.map((g, index) => (
                       <Fragment key={g.key}>
+                        {index > 0 && (
+                          <tbody>
+                            <TableRow className="border-none hover:bg-transparent">
+                              <TableCell colSpan={colSpanCount} className="py-3" />
+                            </TableRow>
+                          </tbody>
+                        )}
                         <tbody>
                           <TableRow className="border-none hover:bg-transparent">
                             <TableCell colSpan={colSpanCount} className="py-2 px-1">
