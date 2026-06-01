@@ -1022,13 +1022,13 @@ function TiposCustoBlock({
         <h3 className="font-semibold">{titulo}</h3>
         <span className="text-white/40 text-sm">({items.length})</span>
         <div className="ml-auto flex items-center gap-1.5">
-          <button
+          {!readOnly && (<button
             onClick={() => setGerenciarCatOpen(true)}
             className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-white/80 hover:text-white transition-colors"
           >
             <FolderPlus className="w-3.5 h-3.5" />
             Gerenciar categorias
-          </button>
+          </button>)}
           <button
             onClick={() => exportTiposCustosPDF(titulo, items, categorias)}
             className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-white/80 hover:text-white transition-colors"
@@ -1036,13 +1036,13 @@ function TiposCustoBlock({
             <FileText className="w-3.5 h-3.5" />
             Exportar PDF
           </button>
-          <button
+          {!readOnly && (<button
             onClick={() => setAddDialogOpen(true)}
             className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-400/30 text-xs text-emerald-200 hover:text-emerald-100 transition-colors"
           >
             <Plus className="w-3.5 h-3.5" />
             Nova despesa
-          </button>
+          </button>)}
         </div>
       </div>
 
