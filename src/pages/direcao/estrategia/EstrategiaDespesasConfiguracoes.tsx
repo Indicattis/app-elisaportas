@@ -1207,7 +1207,7 @@ function categoriaSelectClass(_list: CategoriaDespesa[], v?: string | null) {
 
 function CategoriaGroup({
   cat, palette, rows, categorias, empresasAtivas, update, remove, dragHandle, rename, removeCat, expanded, onToggle, hideHeader, reorderRows, hideCategoria,
-  readOnly, mesReferencia, clearOverride, hasOverride,
+  readOnly, mesReferencia, clearOverride, hasOverride, contagemGastos,
 }: {
   cat: CategoriaDespesa | null;
   palette: { color: string; dot: string };
