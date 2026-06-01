@@ -689,9 +689,9 @@ export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaP
             <div className="bg-white/5 rounded-xl border border-white/10 p-3 text-center">
               {vendaCompleta?.venda_presencial != null ? (
                 vendaCompleta.venda_presencial ? (
-                  <Flame className="h-4 w-4 text-orange-400 mx-auto mb-1" />
-                ) : (
                   <Snowflake className="h-4 w-4 text-sky-400 mx-auto mb-1" />
+                ) : (
+                  <Flame className="h-4 w-4 text-orange-400 mx-auto mb-1" />
                 )
               ) : (
                 <Flame className="h-4 w-4 text-white/30 mx-auto mb-1" />
@@ -702,12 +702,12 @@ export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaP
                 vendaCompleta?.venda_presencial == null
                   ? "text-white/40"
                   : vendaCompleta.venda_presencial
-                    ? "text-orange-400"
-                    : "text-sky-400"
+                    ? "text-sky-400"
+                    : "text-orange-400"
               )}>
                 {vendaCompleta?.venda_presencial == null
                   ? '—'
-                  : vendaCompleta.venda_presencial ? 'Quente' : 'Fria'}
+                  : vendaCompleta.venda_presencial ? 'Fria' : 'Quente'}
               </p>
             </div>
           </div>
