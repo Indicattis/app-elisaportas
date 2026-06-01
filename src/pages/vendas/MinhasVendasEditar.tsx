@@ -790,7 +790,7 @@ export default function MinhasVendasEditar() {
                   {venda.venda_presencial && (
                     <Badge variant="outline" className="flex items-center gap-1 border-blue-500/30 text-blue-200">
                       <Store className="h-3 w-3" />
-                      Presencial
+                      Fria
                     </Badge>
                   )}
                 </div>

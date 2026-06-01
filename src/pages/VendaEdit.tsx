@@ -431,7 +431,7 @@ export default function VendaEdit() {
                 {venda.venda_presencial && (
                   <Badge variant="outline" className="flex items-center gap-1">
                     <Store className="h-3 w-3" />
-                    Presencial
+                    Fria
                   </Badge>
                 )}
               </div>

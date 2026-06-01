@@ -311,7 +311,7 @@ export default function RegrasVendasDirecao() {
               <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-white/5 border border-white/10">
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                   <User className="h-4 w-4 text-blue-400 shrink-0" />
-                  <span className="text-white/80 text-sm truncate">Venda presencial</span>
+                  <span className="text-white/80 text-sm truncate">Venda fria</span>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
                   <span className="text-white/60 text-sm">+</span>

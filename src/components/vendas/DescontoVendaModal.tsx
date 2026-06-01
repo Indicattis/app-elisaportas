@@ -188,7 +188,7 @@ export function DescontoVendaModal({
             {vendaPresencial && (
               <Badge variant="outline" className="bg-blue-500/10 text-blue-700 border-blue-500/20">
                 <CheckCircle2 className="w-3 h-3 mr-1" />
-                Presencial (+{configLimites.presencial}%)
+                Fria (+{configLimites.presencial}%)
               </Badge>
             )}
           </div>

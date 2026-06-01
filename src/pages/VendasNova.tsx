@@ -740,7 +740,7 @@ export default function VendasNova() {
                   onCheckedChange={(checked) => setFormData(prev => ({ ...prev, venda_presencial: checked as boolean }))}
                 />
                 <Label htmlFor="venda_presencial" className="cursor-pointer flex-1 text-xs">
-                  <span className="font-medium">Venda Presencial</span>
+                  <span className="font-medium">Venda Fria</span>
                   <span className="text-muted-foreground ml-1.5">(+5% limite de desconto)</span>
                 </Label>
               </div>

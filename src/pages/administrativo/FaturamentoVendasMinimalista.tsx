@@ -107,7 +107,7 @@ const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
   { id: 'tabela', label: 'Tabela', defaultVisible: true },
   { id: 'valor', label: 'Venda', defaultVisible: true },
   { id: 'desc_cartao', label: 'Cartão', defaultVisible: true },
-  { id: 'desc_gelo', label: 'Gelo', defaultVisible: true },
+  { id: 'desc_gelo', label: 'Quente', defaultVisible: true },
   { id: 'desc_responsavel', label: 'Luan/Alana', defaultVisible: true },
   { id: 'lucro', label: 'Lucro', defaultVisible: true },
   { id: 'tempo_sem_faturar', label: 'Tempo s/ Faturar', defaultVisible: true },
@@ -1311,7 +1311,7 @@ export default function FaturamentoMinimalista() {
                               </TooltipTrigger>
                               <TooltipContent side="top" className="max-w-[200px] text-xs">
                                 {column.id === 'desc_cartao' && `Desconto à vista (até ${configLimites.avista}%) — pagamento fora do cartão`}
-                                {column.id === 'desc_gelo' && `Desconto Frio (até ${configLimites.presencial}%) — venda não presencial (Frio)`}
+                                {column.id === 'desc_gelo' && `Desconto Quente (até ${configLimites.presencial}%) — venda não presencial (Quente)`}
                                 {column.id === 'desc_responsavel' && `Desconto c/ senha (até ${configLimites.adicionalResponsavel}%) — requer autorização`}
                               </TooltipContent>
                             </Tooltip>

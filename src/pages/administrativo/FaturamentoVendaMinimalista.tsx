@@ -1171,9 +1171,9 @@ export default function FaturamentoVendaMinimalista() {
             </p>
           </div>
 
-          {/* Desconto Gelo */}
+          {/* Desconto Quente */}
           <div className="bg-white/5 border border-white/10 rounded-lg p-3">
-            <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">Desc. Gelo</p>
+            <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">Desc. Quente</p>
             <p className={cn("text-sm font-bold", descontoTiers.gelo > 0 ? "text-red-400" : "text-white/30")}>
               {descontoTiers.gelo > 0 ? `-${formatCurrency(descontoTiers.gelo)}` : '-'}
             </p>
@@ -1480,9 +1480,9 @@ export default function FaturamentoVendaMinimalista() {
                   <p className="text-xs text-white/50">Tipo de Venda</p>
                   <p className="text-sm font-medium">
                     {venda.venda_presencial ? (
-                      <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30">🔥 Venda Quente</Badge>
+                      <Badge className="bg-cyan-500/20 text-cyan-400 border-cyan-500/30">❄️ Venda Fria</Badge>
                     ) : (
-                      <Badge className="bg-cyan-500/20 text-cyan-400 border-cyan-500/30">❄️ Venda Frio</Badge>
+                      <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30">🔥 Venda Quente</Badge>
                     )}
                   </p>
                 </div>
