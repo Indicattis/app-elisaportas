@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -7,7 +8,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useLiderVendas } from '@/hooks/useLiderVendas';
 import { useConfiguracoesVendasPublicas } from '@/hooks/useConfiguracoesVendasPublicas';
 import { Loader2, AlertCircle, ShieldCheck, Infinity } from 'lucide-react';
 
@@ -34,8 +34,7 @@ export function AutorizacaoDescontoModal({
   const [autorizadorId, setAutorizadorId] = useState('');
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState('');
-  
-  const { data: liderVendas, isLoading: loadingLider } = useLiderVendas();
+
   const {
     configuracoesPublicas,
     isLoading: loadingConfig,
@@ -43,45 +42,33 @@ export function AutorizacaoDescontoModal({
     refetch: refetchConfiguracoes,
   } = useConfiguracoesVendasPublicas();
 
-  // Buscar o responsável master direto (sem filtrar por ativo/visivel_organograma)
-  const masterId = configuracoesPublicas?.responsavel_senha_master_id ?? null;
-  const { data: responsavelMaster, isLoading: loadingMaster } = useQuery({
-    queryKey: ['responsavel-senha-master', masterId],
-    enabled: !!masterId && tipoAutorizacao === 'master',
+  // Resolve qual usuário autoriza a partir das Regras de Vendas:
+  // - responsavel_setor (8%–15%) → Gerente (responsavel_senha_responsavel_id)
+  // - master (>15%)             → Diretor (responsavel_senha_master_id)
+  const autorizadorUserId =
+    tipoAutorizacao === 'master'
+      ? configuracoesPublicas?.responsavel_senha_master_id ?? null
+      : configuracoesPublicas?.responsavel_senha_responsavel_id ?? null;
+
+  const cargoLabel = tipoAutorizacao === 'master' ? 'Diretor' : 'Gerente';
+
+  const { data: autorizadorConfigurado, isLoading: loadingAutorizador } = useQuery({
+    queryKey: ['autorizador-desconto', tipoAutorizacao, autorizadorUserId],
+    enabled: !!autorizadorUserId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('admin_users')
-        .select('user_id, nome, role')
-        .eq('user_id', masterId!)
+        .select('user_id, nome, role, ativo')
+        .eq('user_id', autorizadorUserId!)
         .maybeSingle();
       if (error) throw error;
       return data;
     },
   });
 
-  // Obter o autorizador configurado (não permite seleção manual)
-  const autorizadorConfigurado = useMemo(() => {
-    if (tipoAutorizacao === 'responsavel_setor') {
-      if (liderVendas) {
-        return {
-          id: liderVendas.user_id,
-          nome: liderVendas.nome,
-          role: liderVendas.role
-        };
-      }
-      return null;
-    }
-
-    // Para master, usar o responsável buscado direto
-    if (responsavelMaster) {
-      return {
-        id: responsavelMaster.user_id,
-        nome: responsavelMaster.nome,
-        role: responsavelMaster.role,
-      };
-    }
-    return null;
-  }, [tipoAutorizacao, liderVendas, responsavelMaster]);
+  const autorizadorIndisponivel =
+    !loadingConfig && !loadingAutorizador &&
+    (!autorizadorConfigurado || autorizadorConfigurado.ativo === false);
 
   useEffect(() => {
     if (open) {
@@ -89,10 +76,9 @@ export function AutorizacaoDescontoModal({
       refetchConfiguracoes();
       setSenha('');
       setErro('');
-      
-      // Auto-definir o autorizador configurado
-      if (autorizadorConfigurado) {
-        setAutorizadorId(autorizadorConfigurado.id);
+
+      if (autorizadorConfigurado && autorizadorConfigurado.ativo !== false) {
+        setAutorizadorId(autorizadorConfigurado.user_id);
       } else {
         setAutorizadorId('');
       }
@@ -139,16 +125,14 @@ export function AutorizacaoDescontoModal({
         return;
       }
 
-      // Validar usuário para senha do responsável
-      if (tipoAutorizacao === 'responsavel_setor') {
-        if (!liderVendas) {
-          setErro('Nenhum líder de vendas configurado no sistema');
-          return;
-        }
-        if (autorizadorId !== liderVendas.user_id) {
-          setErro('Usuário selecionado não é o líder de vendas');
-          return;
-        }
+      // Garantir que o autorizador resolvido bate com o configurado
+      if (!autorizadorConfigurado || autorizadorConfigurado.ativo === false) {
+        setErro(`Nenhum ${cargoLabel} ativo configurado em Regras de Vendas.`);
+        return;
+      }
+      if (autorizadorId !== autorizadorConfigurado.user_id) {
+        setErro(`Usuário autorizador não corresponde ao ${cargoLabel} configurado.`);
+        return;
       }
 
       // Senha correta, prosseguir devolvendo a senha digitada para auditoria
@@ -175,80 +159,85 @@ export function AutorizacaoDescontoModal({
           <div className="flex items-center gap-2 mb-2">
             <ShieldCheck className="h-6 w-6 text-amber-500" />
             <DialogTitle>
-              {tipoAutorizacao === 'master' ? 'Autorização Master Necessária' : 'Autorização do Responsável Necessária'}
+              {tipoAutorizacao === 'master'
+                ? 'Autorização do Diretor Necessária'
+                : 'Autorização do Gerente Necessária'}
             </DialogTitle>
           </div>
           <DialogDescription>
             O desconto de <span className="font-bold text-foreground">{percentualDesconto.toFixed(1)}%</span> excede 
             o limite permitido de <span className="font-bold text-foreground">{limitePermitido.toFixed(0)}%</span> em{' '}
             <span className="font-bold text-foreground">{(percentualDesconto - limitePermitido).toFixed(1)}%</span>.
-            {tipoAutorizacao === 'master' 
-              ? ` É necessária a senha master (desconto acima de ${limites.totalComResponsavel}%).`
-              : ` É necessária a senha do responsável (até ${limites.totalComResponsavel}%).`}
+            {tipoAutorizacao === 'master'
+              ? ` É necessária a senha do Diretor (desconto acima de ${limites.totalComResponsavel}%).`
+              : ` É necessária a senha do Gerente (até ${limites.totalComResponsavel}%).`}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          {tipoAutorizacao === 'responsavel_setor' && !liderVendas && !loadingLider && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                Nenhum líder de vendas configurado. Configure um líder em Configurações → Setores e Líderes.
-              </AlertDescription>
-            </Alert>
-          )}
-
           {tipoAutorizacao === 'master' && (
             <Alert className="bg-red-500/10 border-red-500/30">
               <Infinity className="h-4 w-4 text-red-400" />
               <AlertDescription className="text-red-300">
-                A senha master desbloqueia qualquer percentual de desconto.
+                A senha do Diretor desbloqueia qualquer percentual de desconto.
               </AlertDescription>
             </Alert>
           )}
 
           <div className="space-y-2">
             <Label>Quem está autorizando?</Label>
-            {loadingLider || loadingMaster ? (
+            {loadingConfig || loadingAutorizador ? (
               <div className="flex items-center gap-2 p-3 bg-muted rounded-md">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 <span className="text-sm text-muted-foreground">Carregando...</span>
               </div>
-            ) : autorizadorConfigurado ? (
+            ) : autorizadorConfigurado && autorizadorConfigurado.ativo !== false ? (
               <div className="p-3 bg-muted rounded-md">
                 <p className="font-medium">{autorizadorConfigurado.nome}</p>
-                <p className="text-xs text-muted-foreground">{autorizadorConfigurado.role}</p>
+                <p className="text-xs text-muted-foreground">
+                  {cargoLabel}
+                  {autorizadorConfigurado.role ? ` · ${autorizadorConfigurado.role}` : ''}
+                </p>
               </div>
             ) : (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  {tipoAutorizacao === 'master' 
-                    ? 'Nenhum responsável configurado para senha master. Configure em Regras de Vendas.'
-                    : 'Nenhum líder de vendas configurado. Configure em Setores e Líderes.'}
+                <AlertDescription className="space-y-2">
+                  <p>
+                    {autorizadorConfigurado && autorizadorConfigurado.ativo === false
+                      ? `O ${cargoLabel} configurado (${autorizadorConfigurado.nome}) está desativado.`
+                      : `Nenhum ${cargoLabel} configurado em Regras de Vendas.`}
+                  </p>
+                  <Link
+                    to="/direcao/regras-vendas"
+                    className="inline-block underline font-medium"
+                    onClick={() => onOpenChange(false)}
+                  >
+                    Configurar agora →
+                  </Link>
                 </AlertDescription>
               </Alert>
             )}
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="senha">
-              {tipoAutorizacao === 'master' ? 'Senha Master *' : 'Senha do Responsável *'}
-            </Label>
-            <Input
-              id="senha"
-              type="password"
-              value={senha}
-              onChange={(e) => {
-                setSenha(e.target.value);
-                setErro('');
-              }}
-              onKeyPress={handleKeyPress}
-              placeholder={tipoAutorizacao === 'master' ? 'Digite a senha master' : 'Digite a senha do responsável'}
-              disabled={loading}
-              autoFocus
-            />
-          </div>
+          {!autorizadorIndisponivel && (
+            <div className="space-y-2">
+              <Label htmlFor="senha">Senha do {cargoLabel} *</Label>
+              <Input
+                id="senha"
+                type="password"
+                value={senha}
+                onChange={(e) => {
+                  setSenha(e.target.value);
+                  setErro('');
+                }}
+                onKeyPress={handleKeyPress}
+                placeholder={`Digite a senha do ${cargoLabel}`}
+                disabled={loading}
+                autoFocus
+              />
+            </div>
+          )}
 
           {erro && (
             <Alert variant="destructive">
@@ -282,7 +271,7 @@ export function AutorizacaoDescontoModal({
             </Button>
             <Button
               onClick={handleAutorizar}
-              disabled={loading || !senha || !autorizadorId}
+              disabled={loading || !senha || !autorizadorId || autorizadorIndisponivel}
             >
               {loading ? (
                 <>
