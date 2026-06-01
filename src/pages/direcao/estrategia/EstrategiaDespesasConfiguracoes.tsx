@@ -571,7 +571,7 @@ function FolhaColGroup() {
 }
 
 function FolhaSetorGroup({
-  meta, rows, setores, update, remove, reorder, dragHandle,
+  meta, rows, setores, update, remove, reorder, dragHandle, readOnly, clearOverride, hasOverride,
 }: {
   meta: SetorMeta;
   rows: DespesaPadrao[];
@@ -580,6 +580,9 @@ function FolhaSetorGroup({
   remove: ReturnType<typeof useDespesasPadrao>['remove'];
   reorder: ReturnType<typeof useDespesasPadrao>['reorder'];
   dragHandle?: React.ReactNode;
+  readOnly?: boolean;
+  clearOverride?: (id: string) => Promise<boolean>;
+  hasOverride?: (id: string) => boolean;
 }) {
   const subtotal = rows.reduce((s, i) => s + calcTotalFolha({
     salario: Number(i.salario) || 0,
@@ -625,7 +628,16 @@ function FolhaSetorGroup({
             <SortableContext items={rowIds} strategy={verticalListSortingStrategy}>
               <tbody>
                 {sortedRows.map(i => (
-                  <SortableFolhaRow key={i.id} item={i} setores={setores} update={update} remove={remove} />
+                  <SortableFolhaRow
+                    key={i.id}
+                    item={i}
+                    setores={setores}
+                    update={update}
+                    remove={remove}
+                    readOnly={readOnly}
+                    clearOverride={clearOverride}
+                    hasOverride={hasOverride}
+                  />
                 ))}
               </tbody>
             </SortableContext>
@@ -644,6 +656,9 @@ function SortableSetorGroup(props: {
   update: ReturnType<typeof useDespesasPadrao>['update'];
   remove: ReturnType<typeof useDespesasPadrao>['remove'];
   reorder: ReturnType<typeof useDespesasPadrao>['reorder'];
+  readOnly?: boolean;
+  clearOverride?: (id: string) => Promise<boolean>;
+  hasOverride?: (id: string) => boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: props.id });
   const style = {
@@ -651,7 +666,7 @@ function SortableSetorGroup(props: {
     transition,
     opacity: isDragging ? 0.5 : 1,
   };
-  const handle = (
+  const handle = props.readOnly ? null : (
     <button
       {...attributes}
       {...listeners}
@@ -672,6 +687,9 @@ function SortableSetorGroup(props: {
         remove={props.remove}
         reorder={props.reorder}
         dragHandle={handle}
+        readOnly={props.readOnly}
+        clearOverride={props.clearOverride}
+        hasOverride={props.hasOverride}
       />
     </div>
   );
@@ -682,6 +700,9 @@ function SortableFolhaRow(props: {
   setores: SetorMeta[];
   update: ReturnType<typeof useDespesasPadrao>['update'];
   remove: ReturnType<typeof useDespesasPadrao>['remove'];
+  readOnly?: boolean;
+  clearOverride?: (id: string) => Promise<boolean>;
+  hasOverride?: (id: string) => boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: props.item.id });
   const style = {
@@ -689,7 +710,7 @@ function SortableFolhaRow(props: {
     transition,
     opacity: isDragging ? 0.5 : 1,
   };
-  const handle = (
+  const handle = props.readOnly ? null : (
     <button
       {...attributes}
       {...listeners}
@@ -702,7 +723,16 @@ function SortableFolhaRow(props: {
   );
   return (
     <tr ref={setNodeRef as any} style={style} className="border-b border-white/5 hover:bg-white/[0.03]">
-      <FolhaRowCells item={props.item} setores={props.setores} update={props.update} remove={props.remove} dragHandle={handle} />
+      <FolhaRowCells
+        item={props.item}
+        setores={props.setores}
+        update={props.update}
+        remove={props.remove}
+        dragHandle={handle}
+        readOnly={props.readOnly}
+        clearOverride={props.clearOverride}
+        hasOverride={props.hasOverride}
+      />
     </tr>
   );
 }
