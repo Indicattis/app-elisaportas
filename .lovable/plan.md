@@ -1,55 +1,86 @@
-
 ## Objetivo
 
-Em `/direcao/estrategia/despesas/:mes`, restringir os campos editáveis (a configuração global continua intocada) e permitir abrir cada tipo de custo para ver/cadastrar os gastos vinculados àquele mês.
+Criar uma nova seção "Pagamentos de Autorizados Terceiros" em:
+- `/direcao/estrategia/despesas/configuracoes` — cadastro mestre (linha por autorizado)
+- `/direcao/estrategia/despesas/:mes` — visão mensal com `valor_pago` editável
 
-Tudo continua em `src/pages/direcao/estrategia/EstrategiaDespesasConfiguracoes.tsx` (compartilhado via `mode="mes"`). Nenhuma mudança em banco ou regras de negócio.
+Cada linha contém: **Nome / Cidade (KM) / Valor estipulado / Valor pago**.
 
-## Folha (colaboradores) — `FolhaRowCells`
+---
 
-Quando `readOnly` (mode='mes'):
-- **Colaborador (nome)** — já é texto estático. Manter.
-- **Em folha (Switch)** — adicionar `disabled={readOnly}` para travar.
-- **Setor (select)** — já está `disabled={readOnly}`. Manter.
-- Campos numéricos (Salário, Salário mín., Combustível, Insalub %, FGTS %) continuam editáveis (override do mês).
-- Botão "Restaurar padrão" continua.
+## Comportamento
 
-## Despesas (tipos de custo) — `SortableTipoRow` + `CategoriaGroup`
+### Página configurações (mestre)
+- Lista todos os autorizados terceiros cadastrados.
+- Botão "Adicionar autorizado" abre linha editável:
+  - **Nome**: texto livre.
+  - **Cidade**: input com autocomplete consultando `frete_cidades` (cidade + estado).
+  - **KM**: preenchido automaticamente a partir de `frete_cidades.quilometragem` quando a cidade é selecionada (read-only, derivado).
+  - **Valor estipulado**: calculado automaticamente como `quilometragem × tarifa` usando `frete_cidades.valor_frete` (já é `quilometragem × 6` na tabela). Read-only, derivado.
+  - **Valor pago**: não aparece neste modo (é por mês).
+- Ações: editar nome/cidade, remover, reordenar (drag) — mesmo padrão dos outros blocos.
 
-Propagar `readOnly` de `TiposCustoBlock` → `CategoriaGroup` → `SortableTipoRow`.
+### Página mensal (`/despesas/2026-05`)
+- Mesma lista de autorizados, em modo `readOnly` para nome/cidade/km/valor estipulado.
+- Coluna extra **Valor pago** editável (inline), persistida por mês.
+- Linha de subtotal com soma de `valor_estipulado` e `valor_pago` (mesmo padrão visual dos blocos existentes).
+- Botão "Já pago" opcional para copiar `valor_estipulado` → `valor_pago` rapidamente.
 
-Quando `readOnly`:
-- **Nome** — texto estático (sem `InlineText`).
-- **Descrição** — botão do popover desabilitado / só leitura (mostra conteúdo se houver, sem permitir editar).
-- **Categoria** — `<select disabled>` (mantém visual de chip).
-- **Valor projetado** — texto estático com `formatCurrency`.
-- **DRE (Switch)** — `disabled`.
-- **Eliminar (AlertTriangle button)** — `disabled`, sem `onClick`.
-- **Drag handle** e **Trash** — ocultos (já há `!readOnly` no bloco para "Nova despesa" e "Gerenciar categorias", aplicar mesma lógica nas linhas).
-- **Linha torna-se clicável** (cursor-pointer) para expandir e mostrar os gastos vinculados ao tipo dentro do mês atual.
-  - Adicionar botão chevron (>) à esquerda do nome ou tornar o nome clicável.
-  - Estado local de expansão por id em `CategoriaGroup`.
+### Integração DRE
+- Soma de `valor_pago` do mês entra como **despesa variável** no DRE da Direção (`DREDirecao.tsx`), agregando junto com `gastos` cujo tipo tenha `aparece_no_dre = true`.
+- DRE legado (`dre_mensais` via `despesas_mensais`) não é alterado.
 
-### Sub-bloco de gastos expandido (apenas em `readOnly`)
+---
 
-Ao expandir um tipo, renderizar uma linha extra (`<tr>` com `colSpan`) contendo:
-- Lista dos `gastos` do mês daquele `tipo_custo_id` (colunas: data, descrição, valor, ações).
-- Botão **"+ Novo gasto"** que abre dialog simples (data, descrição, valor) e insere em `gastos` com `data_pagamento` no mês corrente.
-- Botão de excluir gasto por linha.
-- Total dos gastos do mês para esse tipo.
+## Mudanças técnicas
 
-Implementação:
-- Novo hook `useGastosPorTipoMes(tipoCustoId, mes)` em `src/hooks/` (ou usar `useGastos` existente já filtrado): faz `SELECT id, data_pagamento, descricao, valor FROM gastos WHERE tipo_custo_id = $1 AND data_pagamento BETWEEN start AND end ORDER BY data_pagamento DESC`. Inclui `insert` e `delete`.
-- Novo componente `GastosDoTipoExpand` colocado no mesmo arquivo (perto de `SortableTipoRow`) para evitar nova explosão de arquivos.
+### Banco de dados (migration)
 
-## Passagem de props
+Duas tabelas novas:
 
-- `TiposCustoBlock` já recebe `readOnly`. Passar para `<CategoriaGroup readOnly={readOnly} mesReferencia={mesReferencia} />`.
-- `CategoriaGroup` recebe `readOnly` + `mesReferencia` e propaga para `SortableTipoRow`.
-- `DespesasGridContent` passa `mesReferencia` para `TiposCustoBlock` (hoje só passa para Folha indiretamente via hook).
+**`autorizados_terceiros`** (mestre)
+- `id` uuid pk
+- `nome` text not null
+- `cidade` text not null
+- `estado` text not null
+- `quilometragem` numeric — snapshot do `frete_cidades` no momento da seleção (recalculado se cidade mudar)
+- `valor_estipulado` numeric — snapshot de `valor_frete`
+- `ordem` int default 0
+- `ativo` boolean default true
+- `created_at`, `updated_at`
 
-## Fora de escopo
+**`pagamentos_autorizados_terceiros_mes`** (valores pagos por mês)
+- `id` uuid pk
+- `autorizado_id` uuid fk → `autorizados_terceiros.id` on delete cascade
+- `mes_referencia` date (sempre dia 01)
+- `valor_pago` numeric default 0
+- `pago_em` date null
+- `created_at`, `updated_at`
+- UNIQUE (`autorizado_id`, `mes_referencia`)
 
-- Nenhuma alteração na página de Configurações (`mode="config"` continua igual).
-- Nenhuma migração ou mudança em RLS — usa tabela `gastos` existente.
-- Nenhuma mudança no botão de status, breadcrumb ou totalização superior.
+Ambas com `GRANT` para `authenticated` e `service_role`, RLS habilitado e policies permitindo leitura/escrita para usuários autenticados (padrão das demais tabelas de estratégia).
+
+### Frontend
+
+- Novo hook `src/hooks/useAutorizadosTerceiros.ts` — CRUD do mestre.
+- Novo hook `src/hooks/usePagamentosAutorizadosTerceirosMes.ts` — leitura/upsert por mês.
+- Novo hook `src/hooks/useCidadesFreteAutocomplete.ts` — busca em `frete_cidades` para o autocomplete (lookup por `cidade` ilike).
+- Novo componente `src/components/direcao/estrategia/AutorizadosTerceirosBlock.tsx` — bloco com header e tabela alinhada ao padrão dos `TiposCustoBlock` (colunas Nome / Cidade-KM / Valor estipulado / Valor pago / ações), suportando `mode: 'config' | 'mes'` e `mesReferencia`.
+- Em `EstrategiaDespesasConfiguracoes.tsx` → `DespesasGridContent`: adicionar 5º bloco renderizando `<AutorizadosTerceirosBlock />` (passando `mode` e `mesReferencia` quando aplicável).
+- DRE: ajustar `DREDirecao.tsx` (ou hook equivalente) para somar `pagamentos_autorizados_terceiros_mes.valor_pago` do mês selecionado como despesa variável.
+
+### Notas
+- Cidade/KM/valor estipulado são snapshots gravados no momento do cadastro/edição; se a cidade for trocada, recalcula a partir de `frete_cidades`. Mudanças posteriores em `frete_cidades` não afetam linhas já cadastradas (mantém histórico consistente).
+- Não criamos `tipo_custo` novo nem usamos `gastos` — a estrutura "linha por autorizado" exige tabela própria.
+
+---
+
+## Arquivos afetados
+
+- `supabase/migrations/<novo>.sql` (criação das duas tabelas + GRANTs + RLS)
+- `src/hooks/useAutorizadosTerceiros.ts` (novo)
+- `src/hooks/usePagamentosAutorizadosTerceirosMes.ts` (novo)
+- `src/hooks/useCidadesFreteAutocomplete.ts` (novo)
+- `src/components/direcao/estrategia/AutorizadosTerceirosBlock.tsx` (novo)
+- `src/pages/direcao/estrategia/EstrategiaDespesasConfiguracoes.tsx` (adicionar bloco no grid)
+- `src/pages/direcao/DREDirecao.tsx` ou hook DRE Direção (somar `valor_pago` do mês)
