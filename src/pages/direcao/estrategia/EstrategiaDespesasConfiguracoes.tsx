@@ -1670,12 +1670,8 @@ function GastosDoTipoExpand({
           ))}
           <tr className="bg-white/[0.015] text-[11px]" onClick={stop}>
             <td />
-            <td colSpan={1 + catCols} className="py-1 pl-1 text-white/40 uppercase tracking-wider">Total</td>
-            <td className="px-1" />
-            <td className="px-2 text-right text-white/40" />
-            <td />
-            <td />
-            <td />
+            <td className="py-1 pl-1 text-white/40 uppercase tracking-wider">Total</td>
+            <td colSpan={3 + catCols} />
             <td className="px-2 text-right text-emerald-300/90 font-semibold tabular-nums">{formatCurrency(total)}</td>
             <td />
           </tr>
