@@ -38,25 +38,6 @@ import { CSS } from '@dnd-kit/utilities';
 import { restrictToVerticalAxis, restrictToParentElement } from '@dnd-kit/modifiers';
 
 export default function EstrategiaDespesasConfiguracoes() {
-  const { items, loading, insert, update, remove, reorder } = useDespesasPadrao();
-  const {
-    tiposCustos, loading: loadingTipos,
-    saveTipoCusto, updateTipoCusto, deleteTipoCusto,
-    contarGastosVinculados, realocarEExcluirTipoCusto, forcarExclusaoTipoCusto, reorderTiposCustos,
-  } = useTiposCustos();
-
-  // Only show full-page spinner on the very first load. Subsequent refetches
-  // (triggered by insert/update/remove) must NOT unmount the grid, otherwise
-  // the page scroll resets to the top after every change.
-  const firstLoadedRef = useRef(false);
-  if (!loading && !loadingTipos) firstLoadedRef.current = true;
-  const showSpinner = !firstLoadedRef.current && (loading || loadingTipos);
-
-  const folha = items.filter(i => i.tipo === 'folha');
-  const tiposFixas = tiposCustos.filter(t => t.tipo === 'fixa');
-  const tiposVariaveis = tiposCustos.filter(t => t.tipo === 'variavel');
-  const tiposImpostos = tiposCustos.filter(t => t.tipo === 'imposto');
-
   return (
     <MinimalistLayout
       title="Configurações padrão"
@@ -71,13 +52,62 @@ export default function EstrategiaDespesasConfiguracoes() {
         { label: 'Configurações padrão' },
       ]}
     >
-      {showSpinner ? (
+      <DespesasGridContent mode="config" />
+    </MinimalistLayout>
+  );
+}
+
+export function DespesasGridContent({
+  mode = 'config',
+  mesReferencia,
+}: {
+  mode?: 'config' | 'mes';
+  mesReferencia?: string | null;
+}) {
+  const baseHook = useDespesasPadrao();
+  const mesHook = useDespesasPadraoMes(mode === 'mes' ? (mesReferencia ?? null) : null);
+  const { items, loading, insert, update, remove, reorder } = mode === 'mes' ? mesHook : baseHook;
+
+  const baseTipos = useTiposCustos();
+  const mesTipos = useTiposCustosMes(mode === 'mes' ? (mesReferencia ?? null) : null);
+  const {
+    tiposCustos, loading: loadingTipos,
+    saveTipoCusto, updateTipoCusto, deleteTipoCusto,
+    contarGastosVinculados, realocarEExcluirTipoCusto, forcarExclusaoTipoCusto, reorderTiposCustos,
+  } = mode === 'mes' ? mesTipos : baseTipos;
+
+  const folhaClearOverride = mode === 'mes' ? mesHook.clearOverride : undefined;
+  const folhaHasOverride = mode === 'mes' ? mesHook.hasOverride : undefined;
+  const tipoClearOverride = mode === 'mes' ? mesTipos.clearOverride : undefined;
+  const tipoHasOverride = mode === 'mes' ? mesTipos.hasOverride : undefined;
+
+  const readOnly = mode === 'mes';
+
+  const firstLoadedRef = useRef(false);
+  if (!loading && !loadingTipos) firstLoadedRef.current = true;
+  const showSpinner = !firstLoadedRef.current && (loading || loadingTipos);
+
+  const folha = items.filter(i => i.tipo === 'folha');
+  const tiposFixas = tiposCustos.filter(t => t.tipo === 'fixa');
+  const tiposVariaveis = tiposCustos.filter(t => t.tipo === 'variavel');
+  const tiposImpostos = tiposCustos.filter(t => t.tipo === 'imposto');
+
+  return showSpinner ? (
         <div className="flex items-center justify-center py-20">
           <div className="w-6 h-6 animate-spin rounded-full border-2 border-white/20 border-t-white/60" />
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4">
-          <FolhaBlock items={folha} insert={insert} update={update} remove={remove} reorder={reorder} />
+          <FolhaBlock
+            items={folha}
+            insert={insert}
+            update={update}
+            remove={remove}
+            reorder={reorder}
+            readOnly={readOnly}
+            clearOverride={folhaClearOverride}
+            hasOverride={folhaHasOverride}
+          />
           <TiposCustoBlock
             titulo="Tipos de Custos — Fixas"
             icon={<Receipt className="w-4 h-4" />}
@@ -91,6 +121,9 @@ export default function EstrategiaDespesasConfiguracoes() {
             realocarEExcluir={realocarEExcluirTipoCusto}
             forcarExclusao={forcarExclusaoTipoCusto}
             reorderTipos={reorderTiposCustos}
+            readOnly={readOnly}
+            clearOverride={tipoClearOverride}
+            hasOverride={tipoHasOverride}
           />
           <TiposCustoBlock
             titulo="Tipos de Custos — Variáveis"
@@ -105,6 +138,9 @@ export default function EstrategiaDespesasConfiguracoes() {
             realocarEExcluir={realocarEExcluirTipoCusto}
             forcarExclusao={forcarExclusaoTipoCusto}
             reorderTipos={reorderTiposCustos}
+            readOnly={readOnly}
+            clearOverride={tipoClearOverride}
+            hasOverride={tipoHasOverride}
           />
           <TiposCustoBlock
             titulo="Tipos de Custos — Impostos"
@@ -119,11 +155,12 @@ export default function EstrategiaDespesasConfiguracoes() {
             realocarEExcluir={realocarEExcluirTipoCusto}
             forcarExclusao={forcarExclusaoTipoCusto}
             reorderTipos={reorderTiposCustos}
+            readOnly={readOnly}
+            clearOverride={tipoClearOverride}
+            hasOverride={tipoHasOverride}
           />
         </div>
-      )}
-    </MinimalistLayout>
-  );
+      );
 }
 
 /* ---------------- Folha ---------------- */
