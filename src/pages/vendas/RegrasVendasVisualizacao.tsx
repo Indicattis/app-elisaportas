@@ -189,7 +189,7 @@ export default function RegrasVendasVisualizacao() {
               />
               <Row
                 icon={CreditCard}
-                label="Cartão — parcelas"
+                label="Cartão — parcelas sem juros"
                 value={`${regras.cartao_parcelas_min}x a ${regras.cartao_parcelas_max}x`}
               />
               <Row
