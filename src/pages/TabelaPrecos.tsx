@@ -44,6 +44,7 @@ interface TabelaPrecosProps {
   hideTotalColumn?: boolean;
   embedded?: boolean;
   enableReorder?: boolean;
+  readOnly?: boolean;
   titleOverride?: string;
   subtitleOverride?: string;
   backPathOverride?: string;
@@ -59,6 +60,7 @@ export default function TabelaPrecos({
   hideTotalColumn = false,
   embedded = false,
   enableReorder = false,
+  readOnly = false,
   titleOverride,
   subtitleOverride,
   backPathOverride,
@@ -175,7 +177,7 @@ export default function TabelaPrecos({
   };
 
 
-  const internalHeaderActions = (
+  const internalHeaderActions = readOnly ? null : (
     <div className="flex gap-2">
       <Button onClick={() => setBulkUploadModalOpen(true)} variant="outline" size="sm" className="border-white/20 text-white hover:bg-white/10">
         <Upload className="h-4 w-4 mr-2" />
@@ -325,17 +327,17 @@ export default function TabelaPrecos({
                       <TableHead className="text-center text-white/60">Largura</TableHead>
                       <TableHead className="text-center text-white/60">Altura</TableHead>
                       <TableHead className="text-right text-white/60">Valor Porta</TableHead>
-                      {!hideLucroColumn && <TableHead className="text-right hidden md:table-cell text-white/60">Lucro</TableHead>}
-                      {!hideLucroColumn && <TableHead className="text-right hidden md:table-cell text-white/60">% Lucro</TableHead>}
+                      {!hideLucroColumn && !readOnly && <TableHead className="text-right hidden md:table-cell text-white/60">Lucro</TableHead>}
+                      {!hideLucroColumn && !readOnly && <TableHead className="text-right hidden md:table-cell text-white/60">% Lucro</TableHead>}
                       <TableHead className="text-right hidden md:table-cell text-white/60">Valor Instalação</TableHead>
-                      <TableHead className="text-right hidden md:table-cell text-white/60">Lucro Instalação</TableHead>
-                      <TableHead className="text-right hidden md:table-cell text-white/60">% Lucro Inst.</TableHead>
+                      {!readOnly && <TableHead className="text-right hidden md:table-cell text-white/60">Lucro Instalação</TableHead>}
+                      {!readOnly && <TableHead className="text-right hidden md:table-cell text-white/60">% Lucro Inst.</TableHead>}
                       <TableHead className="text-right hidden md:table-cell text-white/60">Valor Pintura</TableHead>
-                      <TableHead className="text-right hidden md:table-cell text-white/60">Lucro Pintura</TableHead>
-                      <TableHead className="text-right hidden md:table-cell text-white/60">% Lucro Pint.</TableHead>
+                      {!readOnly && <TableHead className="text-right hidden md:table-cell text-white/60">Lucro Pintura</TableHead>}
+                      {!readOnly && <TableHead className="text-right hidden md:table-cell text-white/60">% Lucro Pint.</TableHead>}
                       {!hideTotalColumn && <TableHead className="text-right text-white/60">Total</TableHead>}
                       {!hideAcoesColumn && <TableHead className="text-center text-white/60">Montagem</TableHead>}
-                      {!hideAcoesColumn && <TableHead className="text-center w-24 text-white/60">Ações</TableHead>}
+                      {!hideAcoesColumn && !readOnly && <TableHead className="text-center w-24 text-white/60">Ações</TableHead>}
                     </TableRow>
                   </TableHeader>
                   <DndContext
@@ -361,7 +363,7 @@ export default function TabelaPrecos({
                               currency: 'BRL' 
                             })}
                           </TableCell>
-                          {!hideLucroColumn && (() => {
+                          {!hideLucroColumn && !readOnly && (() => {
                             if (lucroInfo.value === null) {
                               return (
                                 <TableCell className="text-right hidden md:table-cell text-white/30">—</TableCell>
@@ -379,7 +381,7 @@ export default function TabelaPrecos({
                               </TableCell>
                             );
                           })()}
-                          {!hideLucroColumn && (() => {
+                          {!hideLucroColumn && !readOnly && (() => {
                             if (lucroInfo.value === null) {
                               return (
                                 <TableCell className="text-right hidden md:table-cell text-white/30">—</TableCell>
@@ -400,22 +402,26 @@ export default function TabelaPrecos({
                               currency: 'BRL' 
                             })}
                           </TableCell>
-                          <TableCell className="text-right hidden md:table-cell text-emerald-400">
-                            {(item.valor_instalacao * (instalLucroPct / 100)).toLocaleString('pt-BR', {
-                              style: 'currency',
-                              currency: 'BRL'
-                            })}
-                          </TableCell>
-                          <TableCell className="text-right hidden md:table-cell font-medium text-orange-400">
-                            {instalLucroPct.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%
-                          </TableCell>
+                          {!readOnly && (
+                            <TableCell className="text-right hidden md:table-cell text-emerald-400">
+                              {(item.valor_instalacao * (instalLucroPct / 100)).toLocaleString('pt-BR', {
+                                style: 'currency',
+                                currency: 'BRL'
+                              })}
+                            </TableCell>
+                          )}
+                          {!readOnly && (
+                            <TableCell className="text-right hidden md:table-cell font-medium text-orange-400">
+                              {instalLucroPct.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%
+                            </TableCell>
+                          )}
                           <TableCell className="text-right hidden md:table-cell text-white/70">
                             {item.valor_pintura.toLocaleString('pt-BR', { 
                               style: 'currency', 
                               currency: 'BRL' 
                             })}
                           </TableCell>
-                          {(() => {
+                          {!readOnly && (() => {
                             const p = getPinturaLucro(item);
                             return (
                               <>
@@ -440,7 +446,15 @@ export default function TabelaPrecos({
                           </TableCell>}
                           {!hideAcoesColumn && (
                             <TableCell className="text-center">
-                              {lucroInfo.fromMontagem ? (
+                              {readOnly ? (
+                                lucroInfo.fromMontagem ? (
+                                  <span className="text-xs text-white/60">
+                                    {lucroInfo.count} {lucroInfo.count === 1 ? 'item' : 'itens'}
+                                  </span>
+                                ) : (
+                                  <span className="text-xs text-white/30">—</span>
+                                )
+                              ) : lucroInfo.fromMontagem ? (
                                 <Button
                                   variant="ghost"
                                   size="sm"
@@ -465,7 +479,7 @@ export default function TabelaPrecos({
                               )}
                             </TableCell>
                           )}
-                          {!hideAcoesColumn && <TableCell>
+                          {!hideAcoesColumn && !readOnly && <TableCell>
                             <div className="flex items-center justify-center gap-1">
                               <Button
                                 variant="ghost"
