@@ -156,6 +156,23 @@ export default function VendaNovaMinimalista() {
   const [autorizadorId, setAutorizadorId] = useState<string | null>(null);
   const [tipoAutorizacaoNecessaria, setTipoAutorizacaoNecessaria] = useState<'responsavel_setor' | 'master' | null>(null);
   const [limitePermitido, setLimitePermitido] = useState<number>(10);
+
+  // Autorização concedida ao APLICAR o ajuste global (evita re-prompt no submit).
+  const [autorizacaoAjuste, setAutorizacaoAjuste] = useState<{
+    autorizadorId: string;
+    senha: string;
+    tipo: 'responsavel_setor' | 'master';
+    percentualAutorizado: number;
+  } | null>(null);
+
+  // Modal de autorização disparado pela seção de Desconto/Acréscimo.
+  const [aplicarAjusteAutorizacaoOpen, setAplicarAjusteAutorizacaoOpen] = useState(false);
+  const [pendingAjusteRascunho, setPendingAjusteRascunho] = useState<AjusteGlobal | null>(null);
+  const [pendingAjusteValidacao, setPendingAjusteValidacao] = useState<{
+    percentual: number;
+    limite: number;
+    tipo: 'responsavel_setor' | 'master';
+  } | null>(null);
   
   const [valorCredito, setValorCredito] = useState<number>(0);
   const [percentualCredito, setPercentualCredito] = useState<number>(0);
@@ -341,6 +358,83 @@ export default function VendaNovaMinimalista() {
   const tipoAutorizacaoNecessariaMemo = useMemo(() => {
     return getTipoAutorizacaoNecessaria(validacaoDescontoMemo);
   }, [validacaoDescontoMemo]);
+
+  // Aplica um rascunho de ajuste global. Se exigir autorização, abre o modal.
+  const aplicarAjusteGlobal = (rascunho: AjusteGlobal) => {
+    // Acréscimo, ou valor zero — sem validação.
+    if (rascunho.tipo === 'acrescimo' || !rascunho.valor || rascunho.valor <= 0) {
+      setAjusteGlobal(rascunho);
+      setAutorizacaoAjuste(null);
+      return;
+    }
+
+    // Simula portas com o rascunho aplicado para validar percentual real.
+    const ajusteAbs = rascunho.unidade === '%'
+      ? Math.max(0, subtotalProdutosMemo) * (rascunho.valor / 100)
+      : rascunho.valor;
+    const bases = portas.map(p => (p.valor_produto + p.valor_pintura + p.valor_instalacao) * (p.quantidade || 1));
+    const totalBase = bases.reduce((a, b) => a + b, 0);
+    const portasSimuladas: ProdutoVenda[] = totalBase > 0
+      ? portas.map((p, i) => {
+          const parcela = ajusteAbs * (bases[i] / totalBase);
+          const descontoBase = p.tipo_desconto === 'valor'
+            ? (p.desconto_valor || 0)
+            : bases[i] * ((p.desconto_percentual || 0) / 100);
+          return {
+            ...p,
+            tipo_desconto: 'valor' as const,
+            desconto_percentual: 0,
+            desconto_valor: descontoBase + parcela,
+          };
+        })
+      : portas;
+
+    const validacao = validarDesconto(
+      portasSimuladas,
+      formData.forma_pagamento,
+      formData.venda_presencial === false,
+      configLimitesObj
+    );
+
+    if (validacao.dentroDoLimite) {
+      setAjusteGlobal(rascunho);
+      setAutorizacaoAjuste(null);
+      return;
+    }
+
+    const tipoAuth = getTipoAutorizacaoNecessaria(validacao);
+    if (!tipoAuth) {
+      setAjusteGlobal(rascunho);
+      setAutorizacaoAjuste(null);
+      return;
+    }
+
+    setPendingAjusteRascunho(rascunho);
+    setPendingAjusteValidacao({
+      percentual: validacao.percentualDesconto,
+      limite: validacao.limitePermitido,
+      tipo: tipoAuth,
+    });
+    setAplicarAjusteAutorizacaoOpen(true);
+  };
+
+  const limparAjusteGlobal = () => {
+    setAjusteGlobal({ tipo: 'desconto', unidade: '%', valor: 0 });
+    setAutorizacaoAjuste(null);
+  };
+
+  const handleAjusteAutorizado = (autorizadorUserId: string, senhaDigitada: string) => {
+    if (!pendingAjusteRascunho || !pendingAjusteValidacao) return;
+    setAjusteGlobal(pendingAjusteRascunho);
+    setAutorizacaoAjuste({
+      autorizadorId: autorizadorUserId,
+      senha: senhaDigitada,
+      tipo: pendingAjusteValidacao.tipo,
+      percentualAutorizado: pendingAjusteValidacao.percentual,
+    });
+    setPendingAjusteRascunho(null);
+    setPendingAjusteValidacao(null);
+  };
 
   // Sugestão de frete baseada na cidade/estado
   const freteSugerido = useMemo(() => {
@@ -578,6 +672,38 @@ export default function VendaNovaMinimalista() {
 
     const tipoAutorizacao = getTipoAutorizacaoNecessaria(validacao);
     if (tipoAutorizacao) {
+      // Se o usuário já autorizou esse desconto no momento de Aplicar, reusa.
+      if (
+        autorizacaoAjuste &&
+        user &&
+        validacao.percentualDesconto <= autorizacaoAjuste.percentualAutorizado + 0.01 &&
+        (autorizacaoAjuste.tipo === tipoAutorizacao || autorizacaoAjuste.tipo === 'master')
+      ) {
+        try {
+          await createVenda({
+            vendaData: {
+              ...formData,
+              forma_pagamento: pagamentoData.metodos[0]?.tipo || '',
+              data_venda: `${format(dataVenda, 'yyyy-MM-dd')}T12:00:00.000Z`,
+            },
+            portas: portasComAjusteGlobal,
+            pagamentoData,
+            autorizacaoDesconto: {
+              autorizado_por: autorizacaoAjuste.autorizadorId,
+              solicitado_por: user.id,
+              percentual_desconto: validacao.percentualDesconto,
+              senha_usada: autorizacaoAjuste.senha,
+              tipo_autorizacao: autorizacaoAjuste.tipo,
+            },
+            creditoVenda: { valorCredito: 0, percentualCredito: 0 },
+          });
+          navigate('/vendas/minhas-vendas');
+        } catch (error) {
+          console.error('Erro ao criar venda:', error);
+        }
+        return;
+      }
+
       setProdutosComDesconto(portasComAjusteGlobal);
       setTipoAutorizacaoNecessaria(tipoAutorizacao);
       setLimitePermitido(validacao.limitePermitido);
@@ -783,8 +909,9 @@ export default function VendaNovaMinimalista() {
 
         {/* Desconto / Acréscimo Global */}
         <DescontoAcrescimoSection
-          ajuste={ajusteGlobal}
-          onChange={setAjusteGlobal}
+          ajusteAplicado={ajusteGlobal}
+          onAplicar={aplicarAjusteGlobal}
+          onLimpar={limparAjusteGlobal}
           valorBase={subtotalProdutosMemo}
           disabled={valorCredito > 0 && ajusteGlobal.tipo === 'desconto'}
           disabledReason={valorCredito > 0 ? 'Desconto indisponível: existe crédito aplicado à venda.' : undefined}
@@ -1155,6 +1282,23 @@ export default function VendaNovaMinimalista() {
           percentualDesconto={validarDesconto(portas, formData.forma_pagamento, formData.venda_presencial === false).percentualDesconto}
           tipoAutorizacao={tipoAutorizacaoNecessaria}
           limitePermitido={limitePermitido}
+        />
+      )}
+
+      {pendingAjusteValidacao && (
+        <AutorizacaoDescontoModal
+          open={aplicarAjusteAutorizacaoOpen}
+          onOpenChange={(open) => {
+            setAplicarAjusteAutorizacaoOpen(open);
+            if (!open) {
+              setPendingAjusteRascunho(null);
+              setPendingAjusteValidacao(null);
+            }
+          }}
+          onAutorizado={handleAjusteAutorizado}
+          percentualDesconto={pendingAjusteValidacao.percentual}
+          tipoAutorizacao={pendingAjusteValidacao.tipo}
+          limitePermitido={pendingAjusteValidacao.limite}
         />
       )}
 
