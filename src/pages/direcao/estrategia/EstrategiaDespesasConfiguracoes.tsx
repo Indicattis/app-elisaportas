@@ -1680,7 +1680,7 @@ function GastosDoTipoExpand({
       {mes && (
         <tr className="bg-white/[0.015] border-b border-white/10" onClick={stop}>
           <td />
-          <td colSpan={3 + catCols + 4} className="py-1.5 pl-1">
+          <td colSpan={5 + catCols} className="py-1.5 pl-1">
             <button
               type="button"
               onClick={() => setOpen(true)}
