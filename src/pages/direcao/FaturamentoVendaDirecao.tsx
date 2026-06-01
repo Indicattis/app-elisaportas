@@ -312,8 +312,27 @@ export default function FaturamentoVendaDirecao() {
                     <TrendingUp className="w-5 h-5 text-green-400" />
                   </div>
                   <div>
-                    <p className="text-xs text-white/50 uppercase">Lucro Bruto</p>
-                    <p className="text-lg font-semibold text-green-400">{formatCurrency(lucroBruto)}</p>
+                    <p className="text-xs text-white/50 uppercase">
+                      {debitoMaster.valorExcedente > 0 ? 'Lucro Líquido' : 'Lucro Bruto'}
+                    </p>
+                    <p className="text-lg font-semibold text-green-400">
+                      {formatCurrency(lucroLiquido)}
+                    </p>
+                    {debitoMaster.valorExcedente > 0 && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <p className="text-[10px] text-red-300 mt-0.5 cursor-help">
+                            -{formatCurrency(debitoMaster.valorExcedente)} (desconto master)
+                          </p>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          Desconto master de {debitoMaster.percentualMaster.toFixed(1)}%
+                          excedeu o limite de {debitoMaster.limiteMaster.toFixed(1)}%
+                          ({debitoMaster.excedentePct.toFixed(1)}% excedente). O valor
+                          em R$ é debitado do lucro da venda.
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
                   </div>
                 </div>
               </CardContent>
