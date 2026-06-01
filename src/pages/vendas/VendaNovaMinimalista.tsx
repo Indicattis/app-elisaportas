@@ -337,8 +337,8 @@ export default function VendaNovaMinimalista() {
   }), [configLimites]);
 
   const validacaoDescontoMemo = useMemo(() => {
-    return validarDesconto(portas, formData.forma_pagamento, formData.venda_presencial === false, configLimitesObj);
-  }, [portas, formData.forma_pagamento, formData.venda_presencial, configLimitesObj]);
+    return validarDesconto(portasComAjusteGlobal, formData.forma_pagamento, formData.venda_presencial === false, configLimitesObj);
+  }, [portasComAjusteGlobal, formData.forma_pagamento, formData.venda_presencial, configLimitesObj]);
 
   const tipoAutorizacaoNecessariaMemo = useMemo(() => {
     return getTipoAutorizacaoNecessaria(validacaoDescontoMemo);
