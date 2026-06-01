@@ -1228,6 +1228,21 @@ export default function ProdutosFabrica({
                 groups[indexMap.get(key)!].items.push(p);
               });
 
+              const colSpanCount = (() => {
+                let count = 2; // drag + produto
+                if (!hideSku) count++;
+                if (!hideStockColumns) count += 5; // fornecedor + categoria + est.min + est.max + atual
+                if (!hideMateriaPrima) count++;
+                if (!hidePedidos) count++;
+                if (!hideConferir) count++;
+                count++; // custo
+                if (!hideStockColumns) count++; // unidade
+                if (showPrecoVenda) count += 5;
+                if (!hideStockColumns) count++; // valor total
+                count++; // acoes
+                return count;
+              })();
+
               return (
                 <div className="flex flex-col gap-6">
                   {groups.map((g) => (
