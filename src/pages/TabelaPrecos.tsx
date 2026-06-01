@@ -402,15 +402,19 @@ export default function TabelaPrecos({
                               currency: 'BRL' 
                             })}
                           </TableCell>
-                          <TableCell className="text-right hidden md:table-cell text-emerald-400">
-                            {(item.valor_instalacao * (instalLucroPct / 100)).toLocaleString('pt-BR', {
-                              style: 'currency',
-                              currency: 'BRL'
-                            })}
-                          </TableCell>
-                          <TableCell className="text-right hidden md:table-cell font-medium text-orange-400">
-                            {instalLucroPct.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%
-                          </TableCell>
+                          {!readOnly && (
+                            <TableCell className="text-right hidden md:table-cell text-emerald-400">
+                              {(item.valor_instalacao * (instalLucroPct / 100)).toLocaleString('pt-BR', {
+                                style: 'currency',
+                                currency: 'BRL'
+                              })}
+                            </TableCell>
+                          )}
+                          {!readOnly && (
+                            <TableCell className="text-right hidden md:table-cell font-medium text-orange-400">
+                              {instalLucroPct.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%
+                            </TableCell>
+                          )}
                           <TableCell className="text-right hidden md:table-cell text-white/70">
                             {item.valor_pintura.toLocaleString('pt-BR', { 
                               style: 'currency', 
