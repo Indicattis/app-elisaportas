@@ -921,6 +921,7 @@ function TiposCustoBlock({
   clearOverride?: (id: string) => Promise<boolean>;
   hasOverride?: (id: string) => boolean;
   mesReferencia?: string | null;
+  contagemGastos?: Record<string, number>;
 }) {
   const [nome, setNome] = useState('');
   const [descricao, setDescricao] = useState('');
