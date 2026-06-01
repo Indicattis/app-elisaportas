@@ -245,30 +245,6 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
           </div>
         )}
 
-        {/* Checkbox Pagamento na Entrega */}
-        <div 
-          className={`flex items-start space-x-3 p-3 border rounded-lg transition-all ${
-            paymentData.pagamento_na_entrega 
-              ? 'border-amber-500/50 bg-amber-500/10' 
-              : 'border-white/10 bg-white/5'
-          }`}
-        >
-          <Checkbox
-            id="pagamento-na-entrega"
-            checked={paymentData.pagamento_na_entrega}
-            onCheckedChange={(checked) => onChange({ ...paymentData, pagamento_na_entrega: !!checked })}
-            className="mt-0.5"
-          />
-          <div className="flex-1">
-            <Label htmlFor="pagamento-na-entrega" className="cursor-pointer text-sm font-medium text-white">
-              Pagamento será feito na entrega/instalação
-            </Label>
-            <p className="text-xs text-white/50 mt-1">
-              O valor total será cobrado no momento da entrega ou instalação
-            </p>
-          </div>
-        </div>
-
         {/* Toggle para 2 métodos */}
         <div className={cn(
           "flex items-center space-x-2 p-2.5 border rounded-md border-white/10 bg-white/5",
@@ -357,6 +333,31 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
             )}
           </>
         )}
+
+        {/* Checkbox Pagamento na Entrega */}
+        <div 
+          className={`flex items-start space-x-3 p-3 border rounded-lg transition-all ${
+            paymentData.pagamento_na_entrega 
+              ? 'border-amber-500/50 bg-amber-500/10' 
+              : 'border-white/10 bg-white/5'
+          }`}
+        >
+          <Checkbox
+            id="pagamento-na-entrega"
+            checked={paymentData.pagamento_na_entrega}
+            onCheckedChange={(checked) => onChange({ ...paymentData, pagamento_na_entrega: !!checked })}
+            className="mt-0.5"
+          />
+          <div className="flex-1">
+            <Label htmlFor="pagamento-na-entrega" className="cursor-pointer text-sm font-medium text-white">
+              Pagamento será feito na entrega/instalação
+            </Label>
+            <p className="text-xs text-white/50 mt-1">
+              O valor total será cobrado no momento da entrega ou instalação
+            </p>
+          </div>
+        </div>
+
 
         {/* Resumo do pagamento */}
         {(metodo1.tipo || (paymentData.usar_dois_metodos && metodo2.tipo)) && (
