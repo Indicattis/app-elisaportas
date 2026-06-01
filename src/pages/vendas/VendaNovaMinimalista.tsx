@@ -877,8 +877,9 @@ export default function VendaNovaMinimalista() {
 
         {/* Desconto / Acréscimo Global */}
         <DescontoAcrescimoSection
-          ajuste={ajusteGlobal}
-          onChange={setAjusteGlobal}
+          ajusteAplicado={ajusteGlobal}
+          onAplicar={aplicarAjusteGlobal}
+          onLimpar={limparAjusteGlobal}
           valorBase={subtotalProdutosMemo}
           disabled={valorCredito > 0 && ajusteGlobal.tipo === 'desconto'}
           disabledReason={valorCredito > 0 ? 'Desconto indisponível: existe crédito aplicado à venda.' : undefined}
