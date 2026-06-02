@@ -44,7 +44,8 @@ export function GerarContratoElisaModal({ open, onOpenChange, vendaId }: Props) 
         .from('vendas')
         .select(`
           *,
-          produtos:produtos_vendas(*, cor:catalogo_cores(nome))
+          produtos:produtos_vendas(*, cor:catalogo_cores(nome)),
+          cliente:clientes(endereco, bairro, cidade, estado, cep)
         `)
         .eq('id', vendaId)
         .maybeSingle();
@@ -76,11 +77,14 @@ export function GerarContratoElisaModal({ open, onOpenChange, vendaId }: Props) 
         new Set(portas.map((p: any) => p.cor?.nome).filter(Boolean))
       ).join(', ');
 
+      const cliente = (venda as any).cliente || {};
       const enderecoCompleto = [
-        venda.endereco,
-        venda.bairro,
-        venda.cidade && venda.estado ? `${venda.cidade}/${venda.estado}` : venda.cidade,
-        venda.cep ? `CEP ${venda.cep}` : '',
+        cliente.endereco,
+        venda.bairro || cliente.bairro,
+        venda.cidade && venda.estado
+          ? `${venda.cidade}/${venda.estado}`
+          : venda.cidade || cliente.cidade,
+        (venda.cep || cliente.cep) ? `CEP ${venda.cep || cliente.cep}` : '',
       ]
         .filter(Boolean)
         .join(', ');
