@@ -1,30 +1,64 @@
-## Problema
+## Objetivo
 
-Em `/vendas/minhas-vendas/nova`, ao adicionar um item de catálogo como **Meia cana lisa - 0,70mm** (cadastrado em `custos_itens.unidade = 'M'` com `preco_venda = 11,00/m`), o sistema trata o item como unitário e cobra R$ 11,00 por peça, ignorando o tamanho real. O custo e o lucro do item são calculados por metro na Estratégia, então a venda precisa usar a mesma base.
+Adicionar um botão **"Contratos"** no hub `/vendas` que abra uma página onde o usuário escolhe uma venda existente, revisa/edita os campos amarelos do modelo "CONTRATO GRUPO ELISA" e gera um PDF. Cada PDF gerado fica salvo no histórico vinculado à venda.
 
-Causa: em `src/components/vendas/SelecionarAcessoriosModal.tsx` a checagem é literal:
+## Mudanças
 
-```ts
-['metro', 'kg', 'litro'].includes((item.unidade || '').toLowerCase())
-```
+### 1. Hub `/vendas` (`src/pages/vendas/VendasHub.tsx`)
+- Acrescenta item de menu **Contratos** (ícone `FileSignature`) apontando para `/vendas/contratos`.
 
-As unidades reais no banco são `'M'`, `'Un'`, `'UN'` (e o utilitário `utils/unidadesMedida.ts` já normaliza `m`, `kg`, `l`, `m2`, `g`, `ml`, `cm` como decimais via `discreta=false`). Como `'m'` ≠ `'metro'`, o item cai no ramo "unitário" e perde o campo Tamanho.
+### 2. Nova rota `/vendas/contratos` (`src/pages/vendas/ContratosVendas.tsx`)
+Lista as vendas do atendente logado com busca por cliente/CPF. Cada linha tem:
+- Botão **Gerar Contrato** → abre modal de edição.
+- Lista expansível com contratos já gerados para a venda (download / excluir), reutilizando a tabela `contratos_vendas` existente.
 
-## Solução
+Registrar a rota em `src/App.tsx` (lazy import, dentro do mesmo guard de `/vendas`).
 
-Trocar a heurística literal pelo helper já existente `getUnidade(unidade).discreta` de `src/utils/unidadesMedida.ts`, que cobre todas as variações (`M`, `metro`, `m²`, `kg`, `l`, etc.) e devolve a abreviação correta.
+### 3. Modal de edição (`src/components/contratos/GerarContratoElisaModal.tsx`)
+Pré-preenche os campos a partir da venda (cliente, endereço, CPF/CNPJ, valor total, forma de pagamento, lista de produtos) e mostra um formulário com os blocos amarelos editáveis:
 
-### Alterações em `src/components/vendas/SelecionarAcessoriosModal.tsx`
+- Comprador (nome, CPF/CNPJ, endereço completo) — pré-preenchidos
+- Quantidade de portas e descrição do material — pré-preenchidos da venda
+- Quantidade de motores e detalhes (kg, RPM)
+- Cor da pintura (ou "GALVANIZADA")
+- Dimensões da porta
+- Valor total (pré-preenchido)
+- Condições de pagamento (texto livre, pré-preenchido com forma/parcelas da venda)
+- Cidade/data do fechamento
 
-1. Importar `getUnidade` de `@/utils/unidadesMedida`.
-2. Substituir todas as 4 ocorrências de `['metro','kg','litro'].includes(...)` por `!getUnidade(item.unidade).discreta` (item decimal = não discreto e diferente de `un`/`pc`/`rolo`/`cx`/`bobina`).
-3. Substituir o bloco manual de `unidadeLabel` (`metro→m`, `kg→kg`, `litro→L`) por `getUnidade(item.unidade).abreviacao`.
-4. Manter a fórmula `valorUnitario = preco * tamanho` quando decimal — agora `preco_venda` (R$/m) × tamanho (m) gera o valor correto da linha, igual ao usado para custo/lucro na Estratégia.
+Botão **Gerar e Salvar Contrato** → gera PDF, faz upload no bucket `contratos-vendas` e insere registro em `contratos_vendas` (reusa `useContratosVendas.uploadContrato`).
 
-Nenhuma mudança em hooks, banco ou no `ProdutoVendaForm`/`TabelaProdutosVendidos` — eles já recebem `unidade` no payload e renderizam via os mesmos helpers.
+### 4. Gerador de PDF (`src/utils/contratoElisaPDFGenerator.ts`)
+Função nova `generateContratoElisaPDF(dados)` usando jsPDF com o texto fixo das 13 cláusulas do modelo anexado. As lacunas amarelas são injetadas a partir do formulário. Inclui:
+- Header com logo + dados do GRUPO ELISA (CNPJ 20.462.028/0001-58, endereço fixo do contrato).
+- Cláusulas 1 a 13 (texto literal do anexo).
+- Bloco final com cidade, data, assinaturas de VENDEDOR / COMPRADOR e duas testemunhas.
+- Footer com numeração de páginas.
 
-## Validação
+Retorna `Blob` (para subir no storage) e também aciona download local.
 
-- Selecionar **Meia cana lisa - 0,70mm** (unidade `M`, R$ 11,00/m) no modal → deve exibir campo Tamanho obrigatório com sufixo `m`, e a linha gravada deve ter `valor_produto = 11 × tamanho` e `valor_total = valor_produto × quantidade`.
-- Itens com unidade `Un`/`UN` continuam sem campo Tamanho (comportamento atual preservado).
-- `bunx tsc --noEmit` limpo.
+### 5. Sem mudanças de banco
+Aproveita a tabela `contratos_vendas` e o bucket `contratos-vendas` que já existem (memória `assinatura-contrato`). O `template_id` fica nulo (contrato gerado de modelo fixo, não da tabela `contratos_templates`).
+
+## Detalhes técnicos
+
+- Mapeamento dos campos amarelos:
+  | Amarelo do modelo | Origem |
+  |---|---|
+  | Nome + CPF/CNPJ + endereço comprador | `vendas.cliente_nome`, `cpf_cliente`, `endereco/bairro/cidade/cep` |
+  | Qtd. de portas | soma de `produtos_vendas.quantidade` onde `tipo_produto='porta'` |
+  | Material detalhado | descrição dos itens da venda |
+  | Qtd. de motores | input manual (pré: nº de portas) |
+  | Cor | `produtos_vendas.cor` (via `catalogo_cores`) ou "GALVANIZADA" |
+  | Dimensões | concat de `largura x altura` dos itens porta |
+  | Valor total | `vendas.valor_venda` |
+  | Condição de pagamento | texto livre, pré-preenchido com `forma_pagamento` + `numero_parcelas` |
+
+- Tipografia/estilo: helvetica 10pt corpo, 14pt títulos de cláusula, margens 20mm, A4. Texto justificado via `splitTextToSize`.
+- Aestética visual da página (lista/modal): glassmorphism padrão do projeto (`bg-white/5`, `backdrop-blur-xl`, `border-white/10`, gradiente azul).
+- Nome do arquivo: `contrato-elisa-{venda_id8}-{timestamp}.pdf`.
+
+## Fora do escopo
+- Não mexer no fluxo de "Assinatura Contrato" existente (`vendas.contrato_url`). Esse continua sendo upload manual do contrato assinado.
+- Não criar editor de template (modelo é fixo neste contrato).
+- Não criar nova tabela nem alterar schema.
