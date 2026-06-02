@@ -92,6 +92,7 @@ import Vendas from "./pages/Vendas";
 import VendasNova from "./pages/VendasNova";
 import ContratoVendas from "./pages/ContratoVendas";
 import ContratoTemplates from "./pages/ContratoTemplates";
+import ContratosVendasHub from "./pages/vendas/ContratosVendas";
 import Suporte from "./pages/Suporte";
 import Clientes from "./pages/Clientes";
 import Fornecedores from "./pages/Fornecedores";
@@ -468,6 +469,7 @@ const App = () => (
                 <Route path="/vendas/meus-parceiros" element={<ProtectedRoute routeKey="vendas_hub"><MeusParceiros /></ProtectedRoute>} />
                 <Route path="/vendas/acompanhar-pedido" element={<ProtectedRoute routeKey="vendas_hub"><AcompanharPedido /></ProtectedRoute>} />
                 <Route path="/vendas/visitas-tecnicas" element={<ProtectedRoute routeKey="vendas_visitas_tecnicas"><VisitasTecnicas /></ProtectedRoute>} />
+                <Route path="/vendas/contratos" element={<ProtectedRoute routeKey="vendas_hub"><ContratosVendasHub /></ProtectedRoute>} />
 
                 {/* Hub da Fábrica Minimalista */}
                 <Route path="/fabrica" element={<ProtectedRoute routeKeyPrefix="fabrica_"><FabricaHub /></ProtectedRoute>} />
