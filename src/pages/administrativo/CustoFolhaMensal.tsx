@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format, startOfMonth, addMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Loader2, Save, Users } from "lucide-react";
+import { FileDown, Loader2, Save, Users } from "lucide-react";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { exportCustoFolhaMensalPDF } from "@/utils/custoFolhaMensalPDFGenerator";
 
 interface Colaborador {
   id: string;
@@ -286,6 +287,52 @@ export default function CustoFolhaMensal() {
 
   const loading = loadingColabs || loadingLanc;
 
+  const handleExportPDF = () => {
+    const linhas = colaboradores
+      .map((c) => {
+        const l = getLinha(c.id);
+        const sb = parseNum(l.salarioBase);
+        const ac = parseNum(l.ajudaCusto);
+        const he = parseNum(l.horasExtras);
+        const bn = parseNum(l.bonus);
+        const pa = parseNum(l.pensaoAlimenticia);
+        const pv = parseNum(l.previsao);
+        const ad = parseNum(l.adiantamento);
+        const pix = l.chavePix.trim();
+        const tot = sb + ac + he + bn - pa;
+        const hasData =
+          tot !== 0 || pv > 0 || ad > 0 || bn > 0 || pa > 0 || pix.length > 0 || l.pago || !!l.dataPagamento;
+        if (!hasData) return null;
+        return {
+          nome: c.nome,
+          salarioBase: sb,
+          ajudaCusto: ac,
+          horasExtras: he,
+          bonus: bn,
+          pensaoAlimenticia: pa,
+          total: tot,
+          previsao: pv,
+          adiantamento: ad,
+          pago: l.pago,
+          dataPagamento: l.dataPagamento || null,
+          chavePix: pix || null,
+        };
+      })
+      .filter(Boolean) as Parameters<typeof exportCustoFolhaMensalPDF>[2];
+
+    if (linhas.length === 0) {
+      toast.info("Nenhum lançamento para exportar neste mês.");
+      return;
+    }
+
+    exportCustoFolhaMensalPDF(
+      mesLabel,
+      mesIso,
+      linhas,
+      { ...totais, total },
+    );
+  };
+
   return (
     <MinimalistLayout
       title="Custo em Folha"
@@ -323,6 +370,17 @@ export default function CustoFolhaMensal() {
               })}
             </SelectContent>
           </Select>
+          <div className="ml-auto">
+            <Button
+              variant="outline"
+              onClick={handleExportPDF}
+              disabled={loading || colaboradores.length === 0}
+              className="border-white/20 bg-white/10 text-white hover:bg-white/15 hover:text-white"
+            >
+              <FileDown className="w-4 h-4 mr-2" />
+              Exportar PDF
+            </Button>
+          </div>
         </div>
 
         {/* Lista */}
