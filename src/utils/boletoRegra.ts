@@ -26,8 +26,9 @@ export function getIntervalosBoletoPermitidos(valorTotal: number): number[] {
 const round2 = (v: number) => Math.round(v * 100) / 100;
 
 export function pagamentoTemBoleto(p: PagamentoData): boolean {
-  if (p.metodos[0]?.tipo === "boleto") return true;
-  if (p.usar_dois_metodos && p.metodos[1]?.tipo === "boleto") return true;
+  // Regra de 70% entrada + 30% boleto desativada temporariamente.
+  // Retornando false aqui desativa os enforces de split/intervalo/UI banner.
+  void p;
   return false;
 }
 
