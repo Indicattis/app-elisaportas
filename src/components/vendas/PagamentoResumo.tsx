@@ -41,6 +41,13 @@ interface PagamentoResumoProps {
   compact?: boolean;
   /** Esconde o card de comprovante. */
   hideComprovante?: boolean;
+  /**
+   * Quando informado, reescala proporcionalmente os valores exibidos das
+   * parcelas para que a soma bata com este total. Útil quando descontos ou
+   * acréscimos foram aplicados após a geração das parcelas em contas_receber.
+   * Não altera o banco — apenas a exibição.
+   */
+  valorTotalEsperado?: number;
   className?: string;
 }
 
@@ -57,6 +64,7 @@ export function PagamentoResumo({
   contasReceber,
   compact = false,
   hideComprovante = false,
+  valorTotalEsperado,
   className,
 }: PagamentoResumoProps) {
   const empresaIds = Array.from(
@@ -105,6 +113,47 @@ export function PagamentoResumo({
   const isImg = (nome?: string | null) =>
     !!nome && /\.(png|jpg|jpeg|webp)$/i.test(nome);
 
+  // Reescalonamento de exibição: aplica fator proporcional às parcelas para
+  // refletir descontos/acréscimos da venda sem alterar o banco. A última
+  // parcela absorve a diferença de centavos para que a soma exibida bata
+  // exatamente com `valorTotalEsperado`.
+  const somaParcelasOriginal = contasReceber.reduce(
+    (s, p) => s + (Number(p.valor_parcela) || 0),
+    0
+  );
+  const reescalonar =
+    typeof valorTotalEsperado === "number" &&
+    valorTotalEsperado > 0 &&
+    somaParcelasOriginal > 0 &&
+    Math.abs(valorTotalEsperado - somaParcelasOriginal) > 0.01;
+  const fatorEscala = reescalonar
+    ? (valorTotalEsperado as number) / somaParcelasOriginal
+    : 1;
+
+  // Pré-calcula valores exibidos por parcela (com ajuste de centavos na última).
+  const valoresExibidosPorId = new Map<string, number>();
+  if (reescalonar) {
+    const ordenadas = [...contasReceber].sort(
+      (a, b) => (a.numero_parcela || 0) - (b.numero_parcela || 0)
+    );
+    let acumulado = 0;
+    ordenadas.forEach((p, idx) => {
+      const original = Number(p.valor_parcela) || 0;
+      let novo = Math.round(original * fatorEscala * 100) / 100;
+      if (idx === ordenadas.length - 1) {
+        novo = Math.round(((valorTotalEsperado as number) - acumulado) * 100) / 100;
+      }
+      acumulado += novo;
+      valoresExibidosPorId.set(p.id, novo);
+    });
+  }
+  const getValorExibido = (p: ParcelaLike) => {
+    const original = Number(p.valor_parcela) || 0;
+    if (!reescalonar) return original;
+    const v = valoresExibidosPorId.get(p.id);
+    return v ?? original;
+  };
+
   return (
     <div className={cn("space-y-4", className)}>
       <div className="rounded-xl bg-white/5 border border-white/10 backdrop-blur-xl p-4 space-y-4">
@@ -122,6 +171,12 @@ export function PagamentoResumo({
           )}
         </div>
 
+        {reescalonar && (
+          <p className="text-[11px] text-amber-300/80 bg-amber-500/10 border border-amber-500/20 rounded-md px-2 py-1.5">
+            Valores das parcelas ajustados para refletir descontos/acréscimos aplicados na venda.
+          </p>
+        )}
+
         {grupos.length === 0 ? (
           <p className="text-sm text-white/40">
             Nenhuma informação de pagamento registrada nesta venda.
@@ -130,7 +185,7 @@ export function PagamentoResumo({
           <div className="space-y-3">
             {grupos.map((g, idx) => {
               const subtotal = g.parcelas.reduce(
-                (s, p) => s + (p.valor_parcela || 0),
+                (s, p) => s + getValorExibido(p),
                 0
               );
               const pagas = g.parcelas.filter((p) => p.status === "pago").length;
@@ -197,7 +252,7 @@ export function PagamentoResumo({
                               {formatDateBR(p.data_vencimento)}
                             </span>
                             <span className="text-right font-medium text-white/90">
-                              {formatCurrency(p.valor_parcela || 0)}
+                              {formatCurrency(getValorExibido(p))}
                             </span>
                             <span className="flex justify-center">
                               {isPago ? (
