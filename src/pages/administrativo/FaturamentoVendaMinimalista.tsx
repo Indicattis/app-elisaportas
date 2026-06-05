@@ -1454,7 +1454,43 @@ export default function FaturamentoVendaMinimalista() {
         {/* Forma de Pagamento — somente leitura: o que o vendedor cadastrou é a fonte da verdade.
             Alterações só podem ser feitas em /vendas/minhas-vendas/editar. */}
         {venda && (
-          <PagamentoResumo venda={venda} contasReceber={contasReceber} hideComprovante />
+          <PagamentoResumo
+            venda={venda}
+            contasReceber={contasReceber}
+            hideComprovante
+            valorTotalEsperado={(() => {
+              const lista = produtos || [];
+              const bruto = lista.reduce((s: number, p: any) => {
+                const qty = p.quantidade || 1;
+                return (
+                  s +
+                  ((p.valor_produto || 0) +
+                    (p.valor_pintura || 0) +
+                    (p.valor_instalacao || 0)) *
+                    qty
+                );
+              }, 0);
+              const descontos = lista.reduce((s: number, p: any) => {
+                const qty = p.quantidade || 1;
+                if (p.tipo_desconto === "valor") return s + (p.desconto_valor || 0);
+                if (p.tipo_desconto === "percentual" && p.desconto_percentual > 0) {
+                  const base =
+                    ((p.valor_produto || 0) +
+                      (p.valor_pintura || 0) +
+                      (p.valor_instalacao || 0)) *
+                    qty;
+                  return s + base * (p.desconto_percentual / 100);
+                }
+                return s;
+              }, 0);
+              return (
+                bruto -
+                descontos +
+                (venda.valor_frete || 0) +
+                (venda.valor_credito || 0)
+              );
+            })()}
+          />
         )}
 
         {/* Outras Informações da Venda */}
