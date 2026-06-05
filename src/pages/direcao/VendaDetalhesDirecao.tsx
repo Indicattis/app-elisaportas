@@ -165,6 +165,7 @@ export default function VendaDetalhesDirecao() {
             desconto_valor,
             descricao,
             observacao_item,
+            tabela_precos_porta_id,
             catalogo_cores(nome, codigo_hex)
           ),
           autorizacao_desconto:vendas_autorizacoes_desconto(
