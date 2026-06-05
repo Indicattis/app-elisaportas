@@ -147,10 +147,12 @@ export function PagamentoResumo({
       valoresExibidosPorId.set(p.id, novo);
     });
   }
-  const getValorExibido = (p: ParcelaLike) =>
-    reescalonar
-      ? valoresExibidosPorId.get(p.id) ?? Number(p.valor_parcela) || 0
-      : Number(p.valor_parcela) || 0;
+  const getValorExibido = (p: ParcelaLike) => {
+    const original = Number(p.valor_parcela) || 0;
+    if (!reescalonar) return original;
+    const v = valoresExibidosPorId.get(p.id);
+    return v ?? original;
+  };
 
   return (
     <div className={cn("space-y-4", className)}>
