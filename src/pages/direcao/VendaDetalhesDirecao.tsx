@@ -158,6 +158,9 @@ export default function VendaDetalhesDirecao() {
             quantidade,
             valor_produto,
             valor_total,
+            valor_pintura,
+            valor_instalacao,
+            tipo_desconto,
             desconto_percentual,
             desconto_valor,
             descricao,
@@ -632,7 +635,42 @@ export default function VendaDetalhesDirecao() {
         </div>
 
         {/* Forma de Pagamento — somente leitura (fonte: cadastro da venda) */}
-        <PagamentoResumo venda={venda} contasReceber={contasReceber} />
+        <PagamentoResumo
+          venda={venda}
+          contasReceber={contasReceber}
+          valorTotalEsperado={(() => {
+            const lista: any[] = (venda as any).produtos || [];
+            const bruto = lista.reduce((s, p) => {
+              const qty = p.quantidade || 1;
+              return (
+                s +
+                ((p.valor_produto || 0) +
+                  (p.valor_pintura || 0) +
+                  (p.valor_instalacao || 0)) *
+                  qty
+              );
+            }, 0);
+            const descontos = lista.reduce((s, p) => {
+              const qty = p.quantidade || 1;
+              if (p.tipo_desconto === "valor") return s + (p.desconto_valor || 0);
+              if (p.tipo_desconto === "percentual" && p.desconto_percentual > 0) {
+                const base =
+                  ((p.valor_produto || 0) +
+                    (p.valor_pintura || 0) +
+                    (p.valor_instalacao || 0)) *
+                  qty;
+                return s + base * (p.desconto_percentual / 100);
+              }
+              return s;
+            }, 0);
+            return (
+              bruto -
+              descontos +
+              (venda.valor_frete || 0) +
+              ((venda as any).valor_credito || 0)
+            );
+          })()}
+        />
 
         {/* Vendedor */}
         {venda.atendente && (
