@@ -99,6 +99,7 @@ export default function VendaDetalhesDirecao() {
   const [venda, setVenda] = useState<any>(null);
   const [contasReceber, setContasReceber] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [kitsRef, setKitsRef] = useState<Map<string, { id: string; descricao: string | null; largura: number; altura: number }>>(new Map());
   const [excluirModalOpen, setExcluirModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const { isAdmin } = useAuth();
@@ -139,6 +140,24 @@ export default function VendaDetalhesDirecao() {
     }
   }, [id]);
 
+  // Carrega os kits (tabela_precos_portas) referenciados pelos produtos da venda
+  // para exibir a descrição do kit junto ao produto.
+  useEffect(() => {
+    const lista: any[] = (venda as any)?.produtos || [];
+    const ids = Array.from(new Set(
+      lista.map((p) => p.tabela_precos_porta_id).filter((v): v is string => !!v)
+    ));
+    if (ids.length === 0) { setKitsRef(new Map()); return; }
+    (async () => {
+      const { data, error } = await supabase
+        .from('tabela_precos_portas')
+        .select('id, descricao, largura, altura')
+        .in('id', ids);
+      if (error || !data) return;
+      setKitsRef(new Map(data.map((k: any) => [k.id, k])));
+    })();
+  }, [venda]);
+
   const fetchVendaDetails = async () => {
     if (!id) return;
     
@@ -165,6 +184,7 @@ export default function VendaDetalhesDirecao() {
             desconto_valor,
             descricao,
             observacao_item,
+            tabela_precos_porta_id,
             catalogo_cores(nome, codigo_hex)
           ),
           autorizacao_desconto:vendas_autorizacoes_desconto(
@@ -462,13 +482,25 @@ export default function VendaDetalhesDirecao() {
                       <TableRow key={produto.id} className="border-white/10 hover:bg-blue-500/10 transition-colors">
                         <TableCell>{getTipoProdutoBadge(produto.tipo_produto)}</TableCell>
                         <TableCell className="text-white/80 max-w-[260px]">
-                          <span className="block truncate" title={produto.descricao || ''}>
-                            {produto.descricao && produto.descricao.trim().length > 0 ? (
-                              produto.descricao
-                            ) : (
-                              <span className="text-white/40">—</span>
-                            )}
-                          </span>
+                          <div className="flex flex-col">
+                            <span className="block truncate" title={produto.descricao || ''}>
+                              {produto.descricao && produto.descricao.trim().length > 0 ? (
+                                produto.descricao
+                              ) : (
+                                <span className="text-white/40">—</span>
+                              )}
+                            </span>
+                            {(() => {
+                              const kitId = (produto as any).tabela_precos_porta_id;
+                              const kit = kitId ? kitsRef.get(kitId) : null;
+                              if (!kit) return null;
+                              return (
+                                <span className="text-[10px] text-white/40 truncate">
+                                  Kit: {kit.descricao || `${kit.largura}m × ${kit.altura}m`}
+                                </span>
+                              );
+                            })()}
+                          </div>
                         </TableCell>
                         <TableCell>
                           {produto.catalogo_cores ? (
