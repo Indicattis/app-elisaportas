@@ -482,13 +482,25 @@ export default function VendaDetalhesDirecao() {
                       <TableRow key={produto.id} className="border-white/10 hover:bg-blue-500/10 transition-colors">
                         <TableCell>{getTipoProdutoBadge(produto.tipo_produto)}</TableCell>
                         <TableCell className="text-white/80 max-w-[260px]">
-                          <span className="block truncate" title={produto.descricao || ''}>
-                            {produto.descricao && produto.descricao.trim().length > 0 ? (
-                              produto.descricao
-                            ) : (
-                              <span className="text-white/40">—</span>
-                            )}
-                          </span>
+                          <div className="flex flex-col">
+                            <span className="block truncate" title={produto.descricao || ''}>
+                              {produto.descricao && produto.descricao.trim().length > 0 ? (
+                                produto.descricao
+                              ) : (
+                                <span className="text-white/40">—</span>
+                              )}
+                            </span>
+                            {(() => {
+                              const kitId = (produto as any).tabela_precos_porta_id;
+                              const kit = kitId ? kitsRef.get(kitId) : null;
+                              if (!kit) return null;
+                              return (
+                                <span className="text-[10px] text-white/40 truncate">
+                                  Kit: {kit.descricao || `${kit.largura}m × ${kit.altura}m`}
+                                </span>
+                              );
+                            })()}
+                          </div>
                         </TableCell>
                         <TableCell>
                           {produto.catalogo_cores ? (
