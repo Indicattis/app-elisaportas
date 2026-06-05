@@ -99,6 +99,7 @@ export default function VendaDetalhesDirecao() {
   const [venda, setVenda] = useState<any>(null);
   const [contasReceber, setContasReceber] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [kitsRef, setKitsRef] = useState<Map<string, { id: string; descricao: string | null; largura: number; altura: number }>>(new Map());
   const [excluirModalOpen, setExcluirModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const { isAdmin } = useAuth();
@@ -138,6 +139,24 @@ export default function VendaDetalhesDirecao() {
       fetchVendaDetails();
     }
   }, [id]);
+
+  // Carrega os kits (tabela_precos_portas) referenciados pelos produtos da venda
+  // para exibir a descrição do kit junto ao produto.
+  useEffect(() => {
+    const lista: any[] = (venda as any)?.produtos || [];
+    const ids = Array.from(new Set(
+      lista.map((p) => p.tabela_precos_porta_id).filter((v): v is string => !!v)
+    ));
+    if (ids.length === 0) { setKitsRef(new Map()); return; }
+    (async () => {
+      const { data, error } = await supabase
+        .from('tabela_precos_portas')
+        .select('id, descricao, largura, altura')
+        .in('id', ids);
+      if (error || !data) return;
+      setKitsRef(new Map(data.map((k: any) => [k.id, k])));
+    })();
+  }, [venda]);
 
   const fetchVendaDetails = async () => {
     if (!id) return;
