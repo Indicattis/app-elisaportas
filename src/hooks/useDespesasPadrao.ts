@@ -12,6 +12,7 @@ export interface DespesaPadrao {
   salario: number;
   salario_minimo: number;
   aux_combustivel: number;
+  bonificacao: number;
   hora_extra: number;
   insalubridade_pct: number;
   fgts_pct: number;
