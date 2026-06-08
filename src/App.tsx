@@ -456,7 +456,7 @@ const App = () => (
             <Route path="/marketing/conversoes" element={<ProtectedRoute routeKey="marketing_conversoes"><Conversoes /></ProtectedRoute>} />
             <Route path="/marketing/conversoes-meta" element={<ProtectedRoute routeKey="marketing_conversoes"><ConversoesMeta /></ProtectedRoute>} />
             <Route path="/marketing/conversoes-hub" element={<ProtectedRoute routeKey="marketing_conversoes"><ConversoesHub /></ProtectedRoute>} />
-            <Route path="/marketing/videos-ideias" element={<ProtectedRoute><VideosIdeias /></ProtectedRoute>} />
+             <Route path="/marketing/videos-ideias" element={<ProtectedRoute routeKey="marketing_videos_ideias"><VideosIdeias /></ProtectedRoute>} />
 
                 {/* Hub de Vendas Minimalista */}
                 <Route path="/vendas" element={<ProtectedRoute routeKeyPrefix="vendas_"><VendasHub /></ProtectedRoute>} />
@@ -464,8 +464,8 @@ const App = () => (
                 <Route path="/vendas/minhas-vendas/nova" element={<ProtectedRoute routeKey="vendas_hub"><VendaNovaMinimalista /></ProtectedRoute>} />
                 <Route path="/vendas/metas" element={<ProtectedRoute routeKey="vendas_hub"><MetasHistoricoVendas /></ProtectedRoute>} />
                 <Route path="/regras/vendas" element={<Navigate to="/vendas/regras" replace />} />
-                <Route path="/regras" element={<ProtectedRoute routeKey="vendas_hub"><RegrasHub /></ProtectedRoute>} />
-                <Route path="/passos-evolucao" element={<ProtectedRoute><PassosEvolucao /></ProtectedRoute>} />
+                <Route path="/regras" element={<ProtectedRoute routeKey="regras_hub"><RegrasHub /></ProtectedRoute>} />
+                <Route path="/passos-evolucao" element={<ProtectedRoute routeKey="passos_evolucao"><PassosEvolucao /></ProtectedRoute>} />
                 <Route path="/vendas/regras" element={<ProtectedRoute routeKey="vendas_hub"><RegrasVendasVisualizacao /></ProtectedRoute>} />
                 <Route path="/vendas/minhas-vendas/correcao" element={<ProtectedRoute routeKey="vendas_hub"><PedidoCorrecaoNovo /></ProtectedRoute>} />
                 <Route path="/vendas/minhas-vendas/editar/:id" element={<ProtectedRoute routeKey="vendas_hub"><MinhasVendasEditar /></ProtectedRoute>} />
@@ -477,7 +477,7 @@ const App = () => (
                 <Route path="/vendas/meus-parceiros" element={<ProtectedRoute routeKey="vendas_hub"><MeusParceiros /></ProtectedRoute>} />
                 <Route path="/vendas/acompanhar-pedido" element={<ProtectedRoute routeKey="vendas_hub"><AcompanharPedido /></ProtectedRoute>} />
                 <Route path="/vendas/visitas-tecnicas" element={<ProtectedRoute routeKey="vendas_visitas_tecnicas"><VisitasTecnicasCalendario /></ProtectedRoute>} />
-                <Route path="/vendas/visitas-tecnicas/realizadas" element={<ProtectedRoute routeKey="vendas_visitas_tecnicas"><VisitasTecnicasRealizadas /></ProtectedRoute>} />
+                <Route path="/vendas/visitas-tecnicas/realizadas" element={<ProtectedRoute routeKey="vendas_visitas_tecnicas_realizadas"><VisitasTecnicasRealizadas /></ProtectedRoute>} />
                 <Route path="/vendas/contratos" element={<ProtectedRoute routeKey="vendas_hub"><ContratosVendasHub /></ProtectedRoute>} />
                 <Route path="/vendas/precos" element={<ProtectedRoute routeKeyPrefix="vendas_"><PrecosVendas /></ProtectedRoute>} />
 
