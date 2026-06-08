@@ -9666,6 +9666,77 @@ export type Database = {
           },
         ]
       }
+      visitas_tecnicas_agendadas: {
+        Row: {
+          bairro: string | null
+          cep: string | null
+          cidade: string | null
+          complemento: string | null
+          created_at: string
+          created_by: string | null
+          data_visita: string
+          endereco: string | null
+          estado: string | null
+          hora_inicio: string
+          id: string
+          numero: string | null
+          observacoes: string | null
+          responsavel_id: string | null
+          status: string
+          telefone_contato: string | null
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
+          complemento?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_visita: string
+          endereco?: string | null
+          estado?: string | null
+          hora_inicio: string
+          id?: string
+          numero?: string | null
+          observacoes?: string | null
+          responsavel_id?: string | null
+          status?: string
+          telefone_contato?: string | null
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
+          complemento?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_visita?: string
+          endereco?: string | null
+          estado?: string | null
+          hora_inicio?: string
+          id?: string
+          numero?: string | null
+          observacoes?: string | null
+          responsavel_id?: string | null
+          status?: string
+          telefone_contato?: string | null
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visitas_tecnicas_agendadas_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       whatsapp_contador: {
         Row: {
           id: string
