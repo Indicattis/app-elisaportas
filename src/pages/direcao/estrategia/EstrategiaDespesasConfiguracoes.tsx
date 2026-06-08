@@ -1121,7 +1121,7 @@ function TiposCustoBlock({
 
       <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between px-2">
         <span className="text-xs text-white/50 uppercase tracking-wider">Total mensal estimado (ativos)</span>
-        <span className="text-base font-bold text-white">{formatCurrency(totalAtivos)}</span>
+        <span className="text-base font-bold text-white">{tipo === 'variavel' ? '—' : formatCurrency(totalAtivos)}</span>
       </div>
 
       <Dialog open={!!realocacaoDialog} onOpenChange={(open) => { if (!open) { setRealocacaoDialog(null); setDestinoId(''); setConfirmarOrfaos(false); } }}>
