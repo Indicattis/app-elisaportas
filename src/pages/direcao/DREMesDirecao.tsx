@@ -945,8 +945,8 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
   const showDespesas = viewMode === 'full' || viewMode === 'despesas';
   const showResumoFinal = viewMode === 'full' || viewMode === 'resultados';
   const [loading, setLoading] = useState(true);
-  const [faturamento, setFaturamento] = useState<FaturamentoProduto>({ portas: 0, pintura: 0, instalacoes: 0, avulsos: 0, total: 0 });
-  const [lucro, setLucro] = useState<FaturamentoProduto>({ portas: 0, pintura: 0, instalacoes: 0, avulsos: 0, total: 0 });
+  const [faturamento, setFaturamento] = useState<FaturamentoProduto>({ portas: 0, pintura: 0, instalacoes: 0, avulsos: 0, fretes: 0, total: 0 });
+  const [lucro, setLucro] = useState<FaturamentoProduto>({ portas: 0, pintura: 0, instalacoes: 0, avulsos: 0, fretes: 0, total: 0 });
   const [despesasFixas, setDespesasFixas] = useState<DespesaAgrupada[]>([]);
   const [despesasFolha, setDespesasFolha] = useState<DespesaAgrupada[]>([]);
   const [despesasVariaveis, setDespesasVariaveis] = useState<DespesaAgrupada[]>([]);
@@ -1205,8 +1205,8 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
 
         if (prodError) throw prodError;
 
-        const fat: FaturamentoProduto = { portas: 0, pintura: 0, instalacoes: 0, avulsos: 0, total: 0 };
-        const luc: FaturamentoProduto = { portas: 0, pintura: 0, instalacoes: 0, avulsos: 0, total: 0 };
+        const fat: FaturamentoProduto = { portas: 0, pintura: 0, instalacoes: 0, avulsos: 0, fretes: 0, total: 0 };
+        const luc: FaturamentoProduto = { portas: 0, pintura: 0, instalacoes: 0, avulsos: 0, fretes: 0, total: 0 };
 
         produtos?.forEach((p: any) => {
           const tipo = p.tipo_produto;
