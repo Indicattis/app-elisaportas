@@ -1861,14 +1861,24 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         const percBruto = faturamento.total > 0 ? (lucro.total / faturamento.total) * 100 : 0;
         const percLiquid = faturamento.total > 0 ? (lucroLiquido / faturamento.total) * 100 : 0;
         const colorClass = (v: number) => v >= 0 ? 'text-emerald-400' : 'text-red-400';
+        const despesaCols: Array<{ label: string; categoria: CategoriaDespesa; total: number }> = [
+          { label: 'Folha Salarial', categoria: 'salario', total: totalDespFolha },
+          { label: 'Despesas Fixas', categoria: 'fixa', total: totalDespFixas },
+          { label: 'Desp. Variáveis', categoria: 'variavel', total: totalDespVariaveis },
+          { label: 'Despesas de Imposto', categoria: 'imposto', total: totalDespImpostos },
+          { label: 'Investimentos', categoria: 'investimento', total: totalDespInvestimentos },
+          { label: 'Fornecedores', categoria: 'fornecedor', total: totalDespFornecedores },
+          { label: 'Financiamentos', categoria: 'financiamento', total: totalDespFinanciamentos },
+          { label: 'Fretes e Logística', categoria: 'frete', total: totalDespFretes },
+          { label: 'Autorizados', categoria: 'autorizado', total: totalDespAutorizados },
+        ];
         const items = [
           { label: 'Faturamento Bruto', value: formatCurrency(faturamento.total), color: 'text-white' },
           { label: '% Bruto', value: `${percBruto.toFixed(1)}%`, color: colorClass(percBruto) },
           { label: 'Fat. Líquido (Lucro Bruto)', value: formatCurrency(lucro.total), color: colorClass(lucro.total) },
-          { label: 'Despesas Fixas', value: formatCurrency(totalDespFixas), color: 'text-red-400' },
-          { label: 'Folha Salarial', value: formatCurrency(totalDespFolha), color: 'text-red-400' },
-          { label: 'Desp. Variáveis', value: formatCurrency(totalDespVariaveis), color: 'text-red-400' },
-          { label: 'Fretes e Logística', value: formatCurrency(totalDespFretes), color: 'text-red-400' },
+          ...despesaCols
+            .filter(c => debitaCat(c.categoria))
+            .map(c => ({ label: c.label, value: formatCurrency(c.total), color: 'text-red-400' })),
           { label: 'Lucro Líquido', value: formatCurrency(lucroLiquido), color: colorClass(lucroLiquido) },
           { label: '% Lucro Líquido', value: `${percLiquid.toFixed(1)}%`, color: colorClass(percLiquid) },
         ];
