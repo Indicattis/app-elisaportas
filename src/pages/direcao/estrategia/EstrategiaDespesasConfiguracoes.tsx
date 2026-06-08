@@ -441,15 +441,21 @@ function FolhaBlock({
                 <NumCell value={auxComb} onChange={setAuxComb} />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs text-white/70">Hora extra</Label>
-                <NumCell value={horaExtra} onChange={setHoraExtra} />
+                <Label className="text-xs text-white/70">Bonificação</Label>
+                <NumCell value={bonificacao} onChange={setBonificacao} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
+                <Label className="text-xs text-white/70">Hora extra</Label>
+                <NumCell value={horaExtra} onChange={setHoraExtra} />
+              </div>
+              <div className="space-y-1.5">
                 <Label className="text-xs text-white/70">Insalubridade %</Label>
                 <NumCell value={insalub} onChange={setInsalub} />
               </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label className="text-xs text-white/70">FGTS %</Label>
                 <NumCell value={fgts} onChange={setFgts} />
