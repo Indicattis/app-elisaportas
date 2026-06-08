@@ -25,8 +25,8 @@ import { useEstadosCidades } from '@/hooks/useEstadosCidades';
 export default function EstadoAutorizadosDirecao() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const contexto = pathname.startsWith('/logistica') ? 'logistica' : 'direcao';
-  const basePath = `/${contexto}/autorizados`;
+  const contexto = pathname.startsWith('/logistica') ? 'logistica' : pathname.startsWith('/autorizados') ? 'home' : 'direcao';
+  const basePath = contexto === 'home' ? '/autorizados' : `/${contexto}/autorizados`;
   const { estadoId } = useParams<{ estadoId: string }>();
   const [mounted, setMounted] = useState(false);
 
@@ -126,7 +126,7 @@ export default function EstadoAutorizadosDirecao() {
       <AnimatedBreadcrumb
         items={[
           { label: "Home", path: "/home" },
-          { label: contexto === 'logistica' ? "Logística" : "Direção", path: contexto === 'logistica' ? '/logistica' : '/direcao' },
+          ...(contexto !== 'home' ? [{ label: contexto === 'logistica' ? "Logística" : "Direção", path: contexto === 'logistica' ? '/logistica' : '/direcao' }] : []),
           { label: "Autorizados", path: basePath },
           { label: estadoSelecionado.nome }
         ]}

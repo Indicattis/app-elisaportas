@@ -23,7 +23,7 @@ const routePrefixMap: Record<string, string> = {
 
 const menuItems = [
   { label: "Direção", icon: Shield, path: "/direcao", isGold: true },
-  { label: "Autorizados", icon: Users, path: "/logistica/autorizados" },
+  { label: "Autorizados", icon: Users, path: "/autorizados" },
   { label: "Vídeos de Marketing", icon: Clapperboard, path: "/marketing/videos-ideias" },
   { label: "Marketing", icon: BarChart3, path: "/marketing" },
   { label: "Vendas", icon: ShoppingCart, path: "/vendas" },

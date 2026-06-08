@@ -36,7 +36,7 @@ import { DndContext, closestCenter, type DragEndEvent, PointerSensor, TouchSenso
 import { SortableContext, rectSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 
 interface Props {
-  contexto?: 'direcao' | 'logistica';
+  contexto?: 'direcao' | 'logistica' | 'home';
 }
 
 const STATUS_OPTIONS = [
@@ -110,8 +110,9 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
     useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } })
   );
 
-  const backPath = contexto === 'logistica' ? '/logistica' : '/direcao';
-  const breadcrumbLabel = contexto === 'logistica' ? 'Logística' : 'Direção';
+  const backPath = contexto === 'logistica' ? '/logistica' : contexto === 'home' ? '/home' : '/direcao';
+  const breadcrumbLabel = contexto === 'logistica' ? 'Logística' : contexto === 'home' ? 'Home' : 'Direção';
+  const routePrefix = contexto === 'home' ? '/autorizados' : `/${contexto}/autorizados`;
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -263,7 +264,7 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
     <>
       <Button
         size="sm"
-        onClick={() => navigate(`/${contexto}/autorizados/novo`)}
+        onClick={() => navigate(`${routePrefix}/novo`)}
         className="h-10 px-5 rounded-lg bg-gradient-to-r from-blue-500/20 to-blue-600/20 border border-blue-400/20 text-white shadow-lg shadow-blue-500/10 hover:from-blue-500/30 hover:to-blue-600/30 hover:scale-[1.02] transition-all duration-300 text-xs gap-1.5"
       >
         <Plus className="h-4 w-4" />
@@ -327,7 +328,7 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
                         <SortableEstadoCard
                           key={estado.id}
                           estado={estado}
-                          onClick={() => navigate(`/${contexto}/autorizados/estado/${estado.id}`)}
+                          onClick={() => navigate(`${routePrefix}/estado/${estado.id}`)}
                           isSelected={false}
                         />
                       ))}

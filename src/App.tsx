@@ -306,6 +306,7 @@ import FreteValoresTransportadoras from "./pages/logistica/FreteValoresTransport
 
 import PedidosPagosSemEntrega from "./pages/logistica/PedidosPagosSemEntrega";
 import AutorizadosLogistica from "./pages/logistica/AutorizadosLogistica";
+import AutorizadosHome from "./pages/AutorizadosHome";
 import AutorizadosPrecosDirecao from "./pages/direcao/AutorizadosPrecosDirecao";
 import EstadoAutorizadosDirecao from "./pages/direcao/EstadoAutorizadosDirecao";
 import NovoAutorizadoDirecao from "./pages/direcao/NovoAutorizadoDirecao";
@@ -590,11 +591,16 @@ const App = () => (
                 <Route path="/logistica/frete/internos" element={<ProtectedRoute routeKey="logistica_hub"><FreteMinimalista /></ProtectedRoute>} />
                 <Route path="/logistica/frete/transportadoras" element={<ProtectedRoute routeKey="logistica_hub"><FreteTransportadoras /></ProtectedRoute>} />
                 <Route path="/logistica/frete/valores" element={<ProtectedRoute routeKey="logistica_hub"><FreteValoresTransportadoras /></ProtectedRoute>} />
-                <Route path="/logistica/autorizados" element={<ProtectedRoute routeKey="logistica_autorizados"><AutorizadosLogistica /></ProtectedRoute>} />
-                <Route path="/logistica/autorizados/estado/:estadoId" element={<ProtectedRoute routeKey="logistica_autorizados"><EstadoAutorizadosDirecao /></ProtectedRoute>} />
-                <Route path="/logistica/autorizados/estado/:estadoId/novo" element={<ProtectedRoute routeKey="logistica_autorizados"><NovoAutorizadoDirecao /></ProtectedRoute>} />
-                <Route path="/logistica/autorizados/novo" element={<ProtectedRoute routeKey="logistica_autorizados"><NovoAutorizadoDirecao /></ProtectedRoute>} />
-                <Route path="/logistica/autorizados/:id/editar" element={<ProtectedRoute routeKey="logistica_autorizados"><EditarAutorizadoDirecao /></ProtectedRoute>} />
+                <Route path="/autorizados" element={<ProtectedRoute routeKey="logistica_autorizados"><AutorizadosHome /></ProtectedRoute>} />
+                <Route path="/autorizados/estado/:estadoId" element={<ProtectedRoute routeKey="logistica_autorizados"><EstadoAutorizadosDirecao /></ProtectedRoute>} />
+                <Route path="/autorizados/estado/:estadoId/novo" element={<ProtectedRoute routeKey="logistica_autorizados"><NovoAutorizadoDirecao /></ProtectedRoute>} />
+                <Route path="/autorizados/novo" element={<ProtectedRoute routeKey="logistica_autorizados"><NovoAutorizadoDirecao /></ProtectedRoute>} />
+                <Route path="/autorizados/:id/editar" element={<ProtectedRoute routeKey="logistica_autorizados"><EditarAutorizadoDirecao /></ProtectedRoute>} />
+                <Route path="/logistica/autorizados" element={<Navigate to="/autorizados" replace />} />
+                <Route path="/logistica/autorizados/estado/:estadoId" element={<Navigate to="/autorizados/estado/:estadoId" replace />} />
+                <Route path="/logistica/autorizados/estado/:estadoId/novo" element={<Navigate to="/autorizados/estado/:estadoId/novo" replace />} />
+                <Route path="/logistica/autorizados/novo" element={<Navigate to="/autorizados/novo" replace />} />
+                <Route path="/logistica/autorizados/:id/editar" element={<Navigate to="/autorizados/:id/editar" replace />} />
                 <Route path="/logistica/pedidos-sem-entrega" element={<ProtectedRoute routeKey="logistica_pedidos_sem_entrega"><PedidosPagosSemEntrega /></ProtectedRoute>} />
                 
                 <Route path="/logistica/instalacoes" element={<ProtectedRoute routeKey="logistica_hub"><OrdensInstalacoesLogistica /></ProtectedRoute>} />

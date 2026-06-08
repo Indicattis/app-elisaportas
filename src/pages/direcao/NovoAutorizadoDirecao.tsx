@@ -64,8 +64,8 @@ export default function NovoAutorizadoDirecao() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const contexto = pathname.startsWith('/logistica') ? 'logistica' : 'direcao';
-  const basePath = `/${contexto}/autorizados`;
+  const contexto = pathname.startsWith('/logistica') ? 'logistica' : pathname.startsWith('/autorizados') ? 'home' : 'direcao';
+  const basePath = contexto === 'home' ? '/autorizados' : `/${contexto}/autorizados`;
 
   // Fetch estado info if coming from estado page
   useEffect(() => {
@@ -219,7 +219,7 @@ export default function NovoAutorizadoDirecao() {
 
   const breadcrumbItems = [
     { label: "Home", path: "/home" },
-    { label: contexto === 'logistica' ? "Logística" : "Direção", path: contexto === 'logistica' ? '/logistica' : '/direcao' },
+    ...(contexto !== 'home' ? [{ label: contexto === 'logistica' ? "Logística" : "Direção", path: contexto === 'logistica' ? '/logistica' : '/direcao' }] : []),
     { label: "Autorizados", path: basePath },
     ...(estadoInfo ? [{ label: estadoInfo.nome, path: `${basePath}/estado/${estadoInfo.id}` }] : []),
     { label: "Novo" }
