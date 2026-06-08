@@ -96,7 +96,7 @@ export default function MapaAutorizados() {
           longitude, last_geocoded_at, geocode_precision, created_at, 
           updated_at, vendedor_id, tipo_parceiro, etapa, 
           representante_etapa, franqueado_etapa,
-          vendedor:admin_users(nome, foto_perfil_url)
+          vendedor:admin_users!autorizados_vendedor_id_fkey(nome, foto_perfil_url)
         `)
         .order('nome');
 
