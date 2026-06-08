@@ -127,6 +127,25 @@ export default function AcordosMesAutorizados() {
     });
   }, [acordosDoMes, searchTerm, filterStatus]);
 
+  const acordosAgrupados = useMemo(() => {
+    const map = new Map<string, { autorizadoId: string; autorizadoNome: string; total: number; items: AcordoAutorizado[] }>();
+    acordosFiltrados.forEach((acordo) => {
+      const key = acordo.autorizado_id;
+      const grupo = map.get(key) ?? {
+        autorizadoId: acordo.autorizado_id,
+        autorizadoNome: acordo.autorizado_nome,
+        total: 0,
+        items: [],
+      };
+      grupo.items.push(acordo);
+      grupo.total += acordo.valor_acordado;
+      map.set(key, grupo);
+    });
+    return Array.from(map.values()).sort((a, b) =>
+      a.autorizadoNome.localeCompare(b.autorizadoNome, 'pt-BR')
+    );
+  }, [acordosFiltrados]);
+
   const handleNovoAcordo = () => {
     setAcordoParaEditar(null);
     setAcordoDialogOpen(true);
