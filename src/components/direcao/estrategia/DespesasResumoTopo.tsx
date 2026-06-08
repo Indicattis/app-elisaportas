@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { formatCurrency } from '@/lib/utils';
-import { Users, Receipt, TrendingDown, Trash2, Check, X, Landmark, ChevronRight, ChevronDown, FileText, AlertTriangle } from 'lucide-react';
+import { Users, Receipt, TrendingDown, Trash2, Check, X, Landmark, Briefcase, ChevronRight, ChevronDown, FileText, AlertTriangle } from 'lucide-react';
 import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -64,7 +64,7 @@ type LancRow = {
   id: string;
   mes_referencia: string;
   tipo_custo_id: string | null;
-  categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada';
+  categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento';
   tipo_nome: string;
   valor: number;
   data: string;
@@ -83,12 +83,12 @@ type Colab = {
   em_folha: boolean;
 };
 
-type TipoCusto = { id: string; nome: string; tipo: 'fixa' | 'variavel' | 'imposto' | 'projetada' };
+type TipoCusto = { id: string; nome: string; tipo: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' };
 
 type TipoCustoFull = {
   id: string;
   nome: string;
-  tipo: 'fixa' | 'variavel' | 'imposto' | 'projetada';
+  tipo: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento';
   descricao: string | null;
   empresa_id: string | null;
   categoria_id: string | null;
@@ -134,7 +134,7 @@ interface Props {
   onMediaMensalChange?: (media: number) => void;
   onDataChange?: () => void;
   reloadKey?: number;
-  onRequestNovoGasto?: (categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada') => void;
+  onRequestNovoGasto?: (categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento') => void;
 }
 
 export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataChange, reloadKey, onRequestNovoGasto }: Props) {
@@ -143,6 +143,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
   const [gastosFixas, setGastosFixas] = useState<GastoAgrupado[]>([]);
   const [gastosVariaveis, setGastosVariaveis] = useState<GastoAgrupado[]>([]);
   const [gastosImpostos, setGastosImpostos] = useState<GastoAgrupado[]>([]);
+  const [gastosInvestimentos, setGastosInvestimentos] = useState<GastoAgrupado[]>([]);
   const [loading, setLoading] = useState(false);
   const [reloadV, setReloadV] = useState(0);
   const reload = () => { setReloadV(v => v + 1); onDataChange?.(); };
@@ -170,8 +171,9 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
       + padroesFolha.filter(p => !nomesFolha.has(norm(p.nome))).reduce((s, p) => s + calcTotalFolha({ ...p, em_folha: p.em_folha }), 0)
       + gastosFixas.reduce((s, x) => s + Number(x.total || 0), 0)
       + gastosVariaveis.reduce((s, x) => s + Number(x.total || 0), 0)
-      + gastosImpostos.reduce((s, x) => s + Number(x.total || 0), 0);
-  }, [folha, gastosFixas, gastosVariaveis, gastosImpostos, padroesFolha]);
+      + gastosImpostos.reduce((s, x) => s + Number(x.total || 0), 0)
+      + gastosInvestimentos.reduce((s, x) => s + Number(x.total || 0), 0);
+  }, [folha, gastosFixas, gastosVariaveis, gastosImpostos, gastosInvestimentos, padroesFolha]);
 
   useEffect(() => {
     if (mes) onMediaMensalChange?.(totalExibido);
@@ -184,7 +186,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
 
   useEffect(() => {
     if (!mes || !mesStart) {
-      setFolha([]); setImpostos([]); setGastosFixas([]); setGastosVariaveis([]); setGastosImpostos([]);
+      setFolha([]); setImpostos([]); setGastosFixas([]); setGastosVariaveis([]); setGastosImpostos([]); setGastosInvestimentos([]);
       onMediaMensalChange?.(0);
       return;
     }
@@ -210,7 +212,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         setImpostos(lancArr.filter(x => x.categoria === 'imposto'));
 
         const gastosRows = (g || []) as unknown as Array<{ id: string; tipo_custo_id: string; valor: number; data: string; descricao: string | null; responsavel_id: string | null; banco_id: string | null }>;
-        const tiposMap: Record<string, { nome: string; tipo: 'fixa' | 'variavel' | 'imposto' | 'projetada'; aparece_no_dre: boolean; valor_maximo_mensal: number }> = {};
+        const tiposMap: Record<string, { nome: string; tipo: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento'; aparece_no_dre: boolean; valor_maximo_mensal: number }> = {};
         ((tiposAll || []) as any[]).forEach(t => {
           tiposMap[t.id] = {
             nome: t.nome,
@@ -255,7 +257,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
             : Promise.resolve(),
         ]);
 
-        const agruparPor = (categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada'): GastoAgrupado[] => {
+        const agruparPor = (categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento'): GastoAgrupado[] => {
           const acc = new Map<string, GastoAgrupado>();
           // Seed: todos os tipos da categoria aparecem mesmo sem gastos
           Object.entries(tiposMap).forEach(([id, t]) => {
@@ -305,6 +307,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         setGastosFixas(agruparPor('fixa'));
         setGastosVariaveis(agruparPor('variavel'));
         setGastosImpostos(agruparPor('imposto'));
+        setGastosInvestimentos(agruparPor('investimento'));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -370,7 +373,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
   };
 
   const handleInsertLanc = async (payload: {
-    tipo: TipoCusto; categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada'; valor: number; data: string; descricao: string;
+    tipo: TipoCusto; categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento'; valor: number; data: string; descricao: string;
   }) => {
     if (!mesStart) return;
     const userId = (await supabase.auth.getUser()).data.user?.id || null;
@@ -449,6 +452,15 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         gastos={gastosImpostos}
         loading={loading}
         onAddGasto={onRequestNovoGasto ? () => onRequestNovoGasto('imposto') : undefined}
+      />
+      <TiposCustoBlockMensal
+        titulo="Investimentos"
+        icon={<Briefcase className="w-4 h-4" />}
+        tipo="investimento"
+        tiposFull={tiposFull.filter(t => t.tipo === 'investimento')}
+        gastos={gastosInvestimentos}
+        loading={loading}
+        onAddGasto={onRequestNovoGasto ? () => onRequestNovoGasto('investimento') : undefined}
       />
 
       <AlertDialog open={!!confirmDel} onOpenChange={(o) => !o && setConfirmDel(null)}>
@@ -861,13 +873,13 @@ function BlocoDespesa({
   icon: React.ReactNode;
   rows: LancRow[];
   loading: boolean;
-  categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada';
+  categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento';
   tipos: TipoCusto[];
   padroes: DespesaPadrao[];
   mesStart: string;
   onDelete: (id: string) => void;
   onInsert: (payload: {
-    tipo: TipoCusto; categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada'; valor: number; data: string; descricao: string;
+    tipo: TipoCusto; categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento'; valor: number; data: string; descricao: string;
   }) => Promise<void>;
   onUpdate: (
     id: string,
@@ -1415,7 +1427,7 @@ function TiposCustoBlockMensal({
 }: {
   titulo: string;
   icon: React.ReactNode;
-  tipo: 'fixa' | 'variavel' | 'imposto' | 'projetada';
+  tipo: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento';
   tiposFull: TipoCustoFull[];
   gastos: GastoAgrupado[];
   loading: boolean;
@@ -1521,7 +1533,7 @@ function CategoriaGroupMensal({
   categorias: CategoriaDespesa[];
   empresasMap: Record<string, string>;
   gastosMap: Record<string, GastoAgrupado>;
-  tipo: 'fixa' | 'variavel' | 'imposto' | 'projetada';
+  tipo: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento';
 }) {
   const [expanded, setExpanded] = useState(true);
   const [expandedRow, setExpandedRow] = useState<string | null>(null);

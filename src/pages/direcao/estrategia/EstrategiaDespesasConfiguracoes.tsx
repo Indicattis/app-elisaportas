@@ -1,5 +1,5 @@
 import { useState, useRef, useMemo } from 'react';
-import { Plus, Trash2, Users, Receipt, TrendingDown, TrendingUp, Landmark, FileDown, GripVertical, X, Check, FolderPlus, ChevronRight, AlertTriangle, FileText, RotateCcw } from 'lucide-react';
+import { Plus, Trash2, Users, Receipt, TrendingDown, TrendingUp, Landmark, Briefcase, FileDown, GripVertical, X, Check, FolderPlus, ChevronRight, AlertTriangle, FileText, RotateCcw } from 'lucide-react';
 import GastoFormDialog from '@/components/financeiro/GastoFormDialog';
 import { useGastosPorTipoMes } from '@/hooks/useGastosPorTipoMes';
 import { useContagemGastosPorTipoMes } from '@/hooks/useContagemGastosPorTipoMes';
@@ -98,6 +98,7 @@ export function DespesasGridContent({
   const tiposVariaveis = tiposCustos.filter(t => t.tipo === 'variavel');
   const tiposImpostos = tiposCustos.filter(t => t.tipo === 'imposto');
   const tiposProjetadas = tiposCustos.filter(t => t.tipo === 'projetada');
+  const tiposInvestimentos = tiposCustos.filter(t => t.tipo === 'investimento');
 
   return showSpinner ? (
         <div className="flex items-center justify-center py-20">
@@ -181,6 +182,26 @@ export function DespesasGridContent({
             icon={<Landmark className="w-4 h-4" />}
             tipo="imposto"
             items={tiposImpostos}
+            save={saveTipoCusto}
+            update={updateTipoCusto}
+            remove={deleteTipoCusto}
+            allTipos={tiposCustos}
+            contarGastosVinculados={contarGastosVinculados}
+            realocarEExcluir={realocarEExcluirTipoCusto}
+            forcarExclusao={forcarExclusaoTipoCusto}
+            reorderTipos={reorderTiposCustos}
+            readOnly={readOnly}
+            clearOverride={tipoClearOverride}
+            hasOverride={tipoHasOverride}
+            mesReferencia={mesReferencia ?? null}
+            contagemGastos={contagemGastos}
+            totaisGastos={totaisGastos}
+          />
+          <TiposCustoBlock
+            titulo="Tipos de Custos — Investimentos"
+            icon={<Briefcase className="w-4 h-4" />}
+            tipo="investimento"
+            items={tiposInvestimentos}
             save={saveTipoCusto}
             update={updateTipoCusto}
             remove={deleteTipoCusto}
@@ -970,7 +991,7 @@ function TiposCustoBlock({
 }: {
   titulo: string;
   icon: React.ReactNode;
-  tipo: 'fixa' | 'variavel' | 'imposto' | 'projetada';
+  tipo: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento';
   items: TipoCusto[];
   save: ReturnType<typeof useTiposCustos>['saveTipoCusto'];
   update: ReturnType<typeof useTiposCustos>['updateTipoCusto'];
@@ -1694,7 +1715,7 @@ function GastosDoTipoExpand({
 }: {
   tipoCustoId: string;
   tipoNome: string;
-  categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada';
+  categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento';
   mes: string | null;
   hideCategoria?: boolean;
 }) {
