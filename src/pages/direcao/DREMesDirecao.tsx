@@ -287,13 +287,16 @@ function PrintReport({
   despesasFolha,
   despesasVariaveis,
   despesasImpostos,
+  despesasInvestimentos,
   tiposCustosFixos,
   tiposCustosVariaveis,
   tiposCustosImpostos,
+  tiposCustosInvestimentos,
   totalDespFixas,
   totalDespFolha,
   totalDespVariaveis,
   totalDespImpostos,
+  totalDespInvestimentos,
   totalProjetadoAnual,
   topAvulsos,
   estoqueResumo,
@@ -310,13 +313,16 @@ function PrintReport({
   despesasFolha: DespesaAgrupada[];
   despesasVariaveis: DespesaAgrupada[];
   despesasImpostos: DespesaAgrupada[];
+  despesasInvestimentos: DespesaAgrupada[];
   tiposCustosFixos: TipoCustoVariavel[];
   tiposCustosVariaveis: TipoCustoVariavel[];
   tiposCustosImpostos: TipoCustoVariavel[];
+  tiposCustosInvestimentos: TipoCustoVariavel[];
   totalDespFixas: number;
   totalDespFolha: number;
   totalDespVariaveis: number;
   totalDespImpostos: number;
+  totalDespInvestimentos: number;
   totalProjetadoAnual: number;
   topAvulsos: { nome: string; qtd: number }[];
   estoqueResumo: { valorTotal: number; totalItens: number };
@@ -488,6 +494,7 @@ function PrintReport({
               { l: '(–) Despesas Fixas', v: formatCurrency(totalDespFixas), c: '#b91c1c', b: false },
               { l: '(–) Despesas Variáveis', v: formatCurrency(totalDespVariaveis), c: '#b91c1c', b: false },
               { l: '(–) Despesas de Imposto', v: formatCurrency(totalDespImpostos), c: '#b91c1c', b: false },
+              { l: '(–) Investimentos', v: formatCurrency(totalDespInvestimentos), c: '#b91c1c', b: false },
             ].map((r, i) => (
               <tr key={i} style={trZebra(i)}>
                 <td style={{ ...TD, fontWeight: r.b ? 700 : 500 }}>{r.l}</td>
