@@ -501,6 +501,15 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         loading={loading}
         onAddGasto={onRequestNovoGasto ? () => onRequestNovoGasto('frete') : undefined}
       />
+      <TiposCustoBlockMensal
+        titulo="Autorizados"
+        icon={<Handshake className="w-4 h-4" />}
+        tipo="autorizado"
+        tiposFull={tiposFull.filter(t => t.tipo === 'autorizado')}
+        gastos={gastosAutorizados}
+        loading={loading}
+        onAddGasto={onRequestNovoGasto ? () => onRequestNovoGasto('autorizado') : undefined}
+      />
 
       <AlertDialog open={!!confirmDel} onOpenChange={(o) => !o && setConfirmDel(null)}>
         <AlertDialogContent>
