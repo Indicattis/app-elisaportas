@@ -1,17 +1,36 @@
-# Incluir Itens Avulsos no PDF
+## Objetivo
 
-## Problema
-Em `/direcao/estrategia/precos`, o botão "Exportar PDF" gera apenas a seção de Kits. Os Itens Avulsos exibidos na sidebar não aparecem no PDF (o Excel também não os inclui).
+Adicionar uma nova tabela chamada **"Despesa projetada"** ao lado das tabelas existentes (Fixas, Variáveis, Impostos), tanto em:
+- `/direcao/estrategia/despesas/configuracoes`
+- `/direcao/estrategia/despesas/2026-05` (e demais meses)
 
-## Solução
+Comportamento idêntico às outras tabelas de tipos de custos: CRUD, override por mês, aparece no resumo, exportação, etc.
 
-### 1. `src/utils/estrategiaPrecosExport.ts`
-- Aceitar um segundo parâmetro `itensAvulso: CustoItem[]` em `exportEstrategiaPrecosPDF` e `exportEstrategiaPrecosExcel`.
-- No PDF: após a tabela de Kits, adicionar nova seção "Itens Avulso" agrupada por categoria, com colunas: Nome, Unidade, Preço/un. Usar `autoTable` com quebra de página automática.
-- No Excel: adicionar uma segunda aba "Itens Avulso" com as mesmas colunas.
+## Mudanças
 
-### 2. `src/pages/direcao/estrategia/EstrategiaPrecos.tsx`
-- Passar `itensAvulso` (já calculado no componente) para as funções de exportação.
+### 1. Banco de dados (migration)
+Atualizar o `CHECK` da coluna `tipos_custos.tipo` para aceitar o novo valor `'projetada'`:
+- Drop do constraint `tipos_custos_tipo_check`
+- Recriar permitindo `'fixa' | 'variavel' | 'imposto' | 'projetada'`
 
-## Escopo
-Apenas frontend/apresentação. Sem alteração de dados ou regras de negócio.
+Nenhuma alteração de schema adicional — a estrutura existente já suporta o novo tipo (incluindo `useTiposCustosMes`, override por mês e contagem de gastos).
+
+### 2. Frontend — `EstrategiaDespesasConfiguracoes.tsx`
+- Filtrar `tiposProjetadas = tiposCustos.filter(t => t.tipo === 'projetada')`
+- Adicionar 4º `<TiposCustoBlock>` com:
+  - `titulo="Tipos de Custos — Despesa projetada"`
+  - `icon={<TrendingUp />}` (ou similar)
+  - `tipo="projetada"`
+  - Demais props idênticas aos outros blocos
+
+### 3. Tipagens (`useTiposCustos` / `useTiposCustosMes` / `TipoCustoBlock`)
+- Ampliar a união `'fixa' | 'variavel' | 'imposto'` para incluir `'projetada'` onde aparecer (props do bloco, formulários internos, selects de "mover para outro tipo" na exclusão, etc.).
+- Garantir que o select de tipo no formulário interno do `TipoCustoBlock` (se exibir tipos) inclua a nova opção; caso o formulário use o `tipo` fixo via prop, nenhuma mudança extra é necessária.
+
+### 4. Itens NÃO afetados
+- DRE e demais consumidores de `tipos_custos` continuam funcionando normalmente — a flag `aparece_no_dre` já controla a visibilidade.
+- Página `/direcao/estrategia/despesas/{mes}` exibe a nova tabela automaticamente, pois compartilha `DespesasGridContent`.
+
+## Pergunta aberta
+
+O novo tipo deve aparecer no DRE por padrão (`aparece_no_dre = true`) como as outras, ou já vir desmarcado? Vou assumir o padrão atual (`true`, controlável por linha) salvo orientação em contrário.
