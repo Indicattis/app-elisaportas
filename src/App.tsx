@@ -67,6 +67,7 @@ import Conversoes from "./pages/marketing/Conversoes";
 import ConversoesMeta from "./pages/marketing/ConversoesMeta";
 import ConversoesHub from "./pages/marketing/ConversoesHub";
 import VideosIdeias from "./pages/marketing/VideosIdeias";
+import BalancoDescontos from "./pages/marketing/BalancoDescontos";
 
 import FabricaHome from "./pages/FabricaHome";
 import InstalacoesHome from "./pages/InstalacoesHome";
