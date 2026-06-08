@@ -1783,8 +1783,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         }
         #dre-print-document {
           display: block !important;
-          position: absolute !important;
-          left: 0; top: 0;
+          position: static !important;
           width: 100%;
           padding: 14mm 12mm !important;
           background: white !important;
@@ -1793,9 +1792,23 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
           font-size: 10pt;
           line-height: 1.4;
         }
-        #dre-print-document .pdf-page-break { page-break-before: always; }
-        #dre-print-document .pdf-avoid-break { page-break-inside: avoid; }
+        #dre-print-document .pdf-page-break {
+          page-break-before: always;
+          break-before: page;
+          -webkit-column-break-before: always;
+          height: 0;
+          display: block;
+        }
+        #dre-print-document .pdf-avoid-break {
+          page-break-inside: avoid;
+          break-inside: avoid;
+          -webkit-column-break-inside: avoid;
+        }
         #dre-print-document table { border-collapse: collapse; width: 100%; }
+        #dre-print-document table, #dre-print-document tr, #dre-print-document td, #dre-print-document th {
+          page-break-inside: auto;
+          break-inside: auto;
+        }
       }
       #dre-print-document { display: none; }
     `}</style>
