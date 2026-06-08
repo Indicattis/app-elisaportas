@@ -430,10 +430,6 @@ function FolhaBlock({
                 <Label className="text-xs text-white/70">Salário</Label>
                 <NumCell value={salario} onChange={setSalario} />
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs text-white/70">Salário mínimo</Label>
-                <NumCell value={salarioMin} onChange={setSalarioMin} />
-              </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
@@ -547,9 +543,6 @@ function FolhaRowCells({
         <InlineNum value={item.salario} onSave={(v) => update(item.id, { salario: v })} format="currency" />
       </td>
       <td className="px-2 text-right text-white/60">
-        <InlineNum value={item.salario_minimo} onSave={(v) => update(item.id, { salario_minimo: v })} format="currency" />
-      </td>
-      <td className="px-2 text-right text-white/60">
         {desativado ? zeroCurr : <InlineNum value={item.aux_combustivel} onSave={(v) => update(item.id, { aux_combustivel: v })} format="currency" />}
       </td>
       <td className="px-2 text-right text-white/60">
@@ -606,7 +599,6 @@ function FolhaTableHeader() {
         <th className="text-center font-normal pb-2 px-2">Em folha</th>
         <th className="text-left font-normal pb-2 px-2">Setor</th>
         <th className="text-right font-normal pb-2 px-2 text-emerald-400">Salário</th>
-        <th className="text-right font-normal pb-2 px-2">Salário Mínimo</th>
         <th className="text-right font-normal pb-2 px-2">Combustível</th>
         <th className="text-right font-normal pb-2 px-2">Bonificação</th>
         <th className="text-right font-normal pb-2 px-2 text-blue-300">Hora Extra</th>
@@ -650,7 +642,6 @@ function FolhaColGroup() {
       <col style={{ width: '220px' }} />
       <col style={{ width: '80px' }} />
       <col style={{ width: '140px' }} />
-      <col style={{ width: '110px' }} />
       <col style={{ width: '110px' }} />
       <col style={{ width: '110px' }} />
       <col style={{ width: '110px' }} />
