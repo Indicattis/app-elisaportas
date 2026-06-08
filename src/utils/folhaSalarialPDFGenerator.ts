@@ -98,14 +98,15 @@ export function exportFolhaSalarialPDF(
     2: { cellWidth: 15, halign: 'right' },
     3: { cellWidth: 15, halign: 'right' },
     4: { cellWidth: 13, halign: 'right' },
-    5: { cellWidth: 14, halign: 'right' },
+    5: { cellWidth: 13, halign: 'right' },
     6: { cellWidth: 14, halign: 'right' },
     7: { cellWidth: 14, halign: 'right' },
     8: { cellWidth: 14, halign: 'right' },
     9: { cellWidth: 14, halign: 'right' },
     10: { cellWidth: 14, halign: 'right' },
     11: { cellWidth: 14, halign: 'right' },
-    12: { cellWidth: 16, halign: 'right' },
+    12: { cellWidth: 14, halign: 'right' },
+    13: { cellWidth: 16, halign: 'right' },
   };
 
   let totalSalarios = 0;
