@@ -1513,7 +1513,7 @@ function TiposCustoBlockMensal({
 }
 
 function CategoriaGroupMensal({
-  cat, palette, rows, categorias, empresasMap, gastosMap,
+  cat, palette, rows, categorias, empresasMap, gastosMap, tipo,
 }: {
   cat: CategoriaDespesa | null;
   palette: { color: string; dot: string };
@@ -1521,6 +1521,7 @@ function CategoriaGroupMensal({
   categorias: CategoriaDespesa[];
   empresasMap: Record<string, string>;
   gastosMap: Record<string, GastoAgrupado>;
+  tipo: 'fixa' | 'variavel' | 'imposto' | 'projetada';
 }) {
   const [expanded, setExpanded] = useState(true);
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
@@ -1553,7 +1554,7 @@ function CategoriaGroupMensal({
         <span className="text-xs text-white/40 tabular-nums">{rows.length}</span>
         <div className="flex-1" />
         <span className="text-[11px] uppercase tracking-wider text-white/40">Projetado</span>
-        <span className="text-sm text-white/70 font-medium tabular-nums">{formatCurrency(subtotalProj)}</span>
+        <span className="text-sm text-white/70 font-medium tabular-nums">{tipo === 'variavel' ? '—' : formatCurrency(subtotalProj)}</span>
         <span className="text-[11px] uppercase tracking-wider text-white/40 ml-3">Pago</span>
         <span className="text-sm text-white font-semibold tabular-nums">{formatCurrency(subtotalPago)}</span>
       </div>
@@ -1628,7 +1629,7 @@ function CategoriaGroupMensal({
                       </span>
                     </td>
                     <td className={`px-3 text-right font-medium tabular-nums ${t.marcada_para_eliminar ? 'text-red-400 line-through' : 'text-white'}`}>
-                      {formatCurrency(proj)}
+                      {tipo === 'variavel' ? '—' : formatCurrency(proj)}
                     </td>
                     <td className="px-3 text-center">
                       {t.aparece_no_dre ? (
