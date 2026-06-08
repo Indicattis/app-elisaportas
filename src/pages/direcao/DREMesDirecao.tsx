@@ -289,6 +289,7 @@ function PrintReport({
   despesasImpostos,
   tiposCustosFixos,
   tiposCustosVariaveis,
+  tiposCustosImpostos,
   totalDespFixas,
   totalDespFolha,
   totalDespVariaveis,
@@ -311,6 +312,7 @@ function PrintReport({
   despesasImpostos: DespesaAgrupada[];
   tiposCustosFixos: TipoCustoVariavel[];
   tiposCustosVariaveis: TipoCustoVariavel[];
+  tiposCustosImpostos: TipoCustoVariavel[];
   totalDespFixas: number;
   totalDespFolha: number;
   totalDespVariaveis: number;
