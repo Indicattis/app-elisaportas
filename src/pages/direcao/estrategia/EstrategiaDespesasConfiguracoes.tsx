@@ -1445,9 +1445,18 @@ function SortableTipoRow({
             </button>
           ) : null
         ) : (
+          <div className="inline-flex items-center gap-1">
+            <button
+              onClick={() => update(i.id, { marcada_para_eliminar: !i.marcada_para_eliminar } as any)}
+              title={i.marcada_para_eliminar ? 'Desmarcar eliminação' : 'Marcar para eliminar (valor projetado em vermelho)'}
+              className={`p-1 rounded transition-colors ${i.marcada_para_eliminar ? 'bg-red-500/20 text-red-300' : 'hover:bg-red-500/20 text-red-300/50 hover:text-red-300'}`}
+            >
+              <AlertTriangle className="w-4 h-4" />
+            </button>
           <button onClick={() => remove(i.id)} className="p-1 rounded hover:bg-red-500/20 text-red-300/70 hover:text-red-300">
             <Trash2 className="w-4 h-4" />
           </button>
+          </div>
         )}
       </td>
     </tr>
