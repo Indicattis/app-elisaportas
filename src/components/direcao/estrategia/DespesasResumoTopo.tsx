@@ -1492,6 +1492,7 @@ function TiposCustoBlockMensal({
               categorias={categorias}
               empresasMap={empresasMap}
               gastosMap={gastosMap}
+              tipo={tipo}
             />
           ))}
         </div>
@@ -1500,7 +1501,7 @@ function TiposCustoBlockMensal({
       <div className="mt-2 pt-2 border-t border-white/10 flex items-center justify-between px-2 gap-6">
         <div className="flex items-center gap-2">
           <span className="text-xs text-white/50 uppercase tracking-wider">Total projetado</span>
-          <span className="text-sm font-medium text-white/80">{formatCurrency(totalProjetado)}</span>
+          <span className="text-sm font-medium text-white/80">{tipo === 'variavel' ? '—' : formatCurrency(totalProjetado)}</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-xs text-white/50 uppercase tracking-wider">Total pago no mês</span>
