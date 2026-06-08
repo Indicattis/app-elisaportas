@@ -1026,6 +1026,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
       setDespesasFinanciamentos([]);
       setDespesasFretes([]);
       setDespesasAutorizados([]);
+      setDespesasSalarios([]);
       setTiposCustosFixos([]);
       setTiposCustosVariaveis([]);
       setTiposCustosImpostos([]);
@@ -1034,6 +1035,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
       setTiposCustosFinanciamentos([]);
       setTiposCustosFretes([]);
       setTiposCustosAutorizados([]);
+      setTiposCustosSalarios([]);
     } else {
       // soma de gastos por tipo_custo
       const somaGastos: Record<string, number> = {};
@@ -1070,6 +1072,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
       setDespesasFinanciamentos(itemsBy('financiamento'));
       setDespesasFretes(itemsBy('frete'));
       setDespesasAutorizados(itemsBy('autorizado'));
+      setDespesasSalarios(itemsBy('salario'));
 
       const tiposBy = (tipoStr: string): TipoCustoVariavel[] =>
         tiposArr
@@ -1090,6 +1093,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
       setTiposCustosFinanciamentos(tiposBy('financiamento'));
       setTiposCustosFretes(tiposBy('frete'));
       setTiposCustosAutorizados(tiposBy('autorizado'));
+      setTiposCustosSalarios(tiposBy('salario'));
     }
 
     // Folha salarial — mesma fonte de /direcao/estrategia/despesas/:mes
@@ -1562,6 +1566,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
   const totalDespFinanciamentos = despesasFinanciamentos.reduce((acc, d) => acc + (d.valor_real || 0), 0);
   const totalDespFretes = despesasFretes.reduce((acc, d) => acc + (d.valor_real || 0), 0);
   const totalDespAutorizados = despesasAutorizados.reduce((acc, d) => acc + (d.valor_real || 0), 0);
+  const totalDespSalarios = despesasSalarios.reduce((acc, d) => acc + (d.valor_real || 0), 0);
   const totalProjetadoAnual = tiposCustosVariaveis.reduce((acc, t) => acc + (t.valor_maximo_mensal * 12), 0);
 
   const lucroLiquidoFinal = lucro.total - totalDespFixas - totalDespFolha - totalDespVariaveis - totalDespImpostos - totalDespInvestimentos - totalDespFornecedores - totalDespFinanciamentos - totalDespFretes - totalDespAutorizados;
