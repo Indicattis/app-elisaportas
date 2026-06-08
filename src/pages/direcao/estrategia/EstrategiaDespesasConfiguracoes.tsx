@@ -185,6 +185,26 @@ export function DespesasGridContent({
             totaisGastos={totaisGastos}
           />
           <TiposCustoBlock
+            titulo="Tipos de Custos — Autorizados"
+            icon={<Handshake className="w-4 h-4" />}
+            tipo="autorizado"
+            items={tiposAutorizados}
+            save={saveTipoCusto}
+            update={updateTipoCusto}
+            remove={deleteTipoCusto}
+            allTipos={tiposCustos}
+            contarGastosVinculados={contarGastosVinculados}
+            realocarEExcluir={realocarEExcluirTipoCusto}
+            forcarExclusao={forcarExclusaoTipoCusto}
+            reorderTipos={reorderTiposCustos}
+            readOnly={readOnly}
+            clearOverride={tipoClearOverride}
+            hasOverride={tipoHasOverride}
+            mesReferencia={mesReferencia ?? null}
+            contagemGastos={contagemGastos}
+            totaisGastos={totaisGastos}
+          />
+          <TiposCustoBlock
             titulo="Tipos de Custos — Impostos"
             icon={<Landmark className="w-4 h-4" />}
             tipo="imposto"
@@ -269,26 +289,6 @@ export function DespesasGridContent({
             icon={<Package className="w-4 h-4" />}
             tipo="frete"
             items={tiposFretes}
-            save={saveTipoCusto}
-            update={updateTipoCusto}
-            remove={deleteTipoCusto}
-            allTipos={tiposCustos}
-            contarGastosVinculados={contarGastosVinculados}
-            realocarEExcluir={realocarEExcluirTipoCusto}
-            forcarExclusao={forcarExclusaoTipoCusto}
-            reorderTipos={reorderTiposCustos}
-            readOnly={readOnly}
-            clearOverride={tipoClearOverride}
-            hasOverride={tipoHasOverride}
-            mesReferencia={mesReferencia ?? null}
-            contagemGastos={contagemGastos}
-            totaisGastos={totaisGastos}
-          />
-          <TiposCustoBlock
-            titulo="Tipos de Custos — Autorizados"
-            icon={<Handshake className="w-4 h-4" />}
-            tipo="autorizado"
-            items={tiposAutorizados}
             save={saveTipoCusto}
             update={updateTipoCusto}
             remove={deleteTipoCusto}
