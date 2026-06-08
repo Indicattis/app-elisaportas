@@ -10,6 +10,7 @@ export async function criarGastoAcordoAutorizado(params: {
   responsavelId: string | undefined;
   bancoId: string;
   dataPagamento?: string; // YYYY-MM-DD
+  parcial?: boolean;
 }): Promise<void> {
   if (!params.responsavelId) return;
   if (!params.bancoId) {
@@ -22,7 +23,7 @@ export async function criarGastoAcordoAutorizado(params: {
   const { error } = await supabase.from('gastos' as any).insert([
     {
       tipo_custo_id: TIPO_CUSTO_PAGAMENTO_AUTORIZADOS,
-      descricao: `Acordo autorizado — ${params.clienteNome} (${params.autorizadoNome})`,
+      descricao: `Acordo autorizado${params.parcial ? ' (parcial)' : ''} — ${params.clienteNome} (${params.autorizadoNome})`,
       valor: params.valor,
       data,
       responsavel_id: params.responsavelId,
