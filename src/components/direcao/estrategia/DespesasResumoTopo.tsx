@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { formatCurrency } from '@/lib/utils';
-import { Users, Receipt, TrendingDown, Trash2, Check, X, Landmark, Briefcase, Truck, Banknote, ChevronRight, ChevronDown, FileText, AlertTriangle } from 'lucide-react';
+import { Users, Receipt, TrendingDown, Trash2, Check, X, Landmark, Briefcase, Truck, Banknote, Package, ChevronRight, ChevronDown, FileText, AlertTriangle } from 'lucide-react';
 import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -146,6 +146,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
   const [gastosInvestimentos, setGastosInvestimentos] = useState<GastoAgrupado[]>([]);
   const [gastosFornecedores, setGastosFornecedores] = useState<GastoAgrupado[]>([]);
   const [gastosFinanciamentos, setGastosFinanciamentos] = useState<GastoAgrupado[]>([]);
+  const [gastosFretes, setGastosFretes] = useState<GastoAgrupado[]>([]);
   const [loading, setLoading] = useState(false);
   const [reloadV, setReloadV] = useState(0);
   const reload = () => { setReloadV(v => v + 1); onDataChange?.(); };
@@ -176,8 +177,9 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
       + gastosImpostos.reduce((s, x) => s + Number(x.total || 0), 0)
       + gastosInvestimentos.reduce((s, x) => s + Number(x.total || 0), 0)
       + gastosFornecedores.reduce((s, x) => s + Number(x.total || 0), 0)
-      + gastosFinanciamentos.reduce((s, x) => s + Number(x.total || 0), 0);
-  }, [folha, gastosFixas, gastosVariaveis, gastosImpostos, gastosInvestimentos, gastosFornecedores, gastosFinanciamentos, padroesFolha]);
+      + gastosFinanciamentos.reduce((s, x) => s + Number(x.total || 0), 0)
+      + gastosFretes.reduce((s, x) => s + Number(x.total || 0), 0);
+  }, [folha, gastosFixas, gastosVariaveis, gastosImpostos, gastosInvestimentos, gastosFornecedores, gastosFinanciamentos, gastosFretes, padroesFolha]);
 
   useEffect(() => {
     if (mes) onMediaMensalChange?.(totalExibido);
@@ -190,7 +192,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
 
   useEffect(() => {
     if (!mes || !mesStart) {
-      setFolha([]); setImpostos([]); setGastosFixas([]); setGastosVariaveis([]); setGastosImpostos([]); setGastosInvestimentos([]); setGastosFornecedores([]); setGastosFinanciamentos([]);
+      setFolha([]); setImpostos([]); setGastosFixas([]); setGastosVariaveis([]); setGastosImpostos([]); setGastosInvestimentos([]); setGastosFornecedores([]); setGastosFinanciamentos([]); setGastosFretes([]);
       onMediaMensalChange?.(0);
       return;
     }
@@ -314,6 +316,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         setGastosInvestimentos(agruparPor('investimento'));
         setGastosFornecedores(agruparPor('fornecedor'));
         setGastosFinanciamentos(agruparPor('financiamento'));
+        setGastosFretes(agruparPor('frete'));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -485,6 +488,15 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         gastos={gastosFinanciamentos}
         loading={loading}
         onAddGasto={onRequestNovoGasto ? () => onRequestNovoGasto('financiamento') : undefined}
+      />
+      <TiposCustoBlockMensal
+        titulo="Fretes e Logística"
+        icon={<Package className="w-4 h-4" />}
+        tipo="frete"
+        tiposFull={tiposFull.filter(t => t.tipo === 'frete')}
+        gastos={gastosFretes}
+        loading={loading}
+        onAddGasto={onRequestNovoGasto ? () => onRequestNovoGasto('frete') : undefined}
       />
 
       <AlertDialog open={!!confirmDel} onOpenChange={(o) => !o && setConfirmDel(null)}>
