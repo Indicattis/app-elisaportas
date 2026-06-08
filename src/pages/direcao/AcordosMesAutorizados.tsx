@@ -538,6 +538,13 @@ export default function AcordosMesAutorizados() {
           </AlertDialog>
         </>
       )}
+      <ConfirmarPagamentoAcordoDialog
+        open={!!pagamentoDialog}
+        onOpenChange={(open) => { if (!open) setPagamentoDialog(null); }}
+        clienteNome={pagamentoDialog?.clienteNome}
+        valor={pagamentoDialog?.valor}
+        onConfirm={confirmarPagamento}
+      />
     </MinimalistLayout>
   );
 }
