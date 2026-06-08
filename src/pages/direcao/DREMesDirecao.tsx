@@ -1796,8 +1796,15 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
           page-break-before: always;
           break-before: page;
           -webkit-column-break-before: always;
-          height: 0;
           display: block;
+          height: 1px;
+          width: 100%;
+        }
+        #dre-print-document .pdf-page-break::before {
+          content: '\00a0';
+          display: block;
+          page-break-before: always;
+          break-before: page;
         }
         #dre-print-document .pdf-avoid-break {
           page-break-inside: avoid;
