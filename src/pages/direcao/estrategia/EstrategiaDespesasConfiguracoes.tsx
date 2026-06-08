@@ -257,6 +257,7 @@ function FolhaBlock({
   const [salario, setSalario] = useState(0);
   const [salarioMin, setSalarioMin] = useState(1518);
   const [auxComb, setAuxComb] = useState(0);
+  const [bonificacao, setBonificacao] = useState(0);
   const [horaExtra, setHoraExtra] = useState(0);
   const [insalub, setInsalub] = useState(0);
   const [fgts, setFgts] = useState(8);
