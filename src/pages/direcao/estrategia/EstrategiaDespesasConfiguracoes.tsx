@@ -232,7 +232,8 @@ function calcTotalFolha(f: { salario: number; salario_minimo?: number; aux_combu
   const ferias = f.ferias_valor == null ? calcFeriasDefault(f.salario, f.fgts_pct) : Number(f.ferias_valor) || 0;
   const prev13 = f.salario / 12;
   const fgts13 = fgts / 12;
-  return f.salario + f.aux_combustivel + insalub + fgts + prev13 + fgts13 + ferias;
+  const multaFgts = fgts * 0.4;
+  return f.salario + f.aux_combustivel + insalub + fgts + prev13 + fgts13 + ferias + multaFgts;
 }
 
 function FolhaBlock({
@@ -541,6 +542,9 @@ function FolhaRowCells({
       <td className="px-2 text-right text-xs">
         {desativado ? zeroCurr : <span className="text-orange-400">{formatCurrency(feriasDefault)}</span>}
       </td>
+      <td className="px-2 text-right text-xs">
+        {desativado ? zeroCurr : <span className="text-red-400">{formatCurrency(fgtsVal * 0.4)}</span>}
+      </td>
       <td className="px-2 text-right text-white font-semibold">{formatCurrency(total)}</td>
       <td className="pr-1 text-right">
         {readOnly ? (
@@ -597,6 +601,10 @@ function FolhaTableHeader() {
           <div>Férias + 1/3</div>
           <div className="text-[9px] normal-case tracking-normal text-white/30">(salário ÷ 3) ÷ 12</div>
         </th>
+        <th className="text-right font-normal pb-2 px-2">
+          <div className="text-red-400">Multa FGTS</div>
+          <div className="text-[9px] normal-case tracking-normal text-white/30">FGTS valor × 40%</div>
+        </th>
         <th className="text-right font-normal pb-2 px-2">Total</th>
         <th className="pb-2 pr-1"></th>
       </tr>
@@ -620,6 +628,7 @@ function FolhaColGroup() {
       <col style={{ width: '110px' }} />
       <col style={{ width: '110px' }} />
       <col style={{ width: '100px' }} />
+      <col style={{ width: '110px' }} />
       <col style={{ width: '110px' }} />
       <col style={{ width: '120px' }} />
       <col style={{ width: '40px' }} />
