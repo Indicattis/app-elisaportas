@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -11,6 +11,8 @@ import { generateContratoPDF } from "@/utils/contratoPDFGenerator";
 import { FileDown, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface GerarContratoModalProps {
   open: boolean;
@@ -21,14 +23,30 @@ interface GerarContratoModalProps {
 export function GerarContratoModal({ open, onOpenChange, vendaIdInicial }: GerarContratoModalProps) {
   const [vendaId, setVendaId] = useState(vendaIdInicial || '');
   const [templateId, setTemplateId] = useState('');
+  const [clienteId, setClienteId] = useState<string>('');
   
   const { templates } = useContratosTemplates();
   const { vendas } = useVendas();
   const { data: variaveis, isLoading: isLoadingVariaveis } = useContratoVariaveis(vendaId);
   const { settings: companySettings } = useCompanySettings();
 
+  const { data: clientes } = useQuery({
+    queryKey: ['contratos-clientes-select'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('clientes')
+        .select('id, nome, telefone, email, cpf_cnpj, endereco, bairro, cidade, estado, cep')
+        .eq('ativo', true)
+        .order('nome');
+      if (error) throw error;
+      return data;
+    },
+    enabled: open,
+  });
+
   const templatesAtivos = templates?.filter(t => t.ativo) || [];
   const templateSelecionado = templatesAtivos.find(t => t.id === templateId);
+  const clienteSelecionado = clientes?.find(c => c.id === clienteId);
 
   // Sincronizar vendaId quando vendaIdInicial mudar ou modal abrir
   useEffect(() => {
@@ -37,8 +55,25 @@ export function GerarContratoModal({ open, onOpenChange, vendaIdInicial }: Gerar
     }
   }, [open, vendaIdInicial]);
 
+  const variaveisFinais = useMemo(() => {
+    if (!variaveis) return variaveis;
+    if (!clienteSelecionado) return variaveis;
+    return {
+      ...variaveis,
+      cliente_nome: clienteSelecionado.nome ?? variaveis.cliente_nome,
+      cliente_telefone: clienteSelecionado.telefone ?? variaveis.cliente_telefone,
+      cliente_email: clienteSelecionado.email ?? variaveis.cliente_email,
+      cliente_cpf: clienteSelecionado.cpf_cnpj ?? variaveis.cliente_cpf,
+      cliente_endereco: clienteSelecionado.endereco ?? variaveis.cliente_endereco,
+      cliente_bairro: clienteSelecionado.bairro ?? variaveis.cliente_bairro,
+      cliente_cidade: clienteSelecionado.cidade ?? variaveis.cliente_cidade,
+      cliente_estado: clienteSelecionado.estado ?? variaveis.cliente_estado,
+      cliente_cep: clienteSelecionado.cep ?? variaveis.cliente_cep,
+    };
+  }, [variaveis, clienteSelecionado]);
+
   const handleGerar = () => {
-    if (!vendaId || !templateId || !templateSelecionado || !variaveis || !companySettings) {
+    if (!vendaId || !templateId || !templateSelecionado || !variaveisFinais || !companySettings) {
       toast.error('Selecione uma venda e um template');
       return;
     }
@@ -46,8 +81,8 @@ export function GerarContratoModal({ open, onOpenChange, vendaIdInicial }: Gerar
     try {
       generateContratoPDF({
         template: templateSelecionado.conteudo,
-        variaveis,
-        numeroContrato: `CONT-${variaveis.venda_numero}-${Date.now()}`,
+        variaveis: variaveisFinais,
+        numeroContrato: `CONT-${variaveisFinais.venda_numero}-${Date.now()}`,
         companySettings
       });
       
@@ -59,19 +94,19 @@ export function GerarContratoModal({ open, onOpenChange, vendaIdInicial }: Gerar
     }
   };
 
-  const previewConteudo = templateSelecionado && variaveis
-    ? substituirVariaveis(templateSelecionado.conteudo, variaveis)
+  const previewConteudo = templateSelecionado && variaveisFinais
+    ? substituirVariaveis(templateSelecionado.conteudo, variaveisFinais)
     : '';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle>Gerar Contrato</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 flex-1 overflow-y-auto">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="venda">Selecione a Venda *</Label>
               <Select value={vendaId} onValueChange={setVendaId} disabled={!!vendaIdInicial}>
@@ -98,6 +133,26 @@ export function GerarContratoModal({ open, onOpenChange, vendaIdInicial }: Gerar
                   {templatesAtivos.map((template) => (
                     <SelectItem key={template.id} value={template.id}>
                       {template.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="cliente">Cliente (sobrescreve)</Label>
+              <Select
+                value={clienteId || 'none'}
+                onValueChange={(v) => setClienteId(v === 'none' ? '' : v)}
+              >
+                <SelectTrigger id="cliente">
+                  <SelectValue placeholder="Usar cliente da venda" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Usar cliente da venda</SelectItem>
+                  {clientes?.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.nome}{c.cpf_cnpj ? ` · ${c.cpf_cnpj}` : ''}
                     </SelectItem>
                   ))}
                 </SelectContent>
