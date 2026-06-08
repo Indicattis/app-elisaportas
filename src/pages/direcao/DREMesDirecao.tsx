@@ -933,6 +933,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
       setDespesasFixas(itemsBy('fixa'));
       setDespesasVariaveis(itemsBy('variavel'));
       setDespesasImpostos(itemsBy('imposto'));
+      setDespesasInvestimentos(itemsBy('investimento'));
 
       const tiposBy = (tipoStr: string): TipoCustoVariavel[] =>
         tiposArr
@@ -948,6 +949,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
       setTiposCustosFixos(tiposBy('fixa'));
       setTiposCustosVariaveis(tiposBy('variavel'));
       setTiposCustosImpostos(tiposBy('imposto'));
+      setTiposCustosInvestimentos(tiposBy('investimento'));
     }
 
     // Folha salarial — mesma fonte de /direcao/estrategia/despesas/:mes
