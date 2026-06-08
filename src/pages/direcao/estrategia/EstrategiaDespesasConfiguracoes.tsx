@@ -264,7 +264,7 @@ function FolhaBlock({
   const [prev13, setPrev13] = useState(0);
   const [addOpen, setAddOpen] = useState(false);
 
-  const reset = () => { setNome(''); setEmFolha(true); setSetor(''); setSalario(0); setSalarioMin(1518); setAuxComb(0); setHoraExtra(0); setInsalub(0); setFgts(8); setPrev13(0); };
+  const reset = () => { setNome(''); setEmFolha(true); setSetor(''); setSalario(0); setSalarioMin(1518); setAuxComb(0); setBonificacao(0); setHoraExtra(0); setInsalub(0); setFgts(8); setPrev13(0); };
   const [gerenciarSetoresOpen, setGerenciarSetoresOpen] = useState(false);
 
   const save = async () => {
