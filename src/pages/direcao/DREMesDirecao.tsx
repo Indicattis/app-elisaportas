@@ -288,15 +288,18 @@ function PrintReport({
   despesasVariaveis,
   despesasImpostos,
   despesasInvestimentos,
+  despesasFornecedores,
   tiposCustosFixos,
   tiposCustosVariaveis,
   tiposCustosImpostos,
   tiposCustosInvestimentos,
+  tiposCustosFornecedores,
   totalDespFixas,
   totalDespFolha,
   totalDespVariaveis,
   totalDespImpostos,
   totalDespInvestimentos,
+  totalDespFornecedores,
   totalProjetadoAnual,
   topAvulsos,
   estoqueResumo,
@@ -314,15 +317,18 @@ function PrintReport({
   despesasVariaveis: DespesaAgrupada[];
   despesasImpostos: DespesaAgrupada[];
   despesasInvestimentos: DespesaAgrupada[];
+  despesasFornecedores: DespesaAgrupada[];
   tiposCustosFixos: TipoCustoVariavel[];
   tiposCustosVariaveis: TipoCustoVariavel[];
   tiposCustosImpostos: TipoCustoVariavel[];
   tiposCustosInvestimentos: TipoCustoVariavel[];
+  tiposCustosFornecedores: TipoCustoVariavel[];
   totalDespFixas: number;
   totalDespFolha: number;
   totalDespVariaveis: number;
   totalDespImpostos: number;
   totalDespInvestimentos: number;
+  totalDespFornecedores: number;
   totalProjetadoAnual: number;
   topAvulsos: { nome: string; qtd: number }[];
   estoqueResumo: { valorTotal: number; totalItens: number };
@@ -495,6 +501,7 @@ function PrintReport({
               { l: '(–) Despesas Variáveis', v: formatCurrency(totalDespVariaveis), c: '#b91c1c', b: false },
               { l: '(–) Despesas de Imposto', v: formatCurrency(totalDespImpostos), c: '#b91c1c', b: false },
               { l: '(–) Investimentos', v: formatCurrency(totalDespInvestimentos), c: '#b91c1c', b: false },
+              { l: '(–) Fornecedores', v: formatCurrency(totalDespFornecedores), c: '#b91c1c', b: false },
             ].map((r, i) => (
               <tr key={i} style={trZebra(i)}>
                 <td style={{ ...TD, fontWeight: r.b ? 700 : 500 }}>{r.l}</td>
@@ -593,6 +600,17 @@ function PrintReport({
           total={totalDespInvestimentos}
           formatCurrency={formatCurrency}
           tiposDisponiveis={tiposCustosInvestimentos}
+        />
+      </div>
+
+      <div className="pdf-page-break" />
+      <div style={{ marginTop: 0 }}>
+        <div style={H2}>8. Fornecedores</div>
+        <PrintDespesaTable
+          items={despesasFornecedores}
+          total={totalDespFornecedores}
+          formatCurrency={formatCurrency}
+          tiposDisponiveis={tiposCustosFornecedores}
         />
       </div>
 
