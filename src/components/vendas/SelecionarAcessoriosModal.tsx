@@ -37,9 +37,9 @@ export function SelecionarAcessoriosModal({
 }: SelecionarAcessoriosModalProps) {
   const [itensSelecionados, setItensSelecionados] = useState<Set<string>>(new Set());
   const [busca, setBusca] = useState('');
-  // Para itens com unidade decimal (Metro/Kg/Litro), o usuário informa Qtd e Tamanho separadamente.
+  // A quantidade é expressa na unidade cadastrada do item. Para unidades decimais
+  // (m, kg, l...) aceita números fracionários; para discretas (un, rolo...) inteiros.
   const [quantidades, setQuantidades] = useState<Record<string, number>>({});
-  const [tamanhos, setTamanhos] = useState<Record<string, string>>({});
 
   const { data: produtosEstoque = [], isLoading } = useQuery({
     queryKey: ['custos-itens-modal'],
@@ -92,40 +92,28 @@ export function SelecionarAcessoriosModal({
   const handleConfirmar = () => {
     const itensSelecionadosArray = produtosEstoque.filter(item => itensSelecionados.has(item.id));
 
-    // Validar tamanho obrigatório para itens decimais (metro/kg/litro)
-    const semTamanho = itensSelecionadosArray.filter(item => {
-      const isDecimal = !getUnidade(item.unidade).discreta;
-      const tam = parseFloat(tamanhos[item.id] || '') || 0;
-      return isDecimal && tam <= 0;
-    });
-
-    if (semTamanho.length > 0) {
-      toast.error(
-        `Informe o tamanho para: ${semTamanho.map(i => i.nome).join(', ')}`
-      );
+    // Validar quantidade > 0
+    const semQtd = itensSelecionadosArray.filter(item => (quantidades[item.id] ?? 1) <= 0);
+    if (semQtd.length > 0) {
+      toast.error(`Informe a quantidade para: ${semQtd.map(i => i.nome).join(', ')}`);
       return;
     }
-    
+
     const produtos: ProdutoVenda[] = itensSelecionadosArray.map(item => {
-      const isDecimal = !getUnidade(item.unidade).discreta;
       const qtd = quantidades[item.id] ?? 1;
-      const tam = isDecimal ? (tamanhos[item.id] || '') : '';
-      const tamanhoNum = isDecimal ? (parseFloat(tam) || 0) : 0;
-      // Para itens medidos por unidade decimal, o valor unitário armazenado considera o tamanho
-      // (preco_venda * tamanho_unitario), permitindo que o trigger do DB calcule valor_total
-      // como valor_unitario_efetivo * quantidade.
-      const valorUnitario = isDecimal && tamanhoNum > 0 ? item.preco * tamanhoNum : item.preco;
+      // valor_produto = preço unitário puro (na unidade cadastrada).
+      // Total = valor_produto * quantidade (qtd pode ser decimal para m/kg/l).
       return {
         tipo_produto: item.tipo === 'acessorio' ? 'acessorio' : 'adicional',
         largura: 0,
         altura: 0,
-        valor_produto: valorUnitario,
+        valor_produto: item.preco,
         valor_pintura: 0,
         valor_instalacao: 0,
         valor_frete: 0,
         quantidade: qtd,
         descricao: item.nome,
-        tamanho: tam,
+        tamanho: '',
         desconto_valor: 0,
         desconto_percentual: 0,
         tipo_desconto: 'valor' as const,
@@ -142,19 +130,16 @@ export function SelecionarAcessoriosModal({
     setItensSelecionados(new Set());
     setBusca('');
     setQuantidades({});
-    setTamanhos({});
     onOpenChange(false);
   };
 
-  const temItemDecimalSemTamanho = useMemo(() => {
+  const temItemSemQuantidade = useMemo(() => {
     return produtosEstoque.some(item => {
       if (!itensSelecionados.has(item.id)) return false;
-      const isDecimal = !getUnidade(item.unidade).discreta;
-      if (!isDecimal) return false;
-      const tam = parseFloat(tamanhos[item.id] || '') || 0;
-      return tam <= 0;
+      const qtd = quantidades[item.id] ?? 1;
+      return !(qtd > 0);
     });
-  }, [itensSelecionados, tamanhos, produtosEstoque]);
+  }, [itensSelecionados, quantidades, produtosEstoque]);
 
   const getCategoriaColor = (categoria: string) => {
     const c = (categoria || '').toLowerCase();
