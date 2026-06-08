@@ -39,10 +39,10 @@ export default function EstrategiaPrecos() {
         return;
       }
       if (kind === 'pdf') {
-        exportEstrategiaPrecosPDF(kits || []);
+        exportEstrategiaPrecosPDF(kits || [], itensAvulso);
         toast.success('PDF gerado');
       } else {
-        exportEstrategiaPrecosExcel(kits || []);
+        exportEstrategiaPrecosExcel(kits || [], itensAvulso);
         toast.success('Excel gerado');
       }
     } catch (e: any) {

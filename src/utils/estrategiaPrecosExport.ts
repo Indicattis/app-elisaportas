@@ -2,6 +2,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
 import type { ItemTabelaPreco } from "@/hooks/useTabelaPrecos";
+import type { CustoItem } from "@/hooks/useCustosItens";
 
 const fmtBRL = (n: number) =>
   Number(n || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -12,7 +13,17 @@ function kitTotal(i: ItemTabelaPreco) {
   return Number(i.valor_porta || 0) + Number(i.valor_instalacao || 0) + Number(i.valor_pintura || 0);
 }
 
-export function exportEstrategiaPrecosPDF(kits: ItemTabelaPreco[]) {
+function agruparPorCategoria(itens: CustoItem[]) {
+  const map = new Map<string, CustoItem[]>();
+  itens.forEach((it) => {
+    const cat = it.categoria?.trim() || "Sem categoria";
+    if (!map.has(cat)) map.set(cat, []);
+    map.get(cat)!.push(it);
+  });
+  return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b, "pt-BR"));
+}
+
+export function exportEstrategiaPrecosPDF(kits: ItemTabelaPreco[], itensAvulso: CustoItem[] = []) {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
   const data = new Date().toLocaleDateString("pt-BR");
 
@@ -53,10 +64,56 @@ export function exportEstrategiaPrecosPDF(kits: ItemTabelaPreco[]) {
     },
   });
 
+  if (itensAvulso.length > 0) {
+    const grupos = agruparPorCategoria(itensAvulso);
+    let cursorY = (doc as any).lastAutoTable.finalY + 8;
+
+    if (cursorY > doc.internal.pageSize.getHeight() - 30) {
+      doc.addPage();
+      cursorY = 14;
+    }
+    doc.setFontSize(12);
+    doc.text("Itens Avulso", 14, cursorY);
+    cursorY += 4;
+
+    grupos.forEach(([categoria, lista]) => {
+      autoTable(doc, {
+        startY: cursorY,
+        head: [[
+          { content: `${categoria} (${lista.length})`, colSpan: 3, styles: { halign: "left", fillColor: [30, 41, 59], textColor: 255 } },
+        ]],
+        body: [],
+        theme: "plain",
+        margin: { left: 14, right: 14 },
+      });
+      cursorY = (doc as any).lastAutoTable.finalY;
+
+      autoTable(doc, {
+        startY: cursorY,
+        head: [["Nome", "Un.", "Preço/un"]],
+        body: lista.map((it) => [
+          it.descricao,
+          it.unidade || "-",
+          fmtBRL(Number(it.preco_venda || 0)),
+        ]),
+        styles: { fontSize: 9, cellPadding: 2 },
+        headStyles: { fillColor: [51, 65, 85], textColor: 255 },
+        columnStyles: {
+          0: { cellWidth: "auto" },
+          1: { cellWidth: 30, halign: "center" },
+          2: { cellWidth: 40, halign: "right", fontStyle: "bold" },
+        },
+        margin: { left: 14, right: 14 },
+        theme: "striped",
+      });
+      cursorY = (doc as any).lastAutoTable.finalY + 4;
+    });
+  }
+
   doc.save(`tabela-precos-${hoje()}.pdf`);
 }
 
-export function exportEstrategiaPrecosExcel(kits: ItemTabelaPreco[]) {
+export function exportEstrategiaPrecosExcel(kits: ItemTabelaPreco[], itensAvulso: CustoItem[] = []) {
   const wb = XLSX.utils.book_new();
 
   const kitsRows = [
@@ -75,6 +132,21 @@ export function exportEstrategiaPrecosExcel(kits: ItemTabelaPreco[]) {
   const wsKits = XLSX.utils.aoa_to_sheet(kitsRows);
   wsKits["!cols"] = [{ wch: 5 }, { wch: 40 }, { wch: 12 }, { wch: 12 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 14 }];
   XLSX.utils.book_append_sheet(wb, wsKits, "Kits");
+
+  if (itensAvulso.length > 0) {
+    const avulsoRows: (string | number)[][] = [
+      ["Categoria", "Nome", "Unidade", "Preço/un"],
+      ...itensAvulso.map((it) => [
+        it.categoria || "Sem categoria",
+        it.descricao,
+        it.unidade || "-",
+        Number(it.preco_venda || 0),
+      ]),
+    ];
+    const wsAvulso = XLSX.utils.aoa_to_sheet(avulsoRows);
+    wsAvulso["!cols"] = [{ wch: 22 }, { wch: 40 }, { wch: 12 }, { wch: 14 }];
+    XLSX.utils.book_append_sheet(wb, wsAvulso, "Itens Avulso");
+  }
 
   XLSX.writeFile(wb, `tabela-precos-${hoje()}.xlsx`);
 }
