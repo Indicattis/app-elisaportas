@@ -221,19 +221,21 @@ const setorSelectClassFrom = (list: SetorMeta[], v?: string | null) => {
   return `w-full h-8 ${m.color} border rounded-full px-3 text-xs font-medium outline-none focus:ring-2 focus:ring-blue-400/40 appearance-none cursor-pointer transition-colors`;
 };
 
-function calcFeriasDefault(salario: number, _fgts_pct: number) {
-  return salario / 3 / 12;
+function calcFeriasDefault(base: number, _fgts_pct: number) {
+  return base / 3 / 12;
 }
-function calcTotalFolha(f: { salario: number; salario_minimo?: number; aux_combustivel: number; insalubridade_pct: number; fgts_pct: number; previsao_13_valor: number; em_folha?: boolean; ferias_valor?: number | null }) {
-  if (f.em_folha === false) return f.salario;
+function calcTotalFolha(f: { salario: number; salario_minimo?: number; aux_combustivel: number; hora_extra?: number; insalubridade_pct: number; fgts_pct: number; previsao_13_valor: number; em_folha?: boolean; ferias_valor?: number | null }) {
+  const horaExtra = Number(f.hora_extra) || 0;
+  if (f.em_folha === false) return f.salario + horaExtra;
+  const base = f.salario + horaExtra; // base de cálculo dos encargos
   const baseInsalub = f.salario_minimo == null ? f.salario : f.salario_minimo;
   const insalub = baseInsalub * (f.insalubridade_pct || 0) / 100;
-  const fgts = f.salario * (f.fgts_pct || 0) / 100;
-  const ferias = f.ferias_valor == null ? calcFeriasDefault(f.salario, f.fgts_pct) : Number(f.ferias_valor) || 0;
-  const prev13 = f.salario / 12;
+  const fgts = base * (f.fgts_pct || 0) / 100;
+  const ferias = f.ferias_valor == null ? calcFeriasDefault(base, f.fgts_pct) : Number(f.ferias_valor) || 0;
+  const prev13 = base / 12;
   const fgts13 = fgts / 12;
   const multaFgts = fgts * 0.4;
-  return f.salario + f.aux_combustivel + insalub + fgts + prev13 + fgts13 + ferias + multaFgts;
+  return base + f.aux_combustivel + insalub + fgts + prev13 + fgts13 + ferias + multaFgts;
 }
 
 function FolhaBlock({
