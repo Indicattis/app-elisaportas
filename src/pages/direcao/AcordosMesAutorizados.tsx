@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, Fragment } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Search, Edit2, Trash2, MoreHorizontal, Check, X, CheckCircle2, XCircle, CalendarDays, DollarSign, Plus, History } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -126,6 +126,25 @@ export default function AcordosMesAutorizados() {
       return matchSearch && matchStatus;
     });
   }, [acordosDoMes, searchTerm, filterStatus]);
+
+  const acordosAgrupados = useMemo(() => {
+    const map = new Map<string, { autorizadoId: string; autorizadoNome: string; total: number; items: AcordoAutorizado[] }>();
+    acordosFiltrados.forEach((acordo) => {
+      const key = acordo.autorizado_id;
+      const grupo = map.get(key) ?? {
+        autorizadoId: acordo.autorizado_id,
+        autorizadoNome: acordo.autorizado_nome,
+        total: 0,
+        items: [],
+      };
+      grupo.items.push(acordo);
+      grupo.total += acordo.valor_acordado;
+      map.set(key, grupo);
+    });
+    return Array.from(map.values()).sort((a, b) =>
+      a.autorizadoNome.localeCompare(b.autorizadoNome, 'pt-BR')
+    );
+  }, [acordosFiltrados]);
 
   const handleNovoAcordo = () => {
     setAcordoParaEditar(null);
@@ -349,9 +368,29 @@ export default function AcordosMesAutorizados() {
                   </TableHeader>
                   <TableBody>
                     <TooltipProvider>
-                      {acordosFiltrados.map((acordo) => {
-                        const precos = precosMap.get(acordo.autorizado_id);
-                        return (
+                      {(() => {
+                        const colSpan =
+                          12 +
+                          ((contexto === 'direcao' || contexto === 'home') ? 1 : 0) +
+                          ((contexto === 'logistica' || contexto === 'home') ? 1 : 0);
+                        return acordosAgrupados.map((grupo) => (
+                          <Fragment key={grupo.autorizadoId}>
+                            <TableRow className="bg-blue-500/10 hover:bg-blue-500/15 border-blue-500/20">
+                              <TableCell colSpan={colSpan} className="py-2">
+                                <div className="flex items-center justify-between gap-3">
+                                  <span className="text-sm font-semibold text-blue-200">
+                                    {grupo.autorizadoNome}
+                                  </span>
+                                  <span className="text-xs text-white/70">
+                                    {grupo.items.length} acordo{grupo.items.length === 1 ? '' : 's'} ·{' '}
+                                    <span className="text-green-400 font-medium">{formatCurrency(grupo.total)}</span>
+                                  </span>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                            {grupo.items.map((acordo) => {
+                              const precos = precosMap.get(acordo.autorizado_id);
+                              return (
                           <Tooltip key={acordo.id}>
                             <TooltipTrigger asChild>
                               <TableRow className="border-blue-500/10 hover:bg-white/5 text-white/90 cursor-default">
@@ -511,8 +550,11 @@ export default function AcordosMesAutorizados() {
                               </div>
                             </TooltipContent>
                           </Tooltip>
-                        );
-                      })}
+                              );
+                            })}
+                          </Fragment>
+                        ));
+                      })()}
                     </TooltipProvider>
                   </TableBody>
                 </Table>
