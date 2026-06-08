@@ -368,7 +368,7 @@ function calcTotalFolha(f: { salario: number; salario_minimo?: number; aux_combu
 }
 
 function FolhaBlock({
-  items, insert, update, remove, reorder, readOnly, clearOverride, hasOverride,
+  items, insert, update, remove, reorder, readOnly, clearOverride, hasOverride, mesReferencia,
 }: {
   items: DespesaPadrao[];
   insert: ReturnType<typeof useDespesasPadrao>['insert'];
@@ -378,6 +378,7 @@ function FolhaBlock({
   readOnly?: boolean;
   clearOverride?: (id: string) => Promise<boolean>;
   hasOverride?: (id: string) => boolean;
+  mesReferencia?: string | null;
 }) {
   const [nome, setNome] = useState('');
   const [emFolha, setEmFolha] = useState(true);
