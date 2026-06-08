@@ -64,7 +64,7 @@ type LancRow = {
   id: string;
   mes_referencia: string;
   tipo_custo_id: string | null;
-  categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete';
+  categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete' | 'autorizado';
   tipo_nome: string;
   valor: number;
   data: string;
@@ -83,12 +83,12 @@ type Colab = {
   em_folha: boolean;
 };
 
-type TipoCusto = { id: string; nome: string; tipo: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete' };
+type TipoCusto = { id: string; nome: string; tipo: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete' | 'autorizado' };
 
 type TipoCustoFull = {
   id: string;
   nome: string;
-  tipo: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete';
+  tipo: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete' | 'autorizado';
   descricao: string | null;
   empresa_id: string | null;
   categoria_id: string | null;
@@ -134,7 +134,7 @@ interface Props {
   onMediaMensalChange?: (media: number) => void;
   onDataChange?: () => void;
   reloadKey?: number;
-  onRequestNovoGasto?: (categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete') => void;
+  onRequestNovoGasto?: (categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete' | 'autorizado') => void;
 }
 
 export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataChange, reloadKey, onRequestNovoGasto }: Props) {
@@ -218,7 +218,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         setImpostos(lancArr.filter(x => x.categoria === 'imposto'));
 
         const gastosRows = (g || []) as unknown as Array<{ id: string; tipo_custo_id: string; valor: number; data: string; descricao: string | null; responsavel_id: string | null; banco_id: string | null }>;
-        const tiposMap: Record<string, { nome: string; tipo: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete'; aparece_no_dre: boolean; valor_maximo_mensal: number }> = {};
+        const tiposMap: Record<string, { nome: string; tipo: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete' | 'autorizado'; aparece_no_dre: boolean; valor_maximo_mensal: number }> = {};
         ((tiposAll || []) as any[]).forEach(t => {
           tiposMap[t.id] = {
             nome: t.nome,
@@ -263,7 +263,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
             : Promise.resolve(),
         ]);
 
-        const agruparPor = (categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete'): GastoAgrupado[] => {
+        const agruparPor = (categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete' | 'autorizado'): GastoAgrupado[] => {
           const acc = new Map<string, GastoAgrupado>();
           // Seed: todos os tipos da categoria aparecem mesmo sem gastos
           Object.entries(tiposMap).forEach(([id, t]) => {
@@ -382,7 +382,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
   };
 
   const handleInsertLanc = async (payload: {
-    tipo: TipoCusto; categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete'; valor: number; data: string; descricao: string;
+    tipo: TipoCusto; categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete' | 'autorizado'; valor: number; data: string; descricao: string;
   }) => {
     if (!mesStart) return;
     const userId = (await supabase.auth.getUser()).data.user?.id || null;
@@ -909,13 +909,13 @@ function BlocoDespesa({
   icon: React.ReactNode;
   rows: LancRow[];
   loading: boolean;
-  categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete';
+  categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete' | 'autorizado';
   tipos: TipoCusto[];
   padroes: DespesaPadrao[];
   mesStart: string;
   onDelete: (id: string) => void;
   onInsert: (payload: {
-    tipo: TipoCusto; categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete'; valor: number; data: string; descricao: string;
+    tipo: TipoCusto; categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete' | 'autorizado'; valor: number; data: string; descricao: string;
   }) => Promise<void>;
   onUpdate: (
     id: string,
@@ -1463,7 +1463,7 @@ function TiposCustoBlockMensal({
 }: {
   titulo: string;
   icon: React.ReactNode;
-  tipo: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete';
+  tipo: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete' | 'autorizado';
   tiposFull: TipoCustoFull[];
   gastos: GastoAgrupado[];
   loading: boolean;
@@ -1569,7 +1569,7 @@ function CategoriaGroupMensal({
   categorias: CategoriaDespesa[];
   empresasMap: Record<string, string>;
   gastosMap: Record<string, GastoAgrupado>;
-  tipo: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete';
+  tipo: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete' | 'autorizado';
 }) {
   const [expanded, setExpanded] = useState(true);
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
