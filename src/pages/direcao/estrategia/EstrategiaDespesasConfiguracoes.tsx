@@ -330,7 +330,7 @@ export function DespesasGridContent({
 
 /* ---------------- Folha ---------------- */
 
-function TetoIndicator({ secaoKey, mesReferencia }: { secaoKey: string; mesReferencia: string | null }) {
+function TetoIndicator({ secaoKey, mesReferencia, totalProjetado }: { secaoKey: string; mesReferencia: string | null; totalProjetado?: number }) {
   const { getTeto, setTeto } = useDespesasSecaoTeto(mesReferencia ?? null);
   const teto = getTeto(secaoKey);
   const [editing, setEditing] = useState(false);
@@ -342,9 +342,11 @@ function TetoIndicator({ secaoKey, mesReferencia }: { secaoKey: string; mesRefer
     if (v !== teto) await setTeto(secaoKey, v);
   };
 
+  const abaixoDoProjeto = totalProjetado != null && teto < totalProjetado;
+
   return (
     <div className="flex items-center gap-2">
-      <span className="text-xs text-blue-300/70 uppercase tracking-wider">Teto</span>
+      <span className="text-xs text-blue-300/70 uppercase tracking-wider">Objetivo Teto</span>
       {editing ? (
         <input
           autoFocus
@@ -363,7 +365,7 @@ function TetoIndicator({ secaoKey, mesReferencia }: { secaoKey: string; mesRefer
         <button
           type="button"
           onClick={() => { setDraft(teto ? String(teto) : ''); setEditing(true); }}
-          className="text-sm font-semibold text-blue-300 hover:text-blue-200 px-2 py-0.5 rounded hover:bg-blue-500/10 tabular-nums"
+          className={`text-sm font-semibold px-2 py-0.5 rounded hover:bg-blue-500/10 tabular-nums ${abaixoDoProjeto ? 'text-red-400 hover:text-red-300' : 'text-blue-300 hover:text-blue-200'}`}
           title="Clique para editar o teto"
         >
           {formatCurrency(teto)}
