@@ -1,34 +1,53 @@
-## Diagnóstico
+## Histórico de acordos com autorizados
 
-A coluna `vendas.venda_presencial` é gravada como `true` quando a venda é **Quente** e `false` quando é **Fria** (confirmado pelo `RadioGroup` em `PagamentoSection.tsx` linhas 230-266 e pela regra de desconto em `descontoVendasRules.ts`, onde o adicional de desconto é liberado para venda **fria**).
+Hoje a tabela `acordos_instalacao_autorizados` guarda apenas o estado atual (quem criou, quem aprovou, quem pagou). Não há rastro de alterações de status, edições de valor, reprovações, desmarcações de pagamento, etc. Vou adicionar um registro completo de auditoria + um botão na tela `/autorizados/acordos/:ano/:mes` (e também na versão direção) para visualizar todo o histórico de cada acordo.
 
-A venda da **ZANELLA TRANSPORTES** tem `venda_presencial = true` no banco (ou seja, Quente). Porém:
+### 1. Banco de dados (migração)
 
-1. O sheet de detalhes mostra o rótulo invertido como "Fria" — daí o usuário acreditar que a venda estava fria.
-2. A faixa de desconto rotulada "Quente" na verdade representa o adicional liberado para venda **Fria** (variável interna `pctGelo`, calculada quando `isFrio === true`).
-3. O cálculo em si está correto: como Zanella é Quente, o tier "frio" fica 0% e o excedente vai todo para a faixa do responsável ("Luan/Alana").
+Criar tabela `acordos_autorizados_historico`:
 
-Conclusão: o cálculo está certo; o problema é puramente de rótulos na UI.
+- `acordo_id` (FK para `acordos_instalacao_autorizados`, ON DELETE CASCADE)
+- `evento` (text): `criado`, `editado`, `status_alterado`, `aprovado`, `reprovado`, `pago`, `desmarcado_pago`
+- `usuario_id` (uuid) e `usuario_nome` (text, snapshot, para sobreviver a exclusões de usuário)
+- `valor_anterior` (jsonb) / `valor_novo` (jsonb): snapshot dos campos relevantes
+- `descricao` (text): texto pronto para exibição (ex.: "Alterou status de Pendente → Concluído")
+- `created_at` timestamp
 
-## Mudanças
+GRANTs + RLS:
+- `SELECT` para `authenticated` (qualquer usuário logado pode ler o histórico dos acordos que já enxerga)
+- `INSERT` para `authenticated` e `service_role` (registrado via trigger, mas trigger precisa de permissão)
 
-### 1. `src/components/pedidos/VendaPendenteDetalhesSheet.tsx`
-- **Linha 334** — badge no topo: trocar `venda_presencial ? "❄️ Fria" : "🔥 Quente"` por `venda_presencial ? "🔥 Quente" : "❄️ Fria"` (e ajustar as classes de cor correspondentes para casar com o booleano correto: laranja quando Quente, azul quando Frio).
-- **Linhas 690-711** — card "Temperatura": inverter o ícone (Flame para `presencial=true`, Snowflake para `presencial=false`), a cor (laranja/azul) e o texto (`'Quente' : 'Fria'`).
-- **Linha 733** — card da faixa "gelo" em Descontos por Faixa: renomear o título de **"Quente"** para **"Frio"** (essa faixa só é preenchida quando `isFrio`).
-- **Linha 742** — card da faixa "responsavel": renomear **"Luan/Alana"** para **"Diretor"**.
-- **Linha 100** — atualizar o comentário `// Calculate discount tiers (Cartão / Gelo / Luan-Alana)` para `(Cartão / Frio / Diretor)`.
+Trigger `BEFORE INSERT/UPDATE` em `acordos_instalacao_autorizados` que:
+- No INSERT: grava evento `criado` com snapshot inicial
+- No UPDATE: compara campos relevantes (`status`, `valor_acordado`, `observacoes`, `data_acordo`, `aprovado_direcao`, `reprovado_direcao`, `pago`) e gera um evento por mudança, capturando `auth.uid()` e nome via JOIN com `admin_users`
 
-### 2. `src/pages/direcao/VendaEditarDirecao.tsx`
-- **Linha 327** — está mostrando o texto "Fria" dentro de `{venda.venda_presencial && (...)}`. Corrigir para refletir o significado real: quando `venda_presencial=true` exibir "Quente"; manter a renderização condicional ou exibir os dois estados (`presencial ? 'Quente' : 'Fria'`).
+### 2. Hook
 
-### 3. Verificação sem alteração
-- `src/components/pedidos/PedidoDetalhesSheet.tsx:535` — já está correto (`presencial ? "🔥 Quente" : "❄️ Frio"`); apenas confirmar.
-- Lógica de cálculo (`isFrio = venda_presencial === false`) permanece inalterada — está correta e alinhada com `descontoVendasRules.ts`.
+`src/hooks/useAcordoHistorico.ts`:
+- `useAcordoHistorico(acordoId)` retorna `{ historico, loading }` ordenado por `created_at desc`
 
-## Resultado esperado
+### 3. UI
 
-- Zanella passa a aparecer como **🔥 Quente** no sheet (como está no banco).
-- A faixa de desconto rotulada como **Frio** só exibe valor quando a venda é Fria.
-- A faixa do responsável passa a se chamar **Diretor**.
-- Nenhuma mudança no banco, no fluxo de aprovação ou nos limites de desconto.
+Em `src/pages/direcao/AcordosMesAutorizados.tsx`:
+- Adicionar ícone `History` (lucide-react) em cada linha da tabela, ao lado das demais ações (em todos os contextos: home, logistica, direcao)
+- Ao clicar, abre `HistoricoAcordoDialog` (novo componente em `src/components/autorizados/HistoricoAcordoDialog.tsx`)
+
+`HistoricoAcordoDialog`:
+- Lista vertical no estilo timeline com glassmorphism (`bg-white/5 backdrop-blur-xl border-white/10`)
+- Cada item mostra: ícone do evento, descrição, usuário (nome), data/hora formatada (`dd/MM/yyyy HH:mm`)
+- Cores por tipo de evento (verde = aprovado/pago, vermelho = reprovado/desmarcado, azul = criado, amarelo = editado)
+- Estado vazio amigável e loading spinner
+
+### 4. Detalhes técnicos
+
+- Trigger usa `SECURITY DEFINER` e `SET search_path = public` para respeitar RLS no INSERT
+- O nome do usuário é resolvido no trigger via `(SELECT nome FROM admin_users WHERE user_id = auth.uid())` e gravado como snapshot
+- Frontend continua usando `useAcordosAutorizados` sem mudanças — a auditoria é totalmente server-side
+- O dialog não recarrega ao trocar de acordo: chave do componente baseada em `acordoId`
+
+### Arquivos
+
+- (novo) migração SQL: criar tabela + grants + RLS + trigger
+- (novo) `src/hooks/useAcordoHistorico.ts`
+- (novo) `src/components/autorizados/HistoricoAcordoDialog.tsx`
+- (edit) `src/pages/direcao/AcordosMesAutorizados.tsx`: botão de histórico + estado do dialog

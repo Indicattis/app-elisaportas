@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import { Search, Edit2, Trash2, MoreHorizontal, Check, X, CheckCircle2, XCircle, CalendarDays, DollarSign, Plus } from 'lucide-react';
+import { Search, Edit2, Trash2, MoreHorizontal, Check, X, CheckCircle2, XCircle, CalendarDays, DollarSign, Plus, History } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -15,6 +15,7 @@ import { NovoAcordoDialog } from '@/components/autorizados/NovoAcordoDialog';
 import { formatCurrency } from '@/lib/utils';
 import { criarGastoAcordoAutorizado, removerGastoAcordoAutorizado } from '@/lib/gastoAcordoAutorizado';
 import { ConfirmarPagamentoAcordoDialog } from '@/components/autorizados/ConfirmarPagamentoAcordoDialog';
+import { HistoricoAcordoDialog } from '@/components/autorizados/HistoricoAcordoDialog';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
@@ -209,6 +210,7 @@ export default function AcordosMesAutorizados() {
   }, [toast, refetch]);
 
   const [pagamentoDialog, setPagamentoDialog] = useState<{ acordoId: string; clienteNome: string; valor: number } | null>(null);
+  const [historicoDialog, setHistoricoDialog] = useState<{ acordoId: string; clienteNome: string } | null>(null);
 
   const desmarcarPago = useCallback(async (acordoId: string) => {
     try {
@@ -348,6 +350,7 @@ export default function AcordosMesAutorizados() {
                       <TableHead className="text-xs text-white/70 text-center">Status</TableHead>
                       <TableHead className="text-xs text-white/70 text-center">Pagamento</TableHead>
                       <TableHead className="text-xs text-white/70">Observações</TableHead>
+                      <TableHead className="text-xs text-white/70 text-center">Histórico</TableHead>
                       {(contexto === 'direcao' || contexto === 'home') && (
                         <TableHead className="text-xs text-white/70 text-center">Aprovação</TableHead>
                       )}
@@ -413,6 +416,20 @@ export default function AcordosMesAutorizados() {
                                 </TableCell>
                                 <TableCell className="text-white/60 max-w-[200px] truncate" title={acordo.observacoes || ''}>
                                   {acordo.observacoes || '—'}
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-7 w-7 p-0 hover:bg-white/10"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setHistoricoDialog({ acordoId: acordo.id, clienteNome: acordo.cliente_nome });
+                                    }}
+                                    title="Ver histórico"
+                                  >
+                                    <History className="h-4 w-4 text-blue-400/80" />
+                                  </Button>
                                 </TableCell>
                                 {(contexto === 'direcao' || contexto === 'home') && (
                                   <TableCell className="text-center">
@@ -545,6 +562,12 @@ export default function AcordosMesAutorizados() {
         clienteNome={pagamentoDialog?.clienteNome}
         valor={pagamentoDialog?.valor}
         onConfirm={confirmarPagamento}
+      />
+      <HistoricoAcordoDialog
+        open={!!historicoDialog}
+        onOpenChange={(open) => { if (!open) setHistoricoDialog(null); }}
+        acordoId={historicoDialog?.acordoId ?? null}
+        clienteNome={historicoDialog?.clienteNome}
       />
     </MinimalistLayout>
   );
