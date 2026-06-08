@@ -368,9 +368,29 @@ export default function AcordosMesAutorizados() {
                   </TableHeader>
                   <TableBody>
                     <TooltipProvider>
-                      {acordosFiltrados.map((acordo) => {
-                        const precos = precosMap.get(acordo.autorizado_id);
-                        return (
+                      {(() => {
+                        const colSpan =
+                          12 +
+                          ((contexto === 'direcao' || contexto === 'home') ? 1 : 0) +
+                          ((contexto === 'logistica' || contexto === 'home') ? 1 : 0);
+                        return acordosAgrupados.map((grupo) => (
+                          <>
+                            <TableRow key={`grupo-${grupo.autorizadoId}`} className="bg-blue-500/10 hover:bg-blue-500/15 border-blue-500/20">
+                              <TableCell colSpan={colSpan} className="py-2">
+                                <div className="flex items-center justify-between gap-3">
+                                  <span className="text-sm font-semibold text-blue-200">
+                                    {grupo.autorizadoNome}
+                                  </span>
+                                  <span className="text-xs text-white/70">
+                                    {grupo.items.length} acordo{grupo.items.length === 1 ? '' : 's'} ·{' '}
+                                    <span className="text-green-400 font-medium">{formatCurrency(grupo.total)}</span>
+                                  </span>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                            {grupo.items.map((acordo) => {
+                              const precos = precosMap.get(acordo.autorizado_id);
+                              return (
                           <Tooltip key={acordo.id}>
                             <TooltipTrigger asChild>
                               <TableRow className="border-blue-500/10 hover:bg-white/5 text-white/90 cursor-default">
@@ -530,8 +550,11 @@ export default function AcordosMesAutorizados() {
                               </div>
                             </TooltipContent>
                           </Tooltip>
-                        );
-                      })}
+                              );
+                            })}
+                          </>
+                        ));
+                      })()}
                     </TooltipProvider>
                   </TableBody>
                 </Table>
