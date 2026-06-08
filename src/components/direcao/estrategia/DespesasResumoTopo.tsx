@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { formatCurrency } from '@/lib/utils';
-import { Users, Receipt, TrendingDown, Trash2, Check, X, Landmark, Briefcase, Truck, Banknote, Package, ChevronRight, ChevronDown, FileText, AlertTriangle, Handshake } from 'lucide-react';
+import { Users, Receipt, TrendingDown, Trash2, Check, X, Landmark, Briefcase, Truck, Banknote, Package, ChevronRight, ChevronDown, FileText, AlertTriangle, Handshake, Wallet } from 'lucide-react';
 import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -64,7 +64,7 @@ type LancRow = {
   id: string;
   mes_referencia: string;
   tipo_custo_id: string | null;
-  categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete' | 'autorizado';
+  categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete' | 'autorizado' | 'salario';
   tipo_nome: string;
   valor: number;
   data: string;
@@ -83,12 +83,12 @@ type Colab = {
   em_folha: boolean;
 };
 
-type TipoCusto = { id: string; nome: string; tipo: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete' | 'autorizado' };
+type TipoCusto = { id: string; nome: string; tipo: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete' | 'autorizado' | 'salario' };
 
 type TipoCustoFull = {
   id: string;
   nome: string;
-  tipo: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete' | 'autorizado';
+  tipo: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete' | 'autorizado' | 'salario';
   descricao: string | null;
   empresa_id: string | null;
   categoria_id: string | null;
@@ -134,7 +134,7 @@ interface Props {
   onMediaMensalChange?: (media: number) => void;
   onDataChange?: () => void;
   reloadKey?: number;
-  onRequestNovoGasto?: (categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete' | 'autorizado') => void;
+  onRequestNovoGasto?: (categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete' | 'autorizado' | 'salario') => void;
 }
 
 export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataChange, reloadKey, onRequestNovoGasto }: Props) {
@@ -148,6 +148,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
   const [gastosFinanciamentos, setGastosFinanciamentos] = useState<GastoAgrupado[]>([]);
   const [gastosFretes, setGastosFretes] = useState<GastoAgrupado[]>([]);
   const [gastosAutorizados, setGastosAutorizados] = useState<GastoAgrupado[]>([]);
+  const [gastosSalarios, setGastosSalarios] = useState<GastoAgrupado[]>([]);
   const [loading, setLoading] = useState(false);
   const [reloadV, setReloadV] = useState(0);
   const reload = () => { setReloadV(v => v + 1); onDataChange?.(); };
@@ -180,8 +181,9 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
       + gastosFornecedores.reduce((s, x) => s + Number(x.total || 0), 0)
       + gastosFinanciamentos.reduce((s, x) => s + Number(x.total || 0), 0)
       + gastosFretes.reduce((s, x) => s + Number(x.total || 0), 0)
-      + gastosAutorizados.reduce((s, x) => s + Number(x.total || 0), 0);
-  }, [folha, gastosFixas, gastosVariaveis, gastosImpostos, gastosInvestimentos, gastosFornecedores, gastosFinanciamentos, gastosFretes, gastosAutorizados, padroesFolha]);
+      + gastosAutorizados.reduce((s, x) => s + Number(x.total || 0), 0)
+      + gastosSalarios.reduce((s, x) => s + Number(x.total || 0), 0);
+  }, [folha, gastosFixas, gastosVariaveis, gastosImpostos, gastosInvestimentos, gastosFornecedores, gastosFinanciamentos, gastosFretes, gastosAutorizados, gastosSalarios, padroesFolha]);
 
   useEffect(() => {
     if (mes) onMediaMensalChange?.(totalExibido);
@@ -194,7 +196,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
 
   useEffect(() => {
     if (!mes || !mesStart) {
-      setFolha([]); setImpostos([]); setGastosFixas([]); setGastosVariaveis([]); setGastosImpostos([]); setGastosInvestimentos([]); setGastosFornecedores([]); setGastosFinanciamentos([]); setGastosFretes([]); setGastosAutorizados([]);
+      setFolha([]); setImpostos([]); setGastosFixas([]); setGastosVariaveis([]); setGastosImpostos([]); setGastosInvestimentos([]); setGastosFornecedores([]); setGastosFinanciamentos([]); setGastosFretes([]); setGastosAutorizados([]); setGastosSalarios([]);
       onMediaMensalChange?.(0);
       return;
     }
@@ -220,7 +222,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         setImpostos(lancArr.filter(x => x.categoria === 'imposto'));
 
         const gastosRows = (g || []) as unknown as Array<{ id: string; tipo_custo_id: string; valor: number; data: string; descricao: string | null; responsavel_id: string | null; banco_id: string | null }>;
-        const tiposMap: Record<string, { nome: string; tipo: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete' | 'autorizado'; aparece_no_dre: boolean; valor_maximo_mensal: number }> = {};
+        const tiposMap: Record<string, { nome: string; tipo: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete' | 'autorizado' | 'salario'; aparece_no_dre: boolean; valor_maximo_mensal: number }> = {};
         ((tiposAll || []) as any[]).forEach(t => {
           tiposMap[t.id] = {
             nome: t.nome,
@@ -265,7 +267,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
             : Promise.resolve(),
         ]);
 
-        const agruparPor = (categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete' | 'autorizado'): GastoAgrupado[] => {
+        const agruparPor = (categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete' | 'autorizado' | 'salario'): GastoAgrupado[] => {
           const acc = new Map<string, GastoAgrupado>();
           // Seed: todos os tipos da categoria aparecem mesmo sem gastos
           Object.entries(tiposMap).forEach(([id, t]) => {
@@ -320,6 +322,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         setGastosFinanciamentos(agruparPor('financiamento'));
         setGastosFretes(agruparPor('frete'));
         setGastosAutorizados(agruparPor('autorizado'));
+        setGastosSalarios(agruparPor('salario'));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -385,7 +388,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
   };
 
   const handleInsertLanc = async (payload: {
-    tipo: TipoCusto; categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete' | 'autorizado'; valor: number; data: string; descricao: string;
+    tipo: TipoCusto; categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete' | 'autorizado' | 'salario'; valor: number; data: string; descricao: string;
   }) => {
     if (!mesStart) return;
     const userId = (await supabase.auth.getUser()).data.user?.id || null;
@@ -509,6 +512,15 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         gastos={gastosAutorizados}
         loading={loading}
         onAddGasto={onRequestNovoGasto ? () => onRequestNovoGasto('autorizado') : undefined}
+      />
+      <TiposCustoBlockMensal
+        titulo="Salários"
+        icon={<Wallet className="w-4 h-4" />}
+        tipo="salario"
+        tiposFull={tiposFull.filter(t => t.tipo === 'salario')}
+        gastos={gastosSalarios}
+        loading={loading}
+        onAddGasto={onRequestNovoGasto ? () => onRequestNovoGasto('salario') : undefined}
       />
 
       <AlertDialog open={!!confirmDel} onOpenChange={(o) => !o && setConfirmDel(null)}>
@@ -921,13 +933,13 @@ function BlocoDespesa({
   icon: React.ReactNode;
   rows: LancRow[];
   loading: boolean;
-  categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete' | 'autorizado';
+  categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete' | 'autorizado' | 'salario';
   tipos: TipoCusto[];
   padroes: DespesaPadrao[];
   mesStart: string;
   onDelete: (id: string) => void;
   onInsert: (payload: {
-    tipo: TipoCusto; categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete' | 'autorizado'; valor: number; data: string; descricao: string;
+    tipo: TipoCusto; categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete' | 'autorizado' | 'salario'; valor: number; data: string; descricao: string;
   }) => Promise<void>;
   onUpdate: (
     id: string,
@@ -1475,7 +1487,7 @@ function TiposCustoBlockMensal({
 }: {
   titulo: string;
   icon: React.ReactNode;
-  tipo: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete' | 'autorizado';
+  tipo: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete' | 'autorizado' | 'salario';
   tiposFull: TipoCustoFull[];
   gastos: GastoAgrupado[];
   loading: boolean;
@@ -1581,7 +1593,7 @@ function CategoriaGroupMensal({
   categorias: CategoriaDespesa[];
   empresasMap: Record<string, string>;
   gastosMap: Record<string, GastoAgrupado>;
-  tipo: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete' | 'autorizado';
+  tipo: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete' | 'autorizado' | 'salario';
 }) {
   const [expanded, setExpanded] = useState(true);
   const [expandedRow, setExpandedRow] = useState<string | null>(null);

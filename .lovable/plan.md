@@ -1,41 +1,47 @@
-## Objetivo
+## Goals
 
-Recriar a seção de despesas **Autorizados** como uma categoria normal de despesas (igual a Fixas, Variáveis, Fornecedores, Financiamentos, Fretes e Logística), permitindo cadastrar tipos de custos com `tipo='autorizado'` e lançar gastos nessa categoria. A antiga seção "Pagamentos de Autorizados Terceiros" (componente customizado) não volta — fica substituída pela nova lógica padronizada.
+1. Adicionar nova categoria de despesa **Salários** em `/direcao/estrategia/despesas/:mes`, com o mesmo comportamento das demais (Fixas, Variáveis, Fornecedores, Financiamentos, Fretes, Autorizados…).
+2. Adicionar, ao lado dos botões **Exportar PDF** / **Nova despesa** de cada bloco de categoria, um **toggle** que controla se aquela categoria **debita do lucro no DRE** (sim/não), persistido por categoria.
 
-## Mudanças
+## Changes
 
-### 1. Banco (migração)
-- Atualizar o CHECK constraint `tipos_custos_tipo_check` para incluir `'autorizado'` no array de valores permitidos.
+### 1. Banco de dados (migração)
+- Atualizar o `CHECK` de `tipos_custos.tipo` para incluir `'salario'` (mantendo `fixa`, `variavel`, `imposto`, `projetada`, `investimento`, `fornecedor`, `financiamento`, `frete`, `autorizado`).
+- Criar tabela `despesas_categoria_dre_config`:
+  - `categoria text PRIMARY KEY` (`'fixa' | 'variavel' | 'salario' | ...`)
+  - `debita_dre boolean NOT NULL DEFAULT true`
+  - timestamps + trigger updated_at
+  - GRANTs (`authenticated` SELECT/INSERT/UPDATE, `service_role` ALL), RLS habilitada com policy permitindo leitura para `authenticated` e escrita para diretores/admins (mesmo padrão de `dre_mensais`).
+  - Seed inicial: insere uma linha por categoria existente com `debita_dre = true` (Salários inicia em `true`).
 
-### 2. Tipagem (front)
-Adicionar `'autorizado'` na união de tipos em todos os pontos onde aparecem os outros (`'fixa' | 'variavel' | ... | 'frete'`):
-- `src/hooks/useTiposCustos.ts`
+### 2. Tipos no frontend
+Adicionar `'salario'` à união de tipos em:
+- `src/hooks/useTiposCustos.ts` (interface `TipoCusto.tipo`)
 - `src/components/financeiro/GastoFormDialog.tsx`
 - `src/components/direcao/estrategia/DespesasResumoTopo.tsx`
-- `src/pages/direcao/estrategia/EstrategiaDespesasConfiguracoes.tsx`
+- `src/pages/direcao/estrategia/EstrategiaDespesasConfiguracoes.tsx` (3 ocorrências: filtro, união do TipoSelector e tipo da Categoria)
 - `src/pages/direcao/DREMesDirecao.tsx`
 
-### 3. Tela de configuração `EstrategiaDespesasConfiguracoes.tsx`
-- Filtrar `tiposAutorizados = tiposCustos.filter(t => t.tipo === 'autorizado')`.
-- Renderizar bloco "Autorizados" com `tipo="autorizado"` (mesmo padrão dos demais).
-- Incluir `'autorizado'` no array de grupos do seletor (label: `Autorizados`).
+### 3. Bloco "Salários" na configuração
+Em `EstrategiaDespesasConfiguracoes.tsx`:
+- `const tiposSalarios = tiposCustos.filter(t => t.tipo === 'salario')`
+- Renderizar `<TiposCustoBlock titulo="Tipos de Custos — Salários" icon={<Wallet />} tipo="salario" items={tiposSalarios} … />` (posicionado logo após Folha / antes de Fixas, para agrupar com pessoal).
+- Incluir `'salario'` na lista de grupos do seletor de realocação (linha ~1273) com label "Salários".
 
-### 4. Resumo do topo `DespesasResumoTopo.tsx`
-- Novo state `gastosAutorizados`, `setGastosAutorizados(agruparPor('autorizado'))`.
-- Bloco visual "Autorizados" análogo a Fornecedores/Financiamentos/Fretes, com `onAddGasto` enviando categoria `'autorizado'`.
+### 4. Resumo do topo e DRE
+- `DespesasResumoTopo.tsx`: novo estado `gastosSalarios`, novo `agruparPor('salario')` e bloco visual idêntico aos demais (ícone `Wallet`). Somar ao total geral.
+- `DREMesDirecao.tsx`: novos `despesasSalarios` / `tiposCustosSalarios` / `totalDespSalarios`, novo bloco no PDF e na seção detalhada, somar em `lucroLiquidoFinal` **apenas se** a categoria estiver com `debita_dre = true`.
 
-### 5. DRE mensal `DREMesDirecao.tsx`
-- Novos states/props: `despesasAutorizados`, `tiposCustosAutorizados`, `totalDespAutorizados`.
-- `itemsBy('autorizado')` e `tiposBy('autorizado')` no fetch.
-- Bloco na renderização (`11. Autorizados`) idêntico aos demais.
-- Linha extra `(–) Autorizados` no card de totais e na tabela final.
-- Incluir `totalDespAutorizados` no cálculo de `lucroLiquidoFinal`.
-- Passar props para o componente filho que recebe os outros totais.
+### 5. Toggle "Debita do lucro no DRE" por categoria
+Em `TiposCustoBlock` (mesmo componente que já tem o botão Exportar PDF, linhas ~1198-1225):
+- Novo hook leve `useCategoriaDreConfig()` que carrega o mapa `{ categoria → debita_dre }` de `despesas_categoria_dre_config` e expõe `toggle(categoria)`.
+- Renderizar, **à esquerda** do botão "Exportar PDF", um Switch (shadcn) com label curto "Debita do lucro" + estado verde/cinza. Tooltip explicando: "Quando desligado, esta categoria não é subtraída do lucro líquido no DRE."
+- `readOnly` esconde/desabilita o toggle (mesmo padrão do botão "Gerenciar categorias").
+- Persistência via `upsert` na nova tabela; otimista local.
 
-### 6. Dialog de novo gasto `GastoFormDialog.tsx`
-- Reconhecer `defaultCategoria='autorizado'` (apenas estender união de tipos — não precisa lógica nova).
+### 6. DRE: respeitar o toggle
+Em `DREMesDirecao.tsx`, ao calcular `lucroLiquidoFinal` e o card de totais, multiplicar cada total de categoria por `config[categoria].debita_dre ? 1 : 0`. As linhas do detalhamento continuam visíveis, mas marcadas como "informativo (não debita)" quando desligado.
 
-## Observações
-- Sem mudança no schema de `gastos` (já usa `tipo_custo_id`).
-- Sem reaproveitamento dos dados antigos da tabela `pagamentos_autorizados_terceiros_mes` / `autorizados_terceiros` — esses ficam intocados (lógica separada do fluxo financeiro de autorizados se existir).
-- A coluna do DRE final continua mostrando apenas "Desp. Variáveis" e "Fretes e Logística" (conforme exclusão recente); incluir ou não "Autorizados" lá é decisão à parte — por padrão **não** vou adicionar, apenas no card de totais e nas seções detalhadas.
+## Out of scope
+- Não alterar `aparece_no_dre` por item (continua existindo e funcionando como filtro fino).
+- Não migrar gastos existentes para a nova categoria Salários (fica vazia até o usuário cadastrar tipos).

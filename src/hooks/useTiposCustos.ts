@@ -7,7 +7,7 @@ export interface TipoCusto {
   nome: string;
   descricao: string | null;
   valor_maximo_mensal: number;
-  tipo: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete' | 'autorizado';
+  tipo: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete' | 'autorizado' | 'salario';
   ativo: boolean;
   aparece_no_dre: boolean;
   empresa_id: string | null;

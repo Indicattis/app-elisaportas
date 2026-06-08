@@ -1,5 +1,5 @@
 import { useState, useRef, useMemo } from 'react';
-import { Plus, Trash2, Users, Receipt, TrendingDown, TrendingUp, Landmark, Briefcase, Truck, Banknote, Package, FileDown, GripVertical, X, Check, FolderPlus, ChevronRight, AlertTriangle, FileText, RotateCcw, Handshake } from 'lucide-react';
+import { Plus, Trash2, Users, Receipt, TrendingDown, TrendingUp, Landmark, Briefcase, Truck, Banknote, Package, FileDown, GripVertical, X, Check, FolderPlus, ChevronRight, AlertTriangle, FileText, RotateCcw, Handshake, Wallet } from 'lucide-react';
 import GastoFormDialog from '@/components/financeiro/GastoFormDialog';
 import { useGastosPorTipoMes } from '@/hooks/useGastosPorTipoMes';
 import { useContagemGastosPorTipoMes } from '@/hooks/useContagemGastosPorTipoMes';
@@ -7,6 +7,7 @@ import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { formatCurrency } from '@/lib/utils';
 import { useDespesasPadrao, type DespesaPadrao, type DespesaPadraoTipo } from '@/hooks/useDespesasPadrao';
 import { useTiposCustos, type TipoCusto } from '@/hooks/useTiposCustos';
+import { useCategoriaDreConfig } from '@/hooks/useCategoriaDreConfig';
 import { useDespesasPadraoMes } from '@/hooks/useDespesasPadraoMes';
 import { useTiposCustosMes } from '@/hooks/useTiposCustosMes';
 import { useEmpresasEmissoras } from '@/hooks/useEmpresasEmissoras';
@@ -103,6 +104,7 @@ export function DespesasGridContent({
   const tiposFinanciamentos = tiposCustos.filter(t => t.tipo === 'financiamento');
   const tiposFretes = tiposCustos.filter(t => t.tipo === 'frete');
   const tiposAutorizados = tiposCustos.filter(t => t.tipo === 'autorizado');
+  const tiposSalarios = tiposCustos.filter(t => t.tipo === 'salario');
 
   return showSpinner ? (
         <div className="flex items-center justify-center py-20">
@@ -285,6 +287,26 @@ export function DespesasGridContent({
             icon={<Handshake className="w-4 h-4" />}
             tipo="autorizado"
             items={tiposAutorizados}
+            save={saveTipoCusto}
+            update={updateTipoCusto}
+            remove={deleteTipoCusto}
+            allTipos={tiposCustos}
+            contarGastosVinculados={contarGastosVinculados}
+            realocarEExcluir={realocarEExcluirTipoCusto}
+            forcarExclusao={forcarExclusaoTipoCusto}
+            reorderTipos={reorderTiposCustos}
+            readOnly={readOnly}
+            clearOverride={tipoClearOverride}
+            hasOverride={tipoHasOverride}
+            mesReferencia={mesReferencia ?? null}
+            contagemGastos={contagemGastos}
+            totaisGastos={totaisGastos}
+          />
+          <TiposCustoBlock
+            titulo="Tipos de Custos — Salários"
+            icon={<Wallet className="w-4 h-4" />}
+            tipo="salario"
+            items={tiposSalarios}
             save={saveTipoCusto}
             update={updateTipoCusto}
             remove={deleteTipoCusto}
@@ -1074,7 +1096,7 @@ function TiposCustoBlock({
 }: {
   titulo: string;
   icon: React.ReactNode;
-  tipo: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete' | 'autorizado';
+  tipo: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete' | 'autorizado' | 'salario';
   items: TipoCusto[];
   save: ReturnType<typeof useTiposCustos>['saveTipoCusto'];
   update: ReturnType<typeof useTiposCustos>['updateTipoCusto'];
@@ -1101,6 +1123,8 @@ function TiposCustoBlock({
   const { empresas } = useEmpresasEmissoras();
   const empresasAtivas = (empresas || []).filter((e: any) => e.ativo !== false);
   const { categorias, createCategoria, renameCategoria, removeCategoria, reorderCategorias } = useDespesasCategorias();
+  const { debita: debitaDre, toggle: toggleDebitaDre } = useCategoriaDreConfig();
+  const debitaCategoria = debitaDre(tipo);
 
   const [realocacaoDialog, setRealocacaoDialog] = useState<{ tipo: TipoCusto; count: number } | null>(null);
   const [destinoId, setDestinoId] = useState<string>('');
@@ -1200,6 +1224,22 @@ function TiposCustoBlock({
         <h3 className="font-semibold">{titulo}</h3>
         <span className="text-white/40 text-sm">({items.length})</span>
         <div className="ml-auto flex items-center gap-1.5">
+          <div
+            className={`hidden sm:inline-flex items-center gap-2 h-8 px-3 rounded-full border text-xs transition-colors ${
+              debitaCategoria
+                ? 'bg-emerald-500/10 border-emerald-400/30 text-emerald-200'
+                : 'bg-white/5 border-white/15 text-white/60'
+            }`}
+            title="Quando desligado, esta categoria não é subtraída do lucro líquido no DRE."
+          >
+            <span>Debita do lucro no DRE</span>
+            <Switch
+              checked={debitaCategoria}
+              onCheckedChange={() => { if (!readOnly) toggleDebitaDre(tipo); }}
+              disabled={readOnly}
+              className="data-[state=checked]:bg-emerald-500"
+            />
+          </div>
           {!readOnly && (<button
             onClick={() => setGerenciarCatOpen(true)}
             className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-white/80 hover:text-white transition-colors"
@@ -1270,10 +1310,10 @@ function TiposCustoBlock({
                 {destinosPossiveis.length === 0 ? (
                   <div className="px-3 py-2 text-xs text-muted-foreground">Nenhum outro tipo disponível</div>
                 ) : (
-                  (['fixa','variavel','imposto','projetada','investimento','fornecedor','financiamento','frete','autorizado'] as const).map(grupo => {
+                  (['fixa','variavel','imposto','projetada','investimento','fornecedor','financiamento','frete','autorizado','salario'] as const).map(grupo => {
                     const itensGrupo = destinosPossiveis.filter(t => t.tipo === grupo);
                     if (itensGrupo.length === 0) return null;
-                    const label = grupo === 'fixa' ? 'Fixas' : grupo === 'variavel' ? 'Variáveis' : grupo === 'imposto' ? 'Impostos' : grupo === 'projetada' ? 'Projetadas' : grupo === 'investimento' ? 'Investimentos' : grupo === 'fornecedor' ? 'Fornecedores' : grupo === 'financiamento' ? 'Financiamentos' : grupo === 'frete' ? 'Fretes e Logística' : 'Autorizados';
+                    const label = grupo === 'fixa' ? 'Fixas' : grupo === 'variavel' ? 'Variáveis' : grupo === 'imposto' ? 'Impostos' : grupo === 'projetada' ? 'Projetadas' : grupo === 'investimento' ? 'Investimentos' : grupo === 'fornecedor' ? 'Fornecedores' : grupo === 'financiamento' ? 'Financiamentos' : grupo === 'frete' ? 'Fretes e Logística' : grupo === 'autorizado' ? 'Autorizados' : 'Salários';
                     return (
                       <div key={grupo}>
                         <div className="px-2 py-1 text-[10px] uppercase tracking-wider text-white/40">{label}</div>
@@ -1807,7 +1847,7 @@ function GastosDoTipoExpand({
 }: {
   tipoCustoId: string;
   tipoNome: string;
-  categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete' | 'autorizado';
+  categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete' | 'autorizado' | 'salario';
   mes: string | null;
   hideCategoria?: boolean;
 }) {
