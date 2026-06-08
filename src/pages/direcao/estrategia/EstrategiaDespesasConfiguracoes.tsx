@@ -1123,6 +1123,8 @@ function TiposCustoBlock({
   const { empresas } = useEmpresasEmissoras();
   const empresasAtivas = (empresas || []).filter((e: any) => e.ativo !== false);
   const { categorias, createCategoria, renameCategoria, removeCategoria, reorderCategorias } = useDespesasCategorias();
+  const { debita: debitaDre, toggle: toggleDebitaDre } = useCategoriaDreConfig();
+  const debitaCategoria = debitaDre(tipo);
 
   const [realocacaoDialog, setRealocacaoDialog] = useState<{ tipo: TipoCusto; count: number } | null>(null);
   const [destinoId, setDestinoId] = useState<string>('');
@@ -1222,6 +1224,22 @@ function TiposCustoBlock({
         <h3 className="font-semibold">{titulo}</h3>
         <span className="text-white/40 text-sm">({items.length})</span>
         <div className="ml-auto flex items-center gap-1.5">
+          <div
+            className={`hidden sm:inline-flex items-center gap-2 h-8 px-3 rounded-full border text-xs transition-colors ${
+              debitaCategoria
+                ? 'bg-emerald-500/10 border-emerald-400/30 text-emerald-200'
+                : 'bg-white/5 border-white/15 text-white/60'
+            }`}
+            title="Quando desligado, esta categoria não é subtraída do lucro líquido no DRE."
+          >
+            <span>Debita do lucro no DRE</span>
+            <Switch
+              checked={debitaCategoria}
+              onCheckedChange={() => { if (!readOnly) toggleDebitaDre(tipo); }}
+              disabled={readOnly}
+              className="data-[state=checked]:bg-emerald-500"
+            />
+          </div>
           {!readOnly && (<button
             onClick={() => setGerenciarCatOpen(true)}
             className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-white/80 hover:text-white transition-colors"
