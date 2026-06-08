@@ -264,7 +264,7 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
     <>
       <Button
         size="sm"
-        onClick={() => navigate(`/${contexto}/autorizados/novo`)}
+        onClick={() => navigate(`${routePrefix}/novo`)}
         className="h-10 px-5 rounded-lg bg-gradient-to-r from-blue-500/20 to-blue-600/20 border border-blue-400/20 text-white shadow-lg shadow-blue-500/10 hover:from-blue-500/30 hover:to-blue-600/30 hover:scale-[1.02] transition-all duration-300 text-xs gap-1.5"
       >
         <Plus className="h-4 w-4" />
