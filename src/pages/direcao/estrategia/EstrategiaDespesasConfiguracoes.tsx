@@ -1343,7 +1343,7 @@ function TiposCustoBlock({
         <span className="text-xs text-white/50 uppercase tracking-wider">Total mensal estimado (ativos)</span>
         <div className="flex items-center gap-6">
           <span className="text-base font-bold text-white">{tipo === 'variavel' ? '—' : formatCurrency(totalAtivos)}</span>
-          <TetoIndicator secaoKey={tipo} mesReferencia={mesReferencia ?? null} />
+          <TetoIndicator secaoKey={tipo} mesReferencia={mesReferencia ?? null} totalProjetado={tipo === 'variavel' ? undefined : totalAtivos} />
         </div>
       </div>
 
