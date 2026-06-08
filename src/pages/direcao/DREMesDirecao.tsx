@@ -1569,7 +1569,19 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
   const totalDespSalarios = despesasSalarios.reduce((acc, d) => acc + (d.valor_real || 0), 0);
   const totalProjetadoAnual = tiposCustosVariaveis.reduce((acc, t) => acc + (t.valor_maximo_mensal * 12), 0);
 
-  const lucroLiquidoFinal = lucro.total - totalDespFixas - totalDespFolha - totalDespVariaveis - totalDespImpostos - totalDespInvestimentos - totalDespFornecedores - totalDespFinanciamentos - totalDespFretes - totalDespAutorizados;
+  const { debita: debitaCat } = useCategoriaDreConfig();
+  const lucroLiquidoFinal =
+    lucro.total
+    - (debitaCat('fixa') ? totalDespFixas : 0)
+    - totalDespFolha
+    - (debitaCat('variavel') ? totalDespVariaveis : 0)
+    - (debitaCat('imposto') ? totalDespImpostos : 0)
+    - (debitaCat('investimento') ? totalDespInvestimentos : 0)
+    - (debitaCat('fornecedor') ? totalDespFornecedores : 0)
+    - (debitaCat('financiamento') ? totalDespFinanciamentos : 0)
+    - (debitaCat('frete') ? totalDespFretes : 0)
+    - (debitaCat('autorizado') ? totalDespAutorizados : 0)
+    - (debitaCat('salario') ? totalDespSalarios : 0);
   const percBrutoFinal = faturamento.total > 0 ? (lucro.total / faturamento.total) * 100 : 0;
   const percLiquidFinal = faturamento.total > 0 ? (lucroLiquidoFinal / faturamento.total) * 100 : 0;
 
@@ -1763,6 +1775,14 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
               tiposDisponiveis={tiposCustosAutorizados}
               onClickTipo={(id, nome) => setTipoModal({ id, nome })}
             />
+            <DespesaSectionReadOnly
+              title="Salários"
+              despesas={despesasSalarios}
+              total={totalDespSalarios}
+              formatCurrency={formatCurrency}
+              tiposDisponiveis={tiposCustosSalarios}
+              onClickTipo={(id, nome) => setTipoModal({ id, nome })}
+            />
           </div>
           {viewMode === 'full' && (
             <>
@@ -1784,7 +1804,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         </div>
       )}
       {showResumoFinal && (() => {
-        const lucroLiquido = lucro.total - totalDespFixas - totalDespFolha - totalDespVariaveis - totalDespImpostos - totalDespInvestimentos - totalDespFornecedores - totalDespFinanciamentos - totalDespFretes - totalDespAutorizados;
+        const lucroLiquido = lucroLiquidoFinal;
         const percBruto = faturamento.total > 0 ? (lucro.total / faturamento.total) * 100 : 0;
         const percLiquid = faturamento.total > 0 ? (lucroLiquido / faturamento.total) * 100 : 0;
         const colorClass = (v: number) => v >= 0 ? 'text-emerald-400' : 'text-red-400';
@@ -2027,6 +2047,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         despesasFinanciamentos={despesasFinanciamentos}
         despesasFretes={despesasFretes}
         despesasAutorizados={despesasAutorizados}
+        despesasSalarios={despesasSalarios}
         tiposCustosVariaveis={tiposCustosVariaveis}
         tiposCustosFixos={tiposCustosFixos}
         tiposCustosImpostos={tiposCustosImpostos}
@@ -2035,6 +2056,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         tiposCustosFinanciamentos={tiposCustosFinanciamentos}
         tiposCustosFretes={tiposCustosFretes}
         tiposCustosAutorizados={tiposCustosAutorizados}
+        tiposCustosSalarios={tiposCustosSalarios}
         totalDespFixas={totalDespFixas}
         totalDespFolha={totalDespFolha}
         totalDespVariaveis={totalDespVariaveis}
@@ -2044,6 +2066,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         totalDespFinanciamentos={totalDespFinanciamentos}
         totalDespFretes={totalDespFretes}
         totalDespAutorizados={totalDespAutorizados}
+        totalDespSalarios={totalDespSalarios}
         totalProjetadoAnual={totalProjetadoAnual}
         topAvulsos={topAvulsos}
         estoqueResumo={estoqueResumo}
