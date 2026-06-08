@@ -342,7 +342,7 @@ export default function AcordosMesAutorizados() {
                       {(contexto === 'direcao' || contexto === 'home') && (
                         <TableHead className="text-xs text-white/70 text-center">Aprovação</TableHead>
                       )}
-                      {contexto === 'logistica' && (
+                      {(contexto === 'logistica' || contexto === 'home') && (
                         <TableHead className="text-right text-xs text-white/70">Ações</TableHead>
                       )}
                     </TableRow>
@@ -456,7 +456,7 @@ export default function AcordosMesAutorizados() {
                                     )}
                                   </TableCell>
                                 )}
-                                {contexto === 'logistica' && (
+                                {(contexto === 'logistica' || contexto === 'home') && (
                                   <TableCell className="text-right">
                                     <DropdownMenu>
                                       <DropdownMenuTrigger asChild>
@@ -468,10 +468,14 @@ export default function AcordosMesAutorizados() {
                                         <DropdownMenuItem className="text-white hover:bg-zinc-700 cursor-pointer" onClick={() => handleEditarAcordo(acordo)}>
                                           <Edit2 className="h-4 w-4 mr-2" /> Editar
                                         </DropdownMenuItem>
-                                        <DropdownMenuItem className="cursor-pointer hover:bg-zinc-700" onClick={() => handleMarcarPago(acordo.id, acordo.pago)}>
-                                          <DollarSign className={`h-4 w-4 mr-2 ${acordo.pago ? 'text-yellow-400' : 'text-green-400'}`} />
-                                          <span className={acordo.pago ? 'text-yellow-400' : 'text-green-400'}>
-                                            {acordo.pago ? 'Desmarcar Pago' : 'Marcar como Pago'}
+                                        <DropdownMenuItem
+                                          disabled={acordo.pago}
+                                          className="cursor-pointer hover:bg-zinc-700 data-[disabled]:opacity-60 data-[disabled]:cursor-not-allowed"
+                                          onClick={() => { if (!acordo.pago) handleMarcarPago(acordo.id, acordo.pago); }}
+                                        >
+                                          <DollarSign className="h-4 w-4 mr-2 text-green-400" />
+                                          <span className="text-green-400">
+                                            {acordo.pago ? 'Pago — não reversível' : 'Marcar como Pago'}
                                           </span>
                                         </DropdownMenuItem>
                                         <DropdownMenuItem className="text-red-400 hover:bg-red-500/20 cursor-pointer" onClick={() => setAcordoParaDeletar(acordo)}>
