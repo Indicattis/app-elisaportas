@@ -608,6 +608,7 @@ function FolhaTableHeader() {
         <th className="text-right font-normal pb-2 px-2 text-emerald-400">Salário</th>
         <th className="text-right font-normal pb-2 px-2">Salário Mínimo</th>
         <th className="text-right font-normal pb-2 px-2">Combustível</th>
+        <th className="text-right font-normal pb-2 px-2">Bonificação</th>
         <th className="text-right font-normal pb-2 px-2 text-blue-300">Hora Extra</th>
         <th className="text-right font-normal pb-2 px-2">Insalub %</th>
         <th className="text-right font-normal pb-2 px-2">
