@@ -1253,7 +1253,7 @@ function TiposCustoBlock({
                   (['fixa','variavel','imposto','projetada','investimento','fornecedor','financiamento','frete'] as const).map(grupo => {
                     const itensGrupo = destinosPossiveis.filter(t => t.tipo === grupo);
                     if (itensGrupo.length === 0) return null;
-                    const label = grupo === 'fixa' ? 'Fixas' : grupo === 'variavel' ? 'Variáveis' : grupo === 'imposto' ? 'Impostos' : grupo === 'projetada' ? 'Projetadas' : grupo === 'investimento' ? 'Investimentos' : grupo === 'fornecedor' ? 'Fornecedores' : 'Financiamentos';
+                    const label = grupo === 'fixa' ? 'Fixas' : grupo === 'variavel' ? 'Variáveis' : grupo === 'imposto' ? 'Impostos' : grupo === 'projetada' ? 'Projetadas' : grupo === 'investimento' ? 'Investimentos' : grupo === 'fornecedor' ? 'Fornecedores' : grupo === 'financiamento' ? 'Financiamentos' : 'Fretes e Logística';
                     return (
                       <div key={grupo}>
                         <div className="px-2 py-1 text-[10px] uppercase tracking-wider text-white/40">{label}</div>
