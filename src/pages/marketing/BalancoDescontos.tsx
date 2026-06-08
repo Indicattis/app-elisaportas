@@ -108,6 +108,7 @@ export default function BalancoDescontos() {
                     <TableRow className="border-white/10 hover:bg-transparent">
                       <TableHead className="text-white/60">Data</TableHead>
                       <TableHead className="text-white/60">Cliente</TableHead>
+                      <TableHead className="text-white/60 text-right">Sem Desc.</TableHead>
                       <TableHead className="text-white/60 text-right">Total</TableHead>
                       <TableHead className="text-white/60 text-right">% Dado</TableHead>
                       <TableHead className="text-white/60 text-right">À Vista (3%)</TableHead>
@@ -121,7 +122,7 @@ export default function BalancoDescontos() {
                   <TableBody>
                     {rows.length === 0 ? (
                       <TableRow className="border-white/10">
-                        <TableCell colSpan={10} className="text-center text-white/50">
+                        <TableCell colSpan={11} className="text-center text-white/50">
                           Nenhuma venda no período. Clique em Recalcular.
                         </TableCell>
                       </TableRow>
@@ -134,6 +135,10 @@ export default function BalancoDescontos() {
                           pctDado <= limite ? "text-emerald-400" : "text-red-400";
                         const excedidoPct = Math.max(0, pctDado - pctLimite);
                         const excedidoValor = (excedidoPct / 100) * total;
+                        const aptoAvista = r.vendas?.forma_pagamento === "a_vista";
+                        const aptoFrio = !!r.vendas?.venda_presencial;
+                        const aptoGerente = !!r.tem_autorizacao_gerente;
+                        const semDesc = pctDado !== 100 ? total / (1 - pctDado / 100) : total;
                         return (
                         <TableRow key={r.id} className="border-white/10 hover:bg-white/5">
                           <TableCell className="text-white/90">
@@ -142,13 +147,20 @@ export default function BalancoDescontos() {
                               : "-"}
                           </TableCell>
                           <TableCell className="text-white/90">{r.vendas?.cliente_nome || "-"}</TableCell>
+                          <TableCell className="text-white/60 text-right">{formatMoeda(semDesc)}</TableCell>
                           <TableCell className="text-white/90 text-right">{formatMoeda(Number(r.total_venda))}</TableCell>
                           <TableCell className="text-white/90 text-right">
                             {pctDado.toFixed(2)}%
                           </TableCell>
-                          <TableCell className={`text-right ${check(3)}`}>{(0.03 * total).toFixed(2) && formatMoeda(0.03 * total)}</TableCell>
-                          <TableCell className={`text-right ${check(5)}`}>{formatMoeda(0.05 * total)}</TableCell>
-                          <TableCell className={`text-right ${check(8)}`}>{formatMoeda(0.08 * total)}</TableCell>
+                          <TableCell className={`text-right ${aptoAvista ? check(3) : "text-white/30"}`}>
+                            {aptoAvista ? formatMoeda(0.03 * total) : "-"}
+                          </TableCell>
+                          <TableCell className={`text-right ${aptoFrio ? check(5) : "text-white/30"}`}>
+                            {aptoFrio ? formatMoeda(0.05 * total) : "-"}
+                          </TableCell>
+                          <TableCell className={`text-right ${aptoGerente ? check(8) : "text-white/30"}`}>
+                            {aptoGerente ? formatMoeda(0.08 * total) : "-"}
+                          </TableCell>
                           <TableCell className="text-white/50 text-right">
                             {pctLimite.toFixed(2)}%
                           </TableCell>
