@@ -370,28 +370,33 @@ export default function VisitasTecnicasCalendario() {
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{editing ? 'Editar visita' : 'Agendar visita'}</DialogTitle>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-black/80 backdrop-blur-2xl border border-white/10 text-white shadow-2xl shadow-blue-500/10 sm:rounded-2xl p-6">
+          <DialogHeader className="pb-4 border-b border-white/10">
+            <DialogTitle className="text-white text-lg font-semibold tracking-tight">
+              {editing ? 'Editar visita' : 'Agendar nova visita'}
+            </DialogTitle>
+            <p className="text-white/40 text-xs mt-1">
+              Preencha os dados da visita técnica
+            </p>
           </DialogHeader>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-4">
             <div className="md:col-span-2">
-              <label className="text-xs text-muted-foreground">Título *</label>
-              <Input value={form.titulo} onChange={e => setForm({ ...form, titulo: e.target.value })} />
+              <label className="text-[11px] uppercase tracking-wider text-white/50 font-medium">Título *</label>
+              <Input className="mt-1 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus-visible:ring-blue-500/50 focus-visible:border-blue-400/50" value={form.titulo} onChange={e => setForm({ ...form, titulo: e.target.value })} />
             </div>
             <div>
-              <label className="text-xs text-muted-foreground">Data *</label>
-              <Input type="date" value={form.data_visita} onChange={e => setForm({ ...form, data_visita: e.target.value })} />
+              <label className="text-[11px] uppercase tracking-wider text-white/50 font-medium">Data *</label>
+              <Input className="mt-1 bg-white/5 border-white/10 text-white [color-scheme:dark] focus-visible:ring-blue-500/50 focus-visible:border-blue-400/50" type="date" value={form.data_visita} onChange={e => setForm({ ...form, data_visita: e.target.value })} />
             </div>
             <div>
-              <label className="text-xs text-muted-foreground">Hora *</label>
-              <Input type="time" value={form.hora_inicio} onChange={e => setForm({ ...form, hora_inicio: e.target.value })} />
+              <label className="text-[11px] uppercase tracking-wider text-white/50 font-medium">Hora *</label>
+              <Input className="mt-1 bg-white/5 border-white/10 text-white [color-scheme:dark] focus-visible:ring-blue-500/50 focus-visible:border-blue-400/50" type="time" value={form.hora_inicio} onChange={e => setForm({ ...form, hora_inicio: e.target.value })} />
             </div>
             <div>
-              <label className="text-xs text-muted-foreground">Responsável</label>
+              <label className="text-[11px] uppercase tracking-wider text-white/50 font-medium">Responsável</label>
               <Select value={form.responsavel_id || 'none'} onValueChange={v => setForm({ ...form, responsavel_id: v === 'none' ? '' : v })}>
-                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                <SelectContent>
+                <SelectTrigger className="mt-1 bg-white/5 border-white/10 text-white focus:ring-blue-500/50"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent className="bg-black/90 backdrop-blur-xl border-white/10 text-white">
                   <SelectItem value="none">— Sem responsável —</SelectItem>
                   {responsaveis.map(r => (
                     <SelectItem key={r.id} value={r.id}>{r.nome}</SelectItem>
@@ -400,17 +405,19 @@ export default function VisitasTecnicasCalendario() {
               </Select>
             </div>
             <div>
-              <label className="text-xs text-muted-foreground">Telefone de contato</label>
+              <label className="text-[11px] uppercase tracking-wider text-white/50 font-medium">Telefone de contato</label>
               <Input
+                className="mt-1 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus-visible:ring-blue-500/50 focus-visible:border-blue-400/50"
                 value={form.telefone_contato}
                 onChange={e => setForm({ ...form, telefone_contato: formatPhone(e.target.value) })}
                 placeholder="(00) 00000-0000"
               />
             </div>
             <div>
-              <label className="text-xs text-muted-foreground">CEP</label>
-              <div className="relative">
+              <label className="text-[11px] uppercase tracking-wider text-white/50 font-medium">CEP</label>
+              <div className="relative mt-1">
                 <Input
+                  className="bg-white/5 border-white/10 text-white placeholder:text-white/30 focus-visible:ring-blue-500/50 focus-visible:border-blue-400/50"
                   value={form.cep}
                   onChange={e => {
                     const v = e.target.value.replace(/\D/g, '').slice(0, 8);
@@ -419,64 +426,67 @@ export default function VisitasTecnicasCalendario() {
                   }}
                   placeholder="00000000"
                 />
-                {cepLoading && <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-blue-500" />}
+                {cepLoading && <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-blue-400" />}
               </div>
             </div>
             <div className="md:col-span-2">
-              <label className="text-xs text-muted-foreground">Endereço</label>
-              <Input value={form.endereco} onChange={e => setForm({ ...form, endereco: e.target.value })} />
+              <label className="text-[11px] uppercase tracking-wider text-white/50 font-medium">Endereço</label>
+              <Input className="mt-1 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus-visible:ring-blue-500/50 focus-visible:border-blue-400/50" value={form.endereco} onChange={e => setForm({ ...form, endereco: e.target.value })} />
             </div>
             <div>
-              <label className="text-xs text-muted-foreground">Número</label>
-              <Input value={form.numero} onChange={e => setForm({ ...form, numero: e.target.value })} />
+              <label className="text-[11px] uppercase tracking-wider text-white/50 font-medium">Número</label>
+              <Input className="mt-1 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus-visible:ring-blue-500/50 focus-visible:border-blue-400/50" value={form.numero} onChange={e => setForm({ ...form, numero: e.target.value })} />
             </div>
             <div>
-              <label className="text-xs text-muted-foreground">Complemento</label>
-              <Input value={form.complemento} onChange={e => setForm({ ...form, complemento: e.target.value })} />
+              <label className="text-[11px] uppercase tracking-wider text-white/50 font-medium">Complemento</label>
+              <Input className="mt-1 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus-visible:ring-blue-500/50 focus-visible:border-blue-400/50" value={form.complemento} onChange={e => setForm({ ...form, complemento: e.target.value })} />
             </div>
             <div>
-              <label className="text-xs text-muted-foreground">Bairro</label>
-              <Input value={form.bairro} onChange={e => setForm({ ...form, bairro: e.target.value })} />
+              <label className="text-[11px] uppercase tracking-wider text-white/50 font-medium">Bairro</label>
+              <Input className="mt-1 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus-visible:ring-blue-500/50 focus-visible:border-blue-400/50" value={form.bairro} onChange={e => setForm({ ...form, bairro: e.target.value })} />
             </div>
             <div>
-              <label className="text-xs text-muted-foreground">Cidade</label>
-              <Input value={form.cidade} onChange={e => setForm({ ...form, cidade: e.target.value })} />
+              <label className="text-[11px] uppercase tracking-wider text-white/50 font-medium">Cidade</label>
+              <Input className="mt-1 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus-visible:ring-blue-500/50 focus-visible:border-blue-400/50" value={form.cidade} onChange={e => setForm({ ...form, cidade: e.target.value })} />
             </div>
             <div>
-              <label className="text-xs text-muted-foreground">Estado</label>
-              <Input value={form.estado} onChange={e => setForm({ ...form, estado: e.target.value.toUpperCase().slice(0, 2) })} />
+              <label className="text-[11px] uppercase tracking-wider text-white/50 font-medium">Estado</label>
+              <Input className="mt-1 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus-visible:ring-blue-500/50 focus-visible:border-blue-400/50" value={form.estado} onChange={e => setForm({ ...form, estado: e.target.value.toUpperCase().slice(0, 2) })} />
             </div>
             <div className="md:col-span-2">
-              <label className="text-xs text-muted-foreground">Observações</label>
-              <Textarea rows={3} value={form.observacoes} onChange={e => setForm({ ...form, observacoes: e.target.value })} />
+              <label className="text-[11px] uppercase tracking-wider text-white/50 font-medium">Observações</label>
+              <Textarea className="mt-1 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus-visible:ring-blue-500/50 focus-visible:border-blue-400/50" rows={3} value={form.observacoes} onChange={e => setForm({ ...form, observacoes: e.target.value })} />
             </div>
           </div>
 
-          <DialogFooter className="flex-wrap gap-2">
+          <DialogFooter className="flex-wrap gap-2 pt-4 mt-2 border-t border-white/10">
             {editing && (
               <>
                 <Button
                   variant="outline"
+                  className="bg-white/5 border-white/10 text-white hover:bg-white/10"
                   onClick={() => setStatus.mutate(editing.status === 'realizada' ? 'agendada' : 'realizada')}
                 >
                   {editing.status === 'realizada' ? 'Reabrir' : 'Marcar como realizada'}
                 </Button>
                 <Button
                   variant="outline"
+                  className="bg-white/5 border-white/10 text-white hover:bg-white/10"
                   onClick={() => setStatus.mutate(editing.status === 'cancelada' ? 'agendada' : 'cancelada')}
                 >
                   {editing.status === 'cancelada' ? 'Reativar' : 'Cancelar visita'}
                 </Button>
                 <Button
                   variant="destructive"
+                  className="bg-red-500/20 border border-red-400/30 text-red-200 hover:bg-red-500/30"
                   onClick={() => { if (confirm('Excluir esta visita?')) delMut.mutate(editing.id); }}
                 >
                   <Trash2 className="w-4 h-4 mr-1" /> Excluir
                 </Button>
               </>
             )}
-            <Button variant="ghost" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-            <Button onClick={() => saveMut.mutate()} disabled={saveMut.isPending}>
+            <Button variant="ghost" className="text-white/70 hover:text-white hover:bg-white/10" onClick={() => setDialogOpen(false)}>Cancelar</Button>
+            <Button className="bg-gradient-to-br from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 text-white shadow-lg shadow-blue-500/30" onClick={() => saveMut.mutate()} disabled={saveMut.isPending}>
               {saveMut.isPending ? 'Salvando...' : 'Salvar'}
             </Button>
           </DialogFooter>
