@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useQuery } from '@tanstack/react-query';
 import { FileDown, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -19,6 +21,18 @@ interface Props {
 
 export function GerarContratoElisaModal({ open, onOpenChange, vendaId }: Props) {
   const [loading, setLoading] = useState(false);
+  const { data: cores } = useQuery({
+    queryKey: ['contrato-elisa-cores'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('catalogo_cores')
+        .select('id, nome')
+        .order('nome');
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: open,
+  });
   const [form, setForm] = useState<ContratoElisaData>({
     comprador_nome: '',
     comprador_documento: '',
@@ -151,7 +165,7 @@ export function GerarContratoElisaModal({ open, onOpenChange, vendaId }: Props) 
       { key: 'quantidade_portas', label: 'Quantidade de portas', type: 'input' },
       { key: 'material_detalhado', label: 'Material detalhado', type: 'textarea' },
       { key: 'quantidade_motores', label: 'Quantidade de motores', type: 'input' },
-      { key: 'cor', label: 'Cor da pintura (ou GALVANIZADA)', type: 'input' },
+      { key: 'cor', label: 'Cor da pintura (ou GALVANIZADA)', type: 'select' },
       { key: 'dimensoes', label: 'Dimensões da(s) porta(s)', type: 'input' },
       { key: 'valor_total', label: 'Valor total', type: 'input' },
       { key: 'condicao_pagamento', label: 'Condição de pagamento', type: 'textarea' },
@@ -188,6 +202,30 @@ export function GerarContratoElisaModal({ open, onOpenChange, vendaId }: Props) 
                       value={form[f.key]}
                       onChange={e => update(f.key, e.target.value)}
                     />
+                  ) : f.type === 'select' ? (
+                    <Select
+                      value={form[f.key] || 'GALVANIZADA'}
+                      onValueChange={v => update(f.key, v)}
+                    >
+                      <SelectTrigger id={f.key}>
+                        <SelectValue placeholder="Selecione a cor" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="GALVANIZADA">GALVANIZADA</SelectItem>
+                        {(cores || [])
+                          .filter(c => c.nome && c.nome.toUpperCase() !== 'GALVANIZADA')
+                          .map(c => (
+                            <SelectItem key={c.id} value={c.nome}>
+                              {c.nome}
+                            </SelectItem>
+                          ))}
+                        {form[f.key] &&
+                          form[f.key] !== 'GALVANIZADA' &&
+                          !(cores || []).some(c => c.nome === form[f.key]) && (
+                            <SelectItem value={form[f.key]}>{form[f.key]}</SelectItem>
+                          )}
+                      </SelectContent>
+                    </Select>
                   ) : (
                     <Input
                       id={f.key}
