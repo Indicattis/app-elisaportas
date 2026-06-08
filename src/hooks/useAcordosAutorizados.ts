@@ -30,6 +30,7 @@ export interface AcordoAutorizado {
   pago: boolean;
   pago_em?: string;
   pago_por?: string;
+  valor_pago: number;
   criador?: {
     nome: string;
     foto_perfil_url?: string;
@@ -133,6 +134,7 @@ export function useAcordosAutorizados() {
         pago: (acordo as any).pago ?? false,
         pago_em: (acordo as any).pago_em || undefined,
         pago_por: (acordo as any).pago_por || undefined,
+        valor_pago: Number((acordo as any).valor_pago ?? 0),
         criador: acordo.created_by ? criadoresMap[acordo.created_by] : undefined
       }));
 

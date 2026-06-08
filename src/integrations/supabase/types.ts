@@ -145,6 +145,7 @@ export type Database = {
           status: string
           updated_at: string
           valor_acordado: number
+          valor_pago: number
         }
         Insert: {
           aprovado_direcao?: boolean
@@ -167,6 +168,7 @@ export type Database = {
           status?: string
           updated_at?: string
           valor_acordado?: number
+          valor_pago?: number
         }
         Update: {
           aprovado_direcao?: boolean
@@ -189,6 +191,7 @@ export type Database = {
           status?: string
           updated_at?: string
           valor_acordado?: number
+          valor_pago?: number
         }
         Relationships: [
           {

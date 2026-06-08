@@ -271,7 +271,7 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
     setPagamentoDialog({ acordoId, clienteNome: acordo.cliente_nome, valor: acordo.valor_acordado });
   }, [acordos, desmarcarPago]);
 
-  const confirmarPagamento = useCallback(async (bancoId: string) => {
+  const confirmarPagamento = useCallback(async (bancoId: string, _valorPagamento: number) => {
     if (!pagamentoDialog) return;
     const acordo = acordos.find(a => a.id === pagamentoDialog.acordoId);
     if (!acordo) return;
