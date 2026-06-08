@@ -1,24 +1,20 @@
 ## Objetivo
 
-Em `/autorizados/acordos/:ano/:mes` (`src/pages/direcao/AcordosMesAutorizados.tsx`), adicionar uma nova coluna **Km** exibindo a quilometragem (ida) cadastrada em `/logistica/frete/internos` para a cidade/estado de cada autorizado.
+No modal `GerarContratoModal` (acessado a partir de `/vendas/contratos`), adicionar um selectbox de **Cliente** vindo da tabela `clientes`, cujos dados sobrescrevem os campos de cliente do contrato.
 
-## Como funciona
+## Mudanças
 
-1. Após carregar `acordosDoMes`, extrair os `autorizado_id` únicos.
-2. Buscar em `autorizados` os campos `id, cidade, estado` desses IDs.
-3. Buscar em `frete_cidades` as linhas cuja combinação `(cidade, estado)` corresponda às dos autorizados, selecionando `cidade, estado, quilometragem`.
-4. Montar um `Map<autorizadoId, number | null>` com a km encontrada (null se não houver match).
-5. Guardar em `useState` (`kmPorAutorizado`) e popular dentro do mesmo `useEffect` que já busca preços dos autorizados (ou um novo `useEffect` paralelo).
+### `src/components/contratos/GerarContratoModal.tsx`
+- Adicionar um terceiro `Select` ao lado de Venda/Template: **Cliente** (opcional), listando `clientes` (nome, cpf/cnpj, telefone, email, endereço completo).
+- Buscar a lista de clientes com `useQuery` direto da tabela `clientes` (id, nome, cpf, telefone, email, endereco, bairro, cidade, estado, cep).
+- Layout passa de 2 para 3 colunas (`grid-cols-3`), aumentar `max-w-4xl` → `max-w-5xl` se necessário para caber.
+- Quando um cliente é selecionado, sobrescrever as variáveis `cliente_*` do objeto `variaveis` antes de passar ao preview e ao `generateContratoPDF`. Implementar via `useMemo` que faz merge: `{ ...variaveis, ...overridesDoCliente }`.
+- Preview e geração de PDF passam a usar o objeto merged.
 
-## UI
+### Sem mudanças
+- Sem alterações de banco, hooks de variáveis, ou template engine.
+- `useContratoVariaveis` permanece intacto; o override é local ao modal.
 
-- Adicionar `<TableHead>Km</TableHead>` logo após "Cidade", alinhado ao centro.
-- Adicionar `<TableCell>` correspondente em cada linha de acordo, mostrando `123 km` quando houver valor ou `-` quando não houver.
-- Atualizar o cálculo de `colSpan` da linha-cabeçalho do grupo (incrementar +1) para manter o agrupamento por autorizado intacto.
-- Opcional: também exibir a km ao lado do nome do autorizado no cabeçalho do grupo (ex.: "Nome · 47 km"), para reforçar a informação por grupo.
-
-## Observações
-
-- A correspondência usa a cidade do autorizado (tabela `autorizados`), não a cidade do cliente do acordo.
-- Sem mudanças de schema; somente leitura adicional de `autorizados` e `frete_cidades`.
-- Nenhuma alteração em `useAcordosAutorizados` — a busca extra fica isolada na própria página.
+## Comportamento
+- Cliente é opcional; se vazio, mantém os dados vindos da venda.
+- Se selecionado, todos os campos `cliente_nome`, `cliente_cpf`, `cliente_telefone`, `cliente_email`, `cliente_endereco`, `cliente_bairro`, `cliente_cidade`, `cliente_estado`, `cliente_cep` são sobrescritos.
