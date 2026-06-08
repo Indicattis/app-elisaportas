@@ -63,11 +63,11 @@ export default function RegrasVendasVisualizacao() {
     <MinimalistLayout
       title="Regras de Vendas"
       subtitle="Consulta às regras vigentes"
-      backPath="/regras"
+      backPath="/vendas"
       breadcrumbItems={[
         { label: 'Home', path: '/home' },
-        { label: 'Regras', path: '/regras' },
-        { label: 'Vendas' },
+        { label: 'Vendas', path: '/vendas' },
+        { label: 'Regras de Vendas' },
       ]}
     >
       {isLoading ? (
