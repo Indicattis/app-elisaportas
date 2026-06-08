@@ -1,0 +1,2 @@
+ALTER TABLE public.autorizados ADD COLUMN IF NOT EXISTS vendedor_responsavel_id uuid REFERENCES public.admin_users(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS idx_autorizados_vendedor_responsavel_id ON public.autorizados(vendedor_responsavel_id);
