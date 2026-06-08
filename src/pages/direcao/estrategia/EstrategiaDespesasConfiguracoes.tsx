@@ -1235,8 +1235,7 @@ function TiposCustoBlock({
             <span>Debita do lucro no DRE</span>
             <Switch
               checked={debitaCategoria}
-              onCheckedChange={() => { if (!readOnly) toggleDebitaDre(tipo); }}
-              disabled={readOnly}
+              onCheckedChange={() => toggleDebitaDre(tipo)}
               className="data-[state=checked]:bg-emerald-500"
             />
           </div>
