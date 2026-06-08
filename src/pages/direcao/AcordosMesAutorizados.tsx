@@ -212,31 +212,19 @@ export default function AcordosMesAutorizados() {
   const [pagamentoDialog, setPagamentoDialog] = useState<{ acordoId: string; clienteNome: string; valor: number } | null>(null);
   const [historicoDialog, setHistoricoDialog] = useState<{ acordoId: string; clienteNome: string } | null>(null);
 
-  const desmarcarPago = useCallback(async (acordoId: string) => {
-    try {
-      const { error } = await supabase
-        .from('acordos_instalacao_autorizados')
-        .update({ pago: false, pago_em: null, pago_por: null } as any)
-        .eq('id', acordoId);
-      if (error) throw error;
-      await removerGastoAcordoAutorizado(acordoId);
-      toast({ title: 'Sucesso', description: 'Pagamento desmarcado' });
-      await refetch();
-    } catch (error: any) {
-      console.error('Erro ao desmarcar pagamento:', error);
-      toast({ title: 'Erro', description: 'Não foi possível desmarcar o pagamento', variant: 'destructive' });
-    }
-  }, [toast, refetch]);
-
   const handleMarcarPago = useCallback(async (acordoId: string, pagoAtual: boolean) => {
     if (pagoAtual) {
-      await desmarcarPago(acordoId);
+      toast({
+        title: 'Pagamento não reversível',
+        description: 'Acordos pagos não podem ser desmarcados.',
+        variant: 'destructive',
+      });
       return;
     }
     const acordo = acordosDoMes.find(a => a.id === acordoId);
     if (!acordo) return;
     setPagamentoDialog({ acordoId, clienteNome: acordo.cliente_nome, valor: acordo.valor_acordado });
-  }, [acordosDoMes, desmarcarPago]);
+  }, [acordosDoMes, toast]);
 
   const confirmarPagamento = useCallback(async (bancoId: string) => {
     if (!pagamentoDialog) return;
