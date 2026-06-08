@@ -499,12 +499,14 @@ function FolhaRowCells({
   const salario = Number(item.salario) || 0;
   const salario_minimo = Number(item.salario_minimo) || 0;
   const aux_combustivel = Number(item.aux_combustivel) || 0;
+  const hora_extra = Number(item.hora_extra) || 0;
   const insalubridade_pct = Number(item.insalubridade_pct) || 0;
   const fgts_pct = Number(item.fgts_pct) || 0;
+  const base = salario + hora_extra;
   const insalubVal = salario_minimo * insalubridade_pct / 100;
-  const fgtsVal = salario * fgts_pct / 100;
-  const feriasDefault = calcFeriasDefault(salario, fgts_pct);
-  const total = calcTotalFolha({ salario, salario_minimo, aux_combustivel, insalubridade_pct, fgts_pct, previsao_13_valor: 0, em_folha: item.em_folha, ferias_valor: null });
+  const fgtsVal = base * fgts_pct / 100;
+  const feriasDefault = calcFeriasDefault(base, fgts_pct);
+  const total = calcTotalFolha({ salario, salario_minimo, aux_combustivel, hora_extra, insalubridade_pct, fgts_pct, previsao_13_valor: 0, em_folha: item.em_folha, ferias_valor: null });
   const desativado = item.em_folha === false;
   const zeroCurr = <span className="text-white/30">{formatCurrency(0)}</span>;
   const zeroPct = <span className="text-white/30">0%</span>;
@@ -541,6 +543,9 @@ function FolhaRowCells({
         {desativado ? zeroCurr : <InlineNum value={item.aux_combustivel} onSave={(v) => update(item.id, { aux_combustivel: v })} format="currency" />}
       </td>
       <td className="px-2 text-right text-white/60">
+        {desativado ? zeroCurr : <InlineNum value={item.hora_extra} onSave={(v) => update(item.id, { hora_extra: v })} format="currency" />}
+      </td>
+      <td className="px-2 text-right text-white/60">
         {desativado ? zeroPct : <InlineNum value={item.insalubridade_pct} onSave={(v) => update(item.id, { insalubridade_pct: v })} format="percent" />}
       </td>
       <td className="px-2 text-right text-xs">{desativado ? zeroCurr : <span className="text-orange-400">{formatCurrency(insalubVal)}</span>}</td>
@@ -548,7 +553,7 @@ function FolhaRowCells({
         {desativado ? zeroPct : <InlineNum value={item.fgts_pct} onSave={(v) => update(item.id, { fgts_pct: v })} format="percent" />}
       </td>
       <td className="px-2 text-right text-xs">{desativado ? zeroCurr : <span className="text-orange-400">{formatCurrency(fgtsVal)}</span>}</td>
-      <td className="px-2 text-right text-xs">{desativado ? zeroCurr : <span className="text-orange-400">{formatCurrency(salario / 12)}</span>}</td>
+      <td className="px-2 text-right text-xs">{desativado ? zeroCurr : <span className="text-orange-400">{formatCurrency(base / 12)}</span>}</td>
       <td className="px-2 text-right text-xs">{desativado ? zeroCurr : <span className="text-orange-400">{formatCurrency(fgtsVal / 12)}</span>}</td>
       <td className="px-2 text-right text-xs">
         {desativado ? zeroCurr : <span className="text-orange-400">{formatCurrency(feriasDefault)}</span>}
@@ -590,6 +595,7 @@ function FolhaTableHeader() {
         <th className="text-right font-normal pb-2 px-2 text-emerald-400">Salário</th>
         <th className="text-right font-normal pb-2 px-2">Salário Mínimo</th>
         <th className="text-right font-normal pb-2 px-2">Combustível</th>
+        <th className="text-right font-normal pb-2 px-2 text-blue-300">Hora Extra</th>
         <th className="text-right font-normal pb-2 px-2">Insalub %</th>
         <th className="text-right font-normal pb-2 px-2">
           <div>Insalub valor</div>
@@ -598,11 +604,11 @@ function FolhaTableHeader() {
         <th className="text-right font-normal pb-2 px-2">FGTS %</th>
         <th className="text-right font-normal pb-2 px-2">
           <div>FGTS valor</div>
-          <div className="text-[9px] normal-case tracking-normal text-white/30">salário × FGTS%</div>
+          <div className="text-[9px] normal-case tracking-normal text-white/30">(salário + h.extra) × FGTS%</div>
         </th>
         <th className="text-right font-normal pb-2 px-2">
           <div>Previsão 13°</div>
-          <div className="text-[9px] normal-case tracking-normal text-white/30">salário ÷ 12</div>
+          <div className="text-[9px] normal-case tracking-normal text-white/30">(salário + h.extra) ÷ 12</div>
         </th>
         <th className="text-right font-normal pb-2 px-2">
           <div>FGTS 13°</div>
@@ -610,7 +616,7 @@ function FolhaTableHeader() {
         </th>
         <th className="text-right font-normal pb-2 px-2">
           <div>Férias + 1/3</div>
-          <div className="text-[9px] normal-case tracking-normal text-white/30">(salário ÷ 3) ÷ 12</div>
+          <div className="text-[9px] normal-case tracking-normal text-white/30">((salário + h.extra) ÷ 3) ÷ 12</div>
         </th>
         <th className="text-right font-normal pb-2 px-2">
           <div className="text-red-400">Multa FGTS</div>
@@ -630,6 +636,7 @@ function FolhaColGroup() {
       <col style={{ width: '220px' }} />
       <col style={{ width: '80px' }} />
       <col style={{ width: '140px' }} />
+      <col style={{ width: '110px' }} />
       <col style={{ width: '110px' }} />
       <col style={{ width: '110px' }} />
       <col style={{ width: '110px' }} />
@@ -665,6 +672,7 @@ function FolhaSetorGroup({
     salario: Number(i.salario) || 0,
     salario_minimo: Number(i.salario_minimo) || 0,
     aux_combustivel: Number(i.aux_combustivel) || 0,
+    hora_extra: Number(i.hora_extra) || 0,
     insalubridade_pct: Number(i.insalubridade_pct) || 0,
     fgts_pct: Number(i.fgts_pct) || 0,
     previsao_13_valor: Number(i.previsao_13_valor) || 0,
