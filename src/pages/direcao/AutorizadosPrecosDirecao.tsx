@@ -328,7 +328,7 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
                         <SortableEstadoCard
                           key={estado.id}
                           estado={estado}
-                          onClick={() => navigate(`/${contexto}/autorizados/estado/${estado.id}`)}
+                          onClick={() => navigate(`${routePrefix}/estado/${estado.id}`)}
                           isSelected={false}
                         />
                       ))}
