@@ -152,9 +152,10 @@ export function ProdutosVendaTable({ produtos, onRemoveProduto, onEditProduto, o
             : (produto.unidade || '').toLowerCase() === 'litro' ? 'L' : '';
           const tamanhoNumPV = parseFloat(produto.tamanho || '') || 0;
           const valorUnitBase = produto.valor_produto + produto.valor_pintura + produto.valor_instalacao;
-          const valorUnitDisplay = isCatalogoDecimal && tamanhoNumPV > 0
-            ? valorUnitBase / tamanhoNumPV
-            : valorUnitBase;
+          // Legado: vendas antigas gravaram valor_produto = preço × tamanho, com quantidade inteira.
+          // Novo: valor_produto = preço unitário puro, quantidade carrega a medida (decimal).
+          const isLegadoDecimal = isCatalogoDecimal && tamanhoNumPV > 0 && Number.isInteger(produto.quantidade);
+          const valorUnitDisplay = isLegadoDecimal ? valorUnitBase / tamanhoNumPV : valorUnitBase;
           
           return (
             <TableRow key={index}>
@@ -182,35 +183,36 @@ export function ProdutosVendaTable({ produtos, onRemoveProduto, onEditProduto, o
               <TableCell>
                 {onUpdateQuantidade ? (
                   (() => {
-                    const permiteDecimal = produto.unidade?.toLowerCase() === 'metro' || 
-                                          produto.unidade?.toLowerCase() === 'kg' || 
-                                          produto.unidade?.toLowerCase() === 'litro';
+                    const permiteDecimal = isCatalogoDecimal;
                     return (
                       <div className="flex items-center gap-1">
                         <Input
                           type="number"
-                          min="1"
-                          step="1"
+                          min={permiteDecimal ? "0.01" : "1"}
+                          step={permiteDecimal ? "0.01" : "1"}
                           value={produto.quantidade}
                           onChange={(e) => {
-                            const novaQtd = parseInt(e.target.value);
-                            if (novaQtd >= 1) {
+                            const novaQtd = permiteDecimal ? parseFloat(e.target.value) : parseInt(e.target.value);
+                            if (!isNaN(novaQtd) && novaQtd > 0) {
                               onUpdateQuantidade(index, novaQtd);
                             }
                           }}
                           className="w-20"
                         />
+                        {permiteDecimal && unidadeShort && (
+                          <span className="text-xs text-muted-foreground">{unidadeShort}</span>
+                        )}
                       </div>
                     );
                   })()
                 ) : (
                   <span>
-                    {produto.quantidade}
+                    {produto.quantidade}{isCatalogoDecimal && unidadeShort ? ` ${unidadeShort}` : ''}
                   </span>
                 )}
               </TableCell>
               <TableCell>
-                {isCatalogoDecimal ? (
+                {isLegadoDecimal ? (
                   <div className="flex items-center gap-1">
                     <span className="text-sm">{produto.tamanho || '-'}</span>
                     {produto.tamanho && unidadeShort && (

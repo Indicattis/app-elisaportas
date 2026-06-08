@@ -13,6 +13,7 @@ import { ProdutoVenda } from '@/hooks/useVendas';
 import { buscarPrecosPorMedidas } from '@/utils/tabelaPrecosHelper';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
+import { getUnidade } from '@/utils/unidadesMedida';
 
 interface ProdutoVendaFormProps {
   open: boolean;
@@ -660,6 +661,34 @@ export function ProdutoVendaForm({
               </Select>
             </div>
           )}
+
+          {(formData.tipo_produto === 'acessorio' || formData.tipo_produto === 'adicional') && formData.custos_itens_id && (() => {
+            const unidadeInfo = getUnidade(formData.unidade);
+            const isDecimal = !unidadeInfo.discreta;
+            return (
+              <div className="space-y-2">
+                <Label htmlFor="quantidade_catalogo">
+                  Quantidade {isDecimal ? `(${unidadeInfo.abreviacao})` : ''} *
+                </Label>
+                <Input
+                  id="quantidade_catalogo"
+                  type="number"
+                  min={isDecimal ? '0.01' : '1'}
+                  step={isDecimal ? '0.01' : '1'}
+                  value={formData.quantidade}
+                  onChange={(e) => {
+                    const raw = e.target.value;
+                    const parsed = isDecimal ? parseFloat(raw) : parseInt(raw);
+                    setFormData(prev => ({ ...prev, quantidade: isNaN(parsed) ? 0 : parsed }));
+                  }}
+                  required
+                />
+                <p className="text-xs text-muted-foreground">
+                  Total: R$ {((formData.valor_produto || 0) * (formData.quantidade || 0)).toFixed(2)}
+                </p>
+              </div>
+            );
+          })()}
 
           {formData.tipo_produto === 'manutencao' && (
             <div className="space-y-4">

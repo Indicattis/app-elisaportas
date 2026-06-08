@@ -37,9 +37,9 @@ export function SelecionarAcessoriosModal({
 }: SelecionarAcessoriosModalProps) {
   const [itensSelecionados, setItensSelecionados] = useState<Set<string>>(new Set());
   const [busca, setBusca] = useState('');
-  // Para itens com unidade decimal (Metro/Kg/Litro), o usuário informa Qtd e Tamanho separadamente.
+  // A quantidade é expressa na unidade cadastrada do item. Para unidades decimais
+  // (m, kg, l...) aceita números fracionários; para discretas (un, rolo...) inteiros.
   const [quantidades, setQuantidades] = useState<Record<string, number>>({});
-  const [tamanhos, setTamanhos] = useState<Record<string, string>>({});
 
   const { data: produtosEstoque = [], isLoading } = useQuery({
     queryKey: ['custos-itens-modal'],
@@ -92,40 +92,28 @@ export function SelecionarAcessoriosModal({
   const handleConfirmar = () => {
     const itensSelecionadosArray = produtosEstoque.filter(item => itensSelecionados.has(item.id));
 
-    // Validar tamanho obrigatório para itens decimais (metro/kg/litro)
-    const semTamanho = itensSelecionadosArray.filter(item => {
-      const isDecimal = !getUnidade(item.unidade).discreta;
-      const tam = parseFloat(tamanhos[item.id] || '') || 0;
-      return isDecimal && tam <= 0;
-    });
-
-    if (semTamanho.length > 0) {
-      toast.error(
-        `Informe o tamanho para: ${semTamanho.map(i => i.nome).join(', ')}`
-      );
+    // Validar quantidade > 0
+    const semQtd = itensSelecionadosArray.filter(item => (quantidades[item.id] ?? 1) <= 0);
+    if (semQtd.length > 0) {
+      toast.error(`Informe a quantidade para: ${semQtd.map(i => i.nome).join(', ')}`);
       return;
     }
-    
+
     const produtos: ProdutoVenda[] = itensSelecionadosArray.map(item => {
-      const isDecimal = !getUnidade(item.unidade).discreta;
       const qtd = quantidades[item.id] ?? 1;
-      const tam = isDecimal ? (tamanhos[item.id] || '') : '';
-      const tamanhoNum = isDecimal ? (parseFloat(tam) || 0) : 0;
-      // Para itens medidos por unidade decimal, o valor unitário armazenado considera o tamanho
-      // (preco_venda * tamanho_unitario), permitindo que o trigger do DB calcule valor_total
-      // como valor_unitario_efetivo * quantidade.
-      const valorUnitario = isDecimal && tamanhoNum > 0 ? item.preco * tamanhoNum : item.preco;
+      // valor_produto = preço unitário puro (na unidade cadastrada).
+      // Total = valor_produto * quantidade (qtd pode ser decimal para m/kg/l).
       return {
         tipo_produto: item.tipo === 'acessorio' ? 'acessorio' : 'adicional',
         largura: 0,
         altura: 0,
-        valor_produto: valorUnitario,
+        valor_produto: item.preco,
         valor_pintura: 0,
         valor_instalacao: 0,
         valor_frete: 0,
         quantidade: qtd,
         descricao: item.nome,
-        tamanho: tam,
+        tamanho: '',
         desconto_valor: 0,
         desconto_percentual: 0,
         tipo_desconto: 'valor' as const,
@@ -142,19 +130,16 @@ export function SelecionarAcessoriosModal({
     setItensSelecionados(new Set());
     setBusca('');
     setQuantidades({});
-    setTamanhos({});
     onOpenChange(false);
   };
 
-  const temItemDecimalSemTamanho = useMemo(() => {
+  const temItemSemQuantidade = useMemo(() => {
     return produtosEstoque.some(item => {
       if (!itensSelecionados.has(item.id)) return false;
-      const isDecimal = !getUnidade(item.unidade).discreta;
-      if (!isDecimal) return false;
-      const tam = parseFloat(tamanhos[item.id] || '') || 0;
-      return tam <= 0;
+      const qtd = quantidades[item.id] ?? 1;
+      return !(qtd > 0);
     });
-  }, [itensSelecionados, tamanhos, produtosEstoque]);
+  }, [itensSelecionados, quantidades, produtosEstoque]);
 
   const getCategoriaColor = (categoria: string) => {
     const c = (categoria || '').toLowerCase();
@@ -215,8 +200,7 @@ export function SelecionarAcessoriosModal({
                   <TableHead>Produto</TableHead>
                   <TableHead className="w-24">Categoria</TableHead>
                   <TableHead className="text-right w-24">Preço</TableHead>
-                  <TableHead className="text-right w-20">Qtd</TableHead>
-                  <TableHead className="text-right w-24">Tamanho</TableHead>
+                  <TableHead className="text-right w-28">Qtd</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -263,41 +247,33 @@ export function SelecionarAcessoriosModal({
                       </Badge>
                     </TableCell>
                     <TableCell className="py-1 text-right font-semibold text-primary text-sm">
-                      R$ {item.preco.toFixed(2)}
+                      R$ {item.preco.toFixed(2)}{isDecimal ? `/${unidadeLabel}` : ''}
                     </TableCell>
                     <TableCell className="py-1 text-right" onClick={(e) => e.stopPropagation()}>
-                      <Input
-                        type="number"
-                        min={1}
-                        step={1}
-                        value={quantidades[item.id] ?? 1}
-                        disabled={!selected}
-                        onChange={(e) => setQuantidades(prev => ({ ...prev, [item.id]: Math.max(1, parseInt(e.target.value) || 1) }))}
-                        className="h-7 w-16 text-right text-xs px-1.5"
-                      />
-                    </TableCell>
-                    <TableCell className="py-1 text-right" onClick={(e) => e.stopPropagation()}>
-                      {isDecimal ? (
-                        <div className="flex items-center justify-end gap-1">
-                          <Input
-                            type="number"
-                            min={0}
-                            step="0.01"
-                            placeholder={selected ? "obrigatório" : "0,00"}
-                            value={tamanhos[item.id] ?? ''}
-                            disabled={!selected}
-                            onChange={(e) => setTamanhos(prev => ({ ...prev, [item.id]: e.target.value }))}
-                            className={`h-7 w-20 text-right text-xs px-1.5 ${
-                              selected && (!(parseFloat(tamanhos[item.id] || '') > 0))
-                                ? 'border-destructive focus-visible:ring-destructive'
-                                : ''
-                            }`}
-                          />
-                          <span className="text-[10px] text-muted-foreground">{unidadeLabel}</span>
-                        </div>
-                      ) : (
-                        <span className="text-[10px] text-muted-foreground">—</span>
-                      )}
+                      <div className="flex items-center justify-end gap-1">
+                        <Input
+                          type="number"
+                          min={isDecimal ? 0.01 : 1}
+                          step={isDecimal ? 0.01 : 1}
+                          value={quantidades[item.id] ?? (isDecimal ? '' : 1)}
+                          disabled={!selected}
+                          placeholder={isDecimal && selected ? '0,00' : ''}
+                          onChange={(e) => {
+                            const raw = e.target.value;
+                            const parsed = isDecimal ? parseFloat(raw) : parseInt(raw);
+                            setQuantidades(prev => ({
+                              ...prev,
+                              [item.id]: isNaN(parsed) ? 0 : (isDecimal ? parsed : Math.max(1, parsed)),
+                            }));
+                          }}
+                          className={`h-7 w-20 text-right text-xs px-1.5 ${
+                            selected && !((quantidades[item.id] ?? (isDecimal ? 0 : 1)) > 0)
+                              ? 'border-destructive focus-visible:ring-destructive'
+                              : ''
+                          }`}
+                        />
+                        {isDecimal && <span className="text-[10px] text-muted-foreground">{unidadeLabel}</span>}
+                      </div>
                     </TableCell>
                   </TableRow>
                   );
@@ -313,8 +289,8 @@ export function SelecionarAcessoriosModal({
           </Button>
           <Button 
             onClick={handleConfirmar}
-            disabled={itensSelecionados.size === 0 || temItemDecimalSemTamanho}
-            title={temItemDecimalSemTamanho ? 'Informe o tamanho dos itens medidos por metro, kg ou litro' : undefined}
+            disabled={itensSelecionados.size === 0 || temItemSemQuantidade}
+            title={temItemSemQuantidade ? 'Informe a quantidade dos itens selecionados' : undefined}
           >
             Adicionar {itensSelecionados.size > 0 && `(${itensSelecionados.size})`}
           </Button>

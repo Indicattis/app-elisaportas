@@ -542,7 +542,7 @@ export default function VendaNovaMinimalista() {
   };
 
   const handleUpdateQuantidade = (index: number, novaQuantidade: number) => {
-    if (novaQuantidade < 1) return;
+    if (!(novaQuantidade > 0)) return;
     
     setPortas(prev => {
       const newPortas = [...prev];
