@@ -535,7 +535,7 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
                           return (
                           <Tooltip key={acordo.id}>
                             <TooltipTrigger asChild>
-                              <TableRow className="border-blue-500/10 hover:bg-white/5 text-white/90 cursor-default">
+                              <TableRow className="border-white/10 hover:bg-white/5 text-white/90 cursor-default">
                                 <TableCell className="text-center">
                                   <div className="flex items-center justify-center gap-1">
                                     {getResumoPortasBadges(acordo)}
