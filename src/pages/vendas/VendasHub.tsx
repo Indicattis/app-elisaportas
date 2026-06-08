@@ -10,7 +10,8 @@ import {
   ClipboardCheck,
   Target,
   BookOpen,
-  FileSignature
+  FileSignature,
+  Tag
 } from 'lucide-react';
 
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
@@ -26,6 +27,7 @@ const menuItems = [
   { label: 'Metas', icon: Target, path: '/vendas/metas' },
   { label: 'Contratos', icon: FileSignature, path: '/vendas/contratos' },
   { label: 'Regras de Vendas', icon: BookOpen, path: '/vendas/regras' },
+  { label: 'Tabela de Preços', icon: Tag, path: '/vendas/precos' },
 ];
 
 export default function VendasHub() {

@@ -193,6 +193,7 @@ import AcompanharPedido from "./pages/vendas/AcompanharPedido";
 import MeusParceiros from "./pages/vendas/MeusParceiros";
 import VisitasTecnicas from "./pages/vendas/VisitasTecnicas";
 import VendaDetalhesMinimalista from "./pages/vendas/VendaDetalhesMinimalista";
+import PrecosVendas from "./pages/vendas/PrecosVendas";
 
 // Hub da Fábrica Minimalista
 import FabricaHub from "./pages/fabrica/FabricaHub";
@@ -470,6 +471,7 @@ const App = () => (
                 <Route path="/vendas/acompanhar-pedido" element={<ProtectedRoute routeKey="vendas_hub"><AcompanharPedido /></ProtectedRoute>} />
                 <Route path="/vendas/visitas-tecnicas" element={<ProtectedRoute routeKey="vendas_visitas_tecnicas"><VisitasTecnicas /></ProtectedRoute>} />
                 <Route path="/vendas/contratos" element={<ProtectedRoute routeKey="vendas_hub"><ContratosVendasHub /></ProtectedRoute>} />
+                <Route path="/vendas/precos" element={<ProtectedRoute routeKeyPrefix="vendas_"><PrecosVendas /></ProtectedRoute>} />
 
                 {/* Hub da Fábrica Minimalista */}
                 <Route path="/fabrica" element={<ProtectedRoute routeKeyPrefix="fabrica_"><FabricaHub /></ProtectedRoute>} />
