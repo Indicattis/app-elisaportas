@@ -1406,7 +1406,8 @@ function calcTotalFolhaConfig(f: {
   const ferias = f.ferias_valor == null ? (f.salario / 3 / 12) : Number(f.ferias_valor) || 0;
   const prev13 = f.salario / 12;
   const fgts13 = fgts / 12;
-  return f.salario + f.aux_combustivel + insalub + fgts + prev13 + fgts13 + ferias;
+  const multaFgts = fgts * 0.4;
+  return f.salario + f.aux_combustivel + insalub + fgts + prev13 + fgts13 + ferias + multaFgts;
 }
 
 function TiposCustoBlockMensal({
@@ -1811,6 +1812,7 @@ function SetorGroupMensal({
               <th className="text-right font-normal pb-1.5 px-2 w-[100px]">13º</th>
               <th className="text-right font-normal pb-1.5 px-2 w-[100px]">FGTS 13º</th>
               <th className="text-right font-normal pb-1.5 px-2 w-[110px]">Férias</th>
+              <th className="text-right font-normal pb-1.5 px-2 w-[110px]">Multa FGTS</th>
               <th className="text-right font-normal pb-1.5 px-2 w-[130px]">Total</th>
               <th className="text-right font-normal pb-1.5 px-2 w-[130px]">Pago no mês</th>
             </tr>
@@ -1829,6 +1831,7 @@ function SetorGroupMensal({
               const prev13 = desativado ? 0 : salario / 12;
               const fgts13 = desativado ? 0 : fgtsVal / 12;
               const ferias = desativado ? 0 : (p.ferias_valor == null ? salario / 3 / 12 : Number(p.ferias_valor) || 0);
+              const multaFgts = desativado ? 0 : fgtsVal * 0.4;
               const total = calcTotalFolhaConfig({
                 salario, salario_minimo, aux_combustivel, insalubridade_pct, fgts_pct,
                 em_folha: p.em_folha, ferias_valor: p.ferias_valor,
@@ -1862,6 +1865,7 @@ function SetorGroupMensal({
                   <td className="px-2 text-right text-xs tabular-nums">{desativado ? zeroCurr : <span className="text-orange-400">{formatCurrency(prev13)}</span>}</td>
                   <td className="px-2 text-right text-xs tabular-nums">{desativado ? zeroCurr : <span className="text-orange-400">{formatCurrency(fgts13)}</span>}</td>
                   <td className="px-2 text-right text-xs tabular-nums">{desativado ? zeroCurr : <span className="text-orange-400">{formatCurrency(ferias)}</span>}</td>
+                  <td className="px-2 text-right text-xs tabular-nums">{desativado ? zeroCurr : <span className="text-orange-400">{formatCurrency(multaFgts)}</span>}</td>
                   <td className="px-2 text-right text-white font-semibold tabular-nums">{formatCurrency(total)}</td>
                   <td className={`px-2 text-right font-medium tabular-nums ${pago === 0 ? 'text-white/40' : overspent ? 'text-orange-300' : 'text-white'}`}>
                     {pago > 0 ? formatCurrency(pago) : '—'}
