@@ -228,7 +228,7 @@ export default function AcordosMesAutorizados() {
   const mesLabel = mesValido ? `${MESES[mesNum]} ${anoNum}` : 'Mês inválido';
   const totalValor = acordosDoMes.reduce((sum, a) => sum + a.valor_acordado, 0);
 
-  const headerActions = contexto === 'logistica' ? (
+  const headerActions = contexto === 'logistica' || contexto === 'home' ? (
     <Button
       size="sm"
       onClick={handleNovoAcordo}
@@ -471,7 +471,7 @@ export default function AcordosMesAutorizados() {
         )}
       </div>
 
-      {contexto === 'logistica' && (
+      {(contexto === 'logistica' || contexto === 'home') && (
         <>
           <NovoAcordoDialog
             open={acordoDialogOpen}
