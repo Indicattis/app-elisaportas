@@ -76,8 +76,8 @@ export default function EditarAutorizadoDirecao() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const contexto = pathname.startsWith('/logistica') ? 'logistica' : 'direcao';
-  const basePath = `/${contexto}/autorizados`;
+  const contexto = pathname.startsWith('/logistica') ? 'logistica' : pathname.startsWith('/autorizados') ? 'home' : 'direcao';
+  const basePath = contexto === 'home' ? '/autorizados' : `/${contexto}/autorizados`;
 
   useEffect(() => {
     const timer = setTimeout(() => setMounted(true), 50);
