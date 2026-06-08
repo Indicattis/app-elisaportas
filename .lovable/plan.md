@@ -1,52 +1,52 @@
-## 1. Coluna "Hora Extra" na Folha Salarial
+## Objetivo
 
-### Banco
+Fazer o DRE de `/direcao/estrategia/dre/:mes` consumir exatamente as mesmas fontes e fórmulas usadas em `/direcao/estrategia/despesas/:mes`, garantindo que os totais de Folha, Despesas Fixas, Variáveis e Impostos batam linha a linha entre as duas telas.
 
-Adicionar coluna `hora_extra numeric NOT NULL DEFAULT 0` em:
-- `public.despesas_padrao`
-- `public.despesas_mes_folha_override`
+## Diagnóstico (DREMesDirecao.tsx vs EstrategiaDespesasConfiguracoes.tsx)
 
-### Cálculo
+Hoje o DRE diverge em 5 pontos:
 
-Atualizar `calcTotalFolha` em `src/pages/direcao/estrategia/EstrategiaDespesasConfiguracoes.tsx` para usar **base = salário + hora extra** nos encargos:
+1. **Fórmula da folha desatualizada** — usa `salario + aux + insalub + fgts + prev13 + fgts13 + ferias`. Não considera `hora_extra`, `bonificacao`, `multa_fgts (40%)`, `salario_minimo` como base da insalubridade, nem o override de `ferias_valor`.
+2. **Fonte da folha errada** — lê `despesas_manuais_folha` (tabela legada), enquanto a tela de Despesas usa `despesas_padrao` + `despesas_mes_folha_override`.
+3. **Impostos zerados** — `despesasImpostos` é sempre `[]`. A tabela `tipos_custos` já tem `tipo='imposto'`, mas o DRE não consulta.
+4. **Projetado mensal ignora overrides** — coluna "Projetado" usa `tipos_custos.valor_maximo_mensal` sem aplicar `despesas_mes_tipo_custo_override`.
+5. **Linhas sem gasto somem** — DRE só lista tipos que tiveram lançamento em `gastos`; a tela de Despesas mostra todos os tipos ativos (com valor real 0 quando não há gasto).
 
-- `FGTS = base × FGTS%`
-- `Previsão 13° = base ÷ 12`
-- `FGTS 13° = FGTS ÷ 12`
-- `Férias + 1/3 = base ÷ 3 ÷ 12`
-- `Multa FGTS = FGTS × 40%`
-- `Insalubridade` continua sobre o salário mínimo (sem mudança)
-- `Total = base + aux_combustivel + insalub + FGTS + prev13 + fgts13 + férias + multa`
+## Alterações
 
-Aplicar a mesma fórmula em `FolhaRowCells`, `FolhaSetorGroup` (subtotal), `FolhaBlock` (total da folha) e no preview do dialog "Novo colaborador".
+### 1. `src/pages/direcao/DREMesDirecao.tsx`
 
-### UI
+- Substituir a função local `calcTotalFolha` por uma versão idêntica à de `EstrategiaDespesasConfiguracoes.tsx`:
+  - `base = salario + hora_extra`
+  - `insalub = (salario_minimo ?? salario) * insalubridade_pct / 100`
+  - `fgts = base * fgts_pct / 100`
+  - `ferias = ferias_valor ?? base / 3 / 12`
+  - `prev13 = base / 12`, `fgts13 = fgts / 12`, `multaFgts = fgts * 0.4`
+  - `total = base + aux_combustivel + bonificacao + insalub + fgts + prev13 + fgts13 + ferias + multaFgts`
+  - Se `em_folha === false`: retorna `salario + hora_extra + bonificacao`.
+- Trocar a fonte da folha: remover `despesas_manuais_folha`; ler `despesas_padrao` (tipo='folha') + `despesas_mes_folha_override` (por `mes_referencia`) e aplicar override campo-a-campo (mesma lógica de `useDespesasPadraoMes`).
+- Em `fetchDespesasFromGastos`:
+  - Buscar `tipos_custos` com `aparece_no_dre = true AND ativo = true`, incluindo `tipo` ∈ {`fixa`, `variavel`, `imposto`}.
+  - Buscar `despesas_mes_tipo_custo_override` do mês para sobrescrever `valor_maximo_mensal` (projetado).
+  - Listar **todos** os tipos ativos (mesmo sem gastos no mês), com `valor_real = 0` quando não houver lançamento.
+  - Popular `despesasImpostos` a partir de `tipo='imposto'`.
+- Atualizar `tiposCustosFixos` / `tiposCustosVariaveis` para refletir os valores projetados após override (usados nas colunas "Projetado" do componente `DespesaSectionReadOnly` e do `PrintReport`).
+- Adicionar `tiposCustosImpostos` e passar ao `PrintReport` para que a seção "Despesas de Imposto" exiba projetado + ano (hoje vai sem projetado).
+- O cálculo de `lucroLiquidoFinal` já subtrai `totalDespImpostos`, então passa a refletir corretamente os impostos.
 
-Em `EstrategiaDespesasConfiguracoes.tsx`:
+### 2. Verificação de concordância
 
-- Nova coluna **Hora Extra** entre "Combustível" e "Insalub %" no `FolhaTableHeader`, `FolhaColGroup` e `FolhaRowCells` (editável via `InlineNum format="currency"`).
-- Campo "Hora extra" no diálogo "Novo colaborador" (grid junto de Aux. combustível).
-- Estado `horaExtra` no `FolhaBlock` e reset incluindo o campo.
+Após implementação, abrir `/direcao/estrategia/despesas/2026-06` e `/direcao/estrategia/dre/2026-06` e conferir:
 
-### Hook / tipos
+- Total da Folha (DRE seção 3) == subtotal da tabela Folha em Despesas (somando todos os setores).
+- Total Despesas Fixas (DRE seção 4) == subtotal dos tipos `fixa` em Despesas (coluna Total Gastos do mês).
+- Total Despesas Variáveis (DRE seção 5) == subtotal dos tipos `variavel`.
+- Total Impostos (DRE seção 6) == subtotal dos tipos `imposto`.
 
-- `src/hooks/useDespesasPadrao.ts`: incluir `hora_extra` no tipo `DespesaPadrao` e no payload de `insert`/`update`.
-- `src/hooks/useDespesasPadraoMes.ts`: incluir `hora_extra` no override mensal e no merge com o padrão.
+Qualquer divergência só pode vir de tipos com `aparece_no_dre = false` (intencional). O plano não altera dados, apenas leitura.
 
-### PDF
+## Fora de escopo
 
-`src/utils/folhaSalarialPDFGenerator.ts`: adicionar coluna Hora Extra e usar a mesma base nas demais colunas calculadas.
-
-## 2. Banco no gasto automático de acordos pagos (ajuste do fluxo anterior)
-
-Hoje o gasto criado ao marcar um acordo como pago usa o primeiro banco cadastrado. Substituir por um **diálogo de confirmação** que pede o banco antes de criar o gasto.
-
-- Novo componente `ConfirmarPagamentoAcordoDialog` com `Select` de bancos (lista `bancos` ordenada por nome).
-- Em `AcordosMesAutorizados.tsx` e `AutorizadosPrecosDirecao.tsx`: ao clicar em "Marcar como pago", abrir o diálogo; só depois da escolha do banco rodar `update` em `acordos_instalacao_autorizados` + `criarGastoAcordoAutorizado` passando `bancoId`. Desmarcar continua sem diálogo (apenas remove o gasto).
-- `src/lib/gastoAcordoAutorizado.ts`: receber `bancoId` por parâmetro (obrigatório); remover a busca automática do banco padrão.
-
-## Detalhes técnicos
-
-- Total mostrado em "Total estimado" do dialog usa `calcTotalFolha` já atualizado.
-- Linha desativada (`em_folha === false`) continua exibindo `R$ 0` para hora extra e demais encargos; total = salário (mantém comportamento atual).
-- Override mensal segue o padrão dos demais campos: se `hora_extra` estiver em override usa-o, senão herda do padrão.
+- Não alterar schema do banco; tabelas e colunas necessárias (`hora_extra`, `bonificacao`, `ferias_valor`, `salario_minimo`, overrides mensais) já existem.
+- Não tocar em DREDirecao.tsx (lista de meses) nem no PDF além de propagar os novos arrays — layout do PDF permanece igual.
+- Não alterar a aba "Faturamento" do DRE, apenas a integração de despesas.
