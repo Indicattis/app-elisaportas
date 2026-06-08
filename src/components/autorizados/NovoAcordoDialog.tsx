@@ -21,6 +21,7 @@ import {
 import { useAutorizadosPrecos } from '@/hooks/useAutorizadosPrecos';
 import { formatCurrency } from '@/lib/utils';
 import type { NovoAcordo, AcordoAutorizado } from '@/hooks/useAcordosAutorizados';
+import { SeletorPedidoExistente, type PedidoSelecionado } from './SeletorPedidoExistente';
 
 const ESTADOS_BR = [
   'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS',
@@ -55,6 +56,7 @@ export function NovoAcordoDialog({
   const [valorAcordado, setValorAcordado] = useState('');
   const [observacoes, setObservacoes] = useState('');
   const [dataAcordo, setDataAcordo] = useState(new Date().toISOString().split('T')[0]);
+  const [pedidoVinculado, setPedidoVinculado] = useState<PedidoSelecionado | null>(null);
 
   // Reset form when dialog opens/closes
   useEffect(() => {
@@ -82,6 +84,7 @@ export function NovoAcordoDialog({
         setValorAcordado('');
         setObservacoes('');
         setDataAcordo(new Date().toISOString().split('T')[0]);
+        setPedidoVinculado(null);
       }
     }
   }, [open, acordoParaEditar]);
@@ -136,6 +139,19 @@ export function NovoAcordoDialog({
         </DialogHeader>
 
         <div className="space-y-4 py-4">
+          {/* Vincular a pedido */}
+          <SeletorPedidoExistente
+            pedidoSelecionado={pedidoVinculado}
+            onSelect={(p) => {
+              if (!p.id) {
+                setPedidoVinculado(null);
+                return;
+              }
+              setPedidoVinculado(p);
+              if (p.cliente_nome) setClienteNome(p.cliente_nome);
+            }}
+          />
+
           {/* Cliente */}
           <div className="space-y-3">
             <Label className="text-sm font-medium text-white/70">CLIENTE</Label>
