@@ -292,6 +292,7 @@ export default function AcordosMesAutorizados() {
         { label: mesLabel },
       ]}
       headerActions={headerActions}
+      fullWidth
     >
       <div className="space-y-4">
         <div className="flex items-center gap-2 text-white/70 text-sm">
@@ -347,7 +348,7 @@ export default function AcordosMesAutorizados() {
                       <TableHead className="text-xs text-white/70 text-center">Status</TableHead>
                       <TableHead className="text-xs text-white/70 text-center">Pagamento</TableHead>
                       <TableHead className="text-xs text-white/70">Observações</TableHead>
-                      {contexto === 'direcao' && (
+                      {(contexto === 'direcao' || contexto === 'home') && (
                         <TableHead className="text-xs text-white/70 text-center">Aprovação</TableHead>
                       )}
                       {contexto === 'logistica' && (
@@ -413,7 +414,7 @@ export default function AcordosMesAutorizados() {
                                 <TableCell className="text-white/60 max-w-[200px] truncate" title={acordo.observacoes || ''}>
                                   {acordo.observacoes || '—'}
                                 </TableCell>
-                                {contexto === 'direcao' && (
+                                {(contexto === 'direcao' || contexto === 'home') && (
                                   <TableCell className="text-center">
                                     {acordo.aprovado_direcao ? (
                                       <Badge variant="outline" className="bg-green-500/20 text-green-400 border-green-500/30 gap-1">
