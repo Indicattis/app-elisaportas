@@ -1121,7 +1121,7 @@ function TiposCustoBlock({
 
       <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between px-2">
         <span className="text-xs text-white/50 uppercase tracking-wider">Total mensal estimado (ativos)</span>
-        <span className="text-base font-bold text-white">{formatCurrency(totalAtivos)}</span>
+        <span className="text-base font-bold text-white">{tipo === 'variavel' ? '—' : formatCurrency(totalAtivos)}</span>
       </div>
 
       <Dialog open={!!realocacaoDialog} onOpenChange={(open) => { if (!open) { setRealocacaoDialog(null); setDestinoId(''); setConfirmarOrfaos(false); } }}>
@@ -1270,6 +1270,7 @@ function CategoriaGroup({
   totaisGastos?: Record<string, number>;
 }) {
   const subtotal = rows.reduce((s, i) => s + Number(i.valor_maximo_mensal || 0), 0);
+  const isVariavel = rows.some(r => r.tipo === 'variavel');
   const rowSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
   const rowIds = rows.map(r => r.id);
   const onRowDragEnd = (e: DragEndEvent) => {
@@ -1306,7 +1307,7 @@ function CategoriaGroup({
         )}
         <span className="text-xs text-white/40 tabular-nums">{rows.length}</span>
         <div className="flex-1" />
-        <span className="text-sm text-white/90 font-semibold tabular-nums">{formatCurrency(subtotal)}</span>
+        <span className="text-sm text-white/90 font-semibold tabular-nums">{isVariavel ? '—' : formatCurrency(subtotal)}</span>
         {cat && removeCat && (
           <button
             onClick={(e) => { e.stopPropagation(); removeCat(cat.id); }}
@@ -1459,9 +1460,11 @@ function SortableTipoRow({
         </span>
       </td>
       <td className={`px-2 text-right font-medium ${i.marcada_para_eliminar ? 'text-red-400 line-through' : 'text-white'}`}>
-        {readOnly
-          ? <span className="px-1 py-0.5">{formatCurrency(Number(i.valor_maximo_mensal) || 0)}</span>
-          : <InlineNum value={i.valor_maximo_mensal} onSave={(v) => update(i.id, { valor_maximo_mensal: v })} format="currency" />}
+        {i.tipo === 'variavel'
+          ? <span className="px-1 py-0.5 text-white/40">—</span>
+          : readOnly
+            ? <span className="px-1 py-0.5">{formatCurrency(Number(i.valor_maximo_mensal) || 0)}</span>
+            : <InlineNum value={i.valor_maximo_mensal} onSave={(v) => update(i.id, { valor_maximo_mensal: v })} format="currency" />}
       </td>
       <td className="pr-1 text-right">
         {readOnly ? (
