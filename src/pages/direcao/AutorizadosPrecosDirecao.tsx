@@ -436,7 +436,7 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
                             mesAtual
                               ? 'bg-blue-500/10 border-blue-400/30 shadow-lg shadow-blue-500/10'
                               : total > 0
-                                ? 'bg-white/5 border-blue-500/10 hover:bg-white/10'
+                                ? 'bg-white/5 border-white/10 hover:bg-white/10'
                                 : 'bg-white/[0.02] border-white/5 hover:bg-white/5'
                           }`}
                         >
