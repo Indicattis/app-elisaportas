@@ -484,9 +484,12 @@ function PrintReport({
               { key: 'pintura', label: 'Pintura' },
               { key: 'instalacoes', label: 'Instalações' },
               { key: 'avulsos', label: 'Itens Avulsos' },
+              { key: 'fretes', label: 'Fretes' },
             ].map((c, i) => {
               const f = faturamento[c.key as keyof FaturamentoProduto];
-              const l = lucro[c.key as keyof FaturamentoProduto];
+              const l = c.key === 'fretes'
+                ? (faturamento.fretes - totalDespFretes)
+                : lucro[c.key as keyof FaturamentoProduto];
               const m = f > 0 ? (l / f) * 100 : 0;
               return (
                 <tr key={c.key} style={trZebra(i)}>
