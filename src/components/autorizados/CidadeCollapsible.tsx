@@ -147,6 +147,7 @@ export function CidadeCollapsible({
                   <TableHead className="text-xs text-white/70 w-10"></TableHead>
                   <TableHead className="text-xs text-white/70">Autorizado</TableHead>
                   <TableHead className="text-xs text-white/70">Etapa</TableHead>
+                  <TableHead className="text-xs text-white/70">Vendedor Resp.</TableHead>
                   <TableHead className="text-xs text-white/70">Cidades Sec.</TableHead>
                   <TableHead className="text-xs text-white/70 text-center">P</TableHead>
                   <TableHead className="text-xs text-white/70 text-center">G</TableHead>
@@ -229,6 +230,9 @@ function AutorizadoRow({ autorizado, onEdit, onDelete, onTogglePremium }: Autori
         >
           {autorizado.etapa || 'ativo'}
         </Badge>
+      </TableCell>
+      <TableCell className="text-white/70 text-xs">
+        {autorizado.vendedorResponsavelNome || '-'}
       </TableCell>
       <TableCell className="text-white/60 text-xs max-w-[150px]">
         {autorizado.cidadesSecundarias && autorizado.cidadesSecundarias.length > 0
