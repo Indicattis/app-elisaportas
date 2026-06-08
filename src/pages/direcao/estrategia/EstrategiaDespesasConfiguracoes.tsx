@@ -702,7 +702,7 @@ function FolhaSetorGroup({
         <span className="text-xs text-white/90 font-medium">{formatCurrency(subtotal)}</span>
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full text-sm table-fixed min-w-[1640px]">
+        <table className="w-full text-sm table-fixed min-w-[1750px]">
           <FolhaTableHeader />
           <DndContext
             sensors={sensors}
