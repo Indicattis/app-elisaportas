@@ -1270,6 +1270,7 @@ function CategoriaGroup({
   totaisGastos?: Record<string, number>;
 }) {
   const subtotal = rows.reduce((s, i) => s + Number(i.valor_maximo_mensal || 0), 0);
+  const isVariavel = rows.some(r => r.tipo === 'variavel');
   const rowSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
   const rowIds = rows.map(r => r.id);
   const onRowDragEnd = (e: DragEndEvent) => {
@@ -1306,7 +1307,7 @@ function CategoriaGroup({
         )}
         <span className="text-xs text-white/40 tabular-nums">{rows.length}</span>
         <div className="flex-1" />
-        <span className="text-sm text-white/90 font-semibold tabular-nums">{formatCurrency(subtotal)}</span>
+        <span className="text-sm text-white/90 font-semibold tabular-nums">{isVariavel ? '—' : formatCurrency(subtotal)}</span>
         {cat && removeCat && (
           <button
             onClick={(e) => { e.stopPropagation(); removeCat(cat.id); }}
