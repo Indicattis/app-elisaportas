@@ -24,7 +24,7 @@ interface GrupoVenda {
   pedidos: PedidoVisita[];
 }
 
-export default function VisitasTecnicas() {
+export default function VisitasTecnicasRealizadas() {
   const navigate = useNavigate();
   const [mounted, setMounted] = useState(false);
   const [busca, setBusca] = useState('');
@@ -82,12 +82,13 @@ export default function VisitasTecnicas() {
         items={[
           { label: 'Home', path: '/home' },
           { label: 'Vendas', path: '/vendas' },
-          { label: 'Visitas Técnicas' },
+          { label: 'Visitas Técnicas', path: '/vendas/visitas-tecnicas' },
+          { label: 'Realizadas' },
         ]}
         mounted={mounted}
       />
       <button
-        onClick={() => navigate('/vendas')}
+        onClick={() => navigate('/vendas/visitas-tecnicas')}
         className="fixed top-4 left-4 z-50 p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10
                    hover:bg-white/10 transition-all duration-300"
         style={{
@@ -109,6 +110,7 @@ export default function VisitasTecnicas() {
           transition: 'all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 300ms',
         }}
       >
+        <h1 className="text-xl font-semibold text-white mb-4">Visitas realizadas para pedidos existentes</h1>
         {/* Busca */}
         <div className="relative mb-6">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
