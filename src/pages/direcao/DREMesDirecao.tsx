@@ -1557,6 +1557,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
     { key: 'pintura', label: 'Pintura' },
     { key: 'instalacoes', label: 'Instalações' },
     { key: 'avulsos', label: 'Itens Avulsos' },
+    { key: 'fretes', label: 'Fretes' },
     { key: 'total', label: 'Total' },
   ] as const;
 
