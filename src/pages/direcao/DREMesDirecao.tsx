@@ -291,6 +291,7 @@ function PrintReport({
   despesasFornecedores,
   despesasFinanciamentos,
   despesasFretes,
+  despesasAutorizados,
   tiposCustosFixos,
   tiposCustosVariaveis,
   tiposCustosImpostos,
@@ -298,6 +299,7 @@ function PrintReport({
   tiposCustosFornecedores,
   tiposCustosFinanciamentos,
   tiposCustosFretes,
+  tiposCustosAutorizados,
   totalDespFixas,
   totalDespFolha,
   totalDespVariaveis,
@@ -306,6 +308,7 @@ function PrintReport({
   totalDespFornecedores,
   totalDespFinanciamentos,
   totalDespFretes,
+  totalDespAutorizados,
   totalProjetadoAnual,
   topAvulsos,
   estoqueResumo,
@@ -326,6 +329,7 @@ function PrintReport({
   despesasFornecedores: DespesaAgrupada[];
   despesasFinanciamentos: DespesaAgrupada[];
   despesasFretes: DespesaAgrupada[];
+  despesasAutorizados: DespesaAgrupada[];
   tiposCustosFixos: TipoCustoVariavel[];
   tiposCustosVariaveis: TipoCustoVariavel[];
   tiposCustosImpostos: TipoCustoVariavel[];
@@ -333,6 +337,7 @@ function PrintReport({
   tiposCustosFornecedores: TipoCustoVariavel[];
   tiposCustosFinanciamentos: TipoCustoVariavel[];
   tiposCustosFretes: TipoCustoVariavel[];
+  tiposCustosAutorizados: TipoCustoVariavel[];
   totalDespFixas: number;
   totalDespFolha: number;
   totalDespVariaveis: number;
@@ -341,6 +346,7 @@ function PrintReport({
   totalDespFornecedores: number;
   totalDespFinanciamentos: number;
   totalDespFretes: number;
+  totalDespAutorizados: number;
   totalProjetadoAnual: number;
   topAvulsos: { nome: string; qtd: number }[];
   estoqueResumo: { valorTotal: number; totalItens: number };
