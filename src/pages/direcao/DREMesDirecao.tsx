@@ -574,6 +574,7 @@ function PrintReport({
           items={despesasImpostos}
           total={totalDespImpostos}
           formatCurrency={formatCurrency}
+          tiposDisponiveis={tiposCustosImpostos}
         />
       </div>
 
@@ -1567,6 +1568,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
               despesas={despesasImpostos}
               total={totalDespImpostos}
               formatCurrency={formatCurrency}
+              tiposDisponiveis={tiposCustosImpostos}
               onClickTipo={(id, nome) => setTipoModal({ id, nome })}
             />
           </div>
