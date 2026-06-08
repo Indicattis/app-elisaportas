@@ -19,6 +19,7 @@ export interface AutorizadoResumo {
   precos: { P?: number; G?: number; GG?: number };
   cidadesSecundarias?: string[];
   logo_url?: string | null;
+  vendedorResponsavelNome?: string | null;
 }
 
 export interface Cidade {
