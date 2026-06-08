@@ -13,7 +13,7 @@ import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { useAcordosAutorizados, type AcordoAutorizado, type NovoAcordo } from '@/hooks/useAcordosAutorizados';
 import { NovoAcordoDialog } from '@/components/autorizados/NovoAcordoDialog';
 import { formatCurrency } from '@/lib/utils';
-import { criarGastoAcordoAutorizado, removerGastoAcordoAutorizado } from '@/lib/gastoAcordoAutorizado';
+import { criarGastoAcordoAutorizado } from '@/lib/gastoAcordoAutorizado';
 import { ConfirmarPagamentoAcordoDialog } from '@/components/autorizados/ConfirmarPagamentoAcordoDialog';
 import { HistoricoAcordoDialog } from '@/components/autorizados/HistoricoAcordoDialog';
 import { format } from 'date-fns';
@@ -212,31 +212,19 @@ export default function AcordosMesAutorizados() {
   const [pagamentoDialog, setPagamentoDialog] = useState<{ acordoId: string; clienteNome: string; valor: number } | null>(null);
   const [historicoDialog, setHistoricoDialog] = useState<{ acordoId: string; clienteNome: string } | null>(null);
 
-  const desmarcarPago = useCallback(async (acordoId: string) => {
-    try {
-      const { error } = await supabase
-        .from('acordos_instalacao_autorizados')
-        .update({ pago: false, pago_em: null, pago_por: null } as any)
-        .eq('id', acordoId);
-      if (error) throw error;
-      await removerGastoAcordoAutorizado(acordoId);
-      toast({ title: 'Sucesso', description: 'Pagamento desmarcado' });
-      await refetch();
-    } catch (error: any) {
-      console.error('Erro ao desmarcar pagamento:', error);
-      toast({ title: 'Erro', description: 'Não foi possível desmarcar o pagamento', variant: 'destructive' });
-    }
-  }, [toast, refetch]);
-
   const handleMarcarPago = useCallback(async (acordoId: string, pagoAtual: boolean) => {
     if (pagoAtual) {
-      await desmarcarPago(acordoId);
+      toast({
+        title: 'Pagamento não reversível',
+        description: 'Acordos pagos não podem ser desmarcados.',
+        variant: 'destructive',
+      });
       return;
     }
     const acordo = acordosDoMes.find(a => a.id === acordoId);
     if (!acordo) return;
     setPagamentoDialog({ acordoId, clienteNome: acordo.cliente_nome, valor: acordo.valor_acordado });
-  }, [acordosDoMes, desmarcarPago]);
+  }, [acordosDoMes, toast]);
 
   const confirmarPagamento = useCallback(async (bancoId: string) => {
     if (!pagamentoDialog) return;
@@ -354,7 +342,7 @@ export default function AcordosMesAutorizados() {
                       {(contexto === 'direcao' || contexto === 'home') && (
                         <TableHead className="text-xs text-white/70 text-center">Aprovação</TableHead>
                       )}
-                      {contexto === 'logistica' && (
+                      {(contexto === 'logistica' || contexto === 'home') && (
                         <TableHead className="text-right text-xs text-white/70">Ações</TableHead>
                       )}
                     </TableRow>
@@ -468,7 +456,7 @@ export default function AcordosMesAutorizados() {
                                     )}
                                   </TableCell>
                                 )}
-                                {contexto === 'logistica' && (
+                                {(contexto === 'logistica' || contexto === 'home') && (
                                   <TableCell className="text-right">
                                     <DropdownMenu>
                                       <DropdownMenuTrigger asChild>
@@ -480,10 +468,14 @@ export default function AcordosMesAutorizados() {
                                         <DropdownMenuItem className="text-white hover:bg-zinc-700 cursor-pointer" onClick={() => handleEditarAcordo(acordo)}>
                                           <Edit2 className="h-4 w-4 mr-2" /> Editar
                                         </DropdownMenuItem>
-                                        <DropdownMenuItem className="cursor-pointer hover:bg-zinc-700" onClick={() => handleMarcarPago(acordo.id, acordo.pago)}>
-                                          <DollarSign className={`h-4 w-4 mr-2 ${acordo.pago ? 'text-yellow-400' : 'text-green-400'}`} />
-                                          <span className={acordo.pago ? 'text-yellow-400' : 'text-green-400'}>
-                                            {acordo.pago ? 'Desmarcar Pago' : 'Marcar como Pago'}
+                                        <DropdownMenuItem
+                                          disabled={acordo.pago}
+                                          className="cursor-pointer hover:bg-zinc-700 data-[disabled]:opacity-60 data-[disabled]:cursor-not-allowed"
+                                          onClick={() => { if (!acordo.pago) handleMarcarPago(acordo.id, acordo.pago); }}
+                                        >
+                                          <DollarSign className="h-4 w-4 mr-2 text-green-400" />
+                                          <span className="text-green-400">
+                                            {acordo.pago ? 'Pago — não reversível' : 'Marcar como Pago'}
                                           </span>
                                         </DropdownMenuItem>
                                         <DropdownMenuItem className="text-red-400 hover:bg-red-500/20 cursor-pointer" onClick={() => setAcordoParaDeletar(acordo)}>
