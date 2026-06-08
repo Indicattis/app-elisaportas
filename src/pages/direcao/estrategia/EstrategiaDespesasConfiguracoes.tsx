@@ -1055,7 +1055,6 @@ function TiposCustoBlock({
   };
 
   const destinosPossiveis = allTipos.filter(t =>
-    t.tipo === realocacaoDialog?.tipo.tipo &&
     t.id !== realocacaoDialog?.tipo.id &&
     t.ativo
   );
@@ -1186,11 +1185,21 @@ function TiposCustoBlock({
               <SelectTrigger><SelectValue placeholder="Selecione um tipo de custo" /></SelectTrigger>
               <SelectContent>
                 {destinosPossiveis.length === 0 ? (
-                  <div className="px-3 py-2 text-xs text-muted-foreground">Nenhum outro tipo disponível neste grupo</div>
+                  <div className="px-3 py-2 text-xs text-muted-foreground">Nenhum outro tipo disponível</div>
                 ) : (
-                  destinosPossiveis.map(t => (
-                    <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
-                  ))
+                  (['fixa','variavel','imposto','projetada','investimento'] as const).map(grupo => {
+                    const itensGrupo = destinosPossiveis.filter(t => t.tipo === grupo);
+                    if (itensGrupo.length === 0) return null;
+                    const label = grupo === 'fixa' ? 'Fixas' : grupo === 'variavel' ? 'Variáveis' : grupo === 'imposto' ? 'Impostos' : grupo === 'projetada' ? 'Projetadas' : 'Investimentos';
+                    return (
+                      <div key={grupo}>
+                        <div className="px-2 py-1 text-[10px] uppercase tracking-wider text-white/40">{label}</div>
+                        {itensGrupo.map(t => (
+                          <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
+                        ))}
+                      </div>
+                    );
+                  })
                 )}
               </SelectContent>
             </Select>
