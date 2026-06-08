@@ -1,5 +1,5 @@
 import { useState, useRef, useMemo } from 'react';
-import { Plus, Trash2, Users, Receipt, TrendingDown, Landmark, FileDown, GripVertical, X, Check, FolderPlus, ChevronRight, AlertTriangle, FileText, RotateCcw } from 'lucide-react';
+import { Plus, Trash2, Users, Receipt, TrendingDown, TrendingUp, Landmark, FileDown, GripVertical, X, Check, FolderPlus, ChevronRight, AlertTriangle, FileText, RotateCcw } from 'lucide-react';
 import GastoFormDialog from '@/components/financeiro/GastoFormDialog';
 import { useGastosPorTipoMes } from '@/hooks/useGastosPorTipoMes';
 import { useContagemGastosPorTipoMes } from '@/hooks/useContagemGastosPorTipoMes';
@@ -97,6 +97,7 @@ export function DespesasGridContent({
   const tiposFixas = tiposCustos.filter(t => t.tipo === 'fixa');
   const tiposVariaveis = tiposCustos.filter(t => t.tipo === 'variavel');
   const tiposImpostos = tiposCustos.filter(t => t.tipo === 'imposto');
+  const tiposProjetadas = tiposCustos.filter(t => t.tipo === 'projetada');
 
   return showSpinner ? (
         <div className="flex items-center justify-center py-20">
@@ -159,6 +160,26 @@ export function DespesasGridContent({
             icon={<Landmark className="w-4 h-4" />}
             tipo="imposto"
             items={tiposImpostos}
+            save={saveTipoCusto}
+            update={updateTipoCusto}
+            remove={deleteTipoCusto}
+            allTipos={tiposCustos}
+            contarGastosVinculados={contarGastosVinculados}
+            realocarEExcluir={realocarEExcluirTipoCusto}
+            forcarExclusao={forcarExclusaoTipoCusto}
+            reorderTipos={reorderTiposCustos}
+            readOnly={readOnly}
+            clearOverride={tipoClearOverride}
+            hasOverride={tipoHasOverride}
+            mesReferencia={mesReferencia ?? null}
+            contagemGastos={contagemGastos}
+            totaisGastos={totaisGastos}
+          />
+          <TiposCustoBlock
+            titulo="Despesa projetada"
+            icon={<TrendingUp className="w-4 h-4" />}
+            tipo="projetada"
+            items={tiposProjetadas}
             save={saveTipoCusto}
             update={updateTipoCusto}
             remove={deleteTipoCusto}
