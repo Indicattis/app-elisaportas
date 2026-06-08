@@ -387,7 +387,7 @@ export default function VideosIdeias() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate("/home")}
+              onClick={() => navigate("/marketing")}
               className="text-white/70 hover:text-white hover:bg-white/10"
             >
               <ArrowLeft className="w-5 h-5" />
