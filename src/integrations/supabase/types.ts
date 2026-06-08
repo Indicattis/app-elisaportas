@@ -9619,6 +9619,56 @@ export type Database = {
           },
         ]
       }
+      vendas_balanco_desconto: {
+        Row: {
+          created_at: string
+          data_venda: string | null
+          desconto_dado: number
+          id: string
+          pct_desconto_dado: number
+          pct_limite_permitido: number
+          tipo: string
+          total_venda: number
+          updated_at: string
+          valor_balanco: number
+          venda_id: string
+        }
+        Insert: {
+          created_at?: string
+          data_venda?: string | null
+          desconto_dado?: number
+          id?: string
+          pct_desconto_dado?: number
+          pct_limite_permitido?: number
+          tipo: string
+          total_venda?: number
+          updated_at?: string
+          valor_balanco?: number
+          venda_id: string
+        }
+        Update: {
+          created_at?: string
+          data_venda?: string | null
+          desconto_dado?: number
+          id?: string
+          pct_desconto_dado?: number
+          pct_limite_permitido?: number
+          tipo?: string
+          total_venda?: number
+          updated_at?: string
+          valor_balanco?: number
+          venda_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendas_balanco_desconto_venda_id_fkey"
+            columns: ["venda_id"]
+            isOneToOne: true
+            referencedRelation: "vendas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendas_config_lucro: {
         Row: {
           id: string
@@ -10324,6 +10374,10 @@ export type Database = {
       }
       processar_postagens_agendadas: { Args: never; Returns: number }
       proximo_numero_orcamento_app: { Args: never; Returns: number }
+      recalcular_balanco_desconto_vendas: {
+        Args: { p_fim: string; p_inicio: string }
+        Returns: number
+      }
       recalcular_pontuacao_linhas_concluidas: {
         Args: never
         Returns: {
