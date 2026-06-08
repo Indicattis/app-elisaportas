@@ -612,6 +612,7 @@ export default function AcordosMesAutorizados() {
         onOpenChange={(open) => { if (!open) setPagamentoDialog(null); }}
         clienteNome={pagamentoDialog?.clienteNome}
         valor={pagamentoDialog?.valor}
+        valorJaPago={pagamentoDialog?.valorJaPago ?? 0}
         onConfirm={confirmarPagamento}
       />
       <HistoricoAcordoDialog
