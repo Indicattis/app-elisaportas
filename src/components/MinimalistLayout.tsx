@@ -28,6 +28,7 @@ export function MinimalistLayout({
   fullWidth = false,
   showBackButton = true,
   lightTheme = false,
+  contentClassName,
 }: MinimalistLayoutProps) {
   const navigate = useNavigate();
   const [mounted, setMounted] = useState(false);
