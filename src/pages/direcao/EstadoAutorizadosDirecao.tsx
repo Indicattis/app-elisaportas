@@ -126,7 +126,7 @@ export default function EstadoAutorizadosDirecao() {
       <AnimatedBreadcrumb
         items={[
           { label: "Home", path: "/home" },
-          { label: contexto === 'logistica' ? "Logística" : "Direção", path: contexto === 'logistica' ? '/logistica' : '/direcao' },
+          ...(contexto !== 'home' ? [{ label: contexto === 'logistica' ? "Logística" : "Direção", path: contexto === 'logistica' ? '/logistica' : '/direcao' }] : []),
           { label: "Autorizados", path: basePath },
           { label: estadoSelecionado.nome }
         ]}
