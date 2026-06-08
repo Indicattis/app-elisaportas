@@ -17,6 +17,7 @@ import { useAcordosAutorizados, type AcordoAutorizado, type NovoAcordo } from '@
 import { NovoAcordoDialog } from '@/components/autorizados/NovoAcordoDialog';
 import { formatCurrency } from '@/lib/utils';
 import { criarGastoAcordoAutorizado, removerGastoAcordoAutorizado } from '@/lib/gastoAcordoAutorizado';
+import { ConfirmarPagamentoAcordoDialog } from '@/components/autorizados/ConfirmarPagamentoAcordoDialog';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -242,36 +243,63 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
     }
   }, [toast]);
 
+  const [pagamentoDialog, setPagamentoDialog] = useState<{ acordoId: string; clienteNome: string; valor: number } | null>(null);
+
+  const desmarcarPago = useCallback(async (acordoId: string) => {
+    try {
+      const { error } = await supabase
+        .from('acordos_instalacao_autorizados')
+        .update({ pago: false, pago_em: null, pago_por: null } as any)
+        .eq('id', acordoId);
+      if (error) throw error;
+      await removerGastoAcordoAutorizado(acordoId);
+      toast({ title: 'Sucesso', description: 'Pagamento desmarcado' });
+      await refetch();
+    } catch (error: any) {
+      console.error('Erro ao desmarcar pagamento:', error);
+      toast({ title: 'Erro', description: 'Não foi possível desmarcar o pagamento', variant: 'destructive' });
+    }
+  }, [toast, refetch]);
+
   const handleMarcarPago = useCallback(async (acordoId: string, pagoAtual: boolean) => {
+    if (pagoAtual) {
+      await desmarcarPago(acordoId);
+      return;
+    }
+    const acordo = acordos.find(a => a.id === acordoId);
+    if (!acordo) return;
+    setPagamentoDialog({ acordoId, clienteNome: acordo.cliente_nome, valor: acordo.valor_acordado });
+  }, [acordos, desmarcarPago]);
+
+  const confirmarPagamento = useCallback(async (bancoId: string) => {
+    if (!pagamentoDialog) return;
+    const acordo = acordos.find(a => a.id === pagamentoDialog.acordoId);
+    if (!acordo) return;
     try {
       const { error } = await supabase
         .from('acordos_instalacao_autorizados')
         .update({
-          pago: !pagoAtual,
-          pago_em: !pagoAtual ? new Date().toISOString() : null,
-          pago_por: !pagoAtual ? user?.id : null,
+          pago: true,
+          pago_em: new Date().toISOString(),
+          pago_por: user?.id,
         } as any)
-        .eq('id', acordoId);
+        .eq('id', acordo.id);
       if (error) throw error;
-      const acordo = acordos.find(a => a.id === acordoId);
-      if (!pagoAtual && acordo) {
-        await criarGastoAcordoAutorizado({
-          acordoId,
-          valor: acordo.valor_acordado,
-          clienteNome: acordo.cliente_nome,
-          autorizadoNome: acordo.autorizado_nome,
-          responsavelId: user?.id,
-        });
-      } else if (pagoAtual) {
-        await removerGastoAcordoAutorizado(acordoId);
-      }
-      toast({ title: 'Sucesso', description: !pagoAtual ? 'Acordo marcado como pago' : 'Pagamento desmarcado' });
+      await criarGastoAcordoAutorizado({
+        acordoId: acordo.id,
+        valor: acordo.valor_acordado,
+        clienteNome: acordo.cliente_nome,
+        autorizadoNome: acordo.autorizado_nome,
+        responsavelId: user?.id,
+        bancoId,
+      });
+      toast({ title: 'Sucesso', description: 'Acordo marcado como pago' });
       await refetch();
     } catch (error: any) {
-      console.error('Erro ao atualizar pagamento:', error);
-      toast({ title: 'Erro', description: 'Não foi possível atualizar o pagamento', variant: 'destructive' });
+      console.error('Erro ao confirmar pagamento:', error);
+      toast({ title: 'Erro', description: 'Não foi possível confirmar o pagamento', variant: 'destructive' });
     }
-  }, [user?.id, toast, refetch, acordos]);
+  }, [pagamentoDialog, acordos, user?.id, toast, refetch]);
 
   const headerActions = (
     <>
@@ -700,6 +728,13 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
           </AlertDialog>
         </>
       )}
+      <ConfirmarPagamentoAcordoDialog
+        open={!!pagamentoDialog}
+        onOpenChange={(open) => { if (!open) setPagamentoDialog(null); }}
+        clienteNome={pagamentoDialog?.clienteNome}
+        valor={pagamentoDialog?.valor}
+        onConfirm={confirmarPagamento}
+      />
     </MinimalistLayout>
   );
 }

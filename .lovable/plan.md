@@ -1,35 +1,52 @@
-## Objetivo
+## 1. Coluna "Hora Extra" na Folha Salarial
 
-Quando um acordo de autorizado for marcado como **Pago**, gerar automaticamente um lançamento na tabela `gastos`, categorizado em **"Pagamento - Autorizados"** (tipo de custo já existente, id `55302712-8a2b-4fb4-b579-91921f4abc41`). Esse gasto aparece no mês correspondente em `/direcao/estrategia/despesas/2026-05`. Se o pagamento for desmarcado, o gasto é removido.
+### Banco
 
-## Mudança no banco
+Adicionar coluna `hora_extra numeric NOT NULL DEFAULT 0` em:
+- `public.despesas_padrao`
+- `public.despesas_mes_folha_override`
 
-Adicionar coluna nullable `acordo_autorizado_id uuid` em `public.gastos`, com FK para `acordos_instalacao_autorizados(id) ON DELETE CASCADE` e índice. Permite vincular cada gasto ao acordo de origem e localizar/remover o registro ao desmarcar o pagamento.
+### Cálculo
 
-## Mudança no código
+Atualizar `calcTotalFolha` em `src/pages/direcao/estrategia/EstrategiaDespesasConfiguracoes.tsx` para usar **base = salário + hora extra** nos encargos:
 
-Em `handleMarcarPago` de:
-- `src/pages/direcao/AcordosMesAutorizados.tsx`
-- `src/pages/direcao/AutorizadosPrecosDirecao.tsx`
+- `FGTS = base × FGTS%`
+- `Previsão 13° = base ÷ 12`
+- `FGTS 13° = FGTS ÷ 12`
+- `Férias + 1/3 = base ÷ 3 ÷ 12`
+- `Multa FGTS = FGTS × 40%`
+- `Insalubridade` continua sobre o salário mínimo (sem mudança)
+- `Total = base + aux_combustivel + insalub + FGTS + prev13 + fgts13 + férias + multa`
 
-Após o `update` em `acordos_instalacao_autorizados`:
+Aplicar a mesma fórmula em `FolhaRowCells`, `FolhaSetorGroup` (subtotal), `FolhaBlock` (total da folha) e no preview do dialog "Novo colaborador".
 
-- **Ao marcar como pago** → `insert` em `gastos`:
-  - `tipo_custo_id`: id fixo de "Pagamento - Autorizados"
-  - `valor`: `acordo.valor_acordado`
-  - `data`: data do pagamento (hoje, em formato `YYYY-MM-DD`) — define o mês em que aparece em `/despesas/<ano-mes>`
-  - `descricao`: `Acordo autorizado — <cliente_nome> (<autorizado_nome>)`
-  - `status`: `pago`
-  - `responsavel_id`: `user.id` (quem clicou)
-  - `banco_id`: banco padrão (ver pergunta abaixo)
-  - `acordo_autorizado_id`: id do acordo
-- **Ao desmarcar pago** → `delete from gastos where acordo_autorizado_id = <id>`.
+### UI
 
-Tratamento simples de erro com toast; a operação do gasto é encadeada após o update e qualquer falha exibe mensagem, sem reverter o update do acordo (consistente com o padrão atual).
+Em `EstrategiaDespesasConfiguracoes.tsx`:
 
-## Pergunta
+- Nova coluna **Hora Extra** entre "Combustível" e "Insalub %" no `FolhaTableHeader`, `FolhaColGroup` e `FolhaRowCells` (editável via `InlineNum format="currency"`).
+- Campo "Hora extra" no diálogo "Novo colaborador" (grid junto de Aux. combustível).
+- Estado `horaExtra` no `FolhaBlock` e reset incluindo o campo.
 
-`gastos.banco_id` é obrigatório. Como o acordo de autorizado não registra qual banco foi usado no pagamento, preciso de um padrão. Quer que eu:
+### Hook / tipos
 
-1. use sempre um banco específico (qual?); ou
-2. acrescente um seletor de banco no momento de marcar como pago (abre um pequeno diálogo)?
+- `src/hooks/useDespesasPadrao.ts`: incluir `hora_extra` no tipo `DespesaPadrao` e no payload de `insert`/`update`.
+- `src/hooks/useDespesasPadraoMes.ts`: incluir `hora_extra` no override mensal e no merge com o padrão.
+
+### PDF
+
+`src/utils/folhaSalarialPDFGenerator.ts`: adicionar coluna Hora Extra e usar a mesma base nas demais colunas calculadas.
+
+## 2. Banco no gasto automático de acordos pagos (ajuste do fluxo anterior)
+
+Hoje o gasto criado ao marcar um acordo como pago usa o primeiro banco cadastrado. Substituir por um **diálogo de confirmação** que pede o banco antes de criar o gasto.
+
+- Novo componente `ConfirmarPagamentoAcordoDialog` com `Select` de bancos (lista `bancos` ordenada por nome).
+- Em `AcordosMesAutorizados.tsx` e `AutorizadosPrecosDirecao.tsx`: ao clicar em "Marcar como pago", abrir o diálogo; só depois da escolha do banco rodar `update` em `acordos_instalacao_autorizados` + `criarGastoAcordoAutorizado` passando `bancoId`. Desmarcar continua sem diálogo (apenas remove o gasto).
+- `src/lib/gastoAcordoAutorizado.ts`: receber `bancoId` por parâmetro (obrigatório); remover a busca automática do banco padrão.
+
+## Detalhes técnicos
+
+- Total mostrado em "Total estimado" do dialog usa `calcTotalFolha` já atualizado.
+- Linha desativada (`em_folha === false`) continua exibindo `R$ 0` para hora extra e demais encargos; total = salário (mantém comportamento atual).
+- Override mensal segue o padrão dos demais campos: se `hora_extra` estiver em override usa-o, senão herda do padrão.

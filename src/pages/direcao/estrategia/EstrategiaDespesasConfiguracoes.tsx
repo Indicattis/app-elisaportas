@@ -221,19 +221,21 @@ const setorSelectClassFrom = (list: SetorMeta[], v?: string | null) => {
   return `w-full h-8 ${m.color} border rounded-full px-3 text-xs font-medium outline-none focus:ring-2 focus:ring-blue-400/40 appearance-none cursor-pointer transition-colors`;
 };
 
-function calcFeriasDefault(salario: number, _fgts_pct: number) {
-  return salario / 3 / 12;
+function calcFeriasDefault(base: number, _fgts_pct: number) {
+  return base / 3 / 12;
 }
-function calcTotalFolha(f: { salario: number; salario_minimo?: number; aux_combustivel: number; insalubridade_pct: number; fgts_pct: number; previsao_13_valor: number; em_folha?: boolean; ferias_valor?: number | null }) {
-  if (f.em_folha === false) return f.salario;
+function calcTotalFolha(f: { salario: number; salario_minimo?: number; aux_combustivel: number; hora_extra?: number; insalubridade_pct: number; fgts_pct: number; previsao_13_valor: number; em_folha?: boolean; ferias_valor?: number | null }) {
+  const horaExtra = Number(f.hora_extra) || 0;
+  if (f.em_folha === false) return f.salario + horaExtra;
+  const base = f.salario + horaExtra; // base de cálculo dos encargos
   const baseInsalub = f.salario_minimo == null ? f.salario : f.salario_minimo;
   const insalub = baseInsalub * (f.insalubridade_pct || 0) / 100;
-  const fgts = f.salario * (f.fgts_pct || 0) / 100;
-  const ferias = f.ferias_valor == null ? calcFeriasDefault(f.salario, f.fgts_pct) : Number(f.ferias_valor) || 0;
-  const prev13 = f.salario / 12;
+  const fgts = base * (f.fgts_pct || 0) / 100;
+  const ferias = f.ferias_valor == null ? calcFeriasDefault(base, f.fgts_pct) : Number(f.ferias_valor) || 0;
+  const prev13 = base / 12;
   const fgts13 = fgts / 12;
   const multaFgts = fgts * 0.4;
-  return f.salario + f.aux_combustivel + insalub + fgts + prev13 + fgts13 + ferias + multaFgts;
+  return base + f.aux_combustivel + insalub + fgts + prev13 + fgts13 + ferias + multaFgts;
 }
 
 function FolhaBlock({
@@ -254,12 +256,13 @@ function FolhaBlock({
   const [salario, setSalario] = useState(0);
   const [salarioMin, setSalarioMin] = useState(1518);
   const [auxComb, setAuxComb] = useState(0);
+  const [horaExtra, setHoraExtra] = useState(0);
   const [insalub, setInsalub] = useState(0);
   const [fgts, setFgts] = useState(8);
   const [prev13, setPrev13] = useState(0);
   const [addOpen, setAddOpen] = useState(false);
 
-  const reset = () => { setNome(''); setEmFolha(true); setSetor(''); setSalario(0); setSalarioMin(1518); setAuxComb(0); setInsalub(0); setFgts(8); setPrev13(0); };
+  const reset = () => { setNome(''); setEmFolha(true); setSetor(''); setSalario(0); setSalarioMin(1518); setAuxComb(0); setHoraExtra(0); setInsalub(0); setFgts(8); setPrev13(0); };
   const [gerenciarSetoresOpen, setGerenciarSetoresOpen] = useState(false);
 
   const save = async () => {
@@ -272,6 +275,7 @@ function FolhaBlock({
       salario,
       salario_minimo: salarioMin,
       aux_combustivel: auxComb,
+      hora_extra: horaExtra,
       insalubridade_pct: insalub,
       fgts_pct: fgts,
       previsao_13_valor: prev13,
@@ -284,6 +288,7 @@ function FolhaBlock({
     salario: Number(i.salario) || 0,
     salario_minimo: Number(i.salario_minimo) || 0,
     aux_combustivel: Number(i.aux_combustivel) || 0,
+    hora_extra: Number(i.hora_extra) || 0,
     insalubridade_pct: Number(i.insalubridade_pct) || 0,
     fgts_pct: Number(i.fgts_pct) || 0,
     previsao_13_valor: Number(i.previsao_13_valor) || 0,
@@ -432,19 +437,25 @@ function FolhaBlock({
                 <NumCell value={auxComb} onChange={setAuxComb} />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs text-white/70">Insalubridade %</Label>
-                <NumCell value={insalub} onChange={setInsalub} />
+                <Label className="text-xs text-white/70">Hora extra</Label>
+                <NumCell value={horaExtra} onChange={setHoraExtra} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
+                <Label className="text-xs text-white/70">Insalubridade %</Label>
+                <NumCell value={insalub} onChange={setInsalub} />
+              </div>
+              <div className="space-y-1.5">
                 <Label className="text-xs text-white/70">FGTS %</Label>
                 <NumCell value={fgts} onChange={setFgts} />
               </div>
+            </div>
+            <div className="grid grid-cols-1 gap-3">
               <div className="space-y-1.5">
                 <Label className="text-xs text-white/70">Total estimado</Label>
                 <div className="h-9 flex items-center justify-end px-3 bg-white/5 border border-white/10 rounded text-sm text-white/80">
-                  {formatCurrency(calcTotalFolha({ salario, salario_minimo: salarioMin, aux_combustivel: auxComb, insalubridade_pct: insalub, fgts_pct: fgts, previsao_13_valor: prev13, em_folha: emFolha }))}
+                  {formatCurrency(calcTotalFolha({ salario, salario_minimo: salarioMin, aux_combustivel: auxComb, hora_extra: horaExtra, insalubridade_pct: insalub, fgts_pct: fgts, previsao_13_valor: prev13, em_folha: emFolha }))}
                 </div>
               </div>
             </div>
@@ -488,12 +499,14 @@ function FolhaRowCells({
   const salario = Number(item.salario) || 0;
   const salario_minimo = Number(item.salario_minimo) || 0;
   const aux_combustivel = Number(item.aux_combustivel) || 0;
+  const hora_extra = Number(item.hora_extra) || 0;
   const insalubridade_pct = Number(item.insalubridade_pct) || 0;
   const fgts_pct = Number(item.fgts_pct) || 0;
+  const base = salario + hora_extra;
   const insalubVal = salario_minimo * insalubridade_pct / 100;
-  const fgtsVal = salario * fgts_pct / 100;
-  const feriasDefault = calcFeriasDefault(salario, fgts_pct);
-  const total = calcTotalFolha({ salario, salario_minimo, aux_combustivel, insalubridade_pct, fgts_pct, previsao_13_valor: 0, em_folha: item.em_folha, ferias_valor: null });
+  const fgtsVal = base * fgts_pct / 100;
+  const feriasDefault = calcFeriasDefault(base, fgts_pct);
+  const total = calcTotalFolha({ salario, salario_minimo, aux_combustivel, hora_extra, insalubridade_pct, fgts_pct, previsao_13_valor: 0, em_folha: item.em_folha, ferias_valor: null });
   const desativado = item.em_folha === false;
   const zeroCurr = <span className="text-white/30">{formatCurrency(0)}</span>;
   const zeroPct = <span className="text-white/30">0%</span>;
@@ -530,6 +543,9 @@ function FolhaRowCells({
         {desativado ? zeroCurr : <InlineNum value={item.aux_combustivel} onSave={(v) => update(item.id, { aux_combustivel: v })} format="currency" />}
       </td>
       <td className="px-2 text-right text-white/60">
+        {desativado ? zeroCurr : <InlineNum value={item.hora_extra} onSave={(v) => update(item.id, { hora_extra: v })} format="currency" />}
+      </td>
+      <td className="px-2 text-right text-white/60">
         {desativado ? zeroPct : <InlineNum value={item.insalubridade_pct} onSave={(v) => update(item.id, { insalubridade_pct: v })} format="percent" />}
       </td>
       <td className="px-2 text-right text-xs">{desativado ? zeroCurr : <span className="text-orange-400">{formatCurrency(insalubVal)}</span>}</td>
@@ -537,7 +553,7 @@ function FolhaRowCells({
         {desativado ? zeroPct : <InlineNum value={item.fgts_pct} onSave={(v) => update(item.id, { fgts_pct: v })} format="percent" />}
       </td>
       <td className="px-2 text-right text-xs">{desativado ? zeroCurr : <span className="text-orange-400">{formatCurrency(fgtsVal)}</span>}</td>
-      <td className="px-2 text-right text-xs">{desativado ? zeroCurr : <span className="text-orange-400">{formatCurrency(salario / 12)}</span>}</td>
+      <td className="px-2 text-right text-xs">{desativado ? zeroCurr : <span className="text-orange-400">{formatCurrency(base / 12)}</span>}</td>
       <td className="px-2 text-right text-xs">{desativado ? zeroCurr : <span className="text-orange-400">{formatCurrency(fgtsVal / 12)}</span>}</td>
       <td className="px-2 text-right text-xs">
         {desativado ? zeroCurr : <span className="text-orange-400">{formatCurrency(feriasDefault)}</span>}
@@ -579,6 +595,7 @@ function FolhaTableHeader() {
         <th className="text-right font-normal pb-2 px-2 text-emerald-400">Salário</th>
         <th className="text-right font-normal pb-2 px-2">Salário Mínimo</th>
         <th className="text-right font-normal pb-2 px-2">Combustível</th>
+        <th className="text-right font-normal pb-2 px-2 text-blue-300">Hora Extra</th>
         <th className="text-right font-normal pb-2 px-2">Insalub %</th>
         <th className="text-right font-normal pb-2 px-2">
           <div>Insalub valor</div>
@@ -587,11 +604,11 @@ function FolhaTableHeader() {
         <th className="text-right font-normal pb-2 px-2">FGTS %</th>
         <th className="text-right font-normal pb-2 px-2">
           <div>FGTS valor</div>
-          <div className="text-[9px] normal-case tracking-normal text-white/30">salário × FGTS%</div>
+          <div className="text-[9px] normal-case tracking-normal text-white/30">(salário + h.extra) × FGTS%</div>
         </th>
         <th className="text-right font-normal pb-2 px-2">
           <div>Previsão 13°</div>
-          <div className="text-[9px] normal-case tracking-normal text-white/30">salário ÷ 12</div>
+          <div className="text-[9px] normal-case tracking-normal text-white/30">(salário + h.extra) ÷ 12</div>
         </th>
         <th className="text-right font-normal pb-2 px-2">
           <div>FGTS 13°</div>
@@ -599,7 +616,7 @@ function FolhaTableHeader() {
         </th>
         <th className="text-right font-normal pb-2 px-2">
           <div>Férias + 1/3</div>
-          <div className="text-[9px] normal-case tracking-normal text-white/30">(salário ÷ 3) ÷ 12</div>
+          <div className="text-[9px] normal-case tracking-normal text-white/30">((salário + h.extra) ÷ 3) ÷ 12</div>
         </th>
         <th className="text-right font-normal pb-2 px-2">
           <div className="text-red-400">Multa FGTS</div>
@@ -619,6 +636,7 @@ function FolhaColGroup() {
       <col style={{ width: '220px' }} />
       <col style={{ width: '80px' }} />
       <col style={{ width: '140px' }} />
+      <col style={{ width: '110px' }} />
       <col style={{ width: '110px' }} />
       <col style={{ width: '110px' }} />
       <col style={{ width: '110px' }} />
@@ -654,6 +672,7 @@ function FolhaSetorGroup({
     salario: Number(i.salario) || 0,
     salario_minimo: Number(i.salario_minimo) || 0,
     aux_combustivel: Number(i.aux_combustivel) || 0,
+    hora_extra: Number(i.hora_extra) || 0,
     insalubridade_pct: Number(i.insalubridade_pct) || 0,
     fgts_pct: Number(i.fgts_pct) || 0,
     previsao_13_valor: Number(i.previsao_13_valor) || 0,
@@ -683,7 +702,7 @@ function FolhaSetorGroup({
         <span className="text-xs text-white/90 font-medium">{formatCurrency(subtotal)}</span>
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full text-sm table-fixed min-w-[1640px]">
+        <table className="w-full text-sm table-fixed min-w-[1750px]">
           <FolhaTableHeader />
           <DndContext
             sensors={sensors}

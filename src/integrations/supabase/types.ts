@@ -2346,6 +2346,7 @@ export type Database = {
           em_folha: boolean | null
           ferias_valor: number | null
           fgts_pct: number | null
+          hora_extra: number | null
           id: string
           insalubridade_pct: number | null
           mes_referencia: string
@@ -2362,6 +2363,7 @@ export type Database = {
           em_folha?: boolean | null
           ferias_valor?: number | null
           fgts_pct?: number | null
+          hora_extra?: number | null
           id?: string
           insalubridade_pct?: number | null
           mes_referencia: string
@@ -2378,6 +2380,7 @@ export type Database = {
           em_folha?: boolean | null
           ferias_valor?: number | null
           fgts_pct?: number | null
+          hora_extra?: number | null
           id?: string
           insalubridade_pct?: number | null
           mes_referencia?: string
@@ -2466,6 +2469,7 @@ export type Database = {
           em_folha: boolean
           ferias_valor: number | null
           fgts_pct: number
+          hora_extra: number
           id: string
           insalubridade_pct: number
           nome: string
@@ -2485,6 +2489,7 @@ export type Database = {
           em_folha?: boolean
           ferias_valor?: number | null
           fgts_pct?: number
+          hora_extra?: number
           id?: string
           insalubridade_pct?: number
           nome: string
@@ -2504,6 +2509,7 @@ export type Database = {
           em_folha?: boolean
           ferias_valor?: number | null
           fgts_pct?: number
+          hora_extra?: number
           id?: string
           insalubridade_pct?: number
           nome?: string
