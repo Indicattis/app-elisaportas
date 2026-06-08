@@ -224,9 +224,10 @@ const setorSelectClassFrom = (list: SetorMeta[], v?: string | null) => {
 function calcFeriasDefault(base: number, _fgts_pct: number) {
   return base / 3 / 12;
 }
-function calcTotalFolha(f: { salario: number; salario_minimo?: number; aux_combustivel: number; hora_extra?: number; insalubridade_pct: number; fgts_pct: number; previsao_13_valor: number; em_folha?: boolean; ferias_valor?: number | null }) {
+function calcTotalFolha(f: { salario: number; salario_minimo?: number; aux_combustivel: number; bonificacao?: number; hora_extra?: number; insalubridade_pct: number; fgts_pct: number; previsao_13_valor: number; em_folha?: boolean; ferias_valor?: number | null }) {
   const horaExtra = Number(f.hora_extra) || 0;
-  if (f.em_folha === false) return f.salario + horaExtra;
+  const bonif = Number(f.bonificacao) || 0;
+  if (f.em_folha === false) return f.salario + horaExtra + bonif;
   const base = f.salario + horaExtra; // base de cálculo dos encargos
   const baseInsalub = f.salario_minimo == null ? f.salario : f.salario_minimo;
   const insalub = baseInsalub * (f.insalubridade_pct || 0) / 100;
@@ -235,7 +236,7 @@ function calcTotalFolha(f: { salario: number; salario_minimo?: number; aux_combu
   const prev13 = base / 12;
   const fgts13 = fgts / 12;
   const multaFgts = fgts * 0.4;
-  return base + f.aux_combustivel + insalub + fgts + prev13 + fgts13 + ferias + multaFgts;
+  return base + f.aux_combustivel + bonif + insalub + fgts + prev13 + fgts13 + ferias + multaFgts;
 }
 
 function FolhaBlock({
