@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import { Search, Edit2, Trash2, MoreHorizontal, Check, X, CheckCircle2, XCircle, CalendarDays, DollarSign, Plus } from 'lucide-react';
+import { Search, Edit2, Trash2, MoreHorizontal, Check, X, CheckCircle2, XCircle, CalendarDays, DollarSign, Plus, History } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -15,6 +15,7 @@ import { NovoAcordoDialog } from '@/components/autorizados/NovoAcordoDialog';
 import { formatCurrency } from '@/lib/utils';
 import { criarGastoAcordoAutorizado, removerGastoAcordoAutorizado } from '@/lib/gastoAcordoAutorizado';
 import { ConfirmarPagamentoAcordoDialog } from '@/components/autorizados/ConfirmarPagamentoAcordoDialog';
+import { HistoricoAcordoDialog } from '@/components/autorizados/HistoricoAcordoDialog';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
@@ -209,6 +210,7 @@ export default function AcordosMesAutorizados() {
   }, [toast, refetch]);
 
   const [pagamentoDialog, setPagamentoDialog] = useState<{ acordoId: string; clienteNome: string; valor: number } | null>(null);
+  const [historicoDialog, setHistoricoDialog] = useState<{ acordoId: string; clienteNome: string } | null>(null);
 
   const desmarcarPago = useCallback(async (acordoId: string) => {
     try {
@@ -348,6 +350,7 @@ export default function AcordosMesAutorizados() {
                       <TableHead className="text-xs text-white/70 text-center">Status</TableHead>
                       <TableHead className="text-xs text-white/70 text-center">Pagamento</TableHead>
                       <TableHead className="text-xs text-white/70">Observações</TableHead>
+                      <TableHead className="text-xs text-white/70 text-center">Histórico</TableHead>
                       {(contexto === 'direcao' || contexto === 'home') && (
                         <TableHead className="text-xs text-white/70 text-center">Aprovação</TableHead>
                       )}
