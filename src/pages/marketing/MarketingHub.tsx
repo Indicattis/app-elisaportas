@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { TrendingUp, DollarSign, ArrowLeft, Image, Package, Target, Download, Clapperboard } from 'lucide-react';
+import { TrendingUp, DollarSign, ArrowLeft, Image, Package, Target, Download, Clapperboard, Scale } from 'lucide-react';
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { DelayedParticles } from '@/components/DelayedParticles';
 
@@ -11,6 +11,7 @@ const menuItems = [
   { label: "Mídias", icon: Image, path: "/marketing/midias" },
   { label: "Gestão do Catálogo", icon: Package, path: "/marketing/catalogo" },
   { label: "Conversões", icon: Target, path: "/marketing/conversoes-hub" },
+  { label: "Balanço de Descontos", icon: Scale, path: "/marketing/balanco-descontos" },
 ];
 
 export default function MarketingHub() {
