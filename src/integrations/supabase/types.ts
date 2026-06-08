@@ -2615,6 +2615,36 @@ export type Database = {
         }
         Relationships: []
       }
+      despesas_secao_teto: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          mes_referencia: string | null
+          secao_key: string
+          updated_at: string
+          valor_teto: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          mes_referencia?: string | null
+          secao_key: string
+          updated_at?: string
+          valor_teto?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          mes_referencia?: string | null
+          secao_key?: string
+          updated_at?: string
+          valor_teto?: number
+        }
+        Relationships: []
+      }
       despesas_status_historico: {
         Row: {
           changed_by: string | null
