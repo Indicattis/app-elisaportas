@@ -129,15 +129,19 @@ export default function BalancoDescontos() {
                     ) : (
                       rows.map((r) => {
                         const pctDado = Number(r.pct_desconto_dado);
-                        const pctLimite = Number(r.pct_limite_permitido);
                         const total = Number(r.total_venda);
+                        const aptoAvista = r.vendas?.forma_pagamento === "a_vista";
+                        const aptoFrio = !!r.vendas?.venda_presencial;
+                        const aptoGerente = !!r.tem_autorizacao_gerente;
+                        const pctLimite = Math.max(
+                          aptoAvista ? 3 : 0,
+                          aptoFrio ? 5 : 0,
+                          aptoGerente ? 8 : 0,
+                        );
                         const check = (limite: number) =>
                           pctDado <= limite ? "text-emerald-400" : "text-red-400";
                         const excedidoPct = Math.max(0, pctDado - pctLimite);
                         const excedidoValor = (excedidoPct / 100) * total;
-                        const aptoAvista = r.vendas?.forma_pagamento === "a_vista";
-                        const aptoFrio = !!r.vendas?.venda_presencial;
-                        const aptoGerente = !!r.tem_autorizacao_gerente;
                         const semDesc = pctDado !== 100 ? total / (1 - pctDado / 100) : total;
                         return (
                         <TableRow key={r.id} className="border-white/10 hover:bg-white/5">
@@ -162,7 +166,7 @@ export default function BalancoDescontos() {
                             {aptoGerente ? formatMoeda(0.08 * total) : "-"}
                           </TableCell>
                           <TableCell className="text-white/50 text-right">
-                            {pctLimite.toFixed(2)}%
+                            {pctLimite > 0 ? `${pctLimite.toFixed(2)}%` : "-"}
                           </TableCell>
                           <TableCell className={`text-right font-medium ${excedidoPct > 0 ? "text-red-400" : "text-white/40"}`}>
                             {excedidoPct > 0 ? `${excedidoPct.toFixed(2)}% (${formatMoeda(excedidoValor)})` : "-"}
