@@ -232,7 +232,8 @@ function calcTotalFolha(f: { salario: number; salario_minimo?: number; aux_combu
   const ferias = f.ferias_valor == null ? calcFeriasDefault(f.salario, f.fgts_pct) : Number(f.ferias_valor) || 0;
   const prev13 = f.salario / 12;
   const fgts13 = fgts / 12;
-  return f.salario + f.aux_combustivel + insalub + fgts + prev13 + fgts13 + ferias;
+  const multaFgts = fgts * 0.4;
+  return f.salario + f.aux_combustivel + insalub + fgts + prev13 + fgts13 + ferias + multaFgts;
 }
 
 function FolhaBlock({
