@@ -1,52 +1,34 @@
-## Objetivo
+## Diagnóstico
 
-Fazer o DRE de `/direcao/estrategia/dre/:mes` consumir exatamente as mesmas fontes e fórmulas usadas em `/direcao/estrategia/despesas/:mes`, garantindo que os totais de Folha, Despesas Fixas, Variáveis e Impostos batam linha a linha entre as duas telas.
+A coluna `vendas.venda_presencial` é gravada como `true` quando a venda é **Quente** e `false` quando é **Fria** (confirmado pelo `RadioGroup` em `PagamentoSection.tsx` linhas 230-266 e pela regra de desconto em `descontoVendasRules.ts`, onde o adicional de desconto é liberado para venda **fria**).
 
-## Diagnóstico (DREMesDirecao.tsx vs EstrategiaDespesasConfiguracoes.tsx)
+A venda da **ZANELLA TRANSPORTES** tem `venda_presencial = true` no banco (ou seja, Quente). Porém:
 
-Hoje o DRE diverge em 5 pontos:
+1. O sheet de detalhes mostra o rótulo invertido como "Fria" — daí o usuário acreditar que a venda estava fria.
+2. A faixa de desconto rotulada "Quente" na verdade representa o adicional liberado para venda **Fria** (variável interna `pctGelo`, calculada quando `isFrio === true`).
+3. O cálculo em si está correto: como Zanella é Quente, o tier "frio" fica 0% e o excedente vai todo para a faixa do responsável ("Luan/Alana").
 
-1. **Fórmula da folha desatualizada** — usa `salario + aux + insalub + fgts + prev13 + fgts13 + ferias`. Não considera `hora_extra`, `bonificacao`, `multa_fgts (40%)`, `salario_minimo` como base da insalubridade, nem o override de `ferias_valor`.
-2. **Fonte da folha errada** — lê `despesas_manuais_folha` (tabela legada), enquanto a tela de Despesas usa `despesas_padrao` + `despesas_mes_folha_override`.
-3. **Impostos zerados** — `despesasImpostos` é sempre `[]`. A tabela `tipos_custos` já tem `tipo='imposto'`, mas o DRE não consulta.
-4. **Projetado mensal ignora overrides** — coluna "Projetado" usa `tipos_custos.valor_maximo_mensal` sem aplicar `despesas_mes_tipo_custo_override`.
-5. **Linhas sem gasto somem** — DRE só lista tipos que tiveram lançamento em `gastos`; a tela de Despesas mostra todos os tipos ativos (com valor real 0 quando não há gasto).
+Conclusão: o cálculo está certo; o problema é puramente de rótulos na UI.
 
-## Alterações
+## Mudanças
 
-### 1. `src/pages/direcao/DREMesDirecao.tsx`
+### 1. `src/components/pedidos/VendaPendenteDetalhesSheet.tsx`
+- **Linha 334** — badge no topo: trocar `venda_presencial ? "❄️ Fria" : "🔥 Quente"` por `venda_presencial ? "🔥 Quente" : "❄️ Fria"` (e ajustar as classes de cor correspondentes para casar com o booleano correto: laranja quando Quente, azul quando Frio).
+- **Linhas 690-711** — card "Temperatura": inverter o ícone (Flame para `presencial=true`, Snowflake para `presencial=false`), a cor (laranja/azul) e o texto (`'Quente' : 'Fria'`).
+- **Linha 733** — card da faixa "gelo" em Descontos por Faixa: renomear o título de **"Quente"** para **"Frio"** (essa faixa só é preenchida quando `isFrio`).
+- **Linha 742** — card da faixa "responsavel": renomear **"Luan/Alana"** para **"Diretor"**.
+- **Linha 100** — atualizar o comentário `// Calculate discount tiers (Cartão / Gelo / Luan-Alana)` para `(Cartão / Frio / Diretor)`.
 
-- Substituir a função local `calcTotalFolha` por uma versão idêntica à de `EstrategiaDespesasConfiguracoes.tsx`:
-  - `base = salario + hora_extra`
-  - `insalub = (salario_minimo ?? salario) * insalubridade_pct / 100`
-  - `fgts = base * fgts_pct / 100`
-  - `ferias = ferias_valor ?? base / 3 / 12`
-  - `prev13 = base / 12`, `fgts13 = fgts / 12`, `multaFgts = fgts * 0.4`
-  - `total = base + aux_combustivel + bonificacao + insalub + fgts + prev13 + fgts13 + ferias + multaFgts`
-  - Se `em_folha === false`: retorna `salario + hora_extra + bonificacao`.
-- Trocar a fonte da folha: remover `despesas_manuais_folha`; ler `despesas_padrao` (tipo='folha') + `despesas_mes_folha_override` (por `mes_referencia`) e aplicar override campo-a-campo (mesma lógica de `useDespesasPadraoMes`).
-- Em `fetchDespesasFromGastos`:
-  - Buscar `tipos_custos` com `aparece_no_dre = true AND ativo = true`, incluindo `tipo` ∈ {`fixa`, `variavel`, `imposto`}.
-  - Buscar `despesas_mes_tipo_custo_override` do mês para sobrescrever `valor_maximo_mensal` (projetado).
-  - Listar **todos** os tipos ativos (mesmo sem gastos no mês), com `valor_real = 0` quando não houver lançamento.
-  - Popular `despesasImpostos` a partir de `tipo='imposto'`.
-- Atualizar `tiposCustosFixos` / `tiposCustosVariaveis` para refletir os valores projetados após override (usados nas colunas "Projetado" do componente `DespesaSectionReadOnly` e do `PrintReport`).
-- Adicionar `tiposCustosImpostos` e passar ao `PrintReport` para que a seção "Despesas de Imposto" exiba projetado + ano (hoje vai sem projetado).
-- O cálculo de `lucroLiquidoFinal` já subtrai `totalDespImpostos`, então passa a refletir corretamente os impostos.
+### 2. `src/pages/direcao/VendaEditarDirecao.tsx`
+- **Linha 327** — está mostrando o texto "Fria" dentro de `{venda.venda_presencial && (...)}`. Corrigir para refletir o significado real: quando `venda_presencial=true` exibir "Quente"; manter a renderização condicional ou exibir os dois estados (`presencial ? 'Quente' : 'Fria'`).
 
-### 2. Verificação de concordância
+### 3. Verificação sem alteração
+- `src/components/pedidos/PedidoDetalhesSheet.tsx:535` — já está correto (`presencial ? "🔥 Quente" : "❄️ Frio"`); apenas confirmar.
+- Lógica de cálculo (`isFrio = venda_presencial === false`) permanece inalterada — está correta e alinhada com `descontoVendasRules.ts`.
 
-Após implementação, abrir `/direcao/estrategia/despesas/2026-06` e `/direcao/estrategia/dre/2026-06` e conferir:
+## Resultado esperado
 
-- Total da Folha (DRE seção 3) == subtotal da tabela Folha em Despesas (somando todos os setores).
-- Total Despesas Fixas (DRE seção 4) == subtotal dos tipos `fixa` em Despesas (coluna Total Gastos do mês).
-- Total Despesas Variáveis (DRE seção 5) == subtotal dos tipos `variavel`.
-- Total Impostos (DRE seção 6) == subtotal dos tipos `imposto`.
-
-Qualquer divergência só pode vir de tipos com `aparece_no_dre = false` (intencional). O plano não altera dados, apenas leitura.
-
-## Fora de escopo
-
-- Não alterar schema do banco; tabelas e colunas necessárias (`hora_extra`, `bonificacao`, `ferias_valor`, `salario_minimo`, overrides mensais) já existem.
-- Não tocar em DREDirecao.tsx (lista de meses) nem no PDF além de propagar os novos arrays — layout do PDF permanece igual.
-- Não alterar a aba "Faturamento" do DRE, apenas a integração de despesas.
+- Zanella passa a aparecer como **🔥 Quente** no sheet (como está no banco).
+- A faixa de desconto rotulada como **Frio** só exibe valor quando a venda é Fria.
+- A faixa do responsável passa a se chamar **Diretor**.
+- Nenhuma mudança no banco, no fluxo de aprovação ou nos limites de desconto.
