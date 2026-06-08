@@ -6526,6 +6526,36 @@ export type Database = {
         }
         Relationships: []
       }
+      passos_evolucao: {
+        Row: {
+          concluido: boolean
+          created_at: string
+          descricao: string | null
+          id: string
+          numero: number
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          concluido?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          numero: number
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          concluido?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          numero?: number
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       pedido_comentarios: {
         Row: {
           autor_id: string
