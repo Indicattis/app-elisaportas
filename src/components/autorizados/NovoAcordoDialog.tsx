@@ -97,6 +97,9 @@ export function NovoAcordoDialog({
     if (!clienteNome || !clienteCidade || !clienteEstado || !autorizadoId) {
       return;
     }
+    if (!acordoParaEditar && !pedidoVinculado?.id) {
+      return;
+    }
 
     setSaving(true);
     try {
@@ -114,7 +117,8 @@ export function NovoAcordoDialog({
           valor_unitario: autorizadoSelecionado?.precos[portaTamanho] || 0,
           largura: portaLargura ? parseFloat(portaLargura) : undefined,
           altura: portaAltura ? parseFloat(portaAltura) : undefined,
-        }]
+        }],
+        pedido_id: pedidoVinculado?.id || null,
       };
 
       await onSave(novoAcordo);
