@@ -1688,7 +1688,7 @@ function GastosDoTipoExpand({
               <td className="px-1 text-white/70 truncate" colSpan={1 + catCols}>{g.descricao || '—'}</td>
               <td />
               <td />
-              <td />
+              <td className="px-2 text-right text-white/80 tabular-nums whitespace-nowrap">{formatCurrency(Number(g.valor) || 0)}</td>
               <td className="pr-1 text-right">
                 <button
                   onClick={() => deleteGasto(g.id)}
