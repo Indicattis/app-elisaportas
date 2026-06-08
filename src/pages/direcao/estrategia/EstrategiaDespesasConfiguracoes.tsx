@@ -256,12 +256,13 @@ function FolhaBlock({
   const [salario, setSalario] = useState(0);
   const [salarioMin, setSalarioMin] = useState(1518);
   const [auxComb, setAuxComb] = useState(0);
+  const [horaExtra, setHoraExtra] = useState(0);
   const [insalub, setInsalub] = useState(0);
   const [fgts, setFgts] = useState(8);
   const [prev13, setPrev13] = useState(0);
   const [addOpen, setAddOpen] = useState(false);
 
-  const reset = () => { setNome(''); setEmFolha(true); setSetor(''); setSalario(0); setSalarioMin(1518); setAuxComb(0); setInsalub(0); setFgts(8); setPrev13(0); };
+  const reset = () => { setNome(''); setEmFolha(true); setSetor(''); setSalario(0); setSalarioMin(1518); setAuxComb(0); setHoraExtra(0); setInsalub(0); setFgts(8); setPrev13(0); };
   const [gerenciarSetoresOpen, setGerenciarSetoresOpen] = useState(false);
 
   const save = async () => {
@@ -274,6 +275,7 @@ function FolhaBlock({
       salario,
       salario_minimo: salarioMin,
       aux_combustivel: auxComb,
+      hora_extra: horaExtra,
       insalubridade_pct: insalub,
       fgts_pct: fgts,
       previsao_13_valor: prev13,
@@ -286,6 +288,7 @@ function FolhaBlock({
     salario: Number(i.salario) || 0,
     salario_minimo: Number(i.salario_minimo) || 0,
     aux_combustivel: Number(i.aux_combustivel) || 0,
+    hora_extra: Number(i.hora_extra) || 0,
     insalubridade_pct: Number(i.insalubridade_pct) || 0,
     fgts_pct: Number(i.fgts_pct) || 0,
     previsao_13_valor: Number(i.previsao_13_valor) || 0,
