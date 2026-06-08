@@ -30,7 +30,7 @@ const menuItems = [
   { label: "Logística", icon: Truck, path: "/logistica" },
   { label: "Financeiro", icon: DollarSign, path: "/financeiro" },
   { label: "Administrativo", icon: Building2, path: "/administrativo" },
-  { label: "8 Passos para R$5 Milhões", icon: Target, path: "/passos-evolucao" },
+  { label: "10 Passos para R$5 Milhões", icon: Target, path: "/passos-evolucao" },
   { label: "Regras", icon: BookOpen, path: "/regras" }
 ];
 
