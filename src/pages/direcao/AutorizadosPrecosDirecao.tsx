@@ -112,6 +112,7 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
 
   const backPath = contexto === 'logistica' ? '/logistica' : contexto === 'home' ? '/home' : '/direcao';
   const breadcrumbLabel = contexto === 'logistica' ? 'Logística' : contexto === 'home' ? 'Home' : 'Direção';
+  const routePrefix = contexto === 'home' ? '/autorizados' : `/${contexto}/autorizados`;
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
