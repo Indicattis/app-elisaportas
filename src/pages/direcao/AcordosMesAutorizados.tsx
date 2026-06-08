@@ -471,7 +471,7 @@ export default function AcordosMesAutorizados() {
         )}
       </div>
 
-      {contexto === 'logistica' && (
+      {(contexto === 'logistica' || contexto === 'home') && (
         <>
           <NovoAcordoDialog
             open={acordoDialogOpen}
