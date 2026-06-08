@@ -309,6 +309,7 @@ import AutorizadosLogistica from "./pages/logistica/AutorizadosLogistica";
 import AutorizadosHome from "./pages/AutorizadosHome";
 import AutorizadosPrecosDirecao from "./pages/direcao/AutorizadosPrecosDirecao";
 import EstadoAutorizadosDirecao from "./pages/direcao/EstadoAutorizadosDirecao";
+import AcordosMesAutorizados from "./pages/direcao/AcordosMesAutorizados";
 import NovoAutorizadoDirecao from "./pages/direcao/NovoAutorizadoDirecao";
 import EditarAutorizadoDirecao from "./pages/direcao/EditarAutorizadoDirecao";
 import InstalacoesHubDirecao from "./pages/direcao/InstalacoesHubDirecao";
@@ -514,6 +515,7 @@ const App = () => (
                 <Route path="/direcao/metas/vendas" element={<ProtectedRoute routeKey="direcao_hub"><MetasVendasDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/pedidos/:id" element={<ProtectedRoute routeKey="direcao_hub"><PedidoViewDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/autorizados" element={<ProtectedRoute routeKey="direcao_autorizados"><AutorizadosPrecosDirecao /></ProtectedRoute>} />
+                <Route path="/direcao/autorizados/acordos/:ano/:mes" element={<ProtectedRoute routeKey="direcao_autorizados"><AcordosMesAutorizados /></ProtectedRoute>} />
                 <Route path="/direcao/autorizados/estado/:estadoId" element={<ProtectedRoute routeKey="direcao_autorizados"><EstadoAutorizadosDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/autorizados/estado/:estadoId/novo" element={<ProtectedRoute routeKey="direcao_autorizados"><NovoAutorizadoDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/autorizados/novo" element={<ProtectedRoute routeKey="direcao_autorizados"><NovoAutorizadoDirecao /></ProtectedRoute>} />
@@ -592,6 +594,7 @@ const App = () => (
                 <Route path="/logistica/frete/transportadoras" element={<ProtectedRoute routeKey="logistica_hub"><FreteTransportadoras /></ProtectedRoute>} />
                 <Route path="/logistica/frete/valores" element={<ProtectedRoute routeKey="logistica_hub"><FreteValoresTransportadoras /></ProtectedRoute>} />
                 <Route path="/autorizados" element={<ProtectedRoute routeKey="logistica_autorizados"><AutorizadosHome /></ProtectedRoute>} />
+                <Route path="/autorizados/acordos/:ano/:mes" element={<ProtectedRoute routeKey="logistica_autorizados"><AcordosMesAutorizados /></ProtectedRoute>} />
                 <Route path="/autorizados/estado/:estadoId" element={<ProtectedRoute routeKey="logistica_autorizados"><EstadoAutorizadosDirecao /></ProtectedRoute>} />
                 <Route path="/autorizados/estado/:estadoId/novo" element={<ProtectedRoute routeKey="logistica_autorizados"><NovoAutorizadoDirecao /></ProtectedRoute>} />
                 <Route path="/autorizados/novo" element={<ProtectedRoute routeKey="logistica_autorizados"><NovoAutorizadoDirecao /></ProtectedRoute>} />

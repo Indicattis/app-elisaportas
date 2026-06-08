@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Edit2, Trash2, MoreHorizontal, Check, X, CheckCircle2, XCircle, ChevronLeft, ChevronRight, CalendarDays, DollarSign } from 'lucide-react';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { Search, Edit2, Trash2, MoreHorizontal, Check, X, CheckCircle2, XCircle, CalendarDays, DollarSign, Plus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -10,15 +10,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
-import { useEstadosCidades } from '@/hooks/useEstadosCidades';
-import { SortableEstadoCard } from '@/components/autorizados/EstadoCard';
-import { NovoEstadoDialog } from '@/components/autorizados/NovoEstadoDialog';
 import { useAcordosAutorizados, type AcordoAutorizado, type NovoAcordo } from '@/hooks/useAcordosAutorizados';
 import { NovoAcordoDialog } from '@/components/autorizados/NovoAcordoDialog';
 import { formatCurrency } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
@@ -32,12 +28,6 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { DndContext, closestCenter, type DragEndEvent, PointerSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
-import { SortableContext, rectSortingStrategy, arrayMove } from '@dnd-kit/sortable';
-
-interface Props {
-  contexto?: 'direcao' | 'logistica' | 'home';
-}
 
 const STATUS_OPTIONS = [
   { value: 'todos', label: 'Todos os Status' },
@@ -64,17 +54,30 @@ const PORTA_COLORS: Record<string, string> = {
   GG: 'bg-orange-500/20 text-orange-400 border-orange-500/40',
 };
 
-export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props) {
+const MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+
+export default function AcordosMesAutorizados() {
   const navigate = useNavigate();
+  const { ano, mes } = useParams<{ ano: string; mes: string }>();
+  const { pathname } = useLocation();
   const { user } = useAuth();
   const { toast } = useToast();
-  // Estados
-  const { estados, loading: loadingEstados, criarEstado, editarEstado, reordenarEstados } = useEstadosCidades();
-  const [novoEstadoOpen, setNovoEstadoOpen] = useState(false);
-  const [estadoParaEditar, setEstadoParaEditar] = useState<typeof estados[0] | null>(null);
 
-  // Acordos
-  const { acordos, loading: loadingAcordos, createAcordo, updateAcordo, deleteAcordo, refetch } = useAcordosAutorizados();
+  const contexto: 'direcao' | 'logistica' | 'home' = pathname.startsWith('/direcao')
+    ? 'direcao'
+    : pathname.startsWith('/logistica')
+      ? 'logistica'
+      : 'home';
+
+  const backPath = contexto === 'direcao' ? '/direcao/autorizados' : '/autorizados';
+  const breadcrumbLabel = contexto === 'direcao' ? 'Direção' : contexto === 'logistica' ? 'Logística' : 'Home';
+  const breadcrumbBack = contexto === 'direcao' ? '/direcao' : contexto === 'logistica' ? '/logistica' : '/home';
+
+  const anoNum = Number(ano) || new Date().getFullYear();
+  const mesNum = Number(mes);
+  const mesValido = !isNaN(mesNum) && mesNum >= 0 && mesNum <= 11;
+
+  const { acordos, loading, createAcordo, updateAcordo, deleteAcordo, refetch } = useAcordosAutorizados();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('todos');
   const [acordoDialogOpen, setAcordoDialogOpen] = useState(false);
@@ -83,10 +86,7 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
   const [precosMap, setPrecosMap] = useState<Map<string, { P: number; G: number; GG: number }>>(new Map());
   const [approvingId, setApprovingId] = useState<string | null>(null);
   const [rejectingId, setRejectingId] = useState<string | null>(null);
-  const [anoSelecionado, setAnoSelecionado] = useState(new Date().getFullYear());
-  const [mesSelecionado, setMesSelecionado] = useState<number | null>(null);
 
-  // Buscar preços padrões dos autorizados
   useEffect(() => {
     if (acordos.length === 0) return;
     const autorizadoIds = [...new Set(acordos.map(a => a.autorizado_id))];
@@ -105,48 +105,15 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
       });
   }, [acordos]);
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } })
-  );
-
-  const backPath = contexto === 'logistica' ? '/logistica' : contexto === 'home' ? '/home' : '/direcao';
-  const breadcrumbLabel = contexto === 'logistica' ? 'Logística' : contexto === 'home' ? 'Home' : 'Direção';
-  const routePrefix = contexto === 'home' ? '/autorizados' : `/${contexto}/autorizados`;
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (active.id !== over?.id) {
-      const oldIndex = estados.findIndex(e => e.id === active.id);
-      const newIndex = estados.findIndex(e => e.id === over?.id);
-      const newOrder = arrayMove(estados, oldIndex, newIndex);
-      reordenarEstados(newOrder);
-    }
-  };
-
-  const handleCloseEstadoDialog = (open: boolean) => {
-    setNovoEstadoOpen(open);
-    if (!open) setEstadoParaEditar(null);
-  };
-
-  // Acordos logic
-  const MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
-
-  const acordosPorMes = useMemo(() => {
-    const map: Record<number, AcordoAutorizado[]> = {};
-    for (let i = 0; i < 12; i++) map[i] = [];
-    acordos.forEach((acordo) => {
+  const acordosDoMes = useMemo(() => {
+    if (!mesValido) return [];
+    return acordos.filter((acordo) => {
       const data = new Date(acordo.data_acordo);
-      if (data.getFullYear() === anoSelecionado) {
-        map[data.getMonth()].push(acordo);
-      }
+      return data.getFullYear() === anoNum && data.getMonth() === mesNum;
     });
-    return map;
-  }, [acordos, anoSelecionado]);
+  }, [acordos, anoNum, mesNum, mesValido]);
 
-  const acordosDoMesFiltrados = useMemo(() => {
-    if (mesSelecionado === null) return [];
-    const acordosDoMes = acordosPorMes[mesSelecionado] || [];
+  const acordosFiltrados = useMemo(() => {
     return acordosDoMes.filter((acordo) => {
       const matchSearch =
         acordo.cliente_nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -155,7 +122,7 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
       const matchStatus = filterStatus === 'todos' || acordo.status === filterStatus;
       return matchSearch && matchStatus;
     });
-  }, [acordosPorMes, mesSelecionado, searchTerm, filterStatus]);
+  }, [acordosDoMes, searchTerm, filterStatus]);
 
   const handleNovoAcordo = () => {
     setAcordoParaEditar(null);
@@ -219,16 +186,14 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
     } finally {
       setApprovingId(null);
     }
-  }, [user?.id, toast]);
+  }, [user?.id, toast, refetch]);
 
   const handleReprovar = useCallback(async (acordoId: string) => {
     try {
       setRejectingId(acordoId);
       const { error } = await supabase
         .from('acordos_instalacao_autorizados')
-        .update({
-          reprovado_direcao: true,
-        } as any)
+        .update({ reprovado_direcao: true } as any)
         .eq('id', acordoId);
       if (error) throw error;
       toast({ title: 'Sucesso', description: 'Acordo reprovado' });
@@ -239,7 +204,7 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
     } finally {
       setRejectingId(null);
     }
-  }, [toast]);
+  }, [toast, refetch]);
 
   const handleMarcarPago = useCallback(async (acordoId: string, pagoAtual: boolean) => {
     try {
@@ -260,238 +225,100 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
     }
   }, [user?.id, toast, refetch]);
 
-  const headerActions = (
-    <>
-      <Button
-        size="sm"
-        onClick={() => navigate(`${routePrefix}/novo`)}
-        className="h-10 px-5 rounded-lg bg-gradient-to-r from-blue-500/20 to-blue-600/20 border border-blue-400/20 text-white shadow-lg shadow-blue-500/10 hover:from-blue-500/30 hover:to-blue-600/30 hover:scale-[1.02] transition-all duration-300 text-xs gap-1.5"
-      >
-        <Plus className="h-4 w-4" />
-        <span className="hidden sm:inline">Novo Autorizado</span>
-      </Button>
-      <Button
-        size="sm"
-        onClick={() => setNovoEstadoOpen(true)}
-        className="h-10 px-5 rounded-lg bg-gradient-to-r from-blue-500/20 to-blue-600/20 border border-blue-400/20 text-white shadow-lg shadow-blue-500/10 hover:from-blue-500/30 hover:to-blue-600/30 hover:scale-[1.02] transition-all duration-300 text-xs gap-1.5"
-      >
-        <Plus className="h-4 w-4" />
-        <span className="hidden sm:inline">Novo Estado</span>
-      </Button>
-      {contexto === 'logistica' && (
-        <Button
-          size="sm"
-          onClick={handleNovoAcordo}
-          className="h-10 px-5 rounded-lg bg-gradient-to-r from-blue-500 to-blue-700 border border-blue-400/30 text-white shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:scale-[1.02] transition-all duration-300 text-xs gap-1.5"
-        >
-          <Plus className="h-4 w-4" />
-          <span className="hidden sm:inline">Novo Acordo</span>
-        </Button>
-      )}
-    </>
-  );
+  const mesLabel = mesValido ? `${MESES[mesNum]} ${anoNum}` : 'Mês inválido';
+  const totalValor = acordosDoMes.reduce((sum, a) => sum + a.valor_acordado, 0);
+
+  const headerActions = contexto === 'logistica' ? (
+    <Button
+      size="sm"
+      onClick={handleNovoAcordo}
+      className="h-10 px-5 rounded-lg bg-gradient-to-r from-blue-500 to-blue-700 border border-blue-400/30 text-white shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:scale-[1.02] transition-all duration-300 text-xs gap-1.5"
+    >
+      <Plus className="h-4 w-4" />
+      <span className="hidden sm:inline">Novo Acordo</span>
+    </Button>
+  ) : null;
 
   return (
     <MinimalistLayout
-      title="Gestão de Autorizados"
-      subtitle={`${estados.length} estados cadastrados`}
+      title={mesLabel}
+      subtitle={`${acordosDoMes.length} acordo${acordosDoMes.length === 1 ? '' : 's'} · ${formatCurrency(totalValor)}`}
       backPath={backPath}
       breadcrumbItems={[
         { label: "Home", path: "/home" },
-        { label: breadcrumbLabel, path: backPath },
-        { label: "Autorizados" }
+        { label: breadcrumbLabel, path: breadcrumbBack },
+        { label: "Autorizados", path: backPath },
+        { label: mesLabel },
       ]}
       headerActions={headerActions}
     >
-      <div className="space-y-8">
-          {/* Seção Estados */}
-          {loadingEstados ? (
-            <div className="flex items-center justify-center py-20">
-              <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
-            </div>
-          ) : (
-            <div>
-              <div className="flex items-center gap-3 mb-3">
-                <h2 className="text-sm font-medium text-white/70">Estados Cadastrados</h2>
-                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-500/10 border border-blue-500/20">
-                  <span className="text-xs font-bold text-blue-400">{estados.length}</span>
-                  <span className="text-xs text-white/40">/</span>
-                  <span className="text-xs text-white/40">27</span>
-                </div>
-              </div>
-              {estados.length === 0 ? (
-                <div className="text-center py-8 bg-primary/5 rounded-lg border border-primary/10">
-                  <p className="text-white/60 mb-4">Nenhum estado cadastrado</p>
-                  <Button onClick={() => setNovoEstadoOpen(true)} variant="outline" className="bg-primary/10 border-primary/20">
-                    <Plus className="h-4 w-4 mr-1" />
-                    Cadastrar Estado
-                  </Button>
-                </div>
-              ) : (
-                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                  <SortableContext items={estados.map(e => e.id)} strategy={rectSortingStrategy}>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                      {estados.map(estado => (
-                        <SortableEstadoCard
-                          key={estado.id}
-                          estado={estado}
-                          onClick={() => navigate(`${routePrefix}/estado/${estado.id}`)}
-                          isSelected={false}
-                        />
-                      ))}
-                    </div>
-                  </SortableContext>
-                </DndContext>
-              )}
-            </div>
-          )}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 text-white/70 text-sm">
+          <CalendarDays className="h-4 w-4 text-blue-400" />
+          <span>Acordos firmados com autorizados em {mesLabel}.</span>
+        </div>
 
-          {/* Separador */}
-          <div className="border-t border-blue-500/10" />
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
+            <Input
+              placeholder="Buscar por cliente, autorizado ou cidade..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/40"
+            />
+          </div>
+          <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <SelectTrigger className="w-full sm:w-48 bg-white/5 border-white/10 text-white">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent className="bg-zinc-800 border-zinc-700">
+              {STATUS_OPTIONS.map(opt => (
+                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-              {/* Seção Acordos - Grid de Meses */}
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-sm font-medium text-white/70">Acordos com Autorizados</h2>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setAnoSelecionado(prev => prev - 1)}
-                      className="h-8 w-8 p-0 text-white/60 hover:text-white hover:bg-white/10"
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <span className="text-sm font-semibold text-white/90 min-w-[4rem] text-center">{anoSelecionado}</span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setAnoSelecionado(prev => prev + 1)}
-                      className="h-8 w-8 p-0 text-white/60 hover:text-white hover:bg-white/10"
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-
-                {loadingAcordos ? (
-                  <div className="flex items-center justify-center py-12">
-                    <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                    {MESES.map((mes, index) => {
-                      const acordosDoMes = acordosPorMes[index] || [];
-                      const total = acordosDoMes.length;
-                      const valorTotal = acordosDoMes.reduce((sum, a) => sum + a.valor_acordado, 0);
-                      const pendentes = acordosDoMes.filter(a => !a.aprovado_direcao && !a.reprovado_direcao).length;
-                      const mesAtual = new Date().getMonth() === index && new Date().getFullYear() === anoSelecionado;
-
-                      return (
-                        <Card
-                          key={index}
-                          onClick={() => navigate(`${routePrefix}/acordos/${anoSelecionado}/${index}`)}
-                          className={`cursor-pointer transition-all duration-200 hover:scale-[1.02] backdrop-blur-xl border ${
-                            mesAtual
-                              ? 'bg-blue-500/10 border-blue-400/30 shadow-lg shadow-blue-500/10'
-                              : total > 0
-                                ? 'bg-white/5 border-blue-500/10 hover:bg-white/10'
-                                : 'bg-white/[0.02] border-white/5 hover:bg-white/5'
-                          }`}
-                        >
-                          <CardContent className="p-3 space-y-2">
-                            <div className="flex items-center justify-between">
-                              <span className={`text-sm font-medium ${mesAtual ? 'text-blue-300' : 'text-white/80'}`}>
-                                {mes}
-                              </span>
-                              {pendentes > 0 && (
-                                <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 text-[10px] px-1.5 py-0">
-                                  {pendentes} pendente{pendentes > 1 ? 's' : ''}
-                                </Badge>
-                              )}
-                            </div>
-                            <div className="flex items-end justify-between">
-                              <span className="text-lg font-bold text-white/90">{total}</span>
-                              {valorTotal > 0 && (
-                                <span className="text-xs text-green-400/80">{formatCurrency(valorTotal)}</span>
-                              )}
-                            </div>
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-        {/* Dialog do mês selecionado */}
-        <Dialog open={mesSelecionado !== null} onOpenChange={(open) => { if (!open) setMesSelecionado(null); }}>
-          <DialogContent className="max-w-5xl max-h-[85vh] overflow-y-auto bg-black/95 border-white/10 backdrop-blur-xl">
-            <DialogHeader>
-              <DialogTitle className="text-white flex items-center gap-2">
-                <CalendarDays className="h-5 w-5 text-blue-400" />
-                {mesSelecionado !== null ? `${MESES[mesSelecionado]} ${anoSelecionado}` : ''}
-              </DialogTitle>
-            </DialogHeader>
-
-            {/* Filtros dentro do dialog */}
-            <div className="flex flex-col sm:flex-row gap-3 mt-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
-                <Input
-                  placeholder="Buscar por cliente, autorizado ou cidade..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/40"
-                />
-              </div>
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="w-full sm:w-48 bg-white/5 border-white/10 text-white">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent className="bg-zinc-800 border-zinc-700">
-                  {STATUS_OPTIONS.map(opt => (
-                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {acordosDoMesFiltrados.length === 0 ? (
-              <div className="text-center py-8 bg-white/5 rounded-lg border border-white/10">
-                <p className="text-white/60">Nenhum acordo encontrado neste mês</p>
-              </div>
-            ) : (
-              <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl">
-                <CardContent className="p-0">
-                  <div className="overflow-x-auto">
-                    <Table className="text-xs">
-                      <TableHeader>
-                        <TableRow className="border-blue-500/10 hover:bg-white/5">
-                          <TableHead className="text-xs text-white/70 text-center">Portas</TableHead>
-                          <TableHead className="text-xs text-white/70 text-center">Medidas</TableHead>
-                          <TableHead className="text-xs text-white/70">Autorizado</TableHead>
-                          <TableHead className="text-xs text-white/70">Cliente</TableHead>
-                          <TableHead className="text-xs text-white/70">Cidade</TableHead>
-                          <TableHead className="text-xs text-white/70 text-center">Data</TableHead>
-                          <TableHead className="text-xs text-white/70 text-right">Valor</TableHead>
-                          <TableHead className="text-xs text-white/70 text-right">Valor excesso</TableHead>
-                          <TableHead className="text-xs text-white/70 text-center">Status</TableHead>
-                          <TableHead className="text-xs text-white/70 text-center">Pagamento</TableHead>
-                          <TableHead className="text-xs text-white/70">Observações</TableHead>
-                          {contexto === 'direcao' && (
-                            <TableHead className="text-xs text-white/70 text-center">Aprovação</TableHead>
-                          )}
-                          {contexto === 'logistica' && (
-                            <TableHead className="text-right text-xs text-white/70">Ações</TableHead>
-                          )}
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        <TooltipProvider>
-                        {acordosDoMesFiltrados.map((acordo) => {
-                          const precos = precosMap.get(acordo.autorizado_id);
-                          return (
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
+          </div>
+        ) : acordosFiltrados.length === 0 ? (
+          <div className="text-center py-12 bg-white/5 rounded-lg border border-white/10">
+            <p className="text-white/60">Nenhum acordo encontrado neste mês</p>
+          </div>
+        ) : (
+          <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl">
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <Table className="text-xs">
+                  <TableHeader>
+                    <TableRow className="border-blue-500/10 hover:bg-white/5">
+                      <TableHead className="text-xs text-white/70 text-center">Portas</TableHead>
+                      <TableHead className="text-xs text-white/70 text-center">Medidas</TableHead>
+                      <TableHead className="text-xs text-white/70">Autorizado</TableHead>
+                      <TableHead className="text-xs text-white/70">Cliente</TableHead>
+                      <TableHead className="text-xs text-white/70">Cidade</TableHead>
+                      <TableHead className="text-xs text-white/70 text-center">Data</TableHead>
+                      <TableHead className="text-xs text-white/70 text-right">Valor</TableHead>
+                      <TableHead className="text-xs text-white/70 text-right">Valor excesso</TableHead>
+                      <TableHead className="text-xs text-white/70 text-center">Status</TableHead>
+                      <TableHead className="text-xs text-white/70 text-center">Pagamento</TableHead>
+                      <TableHead className="text-xs text-white/70">Observações</TableHead>
+                      {contexto === 'direcao' && (
+                        <TableHead className="text-xs text-white/70 text-center">Aprovação</TableHead>
+                      )}
+                      {contexto === 'logistica' && (
+                        <TableHead className="text-right text-xs text-white/70">Ações</TableHead>
+                      )}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    <TooltipProvider>
+                      {acordosFiltrados.map((acordo) => {
+                        const precos = precosMap.get(acordo.autorizado_id);
+                        return (
                           <Tooltip key={acordo.id}>
                             <TooltipTrigger asChild>
                               <TableRow className="border-blue-500/10 hover:bg-white/5 text-white/90 cursor-default">
@@ -505,15 +332,9 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
                                     p.largura && p.altura ? `${p.largura}m × ${p.altura}m` : '-'
                                   ).join(', ')}
                                 </TableCell>
-                                <TableCell className="text-white/70">
-                                  {acordo.autorizado_nome}
-                                </TableCell>
-                                <TableCell>
-                                  <span className="font-medium">{acordo.cliente_nome}</span>
-                                </TableCell>
-                                <TableCell className="text-white/70">
-                                  {acordo.cliente_cidade} - {acordo.cliente_estado}
-                                </TableCell>
+                                <TableCell className="text-white/70">{acordo.autorizado_nome}</TableCell>
+                                <TableCell><span className="font-medium">{acordo.cliente_nome}</span></TableCell>
+                                <TableCell className="text-white/70">{acordo.cliente_cidade} - {acordo.cliente_estado}</TableCell>
                                 <TableCell className="text-center text-white/60">
                                   {format(new Date(acordo.data_acordo), 'dd/MM/yy', { locale: ptBR })}
                                 </TableCell>
@@ -639,27 +460,16 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
                               </div>
                             </TooltipContent>
                           </Tooltip>
-                          );
-                        })}
-                        </TooltipProvider>
-                      </TableBody>
-                    </Table>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-           </DialogContent>
-        </Dialog>
+                        );
+                      })}
+                    </TooltipProvider>
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
-
-      <NovoEstadoDialog
-        open={novoEstadoOpen}
-        onOpenChange={handleCloseEstadoDialog}
-        onSave={criarEstado}
-        estadoParaEditar={estadoParaEditar}
-        onUpdate={editarEstado}
-        estadosCadastrados={estados.map(e => e.sigla)}
-      />
 
       {contexto === 'logistica' && (
         <>
