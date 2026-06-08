@@ -15,6 +15,7 @@ interface MinimalistLayoutProps {
   fullWidth?: boolean;
   showBackButton?: boolean;
   lightTheme?: boolean;
+  contentClassName?: string;
 }
 
 export function MinimalistLayout({ 
