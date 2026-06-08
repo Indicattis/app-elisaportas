@@ -134,14 +134,6 @@ export default function DREDirecao() {
         { label: 'Estratégia', path: '/direcao/estrategia' },
         { label: 'DRE' },
       ]}
-      headerActions={
-        <button
-          onClick={() => navigate('/direcao/estrategia/dre/despesas')}
-          className="px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white hover:bg-white/10 transition-all duration-200"
-        >
-          Gestão de Despesas
-        </button>
-      }
     >
       {loading ? (
         <div className="flex items-center justify-center py-20">
