@@ -28,7 +28,7 @@ interface Props {
   gasto?: Gasto | null;
   onSaved?: () => void;
   /** When provided, pre-filters tipos by category (UX hint when opening from a section). */
-  defaultCategoria?: 'fixa' | 'variavel' | 'imposto';
+  defaultCategoria?: 'fixa' | 'variavel' | 'imposto' | 'projetada';
   /** When provided and creating, pre-selects the tipo de custo. */
   defaultTipoCustoId?: string;
 }
