@@ -1459,9 +1459,11 @@ function SortableTipoRow({
         </span>
       </td>
       <td className={`px-2 text-right font-medium ${i.marcada_para_eliminar ? 'text-red-400 line-through' : 'text-white'}`}>
-        {readOnly
-          ? <span className="px-1 py-0.5">{formatCurrency(Number(i.valor_maximo_mensal) || 0)}</span>
-          : <InlineNum value={i.valor_maximo_mensal} onSave={(v) => update(i.id, { valor_maximo_mensal: v })} format="currency" />}
+        {i.tipo === 'variavel'
+          ? <span className="px-1 py-0.5 text-white/40">—</span>
+          : readOnly
+            ? <span className="px-1 py-0.5">{formatCurrency(Number(i.valor_maximo_mensal) || 0)}</span>
+            : <InlineNum value={i.valor_maximo_mensal} onSave={(v) => update(i.id, { valor_maximo_mensal: v })} format="currency" />}
       </td>
       <td className="pr-1 text-right">
         {readOnly ? (
