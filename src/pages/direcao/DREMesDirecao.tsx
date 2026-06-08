@@ -18,6 +18,7 @@ interface FaturamentoProduto {
   pintura: number;
   instalacoes: number;
   avulsos: number;
+  fretes: number;
   total: number;
 }
 
@@ -483,9 +484,12 @@ function PrintReport({
               { key: 'pintura', label: 'Pintura' },
               { key: 'instalacoes', label: 'Instalações' },
               { key: 'avulsos', label: 'Itens Avulsos' },
+              { key: 'fretes', label: 'Fretes' },
             ].map((c, i) => {
               const f = faturamento[c.key as keyof FaturamentoProduto];
-              const l = lucro[c.key as keyof FaturamentoProduto];
+              const l = c.key === 'fretes'
+                ? (faturamento.fretes - totalDespFretes)
+                : lucro[c.key as keyof FaturamentoProduto];
               const m = f > 0 ? (l / f) * 100 : 0;
               return (
                 <tr key={c.key} style={trZebra(i)}>
@@ -944,8 +948,8 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
   const showDespesas = viewMode === 'full' || viewMode === 'despesas';
   const showResumoFinal = viewMode === 'full' || viewMode === 'resultados';
   const [loading, setLoading] = useState(true);
-  const [faturamento, setFaturamento] = useState<FaturamentoProduto>({ portas: 0, pintura: 0, instalacoes: 0, avulsos: 0, total: 0 });
-  const [lucro, setLucro] = useState<FaturamentoProduto>({ portas: 0, pintura: 0, instalacoes: 0, avulsos: 0, total: 0 });
+  const [faturamento, setFaturamento] = useState<FaturamentoProduto>({ portas: 0, pintura: 0, instalacoes: 0, avulsos: 0, fretes: 0, total: 0 });
+  const [lucro, setLucro] = useState<FaturamentoProduto>({ portas: 0, pintura: 0, instalacoes: 0, avulsos: 0, fretes: 0, total: 0 });
   const [despesasFixas, setDespesasFixas] = useState<DespesaAgrupada[]>([]);
   const [despesasFolha, setDespesasFolha] = useState<DespesaAgrupada[]>([]);
   const [despesasVariaveis, setDespesasVariaveis] = useState<DespesaAgrupada[]>([]);
@@ -1204,8 +1208,8 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
 
         if (prodError) throw prodError;
 
-        const fat: FaturamentoProduto = { portas: 0, pintura: 0, instalacoes: 0, avulsos: 0, total: 0 };
-        const luc: FaturamentoProduto = { portas: 0, pintura: 0, instalacoes: 0, avulsos: 0, total: 0 };
+        const fat: FaturamentoProduto = { portas: 0, pintura: 0, instalacoes: 0, avulsos: 0, fretes: 0, total: 0 };
+        const luc: FaturamentoProduto = { portas: 0, pintura: 0, instalacoes: 0, avulsos: 0, fretes: 0, total: 0 };
 
         produtos?.forEach((p: any) => {
           const tipo = p.tipo_produto;
@@ -1256,11 +1260,13 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
 
         const { data: vendas } = await supabase
           .from('vendas')
-          .select('valor_credito, lucro_instalacao, valor_instalacao')
+          .select('valor_credito, lucro_instalacao, valor_instalacao, valor_frete')
           .gte('data_venda', start + ' 00:00:00')
           .lte('data_venda', end + ' 23:59:59');
 
         const totalCredito = vendas?.reduce((sum, v) => sum + ((v as any).valor_credito || 0), 0) || 0;
+        const totalFretesVendas = vendas?.reduce((sum, v) => sum + ((v as any).valor_frete || 0), 0) || 0;
+        fat.fretes = totalFretesVendas;
 
         fat.total = fat.portas + fat.pintura + fat.instalacoes + fat.avulsos + totalCredito;
         luc.total = luc.portas + luc.pintura + luc.instalacoes + luc.avulsos;
@@ -1554,6 +1560,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
     { key: 'pintura', label: 'Pintura' },
     { key: 'instalacoes', label: 'Instalações' },
     { key: 'avulsos', label: 'Itens Avulsos' },
+    { key: 'fretes', label: 'Fretes' },
     { key: 'total', label: 'Total' },
   ] as const;
 
@@ -1668,12 +1675,15 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
                 <tr>
                   <td className="p-3 text-white/60 font-medium text-xs uppercase">Lucro</td>
                   {columns.map(col => {
-                    const val = lucro[col.key];
+                    const val = col.key === 'fretes'
+                      ? (faturamento.fretes - totalDespFretes)
+                      : lucro[col.key];
                     const isInstalacoes = col.key === 'instalacoes';
+                    const isFretes = col.key === 'fretes';
                     return (
                       <td
                         key={col.key}
-                        className={`text-right p-3 font-semibold ${isInstalacoes ? 'text-yellow-400' : val >= 0 ? 'text-emerald-400' : 'text-red-400'} ${col.key === 'total' ? 'bg-white/5' : ''}`}
+                        className={`text-right p-3 font-semibold ${isFretes ? (val >= 0 ? 'text-blue-400' : 'text-red-400') : isInstalacoes ? 'text-yellow-400' : val >= 0 ? 'text-emerald-400' : 'text-red-400'} ${col.key === 'total' ? 'bg-white/5' : ''}`}
                       >
                         {formatCurrency(val)}
                       </td>
@@ -1683,13 +1693,17 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
                 <tr className="border-t border-white/5">
                   <td className="p-3 text-white/60 font-medium text-xs uppercase">Margem %</td>
                   {columns.map(col => {
+                    const lucroCol = col.key === 'fretes'
+                      ? (faturamento.fretes - totalDespFretes)
+                      : lucro[col.key];
                     const perc = faturamento[col.key] > 0
-                      ? (lucro[col.key] / faturamento[col.key]) * 100
+                      ? (lucroCol / faturamento[col.key]) * 100
                       : 0;
                     const isInstalacoes = col.key === 'instalacoes';
+                    const isFretes = col.key === 'fretes';
                     return (
                       <td key={col.key} className={`text-right p-3 ${col.key === 'total' ? 'bg-white/5' : ''}`}>
-                        <span className={`inline-block rounded-full bg-white/10 px-2 py-0.5 text-xs font-semibold ${isInstalacoes ? 'text-yellow-400' : perc >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                        <span className={`inline-block rounded-full bg-white/10 px-2 py-0.5 text-xs font-semibold ${isFretes ? (perc >= 0 ? 'text-blue-400' : 'text-red-400') : isInstalacoes ? 'text-yellow-400' : perc >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                           {perc.toFixed(1)}%
                         </span>
                       </td>

@@ -1,68 +1,44 @@
 ## Objetivo
 
-Reformular `/vendas/visitas-tecnicas` em um calendário mensal para agendar novas visitas técnicas (com título, endereço completo via CEP, data, hora, responsável, telefone e observações) e mover o conteúdo atual (fichas de visita de pedidos existentes) para uma nova rota `/vendas/visitas-tecnicas/realizadas`.
+Adicionar uma nova coluna **Fretes** na tabela "Faturamento por Categoria" em `/direcao/estrategia/dre/:mes`, posicionada antes da coluna **Total**, alimentada pela soma de `valor_frete` de todas as vendas do mês.
 
-## 1. Banco de dados
+## Comportamento da coluna
 
-Criar nova tabela `public.visitas_tecnicas_agendadas` (separada da `visitas_tecnicas` existente, que é vinculada a leads e tem outra finalidade):
+| Linha       | Cálculo                                                                                     |
+| ----------- | ------------------------------------------------------------------------------------------- |
+| Faturamento | Soma de `vendas.valor_frete` de todas as vendas com `data_venda` dentro do mês              |
+| Lucro       | `Total de fretes nas vendas − total de despesas da categoria "Fretes e Logística"` (`totalDespFretes`) |
+| Margem %    | `lucro / faturamento * 100` (mesma fórmula das outras colunas)                              |
 
-- `titulo` text
-- `data_visita` date
-- `hora_inicio` time
-- `responsavel_id` uuid (ref. `admin_users`)
-- `telefone_contato` text
-- `cep` text
-- `endereco`, `numero`, `complemento`, `bairro`, `cidade`, `estado` text
-- `observacoes` text
-- `status` text default `'agendada'` (`agendada` | `realizada` | `cancelada`)
-- `created_by` uuid, `created_at`, `updated_at`
+A coluna **Total** continua somando apenas Portas + Pintura + Instalações + Avulsos (não inclui Fretes), pois o frete já é tratado separadamente no DRE e descontado do `valor_venda` no cálculo das demais categorias — assim evita-se contagem dupla. (Caso o usuário prefira incluí-lo no Total, ajustamos.)
 
-Padrões já estabelecidos no projeto:
-- Datas gravadas com sufixo `T12:00:00.000Z` (regra global).
-- RLS + GRANTs para `authenticated` e `service_role`.
-- Trigger de `updated_at`.
-- Política: usuários autenticados podem ver/criar/editar/excluir (acesso já filtrado por `routeKey` na rota).
+## Arquivos
 
-## 2. Rotas (`src/App.tsx`)
+- `src/pages/direcao/DREMesDirecao.tsx`
 
-- Manter `routeKey="vendas_visitas_tecnicas"` na rota `/vendas/visitas-tecnicas` → novo componente `VisitasTecnicasCalendario`.
-- Adicionar `/vendas/visitas-tecnicas/realizadas` reaproveitando o mesmo `routeKey` → componente atual renomeado para `VisitasTecnicasRealizadas`.
+## Mudanças técnicas
 
-## 3. Página nova: calendário (`VisitasTecnicasCalendario.tsx`)
+1. **Estado novo:** `totalFretesVendas: number` no componente principal, populado durante o `useEffect` que carrega as vendas do mês (mesmo bloco que hoje já lê `valor_frete` para subtraí-lo de `valor_venda`). Adicionar acumulador ao iterar vendas para somar `v.valor_frete`.
 
-Layout no padrão glassmorphism (bg-white/5, backdrop-blur-xl, blue/white) já usado no projeto:
+2. **Interface `FaturamentoProduto`:** acrescentar campo opcional `fretes?: number`. Preencher `fat.fretes = totalFretesVendas` e `luc.fretes = totalFretesVendas − totalDespFretes`.
 
-- Header com breadcrumb, botão voltar para `/vendas`, título "Visitas Técnicas".
-- Botão secundário "Visitas realizadas" → navega para `/vendas/visitas-tecnicas/realizadas`.
-- Botão primário "Agendar visita" → abre dialog.
-- Grid mensal (seg–dom) com navegação `< mês >`, hoje destacado, cada célula mostra até 3 visitas com horário + título; clique na visita abre dialog de detalhes/edição; clique em dia vazio pré-preenche a data no dialog de criação.
-- Dialog de criação/edição:
-  - Título
-  - Data (date picker) + Hora (input time)
-  - Responsável (Select de `admin_users` ativos)
-  - Telefone de contato (máscara BR)
-  - CEP com auto-lookup (ViaCEP, `https://viacep.com.br/ws/<cep>/json/`) preenchendo endereço, bairro, cidade, estado; campos número e complemento manuais
-  - Observações (textarea)
-  - Botões: Cancelar, Salvar; em edição também Excluir e Marcar como realizada/cancelada
-- Query via React Query (`['visitas-agendadas', mes]`) filtrando pelo mês visível.
+3. **`columns`:** inserir `{ key: 'fretes', label: 'Fretes' }` entre `'avulsos'` e `'total'`.
 
-## 4. Página realocada: `VisitasTecnicasRealizadas.tsx`
+4. **Renderização das três linhas** (Faturamento / Lucro / Margem %) já mapeia `columns`, então a coluna aparece automaticamente. Adicionar tratamento para destacar a coluna Fretes em azul (consistente com o padrão visual de "Fretes e Logística" já em uso no PDF).
 
-Conteúdo idêntico ao atual `VisitasTecnicas.tsx` (lista agrupada por venda das fichas em `pedidos_producao.ficha_visita_url`), apenas:
-- Breadcrumb passa a ser `Home › Vendas › Visitas Técnicas › Realizadas`.
-- Botão voltar leva a `/vendas/visitas-tecnicas` (calendário), não a `/vendas`.
-- Título: "Visitas realizadas para pedidos existentes".
+5. **PDF / `PrintReport`:** acrescentar a mesma coluna Fretes na tabela "1. Faturamento por Categoria" para manter paridade entre tela e PDF.
 
-O arquivo antigo `VisitasTecnicas.tsx` é excluído; seu conteúdo migra para `VisitasTecnicasRealizadas.tsx`.
+6. **Não alterar:** `lucroLiquidoFinal`, KPIs, blocos de despesas, nem o "Resumo Final" — o lucro de Fretes é informativo na tabela de categorias e a despesa "Fretes e Logística" continua sendo descontada normalmente no lucro líquido (já é hoje via `debitaCat('frete')`).
 
-## 5. Hub de Vendas
+## Fonte dos dados
 
-Sem mudança: `VendasHub.tsx` continua linkando para `/vendas/visitas-tecnicas` (agora o calendário). A página "Realizadas" é acessada via botão dentro do calendário.
+Já existe carregamento de `vendas.valor_frete` no `useEffect` por volta da linha 1305. Basta acumular no mesmo loop sem nova query.
 
-## Detalhes técnicos
+## Critérios de aceitação
 
-- Lookup de CEP: fetch direto ao ViaCEP (público, sem chave), com debounce de 400 ms ao digitar 8 dígitos; mostra spinner no campo enquanto carrega; trata erro `erro: true`.
-- Data persistida como string `YYYY-MM-DDT12:00:00.000Z`; exibida com `T12:00:00` local.
-- Hora persistida como `HH:MM` (`time without time zone`).
-- Reuso de componentes shadcn: `Dialog`, `Input`, `Select`, `Textarea`, `Button`, `Popover` (datepicker conforme padrão do projeto, com `pointer-events-auto`).
-- Sem nova permissão de rota: `/realizadas` herda o mesmo `routeKey` do hub.
+- A coluna "Fretes" aparece entre "Itens Avulsos" e "Total" na tabela de Faturamento por Categoria.
+- Linha Faturamento mostra a soma de fretes das vendas do mês.
+- Linha Lucro mostra `fretes − totalDespFretes` (positivo em verde, negativo em vermelho, igual às outras colunas).
+- Linha Margem % mostra o percentual calculado.
+- PDF reflete a mesma coluna.
+- Nenhum outro KPI ou total da página muda de valor.
