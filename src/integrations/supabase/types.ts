@@ -79,6 +79,50 @@ export type Database = {
           },
         ]
       }
+      acordos_autorizados_historico: {
+        Row: {
+          acordo_id: string
+          created_at: string
+          descricao: string
+          evento: string
+          id: string
+          usuario_id: string | null
+          usuario_nome: string | null
+          valor_anterior: Json | null
+          valor_novo: Json | null
+        }
+        Insert: {
+          acordo_id: string
+          created_at?: string
+          descricao: string
+          evento: string
+          id?: string
+          usuario_id?: string | null
+          usuario_nome?: string | null
+          valor_anterior?: Json | null
+          valor_novo?: Json | null
+        }
+        Update: {
+          acordo_id?: string
+          created_at?: string
+          descricao?: string
+          evento?: string
+          id?: string
+          usuario_id?: string | null
+          usuario_nome?: string | null
+          valor_anterior?: Json | null
+          valor_novo?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acordos_autorizados_historico_acordo_id_fkey"
+            columns: ["acordo_id"]
+            isOneToOne: false
+            referencedRelation: "acordos_instalacao_autorizados"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       acordos_instalacao_autorizados: {
         Row: {
           aprovado_direcao: boolean
