@@ -1270,10 +1270,10 @@ function TiposCustoBlock({
                 {destinosPossiveis.length === 0 ? (
                   <div className="px-3 py-2 text-xs text-muted-foreground">Nenhum outro tipo disponível</div>
                 ) : (
-                  (['fixa','variavel','imposto','projetada','investimento','fornecedor','financiamento','frete','autorizado'] as const).map(grupo => {
+                  (['fixa','variavel','imposto','projetada','investimento','fornecedor','financiamento','frete','autorizado','salario'] as const).map(grupo => {
                     const itensGrupo = destinosPossiveis.filter(t => t.tipo === grupo);
                     if (itensGrupo.length === 0) return null;
-                    const label = grupo === 'fixa' ? 'Fixas' : grupo === 'variavel' ? 'Variáveis' : grupo === 'imposto' ? 'Impostos' : grupo === 'projetada' ? 'Projetadas' : grupo === 'investimento' ? 'Investimentos' : grupo === 'fornecedor' ? 'Fornecedores' : grupo === 'financiamento' ? 'Financiamentos' : grupo === 'frete' ? 'Fretes e Logística' : 'Autorizados';
+                    const label = grupo === 'fixa' ? 'Fixas' : grupo === 'variavel' ? 'Variáveis' : grupo === 'imposto' ? 'Impostos' : grupo === 'projetada' ? 'Projetadas' : grupo === 'investimento' ? 'Investimentos' : grupo === 'fornecedor' ? 'Fornecedores' : grupo === 'financiamento' ? 'Financiamentos' : grupo === 'frete' ? 'Fretes e Logística' : grupo === 'autorizado' ? 'Autorizados' : 'Salários';
                     return (
                       <div key={grupo}>
                         <div className="px-2 py-1 text-[10px] uppercase tracking-wider text-white/40">{label}</div>
