@@ -110,19 +110,31 @@ export default function BalancoDescontos() {
                       <TableHead className="text-white/60">Cliente</TableHead>
                       <TableHead className="text-white/60 text-right">Total</TableHead>
                       <TableHead className="text-white/60 text-right">% Dado</TableHead>
+                      <TableHead className="text-white/60 text-right">À Vista (3%)</TableHead>
+                      <TableHead className="text-white/60 text-right">Frio (5%)</TableHead>
+                      <TableHead className="text-white/60 text-right">Gerente (8%)</TableHead>
                       <TableHead className="text-white/60 text-right">% Limite</TableHead>
+                      <TableHead className="text-white/60 text-right">Excedido</TableHead>
                       <TableHead className="text-white/60 text-right">Balanço</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {rows.length === 0 ? (
                       <TableRow className="border-white/10">
-                        <TableCell colSpan={6} className="text-center text-white/50">
+                        <TableCell colSpan={10} className="text-center text-white/50">
                           Nenhuma venda no período. Clique em Recalcular.
                         </TableCell>
                       </TableRow>
                     ) : (
-                      rows.map((r) => (
+                      rows.map((r) => {
+                        const pctDado = Number(r.pct_desconto_dado);
+                        const pctLimite = Number(r.pct_limite_permitido);
+                        const total = Number(r.total_venda);
+                        const check = (limite: number) =>
+                          pctDado <= limite ? "text-emerald-400" : "text-red-400";
+                        const excedidoPct = Math.max(0, pctDado - pctLimite);
+                        const excedidoValor = (excedidoPct / 100) * total;
+                        return (
                         <TableRow key={r.id} className="border-white/10 hover:bg-white/5">
                           <TableCell className="text-white/90">
                             {r.data_venda
@@ -132,10 +144,16 @@ export default function BalancoDescontos() {
                           <TableCell className="text-white/90">{r.vendas?.cliente_nome || "-"}</TableCell>
                           <TableCell className="text-white/90 text-right">{formatMoeda(Number(r.total_venda))}</TableCell>
                           <TableCell className="text-white/90 text-right">
-                            {Number(r.pct_desconto_dado).toFixed(2)}%
+                            {pctDado.toFixed(2)}%
                           </TableCell>
+                          <TableCell className={`text-right ${check(3)}`}>{(0.03 * total).toFixed(2) && formatMoeda(0.03 * total)}</TableCell>
+                          <TableCell className={`text-right ${check(5)}`}>{formatMoeda(0.05 * total)}</TableCell>
+                          <TableCell className={`text-right ${check(8)}`}>{formatMoeda(0.08 * total)}</TableCell>
                           <TableCell className="text-white/50 text-right">
-                            {Number(r.pct_limite_permitido).toFixed(2)}%
+                            {pctLimite.toFixed(2)}%
+                          </TableCell>
+                          <TableCell className={`text-right font-medium ${excedidoPct > 0 ? "text-red-400" : "text-white/40"}`}>
+                            {excedidoPct > 0 ? `${excedidoPct.toFixed(2)}% (${formatMoeda(excedidoValor)})` : "-"}
                           </TableCell>
                           <TableCell
                             className={`text-right font-semibold ${
@@ -145,7 +163,8 @@ export default function BalancoDescontos() {
                             {formatMoeda(Number(r.valor_balanco))}
                           </TableCell>
                         </TableRow>
-                      ))
+                        );
+                      })
                     )}
                   </TableBody>
                 </Table>
