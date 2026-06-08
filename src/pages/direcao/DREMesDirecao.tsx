@@ -1740,7 +1740,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         </div>
       )}
       {showResumoFinal && (() => {
-        const lucroLiquido = lucro.total - totalDespFixas - totalDespFolha - totalDespVariaveis - totalDespImpostos - totalDespInvestimentos - totalDespFornecedores - totalDespFinanciamentos - totalDespFretes;
+        const lucroLiquido = lucro.total - totalDespFixas - totalDespFolha - totalDespVariaveis - totalDespImpostos - totalDespInvestimentos - totalDespFornecedores - totalDespFinanciamentos - totalDespFretes - totalDespAutorizados;
         const percBruto = faturamento.total > 0 ? (lucro.total / faturamento.total) * 100 : 0;
         const percLiquid = faturamento.total > 0 ? (lucroLiquido / faturamento.total) * 100 : 0;
         const colorClass = (v: number) => v >= 0 ? 'text-emerald-400' : 'text-red-400';
