@@ -219,7 +219,7 @@ export default function NovoAutorizadoDirecao() {
 
   const breadcrumbItems = [
     { label: "Home", path: "/home" },
-    { label: contexto === 'logistica' ? "Logística" : "Direção", path: contexto === 'logistica' ? '/logistica' : '/direcao' },
+    ...(contexto !== 'home' ? [{ label: contexto === 'logistica' ? "Logística" : "Direção", path: contexto === 'logistica' ? '/logistica' : '/direcao' }] : []),
     { label: "Autorizados", path: basePath },
     ...(estadoInfo ? [{ label: estadoInfo.nome, path: `${basePath}/estado/${estadoInfo.id}` }] : []),
     { label: "Novo" }
