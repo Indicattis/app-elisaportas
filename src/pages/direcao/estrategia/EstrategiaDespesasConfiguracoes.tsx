@@ -99,7 +99,7 @@ export function DespesasGridContent({
   const tiposImpostos = tiposCustos.filter(t => t.tipo === 'imposto');
   const tiposProjetadas = tiposCustos.filter(t => t.tipo === 'projetada');
   const tiposInvestimentos = tiposCustos.filter(t => t.tipo === 'investimento');
-  const tiposFornecedores = tiposCustos.filter(t => t.tipo === 'fornecedor');
+  const tiposFornecedores = tiposCustos.filter(t => t.tipo ==='fornecedor');
 
   return showSpinner ? (
         <div className="flex items-center justify-center py-20">
@@ -1012,7 +1012,7 @@ function TiposCustoBlock({
 }: {
   titulo: string;
   icon: React.ReactNode;
-  tipo: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' | 'fornecedor';
+  tipo: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento';
   items: TipoCusto[];
   save: ReturnType<typeof useTiposCustos>['saveTipoCusto'];
   update: ReturnType<typeof useTiposCustos>['updateTipoCusto'];
@@ -1208,7 +1208,7 @@ function TiposCustoBlock({
                 {destinosPossiveis.length === 0 ? (
                   <div className="px-3 py-2 text-xs text-muted-foreground">Nenhum outro tipo disponível</div>
                 ) : (
-                  (['fixa','variavel','imposto','projetada','investimento','fornecedor'] as const).map(grupo => {
+                  (['fixa','variavel','imposto','projetada','investimento','fornecedor','financiamento'] as const).map(grupo => {
                     const itensGrupo = destinosPossiveis.filter(t => t.tipo === grupo);
                     if (itensGrupo.length === 0) return null;
                     const label = grupo === 'fixa' ? 'Fixas' : grupo === 'variavel' ? 'Variáveis' : grupo === 'imposto' ? 'Impostos' : grupo === 'projetada' ? 'Projetadas' : grupo === 'investimento' ? 'Investimentos' : 'Fornecedores';
@@ -1745,7 +1745,7 @@ function GastosDoTipoExpand({
 }: {
   tipoCustoId: string;
   tipoNome: string;
-  categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' | 'fornecedor';
+  categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento';
   mes: string | null;
   hideCategoria?: boolean;
 }) {
