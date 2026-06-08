@@ -370,7 +370,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
   };
 
   const handleInsertLanc = async (payload: {
-    tipo: TipoCusto; categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada'; valor: number; data: string; descricao: string;
+    tipo: TipoCusto; categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento'; valor: number; data: string; descricao: string;
   }) => {
     if (!mesStart) return;
     const userId = (await supabase.auth.getUser()).data.user?.id || null;
