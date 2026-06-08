@@ -1711,6 +1711,14 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
               tiposDisponiveis={tiposCustosFretes}
               onClickTipo={(id, nome) => setTipoModal({ id, nome })}
             />
+            <DespesaSectionReadOnly
+              title="Autorizados"
+              despesas={despesasAutorizados}
+              total={totalDespAutorizados}
+              formatCurrency={formatCurrency}
+              tiposDisponiveis={tiposCustosAutorizados}
+              onClickTipo={(id, nome) => setTipoModal({ id, nome })}
+            />
           </div>
           {viewMode === 'full' && (
             <>
