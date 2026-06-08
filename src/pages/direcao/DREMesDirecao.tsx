@@ -483,8 +483,8 @@ function PrintReport({
               { key: 'portas', label: 'Portas' },
               { key: 'pintura', label: 'Pintura' },
               { key: 'instalacoes', label: 'Instalações' },
-              { key: 'avulsos', label: 'Itens Avulsos' },
               { key: 'fretes', label: 'Fretes' },
+              { key: 'avulsos', label: 'Itens Avulsos' },
             ].map((c, i) => {
               const f = faturamento[c.key as keyof FaturamentoProduto];
               const l = c.key === 'fretes'
