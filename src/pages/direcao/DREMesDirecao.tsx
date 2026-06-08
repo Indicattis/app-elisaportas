@@ -1801,7 +1801,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
           width: 100%;
         }
         #dre-print-document .pdf-page-break::before {
-          content: '\00a0';
+          content: '\\00a0';
           display: block;
           page-break-before: always;
           break-before: page;
