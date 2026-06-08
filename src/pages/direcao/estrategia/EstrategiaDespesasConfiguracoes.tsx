@@ -970,7 +970,7 @@ function TiposCustoBlock({
 }: {
   titulo: string;
   icon: React.ReactNode;
-  tipo: 'fixa' | 'variavel' | 'imposto' | 'projetada';
+  tipo: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento';
   items: TipoCusto[];
   save: ReturnType<typeof useTiposCustos>['saveTipoCusto'];
   update: ReturnType<typeof useTiposCustos>['updateTipoCusto'];
@@ -1694,7 +1694,7 @@ function GastosDoTipoExpand({
 }: {
   tipoCustoId: string;
   tipoNome: string;
-  categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada';
+  categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento';
   mes: string | null;
   hideCategoria?: boolean;
 }) {
