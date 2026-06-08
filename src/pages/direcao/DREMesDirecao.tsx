@@ -1672,12 +1672,15 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
                 <tr>
                   <td className="p-3 text-white/60 font-medium text-xs uppercase">Lucro</td>
                   {columns.map(col => {
-                    const val = lucro[col.key];
+                    const val = col.key === 'fretes'
+                      ? (faturamento.fretes - totalDespFretes)
+                      : lucro[col.key];
                     const isInstalacoes = col.key === 'instalacoes';
+                    const isFretes = col.key === 'fretes';
                     return (
                       <td
                         key={col.key}
-                        className={`text-right p-3 font-semibold ${isInstalacoes ? 'text-yellow-400' : val >= 0 ? 'text-emerald-400' : 'text-red-400'} ${col.key === 'total' ? 'bg-white/5' : ''}`}
+                        className={`text-right p-3 font-semibold ${isFretes ? (val >= 0 ? 'text-blue-400' : 'text-red-400') : isInstalacoes ? 'text-yellow-400' : val >= 0 ? 'text-emerald-400' : 'text-red-400'} ${col.key === 'total' ? 'bg-white/5' : ''}`}
                       >
                         {formatCurrency(val)}
                       </td>
@@ -1687,13 +1690,17 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
                 <tr className="border-t border-white/5">
                   <td className="p-3 text-white/60 font-medium text-xs uppercase">Margem %</td>
                   {columns.map(col => {
+                    const lucroCol = col.key === 'fretes'
+                      ? (faturamento.fretes - totalDespFretes)
+                      : lucro[col.key];
                     const perc = faturamento[col.key] > 0
-                      ? (lucro[col.key] / faturamento[col.key]) * 100
+                      ? (lucroCol / faturamento[col.key]) * 100
                       : 0;
                     const isInstalacoes = col.key === 'instalacoes';
+                    const isFretes = col.key === 'fretes';
                     return (
                       <td key={col.key} className={`text-right p-3 ${col.key === 'total' ? 'bg-white/5' : ''}`}>
-                        <span className={`inline-block rounded-full bg-white/10 px-2 py-0.5 text-xs font-semibold ${isInstalacoes ? 'text-yellow-400' : perc >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                        <span className={`inline-block rounded-full bg-white/10 px-2 py-0.5 text-xs font-semibold ${isFretes ? (perc >= 0 ? 'text-blue-400' : 'text-red-400') : isInstalacoes ? 'text-yellow-400' : perc >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                           {perc.toFixed(1)}%
                         </span>
                       </td>
