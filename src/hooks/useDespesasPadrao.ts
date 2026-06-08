@@ -71,6 +71,7 @@ export function useDespesasPadrao() {
       salario: payload.salario ?? 0,
       salario_minimo: payload.salario_minimo ?? 1518,
       aux_combustivel: payload.aux_combustivel ?? 0,
+      bonificacao: payload.bonificacao ?? 0,
       hora_extra: payload.hora_extra ?? 0,
       insalubridade_pct: payload.insalubridade_pct ?? 0,
       fgts_pct: payload.fgts_pct ?? 8,
