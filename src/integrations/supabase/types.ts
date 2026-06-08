@@ -3873,6 +3873,7 @@ export type Database = {
       }
       gastos: {
         Row: {
+          acordo_autorizado_id: string | null
           banco_id: string
           created_at: string | null
           created_by: string | null
@@ -3887,6 +3888,7 @@ export type Database = {
           valor: number
         }
         Insert: {
+          acordo_autorizado_id?: string | null
           banco_id: string
           created_at?: string | null
           created_by?: string | null
@@ -3901,6 +3903,7 @@ export type Database = {
           valor?: number
         }
         Update: {
+          acordo_autorizado_id?: string | null
           banco_id?: string
           created_at?: string | null
           created_by?: string | null
@@ -3915,6 +3918,13 @@ export type Database = {
           valor?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "gastos_acordo_autorizado_id_fkey"
+            columns: ["acordo_autorizado_id"]
+            isOneToOne: false
+            referencedRelation: "acordos_instalacao_autorizados"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "gastos_banco_id_fkey"
             columns: ["banco_id"]
