@@ -381,9 +381,9 @@ export default function AcordosMesAutorizados() {
                           12 +
                           ((contexto === 'direcao' || contexto === 'home') ? 1 : 0) +
                           ((contexto === 'logistica' || contexto === 'home') ? 1 : 0);
-                        return acordosAgrupados.map((grupo) => (
+                        return acordosAgrupados.map((grupo, idx) => (
                           <Fragment key={grupo.autorizadoId}>
-                            <TableRow className="bg-blue-500/10 hover:bg-blue-500/15 border-blue-500/20">
+                            <TableRow className={`bg-blue-500/10 hover:bg-blue-500/15 border-blue-500/20 ${idx > 0 ? 'border-t-4 border-t-white/5' : ''}`}>
                               <TableCell colSpan={colSpan} className="py-2">
                                 <div className="flex items-center justify-between gap-3">
                                   <span className="text-sm font-semibold text-blue-200">
