@@ -598,6 +598,10 @@ function FolhaTableHeader() {
           <div>Férias + 1/3</div>
           <div className="text-[9px] normal-case tracking-normal text-white/30">(salário ÷ 3) ÷ 12</div>
         </th>
+        <th className="text-right font-normal pb-2 px-2">
+          <div className="text-red-400">Multa FGTS</div>
+          <div className="text-[9px] normal-case tracking-normal text-white/30">FGTS valor × 40%</div>
+        </th>
         <th className="text-right font-normal pb-2 px-2">Total</th>
         <th className="pb-2 pr-1"></th>
       </tr>
