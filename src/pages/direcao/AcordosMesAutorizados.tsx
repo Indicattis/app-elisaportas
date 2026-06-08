@@ -87,7 +87,7 @@ export default function AcordosMesAutorizados() {
   const [acordoParaEditar, setAcordoParaEditar] = useState<AcordoAutorizado | null>(null);
   const [acordoParaDeletar, setAcordoParaDeletar] = useState<AcordoAutorizado | null>(null);
   const [precosMap, setPrecosMap] = useState<Map<string, { P: number; G: number; GG: number }>>(new Map());
-  const [kmPorAutorizado, setKmPorAutorizado] = useState<Map<string, number | null>>(new Map());
+  const [kmPorCidade, setKmPorCidade] = useState<Map<string, number | null>>(new Map());
   const [approvingId, setApprovingId] = useState<string | null>(null);
   const [rejectingId, setRejectingId] = useState<string | null>(null);
 
@@ -111,35 +111,31 @@ export default function AcordosMesAutorizados() {
 
   useEffect(() => {
     if (acordos.length === 0) return;
-    const autorizadoIds = [...new Set(acordos.map(a => a.autorizado_id))];
-    (async () => {
-      const { data: autorizadosData } = await supabase
-        .from('autorizados')
-        .select('id, cidade, estado')
-        .in('id', autorizadoIds);
-      if (!autorizadosData || autorizadosData.length === 0) {
-        setKmPorAutorizado(new Map());
-        return;
-      }
-      const cidades = [...new Set(autorizadosData.map(a => a.cidade).filter(Boolean) as string[])];
-      const estados = [...new Set(autorizadosData.map(a => a.estado).filter(Boolean) as string[])];
-      const { data: fretes } = await supabase
-        .from('frete_cidades')
-        .select('cidade, estado, quilometragem')
-        .in('cidade', cidades)
-        .in('estado', estados);
-      const freteMap = new Map<string, number | null>();
-      fretes?.forEach((f) => {
-        freteMap.set(`${f.cidade}|${f.estado}`, f.quilometragem != null ? Number(f.quilometragem) : null);
+    const cidades = [...new Set(acordos.map(a => a.cliente_cidade).filter(Boolean) as string[])];
+    const estados = [...new Set(acordos.map(a => a.cliente_estado).filter(Boolean) as string[])];
+    if (cidades.length === 0 || estados.length === 0) {
+      setKmPorCidade(new Map());
+      return;
+    }
+    supabase
+      .from('frete_cidades')
+      .select('cidade, estado, quilometragem')
+      .in('cidade', cidades)
+      .in('estado', estados)
+      .then(({ data }) => {
+        const map = new Map<string, number | null>();
+        data?.forEach((f) => {
+          map.set(`${(f.cidade || '').toLowerCase()}|${f.estado}`, f.quilometragem != null ? Number(f.quilometragem) : null);
+        });
+        setKmPorCidade(map);
       });
-      const map = new Map<string, number | null>();
-      autorizadosData.forEach((a) => {
-        const key = `${a.cidade}|${a.estado}`;
-        map.set(a.id, freteMap.has(key) ? freteMap.get(key)! : null);
-      });
-      setKmPorAutorizado(map);
-    })();
   }, [acordos]);
+
+  const getKmAcordo = (cidade?: string | null, estado?: string | null): number | null => {
+    if (!cidade || !estado) return null;
+    const key = `${cidade.toLowerCase()}|${estado}`;
+    return kmPorCidade.has(key) ? (kmPorCidade.get(key) ?? null) : null;
+  };
 
   const acordosDoMes = useMemo(() => {
     if (!mesValido) return [];
@@ -420,12 +416,8 @@ export default function AcordosMesAutorizados() {
                             <TableRow className={`bg-blue-500/10 hover:bg-blue-500/15 border-blue-500/20 ${idx > 0 ? 'border-t-4 border-t-white/5' : ''}`}>
                               <TableCell colSpan={colSpan} className="py-2">
                                 <div className="flex items-center justify-between gap-3">
-                                  <span className="text-sm font-semibold text-blue-200">
+                                   <span className="text-sm font-semibold text-blue-200">
                                     {grupo.autorizadoNome}
-                                    {(() => {
-                                      const km = kmPorAutorizado.get(grupo.autorizadoId);
-                                      return km != null ? <span className="ml-2 text-xs font-normal text-white/60">· {km} km</span> : null;
-                                    })()}
                                   </span>
                                   <span className="text-xs text-white/70">
                                     {grupo.items.length} acordo{grupo.items.length === 1 ? '' : 's'} ·{' '}
@@ -455,7 +447,7 @@ export default function AcordosMesAutorizados() {
                                 <TableCell className="text-white/70">{acordo.cliente_cidade} - {acordo.cliente_estado}</TableCell>
                                 <TableCell className="text-center text-white/70">
                                   {(() => {
-                                    const km = kmPorAutorizado.get(acordo.autorizado_id);
+                                    const km = getKmAcordo(acordo.cliente_cidade, acordo.cliente_estado);
                                     return km != null ? `${km} km` : <span className="text-white/40">—</span>;
                                   })()}
                                 </TableCell>
