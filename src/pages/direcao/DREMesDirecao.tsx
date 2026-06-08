@@ -530,6 +530,7 @@ function PrintReport({
               { l: '(–) Financiamentos', v: formatCurrency(totalDespFinanciamentos), c: '#b91c1c', b: false },
               { l: '(–) Fretes e Logística', v: formatCurrency(totalDespFretes), c: '#b91c1c', b: false },
               { l: '(–) Autorizados', v: formatCurrency(totalDespAutorizados), c: '#b91c1c', b: false },
+              { l: '(–) Salários', v: formatCurrency(totalDespSalarios), c: '#b91c1c', b: false },
             ].map((r, i) => (
               <tr key={i} style={trZebra(i)}>
                 <td style={{ ...TD, fontWeight: r.b ? 700 : 500 }}>{r.l}</td>
@@ -672,6 +673,17 @@ function PrintReport({
           total={totalDespAutorizados}
           formatCurrency={formatCurrency}
           tiposDisponiveis={tiposCustosAutorizados}
+        />
+      </div>
+
+      <div className="pdf-page-break" />
+      <div style={{ marginTop: 0 }}>
+        <div style={H2}>12. Salários</div>
+        <PrintDespesaTable
+          items={despesasSalarios}
+          total={totalDespSalarios}
+          formatCurrency={formatCurrency}
+          tiposDisponiveis={tiposCustosSalarios}
         />
       </div>
 
@@ -943,6 +955,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
   const [despesasFinanciamentos, setDespesasFinanciamentos] = useState<DespesaAgrupada[]>([]);
   const [despesasFretes, setDespesasFretes] = useState<DespesaAgrupada[]>([]);
   const [despesasAutorizados, setDespesasAutorizados] = useState<DespesaAgrupada[]>([]);
+  const [despesasSalarios, setDespesasSalarios] = useState<DespesaAgrupada[]>([]);
   const [tipoModal, setTipoModal] = useState<{ id: string; nome: string } | null>(null);
   const [tiposCustosFixos, setTiposCustosFixos] = useState<TipoCustoVariavel[]>([]);
   const [tiposCustosVariaveis, setTiposCustosVariaveis] = useState<TipoCustoVariavel[]>([]);
@@ -952,6 +965,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
   const [tiposCustosFinanciamentos, setTiposCustosFinanciamentos] = useState<TipoCustoVariavel[]>([]);
   const [tiposCustosFretes, setTiposCustosFretes] = useState<TipoCustoVariavel[]>([]);
   const [tiposCustosAutorizados, setTiposCustosAutorizados] = useState<TipoCustoVariavel[]>([]);
+  const [tiposCustosSalarios, setTiposCustosSalarios] = useState<TipoCustoVariavel[]>([]);
   const [topAvulsos, setTopAvulsos] = useState<{nome: string, qtd: number}[]>([]);
   const [estoqueResumo, setEstoqueResumo] = useState({ valorTotal: 0, totalItens: 0 });
   const [vendasListagem, setVendasListagem] = useState<{ id: string; data: string; cliente: string; valorTabela: number; valorVenda: number; desconto: number; lucro: number }[]>([]);
