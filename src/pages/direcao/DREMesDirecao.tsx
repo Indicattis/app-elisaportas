@@ -866,8 +866,15 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
     const [y, m] = mes.split('-').map(Number);
     const end = new Date(y, m, 0).toISOString().split('T')[0];
 
-    // Despesas vêm de gastos cruzado com tipos_custos (aparece_no_dre)
-    const [{ data: gastos, error: gErr }, { data: tipos, error: tErr }] = await Promise.all([
+    // Despesas vêm de gastos cruzado com tipos_custos (aparece_no_dre).
+    // Para a coluna "Projetado", aplica override mensal de despesas_mes_tipo_custo_override.
+    // Lista TODOS os tipos ativos (mesmo sem gastos no mês) com valor_real=0
+    // para bater com a tela /direcao/estrategia/despesas/:mes.
+    const [
+      { data: gastos, error: gErr },
+      { data: tipos, error: tErr },
+      { data: tcOverrides, error: oErr },
+    ] = await Promise.all([
       supabase
         .from('gastos' as any)
         .select('valor, tipo_custo_id')
@@ -875,124 +882,136 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         .lte('data', end),
       supabase
         .from('tipos_custos' as any)
-        .select('id, nome, tipo, aparece_no_dre')
-        .eq('aparece_no_dre', true),
-    ]);
-
-    if (gErr || tErr) {
-      console.error('Erro ao buscar despesas (gastos/tipos_custos):', gErr || tErr);
-      setDespesasFixas([]);
-      setDespesasVariaveis([]);
-      setDespesasImpostos([]);
-    } else {
-      const tiposMap: Record<string, { nome: string; tipo: string }> = {};
-      ((tipos || []) as any[]).forEach((t: any) => {
-        tiposMap[t.id] = { nome: t.nome, tipo: t.tipo };
-      });
-
-      const agrupado: Record<string, { nome: string; tipo: string; valor: number }> = {};
-      ((gastos || []) as any[]).forEach((g: any) => {
-        const tipo = tiposMap[g.tipo_custo_id];
-        if (!tipo) return;
-        if (!agrupado[g.tipo_custo_id]) {
-          agrupado[g.tipo_custo_id] = { nome: tipo.nome, tipo: tipo.tipo, valor: 0 };
-        }
-        agrupado[g.tipo_custo_id].valor += Number(g.valor) || 0;
-      });
-
-      const items = Object.entries(agrupado).map(([id, v]) => ({
-        id,
-        nome: v.nome,
-        valor_real: v.valor,
-        tipo: v.tipo,
-      }));
-
-      setDespesasFixas(
-        items
-          .filter(i => i.tipo === 'fixa' && !isFolha(i.nome))
-          .sort((a, b) => a.nome.localeCompare(b.nome))
-      );
-      setDespesasVariaveis(
-        items
-          .filter(i => i.tipo === 'variavel' && !isFolha(i.nome))
-          .sort((a, b) => a.nome.localeCompare(b.nome))
-      );
-      setDespesasImpostos([]);
-    }
-
-    // Folha salarial — mesma fonte de /direcao/estrategia/despesas/:mes
-    // despesas_padrao (tipo='folha') sobrescrita por despesas_manuais_folha do mês.
-    const normNome = (s: string) => (s || '').trim().toLowerCase();
-    const calcTotalFolha = (f: {
-      salario: number; aux_combustivel: number; insalubridade_pct: number;
-      fgts_pct: number; previsao_13_valor: number; em_folha?: boolean;
-    }) => {
-      const salario = Number(f.salario) || 0;
-      if (f.em_folha === false) return salario;
-      const aux = Number(f.aux_combustivel) || 0;
-      const insalub = salario * (Number(f.insalubridade_pct) || 0) / 100;
-      const fgts = salario * (Number(f.fgts_pct) || 0) / 100;
-      const ferias = salario / 3;
-      const prev13 = salario / 12;
-      const fgts13 = fgts / 12;
-      return salario + aux + insalub + fgts + prev13 + fgts13 + ferias;
-    };
-
-    const [{ data: padroes, error: padErr }, { data: manuais, error: manErr }] = await Promise.all([
+        .select('id, nome, tipo, aparece_no_dre, ativo, valor_maximo_mensal')
+        .eq('aparece_no_dre', true)
+        .eq('ativo', true),
       supabase
-        .from('despesas_padrao' as any)
-        .select('id, nome, salario, aux_combustivel, insalubridade_pct, fgts_pct, previsao_13_valor, em_folha, tipo')
-        .eq('tipo', 'folha'),
-      supabase
-        .from('despesas_manuais_folha' as any)
-        .select('id, colaborador_nome, salario, aux_combustivel, insalubridade_pct, fgts_pct, previsao_13_valor')
+        .from('despesas_mes_tipo_custo_override' as any)
+        .select('tipo_custo_id, valor_maximo_mensal')
         .eq('mes_referencia', start),
     ]);
 
-    if (padErr || manErr) {
-      console.error('Erro ao buscar folha:', padErr || manErr);
-      setDespesasFolha([]);
+    if (gErr || tErr || oErr) {
+      console.error('Erro ao buscar despesas (gastos/tipos_custos):', gErr || tErr || oErr);
+      setDespesasFixas([]);
+      setDespesasVariaveis([]);
+      setDespesasImpostos([]);
+      setTiposCustosFixos([]);
+      setTiposCustosVariaveis([]);
+      setTiposCustosImpostos([]);
     } else {
-      const manuaisByNome = new Map<string, any>();
-      ((manuais || []) as any[]).forEach(m => manuaisByNome.set(normNome(m.colaborador_nome), m));
-      const usados = new Set<string>();
-      const items: DespesaAgrupada[] = [];
-
-      ((padroes || []) as any[]).forEach(p => {
-        const key = normNome(p.nome);
-        const manual = manuaisByNome.get(key);
-        if (manual) usados.add(key);
-        const src = manual ?? p;
-        items.push({
-          id: manual ? `m:${manual.id}` : `p:${p.id}`,
-          nome: p.nome,
-          valor_real: calcTotalFolha({
-            salario: src.salario,
-            aux_combustivel: src.aux_combustivel,
-            insalubridade_pct: src.insalubridade_pct,
-            fgts_pct: src.fgts_pct,
-            previsao_13_valor: src.previsao_13_valor,
-            em_folha: p.em_folha,
-          }),
-        });
+      // soma de gastos por tipo_custo
+      const somaGastos: Record<string, number> = {};
+      ((gastos || []) as any[]).forEach((g: any) => {
+        if (!g.tipo_custo_id) return;
+        somaGastos[g.tipo_custo_id] = (somaGastos[g.tipo_custo_id] || 0) + (Number(g.valor) || 0);
       });
 
-      // Lançamentos manuais sem padrão correspondente
-      ((manuais || []) as any[]).forEach(m => {
-        const key = normNome(m.colaborador_nome);
-        if (usados.has(key)) return;
-        items.push({
-          id: `m:${m.id}`,
-          nome: m.colaborador_nome,
-          valor_real: calcTotalFolha({
-            salario: m.salario,
-            aux_combustivel: m.aux_combustivel,
-            insalubridade_pct: m.insalubridade_pct,
-            fgts_pct: m.fgts_pct,
-            previsao_13_valor: m.previsao_13_valor,
-            em_folha: true,
-          }),
-        });
+      // override mensal do projetado
+      const ovMap: Record<string, number> = {};
+      ((tcOverrides || []) as any[]).forEach((o: any) => {
+        if (o.tipo_custo_id != null && o.valor_maximo_mensal != null) {
+          ovMap[o.tipo_custo_id] = Number(o.valor_maximo_mensal);
+        }
+      });
+
+      const tiposArr = (tipos || []) as any[];
+
+      const itemsBy = (tipoStr: string) =>
+        tiposArr
+          .filter(t => t.tipo === tipoStr && !isFolha(t.nome))
+          .map(t => ({
+            id: t.id,
+            nome: t.nome,
+            valor_real: somaGastos[t.id] || 0,
+          } as DespesaAgrupada))
+          .sort((a, b) => a.nome.localeCompare(b.nome));
+
+      setDespesasFixas(itemsBy('fixa'));
+      setDespesasVariaveis(itemsBy('variavel'));
+      setDespesasImpostos(itemsBy('imposto'));
+
+      const tiposBy = (tipoStr: string): TipoCustoVariavel[] =>
+        tiposArr
+          .filter(t => t.tipo === tipoStr)
+          .map(t => ({
+            id: t.id,
+            nome: t.nome,
+            valor_maximo_mensal:
+              ovMap[t.id] != null ? ovMap[t.id] : Number(t.valor_maximo_mensal) || 0,
+          }))
+          .sort((a, b) => a.nome.localeCompare(b.nome));
+
+      setTiposCustosFixos(tiposBy('fixa'));
+      setTiposCustosVariaveis(tiposBy('variavel'));
+      setTiposCustosImpostos(tiposBy('imposto'));
+    }
+
+    // Folha salarial — mesma fonte de /direcao/estrategia/despesas/:mes
+    // despesas_padrao (tipo='folha') sobrescrita por despesas_mes_folha_override.
+    const normNome = (s: string) => (s || '').trim().toLowerCase();
+    // Fórmula idêntica à de EstrategiaDespesasConfiguracoes.tsx (calcTotalFolha).
+    const calcTotalFolha = (f: {
+      salario: number; salario_minimo?: number | null;
+      aux_combustivel: number; bonificacao?: number | null; hora_extra?: number | null;
+      insalubridade_pct: number; fgts_pct: number;
+      ferias_valor?: number | null; em_folha?: boolean | null;
+    }) => {
+      const salario = Number(f.salario) || 0;
+      const horaExtra = Number(f.hora_extra) || 0;
+      const bonif = Number(f.bonificacao) || 0;
+      if (f.em_folha === false) return salario + horaExtra + bonif;
+      const aux = Number(f.aux_combustivel) || 0;
+      const base = salario + horaExtra; // base de cálculo dos encargos
+      const baseInsalub = f.salario_minimo == null ? salario : Number(f.salario_minimo) || 0;
+      const insalub = baseInsalub * (Number(f.insalubridade_pct) || 0) / 100;
+      const fgts = base * (Number(f.fgts_pct) || 0) / 100;
+      const ferias = f.ferias_valor == null ? base / 3 / 12 : Number(f.ferias_valor) || 0;
+      const prev13 = base / 12;
+      const fgts13 = fgts / 12;
+      const multaFgts = fgts * 0.4;
+      return base + aux + bonif + insalub + fgts + prev13 + fgts13 + ferias + multaFgts;
+    };
+
+    const [{ data: padroes, error: padErr }, { data: overrides, error: ovErr }] = await Promise.all([
+      supabase
+        .from('despesas_padrao' as any)
+        .select('id, nome, salario, salario_minimo, aux_combustivel, bonificacao, hora_extra, insalubridade_pct, fgts_pct, ferias_valor, em_folha, tipo')
+        .eq('tipo', 'folha'),
+      supabase
+        .from('despesas_mes_folha_override' as any)
+        .select('despesa_padrao_id, salario, salario_minimo, aux_combustivel, bonificacao, hora_extra, insalubridade_pct, fgts_pct, ferias_valor, em_folha')
+        .eq('mes_referencia', start),
+    ]);
+
+    if (padErr || ovErr) {
+      console.error('Erro ao buscar folha:', padErr || ovErr);
+      setDespesasFolha([]);
+    } else {
+      const ovMap = new Map<string, any>();
+      ((overrides || []) as any[]).forEach(o => ovMap.set(o.despesa_padrao_id, o));
+
+      const pick = <T,>(ov: any, p: any, key: string): T =>
+        (ov && ov[key] != null ? ov[key] : p[key]) as T;
+
+      const items: DespesaAgrupada[] = ((padroes || []) as any[]).map(p => {
+        const ov = ovMap.get(p.id);
+        const merged = {
+          salario: pick<number>(ov, p, 'salario'),
+          salario_minimo: pick<number | null>(ov, p, 'salario_minimo'),
+          aux_combustivel: pick<number>(ov, p, 'aux_combustivel'),
+          bonificacao: pick<number | null>(ov, p, 'bonificacao'),
+          hora_extra: pick<number | null>(ov, p, 'hora_extra'),
+          insalubridade_pct: pick<number>(ov, p, 'insalubridade_pct'),
+          fgts_pct: pick<number>(ov, p, 'fgts_pct'),
+          ferias_valor: pick<number | null>(ov, p, 'ferias_valor'),
+          em_folha: pick<boolean | null>(ov, p, 'em_folha'),
+        };
+        return {
+          id: `p:${p.id}`,
+          nome: p.nome,
+          valor_real: calcTotalFolha(merged),
+        };
       });
 
       setDespesasFolha(items.sort((a, b) => a.nome.localeCompare(b.nome)));
@@ -1000,19 +1019,8 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
   };
 
   const fetchTiposCustosAtivos = async () => {
-    const { data, error } = await supabase
-      .from('tipos_custos' as any)
-      .select('id, nome, valor_maximo_mensal, tipo')
-      .eq('ativo', true)
-      .order('nome');
-
-    if (error) {
-      console.error('Erro ao buscar tipos custos:', error);
-      return;
-    }
-    const all = (data || []) as unknown as (TipoCustoVariavel & { tipo: string })[];
-    setTiposCustosFixos(all.filter(t => t.tipo === 'fixa'));
-    setTiposCustosVariaveis(all.filter(t => t.tipo === 'variavel'));
+    // Mantido como no-op: tiposCustosFixos/Variaveis/Impostos agora são
+    // populados em fetchDespesasFromGastos (com override mensal aplicado).
   };
 
   useEffect(() => {
