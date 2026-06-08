@@ -26,7 +26,7 @@ interface VendaRow {
 
 export default function ContratosVendas() {
   const navigate = useNavigate();
-  const { user, isAdmin } = useAuth();
+  const { user } = useAuth();
   const [mounted, setMounted] = useState(false);
   const [search, setSearch] = useState('');
   const [vendas, setVendas] = useState<VendaRow[]>([]);
@@ -44,22 +44,18 @@ export default function ContratosVendas() {
   useEffect(() => {
     (async () => {
       setLoadingVendas(true);
-      let query = supabase
+      const query = supabase
         .from('vendas')
         .select('id, cliente_nome, cpf_cliente, cidade, data_venda, valor_venda, atendente_id')
         .eq('is_rascunho', false)
         .order('data_venda', { ascending: false })
-        .limit(200);
-
-      if (!isAdmin && user) {
-        query = query.eq('atendente_id', user.id);
-      }
+        .limit(5000);
 
       const { data, error } = await query;
       if (!error && data) setVendas(data as any);
       setLoadingVendas(false);
     })();
-  }, [user, isAdmin]);
+  }, [user]);
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
