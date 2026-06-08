@@ -36,7 +36,7 @@ import { DndContext, closestCenter, type DragEndEvent, PointerSensor, TouchSenso
 import { SortableContext, rectSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 
 interface Props {
-  contexto?: 'direcao' | 'logistica';
+  contexto?: 'direcao' | 'logistica' | 'home';
 }
 
 const STATUS_OPTIONS = [
