@@ -417,6 +417,20 @@ export default function AcordosMesAutorizados() {
                                 <TableCell className="text-white/60 max-w-[200px] truncate" title={acordo.observacoes || ''}>
                                   {acordo.observacoes || '—'}
                                 </TableCell>
+                                <TableCell className="text-center">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-7 w-7 p-0 hover:bg-white/10"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setHistoricoDialog({ acordoId: acordo.id, clienteNome: acordo.cliente_nome });
+                                    }}
+                                    title="Ver histórico"
+                                  >
+                                    <History className="h-4 w-4 text-blue-400/80" />
+                                  </Button>
+                                </TableCell>
                                 {(contexto === 'direcao' || contexto === 'home') && (
                                   <TableCell className="text-center">
                                     {acordo.aprovado_direcao ? (
