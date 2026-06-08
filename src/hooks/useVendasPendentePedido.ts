@@ -25,6 +25,7 @@ export interface VendaPendentePedido {
   cidade: string | null;
   estado: string | null;
   valor_a_receber_entrega: number | null;
+  valor_entrada: number;
   venda_presencial?: boolean | null;
   cores: Array<{ nome: string; codigo_hex: string }>;
   portas_info: Array<{ tamanho: 'P' | 'G'; largura: number; altura: number; area: number }>;
@@ -59,6 +60,7 @@ export const useVendasPendentePedido = () => {
           pagamento_na_entrega,
           pago_na_instalacao,
           valor_a_receber,
+          valor_entrada,
           cidade,
           estado,
           venda_presencial,
@@ -268,6 +270,7 @@ export const useVendasPendentePedido = () => {
             cidade: v.cidade || null,
             estado: v.estado || null,
             valor_a_receber_entrega: valorAReceberEntrega,
+            valor_entrada: Number(v.valor_entrada) || 0,
             venda_presencial: v.venda_presencial ?? null,
             cores: Array.from(coresUnicas.values()),
             portas_info: portasInfo,
