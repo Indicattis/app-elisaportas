@@ -728,6 +728,13 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
           </AlertDialog>
         </>
       )}
+      <ConfirmarPagamentoAcordoDialog
+        open={!!pagamentoDialog}
+        onOpenChange={(open) => { if (!open) setPagamentoDialog(null); }}
+        clienteNome={pagamentoDialog?.clienteNome}
+        valor={pagamentoDialog?.valor}
+        onConfirm={confirmarPagamento}
+      />
     </MinimalistLayout>
   );
 }
