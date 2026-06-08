@@ -1865,7 +1865,7 @@ function SetorGroupMensal({
                   <td className="px-2 text-right text-xs tabular-nums">{desativado ? zeroCurr : <span className="text-orange-400">{formatCurrency(prev13)}</span>}</td>
                   <td className="px-2 text-right text-xs tabular-nums">{desativado ? zeroCurr : <span className="text-orange-400">{formatCurrency(fgts13)}</span>}</td>
                   <td className="px-2 text-right text-xs tabular-nums">{desativado ? zeroCurr : <span className="text-orange-400">{formatCurrency(ferias)}</span>}</td>
-                  <td className="px-2 text-right text-xs tabular-nums">{desativado ? zeroCurr : <span className="text-orange-400">{formatCurrency(multaFgts)}</span>}</td>
+                  <td className="px-2 text-right text-xs tabular-nums">{desativado ? zeroCurr : <span className="text-red-400">{formatCurrency(multaFgts)}</span>}</td>
                   <td className="px-2 text-right text-white font-semibold tabular-nums">{formatCurrency(total)}</td>
                   <td className={`px-2 text-right font-medium tabular-nums ${pago === 0 ? 'text-white/40' : overspent ? 'text-orange-300' : 'text-white'}`}>
                     {pago > 0 ? formatCurrency(pago) : '—'}
