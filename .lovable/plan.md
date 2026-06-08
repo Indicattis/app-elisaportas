@@ -1,36 +1,34 @@
 ## Objetivo
 
-Adicionar uma nova tabela chamada **"Despesa projetada"** ao lado das tabelas existentes (Fixas, Variáveis, Impostos), tanto em:
-- `/direcao/estrategia/despesas/configuracoes`
-- `/direcao/estrategia/despesas/2026-05` (e demais meses)
-
-Comportamento idêntico às outras tabelas de tipos de custos: CRUD, override por mês, aparece no resumo, exportação, etc.
+Adicionar 3 indicadores de saldo (Conta, Espécie, Cheque) + Total em `/financeiro/gastos`, com edição de "Saldo em espécie" e "Saldo em cheque" diretamente nessa página. "Saldo em conta" fica somente leitura ali e é editável apenas em `/direcao/caixa-elisa` por meio de um novo botão.
 
 ## Mudanças
 
-### 1. Banco de dados (migration)
-Atualizar o `CHECK` da coluna `tipos_custos.tipo` para aceitar o novo valor `'projetada'`:
-- Drop do constraint `tipos_custos_tipo_check`
-- Recriar permitindo `'fixa' | 'variavel' | 'imposto' | 'projetada'`
+### 1. Banco (migration)
+Adicionar à tabela singleton `caixa_elisa_config` três colunas numéricas com default 0:
+- `saldo_conta numeric NOT NULL DEFAULT 0`
+- `saldo_especie numeric NOT NULL DEFAULT 0`
+- `saldo_cheque numeric NOT NULL DEFAULT 0`
 
-Nenhuma alteração de schema adicional — a estrutura existente já suporta o novo tipo (incluindo `useTiposCustosMes`, override por mês e contagem de gastos).
+(Reaproveita a linha `id = 'singleton'` já existente e respeita as RLS atuais.)
 
-### 2. Frontend — `EstrategiaDespesasConfiguracoes.tsx`
-- Filtrar `tiposProjetadas = tiposCustos.filter(t => t.tipo === 'projetada')`
-- Adicionar 4º `<TiposCustoBlock>` com:
-  - `titulo="Tipos de Custos — Despesa projetada"`
-  - `icon={<TrendingUp />}` (ou similar)
-  - `tipo="projetada"`
-  - Demais props idênticas aos outros blocos
+### 2. `/financeiro/gastos` — `src/pages/administrativo/GastosPage.tsx`
+- Buscar/observar o registro `caixa_elisa_config` via React Query.
+- Renderizar, acima da tabela de gastos, um grid de 4 cards (estilo glassmorphism):
+  - **Saldo em conta** — somente leitura, com cadeado/ícone indicando que só é editável em `/direcao/caixa-elisa` (tooltip).
+  - **Saldo em espécie** — botão lápis abre dialog para editar e salvar via `upsert` em `caixa_elisa_config`.
+  - **Saldo em cheque** — idem.
+  - **Total** — soma dos três, sem edição.
+- Invalidar query após salvar; toasts de sucesso/erro.
 
-### 3. Tipagens (`useTiposCustos` / `useTiposCustosMes` / `TipoCustoBlock`)
-- Ampliar a união `'fixa' | 'variavel' | 'imposto'` para incluir `'projetada'` onde aparecer (props do bloco, formulários internos, selects de "mover para outro tipo" na exclusão, etc.).
-- Garantir que o select de tipo no formulário interno do `TipoCustoBlock` (se exibir tipos) inclua a nova opção; caso o formulário use o `tipo` fixo via prop, nenhuma mudança extra é necessária.
+### 3. `/direcao/caixa-elisa` — `src/pages/direcao/CaixaElisaDirecao.tsx`
+- Adicionar novo botão "Saldo em conta" no menu (mesmo estilo dos demais) que abre um dialog inline (ou navega para uma página dedicada).
+- Implementação proposta: abrir um dialog no próprio Hub para editar `saldo_conta` em `caixa_elisa_config` (mesmo padrão do dialog de Capital de Giro em `CapitalGiroPage`).
 
-### 4. Itens NÃO afetados
-- DRE e demais consumidores de `tipos_custos` continuam funcionando normalmente — a flag `aparece_no_dre` já controla a visibilidade.
-- Página `/direcao/estrategia/despesas/{mes}` exibe a nova tabela automaticamente, pois compartilha `DespesasGridContent`.
+### 4. Restrições
+- Em `/financeiro/gastos` o card "Saldo em conta" não tem ação de edição.
+- Apenas os campos `saldo_especie` e `saldo_cheque` são atualizados a partir dali; `saldo_conta` é atualizado somente a partir de `/direcao/caixa-elisa`.
 
-## Pergunta aberta
-
-O novo tipo deve aparecer no DRE por padrão (`aparece_no_dre = true`) como as outras, ou já vir desmarcado? Vou assumir o padrão atual (`true`, controlável por linha) salvo orientação em contrário.
+## Pontos não alterados
+- Capital de Giro e obrigações em `caixa-elisa/capital-giro` permanecem como estão.
+- RLS, tipos de custos, gastos e demais áreas seguem intactos.
