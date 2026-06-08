@@ -24,6 +24,7 @@ import { Label } from '@/components/ui/label';
 import { exportFolhaSalarialPDF } from '@/utils/folhaSalarialPDFGenerator';
 import { exportTiposCustosPDF } from '@/utils/tiposCustosPDFGenerator';
 import { useSetores, getSetorPalette } from '@/hooks/useSetores';
+import { useDespesasSecaoTeto } from '@/hooks/useDespesasSecaoTeto';
 
 import {
   DndContext,
@@ -121,6 +122,7 @@ export function DespesasGridContent({
             readOnly={readOnly}
             clearOverride={folhaClearOverride}
             hasOverride={folhaHasOverride}
+            mesReferencia={mesReferencia ?? null}
           />
           <TiposCustoBlock
             titulo="Despesa projetada"
