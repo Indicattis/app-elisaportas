@@ -13,7 +13,7 @@ import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { useAcordosAutorizados, type AcordoAutorizado, type NovoAcordo } from '@/hooks/useAcordosAutorizados';
 import { NovoAcordoDialog } from '@/components/autorizados/NovoAcordoDialog';
 import { formatCurrency } from '@/lib/utils';
-import { criarGastoAcordoAutorizado, removerGastoAcordoAutorizado } from '@/lib/gastoAcordoAutorizado';
+import { criarGastoAcordoAutorizado } from '@/lib/gastoAcordoAutorizado';
 import { ConfirmarPagamentoAcordoDialog } from '@/components/autorizados/ConfirmarPagamentoAcordoDialog';
 import { HistoricoAcordoDialog } from '@/components/autorizados/HistoricoAcordoDialog';
 import { format } from 'date-fns';
