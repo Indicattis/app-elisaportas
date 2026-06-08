@@ -443,6 +443,11 @@ export default function AcordosMesAutorizados() {
                                       <DollarSign className="h-3 w-3" />
                                       Pago
                                     </Badge>
+                                  ) : (acordo.valor_pago ?? 0) > 0 ? (
+                                    <Badge variant="outline" className="bg-amber-500/15 text-amber-300 border-amber-500/30 gap-1" title={`${formatCurrency(acordo.valor_pago)} de ${formatCurrency(acordo.valor_acordado)}`}>
+                                      <DollarSign className="h-3 w-3" />
+                                      Parcial · {formatCurrency(acordo.valor_pago)}
+                                    </Badge>
                                   ) : (
                                     <Badge variant="outline" className="bg-white/5 text-white/40 border-white/10">
                                       Pendente
@@ -522,7 +527,11 @@ export default function AcordosMesAutorizados() {
                                         >
                                           <DollarSign className="h-4 w-4 mr-2 text-green-400" />
                                           <span className="text-green-400">
-                                            {acordo.pago ? 'Pago — não reversível' : 'Marcar como Pago'}
+                                            {acordo.pago
+                                              ? 'Pago — não reversível'
+                                              : (acordo.valor_pago ?? 0) > 0
+                                                ? 'Continuar pagamento'
+                                                : 'Registrar pagamento'}
                                           </span>
                                         </DropdownMenuItem>
                                         <DropdownMenuItem className="text-red-400 hover:bg-red-500/20 cursor-pointer" onClick={() => setAcordoParaDeletar(acordo)}>
