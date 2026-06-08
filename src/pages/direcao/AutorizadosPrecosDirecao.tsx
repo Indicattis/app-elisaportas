@@ -361,9 +361,9 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
                 </div>
               </div>
               {estados.length === 0 ? (
-                <div className="text-center py-8 bg-primary/5 rounded-lg border border-primary/10">
+                <div className="text-center py-8 bg-white/5 backdrop-blur-xl rounded-lg border border-white/10">
                   <p className="text-white/60 mb-4">Nenhum estado cadastrado</p>
-                  <Button onClick={() => setNovoEstadoOpen(true)} variant="outline" className="bg-primary/10 border-primary/20">
+                  <Button onClick={() => setNovoEstadoOpen(true)} variant="outline" className="bg-white/5 border-white/10 hover:bg-white/10 text-white">
                     <Plus className="h-4 w-4 mr-1" />
                     Cadastrar Estado
                   </Button>
@@ -388,7 +388,7 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
           )}
 
           {/* Separador */}
-          <div className="border-t border-blue-500/10" />
+          <div className="border-t border-white/10" />
 
               {/* Seção Acordos - Grid de Meses */}
               <div>
@@ -436,7 +436,7 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
                             mesAtual
                               ? 'bg-blue-500/10 border-blue-400/30 shadow-lg shadow-blue-500/10'
                               : total > 0
-                                ? 'bg-white/5 border-blue-500/10 hover:bg-white/10'
+                                ? 'bg-white/5 border-white/10 hover:bg-white/10'
                                 : 'bg-white/[0.02] border-white/5 hover:bg-white/5'
                           }`}
                         >
@@ -503,12 +503,12 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
                 <p className="text-white/60">Nenhum acordo encontrado neste mês</p>
               </div>
             ) : (
-              <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl">
+              <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
                 <CardContent className="p-0">
                   <div className="overflow-x-auto">
                     <Table className="text-xs">
                       <TableHeader>
-                        <TableRow className="border-blue-500/10 hover:bg-white/5">
+                        <TableRow className="border-white/10 hover:bg-white/5">
                           <TableHead className="text-xs text-white/70 text-center">Portas</TableHead>
                           <TableHead className="text-xs text-white/70 text-center">Medidas</TableHead>
                           <TableHead className="text-xs text-white/70">Autorizado</TableHead>
@@ -535,7 +535,7 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
                           return (
                           <Tooltip key={acordo.id}>
                             <TooltipTrigger asChild>
-                              <TableRow className="border-blue-500/10 hover:bg-white/5 text-white/90 cursor-default">
+                              <TableRow className="border-white/10 hover:bg-white/5 text-white/90 cursor-default">
                                 <TableCell className="text-center">
                                   <div className="flex items-center justify-center gap-1">
                                     {getResumoPortasBadges(acordo)}
