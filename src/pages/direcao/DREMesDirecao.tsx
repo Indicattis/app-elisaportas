@@ -1988,6 +1988,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         despesasFornecedores={despesasFornecedores}
         despesasFinanciamentos={despesasFinanciamentos}
         despesasFretes={despesasFretes}
+        despesasAutorizados={despesasAutorizados}
         tiposCustosVariaveis={tiposCustosVariaveis}
         tiposCustosFixos={tiposCustosFixos}
         tiposCustosImpostos={tiposCustosImpostos}
@@ -1995,6 +1996,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         tiposCustosFornecedores={tiposCustosFornecedores}
         tiposCustosFinanciamentos={tiposCustosFinanciamentos}
         tiposCustosFretes={tiposCustosFretes}
+        tiposCustosAutorizados={tiposCustosAutorizados}
         totalDespFixas={totalDespFixas}
         totalDespFolha={totalDespFolha}
         totalDespVariaveis={totalDespVariaveis}
@@ -2003,6 +2005,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         totalDespFornecedores={totalDespFornecedores}
         totalDespFinanciamentos={totalDespFinanciamentos}
         totalDespFretes={totalDespFretes}
+        totalDespAutorizados={totalDespAutorizados}
         totalProjetadoAnual={totalProjetadoAnual}
         topAvulsos={topAvulsos}
         estoqueResumo={estoqueResumo}
