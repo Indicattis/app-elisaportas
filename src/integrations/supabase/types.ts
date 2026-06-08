@@ -2260,6 +2260,27 @@ export type Database = {
         }
         Relationships: []
       }
+      despesas_categoria_dre_config: {
+        Row: {
+          categoria: string
+          created_at: string
+          debita_dre: boolean
+          updated_at: string
+        }
+        Insert: {
+          categoria: string
+          created_at?: string
+          debita_dre?: boolean
+          updated_at?: string
+        }
+        Update: {
+          categoria?: string
+          created_at?: string
+          debita_dre?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       despesas_manuais_folha: {
         Row: {
           admin_user_id: string
