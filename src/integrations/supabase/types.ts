@@ -140,6 +140,7 @@ export type Database = {
           pago: boolean
           pago_em: string | null
           pago_por: string | null
+          pedido_id: string | null
           quantidade_portas: number
           reprovado_direcao: boolean | null
           status: string
@@ -163,6 +164,7 @@ export type Database = {
           pago?: boolean
           pago_em?: string | null
           pago_por?: string | null
+          pedido_id?: string | null
           quantidade_portas?: number
           reprovado_direcao?: boolean | null
           status?: string
@@ -186,6 +188,7 @@ export type Database = {
           pago?: boolean
           pago_em?: string | null
           pago_por?: string | null
+          pedido_id?: string | null
           quantidade_portas?: number
           reprovado_direcao?: boolean | null
           status?: string
@@ -199,6 +202,20 @@ export type Database = {
             columns: ["autorizado_id"]
             isOneToOne: false
             referencedRelation: "autorizados"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acordos_instalacao_autorizados_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_backlog_ativo"
+            referencedColumns: ["pedido_id"]
+          },
+          {
+            foreignKeyName: "acordos_instalacao_autorizados_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_producao"
             referencedColumns: ["id"]
           },
         ]

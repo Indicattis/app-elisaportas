@@ -1,0 +1,2 @@
+ALTER TABLE public.acordos_instalacao_autorizados ADD COLUMN IF NOT EXISTS pedido_id uuid REFERENCES public.pedidos_producao(id) ON DELETE SET NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS acordos_instalacao_autorizados_pedido_id_unique ON public.acordos_instalacao_autorizados(pedido_id) WHERE pedido_id IS NOT NULL;

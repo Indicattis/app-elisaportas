@@ -97,6 +97,9 @@ export function NovoAcordoDialog({
     if (!clienteNome || !clienteCidade || !clienteEstado || !autorizadoId) {
       return;
     }
+    if (!acordoParaEditar && !pedidoVinculado?.id) {
+      return;
+    }
 
     setSaving(true);
     try {
@@ -114,7 +117,8 @@ export function NovoAcordoDialog({
           valor_unitario: autorizadoSelecionado?.precos[portaTamanho] || 0,
           largura: portaLargura ? parseFloat(portaLargura) : undefined,
           altura: portaAltura ? parseFloat(portaAltura) : undefined,
-        }]
+        }],
+        pedido_id: pedidoVinculado?.id || null,
       };
 
       await onSave(novoAcordo);
@@ -128,7 +132,7 @@ export function NovoAcordoDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg bg-zinc-900 border-zinc-700 text-white max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl bg-zinc-900 border-zinc-700 text-white max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {acordoParaEditar ? 'Editar Acordo' : 'Novo Acordo de Instalação'}
@@ -140,18 +144,21 @@ export function NovoAcordoDialog({
 
         <div className="space-y-4 py-4">
           {/* Vincular a pedido */}
-          <SeletorPedidoExistente
-            pedidoSelecionado={pedidoVinculado}
-            onSelect={(p) => {
-              if (!p.id) {
-                setPedidoVinculado(null);
-                return;
-              }
-              setPedidoVinculado(p);
-              if (p.cliente_nome) setClienteNome(p.cliente_nome);
-            }}
-          />
+          {!acordoParaEditar && (
+            <SeletorPedidoExistente
+              pedidoSelecionado={pedidoVinculado}
+              onSelect={(p) => {
+                if (!p.id) {
+                  setPedidoVinculado(null);
+                  return;
+                }
+                setPedidoVinculado(p);
+                if (p.cliente_nome) setClienteNome(p.cliente_nome);
+              }}
+            />
+          )}
 
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Cliente */}
           <div className="space-y-3">
             <Label className="text-sm font-medium text-white/70">CLIENTE</Label>
@@ -272,7 +279,7 @@ export function NovoAcordoDialog({
           </div>
 
           {/* Observações */}
-          <div className="space-y-2">
+          <div className="space-y-2 md:col-span-2">
             <Label className="text-sm font-medium text-white/70">OBSERVAÇÕES (opcional)</Label>
             <Textarea
               placeholder="Observações sobre o acordo..."
@@ -281,6 +288,7 @@ export function NovoAcordoDialog({
               className="bg-zinc-800 border-zinc-700 text-white resize-none"
               rows={3}
             />
+          </div>
           </div>
         </div>
 
@@ -294,7 +302,7 @@ export function NovoAcordoDialog({
           </Button>
           <Button
             onClick={handleSave}
-            disabled={saving || !clienteNome || !clienteCidade || !clienteEstado || !autorizadoId}
+            disabled={saving || !clienteNome || !clienteCidade || !clienteEstado || !autorizadoId || (!acordoParaEditar && !pedidoVinculado?.id)}
             className="bg-primary hover:bg-primary/90"
           >
             {saving ? 'Salvando...' : acordoParaEditar ? 'Salvar Alterações' : 'Salvar Acordo'}

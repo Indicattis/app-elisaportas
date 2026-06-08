@@ -37,6 +37,7 @@ interface Props {
 
 export function SeletorPedidoExistente({ onSelect, pedidoSelecionado }: Props) {
   const [pedidos, setPedidos] = useState<PedidoSelecionado[]>([]);
+  const [pedidosComAcordo, setPedidosComAcordo] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [etapa, setEtapa] = useState('todas');
   const [busca, setBusca] = useState('');
@@ -44,22 +45,34 @@ export function SeletorPedidoExistente({ onSelect, pedidoSelecionado }: Props) {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    supabase
-      .from('pedidos_producao')
-      .select('id, numero_pedido, cliente_nome, etapa_atual')
-      .order('numero_pedido', { ascending: false })
-      .limit(500)
-      .then(({ data, error }) => {
-        if (cancelled) return;
-        if (!error && data) setPedidos(data as any);
-        setLoading(false);
-      });
+    Promise.all([
+      supabase
+        .from('pedidos_producao')
+        .select('id, numero_pedido, cliente_nome, etapa_atual')
+        .order('numero_pedido', { ascending: false })
+        .limit(500),
+      supabase
+        .from('acordos_instalacao_autorizados')
+        .select('pedido_id' as any)
+        .not('pedido_id' as any, 'is', null),
+    ]).then(([pedidosRes, acordosRes]) => {
+      if (cancelled) return;
+      if (!pedidosRes.error && pedidosRes.data) setPedidos(pedidosRes.data as any);
+      const ids = new Set<string>(
+        ((acordosRes.data as any[]) || [])
+          .map((a) => a.pedido_id)
+          .filter(Boolean)
+      );
+      setPedidosComAcordo(ids);
+      setLoading(false);
+    });
     return () => { cancelled = true; };
   }, []);
 
   const filtrados = useMemo(() => {
     const termo = busca.trim().toLowerCase();
     return pedidos.filter(p => {
+      if (pedidosComAcordo.has(p.id)) return false;
       if (etapa !== 'todas' && p.etapa_atual !== etapa) return false;
       if (!termo) return true;
       return (
@@ -67,11 +80,11 @@ export function SeletorPedidoExistente({ onSelect, pedidoSelecionado }: Props) {
         (p.cliente_nome || '').toLowerCase().includes(termo)
       );
     }).slice(0, 100);
-  }, [pedidos, etapa, busca]);
+  }, [pedidos, etapa, busca, pedidosComAcordo]);
 
   return (
     <div className="space-y-2 p-3 rounded-lg bg-white/5 border border-white/10">
-      <Label className="text-sm font-medium text-white/70">VINCULAR A PEDIDO (opcional)</Label>
+      <Label className="text-sm font-medium text-white/70">VINCULAR A PEDIDO <span className="text-red-400">*</span></Label>
 
       <div className="grid grid-cols-1 sm:grid-cols-[1fr_180px] gap-2">
         <div className="relative">
