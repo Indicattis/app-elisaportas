@@ -79,6 +79,7 @@ export function useDespesasPadraoMes(mes: string | null) {
         salario: ov.salario != null ? Number(ov.salario) : it.salario,
         salario_minimo: ov.salario_minimo != null ? Number(ov.salario_minimo) : it.salario_minimo,
         aux_combustivel: ov.aux_combustivel != null ? Number(ov.aux_combustivel) : it.aux_combustivel,
+        bonificacao: ov.bonificacao != null ? Number(ov.bonificacao) : it.bonificacao,
         hora_extra: ov.hora_extra != null ? Number(ov.hora_extra) : it.hora_extra,
         insalubridade_pct: ov.insalubridade_pct != null ? Number(ov.insalubridade_pct) : it.insalubridade_pct,
         fgts_pct: ov.fgts_pct != null ? Number(ov.fgts_pct) : it.fgts_pct,
