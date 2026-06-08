@@ -16,6 +16,7 @@ import { NovoEstadoDialog } from '@/components/autorizados/NovoEstadoDialog';
 import { useAcordosAutorizados, type AcordoAutorizado, type NovoAcordo } from '@/hooks/useAcordosAutorizados';
 import { NovoAcordoDialog } from '@/components/autorizados/NovoAcordoDialog';
 import { formatCurrency } from '@/lib/utils';
+import { criarGastoAcordoAutorizado, removerGastoAcordoAutorizado } from '@/lib/gastoAcordoAutorizado';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -252,13 +253,25 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
         } as any)
         .eq('id', acordoId);
       if (error) throw error;
+      const acordo = acordos.find(a => a.id === acordoId);
+      if (!pagoAtual && acordo) {
+        await criarGastoAcordoAutorizado({
+          acordoId,
+          valor: acordo.valor_acordado,
+          clienteNome: acordo.cliente_nome,
+          autorizadoNome: acordo.autorizado_nome,
+          responsavelId: user?.id,
+        });
+      } else if (pagoAtual) {
+        await removerGastoAcordoAutorizado(acordoId);
+      }
       toast({ title: 'Sucesso', description: !pagoAtual ? 'Acordo marcado como pago' : 'Pagamento desmarcado' });
       await refetch();
     } catch (error: any) {
       console.error('Erro ao atualizar pagamento:', error);
       toast({ title: 'Erro', description: 'Não foi possível atualizar o pagamento', variant: 'destructive' });
     }
-  }, [user?.id, toast, refetch]);
+  }, [user?.id, toast, refetch, acordos]);
 
   const headerActions = (
     <>
