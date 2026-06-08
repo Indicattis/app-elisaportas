@@ -1522,9 +1522,10 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
   const totalDespFornecedores = despesasFornecedores.reduce((acc, d) => acc + (d.valor_real || 0), 0);
   const totalDespFinanciamentos = despesasFinanciamentos.reduce((acc, d) => acc + (d.valor_real || 0), 0);
   const totalDespFretes = despesasFretes.reduce((acc, d) => acc + (d.valor_real || 0), 0);
+  const totalDespAutorizados = despesasAutorizados.reduce((acc, d) => acc + (d.valor_real || 0), 0);
   const totalProjetadoAnual = tiposCustosVariaveis.reduce((acc, t) => acc + (t.valor_maximo_mensal * 12), 0);
 
-  const lucroLiquidoFinal = lucro.total - totalDespFixas - totalDespFolha - totalDespVariaveis - totalDespImpostos - totalDespInvestimentos - totalDespFornecedores - totalDespFinanciamentos - totalDespFretes;
+  const lucroLiquidoFinal = lucro.total - totalDespFixas - totalDespFolha - totalDespVariaveis - totalDespImpostos - totalDespInvestimentos - totalDespFornecedores - totalDespFinanciamentos - totalDespFretes - totalDespAutorizados;
   const percBrutoFinal = faturamento.total > 0 ? (lucro.total / faturamento.total) * 100 : 0;
   const percLiquidFinal = faturamento.total > 0 ? (lucroLiquidoFinal / faturamento.total) * 100 : 0;
 
