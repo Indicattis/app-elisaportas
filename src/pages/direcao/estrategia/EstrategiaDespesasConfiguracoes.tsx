@@ -123,6 +123,26 @@ export function DespesasGridContent({
             hasOverride={folhaHasOverride}
           />
           <TiposCustoBlock
+            titulo="Despesa projetada"
+            icon={<TrendingUp className="w-4 h-4" />}
+            tipo="projetada"
+            items={tiposProjetadas}
+            save={saveTipoCusto}
+            update={updateTipoCusto}
+            remove={deleteTipoCusto}
+            allTipos={tiposCustos}
+            contarGastosVinculados={contarGastosVinculados}
+            realocarEExcluir={realocarEExcluirTipoCusto}
+            forcarExclusao={forcarExclusaoTipoCusto}
+            reorderTipos={reorderTiposCustos}
+            readOnly={readOnly}
+            clearOverride={tipoClearOverride}
+            hasOverride={tipoHasOverride}
+            mesReferencia={mesReferencia ?? null}
+            contagemGastos={contagemGastos}
+            totaisGastos={totaisGastos}
+          />
+          <TiposCustoBlock
             titulo="Tipos de Custos — Fixas"
             icon={<Receipt className="w-4 h-4" />}
             tipo="fixa"
