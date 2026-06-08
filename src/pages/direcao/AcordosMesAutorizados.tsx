@@ -87,6 +87,7 @@ export default function AcordosMesAutorizados() {
   const [acordoParaEditar, setAcordoParaEditar] = useState<AcordoAutorizado | null>(null);
   const [acordoParaDeletar, setAcordoParaDeletar] = useState<AcordoAutorizado | null>(null);
   const [precosMap, setPrecosMap] = useState<Map<string, { P: number; G: number; GG: number }>>(new Map());
+  const [kmPorAutorizado, setKmPorAutorizado] = useState<Map<string, number | null>>(new Map());
   const [approvingId, setApprovingId] = useState<string | null>(null);
   const [rejectingId, setRejectingId] = useState<string | null>(null);
 
@@ -106,6 +107,38 @@ export default function AcordosMesAutorizados() {
         });
         setPrecosMap(map);
       });
+  }, [acordos]);
+
+  useEffect(() => {
+    if (acordos.length === 0) return;
+    const autorizadoIds = [...new Set(acordos.map(a => a.autorizado_id))];
+    (async () => {
+      const { data: autorizadosData } = await supabase
+        .from('autorizados')
+        .select('id, cidade, estado')
+        .in('id', autorizadoIds);
+      if (!autorizadosData || autorizadosData.length === 0) {
+        setKmPorAutorizado(new Map());
+        return;
+      }
+      const cidades = [...new Set(autorizadosData.map(a => a.cidade).filter(Boolean) as string[])];
+      const estados = [...new Set(autorizadosData.map(a => a.estado).filter(Boolean) as string[])];
+      const { data: fretes } = await supabase
+        .from('frete_cidades')
+        .select('cidade, estado, quilometragem')
+        .in('cidade', cidades)
+        .in('estado', estados);
+      const freteMap = new Map<string, number | null>();
+      fretes?.forEach((f) => {
+        freteMap.set(`${f.cidade}|${f.estado}`, f.quilometragem != null ? Number(f.quilometragem) : null);
+      });
+      const map = new Map<string, number | null>();
+      autorizadosData.forEach((a) => {
+        const key = `${a.cidade}|${a.estado}`;
+        map.set(a.id, freteMap.has(key) ? freteMap.get(key)! : null);
+      });
+      setKmPorAutorizado(map);
+    })();
   }, [acordos]);
 
   const acordosDoMes = useMemo(() => {
@@ -359,6 +392,7 @@ export default function AcordosMesAutorizados() {
                       <TableHead className="text-xs text-white/70">Autorizado</TableHead>
                       <TableHead className="text-xs text-white/70">Cliente</TableHead>
                       <TableHead className="text-xs text-white/70">Cidade</TableHead>
+                      <TableHead className="text-xs text-white/70 text-center">Km</TableHead>
                       <TableHead className="text-xs text-white/70 text-center">Data</TableHead>
                       <TableHead className="text-xs text-white/70 text-right">Valor</TableHead>
                       <TableHead className="text-xs text-white/70 text-right">Valor excesso</TableHead>
@@ -378,7 +412,7 @@ export default function AcordosMesAutorizados() {
                     <TooltipProvider>
                       {(() => {
                         const colSpan =
-                          12 +
+                          13 +
                           ((contexto === 'direcao' || contexto === 'home') ? 1 : 0) +
                           ((contexto === 'logistica' || contexto === 'home') ? 1 : 0);
                         return acordosAgrupados.map((grupo, idx) => (
@@ -388,6 +422,10 @@ export default function AcordosMesAutorizados() {
                                 <div className="flex items-center justify-between gap-3">
                                   <span className="text-sm font-semibold text-blue-200">
                                     {grupo.autorizadoNome}
+                                    {(() => {
+                                      const km = kmPorAutorizado.get(grupo.autorizadoId);
+                                      return km != null ? <span className="ml-2 text-xs font-normal text-white/60">· {km} km</span> : null;
+                                    })()}
                                   </span>
                                   <span className="text-xs text-white/70">
                                     {grupo.items.length} acordo{grupo.items.length === 1 ? '' : 's'} ·{' '}
@@ -415,6 +453,12 @@ export default function AcordosMesAutorizados() {
                                 <TableCell className="text-white/70">{acordo.autorizado_nome}</TableCell>
                                 <TableCell><span className="font-medium">{acordo.cliente_nome}</span></TableCell>
                                 <TableCell className="text-white/70">{acordo.cliente_cidade} - {acordo.cliente_estado}</TableCell>
+                                <TableCell className="text-center text-white/70">
+                                  {(() => {
+                                    const km = kmPorAutorizado.get(acordo.autorizado_id);
+                                    return km != null ? `${km} km` : <span className="text-white/40">—</span>;
+                                  })()}
+                                </TableCell>
                                 <TableCell className="text-center text-white/60">
                                   {format(new Date(acordo.data_acordo), 'dd/MM/yy', { locale: ptBR })}
                                 </TableCell>
