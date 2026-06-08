@@ -626,6 +626,7 @@ function FolhaColGroup() {
       <col style={{ width: '110px' }} />
       <col style={{ width: '100px' }} />
       <col style={{ width: '110px' }} />
+      <col style={{ width: '110px' }} />
       <col style={{ width: '120px' }} />
       <col style={{ width: '40px' }} />
     </colgroup>
