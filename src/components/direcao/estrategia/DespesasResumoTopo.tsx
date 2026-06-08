@@ -134,7 +134,7 @@ interface Props {
   onMediaMensalChange?: (media: number) => void;
   onDataChange?: () => void;
   reloadKey?: number;
-  onRequestNovoGasto?: (categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento') => void;
+  onRequestNovoGasto?: (categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' | 'fornecedor') => void;
 }
 
 export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataChange, reloadKey, onRequestNovoGasto }: Props) {
