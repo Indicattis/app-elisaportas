@@ -7264,6 +7264,36 @@ export type Database = {
           },
         ]
       }
+      pintura_trocas_gas: {
+        Row: {
+          created_at: string
+          id: string
+          observacoes: string | null
+          registrado_em: string
+          registrado_por: string | null
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          observacoes?: string | null
+          registrado_em?: string
+          registrado_por?: string | null
+          updated_at?: string
+          valor?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          observacoes?: string | null
+          registrado_em?: string
+          registrado_por?: string | null
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: []
+      }
       pontuacao_colaboradores: {
         Row: {
           created_at: string | null
