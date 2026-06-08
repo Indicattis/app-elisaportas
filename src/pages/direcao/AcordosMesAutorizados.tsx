@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, Fragment } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Search, Edit2, Trash2, MoreHorizontal, Check, X, CheckCircle2, XCircle, CalendarDays, DollarSign, Plus, History } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
