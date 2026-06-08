@@ -873,13 +873,13 @@ function BlocoDespesa({
   icon: React.ReactNode;
   rows: LancRow[];
   loading: boolean;
-  categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada';
+  categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento';
   tipos: TipoCusto[];
   padroes: DespesaPadrao[];
   mesStart: string;
   onDelete: (id: string) => void;
   onInsert: (payload: {
-    tipo: TipoCusto; categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada'; valor: number; data: string; descricao: string;
+    tipo: TipoCusto; categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento'; valor: number; data: string; descricao: string;
   }) => Promise<void>;
   onUpdate: (
     id: string,
@@ -1427,7 +1427,7 @@ function TiposCustoBlockMensal({
 }: {
   titulo: string;
   icon: React.ReactNode;
-  tipo: 'fixa' | 'variavel' | 'imposto' | 'projetada';
+  tipo: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento';
   tiposFull: TipoCustoFull[];
   gastos: GastoAgrupado[];
   loading: boolean;
@@ -1533,7 +1533,7 @@ function CategoriaGroupMensal({
   categorias: CategoriaDespesa[];
   empresasMap: Record<string, string>;
   gastosMap: Record<string, GastoAgrupado>;
-  tipo: 'fixa' | 'variavel' | 'imposto' | 'projetada';
+  tipo: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento';
 }) {
   const [expanded, setExpanded] = useState(true);
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
