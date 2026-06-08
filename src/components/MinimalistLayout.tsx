@@ -153,8 +153,8 @@ export function MinimalistLayout({
         </header>
         
         {/* Conteúdo */}
-        <main className={`flex-1 py-6 overflow-auto ${fullWidth ? "px-4 lg:px-[100px]" : "px-4"}`}>
-          <div className={fullWidth ? "w-full" : "max-w-7xl mx-auto"}>
+        <main className={`flex-1 py-6 overflow-auto ${contentClassName ?? (fullWidth ? "px-4 lg:px-[100px]" : "px-4")}`}>
+          <div className={fullWidth || contentClassName ? "w-full" : "max-w-7xl mx-auto"}>
             {children}
           </div>
         </main>
