@@ -200,8 +200,7 @@ export function SelecionarAcessoriosModal({
                   <TableHead>Produto</TableHead>
                   <TableHead className="w-24">Categoria</TableHead>
                   <TableHead className="text-right w-24">Preço</TableHead>
-                  <TableHead className="text-right w-20">Qtd</TableHead>
-                  <TableHead className="text-right w-24">Tamanho</TableHead>
+                  <TableHead className="text-right w-28">Qtd</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -248,41 +247,33 @@ export function SelecionarAcessoriosModal({
                       </Badge>
                     </TableCell>
                     <TableCell className="py-1 text-right font-semibold text-primary text-sm">
-                      R$ {item.preco.toFixed(2)}
+                      R$ {item.preco.toFixed(2)}{isDecimal ? `/${unidadeLabel}` : ''}
                     </TableCell>
                     <TableCell className="py-1 text-right" onClick={(e) => e.stopPropagation()}>
-                      <Input
-                        type="number"
-                        min={1}
-                        step={1}
-                        value={quantidades[item.id] ?? 1}
-                        disabled={!selected}
-                        onChange={(e) => setQuantidades(prev => ({ ...prev, [item.id]: Math.max(1, parseInt(e.target.value) || 1) }))}
-                        className="h-7 w-16 text-right text-xs px-1.5"
-                      />
-                    </TableCell>
-                    <TableCell className="py-1 text-right" onClick={(e) => e.stopPropagation()}>
-                      {isDecimal ? (
-                        <div className="flex items-center justify-end gap-1">
-                          <Input
-                            type="number"
-                            min={0}
-                            step="0.01"
-                            placeholder={selected ? "obrigatório" : "0,00"}
-                            value={tamanhos[item.id] ?? ''}
-                            disabled={!selected}
-                            onChange={(e) => setTamanhos(prev => ({ ...prev, [item.id]: e.target.value }))}
-                            className={`h-7 w-20 text-right text-xs px-1.5 ${
-                              selected && (!(parseFloat(tamanhos[item.id] || '') > 0))
-                                ? 'border-destructive focus-visible:ring-destructive'
-                                : ''
-                            }`}
-                          />
-                          <span className="text-[10px] text-muted-foreground">{unidadeLabel}</span>
-                        </div>
-                      ) : (
-                        <span className="text-[10px] text-muted-foreground">—</span>
-                      )}
+                      <div className="flex items-center justify-end gap-1">
+                        <Input
+                          type="number"
+                          min={isDecimal ? 0.01 : 1}
+                          step={isDecimal ? 0.01 : 1}
+                          value={quantidades[item.id] ?? (isDecimal ? '' : 1)}
+                          disabled={!selected}
+                          placeholder={isDecimal && selected ? '0,00' : ''}
+                          onChange={(e) => {
+                            const raw = e.target.value;
+                            const parsed = isDecimal ? parseFloat(raw) : parseInt(raw);
+                            setQuantidades(prev => ({
+                              ...prev,
+                              [item.id]: isNaN(parsed) ? 0 : (isDecimal ? parsed : Math.max(1, parsed)),
+                            }));
+                          }}
+                          className={`h-7 w-20 text-right text-xs px-1.5 ${
+                            selected && !((quantidades[item.id] ?? (isDecimal ? 0 : 1)) > 0)
+                              ? 'border-destructive focus-visible:ring-destructive'
+                              : ''
+                          }`}
+                        />
+                        {isDecimal && <span className="text-[10px] text-muted-foreground">{unidadeLabel}</span>}
+                      </div>
                     </TableCell>
                   </TableRow>
                   );
@@ -298,8 +289,8 @@ export function SelecionarAcessoriosModal({
           </Button>
           <Button 
             onClick={handleConfirmar}
-            disabled={itensSelecionados.size === 0 || temItemDecimalSemTamanho}
-            title={temItemDecimalSemTamanho ? 'Informe o tamanho dos itens medidos por metro, kg ou litro' : undefined}
+            disabled={itensSelecionados.size === 0 || temItemSemQuantidade}
+            title={temItemSemQuantidade ? 'Informe a quantidade dos itens selecionados' : undefined}
           >
             Adicionar {itensSelecionados.size > 0 && `(${itensSelecionados.size})`}
           </Button>
