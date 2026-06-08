@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import logoElisa from '@/assets/logo-elisa-dre.png';
+import { useCategoriaDreConfig } from '@/hooks/useCategoriaDreConfig';
 
 interface FaturamentoProduto {
   portas: number;
