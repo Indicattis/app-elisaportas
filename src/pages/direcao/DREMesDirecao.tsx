@@ -1603,7 +1603,6 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
           { label: 'Despesas Fixas', value: formatCurrency(totalDespFixas), color: 'text-red-400' },
           { label: 'Folha Salarial', value: formatCurrency(totalDespFolha), color: 'text-red-400' },
           { label: 'Desp. Variáveis', value: formatCurrency(totalDespVariaveis), color: 'text-red-400' },
-          { label: 'Desp. Imposto', value: formatCurrency(totalDespImpostos), color: 'text-red-400' },
           { label: 'Lucro Líquido', value: formatCurrency(lucroLiquido), color: colorClass(lucroLiquido) },
           { label: '% Lucro Líquido', value: `${percLiquid.toFixed(1)}%`, color: colorClass(percLiquid) },
         ];
