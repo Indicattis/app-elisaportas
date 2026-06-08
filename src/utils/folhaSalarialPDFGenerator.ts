@@ -22,8 +22,9 @@ function calcFeriasDefault(base: number) {
 function calcTotalFolha(f: DespesaPadrao) {
   const salario = Number(f.salario) || 0;
   const horaExtra = Number((f as any).hora_extra) || 0;
+  const bonif = Number((f as any).bonificacao) || 0;
   const base = salario + horaExtra;
-  if (f.em_folha === false) return base;
+  if (f.em_folha === false) return base + bonif;
   const baseInsalub = Number(f.salario_minimo) || salario;
   const aux = Number(f.aux_combustivel) || 0;
   const insalub = baseInsalub * (Number(f.insalubridade_pct) || 0) / 100;
@@ -32,7 +33,7 @@ function calcTotalFolha(f: DespesaPadrao) {
   const prev13 = base / 12;
   const fgts13 = fgts / 12;
   const multaFgts = fgts * 0.4;
-  return base + aux + insalub + fgts + prev13 + fgts13 + ferias + multaFgts;
+  return base + aux + bonif + insalub + fgts + prev13 + fgts13 + ferias + multaFgts;
 }
 
 export function exportFolhaSalarialPDF(
@@ -87,7 +88,7 @@ export function exportFolhaSalarialPDF(
   y += 14;
 
   const head = [[
-    'Colaborador', 'Em folha', 'Salário', 'Sal. Mín.', 'Comb.', 'H. Extra',
+    'Colaborador', 'Em folha', 'Salário', 'Sal. Mín.', 'Comb.', 'Bonif.', 'H. Extra',
     'Insalub.', 'FGTS', 'Prev. 13°', 'FGTS 13°', 'Férias', 'Multa FGTS', 'Total',
   ]];
 
@@ -97,14 +98,15 @@ export function exportFolhaSalarialPDF(
     2: { cellWidth: 15, halign: 'right' },
     3: { cellWidth: 15, halign: 'right' },
     4: { cellWidth: 13, halign: 'right' },
-    5: { cellWidth: 14, halign: 'right' },
+    5: { cellWidth: 13, halign: 'right' },
     6: { cellWidth: 14, halign: 'right' },
     7: { cellWidth: 14, halign: 'right' },
     8: { cellWidth: 14, halign: 'right' },
     9: { cellWidth: 14, halign: 'right' },
     10: { cellWidth: 14, halign: 'right' },
     11: { cellWidth: 14, halign: 'right' },
-    12: { cellWidth: 16, halign: 'right' },
+    12: { cellWidth: 14, halign: 'right' },
+    13: { cellWidth: 16, halign: 'right' },
   };
 
   let totalSalarios = 0;
@@ -138,6 +140,7 @@ export function exportFolhaSalarialPDF(
         : (i.ferias_valor == null ? calcFeriasDefault(base) : Number(i.ferias_valor) || 0);
       const multaFgts = desativado ? 0 : fgtsVal * 0.4;
       const aux = desativado ? 0 : (Number(i.aux_combustivel) || 0);
+      const bonif = desativado ? 0 : (Number((i as any).bonificacao) || 0);
       const total = calcTotalFolha(i);
       totalSalarios += salario;
       totalFolha += total;
@@ -148,6 +151,7 @@ export function exportFolhaSalarialPDF(
         fmt(salario),
         fmt(salarioMin),
         fmt(aux),
+        fmt(bonif),
         fmt(horaExtra),
         fmt(insalubVal),
         fmt(fgtsVal),
@@ -160,7 +164,7 @@ export function exportFolhaSalarialPDF(
     });
 
     body.push([
-      { content: 'Subtotal do setor', colSpan: 12, styles: { halign: 'right', fontStyle: 'bold', fillColor: [240, 240, 240] } } as any,
+      { content: 'Subtotal do setor', colSpan: 13, styles: { halign: 'right', fontStyle: 'bold', fillColor: [240, 240, 240] } } as any,
       { content: fmt(subtotal), styles: { halign: 'right', fontStyle: 'bold', fillColor: [240, 240, 240] } } as any,
     ]);
 

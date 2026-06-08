@@ -2340,6 +2340,7 @@ export type Database = {
       despesas_mes_folha_override: {
         Row: {
           aux_combustivel: number | null
+          bonificacao: number | null
           created_at: string
           created_by: string | null
           despesa_padrao_id: string
@@ -2357,6 +2358,7 @@ export type Database = {
         }
         Insert: {
           aux_combustivel?: number | null
+          bonificacao?: number | null
           created_at?: string
           created_by?: string | null
           despesa_padrao_id: string
@@ -2374,6 +2376,7 @@ export type Database = {
         }
         Update: {
           aux_combustivel?: number | null
+          bonificacao?: number | null
           created_at?: string
           created_by?: string | null
           despesa_padrao_id?: string
@@ -2464,6 +2467,7 @@ export type Database = {
       despesas_padrao: {
         Row: {
           aux_combustivel: number
+          bonificacao: number
           created_at: string
           created_by: string | null
           em_folha: boolean
@@ -2484,6 +2488,7 @@ export type Database = {
         }
         Insert: {
           aux_combustivel?: number
+          bonificacao?: number
           created_at?: string
           created_by?: string | null
           em_folha?: boolean
@@ -2504,6 +2509,7 @@ export type Database = {
         }
         Update: {
           aux_combustivel?: number
+          bonificacao?: number
           created_at?: string
           created_by?: string | null
           em_folha?: boolean

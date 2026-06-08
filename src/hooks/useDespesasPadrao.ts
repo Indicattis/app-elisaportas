@@ -12,6 +12,7 @@ export interface DespesaPadrao {
   salario: number;
   salario_minimo: number;
   aux_combustivel: number;
+  bonificacao: number;
   hora_extra: number;
   insalubridade_pct: number;
   fgts_pct: number;
@@ -45,6 +46,7 @@ export function useDespesasPadrao() {
         salario: Number(x.salario) || 0,
         salario_minimo: x.salario_minimo == null ? 1518 : Number(x.salario_minimo) || 0,
         aux_combustivel: Number(x.aux_combustivel) || 0,
+        bonificacao: Number(x.bonificacao) || 0,
         hora_extra: Number(x.hora_extra) || 0,
         insalubridade_pct: Number(x.insalubridade_pct) || 0,
         fgts_pct: Number(x.fgts_pct) || 0,
@@ -69,6 +71,7 @@ export function useDespesasPadrao() {
       salario: payload.salario ?? 0,
       salario_minimo: payload.salario_minimo ?? 1518,
       aux_combustivel: payload.aux_combustivel ?? 0,
+      bonificacao: payload.bonificacao ?? 0,
       hora_extra: payload.hora_extra ?? 0,
       insalubridade_pct: payload.insalubridade_pct ?? 0,
       fgts_pct: payload.fgts_pct ?? 8,

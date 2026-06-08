@@ -18,6 +18,7 @@ const OVERRIDE_FIELDS = [
   'salario',
   'salario_minimo',
   'aux_combustivel',
+  'bonificacao',
   'hora_extra',
   'insalubridade_pct',
   'fgts_pct',
@@ -34,6 +35,7 @@ interface FolhaOverrideRow {
   salario: number | null;
   salario_minimo: number | null;
   aux_combustivel: number | null;
+  bonificacao: number | null;
   hora_extra: number | null;
   insalubridade_pct: number | null;
   fgts_pct: number | null;
@@ -77,6 +79,7 @@ export function useDespesasPadraoMes(mes: string | null) {
         salario: ov.salario != null ? Number(ov.salario) : it.salario,
         salario_minimo: ov.salario_minimo != null ? Number(ov.salario_minimo) : it.salario_minimo,
         aux_combustivel: ov.aux_combustivel != null ? Number(ov.aux_combustivel) : it.aux_combustivel,
+        bonificacao: ov.bonificacao != null ? Number(ov.bonificacao) : it.bonificacao,
         hora_extra: ov.hora_extra != null ? Number(ov.hora_extra) : it.hora_extra,
         insalubridade_pct: ov.insalubridade_pct != null ? Number(ov.insalubridade_pct) : it.insalubridade_pct,
         fgts_pct: ov.fgts_pct != null ? Number(ov.fgts_pct) : it.fgts_pct,
@@ -100,7 +103,7 @@ export function useDespesasPadraoMes(mes: string | null) {
       const cur = prev[id] || {
         id: '',
         despesa_padrao_id: id,
-        salario: null, salario_minimo: null, aux_combustivel: null,
+        salario: null, salario_minimo: null, aux_combustivel: null, bonificacao: null,
         hora_extra: null, insalubridade_pct: null, fgts_pct: null, previsao_13_valor: null,
         ferias_valor: null, em_folha: null,
       };
