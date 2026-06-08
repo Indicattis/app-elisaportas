@@ -157,10 +157,10 @@ export function DespesasGridContent({
             totaisGastos={totaisGastos}
           />
           <TiposCustoBlock
-            titulo="Tipos de Custos — Impostos"
-            icon={<Landmark className="w-4 h-4" />}
-            tipo="imposto"
-            items={tiposImpostos}
+            titulo="Despesa projetada"
+            icon={<TrendingUp className="w-4 h-4" />}
+            tipo="projetada"
+            items={tiposProjetadas}
             save={saveTipoCusto}
             update={updateTipoCusto}
             remove={deleteTipoCusto}
@@ -177,10 +177,10 @@ export function DespesasGridContent({
             totaisGastos={totaisGastos}
           />
           <TiposCustoBlock
-            titulo="Despesa projetada"
-            icon={<TrendingUp className="w-4 h-4" />}
-            tipo="projetada"
-            items={tiposProjetadas}
+            titulo="Tipos de Custos — Impostos"
+            icon={<Landmark className="w-4 h-4" />}
+            tipo="imposto"
+            items={tiposImpostos}
             save={saveTipoCusto}
             update={updateTipoCusto}
             remove={deleteTipoCusto}
