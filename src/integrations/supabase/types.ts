@@ -785,18 +785,27 @@ export type Database = {
           capital_giro: number
           created_at: string
           id: string
+          saldo_cheque: number
+          saldo_conta: number
+          saldo_especie: number
           updated_at: string
         }
         Insert: {
           capital_giro?: number
           created_at?: string
           id?: string
+          saldo_cheque?: number
+          saldo_conta?: number
+          saldo_especie?: number
           updated_at?: string
         }
         Update: {
           capital_giro?: number
           created_at?: string
           id?: string
+          saldo_cheque?: number
+          saldo_conta?: number
+          saldo_especie?: number
           updated_at?: string
         }
         Relationships: []
