@@ -115,6 +115,7 @@ export function DespesasGridContent({
             clearOverride={folhaClearOverride}
             hasOverride={folhaHasOverride}
           />
+          <AutorizadosTerceirosBlock mode={mode} mesReferencia={mesReferencia ?? null} />
           <TiposCustoBlock
             titulo="Tipos de Custos — Fixas"
             icon={<Receipt className="w-4 h-4" />}
@@ -195,7 +196,6 @@ export function DespesasGridContent({
             contagemGastos={contagemGastos}
             totaisGastos={totaisGastos}
           />
-          <AutorizadosTerceirosBlock mode={mode} mesReferencia={mesReferencia ?? null} />
         </div>
       );
 }
