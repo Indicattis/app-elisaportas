@@ -437,19 +437,25 @@ function FolhaBlock({
                 <NumCell value={auxComb} onChange={setAuxComb} />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs text-white/70">Insalubridade %</Label>
-                <NumCell value={insalub} onChange={setInsalub} />
+                <Label className="text-xs text-white/70">Hora extra</Label>
+                <NumCell value={horaExtra} onChange={setHoraExtra} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
+                <Label className="text-xs text-white/70">Insalubridade %</Label>
+                <NumCell value={insalub} onChange={setInsalub} />
+              </div>
+              <div className="space-y-1.5">
                 <Label className="text-xs text-white/70">FGTS %</Label>
                 <NumCell value={fgts} onChange={setFgts} />
               </div>
+            </div>
+            <div className="grid grid-cols-1 gap-3">
               <div className="space-y-1.5">
                 <Label className="text-xs text-white/70">Total estimado</Label>
                 <div className="h-9 flex items-center justify-end px-3 bg-white/5 border border-white/10 rounded text-sm text-white/80">
-                  {formatCurrency(calcTotalFolha({ salario, salario_minimo: salarioMin, aux_combustivel: auxComb, insalubridade_pct: insalub, fgts_pct: fgts, previsao_13_valor: prev13, em_folha: emFolha }))}
+                  {formatCurrency(calcTotalFolha({ salario, salario_minimo: salarioMin, aux_combustivel: auxComb, hora_extra: horaExtra, insalubridade_pct: insalub, fgts_pct: fgts, previsao_13_valor: prev13, em_folha: emFolha }))}
                 </div>
               </div>
             </div>
