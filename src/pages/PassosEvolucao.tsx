@@ -111,7 +111,7 @@ export default function PassosEvolucao() {
               <Target className="w-6 h-6 text-amber-300" strokeWidth={1.5} />
             </div>
             <div>
-              <h1 className="text-2xl font-medium text-white">8 Passos Elisa Portas</h1>
+              <h1 className="text-2xl font-medium text-white">10 Passos Elisa Portas</h1>
               <p className="text-white/50 text-sm">Processo de evolução da empresa</p>
             </div>
           </div>
