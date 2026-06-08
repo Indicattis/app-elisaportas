@@ -522,6 +522,7 @@ function PrintReport({
               { l: '(–) Fornecedores', v: formatCurrency(totalDespFornecedores), c: '#b91c1c', b: false },
               { l: '(–) Financiamentos', v: formatCurrency(totalDespFinanciamentos), c: '#b91c1c', b: false },
               { l: '(–) Fretes e Logística', v: formatCurrency(totalDespFretes), c: '#b91c1c', b: false },
+              { l: '(–) Autorizados', v: formatCurrency(totalDespAutorizados), c: '#b91c1c', b: false },
             ].map((r, i) => (
               <tr key={i} style={trZebra(i)}>
                 <td style={{ ...TD, fontWeight: r.b ? 700 : 500 }}>{r.l}</td>
