@@ -134,7 +134,7 @@ interface Props {
   onMediaMensalChange?: (media: number) => void;
   onDataChange?: () => void;
   reloadKey?: number;
-  onRequestNovoGasto?: (categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' | 'fornecedor') => void;
+  onRequestNovoGasto?: (categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento') => void;
 }
 
 export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataChange, reloadKey, onRequestNovoGasto }: Props) {
@@ -257,7 +257,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
             : Promise.resolve(),
         ]);
 
-        const agruparPor = (categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' | 'fornecedor'): GastoAgrupado[] => {
+        const agruparPor = (categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento'): GastoAgrupado[] => {
           const acc = new Map<string, GastoAgrupado>();
           // Seed: todos os tipos da categoria aparecem mesmo sem gastos
           Object.entries(tiposMap).forEach(([id, t]) => {
@@ -307,7 +307,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         setGastosFixas(agruparPor('fixa'));
         setGastosVariaveis(agruparPor('variavel'));
         setGastosImpostos(agruparPor('imposto'));
-        setGastosInvestimentos(agruparPor('investimento' | 'fornecedor'));
+        setGastosInvestimentos(agruparPor('investimento'));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -457,10 +457,10 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         titulo="Investimentos"
         icon={<Briefcase className="w-4 h-4" />}
         tipo="investimento"
-        tiposFull={tiposFull.filter(t => t.tipo === 'investimento' | 'fornecedor')}
+        tiposFull={tiposFull.filter(t => t.tipo === 'investimento')}
         gastos={gastosInvestimentos}
         loading={loading}
-        onAddGasto={onRequestNovoGasto ? () => onRequestNovoGasto('investimento' | 'fornecedor') : undefined}
+        onAddGasto={onRequestNovoGasto ? () => onRequestNovoGasto('investimento') : undefined}
       />
 
       <AlertDialog open={!!confirmDel} onOpenChange={(o) => !o && setConfirmDel(null)}>

@@ -98,7 +98,7 @@ export function DespesasGridContent({
   const tiposVariaveis = tiposCustos.filter(t => t.tipo === 'variavel');
   const tiposImpostos = tiposCustos.filter(t => t.tipo === 'imposto');
   const tiposProjetadas = tiposCustos.filter(t => t.tipo === 'projetada');
-  const tiposInvestimentos = tiposCustos.filter(t => t.tipo === 'investimento' | 'fornecedor');
+  const tiposInvestimentos = tiposCustos.filter(t => t.tipo === 'investimento');
 
   return showSpinner ? (
         <div className="flex items-center justify-center py-20">
@@ -1187,7 +1187,7 @@ function TiposCustoBlock({
                 {destinosPossiveis.length === 0 ? (
                   <div className="px-3 py-2 text-xs text-muted-foreground">Nenhum outro tipo disponível</div>
                 ) : (
-                  (['fixa','variavel','imposto','projetada','investimento' | 'fornecedor'] as const).map(grupo => {
+                  (['fixa','variavel','imposto','projetada','investimento','fornecedor'] as const).map(grupo => {
                     const itensGrupo = destinosPossiveis.filter(t => t.tipo === grupo);
                     if (itensGrupo.length === 0) return null;
                     const label = grupo === 'fixa' ? 'Fixas' : grupo === 'variavel' ? 'Variáveis' : grupo === 'imposto' ? 'Impostos' : grupo === 'projetada' ? 'Projetadas' : 'Investimentos';
