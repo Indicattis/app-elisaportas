@@ -565,6 +565,7 @@ export type Database = {
           tipo_parceiro: Database["public"]["Enums"]["tipo_parceiro"]
           updated_at: string
           vendedor_id: string | null
+          vendedor_responsavel_id: string | null
           whatsapp: string | null
         }
         Insert: {
@@ -600,6 +601,7 @@ export type Database = {
           tipo_parceiro?: Database["public"]["Enums"]["tipo_parceiro"]
           updated_at?: string
           vendedor_id?: string | null
+          vendedor_responsavel_id?: string | null
           whatsapp?: string | null
         }
         Update: {
@@ -635,12 +637,20 @@ export type Database = {
           tipo_parceiro?: Database["public"]["Enums"]["tipo_parceiro"]
           updated_at?: string
           vendedor_id?: string | null
+          vendedor_responsavel_id?: string | null
           whatsapp?: string | null
         }
         Relationships: [
           {
             foreignKeyName: "autorizados_vendedor_id_fkey"
             columns: ["vendedor_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "autorizados_vendedor_responsavel_id_fkey"
+            columns: ["vendedor_responsavel_id"]
             isOneToOne: false
             referencedRelation: "admin_users"
             referencedColumns: ["id"]

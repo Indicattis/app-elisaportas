@@ -30,6 +30,7 @@ interface ParceiroForm {
   ativo: boolean;
   logo_url: string;
   vendedor_id: string;
+  vendedor_responsavel_id: string;
   etapa: string;
 }
 
@@ -55,6 +56,7 @@ export default function EditarAutorizadoDirecao() {
     nome: "", email: "", telefone: "", whatsapp: "",
     responsavel: "", cidade: "", estado: "", cep: "",
     ativo: true, logo_url: "", vendedor_id: "",
+    vendedor_responsavel_id: "",
     etapa: order[0],
   });
 
@@ -117,6 +119,7 @@ export default function EditarAutorizadoDirecao() {
           ativo: data.ativo,
           logo_url: data.logo_url || "",
           vendedor_id: data.vendedor_id || "",
+          vendedor_responsavel_id: (data as any).vendedor_responsavel_id || "",
           etapa: data.etapa || order[0],
         });
 
@@ -248,6 +251,7 @@ export default function EditarAutorizadoDirecao() {
           ativo: form.ativo,
           logo_url: form.logo_url || null,
           vendedor_id: form.vendedor_id,
+          vendedor_responsavel_id: form.vendedor_responsavel_id || null,
           etapa: form.etapa as 'ativo' | 'perdido' | 'premium',
           contrato_url: contratoUrl,
           contrato_nome_arquivo: contratoNome,
@@ -497,6 +501,19 @@ export default function EditarAutorizadoDirecao() {
                         </SelectContent>
                       </Select>
                       {errors.vendedor_id && <p className="text-sm text-red-500">{errors.vendedor_id}</p>}
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-white/80">Vendedor Responsável</Label>
+                      <Select value={form.vendedor_responsavel_id} onValueChange={(value) => setForm({ ...form, vendedor_responsavel_id: value })}>
+                        <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                          <SelectValue placeholder="Selecione o vendedor responsável" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {vendedores.map((v) => (
+                            <SelectItem key={v.id} value={v.id}>{v.nome}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
 

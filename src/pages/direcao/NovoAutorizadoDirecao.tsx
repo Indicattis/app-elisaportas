@@ -26,6 +26,7 @@ interface ParceiroForm {
   ativo: boolean;
   logo_url: string;
   vendedor_id: string;
+  vendedor_responsavel_id: string;
   etapa: string;
 }
 
@@ -49,6 +50,7 @@ export default function NovoAutorizadoDirecao() {
     nome: "", email: "", telefone: "", whatsapp: "",
     responsavel: "", cidade: "", estado: "", cep: "",
     ativo: true, logo_url: "", vendedor_id: "",
+    vendedor_responsavel_id: "",
     etapa: order[0],
   });
 
@@ -176,6 +178,7 @@ export default function NovoAutorizadoDirecao() {
           ativo: form.ativo,
           logo_url: form.logo_url || null,
           vendedor_id: form.vendedor_id,
+          vendedor_responsavel_id: form.vendedor_responsavel_id || null,
           tipo_parceiro: 'autorizado' as const,
           etapa: form.etapa as 'ativo' | 'perdido' | 'premium',
         }])
@@ -307,6 +310,19 @@ export default function NovoAutorizadoDirecao() {
                         </SelectContent>
                       </Select>
                       {errors.vendedor_id && <p className="text-sm text-red-500">{errors.vendedor_id}</p>}
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-white/80">Vendedor Responsável</Label>
+                      <Select value={form.vendedor_responsavel_id} onValueChange={(value) => setForm({ ...form, vendedor_responsavel_id: value })}>
+                        <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                          <SelectValue placeholder="Selecione o vendedor responsável" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {vendedores.map((v) => (
+                            <SelectItem key={v.id} value={v.id}>{v.nome}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
 
