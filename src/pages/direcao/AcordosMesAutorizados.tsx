@@ -374,8 +374,8 @@ export default function AcordosMesAutorizados() {
                           ((contexto === 'direcao' || contexto === 'home') ? 1 : 0) +
                           ((contexto === 'logistica' || contexto === 'home') ? 1 : 0);
                         return acordosAgrupados.map((grupo) => (
-                          <>
-                            <TableRow key={`grupo-${grupo.autorizadoId}`} className="bg-blue-500/10 hover:bg-blue-500/15 border-blue-500/20">
+                          <Fragment key={grupo.autorizadoId}>
+                            <TableRow className="bg-blue-500/10 hover:bg-blue-500/15 border-blue-500/20">
                               <TableCell colSpan={colSpan} className="py-2">
                                 <div className="flex items-center justify-between gap-3">
                                   <span className="text-sm font-semibold text-blue-200">
@@ -552,7 +552,7 @@ export default function AcordosMesAutorizados() {
                           </Tooltip>
                               );
                             })}
-                          </>
+                          </Fragment>
                         ));
                       })()}
                     </TooltipProvider>
