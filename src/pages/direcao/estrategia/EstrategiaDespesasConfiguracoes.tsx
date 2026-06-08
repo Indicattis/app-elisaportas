@@ -653,9 +653,12 @@ function FolhaBlock({
           <span className="text-xs text-white/50 uppercase tracking-wider">Total de salários</span>
           <span className="text-sm font-medium text-white/80">{formatCurrency(totalSalarios)}</span>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-white/50 uppercase tracking-wider">Total da folha</span>
-          <span className="text-base font-bold text-white">{formatCurrency(totalFolha)}</span>
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-white/50 uppercase tracking-wider">Total da folha</span>
+            <span className="text-base font-bold text-white">{formatCurrency(totalFolha)}</span>
+          </div>
+          <TetoIndicator secaoKey="folha" mesReferencia={mesReferencia ?? null} />
         </div>
       </div>
       <GerenciarSetoresDialog open={gerenciarSetoresOpen} onOpenChange={setGerenciarSetoresOpen} />
