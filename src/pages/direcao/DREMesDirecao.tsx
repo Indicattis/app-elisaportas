@@ -1257,11 +1257,13 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
 
         const { data: vendas } = await supabase
           .from('vendas')
-          .select('valor_credito, lucro_instalacao, valor_instalacao')
+          .select('valor_credito, lucro_instalacao, valor_instalacao, valor_frete')
           .gte('data_venda', start + ' 00:00:00')
           .lte('data_venda', end + ' 23:59:59');
 
         const totalCredito = vendas?.reduce((sum, v) => sum + ((v as any).valor_credito || 0), 0) || 0;
+        const totalFretesVendas = vendas?.reduce((sum, v) => sum + ((v as any).valor_frete || 0), 0) || 0;
+        fat.fretes = totalFretesVendas;
 
         fat.total = fat.portas + fat.pintura + fat.instalacoes + fat.avulsos + totalCredito;
         luc.total = luc.portas + luc.pintura + luc.instalacoes + luc.avulsos;
