@@ -27,6 +27,7 @@ const menuItems = [
   { label: 'Metas', icon: Target, path: '/vendas/metas' },
   { label: 'Contratos', icon: FileSignature, path: '/vendas/contratos' },
   { label: 'Tabela de Preços', icon: Tag, path: '/vendas/precos' },
+  { label: 'Regras de Vendas', icon: BookOpen, path: '/vendas/regras' },
 ];
 
 export default function VendasHub() {
