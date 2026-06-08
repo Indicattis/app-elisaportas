@@ -228,7 +228,7 @@ export default function AcordosMesAutorizados() {
     }
   }, [toast, refetch]);
 
-  const [pagamentoDialog, setPagamentoDialog] = useState<{ acordoId: string; clienteNome: string; valor: number } | null>(null);
+  const [pagamentoDialog, setPagamentoDialog] = useState<{ acordoId: string; clienteNome: string; valor: number; valorJaPago: number } | null>(null);
   const [historicoDialog, setHistoricoDialog] = useState<{ acordoId: string; clienteNome: string } | null>(null);
 
   const handleMarcarPago = useCallback(async (acordoId: string, pagoAtual: boolean) => {
@@ -242,32 +242,40 @@ export default function AcordosMesAutorizados() {
     }
     const acordo = acordosDoMes.find(a => a.id === acordoId);
     if (!acordo) return;
-    setPagamentoDialog({ acordoId, clienteNome: acordo.cliente_nome, valor: acordo.valor_acordado });
+    setPagamentoDialog({
+      acordoId,
+      clienteNome: acordo.cliente_nome,
+      valor: acordo.valor_acordado,
+      valorJaPago: acordo.valor_pago ?? 0,
+    });
   }, [acordosDoMes, toast]);
 
-  const confirmarPagamento = useCallback(async (bancoId: string) => {
+  const confirmarPagamento = useCallback(async (bancoId: string, valorPagamento: number) => {
     if (!pagamentoDialog) return;
     const acordo = acordosDoMes.find(a => a.id === pagamentoDialog.acordoId);
     if (!acordo) return;
+    const valorJaPago = acordo.valor_pago ?? 0;
+    const novoTotalPago = +(valorJaPago + valorPagamento).toFixed(2);
+    const quita = novoTotalPago >= acordo.valor_acordado - 0.001;
     try {
       const { error } = await supabase
         .from('acordos_instalacao_autorizados')
         .update({
-          pago: true,
-          pago_em: new Date().toISOString(),
-          pago_por: user?.id,
+          valor_pago: novoTotalPago,
+          ...(quita ? { pago: true, pago_em: new Date().toISOString(), pago_por: user?.id } : {}),
         } as any)
         .eq('id', acordo.id);
       if (error) throw error;
       await criarGastoAcordoAutorizado({
         acordoId: acordo.id,
-        valor: acordo.valor_acordado,
+        valor: valorPagamento,
         clienteNome: acordo.cliente_nome,
         autorizadoNome: acordo.autorizado_nome,
         responsavelId: user?.id,
         bancoId,
+        parcial: !quita,
       });
-      toast({ title: 'Sucesso', description: 'Acordo marcado como pago' });
+      toast({ title: 'Sucesso', description: quita ? 'Acordo quitado' : 'Pagamento parcial registrado' });
       await refetch();
     } catch (error: any) {
       console.error('Erro ao confirmar pagamento:', error);
