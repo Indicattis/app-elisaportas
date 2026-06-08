@@ -84,7 +84,7 @@ export function SeletorPedidoExistente({ onSelect, pedidoSelecionado }: Props) {
 
   return (
     <div className="space-y-2 p-3 rounded-lg bg-white/5 border border-white/10">
-      <Label className="text-sm font-medium text-white/70">VINCULAR A PEDIDO (opcional)</Label>
+      <Label className="text-sm font-medium text-white/70">VINCULAR A PEDIDO <span className="text-red-400">*</span></Label>
 
       <div className="grid grid-cols-1 sm:grid-cols-[1fr_180px] gap-2">
         <div className="relative">
