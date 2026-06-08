@@ -660,7 +660,7 @@ function FolhaBlock({
             <span className="text-xs text-white/50 uppercase tracking-wider">Total da folha</span>
             <span className="text-base font-bold text-white">{formatCurrency(totalFolha)}</span>
           </div>
-          <TetoIndicator secaoKey="folha" mesReferencia={mesReferencia ?? null} />
+          <TetoIndicator secaoKey="folha" mesReferencia={mesReferencia ?? null} totalProjetado={totalFolha} />
         </div>
       </div>
       <GerenciarSetoresDialog open={gerenciarSetoresOpen} onOpenChange={setGerenciarSetoresOpen} />
