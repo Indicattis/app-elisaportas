@@ -917,6 +917,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
   const [despesasFornecedores, setDespesasFornecedores] = useState<DespesaAgrupada[]>([]);
   const [despesasFinanciamentos, setDespesasFinanciamentos] = useState<DespesaAgrupada[]>([]);
   const [despesasFretes, setDespesasFretes] = useState<DespesaAgrupada[]>([]);
+  const [despesasAutorizados, setDespesasAutorizados] = useState<DespesaAgrupada[]>([]);
   const [tipoModal, setTipoModal] = useState<{ id: string; nome: string } | null>(null);
   const [tiposCustosFixos, setTiposCustosFixos] = useState<TipoCustoVariavel[]>([]);
   const [tiposCustosVariaveis, setTiposCustosVariaveis] = useState<TipoCustoVariavel[]>([]);
@@ -925,6 +926,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
   const [tiposCustosFornecedores, setTiposCustosFornecedores] = useState<TipoCustoVariavel[]>([]);
   const [tiposCustosFinanciamentos, setTiposCustosFinanciamentos] = useState<TipoCustoVariavel[]>([]);
   const [tiposCustosFretes, setTiposCustosFretes] = useState<TipoCustoVariavel[]>([]);
+  const [tiposCustosAutorizados, setTiposCustosAutorizados] = useState<TipoCustoVariavel[]>([]);
   const [topAvulsos, setTopAvulsos] = useState<{nome: string, qtd: number}[]>([]);
   const [estoqueResumo, setEstoqueResumo] = useState({ valorTotal: 0, totalItens: 0 });
   const [vendasListagem, setVendasListagem] = useState<{ id: string; data: string; cliente: string; valorTabela: number; valorVenda: number; desconto: number; lucro: number }[]>([]);
@@ -984,6 +986,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
       setDespesasFornecedores([]);
       setDespesasFinanciamentos([]);
       setDespesasFretes([]);
+      setDespesasAutorizados([]);
       setTiposCustosFixos([]);
       setTiposCustosVariaveis([]);
       setTiposCustosImpostos([]);
@@ -991,6 +994,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
       setTiposCustosFornecedores([]);
       setTiposCustosFinanciamentos([]);
       setTiposCustosFretes([]);
+      setTiposCustosAutorizados([]);
     } else {
       // soma de gastos por tipo_custo
       const somaGastos: Record<string, number> = {};
@@ -1026,6 +1030,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
       setDespesasFornecedores(itemsBy('fornecedor'));
       setDespesasFinanciamentos(itemsBy('financiamento'));
       setDespesasFretes(itemsBy('frete'));
+      setDespesasAutorizados(itemsBy('autorizado'));
 
       const tiposBy = (tipoStr: string): TipoCustoVariavel[] =>
         tiposArr
@@ -1045,6 +1050,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
       setTiposCustosFornecedores(tiposBy('fornecedor'));
       setTiposCustosFinanciamentos(tiposBy('financiamento'));
       setTiposCustosFretes(tiposBy('frete'));
+      setTiposCustosAutorizados(tiposBy('autorizado'));
     }
 
     // Folha salarial — mesma fonte de /direcao/estrategia/despesas/:mes
