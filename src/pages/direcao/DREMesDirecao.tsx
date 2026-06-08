@@ -289,17 +289,20 @@ function PrintReport({
   despesasImpostos,
   despesasInvestimentos,
   despesasFornecedores,
+  despesasFinanciamentos,
   tiposCustosFixos,
   tiposCustosVariaveis,
   tiposCustosImpostos,
   tiposCustosInvestimentos,
   tiposCustosFornecedores,
+  tiposCustosFinanciamentos,
   totalDespFixas,
   totalDespFolha,
   totalDespVariaveis,
   totalDespImpostos,
   totalDespInvestimentos,
   totalDespFornecedores,
+  totalDespFinanciamentos,
   totalProjetadoAnual,
   topAvulsos,
   estoqueResumo,
@@ -318,17 +321,20 @@ function PrintReport({
   despesasImpostos: DespesaAgrupada[];
   despesasInvestimentos: DespesaAgrupada[];
   despesasFornecedores: DespesaAgrupada[];
+  despesasFinanciamentos: DespesaAgrupada[];
   tiposCustosFixos: TipoCustoVariavel[];
   tiposCustosVariaveis: TipoCustoVariavel[];
   tiposCustosImpostos: TipoCustoVariavel[];
   tiposCustosInvestimentos: TipoCustoVariavel[];
   tiposCustosFornecedores: TipoCustoVariavel[];
+  tiposCustosFinanciamentos: TipoCustoVariavel[];
   totalDespFixas: number;
   totalDespFolha: number;
   totalDespVariaveis: number;
   totalDespImpostos: number;
   totalDespInvestimentos: number;
   totalDespFornecedores: number;
+  totalDespFinanciamentos: number;
   totalProjetadoAnual: number;
   topAvulsos: { nome: string; qtd: number }[];
   estoqueResumo: { valorTotal: number; totalItens: number };
@@ -502,6 +508,7 @@ function PrintReport({
               { l: '(–) Despesas de Imposto', v: formatCurrency(totalDespImpostos), c: '#b91c1c', b: false },
               { l: '(–) Investimentos', v: formatCurrency(totalDespInvestimentos), c: '#b91c1c', b: false },
               { l: '(–) Fornecedores', v: formatCurrency(totalDespFornecedores), c: '#b91c1c', b: false },
+              { l: '(–) Financiamentos', v: formatCurrency(totalDespFinanciamentos), c: '#b91c1c', b: false },
             ].map((r, i) => (
               <tr key={i} style={trZebra(i)}>
                 <td style={{ ...TD, fontWeight: r.b ? 700 : 500 }}>{r.l}</td>
@@ -611,6 +618,17 @@ function PrintReport({
           total={totalDespFornecedores}
           formatCurrency={formatCurrency}
           tiposDisponiveis={tiposCustosFornecedores}
+        />
+      </div>
+
+      <div className="pdf-page-break" />
+      <div style={{ marginTop: 0 }}>
+        <div style={H2}>9. Financiamentos</div>
+        <PrintDespesaTable
+          items={despesasFinanciamentos}
+          total={totalDespFinanciamentos}
+          formatCurrency={formatCurrency}
+          tiposDisponiveis={tiposCustosFinanciamentos}
         />
       </div>
 
@@ -879,12 +897,14 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
   const [despesasImpostos, setDespesasImpostos] = useState<DespesaAgrupada[]>([]);
   const [despesasInvestimentos, setDespesasInvestimentos] = useState<DespesaAgrupada[]>([]);
   const [despesasFornecedores, setDespesasFornecedores] = useState<DespesaAgrupada[]>([]);
+  const [despesasFinanciamentos, setDespesasFinanciamentos] = useState<DespesaAgrupada[]>([]);
   const [tipoModal, setTipoModal] = useState<{ id: string; nome: string } | null>(null);
   const [tiposCustosFixos, setTiposCustosFixos] = useState<TipoCustoVariavel[]>([]);
   const [tiposCustosVariaveis, setTiposCustosVariaveis] = useState<TipoCustoVariavel[]>([]);
   const [tiposCustosImpostos, setTiposCustosImpostos] = useState<TipoCustoVariavel[]>([]);
   const [tiposCustosInvestimentos, setTiposCustosInvestimentos] = useState<TipoCustoVariavel[]>([]);
   const [tiposCustosFornecedores, setTiposCustosFornecedores] = useState<TipoCustoVariavel[]>([]);
+  const [tiposCustosFinanciamentos, setTiposCustosFinanciamentos] = useState<TipoCustoVariavel[]>([]);
   const [topAvulsos, setTopAvulsos] = useState<{nome: string, qtd: number}[]>([]);
   const [estoqueResumo, setEstoqueResumo] = useState({ valorTotal: 0, totalItens: 0 });
   const [vendasListagem, setVendasListagem] = useState<{ id: string; data: string; cliente: string; valorTabela: number; valorVenda: number; desconto: number; lucro: number }[]>([]);
@@ -941,11 +961,13 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
       setDespesasImpostos([]);
       setDespesasInvestimentos([]);
       setDespesasFornecedores([]);
+      setDespesasFinanciamentos([]);
       setTiposCustosFixos([]);
       setTiposCustosVariaveis([]);
       setTiposCustosImpostos([]);
       setTiposCustosInvestimentos([]);
       setTiposCustosFornecedores([]);
+      setTiposCustosFinanciamentos([]);
     } else {
       // soma de gastos por tipo_custo
       const somaGastos: Record<string, number> = {};
@@ -979,6 +1001,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
       setDespesasImpostos(itemsBy('imposto'));
       setDespesasInvestimentos(itemsBy('investimento'));
       setDespesasFornecedores(itemsBy('fornecedor'));
+      setDespesasFinanciamentos(itemsBy('financiamento'));
 
       const tiposBy = (tipoStr: string): TipoCustoVariavel[] =>
         tiposArr
@@ -996,6 +1019,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
       setTiposCustosImpostos(tiposBy('imposto'));
       setTiposCustosInvestimentos(tiposBy('investimento'));
       setTiposCustosFornecedores(tiposBy('fornecedor'));
+      setTiposCustosFinanciamentos(tiposBy('financiamento'));
     }
 
     // Folha salarial — mesma fonte de /direcao/estrategia/despesas/:mes
@@ -1465,9 +1489,10 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
   const totalDespImpostos = despesasImpostos.reduce((acc, d) => acc + (d.valor_real || 0), 0);
   const totalDespInvestimentos = despesasInvestimentos.reduce((acc, d) => acc + (d.valor_real || 0), 0);
   const totalDespFornecedores = despesasFornecedores.reduce((acc, d) => acc + (d.valor_real || 0), 0);
+  const totalDespFinanciamentos = despesasFinanciamentos.reduce((acc, d) => acc + (d.valor_real || 0), 0);
   const totalProjetadoAnual = tiposCustosVariaveis.reduce((acc, t) => acc + (t.valor_maximo_mensal * 12), 0);
 
-  const lucroLiquidoFinal = lucro.total - totalDespFixas - totalDespFolha - totalDespVariaveis - totalDespImpostos - totalDespInvestimentos - totalDespFornecedores;
+  const lucroLiquidoFinal = lucro.total - totalDespFixas - totalDespFolha - totalDespVariaveis - totalDespImpostos - totalDespInvestimentos - totalDespFornecedores - totalDespFinanciamentos;
   const percBrutoFinal = faturamento.total > 0 ? (lucro.total / faturamento.total) * 100 : 0;
   const percLiquidFinal = faturamento.total > 0 ? (lucroLiquidoFinal / faturamento.total) * 100 : 0;
 
@@ -1637,6 +1662,14 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
               tiposDisponiveis={tiposCustosFornecedores}
               onClickTipo={(id, nome) => setTipoModal({ id, nome })}
             />
+            <DespesaSectionReadOnly
+              title="Financiamentos"
+              despesas={despesasFinanciamentos}
+              total={totalDespFinanciamentos}
+              formatCurrency={formatCurrency}
+              tiposDisponiveis={tiposCustosFinanciamentos}
+              onClickTipo={(id, nome) => setTipoModal({ id, nome })}
+            />
           </div>
           {viewMode === 'full' && (
             <>
@@ -1658,7 +1691,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         </div>
       )}
       {showResumoFinal && (() => {
-        const lucroLiquido = lucro.total - totalDespFixas - totalDespFolha - totalDespVariaveis - totalDespImpostos - totalDespInvestimentos - totalDespFornecedores;
+        const lucroLiquido = lucro.total - totalDespFixas - totalDespFolha - totalDespVariaveis - totalDespImpostos - totalDespInvestimentos - totalDespFornecedores - totalDespFinanciamentos;
         const percBruto = faturamento.total > 0 ? (lucro.total / faturamento.total) * 100 : 0;
         const percLiquid = faturamento.total > 0 ? (lucroLiquido / faturamento.total) * 100 : 0;
         const colorClass = (v: number) => v >= 0 ? 'text-emerald-400' : 'text-red-400';
@@ -1671,6 +1704,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
           { label: 'Desp. Variáveis', value: formatCurrency(totalDespVariaveis), color: 'text-red-400' },
           { label: 'Investimentos', value: formatCurrency(totalDespInvestimentos), color: 'text-red-400' },
           { label: 'Fornecedores', value: formatCurrency(totalDespFornecedores), color: 'text-red-400' },
+          { label: 'Financiamentos', value: formatCurrency(totalDespFinanciamentos), color: 'text-red-400' },
           { label: 'Lucro Líquido', value: formatCurrency(lucroLiquido), color: colorClass(lucroLiquido) },
           { label: '% Lucro Líquido', value: `${percLiquid.toFixed(1)}%`, color: colorClass(percLiquid) },
         ];
@@ -1899,17 +1933,20 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         despesasImpostos={despesasImpostos}
         despesasInvestimentos={despesasInvestimentos}
         despesasFornecedores={despesasFornecedores}
+        despesasFinanciamentos={despesasFinanciamentos}
         tiposCustosVariaveis={tiposCustosVariaveis}
         tiposCustosFixos={tiposCustosFixos}
         tiposCustosImpostos={tiposCustosImpostos}
         tiposCustosInvestimentos={tiposCustosInvestimentos}
         tiposCustosFornecedores={tiposCustosFornecedores}
+        tiposCustosFinanciamentos={tiposCustosFinanciamentos}
         totalDespFixas={totalDespFixas}
         totalDespFolha={totalDespFolha}
         totalDespVariaveis={totalDespVariaveis}
         totalDespImpostos={totalDespImpostos}
         totalDespInvestimentos={totalDespInvestimentos}
         totalDespFornecedores={totalDespFornecedores}
+        totalDespFinanciamentos={totalDespFinanciamentos}
         totalProjetadoAnual={totalProjetadoAnual}
         topAvulsos={topAvulsos}
         estoqueResumo={estoqueResumo}
