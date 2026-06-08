@@ -1033,7 +1033,7 @@ function TiposCustoBlock({
 }: {
   titulo: string;
   icon: React.ReactNode;
-  tipo: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento';
+  tipo: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete';
   items: TipoCusto[];
   save: ReturnType<typeof useTiposCustos>['saveTipoCusto'];
   update: ReturnType<typeof useTiposCustos>['updateTipoCusto'];
@@ -1229,7 +1229,7 @@ function TiposCustoBlock({
                 {destinosPossiveis.length === 0 ? (
                   <div className="px-3 py-2 text-xs text-muted-foreground">Nenhum outro tipo disponível</div>
                 ) : (
-                  (['fixa','variavel','imposto','projetada','investimento','fornecedor','financiamento'] as const).map(grupo => {
+                  (['fixa','variavel','imposto','projetada','investimento','fornecedor','financiamento','frete'] as const).map(grupo => {
                     const itensGrupo = destinosPossiveis.filter(t => t.tipo === grupo);
                     if (itensGrupo.length === 0) return null;
                     const label = grupo === 'fixa' ? 'Fixas' : grupo === 'variavel' ? 'Variáveis' : grupo === 'imposto' ? 'Impostos' : grupo === 'projetada' ? 'Projetadas' : grupo === 'investimento' ? 'Investimentos' : grupo === 'fornecedor' ? 'Fornecedores' : 'Financiamentos';
@@ -1766,7 +1766,7 @@ function GastosDoTipoExpand({
 }: {
   tipoCustoId: string;
   tipoNome: string;
-  categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento';
+  categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete';
   mes: string | null;
   hideCategoria?: boolean;
 }) {
