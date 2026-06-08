@@ -456,7 +456,7 @@ const App = () => (
             <Route path="/marketing/conversoes" element={<ProtectedRoute routeKey="marketing_conversoes"><Conversoes /></ProtectedRoute>} />
             <Route path="/marketing/conversoes-meta" element={<ProtectedRoute routeKey="marketing_conversoes"><ConversoesMeta /></ProtectedRoute>} />
             <Route path="/marketing/conversoes-hub" element={<ProtectedRoute routeKey="marketing_conversoes"><ConversoesHub /></ProtectedRoute>} />
-            <Route path="/marketing/videos-ideias" element={<ProtectedRoute><VideosIdeias /></ProtectedRoute>} />
+             <Route path="/marketing/videos-ideias" element={<ProtectedRoute routeKey="marketing_videos_ideias"><VideosIdeias /></ProtectedRoute>} />
 
                 {/* Hub de Vendas Minimalista */}
                 <Route path="/vendas" element={<ProtectedRoute routeKeyPrefix="vendas_"><VendasHub /></ProtectedRoute>} />
