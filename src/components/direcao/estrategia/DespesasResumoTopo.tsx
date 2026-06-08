@@ -513,6 +513,15 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         loading={loading}
         onAddGasto={onRequestNovoGasto ? () => onRequestNovoGasto('autorizado') : undefined}
       />
+      <TiposCustoBlockMensal
+        titulo="Salários"
+        icon={<Wallet className="w-4 h-4" />}
+        tipo="salario"
+        tiposFull={tiposFull.filter(t => t.tipo === 'salario')}
+        gastos={gastosSalarios}
+        loading={loading}
+        onAddGasto={onRequestNovoGasto ? () => onRequestNovoGasto('salario') : undefined}
+      />
 
       <AlertDialog open={!!confirmDel} onOpenChange={(o) => !o && setConfirmDel(null)}>
         <AlertDialogContent>
