@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import logoPortasEnrolar from "@/assets/logo-portas-enrolar.ico";
-import { ShoppingCart, Factory, Shield, Truck, Building2, LogOut, LayoutDashboard, PanelLeft, Settings, Lock, BarChart3, Calendar, User, ClipboardList, Sun, Moon, Monitor, DollarSign, Users, BookOpen } from "lucide-react";
+import { ShoppingCart, Factory, Shield, Truck, Building2, LogOut, LayoutDashboard, PanelLeft, Settings, Lock, BarChart3, Calendar, User, ClipboardList, Sun, Moon, Monitor, DollarSign, Users, BookOpen, Target } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -30,6 +30,7 @@ const menuItems = [
   { label: "Logística", icon: Truck, path: "/logistica" },
   { label: "Financeiro", icon: DollarSign, path: "/financeiro" },
   { label: "Administrativo", icon: Building2, path: "/administrativo" },
+  { label: "8 Passos para R$5 Milhões", icon: Target, path: "/passos-evolucao" },
   { label: "Regras", icon: BookOpen, path: "/regras" }
 ];
 
