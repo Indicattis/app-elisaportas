@@ -111,7 +111,7 @@ export const useEstadosCidades = () => {
       // Buscar autorizados desse estado
       const { data: autorizados, error: errorAutorizados } = await supabase
         .from('autorizados')
-        .select('id, nome, cidade, estado, etapa, logo_url')
+        .select('id, nome, cidade, estado, etapa, logo_url, vendedor_responsavel_id')
         .eq('ativo', true)
         .ilike('estado', estado.sigla)
         .in('etapa', ['ativo', 'premium'])
@@ -123,8 +123,20 @@ export const useEstadosCidades = () => {
       const autorizadoIds = (autorizados || []).map(a => a.id);
       let precosMap: Record<string, { P?: number; G?: number; GG?: number }> = {};
       let cidadesSecMap: Record<string, string[]> = {};
+      let vendedorMap: Record<string, string> = {};
       
       if (autorizadoIds.length > 0) {
+        const vendedorIds = Array.from(new Set(
+          (autorizados || []).map(a => (a as any).vendedor_responsavel_id).filter(Boolean)
+        )) as string[];
+        if (vendedorIds.length > 0) {
+          const { data: vendedoresData } = await supabase
+            .from('admin_users')
+            .select('id, nome')
+            .in('id', vendedorIds);
+          for (const v of vendedoresData || []) vendedorMap[v.id] = v.nome;
+        }
+
         const { data: precos, error: errorPrecos } = await supabase
           .from('autorizado_precos_portas')
           .select('autorizado_id, tamanho, valor')
@@ -158,13 +170,23 @@ export const useEstadosCidades = () => {
         ...cidade,
         autorizados: (autorizados || []).filter(
           a => a.cidade?.toLowerCase() === cidade.nome.toLowerCase()
-        ).map(a => ({ ...a, precos: precosMap[a.id] || {}, cidadesSecundarias: cidadesSecMap[a.id] || [] }))
+        ).map(a => ({
+          ...a,
+          precos: precosMap[a.id] || {},
+          cidadesSecundarias: cidadesSecMap[a.id] || [],
+          vendedorResponsavelNome: (a as any).vendedor_responsavel_id ? (vendedorMap[(a as any).vendedor_responsavel_id] || null) : null,
+        }))
       }));
 
       // Identificar órfãos (sem cidade ou cidade não cadastrada)
       const orfaos = (autorizados || []).filter(
         a => !a.cidade || !cidadesNomes.includes(a.cidade.toLowerCase())
-      ).map(a => ({ ...a, precos: precosMap[a.id] || {}, cidadesSecundarias: cidadesSecMap[a.id] || [] }));
+      ).map(a => ({
+        ...a,
+        precos: precosMap[a.id] || {},
+        cidadesSecundarias: cidadesSecMap[a.id] || [],
+        vendedorResponsavelNome: (a as any).vendedor_responsavel_id ? (vendedorMap[(a as any).vendedor_responsavel_id] || null) : null,
+      }));
 
       setCidades(cidadesComAutorizados);
       setAutorizadosOrfaos(orfaos);
