@@ -547,6 +547,59 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
               )}
             </div>
 
+            {/* Entrada? */}
+            <div className="text-center">
+              {(() => {
+                const ent = venda.valor_entrada || 0;
+                if (ent > 0) {
+                  return (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Badge variant="outline" className="text-[8px] px-1 py-0 h-4 bg-emerald-500/10 text-emerald-600 border-emerald-500/50">
+                          Sim
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="text-xs">Entrada paga: {formatCurrency(ent)}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  );
+                }
+                return (
+                  <Badge variant="outline" className="text-[8px] px-1 py-0 h-4 bg-muted/30 text-muted-foreground border-muted">
+                    Não
+                  </Badge>
+                );
+              })()}
+            </div>
+
+            {/* Valor Entrada + % */}
+            <div className="text-center">
+              {(() => {
+                const ent = venda.valor_entrada || 0;
+                const base = (venda.valor_venda || 0) + (venda.valor_credito || 0);
+                if (ent > 0) {
+                  const perc = base > 0 ? (ent / base) * 100 : 0;
+                  return (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="text-[10px] font-medium text-emerald-500 truncate block">
+                          {formatCurrency(ent)}
+                          {perc > 0 && (
+                            <span className="text-[9px] text-emerald-400/80 ml-0.5">({perc.toFixed(0)}%)</span>
+                          )}
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="text-xs">Entrada: {formatCurrency(ent)} ({perc.toFixed(1)}% do valor total)</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  );
+                }
+                return <span className="text-[9px] text-muted-foreground/50">—</span>;
+              })()}
+            </div>
+
             {/* Desconto/Crédito */}
             <div className="text-center">
               {(() => {
