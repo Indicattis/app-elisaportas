@@ -682,3 +682,130 @@ export default function GastosPage() {
     </MinimalistLayout>
   );
 }
+
+function SaldosIndicadores() {
+  const [conta, setConta] = useState(0);
+  const [especie, setEspecie] = useState(0);
+  const [cheque, setCheque] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState<null | "especie" | "cheque">(null);
+  const [inputValue, setInputValue] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const load = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("caixa_elisa_config")
+      .select("saldo_conta, saldo_especie, saldo_cheque")
+      .eq("id", "singleton")
+      .maybeSingle();
+    if (!error && data) {
+      setConta(Number((data as any).saldo_conta) || 0);
+      setEspecie(Number((data as any).saldo_especie) || 0);
+      setCheque(Number((data as any).saldo_cheque) || 0);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const total = conta + especie + cheque;
+  const fmt = (v: number) =>
+    new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v || 0);
+
+  const openEdit = (kind: "especie" | "cheque") => {
+    setEditing(kind);
+    setInputValue(String(kind === "especie" ? especie : cheque));
+  };
+
+  const save = async () => {
+    if (!editing) return;
+    setSaving(true);
+    const num = Number(String(inputValue).replace(",", ".")) || 0;
+    const payload: any = { id: "singleton" };
+    payload[editing === "especie" ? "saldo_especie" : "saldo_cheque"] = num;
+    const { error } = await supabase
+      .from("caixa_elisa_config")
+      .upsert(payload, { onConflict: "id" });
+    setSaving(false);
+    if (error) {
+      toast.error("Erro ao salvar saldo");
+      return;
+    }
+    if (editing === "especie") setEspecie(num);
+    else setCheque(num);
+    setEditing(null);
+    toast.success("Saldo atualizado.");
+  };
+
+  const Card = ({
+    title, value, icon: Icon, onEdit, locked, accent,
+  }: {
+    title: string; value: number; icon: any;
+    onEdit?: () => void; locked?: boolean; accent: string;
+  }) => (
+    <div className="relative rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 p-4">
+      <div className="flex items-center gap-2 text-xs text-white/50 uppercase tracking-wide">
+        <Icon className={`w-3.5 h-3.5 ${accent}`} />
+        {title}
+        {locked && <Lock className="w-3 h-3 text-white/30 ml-auto" />}
+      </div>
+      <div className="mt-2 text-xl font-semibold text-white">{loading ? "—" : fmt(value)}</div>
+      {onEdit && (
+        <button
+          onClick={onEdit}
+          className="absolute top-2 right-2 p-1.5 rounded-md text-white/40 hover:text-white hover:bg-white/10 transition"
+          aria-label="Editar"
+        >
+          <Pencil className="w-3.5 h-3.5" />
+        </button>
+      )}
+      {locked && (
+        <div className="mt-1 text-[10px] text-white/30">Editável em Direção › Caixa Elisa</div>
+      )}
+    </div>
+  );
+
+  return (
+    <>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Card title="Saldo em conta" value={conta} icon={Wallet} locked accent="text-blue-300" />
+        <Card title="Saldo em espécie" value={especie} icon={Banknote} onEdit={() => openEdit("especie")} accent="text-emerald-300" />
+        <Card title="Saldo em cheque" value={cheque} icon={Receipt} onEdit={() => openEdit("cheque")} accent="text-amber-300" />
+        <Card title="Total" value={total} icon={Sigma} accent="text-white/70" />
+      </div>
+
+      <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
+        <DialogContent className="bg-zinc-950 border border-white/10 text-white">
+          <DialogHeader>
+            <DialogTitle>
+              Editar {editing === "especie" ? "Saldo em espécie" : "Saldo em cheque"}
+            </DialogTitle>
+          </DialogHeader>
+          <div>
+            <Label className="text-white/70">Valor (R$)</Label>
+            <Input
+              inputMode="decimal"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value.replace(/[^0-9.,]/g, ""))}
+              className="bg-white/5 border-white/10 text-white mt-2"
+              autoFocus
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setEditing(null)} className="text-white/70 hover:text-white">
+              Cancelar
+            </Button>
+            <Button
+              onClick={save}
+              disabled={saving}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
