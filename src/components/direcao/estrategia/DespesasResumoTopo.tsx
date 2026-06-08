@@ -144,6 +144,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
   const [gastosVariaveis, setGastosVariaveis] = useState<GastoAgrupado[]>([]);
   const [gastosImpostos, setGastosImpostos] = useState<GastoAgrupado[]>([]);
   const [gastosInvestimentos, setGastosInvestimentos] = useState<GastoAgrupado[]>([]);
+  const [gastosFornecedores, setGastosFornecedores] = useState<GastoAgrupado[]>([]);
   const [loading, setLoading] = useState(false);
   const [reloadV, setReloadV] = useState(0);
   const reload = () => { setReloadV(v => v + 1); onDataChange?.(); };
@@ -172,8 +173,9 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
       + gastosFixas.reduce((s, x) => s + Number(x.total || 0), 0)
       + gastosVariaveis.reduce((s, x) => s + Number(x.total || 0), 0)
       + gastosImpostos.reduce((s, x) => s + Number(x.total || 0), 0)
-      + gastosInvestimentos.reduce((s, x) => s + Number(x.total || 0), 0);
-  }, [folha, gastosFixas, gastosVariaveis, gastosImpostos, gastosInvestimentos, padroesFolha]);
+      + gastosInvestimentos.reduce((s, x) => s + Number(x.total || 0), 0)
+      + gastosFornecedores.reduce((s, x) => s + Number(x.total || 0), 0);
+  }, [folha, gastosFixas, gastosVariaveis, gastosImpostos, gastosInvestimentos, gastosFornecedores, padroesFolha]);
 
   useEffect(() => {
     if (mes) onMediaMensalChange?.(totalExibido);
@@ -186,7 +188,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
 
   useEffect(() => {
     if (!mes || !mesStart) {
-      setFolha([]); setImpostos([]); setGastosFixas([]); setGastosVariaveis([]); setGastosImpostos([]); setGastosInvestimentos([]);
+      setFolha([]); setImpostos([]); setGastosFixas([]); setGastosVariaveis([]); setGastosImpostos([]); setGastosInvestimentos([]); setGastosFornecedores([]);
       onMediaMensalChange?.(0);
       return;
     }
@@ -257,7 +259,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
             : Promise.resolve(),
         ]);
 
-        const agruparPor = (categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento'): GastoAgrupado[] => {
+        const agruparPor = (categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' | 'fornecedor'): GastoAgrupado[] => {
           const acc = new Map<string, GastoAgrupado>();
           // Seed: todos os tipos da categoria aparecem mesmo sem gastos
           Object.entries(tiposMap).forEach(([id, t]) => {
@@ -308,6 +310,7 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         setGastosVariaveis(agruparPor('variavel'));
         setGastosImpostos(agruparPor('imposto'));
         setGastosInvestimentos(agruparPor('investimento'));
+        setGastosFornecedores(agruparPor('fornecedor'));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -461,6 +464,15 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         gastos={gastosInvestimentos}
         loading={loading}
         onAddGasto={onRequestNovoGasto ? () => onRequestNovoGasto('investimento') : undefined}
+      />
+      <TiposCustoBlockMensal
+        titulo="Fornecedores"
+        icon={<Truck className="w-4 h-4" />}
+        tipo="fornecedor"
+        tiposFull={tiposFull.filter(t => t.tipo === 'fornecedor')}
+        gastos={gastosFornecedores}
+        loading={loading}
+        onAddGasto={onRequestNovoGasto ? () => onRequestNovoGasto('fornecedor') : undefined}
       />
 
       <AlertDialog open={!!confirmDel} onOpenChange={(o) => !o && setConfirmDel(null)}>
