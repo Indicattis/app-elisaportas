@@ -1861,6 +1861,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         totalDespFolha={totalDespFolha}
         totalDespVariaveis={totalDespVariaveis}
         totalDespImpostos={totalDespImpostos}
+        totalDespInvestimentos={totalDespInvestimentos}
         totalProjetadoAnual={totalProjetadoAnual}
         topAvulsos={topAvulsos}
         estoqueResumo={estoqueResumo}
