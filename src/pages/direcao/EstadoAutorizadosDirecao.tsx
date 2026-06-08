@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import { ArrowLeft, Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
@@ -13,7 +13,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
+import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { EstadoDetalheView } from '@/components/autorizados/EstadoDetalheView';
@@ -27,8 +27,9 @@ export default function EstadoAutorizadosDirecao() {
   const { pathname } = useLocation();
   const contexto = pathname.startsWith('/logistica') ? 'logistica' : pathname.startsWith('/autorizados') ? 'home' : 'direcao';
   const basePath = contexto === 'home' ? '/autorizados' : `/${contexto}/autorizados`;
+  const backPath = contexto === 'logistica' ? '/logistica' : contexto === 'home' ? '/home' : '/direcao';
+  const breadcrumbLabel = contexto === 'logistica' ? 'Logística' : contexto === 'home' ? 'Home' : 'Direção';
   const { estadoId } = useParams<{ estadoId: string }>();
-  const [mounted, setMounted] = useState(false);
 
   const {
     estados,
@@ -53,11 +54,6 @@ export default function EstadoAutorizadosDirecao() {
   const [novaCidadeOpen, setNovaCidadeOpen] = useState(false);
   const [estadoParaEditar, setEstadoParaEditar] = useState<Estado | null>(null);
   const [cidadeParaEditar, setCidadeParaEditar] = useState<Cidade | null>(null);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setMounted(true), 50);
-    return () => clearTimeout(timer);
-  }, []);
 
   // When estados load, select the one matching the URL param
   useEffect(() => {
@@ -121,84 +117,66 @@ export default function EstadoAutorizadosDirecao() {
     );
   }
 
+  const headerActions = (
+    <>
+      <Button
+        size="sm"
+        onClick={() => setNovaCidadeOpen(true)}
+        className="h-10 px-5 rounded-lg bg-gradient-to-r from-blue-500/20 to-blue-600/20 border border-blue-400/20 text-white shadow-lg shadow-blue-500/10 hover:from-blue-500/30 hover:to-blue-600/30 hover:scale-[1.02] transition-all duration-300 text-xs gap-1.5"
+      >
+        <Plus className="h-4 w-4" />
+        <span className="hidden sm:inline">Nova Cidade</span>
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={handleEditEstado}
+        className="hover:bg-primary/10"
+      >
+        <Pencil className="h-4 w-4 text-white/60" />
+      </Button>
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-destructive hover:bg-destructive/10"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir estado?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O estado "{estadoSelecionado.nome}" e todas as suas cidades cadastradas serão excluídos. Os autorizados não serão afetados.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteEstado}>
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
+
   return (
-    <div className="min-h-screen bg-black text-white overflow-hidden relative">
-      <AnimatedBreadcrumb
-        items={[
-          { label: "Home", path: "/home" },
-          ...(contexto !== 'home' ? [{ label: contexto === 'logistica' ? "Logística" : "Direção", path: contexto === 'logistica' ? '/logistica' : '/direcao' }] : []),
-          { label: "Autorizados", path: basePath },
-          { label: estadoSelecionado.nome }
-        ]}
-        mounted={mounted}
-      />
-
-      <div className="pt-12">
-        <header className="sticky top-0 z-20 px-4 py-3 bg-black/80 backdrop-blur-md border-b border-primary/10">
-          <div className="max-w-7xl mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => navigate(basePath)}
-                className="p-2 rounded-lg hover:bg-primary/10 transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5 text-white/80" />
-              </button>
-              <div>
-                <h1 className="text-lg font-semibold text-white">{estadoSelecionado.nome}</h1>
-                <p className="text-xs text-white/60">
-                  {estadoSelecionado.sigla} · {cidades.length} cidades cadastradas
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setNovaCidadeOpen(true)}
-                className="bg-primary/10 border-primary/20 hover:bg-primary/20"
-              >
-                <Plus className="h-4 w-4 mr-1" />
-                Nova Cidade
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleEditEstado}
-                className="hover:bg-primary/10"
-              >
-                <Pencil className="h-4 w-4 text-white/60" />
-              </Button>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-destructive hover:bg-destructive/10"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Excluir estado?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      O estado "{estadoSelecionado.nome}" e todas as suas cidades cadastradas serão excluídos. Os autorizados não serão afetados.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDeleteEstado}>
-                      Excluir
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
-          </div>
-        </header>
-
-        <div className="px-4 py-4 max-w-7xl mx-auto">
-          <EstadoDetalheView
+    <MinimalistLayout
+      title={estadoSelecionado.nome}
+      subtitle={`${estadoSelecionado.sigla} · ${cidades.length} cidades cadastradas`}
+      backPath={basePath}
+      breadcrumbItems={[
+        { label: "Home", path: "/home" },
+        ...(contexto !== 'home' ? [{ label: breadcrumbLabel, path: backPath }] : []),
+        { label: "Autorizados", path: basePath },
+        { label: estadoSelecionado.nome }
+      ]}
+      headerActions={headerActions}
+    >
+      <EstadoDetalheView
             estado={estadoSelecionado}
             cidades={cidades}
             autorizadosOrfaos={autorizadosOrfaos}
@@ -213,9 +191,7 @@ export default function EstadoAutorizadosDirecao() {
             onDeleteAutorizado={excluirAutorizado}
             onTogglePremium={handleTogglePremium}
             onReordenarCidades={reordenarCidades}
-          />
-        </div>
-      </div>
+      />
 
       <NovoEstadoDialog
         open={novoEstadoOpen}
@@ -237,6 +213,6 @@ export default function EstadoAutorizadosDirecao() {
         onUpdate={editarCidade}
         cidadesCadastradas={cidades.map(c => c.nome)}
       />
-    </div>
+    </MinimalistLayout>
   );
 }
