@@ -22,8 +22,9 @@ function calcFeriasDefault(base: number) {
 function calcTotalFolha(f: DespesaPadrao) {
   const salario = Number(f.salario) || 0;
   const horaExtra = Number((f as any).hora_extra) || 0;
+  const bonif = Number((f as any).bonificacao) || 0;
   const base = salario + horaExtra;
-  if (f.em_folha === false) return base;
+  if (f.em_folha === false) return base + bonif;
   const baseInsalub = Number(f.salario_minimo) || salario;
   const aux = Number(f.aux_combustivel) || 0;
   const insalub = baseInsalub * (Number(f.insalubridade_pct) || 0) / 100;
@@ -32,7 +33,7 @@ function calcTotalFolha(f: DespesaPadrao) {
   const prev13 = base / 12;
   const fgts13 = fgts / 12;
   const multaFgts = fgts * 0.4;
-  return base + aux + insalub + fgts + prev13 + fgts13 + ferias + multaFgts;
+  return base + aux + bonif + insalub + fgts + prev13 + fgts13 + ferias + multaFgts;
 }
 
 export function exportFolhaSalarialPDF(
