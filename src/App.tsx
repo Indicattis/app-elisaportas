@@ -237,7 +237,6 @@ import PedidoViewDirecao from "./pages/direcao/PedidoViewDirecao";
 // DRE da Direção
 import DREDirecao from "./pages/direcao/DREDirecao";
 import DREMesDirecao from "./pages/direcao/DREMesDirecao";
-import DREDespesasDirecao from "./pages/direcao/DREDespesasDirecao";
 import CaixaElisaDirecao from "./pages/direcao/CaixaElisaDirecao";
 import CaixaElisaCapitalGiro from "./pages/direcao/caixa-elisa/CapitalGiroPage";
 import CaixaElisaPlanejamento from "./pages/direcao/caixa-elisa/PlanejamentoPage";
