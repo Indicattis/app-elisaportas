@@ -464,8 +464,8 @@ const App = () => (
                 <Route path="/vendas/minhas-vendas/nova" element={<ProtectedRoute routeKey="vendas_hub"><VendaNovaMinimalista /></ProtectedRoute>} />
                 <Route path="/vendas/metas" element={<ProtectedRoute routeKey="vendas_hub"><MetasHistoricoVendas /></ProtectedRoute>} />
                 <Route path="/regras/vendas" element={<Navigate to="/vendas/regras" replace />} />
-                <Route path="/regras" element={<ProtectedRoute routeKey="vendas_hub"><RegrasHub /></ProtectedRoute>} />
-                <Route path="/passos-evolucao" element={<ProtectedRoute><PassosEvolucao /></ProtectedRoute>} />
+                <Route path="/regras" element={<ProtectedRoute routeKey="regras_hub"><RegrasHub /></ProtectedRoute>} />
+                <Route path="/passos-evolucao" element={<ProtectedRoute routeKey="passos_evolucao"><PassosEvolucao /></ProtectedRoute>} />
                 <Route path="/vendas/regras" element={<ProtectedRoute routeKey="vendas_hub"><RegrasVendasVisualizacao /></ProtectedRoute>} />
                 <Route path="/vendas/minhas-vendas/correcao" element={<ProtectedRoute routeKey="vendas_hub"><PedidoCorrecaoNovo /></ProtectedRoute>} />
                 <Route path="/vendas/minhas-vendas/editar/:id" element={<ProtectedRoute routeKey="vendas_hub"><MinhasVendasEditar /></ProtectedRoute>} />
@@ -477,7 +477,7 @@ const App = () => (
                 <Route path="/vendas/meus-parceiros" element={<ProtectedRoute routeKey="vendas_hub"><MeusParceiros /></ProtectedRoute>} />
                 <Route path="/vendas/acompanhar-pedido" element={<ProtectedRoute routeKey="vendas_hub"><AcompanharPedido /></ProtectedRoute>} />
                 <Route path="/vendas/visitas-tecnicas" element={<ProtectedRoute routeKey="vendas_visitas_tecnicas"><VisitasTecnicasCalendario /></ProtectedRoute>} />
-                <Route path="/vendas/visitas-tecnicas/realizadas" element={<ProtectedRoute routeKey="vendas_visitas_tecnicas"><VisitasTecnicasRealizadas /></ProtectedRoute>} />
+                <Route path="/vendas/visitas-tecnicas/realizadas" element={<ProtectedRoute routeKey="vendas_visitas_tecnicas_realizadas"><VisitasTecnicasRealizadas /></ProtectedRoute>} />
                 <Route path="/vendas/contratos" element={<ProtectedRoute routeKey="vendas_hub"><ContratosVendasHub /></ProtectedRoute>} />
                 <Route path="/vendas/precos" element={<ProtectedRoute routeKeyPrefix="vendas_"><PrecosVendas /></ProtectedRoute>} />
 
