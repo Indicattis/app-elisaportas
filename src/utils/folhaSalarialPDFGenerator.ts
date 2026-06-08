@@ -88,7 +88,7 @@ export function exportFolhaSalarialPDF(
   y += 14;
 
   const head = [[
-    'Colaborador', 'Em folha', 'Salário', 'Sal. Mín.', 'Comb.', 'H. Extra',
+    'Colaborador', 'Em folha', 'Salário', 'Sal. Mín.', 'Comb.', 'Bonif.', 'H. Extra',
     'Insalub.', 'FGTS', 'Prev. 13°', 'FGTS 13°', 'Férias', 'Multa FGTS', 'Total',
   ]];
 
