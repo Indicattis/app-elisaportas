@@ -35,6 +35,7 @@ interface FolhaOverrideRow {
   salario: number | null;
   salario_minimo: number | null;
   aux_combustivel: number | null;
+  bonificacao: number | null;
   hora_extra: number | null;
   insalubridade_pct: number | null;
   fgts_pct: number | null;
