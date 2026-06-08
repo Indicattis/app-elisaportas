@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import logoElisa from '@/assets/logo-elisa-dre.png';
 import { useCategoriaDreConfig } from '@/hooks/useCategoriaDreConfig';
+import { fetchConfigLucro } from '@/hooks/useConfigLucro';
 
 interface FaturamentoProduto {
   portas: number;
@@ -1201,12 +1202,43 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
             lucro_pintura,
             lucro_item,
             descricao,
+            altura,
+            largura,
+            tamanho,
             vendas!inner(data_venda)
           `)
           .gte('vendas.data_venda', start + ' 00:00:00')
           .lte('vendas.data_venda', end + ' 23:59:59');
 
         if (prodError) throw prodError;
+
+        // Configs ao vivo de lucro (definidas em /direcao/estrategia/kits)
+        const [cfgPintura, cfgInstal] = await Promise.all([
+          fetchConfigLucro('pintura_epoxi'),
+          fetchConfigLucro('instalacao'),
+        ]);
+        const pctInstal = Number(cfgInstal.percentual_custo) || 0;
+        const pctPintura = Number(cfgPintura.percentual_custo) || 0;
+        const valorM2Pintura = Number(cfgPintura.parametros?.valor_m2) || 0;
+        const calcLucroInstal = (valor: number) => valor * (1 - pctInstal / 100);
+        const calcLucroPintura = (valor: number, altura: number, largura: number) => {
+          if (cfgPintura.modo === 'formula_dimensao' && altura > 0 && largura > 0 && valorM2Pintura > 0) {
+            return Math.min(valor, altura * largura * valorM2Pintura);
+          }
+          return valor * (1 - pctPintura / 100);
+        };
+        const parseDims = (p: any) => {
+          let altura = Number(p.altura) || 0;
+          let largura = Number(p.largura) || 0;
+          if ((!altura || !largura) && p.tamanho) {
+            const partes = String(p.tamanho).split('x');
+            if (partes.length === 2) {
+              largura = largura || parseFloat(partes[0]) || 0;
+              altura = altura || parseFloat(partes[1]) || 0;
+            }
+          }
+          return { altura, largura };
+        };
 
         const fat: FaturamentoProduto = { portas: 0, pintura: 0, instalacoes: 0, avulsos: 0, fretes: 0, total: 0 };
         const luc: FaturamentoProduto = { portas: 0, pintura: 0, instalacoes: 0, avulsos: 0, fretes: 0, total: 0 };
@@ -1240,21 +1272,28 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
             fat.portas += valorPortaLiquido;
             fat.pintura += valorPinturaLiquido;
             fat.instalacoes += valorInstalacaoLiquido;
-            // Distribui lucro_item proporcionalmente entre porta/pintura/instalação
-            // (vendas legadas trazem porta+pintura+instalação embutidas na mesma linha)
+            // Lucro da porta segue o lucro_item já armazenado (tabela de kits),
+            // proporcional ao componente porta.
             const lucroLinha = p.lucro_item || 0;
             luc.portas += lucroLinha * proporcaoProduto;
-            luc.pintura += lucroLinha * proporcaoPintura;
-            luc.instalacoes += lucroLinha * proporcaoInstalacao;
+            // Pintura e instalação respeitam as configurações ao vivo de /direcao/estrategia/kits
+            const { altura, largura } = parseDims(p);
+            if (valorPinturaLiquido > 0) {
+              luc.pintura += calcLucroPintura(valorPinturaLiquido, altura, largura);
+            }
+            if (valorInstalacaoLiquido > 0) {
+              luc.instalacoes += calcLucroInstal(valorInstalacaoLiquido);
+            }
           } else if (tipo === 'pintura_epoxi') {
             fat.pintura += valorTotal;
-            luc.pintura += p.lucro_item || 0;
+            const { altura, largura } = parseDims(p);
+            luc.pintura += calcLucroPintura(valorTotal, altura, largura);
           } else if (['acessorio', 'adicional'].includes(tipo)) {
             fat.avulsos += valorTotal;
             luc.avulsos += p.lucro_item || 0;
           } else if (['instalacao', 'manutencao'].includes(tipo)) {
             fat.instalacoes += valorTotal;
-            luc.instalacoes += p.lucro_item || 0;
+            luc.instalacoes += calcLucroInstal(valorTotal);
           }
         });
 
