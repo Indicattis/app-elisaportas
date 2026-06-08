@@ -330,6 +330,50 @@ export function DespesasGridContent({
 
 /* ---------------- Folha ---------------- */
 
+function TetoIndicator({ secaoKey, mesReferencia }: { secaoKey: string; mesReferencia: string | null }) {
+  const { getTeto, setTeto } = useDespesasSecaoTeto(mesReferencia ?? null);
+  const teto = getTeto(secaoKey);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState<string>('');
+
+  const commit = async () => {
+    const v = Number(draft.replace(',', '.')) || 0;
+    setEditing(false);
+    if (v !== teto) await setTeto(secaoKey, v);
+  };
+
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-xs text-blue-300/70 uppercase tracking-wider">Teto</span>
+      {editing ? (
+        <input
+          autoFocus
+          type="number"
+          step="0.01"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') (e.currentTarget as HTMLInputElement).blur();
+            if (e.key === 'Escape') { setEditing(false); }
+          }}
+          className="w-32 h-7 bg-blue-500/10 border border-blue-400/40 rounded px-2 text-right text-sm text-blue-100 outline-none focus:border-blue-400"
+        />
+      ) : (
+        <button
+          type="button"
+          onClick={() => { setDraft(teto ? String(teto) : ''); setEditing(true); }}
+          className="text-sm font-semibold text-blue-300 hover:text-blue-200 px-2 py-0.5 rounded hover:bg-blue-500/10 tabular-nums"
+          title="Clique para editar o teto"
+        >
+          {formatCurrency(teto)}
+        </button>
+      )}
+    </div>
+  );
+}
+
+
 type SetorMeta = { value: string; label: string; color: string; dot: string };
 const SETOR_SEM: SetorMeta = { value: '', label: 'Sem setor', color: 'bg-white/5 border-white/15 text-white/60', dot: 'bg-white/40' };
 
