@@ -10,7 +10,8 @@ import {
   ClipboardCheck,
   Target,
   FileSignature,
-  Tag
+  Tag,
+  BookOpen
 } from 'lucide-react';
 
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
