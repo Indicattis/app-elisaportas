@@ -309,6 +309,7 @@ import AutorizadosLogistica from "./pages/logistica/AutorizadosLogistica";
 import AutorizadosHome from "./pages/AutorizadosHome";
 import AutorizadosPrecosDirecao from "./pages/direcao/AutorizadosPrecosDirecao";
 import EstadoAutorizadosDirecao from "./pages/direcao/EstadoAutorizadosDirecao";
+import AcordosMesAutorizados from "./pages/direcao/AcordosMesAutorizados";
 import NovoAutorizadoDirecao from "./pages/direcao/NovoAutorizadoDirecao";
 import EditarAutorizadoDirecao from "./pages/direcao/EditarAutorizadoDirecao";
 import InstalacoesHubDirecao from "./pages/direcao/InstalacoesHubDirecao";
