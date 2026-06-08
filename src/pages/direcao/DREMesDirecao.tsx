@@ -841,10 +841,12 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
   const [despesasFolha, setDespesasFolha] = useState<DespesaAgrupada[]>([]);
   const [despesasVariaveis, setDespesasVariaveis] = useState<DespesaAgrupada[]>([]);
   const [despesasImpostos, setDespesasImpostos] = useState<DespesaAgrupada[]>([]);
+  const [despesasInvestimentos, setDespesasInvestimentos] = useState<DespesaAgrupada[]>([]);
   const [tipoModal, setTipoModal] = useState<{ id: string; nome: string } | null>(null);
   const [tiposCustosFixos, setTiposCustosFixos] = useState<TipoCustoVariavel[]>([]);
   const [tiposCustosVariaveis, setTiposCustosVariaveis] = useState<TipoCustoVariavel[]>([]);
   const [tiposCustosImpostos, setTiposCustosImpostos] = useState<TipoCustoVariavel[]>([]);
+  const [tiposCustosInvestimentos, setTiposCustosInvestimentos] = useState<TipoCustoVariavel[]>([]);
   const [topAvulsos, setTopAvulsos] = useState<{nome: string, qtd: number}[]>([]);
   const [estoqueResumo, setEstoqueResumo] = useState({ valorTotal: 0, totalItens: 0 });
   const [vendasListagem, setVendasListagem] = useState<{ id: string; data: string; cliente: string; valorTabela: number; valorVenda: number; desconto: number; lucro: number }[]>([]);
@@ -899,9 +901,11 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
       setDespesasFixas([]);
       setDespesasVariaveis([]);
       setDespesasImpostos([]);
+      setDespesasInvestimentos([]);
       setTiposCustosFixos([]);
       setTiposCustosVariaveis([]);
       setTiposCustosImpostos([]);
+      setTiposCustosInvestimentos([]);
     } else {
       // soma de gastos por tipo_custo
       const somaGastos: Record<string, number> = {};
