@@ -563,6 +563,12 @@ export default function AcordosMesAutorizados() {
         valor={pagamentoDialog?.valor}
         onConfirm={confirmarPagamento}
       />
+      <HistoricoAcordoDialog
+        open={!!historicoDialog}
+        onOpenChange={(open) => { if (!open) setHistoricoDialog(null); }}
+        acordoId={historicoDialog?.acordoId ?? null}
+        clienteNome={historicoDialog?.clienteNome}
+      />
     </MinimalistLayout>
   );
 }
