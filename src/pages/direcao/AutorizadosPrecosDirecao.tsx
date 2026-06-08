@@ -311,7 +311,14 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
             </div>
           ) : (
             <div>
-              <h2 className="text-sm font-medium text-white/70 mb-3">Estados Cadastrados</h2>
+              <div className="flex items-center gap-3 mb-3">
+                <h2 className="text-sm font-medium text-white/70">Estados Cadastrados</h2>
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-500/10 border border-blue-500/20">
+                  <span className="text-xs font-bold text-blue-400">{estados.length}</span>
+                  <span className="text-xs text-white/40">/</span>
+                  <span className="text-xs text-white/40">27</span>
+                </div>
+              </div>
               {estados.length === 0 ? (
                 <div className="text-center py-8 bg-primary/5 rounded-lg border border-primary/10">
                   <p className="text-white/60 mb-4">Nenhum estado cadastrado</p>
