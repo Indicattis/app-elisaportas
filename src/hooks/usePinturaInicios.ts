@@ -15,6 +15,8 @@ export function usePinturaInicios() {
   
   // Determinar o ID do usuário atual (prioriza contexto de produção se disponível)
   const currentAdminUserId = producaoContext?.user?.admin_user_id || userRole?.id;
+  // Para satisfazer RLS (iniciado_por = auth.uid()), usar auth.uid() quando disponível
+  const currentAuthUid = authUser?.id || producaoContext?.user?.user_id || currentAdminUserId;
   const isAuthenticated = !!(producaoContext?.user || authUser);
 
   // Buscar inícios de pintura
@@ -107,7 +109,7 @@ export function usePinturaInicios() {
         .update({
           recarga_realizada: true,
           recarga_realizada_em: new Date().toISOString(),
-          recarga_realizada_por: currentAdminUserId,
+          recarga_realizada_por: currentAuthUid,
         })
         .eq('id', inicioId);
 
@@ -138,7 +140,7 @@ export function usePinturaInicios() {
       const { data, error } = await supabase
         .from("pintura_inicios")
         .insert({
-          iniciado_por: currentAdminUserId,
+          iniciado_por: currentAuthUid,
           observacoes: observacoes || null,
         })
         .select()
