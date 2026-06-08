@@ -110,8 +110,8 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
     useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } })
   );
 
-  const backPath = contexto === 'logistica' ? '/logistica' : '/direcao';
-  const breadcrumbLabel = contexto === 'logistica' ? 'Logística' : 'Direção';
+  const backPath = contexto === 'logistica' ? '/logistica' : contexto === 'home' ? '/home' : '/direcao';
+  const breadcrumbLabel = contexto === 'logistica' ? 'Logística' : contexto === 'home' ? 'Home' : 'Direção';
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
