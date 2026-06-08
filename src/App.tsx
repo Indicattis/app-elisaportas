@@ -186,6 +186,7 @@ import VendaNovaMinimalista from "./pages/vendas/VendaNovaMinimalista";
 import MetasHistoricoVendas from "./pages/vendas/MetasHistoricoVendas";
 import RegrasVendasVisualizacao from "./pages/vendas/RegrasVendasVisualizacao";
 import RegrasHub from "./pages/regras/RegrasHub";
+import PassosEvolucao from "./pages/PassosEvolucao";
 import PedidoCorrecaoNovo from "./pages/vendas/PedidoCorrecaoNovo";
 import MeusClientes from "./pages/vendas/MeusClientes";
 import MeuClienteDetalhe from "./pages/vendas/MeuClienteDetalhe";
