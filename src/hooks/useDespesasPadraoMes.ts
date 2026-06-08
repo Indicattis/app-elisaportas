@@ -103,7 +103,7 @@ export function useDespesasPadraoMes(mes: string | null) {
       const cur = prev[id] || {
         id: '',
         despesa_padrao_id: id,
-        salario: null, salario_minimo: null, aux_combustivel: null,
+        salario: null, salario_minimo: null, aux_combustivel: null, bonificacao: null,
         hora_extra: null, insalubridade_pct: null, fgts_pct: null, previsao_13_valor: null,
         ferias_valor: null, em_folha: null,
       };
