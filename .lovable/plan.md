@@ -1,82 +1,24 @@
-## Objetivo
+## Problema
 
-Calcular, por venda, um "balanço de desconto":
-- **Negativo**: desconto dado acima do limite permitido (sem senha).
-- **Positivo**: margem de desconto que poderia ter sido dada e não foi.
+As colunas À Vista, Frio, Gerente e % Limite aparecem todas com "-" mesmo havendo vendas elegíveis. Confirmado no banco:
 
-Exibir o resultado em nova página acessível pelo MarketingHub.
+- 19 vendas em junho/2026
+- **Todas** com `venda_presencial=true` (deveriam exibir Frio 5%)
+- **15** com `forma_pagamento='a_vista'` (deveriam exibir À Vista 3%)
+- 0 com autorização de gerente (correto exibir "-")
 
-## Regra de cálculo
+O join `vendas:venda_id(cliente_nome, forma_pagamento, venda_presencial)` em `useBalancoDescontos.ts` não está retornando os campos extras em runtime — o `r.vendas?.forma_pagamento` e `r.vendas?.venda_presencial` ficam undefined, então `aptoAvista` e `aptoFrio` viram `false`.
 
-Para cada venda (não rascunho, status_aprovacao = 'aprovada' ou null) com `valor_venda >= 500`:
+## Correção
 
-1. `total = soma((valor_produto + valor_pintura + valor_instalacao) * quantidade)` em `produtos_vendas`.
-2. `desconto_dado = soma(desconto_valor ou desconto_percentual aplicado)`.
-3. `pct_dado = desconto_dado / total * 100`.
-4. `limite_pct = regras_vendas.limite_desconto_avista + (venda_presencial ? limite_desconto_fria : 0)`. Se `forma_pagamento` = 'cartao_credito' ou vazio → limite_avista = 0.
-5. `diff_pct = limite_pct - pct_dado`:
-   - `diff_pct >= 0` → balanço **positivo** = `diff_pct/100 * total` (oportunidade não usada).
-   - `diff_pct < 0` → balanço **negativo** = `diff_pct/100 * total` (excedeu).
+Em `src/hooks/useBalancoDescontos.ts`, substituir o embed por uma busca separada (mesmo padrão que já fiz para `tem_autorizacao_gerente`):
 
-## Schema (migração)
+1. Manter o select simples: `select("*")` em `vendas_balanco_desconto`
+2. Após receber as linhas, em paralelo:
+   - Buscar `vendas` (`id, cliente_nome, forma_pagamento, venda_presencial`) pelos `venda_id`
+   - Buscar `vendas_autorizacoes_desconto` (já existe)
+3. Montar um `Map<venda_id, vendaInfo>` e popular `r.vendas` manualmente em cada linha.
 
-Nova tabela `vendas_balanco_desconto`:
-- `id uuid PK`
-- `venda_id uuid UNIQUE FK vendas(id) ON DELETE CASCADE`
-- `total_venda numeric`
-- `desconto_dado numeric`
-- `pct_desconto_dado numeric`
-- `pct_limite_permitido numeric`
-- `valor_balanco numeric` (negativo ou positivo)
-- `tipo text check in ('positivo','negativo','neutro')`
-- `data_venda timestamptz`
-- `created_at/updated_at`
+Isso elimina qualquer ambiguidade de embed/RLS e garante que os 3 campos cheguem ao componente.
 
-RLS: SELECT para `authenticated`; INSERT/UPDATE/DELETE somente `service_role` (alimentada por função/edge).
-
-Grants padrão (authenticated + service_role).
-
-Função SQL `public.recalcular_balanco_desconto_vendas(p_inicio timestamptz, p_fim timestamptz)` SECURITY DEFINER:
-- Lê `regras_vendas` (mais recente).
-- Itera vendas no período (filtra `is_rascunho=false` e `valor_venda >= 500`).
-- Faz UPSERT em `vendas_balanco_desconto`.
-
-Trigger opcional (fica fora desta primeira versão para manter escopo simples) — recálculo será via função chamada manualmente / botão.
-
-## Migração de dados do mês
-
-Após criação da função, executar:
-```sql
-SELECT public.recalcular_balanco_desconto_vendas(
-  date_trunc('month', now()),
-  date_trunc('month', now()) + interval '1 month'
-);
-```
-
-## Frontend
-
-1. **Hook** `src/hooks/useBalancoDescontos.ts`: busca `vendas_balanco_desconto` joined com `vendas(cliente_nome, atendente_id)` por período (default mês atual). Retorna lista + totais (soma positivos, soma negativos, líquido).
-
-2. **Página** `src/pages/marketing/BalancoDescontos.tsx`:
-   - Seletor de mês.
-   - 3 cards: Balanço Positivo (verde), Balanço Negativo (vermelho), Saldo Líquido.
-   - Tabela: Data, Cliente, Total Venda, % Desconto Dado, % Limite, Valor Balanço (verde/vermelho), Tipo.
-   - Botão "Recalcular mês" que invoca a função RPC.
-
-3. **Rota**: registrar `/marketing/balanco-descontos` em `src/App.tsx`.
-
-4. **MarketingHub**: adicionar item `{ label: "Balanço de Descontos", icon: Scale, path: "/marketing/balanco-descontos" }` no `menuItems`.
-
-## Arquivos alterados
-
-- Nova migração SQL (tabela + grants + RLS + função).
-- Insert RPC para popular o mês atual.
-- `src/hooks/useBalancoDescontos.ts` (novo).
-- `src/pages/marketing/BalancoDescontos.tsx` (novo).
-- `src/App.tsx` (rota).
-- `src/pages/marketing/MarketingHub.tsx` (item de menu).
-
-## Fora de escopo
-
-- Atualização automática via trigger ao criar/editar venda (pode ser adicionado depois).
-- Permissões granulares por rota — usa apenas autenticado por enquanto.
+Nenhuma mudança necessária em `BalancoDescontos.tsx` — a lógica de apto/check já está correta.

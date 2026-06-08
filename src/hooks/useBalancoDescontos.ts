@@ -37,7 +37,7 @@ export function useBalancoDescontos(mesISO: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("vendas_balanco_desconto")
-        .select("*, vendas:venda_id(cliente_nome, forma_pagamento, venda_presencial)")
+        .select("*")
         .gte("data_venda", inicio)
         .lt("data_venda", fim)
         .order("data_venda", { ascending: false });
@@ -45,13 +45,30 @@ export function useBalancoDescontos(mesISO: string) {
       const rows = (data || []) as unknown as BalancoDescontoRow[];
       const ids = rows.map((r) => r.venda_id);
       if (ids.length) {
-        const { data: autos } = await supabase
-          .from("vendas_autorizacoes_desconto")
-          .select("venda_id")
-          .in("venda_id", ids);
-        const set = new Set((autos || []).map((a: any) => a.venda_id));
+        const [{ data: autos }, { data: vendasData }] = await Promise.all([
+          supabase
+            .from("vendas_autorizacoes_desconto")
+            .select("venda_id")
+            .in("venda_id", ids),
+          supabase
+            .from("vendas")
+            .select("id, cliente_nome, forma_pagamento, venda_presencial")
+            .in("id", ids),
+        ]);
+        const autoSet = new Set((autos || []).map((a: any) => a.venda_id));
+        const vendasMap = new Map(
+          (vendasData || []).map((v: any) => [v.id, v]),
+        );
         rows.forEach((r) => {
-          r.tem_autorizacao_gerente = set.has(r.venda_id);
+          r.tem_autorizacao_gerente = autoSet.has(r.venda_id);
+          const v = vendasMap.get(r.venda_id);
+          r.vendas = v
+            ? {
+                cliente_nome: v.cliente_nome,
+                forma_pagamento: v.forma_pagamento,
+                venda_presencial: v.venda_presencial,
+              }
+            : null;
         });
       }
       return rows;
