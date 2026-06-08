@@ -64,8 +64,8 @@ export default function NovoAutorizadoDirecao() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const contexto = pathname.startsWith('/logistica') ? 'logistica' : 'direcao';
-  const basePath = `/${contexto}/autorizados`;
+  const contexto = pathname.startsWith('/logistica') ? 'logistica' : pathname.startsWith('/autorizados') ? 'home' : 'direcao';
+  const basePath = contexto === 'home' ? '/autorizados' : `/${contexto}/autorizados`;
 
   // Fetch estado info if coming from estado page
   useEffect(() => {
