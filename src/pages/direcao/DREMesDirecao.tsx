@@ -585,6 +585,17 @@ function PrintReport({
         />
       </div>
 
+      <div className="pdf-page-break" />
+      <div style={{ marginTop: 0 }}>
+        <div style={H2}>7. Investimentos</div>
+        <PrintDespesaTable
+          items={despesasInvestimentos}
+          total={totalDespInvestimentos}
+          formatCurrency={formatCurrency}
+          tiposDisponiveis={tiposCustosInvestimentos}
+        />
+      </div>
+
       {/* ESTOQUE */}
       <div className="pdf-page-break" />
       <div style={{ marginTop: 0 }}>
