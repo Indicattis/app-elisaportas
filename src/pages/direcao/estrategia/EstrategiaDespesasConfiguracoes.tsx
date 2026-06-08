@@ -553,6 +553,9 @@ function FolhaRowCells({
         {desativado ? zeroCurr : <InlineNum value={item.aux_combustivel} onSave={(v) => update(item.id, { aux_combustivel: v })} format="currency" />}
       </td>
       <td className="px-2 text-right text-white/60">
+        {desativado ? zeroCurr : <InlineNum value={item.bonificacao} onSave={(v) => update(item.id, { bonificacao: v })} format="currency" />}
+      </td>
+      <td className="px-2 text-right text-white/60">
         {desativado ? zeroCurr : <InlineNum value={item.hora_extra} onSave={(v) => update(item.id, { hora_extra: v })} format="currency" />}
       </td>
       <td className="px-2 text-right text-white/60">
