@@ -1,5 +1,5 @@
 import { useState, useRef, useMemo } from 'react';
-import { Plus, Trash2, Users, Receipt, TrendingDown, TrendingUp, Landmark, Briefcase, FileDown, GripVertical, X, Check, FolderPlus, ChevronRight, AlertTriangle, FileText, RotateCcw } from 'lucide-react';
+import { Plus, Trash2, Users, Receipt, TrendingDown, TrendingUp, Landmark, Briefcase, Truck, FileDown, GripVertical, X, Check, FolderPlus, ChevronRight, AlertTriangle, FileText, RotateCcw } from 'lucide-react';
 import GastoFormDialog from '@/components/financeiro/GastoFormDialog';
 import { useGastosPorTipoMes } from '@/hooks/useGastosPorTipoMes';
 import { useContagemGastosPorTipoMes } from '@/hooks/useContagemGastosPorTipoMes';
@@ -99,6 +99,7 @@ export function DespesasGridContent({
   const tiposImpostos = tiposCustos.filter(t => t.tipo === 'imposto');
   const tiposProjetadas = tiposCustos.filter(t => t.tipo === 'projetada');
   const tiposInvestimentos = tiposCustos.filter(t => t.tipo === 'investimento');
+  const tiposFornecedores = tiposCustos.filter(t => t.tipo === 'fornecedor');
 
   return showSpinner ? (
         <div className="flex items-center justify-center py-20">
@@ -202,6 +203,26 @@ export function DespesasGridContent({
             icon={<Briefcase className="w-4 h-4" />}
             tipo="investimento"
             items={tiposInvestimentos}
+            save={saveTipoCusto}
+            update={updateTipoCusto}
+            remove={deleteTipoCusto}
+            allTipos={tiposCustos}
+            contarGastosVinculados={contarGastosVinculados}
+            realocarEExcluir={realocarEExcluirTipoCusto}
+            forcarExclusao={forcarExclusaoTipoCusto}
+            reorderTipos={reorderTiposCustos}
+            readOnly={readOnly}
+            clearOverride={tipoClearOverride}
+            hasOverride={tipoHasOverride}
+            mesReferencia={mesReferencia ?? null}
+            contagemGastos={contagemGastos}
+            totaisGastos={totaisGastos}
+          />
+          <TiposCustoBlock
+            titulo="Tipos de Custos — Fornecedores"
+            icon={<Truck className="w-4 h-4" />}
+            tipo="fornecedor"
+            items={tiposFornecedores}
             save={saveTipoCusto}
             update={updateTipoCusto}
             remove={deleteTipoCusto}
