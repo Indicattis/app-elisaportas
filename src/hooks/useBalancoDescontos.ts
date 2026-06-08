@@ -12,7 +12,12 @@ export interface BalancoDescontoRow {
   valor_balanco: number;
   tipo: "positivo" | "negativo" | "neutro";
   data_venda: string | null;
-  vendas?: { cliente_nome: string | null } | null;
+  vendas?: {
+    cliente_nome: string | null;
+    forma_pagamento: string | null;
+    venda_presencial: boolean | null;
+  } | null;
+  tem_autorizacao_gerente?: boolean;
 }
 
 function periodoMes(mesISO: string) {
@@ -32,12 +37,24 @@ export function useBalancoDescontos(mesISO: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("vendas_balanco_desconto")
-        .select("*, vendas:venda_id(cliente_nome)")
+        .select("*, vendas:venda_id(cliente_nome, forma_pagamento, venda_presencial)")
         .gte("data_venda", inicio)
         .lt("data_venda", fim)
         .order("data_venda", { ascending: false });
       if (error) throw error;
-      return (data || []) as unknown as BalancoDescontoRow[];
+      const rows = (data || []) as unknown as BalancoDescontoRow[];
+      const ids = rows.map((r) => r.venda_id);
+      if (ids.length) {
+        const { data: autos } = await supabase
+          .from("vendas_autorizacoes_desconto")
+          .select("venda_id")
+          .in("venda_id", ids);
+        const set = new Set((autos || []).map((a: any) => a.venda_id));
+        rows.forEach((r) => {
+          r.tem_autorizacao_gerente = set.has(r.venda_id);
+        });
+      }
+      return rows;
     },
   });
 
