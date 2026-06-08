@@ -1,23 +1,30 @@
-## Marcar acordo como pago (irreversível) em /autorizados
+## Seletor de pedido existente no cadastro de acordo
 
-Hoje em `/autorizados/acordos/:ano/:mes` (contexto `home`) não há ação para marcar pagamento — só existe no contexto `logistica`, via dropdown, e ainda permite "Desmarcar Pago" (que apaga a despesa em `gastos`). A regra muda: marcar como pago deve estar disponível também para `home`, e a operação não pode mais ser revertida em nenhum contexto.
+No formulário `NovoAcordoDialog` (usado em `/autorizados/acordos/:ano/:mes`), adicionar uma caixa para vincular o acordo a um **pedido existente**, com filtro por **etapa**. Ao selecionar um pedido, os campos do cliente são preenchidos automaticamente para evitar digitação manual.
 
 ### Mudanças
 
-**`src/pages/direcao/AcordosMesAutorizados.tsx`**
-- Mostrar a coluna/ação "Ações" também no contexto `home` (não só `logistica`).
-- No dropdown:
-  - Manter "Editar" e "Excluir" como já são (só home/logistica).
-  - Substituir o item "Marcar como Pago / Desmarcar Pago" por apenas **"Marcar como Pago"**, que:
-    - Fica **desabilitado** quando `acordo.pago === true` (rótulo: "Pago — não reversível", em verde/desabilitado).
-    - Quando ativo, abre o `ConfirmarPagamentoAcordoDialog` para escolher o banco e gera a despesa via `criarGastoAcordoAutorizado` (fluxo atual já implementado).
-- Remover `desmarcarPago` e a chamada a `removerGastoAcordoAutorizado` (mantida a import só se outras telas usarem; nesta tela é removida).
-- Em `handleMarcarPago`, se `pagoAtual === true`, apenas exibir um toast informativo ("Pagamento não pode ser revertido") em vez de chamar desmarcar.
+**Novo componente** `src/components/autorizados/SeletorPedidoExistente.tsx`
+- Caixa com:
+  - Filtro de etapa: `Select` com opções derivadas das etapas existentes em `pedidos_producao` (`aberto`, `em_producao`, `embalagem`, `inspecao_qualidade`, `instalacoes`, `correcoes`, `aguardando_cliente`, `finalizado`) + opção "Todas".
+  - Campo de busca por nome do cliente / número do pedido.
+  - Lista (max-height + scroll) dos pedidos filtrados, mostrando `#numero_pedido — cliente_nome — badge da etapa`.
+  - Clique em um item retorna `{ id, numero_pedido, cliente_nome, etapa_atual }` ao pai via `onSelect`.
+- Carrega os pedidos com um único `select` em `pedidos_producao` (id, numero_pedido, cliente_nome, etapa_atual, status) ordenado por `numero_pedido` desc, limit 500. Cache via `useEffect` na montagem.
 
-### Histórico
-
-O trigger já registra o evento `pago` automaticamente; nenhuma mudança no banco é necessária. O evento `desmarcado_pago` continua existindo no trigger para retrocompatibilidade, mas não será mais disparado por esta tela.
+**Edição** `src/components/autorizados/NovoAcordoDialog.tsx`
+- Acima do bloco CLIENTE, adicionar uma seção "VINCULAR A PEDIDO (opcional)" com o `SeletorPedidoExistente`.
+- Ao selecionar:
+  - Preencher `clienteNome` com `cliente_nome` do pedido.
+  - Mostrar abaixo o número do pedido vinculado com botão "Remover vínculo".
+  - Cidade/UF continuam sendo editáveis manualmente (a tabela `pedidos_producao` não armazena cidade/estado do cliente nessa instância).
+- Não altera a assinatura de `NovoAcordo` nem o banco — o vínculo é só uma facilidade de preenchimento por enquanto. Se no futuro quisermos persistir o `pedido_id`, será outro passo.
 
 ### Arquivos
 
-- (edit) `src/pages/direcao/AcordosMesAutorizados.tsx`
+- (novo) `src/components/autorizados/SeletorPedidoExistente.tsx`
+- (edit) `src/components/autorizados/NovoAcordoDialog.tsx`
+
+### Pergunta de escopo (assumida)
+
+O vínculo é apenas para autopreenchimento do nome do cliente; não vamos adicionar coluna `pedido_id` em `acordos_instalacao_autorizados` agora. Caso queira persistir o vínculo, sinalize e eu adiciono migração + coluna na próxima rodada.
