@@ -450,6 +450,15 @@ export default function DespesasResumoTopo({ mes, onMediaMensalChange, onDataCha
         loading={loading}
         onAddGasto={onRequestNovoGasto ? () => onRequestNovoGasto('imposto') : undefined}
       />
+      <TiposCustoBlockMensal
+        titulo="Investimentos"
+        icon={<Briefcase className="w-4 h-4" />}
+        tipo="investimento"
+        tiposFull={tiposFull.filter(t => t.tipo === 'investimento')}
+        gastos={gastosInvestimentos}
+        loading={loading}
+        onAddGasto={onRequestNovoGasto ? () => onRequestNovoGasto('investimento') : undefined}
+      />
 
       <AlertDialog open={!!confirmDel} onOpenChange={(o) => !o && setConfirmDel(null)}>
         <AlertDialogContent>
