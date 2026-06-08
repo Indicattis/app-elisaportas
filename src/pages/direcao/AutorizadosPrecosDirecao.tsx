@@ -390,7 +390,7 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
                       return (
                         <Card
                           key={index}
-                          onClick={() => { setMesSelecionado(index); setSearchTerm(''); setFilterStatus('todos'); }}
+                          onClick={() => navigate(`${routePrefix}/acordos/${anoSelecionado}/${index}`)}
                           className={`cursor-pointer transition-all duration-200 hover:scale-[1.02] backdrop-blur-xl border ${
                             mesAtual
                               ? 'bg-blue-500/10 border-blue-400/30 shadow-lg shadow-blue-500/10'
