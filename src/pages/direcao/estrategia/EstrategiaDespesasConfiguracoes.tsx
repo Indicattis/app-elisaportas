@@ -8,7 +8,6 @@ import { formatCurrency } from '@/lib/utils';
 import { useDespesasPadrao, type DespesaPadrao, type DespesaPadraoTipo } from '@/hooks/useDespesasPadrao';
 import { useTiposCustos, type TipoCusto } from '@/hooks/useTiposCustos';
 import { useCategoriaDreConfig } from '@/hooks/useCategoriaDreConfig';
-import { Switch } from '@/components/ui/switch';
 import { useDespesasPadraoMes } from '@/hooks/useDespesasPadraoMes';
 import { useTiposCustosMes } from '@/hooks/useTiposCustosMes';
 import { useEmpresasEmissoras } from '@/hooks/useEmpresasEmissoras';
