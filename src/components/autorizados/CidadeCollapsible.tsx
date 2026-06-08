@@ -374,6 +374,9 @@ export function OrfaosCollapsible({
                       {aut.etapa || 'ativo'}
                     </Badge>
                   </TableCell>
+                  <TableCell className="text-white/70 text-xs">
+                    {aut.vendedorResponsavelNome || '-'}
+                  </TableCell>
                   <TableCell className="text-white/60 text-xs max-w-[150px]">
                     {aut.cidadesSecundarias && aut.cidadesSecundarias.length > 0
                       ? aut.cidadesSecundarias.join(', ')
