@@ -18,6 +18,7 @@ const OVERRIDE_FIELDS = [
   'salario',
   'salario_minimo',
   'aux_combustivel',
+  'bonificacao',
   'hora_extra',
   'insalubridade_pct',
   'fgts_pct',
