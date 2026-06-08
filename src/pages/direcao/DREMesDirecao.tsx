@@ -2011,6 +2011,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
       title="D.R.E"
       subtitle={mesNome}
       backPath="/direcao/estrategia/dre"
+      fullWidth
       breadcrumbItems={[
         { label: 'Home', path: '/home' },
         { label: 'Direção', path: '/direcao' },
