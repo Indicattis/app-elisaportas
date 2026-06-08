@@ -277,6 +277,7 @@ function FolhaBlock({
       salario,
       salario_minimo: salarioMin,
       aux_combustivel: auxComb,
+      bonificacao,
       hora_extra: horaExtra,
       insalubridade_pct: insalub,
       fgts_pct: fgts,
