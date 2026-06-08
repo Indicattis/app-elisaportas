@@ -2,28 +2,18 @@ import { supabase } from '@/integrations/supabase/client';
 
 const TIPO_CUSTO_PAGAMENTO_AUTORIZADOS = '55302712-8a2b-4fb4-b579-91921f4abc41';
 
-async function getDefaultBancoId(): Promise<string | null> {
-  const { data } = await supabase
-    .from('bancos' as any)
-    .select('id')
-    .order('nome', { ascending: true })
-    .limit(1)
-    .maybeSingle();
-  return (data as any)?.id ?? null;
-}
-
 export async function criarGastoAcordoAutorizado(params: {
   acordoId: string;
   valor: number;
   clienteNome: string;
   autorizadoNome: string;
   responsavelId: string | undefined;
+  bancoId: string;
   dataPagamento?: string; // YYYY-MM-DD
 }): Promise<void> {
   if (!params.responsavelId) return;
-  const bancoId = await getDefaultBancoId();
-  if (!bancoId) {
-    console.warn('[gastoAcordoAutorizado] Nenhum banco cadastrado; gasto não criado.');
+  if (!params.bancoId) {
+    console.warn('[gastoAcordoAutorizado] Banco não informado; gasto não criado.');
     return;
   }
   const data =
@@ -36,7 +26,7 @@ export async function criarGastoAcordoAutorizado(params: {
       valor: params.valor,
       data,
       responsavel_id: params.responsavelId,
-      banco_id: bancoId,
+      banco_id: params.bancoId,
       status: 'pago',
       acordo_autorizado_id: params.acordoId,
       created_by: params.responsavelId,
