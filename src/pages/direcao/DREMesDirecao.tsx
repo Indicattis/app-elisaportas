@@ -940,8 +940,9 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
   const [realizadoObs, setRealizadoObs] = useState('');
   const [realizadoSaving, setRealizadoSaving] = useState(false);
 
-  const mesDate = mes ? new Date(mes + '-15') : new Date();
-  const mesNome = format(mesDate, 'MMMM yyyy', { locale: ptBR });
+  const isValidMes = !!mes && /^\d{4}-\d{2}$/.test(mes);
+  const mesDate = isValidMes ? new Date(mes + '-15') : new Date();
+  const mesNome = isValidMes ? format(mesDate, 'MMMM yyyy', { locale: ptBR }) : '';
 
   const fetchDespesasFromGastos = async () => {
     if (!mes) return;
