@@ -13,10 +13,10 @@ interface EstadoCardProps {
 
 export function EstadoCard({ estado, onClick, isSelected }: EstadoCardProps) {
   return (
-    <Card 
+    <Card
       className={cn(
-        "cursor-pointer transition-all bg-primary/5 border-primary/10 hover:bg-primary/10",
-        isSelected && "ring-2 ring-primary"
+        "cursor-pointer transition-all duration-300 bg-white/5 backdrop-blur-xl border border-white/10 hover:bg-white/10 hover:border-blue-400/30 hover:shadow-lg hover:shadow-blue-500/10",
+        isSelected && "ring-2 ring-blue-400/40 border-blue-400/40"
       )}
       onClick={onClick}
     >
@@ -26,7 +26,7 @@ export function EstadoCard({ estado, onClick, isSelected }: EstadoCardProps) {
             <h3 className="text-lg font-bold text-white">{estado.sigla}</h3>
             <p className="text-sm text-white/60">{estado.nome}</p>
           </div>
-          <MapPin className="h-6 w-6 text-primary/50" />
+          <MapPin className="h-6 w-6 text-blue-400/70" />
         </div>
         <div className="mt-3 flex gap-4 text-xs text-white/70">
           <div className="flex items-center gap-1">
@@ -67,11 +67,11 @@ export function SortableEstadoCard({ estado, onClick, isSelected }: SortableEsta
 
   return (
     <div ref={setNodeRef} style={style}>
-      <Card 
+      <Card
         className={cn(
-          "cursor-pointer transition-all bg-primary/5 border-primary/10 hover:bg-primary/10",
-          isSelected && "ring-2 ring-primary",
-          isDragging && "shadow-lg"
+          "cursor-pointer transition-all duration-300 bg-white/5 backdrop-blur-xl border border-white/10 hover:bg-white/10 hover:border-blue-400/30 hover:shadow-lg hover:shadow-blue-500/10",
+          isSelected && "ring-2 ring-blue-400/40 border-blue-400/40",
+          isDragging && "shadow-xl shadow-blue-500/20"
         )}
         onClick={onClick}
       >
@@ -91,7 +91,7 @@ export function SortableEstadoCard({ estado, onClick, isSelected }: SortableEsta
                 <p className="text-sm text-white/60">{estado.nome}</p>
               </div>
             </div>
-            <MapPin className="h-6 w-6 text-primary/50" />
+            <MapPin className="h-6 w-6 text-blue-400/70" />
           </div>
           <div className="mt-3 flex gap-4 text-xs text-white/70">
             <div className="flex items-center gap-1">
