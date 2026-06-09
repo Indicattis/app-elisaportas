@@ -9,6 +9,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useBalancoDescontos } from "@/hooks/useBalancoDescontos";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const formatMoeda = (v: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
@@ -106,6 +107,7 @@ export default function BalancoDescontos() {
                 <Table>
                   <TableHeader>
                     <TableRow className="border-white/10 hover:bg-transparent">
+                      <TableHead className="text-white/60">Vendedor</TableHead>
                       <TableHead className="text-white/60">Data</TableHead>
                       <TableHead className="text-white/60">Cliente</TableHead>
                       <TableHead className="text-white/60 text-right">Sem Desc.</TableHead>
@@ -122,7 +124,7 @@ export default function BalancoDescontos() {
                   <TableBody>
                     {rows.length === 0 ? (
                       <TableRow className="border-white/10">
-                        <TableCell colSpan={11} className="text-center text-white/50">
+                        <TableCell colSpan={12} className="text-center text-white/50">
                           Nenhuma venda no período. Clique em Recalcular.
                         </TableCell>
                       </TableRow>
@@ -155,6 +157,14 @@ export default function BalancoDescontos() {
                         const semDesc = pctDado !== 100 ? total / (1 - pctDado / 100) : total;
                         return (
                         <TableRow key={r.id} className="border-white/10 hover:bg-white/5">
+                          <TableCell>
+                            <Avatar className="w-8 h-8">
+                              <AvatarImage src={r.vendedor?.foto_perfil_url || undefined} alt={r.vendedor?.nome || "Vendedor"} />
+                              <AvatarFallback className="bg-white/10 text-white/70 text-xs">
+                                {(r.vendedor?.nome || "?").slice(0, 2).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                          </TableCell>
                           <TableCell className="text-white/90">
                             {r.data_venda
                               ? format(new Date(r.data_venda), "dd/MM/yyyy", { locale: ptBR })
