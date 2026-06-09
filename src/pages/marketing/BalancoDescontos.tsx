@@ -165,11 +165,11 @@ export default function BalancoDescontos() {
                       <TableHead className="text-white/60">Cliente</TableHead>
                       <TableHead className="text-white/60 text-right">Sem Desc.</TableHead>
                       <TableHead className="text-white/60 text-right">Total</TableHead>
-                      <TableHead className="text-white/60 text-right">% Dado</TableHead>
                        <TableHead className="text-white/60 text-right">À Vista (3%)</TableHead>
                        <TableHead className="text-white/60 text-right">Frio (5%)</TableHead>
                        <TableHead className="text-white/60 text-right">Gerente (+7%)</TableHead>
                       <TableHead className="text-white/60 text-right">% Limite</TableHead>
+                      <TableHead className="text-white/60 text-right">% Dado</TableHead>
                       <TableHead className="text-white/60 text-right">Excedido</TableHead>
                       <TableHead className="text-white/60 text-right">Lucro</TableHead>
                       <TableHead className="text-white/60 text-right">Balanço</TableHead>
