@@ -210,6 +210,7 @@ export default function BalancoDescontos() {
                       <TableHead className="text-white/60">Data</TableHead>
                       <TableHead className="text-white/60">Cliente</TableHead>
                       <TableHead className="text-white/60 text-right">Sem Desc.</TableHead>
+                      <TableHead className="text-white/60 text-right">Desconto/Acréscimo</TableHead>
                       <TableHead className="text-white/60 text-right">Total</TableHead>
                        <TableHead className="text-white/60 text-right">À Vista (3%)</TableHead>
                        <TableHead className="text-white/60 text-right">Frio (5%)</TableHead>
@@ -224,7 +225,7 @@ export default function BalancoDescontos() {
                   <TableBody>
                     {rows.length === 0 ? (
                       <TableRow className="border-white/10">
-                        <TableCell colSpan={14} className="text-center text-white/50">
+                        <TableCell colSpan={15} className="text-center text-white/50">
                           Nenhuma venda no período. Clique em Recalcular.
                         </TableCell>
                       </TableRow>
@@ -254,6 +255,9 @@ export default function BalancoDescontos() {
                           </TableCell>
                           <TableCell className="text-white/90">{r.vendas?.cliente_nome || "-"}</TableCell>
                           <TableCell className="text-white/60 text-right">{formatMoeda(semDesc)}</TableCell>
+                          <TableCell className={`text-right font-medium ${pctDado < 0 ? "text-emerald-400" : pctDado > 0 ? "text-red-400" : "text-white/60"}`}>
+                            {pctDado !== 0 ? formatMoeda(total - semDesc) : "-"}
+                          </TableCell>
                           <TableCell className="text-white/90 text-right">{formatMoeda(Number(r.total_venda))}</TableCell>
                           <TableCell className={`text-right ${aptoAvista ? check(3) : "text-white/30"}`}>
                             {aptoAvista ? formatMoeda(0.03 * total) : "-"}
