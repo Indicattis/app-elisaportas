@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, RefreshCw, Flame, Fuel, BarChart3, Check, Pencil, DoorOpen, DollarSign } from "lucide-react";
+import { ArrowLeft, RefreshCw, Flame, Fuel, BarChart3, Check, Pencil, DoorOpen, DollarSign, Droplet, Trash2, CheckCircle2, TrendingUp } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useQueryClient } from "@tanstack/react-query";
@@ -12,11 +12,20 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePinturaInicios } from "@/hooks/usePinturaInicios";
 import { usePinturaTrocasGas } from "@/hooks/usePinturaTrocasGas";
-import { PinturaIniciosList } from "@/components/production/PinturaIniciosList";
-import { TrocasGasList } from "@/components/production/TrocasGasList";
 import { usePinturaFornadaCusto } from "@/hooks/usePinturaFornadaCusto";
 import { useFornadasResumo } from "@/hooks/useFornadasResumo";
 import { formatCurrency } from "@/lib/utils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export default function ControleFornadas() {
   const navigate = useNavigate();
@@ -39,6 +48,9 @@ export default function ControleFornadas() {
   const totalFornadas = resumo.length;
   const totalPortas = resumo.reduce((s, r) => s + r.qtd_portas, 0);
   const custoTotal = totalFornadas * custoPorFornada;
+  const mediaPortas = totalFornadas > 0 ? totalPortas / totalFornadas : 0;
+  const mediaCusto = totalFornadas > 0 ? custoTotal / totalFornadas : 0;
+  const totalTrocasValor = trocas.reduce((s, t) => s + (Number(t.valor) || 0), 0);
 
   const salvarCusto = () => {
     const v = parseFloat(custoInput.replace(",", "."));
