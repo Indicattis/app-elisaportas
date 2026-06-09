@@ -109,6 +109,7 @@ export function useBalancoDescontos(mesISO: string) {
               }
             : null;
           r.vendedor = v?.atendente_id ? vendedoresMap.get(v.atendente_id) || null : null;
+          r.etapa_atual = pedidosMap.get(r.venda_id) || null;
         });
       }
       return rows;
