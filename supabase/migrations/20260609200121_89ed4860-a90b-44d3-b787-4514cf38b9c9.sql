@@ -1,0 +1,2 @@
+CREATE POLICY "Admins podem deletar pintura_inicios" ON public.pintura_inicios FOR DELETE USING (public.is_admin(auth.uid()));
+CREATE POLICY "Admins podem atualizar pintura_inicios" ON public.pintura_inicios FOR UPDATE USING (public.is_admin(auth.uid())) WITH CHECK (public.is_admin(auth.uid()));
