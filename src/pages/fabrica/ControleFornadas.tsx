@@ -1,18 +1,16 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, RefreshCw, Flame, Fuel, BarChart3, Check, Pencil, DoorOpen, DollarSign, Droplet, Trash2, CheckCircle2, TrendingUp } from "lucide-react";
+import { ArrowLeft, RefreshCw, Flame, Fuel, BarChart3, DoorOpen, DollarSign, Droplet, Trash2, CheckCircle2, TrendingUp, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePinturaInicios } from "@/hooks/usePinturaInicios";
 import { usePinturaTrocasGas } from "@/hooks/usePinturaTrocasGas";
-import { usePinturaFornadaCusto } from "@/hooks/usePinturaFornadaCusto";
 import { useFornadasResumo } from "@/hooks/useFornadasResumo";
 import { formatCurrency } from "@/lib/utils";
 import {
@@ -33,37 +31,24 @@ export default function ControleFornadas() {
 
   const { inicios, isLoading: isLoadingInicios, toggleRecarga, excluirInicio } = usePinturaInicios();
   const { trocas, isLoading: isLoadingTrocas, excluirTroca } = usePinturaTrocasGas();
-  const { custoPorFornada, update: updateCusto } = usePinturaFornadaCusto();
-  const { data: resumo = [], isLoading: isLoadingResumo } = useFornadasResumo(custoPorFornada);
+  const { data: resumo = [], isLoading: isLoadingResumo } = useFornadasResumo();
 
-  const [editandoCusto, setEditandoCusto] = useState(false);
-  const [custoInput, setCustoInput] = useState<string>("");
   type TabKey = "resumo" | "fornadas" | "trocas";
   const [activeTab, setActiveTab] = useState<TabKey>("resumo");
 
-  useEffect(() => {
-    setCustoInput(String(custoPorFornada ?? 0));
-  }, [custoPorFornada]);
-
   const totalFornadas = resumo.length;
   const totalPortas = resumo.reduce((s, r) => s + r.qtd_portas, 0);
-  const custoTotal = totalFornadas * custoPorFornada;
+  const fornadasConsolidadas = resumo.filter((r) => !r.em_apuracao && r.custo_fornada !== null);
+  const custoConsolidado = fornadasConsolidadas.reduce((s, r) => s + (r.custo_fornada ?? 0), 0);
   const mediaPortas = totalFornadas > 0 ? totalPortas / totalFornadas : 0;
-  const mediaCusto = totalFornadas > 0 ? custoTotal / totalFornadas : 0;
+  const mediaCusto = fornadasConsolidadas.length > 0 ? custoConsolidado / fornadasConsolidadas.length : 0;
   const totalTrocasValor = trocas.reduce((s, t) => s + (Number(t.valor) || 0), 0);
-
-  const salvarCusto = () => {
-    const v = parseFloat(custoInput.replace(",", "."));
-    if (Number.isFinite(v) && v >= 0) {
-      updateCusto.mutate(v, { onSuccess: () => setEditandoCusto(false) });
-    }
-  };
+  const fornadasEmApuracao = resumo.filter((r) => r.em_apuracao).length;
 
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ["pintura-inicios"] });
     queryClient.invalidateQueries({ queryKey: ["pintura-trocas-gas"] });
     queryClient.invalidateQueries({ queryKey: ["fornadas-resumo"] });
-    queryClient.invalidateQueries({ queryKey: ["pintura-fornada-config"] });
   };
 
   const TABS: Array<{ key: TabKey; label: string; icon: typeof BarChart3; count: number }> = [
