@@ -139,6 +139,7 @@ export default function BalancoDescontos() {
                   <TableHeader>
                     <TableRow className="border-white/10 hover:bg-transparent">
                       <TableHead className="text-white/60">Vendedor</TableHead>
+                      <TableHead className="text-white/60">Status</TableHead>
                       <TableHead className="text-white/60">Data</TableHead>
                       <TableHead className="text-white/60">Cliente</TableHead>
                       <TableHead className="text-white/60 text-right">Sem Desc.</TableHead>
