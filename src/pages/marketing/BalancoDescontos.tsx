@@ -132,7 +132,13 @@ export default function BalancoDescontos() {
                         const total = Number(r.total_venda);
                         const aptoAvista = r.vendas?.forma_pagamento === "a_vista";
                         const aptoFrio = !!r.vendas?.venda_presencial;
-                        const aptoGerente = !!r.tem_autorizacao_gerente;
+                        // Gerente é considerado apto se houver registro de autorização OU
+                        // se o desconto aplicado excedeu o limite básico (à vista + frio),
+                        // o que só é possível com autorização do gerente (registro pode estar
+                        // faltando por falha histórica de gravação).
+                        const limiteBasico = Number(r.pct_limite_permitido) || 0;
+                        const aptoGerente =
+                          !!r.tem_autorizacao_gerente || pctDado > limiteBasico;
                         const pctLimite = Math.max(
                           aptoAvista ? 3 : 0,
                           aptoFrio ? 5 : 0,
