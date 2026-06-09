@@ -7335,6 +7335,27 @@ export type Database = {
           },
         ]
       }
+      pintura_fornada_config: {
+        Row: {
+          custo_por_fornada: number
+          id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          custo_por_fornada?: number
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          custo_por_fornada?: number
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       pintura_inicios: {
         Row: {
           created_at: string
