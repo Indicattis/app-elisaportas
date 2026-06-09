@@ -60,8 +60,23 @@ export default function BalancoDescontos() {
   const hoje = new Date();
   const mesPadrao = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}`;
   const [mes, setMes] = useState(mesPadrao);
+  const [busca, setBusca] = useState("");
 
-  const { rows, isLoading, recalcular, isRecalculando } = useBalancoDescontos(mes);
+  const { rows: rawRows, isLoading, recalcular, isRecalculando } = useBalancoDescontos(mes);
+
+  const dataMes = parseISO(`${mes}-01`);
+  const mesAnterior = () => setMes(format(subMonths(dataMes, 1), "yyyy-MM"));
+  const mesProximo = () => setMes(format(addMonths(dataMes, 1), "yyyy-MM"));
+
+  const termoBusca = busca.trim().toLowerCase();
+  const rows = useMemo(() => {
+    if (!termoBusca) return rawRows;
+    return rawRows.filter((r) => {
+      const cliente = (r.vendas?.cliente_nome || "").toLowerCase();
+      const vendedor = (r.vendedor?.nome || "").toLowerCase();
+      return cliente.includes(termoBusca) || vendedor.includes(termoBusca);
+    });
+  }, [rawRows, termoBusca]);
 
   // Balanço = lucro - excedido (débito do excesso de desconto no lucro)
   const computeRow = (r: typeof rows[number]) => {
