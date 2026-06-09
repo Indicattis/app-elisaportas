@@ -27,7 +27,7 @@ const routeKeyMap: Record<string, string> = {
 export default function FabricaHub() {
   const navigate = useNavigate();
   const [mounted, setMounted] = useState(false);
-  const { user, hasBypassPermissions } = useAuth();
+  const { user, loading, hasBypassPermissions } = useAuth();
 
   useEffect(() => {
     const timer = setTimeout(() => setMounted(true), 50);
@@ -53,11 +53,14 @@ export default function FabricaHub() {
       return data?.map(r => r.route_key) || [];
     },
     enabled: !!user?.id && !hasBypassPermissions,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   });
 
   const hasAccess = (path: string): boolean => {
     if (hasBypassPermissions) return true;
-    if (isLoadingAccess) return true; // Mostra como habilitado enquanto carrega
+    if (loading || isLoadingAccess) return true; // Mostra como habilitado enquanto carrega
     const routeKey = routeKeyMap[path];
     if (!routeKey) return true;
     return userAccess.includes(routeKey);
