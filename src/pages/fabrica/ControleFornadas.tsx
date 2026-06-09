@@ -1,18 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, RefreshCw, Flame, Fuel, BarChart3, Check, Pencil, DoorOpen, DollarSign, Droplet, Trash2, CheckCircle2, TrendingUp } from "lucide-react";
+import { ArrowLeft, RefreshCw, Flame, Fuel, BarChart3, DoorOpen, DollarSign, Droplet, Trash2, CheckCircle2, TrendingUp, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePinturaInicios } from "@/hooks/usePinturaInicios";
 import { usePinturaTrocasGas } from "@/hooks/usePinturaTrocasGas";
-import { usePinturaFornadaCusto } from "@/hooks/usePinturaFornadaCusto";
 import { useFornadasResumo } from "@/hooks/useFornadasResumo";
 import { formatCurrency } from "@/lib/utils";
 import {
@@ -33,37 +31,24 @@ export default function ControleFornadas() {
 
   const { inicios, isLoading: isLoadingInicios, toggleRecarga, excluirInicio } = usePinturaInicios();
   const { trocas, isLoading: isLoadingTrocas, excluirTroca } = usePinturaTrocasGas();
-  const { custoPorFornada, update: updateCusto } = usePinturaFornadaCusto();
-  const { data: resumo = [], isLoading: isLoadingResumo } = useFornadasResumo(custoPorFornada);
+  const { data: resumo = [], isLoading: isLoadingResumo } = useFornadasResumo();
 
-  const [editandoCusto, setEditandoCusto] = useState(false);
-  const [custoInput, setCustoInput] = useState<string>("");
   type TabKey = "resumo" | "fornadas" | "trocas";
   const [activeTab, setActiveTab] = useState<TabKey>("resumo");
 
-  useEffect(() => {
-    setCustoInput(String(custoPorFornada ?? 0));
-  }, [custoPorFornada]);
-
   const totalFornadas = resumo.length;
   const totalPortas = resumo.reduce((s, r) => s + r.qtd_portas, 0);
-  const custoTotal = totalFornadas * custoPorFornada;
+  const fornadasConsolidadas = resumo.filter((r) => !r.em_apuracao && r.custo_fornada !== null);
+  const custoConsolidado = fornadasConsolidadas.reduce((s, r) => s + (r.custo_fornada ?? 0), 0);
   const mediaPortas = totalFornadas > 0 ? totalPortas / totalFornadas : 0;
-  const mediaCusto = totalFornadas > 0 ? custoTotal / totalFornadas : 0;
+  const mediaCusto = fornadasConsolidadas.length > 0 ? custoConsolidado / fornadasConsolidadas.length : 0;
   const totalTrocasValor = trocas.reduce((s, t) => s + (Number(t.valor) || 0), 0);
-
-  const salvarCusto = () => {
-    const v = parseFloat(custoInput.replace(",", "."));
-    if (Number.isFinite(v) && v >= 0) {
-      updateCusto.mutate(v, { onSuccess: () => setEditandoCusto(false) });
-    }
-  };
+  const fornadasEmApuracao = resumo.filter((r) => r.em_apuracao).length;
 
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ["pintura-inicios"] });
     queryClient.invalidateQueries({ queryKey: ["pintura-trocas-gas"] });
     queryClient.invalidateQueries({ queryKey: ["fornadas-resumo"] });
-    queryClient.invalidateQueries({ queryKey: ["pintura-fornada-config"] });
   };
 
   const TABS: Array<{ key: TabKey; label: string; icon: typeof BarChart3; count: number }> = [
@@ -153,42 +138,11 @@ export default function ControleFornadas() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs uppercase tracking-wide text-white/50">Custo por fornada</span>
-                  <DollarSign className="h-4 w-4 text-blue-400" />
+                  <span className="text-xs uppercase tracking-wide text-white/50">Em apuração</span>
+                  <Clock className="h-4 w-4 text-amber-400" />
                 </div>
-                {editandoCusto ? (
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={custoInput}
-                      onChange={(e) => setCustoInput(e.target.value)}
-                      className="bg-white/10 border-white/20 text-white"
-                      autoFocus
-                    />
-                    <Button
-                      size="icon"
-                      onClick={salvarCusto}
-                      disabled={updateCusto.isPending}
-                      className="bg-blue-700 hover:bg-blue-800 text-white"
-                    >
-                      <Check className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-between">
-                    <span className="text-2xl font-semibold">{formatCurrency(custoPorFornada)}</span>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => setEditandoCusto(true)}
-                      className="text-white/60 hover:text-white hover:bg-white/10"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                  </div>
-                )}
+                <div className="text-2xl font-semibold">{fornadasEmApuracao}</div>
+                <div className="text-xs text-white/50 mt-1">fornadas da troca em aberto</div>
               </div>
               <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl p-4">
                 <div className="flex items-center justify-between mb-2">
@@ -203,7 +157,8 @@ export default function ControleFornadas() {
                   <span className="text-xs uppercase tracking-wide text-white/50">Custo total acumulado</span>
                   <DollarSign className="h-4 w-4 text-blue-400" />
                 </div>
-                <div className="text-2xl font-semibold">{formatCurrency(custoTotal)}</div>
+                <div className="text-2xl font-semibold">{formatCurrency(custoConsolidado)}</div>
+                <div className="text-xs text-white/50 mt-1">{fornadasConsolidadas.length} fornadas consolidadas</div>
               </div>
               <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl p-4">
                 <div className="flex items-center justify-between mb-2">
@@ -238,6 +193,7 @@ export default function ControleFornadas() {
                       <TableHead className="text-white/60">Início</TableHead>
                       <TableHead className="text-white/60">Responsável</TableHead>
                       <TableHead className="text-white/60 text-center">Portas pintadas</TableHead>
+                      <TableHead className="text-white/60">Troca de gás</TableHead>
                       <TableHead className="text-white/60 text-right">Custo</TableHead>
                       <TableHead className="text-white/60 text-right">Recarga</TableHead>
                     </TableRow>
@@ -265,7 +221,21 @@ export default function ControleFornadas() {
                             {r.qtd_portas}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-right text-white">{formatCurrency(custoPorFornada)}</TableCell>
+                        <TableCell className="text-white/80 text-sm">
+                          {r.troca_registrado_em
+                            ? format(new Date(r.troca_registrado_em), "dd/MM/yyyy", { locale: ptBR })
+                            : "—"}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {r.em_apuracao ? (
+                            <Badge variant="outline" className="border-amber-500/40 bg-amber-500/10 text-amber-300 gap-1">
+                              <Clock className="h-3 w-3" />
+                              Em apuração
+                            </Badge>
+                          ) : (
+                            <span className="text-white">{formatCurrency(r.custo_fornada ?? 0)}</span>
+                          )}
+                        </TableCell>
                         <TableCell className="text-right">
                           {r.recarga_realizada ? (
                             <Badge className="bg-green-500/15 text-green-300 border border-green-500/30">Realizada</Badge>
