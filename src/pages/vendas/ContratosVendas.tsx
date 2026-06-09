@@ -25,6 +25,18 @@ interface VendaRow {
   valor_venda: number | null;
   contrato_url: string | null;
   contrato_assinado_em: string | null;
+  atendente_id: string | null;
+}
+
+interface VendedorInfo {
+  id: string;
+  nome: string | null;
+  foto_perfil_url: string | null;
+}
+
+interface BalancoInfo {
+  desconto_dado: number | null;
+  tipo: string | null;
 }
 
 export default function ContratosVendas() {
@@ -34,6 +46,8 @@ export default function ContratosVendas() {
   const [search, setSearch] = useState('');
   const [vendas, setVendas] = useState<VendaRow[]>([]);
   const [loadingVendas, setLoadingVendas] = useState(true);
+  const [vendedores, setVendedores] = useState<Record<string, VendedorInfo>>({});
+  const [balancos, setBalancos] = useState<Record<string, BalancoInfo>>({});
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedVendaId, setSelectedVendaId] = useState<string | null>(null);
   const [anexarOpen, setAnexarOpen] = useState(false);
@@ -63,7 +77,40 @@ export default function ContratosVendas() {
         .limit(5000);
 
       const { data, error } = await query;
-      if (!error && data) setVendas(data as any);
+      if (!error && data) {
+        const rows = data as any as VendaRow[];
+        setVendas(rows);
+
+        const atendenteIds = Array.from(
+          new Set(rows.map(r => r.atendente_id).filter(Boolean) as string[])
+        );
+        const vendaIds = rows.map(r => r.id);
+
+        const [vendRes, balRes] = await Promise.all([
+          atendenteIds.length
+            ? supabase
+                .from('admin_users')
+                .select('id, nome, foto_perfil_url')
+                .in('id', atendenteIds)
+            : Promise.resolve({ data: [] as any[] }),
+          vendaIds.length
+            ? supabase
+                .from('vendas_balanco_desconto')
+                .select('venda_id, desconto_dado, tipo')
+                .in('venda_id', vendaIds)
+            : Promise.resolve({ data: [] as any[] }),
+        ]);
+
+        const vMap: Record<string, VendedorInfo> = {};
+        (vendRes.data || []).forEach((v: any) => { vMap[v.id] = v; });
+        setVendedores(vMap);
+
+        const bMap: Record<string, BalancoInfo> = {};
+        (balRes.data || []).forEach((b: any) => {
+          bMap[b.venda_id] = { desconto_dado: b.desconto_dado, tipo: b.tipo };
+        });
+        setBalancos(bMap);
+      }
       setLoadingVendas(false);
     })();
   }, [user, refreshKey]);
@@ -141,20 +188,102 @@ export default function ContratosVendas() {
     );
   };
 
-  const Card = ({ v, children }: { v: VendaRow; children?: React.ReactNode }) => (
-    <div className="p-3 rounded-xl bg-white/[0.03] border border-white/5 hover:bg-white/[0.05] transition-colors">
-      <div className="min-w-0">
-        <div className="text-white text-sm font-medium truncate">
-          {v.cliente_nome || 'Sem nome'}
+  const renderDescontoAcrescimo = (vendaId: string) => {
+    const b = balancos[vendaId];
+    if (!b || !b.desconto_dado || b.tipo === 'neutro') {
+      return <span className="text-white/30">—</span>;
+    }
+    const valor = Math.abs(Number(b.desconto_dado) || 0);
+    if (b.tipo === 'positivo') {
+      return <span className="text-emerald-300">+ {formatCurrency(valor)}</span>;
+    }
+    return <span className="text-rose-300">- {formatCurrency(valor)}</span>;
+  };
+
+  const renderVendedor = (atendenteId: string | null) => {
+    if (!atendenteId) return <span className="text-white/30">—</span>;
+    const v = vendedores[atendenteId];
+    const initials = (v?.nome || '?').split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase();
+    return (
+      <div className="flex items-center gap-2 min-w-0">
+        <div className="h-7 w-7 rounded-full overflow-hidden bg-white/10 border border-white/10 shrink-0 flex items-center justify-center text-[10px] text-white/70">
+          {v?.foto_perfil_url ? (
+            <img src={v.foto_perfil_url} alt={v?.nome || ''} className="h-full w-full object-cover" />
+          ) : (
+            <span>{initials}</span>
+          )}
         </div>
-        <div className="text-[11px] text-white/50 flex flex-wrap gap-x-2 gap-y-0.5 mt-0.5">
-          <span>{v.cpf_cliente || 'Sem CPF'}</span>
-          <span>{v.cidade || '-'}</span>
-          <span>{format(new Date(v.data_venda), 'dd/MM/yyyy', { locale: ptBR })}</span>
-          <span className="text-blue-300">{formatCurrency(v.valor_venda || 0)}</span>
-        </div>
+        <span className="text-xs text-white/70 truncate max-w-[140px]">{v?.nome || '—'}</span>
       </div>
-      {children}
+    );
+  };
+
+  const TableView = ({
+    rows,
+    actionLabel,
+    actionClass,
+    actionIcon: ActionIcon,
+    onAction,
+    extraRow,
+  }: {
+    rows: VendaRow[];
+    actionLabel?: string;
+    actionClass?: string;
+    actionIcon?: typeof FileSignature;
+    onAction?: (v: VendaRow) => void;
+    extraRow?: (v: VendaRow) => React.ReactNode;
+  }) => (
+    <div className="overflow-x-auto rounded-lg border border-white/5">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="text-left text-[11px] uppercase tracking-wide text-white/40 border-b border-white/10">
+            <th className="px-3 py-2 font-medium">Data</th>
+            <th className="px-3 py-2 font-medium">Cliente</th>
+            <th className="px-3 py-2 font-medium">CPF/CNPJ</th>
+            <th className="px-3 py-2 font-medium">Cidade</th>
+            <th className="px-3 py-2 font-medium text-right">Valor</th>
+            <th className="px-3 py-2 font-medium text-right">Desc./Acréscimo</th>
+            <th className="px-3 py-2 font-medium">Vendedor</th>
+            {(onAction || extraRow) && <th className="px-3 py-2 font-medium text-right">Ações</th>}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map(v => (
+            <tr key={v.id} className="border-b border-white/5 hover:bg-white/[0.03] transition-colors align-middle">
+              <td className="px-3 py-2 text-white/80 whitespace-nowrap">
+                {format(new Date(v.data_venda), 'dd/MM/yyyy', { locale: ptBR })}
+              </td>
+              <td className="px-3 py-2 text-white font-medium max-w-[220px] truncate">
+                {v.cliente_nome || 'Sem nome'}
+              </td>
+              <td className="px-3 py-2 text-white/70 whitespace-nowrap">{v.cpf_cliente || '—'}</td>
+              <td className="px-3 py-2 text-white/70 max-w-[160px] truncate">{v.cidade || '—'}</td>
+              <td className="px-3 py-2 text-right text-blue-300 whitespace-nowrap">
+                {formatCurrency(v.valor_venda || 0)}
+              </td>
+              <td className="px-3 py-2 text-right whitespace-nowrap">{renderDescontoAcrescimo(v.id)}</td>
+              <td className="px-3 py-2">{renderVendedor(v.atendente_id)}</td>
+              {(onAction || extraRow) && (
+                <td className="px-3 py-2 text-right">
+                  <div className="flex flex-col items-end gap-1.5">
+                    {extraRow?.(v)}
+                    {onAction && ActionIcon && (
+                      <Button
+                        size="sm"
+                        className={actionClass}
+                        onClick={() => onAction(v)}
+                      >
+                        <ActionIcon className="w-4 h-4 mr-2" />
+                        {actionLabel}
+                      </Button>
+                    )}
+                  </div>
+                </td>
+              )}
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 
@@ -300,23 +429,16 @@ export default function ContratosVendas() {
                 {pendentes.length === 0 ? (
                   <div className="text-center text-white/40 text-xs py-6">Nenhuma venda</div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                    {pendentes.map(v => (
-                      <Card key={v.id} v={v}>
-                        <Button
-                          size="sm"
-                          className="mt-3 w-full bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 text-white border border-blue-400/30"
-                          onClick={() => {
-                            setSelectedVendaId(v.id);
-                            setModalOpen(true);
-                          }}
-                        >
-                          <FileSignature className="w-4 h-4 mr-2" />
-                          Gerar Contrato
-                        </Button>
-                      </Card>
-                    ))}
-                  </div>
+                  <TableView
+                    rows={pendentes}
+                    actionLabel="Gerar Contrato"
+                    actionIcon={FileSignature}
+                    actionClass="bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 text-white border border-blue-400/30"
+                    onAction={(v) => {
+                      setSelectedVendaId(v.id);
+                      setModalOpen(true);
+                    }}
+                  />
                 )}
               </Column>
             )}
@@ -331,24 +453,17 @@ export default function ContratosVendas() {
                 {gerados.length === 0 ? (
                   <div className="text-center text-white/40 text-xs py-6">Nenhuma venda</div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                    {gerados.map(v => (
-                      <Card key={v.id} v={v}>
-                        {renderContratoFiles(v.id, true)}
-                        <Button
-                          size="sm"
-                          className="mt-3 w-full bg-gradient-to-r from-emerald-500 to-emerald-700 hover:from-emerald-400 hover:to-emerald-600 text-white border border-emerald-400/30"
-                          onClick={() => {
-                            setAnexarVenda({ id: v.id, nome: v.cliente_nome || 'Sem nome' });
-                            setAnexarOpen(true);
-                          }}
-                        >
-                          <Upload className="w-4 h-4 mr-2" />
-                          Anexar Assinado
-                        </Button>
-                      </Card>
-                    ))}
-                  </div>
+                  <TableView
+                    rows={gerados}
+                    actionLabel="Anexar Assinado"
+                    actionIcon={Upload}
+                    actionClass="bg-gradient-to-r from-emerald-500 to-emerald-700 hover:from-emerald-400 hover:to-emerald-600 text-white border border-emerald-400/30"
+                    onAction={(v) => {
+                      setAnexarVenda({ id: v.id, nome: v.cliente_nome || 'Sem nome' });
+                      setAnexarOpen(true);
+                    }}
+                    extraRow={(v) => renderContratoFiles(v.id, true)}
+                  />
                 )}
               </Column>
             )}
@@ -363,11 +478,12 @@ export default function ContratosVendas() {
                 {assinados.length === 0 ? (
                   <div className="text-center text-white/40 text-xs py-6">Nenhuma venda</div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                    {assinados.map(v => (
-                      <Card key={v.id} v={v}>
+                  <TableView
+                    rows={assinados}
+                    extraRow={(v) => (
+                      <div className="space-y-1.5">
                         {v.contrato_assinado_em && (
-                          <div className="mt-2 text-[11px] text-emerald-300/80 flex items-center gap-1">
+                          <div className="text-[11px] text-emerald-300/80 flex items-center gap-1 justify-end">
                             <FileCheck2 className="w-3 h-3" />
                             Assinado em {format(new Date(v.contrato_assinado_em), 'dd/MM/yyyy', { locale: ptBR })}
                           </div>
@@ -377,7 +493,7 @@ export default function ContratosVendas() {
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="mt-2 w-full text-white/80 hover:text-white hover:bg-white/10 border border-white/10"
+                            className="text-white/80 hover:text-white hover:bg-white/10 border border-white/10"
                             onClick={async () => {
                               const { data } = await supabase.storage
                                 .from('contratos-vendas')
@@ -389,9 +505,9 @@ export default function ContratosVendas() {
                             Baixar contrato assinado
                           </Button>
                         )}
-                      </Card>
-                    ))}
-                  </div>
+                      </div>
+                    )}
+                  />
                 )}
               </Column>
             )}
