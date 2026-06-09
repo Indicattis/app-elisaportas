@@ -529,20 +529,25 @@ export function useVendas() {
 
       // 9. Salvar autorização de desconto, se houver
       if (autorizacaoDesconto) {
+        const autorizacaoPayload = {
+          venda_id: venda.id,
+          percentual_desconto: autorizacaoDesconto.percentual_desconto,
+          autorizado_por: autorizacaoDesconto.autorizado_por,
+          solicitado_por: autorizacaoDesconto.solicitado_por,
+          senha_usada: autorizacaoDesconto.senha_usada,
+          tipo_autorizacao: autorizacaoDesconto.tipo_autorizacao,
+          observacoes: autorizacaoDesconto.observacoes || null,
+        };
+        console.warn('[autorizacao-desconto] inserindo:', autorizacaoPayload);
         const { error: autorizacaoError } = await supabase
           .from('vendas_autorizacoes_desconto')
-          .insert([{
-            venda_id: venda.id,
-            percentual_desconto: autorizacaoDesconto.percentual_desconto,
-            autorizado_por: autorizacaoDesconto.autorizado_por,
-            solicitado_por: autorizacaoDesconto.solicitado_por,
-            senha_usada: autorizacaoDesconto.senha_usada,
-            tipo_autorizacao: autorizacaoDesconto.tipo_autorizacao,
-            observacoes: autorizacaoDesconto.observacoes || null
-          }]);
+          .insert([autorizacaoPayload]);
 
         if (autorizacaoError) {
           console.error('Erro ao salvar autorização:', autorizacaoError);
+          throw new Error(
+            `Venda criada mas a autorização de desconto NÃO foi registrada: ${autorizacaoError.message}. Avise o suporte imediatamente.`
+          );
         }
       }
 
