@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePinturaInicios } from "@/hooks/usePinturaInicios";
@@ -30,6 +29,8 @@ export default function ControleFornadas() {
 
   const [editandoCusto, setEditandoCusto] = useState(false);
   const [custoInput, setCustoInput] = useState<string>("");
+  type TabKey = "resumo" | "fornadas" | "trocas";
+  const [activeTab, setActiveTab] = useState<TabKey>("resumo");
 
   useEffect(() => {
     setCustoInput(String(custoPorFornada ?? 0));
@@ -52,6 +53,14 @@ export default function ControleFornadas() {
     queryClient.invalidateQueries({ queryKey: ["fornadas-resumo"] });
     queryClient.invalidateQueries({ queryKey: ["pintura-fornada-config"] });
   };
+
+  const TABS: Array<{ key: TabKey; label: string; icon: typeof BarChart3; count: number }> = [
+    { key: "resumo", label: "Resumo", icon: BarChart3, count: totalFornadas },
+    { key: "fornadas", label: "Fornadas", icon: Flame, count: inicios.length },
+    { key: "trocas", label: "Trocas de Gás", icon: Fuel, count: trocas.length },
+  ];
+  const activeIndex = Math.max(0, TABS.findIndex(t => t.key === activeTab));
+  const cols = TABS.length;
 
   return (
     <div className="min-h-screen bg-black text-white p-4 md:p-6">
