@@ -1,43 +1,46 @@
-
 ## Objetivo
-Transformar a tela `/vendas/contratos` em um kanban com 3 colunas representando o ciclo do contrato de cada venda.
 
-## Colunas do Kanban
+1. Ao gerar contrato em **Pendente**, mostrar feedback de loading na linha e migrar automaticamente a venda para a aba **Contrato Gerado**, com botões de baixar/visualizar.
+2. Permitir **retornar** a venda para a aba anterior (excluindo o contrato atual) tanto em **Contrato Gerado** quanto em **Contrato Assinado**.
 
-1. **Pendente de Contrato** — vendas sem nenhum contrato gerado ainda
-   - Critério: venda ativa (não rascunho, não reprovada, contrato não dispensado) **e** sem registro em `contratos_vendas` **e** `vendas.contrato_url IS NULL`
-   - Ação principal no card: botão **Gerar Contrato** (abre `GerarContratoElisaModal`)
+## Mudanças
 
-2. **Contrato Gerado** — contrato já gerado/anexado em `contratos_vendas`, mas ainda não assinado
-   - Critério: venda tem ao menos 1 registro em `contratos_vendas` **e** `vendas.contrato_url IS NULL`
-   - Ações no card: baixar/abrir o(s) arquivo(s), excluir contrato, e botão **Anexar Assinado** (abre `AnexarContratoModal`, que preenche `vendas.contrato_url` e move o card para a próxima coluna)
+### `src/pages/vendas/ContratosVendas.tsx`
 
-3. **Contrato Assinado** — venda com `contrato_url` preenchido (assinatura registrada)
-   - Critério: `vendas.contrato_url IS NOT NULL` (e diferente de `'legado'`, para não poluir a coluna com vendas antigas migradas)
-   - Card mostra arquivo(s) de `contratos_vendas` + link para baixar o contrato assinado (`contrato_url` no bucket `contratos-vendas`), data de assinatura (`contrato_assinado_em`)
-   - Sem ações de transição (final do fluxo)
+**Loading + troca automática de aba ao gerar:**
+- Novo estado `generatingVendaId: string | null`.
+- Quando o usuário clica **Gerar Contrato**, além de abrir o modal, marcar `generatingVendaId = v.id`. Enquanto estiver setado, a linha exibe um spinner discreto no lugar do botão de ação.
+- Passar uma callback `onGerado(vendaId)` ao `GerarContratoElisaModal` que:
+  - dispara `setRefreshKey(k => k+1)` (já existente) para recarregar `vendas`,
+  - invalida `contratos-vendas` (já feito pelo hook),
+  - faz `setActiveTab('gerados')`,
+  - limpa `generatingVendaId`.
+- Se o usuário fechar o modal sem gerar, também limpar `generatingVendaId`.
 
-## Layout (mantendo padrão glassmorphism do projeto)
+**Baixar/visualizar em "Contrato Gerado":**
+- A função `renderContratoFiles(vendaId, true)` já lista os arquivos com botão **Download**. Adicionar um botão **Visualizar** (abre `arquivo_url` em nova aba — equivalente ao download mas com `target=_blank` sem `download`). Manter exclusão individual.
 
-- Mantém header, breadcrumb, partículas e botão de voltar atuais
-- Mantém o input de busca (filtra por cliente / CPF / cidade em todas as colunas simultaneamente)
-- Substitui a lista única por um grid de 3 colunas:
-  - `grid grid-cols-1 lg:grid-cols-3 gap-4`
-  - Cada coluna: header com ícone + título + contador, e lista scrollável de cards (`max-h-[calc(100vh-280px)] overflow-y-auto`)
-  - Cards mantêm visual atual (nome, CPF, cidade, data, valor) com estilo `bg-white/[0.03] border border-white/5`
-- Largura externa do container aumentada de `max-w-6xl` para `max-w-7xl` para acomodar 3 colunas
+**Retornar de aba (novo botão "Retornar" por linha):**
+- Em **Contrato Gerado** → botão "Retornar para Pendente":
+  - Confirmação ("Isso excluirá o(s) contrato(s) gerado(s). Continuar?").
+  - Para cada contrato em `contratosByVenda[v.id]`, chamar `deleteContrato(c.id)` (já remove storage + linha em `contratos_vendas`).
+  - Após sucesso, `setRefreshKey(k => k+1)` e manter na aba atual (a venda some dela e aparece em Pendente).
+- Em **Contrato Assinado** → botão "Retornar para Gerado":
+  - Confirmação ("Isso removerá o contrato assinado. Continuar?").
+  - `UPDATE vendas SET contrato_url=null, contrato_assinado_em=null WHERE id=v.id`.
+  - Se também houver arquivo no storage referenciado por `contrato_url` (chave do bucket `contratos-vendas`), removê-lo via `supabase.storage.from('contratos-vendas').remove([contrato_url])` antes do update.
+  - `setRefreshKey(k => k+1)`.
 
-## Dados (sem mudanças de schema)
+Botões "Retornar" usam variante `ghost` com borda sutil (`border-white/10 text-white/70 hover:bg-white/10`) e ícone `Undo2` do lucide.
 
-Carregar em paralelo dentro do `useEffect`:
-- `vendas` ativas (mesmos filtros de hoje, removendo o `is('contrato_url', null)` para também trazer as assinadas)
-- `contratos_vendas` (via hook `useContratosVendas` já existente) agrupados por `venda_id`
+### `src/components/contratos/GerarContratoElisaModal.tsx`
 
-Derivar as 3 listas com `useMemo` aplicando os critérios acima, e em seguida aplicar o filtro de busca em cada lista.
+- Adicionar prop opcional `onGerado?: () => void`.
+- No `uploadContrato({...}, { onSuccess })`: chamar `onGerado?.()` antes de `onOpenChange(false)`.
+- Nenhuma outra alteração de UX.
 
-## Arquivos afetados
+## Observações técnicas
 
-- `src/pages/vendas/ContratosVendas.tsx` — reestruturação do JSX em kanban e ajuste da query/derivações
-- Reutiliza: `GerarContratoElisaModal`, `AnexarContratoModal`, hook `useContratosVendas`
-
-Sem mudanças de banco, RLS, rotas ou outros componentes.
+- A query `useContratosVendas({})` já é invalidada por `uploadContrato` e `deleteContrato`, então a transição entre abas é reativa.
+- A coluna `contrato_url` em `vendas` armazena a chave de storage (não URL pública) — por isso o download em **Assinado** já usa `createSignedUrl`. O remove do storage segue o mesmo padrão.
+- Não há mudança de schema nem de RLS.
