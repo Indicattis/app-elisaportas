@@ -334,6 +334,7 @@ export default function ContratosVendas() {
         <tbody>
           {rows.map(v => (
             <tr key={v.id} className="border-b border-white/5 hover:bg-white/[0.03] transition-colors align-middle">
+              <td className="px-3 py-2">{renderVendedor(v.atendente_id)}</td>
               <td className="px-3 py-2 text-white/80 whitespace-nowrap">
                 {format(new Date(v.data_venda), 'dd/MM/yyyy', { locale: ptBR })}
               </td>
@@ -346,7 +347,6 @@ export default function ContratosVendas() {
                 {formatCurrency(v.valor_venda || 0)}
               </td>
               <td className="px-3 py-2 text-right whitespace-nowrap">{renderDescontoAcrescimo(v.id)}</td>
-              <td className="px-3 py-2">{renderVendedor(v.atendente_id)}</td>
               {(onAction || extraRow) && (
                 <td className="px-3 py-2 text-right">
                   <div className="flex flex-row flex-wrap items-center justify-end gap-2">
