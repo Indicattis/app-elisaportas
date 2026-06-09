@@ -14,6 +14,22 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 const formatMoeda = (v: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
 
+const etapaLabels: Record<string, string> = {
+  aberto: "Aberto",
+  aprovacao_diretor: "Aprovação CEO",
+  em_producao: "Em Produção",
+  aguardando_pintura: "Aguardando Pintura",
+  embalagem: "Embalagem",
+  inspecao_qualidade: "Inspeção de Qualidade",
+  aguardando_cliente: "Aguardando Cliente",
+  correções: "Correções",
+  instalacoes: "Instalações",
+  finalizado: "Finalizado",
+};
+
+const formatEtapa = (etapa: string | null | undefined) =>
+  etapa && etapaLabels[etapa] ? etapaLabels[etapa] : etapa || "-";
+
 export default function BalancoDescontos() {
   const hoje = new Date();
   const mesPadrao = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}`;
@@ -139,6 +155,7 @@ export default function BalancoDescontos() {
                   <TableHeader>
                     <TableRow className="border-white/10 hover:bg-transparent">
                       <TableHead className="text-white/60">Vendedor</TableHead>
+                      <TableHead className="text-white/60">Status</TableHead>
                       <TableHead className="text-white/60">Data</TableHead>
                       <TableHead className="text-white/60">Cliente</TableHead>
                       <TableHead className="text-white/60 text-right">Sem Desc.</TableHead>
@@ -156,7 +173,7 @@ export default function BalancoDescontos() {
                   <TableBody>
                     {rows.length === 0 ? (
                       <TableRow className="border-white/10">
-                        <TableCell colSpan={13} className="text-center text-white/50">
+                        <TableCell colSpan={14} className="text-center text-white/50">
                           Nenhuma venda no período. Clique em Recalcular.
                         </TableCell>
                       </TableRow>
@@ -175,6 +192,9 @@ export default function BalancoDescontos() {
                                 {(r.vendedor?.nome || "?").slice(0, 2).toUpperCase()}
                               </AvatarFallback>
                             </Avatar>
+                          </TableCell>
+                          <TableCell className="text-white/90 whitespace-nowrap">
+                            {formatEtapa(r.etapa_atual)}
                           </TableCell>
                           <TableCell className="text-white/90">
                             {r.data_venda
