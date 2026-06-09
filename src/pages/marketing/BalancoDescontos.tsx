@@ -111,9 +111,9 @@ export default function BalancoDescontos() {
                       <TableHead className="text-white/60 text-right">Sem Desc.</TableHead>
                       <TableHead className="text-white/60 text-right">Total</TableHead>
                       <TableHead className="text-white/60 text-right">% Dado</TableHead>
-                      <TableHead className="text-white/60 text-right">À Vista (3%)</TableHead>
-                      <TableHead className="text-white/60 text-right">Frio (5%)</TableHead>
-                      <TableHead className="text-white/60 text-right">Gerente (8%)</TableHead>
+                       <TableHead className="text-white/60 text-right">À Vista (3%)</TableHead>
+                       <TableHead className="text-white/60 text-right">Frio (5%)</TableHead>
+                       <TableHead className="text-white/60 text-right">Gerente (+7%)</TableHead>
                       <TableHead className="text-white/60 text-right">% Limite</TableHead>
                       <TableHead className="text-white/60 text-right">Excedido</TableHead>
                       <TableHead className="text-white/60 text-right">Balanço</TableHead>
@@ -128,25 +128,29 @@ export default function BalancoDescontos() {
                       </TableRow>
                     ) : (
                       rows.map((r) => {
-                        const pctDado = Number(r.pct_desconto_dado);
-                        const total = Number(r.total_venda);
-                        const aptoAvista = r.vendas?.forma_pagamento === "a_vista";
-                        const aptoFrio = !!r.vendas?.venda_presencial;
-                        // Gerente é considerado apto se houver registro de autorização OU
-                        // se o desconto aplicado excedeu o limite básico (à vista + frio),
-                        // o que só é possível com autorização do gerente (registro pode estar
-                        // faltando por falha histórica de gravação).
-                        const limiteBasico = Number(r.pct_limite_permitido) || 0;
-                        const aptoGerente =
-                          !!r.tem_autorizacao_gerente || pctDado > limiteBasico;
-                        const pctLimite = Math.max(
-                          aptoAvista ? 3 : 0,
-                          aptoFrio ? 5 : 0,
-                          aptoGerente ? 8 : 0,
-                        );
-                        const check = (limite: number) =>
-                          pctDado <= limite ? "text-emerald-400" : "text-red-400";
-                        const excedidoPct = Math.max(0, pctDado - pctLimite);
+                         const pctDado = Number(r.pct_desconto_dado);
+                         const total = Number(r.total_venda);
+                         const formaPg = r.vendas?.forma_pagamento || "";
+                         const aptoAvista = formaPg !== "" && formaPg !== "cartao_credito";
+                         const aptoFrio = !!r.vendas?.venda_presencial;
+                         // Limite base = soma dos limites aplicáveis (à vista + frio)
+                         const limiteBase =
+                           (aptoAvista ? 3 : 0) + (aptoFrio ? 5 : 0);
+                         // Gerente é considerado apto se houver registro de autorização OU
+                         // se o desconto aplicado excedeu o limite base (fallback para
+                         // registros históricos sem autorização gravada).
+                         const aptoGerente =
+                           !!r.tem_autorizacao_gerente || pctDado > limiteBase;
+                         // Limite total: soma À Vista + Frio + adicional do Gerente (7%).
+                         // Prioriza o valor já recalculado no banco quando disponível.
+                         const pctLimiteCalc = limiteBase + (aptoGerente ? 7 : 0);
+                         const pctLimite =
+                           Number(r.pct_limite_permitido) > 0
+                             ? Number(r.pct_limite_permitido)
+                             : pctLimiteCalc;
+                         const check = (limite: number) =>
+                           pctDado <= limite ? "text-emerald-400" : "text-red-400";
+                         const excedidoPct = Math.max(0, pctDado - pctLimite);
                         const excedidoValor = (excedidoPct / 100) * total;
                         const semDesc = pctDado !== 100 ? total / (1 - pctDado / 100) : total;
                         return (
@@ -168,8 +172,8 @@ export default function BalancoDescontos() {
                           <TableCell className={`text-right ${aptoFrio ? check(5) : "text-white/30"}`}>
                             {aptoFrio ? formatMoeda(0.05 * total) : "-"}
                           </TableCell>
-                          <TableCell className={`text-right ${aptoGerente ? check(8) : "text-white/30"}`}>
-                            {aptoGerente ? formatMoeda(0.08 * total) : "-"}
+                          <TableCell className={`text-right ${aptoGerente ? check(pctLimite) : "text-white/30"}`}>
+                            {aptoGerente ? formatMoeda(0.07 * total) : "-"}
                           </TableCell>
                           <TableCell className="text-white/50 text-right">
                             {pctLimite > 0 ? `${pctLimite.toFixed(2)}%` : "-"}
