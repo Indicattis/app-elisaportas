@@ -93,8 +93,8 @@ export default function ContratosVendas() {
           atendenteIds.length
             ? supabase
                 .from('admin_users')
-                .select('id, nome, foto_perfil_url')
-                .in('id', atendenteIds)
+                .select('id, user_id, nome, foto_perfil_url')
+                .or(`id.in.(${atendenteIds.join(',')}),user_id.in.(${atendenteIds.join(',')})`)
             : Promise.resolve({ data: [] as any[] }),
           vendaIds.length
             ? supabase
@@ -105,7 +105,10 @@ export default function ContratosVendas() {
         ]);
 
         const vMap: Record<string, VendedorInfo> = {};
-        (vendRes.data || []).forEach((v: any) => { vMap[v.id] = v; });
+        (vendRes.data || []).forEach((v: any) => {
+          if (v.id) vMap[v.id] = v;
+          if (v.user_id) vMap[v.user_id] = v;
+        });
         setVendedores(vMap);
 
         const bMap: Record<string, BalancoInfo> = {};
