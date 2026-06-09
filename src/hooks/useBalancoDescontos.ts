@@ -70,6 +70,9 @@ export function useBalancoDescontos(mesISO: string) {
         const vendasMap = new Map(
           (vendasData || []).map((v: any) => [v.id, v]),
         );
+        const pedidosMap = new Map(
+          (pedidosData || []).map((p: any) => [p.venda_id, p.etapa_atual]),
+        );
         const atendenteIds = Array.from(
           new Set(
             (vendasData || [])
