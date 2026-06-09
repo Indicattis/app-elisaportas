@@ -171,5 +171,6 @@ export function usePinturaInicios() {
     isLoading,
     criarInicio,
     toggleRecarga,
+    excluirInicio,
   };
 }
