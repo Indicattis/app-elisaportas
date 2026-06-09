@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, FileSignature, Search, Download, Trash2, FileText, FileClock, FileCheck2, Upload } from 'lucide-react';
+import { ArrowLeft, FileSignature, Search, Download, Trash2, FileText, FileClock, FileCheck2, Upload, Loader2, Undo2, Eye } from 'lucide-react';
+import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -53,6 +54,8 @@ export default function ContratosVendas() {
   const [anexarOpen, setAnexarOpen] = useState(false);
   const [anexarVenda, setAnexarVenda] = useState<{ id: string; nome: string } | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [generatingVendaId, setGeneratingVendaId] = useState<string | null>(null);
+  const [revertingVendaId, setRevertingVendaId] = useState<string | null>(null);
 
   const { contratos, deleteContrato, isDeleting } = useContratosVendas({});
 
@@ -164,7 +167,26 @@ export default function ContratosVendas() {
                 size="icon"
                 variant="ghost"
                 className="h-7 w-7 text-white/70 hover:text-white hover:bg-white/10"
-                onClick={() => window.open(c.arquivo_url, '_blank')}
+                onClick={() => window.open(c.arquivo_url, '_blank', 'noopener,noreferrer')}
+                title="Visualizar"
+              >
+                <Eye className="w-3.5 h-3.5" />
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7 text-white/70 hover:text-white hover:bg-white/10"
+                onClick={() => {
+                  const a = document.createElement('a');
+                  a.href = c.arquivo_url;
+                  a.download = c.nome_arquivo || 'contrato.pdf';
+                  a.target = '_blank';
+                  a.rel = 'noopener noreferrer';
+                  document.body.appendChild(a);
+                  a.click();
+                  a.remove();
+                }}
+                title="Baixar"
               >
                 <Download className="w-3.5 h-3.5" />
               </Button>
@@ -186,6 +208,56 @@ export default function ContratosVendas() {
         ))}
       </div>
     );
+  };
+
+  const handleRetornarParaPendente = async (v: VendaRow) => {
+    const vContratos = (contratosByVenda as any)[v.id] || [];
+    if (vContratos.length === 0) return;
+    if (!confirm('Isso excluirá o(s) contrato(s) gerado(s) e retornará a venda para Pendente. Continuar?')) return;
+    setRevertingVendaId(v.id);
+    try {
+      await Promise.all(
+        vContratos.map(
+          (c: any) =>
+            new Promise<void>((resolve, reject) => {
+              deleteContrato(c.id, {
+                onSuccess: () => resolve(),
+                onError: (err: any) => reject(err),
+              } as any);
+            })
+        )
+      );
+      setRefreshKey(k => k + 1);
+      toast.success('Venda retornou para Pendente');
+    } catch (e) {
+      console.error(e);
+      toast.error('Erro ao retornar venda');
+    } finally {
+      setRevertingVendaId(null);
+    }
+  };
+
+  const handleRetornarParaGerado = async (v: VendaRow) => {
+    if (!v.contrato_url) return;
+    if (!confirm('Isso removerá o contrato assinado e retornará a venda para Contrato Gerado. Continuar?')) return;
+    setRevertingVendaId(v.id);
+    try {
+      if (v.contrato_url !== 'legado') {
+        await supabase.storage.from('contratos-vendas').remove([v.contrato_url]);
+      }
+      const { error } = await supabase
+        .from('vendas')
+        .update({ contrato_url: null, contrato_assinado_em: null })
+        .eq('id', v.id);
+      if (error) throw error;
+      setRefreshKey(k => k + 1);
+      toast.success('Venda retornou para Contrato Gerado');
+    } catch (e) {
+      console.error(e);
+      toast.error('Erro ao retornar venda');
+    } finally {
+      setRevertingVendaId(null);
+    }
   };
 
   const renderDescontoAcrescimo = (vendaId: string) => {
@@ -271,10 +343,20 @@ export default function ContratosVendas() {
                       <Button
                         size="sm"
                         className={actionClass}
+                        disabled={generatingVendaId === v.id || revertingVendaId === v.id}
                         onClick={() => onAction(v)}
                       >
-                        <ActionIcon className="w-4 h-4 mr-2" />
-                        {actionLabel}
+                        {generatingVendaId === v.id ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Gerando...
+                          </>
+                        ) : (
+                          <>
+                            <ActionIcon className="w-4 h-4 mr-2" />
+                            {actionLabel}
+                          </>
+                        )}
                       </Button>
                     )}
                   </div>
@@ -436,6 +518,7 @@ export default function ContratosVendas() {
                     actionClass="bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 text-white border border-blue-400/30"
                     onAction={(v) => {
                       setSelectedVendaId(v.id);
+                      setGeneratingVendaId(v.id);
                       setModalOpen(true);
                     }}
                   />
@@ -462,7 +545,25 @@ export default function ContratosVendas() {
                       setAnexarVenda({ id: v.id, nome: v.cliente_nome || 'Sem nome' });
                       setAnexarOpen(true);
                     }}
-                    extraRow={(v) => renderContratoFiles(v.id, true)}
+                    extraRow={(v) => (
+                      <div className="space-y-1.5 w-full">
+                        {renderContratoFiles(v.id, true)}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="w-full text-white/70 hover:text-white hover:bg-white/10 border border-white/10"
+                          disabled={revertingVendaId === v.id}
+                          onClick={() => handleRetornarParaPendente(v)}
+                        >
+                          {revertingVendaId === v.id ? (
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          ) : (
+                            <Undo2 className="w-4 h-4 mr-2" />
+                          )}
+                          Retornar para Pendente
+                        </Button>
+                      </div>
+                    )}
                   />
                 )}
               </Column>
@@ -493,7 +594,7 @@ export default function ContratosVendas() {
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="text-white/80 hover:text-white hover:bg-white/10 border border-white/10"
+                            className="w-full text-white/80 hover:text-white hover:bg-white/10 border border-white/10"
                             onClick={async () => {
                               const { data } = await supabase.storage
                                 .from('contratos-vendas')
@@ -503,6 +604,22 @@ export default function ContratosVendas() {
                           >
                             <Download className="w-4 h-4 mr-2" />
                             Baixar contrato assinado
+                          </Button>
+                        )}
+                        {v.contrato_url && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="w-full text-white/70 hover:text-white hover:bg-white/10 border border-white/10"
+                            disabled={revertingVendaId === v.id}
+                            onClick={() => handleRetornarParaGerado(v)}
+                          >
+                            {revertingVendaId === v.id ? (
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            ) : (
+                              <Undo2 className="w-4 h-4 mr-2" />
+                            )}
+                            Retornar para Gerado
                           </Button>
                         )}
                       </div>
@@ -517,8 +634,16 @@ export default function ContratosVendas() {
 
       <GerarContratoElisaModal
         open={modalOpen}
-        onOpenChange={setModalOpen}
+        onOpenChange={(o) => {
+          setModalOpen(o);
+          if (!o) setGeneratingVendaId(null);
+        }}
         vendaId={selectedVendaId}
+        onGerado={() => {
+          setRefreshKey(k => k + 1);
+          setActiveTab('gerados');
+          setGeneratingVendaId(null);
+        }}
       />
 
       {anexarVenda && (

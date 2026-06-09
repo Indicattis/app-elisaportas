@@ -17,9 +17,10 @@ interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   vendaId: string | null;
+  onGerado?: () => void;
 }
 
-export function GerarContratoElisaModal({ open, onOpenChange, vendaId }: Props) {
+export function GerarContratoElisaModal({ open, onOpenChange, vendaId, onGerado }: Props) {
   const [loading, setLoading] = useState(false);
   const { data: cores } = useQuery({
     queryKey: ['contrato-elisa-cores'],
@@ -148,7 +149,10 @@ export function GerarContratoElisaModal({ open, onOpenChange, vendaId }: Props) 
       uploadContrato(
         { file, vendaId, observacoes: 'Contrato GRUPO ELISA gerado pelo sistema' },
         {
-          onSuccess: () => onOpenChange(false),
+          onSuccess: () => {
+            onGerado?.();
+            onOpenChange(false);
+          },
         }
       );
     } catch (e) {
