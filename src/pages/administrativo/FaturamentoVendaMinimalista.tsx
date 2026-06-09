@@ -747,6 +747,68 @@ export default function FaturamentoVendaMinimalista() {
     });
   }, [produtos]);
 
+  // Auto-faturar itens avulsos (acessorio/adicional/manutencao) usando custos_itens
+  useEffect(() => {
+    if (!produtos || produtos.length === 0 || isUpdatingLucro) return;
+
+    const TIPOS_AVULSOS = ['acessorio', 'adicional', 'manutencao'];
+    const avulsosParaAutoFaturar = produtos.filter(p =>
+      TIPOS_AVULSOS.includes(p.tipo_produto) &&
+      (p.lucro_item === null || p.lucro_item === undefined || p.lucro_item === 0) &&
+      !p.faturamento &&
+      !autoFaturadosRef.current.has(p.id)
+    );
+
+    if (avulsosParaAutoFaturar.length === 0) return;
+
+    avulsosParaAutoFaturar.forEach(async (produto) => {
+      autoFaturadosRef.current.add(produto.id);
+
+      try {
+        let custoUnitario: number | null = null;
+
+        // Preferencial: vínculo direto via custos_itens_id
+        if ((produto as any).custos_itens_id) {
+          const { data } = await supabase
+            .from('custos_itens')
+            .select('custo_unitario')
+            .eq('id', (produto as any).custos_itens_id)
+            .maybeSingle();
+          if (data && data.custo_unitario != null) {
+            custoUnitario = Number(data.custo_unitario);
+          }
+        }
+
+        // Fallback: match por descrição em itens vendáveis avulsos
+        if (custoUnitario === null && produto.descricao) {
+          const { data } = await supabase
+            .from('custos_itens')
+            .select('custo_unitario')
+            .eq('vendavel_avulso', true)
+            .ilike('descricao', produto.descricao.trim())
+            .order('descricao', { ascending: true })
+            .limit(1);
+          if (data && data.length > 0 && data[0].custo_unitario != null) {
+            custoUnitario = Number(data[0].custo_unitario);
+          }
+        }
+
+        if (custoUnitario === null) return;
+
+        const custoTotal = custoUnitario * (produto.quantidade || 1);
+        const lucroItem = Math.max(0, (produto.valor_total || 0) - custoTotal);
+
+        await updateLucroItem({
+          produtoId: produto.id,
+          lucroItem,
+          custoProducao: custoTotal,
+        });
+      } catch (err) {
+        console.error('Erro ao auto-faturar item avulso:', err);
+      }
+    });
+  }, [produtos]);
+
   const fetchVenda = async () => {
     try {
       setLoading(true);

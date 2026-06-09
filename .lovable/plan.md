@@ -1,61 +1,50 @@
-## Objetivo
+# Auto-faturamento de itens avulsos
 
-Remover o custo fixo por fornada e passar a calculá-lo a partir do valor das trocas de gás, rateando o valor de cada troca entre as fornadas afiliadas a ela.
+## Problema
+Na tela `/financeiro/faturamento/:id`, itens avulsos (`tipo_produto` `acessorio`, `adicional`, `manutencao`) ficam com `lucro_item = 0` e exigem preenchimento manual. Hoje só portas, pintura e instalação são auto-faturadas.
 
-## Regras de afiliação
+A definição de custo/preço desses itens existe em `/direcao/estrategia/itens` (tabela `custos_itens` com `custo_unitario` e `preco_venda`).
 
-- Cada fornada é afiliada à troca de gás mais recente cuja data seja **anterior ou igual** à data da fornada.
-- Fornadas anteriores à 1ª troca registrada são afiliadas à **1ª troca** (decisão do usuário).
-- A última troca (mais recente) fica "em aberto" até existir uma troca posterior.
+## Solução
+Adicionar um quarto `useEffect` de auto-faturamento em `src/pages/administrativo/FaturamentoVendaMinimalista.tsx`, paralelo aos três existentes (pintura, porta, instalação), específico para avulsos.
 
-## Cálculo de custo
+### Regra de cálculo
+Para cada produto avulso ainda não faturado e com `lucro_item` zerado:
 
-- Para trocas **fechadas** (têm troca posterior):
-  - `custo_por_fornada = valor_troca / qtd_fornadas_no_periodo`
-  - Se `qtd_fornadas_no_periodo = 0`, custo da troca não é distribuído.
-- Para a troca **em aberto** (a mais recente):
-  - Fornadas afiliadas aparecem com status **"Em apuração"** (custo não exibido / placeholder), pois o valor unitário só se consolida quando uma próxima troca delimitar o período.
-- Fornadas sem nenhuma troca registrada no sistema: aparecem com **R$ 0,00**.
+1. **Localizar o item no catálogo** `custos_itens`:
+   - Preferencial: `custos_itens_id` (se a venda já gravar esse vínculo — atualmente está `null` no caso reportado, então fica como fallback futuro).
+   - Fallback principal: match por `descricao` exata (case-insensitive) na tabela `custos_itens` com `vendavel_avulso = true`. Se houver mais de um, usar o primeiro ordenado por `descricao`.
+   - Se não encontrar nenhum: pular (não preencher lucro automaticamente, deixar manual).
 
-## Mudanças no frontend
+2. **Calcular**:
+   - `custoTotal = custo_unitario × quantidade`
+   - `lucroItem = valor_total − custoTotal` (respeita o preço efetivamente cobrado na venda, mesmo se diferente do `preco_venda` do catálogo)
+   - Se `lucroItem < 0`, gravar `0` (evita lucro negativo automático; usuário pode ajustar manualmente).
 
-### Hook `useFornadasResumo`
-- Buscar também `pintura_trocas_gas` (registrado_em, valor) ordenadas por data.
-- Para cada fornada, determinar a troca afiliada (regra acima) e marcar `em_apuracao = true` quando for da troca mais recente.
-- Calcular `custo_fornada` para cada fornada conforme regra. Expor por linha: `troca_id`, `troca_valor`, `qtd_fornadas_troca`, `custo_fornada`, `em_apuracao`.
+3. **Persistir** via `updateLucroItem({ produtoId, lucroItem, custoProducao: custoTotal })` — mesmo padrão dos outros três efeitos. Não marcar `faturamento: true` automaticamente (diferente de instalação) — mantém o comportamento atual de portas/pintura, onde o lucro é preenchido mas o usuário ainda confirma.
 
-### Página `ControleFornadas.tsx` — aba Resumo
-- **Remover** o card editável "Custo por fornada" e toda a UI/estado de edição (`editandoCusto`, `custoInput`, `salvarCusto`).
-- **Remover** os imports/uso de `usePinturaFornadaCusto`.
-- Substituir o card por **"Custo médio por fornada"** = soma dos custos calculados / nº de fornadas com custo consolidado (ignorando "em apuração").
-- O card "Custo total acumulado" passa a somar os custos consolidados das fornadas (equivalente à soma das trocas fechadas com pelo menos 1 fornada).
-- Na tabela de fornadas:
-  - Coluna "Custo" exibe o valor calculado da linha; quando `em_apuracao`, exibe badge **"Em apuração"** em vez de valor.
-  - Adicionar coluna "Troca de gás" mostrando data da troca afiliada (ou "—" se não houver).
+4. **Anti-loop**: usar o mesmo `autoFaturadosRef.current` já existente para não reprocessar.
 
-### Página `ControleFornadas.tsx` — aba Fornadas
-- Mesma exibição de custo/status "Em apuração" por linha (consistente com Resumo).
+### Onde mudar
+- `src/pages/administrativo/FaturamentoVendaMinimalista.tsx`: adicionar o novo `useEffect` logo após o bloco de instalação (~linha 748).
 
-### Hook `usePinturaFornadaCusto`
-- Deixa de ser usado pela página. Pode permanecer no projeto sem alterações (não vamos remover arquivo nem tabela `pintura_fornada_config` neste plano — apenas paramos de usar).
-
-## Mudanças no backend
-
-Nenhuma migração necessária. Toda a lógica é derivada em tempo de leitura a partir de `pintura_inicios` e `pintura_trocas_gas` já existentes.
+### Fora do escopo
+- Não altera schema, RLS ou a página `/direcao/estrategia/itens`.
+- Não preenche `custos_itens_id` retroativamente em vendas antigas (apenas usa para lookup quando existir).
+- Não toca em `acessorio_id` / `adicional_id` (são tabelas legadas separadas — `acessorios` e `adicionais` — distintas de `custos_itens`).
 
 ## Detalhes técnicos
-
-- A determinação da troca afiliada é feita em memória após buscar ambas as listas (volumes pequenos, ordenadas por data).
-- Pseudocódigo:
-  ```text
-  trocas asc por registrado_em
-  para cada fornada (asc por iniciado_em):
-    troca = última troca com registrado_em <= fornada.iniciado_em
-    se nenhuma e existe ao menos uma troca: troca = primeira troca
-    fornada.troca_id = troca?.id
-  agrupar fornadas por troca_id → qtd_fornadas_troca
-  para cada fornada:
-    em_apuracao = (troca == última troca registrada)
-    custo = em_apuracao ? null : troca.valor / qtd_fornadas_troca
-  ```
-- `invalidateQueries` de `fornadas-resumo` já é disparado ao criar/excluir troca ou fornada, então o recálculo é automático.
+```text
+useEffect avulsos:
+  filtrar produtos com tipo_produto ∈ {acessorio, adicional, manutencao}
+                     ∧ lucro_item ∈ {null, 0}
+                     ∧ !faturamento
+                     ∧ ∉ autoFaturadosRef
+  para cada:
+    autoFaturadosRef.add(id)
+    item = custos_itens.findByDescricao(produto.descricao, vendavel_avulso=true)
+    se !item → return
+    custoTotal = item.custo_unitario × produto.quantidade
+    lucroItem  = max(0, produto.valor_total − custoTotal)
+    updateLucroItem({ produtoId, lucroItem, custoProducao: custoTotal })
+```
