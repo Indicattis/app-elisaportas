@@ -1,11 +1,11 @@
 import { useMemo, useState } from "react";
-import { Scale, RefreshCw, TrendingUp, TrendingDown } from "lucide-react";
+import { Scale, RefreshCw, TrendingUp, TrendingDown, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { format } from "date-fns";
+import { format, addMonths, subMonths, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useBalancoDescontos } from "@/hooks/useBalancoDescontos";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
