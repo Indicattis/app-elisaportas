@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { ArrowLeft, Lock, ClipboardList, Calendar, Package, PackageCheck } from "lucide-react";
+import { ArrowLeft, Lock, ClipboardList, Calendar, Package, PackageCheck, Flame } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +13,7 @@ const menuItems = [
   { label: 'Ordens por Pedido', icon: ClipboardList, path: '/fabrica/ordens-pedidos' },
   { label: 'Cronograma Produção', icon: Calendar, path: '/fabrica/cronograma-producao' },
   { label: 'Configurar Itens', icon: Package, path: '/fabrica/produtos' },
+  { label: 'Controle de Fornadas', icon: Flame, path: '/fabrica/controle-fornadas' },
 ];
 
 const routeKeyMap: Record<string, string> = {
@@ -20,6 +21,7 @@ const routeKeyMap: Record<string, string> = {
   '/fabrica/ordens-pedidos': 'fabrica_ordens_pedidos',
   '/fabrica/cronograma-producao': 'fabrica_cronograma_producao',
   '/fabrica/produtos': 'fabrica_produtos',
+  '/fabrica/controle-fornadas': 'fabrica_controle_fornadas',
 };
 
 export default function FabricaHub() {
