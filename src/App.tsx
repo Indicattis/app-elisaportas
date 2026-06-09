@@ -206,6 +206,7 @@ import ProducaoInstalacoes from "./pages/producao/ProducaoInstalacoes";
 import MeuHistoricoMinimalista from "./pages/fabrica/producao/MeuHistoricoMinimalista";
 import OrdensPorPedido from "./pages/fabrica/OrdensPorPedido";
 import CronogramaProducao from "./pages/fabrica/CronogramaProducao";
+import ControleFornadas from "./pages/fabrica/ControleFornadas";
 
 import MeuPerfil from "./pages/MeuPerfil";
 
@@ -487,6 +488,7 @@ const App = () => (
                 <Route path="/fabrica" element={<ProtectedRoute routeKeyPrefix="fabrica_"><FabricaHub /></ProtectedRoute>} />
                 <Route path="/fabrica/ordens-pedidos" element={<ProtectedRoute routeKey="fabrica_ordens_pedidos"><OrdensPorPedido /></ProtectedRoute>} />
                 <Route path="/fabrica/cronograma-producao" element={<ProtectedRoute routeKey="fabrica_cronograma_producao"><CronogramaProducao /></ProtectedRoute>} />
+                <Route path="/fabrica/controle-fornadas" element={<ProtectedRoute routeKey="fabrica_controle_fornadas"><ControleFornadas /></ProtectedRoute>} />
                 <Route path="/fabrica/produtos" element={<ProtectedRoute routeKey="fabrica_produtos"><ProdutosFabrica /></ProtectedRoute>} />
                 <Route path="/fabrica/produtos/editar/:id" element={<ProtectedRoute routeKey="fabrica_produtos"><ProdutosFabricaEdit /></ProtectedRoute>} />
                 <Route path="/fabrica/produtos/materias-primas" element={<ProtectedRoute routeKey="fabrica_produtos"><MateriasPrimasPage /></ProtectedRoute>} />
