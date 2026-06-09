@@ -127,20 +127,6 @@ export default function BalancoDescontos() {
               <div className="text-xl font-bold text-red-400">{formatMoeda(totalNegativo)}</div>
             </CardContent>
           </Card>
-          <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-white/80">Saldo Líquido</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div
-                className={`text-xl font-bold ${
-                  saldo >= 0 ? "text-emerald-400" : "text-red-400"
-                }`}
-              >
-                {formatMoeda(saldo)}
-              </div>
-            </CardContent>
-          </Card>
         </div>
 
         <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
