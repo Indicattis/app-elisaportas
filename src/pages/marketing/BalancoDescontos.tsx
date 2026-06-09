@@ -72,7 +72,7 @@ export default function BalancoDescontos() {
     });
     return { totalPositivo: pos, totalNegativo: neg, saldo: pos + neg };
   }, [rows]);
-  const { totalPositivo, totalNegativo, saldo } = totals;
+  const { totalPositivo, totalNegativo } = totals;
 
   return (
     <MinimalistLayout
