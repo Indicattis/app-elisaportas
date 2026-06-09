@@ -337,7 +337,7 @@ export default function ContratosVendas() {
               <td className="px-3 py-2">{renderVendedor(v.atendente_id)}</td>
               {(onAction || extraRow) && (
                 <td className="px-3 py-2 text-right">
-                  <div className="flex flex-col items-end gap-1.5">
+                  <div className="flex flex-row flex-wrap items-center justify-end gap-2">
                     {extraRow?.(v)}
                     {onAction && ActionIcon && (
                       <Button
