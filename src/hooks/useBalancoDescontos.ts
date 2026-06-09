@@ -75,10 +75,16 @@ export function useBalancoDescontos(mesISO: string) {
         if (atendenteIds.length) {
           const { data: vendedores } = await supabase
             .from("admin_users")
-            .select("id, nome, foto_perfil_url")
-            .in("id", atendenteIds);
+            .select("id, user_id, nome, foto_perfil_url")
+            .or(
+              `id.in.(${atendenteIds.join(",")}),user_id.in.(${atendenteIds.join(",")})`,
+            );
           (vendedores || []).forEach((u: any) =>
-            vendedoresMap.set(u.id, { nome: u.nome, foto_perfil_url: u.foto_perfil_url }),
+            {
+              const entry = { nome: u.nome, foto_perfil_url: u.foto_perfil_url };
+              if (u.id) vendedoresMap.set(u.id, entry);
+              if (u.user_id) vendedoresMap.set(u.user_id, entry);
+            },
           );
         }
         rows.forEach((r) => {
