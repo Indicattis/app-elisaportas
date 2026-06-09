@@ -32,8 +32,29 @@ const etapaLabels: Record<string, string> = {
   pendente_pedido: "Pendente Pedido",
 };
 
+const etapaColors: Record<string, string> = {
+  aberto: "text-blue-400",
+  aprovacao_diretor: "text-amber-400",
+  em_producao: "text-sky-400",
+  aguardando_pintura: "text-violet-400",
+  embalagem: "text-teal-400",
+  inspecao_qualidade: "text-cyan-400",
+  aguardando_cliente: "text-amber-300",
+  correções: "text-rose-400",
+  correcoes: "text-rose-400",
+  instalacoes: "text-emerald-400",
+  finalizado: "text-green-400",
+  reprovado: "text-red-500",
+  aguardando_contrato: "text-yellow-400",
+  pendente_faturamento: "text-orange-400",
+  pendente_pedido: "text-slate-400",
+};
+
 const formatEtapa = (etapa: string | null | undefined) =>
   etapa && etapaLabels[etapa] ? etapaLabels[etapa] : etapa || "-";
+
+const statusColor = (etapa: string | null | undefined) =>
+  etapa && etapaColors[etapa] ? etapaColors[etapa] : "text-white/60";
 
 export default function BalancoDescontos() {
   const hoje = new Date();
@@ -184,7 +205,7 @@ export default function BalancoDescontos() {
                               </AvatarFallback>
                             </Avatar>
                           </TableCell>
-                          <TableCell className="text-white/90 whitespace-nowrap">
+                          <TableCell className={`whitespace-nowrap font-medium ${statusColor(r.status_venda || r.etapa_atual)}`}>
                             {formatEtapa(r.status_venda || r.etapa_atual)}
                           </TableCell>
                           <TableCell className="text-white/90">
