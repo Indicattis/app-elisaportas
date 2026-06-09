@@ -17,6 +17,7 @@ export interface BalancoDescontoRow {
     forma_pagamento: string | null;
     venda_presencial: boolean | null;
     atendente_id: string | null;
+    lucro_total: number | null;
   } | null;
   tem_autorizacao_gerente?: boolean;
   vendedor?: {
@@ -57,7 +58,7 @@ export function useBalancoDescontos(mesISO: string) {
             .in("venda_id", ids),
           supabase
             .from("vendas")
-            .select("id, cliente_nome, forma_pagamento, venda_presencial, atendente_id")
+            .select("id, cliente_nome, forma_pagamento, venda_presencial, atendente_id, lucro_total")
             .in("id", ids),
         ]);
         const autoSet = new Set((autos || []).map((a: any) => a.venda_id));
@@ -96,6 +97,7 @@ export function useBalancoDescontos(mesISO: string) {
                 forma_pagamento: v.forma_pagamento,
                 venda_presencial: v.venda_presencial,
                 atendente_id: v.atendente_id,
+                lucro_total: v.lucro_total,
               }
             : null;
           r.vendedor = v?.atendente_id ? vendedoresMap.get(v.atendente_id) || null : null;
