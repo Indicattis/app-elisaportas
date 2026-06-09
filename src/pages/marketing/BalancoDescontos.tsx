@@ -255,6 +255,9 @@ export default function BalancoDescontos() {
                           </TableCell>
                           <TableCell className="text-white/90">{r.vendas?.cliente_nome || "-"}</TableCell>
                           <TableCell className="text-white/60 text-right">{formatMoeda(semDesc)}</TableCell>
+                          <TableCell className={`text-right font-medium ${pctDado < 0 ? "text-emerald-400" : pctDado > 0 ? "text-red-400" : "text-white/60"}`}>
+                            {pctDado !== 0 ? formatMoeda(total - semDesc) : "-"}
+                          </TableCell>
                           <TableCell className="text-white/90 text-right">{formatMoeda(Number(r.total_venda))}</TableCell>
                           <TableCell className={`text-right ${aptoAvista ? check(3) : "text-white/30"}`}>
                             {aptoAvista ? formatMoeda(0.03 * total) : "-"}
