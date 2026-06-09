@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { isVendaFaturada } from "@/lib/faturamentoStatus";
 
 export interface BalancoDescontoRow {
   id: string;
@@ -25,6 +26,7 @@ export interface BalancoDescontoRow {
     foto_perfil_url: string | null;
   } | null;
   etapa_atual?: string | null;
+  status_venda?: string | null;
 }
 
 function periodoMes(mesISO: string) {
@@ -59,7 +61,7 @@ export function useBalancoDescontos(mesISO: string) {
             .in("venda_id", ids),
           supabase
             .from("vendas")
-            .select("id, cliente_nome, forma_pagamento, venda_presencial, atendente_id, lucro_total")
+            .select("id, cliente_nome, forma_pagamento, venda_presencial, atendente_id, lucro_total, status_aprovacao, contrato_url, contrato_dispensado, frete_aprovado, produtos_vendas(faturamento)")
             .in("id", ids),
           supabase
             .from("pedidos_producao")
@@ -110,6 +112,22 @@ export function useBalancoDescontos(mesISO: string) {
             : null;
           r.vendedor = v?.atendente_id ? vendedoresMap.get(v.atendente_id) || null : null;
           r.etapa_atual = pedidosMap.get(r.venda_id) || null;
+          // Derivar status da venda
+          let statusVenda: string | null = null;
+          if (v) {
+            if (v.status_aprovacao === "reprovado") {
+              statusVenda = "reprovado";
+            } else if (r.etapa_atual) {
+              statusVenda = r.etapa_atual;
+            } else if (!v.contrato_url && !v.contrato_dispensado) {
+              statusVenda = "aguardando_contrato";
+            } else if (!isVendaFaturada(v)) {
+              statusVenda = "pendente_faturamento";
+            } else {
+              statusVenda = "pendente_pedido";
+            }
+          }
+          r.status_venda = statusVenda;
         });
       }
       return rows;
