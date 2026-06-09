@@ -272,19 +272,31 @@ export default function ContratosVendas() {
     return <span className="text-rose-300">- {formatCurrency(valor)}</span>;
   };
 
+  const VendedorAvatar = ({ vendedor }: { vendedor: VendedorInfo | undefined }) => {
+    const initials = (vendedor?.nome || '?').split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase();
+    const [imgError, setImgError] = useState(false);
+    return (
+      <div className="h-7 w-7 rounded-full overflow-hidden bg-white/10 border border-white/10 shrink-0 flex items-center justify-center text-[10px] text-white/70">
+        {vendedor?.foto_perfil_url && !imgError ? (
+          <img
+            src={vendedor.foto_perfil_url}
+            alt={vendedor?.nome || ''}
+            className="h-full w-full object-cover"
+            onError={() => setImgError(true)}
+          />
+        ) : (
+          <span>{initials}</span>
+        )}
+      </div>
+    );
+  };
+
   const renderVendedor = (atendenteId: string | null) => {
     if (!atendenteId) return <span className="text-white/30">—</span>;
     const v = vendedores[atendenteId];
-    const initials = (v?.nome || '?').split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase();
     return (
       <div className="flex items-center gap-2 min-w-0">
-        <div className="h-7 w-7 rounded-full overflow-hidden bg-white/10 border border-white/10 shrink-0 flex items-center justify-center text-[10px] text-white/70">
-          {v?.foto_perfil_url ? (
-            <img src={v.foto_perfil_url} alt={v?.nome || ''} className="h-full w-full object-cover" />
-          ) : (
-            <span>{initials}</span>
-          )}
-        </div>
+        <VendedorAvatar vendedor={v} />
         <span className="text-xs text-white/70 truncate max-w-[140px]">{v?.nome || '—'}</span>
       </div>
     );
@@ -309,19 +321,20 @@ export default function ContratosVendas() {
       <table className="w-full text-sm">
         <thead>
           <tr className="text-left text-[11px] uppercase tracking-wide text-white/40 border-b border-white/10">
+            <th className="px-3 py-2 font-medium">Vendedor</th>
             <th className="px-3 py-2 font-medium">Data</th>
             <th className="px-3 py-2 font-medium">Cliente</th>
             <th className="px-3 py-2 font-medium">CPF/CNPJ</th>
             <th className="px-3 py-2 font-medium">Cidade</th>
             <th className="px-3 py-2 font-medium text-right">Valor</th>
             <th className="px-3 py-2 font-medium text-right">Desc./Acréscimo</th>
-            <th className="px-3 py-2 font-medium">Vendedor</th>
             {(onAction || extraRow) && <th className="px-3 py-2 font-medium text-right">Ações</th>}
           </tr>
         </thead>
         <tbody>
           {rows.map(v => (
             <tr key={v.id} className="border-b border-white/5 hover:bg-white/[0.03] transition-colors align-middle">
+              <td className="px-3 py-2">{renderVendedor(v.atendente_id)}</td>
               <td className="px-3 py-2 text-white/80 whitespace-nowrap">
                 {format(new Date(v.data_venda), 'dd/MM/yyyy', { locale: ptBR })}
               </td>
@@ -334,7 +347,6 @@ export default function ContratosVendas() {
                 {formatCurrency(v.valor_venda || 0)}
               </td>
               <td className="px-3 py-2 text-right whitespace-nowrap">{renderDescontoAcrescimo(v.id)}</td>
-              <td className="px-3 py-2">{renderVendedor(v.atendente_id)}</td>
               {(onAction || extraRow) && (
                 <td className="px-3 py-2 text-right">
                   <div className="flex flex-row flex-wrap items-center justify-end gap-2">
