@@ -133,7 +133,7 @@ export function TrocasGasList({ trocas, isLoading, onExcluir, isExcluindo }: Tro
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>Excluir troca de gás?</AlertTitle>
+                        <AlertDialogTitle>Excluir troca de gás?</AlertDialogTitle>
                         <AlertDialogDescription>
                           Esta ação não pode ser desfeita.
                         </AlertDialogDescription>
