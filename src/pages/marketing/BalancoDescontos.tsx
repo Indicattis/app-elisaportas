@@ -165,11 +165,11 @@ export default function BalancoDescontos() {
                       <TableHead className="text-white/60">Cliente</TableHead>
                       <TableHead className="text-white/60 text-right">Sem Desc.</TableHead>
                       <TableHead className="text-white/60 text-right">Total</TableHead>
-                      <TableHead className="text-white/60 text-right">% Dado</TableHead>
                        <TableHead className="text-white/60 text-right">À Vista (3%)</TableHead>
                        <TableHead className="text-white/60 text-right">Frio (5%)</TableHead>
                        <TableHead className="text-white/60 text-right">Gerente (+7%)</TableHead>
                       <TableHead className="text-white/60 text-right">% Limite</TableHead>
+                      <TableHead className="text-white/60 text-right">% Dado</TableHead>
                       <TableHead className="text-white/60 text-right">Excedido</TableHead>
                       <TableHead className="text-white/60 text-right">Lucro</TableHead>
                       <TableHead className="text-white/60 text-right">Balanço</TableHead>
@@ -209,9 +209,6 @@ export default function BalancoDescontos() {
                           <TableCell className="text-white/90">{r.vendas?.cliente_nome || "-"}</TableCell>
                           <TableCell className="text-white/60 text-right">{formatMoeda(semDesc)}</TableCell>
                           <TableCell className="text-white/90 text-right">{formatMoeda(Number(r.total_venda))}</TableCell>
-                          <TableCell className="text-white/90 text-right">
-                            {pctDado.toFixed(2)}%
-                          </TableCell>
                           <TableCell className={`text-right ${aptoAvista ? check(3) : "text-white/30"}`}>
                             {aptoAvista ? formatMoeda(0.03 * total) : "-"}
                           </TableCell>
@@ -223,6 +220,9 @@ export default function BalancoDescontos() {
                           </TableCell>
                           <TableCell className="text-white/50 text-right">
                             {pctLimite > 0 ? `${pctLimite.toFixed(2)}%` : "-"}
+                          </TableCell>
+                          <TableCell className={`text-right font-medium ${pctDado < 0 ? "text-emerald-400" : pctDado > 0 ? "text-red-400" : "text-white/90"}`}>
+                            {pctDado > 0 ? `${pctDado.toFixed(2)}%` : pctDado < 0 ? `${Math.abs(pctDado).toFixed(2)}%` : "0,00%"}
                           </TableCell>
                           <TableCell className={`text-right font-medium ${excedidoPct > 0 ? "text-red-400" : "text-white/40"}`}>
                             {excedidoPct > 0 ? `${excedidoPct.toFixed(2)}% (${formatMoeda(excedidoValor)})` : "-"}
