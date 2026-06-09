@@ -1921,6 +1921,78 @@ export default function FaturamentoVendaMinimalista() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Modal de Regenerar Parcelas (limpa todas e gera de novo) */}
+      <AlertDialog open={showRegenerarParcelasDialog} onOpenChange={setShowRegenerarParcelasDialog}>
+        <AlertDialogContent className="bg-zinc-900 border-white/10">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">Regenerar parcelas?</AlertDialogTitle>
+            <AlertDialogDescription className="text-white/60">
+              Todas as parcelas atuais (inclusive as marcadas como pagas) serão removidas e novas serão geradas com base na forma de pagamento atual.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-white/5 border-white/20 text-white hover:bg-white/10">
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleRegenerarParcelas} className="bg-blue-600 hover:bg-blue-700">
+              Regenerar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Modal pós-salvar forma de pagamento */}
+      <AlertDialog open={showRegenerarAposSalvarDialog} onOpenChange={setShowRegenerarAposSalvarDialog}>
+        <AlertDialogContent className="bg-zinc-900 border-white/10">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">Regenerar parcelas com a nova forma?</AlertDialogTitle>
+            <AlertDialogDescription className="text-white/60">
+              A forma de pagamento foi salva. Deseja regenerar as parcelas em contas a receber agora? Parcelas atuais (inclusive pagas) serão removidas.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => setShowRegenerarAposSalvarDialog(false)}
+              className="bg-white/5 border-white/20 text-white hover:bg-white/10"
+            >
+              Manter parcelas atuais
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                setShowRegenerarAposSalvarDialog(false);
+                await handleRegenerarParcelas();
+              }}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              Regenerar agora
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Confirmar remoção de uma parcela */}
+      <AlertDialog open={!!confirmRemoveId} onOpenChange={(open) => !open && setConfirmRemoveId(null)}>
+        <AlertDialogContent className="bg-zinc-900 border-white/10">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">Remover parcela?</AlertDialogTitle>
+            <AlertDialogDescription className="text-white/60">
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-white/5 border-white/20 text-white hover:bg-white/10">
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => confirmRemoveId && handleRemoveParcela(confirmRemoveId)}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Remover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
