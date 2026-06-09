@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { 
   DollarSign, 
   TrendingUp, 
@@ -1513,47 +1514,223 @@ export default function FaturamentoVendaMinimalista() {
         </Card>
 
 
-        {/* Forma de Pagamento — somente leitura: o que o vendedor cadastrou é a fonte da verdade.
-            Alterações só podem ser feitas em /vendas/minhas-vendas/editar. */}
-        {venda && (
-          <PagamentoResumo
-            venda={venda}
-            contasReceber={contasReceber}
-            hideComprovante
-            valorTotalEsperado={(() => {
-              const lista = produtos || [];
-              const bruto = lista.reduce((s: number, p: any) => {
-                const qty = p.quantidade || 1;
-                return (
-                  s +
+        {/* Forma de Pagamento — editável diretamente no faturamento. */}
+        {venda && (() => {
+          const valorTotalPagamento = (() => {
+            const lista = produtos || [];
+            const bruto = lista.reduce((s: number, p: any) => {
+              const qty = p.quantidade || 1;
+              return (
+                s +
+                ((p.valor_produto || 0) +
+                  (p.valor_pintura || 0) +
+                  (p.valor_instalacao || 0)) *
+                  qty
+              );
+            }, 0);
+            const descontos = lista.reduce((s: number, p: any) => {
+              const qty = p.quantidade || 1;
+              if (p.tipo_desconto === "valor") return s + (p.desconto_valor || 0);
+              if (p.tipo_desconto === "percentual" && p.desconto_percentual > 0) {
+                const base =
                   ((p.valor_produto || 0) +
                     (p.valor_pintura || 0) +
                     (p.valor_instalacao || 0)) *
-                    qty
-                );
-              }, 0);
-              const descontos = lista.reduce((s: number, p: any) => {
-                const qty = p.quantidade || 1;
-                if (p.tipo_desconto === "valor") return s + (p.desconto_valor || 0);
-                if (p.tipo_desconto === "percentual" && p.desconto_percentual > 0) {
-                  const base =
-                    ((p.valor_produto || 0) +
-                      (p.valor_pintura || 0) +
-                      (p.valor_instalacao || 0)) *
-                    qty;
-                  return s + base * (p.desconto_percentual / 100);
-                }
-                return s;
-              }, 0);
-              return (
-                bruto -
-                descontos +
-                (venda.valor_frete || 0) +
-                (venda.valor_credito || 0)
-              );
-            })()}
-          />
-        )}
+                  qty;
+                return s + base * (p.desconto_percentual / 100);
+              }
+              return s;
+            }, 0);
+            return (
+              bruto -
+              descontos +
+              (venda.valor_frete || 0) +
+              (venda.valor_credito || 0)
+            );
+          })();
+
+          return (
+            <div className="space-y-4">
+              <PagamentoSection
+                paymentData={pagamentoData}
+                onChange={setPagamentoData}
+                valorTotal={valorTotalPagamento}
+                vendaPresencial={venda.venda_presencial}
+              />
+
+              <div className="flex justify-end">
+                <Button
+                  onClick={handleSalvarFormaPagamento}
+                  disabled={salvandoFormaPagamento}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  {salvandoFormaPagamento ? "Salvando..." : "Salvar forma de pagamento"}
+                </Button>
+              </div>
+
+              {/* Tabela de parcelas editáveis */}
+              <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle className="text-white text-lg flex items-center gap-2">
+                    <CreditCard className="h-4 w-4 text-blue-400" />
+                    Parcelas / Contas a Receber
+                  </CardTitle>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleAddParcela}
+                      className="bg-white/5 border-white/20 text-white hover:bg-white/10"
+                    >
+                      <Plus className="h-3 w-3 mr-1" /> Adicionar parcela
+                    </Button>
+                    {contasReceber.length > 0 && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setShowRegenerarParcelasDialog(true)}
+                        className="bg-white/5 border-white/20 text-white hover:bg-white/10"
+                      >
+                        <Undo2 className="h-3 w-3 mr-1" /> Regenerar
+                      </Button>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {contasReceber.length === 0 ? (
+                    <p className="text-white/50 text-sm text-center py-6">
+                      Nenhuma parcela gerada. Salve a forma de pagamento ou clique em "Adicionar parcela".
+                    </p>
+                  ) : (
+                    <ScrollArea className="w-full">
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="border-white/10">
+                            <TableHead className="text-white/70 text-xs">#</TableHead>
+                            <TableHead className="text-white/70 text-xs">Método</TableHead>
+                            <TableHead className="text-white/70 text-xs">Vencimento</TableHead>
+                            <TableHead className="text-white/70 text-xs text-right">Valor</TableHead>
+                            <TableHead className="text-white/70 text-xs">Status</TableHead>
+                            <TableHead className="text-white/70 text-xs">Pago em</TableHead>
+                            <TableHead className="text-white/70 text-xs w-10"></TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {[...contasReceber]
+                            .sort((a, b) => (a.numero_parcela || 0) - (b.numero_parcela || 0))
+                            .map((parcela) => (
+                              <TableRow key={parcela.id} className="border-white/10">
+                                <TableCell className="text-white/80 text-sm">
+                                  {parcela.numero_parcela || '-'}
+                                </TableCell>
+                                <TableCell>
+                                  <Select
+                                    value={parcela.metodo_pagamento || 'boleto'}
+                                    onValueChange={(v) => handleUpdateMetodoParcela(parcela.id, v)}
+                                  >
+                                    <SelectTrigger className="w-36 h-8 bg-white/5 border-white/20 text-white text-xs">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-zinc-900 border-white/10">
+                                      <SelectItem value="a_vista">À Vista</SelectItem>
+                                      <SelectItem value="boleto">Boleto</SelectItem>
+                                      <SelectItem value="pix">Pix</SelectItem>
+                                      <SelectItem value="cartao_credito">Cartão de Crédito</SelectItem>
+                                      <SelectItem value="cartao_debito">Cartão de Débito</SelectItem>
+                                      <SelectItem value="dinheiro">Dinheiro</SelectItem>
+                                      <SelectItem value="transferencia">Transferência</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </TableCell>
+                                <TableCell>
+                                  <Input
+                                    type="date"
+                                    value={parcela.data_vencimento ? parcela.data_vencimento.substring(0, 10) : ''}
+                                    onChange={(e) =>
+                                      handleUpdatePagamento(parcela.id, 'data_vencimento', e.target.value || null)
+                                    }
+                                    className="w-36 h-8 bg-white/5 border-white/20 text-white text-xs"
+                                  />
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  <Input
+                                    type="number"
+                                    step="0.01"
+                                    value={parcela.valor_parcela ?? 0}
+                                    onChange={(e) =>
+                                      handleUpdatePagamento(
+                                        parcela.id,
+                                        'valor_parcela',
+                                        parseFloat(e.target.value) || 0,
+                                      )
+                                    }
+                                    className="w-28 h-8 bg-white/5 border-white/20 text-white text-xs text-right ml-auto"
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  <Select
+                                    value={parcela.status || 'pendente'}
+                                    onValueChange={(v) => handleUpdatePagamento(parcela.id, 'status', v)}
+                                  >
+                                    <SelectTrigger
+                                      className={cn(
+                                        "w-32 h-8 border text-xs",
+                                        parcela.status === 'pago'
+                                          ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-400'
+                                          : 'bg-amber-500/20 border-amber-500/30 text-amber-400',
+                                      )}
+                                    >
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-zinc-900 border-white/10">
+                                      <SelectItem value="pendente">Pendente</SelectItem>
+                                      <SelectItem value="pago">Pago</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </TableCell>
+                                <TableCell>
+                                  {parcela.status === 'pago' ? (
+                                    <Input
+                                      type="date"
+                                      value={parcela.data_pagamento ? parcela.data_pagamento.substring(0, 10) : ''}
+                                      onChange={(e) =>
+                                        handleUpdatePagamento(parcela.id, 'data_pagamento', e.target.value || null)
+                                      }
+                                      className="w-36 h-8 bg-white/5 border-white/20 text-white text-xs"
+                                    />
+                                  ) : (
+                                    <span className="text-white/30 text-xs">—</span>
+                                  )}
+                                </TableCell>
+                                <TableCell>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    onClick={() => setConfirmRemoveId(parcela.id)}
+                                    className="h-7 w-7 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                        </TableBody>
+                      </Table>
+                    </ScrollArea>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Comprovante (mantém a visualização read-only) */}
+              <PagamentoResumo
+                venda={venda}
+                contasReceber={[]}
+                compact
+                valorTotalEsperado={valorTotalPagamento}
+              />
+            </div>
+          );
+        })()}
 
         {/* Outras Informações da Venda */}
         {venda && (
@@ -1740,6 +1917,78 @@ export default function FaturamentoVendaMinimalista() {
               className="bg-orange-600 hover:bg-orange-700"
             >
               {isRemovendo ? "Removendo..." : "Sim, Remover Faturamento"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Modal de Regenerar Parcelas (limpa todas e gera de novo) */}
+      <AlertDialog open={showRegenerarParcelasDialog} onOpenChange={setShowRegenerarParcelasDialog}>
+        <AlertDialogContent className="bg-zinc-900 border-white/10">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">Regenerar parcelas?</AlertDialogTitle>
+            <AlertDialogDescription className="text-white/60">
+              Todas as parcelas atuais (inclusive as marcadas como pagas) serão removidas e novas serão geradas com base na forma de pagamento atual.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-white/5 border-white/20 text-white hover:bg-white/10">
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleRegenerarParcelas} className="bg-blue-600 hover:bg-blue-700">
+              Regenerar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Modal pós-salvar forma de pagamento */}
+      <AlertDialog open={showRegenerarAposSalvarDialog} onOpenChange={setShowRegenerarAposSalvarDialog}>
+        <AlertDialogContent className="bg-zinc-900 border-white/10">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">Regenerar parcelas com a nova forma?</AlertDialogTitle>
+            <AlertDialogDescription className="text-white/60">
+              A forma de pagamento foi salva. Deseja regenerar as parcelas em contas a receber agora? Parcelas atuais (inclusive pagas) serão removidas.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => setShowRegenerarAposSalvarDialog(false)}
+              className="bg-white/5 border-white/20 text-white hover:bg-white/10"
+            >
+              Manter parcelas atuais
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                setShowRegenerarAposSalvarDialog(false);
+                await handleRegenerarParcelas();
+              }}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              Regenerar agora
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Confirmar remoção de uma parcela */}
+      <AlertDialog open={!!confirmRemoveId} onOpenChange={(open) => !open && setConfirmRemoveId(null)}>
+        <AlertDialogContent className="bg-zinc-900 border-white/10">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">Remover parcela?</AlertDialogTitle>
+            <AlertDialogDescription className="text-white/60">
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-white/5 border-white/20 text-white hover:bg-white/10">
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => confirmRemoveId && handleRemoveParcela(confirmRemoveId)}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Remover
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

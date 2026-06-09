@@ -1,50 +1,41 @@
-# Auto-faturamento de itens avulsos
+# Tornar Forma de Pagamento editável no Faturamento da Venda
 
-## Problema
-Na tela `/financeiro/faturamento/:id`, itens avulsos (`tipo_produto` `acessorio`, `adicional`, `manutencao`) ficam com `lucro_item = 0` e exigem preenchimento manual. Hoje só portas, pintura e instalação são auto-faturadas.
+## Estado atual
+A página `/financeiro/faturamento/:id` (`FaturamentoVendaMinimalista.tsx`) usa `PagamentoResumo` (somente leitura). Todos os handlers de edição já existem no arquivo mas não estão ligados a nenhum botão/UI:
 
-A definição de custo/preço desses itens existe em `/direcao/estrategia/itens` (tabela `custos_itens` com `custo_unitario` e `preco_venda`).
+- `handleSalvarFormaPagamento` — salva forma/método/parcelas/intervalo via `PagamentoSection` + regenera parcelas
+- `handleUpdatePagamento` — altera campos de uma parcela (status, valor, vencimento, observações)
+- `handleUpdateMetodoGrupo` / `handleUpdateMetodoParcela` / `handleUpdateMetodoVenda`
+- `handleAddParcela` / `handleRemoveParcela`
+- `gerarParcelas` (já existe)
+- `pagamentoData` state + `PagamentoSection` já importados
 
-## Solução
-Adicionar um quarto `useEffect` de auto-faturamento em `src/pages/administrativo/FaturamentoVendaMinimalista.tsx`, paralelo aos três existentes (pintura, porta, instalação), específico para avulsos.
+## Mudanças
 
-### Regra de cálculo
-Para cada produto avulso ainda não faturado e com `lucro_item` zerado:
+### 1. Substituir `PagamentoResumo` por uma seção editável
+Em `src/pages/administrativo/FaturamentoVendaMinimalista.tsx` (~linha 1515), trocar o bloco `<PagamentoResumo .../>` por:
 
-1. **Localizar o item no catálogo** `custos_itens`:
-   - Preferencial: `custos_itens_id` (se a venda já gravar esse vínculo — atualmente está `null` no caso reportado, então fica como fallback futuro).
-   - Fallback principal: match por `descricao` exata (case-insensitive) na tabela `custos_itens` com `vendavel_avulso = true`. Se houver mais de um, usar o primeiro ordenado por `descricao`.
-   - Se não encontrar nenhum: pular (não preencher lucro automaticamente, deixar manual).
+a. **`<PagamentoSection ... />`** ligado a `pagamentoData` + `setPagamentoData`, com botão **"Salvar forma de pagamento"** que chama `handleSalvarFormaPagamento` (já regenera parcelas via diálogo `showRegenerarAposSalvarDialog`, que também já existe).
 
-2. **Calcular**:
-   - `custoTotal = custo_unitario × quantidade`
-   - `lucroItem = valor_total − custoTotal` (respeita o preço efetivamente cobrado na venda, mesmo se diferente do `preco_venda` do catálogo)
-   - Se `lucroItem < 0`, gravar `0` (evita lucro negativo automático; usuário pode ajustar manualmente).
+b. **Tabela de parcelas editável** logo abaixo, listando `contasReceber` com:
+   - **Status** (Select Pago / Pendente) → `handleUpdatePagamento(id, 'status', valor)` (limpa/define `data_pagamento` automaticamente — já implementado)
+   - **Método** (Select) → `handleUpdateMetodoParcela`
+   - **Valor** (Input numérico) → `handleUpdatePagamento(id, 'valor_parcela', ...)`
+   - **Vencimento** (Input date) → `handleUpdatePagamento(id, 'data_vencimento', ...)`
+   - **Data pagamento** (Input date, só quando status = pago) → `handleUpdatePagamento(id, 'data_pagamento', ...)`
+   - Botão remover (ícone lixeira) com `AlertDialog` confirmando → `handleRemoveParcela`
+   - Botão **"+ Adicionar parcela"** acima/abaixo da tabela → `handleAddParcela`
 
-3. **Persistir** via `updateLucroItem({ produtoId, lucroItem, custoProducao: custoTotal })` — mesmo padrão dos outros três efeitos. Não marcar `faturamento: true` automaticamente (diferente de instalação) — mantém o comportamento atual de portas/pintura, onde o lucro é preenchido mas o usuário ainda confirma.
+c. Manter visualização do comprovante (renderizar `PagamentoResumo` ou só o trecho de comprovante reaproveitado) para não perder a funcionalidade já existente.
 
-4. **Anti-loop**: usar o mesmo `autoFaturadosRef.current` já existente para não reprocessar.
+### 2. Estilo
+Cards `bg-white/5 backdrop-blur-xl border-white/10`, badges de status com cores existentes (`emerald` pago, `amber` pendente), tabela em ScrollArea — mantém o padrão glassmorphism do projeto.
 
-### Onde mudar
-- `src/pages/administrativo/FaturamentoVendaMinimalista.tsx`: adicionar o novo `useEffect` logo após o bloco de instalação (~linha 748).
+### 3. Fora de escopo
+- Não alterar schema/RLS — `contas_receber` já é editável pelos handlers.
+- Não tocar em outras telas (`/direcao/...`, `/vendas/...`).
+- Não regenerar parcelas automaticamente ao editar status; só ao salvar forma de pagamento (já há diálogo confirmatório).
 
-### Fora do escopo
-- Não altera schema, RLS ou a página `/direcao/estrategia/itens`.
-- Não preenche `custos_itens_id` retroativamente em vendas antigas (apenas usa para lookup quando existir).
-- Não toca em `acessorio_id` / `adicional_id` (são tabelas legadas separadas — `acessorios` e `adicionais` — distintas de `custos_itens`).
-
-## Detalhes técnicos
-```text
-useEffect avulsos:
-  filtrar produtos com tipo_produto ∈ {acessorio, adicional, manutencao}
-                     ∧ lucro_item ∈ {null, 0}
-                     ∧ !faturamento
-                     ∧ ∉ autoFaturadosRef
-  para cada:
-    autoFaturadosRef.add(id)
-    item = custos_itens.findByDescricao(produto.descricao, vendavel_avulso=true)
-    se !item → return
-    custoTotal = item.custo_unitario × produto.quantidade
-    lucroItem  = max(0, produto.valor_total − custoTotal)
-    updateLucroItem({ produtoId, lucroItem, custoProducao: custoTotal })
-```
+## Riscos
+- Status `pago` em parcela cria/limpa `data_pagamento` no banco — já tratado.
+- Trocar método/parcelas via `PagamentoSection` + regenerar pode sobrescrever parcelas já marcadas como pagas; o diálogo `showRegenerarAposSalvarDialog` existente já avisa o usuário.
