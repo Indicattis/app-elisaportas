@@ -1,12 +1,23 @@
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Flame, Clock, User, Droplet, Check, CheckCircle2 } from "lucide-react";
+import { Flame, Clock, User, Droplet, Check, CheckCircle2, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface PinturaInicio {
   id: string;
@@ -30,9 +41,11 @@ interface PinturaIniciosListProps {
   isLoading: boolean;
   onToggleRecarga: (inicioId: string) => void;
   isTogglingRecarga?: boolean;
+  onExcluir?: (inicioId: string) => void;
+  isExcluindo?: boolean;
 }
 
-export function PinturaIniciosList({ inicios, isLoading, onToggleRecarga, isTogglingRecarga }: PinturaIniciosListProps) {
+export function PinturaIniciosList({ inicios, isLoading, onToggleRecarga, isTogglingRecarga, onExcluir, isExcluindo }: PinturaIniciosListProps) {
   if (isLoading) {
     return (
       <Card>
@@ -180,6 +193,38 @@ export function PinturaIniciosList({ inicios, isLoading, onToggleRecarga, isTogg
                     )}
                   </div>
                 </Button>
+                {onExcluir && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        disabled={isExcluindo}
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        title="Excluir fornada"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Excluir fornada?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Esta ação não pode ser desfeita. O registro será removido permanentemente.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => onExcluir(inicio.id)}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Excluir
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
               </div>
             ))}
           </div>

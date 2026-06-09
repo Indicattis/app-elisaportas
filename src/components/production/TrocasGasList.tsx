@@ -1,19 +1,33 @@
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Fuel, User, Clock } from "lucide-react";
+import { Fuel, User, Clock, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { formatCurrency } from "@/lib/utils";
 import type { PinturaTrocaGas } from "@/hooks/usePinturaTrocasGas";
 
 interface TrocasGasListProps {
   trocas: PinturaTrocaGas[];
   isLoading: boolean;
+  onExcluir?: (trocaId: string) => void;
+  isExcluindo?: boolean;
 }
 
-export function TrocasGasList({ trocas, isLoading }: TrocasGasListProps) {
+export function TrocasGasList({ trocas, isLoading, onExcluir, isExcluindo }: TrocasGasListProps) {
   const total = trocas.reduce((s, t) => s + (Number(t.valor) || 0), 0);
 
   if (isLoading) {
@@ -104,6 +118,38 @@ export function TrocasGasList({ trocas, isLoading }: TrocasGasListProps) {
                     <p className="text-sm text-muted-foreground mt-1">{t.observacoes}</p>
                   )}
                 </div>
+                {onExcluir && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        disabled={isExcluindo}
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        title="Excluir troca"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Excluir troca de gás?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Esta ação não pode ser desfeita.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => onExcluir(t.id)}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Excluir
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
               </div>
             ))}
           </div>

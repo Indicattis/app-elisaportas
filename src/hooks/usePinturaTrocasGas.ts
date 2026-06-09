@@ -88,5 +88,28 @@ export function usePinturaTrocasGas() {
     },
   });
 
-  return { trocas, isLoading, criarTroca };
+  const excluirTroca = useMutation({
+    mutationFn: async (trocaId: string) => {
+      if (!isAuthenticated) throw new Error("Usuário não autenticado");
+      const { error } = await supabase
+        .from("pintura_trocas_gas" as any)
+        .delete()
+        .eq("id", trocaId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pintura-trocas-gas"] });
+      toast({ title: "Troca de gás excluída", description: "Registro removido com sucesso" });
+    },
+    onError: (error) => {
+      console.error("Erro ao excluir troca de gás:", error);
+      toast({
+        title: "Erro",
+        description: error instanceof Error ? error.message : "Não foi possível excluir a troca de gás",
+        variant: "destructive",
+      });
+    },
+  });
+
+  return { trocas, isLoading, criarTroca, excluirTroca };
 }
