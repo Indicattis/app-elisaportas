@@ -16,8 +16,13 @@ export interface BalancoDescontoRow {
     cliente_nome: string | null;
     forma_pagamento: string | null;
     venda_presencial: boolean | null;
+    atendente_id: string | null;
   } | null;
   tem_autorizacao_gerente?: boolean;
+  vendedor?: {
+    nome: string | null;
+    foto_perfil_url: string | null;
+  } | null;
 }
 
 function periodoMes(mesISO: string) {
@@ -52,13 +57,30 @@ export function useBalancoDescontos(mesISO: string) {
             .in("venda_id", ids),
           supabase
             .from("vendas")
-            .select("id, cliente_nome, forma_pagamento, venda_presencial")
+            .select("id, cliente_nome, forma_pagamento, venda_presencial, atendente_id")
             .in("id", ids),
         ]);
         const autoSet = new Set((autos || []).map((a: any) => a.venda_id));
         const vendasMap = new Map(
           (vendasData || []).map((v: any) => [v.id, v]),
         );
+        const atendenteIds = Array.from(
+          new Set(
+            (vendasData || [])
+              .map((v: any) => v.atendente_id)
+              .filter((x: any): x is string => !!x),
+          ),
+        );
+        const vendedoresMap = new Map<string, { nome: string | null; foto_perfil_url: string | null }>();
+        if (atendenteIds.length) {
+          const { data: vendedores } = await supabase
+            .from("admin_users")
+            .select("id, nome, foto_perfil_url")
+            .in("id", atendenteIds);
+          (vendedores || []).forEach((u: any) =>
+            vendedoresMap.set(u.id, { nome: u.nome, foto_perfil_url: u.foto_perfil_url }),
+          );
+        }
         rows.forEach((r) => {
           r.tem_autorizacao_gerente = autoSet.has(r.venda_id);
           const v = vendasMap.get(r.venda_id);
@@ -67,8 +89,10 @@ export function useBalancoDescontos(mesISO: string) {
                 cliente_nome: v.cliente_nome,
                 forma_pagamento: v.forma_pagamento,
                 venda_presencial: v.venda_presencial,
+                atendente_id: v.atendente_id,
               }
             : null;
+          r.vendedor = v?.atendente_id ? vendedoresMap.get(v.atendente_id) || null : null;
         });
       }
       return rows;
