@@ -19,11 +19,11 @@ import { DelayedParticles } from '@/components/DelayedParticles';
 
 const menuItems = [
   { label: 'Minhas Vendas', icon: ShoppingCart, path: '/vendas/minhas-vendas' },
+  { label: 'Visitas Técnicas', icon: ClipboardCheck, path: '/vendas/visitas-tecnicas' },
   { label: 'Meus Clientes', icon: Users, path: '/vendas/meus-clientes' },
   { label: 'Meus Orçamentos', icon: FileText, path: '/vendas/meus-orcamentos' },
   { label: 'Meus Parceiros', icon: Handshake, path: '/vendas/meus-parceiros' },
   { label: 'Acompanhar Pedido', icon: Search, path: '/vendas/acompanhar-pedido' },
-  { label: 'Visitas Técnicas', icon: ClipboardCheck, path: '/vendas/visitas-tecnicas' },
   { label: 'Metas', icon: Target, path: '/vendas/metas' },
   { label: 'Contratos', icon: FileSignature, path: '/vendas/contratos' },
   { label: 'Tabela de Preços', icon: Tag, path: '/vendas/precos' },
@@ -89,15 +89,16 @@ export default function VendasHub() {
               >
                 <button
                   onClick={() => navigate(item.path)}
-                  className="w-full h-12 rounded-lg
-                             bg-gradient-to-r from-blue-500 to-blue-700
-                             hover:from-blue-400 hover:to-blue-600
+                  className={`w-full h-12 rounded-lg
+                             ${item.label === 'Visitas Técnicas'
+                               ? 'bg-gradient-to-r from-blue-900 to-blue-950 hover:from-blue-800 hover:to-blue-900 shadow-blue-900/20 border-blue-800/30'
+                               : 'bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 shadow-blue-500/20 border-blue-400/30'}
                              active:scale-[0.98]
                              flex items-center gap-4 px-5
                              text-white font-medium 
-                             shadow-lg shadow-blue-500/20
-                             border border-blue-400/30
-                             transition-all duration-300"
+                             shadow-lg
+                             border
+                             transition-all duration-300`}
                 >
                   <Icon className="w-5 h-5" strokeWidth={1.5} />
                   <span className="text-sm font-medium">{item.label}</span>
