@@ -1,43 +1,61 @@
 ## Objetivo
 
-Em `/fabrica/controle-fornadas`, adicionar uma seção que lista cada fornada (registro de `pintura_inicios`) com:
-- Quantidade de portas de enrolar pintadas naquela fornada
-- Custo da fornada (valor fixo configurável)
+Remover o custo fixo por fornada e passar a calculá-lo a partir do valor das trocas de gás, rateando o valor de cada troca entre as fornadas afiliadas a ela.
 
-## Regras combinadas
+## Regras de afiliação
 
-- **Portas por fornada**: contar ordens em `ordens_pintura` com `status = 'concluida'` cuja `data_conclusao` esteja entre `iniciado_em` da fornada e `iniciado_em` da fornada seguinte (ou `now()` para a mais recente). Filtrar para portas de enrolar — usar o `pedido_id` para checar o `tipo_produto`/produto correspondente em `pedidos_producao` (manufaturadas: enrolar). Caso a checagem por tipo seja inviável no front, contar todas as ordens de pintura concluídas no intervalo (apresentaremos como "portas pintadas" sem distinguir).
-- **Custo da fornada**: valor único configurável (R$ por fornada), aplicado a todas as fornadas. Editável na própria página por usuários com acesso.
+- Cada fornada é afiliada à troca de gás mais recente cuja data seja **anterior ou igual** à data da fornada.
+- Fornadas anteriores à 1ª troca registrada são afiliadas à **1ª troca** (decisão do usuário).
+- A última troca (mais recente) fica "em aberto" até existir uma troca posterior.
 
-## Mudanças
+## Cálculo de custo
 
-### 1. Banco — nova tabela de configuração simples
-- Migration criando `pintura_fornada_config` (linha única) com campo `custo_por_fornada numeric not null default 0`, mais `updated_at`/`updated_by`.
-- GRANTs para `authenticated` (select/update) e `service_role`; RLS permitindo select para qualquer autenticado e update somente para `is_admin()` (mesmo helper já usado em outras tabelas).
-- Seed da única linha de config.
+- Para trocas **fechadas** (têm troca posterior):
+  - `custo_por_fornada = valor_troca / qtd_fornadas_no_periodo`
+  - Se `qtd_fornadas_no_periodo = 0`, custo da troca não é distribuído.
+- Para a troca **em aberto** (a mais recente):
+  - Fornadas afiliadas aparecem com status **"Em apuração"** (custo não exibido / placeholder), pois o valor unitário só se consolida quando uma próxima troca delimitar o período.
+- Fornadas sem nenhuma troca registrada no sistema: aparecem com **R$ 0,00**.
 
-### 2. Hook novo `usePinturaFornadaCusto`
-- Lê e atualiza `pintura_fornada_config`. Expõe `custoPorFornada` e `setCustoPorFornada`.
+## Mudanças no frontend
 
-### 3. Hook novo `useFornadasResumo`
-- Reaproveita `pintura_inicios` (já carregado pelo `usePinturaInicios`) e busca `ordens_pintura` (status `concluida`) ordenadas por `data_conclusao`.
-- Agrupa cada ordem na fornada cujo intervalo (iniciado_em → próxima fornada) contém sua `data_conclusao`.
-- Retorna, para cada fornada: `qtdPortas`, `custoFornada = custoPorFornada`.
+### Hook `useFornadasResumo`
+- Buscar também `pintura_trocas_gas` (registrado_em, valor) ordenadas por data.
+- Para cada fornada, determinar a troca afiliada (regra acima) e marcar `em_apuracao = true` quando for da troca mais recente.
+- Calcular `custo_fornada` para cada fornada conforme regra. Expor por linha: `troca_id`, `troca_valor`, `qtd_fornadas_troca`, `custo_fornada`, `em_apuracao`.
 
-### 4. UI — nova aba "Resumo" em `ControleFornadas.tsx`
-- Aba "Resumo das Fornadas" (default), mantendo as abas "Fornadas" e "Trocas de Gás".
-- Topo da aba: card com input editável "Custo por fornada (R$)" (salva ao confirmar), badge com total de fornadas e custo total acumulado.
-- Lista/tabela de fornadas (mais recentes primeiro) com colunas:
-  - Data/hora do início
-  - Responsável (avatar + nome)
-  - Portas pintadas (badge numérico)
-  - Custo (R$)
-  - Status de recarga (badge)
-- Visual seguindo o padrão glassmórfico já usado na página (`bg-white/5`, `border-white/10`, blue/white).
+### Página `ControleFornadas.tsx` — aba Resumo
+- **Remover** o card editável "Custo por fornada" e toda a UI/estado de edição (`editandoCusto`, `custoInput`, `salvarCusto`).
+- **Remover** os imports/uso de `usePinturaFornadaCusto`.
+- Substituir o card por **"Custo médio por fornada"** = soma dos custos calculados / nº de fornadas com custo consolidado (ignorando "em apuração").
+- O card "Custo total acumulado" passa a somar os custos consolidados das fornadas (equivalente à soma das trocas fechadas com pelo menos 1 fornada).
+- Na tabela de fornadas:
+  - Coluna "Custo" exibe o valor calculado da linha; quando `em_apuracao`, exibe badge **"Em apuração"** em vez de valor.
+  - Adicionar coluna "Troca de gás" mostrando data da troca afiliada (ou "—" se não houver).
+
+### Página `ControleFornadas.tsx` — aba Fornadas
+- Mesma exibição de custo/status "Em apuração" por linha (consistente com Resumo).
+
+### Hook `usePinturaFornadaCusto`
+- Deixa de ser usado pela página. Pode permanecer no projeto sem alterações (não vamos remover arquivo nem tabela `pintura_fornada_config` neste plano — apenas paramos de usar).
+
+## Mudanças no backend
+
+Nenhuma migração necessária. Toda a lógica é derivada em tempo de leitura a partir de `pintura_inicios` e `pintura_trocas_gas` já existentes.
 
 ## Detalhes técnicos
 
-- Para identificar portas "de enrolar" usaremos join leve via `pedidos_producao` (`tipo_produto = 'porta_enrolar'` ou equivalente). Se o esquema atual não distinguir, manteremos a contagem como "ordens de pintura concluídas no intervalo" e ajustaremos quando o usuário confirmar.
-- O intervalo de cada fornada termina em `iniciado_em` da próxima fornada (exclusivo) ou em `now()` na mais recente.
-- Custo total exibido = `nº fornadas × custo_por_fornada`.
-- Sem alterações em rotas, permissões ou fluxo da pintura.
+- A determinação da troca afiliada é feita em memória após buscar ambas as listas (volumes pequenos, ordenadas por data).
+- Pseudocódigo:
+  ```text
+  trocas asc por registrado_em
+  para cada fornada (asc por iniciado_em):
+    troca = última troca com registrado_em <= fornada.iniciado_em
+    se nenhuma e existe ao menos uma troca: troca = primeira troca
+    fornada.troca_id = troca?.id
+  agrupar fornadas por troca_id → qtd_fornadas_troca
+  para cada fornada:
+    em_apuracao = (troca == última troca registrada)
+    custo = em_apuracao ? null : troca.valor / qtd_fornadas_troca
+  ```
+- `invalidateQueries` de `fornadas-resumo` já é disparado ao criar/excluir troca ou fornada, então o recálculo é automático.
