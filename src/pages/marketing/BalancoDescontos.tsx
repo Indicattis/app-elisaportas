@@ -1,11 +1,11 @@
 import { useMemo, useState } from "react";
-import { Scale, RefreshCw, TrendingUp, TrendingDown } from "lucide-react";
+import { Scale, RefreshCw, TrendingUp, TrendingDown, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { format } from "date-fns";
+import { format, addMonths, subMonths, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useBalancoDescontos } from "@/hooks/useBalancoDescontos";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
@@ -60,8 +60,23 @@ export default function BalancoDescontos() {
   const hoje = new Date();
   const mesPadrao = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}`;
   const [mes, setMes] = useState(mesPadrao);
+  const [busca, setBusca] = useState("");
 
-  const { rows, isLoading, recalcular, isRecalculando } = useBalancoDescontos(mes);
+  const { rows: rawRows, isLoading, recalcular, isRecalculando } = useBalancoDescontos(mes);
+
+  const dataMes = parseISO(`${mes}-01`);
+  const mesAnterior = () => setMes(format(subMonths(dataMes, 1), "yyyy-MM"));
+  const mesProximo = () => setMes(format(addMonths(dataMes, 1), "yyyy-MM"));
+
+  const termoBusca = busca.trim().toLowerCase();
+  const rows = useMemo(() => {
+    if (!termoBusca) return rawRows;
+    return rawRows.filter((r) => {
+      const cliente = (r.vendas?.cliente_nome || "").toLowerCase();
+      const vendedor = (r.vendedor?.nome || "").toLowerCase();
+      return cliente.includes(termoBusca) || vendedor.includes(termoBusca);
+    });
+  }, [rawRows, termoBusca]);
 
   // Balanço = lucro - excedido (débito do excesso de desconto no lucro)
   const computeRow = (r: typeof rows[number]) => {
@@ -109,12 +124,27 @@ export default function BalancoDescontos() {
       contentClassName="px-[100px]"
       headerActions={
         <div className="flex items-center gap-2">
-          <Input
-            type="month"
-            value={mes}
-            onChange={(e) => setMes(e.target.value)}
-            className="w-[160px] bg-white/5 border-white/10 text-white"
-          />
+          <div className="flex items-center bg-white/5 border border-white/10 rounded-md overflow-hidden">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={mesAnterior}
+              className="h-9 px-2 text-white hover:bg-white/10 hover:text-white"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <span className="px-3 text-sm font-medium text-white min-w-[110px] text-center">
+              {format(dataMes, "MMM yyyy", { locale: ptBR })}
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={mesProximo}
+              className="h-9 px-2 text-white hover:bg-white/10 hover:text-white"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
           <Button
             onClick={() => recalcular()}
             disabled={isRecalculando}
@@ -155,6 +185,15 @@ export default function BalancoDescontos() {
             <CardTitle className="text-white">Vendas do mês</CardTitle>
           </CardHeader>
           <CardContent>
+            <div className="relative mb-4 max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+              <Input
+                placeholder="Buscar cliente ou vendedor..."
+                value={busca}
+                onChange={(e) => setBusca(e.target.value)}
+                className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/40"
+              />
+            </div>
             {isLoading ? (
               <div className="space-y-2">
                 <Skeleton className="h-10 w-full bg-white/10" />
