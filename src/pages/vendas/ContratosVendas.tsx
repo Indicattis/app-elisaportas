@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, FileSignature, Search, Download, Trash2, FileText, FileClock, FileCheck2, Upload, Loader2, Undo2, Eye } from 'lucide-react';
+import { ArrowLeft, FileSignature, Search, Download, Trash2, FileText, FileClock, FileCheck2, Upload, Loader2, Undo2, Eye, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -622,6 +622,14 @@ export default function ContratosVendas() {
                             Retornar para Gerado
                           </Button>
                         )}
+                        <Button
+                          size="sm"
+                          className="w-full bg-gradient-to-r from-yellow-500 to-yellow-700 hover:from-yellow-400 hover:to-yellow-600 text-white border border-yellow-400/30"
+                          onClick={() => navigate(`/financeiro/faturamento/${v.id}`)}
+                        >
+                          <ArrowRight className="w-4 h-4 mr-2" />
+                          Avançar para Pend. Faturamento
+                        </Button>
                       </div>
                     )}
                   />
