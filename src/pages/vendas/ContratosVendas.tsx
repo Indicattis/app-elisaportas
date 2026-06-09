@@ -38,6 +38,7 @@ export default function ContratosVendas() {
   const [selectedVendaId, setSelectedVendaId] = useState<string | null>(null);
   const [anexarOpen, setAnexarOpen] = useState(false);
   const [anexarVenda, setAnexarVenda] = useState<{ id: string; nome: string } | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const { contratos, deleteContrato, isDeleting } = useContratosVendas({});
 
@@ -62,7 +63,7 @@ export default function ContratosVendas() {
       if (!error && data) setVendas(data as any);
       setLoadingVendas(false);
     })();
-  }, [user]);
+  }, [user, refreshKey]);
 
   const contratosByVenda = useMemo(() => {
     const map: Record<string, typeof contratos extends (infer T)[] | undefined ? T[] : never> = {} as any;
@@ -350,7 +351,10 @@ export default function ContratosVendas() {
           open={anexarOpen}
           onOpenChange={(o) => {
             setAnexarOpen(o);
-            if (!o) setAnexarVenda(null);
+            if (!o) {
+              setAnexarVenda(null);
+              setRefreshKey(k => k + 1);
+            }
           }}
           vendaId={anexarVenda.id}
           clienteNome={anexarVenda.nome}
