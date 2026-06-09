@@ -210,6 +210,7 @@ export default function BalancoDescontos() {
                       <TableHead className="text-white/60">Data</TableHead>
                       <TableHead className="text-white/60">Cliente</TableHead>
                       <TableHead className="text-white/60 text-right">Sem Desc.</TableHead>
+                      <TableHead className="text-white/60 text-right">Desconto/Acréscimo</TableHead>
                       <TableHead className="text-white/60 text-right">Total</TableHead>
                        <TableHead className="text-white/60 text-right">À Vista (3%)</TableHead>
                        <TableHead className="text-white/60 text-right">Frio (5%)</TableHead>
