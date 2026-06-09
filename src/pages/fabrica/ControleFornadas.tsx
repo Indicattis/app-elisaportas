@@ -91,23 +91,53 @@ export default function ControleFornadas() {
           </Button>
         </div>
 
-        <Tabs defaultValue="resumo" className="w-full">
-          <TabsList className="bg-white/5 border border-white/10">
-            <TabsTrigger value="resumo" className="gap-2 data-[state=active]:bg-blue-700 data-[state=active]:text-white">
-              <BarChart3 className="h-4 w-4" />
-              Resumo
-            </TabsTrigger>
-            <TabsTrigger value="fornadas" className="gap-2 data-[state=active]:bg-orange-600 data-[state=active]:text-white">
-              <Flame className="h-4 w-4" />
-              Fornadas
-            </TabsTrigger>
-            <TabsTrigger value="trocas" className="gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-              <Fuel className="h-4 w-4" />
-              Trocas de Gás
-            </TabsTrigger>
-          </TabsList>
+        <div className="mb-6 flex justify-center">
+          <div
+            className="relative inline-grid rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-1"
+            style={{ gridTemplateColumns: `repeat(${cols}, minmax(180px, 1fr))` }}
+          >
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-y-1 left-1 rounded-xl bg-blue-600 shadow-lg shadow-blue-600/20 transition-transform duration-300 ease-out"
+              style={{
+                width: `calc((100% - 0.5rem) / ${cols})`,
+                transform: `translateX(${activeIndex * 100}%)`,
+              }}
+            />
+            {TABS.map((t) => {
+              const Icon = t.icon;
+              const isActive = activeTab === t.key;
+              return (
+                <button
+                  key={t.key}
+                  type="button"
+                  onClick={() => setActiveTab(t.key)}
+                  className={
+                    "relative z-10 inline-flex items-center justify-center gap-2 rounded-xl px-6 py-2.5 text-sm font-medium transition-colors duration-200 " +
+                    (isActive ? "text-white" : "text-white/70 hover:text-white")
+                  }
+                >
+                  <Icon className="h-4 w-4" />
+                  {t.label}
+                  <span
+                    className={
+                      "ml-1 text-[11px] px-1.5 py-0.5 rounded-full border " +
+                      (isActive
+                        ? "bg-white/15 border-white/20 text-white"
+                        : "bg-white/5 border-white/10 text-white/60")
+                    }
+                  >
+                    {t.count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
-          <TabsContent value="resumo" className="mt-4 space-y-4">
+        <div key={activeTab} className="animate-fade-in">
+          {activeTab === "resumo" && (
+            <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl p-4">
                 <div className="flex items-center justify-between mb-2">
@@ -222,9 +252,10 @@ export default function ControleFornadas() {
                 </Table>
               )}
             </div>
-          </TabsContent>
+            </div>
+          )}
 
-          <TabsContent value="fornadas" className="mt-4">
+          {activeTab === "fornadas" && (
             <PinturaIniciosList
               inicios={inicios}
               isLoading={isLoadingInicios}
@@ -233,17 +264,17 @@ export default function ControleFornadas() {
               onExcluir={excluirInicio.mutate}
               isExcluindo={excluirInicio.isPending}
             />
-          </TabsContent>
+          )}
 
-          <TabsContent value="trocas" className="mt-4">
+          {activeTab === "trocas" && (
             <TrocasGasList
               trocas={trocas}
               isLoading={isLoadingTrocas}
               onExcluir={excluirTroca.mutate}
               isExcluindo={excluirTroca.isPending}
             />
-          </TabsContent>
-        </Tabs>
+          )}
+        </div>
       </div>
     </div>
   );
