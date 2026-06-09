@@ -166,6 +166,31 @@ export function usePinturaInicios() {
     },
   });
 
+  // Excluir início de pintura
+  const excluirInicio = useMutation({
+    mutationFn: async (inicioId: string) => {
+      if (!isAuthenticated) throw new Error('Usuário não autenticado');
+      const { error } = await supabase
+        .from('pintura_inicios')
+        .delete()
+        .eq('id', inicioId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pintura-inicios'] });
+      queryClient.invalidateQueries({ queryKey: ['fornadas-resumo'] });
+      toast({ title: 'Fornada excluída', description: 'Fornada excluída com sucesso' });
+    },
+    onError: (error) => {
+      console.error('Erro ao excluir fornada:', error);
+      toast({
+        title: 'Erro',
+        description: error instanceof Error ? error.message : 'Não foi possível excluir a fornada',
+        variant: 'destructive',
+      });
+    },
+  });
+
   return {
     inicios,
     isLoading,
