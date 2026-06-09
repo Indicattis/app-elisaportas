@@ -23,8 +23,13 @@ const etapaLabels: Record<string, string> = {
   inspecao_qualidade: "Inspeção de Qualidade",
   aguardando_cliente: "Aguardando Cliente",
   correções: "Correções",
+  correcoes: "Correções",
   instalacoes: "Instalações",
   finalizado: "Finalizado",
+  reprovado: "Reprovado",
+  aguardando_contrato: "Aguardando Assinatura",
+  pendente_faturamento: "Pend. Faturamento",
+  pendente_pedido: "Pendente Pedido",
 };
 
 const formatEtapa = (etapa: string | null | undefined) =>
@@ -194,7 +199,7 @@ export default function BalancoDescontos() {
                             </Avatar>
                           </TableCell>
                           <TableCell className="text-white/90 whitespace-nowrap">
-                            {formatEtapa(r.etapa_atual)}
+                            {formatEtapa(r.status_venda || r.etapa_atual)}
                           </TableCell>
                           <TableCell className="text-white/90">
                             {r.data_venda
