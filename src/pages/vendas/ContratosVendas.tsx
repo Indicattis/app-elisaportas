@@ -321,13 +321,13 @@ export default function ContratosVendas() {
       <table className="w-full text-sm">
         <thead>
           <tr className="text-left text-[11px] uppercase tracking-wide text-white/40 border-b border-white/10">
+            <th className="px-3 py-2 font-medium">Vendedor</th>
             <th className="px-3 py-2 font-medium">Data</th>
             <th className="px-3 py-2 font-medium">Cliente</th>
             <th className="px-3 py-2 font-medium">CPF/CNPJ</th>
             <th className="px-3 py-2 font-medium">Cidade</th>
             <th className="px-3 py-2 font-medium text-right">Valor</th>
             <th className="px-3 py-2 font-medium text-right">Desc./Acréscimo</th>
-            <th className="px-3 py-2 font-medium">Vendedor</th>
             {(onAction || extraRow) && <th className="px-3 py-2 font-medium text-right">Ações</th>}
           </tr>
         </thead>
