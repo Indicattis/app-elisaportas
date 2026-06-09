@@ -205,7 +205,7 @@ export default function BalancoDescontos() {
                               </AvatarFallback>
                             </Avatar>
                           </TableCell>
-                          <TableCell className="text-white/90 whitespace-nowrap">
+                          <TableCell className={`whitespace-nowrap font-medium ${statusColor(r.status_venda || r.etapa_atual)}`}>
                             {formatEtapa(r.status_venda || r.etapa_atual)}
                           </TableCell>
                           <TableCell className="text-white/90">
