@@ -582,9 +582,9 @@ export default function ContratosVendas() {
                   <TableView
                     rows={assinados}
                     extraRow={(v) => (
-                      <div className="space-y-1.5">
+                      <div className="flex flex-row flex-wrap items-center gap-2">
                         {v.contrato_assinado_em && (
-                          <div className="text-[11px] text-emerald-300/80 flex items-center gap-1 justify-end">
+                          <div className="text-[11px] text-emerald-300/80 flex items-center gap-1">
                             <FileCheck2 className="w-3 h-3" />
                             Assinado em {format(new Date(v.contrato_assinado_em), 'dd/MM/yyyy', { locale: ptBR })}
                           </div>
@@ -594,7 +594,7 @@ export default function ContratosVendas() {
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="w-full text-white/80 hover:text-white hover:bg-white/10 border border-white/10"
+                            className="text-white/80 hover:text-white hover:bg-white/10 border border-white/10"
                             onClick={async () => {
                               const { data } = await supabase.storage
                                 .from('contratos-vendas')
@@ -610,7 +610,7 @@ export default function ContratosVendas() {
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="w-full text-white/70 hover:text-white hover:bg-white/10 border border-white/10"
+                            className="text-white/70 hover:text-white hover:bg-white/10 border border-white/10"
                             disabled={revertingVendaId === v.id}
                             onClick={() => handleRetornarParaGerado(v)}
                           >
@@ -624,7 +624,7 @@ export default function ContratosVendas() {
                         )}
                         <Button
                           size="sm"
-                          className="w-full bg-gradient-to-r from-yellow-500 to-yellow-700 hover:from-yellow-400 hover:to-yellow-600 text-white border border-yellow-400/30"
+                          className="bg-gradient-to-r from-yellow-500 to-yellow-700 hover:from-yellow-400 hover:to-yellow-600 text-white border border-yellow-400/30"
                           onClick={() => navigate(`/financeiro/faturamento/${v.id}`)}
                         >
                           <ArrowRight className="w-4 h-4 mr-2" />
