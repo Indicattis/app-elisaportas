@@ -24,6 +24,7 @@ export interface BalancoDescontoRow {
     nome: string | null;
     foto_perfil_url: string | null;
   } | null;
+  etapa_atual?: string | null;
 }
 
 function periodoMes(mesISO: string) {
