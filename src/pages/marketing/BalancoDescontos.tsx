@@ -193,6 +193,9 @@ export default function BalancoDescontos() {
                               </AvatarFallback>
                             </Avatar>
                           </TableCell>
+                          <TableCell className="text-white/90 whitespace-nowrap">
+                            {formatEtapa(r.etapa_atual)}
+                          </TableCell>
                           <TableCell className="text-white/90">
                             {r.data_venda
                               ? format(new Date(r.data_venda), "dd/MM/yyyy", { locale: ptBR })
