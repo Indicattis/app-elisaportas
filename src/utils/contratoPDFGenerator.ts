@@ -178,7 +178,12 @@ export const generateContratoPDF = (data: ContratoPDFData) => {
   }
 
   // Salvar PDF
-  const fileName = `contrato_${data.numeroContrato}_${Date.now()}.pdf`;
+  const clienteSlug = (data.variaveis.cliente_nome || 'cliente')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9\s]/g, '')
+    .trim()
+    .replace(/\s+/g, '_');
+  const fileName = `contrato_${clienteSlug}_${data.numeroContrato}_${Date.now()}.pdf`;
   doc.save(fileName);
   
   return fileName;
