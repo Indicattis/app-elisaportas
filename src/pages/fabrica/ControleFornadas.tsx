@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, RefreshCw, Flame, Fuel, BarChart3, DoorOpen, DollarSign, Droplet, Trash2, CheckCircle2, TrendingUp, Clock } from "lucide-react";
 import { format } from "date-fns";
