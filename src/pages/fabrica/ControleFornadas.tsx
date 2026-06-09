@@ -23,8 +23,8 @@ export default function ControleFornadas() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const { inicios, isLoading: isLoadingInicios, toggleRecarga } = usePinturaInicios();
-  const { trocas, isLoading: isLoadingTrocas } = usePinturaTrocasGas();
+  const { inicios, isLoading: isLoadingInicios, toggleRecarga, excluirInicio } = usePinturaInicios();
+  const { trocas, isLoading: isLoadingTrocas, excluirTroca } = usePinturaTrocasGas();
   const { custoPorFornada, update: updateCusto } = usePinturaFornadaCusto();
   const { data: resumo = [], isLoading: isLoadingResumo } = useFornadasResumo(custoPorFornada);
 
@@ -221,11 +221,18 @@ export default function ControleFornadas() {
               isLoading={isLoadingInicios}
               onToggleRecarga={toggleRecarga.mutate}
               isTogglingRecarga={toggleRecarga.isPending}
+              onExcluir={excluirInicio.mutate}
+              isExcluindo={excluirInicio.isPending}
             />
           </TabsContent>
 
           <TabsContent value="trocas" className="mt-4">
-            <TrocasGasList trocas={trocas} isLoading={isLoadingTrocas} />
+            <TrocasGasList
+              trocas={trocas}
+              isLoading={isLoadingTrocas}
+              onExcluir={excluirTroca.mutate}
+              isExcluindo={excluirTroca.isPending}
+            />
           </TabsContent>
         </Tabs>
       </div>
