@@ -19,11 +19,11 @@ import { DelayedParticles } from '@/components/DelayedParticles';
 
 const menuItems = [
   { label: 'Minhas Vendas', icon: ShoppingCart, path: '/vendas/minhas-vendas' },
+  { label: 'Visitas Técnicas', icon: ClipboardCheck, path: '/vendas/visitas-tecnicas' },
   { label: 'Meus Clientes', icon: Users, path: '/vendas/meus-clientes' },
   { label: 'Meus Orçamentos', icon: FileText, path: '/vendas/meus-orcamentos' },
   { label: 'Meus Parceiros', icon: Handshake, path: '/vendas/meus-parceiros' },
   { label: 'Acompanhar Pedido', icon: Search, path: '/vendas/acompanhar-pedido' },
-  { label: 'Visitas Técnicas', icon: ClipboardCheck, path: '/vendas/visitas-tecnicas' },
   { label: 'Metas', icon: Target, path: '/vendas/metas' },
   { label: 'Contratos', icon: FileSignature, path: '/vendas/contratos' },
   { label: 'Tabela de Preços', icon: Tag, path: '/vendas/precos' },
