@@ -134,7 +134,12 @@ export function GerarContratoElisaModal({ open, onOpenChange, vendaId, onGerado 
     if (!vendaId) return;
     try {
       const blob = generateContratoElisaPDF(form);
-      const fileName = `contrato-elisa-${vendaId.slice(0, 8)}-${Date.now()}.pdf`;
+      const clienteSlug = (form.comprador_nome || 'cliente')
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-zA-Z0-9\s]/g, '')
+        .trim()
+        .replace(/\s+/g, '_');
+      const fileName = `contrato-elisa-${clienteSlug}-${vendaId.slice(0, 8)}-${Date.now()}.pdf`;
       const file = new File([blob], fileName, { type: 'application/pdf' });
 
       // Download local
