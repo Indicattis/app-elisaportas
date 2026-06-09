@@ -14,6 +14,22 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 const formatMoeda = (v: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
 
+const etapaLabels: Record<string, string> = {
+  aberto: "Aberto",
+  aprovacao_diretor: "Aprovação CEO",
+  em_producao: "Em Produção",
+  aguardando_pintura: "Aguardando Pintura",
+  embalagem: "Embalagem",
+  inspecao_qualidade: "Inspeção de Qualidade",
+  aguardando_cliente: "Aguardando Cliente",
+  correções: "Correções",
+  instalacoes: "Instalações",
+  finalizado: "Finalizado",
+};
+
+const formatEtapa = (etapa: string | null | undefined) =>
+  etapa && etapaLabels[etapa] ? etapaLabels[etapa] : etapa || "-";
+
 export default function BalancoDescontos() {
   const hoje = new Date();
   const mesPadrao = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}`;
