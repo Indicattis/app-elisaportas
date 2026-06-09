@@ -225,7 +225,7 @@ export default function BalancoDescontos() {
                   <TableBody>
                     {rows.length === 0 ? (
                       <TableRow className="border-white/10">
-                        <TableCell colSpan={14} className="text-center text-white/50">
+                        <TableCell colSpan={15} className="text-center text-white/50">
                           Nenhuma venda no período. Clique em Recalcular.
                         </TableCell>
                       </TableRow>
