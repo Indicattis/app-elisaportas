@@ -567,18 +567,28 @@ export default function MinhasVendasEditar() {
 
       // Persistir auditoria de autorização de desconto, se houver
       if (autorizacaoParaUsar && user) {
+        const autorizacaoPayload = {
+          venda_id: id,
+          autorizado_por: autorizacaoParaUsar.autorizadoPor,
+          solicitado_por: user.id,
+          percentual_desconto: autorizacaoParaUsar.percentualDesconto,
+          senha_usada: autorizacaoParaUsar.senhaUsada,
+          tipo_autorizacao: autorizacaoParaUsar.tipo,
+        };
+        console.warn('[autorizacao-desconto] inserindo:', autorizacaoPayload);
         const { error: autErr } = await supabase
           .from('vendas_autorizacoes_desconto')
-          .insert({
-            venda_id: id,
-            autorizado_por: autorizacaoParaUsar.autorizadoPor,
-            solicitado_por: user.id,
-            percentual_desconto: autorizacaoParaUsar.percentualDesconto,
-            senha_usada: autorizacaoParaUsar.senhaUsada,
-            tipo_autorizacao: autorizacaoParaUsar.tipo,
-          } as any);
+          .insert(autorizacaoPayload as any);
         if (autErr) {
           console.error('Erro ao registrar autorização de desconto:', autErr);
+          // Reverte para rascunho para manter consistência
+          await supabase
+            .from('vendas')
+            .update({ is_rascunho: true })
+            .eq('id', id);
+          throw new Error(
+            `A autorização de desconto NÃO foi registrada: ${autErr.message}. A venda voltou para rascunho.`
+          );
         }
         setAutorizacaoPendente(null);
       }
