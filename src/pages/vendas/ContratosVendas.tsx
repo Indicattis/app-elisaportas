@@ -42,6 +42,9 @@ export default function ContratosVendas() {
 
   const { contratos, deleteContrato, isDeleting } = useContratosVendas({});
 
+  type TabKey = 'pendentes' | 'gerados' | 'assinados';
+  const [activeTab, setActiveTab] = useState<TabKey>('pendentes');
+
   useEffect(() => {
     const t = setTimeout(() => setMounted(true), 50);
     return () => clearTimeout(t);
@@ -178,11 +181,19 @@ export default function ContratosVendas() {
           {count}
         </span>
       </div>
-      <div className="p-3 space-y-2 overflow-y-auto max-h-[calc(100vh-260px)]">
+      <div className="p-3 space-y-2">
         {children}
       </div>
     </div>
   );
+
+  const TABS: Array<{ key: TabKey; label: string; icon: typeof FileClock; count: number }> = [
+    { key: 'pendentes', label: 'Pendente de Contrato', icon: FileClock, count: pendentes.length },
+    { key: 'gerados', label: 'Contrato Gerado', icon: FileText, count: gerados.length },
+    { key: 'assinados', label: 'Contrato Assinado', icon: FileCheck2, count: assinados.length },
+  ];
+  const activeIndex = Math.max(0, TABS.findIndex(t => t.key === activeTab));
+  const cols = TABS.length;
 
   return (
     <div className="min-h-screen bg-black relative overflow-hidden">
@@ -231,111 +242,159 @@ export default function ContratosVendas() {
           </div>
         </div>
 
+        <div className="mb-6 flex justify-center">
+          <div
+            className="relative inline-grid rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-1"
+            style={{ gridTemplateColumns: `repeat(${cols}, minmax(200px, 1fr))` }}
+          >
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-y-1 left-1 rounded-xl bg-blue-600 shadow-lg shadow-blue-600/20 transition-transform duration-300 ease-out"
+              style={{
+                width: `calc((100% - 0.5rem) / ${cols})`,
+                transform: `translateX(${activeIndex * 100}%)`,
+              }}
+            />
+            {TABS.map((t) => {
+              const Icon = t.icon;
+              const isActive = activeTab === t.key;
+              return (
+                <button
+                  key={t.key}
+                  type="button"
+                  onClick={() => setActiveTab(t.key)}
+                  className={
+                    'relative z-10 inline-flex items-center justify-center gap-2 rounded-xl px-6 py-2.5 text-sm font-medium transition-colors duration-200 ' +
+                    (isActive ? 'text-white' : 'text-white/70 hover:text-white')
+                  }
+                >
+                  <Icon className="h-4 w-4" />
+                  {t.label}
+                  <span className={
+                    'ml-1 text-[11px] px-1.5 py-0.5 rounded-full border ' +
+                    (isActive ? 'bg-white/15 border-white/20 text-white' : 'bg-white/5 border-white/10 text-white/60')
+                  }>
+                    {t.count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {loadingVendas ? (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 p-3 space-y-2">
-                {Array.from({ length: 4 }).map((_, j) => (
-                  <Skeleton key={j} className="h-16 bg-white/5" />
-                ))}
-              </div>
+          <div className="rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 p-3 space-y-2">
+            {Array.from({ length: 6 }).map((_, j) => (
+              <Skeleton key={j} className="h-16 bg-white/5" />
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <Column
-              title="Pendente de Contrato"
-              icon={<FileClock className="w-4 h-4" strokeWidth={1.8} />}
-              accent="bg-gradient-to-br from-amber-500 to-amber-700 shadow-lg shadow-amber-500/20"
-              count={pendentes.length}
-            >
-              {pendentes.length === 0 ? (
-                <div className="text-center text-white/40 text-xs py-6">Nenhuma venda</div>
-              ) : (
-                pendentes.map(v => (
-                  <Card key={v.id} v={v}>
-                    <Button
-                      size="sm"
-                      className="mt-3 w-full bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 text-white border border-blue-400/30"
-                      onClick={() => {
-                        setSelectedVendaId(v.id);
-                        setModalOpen(true);
-                      }}
-                    >
-                      <FileSignature className="w-4 h-4 mr-2" />
-                      Gerar Contrato
-                    </Button>
-                  </Card>
-                ))
-              )}
-            </Column>
+          <div key={activeTab} className="animate-fade-in">
+            {activeTab === 'pendentes' && (
+              <Column
+                title="Pendente de Contrato"
+                icon={<FileClock className="w-4 h-4" strokeWidth={1.8} />}
+                accent="bg-gradient-to-br from-amber-500 to-amber-700 shadow-lg shadow-amber-500/20"
+                count={pendentes.length}
+              >
+                {pendentes.length === 0 ? (
+                  <div className="text-center text-white/40 text-xs py-6">Nenhuma venda</div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                    {pendentes.map(v => (
+                      <Card key={v.id} v={v}>
+                        <Button
+                          size="sm"
+                          className="mt-3 w-full bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 text-white border border-blue-400/30"
+                          onClick={() => {
+                            setSelectedVendaId(v.id);
+                            setModalOpen(true);
+                          }}
+                        >
+                          <FileSignature className="w-4 h-4 mr-2" />
+                          Gerar Contrato
+                        </Button>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </Column>
+            )}
 
-            <Column
-              title="Contrato Gerado"
-              icon={<FileText className="w-4 h-4" strokeWidth={1.8} />}
-              accent="bg-gradient-to-br from-blue-500 to-blue-700 shadow-lg shadow-blue-500/20"
-              count={gerados.length}
-            >
-              {gerados.length === 0 ? (
-                <div className="text-center text-white/40 text-xs py-6">Nenhuma venda</div>
-              ) : (
-                gerados.map(v => (
-                  <Card key={v.id} v={v}>
-                    {renderContratoFiles(v.id, true)}
-                    <Button
-                      size="sm"
-                      className="mt-3 w-full bg-gradient-to-r from-emerald-500 to-emerald-700 hover:from-emerald-400 hover:to-emerald-600 text-white border border-emerald-400/30"
-                      onClick={() => {
-                        setAnexarVenda({ id: v.id, nome: v.cliente_nome || 'Sem nome' });
-                        setAnexarOpen(true);
-                      }}
-                    >
-                      <Upload className="w-4 h-4 mr-2" />
-                      Anexar Assinado
-                    </Button>
-                  </Card>
-                ))
-              )}
-            </Column>
+            {activeTab === 'gerados' && (
+              <Column
+                title="Contrato Gerado"
+                icon={<FileText className="w-4 h-4" strokeWidth={1.8} />}
+                accent="bg-gradient-to-br from-blue-500 to-blue-700 shadow-lg shadow-blue-500/20"
+                count={gerados.length}
+              >
+                {gerados.length === 0 ? (
+                  <div className="text-center text-white/40 text-xs py-6">Nenhuma venda</div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                    {gerados.map(v => (
+                      <Card key={v.id} v={v}>
+                        {renderContratoFiles(v.id, true)}
+                        <Button
+                          size="sm"
+                          className="mt-3 w-full bg-gradient-to-r from-emerald-500 to-emerald-700 hover:from-emerald-400 hover:to-emerald-600 text-white border border-emerald-400/30"
+                          onClick={() => {
+                            setAnexarVenda({ id: v.id, nome: v.cliente_nome || 'Sem nome' });
+                            setAnexarOpen(true);
+                          }}
+                        >
+                          <Upload className="w-4 h-4 mr-2" />
+                          Anexar Assinado
+                        </Button>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </Column>
+            )}
 
-            <Column
-              title="Contrato Assinado"
-              icon={<FileCheck2 className="w-4 h-4" strokeWidth={1.8} />}
-              accent="bg-gradient-to-br from-emerald-500 to-emerald-700 shadow-lg shadow-emerald-500/20"
-              count={assinados.length}
-            >
-              {assinados.length === 0 ? (
-                <div className="text-center text-white/40 text-xs py-6">Nenhuma venda</div>
-              ) : (
-                assinados.map(v => (
-                  <Card key={v.id} v={v}>
-                    {v.contrato_assinado_em && (
-                      <div className="mt-2 text-[11px] text-emerald-300/80 flex items-center gap-1">
-                        <FileCheck2 className="w-3 h-3" />
-                        Assinado em {format(new Date(v.contrato_assinado_em), 'dd/MM/yyyy', { locale: ptBR })}
-                      </div>
-                    )}
-                    {renderContratoFiles(v.id, false)}
-                    {v.contrato_url && v.contrato_url !== 'legado' && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="mt-2 w-full text-white/80 hover:text-white hover:bg-white/10 border border-white/10"
-                        onClick={async () => {
-                          const { data } = await supabase.storage
-                            .from('contratos-vendas')
-                            .createSignedUrl(v.contrato_url as string, 300);
-                          if (data?.signedUrl) window.open(data.signedUrl, '_blank');
-                        }}
-                      >
-                        <Download className="w-4 h-4 mr-2" />
-                        Baixar contrato assinado
-                      </Button>
-                    )}
-                  </Card>
-                ))
-              )}
-            </Column>
+            {activeTab === 'assinados' && (
+              <Column
+                title="Contrato Assinado"
+                icon={<FileCheck2 className="w-4 h-4" strokeWidth={1.8} />}
+                accent="bg-gradient-to-br from-emerald-500 to-emerald-700 shadow-lg shadow-emerald-500/20"
+                count={assinados.length}
+              >
+                {assinados.length === 0 ? (
+                  <div className="text-center text-white/40 text-xs py-6">Nenhuma venda</div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                    {assinados.map(v => (
+                      <Card key={v.id} v={v}>
+                        {v.contrato_assinado_em && (
+                          <div className="mt-2 text-[11px] text-emerald-300/80 flex items-center gap-1">
+                            <FileCheck2 className="w-3 h-3" />
+                            Assinado em {format(new Date(v.contrato_assinado_em), 'dd/MM/yyyy', { locale: ptBR })}
+                          </div>
+                        )}
+                        {renderContratoFiles(v.id, false)}
+                        {v.contrato_url && v.contrato_url !== 'legado' && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="mt-2 w-full text-white/80 hover:text-white hover:bg-white/10 border border-white/10"
+                            onClick={async () => {
+                              const { data } = await supabase.storage
+                                .from('contratos-vendas')
+                                .createSignedUrl(v.contrato_url as string, 300);
+                              if (data?.signedUrl) window.open(data.signedUrl, '_blank');
+                            }}
+                          >
+                            <Download className="w-4 h-4 mr-2" />
+                            Baixar contrato assinado
+                          </Button>
+                        )}
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </Column>
+            )}
           </div>
         )}
       </div>
