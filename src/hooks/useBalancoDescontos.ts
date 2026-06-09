@@ -52,7 +52,7 @@ export function useBalancoDescontos(mesISO: string) {
       const rows = (data || []) as unknown as BalancoDescontoRow[];
       const ids = rows.map((r) => r.venda_id);
       if (ids.length) {
-        const [{ data: autos }, { data: vendasData }] = await Promise.all([
+        const [{ data: autos }, { data: vendasData }, { data: pedidosData }] = await Promise.all([
           supabase
             .from("vendas_autorizacoes_desconto")
             .select("venda_id")
@@ -61,6 +61,10 @@ export function useBalancoDescontos(mesISO: string) {
             .from("vendas")
             .select("id, cliente_nome, forma_pagamento, venda_presencial, atendente_id, lucro_total")
             .in("id", ids),
+          supabase
+            .from("pedidos_producao")
+            .select("venda_id, etapa_atual")
+            .in("venda_id", ids),
         ]);
         const autoSet = new Set((autos || []).map((a: any) => a.venda_id));
         const vendasMap = new Map(
