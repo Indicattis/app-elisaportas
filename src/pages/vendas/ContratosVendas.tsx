@@ -272,19 +272,31 @@ export default function ContratosVendas() {
     return <span className="text-rose-300">- {formatCurrency(valor)}</span>;
   };
 
+  const VendedorAvatar = ({ vendedor }: { vendedor: VendedorInfo | undefined }) => {
+    const initials = (vendedor?.nome || '?').split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase();
+    const [imgError, setImgError] = useState(false);
+    return (
+      <div className="h-7 w-7 rounded-full overflow-hidden bg-white/10 border border-white/10 shrink-0 flex items-center justify-center text-[10px] text-white/70">
+        {vendedor?.foto_perfil_url && !imgError ? (
+          <img
+            src={vendedor.foto_perfil_url}
+            alt={vendedor?.nome || ''}
+            className="h-full w-full object-cover"
+            onError={() => setImgError(true)}
+          />
+        ) : (
+          <span>{initials}</span>
+        )}
+      </div>
+    );
+  };
+
   const renderVendedor = (atendenteId: string | null) => {
     if (!atendenteId) return <span className="text-white/30">—</span>;
     const v = vendedores[atendenteId];
-    const initials = (v?.nome || '?').split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase();
     return (
       <div className="flex items-center gap-2 min-w-0">
-        <div className="h-7 w-7 rounded-full overflow-hidden bg-white/10 border border-white/10 shrink-0 flex items-center justify-center text-[10px] text-white/70">
-          {v?.foto_perfil_url ? (
-            <img src={v.foto_perfil_url} alt={v?.nome || ''} className="h-full w-full object-cover" />
-          ) : (
-            <span>{initials}</span>
-          )}
-        </div>
+        <VendedorAvatar vendedor={v} />
         <span className="text-xs text-white/70 truncate max-w-[140px]">{v?.nome || '—'}</span>
       </div>
     );
