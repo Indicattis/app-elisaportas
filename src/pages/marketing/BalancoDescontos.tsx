@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Scale, RefreshCw, TrendingUp, TrendingDown } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,8 +19,39 @@ export default function BalancoDescontos() {
   const mesPadrao = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}`;
   const [mes, setMes] = useState(mesPadrao);
 
-  const { rows, isLoading, totalPositivo, totalNegativo, saldo, recalcular, isRecalculando } =
-    useBalancoDescontos(mes);
+  const { rows, isLoading, recalcular, isRecalculando } = useBalancoDescontos(mes);
+
+  // Balanço = lucro - excedido (débito do excesso de desconto no lucro)
+  const computeRow = (r: typeof rows[number]) => {
+    const pctDado = Number(r.pct_desconto_dado);
+    const total = Number(r.total_venda);
+    const formaPg = r.vendas?.forma_pagamento || "";
+    const aptoAvista = formaPg !== "" && formaPg !== "cartao_credito";
+    const aptoFrio = !!r.vendas?.venda_presencial;
+    const limiteBase = (aptoAvista ? 3 : 0) + (aptoFrio ? 5 : 0);
+    const aptoGerente = !!r.tem_autorizacao_gerente || pctDado > limiteBase;
+    const pctLimiteCalc = limiteBase + (aptoGerente ? 7 : 0);
+    const pctLimite =
+      Number(r.pct_limite_permitido) > 0
+        ? Number(r.pct_limite_permitido)
+        : pctLimiteCalc;
+    const excedidoPct = Math.max(0, pctDado - pctLimite);
+    const excedidoValor = (excedidoPct / 100) * total;
+    const lucro = Number(r.vendas?.lucro_total || 0);
+    const balanco = lucro - excedidoValor;
+    return { pctDado, total, aptoAvista, aptoFrio, aptoGerente, pctLimite, excedidoPct, excedidoValor, lucro, balanco };
+  };
+
+  const totals = useMemo(() => {
+    let pos = 0, neg = 0;
+    rows.forEach((r) => {
+      const { balanco } = computeRow(r);
+      if (balanco > 0) pos += balanco;
+      else if (balanco < 0) neg += balanco;
+    });
+    return { totalPositivo: pos, totalNegativo: neg, saldo: pos + neg };
+  }, [rows]);
+  const { totalPositivo, totalNegativo, saldo } = totals;
 
   return (
     <MinimalistLayout
@@ -118,42 +149,22 @@ export default function BalancoDescontos() {
                        <TableHead className="text-white/60 text-right">Gerente (+7%)</TableHead>
                       <TableHead className="text-white/60 text-right">% Limite</TableHead>
                       <TableHead className="text-white/60 text-right">Excedido</TableHead>
+                      <TableHead className="text-white/60 text-right">Lucro</TableHead>
                       <TableHead className="text-white/60 text-right">Balanço</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {rows.length === 0 ? (
                       <TableRow className="border-white/10">
-                        <TableCell colSpan={12} className="text-center text-white/50">
+                        <TableCell colSpan={13} className="text-center text-white/50">
                           Nenhuma venda no período. Clique em Recalcular.
                         </TableCell>
                       </TableRow>
                     ) : (
                       rows.map((r) => {
-                         const pctDado = Number(r.pct_desconto_dado);
-                         const total = Number(r.total_venda);
-                         const formaPg = r.vendas?.forma_pagamento || "";
-                         const aptoAvista = formaPg !== "" && formaPg !== "cartao_credito";
-                         const aptoFrio = !!r.vendas?.venda_presencial;
-                         // Limite base = soma dos limites aplicáveis (à vista + frio)
-                         const limiteBase =
-                           (aptoAvista ? 3 : 0) + (aptoFrio ? 5 : 0);
-                         // Gerente é considerado apto se houver registro de autorização OU
-                         // se o desconto aplicado excedeu o limite base (fallback para
-                         // registros históricos sem autorização gravada).
-                         const aptoGerente =
-                           !!r.tem_autorizacao_gerente || pctDado > limiteBase;
-                         // Limite total: soma À Vista + Frio + adicional do Gerente (7%).
-                         // Prioriza o valor já recalculado no banco quando disponível.
-                         const pctLimiteCalc = limiteBase + (aptoGerente ? 7 : 0);
-                         const pctLimite =
-                           Number(r.pct_limite_permitido) > 0
-                             ? Number(r.pct_limite_permitido)
-                             : pctLimiteCalc;
-                         const check = (limite: number) =>
-                           pctDado <= limite ? "text-emerald-400" : "text-red-400";
-                         const excedidoPct = Math.max(0, pctDado - pctLimite);
-                        const excedidoValor = (excedidoPct / 100) * total;
+                        const { pctDado, total, aptoAvista, aptoFrio, aptoGerente, pctLimite, excedidoPct, excedidoValor, lucro, balanco } = computeRow(r);
+                        const check = (limite: number) =>
+                          pctDado <= limite ? "text-emerald-400" : "text-red-400";
                         const semDesc = pctDado !== 100 ? total / (1 - pctDado / 100) : total;
                         return (
                         <TableRow key={r.id} className="border-white/10 hover:bg-white/5">
@@ -191,12 +202,15 @@ export default function BalancoDescontos() {
                           <TableCell className={`text-right font-medium ${excedidoPct > 0 ? "text-red-400" : "text-white/40"}`}>
                             {excedidoPct > 0 ? `${excedidoPct.toFixed(2)}% (${formatMoeda(excedidoValor)})` : "-"}
                           </TableCell>
+                          <TableCell className="text-right text-white/90">
+                            {formatMoeda(lucro)}
+                          </TableCell>
                           <TableCell
                             className={`text-right font-semibold ${
-                              Number(r.valor_balanco) >= 0 ? "text-emerald-400" : "text-red-400"
+                              balanco >= 0 ? "text-emerald-400" : "text-red-400"
                             }`}
                           >
-                            {formatMoeda(Number(r.valor_balanco))}
+                            {formatMoeda(balanco)}
                           </TableCell>
                         </TableRow>
                         );
