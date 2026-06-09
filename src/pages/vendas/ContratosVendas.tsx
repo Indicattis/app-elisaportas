@@ -546,12 +546,12 @@ export default function ContratosVendas() {
                       setAnexarOpen(true);
                     }}
                     extraRow={(v) => (
-                      <div className="space-y-1.5 w-full">
+                      <div className="flex flex-row flex-wrap items-center gap-2">
                         {renderContratoFiles(v.id, true)}
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="w-full text-white/70 hover:text-white hover:bg-white/10 border border-white/10"
+                          className="text-white/70 hover:text-white hover:bg-white/10 border border-white/10"
                           disabled={revertingVendaId === v.id}
                           onClick={() => handleRetornarParaPendente(v)}
                         >
