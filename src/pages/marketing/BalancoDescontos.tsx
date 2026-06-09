@@ -124,12 +124,27 @@ export default function BalancoDescontos() {
       contentClassName="px-[100px]"
       headerActions={
         <div className="flex items-center gap-2">
-          <Input
-            type="month"
-            value={mes}
-            onChange={(e) => setMes(e.target.value)}
-            className="w-[160px] bg-white/5 border-white/10 text-white"
-          />
+          <div className="flex items-center bg-white/5 border border-white/10 rounded-md overflow-hidden">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={mesAnterior}
+              className="h-9 px-2 text-white hover:bg-white/10 hover:text-white"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <span className="px-3 text-sm font-medium text-white min-w-[110px] text-center">
+              {format(dataMes, "MMM yyyy", { locale: ptBR })}
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={mesProximo}
+              className="h-9 px-2 text-white hover:bg-white/10 hover:text-white"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
           <Button
             onClick={() => recalcular()}
             disabled={isRecalculando}
