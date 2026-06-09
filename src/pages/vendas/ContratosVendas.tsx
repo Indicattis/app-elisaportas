@@ -206,7 +206,7 @@ export default function ContratosVendas() {
         </div>
       </button>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6 pt-24 pb-12">
+      <div className="relative z-10 mx-auto px-[100px] pt-24 pb-12">
         <div className="mb-6 flex items-center gap-3">
           <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-lg shadow-blue-500/20">
             <FileSignature className="w-6 h-6" strokeWidth={1.5} />
