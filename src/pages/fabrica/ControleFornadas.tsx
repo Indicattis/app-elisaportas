@@ -205,6 +205,21 @@ export default function ControleFornadas() {
                 </div>
                 <div className="text-2xl font-semibold">{formatCurrency(custoTotal)}</div>
               </div>
+              <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs uppercase tracking-wide text-white/50">Média de portas / fornada</span>
+                  <TrendingUp className="h-4 w-4 text-blue-400" />
+                </div>
+                <div className="text-2xl font-semibold">{mediaPortas.toFixed(1)}</div>
+                <div className="text-xs text-white/50 mt-1">portas pintadas em média</div>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs uppercase tracking-wide text-white/50">Média de custo / fornada</span>
+                  <TrendingUp className="h-4 w-4 text-blue-400" />
+                </div>
+                <div className="text-2xl font-semibold">{formatCurrency(mediaCusto)}</div>
+              </div>
             </div>
 
             <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden">
@@ -268,23 +283,246 @@ export default function ControleFornadas() {
           )}
 
           {activeTab === "fornadas" && (
-            <PinturaIniciosList
-              inicios={inicios}
-              isLoading={isLoadingInicios}
-              onToggleRecarga={toggleRecarga.mutate}
-              isTogglingRecarga={toggleRecarga.isPending}
-              onExcluir={excluirInicio.mutate}
-              isExcluindo={excluirInicio.isPending}
-            />
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs uppercase tracking-wide text-white/50">Total de fornadas</span>
+                    <Flame className="h-4 w-4 text-orange-400" />
+                  </div>
+                  <div className="text-2xl font-semibold">{inicios.length}</div>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs uppercase tracking-wide text-white/50">Recargas realizadas</span>
+                    <CheckCircle2 className="h-4 w-4 text-green-400" />
+                  </div>
+                  <div className="text-2xl font-semibold">{inicios.filter((i: any) => i.recarga_realizada).length}</div>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs uppercase tracking-wide text-white/50">Recargas pendentes</span>
+                    <Droplet className="h-4 w-4 text-amber-400" />
+                  </div>
+                  <div className="text-2xl font-semibold">{inicios.filter((i: any) => !i.recarga_realizada).length}</div>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden">
+                {isLoadingInicios ? (
+                  <div className="p-4 space-y-3">
+                    {[1, 2, 3].map((i) => (
+                      <Skeleton key={i} className="h-12 w-full bg-white/5" />
+                    ))}
+                  </div>
+                ) : inicios.length === 0 ? (
+                  <div className="p-8 text-center text-white/50">Nenhuma fornada registrada.</div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-white/10 hover:bg-transparent">
+                        <TableHead className="text-white/60">Início</TableHead>
+                        <TableHead className="text-white/60">Responsável</TableHead>
+                        <TableHead className="text-white/60">Recarga</TableHead>
+                        <TableHead className="text-white/60 text-right">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {inicios.map((inicio: any) => (
+                        <TableRow key={inicio.id} className="border-white/10 hover:bg-white/5">
+                          <TableCell className="text-white">
+                            {format(new Date(inicio.iniciado_em), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Avatar className="h-7 w-7">
+                                <AvatarImage src={inicio.admin_users?.foto_perfil_url ?? undefined} />
+                                <AvatarFallback className="bg-white/10 text-white text-xs">
+                                  {inicio.admin_users?.nome?.[0] ?? "?"}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span className="text-white/90 text-sm">{inicio.admin_users?.nome ?? "—"}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {inicio.recarga_realizada ? (
+                              <div className="flex flex-col gap-0.5">
+                                <Badge className="w-fit bg-green-500/15 text-green-300 border border-green-500/30">Realizada</Badge>
+                                {inicio.recarga_realizada_em && (
+                                  <span className="text-[11px] text-white/50">
+                                    {format(new Date(inicio.recarga_realizada_em), "dd/MM HH:mm", { locale: ptBR })}
+                                    {inicio.recarga_admin_users?.nome ? ` · ${inicio.recarga_admin_users.nome}` : ""}
+                                  </span>
+                                )}
+                              </div>
+                            ) : (
+                              <Badge variant="outline" className="border-white/20 text-white/50">Pendente</Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="inline-flex items-center gap-1">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => toggleRecarga.mutate(inicio.id)}
+                                disabled={toggleRecarga.isPending || inicio.recarga_realizada}
+                                className="text-blue-300 hover:text-blue-200 hover:bg-blue-500/10 disabled:opacity-40"
+                                title={inicio.recarga_realizada ? "Recarga já realizada" : "Marcar recarga"}
+                              >
+                                <Droplet className="h-4 w-4 mr-1" />
+                                {inicio.recarga_realizada ? "Recarregado" : "Recarregar"}
+                              </Button>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    disabled={excluirInicio.isPending}
+                                    className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                                    title="Excluir fornada"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Excluir fornada?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Esta ação não pode ser desfeita. O registro será removido permanentemente.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => excluirInicio.mutate(inicio.id)}
+                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    >
+                                      Excluir
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </div>
+            </div>
           )}
 
           {activeTab === "trocas" && (
-            <TrocasGasList
-              trocas={trocas}
-              isLoading={isLoadingTrocas}
-              onExcluir={excluirTroca.mutate}
-              isExcluindo={excluirTroca.isPending}
-            />
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs uppercase tracking-wide text-white/50">Total de trocas</span>
+                    <Fuel className="h-4 w-4 text-blue-400" />
+                  </div>
+                  <div className="text-2xl font-semibold">{trocas.length}</div>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs uppercase tracking-wide text-white/50">Valor total gasto</span>
+                    <DollarSign className="h-4 w-4 text-blue-400" />
+                  </div>
+                  <div className="text-2xl font-semibold">{formatCurrency(totalTrocasValor)}</div>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs uppercase tracking-wide text-white/50">Valor médio / troca</span>
+                    <TrendingUp className="h-4 w-4 text-blue-400" />
+                  </div>
+                  <div className="text-2xl font-semibold">
+                    {formatCurrency(trocas.length > 0 ? totalTrocasValor / trocas.length : 0)}
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden">
+                {isLoadingTrocas ? (
+                  <div className="p-4 space-y-3">
+                    {[1, 2, 3].map((i) => (
+                      <Skeleton key={i} className="h-12 w-full bg-white/5" />
+                    ))}
+                  </div>
+                ) : trocas.length === 0 ? (
+                  <div className="p-8 text-center text-white/50">Nenhuma troca de gás registrada.</div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-white/10 hover:bg-transparent">
+                        <TableHead className="text-white/60">Data</TableHead>
+                        <TableHead className="text-white/60">Registrado por</TableHead>
+                        <TableHead className="text-white/60">Observações</TableHead>
+                        <TableHead className="text-white/60 text-right">Valor</TableHead>
+                        <TableHead className="text-white/60 text-right">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {trocas.map((t: any) => (
+                        <TableRow key={t.id} className="border-white/10 hover:bg-white/5">
+                          <TableCell className="text-white">
+                            {format(new Date(t.registrado_em), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Avatar className="h-7 w-7">
+                                <AvatarImage src={t.admin_users?.foto_perfil_url ?? undefined} />
+                                <AvatarFallback className="bg-white/10 text-white text-xs">
+                                  {t.admin_users?.nome?.[0] ?? "?"}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span className="text-white/90 text-sm">{t.admin_users?.nome ?? "—"}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-white/70 text-sm max-w-[280px] truncate">
+                            {t.observacoes || "—"}
+                          </TableCell>
+                          <TableCell className="text-right text-white font-medium">
+                            {formatCurrency(Number(t.valor) || 0)}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  disabled={excluirTroca.isPending}
+                                  className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                                  title="Excluir troca"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Excluir troca de gás?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Esta ação não pode ser desfeita.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => excluirTroca.mutate(t.id)}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    Excluir
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </div>
+            </div>
           )}
         </div>
       </div>
