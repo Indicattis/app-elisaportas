@@ -9,9 +9,15 @@ export interface FornadaResumo {
   responsavel_foto: string | null;
   qtd_portas: number;
   recarga_realizada: boolean;
+  troca_id: string | null;
+  troca_registrado_em: string | null;
+  troca_valor: number;
+  qtd_fornadas_troca: number;
+  custo_fornada: number | null; // null => em apuração
+  em_apuracao: boolean;
 }
 
-export function useFornadasResumo(custoPorFornada: number) {
+export function useFornadasResumo() {
   return useQuery({
     queryKey: ["fornadas-resumo"],
     queryFn: async (): Promise<FornadaResumo[]> => {
@@ -30,6 +36,47 @@ export function useFornadasResumo(custoPorFornada: number) {
         .not("data_conclusao", "is", null)
         .gte("data_conclusao", oldest);
       if (errO) throw errO;
+
+      // Buscar trocas de gás ordenadas por data (asc)
+      const { data: trocasData, error: errT } = await supabase
+        .from("pintura_trocas_gas" as any)
+        .select("id, registrado_em, valor")
+        .order("registrado_em", { ascending: true });
+      if (errT) throw errT;
+      const trocas = ((trocasData as any[]) || []).map((t) => ({
+        id: t.id as string,
+        registrado_em: t.registrado_em as string,
+        valor: Number(t.valor) || 0,
+      }));
+      const ultimaTrocaId = trocas.length > 0 ? trocas[trocas.length - 1].id : null;
+
+      // Determinar troca afiliada para cada fornada
+      const trocaPorFornadaId = new Map<string, { id: string; registrado_em: string; valor: number } | null>();
+      for (const f of fornadas) {
+        if (trocas.length === 0) {
+          trocaPorFornadaId.set(f.id, null);
+          continue;
+        }
+        // Última troca com registrado_em <= iniciado_em
+        let escolhida = null as null | (typeof trocas)[number];
+        for (let i = trocas.length - 1; i >= 0; i--) {
+          if (trocas[i].registrado_em <= f.iniciado_em) {
+            escolhida = trocas[i];
+            break;
+          }
+        }
+        // Fallback: primeira troca (fornadas anteriores à 1ª troca)
+        if (!escolhida) escolhida = trocas[0];
+        trocaPorFornadaId.set(f.id, escolhida);
+      }
+
+      // Contar fornadas por troca
+      const contagemPorTroca = new Map<string, number>();
+      for (const f of fornadas) {
+        const t = trocaPorFornadaId.get(f.id);
+        if (!t) continue;
+        contagemPorTroca.set(t.id, (contagemPorTroca.get(t.id) ?? 0) + 1);
+      }
 
       const userIds = Array.from(
         new Set(fornadas.map((f) => f.iniciado_por).filter(Boolean) as string[])
@@ -67,6 +114,12 @@ export function useFornadasResumo(custoPorFornada: number) {
           return true;
         }).length;
         const user = f.iniciado_por ? usersMap.get(f.iniciado_por) : undefined;
+        const troca = trocaPorFornadaId.get(f.id) ?? null;
+        const qtdFornadasTroca = troca ? (contagemPorTroca.get(troca.id) ?? 0) : 0;
+        const emApuracao = !!troca && troca.id === ultimaTrocaId;
+        const custoFornada = troca && !emApuracao && qtdFornadasTroca > 0
+          ? troca.valor / qtdFornadasTroca
+          : (!troca ? 0 : null);
         return {
           id: f.id,
           iniciado_em: f.iniciado_em,
@@ -75,6 +128,12 @@ export function useFornadasResumo(custoPorFornada: number) {
           responsavel_foto: user?.foto ?? null,
           qtd_portas: qtd,
           recarga_realizada: !!f.recarga_realizada,
+          troca_id: troca?.id ?? null,
+          troca_registrado_em: troca?.registrado_em ?? null,
+          troca_valor: troca?.valor ?? 0,
+          qtd_fornadas_troca: qtdFornadasTroca,
+          custo_fornada: custoFornada,
+          em_apuracao: emApuracao,
         };
       });
     },
