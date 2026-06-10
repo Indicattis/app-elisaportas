@@ -51,6 +51,7 @@ function SortableVendaItem({ venda, mode, hideActions }: { venda: VendaPendenteP
         isDragging={isDragging}
         dragHandleProps={{ ...attributes, ...listeners }}
         mode={mode}
+        hideActions={hideActions}
       />
     </div>
   );
