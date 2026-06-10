@@ -43,6 +43,8 @@ export const useVendasPendenteFaturamento = () => {
           cidade,
           estado,
           venda_presencial,
+          contrato_url,
+          contrato_dispensado,
           produtos_vendas (
             id,
             faturamento,
@@ -68,6 +70,7 @@ export const useVendasPendenteFaturamento = () => {
         `)
         .eq("is_rascunho", false)
         .eq("dispensada_sistema", false)
+        .or("contrato_url.not.is.null,contrato_dispensado.eq.true")
         .order("data_venda", { ascending: false });
 
       if (error) throw error;
