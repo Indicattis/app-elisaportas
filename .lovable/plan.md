@@ -1,47 +1,72 @@
 
-# Atualizar índices de desconto em `/financeiro/faturamento/:id`
+# Investigação: 612 vendas "Pendente Faturamento" em `/direcao/gestao-fabrica`
 
-## Problema
-Em `src/pages/administrativo/FaturamentoVendaMinimalista.tsx` os cards de desconto estão desatualizados em relação a `/marketing/balanco-descontos`:
+## Causa raiz
 
-1. **Rótulos antigos**: "Desc. Cartão", "Desc. Quente", "Luan/Alana". O Balanço usa "À Vista (3%)", "Frio (5%)", "Gerente (+7%)".
-2. **Regra de "Frio" invertida**: o faturamento usa `isFrio = venda.venda_presencial === false`, enquanto o Balanço (fonte da verdade) usa `aptoFrio = !!venda.venda_presencial` (frio = venda presencial).
-3. **Limite "Gerente"**: o faturamento divide o restante usando `configLimites.presencial` e nomeia o terceiro tier como "responsavel". O Balanço usa um terceiro tier fixo de **+7%** (gerente), exibido sempre que `tem_autorizacao_gerente` OR `pctDado > limiteBase`.
-4. **Excedente**: hoje calculado contra `LIMITE_DESCONTO_LUCRO` (`limitesVendas.totalComResponsavel`). No Balanço o limite efetivo é `limiteBase + (aptoGerente ? 7 : 0)`, então o excedente diverge entre as duas telas para a mesma venda.
+A aba "Pendente Faturamento" lê de `useVendasPendenteFaturamento` (`src/hooks/useVendasPendenteFaturamento.ts`). O filtro atual considera "pendente" toda venda que:
 
-## Mudanças (apenas UI/cálculo desta página — sem tocar em outras telas)
+- `is_rascunho = false` e `pedido_dispensado = false`
+- tem `contrato_url IS NOT NULL` **OU** `contrato_dispensado = true`
+- não está reprovada
+- não tem `pedidos_producao`
+- e ainda não é `isVendaFaturada` (frete aprovado + todos `produtos_vendas.faturamento = true`)
 
-### 1. Reescrever o cálculo `descontoTiers` para espelhar `computeRow` do Balanço
-Em `FaturamentoVendaMinimalista.tsx` (~linha 1059):
+Consulta agregada no banco hoje retorna **640** vendas nesse estado. Detalhando:
 
-- Buscar `tem_autorizacao_gerente` da venda (consultar `vendas_autorizacoes_desconto` por `venda_id` no `fetchVenda` e armazenar como booleano em estado).
-- `aptoAvista = forma_pagamento !== '' && forma_pagamento !== 'cartao_credito'` → tier "À Vista (3%)".
-- `aptoFrio = !!venda.venda_presencial` (corrigir inversão) → tier "Frio (5%)".
-- `aptoGerente = temAutorizacaoGerente || pctDado > limiteBase` → tier "Gerente (+7%)".
-- `pctLimite = (aptoAvista ? 3 : 0) + (aptoFrio ? 5 : 0) + (aptoGerente ? 7 : 0)`.
-- Valores exibidos: `0.03 * valorTabela`, `0.05 * valorTabela`, `0.07 * valorTabela` (mostrando `-` quando o tier não se aplica), idênticos ao Balanço.
+| categoria                                                         | qtd |
+|-------------------------------------------------------------------|----:|
+| Total pendente                                                    | 640 |
+| Sem nenhuma linha em `produtos_vendas`                            | 508 |
+| Com produtos, mas sem `frete_aprovado` / itens sem `faturamento`  | 132 |
+| Marcadas como `contrato_dispensado = true`                        | 640 |
+| Com `contrato_url` real                                           |   0 |
 
-### 2. Atualizar os 4 cards no header de indicadores (linhas ~1229-1264)
-- "Desc. Cartão" → **"À Vista (3%)"**, valor exibido apenas se `aptoAvista`.
-- "Desc. Quente" → **"Frio (5%)"**, valor exibido apenas se `aptoFrio`.
-- "Luan/Alana" → **"Gerente (+7%)"**, valor exibido apenas se `aptoGerente`.
-- Card "Excedente >X%" passa a usar `pctLimite` calculado acima (em vez de `LIMITE_DESCONTO_LUCRO`), com mesmo cálculo `excedidoPct = max(0, pctDado - pctLimite)` e `excedidoValor = (excedidoPct/100) * totalVenda`. Mantém posição e estilo.
+Ou seja, **100% dos pendentes têm `contrato_dispensado = true`** — nenhum chegou ali por contrato anexado. O salto vem da migration `supabase/migrations/20260513202902_177611d9-...sql`:
 
-### 3. Substituir `excedenteValor`/`excedentePct` na página
-Hoje vêm de outro cálculo local (linha ~1018 em diante). Refatorar para reaproveitar os mesmos números do tier acima, garantindo que:
-- O card "Excedente" mostre o mesmo valor do Balanço.
-- O abatimento do excedente sobre o lucro dos itens (loop em ~linha 1351 `excedenteValor * (descontoValorAbs / totalDescontosCalc)`) continue funcionando com o novo `excedenteValor` (apenas a fórmula da base muda; o restante do código permanece igual).
+```sql
+UPDATE vendas
+SET contrato_dispensado = true,
+    contrato_dispensado_em = COALESCE(contrato_dispensado_em, now())
+WHERE contrato_url IS NULL
+  AND contrato_dispensado IS DISTINCT FROM true;
+```
 
-### 4. Cores e estilo
-- Manter glassmorphism existente (`bg-white/5 backdrop-blur-xl border border-white/10`).
-- Cores: `text-emerald-400` quando dentro do limite, `text-red-400` quando excede, `text-white/30` quando tier inativo — igual ao Balanço.
+Ela dispensou o contrato de **toda** venda sem `contrato_url`, inclusive vendas legadas que nem têm itens em `produtos_vendas` (508 casos). A migration anterior (`20260513200358`) só dispensava casos seguros (frete aprovado + todos itens faturados); a segunda removeu essa cláusula e varreu o histórico inteiro, criando o backlog artificial.
+
+Vendas sem `produtos_vendas` não podem ser faturadas pelo fluxo atual (a tela depende dos itens), então ficam presas para sempre na aba.
+
+## Plano de correção
+
+### 1. Filtrar vendas sem itens no hook (UI defensiva)
+Em `src/hooks/useVendasPendenteFaturamento.ts`, após carregar `vendas`, descartar quem tem `produtos_vendas.length === 0` antes do `.map`. Isso elimina imediatamente os 508 registros "fantasma" mesmo sem tocar no banco. Mudança pequena e isolada na função `.filter()` existente.
+
+### 2. Migration de correção dos dados
+Criar nova migration `supabase/migrations/<timestamp>_corrigir_contrato_dispensado_legado.sql`:
+
+```sql
+-- Reverte o dispensamento aplicado em massa quando a venda não tem itens
+-- (vendas legadas que não conseguem ser faturadas pelo fluxo atual e ficaram
+-- presas em "Pendente Faturamento").
+UPDATE public.vendas v
+SET contrato_dispensado = false,
+    contrato_dispensado_em = NULL,
+    contrato_dispensado_por = NULL
+WHERE v.contrato_dispensado = true
+  AND v.contrato_url IS NULL
+  AND NOT EXISTS (
+    SELECT 1 FROM public.produtos_vendas pv WHERE pv.venda_id = v.id
+  );
+```
+
+Isso restaura ~508 vendas para o estado original ("contrato pendente"), sem afetar quem foi dispensado conscientemente via UI (esses têm `contrato_dispensado_por` preenchido — opcionalmente pode-se filtrar `AND contrato_dispensado_por IS NULL` para extra segurança; ver "Pergunta abaixo").
+
+### 3. Validar resultado
+Após aplicação, a aba "Pendente Faturamento" deverá cair para ~132 vendas (as que realmente têm itens não faturados / frete não aprovado). Verificar no preview e nas demais telas que consomem o mesmo hook (`AnexarContratoModal`, `FaturamentoVendasMinimalista`).
 
 ## Fora de escopo
-- Não alterar `useBalancoDescontos`, RPC `recalcular_balanco_desconto_vendas`, nem a view `vendas_balanco_desconto`.
-- Não mexer em `/marketing/balanco-descontos`.
-- Não tocar nas demais seções da página de faturamento (forma de pagamento, parcelas, produtos, lucros).
-- Sem migrations.
+- Não alterar `isVendaFaturada` nem outras lógicas de faturamento.
+- Não tocar nas vendas legítimas (132 com produtos).
+- Sem mudanças em RLS, grants, ou em outras tabelas.
 
-## Riscos
-- Inversão de `venda_presencial` muda o valor exibido para vendas existentes (intencional — é a correção do bug).
-- Mudança do limite do excedente (de `totalComResponsavel` para `base + gerente×7`) pode aumentar ou reduzir o abatimento do excedente no lucro de itens individuais. Isso é o comportamento canônico definido pelo Balanço; vai alinhar as duas telas.
+## Risco
+Reverter `contrato_dispensado` para essas 508 vendas legadas é seguro: elas não são faturáveis pelo fluxo atual de qualquer forma e não aparecerão mais nem na aba "Pendente Faturamento" (graças à mudança 1) nem na aba "Aguardando Contrato" (porque também não têm itens — a maioria das telas exige `produtos_vendas`). Se aparecerem em alguma listagem, ainda será o estado correto: contrato realmente não está assinado nem dispensado por um humano.
