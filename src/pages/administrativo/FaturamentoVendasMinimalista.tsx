@@ -632,6 +632,16 @@ export default function FaturamentoMinimalista() {
             if (isFaturada(venda)) return -1;
             return differenceInDays(new Date(), new Date(venda.data_venda));
           case 'faturada': return isFaturada(venda) ? 1 : 0;
+          case 'status': return isFaturada(venda) ? 1 : 0;
+          case 'desconto':
+          case 'acrescimo': {
+            const tabelaTotal = (venda.portas || []).reduce((acc: number, p: any) => {
+              const qty = p.quantidade || 1;
+              return acc + ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
+            }, 0);
+            const diff = tabelaTotal - (venda.valor_venda || 0);
+            return sortConfig.column === 'desconto' ? Math.max(0, diff) : Math.max(0, -diff);
+          }
           case 'desc_cartao':
           case 'desc_gelo':
           case 'desc_responsavel':
