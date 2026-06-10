@@ -781,7 +781,7 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
                 </div>
                 )}
               </>
-            ) : (
+            ) : mode === 'pedido' ? (
               <>
                 {/* Aprovar venda (cria pedido em 'aberto') */}
                 <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
@@ -834,7 +834,7 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
                 {/* Slot vazio reservado para manter grid alinhado */}
                 <div />
               </>
-            )}
+            ) : null}
 
           </div>
         </CardContent>
