@@ -1003,6 +1003,50 @@ export default function FaturamentoMinimalista() {
           : <span className="text-white/30">-</span>;
       case 'valor':
         return <span className="text-white font-medium">{formatCurrency(venda.valor_venda || 0)}</span>;
+      case 'desconto': {
+        const tabelaTotal = (venda.portas || []).reduce((acc: number, p: any) => {
+          const qty = p.quantidade || 1;
+          return acc + ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
+        }, 0);
+        const diff = tabelaTotal - (venda.valor_venda || 0);
+        if (diff <= 0) return <span className="text-white/30">-</span>;
+        return <span className="text-red-400">-{formatCurrency(diff)}</span>;
+      }
+      case 'acrescimo': {
+        const tabelaTotal = (venda.portas || []).reduce((acc: number, p: any) => {
+          const qty = p.quantidade || 1;
+          return acc + ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
+        }, 0);
+        const diff = (venda.valor_venda || 0) - tabelaTotal;
+        if (diff <= 0) return <span className="text-white/30">-</span>;
+        return <span className="text-emerald-400">+{formatCurrency(diff)}</span>;
+      }
+      case 'status': {
+        if (isFaturada(venda)) {
+          return (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 text-[10px] font-medium">
+                  <CheckCircle2 className="h-3 w-3" />
+                  Faturada
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>Venda faturada</TooltipContent>
+            </Tooltip>
+          );
+        }
+        return (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-amber-500/15 border border-amber-500/40 text-amber-300 text-[10px] font-medium">
+                <Clock className="h-3 w-3" />
+                Pendente
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>Venda ainda não faturada</TooltipContent>
+          </Tooltip>
+        );
+      }
       case 'faturada':
         return isFaturada(venda) 
           ? <Check className="h-4 w-4 text-green-400 mx-auto" />
