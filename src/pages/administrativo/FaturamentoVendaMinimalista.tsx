@@ -781,6 +781,18 @@ export default function FaturamentoVendaMinimalista() {
       try {
         let custoUnitario: number | null = null;
 
+        // Fallback inicial: se já existe custo_producao gravado, usar para calcular lucro
+        if ((produto as any).custo_producao != null && Number((produto as any).custo_producao) > 0) {
+          const custoTotalExistente = Number((produto as any).custo_producao);
+          const lucroItem = Math.max(0, (produto.valor_total || 0) - custoTotalExistente);
+          await updateLucroItem({
+            produtoId: produto.id,
+            lucroItem,
+            custoProducao: custoTotalExistente,
+          });
+          return;
+        }
+
         // Preferencial: vínculo direto via custos_itens_id
         if ((produto as any).custos_itens_id) {
           const { data } = await supabase
