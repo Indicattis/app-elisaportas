@@ -111,6 +111,7 @@ export default function FaturamentoVendaMinimalista() {
   const [hasPedido, setHasPedido] = useState<boolean | null>(null);
   const [contasReceber, setContasReceber] = useState<any[]>([]);
   const [pagamentoData, setPagamentoData] = useState<PagamentoData>(createEmptyPagamentoData());
+  const [temAutorizacaoGerente, setTemAutorizacaoGerente] = useState<boolean>(false);
   const [showRegenerarAposSalvarDialog, setShowRegenerarAposSalvarDialog] = useState(false);
   const [salvandoFormaPagamento, setSalvandoFormaPagamento] = useState(false);
   const { createPedidoFromVenda, checkExistingPedido } = usePedidoCreation();
@@ -204,6 +205,14 @@ export default function FaturamentoVendaMinimalista() {
       fetchVenda();
       checkPedidoExistente();
       fetchContasReceber();
+      (async () => {
+        const { data } = await supabase
+          .from('vendas_autorizacoes_desconto')
+          .select('id')
+          .eq('venda_id', id)
+          .limit(1);
+        setTemAutorizacaoGerente(!!(data && data.length));
+      })();
     }
   }, [id]);
 
@@ -1032,7 +1041,14 @@ export default function FaturamentoVendaMinimalista() {
   const pctDescontoTotal = _valorTabelaParaExcedente > 0
     ? (totalDescontosCalc / _valorTabelaParaExcedente) * 100
     : 0;
-  const excedentePct = Math.max(0, pctDescontoTotal - LIMITE_DESCONTO_LUCRO);
+  // Tiers alinhados com /marketing/balanco-descontos
+  const _formaPg = venda?.forma_pagamento || '';
+  const aptoAvista = _formaPg !== '' && _formaPg !== 'cartao_credito';
+  const aptoFrio = !!venda?.venda_presencial;
+  const _limiteBase = (aptoAvista ? 3 : 0) + (aptoFrio ? 5 : 0);
+  const aptoGerente = temAutorizacaoGerente || pctDescontoTotal > _limiteBase;
+  const pctLimite = _limiteBase + (aptoGerente ? 7 : 0);
+  const excedentePct = Math.max(0, pctDescontoTotal - pctLimite);
   const excedenteValor = _valorTabelaParaExcedente * (excedentePct / 100);
   const totalLucro = lucroProdutos + lucroInstalacao - excedenteValor + totalCreditosProdutos + (venda?.valor_credito || 0);
   const margem = venda && venda.valor_venda > 0 ? (totalLucro / venda.valor_venda) * 100 : 0;
@@ -1055,33 +1071,14 @@ export default function FaturamentoVendaMinimalista() {
     return acc + ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
   }, 0) || 0;
 
-  // Desconto tiers (Cartão / Gelo / Luan-Alana)
-  const descontoTiers = (() => {
-    const totalDesc = produtos?.reduce((acc: number, p: any) => {
-      const qty = p.quantidade || 1;
-      if (p.tipo_desconto === 'percentual' && p.desconto_percentual > 0) {
-        const base = ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
-        return acc + base * (p.desconto_percentual / 100);
-      }
-      if (p.desconto_valor && p.desconto_valor > 0) return acc + p.desconto_valor;
-      return acc;
-    }, 0) || 0;
-    if (totalDesc === 0 || valorTabela === 0) return { cartao: 0, gelo: 0, responsavel: 0, total: totalDesc };
-    const pctTotal = (totalDesc / valorTabela) * 100;
-    const isCartao = venda?.forma_pagamento === 'cartao_credito';
-    const isFrio = venda?.venda_presencial === false;
-    let pctCartao = 0, pctGelo = 0;
-    if (!isCartao) pctCartao = Math.min(pctTotal, configLimites.avista);
-    const restante1 = pctTotal - pctCartao;
-    if (isFrio && restante1 > 0) pctGelo = Math.min(restante1, configLimites.presencial);
-    const pctResp = Math.max(0, pctTotal - pctCartao - pctGelo);
-    return {
-      cartao: valorTabela * (pctCartao / 100),
-      gelo: valorTabela * (pctGelo / 100),
-      responsavel: valorTabela * (pctResp / 100),
-      total: totalDesc,
-    };
-  })();
+  // Tiers de desconto (À Vista 3% / Frio 5% / Gerente +7%) — espelha /marketing/balanco-descontos
+  const descontoTiers = {
+    avista: aptoAvista ? 0.03 * valorTabela : 0,
+    frio: aptoFrio ? 0.05 * valorTabela : 0,
+    gerente: aptoGerente ? 0.07 * valorTabela : 0,
+  };
+  const descontoTierCheck = (limite: number) =>
+    pctDescontoTotal <= limite ? 'text-emerald-400' : 'text-red-400';
 
   const getTipoProdutoLabel = (tipo?: string) => {
     const tipos: Record<string, string> = {
@@ -1226,40 +1223,40 @@ export default function FaturamentoVendaMinimalista() {
             <p className="text-sm font-bold text-blue-400">{formatCurrency(valorTabela)}</p>
           </div>
 
-          {/* Desconto Cartão */}
+          {/* À Vista (3%) */}
           <div className="bg-white/5 border border-white/10 rounded-lg p-3">
-            <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">Desc. Cartão</p>
-            <p className={cn("text-sm font-bold", descontoTiers.cartao > 0 ? "text-red-400" : "text-white/30")}>
-              {descontoTiers.cartao > 0 ? `-${formatCurrency(descontoTiers.cartao)}` : '-'}
+            <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">À Vista (3%)</p>
+            <p className={cn("text-sm font-bold", aptoAvista ? descontoTierCheck(3) : "text-white/30")}>
+              {aptoAvista ? formatCurrency(descontoTiers.avista) : '-'}
             </p>
           </div>
 
-          {/* Desconto Quente */}
+          {/* Frio (5%) */}
           <div className="bg-white/5 border border-white/10 rounded-lg p-3">
-            <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">Desc. Quente</p>
-            <p className={cn("text-sm font-bold", descontoTiers.gelo > 0 ? "text-red-400" : "text-white/30")}>
-              {descontoTiers.gelo > 0 ? `-${formatCurrency(descontoTiers.gelo)}` : '-'}
+            <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">Frio (5%)</p>
+            <p className={cn("text-sm font-bold", aptoFrio ? descontoTierCheck(5) : "text-white/30")}>
+              {aptoFrio ? formatCurrency(descontoTiers.frio) : '-'}
             </p>
           </div>
 
-          {/* Desconto Luan/Alana */}
+          {/* Gerente (+7%) */}
           <div className="bg-white/5 border border-white/10 rounded-lg p-3">
-            <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">Luan/Alana</p>
-            <p className={cn("text-sm font-bold", descontoTiers.responsavel > 0 ? "text-orange-400" : "text-white/30")}>
-              {descontoTiers.responsavel > 0 ? `-${formatCurrency(descontoTiers.responsavel)}` : '-'}
+            <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">Gerente (+7%)</p>
+            <p className={cn("text-sm font-bold", aptoGerente ? descontoTierCheck(pctLimite) : "text-white/30")}>
+              {aptoGerente ? formatCurrency(descontoTiers.gerente) : '-'}
             </p>
           </div>
 
           <div
             className="bg-white/5 border border-white/10 rounded-lg p-3"
-            title={`Desconto acima de ${LIMITE_DESCONTO_LUCRO}% do valor de tabela — abatido do lucro`}
+            title={`Desconto acima de ${pctLimite}% do valor de tabela — abatido do lucro`}
           >
-            <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">Excedente &gt;{LIMITE_DESCONTO_LUCRO}%</p>
+            <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">Excedente &gt;{pctLimite}%</p>
             <p className={cn("text-sm font-bold", excedenteValor > 0 ? "text-red-500" : "text-white/30")}>
               {excedenteValor > 0 ? `-${formatCurrency(excedenteValor)}` : '-'}
             </p>
             {excedenteValor > 0 && (
-              <p className="text-[10px] text-red-400/80 mt-0.5">+{excedentePct.toFixed(1)}% acima de {LIMITE_DESCONTO_LUCRO}%</p>
+              <p className="text-[10px] text-red-400/80 mt-0.5">+{excedentePct.toFixed(1)}% acima de {pctLimite}%</p>
             )}
           </div>
 
