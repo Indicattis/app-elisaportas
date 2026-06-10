@@ -1518,13 +1518,19 @@ export default function FaturamentoMinimalista() {
                               )}
                               <DropdownMenuItem
                                 className="cursor-pointer focus:bg-white/10 focus:text-white"
-                                onClick={() => toggleVendaFlag(
-                                  venda,
-                                  'dispensada_sistema',
-                                  !(venda as any).dispensada_sistema,
-                                  'Venda dispensada do sistema',
-                                  'Venda reativada no sistema',
-                                )}
+                                onClick={() => {
+                                  if ((venda as any).dispensada_sistema) {
+                                    reativarVendaNoSistema(venda);
+                                  } else {
+                                    toggleVendaFlag(
+                                      venda,
+                                      'dispensada_sistema',
+                                      true,
+                                      'Venda dispensada do sistema',
+                                      'Venda reativada no sistema',
+                                    );
+                                  }
+                                }}
                               >
                                 {(venda as any).dispensada_sistema ? (
                                   <><Eye className="h-4 w-4 mr-2" />Reativar no sistema</>
