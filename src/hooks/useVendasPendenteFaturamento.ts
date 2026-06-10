@@ -123,6 +123,9 @@ export const useVendasPendenteFaturamento = () => {
       return vendas
         .filter((v: any) => {
           if (v.status_aprovacao === "reprovado") return false;
+          // Vendas sem itens em produtos_vendas não são faturáveis pelo fluxo atual
+          // (legados que ficaram presos na aba — ver migration 20260513202902).
+          if (!v.produtos_vendas || v.produtos_vendas.length === 0) return false;
           if (isVendaFaturada(v)) return false;
           const pedidos = v.pedidos_producao || [];
           if (pedidos.length > 0) return false;
