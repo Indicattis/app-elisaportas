@@ -1071,11 +1071,21 @@ export default function FaturamentoVendaMinimalista() {
     return acc + ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
   }, 0) || 0;
 
-  // Tiers de desconto (À Vista 3% / Frio 5% / Gerente +7%) — espelha /marketing/balanco-descontos
+  // Tiers de desconto — distribui o desconto REAL aplicado entre À Vista,
+  // Frio e Gerente, na mesma ordem usada em /financeiro/faturamento/vendas.
+  const _tiersAplicados = calcDescontoTiersAplicados({
+    totalVenda: _valorTabelaParaExcedente,
+    descontoTotal: totalDescontosCalc,
+    formaPagamento: _formaPg,
+    vendaPresencial: !!venda?.venda_presencial,
+    limAvista: configLimites.avista,
+    limPresencial: configLimites.presencial,
+    limResponsavel: limitesVendas.adicionalResponsavel ?? 7,
+  });
   const descontoTiers = {
-    avista: aptoAvista ? 0.03 * valorTabela : 0,
-    frio: aptoFrio ? 0.05 * valorTabela : 0,
-    gerente: aptoGerente ? 0.07 * valorTabela : 0,
+    avista: _tiersAplicados.valorAvista,
+    frio: _tiersAplicados.valorFrio,
+    gerente: _tiersAplicados.valorGerente,
   };
   const descontoTierCheck = (limite: number) =>
     pctDescontoTotal <= limite ? 'text-emerald-400' : 'text-red-400';
