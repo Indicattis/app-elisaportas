@@ -48,6 +48,7 @@ import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 import { useConfiguracoesVendas } from "@/hooks/useConfiguracoesVendas";
 import { PagamentoSection, PagamentoData, createEmptyPagamentoData } from "@/components/vendas/PagamentoSection";
 import { MetodoPagamento, createEmptyMetodo } from "@/components/vendas/MetodoPagamentoCard";
+import { resumoPagamentoCompacto } from "@/utils/pagamentoResumo";
 import { PagamentoResumo } from "@/components/vendas/PagamentoResumo";
 
 const safeParseDate = (dateStr: string | null | undefined): Date | null => {
@@ -1777,22 +1778,40 @@ export default function FaturamentoVendaMinimalista() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {venda.data_venda && (
-                  <div className="space-y-1">
-                    <p className="text-xs text-white/50">Data da Venda</p>
-                    <p className="text-sm font-medium text-white">
-                      {(() => { const d = safeParseDate(venda.data_venda); return d ? format(d, "dd/MM/yyyy", { locale: ptBR }) : "-"; })()}
-                    </p>
-                  </div>
-                )}
-                <div className="space-y-1">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="p-3 rounded-lg border border-white/10 bg-white/5 space-y-1">
+                  <p className="text-xs text-white/50">Forma de Pagamento</p>
+                  <p className="text-sm font-medium text-white">
+                    {resumoPagamentoCompacto(venda.metodo_pagamento, contasReceber)}
+                  </p>
+                </div>
+                <div className="p-3 rounded-lg border border-white/10 bg-white/5 space-y-1">
+                  <p className="text-xs text-white/50">Pagamento na Entrega</p>
+                  <p className="text-sm font-medium">
+                    {venda.pagamento_na_entrega ? (
+                      <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">Sim</Badge>
+                    ) : (
+                      <Badge className="bg-white/10 text-white/70 border-white/20">Não</Badge>
+                    )}
+                  </p>
+                </div>
+                <div className="p-3 rounded-lg border border-white/10 bg-white/5 space-y-1">
                   <p className="text-xs text-white/50">Tipo de Venda</p>
                   <p className="text-sm font-medium">
                     {venda.venda_presencial ? (
-                      <Badge className="bg-cyan-500/20 text-cyan-400 border-cyan-500/30">❄️ Venda Fria</Badge>
+                      <Badge className="bg-cyan-500/20 text-cyan-400 border-cyan-500/30">❄️ Fria</Badge>
                     ) : (
-                      <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30">🔥 Venda Quente</Badge>
+                      <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30">🔥 Quente</Badge>
+                    )}
+                  </p>
+                </div>
+                <div className="p-3 rounded-lg border border-white/10 bg-white/5 space-y-1">
+                  <p className="text-xs text-white/50">Status da Venda</p>
+                  <p className="text-sm font-medium">
+                    {vendaFaturada ? (
+                      <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">Faturada</Badge>
+                    ) : (
+                      <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">Não Faturada</Badge>
                     )}
                   </p>
                 </div>
