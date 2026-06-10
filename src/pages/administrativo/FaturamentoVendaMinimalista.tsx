@@ -111,6 +111,7 @@ export default function FaturamentoVendaMinimalista() {
   const [hasPedido, setHasPedido] = useState<boolean | null>(null);
   const [contasReceber, setContasReceber] = useState<any[]>([]);
   const [pagamentoData, setPagamentoData] = useState<PagamentoData>(createEmptyPagamentoData());
+  const [temAutorizacaoGerente, setTemAutorizacaoGerente] = useState<boolean>(false);
   const [showRegenerarAposSalvarDialog, setShowRegenerarAposSalvarDialog] = useState(false);
   const [salvandoFormaPagamento, setSalvandoFormaPagamento] = useState(false);
   const { createPedidoFromVenda, checkExistingPedido } = usePedidoCreation();
@@ -204,6 +205,14 @@ export default function FaturamentoVendaMinimalista() {
       fetchVenda();
       checkPedidoExistente();
       fetchContasReceber();
+      (async () => {
+        const { data } = await supabase
+          .from('vendas_autorizacoes_desconto')
+          .select('id')
+          .eq('venda_id', id)
+          .limit(1);
+        setTemAutorizacaoGerente(!!(data && data.length));
+      })();
     }
   }, [id]);
 
