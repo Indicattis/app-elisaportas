@@ -104,6 +104,7 @@ interface Venda {
   contrato_dispensado?: boolean;
   pedido_dispensado?: boolean;
   forcar_exibicao_pedidos?: boolean;
+  dispensada_sistema?: boolean;
 }
 
 const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
