@@ -115,6 +115,8 @@ export default function FaturamentoVendaMinimalista() {
   const [temAutorizacaoGerente, setTemAutorizacaoGerente] = useState<boolean>(false);
   const [showRegenerarAposSalvarDialog, setShowRegenerarAposSalvarDialog] = useState(false);
   const [salvandoFormaPagamento, setSalvandoFormaPagamento] = useState(false);
+  const [showFormaPagamento, setShowFormaPagamento] = useState(false);
+  const [showParcelas, setShowParcelas] = useState(false);
   const { createPedidoFromVenda, checkExistingPedido } = usePedidoCreation();
   const { removerFaturamento, isRemovendo } = useFaturamento();
   const { configuracoes: configVendas, limites: limitesVendas } = useConfiguracoesVendas();
@@ -1549,24 +1551,53 @@ export default function FaturamentoVendaMinimalista() {
 
           return (
             <div className="space-y-4">
-              <PagamentoSection
-                paymentData={pagamentoData}
-                onChange={setPagamentoData}
-                valorTotal={valorTotalPagamento}
-                vendaPresencial={venda.venda_presencial}
-              />
+              {/* Forma de Pagamento (colapsável) */}
+              <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle className="text-white text-lg flex items-center gap-2">
+                    <DollarSign className="h-4 w-4 text-blue-400" />
+                    Forma de Pagamento
+                  </CardTitle>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowFormaPagamento(v => !v)}
+                    className="bg-white/5 border-white/20 text-white hover:bg-white/10"
+                  >
+                    {showFormaPagamento ? 'Ocultar' : 'Mostrar'}
+                  </Button>
+                </CardHeader>
+                {showFormaPagamento && (
+                  <CardContent className="space-y-4">
+                    <PagamentoSection
+                      paymentData={pagamentoData}
+                      onChange={setPagamentoData}
+                      valorTotal={valorTotalPagamento}
+                      vendaPresencial={venda.venda_presencial}
+                    />
 
-              <div className="flex justify-end">
-                <Button
-                  onClick={handleSalvarFormaPagamento}
-                  disabled={salvandoFormaPagamento}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
-                >
-                  {salvandoFormaPagamento ? "Salvando..." : "Salvar forma de pagamento"}
-                </Button>
-              </div>
+                    <div className="flex justify-end">
+                      <Button
+                        onClick={handleSalvarFormaPagamento}
+                        disabled={salvandoFormaPagamento}
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                      >
+                        {salvandoFormaPagamento ? "Salvando..." : "Salvar forma de pagamento"}
+                      </Button>
+                    </div>
 
-              {/* Tabela de parcelas editáveis */}
+                    {/* Comprovante (mantém a visualização read-only) */}
+                    <PagamentoResumo
+                      venda={venda}
+                      contasReceber={[]}
+                      compact
+                      valorTotalEsperado={valorTotalPagamento}
+                    />
+                  </CardContent>
+                )}
+              </Card>
+
+              {/* Parcelas / Contas a Receber (colapsável) */}
               <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
                 <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle className="text-white text-lg flex items-center gap-2">
@@ -1574,26 +1605,39 @@ export default function FaturamentoVendaMinimalista() {
                     Parcelas / Contas a Receber
                   </CardTitle>
                   <div className="flex gap-2">
+                    {showParcelas && (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={handleAddParcela}
+                          className="bg-white/5 border-white/20 text-white hover:bg-white/10"
+                        >
+                          <Plus className="h-3 w-3 mr-1" /> Adicionar parcela
+                        </Button>
+                        {contasReceber.length > 0 && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setShowRegenerarParcelasDialog(true)}
+                            className="bg-white/5 border-white/20 text-white hover:bg-white/10"
+                          >
+                            <Undo2 className="h-3 w-3 mr-1" /> Regenerar
+                          </Button>
+                        )}
+                      </>
+                    )}
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={handleAddParcela}
+                      onClick={() => setShowParcelas(v => !v)}
                       className="bg-white/5 border-white/20 text-white hover:bg-white/10"
                     >
-                      <Plus className="h-3 w-3 mr-1" /> Adicionar parcela
+                      {showParcelas ? 'Ocultar' : 'Mostrar'}
                     </Button>
-                    {contasReceber.length > 0 && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setShowRegenerarParcelasDialog(true)}
-                        className="bg-white/5 border-white/20 text-white hover:bg-white/10"
-                      >
-                        <Undo2 className="h-3 w-3 mr-1" /> Regenerar
-                      </Button>
-                    )}
                   </div>
                 </CardHeader>
+                {showParcelas && (
                 <CardContent>
                   {contasReceber.length === 0 ? (
                     <p className="text-white/50 text-sm text-center py-6">
@@ -1717,15 +1761,8 @@ export default function FaturamentoVendaMinimalista() {
                     </ScrollArea>
                   )}
                 </CardContent>
+                )}
               </Card>
-
-              {/* Comprovante (mantém a visualização read-only) */}
-              <PagamentoResumo
-                venda={venda}
-                contasReceber={[]}
-                compact
-                valorTotalEsperado={valorTotalPagamento}
-              />
             </div>
           );
         })()}
