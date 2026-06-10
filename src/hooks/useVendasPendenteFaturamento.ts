@@ -9,6 +9,14 @@ export const useVendasPendenteFaturamento = () => {
   return useQuery({
     queryKey: ["vendas-pendente-faturamento"],
     queryFn: async (): Promise<VendaPendenteFaturamento[]> => {
+      const { data: pedidosLinks } = await supabase
+        .from("pedidos_producao")
+        .select("venda_id")
+        .not("venda_id", "is", null);
+      const vendaIdsComPedido = new Set(
+        (pedidosLinks || []).map((p: any) => p.venda_id).filter(Boolean)
+      );
+
       const { data: vendas, error } = await supabase
         .from("vendas")
         .select(`
@@ -128,6 +136,7 @@ export const useVendasPendenteFaturamento = () => {
           if (isVendaFaturada(v)) return false;
           const pedidos = v.pedidos_producao || [];
           if (pedidos.length > 0) return false;
+          if (vendaIdsComPedido.has(v.id)) return false;
           return true;
         })
         .map((v: any) => {
