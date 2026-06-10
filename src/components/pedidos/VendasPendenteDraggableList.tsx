@@ -61,6 +61,7 @@ export function VendasPendenteDraggableList({
   vendas,
   onReorganizar,
   mode = 'pedido',
+  hideActions = false,
 }: VendasPendenteDraggableListProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const overlayContainerRef = useRef<HTMLDivElement | null>(null);
@@ -115,7 +116,7 @@ export function VendasPendenteDraggableList({
         <div className="space-y-1">
           <VendasHeaderRow mode={mode} />
           {vendas.map((venda) => (
-            <SortableVendaItem key={venda.id} venda={venda} mode={mode} />
+            <SortableVendaItem key={venda.id} venda={venda} mode={mode} hideActions={hideActions} />
           ))}
         </div>
       </SortableContext>
@@ -128,7 +129,7 @@ export function VendasPendenteDraggableList({
           >
             {activeVenda ? (
               <div className="opacity-90 shadow-2xl pointer-events-none">
-                <VendaPendentePedidoCard venda={activeVenda} isDragging mode={mode} />
+                <VendaPendentePedidoCard venda={activeVenda} isDragging mode={mode} hideActions={hideActions} />
               </div>
             ) : null}
           </DragOverlay>,
