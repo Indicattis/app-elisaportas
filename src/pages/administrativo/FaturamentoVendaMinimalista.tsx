@@ -1224,27 +1224,27 @@ export default function FaturamentoVendaMinimalista() {
             <p className="text-sm font-bold text-blue-400">{formatCurrency(valorTabela)}</p>
           </div>
 
-          {/* À Vista (3%) */}
+          {/* À Vista (limite configurado) */}
           <div className="bg-white/5 border border-white/10 rounded-lg p-3">
-            <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">À Vista (3%)</p>
-            <p className={cn("text-sm font-bold", aptoAvista ? descontoTierCheck(3) : "text-white/30")}>
-              {aptoAvista ? formatCurrency(descontoTiers.avista) : '-'}
+            <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1" title="Desconto real aplicado na faixa À Vista">À Vista ({configLimites.avista}%)</p>
+            <p className={cn("text-sm font-bold", aptoAvista && descontoTiers.avista > 0 ? "text-white" : "text-white/30")}>
+              {aptoAvista && descontoTiers.avista > 0 ? formatCurrency(descontoTiers.avista) : '-'}
             </p>
           </div>
 
-          {/* Frio (5%) */}
+          {/* Frio (limite configurado) */}
           <div className="bg-white/5 border border-white/10 rounded-lg p-3">
-            <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">Frio (5%)</p>
-            <p className={cn("text-sm font-bold", aptoFrio ? descontoTierCheck(5) : "text-white/30")}>
-              {aptoFrio ? formatCurrency(descontoTiers.frio) : '-'}
+            <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1" title="Desconto real aplicado na faixa Frio (presencial)">Frio ({configLimites.presencial}%)</p>
+            <p className={cn("text-sm font-bold", aptoFrio && descontoTiers.frio > 0 ? "text-white" : "text-white/30")}>
+              {aptoFrio && descontoTiers.frio > 0 ? formatCurrency(descontoTiers.frio) : '-'}
             </p>
           </div>
 
-          {/* Gerente (+7%) */}
+          {/* Gerente (adicional com senha) */}
           <div className="bg-white/5 border border-white/10 rounded-lg p-3">
-            <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">Gerente (+7%)</p>
-            <p className={cn("text-sm font-bold", aptoGerente ? descontoTierCheck(pctLimite) : "text-white/30")}>
-              {aptoGerente ? formatCurrency(descontoTiers.gerente) : '-'}
+            <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1" title="Desconto real aplicado acima das faixas anteriores (autorização gerencial)">Gerente (+{limitesVendas.adicionalResponsavel ?? 7}%)</p>
+            <p className={cn("text-sm font-bold", descontoTiers.gerente > 0 ? "text-amber-300" : "text-white/30")}>
+              {descontoTiers.gerente > 0 ? formatCurrency(descontoTiers.gerente) : '-'}
             </p>
           </div>
 
