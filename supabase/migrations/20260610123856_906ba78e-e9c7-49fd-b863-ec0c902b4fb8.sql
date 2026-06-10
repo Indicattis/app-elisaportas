@@ -1,0 +1,1 @@
+ALTER TABLE public.vendas ADD COLUMN IF NOT EXISTS forcar_exibicao_pedidos boolean NOT NULL DEFAULT false;

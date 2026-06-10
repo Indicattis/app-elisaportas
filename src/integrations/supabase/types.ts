@@ -9391,6 +9391,7 @@ export type Database = {
           data_venda: string
           empresa_receptora_id: string | null
           estado: string | null
+          forcar_exibicao_pedidos: boolean
           forma_pagamento: string | null
           frete_aprovado: boolean
           id: string
@@ -9453,6 +9454,7 @@ export type Database = {
           data_venda?: string
           empresa_receptora_id?: string | null
           estado?: string | null
+          forcar_exibicao_pedidos?: boolean
           forma_pagamento?: string | null
           frete_aprovado?: boolean
           id?: string
@@ -9515,6 +9517,7 @@ export type Database = {
           data_venda?: string
           empresa_receptora_id?: string | null
           estado?: string | null
+          forcar_exibicao_pedidos?: boolean
           forma_pagamento?: string | null
           frete_aprovado?: boolean
           id?: string

@@ -18,7 +18,8 @@ import {
   CheckCircle2, Clock, Truck, Wrench, Paintbrush, Target,
   Calculator, AlertCircle, Plus, Minus, Pencil, MessageSquare,
   ArrowUpDown, ArrowUp, ArrowDown, Check, X, Hammer,
-  Package, PlusCircle, Filter, PanelRight, Info, FileSignature, FileCheck, FileX
+  Package, PlusCircle, Filter, PanelRight, Info, FileSignature, FileCheck, FileX,
+  MoreVertical, Eye, EyeOff, Trash2
 } from "lucide-react";
 import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
@@ -42,6 +43,10 @@ import {
 } from "@/components/ui/alert-dialog";
 
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuSeparator, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Drawer, DrawerContent } from "@/components/ui/drawer";
@@ -95,6 +100,10 @@ interface Venda {
   data_prevista_entrega?: string | null;
   tipo_entrega?: string | null;
   lucro_instalacao?: number;
+  contrato_url?: string | null;
+  contrato_dispensado?: boolean;
+  pedido_dispensado?: boolean;
+  forcar_exibicao_pedidos?: boolean;
 }
 
 const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
@@ -167,6 +176,62 @@ export default function FaturamentoMinimalista() {
   const [anexarContratoOpen, setAnexarContratoOpen] = useState(false);
   const [dispensarContratoOpen, setDispensarContratoOpen] = useState(false);
   const [dispensandoContrato, setDispensandoContrato] = useState(false);
+  const [excluirDialog, setExcluirDialog] = useState<{ open: boolean; venda: Venda | null }>({ open: false, venda: null });
+  const [excluindoVenda, setExcluindoVenda] = useState(false);
+
+  const toggleVendaFlag = async (
+    venda: Venda,
+    campo: 'contrato_dispensado' | 'pedido_dispensado' | 'forcar_exibicao_pedidos',
+    novoValor: boolean,
+    labelOn: string,
+    labelOff: string,
+  ) => {
+    try {
+      const payload: any = { [campo]: novoValor };
+      if (campo === 'contrato_dispensado') {
+        const { data: userData } = await supabase.auth.getUser();
+        payload.contrato_dispensado_em = novoValor ? new Date().toISOString() : null;
+        payload.contrato_dispensado_por = novoValor ? (userData.user?.id ?? null) : null;
+      }
+      const { error } = await supabase.from('vendas').update(payload).eq('id', venda.id);
+      if (error) throw error;
+      setVendas((prev) => prev.map((v) => v.id === venda.id ? ({ ...(v as any), ...payload } as Venda) : v));
+      if (selectedVenda?.id === venda.id) {
+        setSelectedVenda((prev) => prev ? ({ ...(prev as any), ...payload } as Venda) : prev);
+      }
+      toast({ title: novoValor ? labelOn : labelOff });
+      queryClient.invalidateQueries({ queryKey: ['vendas'] });
+      queryClient.invalidateQueries({ queryKey: ['vendas-assinatura-contrato'] });
+      queryClient.invalidateQueries({ queryKey: ['vendas-pendente-faturamento'] });
+      queryClient.invalidateQueries({ queryKey: ['vendas-pendente-pedido'] });
+    } catch (err: any) {
+      console.error('Erro ao alterar flag da venda:', err);
+      toast({ variant: 'destructive', title: 'Erro', description: err?.message || 'Não foi possível atualizar a venda.' });
+    }
+  };
+
+  const handleExcluirVenda = async () => {
+    const venda = excluirDialog.venda;
+    if (!venda) return;
+    try {
+      setExcluindoVenda(true);
+      const { error } = await supabase.rpc('delete_venda_completa', { p_venda_id: venda.id });
+      if (error) throw error;
+      setVendas((prev) => prev.filter((v) => v.id !== venda.id));
+      if (selectedVenda?.id === venda.id) setSelectedVenda(null);
+      toast({ title: 'Venda excluída', description: 'A venda foi removida completamente.' });
+      queryClient.invalidateQueries({ queryKey: ['vendas'] });
+      queryClient.invalidateQueries({ queryKey: ['vendas-assinatura-contrato'] });
+      queryClient.invalidateQueries({ queryKey: ['vendas-pendente-faturamento'] });
+      queryClient.invalidateQueries({ queryKey: ['vendas-pendente-pedido'] });
+      setExcluirDialog({ open: false, venda: null });
+    } catch (err: any) {
+      console.error('Erro ao excluir venda:', err);
+      toast({ variant: 'destructive', title: 'Erro', description: err?.message || 'Não foi possível excluir a venda.' });
+    } finally {
+      setExcluindoVenda(false);
+    }
+  };
 
   const handleUpdatePagamento = async (contaId: string, campo: 'status' | 'observacoes', valor: string) => {
     try {
@@ -264,6 +329,8 @@ export default function FaturamentoMinimalista() {
           lucro_instalacao,
           contrato_url,
           contrato_dispensado,
+          pedido_dispensado,
+          forcar_exibicao_pedidos,
           produtos_vendas (
             id,
             tipo_produto,
@@ -1320,12 +1387,13 @@ export default function FaturamentoMinimalista() {
                         </div>
                       </TableHead>
                     ))}
+                    <TableHead className="w-10 text-white/60" />
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {sortedVendas.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={visibleColumns.length + 1} className="text-center py-8 text-white/40">
+                      <TableCell colSpan={visibleColumns.length + 2} className="text-center py-8 text-white/40">
                         Nenhuma venda encontrada no período
                       </TableCell>
                     </TableRow>
@@ -1359,6 +1427,72 @@ export default function FaturamentoMinimalista() {
                             {renderCell(venda, column.id)}
                           </TableCell>
                         ))}
+                        <TableCell className="w-10 text-right" onClick={(e) => e.stopPropagation()}>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-white/50 hover:text-white hover:bg-white/10">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="bg-slate-950/95 backdrop-blur-xl border-white/10 text-white">
+                              <DropdownMenuItem
+                                className="cursor-pointer focus:bg-white/10 focus:text-white"
+                                onClick={() => toggleVendaFlag(
+                                  venda,
+                                  'contrato_dispensado',
+                                  !(venda as any).contrato_dispensado,
+                                  'Contrato dispensado',
+                                  'Dispensa de contrato removida',
+                                )}
+                              >
+                                {(venda as any).contrato_dispensado ? (
+                                  <><FileCheck className="h-4 w-4 mr-2" />Reativar assinatura de contrato</>
+                                ) : (
+                                  <><FileX className="h-4 w-4 mr-2" />Dispensar assinatura de contrato</>
+                                )}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="cursor-pointer focus:bg-white/10 focus:text-white"
+                                onClick={() => toggleVendaFlag(
+                                  venda,
+                                  'pedido_dispensado',
+                                  !(venda as any).pedido_dispensado,
+                                  'Pendência de faturamento dispensada',
+                                  'Dispensa de pendência removida',
+                                )}
+                              >
+                                {(venda as any).pedido_dispensado ? (
+                                  <><CheckCircle2 className="h-4 w-4 mr-2" />Reativar pendência de faturamento</>
+                                ) : (
+                                  <><X className="h-4 w-4 mr-2" />Dispensar pendência de faturamento</>
+                                )}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="cursor-pointer focus:bg-white/10 focus:text-white"
+                                onClick={() => toggleVendaFlag(
+                                  venda,
+                                  'forcar_exibicao_pedidos',
+                                  !(venda as any).forcar_exibicao_pedidos,
+                                  'Exibição forçada ativada',
+                                  'Exibição forçada desativada',
+                                )}
+                              >
+                                {(venda as any).forcar_exibicao_pedidos ? (
+                                  <><EyeOff className="h-4 w-4 mr-2" />Desativar forçar exibição</>
+                                ) : (
+                                  <><Eye className="h-4 w-4 mr-2" />Forçar exibição (ignorar 10 semanas)</>
+                                )}
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator className="bg-white/10" />
+                              <DropdownMenuItem
+                                className="cursor-pointer text-red-400 focus:bg-red-500/10 focus:text-red-300"
+                                onClick={() => setExcluirDialog({ open: true, venda })}
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />Excluir venda completamente
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
                       </TableRow>
                     ))
                   )}
@@ -1516,6 +1650,35 @@ export default function FaturamentoMinimalista() {
               }}
             >
               {dispensandoContrato ? 'Dispensando...' : 'Confirmar dispensa'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={excluirDialog.open} onOpenChange={(o) => !excluindoVenda && setExcluirDialog({ open: o, venda: o ? excluirDialog.venda : null })}>
+        <AlertDialogContent className="bg-slate-950/90 backdrop-blur-xl border-white/10 text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white flex items-center gap-2">
+              <Trash2 className="h-5 w-5 text-red-400" />
+              Excluir venda completamente?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-white/60">
+              {excluirDialog.venda ? (
+                <>Cliente: <span className="text-white/90 font-medium">{excluirDialog.venda.cliente_nome}</span><br /></>
+              ) : null}
+              Esta ação remove a venda, seus produtos, pagamentos, pedidos e movimentações em cascata. Não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={excluindoVenda} className="bg-white/5 border-white/15 text-white hover:bg-white/10 hover:text-white">
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={excluindoVenda}
+              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={(e) => { e.preventDefault(); handleExcluirVenda(); }}
+            >
+              {excluindoVenda ? 'Excluindo...' : 'Excluir definitivamente'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
