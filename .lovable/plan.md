@@ -1,33 +1,37 @@
 ## Objetivo
-Unificar os controles "Dispensar pendência de faturamento", "Forçar exibição (10 semanas)" e "Dispensar contrato" em **um único toggle por venda**: **"Dispensar do Sistema"**. Quando ativo, a venda some das abas Assinatura de Contrato e Pend. Faturamento. Além disso, **remover o corte global de 10 semanas** — todas as vendas aparecem até que sejam dispensadas manualmente.
 
-## Banco de dados
-- Nova coluna `vendas.dispensada_sistema boolean NOT NULL DEFAULT false` (única flag de verdade).
-- Migração de dados: `UPDATE vendas SET dispensada_sistema = true WHERE pedido_dispensado = true OR contrato_dispensado = true;`
-- Colunas antigas (`pedido_dispensado`, `contrato_dispensado`, `forcar_exibicao_pedidos`) ficam no banco por compatibilidade mas deixam de ser usadas pelos filtros — sem drop, para não quebrar histórico/relatórios.
+Adicionar ação "Dispensar contrato" no menu de cada venda em `/financeiro/faturamento/vendas`, separada de "Dispensar do sistema". A venda dispensada de contrato deve:
+- Sair da aba **Assinatura de Contrato** em `/direcao/gestao-fabrica`
+- Aparecer na aba **Pendente Faturamento** em `/direcao/gestao-fabrica`
+- Ficar habilitada para faturamento (sem exigir upload de contrato)
 
-## Hooks
-`useVendasAssinaturaContrato.ts` e `useVendasPendenteFaturamento.ts`:
-- Remover `.gte("data_venda", cutoff)` / `.or(... forcar_exibicao ...)`.
-- Remover `.eq("contrato_dispensado", false)` / `.eq("pedido_dispensado", false)`.
-- Adicionar `.eq("dispensada_sistema", false)`.
-- Em `useVendasPendenteFaturamento`, remover o `.or("contrato_url.not.is.null,contrato_dispensado.eq.true")` (passa a ser somente `dispensada_sistema=false`) — a venda aparece em Pend. Faturamento mesmo sem contrato anexado, pois a dispensa agora é única.
-- Incluir `dispensada_sistema` no select.
+## Mudanças
 
-## UI — `FaturamentoVendasMinimalista.tsx`
-No `DropdownMenu` de cada linha, substituir os três itens atuais (dispensar contrato, dispensar pendência, forçar exibição) por **um único item**:
-- "Dispensar do Sistema" / "Reativar no Sistema" — toggle de `dispensada_sistema`.
-- Mantém o item "Excluir venda completamente".
+### 1. `src/hooks/useVendasAssinaturaContrato.ts`
+- Adicionar `contrato_dispensado` ao select
+- Adicionar filtro no servidor: `.eq("contrato_dispensado", false)` (assim vendas com contrato dispensado somem desta aba)
 
-Atualizar:
-- `Venda` interface: trocar as três flags por `dispensada_sistema?: boolean`.
-- Select da página inclui `dispensada_sistema`.
-- Remover o `AlertDialog` antigo de "Dispensar contrato" (`dispensarContratoOpen`) e estados relacionados — a dispensa agora é direta pelo menu, sem dialog (igual aos toggles que já fizemos).
-- O badge/borda amber "aguardando contrato" pode ser mantido com base em `!contrato_url && !dispensada_sistema` apenas como indicador visual; sem ação dedicada.
+### 2. `src/hooks/useVendasPendenteFaturamento.ts`
+- Nenhuma mudança de filtro necessária — a venda já passa a aparecer aqui automaticamente, pois esta aba só exclui `dispensada_sistema=true` e vendas já faturadas/com pedido. Com `contrato_dispensado=true` e sem pedido, ela entra naturalmente.
 
-## Arquivos
-- nova migration (coluna + UPDATE).
+### 3. `src/pages/administrativo/FaturamentoVendasMinimalista.tsx`
+- No `DropdownMenu` de ações por venda, adicionar novo item **acima** do "Dispensar do sistema":
+  - Label: "Dispensar contrato" / "Reverter dispensa de contrato" (toggle)
+  - Ícone: `FileX` / `FileCheck` (lucide)
+  - Ação: `UPDATE vendas SET contrato_dispensado=<bool>, contrato_dispensado_em=now()|null, contrato_dispensado_por=user|null` (reaproveitar o padrão já existente nas linhas 1596–1604)
+  - Desabilitado se a venda já tiver `contrato_url` (contrato anexado)
+- Manter a ação "Dispensar do sistema" e "Excluir venda" como estão.
+
+## Comportamento resultante
+
+| Estado da venda | Aparece em Assinatura | Aparece em Pend. Faturamento |
+|---|---|---|
+| Sem contrato + sem dispensa | Sim | Não (bloqueada pelo gate de contrato no faturamento) |
+| Contrato anexado | Não | Sim |
+| **Contrato dispensado** | **Não** | **Sim** |
+| Dispensada do sistema | Não | Não |
+
+## Arquivos alterados
+
 - `src/hooks/useVendasAssinaturaContrato.ts`
-- `src/hooks/useVendasPendenteFaturamento.ts`
 - `src/pages/administrativo/FaturamentoVendasMinimalista.tsx`
-- atualizar memória (substituir entry sobre filtro de 10 semanas).
