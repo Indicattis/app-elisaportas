@@ -332,6 +332,7 @@ export default function FaturamentoMinimalista() {
           contrato_dispensado,
           pedido_dispensado,
           forcar_exibicao_pedidos,
+          dispensada_sistema,
           produtos_vendas (
             id,
             tipo_produto,
