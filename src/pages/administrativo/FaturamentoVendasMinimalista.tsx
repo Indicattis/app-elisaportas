@@ -37,6 +37,7 @@ import { ColumnManager } from "@/components/ColumnManager";
 import { useColumnConfig, ColumnConfig } from "@/hooks/useColumnConfig";
 import { generateFaturamentoPDF } from "@/utils/faturamentoPDFGenerator";
 import { AnexarContratoModal } from "@/components/vendas/AnexarContratoModal";
+import { usePedidoCreation } from "@/hooks/usePedidoCreation";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -150,6 +151,7 @@ export default function FaturamentoMinimalista() {
   const { limites: configLimites } = useConfiguracoesVendas();
   const queryClient = useQueryClient();
   const [vendas, setVendas] = useState<Venda[]>([]);
+  const { createPedidoFromVenda } = usePedidoCreation();
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: startOfMonth(new Date()),
@@ -231,6 +233,65 @@ export default function FaturamentoMinimalista() {
       toast({ variant: 'destructive', title: 'Erro', description: err?.message || 'Não foi possível excluir a venda.' });
     } finally {
       setExcluindoVenda(false);
+    }
+  };
+
+  const reativarVendaNoSistema = async (venda: Venda) => {
+    try {
+      const vendaAny = venda as any;
+      // Caso A: já existe pedido_producao (possivelmente arquivado) → desarquivar
+      const { data: pedidoExistente } = await supabase
+        .from('pedidos_producao')
+        .select('id, etapa_atual, arquivado')
+        .eq('venda_id', venda.id)
+        .maybeSingle();
+
+      if (pedidoExistente) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (pedidoExistente.arquivado) {
+          await supabase
+            .from('pedidos_producao')
+            .update({ arquivado: false, data_arquivamento: null, arquivado_por: null } as any)
+            .eq('id', pedidoExistente.id);
+          await supabase.from('pedidos_movimentacoes').insert({
+            pedido_id: pedidoExistente.id,
+            user_id: user?.id ?? null,
+            etapa_destino: pedidoExistente.etapa_atual,
+            teor: 'reativacao',
+            descricao: 'Venda reativada no sistema (pedido desarquivado)',
+          });
+        }
+        await supabase.from('vendas').update({ dispensada_sistema: false } as any).eq('id', venda.id);
+      } else if (vendaAny.pedido_dispensado === true) {
+        // Caso B: foi "concluída sem pedido" — criar pedido em aprovacao_diretor
+        const pedidoId = await createPedidoFromVenda(venda.id);
+        if (!pedidoId) throw new Error('Falha ao criar pedido de produção');
+        await supabase
+          .from('vendas')
+          .update({ dispensada_sistema: false, pedido_dispensado: false } as any)
+          .eq('id', venda.id);
+      } else {
+        // Caso C: simples — apenas reativar
+        await supabase.from('vendas').update({ dispensada_sistema: false } as any).eq('id', venda.id);
+      }
+
+      setVendas((prev) => prev.map((v) => v.id === venda.id
+        ? ({ ...(v as any), dispensada_sistema: false, pedido_dispensado: false } as Venda)
+        : v));
+      if (selectedVenda?.id === venda.id) {
+        setSelectedVenda((prev) => prev ? ({ ...(prev as any), dispensada_sistema: false, pedido_dispensado: false } as Venda) : prev);
+      }
+      toast({ title: 'Venda reativada no sistema' });
+      queryClient.invalidateQueries({ queryKey: ['vendas'] });
+      queryClient.invalidateQueries({ queryKey: ['vendas-assinatura-contrato'] });
+      queryClient.invalidateQueries({ queryKey: ['vendas-pendente-faturamento'] });
+      queryClient.invalidateQueries({ queryKey: ['vendas-pendente-pedido'] });
+      queryClient.invalidateQueries({ queryKey: ['pedidos-aprovacao-diretor'] });
+      queryClient.invalidateQueries({ queryKey: ['pedidos-contadores'] });
+      queryClient.invalidateQueries({ queryKey: ['pedidos-etapas'] });
+    } catch (err: any) {
+      console.error('Erro ao reativar venda:', err);
+      toast({ variant: 'destructive', title: 'Erro', description: err?.message || 'Não foi possível reativar a venda.' });
     }
   };
 
@@ -1457,13 +1518,19 @@ export default function FaturamentoMinimalista() {
                               )}
                               <DropdownMenuItem
                                 className="cursor-pointer focus:bg-white/10 focus:text-white"
-                                onClick={() => toggleVendaFlag(
-                                  venda,
-                                  'dispensada_sistema',
-                                  !(venda as any).dispensada_sistema,
-                                  'Venda dispensada do sistema',
-                                  'Venda reativada no sistema',
-                                )}
+                                onClick={() => {
+                                  if ((venda as any).dispensada_sistema) {
+                                    reativarVendaNoSistema(venda);
+                                  } else {
+                                    toggleVendaFlag(
+                                      venda,
+                                      'dispensada_sistema',
+                                      true,
+                                      'Venda dispensada do sistema',
+                                      'Venda reativada no sistema',
+                                    );
+                                  }
+                                }}
                               >
                                 {(venda as any).dispensada_sistema ? (
                                   <><Eye className="h-4 w-4 mr-2" />Reativar no sistema</>
