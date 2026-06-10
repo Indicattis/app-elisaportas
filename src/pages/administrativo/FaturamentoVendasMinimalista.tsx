@@ -1387,12 +1387,13 @@ export default function FaturamentoMinimalista() {
                         </div>
                       </TableHead>
                     ))}
+                    <TableHead className="w-10 text-white/60" />
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {sortedVendas.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={visibleColumns.length + 1} className="text-center py-8 text-white/40">
+                      <TableCell colSpan={visibleColumns.length + 2} className="text-center py-8 text-white/40">
                         Nenhuma venda encontrada no período
                       </TableCell>
                     </TableRow>
@@ -1426,6 +1427,72 @@ export default function FaturamentoMinimalista() {
                             {renderCell(venda, column.id)}
                           </TableCell>
                         ))}
+                        <TableCell className="w-10 text-right" onClick={(e) => e.stopPropagation()}>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-white/50 hover:text-white hover:bg-white/10">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="bg-slate-950/95 backdrop-blur-xl border-white/10 text-white">
+                              <DropdownMenuItem
+                                className="cursor-pointer focus:bg-white/10 focus:text-white"
+                                onClick={() => toggleVendaFlag(
+                                  venda,
+                                  'contrato_dispensado',
+                                  !(venda as any).contrato_dispensado,
+                                  'Contrato dispensado',
+                                  'Dispensa de contrato removida',
+                                )}
+                              >
+                                {(venda as any).contrato_dispensado ? (
+                                  <><FileCheck className="h-4 w-4 mr-2" />Reativar assinatura de contrato</>
+                                ) : (
+                                  <><FileX className="h-4 w-4 mr-2" />Dispensar assinatura de contrato</>
+                                )}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="cursor-pointer focus:bg-white/10 focus:text-white"
+                                onClick={() => toggleVendaFlag(
+                                  venda,
+                                  'pedido_dispensado',
+                                  !(venda as any).pedido_dispensado,
+                                  'Pendência de faturamento dispensada',
+                                  'Dispensa de pendência removida',
+                                )}
+                              >
+                                {(venda as any).pedido_dispensado ? (
+                                  <><CheckCircle2 className="h-4 w-4 mr-2" />Reativar pendência de faturamento</>
+                                ) : (
+                                  <><X className="h-4 w-4 mr-2" />Dispensar pendência de faturamento</>
+                                )}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="cursor-pointer focus:bg-white/10 focus:text-white"
+                                onClick={() => toggleVendaFlag(
+                                  venda,
+                                  'forcar_exibicao_pedidos',
+                                  !(venda as any).forcar_exibicao_pedidos,
+                                  'Exibição forçada ativada',
+                                  'Exibição forçada desativada',
+                                )}
+                              >
+                                {(venda as any).forcar_exibicao_pedidos ? (
+                                  <><EyeOff className="h-4 w-4 mr-2" />Desativar forçar exibição</>
+                                ) : (
+                                  <><Eye className="h-4 w-4 mr-2" />Forçar exibição (ignorar 10 semanas)</>
+                                )}
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator className="bg-white/10" />
+                              <DropdownMenuItem
+                                className="cursor-pointer text-red-400 focus:bg-red-500/10 focus:text-red-300"
+                                onClick={() => setExcluirDialog({ open: true, venda })}
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />Excluir venda completamente
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
                       </TableRow>
                     ))
                   )}
