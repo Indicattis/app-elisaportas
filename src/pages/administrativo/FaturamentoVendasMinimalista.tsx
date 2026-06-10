@@ -176,6 +176,62 @@ export default function FaturamentoMinimalista() {
   const [anexarContratoOpen, setAnexarContratoOpen] = useState(false);
   const [dispensarContratoOpen, setDispensarContratoOpen] = useState(false);
   const [dispensandoContrato, setDispensandoContrato] = useState(false);
+  const [excluirDialog, setExcluirDialog] = useState<{ open: boolean; venda: Venda | null }>({ open: false, venda: null });
+  const [excluindoVenda, setExcluindoVenda] = useState(false);
+
+  const toggleVendaFlag = async (
+    venda: Venda,
+    campo: 'contrato_dispensado' | 'pedido_dispensado' | 'forcar_exibicao_pedidos',
+    novoValor: boolean,
+    labelOn: string,
+    labelOff: string,
+  ) => {
+    try {
+      const payload: any = { [campo]: novoValor };
+      if (campo === 'contrato_dispensado') {
+        const { data: userData } = await supabase.auth.getUser();
+        payload.contrato_dispensado_em = novoValor ? new Date().toISOString() : null;
+        payload.contrato_dispensado_por = novoValor ? (userData.user?.id ?? null) : null;
+      }
+      const { error } = await supabase.from('vendas').update(payload).eq('id', venda.id);
+      if (error) throw error;
+      setVendas((prev) => prev.map((v) => v.id === venda.id ? ({ ...(v as any), ...payload } as Venda) : v));
+      if (selectedVenda?.id === venda.id) {
+        setSelectedVenda((prev) => prev ? ({ ...(prev as any), ...payload } as Venda) : prev);
+      }
+      toast({ title: novoValor ? labelOn : labelOff });
+      queryClient.invalidateQueries({ queryKey: ['vendas'] });
+      queryClient.invalidateQueries({ queryKey: ['vendas-assinatura-contrato'] });
+      queryClient.invalidateQueries({ queryKey: ['vendas-pendente-faturamento'] });
+      queryClient.invalidateQueries({ queryKey: ['vendas-pendente-pedido'] });
+    } catch (err: any) {
+      console.error('Erro ao alterar flag da venda:', err);
+      toast({ variant: 'destructive', title: 'Erro', description: err?.message || 'Não foi possível atualizar a venda.' });
+    }
+  };
+
+  const handleExcluirVenda = async () => {
+    const venda = excluirDialog.venda;
+    if (!venda) return;
+    try {
+      setExcluindoVenda(true);
+      const { error } = await supabase.rpc('delete_venda_completa', { p_venda_id: venda.id });
+      if (error) throw error;
+      setVendas((prev) => prev.filter((v) => v.id !== venda.id));
+      if (selectedVenda?.id === venda.id) setSelectedVenda(null);
+      toast({ title: 'Venda excluída', description: 'A venda foi removida completamente.' });
+      queryClient.invalidateQueries({ queryKey: ['vendas'] });
+      queryClient.invalidateQueries({ queryKey: ['vendas-assinatura-contrato'] });
+      queryClient.invalidateQueries({ queryKey: ['vendas-pendente-faturamento'] });
+      queryClient.invalidateQueries({ queryKey: ['vendas-pendente-pedido'] });
+      setExcluirDialog({ open: false, venda: null });
+    } catch (err: any) {
+      console.error('Erro ao excluir venda:', err);
+      toast({ variant: 'destructive', title: 'Erro', description: err?.message || 'Não foi possível excluir a venda.' });
+    } finally {
+      setExcluindoVenda(false);
+    }
+  };
 
   const handleUpdatePagamento = async (contaId: string, campo: 'status' | 'observacoes', valor: string) => {
     try {
