@@ -263,9 +263,9 @@ export default function FaturamentoMinimalista() {
         }
         await supabase.from('vendas').update({ dispensada_sistema: false } as any).eq('id', venda.id);
       } else if (vendaAny.pedido_dispensado === true) {
-        // Caso B: foi "concluída sem pedido" — criar pedido em aprovacao_diretor
-        const pedidoId = await createPedidoFromVenda(venda.id);
-        if (!pedidoId) throw new Error('Falha ao criar pedido de produção');
+        // Caso B: foi "concluída sem pedido" — devolve a venda para a fila
+        // de Aprovação Diretor (em /direcao/gestao-fabrica). O pedido só
+        // será criado quando o diretor aprovar a venda nessa aba.
         await supabase
           .from('vendas')
           .update({ dispensada_sistema: false, pedido_dispensado: false } as any)

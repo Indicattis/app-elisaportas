@@ -1,49 +1,23 @@
-## Problema
+Plano para corrigir /direcao/gestao-fabrica:
 
-A venda `3e4a357d-0c2f-4435-a4a8-8e0b0df9787e` está com `pedido_dispensado=true` (foi marcada como "concluir sem pedido" no passado) e foi reativada (`dispensada_sistema=false`). A aba **Aprovação Diretor** lê de `pedidos_producao` com `etapa_atual='aprovacao_diretor'`, mas nenhum pedido foi gerado para essa venda — por isso ela não aparece.
+1. Corrigir a aba “Aprovação Diretor” para ser uma fila de vendas
+- Mostrar somente as vendas faturadas sem pedido vindas de `useVendasPendentePedido`.
+- Parar de renderizar `PedidosDraggableList` quando a aba ativa for `aprovacao_diretor`.
+- Ajustar o contador da aba para usar apenas `vendasPendentePedido.length`, sem somar pedidos existentes em `pedidos_producao`.
 
-Hoje, "reativar do sistema" só faz `update vendas set dispensada_sistema=false`. Não considera o estado anterior da venda.
+2. Manter o fluxo correto de criação
+- Na ação de aprovar a venda, manter o comportamento esperado: criar o pedido a partir da venda e mover imediatamente para `aberto`.
+- O pedido recém-criado deve aparecer na aba “Pedidos em Aberto”, não em “Aprovação Diretor”.
 
-## Solução
+3. Corrigir a reativação que entrou no fluxo errado
+- Ajustar a reativação de venda concluída sem pedido para voltar como venda pendente de criação de pedido, em vez de criar um pedido diretamente em `aprovacao_diretor`.
+- Invalidar as queries certas para a venda aparecer imediatamente na aba “Aprovação Diretor”.
 
-Em `src/pages/administrativo/FaturamentoVendasMinimalista.tsx`, alterar o handler de reativação (`toggleVendaFlag` quando `campo='dispensada_sistema'` e `novoValor=false`) para decidir o destino com base no estado anterior:
+4. Atualizar a regra salva do projeto
+- Atualizar a memória da regra de reativação para refletir: “Aprovação Diretor é fila de vendas; pedido só nasce quando a venda é aprovada e já vai para Aberto”.
 
-```text
-Reativar venda
-│
-├── Existe pedido_producao para esta venda?
-│   ├── SIM (foi arquivado pela dispensa) → desarquivar (arquivado=false)
-│   │   └── Fica na aba correspondente à etapa_atual atual do pedido
-│   │       (geralmente Aprovação Diretor, ou onde estava antes)
-│   │
-│   └── NÃO
-│       ├── pedido_dispensado=true (foi "concluída sem pedido")
-│       │   → Gerar pedido via createPedidoFromVenda(vendaId),
-│       │     forçar etapa_atual='aprovacao_diretor',
-│       │     setar pedido_dispensado=false
-│       │   → Aparece em Aprovação Diretor
-│       │
-│       └── pedido_dispensado=false
-│           → Comportamento atual: apenas dispensada_sistema=false
-│           → Aparece em Assinatura ou Pend. Faturamento conforme contrato
-```
-
-## Detalhes técnicos
-
-**Arquivo:** `src/pages/administrativo/FaturamentoVendasMinimalista.tsx`
-
-1. Refatorar o caso de reativação para uma função dedicada `reativarVendaNoSistema(venda)`:
-   - Buscar `pedidos_producao` (incluindo `arquivado=true`) por `venda_id`.
-   - **Caso A (pedido existe):** `update pedidos_producao set arquivado=false, data_arquivamento=null, arquivado_por=null` + `update vendas set dispensada_sistema=false`. Logar movimentação em `pedidos_movimentacoes` (`teor='reativacao'`).
-   - **Caso B (sem pedido + pedido_dispensado=true):** chamar `createPedidoFromVenda(venda.id)`, depois `update pedidos_producao set etapa_atual='aprovacao_diretor'` no pedido recém-criado, garantir `pedidos_etapas` upsert para `aprovacao_diretor` com `data_entrada=now()`, e `update vendas set dispensada_sistema=false, pedido_dispensado=false`.
-   - **Caso C (sem pedido + pedido_dispensado=false):** apenas `update vendas set dispensada_sistema=false` (comportamento atual).
-
-2. Importar `usePedidoCreation` para usar `createPedidoFromVenda`.
-
-3. Invalidar queries: `vendas`, `vendas-assinatura-contrato`, `vendas-pendente-faturamento`, `vendas-pendente-pedido`, `pedidos-aprovacao-diretor`, `pedidos-contadores`.
-
-4. Para a venda atual (correção pontual via migration de dados): aplicar o Caso B — criar o pedido e mandar para `aprovacao_diretor` — para que ela apareça imediatamente sem precisar clicar reativar novamente.
-
-## Memória
-
-Salvar em `mem://features/vendas/reativacao-venda-sistema` a regra de roteamento por estado anterior (existe pedido → desarquiva; pedido_dispensado=true → cria pedido em aprovação_diretor; senão → volta para assinatura/faturamento).
+Arquivos prováveis:
+- `src/pages/direcao/GestaoFabricaDirecao.tsx`
+- `src/pages/administrativo/FaturamentoVendasMinimalista.tsx`
+- `mem://features/vendas/reativacao-venda-sistema.md`
+- `mem://index.md`
