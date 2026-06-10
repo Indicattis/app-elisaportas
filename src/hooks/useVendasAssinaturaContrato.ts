@@ -9,6 +9,9 @@ export const useVendasAssinaturaContrato = () => {
   return useQuery({
     queryKey: ["vendas-assinatura-contrato"],
     queryFn: async (): Promise<VendaAssinaturaContrato[]> => {
+      const tenWeeksAgo = new Date();
+      tenWeeksAgo.setDate(tenWeeksAgo.getDate() - 70);
+      const cutoff = tenWeeksAgo.toISOString().slice(0, 10);
       const { data: vendas, error } = await supabase
         .from("vendas")
         .select(`
@@ -62,6 +65,7 @@ export const useVendasAssinaturaContrato = () => {
         .eq("is_rascunho", false)
         .is("contrato_url", null)
         .eq("contrato_dispensado", false)
+        .gte("data_venda", cutoff)
         .order("data_venda", { ascending: false });
 
       if (error) throw error;
