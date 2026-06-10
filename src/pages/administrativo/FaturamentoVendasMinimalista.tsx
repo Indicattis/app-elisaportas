@@ -1334,10 +1334,20 @@ export default function FaturamentoMinimalista() {
         { label: "Por Venda" }
       ]}
       headerActions={
-        <Button onClick={handleGeneratePDF} size="sm" className="bg-white/10 hover:bg-white/20 border border-white/20">
-          <Download className="h-4 w-4 mr-2" />
-          PDF
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => setFaturarTudoOpen(true)}
+            size="sm"
+            className="bg-blue-600 hover:bg-blue-500 text-white"
+          >
+            <CheckCircle2 className="h-4 w-4 mr-2" />
+            Faturar tudo
+          </Button>
+          <Button onClick={handleGeneratePDF} size="sm" className="bg-white/10 hover:bg-white/20 border border-white/20">
+            <Download className="h-4 w-4 mr-2" />
+            PDF
+          </Button>
+        </div>
       }
     >
       {/* Indicadores do Período */}
