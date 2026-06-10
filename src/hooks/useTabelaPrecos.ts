@@ -68,10 +68,13 @@ export function useTabelaPrecos(searchTerm: string = '') {
         .single();
 
       if (error) throw error;
+      await supabase.rpc('recalcular_lucro_vendas_em_aberto', { p_somente_dispensadas: false, p_finalizar: false });
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tabela-precos'] });
+      queryClient.invalidateQueries({ queryKey: ['produtos-venda'] });
+      queryClient.invalidateQueries({ queryKey: ['vendas'] });
       toast.success('Item adicionado com sucesso!');
     },
     onError: (error) => {
@@ -90,10 +93,13 @@ export function useTabelaPrecos(searchTerm: string = '') {
         .single();
 
       if (error) throw error;
+      await supabase.rpc('recalcular_lucro_vendas_em_aberto', { p_somente_dispensadas: false, p_finalizar: false });
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tabela-precos'] });
+      queryClient.invalidateQueries({ queryKey: ['produtos-venda'] });
+      queryClient.invalidateQueries({ queryKey: ['vendas'] });
       toast.success('Item atualizado com sucesso!');
     },
     onError: (error) => {

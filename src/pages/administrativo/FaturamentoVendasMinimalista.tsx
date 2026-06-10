@@ -181,6 +181,32 @@ export default function FaturamentoMinimalista() {
   const [dispensandoContrato, setDispensandoContrato] = useState(false);
   const [excluirDialog, setExcluirDialog] = useState<{ open: boolean; venda: Venda | null }>({ open: false, venda: null });
   const [excluindoVenda, setExcluindoVenda] = useState(false);
+  const [faturarTudoOpen, setFaturarTudoOpen] = useState(false);
+  const [faturandoTudo, setFaturandoTudo] = useState(false);
+
+  const handleFaturarTudo = async () => {
+    setFaturandoTudo(true);
+    try {
+      const { data, error } = await supabase.rpc('recalcular_lucro_vendas_em_aberto', {
+        p_somente_dispensadas: false,
+        p_finalizar: true,
+      });
+      if (error) throw error;
+      const r: any = data || {};
+      toast({
+        title: 'Faturamento em massa concluído',
+        description: `${r.faturadas ?? 0} vendas faturadas · ${r.ignoradas ?? 0} ignoradas · ${r.erros ?? 0} erros`,
+      });
+      setFaturarTudoOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['vendas'] });
+      queryClient.invalidateQueries({ queryKey: ['produtos-venda'] });
+      queryClient.invalidateQueries({ queryKey: ['vendas-pendente-faturamento'] });
+    } catch (e: any) {
+      toast({ variant: 'destructive', title: 'Erro ao faturar em massa', description: e.message });
+    } finally {
+      setFaturandoTudo(false);
+    }
+  };
 
   const toggleVendaFlag = async (
     venda: Venda,
@@ -1308,10 +1334,20 @@ export default function FaturamentoMinimalista() {
         { label: "Por Venda" }
       ]}
       headerActions={
-        <Button onClick={handleGeneratePDF} size="sm" className="bg-white/10 hover:bg-white/20 border border-white/20">
-          <Download className="h-4 w-4 mr-2" />
-          PDF
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => setFaturarTudoOpen(true)}
+            size="sm"
+            className="bg-blue-600 hover:bg-blue-500 text-white"
+          >
+            <CheckCircle2 className="h-4 w-4 mr-2" />
+            Faturar tudo
+          </Button>
+          <Button onClick={handleGeneratePDF} size="sm" className="bg-white/10 hover:bg-white/20 border border-white/20">
+            <Download className="h-4 w-4 mr-2" />
+            PDF
+          </Button>
+        </div>
       }
     >
       {/* Indicadores do Período */}
@@ -1734,6 +1770,31 @@ export default function FaturamentoMinimalista() {
               onClick={(e) => { e.preventDefault(); handleExcluirVenda(); }}
             >
               {excluindoVenda ? 'Excluindo...' : 'Excluir definitivamente'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <AlertDialog open={faturarTudoOpen} onOpenChange={setFaturarTudoOpen}>
+        <AlertDialogContent className="bg-zinc-950 border-white/10">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">Faturar todas as vendas elegíveis?</AlertDialogTitle>
+            <AlertDialogDescription className="text-white/60">
+              Serão faturadas automaticamente todas as vendas <strong>dispensadas do sistema</strong> e as vendas
+              <strong> com pedido criado</strong> que ainda não estão faturadas. Os valores de lucro de portas,
+              instalação e pintura serão recalculados com base na parametrização atual de
+              <em> Estratégia &gt; Tabela de Kits</em>. Vendas já faturadas não são alteradas.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={faturandoTudo} className="bg-white/5 border-white/15 text-white hover:bg-white/10 hover:text-white">
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={faturandoTudo}
+              className="bg-blue-600 hover:bg-blue-500 text-white"
+              onClick={(e) => { e.preventDefault(); handleFaturarTudo(); }}
+            >
+              {faturandoTudo ? 'Faturando...' : 'Faturar tudo'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
