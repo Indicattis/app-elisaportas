@@ -48,6 +48,7 @@ import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 import { useConfiguracoesVendas } from "@/hooks/useConfiguracoesVendas";
 import { PagamentoSection, PagamentoData, createEmptyPagamentoData } from "@/components/vendas/PagamentoSection";
 import { MetodoPagamento, createEmptyMetodo } from "@/components/vendas/MetodoPagamentoCard";
+import { resumoPagamentoCompacto } from "@/utils/pagamentoResumo";
 import { PagamentoResumo } from "@/components/vendas/PagamentoResumo";
 
 const safeParseDate = (dateStr: string | null | undefined): Date | null => {
