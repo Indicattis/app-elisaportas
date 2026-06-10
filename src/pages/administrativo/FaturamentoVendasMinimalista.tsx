@@ -1774,6 +1774,31 @@ export default function FaturamentoMinimalista() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <AlertDialog open={faturarTudoOpen} onOpenChange={setFaturarTudoOpen}>
+        <AlertDialogContent className="bg-zinc-950 border-white/10">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">Faturar todas as vendas elegíveis?</AlertDialogTitle>
+            <AlertDialogDescription className="text-white/60">
+              Serão faturadas automaticamente todas as vendas <strong>dispensadas do sistema</strong> e as vendas
+              <strong> com pedido criado</strong> que ainda não estão faturadas. Os valores de lucro de portas,
+              instalação e pintura serão recalculados com base na parametrização atual de
+              <em> Estratégia &gt; Tabela de Kits</em>. Vendas já faturadas não são alteradas.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={faturandoTudo} className="bg-white/5 border-white/15 text-white hover:bg-white/10 hover:text-white">
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={faturandoTudo}
+              className="bg-blue-600 hover:bg-blue-500 text-white"
+              onClick={(e) => { e.preventDefault(); handleFaturarTudo(); }}
+            >
+              {faturandoTudo ? 'Faturando...' : 'Faturar tudo'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </MinimalistLayout>
   );
 }
