@@ -1223,40 +1223,40 @@ export default function FaturamentoVendaMinimalista() {
             <p className="text-sm font-bold text-blue-400">{formatCurrency(valorTabela)}</p>
           </div>
 
-          {/* Desconto Cartão */}
+          {/* À Vista (3%) */}
           <div className="bg-white/5 border border-white/10 rounded-lg p-3">
-            <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">Desc. Cartão</p>
-            <p className={cn("text-sm font-bold", descontoTiers.cartao > 0 ? "text-red-400" : "text-white/30")}>
-              {descontoTiers.cartao > 0 ? `-${formatCurrency(descontoTiers.cartao)}` : '-'}
+            <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">À Vista (3%)</p>
+            <p className={cn("text-sm font-bold", aptoAvista ? descontoTierCheck(3) : "text-white/30")}>
+              {aptoAvista ? formatCurrency(descontoTiers.avista) : '-'}
             </p>
           </div>
 
-          {/* Desconto Quente */}
+          {/* Frio (5%) */}
           <div className="bg-white/5 border border-white/10 rounded-lg p-3">
-            <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">Desc. Quente</p>
-            <p className={cn("text-sm font-bold", descontoTiers.gelo > 0 ? "text-red-400" : "text-white/30")}>
-              {descontoTiers.gelo > 0 ? `-${formatCurrency(descontoTiers.gelo)}` : '-'}
+            <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">Frio (5%)</p>
+            <p className={cn("text-sm font-bold", aptoFrio ? descontoTierCheck(5) : "text-white/30")}>
+              {aptoFrio ? formatCurrency(descontoTiers.frio) : '-'}
             </p>
           </div>
 
-          {/* Desconto Luan/Alana */}
+          {/* Gerente (+7%) */}
           <div className="bg-white/5 border border-white/10 rounded-lg p-3">
-            <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">Luan/Alana</p>
-            <p className={cn("text-sm font-bold", descontoTiers.responsavel > 0 ? "text-orange-400" : "text-white/30")}>
-              {descontoTiers.responsavel > 0 ? `-${formatCurrency(descontoTiers.responsavel)}` : '-'}
+            <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">Gerente (+7%)</p>
+            <p className={cn("text-sm font-bold", aptoGerente ? descontoTierCheck(pctLimite) : "text-white/30")}>
+              {aptoGerente ? formatCurrency(descontoTiers.gerente) : '-'}
             </p>
           </div>
 
           <div
             className="bg-white/5 border border-white/10 rounded-lg p-3"
-            title={`Desconto acima de ${LIMITE_DESCONTO_LUCRO}% do valor de tabela — abatido do lucro`}
+            title={`Desconto acima de ${pctLimite}% do valor de tabela — abatido do lucro`}
           >
-            <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">Excedente &gt;{LIMITE_DESCONTO_LUCRO}%</p>
+            <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">Excedente &gt;{pctLimite}%</p>
             <p className={cn("text-sm font-bold", excedenteValor > 0 ? "text-red-500" : "text-white/30")}>
               {excedenteValor > 0 ? `-${formatCurrency(excedenteValor)}` : '-'}
             </p>
             {excedenteValor > 0 && (
-              <p className="text-[10px] text-red-400/80 mt-0.5">+{excedentePct.toFixed(1)}% acima de {LIMITE_DESCONTO_LUCRO}%</p>
+              <p className="text-[10px] text-red-400/80 mt-0.5">+{excedentePct.toFixed(1)}% acima de {pctLimite}%</p>
             )}
           </div>
 
