@@ -275,14 +275,14 @@ export default function BalancoDescontos() {
                             {pctDado !== 0 ? formatMoeda(total - semDesc) : "-"}
                           </TableCell>
                           <TableCell className="text-white/90 text-right">{formatMoeda(Number(r.total_venda))}</TableCell>
-                          <TableCell className={`text-right ${aptoAvista ? check(3) : "text-white/30"}`}>
-                            {aptoAvista ? formatMoeda(0.03 * total) : "-"}
+                          <TableCell className={`text-right ${aptoAvista ? "text-white/90" : "text-white/30"}`}>
+                            {aptoAvista && tiers.valorAvista > 0 ? formatMoeda(tiers.valorAvista) : "-"}
                           </TableCell>
-                          <TableCell className={`text-right ${aptoFrio ? check(5) : "text-white/30"}`}>
-                            {aptoFrio ? formatMoeda(0.05 * total) : "-"}
+                          <TableCell className={`text-right ${aptoFrio ? "text-white/90" : "text-white/30"}`}>
+                            {aptoFrio && tiers.valorFrio > 0 ? formatMoeda(tiers.valorFrio) : "-"}
                           </TableCell>
-                          <TableCell className={`text-right ${aptoGerente ? check(pctLimite) : "text-white/30"}`}>
-                            {aptoGerente ? formatMoeda(0.07 * total) : "-"}
+                          <TableCell className={`text-right ${tiers.valorGerente > 0 ? "text-amber-300" : "text-white/30"}`}>
+                            {tiers.valorGerente > 0 ? formatMoeda(tiers.valorGerente) : "-"}
                           </TableCell>
                           <TableCell className="text-white/50 text-right">
                             {pctLimite > 0 ? `${pctLimite.toFixed(2)}%` : "-"}
