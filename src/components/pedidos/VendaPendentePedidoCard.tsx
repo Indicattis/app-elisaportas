@@ -807,29 +807,8 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
                   </Tooltip>
                 </div>
 
-                {/* Reprovar venda */}
-                <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        size="icon"
-                        variant="outline"
-                        disabled={isReprovando || isAprovando}
-                        className="flex h-[20px] w-full rounded-[3px] border-red-500/50 text-red-500 hover:bg-red-500/10"
-                        onClick={() => setShowReprovar(true)}
-                      >
-                        {isReprovando ? (
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                        ) : (
-                          <XCircle className="h-3 w-3" />
-                        )}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p className="text-xs">Reprovar venda</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
+                {/* Slot vazio reservado para manter grid alinhado */}
+                <div />
 
                 {/* Slot vazio reservado para manter grid alinhado */}
                 <div />
