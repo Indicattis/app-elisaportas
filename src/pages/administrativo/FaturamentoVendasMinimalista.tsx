@@ -114,15 +114,13 @@ const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
   { id: 'data', label: 'Data', defaultVisible: true },
   { id: 'cidade', label: 'Cidade', defaultVisible: true },
   { id: 'expedicao', label: 'Expedição', defaultVisible: true },
-  { id: 'contrato', label: 'Contrato', defaultVisible: true },
-  { id: 'tabela', label: 'Tabela', defaultVisible: true },
-  { id: 'valor', label: 'Venda', defaultVisible: true },
-  { id: 'desc_cartao', label: 'Cartão', defaultVisible: true },
-  { id: 'desc_gelo', label: 'Quente', defaultVisible: true },
-  { id: 'desc_responsavel', label: 'Luan/Alana', defaultVisible: true },
+  { id: 'tabela', label: 'Preço Tabela', defaultVisible: true },
+  { id: 'valor', label: 'Preço Venda', defaultVisible: true },
+  { id: 'desconto', label: 'Desconto', defaultVisible: true },
+  { id: 'acrescimo', label: 'Acréscimo', defaultVisible: true },
   { id: 'lucro', label: 'Lucro', defaultVisible: true },
-  { id: 'tempo_sem_faturar', label: 'Tempo s/ Faturar', defaultVisible: true },
-  { id: 'justificativa', label: 'Justificativa', defaultVisible: true },
+  { id: 'status', label: 'Status', defaultVisible: true },
+  { id: 'contrato', label: 'Contrato', defaultVisible: true },
 ];
 
 const formatCurrency = (value: number) => {
@@ -634,6 +632,16 @@ export default function FaturamentoMinimalista() {
             if (isFaturada(venda)) return -1;
             return differenceInDays(new Date(), new Date(venda.data_venda));
           case 'faturada': return isFaturada(venda) ? 1 : 0;
+          case 'status': return isFaturada(venda) ? 1 : 0;
+          case 'desconto':
+          case 'acrescimo': {
+            const tabelaTotal = (venda.portas || []).reduce((acc: number, p: any) => {
+              const qty = p.quantidade || 1;
+              return acc + ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
+            }, 0);
+            const diff = tabelaTotal - (venda.valor_venda || 0);
+            return sortConfig.column === 'desconto' ? Math.max(0, diff) : Math.max(0, -diff);
+          }
           case 'desc_cartao':
           case 'desc_gelo':
           case 'desc_responsavel':
@@ -876,14 +884,14 @@ export default function FaturamentoMinimalista() {
   };
 
   const getColumnResponsiveClass = (columnId: string) => {
-    const hiddenOnMobile = ['cidade', 'expedicao', 'desc_cartao', 'desc_gelo', 'desc_responsavel', 'tempo_sem_faturar', 'justificativa', 'lucro', 'tabela', 'contrato'];
+    const hiddenOnMobile = ['cidade', 'expedicao', 'desc_cartao', 'desc_gelo', 'desc_responsavel', 'tempo_sem_faturar', 'justificativa', 'lucro', 'tabela', 'contrato', 'desconto', 'acrescimo', 'status'];
     if (hiddenOnMobile.includes(columnId)) return 'hidden md:table-cell';
     return '';
   };
 
   const getColumnAlignment = (columnId: string) => {
-    const rightAligned = ['valor', 'lucro', 'desc_cartao', 'desc_gelo', 'desc_responsavel', 'tabela'];
-    const centerAligned = ['faturada', 'tempo_sem_faturar', 'expedicao', 'contrato'];
+    const rightAligned = ['valor', 'lucro', 'desc_cartao', 'desc_gelo', 'desc_responsavel', 'tabela', 'desconto', 'acrescimo'];
+    const centerAligned = ['faturada', 'tempo_sem_faturar', 'expedicao', 'contrato', 'status'];
     if (rightAligned.includes(columnId)) return 'text-right';
     if (centerAligned.includes(columnId)) return 'text-center';
     return 'text-left';
@@ -995,6 +1003,50 @@ export default function FaturamentoMinimalista() {
           : <span className="text-white/30">-</span>;
       case 'valor':
         return <span className="text-white font-medium">{formatCurrency(venda.valor_venda || 0)}</span>;
+      case 'desconto': {
+        const tabelaTotal = (venda.portas || []).reduce((acc: number, p: any) => {
+          const qty = p.quantidade || 1;
+          return acc + ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
+        }, 0);
+        const diff = tabelaTotal - (venda.valor_venda || 0);
+        if (diff <= 0) return <span className="text-white/30">-</span>;
+        return <span className="text-red-400">-{formatCurrency(diff)}</span>;
+      }
+      case 'acrescimo': {
+        const tabelaTotal = (venda.portas || []).reduce((acc: number, p: any) => {
+          const qty = p.quantidade || 1;
+          return acc + ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
+        }, 0);
+        const diff = (venda.valor_venda || 0) - tabelaTotal;
+        if (diff <= 0) return <span className="text-white/30">-</span>;
+        return <span className="text-emerald-400">+{formatCurrency(diff)}</span>;
+      }
+      case 'status': {
+        if (isFaturada(venda)) {
+          return (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 text-[10px] font-medium">
+                  <CheckCircle2 className="h-3 w-3" />
+                  Faturada
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>Venda faturada</TooltipContent>
+            </Tooltip>
+          );
+        }
+        return (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-amber-500/15 border border-amber-500/40 text-amber-300 text-[10px] font-medium">
+                <Clock className="h-3 w-3" />
+                Pendente
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>Venda ainda não faturada</TooltipContent>
+          </Tooltip>
+        );
+      }
       case 'faturada':
         return isFaturada(venda) 
           ? <Check className="h-4 w-4 text-green-400 mx-auto" />
@@ -1296,6 +1348,56 @@ export default function FaturamentoMinimalista() {
             </Button>
           </>
         )}
+        <div className="pt-3 mt-1 border-t border-white/10 space-y-2">
+          <p className="text-[10px] font-semibold text-white/40 uppercase tracking-wider">Ações</p>
+          {!(selectedVenda as any).contrato_url && (selectedVenda as any).contrato_dispensado && (
+            <Button
+              variant="outline"
+              className="w-full bg-white/5 border-white/15 text-white/80 hover:bg-white/10 hover:text-white"
+              onClick={() => toggleVendaFlag(
+                selectedVenda,
+                'contrato_dispensado',
+                false,
+                'Contrato dispensado',
+                'Dispensa de contrato revertida',
+              )}
+            >
+              <FileCheck className="h-4 w-4 mr-2" />
+              Reverter dispensa de contrato
+            </Button>
+          )}
+          <Button
+            variant="outline"
+            className="w-full bg-white/5 border-white/15 text-white/80 hover:bg-white/10 hover:text-white"
+            onClick={() => {
+              if ((selectedVenda as any).dispensada_sistema) {
+                reativarVendaNoSistema(selectedVenda);
+              } else {
+                toggleVendaFlag(
+                  selectedVenda,
+                  'dispensada_sistema',
+                  true,
+                  'Venda dispensada do sistema',
+                  'Venda reativada no sistema',
+                );
+              }
+            }}
+          >
+            {(selectedVenda as any).dispensada_sistema ? (
+              <><Eye className="h-4 w-4 mr-2" />Reativar no sistema</>
+            ) : (
+              <><EyeOff className="h-4 w-4 mr-2" />Dispensar do sistema</>
+            )}
+          </Button>
+          <Button
+            variant="outline"
+            className="w-full bg-red-500/10 border-red-500/30 text-red-300 hover:bg-red-500/20 hover:text-red-200"
+            onClick={() => setExcluirDialog({ open: true, venda: selectedVenda })}
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Excluir venda completamente
+          </Button>
+        </div>
       </div>
     );
   })() : null;
