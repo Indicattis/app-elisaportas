@@ -1437,6 +1437,24 @@ export default function FaturamentoMinimalista() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="bg-slate-950/95 backdrop-blur-xl border-white/10 text-white">
+                              {!(venda as any).contrato_url && (
+                                <DropdownMenuItem
+                                  className="cursor-pointer focus:bg-white/10 focus:text-white"
+                                  onClick={() => toggleVendaFlag(
+                                    venda,
+                                    'contrato_dispensado',
+                                    !(venda as any).contrato_dispensado,
+                                    'Contrato dispensado',
+                                    'Dispensa de contrato revertida',
+                                  )}
+                                >
+                                  {(venda as any).contrato_dispensado ? (
+                                    <><FileCheck className="h-4 w-4 mr-2" />Reverter dispensa de contrato</>
+                                  ) : (
+                                    <><FileX className="h-4 w-4 mr-2" />Dispensar contrato</>
+                                  )}
+                                </DropdownMenuItem>
+                              )}
                               <DropdownMenuItem
                                 className="cursor-pointer focus:bg-white/10 focus:text-white"
                                 onClick={() => toggleVendaFlag(
