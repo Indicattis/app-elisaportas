@@ -273,6 +273,8 @@ export default function FaturamentoMinimalista() {
           lucro_instalacao,
           contrato_url,
           contrato_dispensado,
+          pedido_dispensado,
+          forcar_exibicao_pedidos,
           produtos_vendas (
             id,
             tipo_produto,
