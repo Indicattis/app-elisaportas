@@ -100,6 +100,10 @@ interface Venda {
   data_prevista_entrega?: string | null;
   tipo_entrega?: string | null;
   lucro_instalacao?: number;
+  contrato_url?: string | null;
+  contrato_dispensado?: boolean;
+  pedido_dispensado?: boolean;
+  forcar_exibicao_pedidos?: boolean;
 }
 
 const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
