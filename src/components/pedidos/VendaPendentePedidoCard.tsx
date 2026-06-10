@@ -25,6 +25,7 @@ interface VendaPendentePedidoCardProps {
   dragHandleProps?: any;
   isDragging?: boolean;
   mode?: 'pedido' | 'faturamento' | 'contrato';
+  hideActions?: boolean;
 }
 
 import { formatarMetodoPagamento } from "@/utils/pagamentoResumo";
@@ -34,7 +35,7 @@ const isAcoGalvanizado = (corNome: string) => {
   return normalized.includes('aço') || normalized.includes('aco') || normalized.includes('galvanizado');
 };
 
-export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mode = 'pedido' }: VendaPendentePedidoCardProps) {
+export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mode = 'pedido', hideActions = false }: VendaPendentePedidoCardProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { createPedidoFromVenda } = usePedidoCreation();
@@ -692,7 +693,7 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
               )}
             </div>
 
-            {isFaturamentoLayout ? (
+            {isFaturamentoLayout && !hideActions ? (
               <>
                 {/* Ação principal: Faturar (faturamento) ou Anexar Contrato (contrato) */}
                 {mode === 'contrato' ? (

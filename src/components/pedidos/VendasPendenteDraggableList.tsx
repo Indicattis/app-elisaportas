@@ -25,9 +25,10 @@ interface VendasPendenteDraggableListProps {
   vendas: VendaPendentePedido[];
   onReorganizar: (vendas: VendaPendentePedido[]) => void;
   mode?: 'pedido' | 'faturamento' | 'contrato';
+  hideActions?: boolean;
 }
 
-function SortableVendaItem({ venda, mode }: { venda: VendaPendentePedido; mode?: 'pedido' | 'faturamento' | 'contrato' }) {
+function SortableVendaItem({ venda, mode, hideActions }: { venda: VendaPendentePedido; mode?: 'pedido' | 'faturamento' | 'contrato'; hideActions?: boolean }) {
   const {
     attributes,
     listeners,
@@ -50,6 +51,7 @@ function SortableVendaItem({ venda, mode }: { venda: VendaPendentePedido; mode?:
         isDragging={isDragging}
         dragHandleProps={{ ...attributes, ...listeners }}
         mode={mode}
+        hideActions={hideActions}
       />
     </div>
   );

@@ -330,7 +330,6 @@ export default function GestaoFabricaDirecao() {
     reorganizarPedidos,
     arquivarPedido,
     deletarPedido,
-    finalizarDireto
   } = usePedidosEtapas(etapaParaQuery);
   const { updateOrdem } = useOrdensCarregamentoCalendario(new Date(), 'month');
   const { ordens: ordensUnificadas, concluirCarregamento } = useOrdensCarregamentoUnificadas();
@@ -616,10 +615,6 @@ export default function GestaoFabricaDirecao() {
 
   const handleArquivar = async (pedidoId: string) => {
     await arquivarPedido.mutateAsync(pedidoId);
-  };
-
-  const handleFinalizarDireto = async (pedidoId: string) => {
-    await finalizarDireto.mutateAsync(pedidoId);
   };
 
   const handleCarregarOrdem = async (pedidoId: string) => {
@@ -1259,6 +1254,7 @@ export default function GestaoFabricaDirecao() {
                   vendas={vendasContratoFiltradas}
                   onReorganizar={() => {}}
                   mode="contrato"
+                  hideActions
                 />
               )}
             </CardContent>
@@ -1348,6 +1344,7 @@ export default function GestaoFabricaDirecao() {
                   vendas={vendasFaturamentoFiltradas}
                   onReorganizar={handleReorganizarVendas}
                   mode="faturamento"
+                  hideActions
                 />
               )}
             </CardContent>
@@ -1520,7 +1517,7 @@ export default function GestaoFabricaDirecao() {
                       onDeletar={handleDeletarPedido}
                       onAgendar={['aguardando_coleta','instalacoes','correcoes'].includes(etapa) ? handleAgendarPedido : undefined}
                       hideOrdensStatus={['aguardando_coleta','instalacoes','correcoes','finalizado'].includes(etapa)}
-                      onFinalizarDireto={etapa !== 'finalizado' && !['aguardando_coleta','instalacoes','correcoes'].includes(etapa) ? handleFinalizarDireto : undefined}
+                      
                       onCarregarOrdem={['aguardando_coleta','instalacoes','correcoes'].includes(etapa) ? handleCarregarOrdem : undefined}
                       onResetarCarregamento={['aguardando_coleta','instalacoes','correcoes'].includes(etapa) ? handleResetarCarregamento : undefined}
                       onEnviarAguardandoCliente={etapa === 'finalizado' ? handleEnviarAguardandoCliente : undefined}
