@@ -65,7 +65,7 @@ export const useVendasAssinaturaContrato = () => {
         .eq("is_rascunho", false)
         .is("contrato_url", null)
         .eq("contrato_dispensado", false)
-        .gte("data_venda", cutoff)
+        .or(`data_venda.gte.${cutoff},forcar_exibicao_pedidos.eq.true`)
         .order("data_venda", { ascending: false });
 
       if (error) throw error;
