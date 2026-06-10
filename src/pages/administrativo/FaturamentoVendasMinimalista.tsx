@@ -884,14 +884,14 @@ export default function FaturamentoMinimalista() {
   };
 
   const getColumnResponsiveClass = (columnId: string) => {
-    const hiddenOnMobile = ['cidade', 'expedicao', 'desc_cartao', 'desc_gelo', 'desc_responsavel', 'tempo_sem_faturar', 'justificativa', 'lucro', 'tabela', 'contrato'];
+    const hiddenOnMobile = ['cidade', 'expedicao', 'desc_cartao', 'desc_gelo', 'desc_responsavel', 'tempo_sem_faturar', 'justificativa', 'lucro', 'tabela', 'contrato', 'desconto', 'acrescimo', 'status'];
     if (hiddenOnMobile.includes(columnId)) return 'hidden md:table-cell';
     return '';
   };
 
   const getColumnAlignment = (columnId: string) => {
-    const rightAligned = ['valor', 'lucro', 'desc_cartao', 'desc_gelo', 'desc_responsavel', 'tabela'];
-    const centerAligned = ['faturada', 'tempo_sem_faturar', 'expedicao', 'contrato'];
+    const rightAligned = ['valor', 'lucro', 'desc_cartao', 'desc_gelo', 'desc_responsavel', 'tabela', 'desconto', 'acrescimo'];
+    const centerAligned = ['faturada', 'tempo_sem_faturar', 'expedicao', 'contrato', 'status'];
     if (rightAligned.includes(columnId)) return 'text-right';
     if (centerAligned.includes(columnId)) return 'text-center';
     return 'text-left';
