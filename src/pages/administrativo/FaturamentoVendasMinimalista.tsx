@@ -181,6 +181,32 @@ export default function FaturamentoMinimalista() {
   const [dispensandoContrato, setDispensandoContrato] = useState(false);
   const [excluirDialog, setExcluirDialog] = useState<{ open: boolean; venda: Venda | null }>({ open: false, venda: null });
   const [excluindoVenda, setExcluindoVenda] = useState(false);
+  const [faturarTudoOpen, setFaturarTudoOpen] = useState(false);
+  const [faturandoTudo, setFaturandoTudo] = useState(false);
+
+  const handleFaturarTudo = async () => {
+    setFaturandoTudo(true);
+    try {
+      const { data, error } = await supabase.rpc('recalcular_lucro_vendas_em_aberto', {
+        p_somente_dispensadas: false,
+        p_finalizar: true,
+      });
+      if (error) throw error;
+      const r: any = data || {};
+      toast({
+        title: 'Faturamento em massa concluído',
+        description: `${r.faturadas ?? 0} vendas faturadas · ${r.ignoradas ?? 0} ignoradas · ${r.erros ?? 0} erros`,
+      });
+      setFaturarTudoOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['vendas'] });
+      queryClient.invalidateQueries({ queryKey: ['produtos-venda'] });
+      queryClient.invalidateQueries({ queryKey: ['vendas-pendente-faturamento'] });
+    } catch (e: any) {
+      toast({ variant: 'destructive', title: 'Erro ao faturar em massa', description: e.message });
+    } finally {
+      setFaturandoTudo(false);
+    }
+  };
 
   const toggleVendaFlag = async (
     venda: Venda,
