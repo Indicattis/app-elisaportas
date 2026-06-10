@@ -151,6 +151,7 @@ export default function FaturamentoMinimalista() {
   const { limites: configLimites } = useConfiguracoesVendas();
   const queryClient = useQueryClient();
   const [vendas, setVendas] = useState<Venda[]>([]);
+  const { createPedidoFromVenda } = usePedidoCreation();
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: startOfMonth(new Date()),
