@@ -9,6 +9,9 @@ export const useVendasPendenteFaturamento = () => {
   return useQuery({
     queryKey: ["vendas-pendente-faturamento"],
     queryFn: async (): Promise<VendaPendenteFaturamento[]> => {
+      const tenWeeksAgo = new Date();
+      tenWeeksAgo.setDate(tenWeeksAgo.getDate() - 70);
+      const cutoff = tenWeeksAgo.toISOString().slice(0, 10);
       const { data: vendas, error } = await supabase
         .from("vendas")
         .select(`
@@ -61,6 +64,7 @@ export const useVendasPendenteFaturamento = () => {
         .eq("is_rascunho", false)
         .eq("pedido_dispensado", false)
         .or("contrato_url.not.is.null,contrato_dispensado.eq.true")
+        .gte("data_venda", cutoff)
         .order("data_venda", { ascending: false });
 
       if (error) throw error;
