@@ -9389,6 +9389,7 @@ export type Database = {
           custo_total: number | null
           data_prevista_entrega: string | null
           data_venda: string
+          dispensada_sistema: boolean
           empresa_receptora_id: string | null
           estado: string | null
           forcar_exibicao_pedidos: boolean
@@ -9452,6 +9453,7 @@ export type Database = {
           custo_total?: number | null
           data_prevista_entrega?: string | null
           data_venda?: string
+          dispensada_sistema?: boolean
           empresa_receptora_id?: string | null
           estado?: string | null
           forcar_exibicao_pedidos?: boolean
@@ -9515,6 +9517,7 @@ export type Database = {
           custo_total?: number | null
           data_prevista_entrega?: string | null
           data_venda?: string
+          dispensada_sistema?: boolean
           empresa_receptora_id?: string | null
           estado?: string | null
           forcar_exibicao_pedidos?: boolean

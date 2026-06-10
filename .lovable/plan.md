@@ -1,39 +1,33 @@
 ## Objetivo
-Adicionar um menu "três pontinhos" em cada linha da tela `/financeiro/faturamento/vendas` (`FaturamentoVendasMinimalista.tsx`) que permita controlar como cada venda aparece nas abas da Gestão de Pedidos (`/direcao/gestao-fabrica`): Assinatura de Contrato e Pendente Faturamento. Também permitir excluir a venda inteira via RPC de exclusão em cascata já existente.
+Unificar os controles "Dispensar pendência de faturamento", "Forçar exibição (10 semanas)" e "Dispensar contrato" em **um único toggle por venda**: **"Dispensar do Sistema"**. Quando ativo, a venda some das abas Assinatura de Contrato e Pend. Faturamento. Além disso, **remover o corte global de 10 semanas** — todas as vendas aparecem até que sejam dispensadas manualmente.
 
-## Mudanças no banco
-Nova coluna em `vendas`:
-- `forcar_exibicao_pedidos boolean NOT NULL DEFAULT false` — quando true, a venda ignora o corte das 10 semanas (filtro `data_venda >= cutoff`) nas duas abas.
+## Banco de dados
+- Nova coluna `vendas.dispensada_sistema boolean NOT NULL DEFAULT false` (única flag de verdade).
+- Migração de dados: `UPDATE vendas SET dispensada_sistema = true WHERE pedido_dispensado = true OR contrato_dispensado = true;`
+- Colunas antigas (`pedido_dispensado`, `contrato_dispensado`, `forcar_exibicao_pedidos`) ficam no banco por compatibilidade mas deixam de ser usadas pelos filtros — sem drop, para não quebrar histórico/relatórios.
 
-As colunas `contrato_dispensado` e `pedido_dispensado` já existem; serão reutilizadas.
-
-## Hooks (filtros)
-Em `useVendasAssinaturaContrato.ts` e `useVendasPendenteFaturamento.ts`:
-- Substituir `.gte("data_venda", cutoff)` por `.or(\`data_venda.gte.${cutoff},forcar_exibicao_pedidos.eq.true\`)` para que vendas marcadas com "forçar exibição" continuem aparecendo mesmo passadas 10 semanas.
-- Incluir `forcar_exibicao_pedidos` no select.
+## Hooks
+`useVendasAssinaturaContrato.ts` e `useVendasPendenteFaturamento.ts`:
+- Remover `.gte("data_venda", cutoff)` / `.or(... forcar_exibicao ...)`.
+- Remover `.eq("contrato_dispensado", false)` / `.eq("pedido_dispensado", false)`.
+- Adicionar `.eq("dispensada_sistema", false)`.
+- Em `useVendasPendenteFaturamento`, remover o `.or("contrato_url.not.is.null,contrato_dispensado.eq.true")` (passa a ser somente `dispensada_sistema=false`) — a venda aparece em Pend. Faturamento mesmo sem contrato anexado, pois a dispensa agora é única.
+- Incluir `dispensada_sistema` no select.
 
 ## UI — `FaturamentoVendasMinimalista.tsx`
-Em cada linha da tabela (e card mobile), adicionar `DropdownMenu` com ícone `MoreVertical`:
-1. **Dispensar assinatura de contrato** / **Reativar assinatura** — toggle de `contrato_dispensado`.
-2. **Dispensar pendência de faturamento** / **Reativar pendência** — toggle de `pedido_dispensado`.
-3. **Forçar exibição (ignorar corte 10 semanas)** / **Desativar forçar exibição** — toggle de `forcar_exibicao_pedidos`. Só relevante quando a venda for mais antiga que 10 semanas; mostrar sempre para deixar reversível.
-4. Separador.
-5. **Excluir venda completamente** — `AlertDialog` de confirmação. Chama a RPC já existente de exclusão em cascata (mesma usada em "Cascade deletion" da memória). Após sucesso, invalida queries `vendas`, `vendas-assinatura-contrato`, `vendas-pendente-faturamento`.
+No `DropdownMenu` de cada linha, substituir os três itens atuais (dispensar contrato, dispensar pendência, forçar exibição) por **um único item**:
+- "Dispensar do Sistema" / "Reativar no Sistema" — toggle de `dispensada_sistema`.
+- Mantém o item "Excluir venda completamente".
 
-Cada ação:
-- Atualiza via `supabase.from('vendas').update({...}).eq('id', venda.id)`.
-- Toast de sucesso/erro.
-- Invalida queries: `['vendas']`, `['vendas-assinatura-contrato']`, `['vendas-pendente-faturamento']`, `['vendas-pendente-pedido']`.
-- Atualiza estado local `vendas` para feedback imediato.
+Atualizar:
+- `Venda` interface: trocar as três flags por `dispensada_sistema?: boolean`.
+- Select da página inclui `dispensada_sistema`.
+- Remover o `AlertDialog` antigo de "Dispensar contrato" (`dispensarContratoOpen`) e estados relacionados — a dispensa agora é direta pelo menu, sem dialog (igual aos toggles que já fizemos).
+- O badge/borda amber "aguardando contrato" pode ser mantido com base em `!contrato_url && !dispensada_sistema` apenas como indicador visual; sem ação dedicada.
 
-Indicador visual nas linhas: badges discretos (ex.: "Contrato dispensado", "Pedido dispensado", "Forçada") quando flags ativas, para o operador enxergar o estado atual.
-
-## Caso da venda `3e4a357d-0c2f-4435-a4a8-8e0b0df9787e`
-Não criar tela de diagnóstico — apenas os controles. O operador usará o menu para dispensar/forçar conforme necessário.
-
-## Arquivos afetados
-- nova migration: adicionar coluna `forcar_exibicao_pedidos`.
+## Arquivos
+- nova migration (coluna + UPDATE).
 - `src/hooks/useVendasAssinaturaContrato.ts`
 - `src/hooks/useVendasPendenteFaturamento.ts`
 - `src/pages/administrativo/FaturamentoVendasMinimalista.tsx`
-- Memória: atualizar entry sobre filtro de 10 semanas para mencionar o override.
+- atualizar memória (substituir entry sobre filtro de 10 semanas).
