@@ -182,13 +182,18 @@ export default function FaturamentoMinimalista() {
 
   const toggleVendaFlag = async (
     venda: Venda,
-    campo: 'dispensada_sistema',
+    campo: 'dispensada_sistema' | 'contrato_dispensado',
     novoValor: boolean,
     labelOn: string,
     labelOff: string,
   ) => {
     try {
       const payload: any = { [campo]: novoValor };
+      if (campo === 'contrato_dispensado') {
+        const { data: { user } } = await supabase.auth.getUser();
+        payload.contrato_dispensado_em = novoValor ? new Date().toISOString() : null;
+        payload.contrato_dispensado_por = novoValor ? (user?.id ?? null) : null;
+      }
       const { error } = await supabase.from('vendas').update(payload).eq('id', venda.id);
       if (error) throw error;
       setVendas((prev) => prev.map((v) => v.id === venda.id ? ({ ...(v as any), ...payload } as Venda) : v));
