@@ -39,6 +39,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useProdutosVenda } from "@/hooks/useProdutosVenda";
 import { useFaturamento } from "@/hooks/useFaturamento";
 import { fetchPercentualCusto, fetchConfigLucro } from "@/hooks/useConfigLucro";
+import { calcDescontoTiersAplicados } from "@/utils/descontoTiers";
 import { LucroItemModal } from "@/components/vendas/LucroItemModal";
 import { ConfirmarFaturamentoDialog } from "@/components/vendas/ConfirmarFaturamentoDialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -1071,11 +1072,21 @@ export default function FaturamentoVendaMinimalista() {
     return acc + ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
   }, 0) || 0;
 
-  // Tiers de desconto (À Vista 3% / Frio 5% / Gerente +7%) — espelha /marketing/balanco-descontos
+  // Tiers de desconto — distribui o desconto REAL aplicado entre À Vista,
+  // Frio e Gerente, na mesma ordem usada em /financeiro/faturamento/vendas.
+  const _tiersAplicados = calcDescontoTiersAplicados({
+    totalVenda: _valorTabelaParaExcedente,
+    descontoTotal: totalDescontosCalc,
+    formaPagamento: _formaPg,
+    vendaPresencial: !!venda?.venda_presencial,
+    limAvista: configLimites.avista,
+    limPresencial: configLimites.presencial,
+    limResponsavel: limitesVendas.adicionalResponsavel ?? 7,
+  });
   const descontoTiers = {
-    avista: aptoAvista ? 0.03 * valorTabela : 0,
-    frio: aptoFrio ? 0.05 * valorTabela : 0,
-    gerente: aptoGerente ? 0.07 * valorTabela : 0,
+    avista: _tiersAplicados.valorAvista,
+    frio: _tiersAplicados.valorFrio,
+    gerente: _tiersAplicados.valorGerente,
   };
   const descontoTierCheck = (limite: number) =>
     pctDescontoTotal <= limite ? 'text-emerald-400' : 'text-red-400';
@@ -1213,27 +1224,27 @@ export default function FaturamentoVendaMinimalista() {
             <p className="text-sm font-bold text-blue-400">{formatCurrency(valorTabela)}</p>
           </div>
 
-          {/* À Vista (3%) */}
+          {/* À Vista (limite configurado) */}
           <div className="bg-white/5 border border-white/10 rounded-lg p-3">
-            <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">À Vista (3%)</p>
-            <p className={cn("text-sm font-bold", aptoAvista ? descontoTierCheck(3) : "text-white/30")}>
-              {aptoAvista ? formatCurrency(descontoTiers.avista) : '-'}
+            <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1" title="Desconto real aplicado na faixa À Vista">À Vista ({configLimites.avista}%)</p>
+            <p className={cn("text-sm font-bold", aptoAvista && descontoTiers.avista > 0 ? "text-white" : "text-white/30")}>
+              {aptoAvista && descontoTiers.avista > 0 ? formatCurrency(descontoTiers.avista) : '-'}
             </p>
           </div>
 
-          {/* Frio (5%) */}
+          {/* Frio (limite configurado) */}
           <div className="bg-white/5 border border-white/10 rounded-lg p-3">
-            <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">Frio (5%)</p>
-            <p className={cn("text-sm font-bold", aptoFrio ? descontoTierCheck(5) : "text-white/30")}>
-              {aptoFrio ? formatCurrency(descontoTiers.frio) : '-'}
+            <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1" title="Desconto real aplicado na faixa Frio (presencial)">Frio ({configLimites.presencial}%)</p>
+            <p className={cn("text-sm font-bold", aptoFrio && descontoTiers.frio > 0 ? "text-white" : "text-white/30")}>
+              {aptoFrio && descontoTiers.frio > 0 ? formatCurrency(descontoTiers.frio) : '-'}
             </p>
           </div>
 
-          {/* Gerente (+7%) */}
+          {/* Gerente (adicional com senha) */}
           <div className="bg-white/5 border border-white/10 rounded-lg p-3">
-            <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">Gerente (+7%)</p>
-            <p className={cn("text-sm font-bold", aptoGerente ? descontoTierCheck(pctLimite) : "text-white/30")}>
-              {aptoGerente ? formatCurrency(descontoTiers.gerente) : '-'}
+            <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1" title="Desconto real aplicado acima das faixas anteriores (autorização gerencial)">Gerente (+{limitesVendas.adicionalResponsavel ?? 7}%)</p>
+            <p className={cn("text-sm font-bold", descontoTiers.gerente > 0 ? "text-amber-300" : "text-white/30")}>
+              {descontoTiers.gerente > 0 ? formatCurrency(descontoTiers.gerente) : '-'}
             </p>
           </div>
 
