@@ -114,15 +114,13 @@ const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
   { id: 'data', label: 'Data', defaultVisible: true },
   { id: 'cidade', label: 'Cidade', defaultVisible: true },
   { id: 'expedicao', label: 'Expedição', defaultVisible: true },
-  { id: 'contrato', label: 'Contrato', defaultVisible: true },
-  { id: 'tabela', label: 'Tabela', defaultVisible: true },
-  { id: 'valor', label: 'Venda', defaultVisible: true },
-  { id: 'desc_cartao', label: 'Cartão', defaultVisible: true },
-  { id: 'desc_gelo', label: 'Quente', defaultVisible: true },
-  { id: 'desc_responsavel', label: 'Luan/Alana', defaultVisible: true },
+  { id: 'tabela', label: 'Preço Tabela', defaultVisible: true },
+  { id: 'valor', label: 'Preço Venda', defaultVisible: true },
+  { id: 'desconto', label: 'Desconto', defaultVisible: true },
+  { id: 'acrescimo', label: 'Acréscimo', defaultVisible: true },
   { id: 'lucro', label: 'Lucro', defaultVisible: true },
-  { id: 'tempo_sem_faturar', label: 'Tempo s/ Faturar', defaultVisible: true },
-  { id: 'justificativa', label: 'Justificativa', defaultVisible: true },
+  { id: 'status', label: 'Status', defaultVisible: true },
+  { id: 'contrato', label: 'Contrato', defaultVisible: true },
 ];
 
 const formatCurrency = (value: number) => {
