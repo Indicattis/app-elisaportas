@@ -39,6 +39,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useProdutosVenda } from "@/hooks/useProdutosVenda";
 import { useFaturamento } from "@/hooks/useFaturamento";
 import { fetchPercentualCusto, fetchConfigLucro } from "@/hooks/useConfigLucro";
+import { calcDescontoTiersAplicados } from "@/utils/descontoTiers";
 import { LucroItemModal } from "@/components/vendas/LucroItemModal";
 import { ConfirmarFaturamentoDialog } from "@/components/vendas/ConfirmarFaturamentoDialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
