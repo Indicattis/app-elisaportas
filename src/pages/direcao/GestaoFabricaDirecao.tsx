@@ -1349,6 +1349,7 @@ export default function GestaoFabricaDirecao() {
                   vendas={vendasFaturamentoFiltradas}
                   onReorganizar={handleReorganizarVendas}
                   mode="faturamento"
+                  hideActions
                 />
               )}
             </CardContent>
