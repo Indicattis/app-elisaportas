@@ -617,10 +617,6 @@ export default function GestaoFabricaDirecao() {
     await arquivarPedido.mutateAsync(pedidoId);
   };
 
-  const handleFinalizarDireto = async (pedidoId: string) => {
-    await finalizarDireto.mutateAsync(pedidoId);
-  };
-
   const handleCarregarOrdem = async (pedidoId: string) => {
     const ordem = ordensUnificadas.find(o => o.pedido_id === pedidoId && !o.carregamento_concluido);
     if (!ordem) {
