@@ -236,6 +236,65 @@ export default function FaturamentoMinimalista() {
     }
   };
 
+  const reativarVendaNoSistema = async (venda: Venda) => {
+    try {
+      const vendaAny = venda as any;
+      // Caso A: já existe pedido_producao (possivelmente arquivado) → desarquivar
+      const { data: pedidoExistente } = await supabase
+        .from('pedidos_producao')
+        .select('id, etapa_atual, arquivado')
+        .eq('venda_id', venda.id)
+        .maybeSingle();
+
+      if (pedidoExistente) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (pedidoExistente.arquivado) {
+          await supabase
+            .from('pedidos_producao')
+            .update({ arquivado: false, data_arquivamento: null, arquivado_por: null } as any)
+            .eq('id', pedidoExistente.id);
+          await supabase.from('pedidos_movimentacoes').insert({
+            pedido_id: pedidoExistente.id,
+            user_id: user?.id ?? null,
+            etapa_destino: pedidoExistente.etapa_atual,
+            teor: 'reativacao',
+            descricao: 'Venda reativada no sistema (pedido desarquivado)',
+          });
+        }
+        await supabase.from('vendas').update({ dispensada_sistema: false } as any).eq('id', venda.id);
+      } else if (vendaAny.pedido_dispensado === true) {
+        // Caso B: foi "concluída sem pedido" — criar pedido em aprovacao_diretor
+        const pedidoId = await createPedidoFromVenda(venda.id);
+        if (!pedidoId) throw new Error('Falha ao criar pedido de produção');
+        await supabase
+          .from('vendas')
+          .update({ dispensada_sistema: false, pedido_dispensado: false } as any)
+          .eq('id', venda.id);
+      } else {
+        // Caso C: simples — apenas reativar
+        await supabase.from('vendas').update({ dispensada_sistema: false } as any).eq('id', venda.id);
+      }
+
+      setVendas((prev) => prev.map((v) => v.id === venda.id
+        ? ({ ...(v as any), dispensada_sistema: false, pedido_dispensado: false } as Venda)
+        : v));
+      if (selectedVenda?.id === venda.id) {
+        setSelectedVenda((prev) => prev ? ({ ...(prev as any), dispensada_sistema: false, pedido_dispensado: false } as Venda) : prev);
+      }
+      toast({ title: 'Venda reativada no sistema' });
+      queryClient.invalidateQueries({ queryKey: ['vendas'] });
+      queryClient.invalidateQueries({ queryKey: ['vendas-assinatura-contrato'] });
+      queryClient.invalidateQueries({ queryKey: ['vendas-pendente-faturamento'] });
+      queryClient.invalidateQueries({ queryKey: ['vendas-pendente-pedido'] });
+      queryClient.invalidateQueries({ queryKey: ['pedidos-aprovacao-diretor'] });
+      queryClient.invalidateQueries({ queryKey: ['pedidos-contadores'] });
+      queryClient.invalidateQueries({ queryKey: ['pedidos-etapas'] });
+    } catch (err: any) {
+      console.error('Erro ao reativar venda:', err);
+      toast({ variant: 'destructive', title: 'Erro', description: err?.message || 'Não foi possível reativar a venda.' });
+    }
+  };
+
   const handleUpdatePagamento = async (contaId: string, campo: 'status' | 'observacoes', valor: string) => {
     try {
       const updateData: any = { [campo]: valor };
