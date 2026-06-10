@@ -1654,6 +1654,35 @@ export default function FaturamentoMinimalista() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog open={excluirDialog.open} onOpenChange={(o) => !excluindoVenda && setExcluirDialog({ open: o, venda: o ? excluirDialog.venda : null })}>
+        <AlertDialogContent className="bg-slate-950/90 backdrop-blur-xl border-white/10 text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white flex items-center gap-2">
+              <Trash2 className="h-5 w-5 text-red-400" />
+              Excluir venda completamente?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-white/60">
+              {excluirDialog.venda ? (
+                <>Cliente: <span className="text-white/90 font-medium">{excluirDialog.venda.cliente_nome}</span><br /></>
+              ) : null}
+              Esta ação remove a venda, seus produtos, pagamentos, pedidos e movimentações em cascata. Não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={excluindoVenda} className="bg-white/5 border-white/15 text-white hover:bg-white/10 hover:text-white">
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={excluindoVenda}
+              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={(e) => { e.preventDefault(); handleExcluirVenda(); }}
+            >
+              {excluindoVenda ? 'Excluindo...' : 'Excluir definitivamente'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </MinimalistLayout>
   );
 }
