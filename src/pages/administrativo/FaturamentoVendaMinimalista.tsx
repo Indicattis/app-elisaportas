@@ -1041,7 +1041,14 @@ export default function FaturamentoVendaMinimalista() {
   const pctDescontoTotal = _valorTabelaParaExcedente > 0
     ? (totalDescontosCalc / _valorTabelaParaExcedente) * 100
     : 0;
-  const excedentePct = Math.max(0, pctDescontoTotal - LIMITE_DESCONTO_LUCRO);
+  // Tiers alinhados com /marketing/balanco-descontos
+  const _formaPg = venda?.forma_pagamento || '';
+  const aptoAvista = _formaPg !== '' && _formaPg !== 'cartao_credito';
+  const aptoFrio = !!venda?.venda_presencial;
+  const _limiteBase = (aptoAvista ? 3 : 0) + (aptoFrio ? 5 : 0);
+  const aptoGerente = temAutorizacaoGerente || pctDescontoTotal > _limiteBase;
+  const pctLimite = _limiteBase + (aptoGerente ? 7 : 0);
+  const excedentePct = Math.max(0, pctDescontoTotal - pctLimite);
   const excedenteValor = _valorTabelaParaExcedente * (excedentePct / 100);
   const totalLucro = lucroProdutos + lucroInstalacao - excedenteValor + totalCreditosProdutos + (venda?.valor_credito || 0);
   const margem = venda && venda.valor_venda > 0 ? (totalLucro / venda.valor_venda) * 100 : 0;
@@ -1064,33 +1071,14 @@ export default function FaturamentoVendaMinimalista() {
     return acc + ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
   }, 0) || 0;
 
-  // Desconto tiers (Cartão / Gelo / Luan-Alana)
-  const descontoTiers = (() => {
-    const totalDesc = produtos?.reduce((acc: number, p: any) => {
-      const qty = p.quantidade || 1;
-      if (p.tipo_desconto === 'percentual' && p.desconto_percentual > 0) {
-        const base = ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
-        return acc + base * (p.desconto_percentual / 100);
-      }
-      if (p.desconto_valor && p.desconto_valor > 0) return acc + p.desconto_valor;
-      return acc;
-    }, 0) || 0;
-    if (totalDesc === 0 || valorTabela === 0) return { cartao: 0, gelo: 0, responsavel: 0, total: totalDesc };
-    const pctTotal = (totalDesc / valorTabela) * 100;
-    const isCartao = venda?.forma_pagamento === 'cartao_credito';
-    const isFrio = venda?.venda_presencial === false;
-    let pctCartao = 0, pctGelo = 0;
-    if (!isCartao) pctCartao = Math.min(pctTotal, configLimites.avista);
-    const restante1 = pctTotal - pctCartao;
-    if (isFrio && restante1 > 0) pctGelo = Math.min(restante1, configLimites.presencial);
-    const pctResp = Math.max(0, pctTotal - pctCartao - pctGelo);
-    return {
-      cartao: valorTabela * (pctCartao / 100),
-      gelo: valorTabela * (pctGelo / 100),
-      responsavel: valorTabela * (pctResp / 100),
-      total: totalDesc,
-    };
-  })();
+  // Tiers de desconto (À Vista 3% / Frio 5% / Gerente +7%) — espelha /marketing/balanco-descontos
+  const descontoTiers = {
+    avista: aptoAvista ? 0.03 * valorTabela : 0,
+    frio: aptoFrio ? 0.05 * valorTabela : 0,
+    gerente: aptoGerente ? 0.07 * valorTabela : 0,
+  };
+  const descontoTierCheck = (limite: number) =>
+    pctDescontoTotal <= limite ? 'text-emerald-400' : 'text-red-400';
 
   const getTipoProdutoLabel = (tipo?: string) => {
     const tipos: Record<string, string> = {
