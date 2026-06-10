@@ -1,66 +1,58 @@
 ## Objetivo
 
-Tornar as definições de `/direcao/estrategia/kits` (portas, instalações e pinturas) a **fonte de verdade** do lucro/custo de qualquer venda ainda não faturada, e oferecer um botão de faturamento em massa no hub `/financeiro/faturamento` que aplica essa parametrização a:
+Substituir, em `/marketing/balanco-descontos` e em `/financeiro/faturamento/{id}`, os valores teóricos (3% e 5% do total) pelo **desconto real aplicado** em cada faixa (À Vista, Frio, Gerente). Mesma lógica já usada em `/financeiro/faturamento/vendas`.
 
-1. todas as vendas marcadas como **dispensadas do sistema** (`vendas.dispensada_sistema = true`), e
-2. vendas já com pedido criado e ainda não faturadas.
+## Regra de distribuição (espelha `calcDescontoTiers`)
 
-Escopo confirmado: **somente vendas não faturadas** são reescritas. Vendas já faturadas no passado permanecem intocadas.
+A partir do desconto total real (`total_venda * pct_desconto_dado / 100`):
 
----
+```
+limAvista       = 3   (config.limite_desconto_avista)
+limPresencial   = 5   (config.limite_desconto_presencial)
+limResponsavel  = 7   (config.limite_adicional_responsavel)
 
-## 1. Função SQL única de recálculo
+pctTotal  = desconto_dado / total_venda * 100
+isCartao  = forma_pagamento === 'cartao_credito'
+isFrio    = venda_presencial === true
 
-Centralizar a regra em uma RPC `public.recalcular_lucro_venda(venda_id uuid, finalizar boolean)` (SECURITY DEFINER) que reaproveita exatamente as fórmulas usadas hoje em `FaturamentoVendaMinimalista.tsx`:
+pctAvista = isCartao ? 0 : min(pctTotal, limAvista)
+restante1 = pctTotal - pctAvista
+pctFrio   = isFrio ? min(restante1, limPresencial) : 0
+pctGer    = max(0, pctTotal - pctAvista - pctFrio)
 
-- **Pintura epóxi** (`produtos_vendas.tipo_produto = 'pintura_epoxi'`):
-  - se `vendas_config_lucro('pintura_epoxi').modo = 'formula_dimensao'`: `lucro = altura * largura * parametros.valor_m2`
-  - senão: `custo = valor_total * percentual_custo/100`; `lucro = valor_total - custo`
-- **Instalação** (`tipo_produto = 'instalacao'`): `custo = valor_total * percentual_custo/100`; `lucro = valor_total - custo`.
-- **Porta enrolar** (`tipo_produto = 'porta_enrolar'`): lookup em `tabela_precos_portas` via `produtos_vendas.tabela_precos_porta_id` (ou casamento por dimensão com tolerância 15cm como já feito). `lucro = lucro_tabela * quantidade`.
-- Avulsos (acessório/adicional/manutenção) **não** são afetados — continuam usando `custos_itens` no ato do faturamento manual.
+valorAvista = total_venda * pctAvista / 100
+valorFrio   = total_venda * pctFrio   / 100
+valorGer    = total_venda * pctGer    / 100
+```
 
-A função só toca linhas onde `produtos_vendas.faturamento = false`. Quando `finalizar = true`, ao final agrega `lucro_total` e marca `vendas.lucro_total`, `produtos_vendas.faturamento = true`, `instalacao_faturada` etc. (mesma lógica do `handleFinalizarFaturamento`).
+Para a venda do JONATHAN (total 1020, desconto 20, à vista presencial): À Vista = R$ 20,00; Frio = R$ 0; Gerente = R$ 0.
 
-Outra RPC `public.recalcular_lucro_vendas_em_aberto(somente_dispensadas boolean default false)` percorre todas as vendas não faturadas e chama a função por id; é usada tanto pelo sync automático quanto pelo botão de massa.
+## Mudanças
 
-## 2. Sync automático ao salvar a configuração
+### 1. `src/pages/marketing/BalancoDescontos.tsx`
+- Em `computeRow`: calcular `valorAvistaAplicado`, `valorFrioAplicado`, `valorGerenteAplicado` segundo a regra acima (usando `Number(r.desconto_dado)` e `Number(r.total_venda)`).
+- Trocar render das três células (linhas ~262‑270):
+  - "À Vista (3%)" → `valorAvistaAplicado` (se 0, mostra "-")
+  - "Frio (5%)"    → `valorFrioAplicado`
+  - "Gerente (+7%)" → `valorGerenteAplicado`
+- Manter a coloração `check(n)` baseada no percentual realmente consumido em cada faixa.
+- Cabeçalhos: manter, mas adicionar tooltip “Valor real do desconto que caiu nesta faixa”.
 
-Em `src/hooks/useConfigLucro.ts` (mutation `save`) e nas telas de edição da tabela de preços de kits (`TabelaPrecos` quando renderizada com `enableReorder` por `EstrategiaKits`), após sucesso:
+### 2. `src/pages/administrativo/FaturamentoVendaMinimalista.tsx`
+- Substituir o cálculo atual em `descontoTiers` (linhas ~1074‑1078) pelo mesmo algoritmo (usando `valorTabela`, `descontoAplicado` total, `forma_pagamento`, `venda_presencial` e os limites de `configVendas`).
+- Atualizar os três cards do bloco visual (linhas ~1216‑1232 e o card Gerente subsequente) para exibir o valor aplicado em cada faixa, com fallback "-" quando 0.
+- Atualizar labels para refletir os limites configurados (`Avista`, `Presencial`, `Adicional Responsável`) em vez de hardcode 3/5/7.
 
-- invocar `recalcular_lucro_vendas_em_aberto()` (não-dispensadas inclusive — qualquer venda ainda em aberto);
-- invalidar React Query: `vendas_config_lucro`, `produtos_vendas`, `venda-faturamento`, `vendas-pendente-faturamento`;
-- toast resumindo quantas vendas foram atualizadas (retorno da função SQL).
+### 3. Fonte dos limites
+- `BalancoDescontos`: hoje usa hardcode 3/5/7. Passar a ler de `useConfiguracoesVendas` (já presente no projeto) para evitar nova divergência.
 
-Isso garante: alterei R$/m² de pintura → todas as vendas em aberto refletem o novo lucro imediatamente.
+## Fora de escopo
 
-## 3. Botão "Faturar tudo" em `/financeiro/faturamento`
+- `/financeiro/faturamento/vendas` (lista) — já correto.
+- Banco / RPC `recalcular_balanco_desconto_vendas` — sem alteração; o valor `desconto_dado` continua sendo a fonte de verdade.
+- Renomeação de cabeçalhos / nova UI.
 
-Local: header do hub `FaturamentoVendasMinimalista.tsx`.
+## Riscos
 
-- Dialog de confirmação listando contagem das vendas que serão faturadas:
-  - "Dispensadas do sistema" (`dispensada_sistema = true`)
-  - "Com pedido criado e prontas" (têm `pedidos_producao` e nenhuma linha não-faturada além das auto-faturáveis).
-- Ao confirmar: chama `recalcular_lucro_vendas_em_aberto(somente_dispensadas=false)` com `finalizar=true` somente para o subconjunto elegível (RPC já implementa o filtro internamente).
-- Mostra toast com `{faturadas, ignoradas, erros}`; invalida listas.
-
-Pré-checagem mantida pelas regras já existentes (vendas sem produto, sem contrato, etc. são ignoradas e contadas em `ignoradas`).
-
-## 4. Faturamento individual continua funcionando
-
-`FaturamentoVendaMinimalista.tsx` passa a chamar `recalcular_lucro_venda(id, false)` no carregamento (substituindo os quatro `useEffect` de auto-faturar pintura/porta/instalação/avulsos pelas chamadas equivalentes server-side), e `recalcular_lucro_venda(id, true)` no botão "Finalizar faturamento". Isso elimina divergência entre a tela individual e o batch.
-
-## 5. Telas/arquivos afetados
-
-- `supabase/migrations/*` — nova migration com as duas RPCs + GRANT execute para `authenticated, service_role`.
-- `src/hooks/useConfigLucro.ts` — disparar recálculo após save.
-- `src/pages/TabelaPrecos.tsx` (somente quando aberto via `EstrategiaKits`) — disparar recálculo após editar/reordenar preços de portas.
-- `src/pages/administrativo/FaturamentoVendaMinimalista.tsx` — substituir os blocos `auto-faturar produto X` por chamadas à RPC.
-- `src/pages/administrativo/FaturamentoVendasMinimalista.tsx` — novo botão + dialog "Faturar tudo".
-
-## Riscos & decisões
-
-- **Apenas vendas em aberto** são reescritas (escolha confirmada). Vendas já faturadas mantêm histórico — sem impacto retroativo em DRE.
-- O recálculo automático ao salvar config pode levar alguns segundos se houver muitas vendas em aberto; será executado server-side em uma única transação para minimizar latência.
-- A RPC é idempotente: rodar duas vezes produz o mesmo resultado.
-- Vendas faturadas legadas (`instalacao_faturada` antigo, sem produto separado) continuam com a regra atual de 40% e não são tocadas pela RPC.
+- Vendas com `pct_desconto_dado` negativo (acréscimo) devem cair em todas as faixas como 0 e exibir "-".
+- Vendas com `total_venda = 0` → guard para evitar divisão por zero.
