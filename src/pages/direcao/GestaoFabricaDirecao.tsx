@@ -1259,6 +1259,7 @@ export default function GestaoFabricaDirecao() {
                   vendas={vendasContratoFiltradas}
                   onReorganizar={() => {}}
                   mode="contrato"
+                  hideActions
                 />
               )}
             </CardContent>
