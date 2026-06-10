@@ -10405,6 +10405,14 @@ export type Database = {
         Args: { p_fim: string; p_inicio: string }
         Returns: number
       }
+      recalcular_lucro_venda: {
+        Args: { p_finalizar?: boolean; p_venda_id: string }
+        Returns: Json
+      }
+      recalcular_lucro_vendas_em_aberto: {
+        Args: { p_finalizar?: boolean; p_somente_dispensadas?: boolean }
+        Returns: Json
+      }
       recalcular_pontuacao_linhas_concluidas: {
         Args: never
         Returns: {
