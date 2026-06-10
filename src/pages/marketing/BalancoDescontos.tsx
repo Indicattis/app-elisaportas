@@ -10,6 +10,8 @@ import { ptBR } from "date-fns/locale";
 import { useBalancoDescontos } from "@/hooks/useBalancoDescontos";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useConfiguracoesVendas } from "@/hooks/useConfiguracoesVendas";
+import { calcDescontoTiersAplicados } from "@/utils/descontoTiers";
 
 const formatMoeda = (v: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
@@ -63,6 +65,10 @@ export default function BalancoDescontos() {
   const [busca, setBusca] = useState("");
 
   const { rows: rawRows, isLoading, recalcular, isRecalculando } = useBalancoDescontos(mes);
+  const { limites: limitesVendas } = useConfiguracoesVendas();
+  const limAvista = limitesVendas?.avista ?? 3;
+  const limPresencial = limitesVendas?.presencial ?? 5;
+  const limResponsavel = limitesVendas?.adicionalResponsavel ?? 7;
 
   const dataMes = parseISO(`${mes}-01`);
   const mesAnterior = () => setMes(format(subMonths(dataMes, 1), "yyyy-MM"));
@@ -82,12 +88,13 @@ export default function BalancoDescontos() {
   const computeRow = (r: typeof rows[number]) => {
     const pctDado = Number(r.pct_desconto_dado);
     const total = Number(r.total_venda);
+    const descontoTotal = Number(r.desconto_dado) || 0;
     const formaPg = r.vendas?.forma_pagamento || "";
     const aptoAvista = formaPg !== "" && formaPg !== "cartao_credito";
     const aptoFrio = !!r.vendas?.venda_presencial;
-    const limiteBase = (aptoAvista ? 3 : 0) + (aptoFrio ? 5 : 0);
+    const limiteBase = (aptoAvista ? limAvista : 0) + (aptoFrio ? limPresencial : 0);
     const aptoGerente = !!r.tem_autorizacao_gerente || pctDado > limiteBase;
-    const pctLimiteCalc = limiteBase + (aptoGerente ? 7 : 0);
+    const pctLimiteCalc = limiteBase + (aptoGerente ? limResponsavel : 0);
     const pctLimite =
       Number(r.pct_limite_permitido) > 0
         ? Number(r.pct_limite_permitido)
@@ -96,7 +103,16 @@ export default function BalancoDescontos() {
     const excedidoValor = (excedidoPct / 100) * total;
     const lucro = Number(r.vendas?.lucro_total || 0);
     const balanco = lucro - excedidoValor;
-    return { pctDado, total, aptoAvista, aptoFrio, aptoGerente, pctLimite, excedidoPct, excedidoValor, lucro, balanco };
+    const tiers = calcDescontoTiersAplicados({
+      totalVenda: total,
+      descontoTotal: descontoTotal > 0 ? descontoTotal : 0,
+      formaPagamento: formaPg,
+      vendaPresencial: r.vendas?.venda_presencial ?? false,
+      limAvista,
+      limPresencial,
+      limResponsavel,
+    });
+    return { pctDado, total, aptoAvista, aptoFrio, aptoGerente, pctLimite, excedidoPct, excedidoValor, lucro, balanco, tiers };
   };
 
   const totals = useMemo(() => {
@@ -212,9 +228,9 @@ export default function BalancoDescontos() {
                       <TableHead className="text-white/60 text-right">Sem Desc.</TableHead>
                       <TableHead className="text-white/60 text-right">Desconto/Acréscimo</TableHead>
                       <TableHead className="text-white/60 text-right">Total</TableHead>
-                       <TableHead className="text-white/60 text-right">À Vista (3%)</TableHead>
-                       <TableHead className="text-white/60 text-right">Frio (5%)</TableHead>
-                       <TableHead className="text-white/60 text-right">Gerente (+7%)</TableHead>
+                       <TableHead className="text-white/60 text-right" title="Desconto real aplicado na faixa À Vista">À Vista ({limAvista}%)</TableHead>
+                       <TableHead className="text-white/60 text-right" title="Desconto real aplicado na faixa Frio (presencial)">Frio ({limPresencial}%)</TableHead>
+                       <TableHead className="text-white/60 text-right" title="Desconto real aplicado na faixa Gerente (com senha)">Gerente (+{limResponsavel}%)</TableHead>
                       <TableHead className="text-white/60 text-right">% Limite</TableHead>
                       <TableHead className="text-white/60 text-right">% Dado</TableHead>
                       <TableHead className="text-white/60 text-right">Excedido</TableHead>
@@ -231,7 +247,7 @@ export default function BalancoDescontos() {
                       </TableRow>
                     ) : (
                       rows.map((r) => {
-                        const { pctDado, total, aptoAvista, aptoFrio, aptoGerente, pctLimite, excedidoPct, excedidoValor, lucro, balanco } = computeRow(r);
+                        const { pctDado, total, aptoAvista, aptoFrio, aptoGerente, pctLimite, excedidoPct, excedidoValor, lucro, balanco, tiers } = computeRow(r);
                         const check = (limite: number) =>
                           pctDado <= limite ? "text-emerald-400" : "text-red-400";
                         const semDesc = pctDado !== 100 ? total / (1 - pctDado / 100) : total;
