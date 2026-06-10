@@ -1018,7 +1018,7 @@ export default function GestaoFabricaDirecao() {
                     <div className="flex flex-col items-start gap-1 min-w-0">
                       <span className="text-xs font-medium leading-tight truncate">{config.label}</span>
                       <span className="px-1.5 py-0.5 bg-blue-500/20 text-blue-400 rounded-full text-[10px] font-semibold leading-none">
-                        {count + vendasPendentePedido.length}
+                        {vendasPendentePedido.length}
                       </span>
                     </div>
                   </TabsTrigger>
