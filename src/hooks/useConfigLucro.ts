@@ -72,9 +72,19 @@ export function useConfigLucro(tipo: ConfigLucroTipo) {
           { onConflict: "tipo" }
         );
       if (error) throw error;
+      // Aplica a nova parametrização em todas as vendas ainda em aberto.
+      const { data: rec, error: recErr } = await supabase.rpc(
+        "recalcular_lucro_vendas_em_aberto",
+        { p_somente_dispensadas: false, p_finalizar: false }
+      );
+      if (recErr) throw recErr;
+      return rec;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["vendas_config_lucro", tipo] });
+      qc.invalidateQueries({ queryKey: ["produtos-venda"] });
+      qc.invalidateQueries({ queryKey: ["vendas"] });
+      qc.invalidateQueries({ queryKey: ["vendas-pendente-faturamento"] });
     },
   });
 
