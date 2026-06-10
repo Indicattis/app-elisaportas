@@ -151,13 +151,28 @@ export default function FaturamentoMinimalista() {
   const [vendas, setVendas] = useState<Venda[]>([]);
   const { createPedidoFromVenda } = usePedidoCreation();
   const [loading, setLoading] = useState(true);
-  const [dateRange, setDateRange] = useState<DateRange | undefined>({
-    from: startOfMonth(new Date()),
-    to: endOfMonth(new Date())
-  });
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filtroStatus, setFiltroStatus] = useState<string[]>([]);
-  const [selectedAtendente, setSelectedAtendente] = useState<string>("todos");
+  const FILTERS_STORAGE_KEY = 'faturamento_vendas_filtros';
+  const persistedFilters = (() => {
+    try {
+      const raw = sessionStorage.getItem(FILTERS_STORAGE_KEY);
+      if (!raw) return null;
+      const p = JSON.parse(raw);
+      return {
+        dateRange: p.dateRange
+          ? { from: p.dateRange.from ? new Date(p.dateRange.from) : undefined, to: p.dateRange.to ? new Date(p.dateRange.to) : undefined }
+          : undefined,
+        searchTerm: typeof p.searchTerm === 'string' ? p.searchTerm : '',
+        filtroStatus: Array.isArray(p.filtroStatus) ? p.filtroStatus : [],
+        selectedAtendente: typeof p.selectedAtendente === 'string' ? p.selectedAtendente : 'todos',
+      };
+    } catch { return null; }
+  })();
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(
+    persistedFilters?.dateRange ?? { from: startOfMonth(new Date()), to: endOfMonth(new Date()) }
+  );
+  const [searchTerm, setSearchTerm] = useState(persistedFilters?.searchTerm ?? "");
+  const [filtroStatus, setFiltroStatus] = useState<string[]>(persistedFilters?.filtroStatus ?? []);
+  const [selectedAtendente, setSelectedAtendente] = useState<string>(persistedFilters?.selectedAtendente ?? "todos");
   const [atendentes, setAtendentes] = useState<any[]>([]);
   const [selectedVenda, setSelectedVenda] = useState<Venda | null>(null);
   const [mobileDownbarOpen, setMobileDownbarOpen] = useState(false);
@@ -181,6 +196,17 @@ export default function FaturamentoMinimalista() {
   const [excluindoVenda, setExcluindoVenda] = useState(false);
   const [faturarTudoOpen, setFaturarTudoOpen] = useState(false);
   const [faturandoTudo, setFaturandoTudo] = useState(false);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify({
+        dateRange: dateRange ? { from: dateRange.from?.toISOString(), to: dateRange.to?.toISOString() } : undefined,
+        searchTerm,
+        filtroStatus,
+        selectedAtendente,
+      }));
+    } catch {}
+  }, [dateRange, searchTerm, filtroStatus, selectedAtendente]);
 
   const handleFaturarTudo = async () => {
     setFaturandoTudo(true);
