@@ -25,6 +25,7 @@ interface VendasPendenteDraggableListProps {
   vendas: VendaPendentePedido[];
   onReorganizar: (vendas: VendaPendentePedido[]) => void;
   mode?: 'pedido' | 'faturamento' | 'contrato';
+  hideActions?: boolean;
 }
 
 function SortableVendaItem({ venda, mode }: { venda: VendaPendentePedido; mode?: 'pedido' | 'faturamento' | 'contrato' }) {
