@@ -693,7 +693,7 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
               )}
             </div>
 
-            {isFaturamentoLayout ? (
+            {isFaturamentoLayout && !hideActions ? (
               <>
                 {/* Ação principal: Faturar (faturamento) ou Anexar Contrato (contrato) */}
                 {mode === 'contrato' ? (
