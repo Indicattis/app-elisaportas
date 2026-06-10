@@ -197,6 +197,17 @@ export default function FaturamentoMinimalista() {
   const [faturarTudoOpen, setFaturarTudoOpen] = useState(false);
   const [faturandoTudo, setFaturandoTudo] = useState(false);
 
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify({
+        dateRange: dateRange ? { from: dateRange.from?.toISOString(), to: dateRange.to?.toISOString() } : undefined,
+        searchTerm,
+        filtroStatus,
+        selectedAtendente,
+      }));
+    } catch {}
+  }, [dateRange, searchTerm, filtroStatus, selectedAtendente]);
+
   const handleFaturarTudo = async () => {
     setFaturandoTudo(true);
     try {
