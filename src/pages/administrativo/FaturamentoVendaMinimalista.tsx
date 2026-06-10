@@ -1165,17 +1165,7 @@ export default function FaturamentoVendaMinimalista() {
 
           {vendaFaturada && (
             <div className="flex gap-2">
-              {/* Botão Criar Pedido - só aparece se não tem pedido */}
-              {hasPedido === false && (
-                <Button
-                  variant="outline"
-                  className="bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20"
-                  onClick={() => setShowPedidoDialog(true)}
-                >
-                  <Package className="h-4 w-4 mr-2" />
-                  Criar Pedido
-                </Button>
-              )}
+              {/* Botão Criar Pedido removido */}
               
               {/* Botão Acessar Pedido - só aparece se já tem pedido */}
               {hasPedido === true && pedidoExistenteId && (
