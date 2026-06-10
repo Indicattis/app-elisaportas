@@ -25,6 +25,7 @@ interface VendaPendentePedidoCardProps {
   dragHandleProps?: any;
   isDragging?: boolean;
   mode?: 'pedido' | 'faturamento' | 'contrato';
+  hideActions?: boolean;
 }
 
 import { formatarMetodoPagamento } from "@/utils/pagamentoResumo";
