@@ -18,7 +18,8 @@ import {
   CheckCircle2, Clock, Truck, Wrench, Paintbrush, Target,
   Calculator, AlertCircle, Plus, Minus, Pencil, MessageSquare,
   ArrowUpDown, ArrowUp, ArrowDown, Check, X, Hammer,
-  Package, PlusCircle, Filter, PanelRight, Info, FileSignature, FileCheck, FileX
+  Package, PlusCircle, Filter, PanelRight, Info, FileSignature, FileCheck, FileX,
+  MoreVertical, Eye, EyeOff, Trash2
 } from "lucide-react";
 import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
@@ -42,6 +43,10 @@ import {
 } from "@/components/ui/alert-dialog";
 
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuSeparator, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Drawer, DrawerContent } from "@/components/ui/drawer";
