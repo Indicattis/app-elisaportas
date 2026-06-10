@@ -28,7 +28,7 @@ interface VendasPendenteDraggableListProps {
   hideActions?: boolean;
 }
 
-function SortableVendaItem({ venda, mode }: { venda: VendaPendentePedido; mode?: 'pedido' | 'faturamento' | 'contrato' }) {
+function SortableVendaItem({ venda, mode, hideActions }: { venda: VendaPendentePedido; mode?: 'pedido' | 'faturamento' | 'contrato'; hideActions?: boolean }) {
   const {
     attributes,
     listeners,
