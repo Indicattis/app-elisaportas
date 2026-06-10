@@ -1348,6 +1348,56 @@ export default function FaturamentoMinimalista() {
             </Button>
           </>
         )}
+        <div className="pt-3 mt-1 border-t border-white/10 space-y-2">
+          <p className="text-[10px] font-semibold text-white/40 uppercase tracking-wider">Ações</p>
+          {!(selectedVenda as any).contrato_url && (selectedVenda as any).contrato_dispensado && (
+            <Button
+              variant="outline"
+              className="w-full bg-white/5 border-white/15 text-white/80 hover:bg-white/10 hover:text-white"
+              onClick={() => toggleVendaFlag(
+                selectedVenda,
+                'contrato_dispensado',
+                false,
+                'Contrato dispensado',
+                'Dispensa de contrato revertida',
+              )}
+            >
+              <FileCheck className="h-4 w-4 mr-2" />
+              Reverter dispensa de contrato
+            </Button>
+          )}
+          <Button
+            variant="outline"
+            className="w-full bg-white/5 border-white/15 text-white/80 hover:bg-white/10 hover:text-white"
+            onClick={() => {
+              if ((selectedVenda as any).dispensada_sistema) {
+                reativarVendaNoSistema(selectedVenda);
+              } else {
+                toggleVendaFlag(
+                  selectedVenda,
+                  'dispensada_sistema',
+                  true,
+                  'Venda dispensada do sistema',
+                  'Venda reativada no sistema',
+                );
+              }
+            }}
+          >
+            {(selectedVenda as any).dispensada_sistema ? (
+              <><Eye className="h-4 w-4 mr-2" />Reativar no sistema</>
+            ) : (
+              <><EyeOff className="h-4 w-4 mr-2" />Dispensar do sistema</>
+            )}
+          </Button>
+          <Button
+            variant="outline"
+            className="w-full bg-red-500/10 border-red-500/30 text-red-300 hover:bg-red-500/20 hover:text-red-200"
+            onClick={() => setExcluirDialog({ open: true, venda: selectedVenda })}
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Excluir venda completamente
+          </Button>
+        </div>
       </div>
     );
   })() : null;
