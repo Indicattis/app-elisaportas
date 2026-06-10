@@ -104,6 +104,7 @@ interface Venda {
   contrato_dispensado?: boolean;
   pedido_dispensado?: boolean;
   forcar_exibicao_pedidos?: boolean;
+  dispensada_sistema?: boolean;
 }
 
 const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
@@ -181,18 +182,13 @@ export default function FaturamentoMinimalista() {
 
   const toggleVendaFlag = async (
     venda: Venda,
-    campo: 'contrato_dispensado' | 'pedido_dispensado' | 'forcar_exibicao_pedidos',
+    campo: 'dispensada_sistema',
     novoValor: boolean,
     labelOn: string,
     labelOff: string,
   ) => {
     try {
       const payload: any = { [campo]: novoValor };
-      if (campo === 'contrato_dispensado') {
-        const { data: userData } = await supabase.auth.getUser();
-        payload.contrato_dispensado_em = novoValor ? new Date().toISOString() : null;
-        payload.contrato_dispensado_por = novoValor ? (userData.user?.id ?? null) : null;
-      }
       const { error } = await supabase.from('vendas').update(payload).eq('id', venda.id);
       if (error) throw error;
       setVendas((prev) => prev.map((v) => v.id === venda.id ? ({ ...(v as any), ...payload } as Venda) : v));
@@ -331,6 +327,7 @@ export default function FaturamentoMinimalista() {
           contrato_dispensado,
           pedido_dispensado,
           forcar_exibicao_pedidos,
+          dispensada_sistema,
           produtos_vendas (
             id,
             tipo_produto,
@@ -1439,48 +1436,16 @@ export default function FaturamentoMinimalista() {
                                 className="cursor-pointer focus:bg-white/10 focus:text-white"
                                 onClick={() => toggleVendaFlag(
                                   venda,
-                                  'contrato_dispensado',
-                                  !(venda as any).contrato_dispensado,
-                                  'Contrato dispensado',
-                                  'Dispensa de contrato removida',
+                                  'dispensada_sistema',
+                                  !(venda as any).dispensada_sistema,
+                                  'Venda dispensada do sistema',
+                                  'Venda reativada no sistema',
                                 )}
                               >
-                                {(venda as any).contrato_dispensado ? (
-                                  <><FileCheck className="h-4 w-4 mr-2" />Reativar assinatura de contrato</>
+                                {(venda as any).dispensada_sistema ? (
+                                  <><Eye className="h-4 w-4 mr-2" />Reativar no sistema</>
                                 ) : (
-                                  <><FileX className="h-4 w-4 mr-2" />Dispensar assinatura de contrato</>
-                                )}
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                className="cursor-pointer focus:bg-white/10 focus:text-white"
-                                onClick={() => toggleVendaFlag(
-                                  venda,
-                                  'pedido_dispensado',
-                                  !(venda as any).pedido_dispensado,
-                                  'Pendência de faturamento dispensada',
-                                  'Dispensa de pendência removida',
-                                )}
-                              >
-                                {(venda as any).pedido_dispensado ? (
-                                  <><CheckCircle2 className="h-4 w-4 mr-2" />Reativar pendência de faturamento</>
-                                ) : (
-                                  <><X className="h-4 w-4 mr-2" />Dispensar pendência de faturamento</>
-                                )}
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                className="cursor-pointer focus:bg-white/10 focus:text-white"
-                                onClick={() => toggleVendaFlag(
-                                  venda,
-                                  'forcar_exibicao_pedidos',
-                                  !(venda as any).forcar_exibicao_pedidos,
-                                  'Exibição forçada ativada',
-                                  'Exibição forçada desativada',
-                                )}
-                              >
-                                {(venda as any).forcar_exibicao_pedidos ? (
-                                  <><EyeOff className="h-4 w-4 mr-2" />Desativar forçar exibição</>
-                                ) : (
-                                  <><Eye className="h-4 w-4 mr-2" />Forçar exibição (ignorar 10 semanas)</>
+                                  <><EyeOff className="h-4 w-4 mr-2" />Dispensar do sistema</>
                                 )}
                               </DropdownMenuItem>
                               <DropdownMenuSeparator className="bg-white/10" />

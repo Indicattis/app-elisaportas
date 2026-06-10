@@ -1,0 +1,2 @@
+ALTER TABLE public.vendas ADD COLUMN IF NOT EXISTS dispensada_sistema boolean NOT NULL DEFAULT false;
+UPDATE public.vendas SET dispensada_sistema = true WHERE (pedido_dispensado = true OR contrato_dispensado = true) AND dispensada_sistema = false;
