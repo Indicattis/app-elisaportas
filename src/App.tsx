@@ -196,6 +196,7 @@ import AcompanharPedido from "./pages/vendas/AcompanharPedido";
 import MeusParceiros from "./pages/vendas/MeusParceiros";
 import VisitasTecnicasCalendario from "./pages/vendas/VisitasTecnicasCalendario";
 import VisitasTecnicasRealizadas from "./pages/vendas/VisitasTecnicasRealizadas";
+import VisitaTecnicaConclusao from "./pages/vendas/VisitaTecnicaConclusao";
 import VendaDetalhesMinimalista from "./pages/vendas/VendaDetalhesMinimalista";
 import PrecosVendas from "./pages/vendas/PrecosVendas";
 
@@ -479,6 +480,7 @@ const App = () => (
                 <Route path="/vendas/acompanhar-pedido" element={<ProtectedRoute routeKey="vendas_hub"><AcompanharPedido /></ProtectedRoute>} />
                 <Route path="/vendas/visitas-tecnicas" element={<ProtectedRoute routeKey="vendas_visitas_tecnicas"><VisitasTecnicasCalendario /></ProtectedRoute>} />
                 <Route path="/vendas/visitas-tecnicas/realizadas" element={<ProtectedRoute routeKey="vendas_visitas_tecnicas_realizadas"><VisitasTecnicasRealizadas /></ProtectedRoute>} />
+                <Route path="/vendas/visitas-tecnicas/:visitaId/concluir" element={<ProtectedRoute routeKey="vendas_visitas_tecnicas"><VisitaTecnicaConclusao /></ProtectedRoute>} />
                 <Route path="/vendas/contratos" element={<ProtectedRoute routeKey="vendas_hub"><ContratosVendasHub /></ProtectedRoute>} />
                 <Route path="/vendas/precos" element={<ProtectedRoute routeKeyPrefix="vendas_"><PrecosVendas /></ProtectedRoute>} />
 

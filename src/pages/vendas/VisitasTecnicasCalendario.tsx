@@ -345,7 +345,7 @@ export default function VisitasTecnicasCalendario() {
                       className={`text-left text-[11px] px-1.5 py-0.5 rounded truncate ${
                         v.status === 'cancelada'
                           ? 'bg-red-500/15 text-red-200 line-through'
-                          : v.status === 'realizada'
+                          : (v.status === 'realizada' || v.status === 'concluida')
                           ? 'bg-emerald-500/15 text-emerald-200'
                           : 'bg-blue-500/20 text-blue-100'
                       }`}
@@ -462,6 +462,13 @@ export default function VisitasTecnicasCalendario() {
           <DialogFooter className="flex-wrap gap-2 pt-4 mt-2 border-t border-white/10">
             {editing && (
               <>
+                <Button
+                  variant="outline"
+                  className="bg-blue-500/20 border-blue-400/30 text-blue-100 hover:bg-blue-500/30"
+                  onClick={() => navigate(`/vendas/visitas-tecnicas/${editing.id}/concluir`)}
+                >
+                  {editing.status === 'concluida' ? 'Ver ficha' : 'Concluir visita'}
+                </Button>
                 <Button
                   variant="outline"
                   className="bg-white/5 border-white/10 text-white hover:bg-white/10"
