@@ -268,11 +268,11 @@ export default function VisitaTecnicaConclusao() {
 
       const { data: conclusao, error: cErr } = await supabase
         .from('visitas_tecnicas_conclusoes')
-        .insert({
+        .insert([{
           visita_id: visitaId,
           observacoes_gerais: obsGerais || null,
           concluido_por: u.user?.id || null,
-        })
+        }] as any)
         .select()
         .single();
       if (cErr) throw cErr;
@@ -280,7 +280,7 @@ export default function VisitaTecnicaConclusao() {
       for (const p of portas) {
         const { data: portaRow, error: pErr } = await supabase
           .from('visitas_tecnicas_portas')
-          .insert({
+          .insert([{
             conclusao_id: conclusao.id,
             ordem: p.ordem,
             largura_vao: p.largura_vao ? Number(p.largura_vao) : null,
@@ -309,7 +309,7 @@ export default function VisitaTecnicaConclusao() {
             tem_tubo_tiras_frontais: p.tem_tubo_tiras_frontais,
             retirar_portao_local: p.retirar_portao_local,
             observacoes: p.observacoes || null,
-          })
+          }] as any)
           .select()
           .single();
         if (pErr) throw pErr;
@@ -321,9 +321,9 @@ export default function VisitaTecnicaConclusao() {
           const { error: upErr } = await supabase.storage.from('visitas-tecnicas-fotos').upload(fname, file);
           if (upErr) throw upErr;
           const { data: pub } = supabase.storage.from('visitas-tecnicas-fotos').getPublicUrl(fname);
-          await supabase.from('visitas_tecnicas_portas_fotos').insert({
+          await supabase.from('visitas_tecnicas_portas_fotos').insert([{
             porta_id: portaRow.id, url: pub.publicUrl, legenda: p.legendasNovas[i] || null, ordem: i,
-          });
+          }] as any);
         }
       }
 
