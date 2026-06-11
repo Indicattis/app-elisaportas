@@ -345,8 +345,6 @@ import FaturamentoVendasMinimalista from "./pages/administrativo/FaturamentoVend
 import FaturamentoProdutosMinimalista from "./pages/administrativo/FaturamentoProdutosMinimalista";
 import FaturamentoVendaMinimalista from "./pages/administrativo/FaturamentoVendaMinimalista";
 import CustosMinimalista from "./pages/administrativo/CustosMinimalista";
-import CustosGridMinimalista from "./pages/administrativo/CustosGridMinimalista";
-import CustosMesMinimalista from "./pages/administrativo/CustosMesMinimalista";
 import GastosPage from "./pages/administrativo/GastosPage";
 import BancosPage from "./pages/administrativo/BancosPage";
 
@@ -646,8 +644,6 @@ const App = () => (
                 <Route path="/financeiro/faturamento/vendas" element={<ProtectedRoute routeKey="administrativo_hub"><FaturamentoVendasMinimalista /></ProtectedRoute>} />
                 <Route path="/financeiro/faturamento/produtos" element={<ProtectedRoute routeKey="administrativo_hub"><FaturamentoProdutosMinimalista /></ProtectedRoute>} />
                 <Route path="/financeiro/faturamento/:id" element={<ProtectedRoute routeKey="administrativo_hub"><FaturamentoVendaMinimalista /></ProtectedRoute>} />
-                <Route path="/financeiro/custos/:mes" element={<ProtectedRoute routeKey="administrativo_hub"><CustosMesMinimalista /></ProtectedRoute>} />
-                <Route path="/financeiro/custos" element={<ProtectedRoute routeKey="administrativo_hub"><CustosGridMinimalista /></ProtectedRoute>} />
                 <Route path="/financeiro/gastos" element={<ProtectedRoute routeKey="admin_gastos"><GastosPage /></ProtectedRoute>} />
                 <Route path="/financeiro/custo-folha" element={<ProtectedRoute routeKey="administrativo_hub"><CustoFolhaMensal /></ProtectedRoute>} />
                 <Route path="/financeiro/bancos" element={<ProtectedRoute routeKey="admin_bancos"><BancosPage /></ProtectedRoute>} />
