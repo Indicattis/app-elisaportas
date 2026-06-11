@@ -156,61 +156,53 @@ export default function ContratosVendas() {
     const vContratos = (contratosByVenda as any)[vendaId] || [];
     if (vContratos.length === 0) return null;
     return (
-      <div className="mt-3 space-y-1.5">
+      <>
         {vContratos.map((c: any) => (
-          <div
-            key={c.id}
-            className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg bg-white/[0.03] border border-white/5"
-          >
-            <div className="flex items-center gap-2 min-w-0">
-              <FileText className="w-3.5 h-3.5 text-white/50 shrink-0" />
-              <span className="text-xs text-white/80 truncate">{c.nome_arquivo}</span>
-            </div>
-            <div className="flex items-center gap-0.5 shrink-0">
+          <div key={c.id} className="contents">
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-7 w-7 text-white/70 hover:text-white hover:bg-white/10"
+              onClick={() => window.open(c.arquivo_url, '_blank', 'noopener,noreferrer')}
+              title="Visualizar"
+            >
+              <Eye className="w-3.5 h-3.5" />
+            </Button>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-7 w-7 text-white/70 hover:text-white hover:bg-white/10"
+              onClick={() => {
+                const a = document.createElement('a');
+                a.href = c.arquivo_url;
+                a.download = c.nome_arquivo || 'contrato.pdf';
+                a.target = '_blank';
+                a.rel = 'noopener noreferrer';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+              }}
+              title="Baixar"
+            >
+              <Download className="w-3.5 h-3.5" />
+            </Button>
+            {allowDelete && (
               <Button
                 size="icon"
                 variant="ghost"
-                className="h-7 w-7 text-white/70 hover:text-white hover:bg-white/10"
-                onClick={() => window.open(c.arquivo_url, '_blank', 'noopener,noreferrer')}
-                title="Visualizar"
-              >
-                <Eye className="w-3.5 h-3.5" />
-              </Button>
-              <Button
-                size="icon"
-                variant="ghost"
-                className="h-7 w-7 text-white/70 hover:text-white hover:bg-white/10"
+                className="h-7 w-7 text-red-300/70 hover:text-red-300 hover:bg-red-500/10"
+                disabled={isDeleting}
                 onClick={() => {
-                  const a = document.createElement('a');
-                  a.href = c.arquivo_url;
-                  a.download = c.nome_arquivo || 'contrato.pdf';
-                  a.target = '_blank';
-                  a.rel = 'noopener noreferrer';
-                  document.body.appendChild(a);
-                  a.click();
-                  a.remove();
+                  if (confirm('Excluir este contrato?')) deleteContrato(c.id);
                 }}
-                title="Baixar"
+                title="Excluir"
               >
-                <Download className="w-3.5 h-3.5" />
+                <Trash2 className="w-3.5 h-3.5" />
               </Button>
-              {allowDelete && (
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-7 w-7 text-red-300/70 hover:text-red-300 hover:bg-red-500/10"
-                  disabled={isDeleting}
-                  onClick={() => {
-                    if (confirm('Excluir este contrato?')) deleteContrato(c.id);
-                  }}
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </Button>
-              )}
-            </div>
+            )}
           </div>
         ))}
-      </div>
+      </>
     );
   };
 
@@ -353,25 +345,20 @@ export default function ContratosVendas() {
               <td className="px-3 py-2 text-right whitespace-nowrap">{renderDescontoAcrescimo(v.id)}</td>
               {(onAction || extraRow) && (
                 <td className="px-3 py-2 text-right">
-                  <div className="flex flex-row flex-wrap items-center justify-end gap-2">
+                  <div className="flex flex-row flex-nowrap items-center justify-end gap-1">
                     {extraRow?.(v)}
                     {onAction && ActionIcon && (
                       <Button
-                        size="sm"
+                        size="icon"
                         className={actionClass}
                         disabled={generatingVendaId === v.id || revertingVendaId === v.id}
                         onClick={() => onAction(v)}
+                        title={actionLabel}
                       >
                         {generatingVendaId === v.id ? (
-                          <>
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            Gerando...
-                          </>
+                          <Loader2 className="w-4 h-4 animate-spin" />
                         ) : (
-                          <>
-                            <ActionIcon className="w-4 h-4 mr-2" />
-                            {actionLabel}
-                          </>
+                          <ActionIcon className="w-4 h-4" />
                         )}
                       </Button>
                     )}
@@ -562,23 +549,23 @@ export default function ContratosVendas() {
                       setAnexarOpen(true);
                     }}
                     extraRow={(v) => (
-                      <div className="flex flex-row flex-wrap items-center gap-2">
+                      <>
                         {renderContratoFiles(v.id, true)}
                         <Button
-                          size="sm"
+                          size="icon"
                           variant="ghost"
-                          className="text-white/70 hover:text-white hover:bg-white/10 border border-white/10"
+                          className="h-7 w-7 text-white/70 hover:text-white hover:bg-white/10 border border-white/10"
                           disabled={revertingVendaId === v.id}
                           onClick={() => handleRetornarParaPendente(v)}
+                          title="Retornar para Pendente"
                         >
                           {revertingVendaId === v.id ? (
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            <Loader2 className="w-4 h-4 animate-spin" />
                           ) : (
-                            <Undo2 className="w-4 h-4 mr-2" />
+                            <Undo2 className="w-4 h-4" />
                           )}
-                          Retornar para Pendente
                         </Button>
-                      </div>
+                      </>
                     )}
                   />
                 )}
@@ -598,55 +585,49 @@ export default function ContratosVendas() {
                   <TableView
                     rows={assinados}
                     extraRow={(v) => (
-                      <div className="flex flex-row flex-wrap items-center gap-2">
-                        {v.contrato_assinado_em && (
-                          <div className="text-[11px] text-emerald-300/80 flex items-center gap-1">
-                            <FileCheck2 className="w-3 h-3" />
-                            Assinado em {format(new Date(v.contrato_assinado_em), 'dd/MM/yyyy', { locale: ptBR })}
-                          </div>
-                        )}
+                      <>
                         {renderContratoFiles(v.id, false)}
                         {v.contrato_url && v.contrato_url !== 'legado' && (
                           <Button
-                            size="sm"
+                            size="icon"
                             variant="ghost"
-                            className="text-white/80 hover:text-white hover:bg-white/10 border border-white/10"
+                            className="h-7 w-7 text-white/80 hover:text-white hover:bg-white/10 border border-white/10"
                             onClick={async () => {
                               const { data } = await supabase.storage
                                 .from('contratos-vendas')
                                 .createSignedUrl(v.contrato_url as string, 300);
                               if (data?.signedUrl) window.open(data.signedUrl, '_blank');
                             }}
+                            title="Baixar contrato assinado"
                           >
-                            <Download className="w-4 h-4 mr-2" />
-                            Baixar contrato assinado
+                            <Download className="w-4 h-4" />
                           </Button>
                         )}
                         {v.contrato_url && (
                           <Button
-                            size="sm"
+                            size="icon"
                             variant="ghost"
-                            className="text-white/70 hover:text-white hover:bg-white/10 border border-white/10"
+                            className="h-7 w-7 text-white/70 hover:text-white hover:bg-white/10 border border-white/10"
                             disabled={revertingVendaId === v.id}
                             onClick={() => handleRetornarParaGerado(v)}
+                            title="Retornar para Gerado"
                           >
                             {revertingVendaId === v.id ? (
-                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              <Loader2 className="w-4 h-4 animate-spin" />
                             ) : (
-                              <Undo2 className="w-4 h-4 mr-2" />
+                              <Undo2 className="w-4 h-4" />
                             )}
-                            Retornar para Gerado
                           </Button>
                         )}
                         <Button
-                          size="sm"
-                          className="bg-gradient-to-r from-yellow-500 to-yellow-700 hover:from-yellow-400 hover:to-yellow-600 text-white border border-yellow-400/30"
+                          size="icon"
+                          className="bg-gradient-to-r from-yellow-500 to-yellow-700 hover:from-yellow-400 hover:to-yellow-600 text-white border border-yellow-400/30 h-7 w-7"
                           onClick={() => navigate(`/financeiro/faturamento/${v.id}`)}
+                          title="Avançar para Pend. Faturamento"
                         >
-                          <ArrowRight className="w-4 h-4 mr-2" />
-                          Avançar para Pend. Faturamento
+                          <ArrowRight className="w-4 h-4" />
                         </Button>
-                      </div>
+                      </>
                     )}
                   />
                 )}
