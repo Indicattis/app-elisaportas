@@ -1,49 +1,28 @@
 ## Problema
 
-No contrato gerado em `/vendas/contratos`, a linha do motor sai como:
+Em `/direcao/estrategia/itens`, ao alterar `custo_unitario`/`preco_venda` (e taxas) de um item de custo, a página `/direcao/estrategia/kits/:id/montagem` continua mostrando o lucro/custo/venda total antigos. Além disso, o `valor_porta` salvo no kit também fica desatualizado.
 
-> • MOTOR: 1, de **000 kg** baixo fluxo (...)
-
-O "000 kg" está hardcoded em `src/utils/contratoElisaPDFGenerator.ts` (linha 36). O peso correto está no kit de montagem da porta (`tabela_precos_portas_montagem` → `custos_itens` com `categoria = 'Motores'`), referenciado por `produtos_vendas.tabela_precos_porta_id`.
+Causas:
+1. `useCustosItens.updateItem` só invalida a query `["custos_itens"]`. As queries `["kit-montagem", kitId]` e `["kits-montagem-resumo"]` (que selecionam joined `custo_item`) permanecem em cache.
+2. Nenhum recálculo de `tabela_precos_portas.valor_porta` é disparado quando o `preco_venda` do item muda — hoje só acontece via `recalcKitValorPorta` em add/update/remove na montagem.
 
 ## Solução
 
-### 1. `src/components/contratos/GerarContratoElisaModal.tsx`
+### 1. Invalidar queries dependentes ao atualizar item de custo
+Em `src/hooks/useCustosItens.ts`, no `onSuccess` de `updateItem` (e por simetria em `createItem`/`deleteItem`), invalidar também:
+- `["kit-montagem"]` (todas as chaves que começam com isso)
+- `["kits-montagem-resumo"]`
+- `["tabela-precos"]` e `["tabela-precos-kit"]` (pois `valor_porta` será recalculado)
+- `["montagem-template"]`
 
-Ao carregar a venda, para cada porta (`tipo_produto` em `porta_enrolar`/`porta_social`/`porta`) com `tabela_precos_porta_id`:
+### 2. Recalcular `valor_porta` dos kits afetados
+No `mutationFn` de `updateItem`, quando o `patch` contiver campos que afetam o preço de venda do kit (`preco_venda`, ou — se decidirmos — `custo_unitario`/taxas que afetam lucro), após o `update`:
+- Buscar `tabela_precos_portas_montagem` filtrando `custo_item_id = id` para descobrir os `kit_id`s impactados (distinct).
+- Para cada `kit_id`, chamar `recalcKitValorPorta(kitId)` (já existe em `useKitMontagem.ts`).
 
-- Consultar `tabela_precos_portas_montagem` filtrando por `kit_id` e fazendo join com `custos_itens` para pegar os itens da `categoria = 'Motores'`.
-- Extrair o peso em kg da `descricao` via regex `/(\d+)\s*kg/i` (ex.: "Motor AC 300 Kg" → 300).
-- Multiplicar a quantidade do item de motor pela quantidade da porta na venda.
+Observação: `recalcKitValorPorta` só depende de `preco_venda`, então só precisa rodar quando `patch.preco_venda` mudou. Para mudanças apenas em `custo_unitario`/taxas, basta invalidar as queries (lucro/custo derivados são calculados no client em `computeLucroUnit`).
 
-Montar a string `quantidade_motores` no formato pedido (listar por porta), ex.:
-- `1 de 300 kg + 2 de 500 kg`
-- Se um kit não tiver motor identificável, manter fallback `<qtd> de — kg` e logar `console.warn`.
+### Arquivos alterados
+- `src/hooks/useCustosItens.ts` — expandir `updateItem` (e create/delete) para invalidar as queries de montagem e recalcular `valor_porta` dos kits afetados quando `preco_venda` mudar.
 
-### 2. `src/utils/contratoElisaPDFGenerator.ts`
-
-Trocar o template fixo na linha 36 de:
-```
-• MOTOR: ${d.quantidade_motores}, de 000 kg baixo fluxo (...)
-```
-para:
-```
-• MOTOR: ${d.quantidade_motores} baixo fluxo (...)
-```
-(o peso já vem embutido em `quantidade_motores`).
-
-Nenhuma mudança na interface `ContratoElisaData` — o campo `quantidade_motores` continua existindo, só passa a transportar a descrição completa "1 de 300 kg + 2 de 500 kg".
-
-### 3. UI do modal
-
-Manter o input `Quantidade de motores` editável (usuário pode ajustar antes de gerar). Apenas atualizar o `label` para "Motores (qtd + peso)" e o placeholder com um exemplo.
-
-## Arquivos afetados
-
-- `src/components/contratos/GerarContratoElisaModal.tsx` — buscar kits e montar a string.
-- `src/utils/contratoElisaPDFGenerator.ts` — remover "de 000 kg" do template.
-
-## Fora de escopo
-
-- Não altera schema do banco.
-- Não altera regras de faturamento, kits, ou outras telas.
+Sem mudanças de schema, sem mudanças visuais.
