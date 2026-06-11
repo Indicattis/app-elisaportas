@@ -33,7 +33,7 @@ function buildClausulas(d: ContratoElisaData): Array<{ titulo?: string; texto: s
       texto:
         `1. O presente contrato tem como objeto a venda e instalação de ${d.quantidade_portas} porta(s) de enrolar automática(s), conforme as seguintes especificações:\n\n` +
         `• MATERIAL: ${d.material_detalhado}, dimensionado conforme medidas tiradas em visita técnica realizada com a presença e confirmação do comprador.\n` +
-        `• MOTOR: ${d.quantidade_motores}, de 000 kg baixo fluxo (monofásico 220v, 120RPM), freio eletromagnético, fim de curso com limitador de parada automática, acionamento através de botoeira de comando composta por 3 botões (abre, para e fecha) cada motor.\n` +
+        `• MOTOR: ${d.quantidade_motores} baixo fluxo (monofásico 220v, 120RPM), freio eletromagnético, fim de curso com limitador de parada automática, acionamento através de botoeira de comando composta por 3 botões (abre, para e fecha) cada motor.\n` +
         `• SISTEMA DE EMERGÊNCIA: Correntes manuais para acionamento na falta de energia elétrica.\n` +
         `• CARACTERÍSTICAS ADICIONAIS: Portas com pintura eletrostática na cor ${d.cor}.\n` +
         `• DIMENSÕES DA PORTA: ${d.dimensoes}.`,

@@ -76,6 +76,47 @@ export function GerarContratoElisaModal({ open, onOpenChange, vendaId, onGerado 
       );
       const qtdPortas = portas.reduce((a: number, p: any) => a + (p.quantidade || 1), 0);
 
+      // Buscar motor de cada porta via kit de montagem
+      const kitIds = Array.from(
+        new Set(portas.map((p: any) => p.tabela_precos_porta_id).filter(Boolean))
+      ) as string[];
+
+      const motoresPorKit: Record<string, { qtdPorPorta: number; pesoKg: number | null }> = {};
+      if (kitIds.length > 0) {
+        const { data: montagens } = await supabase
+          .from('tabela_precos_portas_montagem')
+          .select('kit_id, quantidade, custo_item:custo_item_id(descricao, categoria)')
+          .in('kit_id', kitIds);
+
+        (montagens || []).forEach((m: any) => {
+          if (m.custo_item?.categoria !== 'Motores') return;
+          const match = /(\d+(?:[\.,]\d+)?)\s*kg/i.exec(m.custo_item?.descricao || '');
+          const peso = match ? parseFloat(match[1].replace(',', '.')) : null;
+          motoresPorKit[m.kit_id] = {
+            qtdPorPorta: Number(m.quantidade) || 1,
+            pesoKg: peso,
+          };
+        });
+      }
+
+      // Agregar: { peso => quantidade total }
+      const agg: Record<string, number> = {};
+      portas.forEach((p: any) => {
+        const info = p.tabela_precos_porta_id ? motoresPorKit[p.tabela_precos_porta_id] : undefined;
+        const qtdPorta = p.quantidade || 1;
+        const qtdMotores = (info?.qtdPorPorta ?? 1) * qtdPorta;
+        const pesoLabel = info?.pesoKg != null ? `${info.pesoKg} kg` : '— kg';
+        if (!info?.pesoKg) {
+          console.warn('[ContratoElisa] Motor sem peso identificável para kit', p.tabela_precos_porta_id);
+        }
+        agg[pesoLabel] = (agg[pesoLabel] || 0) + qtdMotores;
+      });
+
+      const motoresStr =
+        Object.entries(agg)
+          .map(([peso, qtd]) => `${qtd} de ${peso}`)
+          .join(' + ') || (qtdPortas ? `${qtdPortas} de — kg` : '');
+
       const materialDetalhado = (venda.produtos || [])
         .map((p: any) => `${p.quantidade || 1}x ${p.descricao || p.tipo_produto}${p.tamanho ? ` (${p.tamanho})` : ''}`)
         .join('; ');
@@ -116,7 +157,7 @@ export function GerarContratoElisaModal({ open, onOpenChange, vendaId, onGerado 
         comprador_endereco: enderecoCompleto,
         quantidade_portas: qtdPortas ? String(qtdPortas) : '',
         material_detalhado: materialDetalhado,
-        quantidade_motores: qtdPortas ? String(qtdPortas) : '',
+        quantidade_motores: motoresStr,
         cor: cores || 'GALVANIZADA',
         dimensoes,
         valor_total: formatCurrency(venda.valor_venda || 0),
@@ -173,7 +214,7 @@ export function GerarContratoElisaModal({ open, onOpenChange, vendaId, onGerado 
       { key: 'comprador_endereco', label: 'Endereço completo', type: 'textarea' },
       { key: 'quantidade_portas', label: 'Quantidade de portas', type: 'input' },
       { key: 'material_detalhado', label: 'Material detalhado', type: 'textarea' },
-      { key: 'quantidade_motores', label: 'Quantidade de motores', type: 'input' },
+      { key: 'quantidade_motores', label: 'Motores (qtd + peso)', type: 'input' },
       { key: 'cor', label: 'Cor da pintura (ou GALVANIZADA)', type: 'select' },
       { key: 'dimensoes', label: 'Dimensões da(s) porta(s)', type: 'input' },
       { key: 'valor_total', label: 'Valor total', type: 'input' },
