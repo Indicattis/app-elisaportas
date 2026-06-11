@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { recalcKitValorPorta } from "./useKitMontagem";
 
 export type CustoItem = {
   id: string;
@@ -298,6 +299,14 @@ export function useCustosItens() {
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: QUERY_KEY });
 
+  const invalidateMontagemDependentes = () => {
+    queryClient.invalidateQueries({ queryKey: ["kit-montagem"] });
+    queryClient.invalidateQueries({ queryKey: ["kits-montagem-resumo"] });
+    queryClient.invalidateQueries({ queryKey: ["tabela-precos"] });
+    queryClient.invalidateQueries({ queryKey: ["tabela-precos-kit"] });
+    queryClient.invalidateQueries({ queryKey: ["montagem-template"] });
+  };
+
   const createItem = useMutation({
     mutationFn: async (payload: NewCustoItem) => {
       const { data, error } = await supabase
@@ -328,6 +337,7 @@ export function useCustosItens() {
     },
     onSuccess: () => {
       invalidate();
+      invalidateMontagemDependentes();
       toast.success("Item criado");
     },
     onError: (err: any) => toast.error(err?.message ?? "Erro ao criar item"),
@@ -337,8 +347,21 @@ export function useCustosItens() {
     mutationFn: async ({ id, patch }: { id: string; patch: Partial<CustoItem> }) => {
       const { error } = await supabase.from("custos_itens").update(patch).eq("id", id);
       if (error) throw error;
+      // Se preco_venda mudou, recalcular valor_porta dos kits que usam este item
+      if (Object.prototype.hasOwnProperty.call(patch, "preco_venda")) {
+        const { data: rows, error: kitsErr } = await supabase
+          .from("tabela_precos_portas_montagem")
+          .select("kit_id")
+          .eq("custo_item_id", id);
+        if (kitsErr) throw kitsErr;
+        const kitIds = Array.from(new Set((rows ?? []).map((r: any) => r.kit_id)));
+        await Promise.all(kitIds.map((kid) => recalcKitValorPorta(kid)));
+      }
     },
-    onSuccess: () => invalidate(),
+    onSuccess: () => {
+      invalidate();
+      invalidateMontagemDependentes();
+    },
     onError: (err: any) => toast.error(err?.message ?? "Erro ao atualizar item"),
   });
 
@@ -349,6 +372,7 @@ export function useCustosItens() {
     },
     onSuccess: () => {
       invalidate();
+      invalidateMontagemDependentes();
       toast.success("Item excluído");
     },
     onError: (err: any) => toast.error(err?.message ?? "Erro ao excluir item"),
