@@ -75,6 +75,7 @@ export default function ContratosVendas() {
         .select('id, cliente_nome, cpf_cliente, cidade, data_venda, valor_venda, atendente_id, contrato_url, contrato_assinado_em')
         .eq('is_rascunho', false)
         .eq('contrato_dispensado', false)
+        .eq('dispensada_sistema', false)
         .neq('status_aprovacao', 'reprovado')
         .order('data_venda', { ascending: false })
         .limit(5000);
