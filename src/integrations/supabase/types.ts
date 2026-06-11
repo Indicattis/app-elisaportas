@@ -9844,6 +9844,189 @@ export type Database = {
           },
         ]
       }
+      visitas_tecnicas_conclusoes: {
+        Row: {
+          concluido_em: string
+          concluido_por: string | null
+          created_at: string
+          id: string
+          observacoes_gerais: string | null
+          updated_at: string
+          visita_id: string
+        }
+        Insert: {
+          concluido_em?: string
+          concluido_por?: string | null
+          created_at?: string
+          id?: string
+          observacoes_gerais?: string | null
+          updated_at?: string
+          visita_id: string
+        }
+        Update: {
+          concluido_em?: string
+          concluido_por?: string | null
+          created_at?: string
+          id?: string
+          observacoes_gerais?: string | null
+          updated_at?: string
+          visita_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visitas_tecnicas_conclusoes_visita_id_fkey"
+            columns: ["visita_id"]
+            isOneToOne: true
+            referencedRelation: "visitas_tecnicas_agendadas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      visitas_tecnicas_portas: {
+        Row: {
+          acessorios: Json
+          altura_total: number | null
+          altura_vao: number | null
+          caixa_motor: string | null
+          conclusao_id: string
+          cores: Json
+          created_at: string
+          dificuldade_instalacao: string | null
+          distancia_tubo_cm: number | null
+          guia_tamanho: string | null
+          id: string
+          largura_total: number | null
+          largura_vao: number | null
+          meia_cana_especificacoes: string | null
+          meia_cana_tipo: string | null
+          observacoes: string | null
+          ordem: number
+          posicao_guia: string | null
+          posicao_motor: string | null
+          posicao_porta: string | null
+          posicao_testeira: string | null
+          qtd_controle_adicional: number | null
+          qtd_tiras_frontais: number | null
+          retirar_portao_local: boolean
+          tem_controle_adicional: boolean
+          tem_tiras_frontais: boolean
+          tem_tubo_afastamento: boolean
+          tem_tubo_tiras_frontais: boolean
+          tipo_guia: string | null
+          tipo_servico: string | null
+          updated_at: string
+        }
+        Insert: {
+          acessorios?: Json
+          altura_total?: number | null
+          altura_vao?: number | null
+          caixa_motor?: string | null
+          conclusao_id: string
+          cores?: Json
+          created_at?: string
+          dificuldade_instalacao?: string | null
+          distancia_tubo_cm?: number | null
+          guia_tamanho?: string | null
+          id?: string
+          largura_total?: number | null
+          largura_vao?: number | null
+          meia_cana_especificacoes?: string | null
+          meia_cana_tipo?: string | null
+          observacoes?: string | null
+          ordem?: number
+          posicao_guia?: string | null
+          posicao_motor?: string | null
+          posicao_porta?: string | null
+          posicao_testeira?: string | null
+          qtd_controle_adicional?: number | null
+          qtd_tiras_frontais?: number | null
+          retirar_portao_local?: boolean
+          tem_controle_adicional?: boolean
+          tem_tiras_frontais?: boolean
+          tem_tubo_afastamento?: boolean
+          tem_tubo_tiras_frontais?: boolean
+          tipo_guia?: string | null
+          tipo_servico?: string | null
+          updated_at?: string
+        }
+        Update: {
+          acessorios?: Json
+          altura_total?: number | null
+          altura_vao?: number | null
+          caixa_motor?: string | null
+          conclusao_id?: string
+          cores?: Json
+          created_at?: string
+          dificuldade_instalacao?: string | null
+          distancia_tubo_cm?: number | null
+          guia_tamanho?: string | null
+          id?: string
+          largura_total?: number | null
+          largura_vao?: number | null
+          meia_cana_especificacoes?: string | null
+          meia_cana_tipo?: string | null
+          observacoes?: string | null
+          ordem?: number
+          posicao_guia?: string | null
+          posicao_motor?: string | null
+          posicao_porta?: string | null
+          posicao_testeira?: string | null
+          qtd_controle_adicional?: number | null
+          qtd_tiras_frontais?: number | null
+          retirar_portao_local?: boolean
+          tem_controle_adicional?: boolean
+          tem_tiras_frontais?: boolean
+          tem_tubo_afastamento?: boolean
+          tem_tubo_tiras_frontais?: boolean
+          tipo_guia?: string | null
+          tipo_servico?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visitas_tecnicas_portas_conclusao_id_fkey"
+            columns: ["conclusao_id"]
+            isOneToOne: false
+            referencedRelation: "visitas_tecnicas_conclusoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      visitas_tecnicas_portas_fotos: {
+        Row: {
+          created_at: string
+          id: string
+          legenda: string | null
+          ordem: number
+          porta_id: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          legenda?: string | null
+          ordem?: number
+          porta_id: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          legenda?: string | null
+          ordem?: number
+          porta_id?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visitas_tecnicas_portas_fotos_porta_id_fkey"
+            columns: ["porta_id"]
+            isOneToOne: false
+            referencedRelation: "visitas_tecnicas_portas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       whatsapp_contador: {
         Row: {
           id: string
