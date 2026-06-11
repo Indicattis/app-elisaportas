@@ -464,6 +464,13 @@ export default function VisitasTecnicasCalendario() {
               <>
                 <Button
                   variant="outline"
+                  className="bg-blue-500/20 border-blue-400/30 text-blue-100 hover:bg-blue-500/30"
+                  onClick={() => navigate(`/vendas/visitas-tecnicas/${editing.id}/concluir`)}
+                >
+                  {editing.status === 'concluida' ? 'Ver ficha' : 'Concluir visita'}
+                </Button>
+                <Button
+                  variant="outline"
                   className="bg-white/5 border-white/10 text-white hover:bg-white/10"
                   onClick={() => setStatus.mutate(editing.status === 'realizada' ? 'agendada' : 'realizada')}
                 >
