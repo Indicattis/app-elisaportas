@@ -6,7 +6,7 @@ import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 const menuItems = [
   { label: "Gastos", icon: DollarSign, path: "/financeiro/gastos", ativo: true, cor: "orange" },
   { label: "Faturamento", icon: Receipt, path: "/financeiro/faturamento", ativo: true },
-  { label: "Custos", icon: Coins, path: "/financeiro/custos", ativo: true },
+  
   { label: "Contas a Pagar", icon: BadgeDollarSign, path: "/financeiro/caixa/contas-a-pagar", ativo: false },
   { label: "Contas a Receber", icon: Receipt, path: "/financeiro/caixa/contas-a-receber", ativo: true },
   { label: "Custo em Folha", icon: Users, path: "/financeiro/custo-folha", ativo: true },
