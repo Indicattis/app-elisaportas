@@ -345,7 +345,7 @@ export default function VisitasTecnicasCalendario() {
                       className={`text-left text-[11px] px-1.5 py-0.5 rounded truncate ${
                         v.status === 'cancelada'
                           ? 'bg-red-500/15 text-red-200 line-through'
-                          : v.status === 'realizada'
+                          : (v.status === 'realizada' || v.status === 'concluida')
                           ? 'bg-emerald-500/15 text-emerald-200'
                           : 'bg-blue-500/20 text-blue-100'
                       }`}
