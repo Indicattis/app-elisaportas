@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Plus, ChevronLeft, ChevronRight, FileText, Trash2, Loader2 } from 'lucide-react';
+import { ArrowLeft, Plus, ChevronLeft, ChevronRight, FileText, Trash2, Loader2, CalendarIcon, Check, ChevronsUpDown } from 'lucide-react';
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { DelayedParticles } from '@/components/DelayedParticles';
 import { Button } from '@/components/ui/button';
@@ -11,9 +11,10 @@ import { Textarea } from '@/components/ui/textarea';
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
 interface VisitaAgendada {
@@ -58,6 +59,23 @@ function formatPhone(v: string) {
   const d = v.replace(/\D/g, '').slice(0, 11);
   if (d.length <= 10) return d.replace(/(\d{2})(\d{4})(\d{0,4}).*/, '($1) $2-$3').replace(/-$/, '');
   return d.replace(/(\d{2})(\d{5})(\d{0,4}).*/, '($1) $2-$3').replace(/-$/, '');
+}
+
+function dateToYmd(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function ymdToDate(ymd: string): Date | undefined {
+  if (!ymd) return undefined;
+  const [y, m, d] = ymd.split('-').map(Number);
+  if (!y || !m || !d) return undefined;
+  return new Date(y, m - 1, d);
+}
+
+function formatYmdBR(ymd: string) {
+  if (!ymd) return '';
+  const [y, m, d] = ymd.split('-');
+  return `${d}/${m}/${y}`;
 }
 
 const emptyForm = {
