@@ -78,6 +78,65 @@ function formatYmdBR(ymd: string) {
   return `${d}/${m}/${y}`;
 }
 
+function ResponsavelCombobox({
+  value,
+  onChange,
+  responsaveis,
+}: {
+  value: string;
+  onChange: (id: string) => void;
+  responsaveis: Responsavel[];
+}) {
+  const [open, setOpen] = useState(false);
+  const selected = responsaveis.find(r => r.id === value);
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          className={cn(
+            "mt-1 w-full justify-between font-normal bg-white/5 border-white/10 text-white hover:bg-white/10 hover:text-white",
+            !selected && "text-white/40"
+          )}
+        >
+          {selected ? selected.nome : 'Selecione'}
+          <ChevronsUpDown className="ml-2 h-4 w-4 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 bg-zinc-900 border-white/10" align="start">
+        <Command className="bg-transparent">
+          <CommandInput placeholder="Buscar responsável..." className="text-white" />
+          <CommandList>
+            <CommandEmpty className="text-white/50 text-sm p-2">Nenhum encontrado.</CommandEmpty>
+            <CommandGroup>
+              <CommandItem
+                value="__none__"
+                onSelect={() => { onChange(''); setOpen(false); }}
+                className="text-white/70 aria-selected:bg-white/10"
+              >
+                <Check className={cn("mr-2 h-3 w-3", !value ? "opacity-100" : "opacity-0")} />
+                — Sem responsável —
+              </CommandItem>
+              {responsaveis.map(r => (
+                <CommandItem
+                  key={r.id}
+                  value={r.nome}
+                  onSelect={() => { onChange(r.id); setOpen(false); }}
+                  className="text-white aria-selected:bg-white/10"
+                >
+                  <Check className={cn("mr-2 h-3 w-3", value === r.id ? "opacity-100" : "opacity-0")} />
+                  {r.nome}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 const emptyForm = {
   titulo: '',
   data_visita: '',
