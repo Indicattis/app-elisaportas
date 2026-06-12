@@ -1,32 +1,30 @@
-# Modal "Agendar nova visita" — versão dinâmica
+# Largura ampliada + sidebar direita de visitas a concluir
 
-Arquivo único afetado: `src/pages/vendas/VisitasTecnicasCalendario.tsx`.
+Arquivo: `src/pages/vendas/VisitasTecnicasCalendario.tsx`.
 
-## O que muda
+## 1. Largura do conteúdo
+- Remover o `max-w-6xl` e usar largura cheia com `px-[100px]` (100px de padding lateral interno).
+- Manter o padding vertical atual (`pt-20 pb-10`).
 
-### 1. Endereço enxuto
-- Remover do modal os inputs visíveis de **Endereço (rua)**, **Bairro**, **Cidade**, **Estado** e **Complemento**.
-- Manter apenas **CEP** e **Número** lado a lado.
-- O lookup do ViaCEP continua acontecendo ao digitar o CEP (8 dígitos), e os campos rua/bairro/cidade/estado são preenchidos **em memória** no `form` (sem mostrar inputs). Continuam sendo salvos normalmente no insert/update.
-- Abaixo do CEP, exibir uma linha discreta read-only com o resumo (`Rua, Bairro — Cidade/UF`) quando o ViaCEP responder, só para confirmação visual. Se o CEP não retornar, mostrar aviso curto.
+## 2. Layout em duas colunas
+- Envolver o conteúdo principal em um grid: `grid grid-cols-[1fr_320px] gap-6`.
+- Coluna esquerda: header da página + grade do calendário (conteúdo atual).
+- Coluna direita: nova sidebar "Visitas a concluir".
 
-### 2. Data dinâmica (date picker)
-- Substituir o `<Input type="date">` por um botão + `Popover` + `Calendar` (shadcn), padrão usado no projeto.
-- Locale pt-BR, formatação `dd/MM/yyyy` no botão.
-- Manter o valor interno em `form.data_visita` como `YYYY-MM-DD` (compatível com a regra global `T12:00:00.000Z` já usada no save).
-- Wrapper do Calendar com `pointer-events-auto` (necessário dentro de Dialog).
+## 3. Sidebar "Visitas a concluir"
+- Card glassmorphism (`bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-4`) sticky no topo (`sticky top-20`, `max-h-[calc(100vh-6rem)] overflow-y-auto`).
+- Título "Visitas a concluir" + contador.
+- Nova query `useQuery(['visitas-a-concluir'])` em `visitas_tecnicas_agendadas`:
+  - filtro `status in ('agendada','realizada')` (visitas em aberto = não `concluida` nem `cancelada`)
+  - ordenado por `data_visita asc, hora_inicio asc`
+  - sem limite de mês (lista global de pendências)
+- Cada item: linha clicável mostrando data (`dd/MM`), hora, título e cidade (quando houver). Click navega para `/vendas/visitas-tecnicas/${id}/concluir`.
+- Badge sutil indicando se está atrasada (data < hoje) em âmbar.
+- Estado vazio: "Nenhuma visita pendente".
+- Após salvar/atualizar/excluir uma visita no modal, invalidar também `['visitas-a-concluir']`.
 
-### 3. Responsável dinâmico (combobox com busca)
-- Substituir o `<Select>` por `Popover + Command` (combobox shadcn) com `CommandInput` para filtrar responsáveis por nome.
-- Mostra nome selecionado no trigger; opção "— Sem responsável —" no topo.
-- Mesma fonte de dados (`admin_users` ativos) já carregada no componente.
+## Responsivo
+- Abaixo de `lg`, colapsar para uma coluna (`grid-cols-1`) e exibir a sidebar acima ou abaixo do calendário (abaixo é mais limpo).
 
 ## Fora do escopo
-- Não alterar a tabela `visitas_tecnicas_agendadas` nem o payload salvo (endereço continua persistido com os campos preenchidos via ViaCEP).
-- Não mexer no fluxo de edição/exclusão/conclusão, nem na grade do calendário.
-- Não tocar em outros modais/páginas.
-
-## Detalhe técnico
-- Usar `Calendar` de `@/components/ui/calendar` em `mode="single"`, convertendo Date ⇄ string `YYYY-MM-DD` sem `toISOString` (montar manualmente para evitar shift de timezone, conforme regra do projeto).
-- Combobox: `Command`, `CommandInput`, `CommandList`, `CommandItem` de `@/components/ui/command` (mesmo padrão do `EstadoCidadeInline.tsx`).
-- Validação no save permanece a mesma; endereço continua opcional.
+- Nenhuma mudança no modal, na grade do calendário, no schema, nem nas demais páginas.

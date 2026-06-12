@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Plus, ChevronLeft, ChevronRight, FileText, Trash2, Loader2, CalendarIcon, Check, ChevronsUpDown } from 'lucide-react';
+import { ArrowLeft, Plus, ChevronLeft, ChevronRight, FileText, Trash2, Loader2, CalendarIcon, Check, ChevronsUpDown, ClipboardList, AlertCircle } from 'lucide-react';
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { DelayedParticles } from '@/components/DelayedParticles';
 import { Button } from '@/components/ui/button';
@@ -197,6 +197,20 @@ export default function VisitasTecnicasCalendario() {
     },
   });
 
+  const { data: visitasAConcluir = [] } = useQuery({
+    queryKey: ['visitas-a-concluir'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('visitas_tecnicas_agendadas')
+        .select('id, titulo, data_visita, hora_inicio, cidade, estado, status')
+        .in('status', ['agendada', 'realizada'])
+        .order('data_visita', { ascending: true })
+        .order('hora_inicio', { ascending: true });
+      if (error) throw error;
+      return (data || []) as Array<Pick<VisitaAgendada, 'id'|'titulo'|'data_visita'|'hora_inicio'|'cidade'|'estado'|'status'>>;
+    },
+  });
+
   const visitasPorDia = useMemo(() => {
     const map = new Map<string, VisitaAgendada[]>();
     visitas.forEach(v => {
@@ -289,6 +303,7 @@ export default function VisitasTecnicasCalendario() {
       toast.success(editing ? 'Visita atualizada' : 'Visita agendada');
       setDialogOpen(false);
       qc.invalidateQueries({ queryKey: ['visitas-agendadas'] });
+      qc.invalidateQueries({ queryKey: ['visitas-a-concluir'] });
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -302,6 +317,7 @@ export default function VisitasTecnicasCalendario() {
       toast.success('Visita excluída');
       setDialogOpen(false);
       qc.invalidateQueries({ queryKey: ['visitas-agendadas'] });
+      qc.invalidateQueries({ queryKey: ['visitas-a-concluir'] });
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -315,6 +331,7 @@ export default function VisitasTecnicasCalendario() {
     onSuccess: () => {
       setDialogOpen(false);
       qc.invalidateQueries({ queryKey: ['visitas-agendadas'] });
+      qc.invalidateQueries({ queryKey: ['visitas-a-concluir'] });
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -348,13 +365,15 @@ export default function VisitasTecnicasCalendario() {
       </button>
 
       <div
-        className="relative z-10 w-full max-w-6xl px-4 pt-20 pb-10"
+        className="relative z-10 w-full px-[100px] pt-20 pb-10"
         style={{
           opacity: mounted ? 1 : 0,
           transform: mounted ? 'translateY(0)' : 'translateY(20px)',
           transition: 'all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 300ms',
         }}
       >
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
+        <div>
         <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
           <div>
             <h1 className="text-xl font-semibold text-white">Visitas Técnicas</h1>
@@ -443,6 +462,55 @@ export default function VisitasTecnicasCalendario() {
               <Loader2 className="w-5 h-5 text-blue-400 animate-spin" />
             </div>
           )}
+        </div>
+        </div>
+
+        <aside className="lg:sticky lg:top-20 lg:self-start lg:max-h-[calc(100vh-6rem)] overflow-y-auto rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <ClipboardList className="w-4 h-4 text-blue-300" />
+              <h2 className="text-sm font-semibold text-white">Visitas a concluir</h2>
+            </div>
+            <span className="text-[11px] px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-200 border border-blue-400/20">
+              {visitasAConcluir.length}
+            </span>
+          </div>
+
+          {visitasAConcluir.length === 0 ? (
+            <div className="text-center py-8 text-white/40 text-xs">
+              Nenhuma visita pendente
+            </div>
+          ) : (
+            <ul className="space-y-1.5">
+              {visitasAConcluir.map(v => {
+                const ymd = toDateOnly(v.data_visita);
+                const dia = ymd.slice(8, 10);
+                const mes = ymd.slice(5, 7);
+                const hora = (v.hora_inicio || '').slice(0, 5);
+                const todayYmd = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+                const atrasada = ymd < todayYmd;
+                const local = [v.cidade, v.estado].filter(Boolean).join('/');
+                return (
+                  <li key={v.id}>
+                    <button
+                      onClick={() => navigate(`/vendas/visitas-tecnicas/${v.id}/concluir`)}
+                      className="w-full text-left p-2.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.08] border border-white/5 hover:border-white/10 transition group"
+                    >
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <span className={`text-[11px] font-mono px-1.5 py-0.5 rounded ${atrasada ? 'bg-amber-500/20 text-amber-200' : 'bg-blue-500/15 text-blue-200'}`}>
+                          {dia}/{mes} · {hora}
+                        </span>
+                        {atrasada && <AlertCircle className="w-3 h-3 text-amber-300" />}
+                      </div>
+                      <div className="text-sm text-white truncate">{v.titulo}</div>
+                      {local && <div className="text-[11px] text-white/40 truncate">{local}</div>}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </aside>
         </div>
       </div>
 
