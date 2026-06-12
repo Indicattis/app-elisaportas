@@ -404,7 +404,29 @@ export default function VisitasTecnicasCalendario() {
             </div>
             <div>
               <label className="text-[11px] uppercase tracking-wider text-white/50 font-medium">Data *</label>
-              <Input className="mt-1 bg-white/5 border-white/10 text-white [color-scheme:dark] focus-visible:ring-blue-500/50 focus-visible:border-blue-400/50" type="date" value={form.data_visita} onChange={e => setForm({ ...form, data_visita: e.target.value })} />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "mt-1 w-full justify-start text-left font-normal bg-white/5 border-white/10 text-white hover:bg-white/10 hover:text-white",
+                      !form.data_visita && "text-white/40"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {form.data_visita ? formatYmdBR(form.data_visita) : 'Selecione a data'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 bg-zinc-900 border-white/10 pointer-events-auto" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={ymdToDate(form.data_visita)}
+                    onSelect={(d) => d && setForm({ ...form, data_visita: dateToYmd(d) })}
+                    initialFocus
+                    className="pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
             <div>
               <label className="text-[11px] uppercase tracking-wider text-white/50 font-medium">Hora *</label>
@@ -412,15 +434,11 @@ export default function VisitasTecnicasCalendario() {
             </div>
             <div>
               <label className="text-[11px] uppercase tracking-wider text-white/50 font-medium">Responsável</label>
-              <Select value={form.responsavel_id || 'none'} onValueChange={v => setForm({ ...form, responsavel_id: v === 'none' ? '' : v })}>
-                <SelectTrigger className="mt-1 bg-white/5 border-white/10 text-white focus:ring-blue-500/50"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                <SelectContent className="bg-black/90 backdrop-blur-xl border-white/10 text-white">
-                  <SelectItem value="none">— Sem responsável —</SelectItem>
-                  {responsaveis.map(r => (
-                    <SelectItem key={r.id} value={r.id}>{r.nome}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <ResponsavelCombobox
+                value={form.responsavel_id}
+                onChange={(id) => setForm({ ...form, responsavel_id: id })}
+                responsaveis={responsaveis}
+              />
             </div>
             <div>
               <label className="text-[11px] uppercase tracking-wider text-white/50 font-medium">Telefone de contato</label>
@@ -447,30 +465,19 @@ export default function VisitasTecnicasCalendario() {
                 {cepLoading && <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-blue-400" />}
               </div>
             </div>
-            <div className="md:col-span-2">
-              <label className="text-[11px] uppercase tracking-wider text-white/50 font-medium">Endereço</label>
-              <Input className="mt-1 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus-visible:ring-blue-500/50 focus-visible:border-blue-400/50" value={form.endereco} onChange={e => setForm({ ...form, endereco: e.target.value })} />
-            </div>
             <div>
               <label className="text-[11px] uppercase tracking-wider text-white/50 font-medium">Número</label>
               <Input className="mt-1 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus-visible:ring-blue-500/50 focus-visible:border-blue-400/50" value={form.numero} onChange={e => setForm({ ...form, numero: e.target.value })} />
             </div>
-            <div>
-              <label className="text-[11px] uppercase tracking-wider text-white/50 font-medium">Complemento</label>
-              <Input className="mt-1 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus-visible:ring-blue-500/50 focus-visible:border-blue-400/50" value={form.complemento} onChange={e => setForm({ ...form, complemento: e.target.value })} />
-            </div>
-            <div>
-              <label className="text-[11px] uppercase tracking-wider text-white/50 font-medium">Bairro</label>
-              <Input className="mt-1 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus-visible:ring-blue-500/50 focus-visible:border-blue-400/50" value={form.bairro} onChange={e => setForm({ ...form, bairro: e.target.value })} />
-            </div>
-            <div>
-              <label className="text-[11px] uppercase tracking-wider text-white/50 font-medium">Cidade</label>
-              <Input className="mt-1 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus-visible:ring-blue-500/50 focus-visible:border-blue-400/50" value={form.cidade} onChange={e => setForm({ ...form, cidade: e.target.value })} />
-            </div>
-            <div>
-              <label className="text-[11px] uppercase tracking-wider text-white/50 font-medium">Estado</label>
-              <Input className="mt-1 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus-visible:ring-blue-500/50 focus-visible:border-blue-400/50" value={form.estado} onChange={e => setForm({ ...form, estado: e.target.value.toUpperCase().slice(0, 2) })} />
-            </div>
+            {(form.endereco || form.bairro || form.cidade || form.estado) && (
+              <div className="md:col-span-2 -mt-1">
+                <div className="text-[11px] text-white/40 px-1">
+                  {[form.endereco, form.bairro].filter(Boolean).join(', ')}
+                  {(form.cidade || form.estado) && ' — '}
+                  {form.cidade}{form.cidade && form.estado && '/'}{form.estado}
+                </div>
+              </div>
+            )}
             <div className="md:col-span-2">
               <label className="text-[11px] uppercase tracking-wider text-white/50 font-medium">Observações</label>
               <Textarea className="mt-1 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus-visible:ring-blue-500/50 focus-visible:border-blue-400/50" rows={3} value={form.observacoes} onChange={e => setForm({ ...form, observacoes: e.target.value })} />
