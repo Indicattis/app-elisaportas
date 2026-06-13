@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Plus, Trash2, Upload, X, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Upload, X, Loader2, ChevronDown, ChevronUp, Play, Clock } from 'lucide-react';
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { DelayedParticles } from '@/components/DelayedParticles';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,8 @@ import {
 import { toast } from 'sonner';
 import { logVisitaHistorico } from '@/lib/visitasHistorico';
 import { useAuth } from '@/hooks/useAuth';
+import { useCronometro } from '@/hooks/useCronometro';
+import { formatCronometro } from '@/utils/timeFormat';
 
 interface Cor { id: string; nome: string; codigo_hex: string }
 interface CustoItem { id: string; descricao: string; categoria: string | null }
@@ -96,6 +98,8 @@ export default function VisitaTecnicaConclusao() {
   const [portas, setPortas] = useState<PortaForm[]>([]);
   const [obsGerais, setObsGerais] = useState('');
   const [readOnly, setReadOnly] = useState(false);
+  const [iniciado, setIniciado] = useState(false);
+  const { segundosDecorridos, isRunning, start: startCron } = useCronometro();
 
   useEffect(() => { const t = setTimeout(() => setMounted(true), 50); return () => clearTimeout(t); }, []);
 
@@ -151,6 +155,7 @@ export default function VisitaTecnicaConclusao() {
   useEffect(() => {
     if (!existente) return;
     setReadOnly(true);
+    setIniciado(true);
     setObsGerais(existente.conclusao.observacoes_gerais || '');
     const fotosPorPorta = new Map<string, any[]>();
     for (const f of existente.fotos) {
@@ -331,7 +336,10 @@ export default function VisitaTecnicaConclusao() {
       }
 
       // marcar visita como concluída
-      await supabase.from('visitas_tecnicas_agendadas').update({ status: 'concluida' }).eq('id', visitaId);
+      await supabase
+        .from('visitas_tecnicas_agendadas')
+        .update({ status: 'concluida', duracao_medicao_segundos: segundosDecorridos } as any)
+        .eq('id', visitaId);
       await logVisitaHistorico({
         visita_id: visitaId!,
         acao: 'concluida',
@@ -405,8 +413,40 @@ export default function VisitaTecnicaConclusao() {
               {visita.data_visita?.slice(0, 10)} {visita.hora_inicio?.slice(0, 5)}
             </p>
           )}
+          {iniciado && !readOnly && (
+            <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-500/10 border border-blue-400/20">
+              <Clock className={`w-4 h-4 text-blue-300 ${isRunning ? 'animate-pulse' : ''}`} />
+              <span className="font-mono text-base text-blue-200">{formatCronometro(segundosDecorridos)}</span>
+              <span className="text-[10px] uppercase tracking-wider text-white/40">Medição em andamento</span>
+            </div>
+          )}
+          {readOnly && visita?.duracao_medicao_segundos != null && (
+            <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10">
+              <Clock className="w-4 h-4 text-white/60" />
+              <span className="font-mono text-sm text-white/80">{formatCronometro(visita.duracao_medicao_segundos)}</span>
+              <span className="text-[10px] uppercase tracking-wider text-white/40">Duração da medição</span>
+            </div>
+          )}
         </div>
 
+        {!iniciado && !readOnly ? (
+          <div className="rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 p-10 flex flex-col items-center justify-center text-center">
+            <div className="p-4 rounded-full bg-blue-500/10 border border-blue-400/20 mb-5">
+              <Clock className="w-10 h-10 text-blue-300" strokeWidth={1.5} />
+            </div>
+            <h2 className="text-lg font-medium text-white mb-2">Pronto para iniciar a medição?</h2>
+            <p className="text-sm text-white/50 mb-6 max-w-md">
+              Ao clicar em iniciar, o cronômetro começa a contar e o formulário de medição será liberado.
+            </p>
+            <Button
+              size="lg"
+              className="bg-gradient-to-br from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 text-white shadow-lg shadow-blue-500/30 h-12 px-8"
+              onClick={() => { startCron(); setIniciado(true); }}
+            >
+              <Play className="w-5 h-5 mr-2" /> Iniciar Medição
+            </Button>
+          </div>
+        ) : (
         <div className="space-y-4">
           {portas.map((p, idx) => (
             <PortaCard
@@ -470,6 +510,7 @@ export default function VisitaTecnicaConclusao() {
             </div>
           )}
         </div>
+        )}
       </div>
     </div>
   );

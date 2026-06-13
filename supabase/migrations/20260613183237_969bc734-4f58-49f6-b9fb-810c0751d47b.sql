@@ -1,0 +1,1 @@
+ALTER TABLE public.visitas_tecnicas_agendadas ADD COLUMN IF NOT EXISTS duracao_medicao_segundos integer;
