@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Plus, Trash2, Upload, X, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Upload, X, Loader2, ChevronDown, ChevronUp, Play, Clock } from 'lucide-react';
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { DelayedParticles } from '@/components/DelayedParticles';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,8 @@ import {
 import { toast } from 'sonner';
 import { logVisitaHistorico } from '@/lib/visitasHistorico';
 import { useAuth } from '@/hooks/useAuth';
+import { useCronometro } from '@/hooks/useCronometro';
+import { formatCronometro } from '@/utils/timeFormat';
 
 interface Cor { id: string; nome: string; codigo_hex: string }
 interface CustoItem { id: string; descricao: string; categoria: string | null }
@@ -96,6 +98,8 @@ export default function VisitaTecnicaConclusao() {
   const [portas, setPortas] = useState<PortaForm[]>([]);
   const [obsGerais, setObsGerais] = useState('');
   const [readOnly, setReadOnly] = useState(false);
+  const [iniciado, setIniciado] = useState(false);
+  const { segundosDecorridos, isRunning, start: startCron } = useCronometro();
 
   useEffect(() => { const t = setTimeout(() => setMounted(true), 50); return () => clearTimeout(t); }, []);
 
@@ -151,6 +155,7 @@ export default function VisitaTecnicaConclusao() {
   useEffect(() => {
     if (!existente) return;
     setReadOnly(true);
+    setIniciado(true);
     setObsGerais(existente.conclusao.observacoes_gerais || '');
     const fotosPorPorta = new Map<string, any[]>();
     for (const f of existente.fotos) {
@@ -331,7 +336,10 @@ export default function VisitaTecnicaConclusao() {
       }
 
       // marcar visita como concluída
-      await supabase.from('visitas_tecnicas_agendadas').update({ status: 'concluida' }).eq('id', visitaId);
+      await supabase
+        .from('visitas_tecnicas_agendadas')
+        .update({ status: 'concluida', duracao_medicao_segundos: segundosDecorridos } as any)
+        .eq('id', visitaId);
       await logVisitaHistorico({
         visita_id: visitaId!,
         acao: 'concluida',
