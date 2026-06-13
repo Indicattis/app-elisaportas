@@ -168,7 +168,7 @@ function DroppableDayCell({
   );
 }
 
-function DraggableVisitaChip({ visita, onOpen }: { visita: VisitaAgendada; onOpen: () => void }) {
+function DraggableVisitaChip({ visita, onOpen, onDelete }: { visita: VisitaAgendada; onOpen: () => void; onDelete?: () => void }) {
   const disabled = visita.status === 'concluida' || visita.status === 'cancelada';
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: visita.id, disabled });
   const cls =
@@ -178,15 +178,26 @@ function DraggableVisitaChip({ visita, onOpen }: { visita: VisitaAgendada; onOpe
       ? 'bg-emerald-500/15 text-emerald-200'
       : 'bg-blue-500/20 text-blue-100';
   return (
-    <button
-      ref={setNodeRef}
-      {...attributes}
-      {...listeners}
-      onClick={(e) => { e.stopPropagation(); onOpen(); }}
-      className={`text-left text-xs px-2 py-1.5 rounded truncate ${cls} ${isDragging ? 'opacity-30' : ''} ${disabled ? 'cursor-pointer' : 'cursor-grab active:cursor-grabbing'}`}
-    >
-      <span className="opacity-70">{(visita.hora_inicio || '').slice(0, 5)}</span> {visita.titulo}
-    </button>
+    <div className="relative group">
+      <button
+        ref={setNodeRef}
+        {...attributes}
+        {...listeners}
+        onClick={(e) => { e.stopPropagation(); onOpen(); }}
+        className={`w-full text-left text-xs px-2 py-1.5 rounded truncate ${cls} ${isDragging ? 'opacity-30' : ''} ${disabled ? 'cursor-pointer' : 'cursor-grab active:cursor-grabbing'}`}
+      >
+        <span className="opacity-70">{(visita.hora_inicio || '').slice(0, 5)}</span> {visita.titulo}
+      </button>
+      {onDelete && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onDelete(); }}
+          className="absolute right-1 top-1/2 -translate-y-1/2 p-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 text-red-300 hover:text-red-100 hover:bg-red-500/40"
+          title="Excluir visita"
+        >
+          <Trash2 className="w-3 h-3" />
+        </button>
+      )}
+    </div>
   );
 }
 
