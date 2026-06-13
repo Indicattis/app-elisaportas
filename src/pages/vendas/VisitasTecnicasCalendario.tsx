@@ -141,6 +141,55 @@ function ResponsavelCombobox({
   );
 }
 
+function DroppableDayCell({
+  dateStr,
+  isCurrentDay,
+  onAddClick,
+  children,
+}: {
+  dateStr: string;
+  isCurrentDay: boolean;
+  onAddClick: () => void;
+  children: React.ReactNode;
+}) {
+  const { setNodeRef, isOver } = useDroppable({ id: dateStr });
+  return (
+    <div
+      ref={setNodeRef}
+      onClick={onAddClick}
+      className={`min-h-[90px] rounded-md border p-1.5 flex flex-col gap-1 transition-colors cursor-pointer ${
+        isCurrentDay
+          ? 'bg-blue-500/10 border-blue-400/40'
+          : 'bg-white/[0.03] border-white/5 hover:bg-white/[0.06]'
+      } ${isOver ? 'ring-2 ring-blue-400/60 bg-blue-500/15' : ''}`}
+    >
+      {children}
+    </div>
+  );
+}
+
+function DraggableVisitaChip({ visita, onOpen }: { visita: VisitaAgendada; onOpen: () => void }) {
+  const disabled = visita.status === 'concluida' || visita.status === 'cancelada';
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: visita.id, disabled });
+  const cls =
+    visita.status === 'cancelada'
+      ? 'bg-red-500/15 text-red-200 line-through'
+      : (visita.status === 'realizada' || visita.status === 'concluida')
+      ? 'bg-emerald-500/15 text-emerald-200'
+      : 'bg-blue-500/20 text-blue-100';
+  return (
+    <button
+      ref={setNodeRef}
+      {...attributes}
+      {...listeners}
+      onClick={(e) => { e.stopPropagation(); onOpen(); }}
+      className={`text-left text-[11px] px-1.5 py-0.5 rounded truncate ${cls} ${isDragging ? 'opacity-30' : ''} ${disabled ? 'cursor-pointer' : 'cursor-grab active:cursor-grabbing'}`}
+    >
+      <span className="opacity-70">{(visita.hora_inicio || '').slice(0, 5)}</span> {visita.titulo}
+    </button>
+  );
+}
+
 const emptyForm = {
   titulo: '',
   data_visita: '',
