@@ -17,6 +17,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { DndContext, PointerSensor, useSensor, useSensors, useDraggable, useDroppable, DragOverlay, type DragEndEvent, type DragStartEvent } from '@dnd-kit/core';
+import { createPortal } from 'react-dom';
 import { VisitasHistoricoPanel } from '@/components/vendas/VisitasHistoricoPanel';
 import { logVisitaHistorico, diffVisita } from '@/lib/visitasHistorico';
 import { useAuth } from '@/hooks/useAuth';
