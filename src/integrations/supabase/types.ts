@@ -9882,6 +9882,54 @@ export type Database = {
           },
         ]
       }
+      visitas_tecnicas_historico: {
+        Row: {
+          acao: string
+          cidade: string | null
+          created_at: string
+          data_anterior: string | null
+          data_visita: string | null
+          detalhes: Json | null
+          estado: string | null
+          id: string
+          responsavel_nome: string | null
+          titulo: string | null
+          usuario_id: string | null
+          usuario_nome: string | null
+          visita_id: string | null
+        }
+        Insert: {
+          acao: string
+          cidade?: string | null
+          created_at?: string
+          data_anterior?: string | null
+          data_visita?: string | null
+          detalhes?: Json | null
+          estado?: string | null
+          id?: string
+          responsavel_nome?: string | null
+          titulo?: string | null
+          usuario_id?: string | null
+          usuario_nome?: string | null
+          visita_id?: string | null
+        }
+        Update: {
+          acao?: string
+          cidade?: string | null
+          created_at?: string
+          data_anterior?: string | null
+          data_visita?: string | null
+          detalhes?: Json | null
+          estado?: string | null
+          id?: string
+          responsavel_nome?: string | null
+          titulo?: string | null
+          usuario_id?: string | null
+          usuario_nome?: string | null
+          visita_id?: string | null
+        }
+        Relationships: []
+      }
       visitas_tecnicas_portas: {
         Row: {
           acessorios: Json

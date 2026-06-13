@@ -1,30 +1,54 @@
-# Largura ampliada + sidebar direita de visitas a concluir
+# Histórico + Drag-and-drop em /vendas/visitas-tecnicas
 
-Arquivo: `src/pages/vendas/VisitasTecnicasCalendario.tsx`.
+## 1. Histórico de visitas técnicas (abaixo do calendário)
 
-## 1. Largura do conteúdo
-- Remover o `max-w-6xl` e usar largura cheia com `px-[100px]` (100px de padding lateral interno).
-- Manter o padding vertical atual (`pt-20 pb-10`).
+### Banco
+Nova tabela `visitas_tecnicas_historico`:
+- `visita_id uuid` (referência à visita, sem FK rígida para preservar registro após exclusão)
+- `acao text` — `criada` | `alterada` | `excluida` | `concluida` | `reagendada`
+- `titulo text` — snapshot do título no momento do evento
+- `data_visita date`, `data_anterior date` (preenchido em reagendamento)
+- `responsavel_nome text`
+- `cidade text`, `estado text`
+- `detalhes jsonb` — diff resumido (campos alterados) ou payload da conclusão
+- `usuario_id uuid`, `usuario_nome text`
+- `created_at timestamptz default now()`
 
-## 2. Layout em duas colunas
-- Envolver o conteúdo principal em um grid: `grid grid-cols-[1fr_320px] gap-6`.
-- Coluna esquerda: header da página + grade do calendário (conteúdo atual).
-- Coluna direita: nova sidebar "Visitas a concluir".
+RLS: leitura para `authenticated`; insert via app (mesma política das visitas). Grants padrão (`authenticated`, `service_role`).
 
-## 3. Sidebar "Visitas a concluir"
-- Card glassmorphism (`bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-4`) sticky no topo (`sticky top-20`, `max-h-[calc(100vh-6rem)] overflow-y-auto`).
-- Título "Visitas a concluir" + contador.
-- Nova query `useQuery(['visitas-a-concluir'])` em `visitas_tecnicas_agendadas`:
-  - filtro `status in ('agendada','realizada')` (visitas em aberto = não `concluida` nem `cancelada`)
-  - ordenado por `data_visita asc, hora_inicio asc`
-  - sem limite de mês (lista global de pendências)
-- Cada item: linha clicável mostrando data (`dd/MM`), hora, título e cidade (quando houver). Click navega para `/vendas/visitas-tecnicas/${id}/concluir`.
-- Badge sutil indicando se está atrasada (data < hoje) em âmbar.
-- Estado vazio: "Nenhuma visita pendente".
-- Após salvar/atualizar/excluir uma visita no modal, invalidar também `['visitas-a-concluir']`.
+### Registro automático
+Em `VisitasTecnicasCalendario.tsx`, dentro do `onSuccess` das mutations `create`, `update`, `delete`, inserir uma linha na tabela com a ação correspondente. Em `update`, comparar payload anterior x novo para marcar `reagendada` quando `data_visita` mudar; caso contrário `alterada` com diff dos campos.
 
-## Responsivo
-- Abaixo de `lg`, colapsar para uma coluna (`grid-cols-1`) e exibir a sidebar acima ou abaixo do calendário (abaixo é mais limpo).
+Em `VisitaTecnicaConclusao.tsx`, ao concluir, inserir linha com ação `concluida` e snapshot básico (datas/horas reais, responsável).
+
+`usuario_nome` virá de `useAuth()` (perfil atual).
+
+### UI
+Novo card abaixo da grade do calendário (dentro da coluna esquerda do grid), mesmo padrão glassmorphism:
+- Título "Histórico de visitas" + filtro simples por ação (chips: Todas, Criadas, Alteradas, Reagendadas, Concluídas, Excluídas).
+- Lista virtualizada simples (últimas 50, com botão "Carregar mais").
+- Cada linha: ícone por ação, data/hora do evento (`dd/MM HH:mm`), texto descritivo (ex.: "João reagendou 'Visita Cliente X' de 10/06 para 12/06"), cidade entre parênteses.
+- Query `useQuery(['visitas-historico', filtro])` ordenada por `created_at desc`. Invalidada junto com as demais ao salvar/excluir/concluir.
+
+## 2. Drag-and-drop de visitas no calendário
+
+### Biblioteca
+Usar `@dnd-kit/core` (já presente no projeto, conforme `DraggableInstalacao*`).
+
+### Implementação em `VisitasTecnicasCalendario.tsx`
+- Envolver a grade do calendário em `<DndContext>` com `PointerSensor` (activation distance 8 para não conflitar com cliques de abrir modal).
+- Cada célula de dia vira `useDroppable` com id `yyyy-MM-dd`.
+- Cada card de visita dentro do dia vira `useDraggable` carregando `{ id, data_visita }`.
+- `onDragEnd`: se `over.id` é uma data diferente da origem, chamar uma nova mutation `mudarDataVisita({ id, novaData })` que faz `update` em `visitas_tecnicas_agendadas` apenas no campo `data_visita` (mantendo hora/responsável/etc.).
+- Optimistic update na query `['visitas-agendadas', mes]` para feedback imediato; rollback em erro.
+- Registrar evento `reagendada` no histórico (item 1) com `data_anterior` e nova `data_visita`.
+- `DragOverlay` exibindo uma versão compacta do card durante o arrasto.
+- Bloquear drag em visitas com status `concluida` ou `cancelada` (apenas `agendada`/`realizada` arrastáveis).
+
+### Sidebar direita
+Itens da sidebar "Visitas a concluir" também viram `useDraggable` com os mesmos ids, permitindo arrastá-los para um dia do calendário (efeito = reagendar). Sem alteração visual além do cursor.
 
 ## Fora do escopo
-- Nenhuma mudança no modal, na grade do calendário, no schema, nem nas demais páginas.
+- Modal de criação/edição.
+- Página de conclusão (apenas adicionar o log).
+- Edição inline de hora/responsável via drag (apenas a data muda).

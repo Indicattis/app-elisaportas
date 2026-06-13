@@ -16,6 +16,10 @@ import { Calendar } from '@/components/ui/calendar';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { DndContext, PointerSensor, useSensor, useSensors, useDraggable, useDroppable, DragOverlay, type DragEndEvent, type DragStartEvent } from '@dnd-kit/core';
+import { VisitasHistoricoPanel } from '@/components/vendas/VisitasHistoricoPanel';
+import { logVisitaHistorico, diffVisita } from '@/lib/visitasHistorico';
+import { useAuth } from '@/hooks/useAuth';
 
 interface VisitaAgendada {
   id: string;
@@ -137,6 +141,55 @@ function ResponsavelCombobox({
   );
 }
 
+function DroppableDayCell({
+  dateStr,
+  isCurrentDay,
+  onAddClick,
+  children,
+}: {
+  dateStr: string;
+  isCurrentDay: boolean;
+  onAddClick: () => void;
+  children: React.ReactNode;
+}) {
+  const { setNodeRef, isOver } = useDroppable({ id: dateStr });
+  return (
+    <div
+      ref={setNodeRef}
+      onClick={onAddClick}
+      className={`min-h-[90px] rounded-md border p-1.5 flex flex-col gap-1 transition-colors cursor-pointer ${
+        isCurrentDay
+          ? 'bg-blue-500/10 border-blue-400/40'
+          : 'bg-white/[0.03] border-white/5 hover:bg-white/[0.06]'
+      } ${isOver ? 'ring-2 ring-blue-400/60 bg-blue-500/15' : ''}`}
+    >
+      {children}
+    </div>
+  );
+}
+
+function DraggableVisitaChip({ visita, onOpen }: { visita: VisitaAgendada; onOpen: () => void }) {
+  const disabled = visita.status === 'concluida' || visita.status === 'cancelada';
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: visita.id, disabled });
+  const cls =
+    visita.status === 'cancelada'
+      ? 'bg-red-500/15 text-red-200 line-through'
+      : (visita.status === 'realizada' || visita.status === 'concluida')
+      ? 'bg-emerald-500/15 text-emerald-200'
+      : 'bg-blue-500/20 text-blue-100';
+  return (
+    <button
+      ref={setNodeRef}
+      {...attributes}
+      {...listeners}
+      onClick={(e) => { e.stopPropagation(); onOpen(); }}
+      className={`text-left text-[11px] px-1.5 py-0.5 rounded truncate ${cls} ${isDragging ? 'opacity-30' : ''} ${disabled ? 'cursor-pointer' : 'cursor-grab active:cursor-grabbing'}`}
+    >
+      <span className="opacity-70">{(visita.hora_inicio || '').slice(0, 5)}</span> {visita.titulo}
+    </button>
+  );
+}
+
 const emptyForm = {
   titulo: '',
   data_visita: '',
@@ -156,6 +209,9 @@ const emptyForm = {
 export default function VisitasTecnicasCalendario() {
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const { userRole } = useAuth();
+  const usuario_id = userRole?.user_id || null;
+  const usuario_nome = userRole?.nome || null;
   const [mounted, setMounted] = useState(false);
   const today = new Date();
   const [cursor, setCursor] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
@@ -163,6 +219,7 @@ export default function VisitasTecnicasCalendario() {
   const [editing, setEditing] = useState<VisitaAgendada | null>(null);
   const [form, setForm] = useState({ ...emptyForm });
   const [cepLoading, setCepLoading] = useState(false);
+  const [activeDrag, setActiveDrag] = useState<VisitaAgendada | null>(null);
 
   useEffect(() => { const t = setTimeout(() => setMounted(true), 50); return () => clearTimeout(t); }, []);
 
@@ -290,13 +347,44 @@ export default function VisitasTecnicasCalendario() {
         estado: form.estado || null,
         observacoes: form.observacoes || null,
       };
+      const respNome = responsaveis.find(r => r.id === form.responsavel_id)?.nome || null;
       if (editing) {
         const { error } = await supabase.from('visitas_tecnicas_agendadas').update(payload).eq('id', editing.id);
         if (error) throw error;
+        const antes = { ...editing };
+        const depois = { ...editing, ...payload };
+        const diff = diffVisita(antes, depois);
+        const dataMudou = !!diff['data_visita'];
+        await logVisitaHistorico({
+          visita_id: editing.id,
+          acao: dataMudou ? 'reagendada' : 'alterada',
+          titulo: payload.titulo,
+          data_visita: payload.data_visita,
+          data_anterior: dataMudou ? editing.data_visita : null,
+          responsavel_nome: respNome,
+          cidade: payload.cidade,
+          estado: payload.estado,
+          detalhes: diff,
+          usuario_id, usuario_nome,
+        });
       } else {
         const { data: u } = await supabase.auth.getUser();
-        const { error } = await supabase.from('visitas_tecnicas_agendadas').insert({ ...payload, created_by: u.user?.id });
+        const { data: created, error } = await supabase
+          .from('visitas_tecnicas_agendadas')
+          .insert({ ...payload, created_by: u.user?.id })
+          .select('id')
+          .single();
         if (error) throw error;
+        await logVisitaHistorico({
+          visita_id: created?.id || null,
+          acao: 'criada',
+          titulo: payload.titulo,
+          data_visita: payload.data_visita,
+          responsavel_nome: respNome,
+          cidade: payload.cidade,
+          estado: payload.estado,
+          usuario_id, usuario_nome,
+        });
       }
     },
     onSuccess: () => {
@@ -304,20 +392,32 @@ export default function VisitasTecnicasCalendario() {
       setDialogOpen(false);
       qc.invalidateQueries({ queryKey: ['visitas-agendadas'] });
       qc.invalidateQueries({ queryKey: ['visitas-a-concluir'] });
+      qc.invalidateQueries({ queryKey: ['visitas-historico'] });
     },
     onError: (e: any) => toast.error(e.message),
   });
 
   const delMut = useMutation({
     mutationFn: async (id: string) => {
+      const snap = editing;
       const { error } = await supabase.from('visitas_tecnicas_agendadas').delete().eq('id', id);
       if (error) throw error;
+      await logVisitaHistorico({
+        visita_id: id,
+        acao: 'excluida',
+        titulo: snap?.titulo,
+        data_visita: snap?.data_visita,
+        cidade: snap?.cidade,
+        estado: snap?.estado,
+        usuario_id, usuario_nome,
+      });
     },
     onSuccess: () => {
       toast.success('Visita excluída');
       setDialogOpen(false);
       qc.invalidateQueries({ queryKey: ['visitas-agendadas'] });
       qc.invalidateQueries({ queryKey: ['visitas-a-concluir'] });
+      qc.invalidateQueries({ queryKey: ['visitas-historico'] });
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -327,14 +427,79 @@ export default function VisitasTecnicasCalendario() {
       if (!editing) return;
       const { error } = await supabase.from('visitas_tecnicas_agendadas').update({ status }).eq('id', editing.id);
       if (error) throw error;
+      await logVisitaHistorico({
+        visita_id: editing.id,
+        acao: 'alterada',
+        titulo: editing.titulo,
+        data_visita: editing.data_visita,
+        cidade: editing.cidade,
+        estado: editing.estado,
+        detalhes: { status: { de: editing.status, para: status } },
+        usuario_id, usuario_nome,
+      });
     },
     onSuccess: () => {
       setDialogOpen(false);
       qc.invalidateQueries({ queryKey: ['visitas-agendadas'] });
       qc.invalidateQueries({ queryKey: ['visitas-a-concluir'] });
+      qc.invalidateQueries({ queryKey: ['visitas-historico'] });
     },
     onError: (e: any) => toast.error(e.message),
   });
+
+  const reagendarMut = useMutation({
+    mutationFn: async ({ visita, novaData }: { visita: VisitaAgendada; novaData: string }) => {
+      const dataAnterior = toDateOnly(visita.data_visita);
+      if (dataAnterior === novaData) return;
+      const { error } = await supabase
+        .from('visitas_tecnicas_agendadas')
+        .update({ data_visita: `${novaData}T12:00:00.000Z` })
+        .eq('id', visita.id);
+      if (error) throw error;
+      const respNome = responsaveis.find(r => r.id === visita.responsavel_id)?.nome || null;
+      await logVisitaHistorico({
+        visita_id: visita.id,
+        acao: 'reagendada',
+        titulo: visita.titulo,
+        data_visita: novaData,
+        data_anterior: dataAnterior,
+        responsavel_nome: respNome,
+        cidade: visita.cidade,
+        estado: visita.estado,
+        detalhes: { origem: 'drag-and-drop' },
+        usuario_id, usuario_nome,
+      });
+    },
+    onSuccess: () => {
+      toast.success('Visita reagendada');
+      qc.invalidateQueries({ queryKey: ['visitas-agendadas'] });
+      qc.invalidateQueries({ queryKey: ['visitas-a-concluir'] });
+      qc.invalidateQueries({ queryKey: ['visitas-historico'] });
+    },
+    onError: (e: any) => toast.error(e.message || 'Erro ao reagendar'),
+  });
+
+  const dndSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+
+  const handleDragStart = (e: DragStartEvent) => {
+    const id = String(e.active.id);
+    const v = visitas.find(x => x.id === id);
+    setActiveDrag(v || null);
+  };
+
+  const handleDragEnd = (e: DragEndEvent) => {
+    const dragged = activeDrag;
+    setActiveDrag(null);
+    if (!e.over || !dragged) return;
+    const novaData = String(e.over.id);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(novaData)) return;
+    if (toDateOnly(dragged.data_visita) === novaData) return;
+    if (dragged.status === 'concluida' || dragged.status === 'cancelada') {
+      toast.error('Visitas concluídas ou canceladas não podem ser reagendadas');
+      return;
+    }
+    reagendarMut.mutate({ visita: dragged, novaData });
+  };
 
   const isToday = (d: Date) =>
     d.getFullYear() === today.getFullYear() && d.getMonth() === today.getMonth() && d.getDate() === today.getDate();
@@ -394,6 +559,7 @@ export default function VisitasTecnicasCalendario() {
         </div>
 
         <div className="rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 p-4">
+          <DndContext sensors={dndSensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
           <div className="flex items-center justify-between mb-4">
             <button
               className="p-2 rounded-lg hover:bg-white/10 text-white/70"
@@ -422,37 +588,22 @@ export default function VisitasTecnicasCalendario() {
               const dateStr = `${cell.getFullYear()}-${String(cell.getMonth() + 1).padStart(2, '0')}-${String(cell.getDate()).padStart(2, '0')}`;
               const list = visitasPorDia.get(dateStr) || [];
               return (
-                <div
+                <DroppableDayCell
                   key={idx}
-                  className={`min-h-[90px] rounded-md border p-1.5 flex flex-col gap-1 transition-colors cursor-pointer ${
-                    isToday(cell)
-                      ? 'bg-blue-500/10 border-blue-400/40'
-                      : 'bg-white/[0.03] border-white/5 hover:bg-white/[0.06]'
-                  }`}
-                  onClick={() => openCreate(dateStr)}
+                  dateStr={dateStr}
+                  isCurrentDay={isToday(cell)}
+                  onAddClick={() => openCreate(dateStr)}
                 >
                   <div className={`text-xs ${isToday(cell) ? 'text-blue-300 font-semibold' : 'text-white/60'}`}>
                     {cell.getDate()}
                   </div>
                   {list.slice(0, 3).map(v => (
-                    <button
-                      key={v.id}
-                      onClick={(e) => { e.stopPropagation(); openEdit(v); }}
-                      className={`text-left text-[11px] px-1.5 py-0.5 rounded truncate ${
-                        v.status === 'cancelada'
-                          ? 'bg-red-500/15 text-red-200 line-through'
-                          : (v.status === 'realizada' || v.status === 'concluida')
-                          ? 'bg-emerald-500/15 text-emerald-200'
-                          : 'bg-blue-500/20 text-blue-100'
-                      }`}
-                    >
-                      <span className="opacity-70">{(v.hora_inicio || '').slice(0, 5)}</span> {v.titulo}
-                    </button>
+                    <DraggableVisitaChip key={v.id} visita={v} onOpen={() => openEdit(v)} />
                   ))}
                   {list.length > 3 && (
                     <span className="text-[10px] text-white/40">+{list.length - 3} mais</span>
                   )}
-                </div>
+                </DroppableDayCell>
               );
             })}
           </div>
@@ -462,7 +613,17 @@ export default function VisitasTecnicasCalendario() {
               <Loader2 className="w-5 h-5 text-blue-400 animate-spin" />
             </div>
           )}
+          <DragOverlay>
+            {activeDrag ? (
+              <div className="text-[11px] px-1.5 py-0.5 rounded bg-blue-500/40 text-blue-50 shadow-lg max-w-[200px] truncate">
+                <span className="opacity-70">{(activeDrag.hora_inicio || '').slice(0, 5)}</span> {activeDrag.titulo}
+              </div>
+            ) : null}
+          </DragOverlay>
+          </DndContext>
         </div>
+
+        <VisitasHistoricoPanel />
         </div>
 
         <aside className="lg:sticky lg:top-20 lg:self-start lg:max-h-[calc(100vh-6rem)] overflow-y-auto rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 p-4">
