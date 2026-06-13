@@ -157,7 +157,7 @@ function DroppableDayCell({
     <div
       ref={setNodeRef}
       onClick={onAddClick}
-      className={`min-h-[90px] rounded-md border p-1.5 flex flex-col gap-1 transition-colors cursor-pointer ${
+      className={`min-h-[140px] rounded-md border p-2.5 flex flex-col gap-1.5 transition-colors cursor-pointer ${
         isCurrentDay
           ? 'bg-blue-500/10 border-blue-400/40'
           : 'bg-white/[0.03] border-white/5 hover:bg-white/[0.06]'
@@ -183,7 +183,7 @@ function DraggableVisitaChip({ visita, onOpen }: { visita: VisitaAgendada; onOpe
       {...attributes}
       {...listeners}
       onClick={(e) => { e.stopPropagation(); onOpen(); }}
-      className={`text-left text-[11px] px-1.5 py-0.5 rounded truncate ${cls} ${isDragging ? 'opacity-30' : ''} ${disabled ? 'cursor-pointer' : 'cursor-grab active:cursor-grabbing'}`}
+      className={`text-left text-xs px-2 py-1.5 rounded truncate ${cls} ${isDragging ? 'opacity-30' : ''} ${disabled ? 'cursor-pointer' : 'cursor-grab active:cursor-grabbing'}`}
     >
       <span className="opacity-70">{(visita.hora_inicio || '').slice(0, 5)}</span> {visita.titulo}
     </button>
@@ -584,7 +584,7 @@ export default function VisitasTecnicasCalendario() {
 
           <div className="grid grid-cols-7 gap-1">
             {grid.map((cell, idx) => {
-              if (!cell) return <div key={idx} className="min-h-[90px] rounded-md bg-white/[0.02]" />;
+              if (!cell) return <div key={idx} className="min-h-[140px] rounded-md bg-white/[0.02]" />;
               const dateStr = `${cell.getFullYear()}-${String(cell.getMonth() + 1).padStart(2, '0')}-${String(cell.getDate()).padStart(2, '0')}`;
               const list = visitasPorDia.get(dateStr) || [];
               return (
@@ -615,7 +615,7 @@ export default function VisitasTecnicasCalendario() {
           )}
           <DragOverlay>
             {activeDrag ? (
-              <div className="text-[11px] px-1.5 py-0.5 rounded bg-blue-500/40 text-blue-50 shadow-lg max-w-[200px] truncate">
+              <div className="text-xs px-2 py-1.5 rounded bg-blue-500/40 text-blue-50 shadow-lg max-w-[200px] truncate">
                 <span className="opacity-70">{(activeDrag.hora_inicio || '').slice(0, 5)}</span> {activeDrag.titulo}
               </div>
             ) : null}
