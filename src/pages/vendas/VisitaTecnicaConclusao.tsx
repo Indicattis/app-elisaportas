@@ -13,6 +13,8 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { logVisitaHistorico } from '@/lib/visitasHistorico';
+import { useAuth } from '@/hooks/useAuth';
 
 interface Cor { id: string; nome: string; codigo_hex: string }
 interface CustoItem { id: string; descricao: string; categoria: string | null }
