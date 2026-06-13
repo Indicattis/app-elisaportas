@@ -629,13 +629,16 @@ export default function VisitasTecnicasCalendario() {
               <Loader2 className="w-5 h-5 text-blue-400 animate-spin" />
             </div>
           )}
-          <DragOverlay>
-            {activeDrag ? (
-              <div className="text-xs px-2 py-1.5 rounded bg-blue-500/40 text-blue-50 shadow-lg max-w-[200px] truncate">
-                <span className="opacity-70">{(activeDrag.hora_inicio || '').slice(0, 5)}</span> {activeDrag.titulo}
-              </div>
-            ) : null}
-          </DragOverlay>
+          {createPortal(
+            <DragOverlay>
+              {activeDrag ? (
+                <div className="text-xs px-2 py-1.5 rounded bg-blue-500/40 text-blue-50 shadow-lg max-w-[200px] truncate">
+                  <span className="opacity-70">{(activeDrag.hora_inicio || '').slice(0, 5)}</span> {activeDrag.titulo}
+                </div>
+              ) : null}
+            </DragOverlay>,
+            document.body
+          )}
           </DndContext>
         </div>
 
