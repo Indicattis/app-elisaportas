@@ -91,6 +91,7 @@ export default function VisitaTecnicaConclusao() {
   const { visitaId } = useParams<{ visitaId: string }>();
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const { userRole } = useAuth();
   const [mounted, setMounted] = useState(false);
   const [portas, setPortas] = useState<PortaForm[]>([]);
   const [obsGerais, setObsGerais] = useState('');
@@ -331,11 +332,22 @@ export default function VisitaTecnicaConclusao() {
 
       // marcar visita como concluída
       await supabase.from('visitas_tecnicas_agendadas').update({ status: 'concluida' }).eq('id', visitaId);
+      await logVisitaHistorico({
+        visita_id: visitaId!,
+        acao: 'concluida',
+        titulo: visita?.titulo,
+        data_visita: visita?.data_visita,
+        cidade: visita?.cidade,
+        estado: visita?.estado,
+        usuario_id: userRole?.user_id || null,
+        usuario_nome: userRole?.nome || null,
+      });
     },
     onSuccess: () => {
       toast.success('Visita técnica concluída');
       qc.invalidateQueries({ queryKey: ['visitas-agendadas'] });
       qc.invalidateQueries({ queryKey: ['visita-conclusao', visitaId] });
+      qc.invalidateQueries({ queryKey: ['visitas-historico'] });
       navigate('/vendas/visitas-tecnicas');
     },
     onError: (e: any) => toast.error(e.message || 'Erro ao concluir'),
