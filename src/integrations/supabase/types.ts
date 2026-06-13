@@ -9782,6 +9782,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           data_visita: string
+          duracao_medicao_segundos: number | null
           endereco: string | null
           estado: string | null
           hora_inicio: string
@@ -9802,6 +9803,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           data_visita: string
+          duracao_medicao_segundos?: number | null
           endereco?: string | null
           estado?: string | null
           hora_inicio: string
@@ -9822,6 +9824,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           data_visita?: string
+          duracao_medicao_segundos?: number | null
           endereco?: string | null
           estado?: string | null
           hora_inicio?: string
