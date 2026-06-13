@@ -116,7 +116,7 @@ export default function MeusOrcamentos() {
       ]}
       headerActions={
         <Button 
-          onClick={() => navigate('/dashboard/orcamentos/novo')}
+          onClick={() => navigate('/vendas/meus-orcamentos/novo')}
           className="bg-blue-600 hover:bg-blue-700"
           size="sm"
         >
@@ -175,7 +175,7 @@ export default function MeusOrcamentos() {
             return (
               <div
                 key={orcamento.id}
-                onClick={() => navigate(`/dashboard/orcamentos/${orcamento.id}`)}
+                onClick={() => navigate(`/vendas/meus-orcamentos/${orcamento.id}`)}
                 className="bg-primary/5 border border-primary/10 rounded-xl p-4 backdrop-blur-xl
                            hover:bg-primary/10 transition-colors cursor-pointer"
               >
@@ -206,7 +206,7 @@ export default function MeusOrcamentos() {
             <FileText className="w-12 h-12 text-white/20 mx-auto mb-4" />
             <p className="text-white/60">Nenhum orçamento encontrado neste mês</p>
             <Button 
-              onClick={() => navigate('/dashboard/orcamentos/novo')}
+              onClick={() => navigate('/vendas/meus-orcamentos/novo')}
               variant="outline"
               className="mt-4 border-white/20 text-white hover:bg-white/10"
             >
