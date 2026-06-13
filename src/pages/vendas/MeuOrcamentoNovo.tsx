@@ -59,7 +59,7 @@ export default function MeuOrcamentoNovo() {
 
       const { data, error } = await supabase
         .from('orcamentos')
-        .insert({
+        .insert([{
           atendente_id: user.id,
           cliente_nome: cliente.trim(),
           valor_produto: totalPortas + totalAvulsos,
@@ -70,7 +70,7 @@ export default function MeuOrcamentoNovo() {
           status: 'pendente',
           numero_orcamento: proximo,
           campos_personalizados: { portas, avulsos, frete } as any,
-        })
+        }] as any)
         .select('id, numero_orcamento')
         .single();
       if (error) throw error;
