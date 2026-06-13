@@ -17,6 +17,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { DndContext, PointerSensor, useSensor, useSensors, useDraggable, useDroppable, DragOverlay, type DragEndEvent, type DragStartEvent } from '@dnd-kit/core';
+import { createPortal } from 'react-dom';
 import { VisitasHistoricoPanel } from '@/components/vendas/VisitasHistoricoPanel';
 import { logVisitaHistorico, diffVisita } from '@/lib/visitasHistorico';
 import { useAuth } from '@/hooks/useAuth';
@@ -629,13 +630,16 @@ export default function VisitasTecnicasCalendario() {
               <Loader2 className="w-5 h-5 text-blue-400 animate-spin" />
             </div>
           )}
-          <DragOverlay>
-            {activeDrag ? (
-              <div className="text-xs px-2 py-1.5 rounded bg-blue-500/40 text-blue-50 shadow-lg max-w-[200px] truncate">
-                <span className="opacity-70">{(activeDrag.hora_inicio || '').slice(0, 5)}</span> {activeDrag.titulo}
-              </div>
-            ) : null}
-          </DragOverlay>
+          {createPortal(
+            <DragOverlay>
+              {activeDrag ? (
+                <div className="text-xs px-2 py-1.5 rounded bg-blue-500/40 text-blue-50 shadow-lg max-w-[200px] truncate">
+                  <span className="opacity-70">{(activeDrag.hora_inicio || '').slice(0, 5)}</span> {activeDrag.titulo}
+                </div>
+              ) : null}
+            </DragOverlay>,
+            document.body
+          )}
           </DndContext>
         </div>
 
