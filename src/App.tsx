@@ -192,6 +192,8 @@ import PedidoCorrecaoNovo from "./pages/vendas/PedidoCorrecaoNovo";
 import MeusClientes from "./pages/vendas/MeusClientes";
 import MeuClienteDetalhe from "./pages/vendas/MeuClienteDetalhe";
 import MeusOrcamentos from "./pages/vendas/MeusOrcamentos";
+import MeuOrcamentoNovo from "./pages/vendas/MeuOrcamentoNovo";
+import MeuOrcamentoDetalhe from "./pages/vendas/MeuOrcamentoDetalhe";
 import AcompanharPedido from "./pages/vendas/AcompanharPedido";
 import MeusParceiros from "./pages/vendas/MeusParceiros";
 import VisitasTecnicasCalendario from "./pages/vendas/VisitasTecnicasCalendario";
@@ -476,6 +478,8 @@ const App = () => (
                 <Route path="/vendas/catalogo/cores" element={<Navigate to="/marketing/catalogo/cores" replace />} />
                 <Route path="/marketing/catalogo/cores" element={<ProtectedRoute routeKeyPrefix="marketing_"><CatalogoCoresMinimalista /></ProtectedRoute>} />
                 <Route path="/vendas/meus-orcamentos" element={<ProtectedRoute routeKey="vendas_hub"><MeusOrcamentos /></ProtectedRoute>} />
+                <Route path="/vendas/meus-orcamentos/novo" element={<ProtectedRoute routeKey="vendas_hub"><MeuOrcamentoNovo /></ProtectedRoute>} />
+                <Route path="/vendas/meus-orcamentos/:id" element={<ProtectedRoute routeKey="vendas_hub"><MeuOrcamentoDetalhe /></ProtectedRoute>} />
                 <Route path="/vendas/meus-parceiros" element={<ProtectedRoute routeKey="vendas_hub"><MeusParceiros /></ProtectedRoute>} />
                 <Route path="/vendas/acompanhar-pedido" element={<ProtectedRoute routeKey="vendas_hub"><AcompanharPedido /></ProtectedRoute>} />
                 <Route path="/vendas/visitas-tecnicas" element={<ProtectedRoute routeKey="vendas_visitas_tecnicas"><VisitasTecnicasCalendario /></ProtectedRoute>} />
