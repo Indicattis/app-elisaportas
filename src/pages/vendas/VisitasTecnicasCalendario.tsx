@@ -510,6 +510,7 @@ export default function VisitasTecnicasCalendario() {
         </div>
 
         <div className="rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 p-4">
+          <DndContext sensors={dndSensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
           <div className="flex items-center justify-between mb-4">
             <button
               className="p-2 rounded-lg hover:bg-white/10 text-white/70"
@@ -538,37 +539,22 @@ export default function VisitasTecnicasCalendario() {
               const dateStr = `${cell.getFullYear()}-${String(cell.getMonth() + 1).padStart(2, '0')}-${String(cell.getDate()).padStart(2, '0')}`;
               const list = visitasPorDia.get(dateStr) || [];
               return (
-                <div
+                <DroppableDayCell
                   key={idx}
-                  className={`min-h-[90px] rounded-md border p-1.5 flex flex-col gap-1 transition-colors cursor-pointer ${
-                    isToday(cell)
-                      ? 'bg-blue-500/10 border-blue-400/40'
-                      : 'bg-white/[0.03] border-white/5 hover:bg-white/[0.06]'
-                  }`}
-                  onClick={() => openCreate(dateStr)}
+                  dateStr={dateStr}
+                  isCurrentDay={isToday(cell)}
+                  onAddClick={() => openCreate(dateStr)}
                 >
                   <div className={`text-xs ${isToday(cell) ? 'text-blue-300 font-semibold' : 'text-white/60'}`}>
                     {cell.getDate()}
                   </div>
                   {list.slice(0, 3).map(v => (
-                    <button
-                      key={v.id}
-                      onClick={(e) => { e.stopPropagation(); openEdit(v); }}
-                      className={`text-left text-[11px] px-1.5 py-0.5 rounded truncate ${
-                        v.status === 'cancelada'
-                          ? 'bg-red-500/15 text-red-200 line-through'
-                          : (v.status === 'realizada' || v.status === 'concluida')
-                          ? 'bg-emerald-500/15 text-emerald-200'
-                          : 'bg-blue-500/20 text-blue-100'
-                      }`}
-                    >
-                      <span className="opacity-70">{(v.hora_inicio || '').slice(0, 5)}</span> {v.titulo}
-                    </button>
+                    <DraggableVisitaChip key={v.id} visita={v} onOpen={() => openEdit(v)} />
                   ))}
                   {list.length > 3 && (
                     <span className="text-[10px] text-white/40">+{list.length - 3} mais</span>
                   )}
-                </div>
+                </DroppableDayCell>
               );
             })}
           </div>
@@ -578,7 +564,17 @@ export default function VisitasTecnicasCalendario() {
               <Loader2 className="w-5 h-5 text-blue-400 animate-spin" />
             </div>
           )}
+          <DragOverlay>
+            {activeDrag ? (
+              <div className="text-[11px] px-1.5 py-0.5 rounded bg-blue-500/40 text-blue-50 shadow-lg max-w-[200px] truncate">
+                <span className="opacity-70">{(activeDrag.hora_inicio || '').slice(0, 5)}</span> {activeDrag.titulo}
+              </div>
+            ) : null}
+          </DragOverlay>
+          </DndContext>
         </div>
+
+        <VisitasHistoricoPanel />
         </div>
 
         <aside className="lg:sticky lg:top-20 lg:self-start lg:max-h-[calc(100vh-6rem)] overflow-y-auto rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 p-4">
