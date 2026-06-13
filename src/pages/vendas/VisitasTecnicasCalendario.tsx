@@ -609,7 +609,12 @@ export default function VisitasTecnicasCalendario() {
                     {cell.getDate()}
                   </div>
                   {list.slice(0, 3).map(v => (
-                    <DraggableVisitaChip key={v.id} visita={v} onOpen={() => openEdit(v)} />
+                    <DraggableVisitaChip
+                      key={v.id}
+                      visita={v}
+                      onOpen={() => openEdit(v)}
+                      onDelete={() => { if (confirm('Excluir esta visita?')) delMut.mutate(v.id); }}
+                    />
                   ))}
                   {list.length > 3 && (
                     <span className="text-[10px] text-white/40">+{list.length - 3} mais</span>
