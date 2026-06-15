@@ -570,7 +570,7 @@ export default function VendasDirecao() {
       default:
         return null;
     }
-  }, []);
+  }, [metodosExtraPorVenda]);
 
   // Classes responsivas por coluna
   const getColumnResponsiveClass = (columnId: string) => {
