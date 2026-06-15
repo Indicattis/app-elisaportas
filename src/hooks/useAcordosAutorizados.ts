@@ -47,7 +47,7 @@ export interface NovoAcordo {
   data_acordo: string;
   observacoes?: string;
   portas: Omit<PortaAcordo, 'id'>[];
-  pedido_id?: string | null;
+  venda_id?: string | null;
 }
 
 export function useAcordosAutorizados() {
