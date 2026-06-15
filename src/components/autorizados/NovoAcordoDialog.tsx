@@ -21,7 +21,7 @@ import {
 import { useAutorizadosPrecos } from '@/hooks/useAutorizadosPrecos';
 import { formatCurrency } from '@/lib/utils';
 import type { NovoAcordo, AcordoAutorizado } from '@/hooks/useAcordosAutorizados';
-import { SeletorPedidoExistente, type PedidoSelecionado } from './SeletorPedidoExistente';
+import { SeletorVendaExistente, type VendaSelecionada } from './SeletorVendaExistente';
 
 const ESTADOS_BR = [
   'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS',
@@ -56,7 +56,7 @@ export function NovoAcordoDialog({
   const [valorAcordado, setValorAcordado] = useState('');
   const [observacoes, setObservacoes] = useState('');
   const [dataAcordo, setDataAcordo] = useState(new Date().toISOString().split('T')[0]);
-  const [pedidoVinculado, setPedidoVinculado] = useState<PedidoSelecionado | null>(null);
+  const [vendaVinculada, setVendaVinculada] = useState<VendaSelecionada | null>(null);
 
   // Reset form when dialog opens/closes
   useEffect(() => {
@@ -84,7 +84,7 @@ export function NovoAcordoDialog({
         setValorAcordado('');
         setObservacoes('');
         setDataAcordo(new Date().toISOString().split('T')[0]);
-        setPedidoVinculado(null);
+        setVendaVinculada(null);
       }
     }
   }, [open, acordoParaEditar]);
@@ -97,7 +97,7 @@ export function NovoAcordoDialog({
     if (!clienteNome || !clienteCidade || !clienteEstado || !autorizadoId) {
       return;
     }
-    if (!acordoParaEditar && !pedidoVinculado?.id) {
+    if (!acordoParaEditar && !vendaVinculada?.id) {
       return;
     }
 
@@ -118,7 +118,7 @@ export function NovoAcordoDialog({
           largura: portaLargura ? parseFloat(portaLargura) : undefined,
           altura: portaAltura ? parseFloat(portaAltura) : undefined,
         }],
-        pedido_id: pedidoVinculado?.id || null,
+        venda_id: vendaVinculada?.id || null,
       };
 
       await onSave(novoAcordo);
@@ -145,15 +145,17 @@ export function NovoAcordoDialog({
         <div className="space-y-4 py-4">
           {/* Vincular a pedido */}
           {!acordoParaEditar && (
-            <SeletorPedidoExistente
-              pedidoSelecionado={pedidoVinculado}
-              onSelect={(p) => {
-                if (!p.id) {
-                  setPedidoVinculado(null);
+            <SeletorVendaExistente
+              vendaSelecionada={vendaVinculada}
+              onSelect={(v) => {
+                if (!v.id) {
+                  setVendaVinculada(null);
                   return;
                 }
-                setPedidoVinculado(p);
-                if (p.cliente_nome) setClienteNome(p.cliente_nome);
+                setVendaVinculada(v);
+                if (v.cliente_nome && !clienteNome) setClienteNome(v.cliente_nome);
+                if (v.cliente_cidade && !clienteCidade) setClienteCidade(v.cliente_cidade);
+                if (v.cliente_estado && !clienteEstado) setClienteEstado(v.cliente_estado);
               }}
             />
           )}
@@ -302,7 +304,7 @@ export function NovoAcordoDialog({
           </Button>
           <Button
             onClick={handleSave}
-            disabled={saving || !clienteNome || !clienteCidade || !clienteEstado || !autorizadoId || (!acordoParaEditar && !pedidoVinculado?.id)}
+            disabled={saving || !clienteNome || !clienteCidade || !clienteEstado || !autorizadoId || (!acordoParaEditar && !vendaVinculada?.id)}
             className="bg-primary hover:bg-primary/90"
           >
             {saving ? 'Salvando...' : acordoParaEditar ? 'Salvar Alterações' : 'Salvar Acordo'}
