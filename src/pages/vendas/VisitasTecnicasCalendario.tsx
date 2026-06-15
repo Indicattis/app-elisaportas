@@ -158,7 +158,7 @@ function DroppableDayCell({
     <div
       ref={setNodeRef}
       onClick={onAddClick}
-      className={`min-h-[140px] rounded-md border p-2.5 flex flex-col gap-1.5 transition-colors cursor-pointer ${
+      className={`min-h-[64px] sm:min-h-[100px] lg:min-h-[140px] rounded-md border p-1 sm:p-2 lg:p-2.5 flex flex-col gap-1 sm:gap-1.5 transition-colors cursor-pointer ${
         isCurrentDay
           ? 'bg-blue-500/10 border-blue-400/40'
           : 'bg-white/[0.03] border-white/5 hover:bg-white/[0.06]'
@@ -185,9 +185,10 @@ function DraggableVisitaChip({ visita, onOpen, onDelete }: { visita: VisitaAgend
         {...attributes}
         {...listeners}
         onClick={(e) => { e.stopPropagation(); onOpen(); }}
-        className={`w-full text-left text-xs px-2 py-1.5 rounded truncate ${cls} ${isDragging ? 'opacity-30' : ''} ${disabled ? 'cursor-pointer' : 'cursor-grab active:cursor-grabbing'}`}
+        className={`w-full text-left text-[10px] sm:text-xs px-1 sm:px-2 py-0.5 sm:py-1.5 rounded truncate ${cls} ${isDragging ? 'opacity-30' : ''} ${disabled ? 'cursor-pointer' : 'cursor-grab active:cursor-grabbing'}`}
       >
-        <span className="opacity-70">{(visita.hora_inicio || '').slice(0, 5)}</span> {visita.titulo}
+        <span className="opacity-70">{(visita.hora_inicio || '').slice(0, 5)}</span>
+        <span className="hidden sm:inline"> {visita.titulo}</span>
       </button>
       {onDelete && (
         <button
@@ -556,7 +557,7 @@ export default function VisitasTecnicasCalendario() {
       </button>
 
       <div
-        className="relative z-10 w-full px-[100px] pt-20 pb-10"
+        className="relative z-10 w-full px-4 sm:px-6 lg:px-[100px] pt-20 pb-10"
         style={{
           opacity: mounted ? 1 : 0,
           transform: mounted ? 'translateY(0)' : 'translateY(20px)',
@@ -568,16 +569,19 @@ export default function VisitasTecnicasCalendario() {
             <h1 className="text-xl font-semibold text-white">Visitas Técnicas</h1>
             <p className="text-white/40 text-sm">Agendamento de visitas</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             <Button
               variant="outline"
-              className="bg-white/5 border-white/10 text-white hover:bg-white/10"
+              className="bg-white/5 border-white/10 text-white hover:bg-white/10 flex-1 sm:flex-none"
               onClick={() => navigate('/vendas/visitas-tecnicas/realizadas')}
             >
-              <FileText className="w-4 h-4 mr-2" /> Visitas realizadas
+              <FileText className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Visitas realizadas</span>
             </Button>
-            <Button className="bg-blue-600 hover:bg-blue-500 text-white" onClick={() => openCreate()}>
-              <Plus className="w-4 h-4 mr-2" /> Agendar visita
+            <Button className="bg-blue-600 hover:bg-blue-500 text-white flex-1 sm:flex-none" onClick={() => openCreate()}>
+              <Plus className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Agendar visita</span>
+              <span className="sm:hidden">Agendar</span>
             </Button>
           </div>
         </div>
@@ -618,7 +622,7 @@ export default function VisitasTecnicasCalendario() {
         >
         {tab === 'calendario' && (
         <>
-        <div className="rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 p-4">
+        <div className="rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 p-2 sm:p-4">
           <DndContext sensors={dndSensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
           <div className="flex items-center justify-between mb-4">
             <button
@@ -636,15 +640,15 @@ export default function VisitasTecnicasCalendario() {
             </button>
           </div>
 
-          <div className="grid grid-cols-7 gap-1 mb-1">
+          <div className="grid grid-cols-7 gap-0.5 sm:gap-1 mb-1">
             {DIAS_SEM.map(d => (
-              <div key={d} className="text-center text-xs text-white/40 py-1">{d}</div>
+              <div key={d} className="text-center text-[10px] sm:text-xs text-white/40 py-1">{d}</div>
             ))}
           </div>
 
-          <div className="grid grid-cols-7 gap-1">
+          <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
             {grid.map((cell, idx) => {
-              if (!cell) return <div key={idx} className="min-h-[140px] rounded-md bg-white/[0.02]" />;
+              if (!cell) return <div key={idx} className="min-h-[64px] sm:min-h-[100px] lg:min-h-[140px] rounded-md bg-white/[0.02]" />;
               const dateStr = `${cell.getFullYear()}-${String(cell.getMonth() + 1).padStart(2, '0')}-${String(cell.getDate()).padStart(2, '0')}`;
               const list = visitasPorDia.get(dateStr) || [];
               return (
@@ -654,10 +658,10 @@ export default function VisitasTecnicasCalendario() {
                   isCurrentDay={isToday(cell)}
                   onAddClick={() => openCreate(dateStr)}
                 >
-                  <div className={`text-xs ${isToday(cell) ? 'text-blue-300 font-semibold' : 'text-white/60'}`}>
+                  <div className={`text-[10px] sm:text-xs ${isToday(cell) ? 'text-blue-300 font-semibold' : 'text-white/60'}`}>
                     {cell.getDate()}
                   </div>
-                  {list.slice(0, 3).map(v => (
+                  {list.slice(0, 2).map(v => (
                     <DraggableVisitaChip
                       key={v.id}
                       visita={v}
@@ -665,8 +669,8 @@ export default function VisitasTecnicasCalendario() {
                       onDelete={() => { if (confirm('Excluir esta visita?')) delMut.mutate(v.id); }}
                     />
                   ))}
-                  {list.length > 3 && (
-                    <span className="text-[10px] text-white/40">+{list.length - 3} mais</span>
+                  {list.length > 2 && (
+                    <span className="text-[9px] sm:text-[10px] text-white/40">+{list.length - 2}</span>
                   )}
                 </DroppableDayCell>
               );
