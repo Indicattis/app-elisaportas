@@ -106,6 +106,7 @@ export default function VendasDirecao() {
   });
 
   const [atendentes, setAtendentes] = useState<any[]>([]);
+  const [metodosExtraPorVenda, setMetodosExtraPorVenda] = useState<Map<string, string[]>>(new Map());
   const [sortConfig, setSortConfig] = useState<{
     column: string | null;
     direction: 'asc' | 'desc' | null;
@@ -157,6 +158,35 @@ export default function VendasDirecao() {
     };
     fetchAtendentes();
   }, []);
+
+  // Buscar métodos de pagamento adicionais via contas_receber
+  useEffect(() => {
+    const fetchMetodos = async () => {
+      if (!vendas || vendas.length === 0) return;
+      const vendaIds = vendas.map((v: any) => v.id).filter(Boolean);
+      if (vendaIds.length === 0) return;
+      const map = new Map<string, string[]>();
+      // Supabase tem limite de 1000; fazer chunks de 500 por segurança
+      const chunkSize = 500;
+      for (let i = 0; i < vendaIds.length; i += chunkSize) {
+        const slice = vendaIds.slice(i, i + chunkSize);
+        const { data } = await supabase
+          .from('contas_receber')
+          .select('venda_id, metodo_pagamento')
+          .in('venda_id', slice);
+        (data || []).forEach((conta: any) => {
+          if (!conta?.venda_id || !conta?.metodo_pagamento) return;
+          const atuais = map.get(conta.venda_id) || [];
+          if (!atuais.includes(conta.metodo_pagamento)) {
+            atuais.push(conta.metodo_pagamento);
+            map.set(conta.venda_id, atuais);
+          }
+        });
+      }
+      setMetodosExtraPorVenda(map);
+    };
+    fetchMetodos();
+  }, [vendas]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -394,7 +424,21 @@ export default function VendasDirecao() {
         }
         return <span className="text-white/30 text-[10px]">-</span>;
       case 'pagamento':
-        return <span className={textClass}>{getFormaPagamentoLabel(venda.metodo_pagamento)}</span>;
+        {
+          const todos = metodosExtraPorVenda.get(venda.id) || [];
+          const principal = venda.metodo_pagamento;
+          const secundario = todos.find((m) => m !== principal) || null;
+          return (
+            <div className={`${textClass} flex flex-col leading-tight`}>
+              <span>{getFormaPagamentoLabel(principal)}</span>
+              {secundario && (
+                <span className="text-white/50 text-[9px] md:text-xs">
+                  + {getFormaPagamentoLabel(secundario)}
+                </span>
+              )}
+            </div>
+          );
+        }
       case 'previsao':
         return (
           <span className={textMutedClass}>
