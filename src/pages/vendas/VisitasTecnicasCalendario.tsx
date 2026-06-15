@@ -661,7 +661,7 @@ export default function VisitasTecnicasCalendario() {
                     <DraggableVisitaChip
                       key={v.id}
                       visita={v}
-                      onOpen={() => openEdit(v)}
+                      onOpen={() => openDetail(v)}
                       onDelete={() => { if (confirm('Excluir esta visita?')) delMut.mutate(v.id); }}
                     />
                   ))}
