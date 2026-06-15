@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Plus, ChevronLeft, ChevronRight, FileText, Trash2, Loader2, CalendarIcon, Check, ChevronsUpDown, ClipboardList, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Plus, ChevronLeft, ChevronRight, FileText, Trash2, Loader2, CalendarIcon, Check, ChevronsUpDown, ClipboardList, AlertCircle, Pencil, CheckCircle2, MapPin, Phone, User, Clock } from 'lucide-react';
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { DelayedParticles } from '@/components/DelayedParticles';
 import { Button } from '@/components/ui/button';
