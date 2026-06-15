@@ -232,6 +232,13 @@ export default function VisitasTecnicasCalendario() {
   const [form, setForm] = useState({ ...emptyForm });
   const [cepLoading, setCepLoading] = useState(false);
   const [activeDrag, setActiveDrag] = useState<VisitaAgendada | null>(null);
+  const [tab, setTab] = useState<'calendario' | 'concluir'>('calendario');
+  const [tabDirection, setTabDirection] = useState<'left' | 'right'>('right');
+  const handleTabChange = (next: 'calendario' | 'concluir') => {
+    if (next === tab) return;
+    setTabDirection(next === 'concluir' ? 'right' : 'left');
+    setTab(next);
+  };
 
   useEffect(() => { const t = setTimeout(() => setMounted(true), 50); return () => clearTimeout(t); }, []);
 
@@ -549,8 +556,6 @@ export default function VisitasTecnicasCalendario() {
           transition: 'all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 300ms',
         }}
       >
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
-        <div>
         <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
           <div>
             <h1 className="text-xl font-semibold text-white">Visitas Técnicas</h1>
@@ -570,6 +575,42 @@ export default function VisitasTecnicasCalendario() {
           </div>
         </div>
 
+        {/* Tabs */}
+        <div className="mb-6 mx-auto max-w-md">
+          <div className="flex items-center bg-white/5 backdrop-blur-xl border border-white/10 rounded-full p-1">
+            {([
+              { key: 'calendario' as const, label: 'Calendário' },
+              { key: 'concluir' as const, label: 'A Concluir' },
+            ]).map(t => {
+              const active = tab === t.key;
+              return (
+                <button
+                  key={t.key}
+                  onClick={() => handleTabChange(t.key)}
+                  className={`flex-1 h-10 px-4 rounded-full text-sm font-medium transition-all duration-300 flex items-center justify-center gap-2 ${
+                    active
+                      ? 'bg-gradient-to-r from-blue-500 to-blue-700 text-white shadow-lg shadow-blue-500/30 border border-blue-400/30'
+                      : 'text-white/60 hover:text-white/80'
+                  }`}
+                >
+                  {t.label}
+                  {t.key === 'concluir' && visitasAConcluir.length > 0 && (
+                    <span className={`text-[11px] px-1.5 py-0.5 rounded-full ${active ? 'bg-white/20 text-white' : 'bg-blue-500/15 text-blue-200 border border-blue-400/20'}`}>
+                      {visitasAConcluir.length}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div
+          key={tab}
+          className={tabDirection === 'right' ? 'animate-slide-in-right' : 'animate-slide-in-left'}
+        >
+        {tab === 'calendario' && (
+        <>
         <div className="rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 p-4">
           <DndContext sensors={dndSensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
           <div className="flex items-center justify-between mb-4">
@@ -644,9 +685,11 @@ export default function VisitasTecnicasCalendario() {
         </div>
 
         <VisitasHistoricoPanel />
-        </div>
+        </>
+        )}
 
-        <aside className="lg:sticky lg:top-20 lg:self-start lg:max-h-[calc(100vh-6rem)] overflow-y-auto rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 p-4">
+        {tab === 'concluir' && (
+        <div className="rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 p-4">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <ClipboardList className="w-4 h-4 text-blue-300" />
@@ -658,11 +701,11 @@ export default function VisitasTecnicasCalendario() {
           </div>
 
           {visitasAConcluir.length === 0 ? (
-            <div className="text-center py-8 text-white/40 text-xs">
+            <div className="text-center py-12 text-white/40 text-sm">
               Nenhuma visita pendente
             </div>
           ) : (
-            <ul className="space-y-1.5">
+            <ul className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">
               {visitasAConcluir.map(v => {
                 const ymd = toDateOnly(v.data_visita);
                 const dia = ymd.slice(8, 10);
@@ -691,7 +734,8 @@ export default function VisitasTecnicasCalendario() {
               })}
             </ul>
           )}
-        </aside>
+        </div>
+        )}
         </div>
       </div>
 
