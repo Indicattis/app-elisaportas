@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Plus, ChevronLeft, ChevronRight, FileText, Trash2, Loader2, CalendarIcon, Check, ChevronsUpDown, ClipboardList, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Plus, ChevronLeft, ChevronRight, FileText, Trash2, Loader2, CalendarIcon, Check, ChevronsUpDown, ClipboardList, AlertCircle, Pencil, CheckCircle2, MapPin, Phone, User, Clock } from 'lucide-react';
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { DelayedParticles } from '@/components/DelayedParticles';
 import { Button } from '@/components/ui/button';
@@ -234,6 +234,8 @@ export default function VisitasTecnicasCalendario() {
   const [activeDrag, setActiveDrag] = useState<VisitaAgendada | null>(null);
   const [tab, setTab] = useState<'calendario' | 'concluir'>('calendario');
   const [tabDirection, setTabDirection] = useState<'left' | 'right'>('right');
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [selectedVisita, setSelectedVisita] = useState<VisitaAgendada | null>(null);
   const handleTabChange = (next: 'calendario' | 'concluir') => {
     if (next === tab) return;
     setTabDirection(next === 'concluir' ? 'right' : 'left');
@@ -278,12 +280,12 @@ export default function VisitasTecnicasCalendario() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('visitas_tecnicas_agendadas')
-        .select('id, titulo, data_visita, hora_inicio, cidade, estado, status')
+        .select('*')
         .in('status', ['agendada', 'realizada'])
         .order('data_visita', { ascending: true })
         .order('hora_inicio', { ascending: true });
       if (error) throw error;
-      return (data || []) as Array<Pick<VisitaAgendada, 'id'|'titulo'|'data_visita'|'hora_inicio'|'cidade'|'estado'|'status'>>;
+      return (data || []) as VisitaAgendada[];
     },
   });
 
@@ -302,6 +304,11 @@ export default function VisitasTecnicasCalendario() {
     setEditing(null);
     setForm({ ...emptyForm, data_visita: dateStr || '' });
     setDialogOpen(true);
+  };
+
+  const openDetail = (v: VisitaAgendada) => {
+    setSelectedVisita(v);
+    setDetailOpen(true);
   };
 
   const openEdit = (v: VisitaAgendada) => {
@@ -654,7 +661,7 @@ export default function VisitasTecnicasCalendario() {
                     <DraggableVisitaChip
                       key={v.id}
                       visita={v}
-                      onOpen={() => openEdit(v)}
+                      onOpen={() => openDetail(v)}
                       onDelete={() => { if (confirm('Excluir esta visita?')) delMut.mutate(v.id); }}
                     />
                   ))}
@@ -716,8 +723,8 @@ export default function VisitasTecnicasCalendario() {
                 const local = [v.cidade, v.estado].filter(Boolean).join('/');
                 return (
                   <li key={v.id}>
-                    <button
-                      onClick={() => navigate(`/vendas/visitas-tecnicas/${v.id}/concluir`)}
+                  <button
+                      onClick={() => openDetail(v)}
                       className="w-full text-left p-3 rounded-lg bg-white/[0.03] hover:bg-white/[0.08] border border-white/5 hover:border-white/10 transition group flex items-center gap-3"
                     >
                       <span className={`shrink-0 text-[11px] font-mono px-2 py-1 rounded ${atrasada ? 'bg-amber-500/20 text-amber-200' : 'bg-blue-500/15 text-blue-200'}`}>
@@ -872,6 +879,100 @@ export default function VisitasTecnicasCalendario() {
             <Button variant="ghost" className="text-white/70 hover:text-white hover:bg-white/10" onClick={() => setDialogOpen(false)}>Cancelar</Button>
             <Button className="bg-gradient-to-br from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 text-white shadow-lg shadow-blue-500/30" onClick={() => saveMut.mutate()} disabled={saveMut.isPending}>
               {saveMut.isPending ? 'Salvando...' : 'Salvar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Detail modal */}
+      <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
+        <DialogContent className="max-w-md bg-black/80 backdrop-blur-2xl border border-white/10 text-white shadow-2xl shadow-blue-500/10 sm:rounded-2xl p-6">
+          <DialogHeader className="pb-4 border-b border-white/10">
+            <DialogTitle className="text-white text-lg font-semibold tracking-tight">
+              {selectedVisita?.titulo}
+            </DialogTitle>
+            <p className="text-white/40 text-xs mt-1">
+              Detalhes da visita técnica
+            </p>
+          </DialogHeader>
+          <div className="pt-4 space-y-3">
+            {selectedVisita && (
+              <>
+                <div className="flex items-center gap-2 text-sm text-white/80">
+                  <Clock className="w-4 h-4 text-blue-300 shrink-0" />
+                  <span>
+                    {formatYmdBR(toDateOnly(selectedVisita.data_visita))} às {(selectedVisita.hora_inicio || '').slice(0, 5)}
+                  </span>
+                </div>
+                {selectedVisita.responsavel_id && (
+                  <div className="flex items-center gap-2 text-sm text-white/80">
+                    <User className="w-4 h-4 text-blue-300 shrink-0" />
+                    <span>
+                      {responsaveis.find(r => r.id === selectedVisita.responsavel_id)?.nome || 'Responsável'}
+                    </span>
+                  </div>
+                )}
+                {selectedVisita.telefone_contato && (
+                  <div className="flex items-center gap-2 text-sm text-white/80">
+                    <Phone className="w-4 h-4 text-blue-300 shrink-0" />
+                    <span>{selectedVisita.telefone_contato}</span>
+                  </div>
+                )}
+                {(selectedVisita.endereco || selectedVisita.cidade) && (
+                  <div className="flex items-start gap-2 text-sm text-white/80">
+                    <MapPin className="w-4 h-4 text-blue-300 shrink-0 mt-0.5" />
+                    <span>
+                      {[
+                        selectedVisita.endereco,
+                        selectedVisita.numero,
+                        selectedVisita.bairro,
+                        selectedVisita.complemento,
+                      ].filter(Boolean).join(', ')}
+                      {selectedVisita.cidade && (
+                        <>
+                          <br />
+                          {selectedVisita.cidade}
+                          {selectedVisita.estado && ` / ${selectedVisita.estado}`}
+                        </>
+                      )}
+                    </span>
+                  </div>
+                )}
+                {selectedVisita.observacoes && (
+                  <div className="mt-3 p-3 rounded-lg bg-white/[0.03] border border-white/5 text-sm text-white/70">
+                    {selectedVisita.observacoes}
+                  </div>
+                )}
+                {selectedVisita.status === 'cancelada' && (
+                  <div className="mt-2 text-xs text-red-300 bg-red-500/10 border border-red-400/20 rounded-lg px-3 py-2">
+                    Visita cancelada
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+          <DialogFooter className="flex-wrap gap-2 pt-4 mt-2 border-t border-white/10">
+            <Button
+              variant="outline"
+              className="bg-white/5 border-white/10 text-white hover:bg-white/10"
+              onClick={() => {
+                if (selectedVisita) {
+                  setDetailOpen(false);
+                  openEdit(selectedVisita);
+                }
+              }}
+            >
+              <Pencil className="w-4 h-4 mr-2" /> Editar
+            </Button>
+            <Button
+              className="bg-gradient-to-br from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 text-white shadow-lg shadow-blue-500/30"
+              onClick={() => {
+                if (selectedVisita) {
+                  navigate(`/vendas/visitas-tecnicas/${selectedVisita.id}/concluir`);
+                }
+              }}
+            >
+              <CheckCircle2 className="w-4 h-4 mr-2" /> Concluir visita
             </Button>
           </DialogFooter>
         </DialogContent>
