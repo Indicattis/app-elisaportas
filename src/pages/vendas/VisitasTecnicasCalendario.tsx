@@ -158,7 +158,7 @@ function DroppableDayCell({
     <div
       ref={setNodeRef}
       onClick={onAddClick}
-      className={`min-h-[140px] rounded-md border p-2.5 flex flex-col gap-1.5 transition-colors cursor-pointer ${
+      className={`min-h-[64px] sm:min-h-[100px] lg:min-h-[140px] rounded-md border p-1 sm:p-2 lg:p-2.5 flex flex-col gap-1 sm:gap-1.5 transition-colors cursor-pointer ${
         isCurrentDay
           ? 'bg-blue-500/10 border-blue-400/40'
           : 'bg-white/[0.03] border-white/5 hover:bg-white/[0.06]'
@@ -185,9 +185,10 @@ function DraggableVisitaChip({ visita, onOpen, onDelete }: { visita: VisitaAgend
         {...attributes}
         {...listeners}
         onClick={(e) => { e.stopPropagation(); onOpen(); }}
-        className={`w-full text-left text-xs px-2 py-1.5 rounded truncate ${cls} ${isDragging ? 'opacity-30' : ''} ${disabled ? 'cursor-pointer' : 'cursor-grab active:cursor-grabbing'}`}
+        className={`w-full text-left text-[10px] sm:text-xs px-1 sm:px-2 py-0.5 sm:py-1.5 rounded truncate ${cls} ${isDragging ? 'opacity-30' : ''} ${disabled ? 'cursor-pointer' : 'cursor-grab active:cursor-grabbing'}`}
       >
-        <span className="opacity-70">{(visita.hora_inicio || '').slice(0, 5)}</span> {visita.titulo}
+        <span className="opacity-70">{(visita.hora_inicio || '').slice(0, 5)}</span>
+        <span className="hidden sm:inline"> {visita.titulo}</span>
       </button>
       {onDelete && (
         <button
