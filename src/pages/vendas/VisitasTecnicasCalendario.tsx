@@ -723,8 +723,8 @@ export default function VisitasTecnicasCalendario() {
                 const local = [v.cidade, v.estado].filter(Boolean).join('/');
                 return (
                   <li key={v.id}>
-                    <button
-                      onClick={() => navigate(`/vendas/visitas-tecnicas/${v.id}/concluir`)}
+                  <button
+                      onClick={() => openDetail(v)}
                       className="w-full text-left p-3 rounded-lg bg-white/[0.03] hover:bg-white/[0.08] border border-white/5 hover:border-white/10 transition group flex items-center gap-3"
                     >
                       <span className={`shrink-0 text-[11px] font-mono px-2 py-1 rounded ${atrasada ? 'bg-amber-500/20 text-amber-200' : 'bg-blue-500/15 text-blue-200'}`}>
