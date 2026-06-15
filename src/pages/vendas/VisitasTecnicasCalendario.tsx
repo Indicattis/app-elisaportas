@@ -306,6 +306,11 @@ export default function VisitasTecnicasCalendario() {
     setDialogOpen(true);
   };
 
+  const openDetail = (v: VisitaAgendada) => {
+    setSelectedVisita(v);
+    setDetailOpen(true);
+  };
+
   const openEdit = (v: VisitaAgendada) => {
     setEditing(v);
     setForm({
