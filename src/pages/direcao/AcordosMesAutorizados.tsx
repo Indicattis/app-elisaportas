@@ -392,6 +392,8 @@ export default function AcordosMesAutorizados() {
                       <TableHead className="text-xs text-white/70 text-center w-20">Data</TableHead>
                       <TableHead className="text-xs text-white/70 text-right w-24">Valor</TableHead>
                       <TableHead className="text-xs text-white/70 text-right w-28">Valor excesso</TableHead>
+                      <TableHead className="text-xs text-white/70 text-right w-24">Pago</TableHead>
+                      <TableHead className="text-xs text-white/70 text-right w-24">Restante</TableHead>
                       <TableHead className="text-xs text-white/70 text-center w-28">Status</TableHead>
                       <TableHead className="text-xs text-white/70 text-center w-32">Pagamento</TableHead>
                       <TableHead className="text-xs text-white/70 min-w-[180px]">Observações</TableHead>
@@ -408,7 +410,7 @@ export default function AcordosMesAutorizados() {
                     <TooltipProvider>
                       {(() => {
                         const colSpan =
-                          13 +
+                          15 +
                           ((contexto === 'direcao' || contexto === 'home') ? 1 : 0) +
                           ((contexto === 'logistica' || contexto === 'home') ? 1 : 0);
                         return acordosAgrupados.map((grupo, idx) => (
@@ -467,6 +469,20 @@ export default function AcordosMesAutorizados() {
                                       </span>
                                     );
                                   })() : <span className="text-white/40">—</span>}
+                                </TableCell>
+                                <TableCell className="text-right font-medium">
+                                  {(() => {
+                                    const pago = acordo.valor_pago ?? 0;
+                                    if (pago <= 0) return <span className="text-white/40">—</span>;
+                                    return <span className="text-green-400">{formatCurrency(pago)}</span>;
+                                  })()}
+                                </TableCell>
+                                <TableCell className="text-right font-medium">
+                                  {(() => {
+                                    const restante = +(acordo.valor_acordado - (acordo.valor_pago ?? 0)).toFixed(2);
+                                    if (restante <= 0) return <span className="text-white/40">—</span>;
+                                    return <span className="text-amber-300">{formatCurrency(restante)}</span>;
+                                  })()}
                                 </TableCell>
                                 <TableCell className="text-center">
                                   <Badge variant="outline" className={STATUS_COLORS[acordo.status]}>
