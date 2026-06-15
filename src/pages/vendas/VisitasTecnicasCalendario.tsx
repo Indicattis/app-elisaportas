@@ -705,7 +705,7 @@ export default function VisitasTecnicasCalendario() {
               Nenhuma visita pendente
             </div>
           ) : (
-            <ul className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">
+            <ul className="flex flex-col gap-1.5">
               {visitasAConcluir.map(v => {
                 const ymd = toDateOnly(v.data_visita);
                 const dia = ymd.slice(8, 10);
@@ -718,16 +718,16 @@ export default function VisitasTecnicasCalendario() {
                   <li key={v.id}>
                     <button
                       onClick={() => navigate(`/vendas/visitas-tecnicas/${v.id}/concluir`)}
-                      className="w-full text-left p-2.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.08] border border-white/5 hover:border-white/10 transition group"
+                      className="w-full text-left p-3 rounded-lg bg-white/[0.03] hover:bg-white/[0.08] border border-white/5 hover:border-white/10 transition group flex items-center gap-3"
                     >
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <span className={`text-[11px] font-mono px-1.5 py-0.5 rounded ${atrasada ? 'bg-amber-500/20 text-amber-200' : 'bg-blue-500/15 text-blue-200'}`}>
-                          {dia}/{mes} · {hora}
-                        </span>
-                        {atrasada && <AlertCircle className="w-3 h-3 text-amber-300" />}
+                      <span className={`shrink-0 text-[11px] font-mono px-2 py-1 rounded ${atrasada ? 'bg-amber-500/20 text-amber-200' : 'bg-blue-500/15 text-blue-200'}`}>
+                        {dia}/{mes} · {hora}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm text-white truncate">{v.titulo}</div>
+                        {local && <div className="text-[11px] text-white/40 truncate">{local}</div>}
                       </div>
-                      <div className="text-sm text-white truncate">{v.titulo}</div>
-                      {local && <div className="text-[11px] text-white/40 truncate">{local}</div>}
+                      {atrasada && <AlertCircle className="w-4 h-4 text-amber-300 shrink-0" />}
                     </button>
                   </li>
                 );
