@@ -81,13 +81,22 @@ export default function GastosPage() {
 
   useEffect(() => {
     const fetchColaboradores = async () => {
-      const { data } = await supabase
-        .from("admin_users")
-        .select("user_id, nome, setor")
-        .eq("ativo", true)
-        .or("setor.eq.administrativo,role.eq.diretor")
-        .order("nome");
-      setColaboradores((data || []) as ColaboradorOption[]);
+      const [{ data: padrao }, { data: guilherme }] = await Promise.all([
+        supabase
+          .from("admin_users")
+          .select("user_id, nome, setor")
+          .eq("ativo", true)
+          .or("setor.eq.administrativo,role.eq.diretor")
+          .order("nome"),
+        supabase
+          .from("admin_users")
+          .select("user_id, nome, setor")
+          .eq("user_id", "340540a5-a5ff-4485-aaaf-27a985c8d934"),
+      ]);
+      const lista = [...(padrao || []), ...(guilherme || [])];
+      const dedup = Array.from(new Map(lista.map((c) => [c.user_id, c])).values())
+        .sort((a, b) => (a.nome || "").localeCompare(b.nome || "", "pt-BR"));
+      setColaboradores(dedup as ColaboradorOption[]);
     };
     fetchColaboradores();
   }, []);
