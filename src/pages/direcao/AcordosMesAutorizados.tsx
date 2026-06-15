@@ -415,15 +415,20 @@ export default function AcordosMesAutorizados() {
                           ((contexto === 'logistica' || contexto === 'home') ? 1 : 0);
                         return acordosAgrupados.map((grupo, idx) => (
                           <Fragment key={grupo.autorizadoId}>
-                            <TableRow className={`bg-blue-500/10 hover:bg-blue-500/15 border-blue-500/20 ${idx > 0 ? 'border-t-4 border-t-white/5' : ''}`}>
-                              <TableCell colSpan={colSpan} className="py-2">
+                            {idx > 0 && (
+                              <TableRow className="border-0">
+                                <TableCell colSpan={colSpan} className="py-1.5" />
+                              </TableRow>
+                            )}
+                            <TableRow className="bg-white/[0.03] hover:bg-white/[0.05] border-white/10">
+                              <TableCell colSpan={colSpan} className="py-1.5">
                                 <div className="flex items-center justify-between gap-3">
-                                   <span className="text-sm font-semibold text-blue-200">
+                                   <span className="text-sm font-medium text-white/60">
                                     {grupo.autorizadoNome}
                                   </span>
-                                  <span className="text-xs text-white/70">
+                                  <span className="text-xs text-white/50">
                                     {grupo.items.length} acordo{grupo.items.length === 1 ? '' : 's'} ·{' '}
-                                    <span className="text-green-400 font-medium">{formatCurrency(grupo.total)}</span>
+                                    <span className="text-white/70 font-medium">{formatCurrency(grupo.total)}</span>
                                   </span>
                                 </div>
                               </TableCell>
