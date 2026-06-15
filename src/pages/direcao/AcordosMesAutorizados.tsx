@@ -380,7 +380,7 @@ export default function AcordosMesAutorizados() {
           <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl">
             <CardContent className="p-0">
               <div className="overflow-x-auto">
-                <Table className="text-xs">
+                <Table className="text-xs table-fixed">
                   <TableHeader>
                     <TableRow className="border-blue-500/10 hover:bg-white/5">
                       <TableHead className="text-xs text-white/70 text-center">Portas</TableHead>
