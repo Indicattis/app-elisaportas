@@ -883,6 +883,100 @@ export default function VisitasTecnicasCalendario() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Detail modal */}
+      <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
+        <DialogContent className="max-w-md bg-black/80 backdrop-blur-2xl border border-white/10 text-white shadow-2xl shadow-blue-500/10 sm:rounded-2xl p-6">
+          <DialogHeader className="pb-4 border-b border-white/10">
+            <DialogTitle className="text-white text-lg font-semibold tracking-tight">
+              {selectedVisita?.titulo}
+            </DialogTitle>
+            <p className="text-white/40 text-xs mt-1">
+              Detalhes da visita técnica
+            </p>
+          </DialogHeader>
+          <div className="pt-4 space-y-3">
+            {selectedVisita && (
+              <>
+                <div className="flex items-center gap-2 text-sm text-white/80">
+                  <Clock className="w-4 h-4 text-blue-300 shrink-0" />
+                  <span>
+                    {formatYmdBR(toDateOnly(selectedVisita.data_visita))} às {(selectedVisita.hora_inicio || '').slice(0, 5)}
+                  </span>
+                </div>
+                {selectedVisita.responsavel_id && (
+                  <div className="flex items-center gap-2 text-sm text-white/80">
+                    <User className="w-4 h-4 text-blue-300 shrink-0" />
+                    <span>
+                      {responsaveis.find(r => r.id === selectedVisita.responsavel_id)?.nome || 'Responsável'}
+                    </span>
+                  </div>
+                )}
+                {selectedVisita.telefone_contato && (
+                  <div className="flex items-center gap-2 text-sm text-white/80">
+                    <Phone className="w-4 h-4 text-blue-300 shrink-0" />
+                    <span>{selectedVisita.telefone_contato}</span>
+                  </div>
+                )}
+                {(selectedVisita.endereco || selectedVisita.cidade) && (
+                  <div className="flex items-start gap-2 text-sm text-white/80">
+                    <MapPin className="w-4 h-4 text-blue-300 shrink-0 mt-0.5" />
+                    <span>
+                      {[
+                        selectedVisita.endereco,
+                        selectedVisita.numero,
+                        selectedVisita.bairro,
+                        selectedVisita.complemento,
+                      ].filter(Boolean).join(', ')}
+                      {selectedVisita.cidade && (
+                        <>
+                          <br />
+                          {selectedVisita.cidade}
+                          {selectedVisita.estado && ` / ${selectedVisita.estado}`}
+                        </>
+                      )}
+                    </span>
+                  </div>
+                )}
+                {selectedVisita.observacoes && (
+                  <div className="mt-3 p-3 rounded-lg bg-white/[0.03] border border-white/5 text-sm text-white/70">
+                    {selectedVisita.observacoes}
+                  </div>
+                )}
+                {selectedVisita.status === 'cancelada' && (
+                  <div className="mt-2 text-xs text-red-300 bg-red-500/10 border border-red-400/20 rounded-lg px-3 py-2">
+                    Visita cancelada
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+          <DialogFooter className="flex-wrap gap-2 pt-4 mt-2 border-t border-white/10">
+            <Button
+              variant="outline"
+              className="bg-white/5 border-white/10 text-white hover:bg-white/10"
+              onClick={() => {
+                if (selectedVisita) {
+                  setDetailOpen(false);
+                  openEdit(selectedVisita);
+                }
+              }}
+            >
+              <Pencil className="w-4 h-4 mr-2" /> Editar
+            </Button>
+            <Button
+              className="bg-gradient-to-br from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 text-white shadow-lg shadow-blue-500/30"
+              onClick={() => {
+                if (selectedVisita) {
+                  navigate(`/vendas/visitas-tecnicas/${selectedVisita.id}/concluir`);
+                }
+              }}
+            >
+              <CheckCircle2 className="w-4 h-4 mr-2" /> Concluir visita
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
