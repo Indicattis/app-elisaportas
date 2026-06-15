@@ -167,7 +167,7 @@ export function useAcordosAutorizados() {
           status: novoAcordo.status,
           data_acordo: novoAcordo.data_acordo,
           observacoes: novoAcordo.observacoes || null,
-          pedido_id: novoAcordo.pedido_id || null,
+          venda_id: novoAcordo.venda_id || null,
           created_by: user?.id
         } as any)
         .select()
