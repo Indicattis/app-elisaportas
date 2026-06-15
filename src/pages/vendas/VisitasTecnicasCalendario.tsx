@@ -234,6 +234,8 @@ export default function VisitasTecnicasCalendario() {
   const [activeDrag, setActiveDrag] = useState<VisitaAgendada | null>(null);
   const [tab, setTab] = useState<'calendario' | 'concluir'>('calendario');
   const [tabDirection, setTabDirection] = useState<'left' | 'right'>('right');
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [selectedVisita, setSelectedVisita] = useState<VisitaAgendada | null>(null);
   const handleTabChange = (next: 'calendario' | 'concluir') => {
     if (next === tab) return;
     setTabDirection(next === 'concluir' ? 'right' : 'left');
