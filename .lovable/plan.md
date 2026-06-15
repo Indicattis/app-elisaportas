@@ -1,21 +1,36 @@
-# Abas em Visitas Técnicas
-
-Hoje `/vendas/visitas-tecnicas` (`VisitasTecnicasCalendario.tsx`) renderiza o calendário e, ao lado, uma seção "Visitas a concluir". Vamos separar em duas abas no mesmo estilo de `/direcao/vendas/parceiros`.
+## Objetivo
+Em `/autorizados/acordos/:ano/:mes` (e contexto direção), substituir o vínculo do acordo de instalação de **pedido de produção** para **venda**.
 
 ## Mudanças
 
-**Arquivo:** `src/pages/vendas/VisitasTecnicasCalendario.tsx`
+### 1. Banco (migração)
+- Adicionar coluna `venda_id uuid` em `acordos_instalacao_autorizados` referenciando `vendas(id) ON DELETE SET NULL`.
+- Criar índice `idx_acordos_venda_id` em `venda_id`.
+- Manter coluna `pedido_id` apenas como legado (não usada em novas inserções, não exibida no seletor).
 
-1. Adicionar estado `tab: 'calendario' | 'concluir'` (default `'calendario'`) e `direction` para animação slide (igual `ParceirosDirecao.tsx`).
-2. Logo abaixo do header/breadcrumb, inserir o pill de abas (mesmo markup glassmorphism: `bg-white/5 backdrop-blur-xl border border-white/10 rounded-full p-1`, botão ativo com gradient azul):
-   - **Calendário**
-   - **A Concluir** — com badge mostrando `visitasAConcluir.length`
-3. Conteúdo condicional dentro de um wrapper `key={tab}` com `animate-slide-in-right/left`:
-   - `tab === 'calendario'`: renderiza apenas a grade do calendário semanal (drag/drop, dialogs etc. permanecem intactos).
-   - `tab === 'concluir'`: renderiza a listagem atual "Visitas a concluir" expandida para largura total (cards com cliente, endereço, data/hora e botão "Concluir visita" que navega para `/vendas/visitas-tecnicas/:id/concluir`). Estado vazio: "Nenhuma visita pendente".
-4. Remover a coluna lateral "Visitas a concluir" do layout do calendário (passa a viver só na aba "A Concluir"). O calendário pode ocupar toda a largura.
-5. Manter intacto: queries (`visitas-a-concluir`, agendadas), mutations, dialogs de edição/exclusão, DragOverlay via portal.
+### 2. `src/components/autorizados/SeletorPedidoExistente.tsx` → renomear para `SeletorVendaExistente.tsx`
+- Trocar consulta de `pedidos_producao` para `vendas`.
+- Selecionar: `id, cliente_nome, cliente_cidade, cliente_estado, data_venda, is_rascunho, status_aprovacao`.
+- Ordenar por `data_venda desc`, limite 500. Filtrar fora `is_rascunho = true`.
+- Trocar consulta de duplicidade para `acordos_instalacao_autorizados.venda_id`.
+- Remover o filtro por etapa (não existe em vendas). Manter apenas busca por cliente.
+- Tipo: `VendaSelecionada { id, cliente_nome, cliente_cidade, cliente_estado, data_venda }`.
+- Label: "VINCULAR A VENDA *".
+- Exibir cada linha como `Cliente · Cidade/UF · dd/MM/yyyy`.
 
-## Fora do escopo
-- Não alterar `/vendas/visitas-tecnicas/realizadas` nem a página de conclusão.
-- Nenhuma mudança de schema/banco.
+### 3. `src/hooks/useAcordosAutorizados.ts`
+- Trocar `pedido_id` por `venda_id` em `NovoAcordo` e no `insert` do `createAcordo`.
+
+### 4. `src/components/autorizados/NovoAcordoDialog.tsx`
+- Trocar import e uso de `SeletorPedidoExistente` para `SeletorVendaExistente`.
+- Estado `vendaVinculada` no lugar de `pedidoVinculado`.
+- Ao selecionar venda, autopreencher `cliente_nome`, `cliente_cidade`, `cliente_estado` se vazios.
+- `onSave` envia `venda_id` em vez de `pedido_id`.
+- Validação obrigatória passa a exigir `vendaVinculada?.id`.
+
+### 5. Não alterar
+- `AcordosMesAutorizados.tsx`, `ConfirmarPagamentoAcordoDialog`, `HistoricoAcordoDialog`, `gastoAcordoAutorizado.ts` (não referenciam `pedido_id`).
+- Acordos antigos com `pedido_id` continuam intactos no banco.
+
+## Observação
+A coluna `pedido_id` ficará obsoleta mas preservada para histórico. Posso removê-la em migração futura se quiser limpeza.
