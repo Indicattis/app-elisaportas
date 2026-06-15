@@ -380,27 +380,27 @@ export default function AcordosMesAutorizados() {
           <Card className="bg-white/5 border-blue-500/10 backdrop-blur-xl">
             <CardContent className="p-0">
               <div className="overflow-x-auto">
-                <Table className="text-xs">
+                <Table className="text-xs table-fixed">
                   <TableHeader>
                     <TableRow className="border-blue-500/10 hover:bg-white/5">
-                      <TableHead className="text-xs text-white/70 text-center">Portas</TableHead>
-                      <TableHead className="text-xs text-white/70 text-center">Medidas</TableHead>
-                      <TableHead className="text-xs text-white/70">Autorizado</TableHead>
-                      <TableHead className="text-xs text-white/70">Cliente</TableHead>
-                      <TableHead className="text-xs text-white/70">Cidade</TableHead>
-                      <TableHead className="text-xs text-white/70 text-center">Km</TableHead>
-                      <TableHead className="text-xs text-white/70 text-center">Data</TableHead>
-                      <TableHead className="text-xs text-white/70 text-right">Valor</TableHead>
-                      <TableHead className="text-xs text-white/70 text-right">Valor excesso</TableHead>
-                      <TableHead className="text-xs text-white/70 text-center">Status</TableHead>
-                      <TableHead className="text-xs text-white/70 text-center">Pagamento</TableHead>
-                      <TableHead className="text-xs text-white/70">Observações</TableHead>
-                      <TableHead className="text-xs text-white/70 text-center">Histórico</TableHead>
+                      <TableHead className="text-xs text-white/70 text-center w-16">Portas</TableHead>
+                      <TableHead className="text-xs text-white/70 text-center w-24">Medidas</TableHead>
+                      <TableHead className="text-xs text-white/70 w-32">Autorizado</TableHead>
+                      <TableHead className="text-xs text-white/70 w-40">Cliente</TableHead>
+                      <TableHead className="text-xs text-white/70 w-40">Cidade</TableHead>
+                      <TableHead className="text-xs text-white/70 text-center w-16">Km</TableHead>
+                      <TableHead className="text-xs text-white/70 text-center w-20">Data</TableHead>
+                      <TableHead className="text-xs text-white/70 text-right w-24">Valor</TableHead>
+                      <TableHead className="text-xs text-white/70 text-right w-28">Valor excesso</TableHead>
+                      <TableHead className="text-xs text-white/70 text-center w-28">Status</TableHead>
+                      <TableHead className="text-xs text-white/70 text-center w-32">Pagamento</TableHead>
+                      <TableHead className="text-xs text-white/70 min-w-[180px]">Observações</TableHead>
+                      <TableHead className="text-xs text-white/70 text-center w-16">Histórico</TableHead>
                       {(contexto === 'direcao' || contexto === 'home') && (
-                        <TableHead className="text-xs text-white/70 text-center">Aprovação</TableHead>
+                        <TableHead className="text-xs text-white/70 text-center w-36">Aprovação</TableHead>
                       )}
                       {(contexto === 'logistica' || contexto === 'home') && (
-                        <TableHead className="text-right text-xs text-white/70">Ações</TableHead>
+                        <TableHead className="text-right text-xs text-white/70 w-16">Ações</TableHead>
                       )}
                     </TableRow>
                   </TableHeader>
