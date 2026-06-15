@@ -232,6 +232,13 @@ export default function VisitasTecnicasCalendario() {
   const [form, setForm] = useState({ ...emptyForm });
   const [cepLoading, setCepLoading] = useState(false);
   const [activeDrag, setActiveDrag] = useState<VisitaAgendada | null>(null);
+  const [tab, setTab] = useState<'calendario' | 'concluir'>('calendario');
+  const [tabDirection, setTabDirection] = useState<'left' | 'right'>('right');
+  const handleTabChange = (next: 'calendario' | 'concluir') => {
+    if (next === tab) return;
+    setTabDirection(next === 'concluir' ? 'right' : 'left');
+    setTab(next);
+  };
 
   useEffect(() => { const t = setTimeout(() => setMounted(true), 50); return () => clearTimeout(t); }, []);
 
