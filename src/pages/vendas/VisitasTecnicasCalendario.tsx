@@ -280,12 +280,12 @@ export default function VisitasTecnicasCalendario() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('visitas_tecnicas_agendadas')
-        .select('id, titulo, data_visita, hora_inicio, cidade, estado, status')
+        .select('*')
         .in('status', ['agendada', 'realizada'])
         .order('data_visita', { ascending: true })
         .order('hora_inicio', { ascending: true });
       if (error) throw error;
-      return (data || []) as Array<Pick<VisitaAgendada, 'id'|'titulo'|'data_visita'|'hora_inicio'|'cidade'|'estado'|'status'>>;
+      return (data || []) as VisitaAgendada[];
     },
   });
 
