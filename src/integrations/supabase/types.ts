@@ -147,6 +147,7 @@ export type Database = {
           updated_at: string
           valor_acordado: number
           valor_pago: number
+          venda_id: string | null
         }
         Insert: {
           aprovado_direcao?: boolean
@@ -171,6 +172,7 @@ export type Database = {
           updated_at?: string
           valor_acordado?: number
           valor_pago?: number
+          venda_id?: string | null
         }
         Update: {
           aprovado_direcao?: boolean
@@ -195,6 +197,7 @@ export type Database = {
           updated_at?: string
           valor_acordado?: number
           valor_pago?: number
+          venda_id?: string | null
         }
         Relationships: [
           {
@@ -216,6 +219,13 @@ export type Database = {
             columns: ["pedido_id"]
             isOneToOne: false
             referencedRelation: "pedidos_producao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acordos_instalacao_autorizados_venda_id_fkey"
+            columns: ["venda_id"]
+            isOneToOne: false
+            referencedRelation: "vendas"
             referencedColumns: ["id"]
           },
         ]

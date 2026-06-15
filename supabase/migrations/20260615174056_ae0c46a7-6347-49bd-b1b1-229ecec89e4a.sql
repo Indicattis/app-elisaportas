@@ -1,0 +1,2 @@
+ALTER TABLE public.acordos_instalacao_autorizados ADD COLUMN IF NOT EXISTS venda_id uuid REFERENCES public.vendas(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS idx_acordos_venda_id ON public.acordos_instalacao_autorizados(venda_id);
