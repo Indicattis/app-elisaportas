@@ -1,53 +1,31 @@
-## Objetivo
+## Contexto
 
-Adicionar um novo botão "Atividades de Marketing" na segunda posição do menu em `/marketing` que leva a uma nova página onde o usuário cadastra atividades realizadas (Stories / Post / Vídeo) em formato de tabela.
+Na venda `12bda7ce-...` a tabela de produtos do `/financeiro/faturamento/...` mostra dois valores na coluna **Desconto** (R$ 189,65 e R$ 1.014,35). Investiguei o banco:
 
-## Mudanças
+- `produtos_vendas.desconto_valor` está **positivo** nas duas linhas (somam R$ 1.204).
+- `valor_total = base − desconto_valor` → soma 3.240 = `vendas.valor_venda` − frete. Ou seja, no banco, esta venda está gravada como **desconto** de ~27%, não acréscimo.
+- O fluxo de venda (`VendaNovaMinimalista.tsx → portasComAjusteGlobal`) salva acréscimo como `desconto_valor` **negativo** (sinal = −1). Não há coluna separada de acréscimo em `produtos_vendas`.
 
-### 1. Banco de dados (nova migration)
+Conclusão: hoje a coluna "Desconto" do `FaturamentoProdutosTable` exibe `desconto_valor` independente do sinal. Quando o vendedor aplica acréscimo (negativo) ele apareceria como "−R$ X" rotulado como Desconto — confuso. E quando é desconto real (como nesta venda), aparece como desconto mesmo.
 
-Criar tabela `marketing_atividades`:
-- `id` uuid PK
-- `tipo` text — restrito a `'stories' | 'post' | 'video'`
-- `descricao` text not null
-- `link` text nullable
-- `duracao_minutos` integer not null (minutos inteiros)
-- `data` date not null default `current_date`
-- `created_by` uuid (admin_users)
-- `created_at` / `updated_at` timestamptz
+## O que o plano vai fazer
 
-GRANTs para `authenticated` e `service_role`. RLS habilitado com policies permitindo SELECT/INSERT/UPDATE/DELETE a qualquer usuário autenticado (mesmo nível de acesso da página /marketing).
+### 1. `src/components/vendas/FaturamentoProdutosTable.tsx`
+- Renomear o header da coluna para **"Desc. / Acrésc."**.
+- Detectar sinal de `desconto_valor` (ou `desconto_percentual`):
+  - `> 0` → "Desconto" em vermelho/laranja com prefixo `−`.
+  - `< 0` → "Acréscimo" em âmbar com prefixo `+` (mostrando valor absoluto).
+  - `= 0` → `−`.
+- Exibir badge pequeno ("Desc." / "Acrésc.") junto do valor para deixar a natureza do ajuste explícita.
 
-### 2. Hub de Marketing (`src/pages/marketing/MarketingHub.tsx`)
+### 2. Verificação dos dados desta venda
+Após o ajuste visual, esta venda continuará mostrando **Desconto** porque é o que está gravado no banco. Antes de eu codar, preciso confirmar com você:
 
-Inserir na 2ª posição do array `menuItems`:
-```
-{ label: "Atividades de Marketing", icon: Activity, path: "/marketing/atividades" }
-```
+## Pergunta para você
 
-### 3. Nova página `src/pages/marketing/AtividadesMarketing.tsx`
+Você tem certeza de que o vendedor aplicou **Acréscimo** nesta venda específica? Pelos dados gravados (`desconto_valor` positivo, `valor_venda` = base − 1.204), o sistema salvou como **Desconto** de 27%.
 
-Layout: minimalista glassmorphism (bg-white/5, backdrop-blur-xl, border-white/10, paleta azul/branco) consistente com o restante do projeto.
+- **Se o vendedor realmente aplicou acréscimo** → existe bug na hora de salvar (sinal invertido) e o plano precisa incluir investigação/correção do fluxo de criação da venda.
+- **Se foi mesmo desconto** → só faço o ajuste da tabela (rótulo "Desc. / Acrésc." com sinais corretos) para evitar confusões em vendas futuras com acréscimo.
 
-Conteúdo:
-- Cabeçalho com título "Atividades de Marketing" e botão voltar para `/marketing`
-- Botão "Nova Atividade" abrindo Dialog com formulário:
-  - Tipo (Select: Stories / Post / Vídeo) — obrigatório
-  - Descrição (Textarea) — obrigatória
-  - Link (Input URL) — opcional
-  - Duração em minutos (Input number) — obrigatória
-  - Data (Input date, default hoje, usando padrão `T12:00:00.000Z` para gravação)
-- Tabela listando atividades (mais recentes primeiro): colunas Data, Tipo (badge), Descrição, Link (ícone abrindo em nova aba), Duração (min), Ações (editar / excluir)
-- Edição via mesmo Dialog reutilizando o formulário
-- Exclusão com confirmação (AlertDialog)
-
-### 4. Rota
-
-Registrar `/marketing/atividades` em `src/App.tsx` (mesma proteção de rota usada por `/marketing/investimentos` ou similar do hub).
-
-## Detalhes técnicos
-
-- Datas gravadas com `T12:00:00.000Z` (regra do projeto)
-- Hook `useAtividadesMarketing` com React Query (queryKey `['marketing-atividades']`) para listar/criar/atualizar/excluir
-- Ícone do botão: `Activity` do lucide-react
-- Sem mudanças em lógica de negócio existente
+Me confirme qual cenário antes de eu implementar.
