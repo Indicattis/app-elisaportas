@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { TrendingUp, DollarSign, ArrowLeft, Image, Package, Target, Download, Clapperboard, Scale, Activity } from 'lucide-react';
+import { TrendingUp, DollarSign, ArrowLeft, Image, Target, Download, Clapperboard, Scale, Activity } from 'lucide-react';
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { DelayedParticles } from '@/components/DelayedParticles';
 
@@ -10,7 +10,7 @@ const menuItems = [
   { label: "Performance", icon: TrendingUp, path: "/marketing/performance" },
   { label: "Investimentos", icon: DollarSign, path: "/marketing/investimentos" },
   { label: "Mídias", icon: Image, path: "/marketing/midias" },
-  { label: "Gestão do Catálogo", icon: Package, path: "/marketing/catalogo" },
+  
   { label: "Conversões", icon: Target, path: "/marketing/conversoes-hub" },
   { label: "Balanço de Descontos", icon: Scale, path: "/marketing/balanco-descontos" },
 ];
