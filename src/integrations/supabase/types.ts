@@ -609,6 +609,7 @@ export type Database = {
         Row: {
           ativo: boolean
           cep: string | null
+          chave_pix: string | null
           cidade: string | null
           contrato_nome_arquivo: string | null
           contrato_tamanho_arquivo: number | null
@@ -645,6 +646,7 @@ export type Database = {
         Insert: {
           ativo?: boolean
           cep?: string | null
+          chave_pix?: string | null
           cidade?: string | null
           contrato_nome_arquivo?: string | null
           contrato_tamanho_arquivo?: number | null
@@ -681,6 +683,7 @@ export type Database = {
         Update: {
           ativo?: boolean
           cep?: string | null
+          chave_pix?: string | null
           cidade?: string | null
           contrato_nome_arquivo?: string | null
           contrato_tamanho_arquivo?: number | null
