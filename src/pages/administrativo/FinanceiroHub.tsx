@@ -10,7 +10,7 @@ const menuItems = [
   { label: "Contas a Pagar", icon: BadgeDollarSign, path: "/financeiro/caixa/contas-a-pagar", ativo: false },
   { label: "Contas a Receber", icon: Receipt, path: "/financeiro/caixa/contas-a-receber", ativo: true },
   { label: "Custo em Folha", icon: Users, path: "/financeiro/custo-folha", ativo: true },
-  { label: "Balanço de Descontos", icon: Scale, path: "/marketing/balanco-descontos", ativo: true },
+  { label: "Balanço de Descontos", icon: Scale, path: "/financeiro/balanco-descontos", ativo: true },
 ];
 
 export default function FinanceiroHub() {
