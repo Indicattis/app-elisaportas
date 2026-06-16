@@ -28,6 +28,7 @@ interface ParceiroForm {
   vendedor_id: string;
   vendedor_responsavel_id: string;
   etapa: string;
+  chave_pix: string;
 }
 
 interface CidadeSecundaria {
@@ -52,6 +53,7 @@ export default function NovoAutorizadoDirecao() {
     ativo: true, logo_url: "", vendedor_id: "",
     vendedor_responsavel_id: "",
     etapa: order[0],
+    chave_pix: "",
   });
 
   const [cidadesDisponiveis, setCidadesDisponiveis] = useState<string[]>([]);
@@ -181,6 +183,7 @@ export default function NovoAutorizadoDirecao() {
           vendedor_responsavel_id: form.vendedor_responsavel_id || null,
           tipo_parceiro: 'autorizado' as const,
           etapa: form.etapa as 'ativo' | 'perdido' | 'premium',
+          chave_pix: form.chave_pix || null,
         }])
         .select('id')
         .single();
@@ -289,6 +292,12 @@ export default function NovoAutorizadoDirecao() {
                         onChange={(e) => setForm({ ...form, whatsapp: e.target.value })}
                         className={`bg-white/5 border-white/10 text-white ${errors.whatsapp ? "border-red-500" : ""}`} />
                       {errors.whatsapp && <p className="text-sm text-red-500">{errors.whatsapp}</p>}
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-white/80">Chave Pix</Label>
+                      <Input placeholder="CPF/CNPJ, e-mail, telefone ou chave aleatória" value={form.chave_pix}
+                        onChange={(e) => setForm({ ...form, chave_pix: e.target.value })}
+                        className="bg-white/5 border-white/10 text-white" />
                     </div>
                     <div className="space-y-2">
                       <Label className="text-white/80">Responsável *</Label>
