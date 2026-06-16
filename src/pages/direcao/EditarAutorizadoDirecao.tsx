@@ -486,6 +486,12 @@ export default function EditarAutorizadoDirecao() {
                       {errors.whatsapp && <p className="text-sm text-red-500">{errors.whatsapp}</p>}
                     </div>
                     <div className="space-y-2">
+                      <Label className="text-white/80">Chave Pix</Label>
+                      <Input placeholder="CPF/CNPJ, e-mail, telefone ou chave aleatória" value={form.chave_pix}
+                        onChange={(e) => setForm({ ...form, chave_pix: e.target.value })}
+                        className="bg-white/5 border-white/10 text-white" />
+                    </div>
+                    <div className="space-y-2">
                       <Label className="text-white/80">Responsável *</Label>
                       <Input placeholder="Nome do responsável" value={form.responsavel}
                         onChange={(e) => setForm({ ...form, responsavel: e.target.value })}
