@@ -617,6 +617,19 @@ export default function FaturamentoMinimalista() {
     };
   }, [configLimites]);
 
+  // Ajuste real da venda baseado em produtos_vendas.desconto_valor
+  // sinal positivo = desconto, negativo = acréscimo (mesma convenção do detalhe)
+  const calcAjusteVenda = useCallback((venda: Venda) => {
+    let desconto = 0;
+    let acrescimo = 0;
+    for (const p of (venda.portas || []) as any[]) {
+      const v = Number(p?.desconto_valor) || 0;
+      if (v > 0) desconto += v;
+      else if (v < 0) acrescimo += -v;
+    }
+    return { desconto, acrescimo };
+  }, []);
+
   const filteredVendas = useMemo(() => {
     return vendas.filter(venda => {
       if (filtroStatus.length > 0) {
@@ -661,12 +674,8 @@ export default function FaturamentoMinimalista() {
           case 'status': return isFaturada(venda) ? 1 : 0;
           case 'desconto':
           case 'acrescimo': {
-            const tabelaTotal = (venda.portas || []).reduce((acc: number, p: any) => {
-              const qty = p.quantidade || 1;
-              return acc + ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
-            }, 0);
-            const diff = tabelaTotal - (venda.valor_venda || 0);
-            return sortConfig.column === 'desconto' ? Math.max(0, diff) : Math.max(0, -diff);
+            const { desconto, acrescimo } = calcAjusteVenda(venda);
+            return sortConfig.column === 'desconto' ? desconto : acrescimo;
           }
           case 'desc_cartao':
           case 'desc_gelo':
@@ -1030,22 +1039,14 @@ export default function FaturamentoMinimalista() {
       case 'valor':
         return <span className="text-white font-medium">{formatCurrency(venda.valor_venda || 0)}</span>;
       case 'desconto': {
-        const tabelaTotal = (venda.portas || []).reduce((acc: number, p: any) => {
-          const qty = p.quantidade || 1;
-          return acc + ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
-        }, 0);
-        const diff = tabelaTotal - (venda.valor_venda || 0);
-        if (diff <= 0) return <span className="text-white/30">-</span>;
-        return <span className="text-red-400">-{formatCurrency(diff)}</span>;
+        const { desconto } = calcAjusteVenda(venda);
+        if (desconto <= 0) return <span className="text-white/30">-</span>;
+        return <span className="text-red-400">-{formatCurrency(desconto)}</span>;
       }
       case 'acrescimo': {
-        const tabelaTotal = (venda.portas || []).reduce((acc: number, p: any) => {
-          const qty = p.quantidade || 1;
-          return acc + ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
-        }, 0);
-        const diff = (venda.valor_venda || 0) - tabelaTotal;
-        if (diff <= 0) return <span className="text-white/30">-</span>;
-        return <span className="text-emerald-400">+{formatCurrency(diff)}</span>;
+        const { acrescimo } = calcAjusteVenda(venda);
+        if (acrescimo <= 0) return <span className="text-white/30">-</span>;
+        return <span className="text-emerald-400">+{formatCurrency(acrescimo)}</span>;
       }
       case 'status': {
         if (isFaturada(venda)) {
