@@ -4511,6 +4511,42 @@ export type Database = {
           },
         ]
       }
+      marketing_atividades: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          data: string
+          descricao: string
+          duracao_minutos: number
+          id: string
+          link: string | null
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          data?: string
+          descricao: string
+          duracao_minutos: number
+          id?: string
+          link?: string | null
+          tipo: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          data?: string
+          descricao?: string
+          duracao_minutos?: number
+          id?: string
+          link?: string | null
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       marketing_investimentos: {
         Row: {
           created_at: string

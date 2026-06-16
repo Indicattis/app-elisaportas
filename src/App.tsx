@@ -68,6 +68,7 @@ import ConversoesMeta from "./pages/marketing/ConversoesMeta";
 import ConversoesHub from "./pages/marketing/ConversoesHub";
 import VideosIdeias from "./pages/marketing/VideosIdeias";
 import BalancoDescontos from "./pages/marketing/BalancoDescontos";
+import AtividadesMarketing from "./pages/marketing/AtividadesMarketing";
 
 import FabricaHome from "./pages/FabricaHome";
 import InstalacoesHome from "./pages/InstalacoesHome";
@@ -460,6 +461,7 @@ const App = () => (
             <Route path="/marketing/conversoes-meta" element={<ProtectedRoute routeKey="marketing_conversoes"><ConversoesMeta /></ProtectedRoute>} />
             <Route path="/marketing/conversoes-hub" element={<ProtectedRoute routeKey="marketing_conversoes"><ConversoesHub /></ProtectedRoute>} />
              <Route path="/marketing/videos-ideias" element={<ProtectedRoute routeKey="marketing_videos_ideias"><VideosIdeias /></ProtectedRoute>} />
+            <Route path="/marketing/atividades" element={<ProtectedRoute routeKeyPrefix="marketing_"><AtividadesMarketing /></ProtectedRoute>} />
             <Route path="/marketing/balanco-descontos" element={<ProtectedRoute routeKeyPrefix="marketing_"><BalancoDescontos /></ProtectedRoute>} />
 
                 {/* Hub de Vendas Minimalista */}
