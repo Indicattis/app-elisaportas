@@ -1,31 +1,41 @@
-## Contexto
+## Problema
 
-Na venda `12bda7ce-...` a tabela de produtos do `/financeiro/faturamento/...` mostra dois valores na coluna **Desconto** (R$ 189,65 e R$ 1.014,35). Investiguei o banco:
+Em `/financeiro/faturamento/vendas`, a venda `12bda7ce…` aparece com **Acréscimo de R$ 956**, mas na verdade tem **Desconto de R$ 1.204** (vide página de detalhe e tabela `vendas_balanco_desconto`).
 
-- `produtos_vendas.desconto_valor` está **positivo** nas duas linhas (somam R$ 1.204).
-- `valor_total = base − desconto_valor` → soma 3.240 = `vendas.valor_venda` − frete. Ou seja, no banco, esta venda está gravada como **desconto** de ~27%, não acréscimo.
-- O fluxo de venda (`VendaNovaMinimalista.tsx → portasComAjusteGlobal`) salva acréscimo como `desconto_valor` **negativo** (sinal = −1). Não há coluna separada de acréscimo em `produtos_vendas`.
+## Causa
 
-Conclusão: hoje a coluna "Desconto" do `FaturamentoProdutosTable` exibe `desconto_valor` independente do sinal. Quando o vendedor aplica acréscimo (negativo) ele apareceria como "−R$ X" rotulado como Desconto — confuso. E quando é desconto real (como nesta venda), aparece como desconto mesmo.
+`src/pages/administrativo/FaturamentoVendasMinimalista.tsx` (linhas 1032–1049 e 662–670) calcula desconto/acréscimo assim:
 
-## O que o plano vai fazer
+```
+tabelaTotal = Σ (valor_produto + valor_pintura + valor_instalacao) × qty   // bruto, sem desconto
+diff        = vendas.valor_venda − tabelaTotal
+diff > 0 → Acréscimo    diff < 0 → Desconto
+```
 
-### 1. `src/components/vendas/FaturamentoProdutosTable.tsx`
-- Renomear o header da coluna para **"Desc. / Acrésc."**.
-- Detectar sinal de `desconto_valor` (ou `desconto_percentual`):
-  - `> 0` → "Desconto" em vermelho/laranja com prefixo `−`.
-  - `< 0` → "Acréscimo" em âmbar com prefixo `+` (mostrando valor absoluto).
-  - `= 0` → `−`.
-- Exibir badge pequeno ("Desc." / "Acrésc.") junto do valor para deixar a natureza do ajuste explícita.
+`vendas.valor_venda` pode incluir frete, crédito e eventuais divergências legadas, então a diferença não representa o ajuste real do vendedor. No caso citado: `valor_venda=5.400` vs `tabelaTotal=4.444` → falso acréscimo de 956, quando os itens na verdade têm `Σ desconto_valor = 1.204` (positivo = desconto).
 
-### 2. Verificação dos dados desta venda
-Após o ajuste visual, esta venda continuará mostrando **Desconto** porque é o que está gravado no banco. Antes de eu codar, preciso confirmar com você:
+## Correção
 
-## Pergunta para você
+Usar a fonte de verdade que já existe nos itens:
 
-Você tem certeza de que o vendedor aplicou **Acréscimo** nesta venda específica? Pelos dados gravados (`desconto_valor` positivo, `valor_venda` = base − 1.204), o sistema salvou como **Desconto** de 27%.
+- **Desconto da venda** = `Σ max(desconto_valor, 0)` em `produtos_vendas`
+- **Acréscimo da venda** = `Σ max(−desconto_valor, 0)` em `produtos_vendas`
 
-- **Se o vendedor realmente aplicou acréscimo** → existe bug na hora de salvar (sinal invertido) e o plano precisa incluir investigação/correção do fluxo de criação da venda.
-- **Se foi mesmo desconto** → só faço o ajuste da tabela (rótulo "Desc. / Acrésc." com sinais corretos) para evitar confusões em vendas futuras com acréscimo.
+(Isto bate com o critério do detalhe `FaturamentoProdutosTable` — sinal positivo = desconto, negativo = acréscimo — e com `vendas_balanco_desconto`.)
 
-Me confirme qual cenário antes de eu implementar.
+## Mudanças
+
+Arquivo único: `src/pages/administrativo/FaturamentoVendasMinimalista.tsx`
+
+1. Criar helper `calcAjusteVenda(venda)` que retorna `{ desconto, acrescimo }` a partir de `Σ desconto_valor` dos itens.
+2. Substituir os blocos `case 'desconto'` e `case 'acrescimo'` do render (≈1032–1049) para usar o helper.
+3. Substituir o trecho equivalente do `sortedVendas` (≈662–670) pelo mesmo helper.
+4. Manter formatação atual: vermelho com `−` para desconto, verde com `+` para acréscimo, `-` quando zero.
+
+Sem mudanças em banco, em outras telas, ou no detalhe de faturamento.
+
+## Validação
+
+- A venda `12bda7ce…` passará a mostrar **Desconto R$ 1.204** e Acréscimo `-`.
+- Vendas com `desconto_valor` negativo em algum item continuarão mostrando Acréscimo correto.
+- Build TS.
