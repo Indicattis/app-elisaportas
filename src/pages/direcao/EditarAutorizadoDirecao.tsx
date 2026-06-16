@@ -32,6 +32,7 @@ interface ParceiroForm {
   vendedor_id: string;
   vendedor_responsavel_id: string;
   etapa: string;
+  chave_pix: string;
 }
 
 interface CidadeSecundaria {
@@ -58,6 +59,7 @@ export default function EditarAutorizadoDirecao() {
     ativo: true, logo_url: "", vendedor_id: "",
     vendedor_responsavel_id: "",
     etapa: order[0],
+    chave_pix: "",
   });
 
   const [cidadesDisponiveis, setCidadesDisponiveis] = useState<string[]>([]);
@@ -121,6 +123,7 @@ export default function EditarAutorizadoDirecao() {
           vendedor_id: data.vendedor_id || "",
           vendedor_responsavel_id: (data as any).vendedor_responsavel_id || "",
           etapa: data.etapa || order[0],
+          chave_pix: (data as any).chave_pix || "",
         });
 
         if (data.estado) {
@@ -255,6 +258,7 @@ export default function EditarAutorizadoDirecao() {
           etapa: form.etapa as 'ativo' | 'perdido' | 'premium',
           contrato_url: contratoUrl,
           contrato_nome_arquivo: contratoNome,
+          chave_pix: form.chave_pix || null,
           updated_at: new Date().toISOString(),
         })
         .eq('id', id);
