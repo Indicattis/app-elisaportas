@@ -115,6 +115,7 @@ const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
   { id: 'cidade', label: 'Cidade', defaultVisible: true },
   { id: 'expedicao', label: 'Expedição', defaultVisible: true },
   { id: 'tabela', label: 'Preço Tabela', defaultVisible: true },
+  { id: 'frete', label: 'Frete', defaultVisible: true },
   { id: 'valor', label: 'Preço Venda', defaultVisible: true },
   { id: 'desconto', label: 'Desconto', defaultVisible: true },
   { id: 'acrescimo', label: 'Acréscimo', defaultVisible: true },
