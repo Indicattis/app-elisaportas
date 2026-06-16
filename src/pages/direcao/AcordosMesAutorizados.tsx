@@ -386,6 +386,7 @@ export default function AcordosMesAutorizados() {
                       <TableHead className="text-xs text-white/70 text-center w-16">Portas</TableHead>
                       <TableHead className="text-xs text-white/70 text-center w-24">Medidas</TableHead>
                       <TableHead className="text-xs text-white/70 w-32">Autorizado</TableHead>
+                      <TableHead className="text-xs text-white/70 w-40">Chave Pix</TableHead>
                       <TableHead className="text-xs text-white/70 w-40">Cliente</TableHead>
                       <TableHead className="text-xs text-white/70 w-40">Cidade</TableHead>
                       <TableHead className="text-xs text-white/70 text-center w-16">Km</TableHead>
@@ -410,7 +411,7 @@ export default function AcordosMesAutorizados() {
                     <TooltipProvider>
                       {(() => {
                         const colSpan =
-                          15 +
+                          16 +
                           ((contexto === 'direcao' || contexto === 'home') ? 1 : 0) +
                           ((contexto === 'logistica' || contexto === 'home') ? 1 : 0);
                         return acordosAgrupados.map((grupo, idx) => (
@@ -450,6 +451,9 @@ export default function AcordosMesAutorizados() {
                                   ).join(', ')}
                                 </TableCell>
                                 <TableCell className="text-white/70">{acordo.autorizado_nome}</TableCell>
+                                <TableCell className="text-white/70 max-w-[160px] truncate" title={acordo.autorizado_chave_pix || ''}>
+                                  {acordo.autorizado_chave_pix || '—'}
+                                </TableCell>
                                 <TableCell><span className="font-medium">{acordo.cliente_nome}</span></TableCell>
                                 <TableCell className="text-white/70">{acordo.cliente_cidade} - {acordo.cliente_estado}</TableCell>
                                 <TableCell className="text-center text-white/70">

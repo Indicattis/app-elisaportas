@@ -15,6 +15,7 @@ export interface AcordoAutorizado {
   id: string;
   autorizado_id: string;
   autorizado_nome: string;
+  autorizado_chave_pix?: string;
   cliente_nome: string;
   cliente_cidade: string;
   cliente_estado: string;
@@ -66,7 +67,8 @@ export function useAcordosAutorizados() {
         .select(`
           *,
           autorizados:autorizado_id (
-            nome
+            nome,
+            chave_pix
           )
         `)
         .order('created_at', { ascending: false });
@@ -112,6 +114,7 @@ export function useAcordosAutorizados() {
         id: acordo.id,
         autorizado_id: acordo.autorizado_id,
         autorizado_nome: acordo.autorizados?.nome || 'Desconhecido',
+        autorizado_chave_pix: acordo.autorizados?.chave_pix || undefined,
         cliente_nome: acordo.cliente_nome,
         cliente_cidade: acordo.cliente_cidade,
         cliente_estado: acordo.cliente_estado,
