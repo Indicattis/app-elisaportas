@@ -59,7 +59,7 @@ export function FaturamentoProdutosTable({
             <TableHead>Tipo</TableHead>
             <TableHead>Produto</TableHead>
             <TableHead>Tamanho</TableHead>
-            <TableHead className="text-right">Desconto</TableHead>
+            <TableHead className="text-right">Desc. / Acrésc.</TableHead>
             <TableHead className="text-right">Valor Unit.</TableHead>
             <TableHead className="text-center">Qtd</TableHead>
             <TableHead className="text-right">Valor Total</TableHead>
@@ -81,11 +81,24 @@ export function FaturamentoProdutosTable({
             const valorUnitario = isDecimal && tamanhoNum > 0 && produto.quantidade > 0
               ? produto.valor_total / (produto.quantidade * tamanhoNum)
               : produto.quantidade > 0 ? produto.valor_total / produto.quantidade : 0;
-            const desconto = produto.desconto_percentual
-              ? `${produto.desconto_percentual}%` 
-              : produto.desconto_valor 
-                ? `R$ ${produto.desconto_valor.toFixed(2)}`
-                : '-';
+            const pct = produto.desconto_percentual || 0;
+            const val = produto.desconto_valor || 0;
+            // Sinal: positivo = desconto, negativo = acréscimo
+            const sinalRef = pct !== 0 ? pct : val;
+            const isAcrescimo = sinalRef < 0;
+            const isDesconto = sinalRef > 0;
+            const ajusteLabel = isAcrescimo ? 'Acréscimo' : isDesconto ? 'Desconto' : '';
+            const ajusteSinal = isAcrescimo ? '+' : isDesconto ? '−' : '';
+            const ajusteCor = isAcrescimo
+              ? 'text-amber-600'
+              : isDesconto
+                ? 'text-orange-600'
+                : 'text-muted-foreground';
+            const ajusteValorTxt = pct !== 0
+              ? `${Math.abs(pct)}%`
+              : val !== 0
+                ? `R$ ${Math.abs(val).toFixed(2)}`
+                : '';
             const unidadeLabel = unidadeShort ? ` ${unidadeShort}` : '';
             
             return (
@@ -99,8 +112,19 @@ export function FaturamentoProdutosTable({
                 <TableCell className="text-muted-foreground">
                   {produto.tamanho ? `${produto.tamanho}${unidadeLabel}` : "-"}
                 </TableCell>
-                <TableCell className="text-right text-orange-600">
-                  {desconto}
+                <TableCell className={`text-right ${ajusteCor}`}>
+                  {ajusteValorTxt ? (
+                    <div className="flex flex-col items-end leading-tight">
+                      <span className="text-[10px] uppercase tracking-wider opacity-70">
+                        {ajusteLabel}
+                      </span>
+                      <span className="font-medium">
+                        {ajusteSinal} {ajusteValorTxt}
+                      </span>
+                    </div>
+                  ) : (
+                    '-'
+                  )}
                 </TableCell>
                 <TableCell className="text-right">
                   R$ {valorUnitario.toFixed(2)}{isDecimal && unidadeShort ? `/${unidadeShort}` : ''}
