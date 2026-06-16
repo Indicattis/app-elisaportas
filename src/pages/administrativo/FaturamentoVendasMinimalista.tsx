@@ -661,6 +661,7 @@ export default function FaturamentoMinimalista() {
           case 'vendedor': return venda.atendente_nome.toLowerCase();
           case 'cidade': return venda.cidade?.toLowerCase() || '';
           case 'valor': return (venda.valor_venda || 0) + (venda.valor_credito || 0);
+          case 'frete': return venda.valor_frete || 0;
           case 'tabela':
             return (venda.portas || []).reduce((acc: number, p: any) => {
               const qty = p.quantidade || 1;
@@ -920,13 +921,13 @@ export default function FaturamentoMinimalista() {
   };
 
   const getColumnResponsiveClass = (columnId: string) => {
-    const hiddenOnMobile = ['cidade', 'expedicao', 'desc_cartao', 'desc_gelo', 'desc_responsavel', 'tempo_sem_faturar', 'justificativa', 'lucro', 'tabela', 'contrato', 'desconto', 'acrescimo', 'status'];
+    const hiddenOnMobile = ['cidade', 'expedicao', 'desc_cartao', 'desc_gelo', 'desc_responsavel', 'tempo_sem_faturar', 'justificativa', 'lucro', 'tabela', 'frete', 'contrato', 'desconto', 'acrescimo', 'status'];
     if (hiddenOnMobile.includes(columnId)) return 'hidden md:table-cell';
     return '';
   };
 
   const getColumnAlignment = (columnId: string) => {
-    const rightAligned = ['valor', 'lucro', 'desc_cartao', 'desc_gelo', 'desc_responsavel', 'tabela', 'desconto', 'acrescimo'];
+    const rightAligned = ['valor', 'lucro', 'desc_cartao', 'desc_gelo', 'desc_responsavel', 'tabela', 'frete', 'desconto', 'acrescimo'];
     const centerAligned = ['faturada', 'tempo_sem_faturar', 'expedicao', 'contrato', 'status'];
     if (rightAligned.includes(columnId)) return 'text-right';
     if (centerAligned.includes(columnId)) return 'text-center';
@@ -998,6 +999,11 @@ export default function FaturamentoMinimalista() {
           return acc + ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
         }, 0);
         return <span className="text-blue-400 font-medium">{formatCurrency(tabelaTotal)}</span>;
+      case 'frete': {
+        const frete = venda.valor_frete || 0;
+        if (frete <= 0) return <span className="text-white/30">-</span>;
+        return <span className="text-amber-400">{formatCurrency(frete)}</span>;
+      }
       case 'desc_cartao':
       case 'desc_gelo':
       case 'desc_responsavel': {
