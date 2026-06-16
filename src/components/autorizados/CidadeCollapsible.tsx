@@ -149,6 +149,7 @@ export function CidadeCollapsible({
                   <TableHead className="text-xs text-white/70">Etapa</TableHead>
                   <TableHead className="text-xs text-white/70">Vendedor Resp.</TableHead>
                   <TableHead className="text-xs text-white/70">Cidades Sec.</TableHead>
+                  <TableHead className="text-xs text-white/70">Chave Pix</TableHead>
                   <TableHead className="text-xs text-white/70 text-center">P</TableHead>
                   <TableHead className="text-xs text-white/70 text-center">G</TableHead>
                   <TableHead className="text-xs text-white/70 text-center">GG</TableHead>
@@ -238,6 +239,9 @@ function AutorizadoRow({ autorizado, onEdit, onDelete, onTogglePremium }: Autori
         {autorizado.cidadesSecundarias && autorizado.cidadesSecundarias.length > 0
           ? autorizado.cidadesSecundarias.join(', ')
           : '-'}
+      </TableCell>
+      <TableCell className="text-white/70 text-xs max-w-[180px] truncate" title={autorizado.chave_pix || ''}>
+        {autorizado.chave_pix || '-'}
       </TableCell>
       <TableCell className="text-center text-white/80">{formatCurrency(autorizado.precos?.P)}</TableCell>
       <TableCell className="text-center text-white/80">{formatCurrency(autorizado.precos?.G)}</TableCell>
