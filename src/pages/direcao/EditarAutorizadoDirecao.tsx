@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { LogoUpload } from "@/components/LogoUpload";
 import { ContratoUpload } from "@/components/ContratoUpload";
-import { ArrowLeft, MapPin, Loader2, RotateCcw, Plus, X, User, Upload } from "lucide-react";
+import { ArrowLeft, MapPin, Loader2, RotateCcw, Plus, X, User, Upload, Phone, Users, DollarSign, FileText, Image as ImageIcon, Building2 } from "lucide-react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
@@ -445,186 +445,151 @@ export default function EditarAutorizadoDirecao() {
           </div>
         </header>
 
-        <div className="px-4 py-6 max-w-4xl mx-auto">
-          <Card className="bg-white/5 border-primary/10">
-            <CardHeader>
-              <CardTitle className="text-white">Informações do Autorizado</CardTitle>
-              <CardDescription className="text-white/60">
-                Campos marcados com * são obrigatórios.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Coluna Esquerda */}
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label className="text-white/80">Nome *</Label>
-                      <Input placeholder="Nome do autorizado" value={form.nome}
-                        onChange={(e) => setForm({ ...form, nome: e.target.value })}
-                        className={`bg-white/5 border-white/10 text-white ${errors.nome ? "border-red-500" : ""}`} />
-                      {errors.nome && <p className="text-sm text-red-500">{errors.nome}</p>}
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-white/80">Email</Label>
-                      <Input type="email" placeholder="email@exemplo.com" value={form.email}
-                        onChange={(e) => setForm({ ...form, email: e.target.value })}
-                        className="bg-white/5 border-white/10 text-white" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-white/80">Telefone *</Label>
-                      <Input placeholder="(00) 00000-0000" value={form.telefone}
-                        onChange={(e) => setForm({ ...form, telefone: e.target.value })}
-                        className={`bg-white/5 border-white/10 text-white ${errors.telefone ? "border-red-500" : ""}`} />
-                      {errors.telefone && <p className="text-sm text-red-500">{errors.telefone}</p>}
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-white/80">WhatsApp *</Label>
-                      <Input placeholder="(00) 00000-0000" value={form.whatsapp}
-                        onChange={(e) => setForm({ ...form, whatsapp: e.target.value })}
-                        className={`bg-white/5 border-white/10 text-white ${errors.whatsapp ? "border-red-500" : ""}`} />
-                      {errors.whatsapp && <p className="text-sm text-red-500">{errors.whatsapp}</p>}
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-white/80">Chave Pix</Label>
-                      <Input placeholder="CPF/CNPJ, e-mail, telefone ou chave aleatória" value={form.chave_pix}
-                        onChange={(e) => setForm({ ...form, chave_pix: e.target.value })}
-                        className="bg-white/5 border-white/10 text-white" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-white/80">Responsável *</Label>
-                      <Input placeholder="Nome do responsável" value={form.responsavel}
-                        onChange={(e) => setForm({ ...form, responsavel: e.target.value })}
-                        className={`bg-white/5 border-white/10 text-white ${errors.responsavel ? "border-red-500" : ""}`} />
-                      {errors.responsavel && <p className="text-sm text-red-500">{errors.responsavel}</p>}
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-white/80">Atendente *</Label>
-                      <Select value={form.vendedor_id} onValueChange={(value) => setForm({ ...form, vendedor_id: value })}>
-                        <SelectTrigger className={`bg-white/5 border-white/10 text-white ${errors.vendedor_id ? "border-red-500" : ""}`}>
-                          <SelectValue placeholder="Selecione um atendente" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {vendedores.map((v) => (
-                            <SelectItem key={v.id} value={v.id}>{v.nome}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {errors.vendedor_id && <p className="text-sm text-red-500">{errors.vendedor_id}</p>}
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-white/80">Vendedor Responsável</Label>
-                      <Select value={form.vendedor_responsavel_id} onValueChange={(value) => setForm({ ...form, vendedor_responsavel_id: value })}>
-                        <SelectTrigger className="bg-white/5 border-white/10 text-white">
-                          <SelectValue placeholder="Selecione o vendedor responsável" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {vendedores.map((v) => (
-                            <SelectItem key={v.id} value={v.id}>{v.nome}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+        <div className="px-4 py-6 max-w-5xl mx-auto">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* SEÇÃO 1: Identificação */}
+            <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
+              <CardHeader className="pb-4">
+                <div className="flex items-center gap-2">
+                  <User className="w-4 h-4 text-primary" />
+                  <CardTitle className="text-white text-base">Identificação</CardTitle>
+                </div>
+                <CardDescription className="text-white/50 text-xs">Dados principais e status do autorizado.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                  <div className="md:col-span-6 space-y-2">
+                    <Label className="text-white/70 text-xs uppercase tracking-wide">Nome *</Label>
+                    <Input placeholder="Nome do autorizado" value={form.nome}
+                      onChange={(e) => setForm({ ...form, nome: e.target.value })}
+                      className={`bg-white/5 border-white/10 text-white ${errors.nome ? "border-red-500" : ""}`} />
+                    {errors.nome && <p className="text-xs text-red-500">{errors.nome}</p>}
+                  </div>
+                  <div className="md:col-span-4 space-y-2">
+                    <Label className="text-white/70 text-xs uppercase tracking-wide">Etapa</Label>
+                    <Select value={form.etapa} onValueChange={(v) => setForm({ ...form, etapa: v })}>
+                      <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {order.map((key) => (
+                          <SelectItem key={key} value={key}>{etapas[key as keyof typeof etapas]}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="md:col-span-2 space-y-2">
+                    <Label className="text-white/70 text-xs uppercase tracking-wide">Status</Label>
+                    <div className="flex items-center gap-2 h-10 px-3 rounded-md bg-white/5 border border-white/10">
+                      <Switch id="ativo" checked={form.ativo} onCheckedChange={(checked) => setForm({ ...form, ativo: checked })} />
+                      <Label htmlFor="ativo" className="text-white/80 text-sm cursor-pointer">{form.ativo ? 'Ativo' : 'Inativo'}</Label>
                     </div>
                   </div>
+                </div>
+              </CardContent>
+            </Card>
 
-                  {/* Coluna Direita */}
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label className="text-white/80">Estado *</Label>
-                        <Select value={form.estado} onValueChange={handleEstadoChange}>
-                          <SelectTrigger className={`bg-white/5 border-white/10 text-white ${errors.estado ? "border-red-500" : ""}`}>
-                            <SelectValue placeholder="Estado" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {ESTADOS_BRASIL.map((e) => (
-                              <SelectItem key={e.sigla} value={e.sigla}>{e.nome}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        {errors.estado && <p className="text-sm text-red-500">{errors.estado}</p>}
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-white/80">Cidade *</Label>
-                        <Select value={form.cidade} onValueChange={(v) => setForm({ ...form, cidade: v })} disabled={!form.estado}>
-                          <SelectTrigger className={`bg-white/5 border-white/10 text-white ${errors.cidade ? "border-red-500" : ""}`}>
-                            <SelectValue placeholder={form.estado ? "Cidade" : "Selecione o estado"} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {cidadesDisponiveis.map((c) => (
-                              <SelectItem key={c} value={c}>{c}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        {errors.cidade && <p className="text-sm text-red-500">{errors.cidade}</p>}
-                      </div>
-                    </div>
+            {/* SEÇÃO 2: Contato */}
+            <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
+              <CardHeader className="pb-4">
+                <div className="flex items-center gap-2">
+                  <Phone className="w-4 h-4 text-primary" />
+                  <CardTitle className="text-white text-base">Contato e Pagamento</CardTitle>
+                </div>
+                <CardDescription className="text-white/50 text-xs">Informações para contato e recebimento.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-white/70 text-xs uppercase tracking-wide">Responsável *</Label>
+                    <Input placeholder="Nome do responsável" value={form.responsavel}
+                      onChange={(e) => setForm({ ...form, responsavel: e.target.value })}
+                      className={`bg-white/5 border-white/10 text-white ${errors.responsavel ? "border-red-500" : ""}`} />
+                    {errors.responsavel && <p className="text-xs text-red-500">{errors.responsavel}</p>}
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-white/70 text-xs uppercase tracking-wide">Email</Label>
+                    <Input type="email" placeholder="email@exemplo.com" value={form.email}
+                      onChange={(e) => setForm({ ...form, email: e.target.value })}
+                      className="bg-white/5 border-white/10 text-white" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-white/70 text-xs uppercase tracking-wide">Telefone *</Label>
+                    <Input placeholder="(00) 00000-0000" value={form.telefone}
+                      onChange={(e) => setForm({ ...form, telefone: e.target.value })}
+                      className={`bg-white/5 border-white/10 text-white ${errors.telefone ? "border-red-500" : ""}`} />
+                    {errors.telefone && <p className="text-xs text-red-500">{errors.telefone}</p>}
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-white/70 text-xs uppercase tracking-wide">WhatsApp *</Label>
+                    <Input placeholder="(00) 00000-0000" value={form.whatsapp}
+                      onChange={(e) => setForm({ ...form, whatsapp: e.target.value })}
+                      className={`bg-white/5 border-white/10 text-white ${errors.whatsapp ? "border-red-500" : ""}`} />
+                    {errors.whatsapp && <p className="text-xs text-red-500">{errors.whatsapp}</p>}
+                  </div>
+                  <div className="md:col-span-2 space-y-2">
+                    <Label className="text-white/70 text-xs uppercase tracking-wide">Chave Pix</Label>
+                    <Input placeholder="CPF/CNPJ, e-mail, telefone ou chave aleatória" value={form.chave_pix}
+                      onChange={(e) => setForm({ ...form, chave_pix: e.target.value })}
+                      className="bg-white/5 border-white/10 text-white" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-                    <div className="space-y-2">
-                      <Label className="text-white/80">CEP *</Label>
-                      <Input placeholder="00000-000" value={form.cep}
-                        onChange={(e) => setForm({ ...form, cep: e.target.value })}
-                        className={`bg-white/5 border-white/10 text-white ${errors.cep ? "border-red-500" : ""}`} />
-                      {errors.cep && <p className="text-sm text-red-500">{errors.cep}</p>}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label className="text-white/80">Etapa</Label>
-                      <Select value={form.etapa} onValueChange={(v) => setForm({ ...form, etapa: v })}>
-                        <SelectTrigger className="bg-white/5 border-white/10 text-white">
-                          <SelectValue placeholder="Selecione uma etapa" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {order.map((key) => (
-                            <SelectItem key={key} value={key}>{etapas[key as keyof typeof etapas]}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="flex items-center space-x-2">
-                      <Switch id="ativo" checked={form.ativo} onCheckedChange={(checked) => setForm({ ...form, ativo: checked })} />
-                      <Label htmlFor="ativo" className="text-white/80">Ativo</Label>
-                    </div>
-
-                    {/* Logo */}
-                    <div className="space-y-2">
-                      <Label className="text-white/80">Logo</Label>
-                      {id && (
-                        <LogoUpload
-                          autorizadoId={id}
-                          currentLogoUrl={form.logo_url || null}
-                          autorizadoName={form.nome}
-                          onLogoUpdate={handleLogoUpdate}
-                        />
-                      )}
-                    </div>
-
-                    {/* Contrato */}
-                    {id && (
-                      <div className="space-y-2">
-                        <Label className="text-white/80">Contrato</Label>
-                        <ContratoUpload
-                          contratoUrl={contratoUrl}
-                          contratoNome={contratoNome}
-                          onContratoChange={(url, nome) => {
-                            setContratoUrl(url);
-                            setContratoNome(nome);
-                          }}
-                          onContratoRemove={() => {
-                            setContratoUrl(null);
-                            setContratoNome(null);
-                          }}
-                        />
-                      </div>
-                    )}
+            {/* SEÇÃO 3: Localização */}
+            <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
+              <CardHeader className="pb-4">
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-primary" />
+                  <CardTitle className="text-white text-base">Localização</CardTitle>
+                </div>
+                <CardDescription className="text-white/50 text-xs">Endereço principal e regiões atendidas.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-5">
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                  <div className="md:col-span-4 space-y-2">
+                    <Label className="text-white/70 text-xs uppercase tracking-wide">Estado *</Label>
+                    <Select value={form.estado} onValueChange={handleEstadoChange}>
+                      <SelectTrigger className={`bg-white/5 border-white/10 text-white ${errors.estado ? "border-red-500" : ""}`}>
+                        <SelectValue placeholder="Estado" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ESTADOS_BRASIL.map((e) => (
+                          <SelectItem key={e.sigla} value={e.sigla}>{e.nome}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors.estado && <p className="text-xs text-red-500">{errors.estado}</p>}
+                  </div>
+                  <div className="md:col-span-5 space-y-2">
+                    <Label className="text-white/70 text-xs uppercase tracking-wide">Cidade *</Label>
+                    <Select value={form.cidade} onValueChange={(v) => setForm({ ...form, cidade: v })} disabled={!form.estado}>
+                      <SelectTrigger className={`bg-white/5 border-white/10 text-white ${errors.cidade ? "border-red-500" : ""}`}>
+                        <SelectValue placeholder={form.estado ? "Cidade" : "Selecione o estado"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {cidadesDisponiveis.map((c) => (
+                          <SelectItem key={c} value={c}>{c}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors.cidade && <p className="text-xs text-red-500">{errors.cidade}</p>}
+                  </div>
+                  <div className="md:col-span-3 space-y-2">
+                    <Label className="text-white/70 text-xs uppercase tracking-wide">CEP *</Label>
+                    <Input placeholder="00000-000" value={form.cep}
+                      onChange={(e) => setForm({ ...form, cep: e.target.value })}
+                      className={`bg-white/5 border-white/10 text-white ${errors.cep ? "border-red-500" : ""}`} />
+                    {errors.cep && <p className="text-xs text-red-500">{errors.cep}</p>}
                   </div>
                 </div>
 
-                {/* Cidades Secundárias */}
-                <div className="space-y-3 pt-4 border-t border-white/10">
-                  <Label className="text-white/80 text-base font-medium">Cidades Secundárias (atendidas)</Label>
-                  <p className="text-xs text-white/50">Cidades adicionais onde este autorizado presta serviço além da cidade principal.</p>
+                <div className="pt-4 border-t border-white/10 space-y-3">
+                  <div>
+                    <Label className="text-white/80 text-sm font-medium">Cidades Secundárias</Label>
+                    <p className="text-xs text-white/50 mt-0.5">Cidades adicionais atendidas além da principal.</p>
+                  </div>
 
                   {cidadesSecundarias.length > 0 && (
                     <div className="flex flex-wrap gap-2">
@@ -639,8 +604,8 @@ export default function EditarAutorizadoDirecao() {
                     </div>
                   )}
 
-                  <div className="flex items-end gap-2">
-                    <div className="space-y-1 flex-1">
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-2 items-end">
+                    <div className="md:col-span-3 space-y-1">
                       <Label className="text-white/60 text-xs">Estado</Label>
                       <Select value={novaCidadeSec.estado} onValueChange={handleEstadoSecChange}>
                         <SelectTrigger className="bg-white/5 border-white/10 text-white h-9">
@@ -653,7 +618,7 @@ export default function EditarAutorizadoDirecao() {
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="space-y-1 flex-[2]">
+                    <div className="md:col-span-8 space-y-1">
                       <Label className="text-white/60 text-xs">Cidade</Label>
                       <Select value={novaCidadeSec.cidade} onValueChange={(v) => setNovaCidadeSec({ ...novaCidadeSec, cidade: v })} disabled={!novaCidadeSec.estado}>
                         <SelectTrigger className="bg-white/5 border-white/10 text-white h-9">
@@ -666,56 +631,157 @@ export default function EditarAutorizadoDirecao() {
                         </SelectContent>
                       </Select>
                     </div>
-                    <Button type="button" size="sm" variant="outline"
-                      className="bg-primary/20 border-primary/30 text-white h-9"
-                      onClick={handleAdicionarCidadeSec}
-                      disabled={!novaCidadeSec.estado || !novaCidadeSec.cidade}>
-                      <Plus className="h-4 w-4" />
-                    </Button>
+                    <div className="md:col-span-1">
+                      <Button type="button" size="sm" variant="outline"
+                        className="w-full bg-primary/20 border-primary/30 text-white h-9"
+                        onClick={handleAdicionarCidadeSec}
+                        disabled={!novaCidadeSec.estado || !novaCidadeSec.cidade}>
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
 
-                {/* Preços de Instalação */}
-                <div className="space-y-3 pt-4 border-t border-white/10">
-                  <Label className="text-white/80 text-base font-medium">Preços de Instalação</Label>
-                  <p className="text-xs text-white/50">Valores cobrados por tamanho de porta.</p>
-                  <div className="grid grid-cols-3 gap-4">
-                    {([
-                      { key: 'P' as const, label: 'P', desc: '< 25m²' },
-                      { key: 'G' as const, label: 'G', desc: '25 - 50m²' },
-                      { key: 'GG' as const, label: 'GG', desc: '> 50m²' },
-                    ]).map(({ key, label, desc }) => (
-                      <div key={key} className="space-y-1">
-                        <Label className="text-white/60 text-xs">{label} <span className="text-white/40">({desc})</span></Label>
-                        <div className="relative">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 text-sm">R$</span>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            value={precos[key] || ''}
-                            onChange={(e) => setPrecos({ ...precos, [key]: parseFloat(e.target.value) || 0 })}
-                            className="pl-10 bg-white/5 border-white/10 text-white"
-                            placeholder="0,00"
-                          />
-                        </div>
+            {/* SEÇÃO 4: Equipe */}
+            <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
+              <CardHeader className="pb-4">
+                <div className="flex items-center gap-2">
+                  <Users className="w-4 h-4 text-primary" />
+                  <CardTitle className="text-white text-base">Equipe</CardTitle>
+                </div>
+                <CardDescription className="text-white/50 text-xs">Atendente e vendedor responsáveis pelo autorizado.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-white/70 text-xs uppercase tracking-wide">Atendente *</Label>
+                    <Select value={form.vendedor_id} onValueChange={(value) => setForm({ ...form, vendedor_id: value })}>
+                      <SelectTrigger className={`bg-white/5 border-white/10 text-white ${errors.vendedor_id ? "border-red-500" : ""}`}>
+                        <SelectValue placeholder="Selecione um atendente" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {vendedores.map((v) => (
+                          <SelectItem key={v.id} value={v.id}>{v.nome}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors.vendedor_id && <p className="text-xs text-red-500">{errors.vendedor_id}</p>}
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-white/70 text-xs uppercase tracking-wide">Vendedor Responsável</Label>
+                    <Select value={form.vendedor_responsavel_id} onValueChange={(value) => setForm({ ...form, vendedor_responsavel_id: value })}>
+                      <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                        <SelectValue placeholder="Selecione o vendedor responsável" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {vendedores.map((v) => (
+                          <SelectItem key={v.id} value={v.id}>{v.nome}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* SEÇÃO 5: Preços de Instalação */}
+            <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
+              <CardHeader className="pb-4">
+                <div className="flex items-center gap-2">
+                  <DollarSign className="w-4 h-4 text-primary" />
+                  <CardTitle className="text-white text-base">Preços de Instalação</CardTitle>
+                </div>
+                <CardDescription className="text-white/50 text-xs">Valores cobrados por tamanho de porta.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {([
+                    { key: 'P' as const, label: 'P', desc: '< 25m²' },
+                    { key: 'G' as const, label: 'G', desc: '25 - 50m²' },
+                    { key: 'GG' as const, label: 'GG', desc: '> 50m²' },
+                  ]).map(({ key, label, desc }) => (
+                    <div key={key} className="space-y-2">
+                      <Label className="text-white/70 text-xs uppercase tracking-wide">
+                        Porta {label} <span className="text-white/40 normal-case">({desc})</span>
+                      </Label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 text-sm">R$</span>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={precos[key] || ''}
+                          onChange={(e) => setPrecos({ ...precos, [key]: parseFloat(e.target.value) || 0 })}
+                          className="pl-10 bg-white/5 border-white/10 text-white"
+                          placeholder="0,00"
+                        />
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  ))}
                 </div>
+              </CardContent>
+            </Card>
 
-                <div className="flex justify-end gap-4 pt-6">
-                  <Button type="button" variant="outline" onClick={() => navigate('/direcao/autorizados')}
-                    className="bg-white/5 border-white/10 text-white">
-                    Cancelar
-                  </Button>
-                  <Button type="submit" disabled={saving}>
-                    {saving ? "Salvando..." : "Salvar Alterações"}
-                  </Button>
+            {/* SEÇÃO 6: Arquivos */}
+            <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
+              <CardHeader className="pb-4">
+                <div className="flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-primary" />
+                  <CardTitle className="text-white text-base">Arquivos</CardTitle>
                 </div>
-              </form>
-            </CardContent>
-          </Card>
+                <CardDescription className="text-white/50 text-xs">Logo e contrato do autorizado.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label className="text-white/70 text-xs uppercase tracking-wide flex items-center gap-1.5">
+                      <ImageIcon className="w-3 h-3" /> Logo
+                    </Label>
+                    {id && (
+                      <LogoUpload
+                        autorizadoId={id}
+                        currentLogoUrl={form.logo_url || null}
+                        autorizadoName={form.nome}
+                        onLogoUpdate={handleLogoUpdate}
+                      />
+                    )}
+                  </div>
+                  {id && (
+                    <div className="space-y-2">
+                      <Label className="text-white/70 text-xs uppercase tracking-wide flex items-center gap-1.5">
+                        <FileText className="w-3 h-3" /> Contrato
+                      </Label>
+                      <ContratoUpload
+                        contratoUrl={contratoUrl}
+                        contratoNome={contratoNome}
+                        onContratoChange={(url, nome) => {
+                          setContratoUrl(url);
+                          setContratoNome(nome);
+                        }}
+                        onContratoRemove={() => {
+                          setContratoUrl(null);
+                          setContratoNome(null);
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Ações */}
+            <div className="sticky bottom-0 z-10 -mx-4 px-4 py-4 bg-black/80 backdrop-blur-md border-t border-white/10 flex justify-end gap-3">
+              <Button type="button" variant="outline" onClick={() => navigate(backPath)}
+                className="bg-white/5 border-white/10 text-white">
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={saving}>
+                {saving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Salvando...</> : "Salvar Alterações"}
+              </Button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
