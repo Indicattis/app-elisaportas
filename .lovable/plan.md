@@ -1,36 +1,53 @@
 ## Objetivo
-Em `/autorizados/acordos/:ano/:mes` (e contexto direção), substituir o vínculo do acordo de instalação de **pedido de produção** para **venda**.
+
+Adicionar um novo botão "Atividades de Marketing" na segunda posição do menu em `/marketing` que leva a uma nova página onde o usuário cadastra atividades realizadas (Stories / Post / Vídeo) em formato de tabela.
 
 ## Mudanças
 
-### 1. Banco (migração)
-- Adicionar coluna `venda_id uuid` em `acordos_instalacao_autorizados` referenciando `vendas(id) ON DELETE SET NULL`.
-- Criar índice `idx_acordos_venda_id` em `venda_id`.
-- Manter coluna `pedido_id` apenas como legado (não usada em novas inserções, não exibida no seletor).
+### 1. Banco de dados (nova migration)
 
-### 2. `src/components/autorizados/SeletorPedidoExistente.tsx` → renomear para `SeletorVendaExistente.tsx`
-- Trocar consulta de `pedidos_producao` para `vendas`.
-- Selecionar: `id, cliente_nome, cliente_cidade, cliente_estado, data_venda, is_rascunho, status_aprovacao`.
-- Ordenar por `data_venda desc`, limite 500. Filtrar fora `is_rascunho = true`.
-- Trocar consulta de duplicidade para `acordos_instalacao_autorizados.venda_id`.
-- Remover o filtro por etapa (não existe em vendas). Manter apenas busca por cliente.
-- Tipo: `VendaSelecionada { id, cliente_nome, cliente_cidade, cliente_estado, data_venda }`.
-- Label: "VINCULAR A VENDA *".
-- Exibir cada linha como `Cliente · Cidade/UF · dd/MM/yyyy`.
+Criar tabela `marketing_atividades`:
+- `id` uuid PK
+- `tipo` text — restrito a `'stories' | 'post' | 'video'`
+- `descricao` text not null
+- `link` text nullable
+- `duracao_minutos` integer not null (minutos inteiros)
+- `data` date not null default `current_date`
+- `created_by` uuid (admin_users)
+- `created_at` / `updated_at` timestamptz
 
-### 3. `src/hooks/useAcordosAutorizados.ts`
-- Trocar `pedido_id` por `venda_id` em `NovoAcordo` e no `insert` do `createAcordo`.
+GRANTs para `authenticated` e `service_role`. RLS habilitado com policies permitindo SELECT/INSERT/UPDATE/DELETE a qualquer usuário autenticado (mesmo nível de acesso da página /marketing).
 
-### 4. `src/components/autorizados/NovoAcordoDialog.tsx`
-- Trocar import e uso de `SeletorPedidoExistente` para `SeletorVendaExistente`.
-- Estado `vendaVinculada` no lugar de `pedidoVinculado`.
-- Ao selecionar venda, autopreencher `cliente_nome`, `cliente_cidade`, `cliente_estado` se vazios.
-- `onSave` envia `venda_id` em vez de `pedido_id`.
-- Validação obrigatória passa a exigir `vendaVinculada?.id`.
+### 2. Hub de Marketing (`src/pages/marketing/MarketingHub.tsx`)
 
-### 5. Não alterar
-- `AcordosMesAutorizados.tsx`, `ConfirmarPagamentoAcordoDialog`, `HistoricoAcordoDialog`, `gastoAcordoAutorizado.ts` (não referenciam `pedido_id`).
-- Acordos antigos com `pedido_id` continuam intactos no banco.
+Inserir na 2ª posição do array `menuItems`:
+```
+{ label: "Atividades de Marketing", icon: Activity, path: "/marketing/atividades" }
+```
 
-## Observação
-A coluna `pedido_id` ficará obsoleta mas preservada para histórico. Posso removê-la em migração futura se quiser limpeza.
+### 3. Nova página `src/pages/marketing/AtividadesMarketing.tsx`
+
+Layout: minimalista glassmorphism (bg-white/5, backdrop-blur-xl, border-white/10, paleta azul/branco) consistente com o restante do projeto.
+
+Conteúdo:
+- Cabeçalho com título "Atividades de Marketing" e botão voltar para `/marketing`
+- Botão "Nova Atividade" abrindo Dialog com formulário:
+  - Tipo (Select: Stories / Post / Vídeo) — obrigatório
+  - Descrição (Textarea) — obrigatória
+  - Link (Input URL) — opcional
+  - Duração em minutos (Input number) — obrigatória
+  - Data (Input date, default hoje, usando padrão `T12:00:00.000Z` para gravação)
+- Tabela listando atividades (mais recentes primeiro): colunas Data, Tipo (badge), Descrição, Link (ícone abrindo em nova aba), Duração (min), Ações (editar / excluir)
+- Edição via mesmo Dialog reutilizando o formulário
+- Exclusão com confirmação (AlertDialog)
+
+### 4. Rota
+
+Registrar `/marketing/atividades` em `src/App.tsx` (mesma proteção de rota usada por `/marketing/investimentos` ou similar do hub).
+
+## Detalhes técnicos
+
+- Datas gravadas com `T12:00:00.000Z` (regra do projeto)
+- Hook `useAtividadesMarketing` com React Query (queryKey `['marketing-atividades']`) para listar/criar/atualizar/excluir
+- Ícone do botão: `Activity` do lucide-react
+- Sem mudanças em lógica de negócio existente
