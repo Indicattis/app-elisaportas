@@ -846,6 +846,13 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
         clienteNome={venda.cliente_nome}
       />
 
+      <VendaParcelasDialog
+        open={showParcelas}
+        onOpenChange={setShowParcelas}
+        vendaId={venda.id}
+        numeroVenda={venda.cliente_nome}
+      />
+
       {/* Confirmação Reprovar Venda */}
       <AlertDialog open={showReprovar} onOpenChange={setShowReprovar}>
         <AlertDialogContent>
