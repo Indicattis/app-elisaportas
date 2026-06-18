@@ -99,6 +99,8 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
   const [comentarios, setComentarios] = useState<any[]>([]);
   const [novoComentario, setNovoComentario] = useState('');
   const [enviandoComentario, setEnviandoComentario] = useState(false);
+  const [pagamentoOpen, setPagamentoOpen] = useState(false);
+  const [contasReceber, setContasReceber] = useState<any[]>([]);
   
   const { userRole } = useAuth();
   const { verificarEAvancarManual, processos, modalOpen, setModalOpen } = usePedidoAutoAvanco();
@@ -109,8 +111,36 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
       fetchObservacoesVisita();
       fetchEtapasHistorico();
       fetchComentarios();
+      fetchContasReceber();
     }
   }, [open, pedido?.id]);
+
+  const fetchContasReceber = async () => {
+    const vendaId = pedido?.vendas?.id || pedido?.venda_id;
+    if (!vendaId) {
+      setContasReceber([]);
+      return;
+    }
+    try {
+      const { data } = await supabase
+        .from('contas_receber')
+        .select('*')
+        .eq('venda_id', vendaId)
+        .order('numero_parcela');
+      setContasReceber(data || []);
+    } catch (err) {
+      console.error('Erro ao buscar contas a receber:', err);
+    }
+  };
+
+  const FORMAS_PAGAMENTO_LABELS: Record<string, string> = {
+    boleto: 'Boleto',
+    a_vista: 'À Vista (PIX, Débito)',
+    cartao_credito: 'Cartão de Crédito',
+    dinheiro: 'Dinheiro',
+    avista: 'À Vista',
+    credito: 'Cartão de Crédito',
+  };
 
   const fetchComentarios = async () => {
     try {
