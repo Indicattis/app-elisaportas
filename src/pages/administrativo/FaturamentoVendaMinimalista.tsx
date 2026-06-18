@@ -1671,6 +1671,7 @@ export default function FaturamentoVendaMinimalista() {
                             <TableHead className="text-white/70 text-xs text-right">Valor</TableHead>
                             <TableHead className="text-white/70 text-xs">Status</TableHead>
                             <TableHead className="text-white/70 text-xs">Pago em</TableHead>
+                            <TableHead className="text-white/70 text-xs text-center">Instalação</TableHead>
                             <TableHead className="text-white/70 text-xs w-10"></TableHead>
                           </TableRow>
                         </TableHeader>
