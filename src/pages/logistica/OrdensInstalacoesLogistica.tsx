@@ -8,7 +8,6 @@ import { InstalacoesHeaderActions } from "@/components/instalacoes/InstalacoesHe
 import { PedidoDetalhesSheet } from "@/components/pedidos/PedidoDetalhesSheet";
 import { useInstalacoesFinalizadas, InstalacaoFinalizada } from "@/hooks/useInstalacoesFinalizadas";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
 import { formatCurrency, cn } from "@/lib/utils";
 
 const MESES_PT = [
