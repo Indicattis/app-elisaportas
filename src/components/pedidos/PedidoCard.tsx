@@ -51,6 +51,8 @@ import { ConfirmarExpedicaoModal } from "./ConfirmarExpedicaoModal";
 import { ConcluirManutencaoModal } from "./ConcluirManutencaoModal";
 import { RemoverResponsavelModal } from "./RemoverResponsavelModal";
 import { ExcluirPedidoModal } from "./ExcluirPedidoModal";
+import { VendaParcelasDialog } from "./VendaParcelasDialog";
+import { formatarMetodoPagamento } from "@/utils/pagamentoResumo";
 import type { EtapaPedido } from "@/types/pedidoEtapa";
 import { ETAPAS_CONFIG, getProximaEtapa, getEtapaAnterior } from "@/types/pedidoEtapa";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
