@@ -365,7 +365,7 @@ export default function FaturamentoVendaMinimalista() {
     toast({ title: 'Parcela removida' });
   };
 
-  const handleUpdatePagamento = async (pagamentoId: string, field: string, value: string | number | null) => {
+  const handleUpdatePagamento = async (pagamentoId: string, field: string, value: string | number | boolean | null) => {
     const updates: any = { [field]: value };
     if (field === 'status' && value === 'pago') {
       updates.data_pagamento = new Date().toISOString().split('T')[0];
