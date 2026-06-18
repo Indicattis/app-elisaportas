@@ -433,6 +433,16 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
 
           return {
             ...pedido,
+            vendas: (() => {
+              const v = Array.isArray(pedido.vendas) ? pedido.vendas[0] : pedido.vendas;
+              if (!v) return pedido.vendas;
+              const enriched = {
+                ...v,
+                metodo_pagamento_entrega: metodoEntregaPorVenda.get(v.id) ?? null,
+                valor_a_receber_entrega: valorEntregaPorVenda.get(v.id) ?? null,
+              };
+              return Array.isArray(pedido.vendas) ? [enriched] : enriched;
+            })(),
             backlog: backlogData ? [backlogData] : [],
             tem_historico_backlog: !!historicoBacklog,
             linhas_perfiladeira: linhasPerfiladeira,
