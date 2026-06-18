@@ -1762,6 +1762,17 @@ export default function FaturamentoVendaMinimalista() {
                                     <span className="text-white/30 text-xs">—</span>
                                   )}
                                 </TableCell>
+                                <TableCell className="text-center">
+                                  <div className="flex items-center justify-center">
+                                    <Switch
+                                      checked={!!parcela.pago_na_instalacao}
+                                      onCheckedChange={(checked) =>
+                                        handleUpdatePagamento(parcela.id, 'pago_na_instalacao', checked as any)
+                                      }
+                                      aria-label="Pago na instalação"
+                                    />
+                                  </div>
+                                </TableCell>
                                 <TableCell>
                                   <Button
                                     size="icon"
