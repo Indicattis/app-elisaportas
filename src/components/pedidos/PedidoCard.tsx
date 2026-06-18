@@ -609,19 +609,23 @@ export function PedidoCard({
   const vendaData = Array.isArray(pedido.vendas) ? pedido.vendas[0] : pedido.vendas;
   const venda = vendaData;
 
-  // Contar parcelas reais em contas_receber (fallback quando venda.numero_parcelas é nulo)
-  const { data: parcelasGeradasCount = 0 } = useQuery({
-    queryKey: ['contas-receber-count', venda?.id],
+  // Contar parcelas reais e somar valor em contas_receber
+  const { data: parcelasInfo = { count: 0, total: 0 } } = useQuery({
+    queryKey: ['contas-receber-info', venda?.id],
     enabled: !!venda?.id,
     queryFn: async () => {
-      const { count, error } = await supabase
+      const { data, error } = await supabase
         .from('contas_receber')
-        .select('*', { count: 'exact', head: true })
+        .select('valor')
         .eq('venda_id', venda!.id);
       if (error) throw error;
-      return count || 0;
+      const rows = data || [];
+      const total = rows.reduce((acc, r: any) => acc + (Number(r.valor) || 0), 0);
+      return { count: rows.length, total };
     },
   });
+  const parcelasGeradasCount = parcelasInfo.count;
+  const parcelasGeradasTotal = parcelasInfo.total;
 
   // Combined payment methods label (mesma lógica do VendaPendentePedidoCard)
   const pagamentoLabel = (() => {
@@ -1852,25 +1856,19 @@ export function PedidoCard({
                 )}
               </div>
 
-              {/* Col: Pago na Entrega */}
+              {/* Col: Valor a receber (total das parcelas em contas_receber) */}
               <div className="text-center">
-                {venda?.pagamento_na_entrega ? (
-                  venda.valor_a_receber_entrega && venda.valor_a_receber_entrega > 0 ? (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="text-[10px] font-medium text-amber-600 bg-amber-500/10 rounded px-1 py-0.5">
-                          {formatCurrency(venda.valor_a_receber_entrega)}
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p className="text-xs">Valor a receber na entrega</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  ) : (
-                    <Badge variant="outline" className="text-[8px] px-1 py-0 h-4 bg-emerald-500/10 text-emerald-600 border-emerald-500/50">
-                      Sim
-                    </Badge>
-                  )
+                {parcelasGeradasTotal > 0 ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="text-[10px] font-medium text-emerald-600 bg-emerald-500/10 rounded px-1 py-0.5">
+                        {formatCurrency(parcelasGeradasTotal)}
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-xs">Total a receber ({parcelasGeradasCount}x)</p>
+                    </TooltipContent>
+                  </Tooltip>
                 ) : (
                   <span className="text-[9px] text-muted-foreground/50">—</span>
                 )}
