@@ -1263,6 +1263,21 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
           onSaved={fetchContasReceber}
         />
       )}
+
+      <AlertDialog open={confirmRegenerarOpen} onOpenChange={setConfirmRegenerarOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Regerar parcelas?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Isto removerá todas as {contasReceber.length} parcela(s) atuais e gerará novas a partir dos dados da venda. Continuar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmarRegerar}>Regerar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Sheet>
   );
 }
