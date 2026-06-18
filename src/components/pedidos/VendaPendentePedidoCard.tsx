@@ -19,6 +19,7 @@ import { usePedidoCreation } from "@/hooks/usePedidoCreation";
 import { VendaPendenteDetalhesSheet } from "./VendaPendenteDetalhesSheet";
 import { formatCurrency } from "@/lib/utils";
 import { AnexarContratoModal } from "@/components/vendas/AnexarContratoModal";
+import { VendaParcelasDialog } from "./VendaParcelasDialog";
 
 interface VendaPendentePedidoCardProps {
   venda: VendaPendentePedido;
@@ -46,6 +47,7 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
   const [showDetalhes, setShowDetalhes] = useState(false);
   const [showFinalizarDireto, setShowFinalizarDireto] = useState(false);
   const [showAnexarContrato, setShowAnexarContrato] = useState(false);
+  const [showParcelas, setShowParcelas] = useState(false);
   const isFaturamentoLayout = mode === 'faturamento' || mode === 'contrato';
 
   const { data: ultimoComentario } = useQuery({
@@ -519,9 +521,21 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
 
             {/* Parcelas */}
             <div className="text-center">
-              <span className="text-[10px] text-muted-foreground">
-                {venda.numero_parcelas ? `${venda.numero_parcelas}x` : '—'}
-              </span>
+              {venda.numero_parcelas ? (
+                <button
+                  type="button"
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowParcelas(true);
+                  }}
+                  className="text-[10px] text-muted-foreground hover:text-foreground hover:underline cursor-pointer"
+                >
+                  {venda.numero_parcelas}x
+                </button>
+              ) : (
+                <span className="text-[10px] text-muted-foreground">—</span>
+              )}
             </div>
 
             {/* Pago na entrega */}
