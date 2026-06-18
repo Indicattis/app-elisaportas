@@ -1,29 +1,35 @@
 ## Objetivo
 
-No card de "Venda Pendente de Pedido" (gestão de fábrica e demais consumidores), tornar o índice de parcelas (ex.: `3x`) clicável. Ao clicar, abrir um modal listando cada parcela com seu método de pagamento e valor.
+Permitir marcar cada parcela como "Pago na instalação" no faturamento da venda, e exibir essa informação nas downbars de Vendas Pendentes de Pedido (modal de parcelas).
 
-## UX
+## Banco
 
-- Trocar o `<span>` de parcelas em `VendaPendentePedidoCard.tsx` (linha ~521-525) por um botão discreto (mesmo visual, com `cursor-pointer hover:underline`).
-- Clique abre `Dialog` (shadcn) intitulado "Parcelas da venda Nº {numero_venda}".
-- Conteúdo: tabela compacta — colunas `#`, `Método`, `Vencimento`, `Valor`. Rodapé com total.
-- Estado vazio: "Sem parcelas registradas". Loading: skeleton de 3 linhas.
-- Clique no botão NÃO deve disparar o drag (stopPropagation no pointerDown).
+Sem migração — coluna `contas_receber.pago_na_instalacao` (boolean) já existe.
 
-## Dados
+## 1. Faturamento da Venda — `src/pages/administrativo/FaturamentoVendaMinimalista.tsx`
 
-Buscar de `contas_receber` filtrando por `venda_id` (mesma fonte já usada em `useVendasPendentePedido.ts`). Campos: `metodo_pagamento`, `valor_parcela`, `numero_parcela`, `data_vencimento`, `pago_na_instalacao`.
+Na seção **Parcelas / Contas a Receber**, em cada linha de parcela:
 
-Ordenar por `numero_parcela` ASC (fallback `data_vencimento`). Mostrar método via label amigável (reaproveitar mapeamento existente em `FormaPagamentoSelect`/`pagamentoResumo`).
+- Adicionar um `Switch` (ou checkbox compacto) rotulado **"Pago na instalação"** ao lado dos campos existentes (método, vencimento, valor).
+- Estender o `select(...)` (linha ~236) para incluir `pago_na_instalacao`.
+- Ao alternar: `UPDATE contas_receber SET pago_na_instalacao = <bool> WHERE id = <parcelaId>` e atualizar o estado local `contasReceber`.
+- Incluir o campo `pago_na_instalacao: false` no payload de `handleAddParcela` e nos objetos gerados em `handleGerarParcelas` (default `false`).
+- Toast curto de confirmação ("Parcela atualizada").
 
-Fetch sob demanda (apenas quando o modal abre), com `useQuery(['venda-parcelas', venda.id], …, { enabled: open })`.
+## 2. Modal de Parcelas (downbar Venda Pendente de Pedido) — `src/components/pedidos/VendaParcelasDialog.tsx`
 
-## Arquivos
+O componente já busca `pago_na_instalacao`. Hoje só renderiza badge "Na entrega" condicionalmente. Ajustes:
 
-- Novo: `src/components/pedidos/VendaParcelasDialog.tsx` — Dialog + hook de fetch interno.
-- Editar: `src/components/pedidos/VendaPendentePedidoCard.tsx` — substituir span de parcelas por trigger do dialog; manter visual idêntico quando `numero_parcelas` é nulo (mostra `—`, sem clique).
+- Adicionar coluna dedicada **"Instalação"** na tabela, exibindo badge `Pago na instalação` (variant `secondary` com ícone `Wrench`) quando `true`, e `—` quando `false`.
+- Manter as colunas existentes (#, Método, Vencimento, Valor, Status) e o total no rodapé inalterados.
+- Apenas leitura (sem edição neste modal — edição continua no faturamento).
 
 ## Fora de escopo
 
-- Edição de parcelas.
-- Alterações em hooks de listagem ou no schema do banco.
+- Formulário de Nova Venda e snapshot de `requisicoes_aprovacao_venda` não serão alterados (usuário confirmou que a "solicitação anterior" se refere às downbars de pendentes de pedido).
+- Nenhuma alteração em regras de negócio de pagamento, geração de parcelas ou cálculos.
+
+## Arquivos tocados
+
+- `src/pages/administrativo/FaturamentoVendaMinimalista.tsx` (edição UI + handler)
+- `src/components/pedidos/VendaParcelasDialog.tsx` (nova coluna)
