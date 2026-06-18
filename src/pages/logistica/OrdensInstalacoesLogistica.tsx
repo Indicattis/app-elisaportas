@@ -9,6 +9,18 @@ import { PedidoDetalhesSheet } from "@/components/pedidos/PedidoDetalhesSheet";
 import { useInstalacoesFinalizadas, InstalacaoFinalizada } from "@/hooks/useInstalacoesFinalizadas";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency, cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useResponsaveisInstalacao } from "@/hooks/useResponsaveisInstalacao";
+import { toast } from "sonner";
+import { Users, Building2, Truck } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 const MESES_PT = [
   "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
@@ -41,6 +53,23 @@ export default function OrdensInstalacoesLogistica() {
   const [showDetalhes, setShowDetalhes] = useState(false);
 
   const { data: registros = [], isLoading, refetch } = useInstalacoesFinalizadas(mes);
+  const { responsaveis } = useResponsaveisInstalacao();
+  const equipesInternas = responsaveis.filter((r) => r.tipo === "equipe_interna");
+  const autorizados = responsaveis.filter((r) => r.tipo === "autorizado");
+  const queryClient = useQueryClient();
+
+  const { data: veiculos = [] } = useQuery({
+    queryKey: ["veiculos-ativos-logistica"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("veiculos")
+        .select("id, nome, placa")
+        .eq("ativo", true)
+        .order("nome");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
 
   useEffect(() => {
     const t = setTimeout(() => setMounted(true), 50);
@@ -75,6 +104,119 @@ export default function OrdensInstalacoesLogistica() {
       setShowDetalhes(true);
     }
   };
+
+  const refresh = () => {
+    queryClient.invalidateQueries({ queryKey: ["instalacoes-finalizadas"] });
+    refetch();
+  };
+
+  const setEquipeInstalacao = async (
+    r: InstalacaoFinalizada,
+    equipe: { id: string; nome: string },
+  ) => {
+    const { data: inst } = await supabase
+      .from("instalacoes")
+      .select("id")
+      .eq("pedido_id", r.pedido_id)
+      .maybeSingle();
+    if (!inst) {
+      toast.error("Pedido sem registro em instalações");
+      return;
+    }
+    const { error } = await supabase
+      .from("instalacoes")
+      .update({
+        tipo_instalacao: "elisa",
+        responsavel_instalacao_id: equipe.id,
+        responsavel_instalacao_nome: equipe.nome,
+      })
+      .eq("id", inst.id);
+    if (error) {
+      toast.error("Erro ao definir equipe");
+      return;
+    }
+    toast.success(`Equipe definida: ${equipe.nome}`);
+    refresh();
+  };
+
+  const setAutorizadoCorrecao = async (
+    r: InstalacaoFinalizada,
+    autorizado: { id: string; nome: string },
+  ) => {
+    const { data: cor } = await supabase
+      .from("correcoes")
+      .select("id")
+      .eq("pedido_id", r.pedido_id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (!cor) {
+      toast.error("Pedido sem registro de correção");
+      return;
+    }
+    const { error } = await supabase
+      .from("correcoes")
+      .update({
+        responsavel_correcao_id: autorizado.id,
+        responsavel_correcao_nome: autorizado.nome,
+      })
+      .eq("id", cor.id);
+    if (error) {
+      toast.error("Erro ao definir autorizado");
+      return;
+    }
+    toast.success(`Autorizado definido: ${autorizado.nome}`);
+    refresh();
+  };
+
+  const setVeiculoCarregamento = async (
+    r: InstalacaoFinalizada,
+    veiculo: { id: string; nome: string },
+  ) => {
+    const { data: oc } = await supabase
+      .from("ordens_carregamento")
+      .select("id")
+      .eq("pedido_id", r.pedido_id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (!oc) {
+      toast.error("Pedido sem ordem de carregamento");
+      return;
+    }
+    const { error } = await supabase
+      .from("ordens_carregamento")
+      .update({
+        responsavel_carregamento_id: veiculo.id,
+        responsavel_carregamento_nome: veiculo.nome,
+      })
+      .eq("id", oc.id);
+    if (error) {
+      toast.error("Erro ao definir veículo");
+      return;
+    }
+    toast.success(`Veículo definido: ${veiculo.nome}`);
+    refresh();
+  };
+
+  const tipoServicoChip = (tipo?: string | null) => {
+    const map: Record<string, { label: string; cls: string }> = {
+      instalacao: { label: "Instalação", cls: "bg-blue-500/15 text-blue-400 border-blue-500/30" },
+      entrega: { label: "Entrega", cls: "bg-amber-500/15 text-amber-400 border-amber-500/30" },
+      manutencao: { label: "Manutenção", cls: "bg-purple-500/15 text-purple-400 border-purple-500/30" },
+      correcao: { label: "Correção", cls: "bg-red-500/15 text-red-400 border-red-500/30" },
+      servico: { label: "Serviço", cls: "bg-white/10 text-white/70 border-white/20" },
+    };
+    if (!tipo || !map[tipo]) return <span className="text-white/30">—</span>;
+    const it = map[tipo];
+    return (
+      <span className={cn("inline-flex items-center px-2 py-0.5 rounded-md border text-[11px] font-medium", it.cls)}>
+        {it.label}
+      </span>
+    );
+  };
+
+  const cellEditable = "cursor-pointer hover:bg-white/10 rounded px-1 -mx-1 transition-colors";
 
   return (
     <MinimalistLayout
@@ -184,6 +326,7 @@ export default function OrdensInstalacoesLogistica() {
                         <th className="text-left font-medium px-4 py-3">Pedido</th>
                         <th className="text-left font-medium px-4 py-3">Cliente</th>
                         <th className="text-left font-medium px-4 py-3">Cidade / UF</th>
+                        <th className="text-left font-medium px-4 py-3">Tipo</th>
                         <th className="text-left font-medium px-4 py-3">Equipe Instalação</th>
                         <th className="text-left font-medium px-4 py-3">Autorizado Correção</th>
                         <th className="text-left font-medium px-4 py-3">Carregamento</th>
@@ -212,9 +355,90 @@ export default function OrdensInstalacoesLogistica() {
                               {r.estado ? ` / ${r.estado}` : ""}
                             </span>
                           </td>
-                          <td className="px-4 py-3">{r.equipe_instalacao_nome ?? "—"}</td>
-                          <td className="px-4 py-3">{r.autorizado_correcao_nome ?? "—"}</td>
-                          <td className="px-4 py-3">{r.responsavel_carregamento_nome ?? "—"}</td>
+                          <td className="px-4 py-3">{tipoServicoChip(r.tipo_entrega)}</td>
+                          <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <span className={cellEditable}>
+                                  {r.equipe_instalacao_nome ?? <span className="text-white/30">—</span>}
+                                </span>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="start" className="w-56 max-h-80 overflow-y-auto">
+                                <DropdownMenuLabel className="text-xs text-muted-foreground">
+                                  <Users className="inline h-3 w-3 mr-1" /> Equipes Internas
+                                </DropdownMenuLabel>
+                                {equipesInternas.length === 0 && (
+                                  <div className="px-2 py-1.5 text-xs text-muted-foreground">Nenhuma equipe</div>
+                                )}
+                                {equipesInternas.map((eq) => (
+                                  <DropdownMenuItem key={eq.id} onClick={() => setEquipeInstalacao(r, eq)}>
+                                    <div className="w-2.5 h-2.5 rounded-full mr-2" style={{ backgroundColor: (eq as any).cor }} />
+                                    {eq.nome}
+                                  </DropdownMenuItem>
+                                ))}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </td>
+                          <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <span className={cellEditable}>
+                                  {r.autorizado_correcao_nome ?? <span className="text-white/30">—</span>}
+                                </span>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="start" className="w-64 max-h-80 overflow-y-auto">
+                                <DropdownMenuLabel className="text-xs text-muted-foreground">
+                                  <Building2 className="inline h-3 w-3 mr-1" /> Autorizados
+                                </DropdownMenuLabel>
+                                {autorizados.length === 0 && (
+                                  <div className="px-2 py-1.5 text-xs text-muted-foreground">Nenhum autorizado</div>
+                                )}
+                                {autorizados.map((au) => (
+                                  <DropdownMenuItem key={au.id} onClick={() => setAutorizadoCorrecao(r, au)}>
+                                    <Building2 className="mr-2 h-3 w-3" />
+                                    <div className="flex flex-col">
+                                      <span>{au.nome}</span>
+                                      {((au as any).cidade || (au as any).estado) && (
+                                        <span className="text-[10px] text-muted-foreground">
+                                          {(au as any).cidade}
+                                          {(au as any).cidade && (au as any).estado && " - "}
+                                          {(au as any).estado}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </DropdownMenuItem>
+                                ))}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </td>
+                          <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <span className={cellEditable}>
+                                  {r.responsavel_carregamento_nome ?? <span className="text-white/30">—</span>}
+                                </span>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="start" className="w-56 max-h-80 overflow-y-auto">
+                                <DropdownMenuLabel className="text-xs text-muted-foreground">
+                                  <Truck className="inline h-3 w-3 mr-1" /> Veículos
+                                </DropdownMenuLabel>
+                                {veiculos.length === 0 && (
+                                  <div className="px-2 py-1.5 text-xs text-muted-foreground">Nenhum veículo</div>
+                                )}
+                                {veiculos.map((v: any) => (
+                                  <DropdownMenuItem key={v.id} onClick={() => setVeiculoCarregamento(r, v)}>
+                                    <Truck className="mr-2 h-3 w-3" />
+                                    <div className="flex flex-col">
+                                      <span>{v.nome}</span>
+                                      {v.placa && (
+                                        <span className="text-[10px] text-muted-foreground">{v.placa}</span>
+                                      )}
+                                    </div>
+                                  </DropdownMenuItem>
+                                ))}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </td>
                           <td className="px-4 py-3 text-right font-semibold text-emerald-500 whitespace-nowrap">
                             {formatCurrency(Number(r.valor_instalacao || 0))}
                           </td>
