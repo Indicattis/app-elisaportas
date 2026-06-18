@@ -1803,11 +1803,63 @@ export function PedidoCard({
                 )}
               </div>
 
-              {/* Col: Valor da Venda */}
+              {/* Col: Forma Pagamento */}
               <div className="text-center">
-                <span className="text-[10px] text-muted-foreground">
-                  {venda?.valor_venda ? formatCurrency(venda.valor_venda) : '—'}
-                </span>
+                {pagamentoLabel ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="text-[10px] text-muted-foreground truncate block">{pagamentoLabel}</span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-xs">{pagamentoLabel}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <span className="text-[9px] text-muted-foreground/50">—</span>
+                )}
+              </div>
+
+              {/* Col: Parcelas */}
+              <div className="text-center">
+                {venda?.numero_parcelas ? (
+                  <button
+                    type="button"
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowParcelas(true);
+                    }}
+                    className="text-[10px] text-muted-foreground hover:text-foreground hover:underline cursor-pointer"
+                  >
+                    {venda.numero_parcelas}x
+                  </button>
+                ) : (
+                  <span className="text-[10px] text-muted-foreground">—</span>
+                )}
+              </div>
+
+              {/* Col: Pago na Entrega */}
+              <div className="text-center">
+                {venda?.pagamento_na_entrega ? (
+                  venda.valor_a_receber_entrega && venda.valor_a_receber_entrega > 0 ? (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="text-[10px] font-medium text-amber-600 bg-amber-500/10 rounded px-1 py-0.5">
+                          {formatCurrency(venda.valor_a_receber_entrega)}
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="text-xs">Valor a receber na entrega</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  ) : (
+                    <Badge variant="outline" className="text-[8px] px-1 py-0 h-4 bg-emerald-500/10 text-emerald-600 border-emerald-500/50">
+                      Sim
+                    </Badge>
+                  )
+                ) : (
+                  <span className="text-[9px] text-muted-foreground/50">—</span>
+                )}
               </div>
 
               {/* Col: Valor a Receber */}
