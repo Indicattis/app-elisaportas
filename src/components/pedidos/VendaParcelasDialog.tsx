@@ -8,6 +8,7 @@ import { formatCurrency } from "@/lib/utils";
 import { formatarMetodoPagamento } from "@/utils/pagamentoResumo";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { Wrench } from "lucide-react";
 
 interface VendaParcelasDialogProps {
   open: boolean;
@@ -68,6 +69,7 @@ export function VendaParcelasDialog({ open, onOpenChange, vendaId, numeroVenda }
                   <TableHead className="w-12">#</TableHead>
                   <TableHead>Método</TableHead>
                   <TableHead>Vencimento</TableHead>
+                  <TableHead className="text-center">Instalação</TableHead>
                   <TableHead className="text-right">Valor</TableHead>
                 </TableRow>
               </TableHeader>
@@ -78,11 +80,6 @@ export function VendaParcelasDialog({ open, onOpenChange, vendaId, numeroVenda }
                     <TableCell className="text-sm">
                       <div className="flex items-center gap-2">
                         <span>{formatarMetodoPagamento(p.metodo_pagamento)}</span>
-                        {p.pago_na_instalacao && (
-                          <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 bg-amber-500/10 text-amber-600 border-amber-500/40">
-                            Na entrega
-                          </Badge>
-                        )}
                         {p.status === "pago" && (
                           <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 bg-emerald-500/10 text-emerald-600 border-emerald-500/40">
                             Pago
@@ -95,13 +92,23 @@ export function VendaParcelasDialog({ open, onOpenChange, vendaId, numeroVenda }
                         ? format(new Date(`${p.data_vencimento}T12:00:00`), "dd/MM/yyyy", { locale: ptBR })
                         : "—"}
                     </TableCell>
+                    <TableCell className="text-center">
+                      {p.pago_na_instalacao ? (
+                        <Badge variant="secondary" className="text-[10px] gap-1 bg-amber-500/10 text-amber-600 border-amber-500/40">
+                          <Wrench className="h-3 w-3" />
+                          Pago na instalação
+                        </Badge>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
                     <TableCell className="text-right font-medium tabular-nums">
                       {formatCurrency(Number(p.valor_parcela || 0))}
                     </TableCell>
                   </TableRow>
                 ))}
                 <TableRow>
-                  <TableCell colSpan={3} className="text-right text-xs uppercase tracking-wide text-muted-foreground">
+                  <TableCell colSpan={4} className="text-right text-xs uppercase tracking-wide text-muted-foreground">
                     Total
                   </TableCell>
                   <TableCell className="text-right font-semibold tabular-nums">

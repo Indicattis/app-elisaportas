@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { 
   DollarSign, 
   TrendingUp, 
@@ -233,7 +234,7 @@ export default function FaturamentoVendaMinimalista() {
     if (!id) return;
     const { data, error } = await supabase
       .from('contas_receber')
-      .select('id, venda_id, metodo_pagamento, data_vencimento, status, observacoes, data_pagamento, valor_parcela, numero_parcela')
+      .select('id, venda_id, metodo_pagamento, data_vencimento, status, observacoes, data_pagamento, valor_parcela, numero_parcela, pago_na_instalacao')
       .eq('venda_id', id)
       .order('numero_parcela');
     if (!error && data) setContasReceber(data);
@@ -289,6 +290,7 @@ export default function FaturamentoVendaMinimalista() {
             metodo_pagamento: metodoTipo,
             empresa_receptora_id: venda.empresa_receptora_id || null,
             status: 'pendente',
+            pago_na_instalacao: false,
           });
         }
       } else {
@@ -301,6 +303,7 @@ export default function FaturamentoVendaMinimalista() {
           metodo_pagamento: metodoTipo,
           empresa_receptora_id: venda.empresa_receptora_id || null,
           status: 'pendente',
+          pago_na_instalacao: false,
         });
       }
     };
@@ -337,6 +340,7 @@ export default function FaturamentoVendaMinimalista() {
         data_vencimento: new Date().toISOString().split('T')[0],
         status: 'pendente',
         numero_parcela: maxNumero + 1,
+        pago_na_instalacao: false,
       })
       .select()
       .single();
@@ -361,7 +365,7 @@ export default function FaturamentoVendaMinimalista() {
     toast({ title: 'Parcela removida' });
   };
 
-  const handleUpdatePagamento = async (pagamentoId: string, field: string, value: string | number | null) => {
+  const handleUpdatePagamento = async (pagamentoId: string, field: string, value: string | number | boolean | null) => {
     const updates: any = { [field]: value };
     if (field === 'status' && value === 'pago') {
       updates.data_pagamento = new Date().toISOString().split('T')[0];
@@ -1667,6 +1671,7 @@ export default function FaturamentoVendaMinimalista() {
                             <TableHead className="text-white/70 text-xs text-right">Valor</TableHead>
                             <TableHead className="text-white/70 text-xs">Status</TableHead>
                             <TableHead className="text-white/70 text-xs">Pago em</TableHead>
+                            <TableHead className="text-white/70 text-xs text-center">Instalação</TableHead>
                             <TableHead className="text-white/70 text-xs w-10"></TableHead>
                           </TableRow>
                         </TableHeader>
@@ -1756,6 +1761,17 @@ export default function FaturamentoVendaMinimalista() {
                                   ) : (
                                     <span className="text-white/30 text-xs">—</span>
                                   )}
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  <div className="flex items-center justify-center">
+                                    <Switch
+                                      checked={!!parcela.pago_na_instalacao}
+                                      onCheckedChange={(checked) =>
+                                        handleUpdatePagamento(parcela.id, 'pago_na_instalacao', checked as any)
+                                      }
+                                      aria-label="Pago na instalação"
+                                    />
+                                  </div>
                                 </TableCell>
                                 <TableCell>
                                   <Button
