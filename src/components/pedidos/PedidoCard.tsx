@@ -150,6 +150,7 @@ export function PedidoCard({
   const [popoverValorAberto, setPopoverValorAberto] = useState(false);
   const [salvandoValor, setSalvandoValor] = useState(false);
   const [avisoFaltaOpen, setAvisoFaltaOpen] = useState(false);
+  const [showParcelas, setShowParcelas] = useState(false);
   const [ordemParaPausar, setOrdemParaPausar] = useState<{
     ordemId: string;
     tipoOrdem: TipoOrdemProducao;
