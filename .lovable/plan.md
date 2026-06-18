@@ -1,35 +1,37 @@
 ## Objetivo
 
-Permitir marcar cada parcela como "Pago na instalação" no faturamento da venda, e exibir essa informação nas downbars de Vendas Pendentes de Pedido (modal de parcelas).
+No `PedidoCard` (downbar dos pedidos em Gestão da Fábrica), substituir a coluna **"Valor da Venda"** (atualmente mostra `venda.valor_venda`) pela mesma seção de 3 colunas que aparece no `VendaPendentePedidoCard` (downbar das vendas pendentes nas 3 primeiras abas):
 
-## Banco
+1. **Forma Pagamento** — `pagamentoLabel` (combina `metodo_pagamento` + `metodo_pagamento_entrega` via `formatarMetodoPagamento`).
+2. **Parcelas** — `{numero_parcelas}x` clicável, abre `VendaParcelasDialog`.
+3. **Pago na Entrega** — badge "Sim" ou `formatCurrency(valor_a_receber_entrega)` em destaque âmbar quando `pagamento_na_entrega`.
 
-Sem migração — coluna `contas_receber.pago_na_instalacao` (boolean) já existe.
+A coluna **"Valor a Receber"** existente (com Popover de edição) permanece intacta.
 
-## 1. Faturamento da Venda — `src/pages/administrativo/FaturamentoVendaMinimalista.tsx`
+## Mudanças em `src/components/pedidos/PedidoCard.tsx`
 
-Na seção **Parcelas / Contas a Receber**, em cada linha de parcela:
+### 1. Imports
+- Adicionar `VendaParcelasDialog` (`./VendaParcelasDialog`) e `formatarMetodoPagamento` (`@/utils/pagamentoResumo`).
 
-- Adicionar um `Switch` (ou checkbox compacto) rotulado **"Pago na instalação"** ao lado dos campos existentes (método, vencimento, valor).
-- Estender o `select(...)` (linha ~236) para incluir `pago_na_instalacao`.
-- Ao alternar: `UPDATE contas_receber SET pago_na_instalacao = <bool> WHERE id = <parcelaId>` e atualizar o estado local `contasReceber`.
-- Incluir o campo `pago_na_instalacao: false` no payload de `handleAddParcela` e nos objetos gerados em `handleGerarParcelas` (default `false`).
-- Toast curto de confirmação ("Parcela atualizada").
+### 2. State
+- Adicionar `const [showParcelas, setShowParcelas] = useState(false);`.
 
-## 2. Modal de Parcelas (downbar Venda Pendente de Pedido) — `src/components/pedidos/VendaParcelasDialog.tsx`
+### 3. Derivar `pagamentoLabel`
+- Replicar a lógica do `VendaPendentePedidoCard` (linhas 97‑110) usando `venda?.metodo_pagamento` e `venda?.metodo_pagamento_entrega`.
 
-O componente já busca `pago_na_instalacao`. Hoje só renderiza badge "Na entrega" condicionalmente. Ajustes:
+### 4. Grid template (linha 1367‑1377)
+- Trocar o slot de `80px` (que correspondia a "Valor da Venda") por **três colunas**: `90px 40px 70px` (Forma Pagamento, Parcelas, Pago na Entrega). Aplicar em ambos os ramos do `if (hideOrdensStatus)` e nas variantes `showEtapaBadge`.
 
-- Adicionar coluna dedicada **"Instalação"** na tabela, exibindo badge `Pago na instalação` (variant `secondary` com ícone `Wrench`) quando `true`, e `—` quando `false`.
-- Manter as colunas existentes (#, Método, Vencimento, Valor, Status) e o total no rodapé inalterados.
-- Apenas leitura (sem edição neste modal — edição continua no faturamento).
+### 5. Render (linhas 1790‑1795)
+- Substituir o bloco `{/* Col: Valor da Venda */}` pelos 3 `<div className="text-center">` copiados de `VendaPendentePedidoCard` (linhas 506‑611) — Forma Pagamento, Parcelas (com `onClick` → `setShowParcelas(true)` e `e.stopPropagation()`), Pago na Entrega.
+
+### 6. Modal
+- Renderizar `<VendaParcelasDialog open={showParcelas} onOpenChange={setShowParcelas} vendaId={venda.id} numeroVenda={venda.cliente_nome} />` no final do JSX, ao lado dos outros modais já existentes no `PedidoCard`.
+
+### 7. Header da tabela (se houver)
+- Procurar e atualizar qualquer cabeçalho que rotule "Valor da Venda" → trocar pelos 3 títulos correspondentes ("Pagto.", "Parc.", "Entrega") para alinhar com o novo grid.
 
 ## Fora de escopo
-
-- Formulário de Nova Venda e snapshot de `requisicoes_aprovacao_venda` não serão alterados (usuário confirmou que a "solicitação anterior" se refere às downbars de pendentes de pedido).
-- Nenhuma alteração em regras de negócio de pagamento, geração de parcelas ou cálculos.
-
-## Arquivos tocados
-
-- `src/pages/administrativo/FaturamentoVendaMinimalista.tsx` (edição UI + handler)
-- `src/components/pedidos/VendaParcelasDialog.tsx` (nova coluna)
+- `PedidoDetalhesSheet` (sheet de detalhes) permanece sem alteração.
+- Coluna "Valor a Receber" e seu Popover de edição não mudam.
+- Nenhuma mudança em DB ou em outros cards.
