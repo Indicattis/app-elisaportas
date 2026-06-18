@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { 
   DollarSign, 
   TrendingUp, 
@@ -233,7 +234,7 @@ export default function FaturamentoVendaMinimalista() {
     if (!id) return;
     const { data, error } = await supabase
       .from('contas_receber')
-      .select('id, venda_id, metodo_pagamento, data_vencimento, status, observacoes, data_pagamento, valor_parcela, numero_parcela')
+      .select('id, venda_id, metodo_pagamento, data_vencimento, status, observacoes, data_pagamento, valor_parcela, numero_parcela, pago_na_instalacao')
       .eq('venda_id', id)
       .order('numero_parcela');
     if (!error && data) setContasReceber(data);
@@ -289,6 +290,7 @@ export default function FaturamentoVendaMinimalista() {
             metodo_pagamento: metodoTipo,
             empresa_receptora_id: venda.empresa_receptora_id || null,
             status: 'pendente',
+            pago_na_instalacao: false,
           });
         }
       } else {
@@ -301,6 +303,7 @@ export default function FaturamentoVendaMinimalista() {
           metodo_pagamento: metodoTipo,
           empresa_receptora_id: venda.empresa_receptora_id || null,
           status: 'pendente',
+          pago_na_instalacao: false,
         });
       }
     };
@@ -337,6 +340,7 @@ export default function FaturamentoVendaMinimalista() {
         data_vencimento: new Date().toISOString().split('T')[0],
         status: 'pendente',
         numero_parcela: maxNumero + 1,
+        pago_na_instalacao: false,
       })
       .select()
       .single();
