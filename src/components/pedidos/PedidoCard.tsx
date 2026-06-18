@@ -609,19 +609,23 @@ export function PedidoCard({
   const vendaData = Array.isArray(pedido.vendas) ? pedido.vendas[0] : pedido.vendas;
   const venda = vendaData;
 
-  // Contar parcelas reais em contas_receber (fallback quando venda.numero_parcelas é nulo)
-  const { data: parcelasGeradasCount = 0 } = useQuery({
-    queryKey: ['contas-receber-count', venda?.id],
+  // Contar parcelas reais e somar valor em contas_receber
+  const { data: parcelasInfo = { count: 0, total: 0 } } = useQuery({
+    queryKey: ['contas-receber-info', venda?.id],
     enabled: !!venda?.id,
     queryFn: async () => {
-      const { count, error } = await supabase
+      const { data, error } = await supabase
         .from('contas_receber')
-        .select('*', { count: 'exact', head: true })
+        .select('valor')
         .eq('venda_id', venda!.id);
       if (error) throw error;
-      return count || 0;
+      const rows = data || [];
+      const total = rows.reduce((acc, r: any) => acc + (Number(r.valor) || 0), 0);
+      return { count: rows.length, total };
     },
   });
+  const parcelasGeradasCount = parcelasInfo.count;
+  const parcelasGeradasTotal = parcelasInfo.total;
 
   // Combined payment methods label (mesma lógica do VendaPendentePedidoCard)
   const pagamentoLabel = (() => {
