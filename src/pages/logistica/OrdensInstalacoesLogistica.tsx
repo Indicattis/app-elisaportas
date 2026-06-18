@@ -328,7 +328,7 @@ export default function OrdensInstalacoesLogistica() {
                         <th className="text-left font-medium px-4 py-3">Cidade / UF</th>
                         <th className="text-left font-medium px-4 py-3">Tipo</th>
                         <th className="text-left font-medium px-4 py-3">Equipe Instalação</th>
-                        <th className="text-left font-medium px-4 py-3">Autorizado Correção</th>
+                        <th className="text-left font-medium px-4 py-3">Autorizado</th>
                         <th className="text-left font-medium px-4 py-3">Carregamento</th>
                         <th className="text-right font-medium px-4 py-3">Valor</th>
                         <th className="text-right font-medium px-4 py-3">Finalizado em</th>
