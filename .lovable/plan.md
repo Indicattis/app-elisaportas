@@ -1,41 +1,38 @@
-## Contexto
+## Diagnóstico
 
-As colunas **Equipe Instalação** e **Autorizado Correção** estão majoritariamente vazias porque a origem dos dados também está vazia:
+Investigando a tabela `instalacoes` (a equipe é definida em `/instalacoes` via menu "Responsável", não em `/logistica/expedicao` — esse só exibe):
 
-| Origem | Pedidos finalizados com dado | Total |
-|---|---|---|
-| `instalacoes.responsavel_instalacao_nome` | 3 | 168 |
-| `correcoes.responsavel_correcao_nome` | 0 | 21 |
-| `ordens_carregamento.responsavel_carregamento_nome` | 87 | 267 |
+| Métrica | Valor |
+|---|---|
+| Total de instalações | 450 |
+| Com `responsavel_instalacao_id` preenchido | **256** |
+| Com `responsavel_instalacao_nome` preenchido | **20** |
+| IDs que pertencem a `equipes_instalacao` | 256 / 256 |
 
-Investiguei todas as tabelas com potencial relação (`neo_instalacoes`, `neo_correcoes`, `pedidos_etapas`, `pedidos_producao`, `pedidos_movimentacoes`, `etapa_responsaveis`, `eventos_calendario`) e **nenhuma armazena equipe/autorizado vinculado ao pedido legado**. A única referência adicional é `instalacao_concluida_por` / `correcao.concluida_por`, que é o `user_id` do colaborador que clicou em "Concluir" — não representa a equipe responsável e seria enganoso usar como fallback.
+**Causa raiz:** O `id` da equipe é salvo, mas o `nome` cacheado na linha fica NULL em 236 registros. Como o backfill anterior e os triggers de sincronização usavam **o nome** como critério, esses 236 registros foram tratados como "sem equipe" — o que propaga para `instalacoes_finalizadas` (apenas 3 de 281 com equipe).
 
-## Conclusão
+## O que fazer
 
-Não existe fonte alternativa real para o histórico legado. O caminho correto é:
+1. **Backfill `instalacoes.responsavel_instalacao_nome`** para os 236 registros, copiando de `equipes_instalacao.nome` via `responsavel_instalacao_id`. Mesma coisa para `correcoes.responsavel_correcao_nome` quando o id existir.
 
-1. **Manter a snapshot atual** (já preenche os 3 + 87 casos onde há dado).
-2. **Adicionar trigger de sincronização** para que, quando alguém preencher retroativamente o responsável em `instalacoes` ou `correcoes`, a linha em `instalacoes_finalizadas` seja atualizada automaticamente.
-3. **Re-rodar o backfill** uma vez após o trigger entrar (caso novos registros tenham aparecido entre as migrations).
-4. **Sinalizar visualmente** na coluna quando vazio com um traço cinza `—` em vez de string vazia, deixando claro que é ausência de dado e não bug de exibição.
+2. **Corrigir `gerar_instalacao_finalizada()`** para resolver o nome diretamente de `equipes_instalacao` quando `responsavel_instalacao_nome` for NULL, garantindo que novos pedidos finalizados nunca entrem vazios.
 
-Pedidos novos finalizados a partir daqui já vão preencher normalmente, pois o workflow atual exige escolher responsável.
+3. **Corrigir os triggers `sync_instalacao_finalizada_responsavel` e `sync_correcao_finalizada_responsavel`** para também resolver nome via `equipes_instalacao` (hoje retornam cedo quando `nome IS NULL`).
 
-## Mudanças técnicas
+4. **Re-rodar backfill de `instalacoes_finalizadas`**: para cada linha, recalcular `equipe_instalacao_*` / `autorizado_correcao_*` via JOIN em `equipes_instalacao` usando o `responsavel_instalacao_id` da `instalacoes` correspondente (e idem `correcoes`).
 
-**Migration:**
-- Criar função `sync_instalacao_finalizada_responsavel()` + trigger `AFTER UPDATE OF responsavel_instalacao_id, responsavel_instalacao_nome ON instalacoes`
-- Criar função `sync_correcao_finalizada_responsavel()` + trigger `AFTER UPDATE OF responsavel_correcao_id, responsavel_correcao_nome ON correcoes`
-- Triggers fazem `UPDATE public.instalacoes_finalizadas SET equipe_instalacao_* / autorizado_correcao_* WHERE pedido_id = NEW.pedido_id`
-- Detectar tipo (equipe vs autorizado) via `EXISTS` em `equipes_instalacao` para decidir entre coluna `equipe_*` e `autorizado_*` (hoje o backfill sempre joga no `equipe_*` — corrigir isso também)
-- Re-executar bloco de backfill com a lógica corrigida
+## Resultado esperado
 
-**UI (`OrdensInstalacoesLogistica.tsx`):**
-- Substituir células vazias por `<span className="text-white/30">—</span>`
-- Tooltip opcional: "Responsável não registrado no momento da finalização"
+- `instalacoes_finalizadas`: equipe preenchida para todos os pedidos cuja `instalacoes` original tinha id de equipe (estimativa: ~180 de 281, vs. 3 hoje).
+- Página `/logistica/expedicao` passa a colorir a maioria das instalações pela cor da equipe.
+- A tabela de OrdensInstalacoesLogistica exibe o nome da equipe nas linhas históricas.
 
-## Não muda
+## Limitações honestas
 
-- Estrutura da tabela `instalacoes_finalizadas`
-- Hook `useInstalacoesFinalizadas`
-- Filtro de mês e indicadores de valor
+- Pedidos finalizados cuja linha em `instalacoes` foi deletada (99 registros sem match por `pedido_id`) continuarão sem equipe — não há fonte para recuperar.
+- Registros realmente sem `responsavel_instalacao_id` (159 pendentes + 35 concluídos) continuarão vazios até alguém atribuir manualmente em `/instalacoes`.
+
+## Arquivos / objetos afetados
+
+- Migration nova: backfill em `instalacoes` e `correcoes`, reescrita de `gerar_instalacao_finalizada`, reescrita dos 2 triggers de sync, re-backfill de `instalacoes_finalizadas`.
+- Nenhuma alteração de frontend necessária.
