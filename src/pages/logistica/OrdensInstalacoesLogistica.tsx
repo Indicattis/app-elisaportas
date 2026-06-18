@@ -170,18 +170,6 @@ export default function OrdensInstalacoesLogistica() {
             )}
           >
             <CardContent className="p-0">
-              {/* Cabeçalho */}
-              <div className="hidden md:grid grid-cols-[100px_minmax(180px,1fr)_minmax(160px,1fr)_minmax(140px,1fr)_minmax(140px,1fr)_minmax(140px,1fr)_120px_120px] gap-3 px-4 py-3 border-b border-white/10 text-xs uppercase tracking-wide text-muted-foreground">
-                <div>Pedido</div>
-                <div>Cliente</div>
-                <div>Cidade / UF</div>
-                <div>Equipe Instalação</div>
-                <div>Autorizado Correção</div>
-                <div>Carregamento</div>
-                <div className="text-right">Valor</div>
-                <div className="text-right">Finalizado em</div>
-              </div>
-
               {isLoading ? (
                 <div className="py-12 text-center text-muted-foreground text-sm">Carregando...</div>
               ) : filtrados.length === 0 ? (
@@ -189,38 +177,54 @@ export default function OrdensInstalacoesLogistica() {
                   Nenhuma instalação finalizada {mes === "todos" ? "" : `em ${labelMes(mes)}`}.
                 </div>
               ) : (
-                <div className="divide-y divide-white/5">
-                  {filtrados.map((r) => (
-                    <button
-                      key={r.id}
-                      onClick={() => handleRowClick(r)}
-                      className="w-full text-left grid grid-cols-1 md:grid-cols-[100px_minmax(180px,1fr)_minmax(160px,1fr)_minmax(140px,1fr)_minmax(140px,1fr)_minmax(140px,1fr)_120px_120px] gap-3 px-4 py-3 hover:bg-white/5 transition-colors text-sm"
-                    >
-                      <div className="font-mono text-xs">
-                        #{r.numero_pedido ?? "—"}
-                        {r.numero_mes != null && (
-                          <span className="text-muted-foreground"> ({r.numero_mes})</span>
-                        )}
-                      </div>
-                      <div className="truncate">{r.cliente_nome ?? "—"}</div>
-                      <div className="flex items-center gap-1 text-muted-foreground truncate">
-                        <MapPin className="h-3 w-3 shrink-0" />
-                        <span className="truncate">
-                          {r.cidade ?? "—"}
-                          {r.estado ? ` / ${r.estado}` : ""}
-                        </span>
-                      </div>
-                      <div className="truncate">{r.equipe_instalacao_nome ?? "—"}</div>
-                      <div className="truncate">{r.autorizado_correcao_nome ?? "—"}</div>
-                      <div className="truncate">{r.responsavel_carregamento_nome ?? "—"}</div>
-                      <div className="text-right font-semibold text-emerald-500">
-                        {formatCurrency(Number(r.valor_instalacao || 0))}
-                      </div>
-                      <div className="text-right text-xs text-muted-foreground">
-                        {new Date(r.finalizado_em).toLocaleDateString("pt-BR")}
-                      </div>
-                    </button>
-                  ))}
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm border-collapse">
+                    <thead>
+                      <tr className="border-b border-white/10 text-xs uppercase tracking-wide text-muted-foreground">
+                        <th className="text-left font-medium px-4 py-3">Pedido</th>
+                        <th className="text-left font-medium px-4 py-3">Cliente</th>
+                        <th className="text-left font-medium px-4 py-3">Cidade / UF</th>
+                        <th className="text-left font-medium px-4 py-3">Equipe Instalação</th>
+                        <th className="text-left font-medium px-4 py-3">Autorizado Correção</th>
+                        <th className="text-left font-medium px-4 py-3">Carregamento</th>
+                        <th className="text-right font-medium px-4 py-3">Valor</th>
+                        <th className="text-right font-medium px-4 py-3">Finalizado em</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {filtrados.map((r) => (
+                        <tr
+                          key={r.id}
+                          onClick={() => handleRowClick(r)}
+                          className="hover:bg-white/5 transition-colors cursor-pointer"
+                        >
+                          <td className="px-4 py-3 font-mono text-xs whitespace-nowrap">
+                            #{r.numero_pedido ?? "—"}
+                            {r.numero_mes != null && (
+                              <span className="text-muted-foreground"> ({r.numero_mes})</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3">{r.cliente_nome ?? "—"}</td>
+                          <td className="px-4 py-3 text-muted-foreground">
+                            <span className="inline-flex items-center gap-1">
+                              <MapPin className="h-3 w-3 shrink-0" />
+                              {r.cidade ?? "—"}
+                              {r.estado ? ` / ${r.estado}` : ""}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">{r.equipe_instalacao_nome ?? "—"}</td>
+                          <td className="px-4 py-3">{r.autorizado_correcao_nome ?? "—"}</td>
+                          <td className="px-4 py-3">{r.responsavel_carregamento_nome ?? "—"}</td>
+                          <td className="px-4 py-3 text-right font-semibold text-emerald-500 whitespace-nowrap">
+                            {formatCurrency(Number(r.valor_instalacao || 0))}
+                          </td>
+                          <td className="px-4 py-3 text-right text-xs text-muted-foreground whitespace-nowrap">
+                            {new Date(r.finalizado_em).toLocaleDateString("pt-BR")}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </CardContent>
