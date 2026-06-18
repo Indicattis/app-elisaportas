@@ -20,18 +20,20 @@ interface SelecionarResponsavelMenuProps {
   instalacaoId: string;
   children: React.ReactNode;
   onResponsavelSelecionado?: () => void;
+  filtro?: 'equipes' | 'autorizados' | 'todos';
 }
 
 export function SelecionarResponsavelMenu({ 
   instalacaoId, 
   children,
-  onResponsavelSelecionado 
+  onResponsavelSelecionado,
+  filtro = 'todos',
 }: SelecionarResponsavelMenuProps) {
   const { responsaveis, loading } = useResponsaveisInstalacao();
   const [atualizando, setAtualizando] = useState(false);
 
-  const equipesInternas = responsaveis.filter(r => r.tipo === 'equipe_interna');
-  const autorizados = responsaveis.filter(r => r.tipo === 'autorizado');
+  const equipesInternas = filtro === 'autorizados' ? [] : responsaveis.filter(r => r.tipo === 'equipe_interna');
+  const autorizados = filtro === 'equipes' ? [] : responsaveis.filter(r => r.tipo === 'autorizado');
 
   const handleSelecionarResponsavel = async (responsavel: typeof responsaveis[0]) => {
     try {
