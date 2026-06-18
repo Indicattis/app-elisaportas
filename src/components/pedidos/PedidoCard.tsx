@@ -609,6 +609,19 @@ export function PedidoCard({
   const vendaData = Array.isArray(pedido.vendas) ? pedido.vendas[0] : pedido.vendas;
   const venda = vendaData;
 
+  // Combined payment methods label (mesma lógica do VendaPendentePedidoCard)
+  const pagamentoLabel = (() => {
+    const methods: string[] = [];
+    if (venda?.metodo_pagamento) {
+      methods.push(formatarMetodoPagamento(venda.metodo_pagamento));
+    }
+    if (venda?.metodo_pagamento_entrega) {
+      const label2 = formatarMetodoPagamento(venda.metodo_pagamento_entrega);
+      if (!methods.includes(label2)) methods.push(label2);
+    }
+    return methods.length > 0 ? methods.join('/') : null;
+  })();
+
   // Helper para exibir valor a receber (prioriza texto)
   const exibirValorAReceber = (prefixo?: string) => {
     if (venda?.valor_a_receber_texto) {
