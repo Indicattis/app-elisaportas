@@ -228,11 +228,13 @@ export default function OrdensInstalacoesLogistica() {
         </div>
       </div>
 
-      <PedidoDetalhesSheet
-        pedido={selectedPedido}
-        open={showDetalhes}
-        onOpenChange={setShowDetalhes}
-      />
+      {selectedPedido && (
+        <PedidoDetalhesSheet
+          pedido={selectedPedido}
+          open={showDetalhes}
+          onOpenChange={setShowDetalhes}
+        />
+      )}
     </MinimalistLayout>
   );
 }
