@@ -1081,7 +1081,17 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
             </CollapsibleTrigger>
             <CollapsibleContent className="mt-2 space-y-1.5 pl-2">
               {vendaIdParaParcelas && (
-                <div className="flex justify-end">
+                <div className="flex justify-end gap-1">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={handleGerarParcelas}
+                    disabled={gerandoParcelas}
+                    className="text-purple-300 hover:bg-purple-500/20 h-7 px-2 text-xs"
+                  >
+                    <Wand2 className="h-3.5 w-3.5 mr-1" />
+                    {gerandoParcelas ? 'Gerando...' : 'Gerar parcelas'}
+                  </Button>
                   <Button
                     size="sm"
                     variant="ghost"
