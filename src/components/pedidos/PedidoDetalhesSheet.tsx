@@ -963,6 +963,18 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
               </div>
             </CollapsibleTrigger>
             <CollapsibleContent className="mt-2 space-y-1.5 pl-2">
+              {vendaIdParaParcelas && (
+                <div className="flex justify-end">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={handleNovaParcela}
+                    className="text-green-400 hover:bg-green-500/20 h-7 px-2 text-xs"
+                  >
+                    <Plus className="h-3.5 w-3.5 mr-1" /> Nova parcela
+                  </Button>
+                </div>
+              )}
               {contasReceber.length > 0 ? (
                 contasReceber.map((parcela: any) => (
                   <div key={parcela.id} className="flex items-center justify-between p-2.5 bg-white/5 rounded-lg border border-white/5">
@@ -985,6 +997,22 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
                       )}>
                         {parcela.status === 'pago' ? 'Pago' : 'Pendente'}
                       </Badge>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => handleEditarParcela(parcela)}
+                        className="h-6 w-6 text-blue-400 hover:bg-blue-500/20"
+                      >
+                        <Pencil className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => handleExcluirParcela(parcela)}
+                        className="h-6 w-6 text-red-400 hover:bg-red-500/20"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
                     </div>
                   </div>
                 ))
