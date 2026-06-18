@@ -99,6 +99,8 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
   const [comentarios, setComentarios] = useState<any[]>([]);
   const [novoComentario, setNovoComentario] = useState('');
   const [enviandoComentario, setEnviandoComentario] = useState(false);
+  const [pagamentoOpen, setPagamentoOpen] = useState(false);
+  const [contasReceber, setContasReceber] = useState<any[]>([]);
   
   const { userRole } = useAuth();
   const { verificarEAvancarManual, processos, modalOpen, setModalOpen } = usePedidoAutoAvanco();
@@ -109,8 +111,36 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
       fetchObservacoesVisita();
       fetchEtapasHistorico();
       fetchComentarios();
+      fetchContasReceber();
     }
   }, [open, pedido?.id]);
+
+  const fetchContasReceber = async () => {
+    const vendaId = pedido?.vendas?.id || pedido?.venda_id;
+    if (!vendaId) {
+      setContasReceber([]);
+      return;
+    }
+    try {
+      const { data } = await supabase
+        .from('contas_receber')
+        .select('*')
+        .eq('venda_id', vendaId)
+        .order('numero_parcela');
+      setContasReceber(data || []);
+    } catch (err) {
+      console.error('Erro ao buscar contas a receber:', err);
+    }
+  };
+
+  const FORMAS_PAGAMENTO_LABELS: Record<string, string> = {
+    boleto: 'Boleto',
+    a_vista: 'À Vista (PIX, Débito)',
+    cartao_credito: 'Cartão de Crédito',
+    dinheiro: 'Dinheiro',
+    avista: 'À Vista',
+    credito: 'Cartão de Crédito',
+  };
 
   const fetchComentarios = async () => {
     try {
@@ -890,6 +920,52 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
               </CollapsibleContent>
             </Collapsible>
           )}
+
+          {/* Parcelas / Recebimentos */}
+          <Collapsible open={pagamentoOpen} onOpenChange={setPagamentoOpen}>
+            <CollapsibleTrigger asChild>
+              <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10 cursor-pointer hover:bg-white/10 transition-colors">
+                <div className="flex items-center gap-2">
+                  <DollarSign className="h-4 w-4 text-green-400" />
+                  <span className="font-medium text-white text-sm">Parcelas / Recebimentos</span>
+                  <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs">
+                    {contasReceber.length}
+                  </Badge>
+                </div>
+                <ChevronDown className={cn("h-4 w-4 text-white/60 transition-transform duration-200", pagamentoOpen && "rotate-180")} />
+              </div>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-2 space-y-1.5 pl-2">
+              {contasReceber.length > 0 ? (
+                contasReceber.map((parcela: any) => (
+                  <div key={parcela.id} className="flex items-center justify-between p-2.5 bg-white/5 rounded-lg border border-white/5">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-white text-sm">
+                        Parcela {parcela.numero_parcela}
+                      </p>
+                      <p className="text-white/40 text-[11px]">
+                        {parcela.data_vencimento && `Venc: ${format(new Date(parcela.data_vencimento), "dd/MM/yyyy")}`}
+                        {parcela.metodo_pagamento && ` • ${FORMAS_PAGAMENTO_LABELS[parcela.metodo_pagamento] || parcela.metodo_pagamento}`}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-white/80">{formatCurrency(parcela.valor_parcela)}</span>
+                      <Badge className={cn(
+                        "text-[10px]",
+                        parcela.status === 'pago'
+                          ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
+                          : "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
+                      )}>
+                        {parcela.status === 'pago' ? 'Pago' : 'Pendente'}
+                      </Badge>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-sm text-white/50 p-2">Nenhuma parcela gerada</div>
+              )}
+            </CollapsibleContent>
+          </Collapsible>
 
           {/* Comentários */}
           <Collapsible open={comentariosOpen} onOpenChange={setComentariosOpen}>
