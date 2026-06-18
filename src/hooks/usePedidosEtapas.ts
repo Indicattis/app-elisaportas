@@ -196,6 +196,58 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
       if (pedidosError) throw pedidosError;
       if (!pedidosData) return [];
 
+      // Derivar metodo_pagamento_entrega e valor_a_receber_entrega a partir de contas_receber
+      const vendaIds = Array.from(new Set(
+        pedidosData
+          .map((p: any) => (Array.isArray(p.vendas) ? p.vendas[0]?.id : p.vendas?.id))
+          .filter(Boolean)
+      ));
+      const metodoEntregaPorVenda = new Map<string, string | null>();
+      const valorEntregaPorVenda = new Map<string, number | null>();
+      if (vendaIds.length > 0) {
+        try {
+          const { data: contas } = await supabase
+            .from('contas_receber')
+            .select('venda_id, metodo_pagamento, valor_parcela')
+            .in('venda_id', vendaIds);
+          const metodosPorVenda = new Map<string, string[]>();
+          const totaisPorVenda = new Map<string, Map<string, number>>();
+          (contas || []).forEach((c: any) => {
+            if (!c?.venda_id) return;
+            if (c.metodo_pagamento) {
+              const arr = metodosPorVenda.get(c.venda_id) || [];
+              if (!arr.includes(c.metodo_pagamento)) arr.push(c.metodo_pagamento);
+              metodosPorVenda.set(c.venda_id, arr);
+              const tot = totaisPorVenda.get(c.venda_id) || new Map<string, number>();
+              tot.set(c.metodo_pagamento, (tot.get(c.metodo_pagamento) || 0) + Number(c.valor_parcela || 0));
+              totaisPorVenda.set(c.venda_id, tot);
+            }
+          });
+          pedidosData.forEach((p: any) => {
+            const v = Array.isArray(p.vendas) ? p.vendas[0] : p.vendas;
+            if (!v?.id) return;
+            const metodos = metodosPorVenda.get(v.id) || [];
+            const extras = metodos.filter((m) => m !== v.metodo_pagamento);
+            const metodoEntrega = extras[0] || null;
+            metodoEntregaPorVenda.set(v.id, metodoEntrega);
+            if (v.pagamento_na_entrega) {
+              let valor: number | null = null;
+              if (metodoEntrega) {
+                const t = totaisPorVenda.get(v.id)?.get(metodoEntrega) ?? 0;
+                if (t > 0) valor = t;
+              }
+              if (!valor) {
+                const fb = Number(v.valor_a_receber ?? 0);
+                if (fb > 0) valor = fb;
+              }
+              valorEntregaPorVenda.set(v.id, valor);
+            }
+          });
+        } catch (e) {
+          console.error('[usePedidosEtapas] erro contas_receber:', e);
+        }
+      }
+
       // Buscar informações de backlog e ordens para cada pedido
       const pedidosComBacklog = await Promise.all(
         pedidosData.map(async (pedido) => {
