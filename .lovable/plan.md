@@ -1,37 +1,29 @@
 ## Objetivo
 
-No `PedidoCard` (downbar dos pedidos em Gestão da Fábrica), substituir a coluna **"Valor da Venda"** (atualmente mostra `venda.valor_venda`) pela mesma seção de 3 colunas que aparece no `VendaPendentePedidoCard` (downbar das vendas pendentes nas 3 primeiras abas):
+Adicionar botão **"Gerar parcelas"** na seção *Parcelas / Recebimentos* do `PedidoDetalhesSheet`, replicando exatamente a mesma lógica de geração já existente na tela de Faturamento da venda (`FaturamentoVendaMinimalista.handleGerarParcelas`), usando os dados cadastrados na venda vinculada ao pedido.
 
-1. **Forma Pagamento** — `pagamentoLabel` (combina `metodo_pagamento` + `metodo_pagamento_entrega` via `formatarMetodoPagamento`).
-2. **Parcelas** — `{numero_parcelas}x` clicável, abre `VendaParcelasDialog`.
-3. **Pago na Entrega** — badge "Sim" ou `formatCurrency(valor_a_receber_entrega)` em destaque âmbar quando `pagamento_na_entrega`.
+## Comportamento
 
-A coluna **"Valor a Receber"** existente (com Popover de edição) permanece intacta.
+1. **Botão "Gerar parcelas"** (com ícone `Sparkles`/`Wand2`) ao lado do botão "+ Nova parcela" no cabeçalho da seção.
+2. Quando **não existem parcelas** → clique gera direto a partir dos dados da venda.
+3. Quando **já existem parcelas** → abrir `AlertDialog` de confirmação ("Isto removerá as parcelas atuais e gerará novas a partir da venda. Continuar?"). Se confirmado, apaga todas as parcelas atuais (`delete().eq('venda_id', vendaId)`) e gera as novas — igual ao `handleRegenerarParcelas`.
+4. Após gerar, chamar `fetchContasReceber()` para atualizar a lista e exibir toast de sucesso/erro.
+5. Se o pedido não tiver `venda_id` resolvível, desabilitar o botão.
 
-## Mudanças em `src/components/pedidos/PedidoCard.tsx`
+## Lógica de geração (idêntica à da venda)
 
-### 1. Imports
-- Adicionar `VendaParcelasDialog` (`./VendaParcelasDialog`) e `formatarMetodoPagamento` (`@/utils/pagamentoResumo`).
+Buscar a venda completa (`vendas` table) pelos campos: `metodo_pagamento`, `numero_parcelas`/`quantidade_parcelas`, `intervalo_boletos`, `valor_venda`, `valor_credito`, `valor_frete`, `data_venda`, `valor_entrada`, `valor_a_receber`, `empresa_receptora_id`.
 
-### 2. State
-- Adicionar `const [showParcelas, setShowParcelas] = useState(false);`.
+- `valorTotal = valor_venda + valor_credito + valor_frete`
+- Se `valor_entrada > 0` **e** `valor_a_receber > 0` → gera 2 blocos:
+  - Entrada: 1 parcela `a_vista` no `data_venda`.
+  - Saldo: `numero_parcelas` no método principal, intervalo `intervalo_boletos` (cartão_credito força 30 dias).
+- Caso contrário → gera `numero_parcelas` parcelas no método principal sobre o `valorTotal`.
+- Para métodos não-parceláveis (`dinheiro`, `a_vista`, `pix`) → 1 parcela única.
+- Insere com `status: 'pendente'`, `pago_na_instalacao: false`, `empresa_receptora_id` da venda.
 
-### 3. Derivar `pagamentoLabel`
-- Replicar a lógica do `VendaPendentePedidoCard` (linhas 97‑110) usando `venda?.metodo_pagamento` e `venda?.metodo_pagamento_entrega`.
+## Arquivos afetados
 
-### 4. Grid template (linha 1367‑1377)
-- Trocar o slot de `80px` (que correspondia a "Valor da Venda") por **três colunas**: `90px 40px 70px` (Forma Pagamento, Parcelas, Pago na Entrega). Aplicar em ambos os ramos do `if (hideOrdensStatus)` e nas variantes `showEtapaBadge`.
+- `src/components/pedidos/PedidoDetalhesSheet.tsx` — adicionar `handleGerarParcelas`, estado `confirmRegenerarOpen`, botão no cabeçalho da seção, e `AlertDialog` de confirmação. Importar `addDays` de `date-fns` e o ícone `Wand2`/`Sparkles`.
 
-### 5. Render (linhas 1790‑1795)
-- Substituir o bloco `{/* Col: Valor da Venda */}` pelos 3 `<div className="text-center">` copiados de `VendaPendentePedidoCard` (linhas 506‑611) — Forma Pagamento, Parcelas (com `onClick` → `setShowParcelas(true)` e `e.stopPropagation()`), Pago na Entrega.
-
-### 6. Modal
-- Renderizar `<VendaParcelasDialog open={showParcelas} onOpenChange={setShowParcelas} vendaId={venda.id} numeroVenda={venda.cliente_nome} />` no final do JSX, ao lado dos outros modais já existentes no `PedidoCard`.
-
-### 7. Header da tabela (se houver)
-- Procurar e atualizar qualquer cabeçalho que rotule "Valor da Venda" → trocar pelos 3 títulos correspondentes ("Pagto.", "Parc.", "Entrega") para alinhar com o novo grid.
-
-## Fora de escopo
-- `PedidoDetalhesSheet` (sheet de detalhes) permanece sem alteração.
-- Coluna "Valor a Receber" e seu Popover de edição não mudam.
-- Nenhuma mudança em DB ou em outros cards.
+Sem alterações no schema/DB, edge functions ou outros componentes.
