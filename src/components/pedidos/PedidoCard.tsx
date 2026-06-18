@@ -51,6 +51,8 @@ import { ConfirmarExpedicaoModal } from "./ConfirmarExpedicaoModal";
 import { ConcluirManutencaoModal } from "./ConcluirManutencaoModal";
 import { RemoverResponsavelModal } from "./RemoverResponsavelModal";
 import { ExcluirPedidoModal } from "./ExcluirPedidoModal";
+import { VendaParcelasDialog } from "./VendaParcelasDialog";
+import { formatarMetodoPagamento } from "@/utils/pagamentoResumo";
 import type { EtapaPedido } from "@/types/pedidoEtapa";
 import { ETAPAS_CONFIG, getProximaEtapa, getEtapaAnterior } from "@/types/pedidoEtapa";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
@@ -148,6 +150,7 @@ export function PedidoCard({
   const [popoverValorAberto, setPopoverValorAberto] = useState(false);
   const [salvandoValor, setSalvandoValor] = useState(false);
   const [avisoFaltaOpen, setAvisoFaltaOpen] = useState(false);
+  const [showParcelas, setShowParcelas] = useState(false);
   const [ordemParaPausar, setOrdemParaPausar] = useState<{
     ordemId: string;
     tipoOrdem: TipoOrdemProducao;
@@ -605,6 +608,19 @@ export function PedidoCard({
   // Tratar venda como array ou objeto único
   const vendaData = Array.isArray(pedido.vendas) ? pedido.vendas[0] : pedido.vendas;
   const venda = vendaData;
+
+  // Combined payment methods label (mesma lógica do VendaPendentePedidoCard)
+  const pagamentoLabel = (() => {
+    const methods: string[] = [];
+    if (venda?.metodo_pagamento) {
+      methods.push(formatarMetodoPagamento(venda.metodo_pagamento));
+    }
+    if (venda?.metodo_pagamento_entrega) {
+      const label2 = formatarMetodoPagamento(venda.metodo_pagamento_entrega);
+      if (!methods.includes(label2)) methods.push(label2);
+    }
+    return methods.length > 0 ? methods.join('/') : null;
+  })();
 
   // Helper para exibir valor a receber (prioriza texto)
   const exibirValorAReceber = (prefixo?: string) => {
@@ -1368,12 +1384,12 @@ export function PedidoCard({
               const valorAReceberCol = hideValorAReceber ? '' : ' 65px';
               if (hideOrdensStatus) {
                 return showEtapaBadge
-                  ? `20px 60px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 65px${valorAReceberCol} 1fr 55px`
-                  : `20px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 65px${valorAReceberCol} 1fr 55px`;
+                  ? `20px 60px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 90px 40px 70px${valorAReceberCol} 1fr 55px`
+                  : `20px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 90px 40px 70px${valorAReceberCol} 1fr 55px`;
               }
               return showEtapaBadge
-                ? `20px 60px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 65px${valorAReceberCol} 24px 24px 24px 24px 24px 24px 1fr 55px`
-                : `20px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 65px${valorAReceberCol} 24px 24px 24px 24px 24px 24px 1fr 55px`;
+                ? `20px 60px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 90px 40px 70px${valorAReceberCol} 24px 24px 24px 24px 24px 24px 1fr 55px`
+                : `20px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 90px 40px 70px${valorAReceberCol} 24px 24px 24px 24px 24px 24px 1fr 55px`;
             })() }}>
               {/* Col 1: Drag Handle ou Aviso de Espera */}
               <div>
@@ -1787,11 +1803,63 @@ export function PedidoCard({
                 )}
               </div>
 
-              {/* Col: Valor da Venda */}
+              {/* Col: Forma Pagamento */}
               <div className="text-center">
-                <span className="text-[10px] text-muted-foreground">
-                  {venda?.valor_venda ? formatCurrency(venda.valor_venda) : '—'}
-                </span>
+                {pagamentoLabel ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="text-[10px] text-muted-foreground truncate block">{pagamentoLabel}</span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-xs">{pagamentoLabel}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <span className="text-[9px] text-muted-foreground/50">—</span>
+                )}
+              </div>
+
+              {/* Col: Parcelas */}
+              <div className="text-center">
+                {venda?.numero_parcelas ? (
+                  <button
+                    type="button"
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowParcelas(true);
+                    }}
+                    className="text-[10px] text-muted-foreground hover:text-foreground hover:underline cursor-pointer"
+                  >
+                    {venda.numero_parcelas}x
+                  </button>
+                ) : (
+                  <span className="text-[10px] text-muted-foreground">—</span>
+                )}
+              </div>
+
+              {/* Col: Pago na Entrega */}
+              <div className="text-center">
+                {venda?.pagamento_na_entrega ? (
+                  venda.valor_a_receber_entrega && venda.valor_a_receber_entrega > 0 ? (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="text-[10px] font-medium text-amber-600 bg-amber-500/10 rounded px-1 py-0.5">
+                          {formatCurrency(venda.valor_a_receber_entrega)}
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="text-xs">Valor a receber na entrega</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  ) : (
+                    <Badge variant="outline" className="text-[8px] px-1 py-0 h-4 bg-emerald-500/10 text-emerald-600 border-emerald-500/50">
+                      Sim
+                    </Badge>
+                  )
+                ) : (
+                  <span className="text-[9px] text-muted-foreground/50">—</span>
+                )}
               </div>
 
               {/* Col: Valor a Receber */}
@@ -2351,6 +2419,15 @@ className="flex h-[20px] w-full rounded-[3px]"
         </AlertDialog>
 
         <PedidoDetalhesSheet pedido={pedido} open={showDetalhes} onOpenChange={setShowDetalhes} />
+
+        {venda?.id && (
+          <VendaParcelasDialog
+            open={showParcelas}
+            onOpenChange={setShowParcelas}
+            vendaId={venda.id}
+            numeroVenda={venda.cliente_nome}
+          />
+        )}
 
         <AcaoEtapaModal pedido={pedido} open={showAcaoEtapa} onOpenChange={setShowAcaoEtapa} onAvancar={onMoverEtapa || (() => {})} />
 
