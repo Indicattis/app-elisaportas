@@ -51,8 +51,8 @@ export function PedidosHeaderRow({ hideOrdensStatus = false, showEtapaBadge = fa
       <div className="text-center">Pag.</div>
       {/* Parcelas */}
       <div className="text-center">Parc.</div>
-      {/* Pago na Entrega */}
-      <div className="text-center">Entr.</div>
+      {/* Valor a receber */}
+      <div className="text-center">Valor a receber</div>
       {/* A Receber */}
       {!hideValorAReceber && <div className="text-center">A Rec.</div>}
       {/* Ordens */}
