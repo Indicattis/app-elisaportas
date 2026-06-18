@@ -8,11 +8,11 @@ export function PedidosHeaderRow({ hideOrdensStatus = false, showEtapaBadge = fa
   const aRec = hideValorAReceber ? '' : ' 65px';
   const gridCols = hideOrdensStatus
     ? (showEtapaBadge
-      ? `20px 60px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 65px${aRec} 1fr 55px`
-      : `20px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 65px${aRec} 1fr 55px`)
+      ? `20px 60px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 90px 80px 40px 70px${aRec} 1fr 55px`
+      : `20px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 90px 80px 40px 70px${aRec} 1fr 55px`)
     : (showEtapaBadge
-      ? `20px 60px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 65px${aRec} 24px 24px 24px 24px 24px 24px 1fr 55px`
-      : `20px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 65px${aRec} 24px 24px 24px 24px 24px 24px 1fr 55px`);
+      ? `20px 60px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 90px 80px 40px 70px${aRec} 24px 24px 24px 24px 24px 24px 1fr 55px`
+      : `20px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 90px 80px 40px 70px${aRec} 24px 24px 24px 24px 24px 24px 1fr 55px`);
 
   return (
     <div
@@ -47,8 +47,12 @@ export function PedidosHeaderRow({ hideOrdensStatus = false, showEtapaBadge = fa
       <div className="text-center">Tipo</div>
       {/* Cores */}
       <div className="text-center">Cores</div>
-      {/* Valor */}
-      <div className="text-center">Valor</div>
+      {/* Forma Pagamento */}
+      <div className="text-center">Pag.</div>
+      {/* Parcelas */}
+      <div className="text-center">Parc.</div>
+      {/* Pago na Entrega */}
+      <div className="text-center">Entr.</div>
       {/* A Receber */}
       {!hideValorAReceber && <div className="text-center">A Rec.</div>}
       {/* Ordens */}
