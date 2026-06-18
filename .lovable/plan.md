@@ -1,29 +1,67 @@
 ## Objetivo
 
-Adicionar botão **"Gerar parcelas"** na seção *Parcelas / Recebimentos* do `PedidoDetalhesSheet`, replicando exatamente a mesma lógica de geração já existente na tela de Faturamento da venda (`FaturamentoVendaMinimalista.handleGerarParcelas`), usando os dados cadastrados na venda vinculada ao pedido.
+Reformular `/logistica/instalacoes`: a página passa a ser apenas uma listagem dos pedidos que chegaram à etapa **Finalizados**, alimentada por uma nova tabela de snapshot, com filtro de mês e indicadores de valor.
 
-## Comportamento
+---
 
-1. **Botão "Gerar parcelas"** (com ícone `Sparkles`/`Wand2`) ao lado do botão "+ Nova parcela" no cabeçalho da seção.
-2. Quando **não existem parcelas** → clique gera direto a partir dos dados da venda.
-3. Quando **já existem parcelas** → abrir `AlertDialog` de confirmação ("Isto removerá as parcelas atuais e gerará novas a partir da venda. Continuar?"). Se confirmado, apaga todas as parcelas atuais (`delete().eq('venda_id', vendaId)`) e gera as novas — igual ao `handleRegenerarParcelas`.
-4. Após gerar, chamar `fetchContasReceber()` para atualizar a lista e exibir toast de sucesso/erro.
-5. Se o pedido não tiver `venda_id` resolvível, desabilitar o botão.
+## 1. Nova tabela `instalacoes_finalizadas`
 
-## Lógica de geração (idêntica à da venda)
+Snapshot imutável criado no momento em que o pedido entra em "Finalizados".
 
-Buscar a venda completa (`vendas` table) pelos campos: `metodo_pagamento`, `numero_parcelas`/`quantidade_parcelas`, `intervalo_boletos`, `valor_venda`, `valor_credito`, `valor_frete`, `data_venda`, `valor_entrada`, `valor_a_receber`, `empresa_receptora_id`.
+Campos de domínio:
+- `pedido_id` (FK → `pedidos_producao.id`, UNIQUE — 1 registro por pedido)
+- `venda_id` (FK → `vendas.id`)
+- `numero_pedido`, `mes_vigencia`, `numero_mes` (denormalizados para listagem rápida)
+- `cliente_nome`
+- `valor_instalacao` (numeric) — soma de `produtos_vendas` onde `tipo_produto = 'instalacao'` da venda, com desconto da venda rateado proporcionalmente
+- `equipe_instalacao_id` / `equipe_instalacao_nome` (snapshot da ordem de instalação principal)
+- `autorizado_correcao_id` / `autorizado_correcao_nome` (snapshot, se houve correção)
+- `responsavel_carregamento_id` / `responsavel_carregamento_nome` (quem confirmou o carregamento)
+- `estado`, `cidade` (do cadastro do cliente da venda)
+- `finalizado_em` (timestamp em que entrou na etapa Finalizados)
 
-- `valorTotal = valor_venda + valor_credito + valor_frete`
-- Se `valor_entrada > 0` **e** `valor_a_receber > 0` → gera 2 blocos:
-  - Entrada: 1 parcela `a_vista` no `data_venda`.
-  - Saldo: `numero_parcelas` no método principal, intervalo `intervalo_boletos` (cartão_credito força 30 dias).
-- Caso contrário → gera `numero_parcelas` parcelas no método principal sobre o `valorTotal`.
-- Para métodos não-parceláveis (`dinheiro`, `a_vista`, `pix`) → 1 parcela única.
-- Insere com `status: 'pendente'`, `pago_na_instalacao: false`, `empresa_receptora_id` da venda.
+RLS: leitura para `authenticated`; escrita só via trigger/service_role. GRANTs explícitos.
 
-## Arquivos afetados
+## 2. Trigger de inserção automática
 
-- `src/components/pedidos/PedidoDetalhesSheet.tsx` — adicionar `handleGerarParcelas`, estado `confirmRegenerarOpen`, botão no cabeçalho da seção, e `AlertDialog` de confirmação. Importar `addDays` de `date-fns` e o ícone `Wand2`/`Sparkles`.
+Trigger em `pedidos_etapas` (AFTER INSERT/UPDATE) que, quando o pedido entra em etapa "Finalizados", faz `INSERT ... ON CONFLICT (pedido_id) DO NOTHING` na nova tabela, calculando todos os campos via subqueries:
+- Valor: `SUM(valor_total) FILTER tipo_produto='instalacao'` × `(1 - desconto_percentual)` da venda.
+- Equipes/autorizados: lookup em `instalacoes`, `correcoes`, `ordens_carregamento` vinculadas ao pedido.
+- Cidade/estado: do cliente da venda.
 
-Sem alterações no schema/DB, edge functions ou outros componentes.
+## 3. Backfill
+
+Migração popula a tabela para todos os pedidos atualmente em etapa **Finalizados** OU **Arquivo Morto**, usando a mesma lógica do trigger e `finalizado_em` = timestamp da entrada em Finalizados em `pedidos_etapas`.
+
+## 4. Substituição da página `/logistica/instalacoes`
+
+`OrdensInstalacoesLogistica.tsx` é reescrito para conter apenas:
+
+- **Cabeçalho** com título "Instalações Finalizadas" e filtro de mês (default: mês atual; navegação ◀ mês ▶ + opção "Todos").
+- **Cards de indicadores** no topo do mês selecionado:
+  - Total de instalações finalizadas (count)
+  - Valor total (soma de `valor_instalacao`)
+  - Ticket médio
+- **Busca** por cliente / nº pedido.
+- **Tabela/listagem** com colunas: Nº Pedido • Cliente • Cidade/UF • Equipe Instalação • Autorizado Correção • Carregamento • Valor • Data Finalizado.
+  - Linha clicável abre o `PedidoDetalhesSheet` existente.
+
+Rotas que apontam para a página antiga (cronograma, equipes, ranking, ordens-instalações, etc.) continuam funcionando — ficam acessíveis pelo `InstalacoesHeaderActions`/hub de logística. A página antiga de ordens vira `/logistica/instalacoes/ordens-instalacoes` (já existe esse path).
+
+## 5. Hook novo
+
+`useInstalacoesFinalizadas(mes)` — query Supabase com filtro por intervalo de mês em `finalizado_em`, ordenado desc.
+
+## 6. Limpeza
+
+Componentes/hooks usados só pela página antiga (`NeoFinalizadoRow`, grids de "Aguardando/Carregadas/Avulsas") permanecem no projeto pois ainda são usados pela rota `/logistica/instalacoes/ordens-instalacoes`. Nada é deletado.
+
+---
+
+## Detalhes técnicos
+
+- Tabela criada com `CREATE TABLE` + `GRANT SELECT ON ... TO authenticated` + `GRANT ALL ... TO service_role` + `ENABLE RLS` + policy de SELECT para authenticated, na mesma migração.
+- Trigger usa `SECURITY DEFINER` com `search_path = public`.
+- Cálculo de valor preserva regra "instalação como produto separado" (memory) e a retrocompatibilidade não se aplica pois usuário escolheu apenas `tipo_produto='instalacao'`.
+- Datas armazenadas em UTC; UI exibe em local com sufixo `T12:00:00` quando necessário (memory de datas).
+- Após aprovação da migração e regeneração de types, implemento hook + página em um segundo passo.
