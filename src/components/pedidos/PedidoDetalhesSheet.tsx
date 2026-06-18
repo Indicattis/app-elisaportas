@@ -4,11 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { formatCurrency, cn } from "@/lib/utils";
-import { format } from "date-fns";
+import { format, addDays } from "date-fns";
 import { 
   Package, Phone, MapPin, Calendar, DollarSign, ListChecks, 
   ShoppingCart, CheckCircle2, Clock, AlertCircle, XCircle,
-  FolderOpen, ChevronDown, User, Wrench, Factory, History, ChevronRight, FileText, RefreshCw, MessageSquare, Send, Plus, Pencil, Trash2
+  FolderOpen, ChevronDown, User, Wrench, Factory, History, ChevronRight, FileText, RefreshCw, MessageSquare, Send, Plus, Pencil, Trash2, Wand2
 } from "lucide-react";
 import { usePedidoAutoAvanco } from "@/hooks/usePedidoAutoAvanco";
 import { ProcessoAvancoModal } from "./ProcessoAvancoModal";
@@ -24,6 +24,16 @@ import { formatarNumeroPedidoMensal } from "@/utils/pedidoFormatters";
 import { PedidoFluxogramaMap } from "./PedidoFluxogramaMap";
 import { OrdemLinhasSheet } from "@/components/fabrica/OrdemLinhasSheet";
 import { ParcelaEditorDialog } from "./ParcelaEditorDialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { ETAPAS_CONFIG } from "@/types/pedidoEtapa";
 import type { EtapaPedido } from "@/types/pedidoEtapa";
 import { formatDuration } from "@/utils/timeFormat";
@@ -104,6 +114,8 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
   const [contasReceber, setContasReceber] = useState<any[]>([]);
   const [parcelaEditorOpen, setParcelaEditorOpen] = useState(false);
   const [parcelaEditando, setParcelaEditando] = useState<any | null>(null);
+  const [confirmRegenerarOpen, setConfirmRegenerarOpen] = useState(false);
+  const [gerandoParcelas, setGerandoParcelas] = useState(false);
   
   const { userRole } = useAuth();
   const { verificarEAvancarManual, processos, modalOpen, setModalOpen } = usePedidoAutoAvanco();
@@ -167,6 +179,111 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
     } catch (err: any) {
       toast({ title: 'Erro ao excluir', description: err.message, variant: 'destructive' });
     }
+  };
+
+  const gerarParcelasAPartirDaVenda = async () => {
+    if (!vendaIdParaParcelas) return;
+    setGerandoParcelas(true);
+    try {
+      const { data: vendaData, error: vendaErr } = await supabase
+        .from('vendas')
+        .select('metodo_pagamento, numero_parcelas, quantidade_parcelas, intervalo_boletos, valor_venda, valor_credito, valor_frete, data_venda, valor_entrada, valor_a_receber, empresa_receptora_id')
+        .eq('id', vendaIdParaParcelas)
+        .maybeSingle();
+      if (vendaErr) throw vendaErr;
+      if (!vendaData) {
+        toast({ title: 'Venda não encontrada', variant: 'destructive' });
+        return;
+      }
+
+      const metodo = (vendaData as any).metodo_pagamento || 'boleto';
+      const numParcelas = (vendaData as any).numero_parcelas || (vendaData as any).quantidade_parcelas || 1;
+      const intervalo = (vendaData as any).intervalo_boletos || 30;
+      const valorTotal = ((vendaData as any).valor_venda || 0) + ((vendaData as any).valor_credito || 0) + ((vendaData as any).valor_frete || 0);
+      const dataBaseStr = (vendaData as any).data_venda;
+      const dataBase = dataBaseStr ? new Date(`${String(dataBaseStr).slice(0, 10)}T12:00:00`) : new Date();
+      const valorEntrada = (vendaData as any).valor_entrada || 0;
+      const valorAReceber = (vendaData as any).valor_a_receber || 0;
+      const usarDoisMetodos = valorEntrada > 0 && valorAReceber > 0;
+      const empresaId = (vendaData as any).empresa_receptora_id || null;
+
+      const parcelas: any[] = [];
+      const gerar = (metodoTipo: string, valorBase: number, qtd: number, offset: number, intervaloDias: number) => {
+        if (metodoTipo === 'boleto' || metodoTipo === 'cartao_credito') {
+          const valorParcela = valorBase / qtd;
+          const intervaloEfetivo = metodoTipo === 'cartao_credito' ? 30 : intervaloDias;
+          for (let i = 0; i < qtd; i++) {
+            parcelas.push({
+              venda_id: vendaIdParaParcelas,
+              numero_parcela: offset + i + 1,
+              valor_parcela: valorParcela,
+              data_vencimento: addDays(dataBase, intervaloEfetivo * i).toISOString().split('T')[0],
+              metodo_pagamento: metodoTipo,
+              empresa_receptora_id: empresaId,
+              status: 'pendente',
+              pago_na_instalacao: false,
+            });
+          }
+        } else {
+          parcelas.push({
+            venda_id: vendaIdParaParcelas,
+            numero_parcela: offset + 1,
+            valor_parcela: valorBase,
+            data_vencimento: dataBase.toISOString().split('T')[0],
+            metodo_pagamento: metodoTipo,
+            empresa_receptora_id: empresaId,
+            status: 'pendente',
+            pago_na_instalacao: false,
+          });
+        }
+      };
+
+      if (usarDoisMetodos) {
+        gerar('a_vista', valorEntrada, 1, 0, 0);
+        gerar(metodo, valorAReceber, numParcelas, 1, intervalo);
+      } else {
+        gerar(metodo, valorTotal, numParcelas, 0, intervalo);
+      }
+
+      if (parcelas.length === 0) {
+        toast({ title: 'Nenhuma parcela a gerar', variant: 'destructive' });
+        return;
+      }
+
+      const { error: insertErr } = await supabase.from('contas_receber').insert(parcelas);
+      if (insertErr) throw insertErr;
+      toast({ title: `${parcelas.length} parcela(s) gerada(s) com sucesso` });
+      fetchContasReceber();
+    } catch (err: any) {
+      toast({ title: 'Erro ao gerar parcelas', description: err.message, variant: 'destructive' });
+    } finally {
+      setGerandoParcelas(false);
+    }
+  };
+
+  const handleGerarParcelas = async () => {
+    if (!vendaIdParaParcelas) return;
+    if (contasReceber.length > 0) {
+      setConfirmRegenerarOpen(true);
+      return;
+    }
+    await gerarParcelasAPartirDaVenda();
+  };
+
+  const handleConfirmarRegerar = async () => {
+    setConfirmRegenerarOpen(false);
+    if (!vendaIdParaParcelas) return;
+    setGerandoParcelas(true);
+    try {
+      const { error } = await supabase.from('contas_receber').delete().eq('venda_id', vendaIdParaParcelas);
+      if (error) throw error;
+    } catch (err: any) {
+      toast({ title: 'Erro ao remover parcelas existentes', description: err.message, variant: 'destructive' });
+      setGerandoParcelas(false);
+      return;
+    }
+    setGerandoParcelas(false);
+    await gerarParcelasAPartirDaVenda();
   };
 
   const fetchComentarios = async () => {
