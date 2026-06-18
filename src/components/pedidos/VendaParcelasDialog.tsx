@@ -48,7 +48,7 @@ export function VendaParcelasDialog({ open, onOpenChange, vendaId, numeroVenda }
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Parcelas da venda{numeroVenda ? ` Nº ${numeroVenda}` : ""}</DialogTitle>
+          <DialogTitle>Parcelas{numeroVenda ? ` — ${numeroVenda}` : ""}</DialogTitle>
           <DialogDescription>Método de pagamento e valor de cada parcela.</DialogDescription>
         </DialogHeader>
 
