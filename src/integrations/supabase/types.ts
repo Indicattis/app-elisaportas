@@ -4245,6 +4245,94 @@ export type Database = {
           },
         ]
       }
+      instalacoes_finalizadas: {
+        Row: {
+          autorizado_correcao_id: string | null
+          autorizado_correcao_nome: string | null
+          cidade: string | null
+          cliente_nome: string | null
+          created_at: string
+          equipe_instalacao_id: string | null
+          equipe_instalacao_nome: string | null
+          estado: string | null
+          finalizado_em: string
+          id: string
+          mes_vigencia: string | null
+          numero_mes: number | null
+          numero_pedido: string | null
+          pedido_id: string
+          responsavel_carregamento_id: string | null
+          responsavel_carregamento_nome: string | null
+          updated_at: string
+          valor_instalacao: number
+          venda_id: string | null
+        }
+        Insert: {
+          autorizado_correcao_id?: string | null
+          autorizado_correcao_nome?: string | null
+          cidade?: string | null
+          cliente_nome?: string | null
+          created_at?: string
+          equipe_instalacao_id?: string | null
+          equipe_instalacao_nome?: string | null
+          estado?: string | null
+          finalizado_em?: string
+          id?: string
+          mes_vigencia?: string | null
+          numero_mes?: number | null
+          numero_pedido?: string | null
+          pedido_id: string
+          responsavel_carregamento_id?: string | null
+          responsavel_carregamento_nome?: string | null
+          updated_at?: string
+          valor_instalacao?: number
+          venda_id?: string | null
+        }
+        Update: {
+          autorizado_correcao_id?: string | null
+          autorizado_correcao_nome?: string | null
+          cidade?: string | null
+          cliente_nome?: string | null
+          created_at?: string
+          equipe_instalacao_id?: string | null
+          equipe_instalacao_nome?: string | null
+          estado?: string | null
+          finalizado_em?: string
+          id?: string
+          mes_vigencia?: string | null
+          numero_mes?: number | null
+          numero_pedido?: string | null
+          pedido_id?: string
+          responsavel_carregamento_id?: string | null
+          responsavel_carregamento_nome?: string | null
+          updated_at?: string
+          valor_instalacao?: number
+          venda_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "instalacoes_finalizadas_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: true
+            referencedRelation: "pedidos_backlog_ativo"
+            referencedColumns: ["pedido_id"]
+          },
+          {
+            foreignKeyName: "instalacoes_finalizadas_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: true
+            referencedRelation: "pedidos_producao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "instalacoes_finalizadas_venda_id_fkey"
+            columns: ["venda_id"]
+            isOneToOne: false
+            referencedRelation: "vendas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_anexos: {
         Row: {
           created_at: string
@@ -10383,6 +10471,10 @@ export type Database = {
       excluir_pedido_em_aberto: {
         Args: { pedido_uuid: string }
         Returns: boolean
+      }
+      gerar_instalacao_finalizada: {
+        Args: { p_finalizado_em?: string; p_pedido_id: string }
+        Returns: undefined
       }
       gerar_numero_ordem:
         | { Args: { tipo_ordem: string }; Returns: string }
