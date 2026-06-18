@@ -1,38 +1,60 @@
-## Diagnóstico
+## Objetivo
 
-Investigando a tabela `instalacoes` (a equipe é definida em `/instalacoes` via menu "Responsável", não em `/logistica/expedicao` — esse só exibe):
+Em `/logistica/instalacoes` (página `Instalações Finalizadas`):
+1. Adicionar coluna **Tipo de Serviço** (Instalação / Entrega / Manutenção / Correção / Serviço) vinda de `vendas.tipo_entrega`.
+2. Tornar as células **Equipe Instalação**, **Autorizado Correção** e **Carregamento** clicáveis, abrindo um menu para definir/alterar o responsável. A escrita atualiza a tabela de origem; o snapshot `instalacoes_finalizadas` reflete via trigger.
 
-| Métrica | Valor |
-|---|---|
-| Total de instalações | 450 |
-| Com `responsavel_instalacao_id` preenchido | **256** |
-| Com `responsavel_instalacao_nome` preenchido | **20** |
-| IDs que pertencem a `equipes_instalacao` | 256 / 256 |
+---
 
-**Causa raiz:** O `id` da equipe é salvo, mas o `nome` cacheado na linha fica NULL em 236 registros. Como o backfill anterior e os triggers de sincronização usavam **o nome** como critério, esses 236 registros foram tratados como "sem equipe" — o que propaga para `instalacoes_finalizadas` (apenas 3 de 281 com equipe).
+## Mudanças
 
-## O que fazer
+### 1. Coluna "Tipo de Serviço"
 
-1. **Backfill `instalacoes.responsavel_instalacao_nome`** para os 236 registros, copiando de `equipes_instalacao.nome` via `responsavel_instalacao_id`. Mesma coisa para `correcoes.responsavel_correcao_nome` quando o id existir.
+- Em `src/hooks/useInstalacoesFinalizadas.ts`, mudar o `select` para `*, vendas:venda_id(tipo_entrega)` e expor `tipo_entrega` na interface `InstalacaoFinalizada`.
+- Em `OrdensInstalacoesLogistica.tsx`, inserir nova coluna **Tipo** logo após "Cidade / UF", renderizando um chip com cor por valor:
+  - `instalacao` → azul ("Instalação")
+  - `entrega` → âmbar ("Entrega")
+  - `manutencao` → roxo ("Manutenção")
+  - `correcao` → vermelho ("Correção")
+  - `servico` → cinza ("Serviço")
+  - `null` → traço
 
-2. **Corrigir `gerar_instalacao_finalizada()`** para resolver o nome diretamente de `equipes_instalacao` quando `responsavel_instalacao_nome` for NULL, garantindo que novos pedidos finalizados nunca entrem vazios.
+### 2. Células clicáveis
 
-3. **Corrigir os triggers `sync_instalacao_finalizada_responsavel` e `sync_correcao_finalizada_responsavel`** para também resolver nome via `equipes_instalacao` (hoje retornam cedo quando `nome IS NULL`).
+Para evitar disparar o `onClick` da linha (que abre o `PedidoDetalhesSheet`), as 3 células ganham `onClick={(e) => e.stopPropagation()}` e envolvem o conteúdo num `DropdownMenu`.
 
-4. **Re-rodar backfill de `instalacoes_finalizadas`**: para cada linha, recalcular `equipe_instalacao_*` / `autorizado_correcao_*` via JOIN em `equipes_instalacao` usando o `responsavel_instalacao_id` da `instalacoes` correspondente (e idem `correcoes`).
+**Equipe Instalação**
+- Reaproveitar `SelecionarResponsavelMenu` filtrando só `tipo='equipe_interna'` (adicionar prop `filtro?: 'equipes' | 'autorizados' | 'todos'`).
+- Atualiza `instalacoes.responsavel_instalacao_id/nome` + `tipo_instalacao='elisa'`, indexado por `pedido_id` (buscar `instalacoes.id` a partir do `pedido_id` do registro).
+- Trigger existente `sync_instalacao_finalizada_responsavel` já reflete em `instalacoes_finalizadas.equipe_instalacao_*`.
 
-## Resultado esperado
+**Autorizado Correção**
+- Mesmo componente, filtrando `tipo='autorizado'`.
+- Atualiza `correcoes.responsavel_correcao_id/nome` (linha da correção do pedido). Se não existir linha de correção, mostrar como desabilitado ("Sem correção registrada").
+- Trigger `sync_correcao_finalizada_responsavel` reflete no snapshot.
 
-- `instalacoes_finalizadas`: equipe preenchida para todos os pedidos cuja `instalacoes` original tinha id de equipe (estimativa: ~180 de 281, vs. 3 hoje).
-- Página `/logistica/expedicao` passa a colorir a maioria das instalações pela cor da equipe.
-- A tabela de OrdensInstalacoesLogistica exibe o nome da equipe nas linhas históricas.
+**Carregamento**
+- Novo componente `SelecionarResponsavelCarregamentoMenu` lista usuários internos (mesma fonte de equipes internas via `useResponsaveisInstalacao` ou colaboradores logística).
+- Atualiza `ordens_carregamento.responsavel_carregamento_id/nome` da ordem vinculada ao pedido.
+- Será criada uma nova trigger `sync_carregamento_finalizada_responsavel` em `ordens_carregamento` (AFTER UPDATE de `responsavel_carregamento_*`) que atualiza `instalacoes_finalizadas.responsavel_carregamento_*` para o `pedido_id` correspondente.
 
-## Limitações honestas
+### 3. Migração SQL
 
-- Pedidos finalizados cuja linha em `instalacoes` foi deletada (99 registros sem match por `pedido_id`) continuarão sem equipe — não há fonte para recuperar.
-- Registros realmente sem `responsavel_instalacao_id` (159 pendentes + 35 concluídos) continuarão vazios até alguém atribuir manualmente em `/instalacoes`.
+- Criar função `sync_carregamento_finalizada_responsavel()` + trigger em `ordens_carregamento`.
+- (Sem alterações de schema; apenas trigger.)
 
-## Arquivos / objetos afetados
+### 4. UX
 
-- Migration nova: backfill em `instalacoes` e `correcoes`, reescrita de `gerar_instalacao_finalizada`, reescrita dos 2 triggers de sync, re-backfill de `instalacoes_finalizadas`.
-- Nenhuma alteração de frontend necessária.
+- Após selecionar responsável: toast de sucesso (já existente) + `refetch()` da query `instalacoes-finalizadas`.
+- Cursor `pointer` nas células editáveis, com hover destacando.
+- Click na linha continua abrindo o detalhe; só as 3 células interceptam.
+
+---
+
+## Arquivos afetados
+
+- `src/hooks/useInstalacoesFinalizadas.ts` (join + tipo)
+- `src/pages/logistica/OrdensInstalacoesLogistica.tsx` (coluna + dropdowns)
+- `src/components/instalacoes/SelecionarResponsavelMenu.tsx` (prop `filtro`)
+- `src/components/instalacoes/SelecionarResponsavelCarregamentoMenu.tsx` (novo)
+- Migração: trigger de sincronização do carregamento.
