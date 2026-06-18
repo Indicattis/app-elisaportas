@@ -1,38 +1,5 @@
-import { useState, useMemo, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
-import { RefreshCw, Search, Filter, MapPin, Truck, Package, Hammer, Wrench, CheckCircle2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { MinimalistLayout } from "@/components/MinimalistLayout";
-import { InstalacoesHeaderActions } from "@/components/instalacoes/InstalacoesHeaderActions";
-
-import { useOrdensInstalacao, OrdemInstalacao } from "@/hooks/useOrdensInstalacao";
-import { useNeoInstalacoesListagem } from "@/hooks/useNeoInstalacoes";
-import { useNeoCorrecoesListagem } from "@/hooks/useNeoCorrecoes";
-import { OrdemInstalacaoRow } from "@/components/instalacoes/OrdemInstalacaoRow";
-import { NeoInstalacaoRow } from "@/components/instalacoes/NeoInstalacaoRow";
-import { NeoCorrecaoRow } from "@/components/instalacoes/NeoCorrecaoRow";
-import { NeoFinalizadoRow } from "@/components/instalacoes/NeoFinalizadoRow";
-import { useNeoFinalizados } from "@/hooks/useNeoFinalizados";
-import { PedidoDetalhesSheet } from "@/components/pedidos/PedidoDetalhesSheet";
-import { NeoInstalacao } from "@/types/neoInstalacao";
-import { NeoCorrecao } from "@/types/neoCorrecao";
-import { cn } from "@/lib/utils";
+import InstalacoesFinalizadasPage from "./InstalacoesFinalizadasPage";
+export default InstalacoesFinalizadasPage;
 
 export default function OrdensInstalacoesLogistica() {
   const navigate = useNavigate();
