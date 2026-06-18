@@ -616,11 +616,11 @@ export function PedidoCard({
     queryFn: async () => {
       const { data, error } = await supabase
         .from('contas_receber')
-        .select('valor')
+        .select('valor_parcela')
         .eq('venda_id', venda!.id);
       if (error) throw error;
       const rows = data || [];
-      const total = rows.reduce((acc, r: any) => acc + (Number(r.valor) || 0), 0);
+      const total = rows.reduce((acc, r: any) => acc + (Number(r.valor_parcela) || 0), 0);
       return { count: rows.length, total };
     },
   });
