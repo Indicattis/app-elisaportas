@@ -2420,6 +2420,15 @@ className="flex h-[20px] w-full rounded-[3px]"
 
         <PedidoDetalhesSheet pedido={pedido} open={showDetalhes} onOpenChange={setShowDetalhes} />
 
+        {venda?.id && (
+          <VendaParcelasDialog
+            open={showParcelas}
+            onOpenChange={setShowParcelas}
+            vendaId={venda.id}
+            numeroVenda={venda.cliente_nome}
+          />
+        )}
+
         <AcaoEtapaModal pedido={pedido} open={showAcaoEtapa} onOpenChange={setShowAcaoEtapa} onAvancar={onMoverEtapa || (() => {})} />
 
         <RetrocederPedidoUnificadoModal pedido={pedido} open={showRetrocederEtapa} onOpenChange={setShowRetrocederEtapa} />
