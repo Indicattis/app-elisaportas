@@ -1384,12 +1384,12 @@ export function PedidoCard({
               const valorAReceberCol = hideValorAReceber ? '' : ' 65px';
               if (hideOrdensStatus) {
                 return showEtapaBadge
-                  ? `20px 60px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 90px 40px 70px${valorAReceberCol} 1fr 55px`
-                  : `20px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 90px 40px 70px${valorAReceberCol} 1fr 55px`;
+                  ? `20px 60px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 90px 40px 70px${valorAReceberCol} 1fr 55px`
+                  : `20px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 90px 40px 70px${valorAReceberCol} 1fr 55px`;
               }
               return showEtapaBadge
-                ? `20px 60px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 90px 40px 70px${valorAReceberCol} 24px 24px 24px 24px 24px 24px 1fr 55px`
-                : `20px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 80px 90px 40px 70px${valorAReceberCol} 24px 24px 24px 24px 24px 24px 1fr 55px`;
+                ? `20px 60px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 90px 40px 70px${valorAReceberCol} 24px 24px 24px 24px 24px 24px 1fr 55px`
+                : `20px 20px 24px 180px 100px 20px 40px 40px 80px 70px 150px 50px 90px 40px 70px${valorAReceberCol} 24px 24px 24px 24px 24px 24px 1fr 55px`;
             })() }}>
               {/* Col 1: Drag Handle ou Aviso de Espera */}
               <div>
