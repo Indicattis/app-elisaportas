@@ -8,7 +8,7 @@ import { format } from "date-fns";
 import { 
   Package, Phone, MapPin, Calendar, DollarSign, ListChecks, 
   ShoppingCart, CheckCircle2, Clock, AlertCircle, XCircle,
-  FolderOpen, ChevronDown, User, Wrench, Factory, History, ChevronRight, FileText, RefreshCw, MessageSquare, Send
+  FolderOpen, ChevronDown, User, Wrench, Factory, History, ChevronRight, FileText, RefreshCw, MessageSquare, Send, Plus, Pencil, Trash2
 } from "lucide-react";
 import { usePedidoAutoAvanco } from "@/hooks/usePedidoAutoAvanco";
 import { ProcessoAvancoModal } from "./ProcessoAvancoModal";
@@ -23,6 +23,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatarNumeroPedidoMensal } from "@/utils/pedidoFormatters";
 import { PedidoFluxogramaMap } from "./PedidoFluxogramaMap";
 import { OrdemLinhasSheet } from "@/components/fabrica/OrdemLinhasSheet";
+import { ParcelaEditorDialog } from "./ParcelaEditorDialog";
 import { ETAPAS_CONFIG } from "@/types/pedidoEtapa";
 import type { EtapaPedido } from "@/types/pedidoEtapa";
 import { formatDuration } from "@/utils/timeFormat";
@@ -101,6 +102,8 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
   const [enviandoComentario, setEnviandoComentario] = useState(false);
   const [pagamentoOpen, setPagamentoOpen] = useState(false);
   const [contasReceber, setContasReceber] = useState<any[]>([]);
+  const [parcelaEditorOpen, setParcelaEditorOpen] = useState(false);
+  const [parcelaEditando, setParcelaEditando] = useState<any | null>(null);
   
   const { userRole } = useAuth();
   const { verificarEAvancarManual, processos, modalOpen, setModalOpen } = usePedidoAutoAvanco();
@@ -140,6 +143,30 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
     dinheiro: 'Dinheiro',
     avista: 'À Vista',
     credito: 'Cartão de Crédito',
+  };
+
+  const vendaIdParaParcelas = pedido?.vendas?.id || pedido?.venda_id;
+
+  const handleNovaParcela = () => {
+    setParcelaEditando(null);
+    setParcelaEditorOpen(true);
+  };
+
+  const handleEditarParcela = (parcela: any) => {
+    setParcelaEditando(parcela);
+    setParcelaEditorOpen(true);
+  };
+
+  const handleExcluirParcela = async (parcela: any) => {
+    if (!confirm(`Excluir parcela ${parcela.numero_parcela}?`)) return;
+    try {
+      const { error } = await supabase.from('contas_receber').delete().eq('id', parcela.id);
+      if (error) throw error;
+      toast({ title: 'Parcela excluída' });
+      fetchContasReceber();
+    } catch (err: any) {
+      toast({ title: 'Erro ao excluir', description: err.message, variant: 'destructive' });
+    }
   };
 
   const fetchComentarios = async () => {
@@ -936,6 +963,18 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
               </div>
             </CollapsibleTrigger>
             <CollapsibleContent className="mt-2 space-y-1.5 pl-2">
+              {vendaIdParaParcelas && (
+                <div className="flex justify-end">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={handleNovaParcela}
+                    className="text-green-400 hover:bg-green-500/20 h-7 px-2 text-xs"
+                  >
+                    <Plus className="h-3.5 w-3.5 mr-1" /> Nova parcela
+                  </Button>
+                </div>
+              )}
               {contasReceber.length > 0 ? (
                 contasReceber.map((parcela: any) => (
                   <div key={parcela.id} className="flex items-center justify-between p-2.5 bg-white/5 rounded-lg border border-white/5">
@@ -958,6 +997,22 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
                       )}>
                         {parcela.status === 'pago' ? 'Pago' : 'Pendente'}
                       </Badge>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => handleEditarParcela(parcela)}
+                        className="h-6 w-6 text-blue-400 hover:bg-blue-500/20"
+                      >
+                        <Pencil className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => handleExcluirParcela(parcela)}
+                        className="h-6 w-6 text-red-400 hover:bg-red-500/20"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
                     </div>
                   </div>
                 ))
@@ -1070,6 +1125,17 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
         open={showOrdemLinhas}
         onOpenChange={setShowOrdemLinhas}
       />
+
+      {vendaIdParaParcelas && (
+        <ParcelaEditorDialog
+          open={parcelaEditorOpen}
+          onOpenChange={setParcelaEditorOpen}
+          vendaId={vendaIdParaParcelas}
+          parcela={parcelaEditando}
+          proximoNumero={(contasReceber.reduce((max, p) => Math.max(max, p.numero_parcela || 0), 0) || 0) + 1}
+          onSaved={fetchContasReceber}
+        />
+      )}
     </Sheet>
   );
 }
