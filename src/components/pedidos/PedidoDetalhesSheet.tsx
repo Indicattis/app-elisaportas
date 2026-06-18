@@ -1125,6 +1125,17 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
         open={showOrdemLinhas}
         onOpenChange={setShowOrdemLinhas}
       />
+
+      {vendaIdParaParcelas && (
+        <ParcelaEditorDialog
+          open={parcelaEditorOpen}
+          onOpenChange={setParcelaEditorOpen}
+          vendaId={vendaIdParaParcelas}
+          parcela={parcelaEditando}
+          proximoNumero={(contasReceber.reduce((max, p) => Math.max(max, p.numero_parcela || 0), 0) || 0) + 1}
+          onSaved={fetchContasReceber}
+        />
+      )}
     </Sheet>
   );
 }
