@@ -1617,7 +1617,7 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
           arquivado_por: user.id
         })
         .eq('id', pedidoId)
-        .eq('etapa_atual', 'finalizado');
+        .eq('etapa_atual', 'pos_vendas');
       
       if (error) throw error;
 
@@ -1625,8 +1625,8 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
       await supabase.from('pedidos_movimentacoes').insert({
         pedido_id: pedidoId,
         user_id: user.id,
-        etapa_origem: 'finalizado',
-        etapa_destino: 'finalizado',
+        etapa_origem: 'pos_vendas',
+        etapa_destino: 'pos_vendas',
         teor: 'avanco',
         descricao: 'Pedido arquivado'
       });

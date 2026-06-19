@@ -70,3 +70,6 @@ verify_jwt = false
 
 [functions.delete-user]
 verify_jwt = false
+
+[functions.init-pesquisas-satisfacao-bucket]
+verify_jwt = false
