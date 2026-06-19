@@ -4,11 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { formatCurrency, cn } from "@/lib/utils";
-import { format, addDays } from "date-fns";
+import { format, addDays, differenceInDays } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { 
   Package, Phone, MapPin, Calendar, DollarSign, ListChecks, 
   ShoppingCart, CheckCircle2, Clock, AlertCircle, XCircle,
-  FolderOpen, ChevronDown, User, Wrench, Factory, History, ChevronRight, FileText, RefreshCw, MessageSquare, Send, Plus, Pencil, Trash2, Wand2
+  FolderOpen, ChevronDown, User, Wrench, Factory, History, ChevronRight, FileText, RefreshCw, MessageSquare, Send, Plus, Pencil, Trash2, Wand2,
+  Truck, CreditCard, Percent, Flame, Snowflake, Hammer
 } from "lucide-react";
 import { usePedidoAutoAvanco } from "@/hooks/usePedidoAutoAvanco";
 import { ProcessoAvancoModal } from "./ProcessoAvancoModal";
@@ -16,10 +18,13 @@ import { useToast } from "@/hooks/use-toast";
 import { PedidoHistoricoMovimentacoes } from "./PedidoHistoricoMovimentacoes";
 import { usePedidoLinhas } from "@/hooks/usePedidoLinhas";
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
+import { buscarPrecosPorMedidas } from "@/utils/tabelaPrecosHelper";
+import type { ItemTabelaPreco } from "@/hooks/useTabelaPrecos";
+import { useConfiguracoesVendas } from "@/hooks/useConfiguracoesVendas";
 import { formatarNumeroPedidoMensal } from "@/utils/pedidoFormatters";
 import { PedidoFluxogramaMap } from "./PedidoFluxogramaMap";
 import { OrdemLinhasSheet } from "@/components/fabrica/OrdemLinhasSheet";
