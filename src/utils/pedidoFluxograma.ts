@@ -107,7 +107,8 @@ export function determinarFluxograma(pedido: any): FluxogramaEtapa[] {
   if (apenasManutencao) {
     return [
       FLUXOGRAMA_ETAPAS.instalacoes,
-      FLUXOGRAMA_ETAPAS.finalizado
+      FLUXOGRAMA_ETAPAS.finalizado,
+      FLUXOGRAMA_ETAPAS.pos_vendas
     ];
   }
   
@@ -141,6 +142,7 @@ export function determinarFluxograma(pedido: any): FluxogramaEtapa[] {
   
   // Finalizado é sempre a última etapa
   baseFlow.push(FLUXOGRAMA_ETAPAS.finalizado);
+  baseFlow.push(FLUXOGRAMA_ETAPAS.pos_vendas);
   
   return baseFlow;
 }
