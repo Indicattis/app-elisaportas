@@ -62,6 +62,11 @@ export const FLUXOGRAMA_ETAPAS: Record<EtapaPedido, FluxogramaEtapa> = {
     label: 'Finalizado',
     color: 'bg-green-500'
   },
+  pos_vendas: {
+    id: 'pos_vendas',
+    label: 'Pós-Vendas',
+    color: 'bg-emerald-500'
+  },
   aguardando_cliente: {
     id: 'aguardando_cliente',
     label: 'Aguardando Cliente',

@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Package, RefreshCw, Factory, Clock, ClipboardCheck, Paintbrush, Wrench, CheckCircle2, ArrowLeft, LogOut, HardHat, AlertTriangle, ShieldCheck } from "lucide-react";
+import { Package, RefreshCw, Factory, Clock, ClipboardCheck, Paintbrush, Wrench, CheckCircle2, ArrowLeft, LogOut, HardHat, AlertTriangle, ShieldCheck, Headset } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePedidosEtapas, usePedidosContadores } from "@/hooks/usePedidosEtapas";
@@ -30,6 +30,7 @@ const ETAPA_ICONS: Record<EtapaPedido, React.ComponentType<{ className?: string 
   instalacoes: HardHat,
   correcoes: AlertTriangle,
   finalizado: CheckCircle2,
+  pos_vendas: Headset,
   aguardando_cliente: Clock
 };
 export default function PedidosStandalone() {
