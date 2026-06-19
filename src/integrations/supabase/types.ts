@@ -5627,7 +5627,7 @@ export type Database = {
           desconto_adicional_percentual: number | null
           desconto_adicional_valor: number | null
           desconto_percentual: number | null
-          forma_pagamento: string
+          forma_pagamento: string | null
           id: string
           justificativa_perda: string | null
           lead_id: string | null
@@ -5667,7 +5667,7 @@ export type Database = {
           desconto_adicional_percentual?: number | null
           desconto_adicional_valor?: number | null
           desconto_percentual?: number | null
-          forma_pagamento: string
+          forma_pagamento?: string | null
           id?: string
           justificativa_perda?: string | null
           lead_id?: string | null
@@ -5707,7 +5707,7 @@ export type Database = {
           desconto_adicional_percentual?: number | null
           desconto_adicional_valor?: number | null
           desconto_percentual?: number | null
-          forma_pagamento?: string
+          forma_pagamento?: string | null
           id?: string
           justificativa_perda?: string | null
           lead_id?: string | null

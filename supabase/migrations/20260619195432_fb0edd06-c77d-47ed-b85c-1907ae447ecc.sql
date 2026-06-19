@@ -1,0 +1,1 @@
+ALTER TABLE public.orcamentos ALTER COLUMN forma_pagamento DROP NOT NULL;
