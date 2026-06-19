@@ -318,12 +318,6 @@ export default function OrdensEntregasLogistica() {
             </Card>
             <Card className="bg-white/5 backdrop-blur-xl border-white/10">
               <CardContent className="p-4">
-                <div className="text-xs text-muted-foreground uppercase tracking-wide">Ticket médio</div>
-                <div className="text-2xl font-bold mt-1 text-blue-500">{formatCurrency(ticketMedio)}</div>
-              </CardContent>
-            </Card>
-            <Card className="bg-white/5 backdrop-blur-xl border-white/10">
-              <CardContent className="p-4">
                 <div className="text-xs text-muted-foreground uppercase tracking-wide">Tempo médio de entrega</div>
                 <div className="text-2xl font-bold mt-1 text-purple-400">
                   {tempoMedioEntrega > 0
