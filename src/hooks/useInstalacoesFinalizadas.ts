@@ -22,6 +22,8 @@ export interface InstalacaoFinalizada {
   tipo_entrega?: string | null;
   valor_frete?: number | null;
   data_cadastro?: string | null;
+  vendedor_nome?: string | null;
+  vendedor_foto_url?: string | null;
 }
 
 /**
@@ -33,7 +35,7 @@ export function useInstalacoesFinalizadas(mes: string) {
     queryFn: async (): Promise<InstalacaoFinalizada[]> => {
       let query = supabase
         .from("instalacoes_finalizadas")
-        .select("*, vendas:venda_id(tipo_entrega, valor_frete)")
+        .select("*, vendas:venda_id(tipo_entrega, valor_frete, atendente_id, atendente:atendente_id(nome, foto_perfil_url))")
         .order("finalizado_em", { ascending: false });
 
       if (mes !== "todos") {
@@ -70,6 +72,8 @@ export function useInstalacoesFinalizadas(mes: string) {
         tipo_entrega: r.vendas?.tipo_entrega ?? null,
         valor_frete: r.vendas?.valor_frete ?? null,
         data_cadastro: pedidosMap[r.pedido_id] ?? null,
+        vendedor_nome: r.vendas?.atendente?.nome ?? null,
+        vendedor_foto_url: r.vendas?.atendente?.foto_perfil_url ?? null,
       })) as InstalacaoFinalizada[];
     },
   });

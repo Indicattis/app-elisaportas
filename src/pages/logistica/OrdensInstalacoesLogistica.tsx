@@ -21,6 +21,8 @@ import { useResponsaveisInstalacao } from "@/hooks/useResponsaveisInstalacao";
 import { toast } from "sonner";
 import { Users, Building2, Truck } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const MESES_PT = [
   "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
@@ -351,7 +353,7 @@ export default function OrdensInstalacoesLogistica() {
                   <table className="w-full text-sm border-collapse">
                     <thead>
                       <tr className="border-b border-white/10 text-xs uppercase tracking-wide text-muted-foreground">
-                        <th className="text-left font-medium px-4 py-3">Pedido</th>
+                        <th className="text-left font-medium px-4 py-3">Vendedor</th>
                         <th className="text-left font-medium px-4 py-3">Cliente</th>
                         <th className="text-left font-medium px-4 py-3">Cidade / UF</th>
                         <th className="text-left font-medium px-4 py-3">Tipo</th>
@@ -371,11 +373,20 @@ export default function OrdensInstalacoesLogistica() {
                           onClick={() => handleRowClick(r)}
                           className="hover:bg-white/5 transition-colors cursor-pointer"
                         >
-                          <td className="px-4 py-3 font-mono text-xs whitespace-nowrap">
-                            #{r.numero_pedido ?? "—"}
-                            {r.numero_mes != null && (
-                              <span className="text-muted-foreground"> ({r.numero_mes})</span>
-                            )}
+                          <td className="px-4 py-3">
+                            <TooltipProvider delayDuration={150}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Avatar className="h-8 w-8 ring-1 ring-white/10">
+                                    <AvatarImage src={r.vendedor_foto_url ?? undefined} alt={r.vendedor_nome ?? "Vendedor"} />
+                                    <AvatarFallback className="text-[10px] bg-white/10">
+                                      {(r.vendedor_nome ?? "—").trim().charAt(0).toUpperCase() || "—"}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                </TooltipTrigger>
+                                <TooltipContent>{r.vendedor_nome ?? "Sem vendedor"}</TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           </td>
                           <td className="px-4 py-3">{r.cliente_nome ?? "—"}</td>
                           <td className="px-4 py-3 text-muted-foreground">
