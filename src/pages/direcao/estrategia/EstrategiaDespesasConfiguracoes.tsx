@@ -1,5 +1,5 @@
 import { useState, useRef, useMemo } from 'react';
-import { Plus, Trash2, Users, Receipt, TrendingDown, TrendingUp, Landmark, Briefcase, Truck, Banknote, Package, FileDown, GripVertical, X, Check, FolderPlus, ChevronRight, AlertTriangle, FileText, RotateCcw, Handshake, Wallet } from 'lucide-react';
+import { Plus, Trash2, Users, Receipt, TrendingDown, TrendingUp, Landmark, Briefcase, Truck, Banknote, Package, FileDown, GripVertical, X, Check, FolderPlus, ChevronRight, AlertTriangle, FileText, RotateCcw, Handshake, Wallet, UserMinus, UserCheck } from 'lucide-react';
 import GastoFormDialog from '@/components/financeiro/GastoFormDialog';
 import { useGastosPorTipoMes } from '@/hooks/useGastosPorTipoMes';
 import { useContagemGastosPorTipoMes } from '@/hooks/useContagemGastosPorTipoMes';
