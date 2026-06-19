@@ -2,7 +2,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Package, RefreshCw, Factory, Clock, ClipboardCheck, Paintbrush, Wrench, CheckCircle2, HardHat, AlertTriangle, UserPlus, ShieldCheck, CalendarDays, Archive, Search, Calendar, User, Undo2, ChevronDown, Truck, Settings, CalendarIcon, DollarSign, ShoppingCart, FileSignature } from "lucide-react";
+import { Package, RefreshCw, Factory, Clock, ClipboardCheck, Paintbrush, Wrench, CheckCircle2, HardHat, AlertTriangle, UserPlus, ShieldCheck, CalendarDays, Archive, Search, Calendar, User, Undo2, ChevronDown, Truck, Settings, CalendarIcon, DollarSign, ShoppingCart, FileSignature, Headset } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { usePedidosArquivados } from "@/hooks/usePedidosArquivados";
@@ -72,6 +72,7 @@ const ETAPA_ICONS = {
   instalacoes: HardHat,
   correcoes: AlertTriangle,
   finalizado: CheckCircle2,
+  pos_vendas: Headset,
   aguardando_cliente: Clock,
   arquivo_morto: Archive
 };
@@ -1114,7 +1115,7 @@ export default function GestaoFabricaDirecao() {
 
             {/* Grupo Verde: Finalizados */}
             <div className="flex gap-1 border-2 border-green-500/50 rounded-lg p-1 h-full">
-              {(['finalizado'] as const).map(etapa => {
+              {(['finalizado', 'pos_vendas'] as const).map(etapa => {
                 const config = ETAPAS_CONFIG[etapa];
                 const count = contadores[etapa] || 0;
                 const IconComponent = ETAPA_ICONS[etapa];
