@@ -236,6 +236,7 @@ export default function OrdensInstalacoesLogistica() {
   return (
     <MinimalistLayout
       title="Instalações Finalizadas"
+      subtitle="Acompanhe as instalações concluídas e seus indicadores"
       backPath="/logistica"
       fullWidth
       breadcrumbItems={[
@@ -246,9 +247,13 @@ export default function OrdensInstalacoesLogistica() {
       headerActions={
         <div className="flex flex-wrap items-center gap-2">
           <InstalacoesHeaderActions />
-          <Button variant="outline" size="sm" onClick={() => refetch()}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Atualizar
+          <Button
+            size="sm"
+            onClick={() => refetch()}
+            className="h-10 px-5 rounded-lg bg-gradient-to-r from-blue-500/20 to-blue-600/20 border border-blue-400/20 text-white shadow-lg shadow-blue-500/10 hover:from-blue-500/30 hover:to-blue-600/30 hover:scale-[1.02] transition-all duration-300 text-xs gap-1.5"
+          >
+            <RefreshCw className="h-4 w-4" />
+            <span className="hidden sm:inline">Atualizar</span>
           </Button>
         </div>
       }
