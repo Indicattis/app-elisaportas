@@ -89,7 +89,7 @@ export default function OrdensEntregasLogistica() {
 
   const { total, valorTotal, ticketMedio, tempoMedioEntrega } = useMemo(() => {
     const t = filtrados.length;
-    const v = filtrados.reduce((acc, r) => acc + Number(r.valor_instalacao || 0), 0);
+    const v = filtrados.reduce((acc, r) => acc + Number(r.valor_frete || 0), 0);
     const MS_DIA = 1000 * 60 * 60 * 24;
     const dias: number[] = [];
     filtrados.forEach((r) => {
