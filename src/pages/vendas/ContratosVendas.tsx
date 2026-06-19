@@ -693,6 +693,50 @@ export default function ContratosVendas() {
           clienteNome={anexarVenda.nome}
         />
       )}
+
+      <AlertDialog
+        open={!!dispensarVenda}
+        onOpenChange={(o) => { if (!o && !dispensandoId) setDispensarVenda(null); }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Dispensar contrato?</AlertDialogTitle>
+            <AlertDialogDescription>
+              A venda de <strong>{dispensarVenda?.cliente_nome || 'cliente'}</strong> será enviada para <strong>Pendente de Faturamento</strong> sem contrato assinado. Esta ação ficará registrada e pode ser revertida pela equipe administrativa.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={!!dispensandoId}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={!!dispensandoId}
+              onClick={async (e) => {
+                e.preventDefault();
+                if (!dispensarVenda) return;
+                setDispensandoId(dispensarVenda.id);
+                const { error } = await supabase
+                  .from('vendas')
+                  .update({
+                    contrato_dispensado: true,
+                    contrato_dispensado_em: new Date().toISOString(),
+                    contrato_dispensado_por: user?.id ?? null,
+                  })
+                  .eq('id', dispensarVenda.id);
+                setDispensandoId(null);
+                if (error) {
+                  toast.error('Erro ao dispensar contrato');
+                  return;
+                }
+                setVendas((prev) => prev.filter((x) => x.id !== dispensarVenda.id));
+                setDispensarVenda(null);
+                toast.success('Contrato dispensado. Venda enviada para Pendente de Faturamento.');
+              }}
+            >
+              {dispensandoId ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              Dispensar contrato
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
