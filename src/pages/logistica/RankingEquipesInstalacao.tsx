@@ -6,7 +6,7 @@ import { EquipeMembrosList } from "@/components/cronograma/EquipeMembrosList";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Trophy, Medal, Crown, Calendar, CalendarDays, CalendarRange, Loader2, TrendingUp, Users, ArrowRight } from "lucide-react";
+import { Trophy, Crown, Calendar, CalendarDays, CalendarRange, Loader2, TrendingUp, ArrowRight } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { AjustePontuacaoSection } from "@/components/ranking/AjustePontuacaoSection";
@@ -29,28 +29,31 @@ function classificarPorta(metragem: number | null | undefined): string | null {
 function getPodiumColor(posicao: number) {
   switch (posicao) {
     case 1: return {
-      border: 'border-yellow-500/40',
-      bg: 'bg-gradient-to-b from-yellow-500/15 to-amber-600/5',
-      glow: 'shadow-yellow-500/20',
-      accent: 'text-yellow-400',
-      bar: 'from-yellow-400 to-amber-500',
-      medal: 'bg-gradient-to-br from-yellow-300 to-amber-500',
+      border: 'border-blue-400/50',
+      bg: 'bg-gradient-to-b from-blue-500/20 to-blue-700/5',
+      glow: 'shadow-blue-500/30',
+      accent: 'text-blue-300',
+      bar: 'from-blue-400 to-blue-600',
+      medal: 'bg-gradient-to-br from-blue-400 to-blue-600',
+      cup: 'from-blue-300 via-blue-400 to-blue-600',
     };
     case 2: return {
       border: 'border-slate-300/40',
       bg: 'bg-gradient-to-b from-slate-300/15 to-slate-500/5',
       glow: 'shadow-slate-400/20',
-      accent: 'text-slate-300',
+      accent: 'text-slate-200',
       bar: 'from-slate-300 to-slate-400',
       medal: 'bg-gradient-to-br from-slate-200 to-slate-400',
+      cup: 'from-slate-200 via-slate-300 to-slate-500',
     };
     case 3: return {
-      border: 'border-orange-500/40',
-      bg: 'bg-gradient-to-b from-orange-500/15 to-amber-700/5',
-      glow: 'shadow-orange-500/20',
-      accent: 'text-orange-400',
-      bar: 'from-orange-400 to-amber-600',
-      medal: 'bg-gradient-to-br from-orange-300 to-amber-600',
+      border: 'border-cyan-500/40',
+      bg: 'bg-gradient-to-b from-cyan-500/15 to-sky-700/5',
+      glow: 'shadow-cyan-500/20',
+      accent: 'text-cyan-300',
+      bar: 'from-cyan-400 to-sky-500',
+      medal: 'bg-gradient-to-br from-cyan-300 to-sky-500',
+      cup: 'from-cyan-200 via-cyan-400 to-sky-600',
     };
     default: return {
       border: 'border-white/10',
@@ -59,73 +62,84 @@ function getPodiumColor(posicao: number) {
       accent: 'text-white/70',
       bar: 'from-blue-400 to-blue-600',
       medal: 'bg-white/10',
+      cup: 'from-white/30 to-white/10',
     };
   }
 }
 
-function PodiumCard({ equipe, posicao, maxInstalacoes, onClick }: {
+function getIniciais(nome: string) {
+  return nome
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((p) => p[0]?.toUpperCase() ?? '')
+    .join('');
+}
+
+function TrophyCup({ equipe, posicao, onClick, elevated = false }: {
   equipe: RankingEquipe;
   posicao: number;
-  maxInstalacoes: number;
   onClick: () => void;
+  elevated?: boolean;
 }) {
   const styles = getPodiumColor(posicao);
-  const percent = maxInstalacoes > 0 ? (equipe.quantidade_instalacoes / maxInstalacoes) * 100 : 0;
+  const size = elevated ? 'w-24 h-24' : 'w-20 h-20';
+  const avatarSize = elevated ? 'w-14 h-14' : 'w-12 h-12';
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: posicao * 0.1, duration: 0.5 }}
-      className={`relative rounded-2xl border ${styles.border} ${styles.bg} backdrop-blur-xl p-5 cursor-pointer transition-all duration-300 hover:scale-[1.02] shadow-lg ${styles.glow}`}
+      className="flex flex-col items-center cursor-pointer group"
       onClick={onClick}
     >
-      {/* Posição */}
-      <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-        <div className={`w-8 h-8 rounded-full ${styles.medal} flex items-center justify-center shadow-lg`}>
-          {posicao === 1 ? (
-            <Crown className="w-4 h-4 text-amber-900" />
-          ) : (
-            <span className="text-white font-bold text-xs">{posicao}</span>
-          )}
-        </div>
-      </div>
+      {/* Crown apenas no 1º */}
+      {posicao === 1 && (
+        <Crown className="w-6 h-6 text-blue-300 mb-1 drop-shadow-[0_0_8px_rgba(96,165,250,0.6)]" />
+      )}
 
-      <div className="pt-3 text-center">
-        {/* Cor da equipe */}
-        <div
-          className="w-4 h-4 rounded-full mx-auto mb-2 border-2 border-white/20"
-          style={{ backgroundColor: equipe.equipe_cor || '#64748b' }}
-        />
-
-        {/* Nome */}
-        <h3 className="text-white font-bold text-lg truncate mb-1">
-          {equipe.equipe_nome}
-        </h3>
-
-        {/* Contador */}
-        <div className={`text-3xl font-black ${styles.accent} mb-1`}>
-          {equipe.quantidade_instalacoes}
-        </div>
-        <p className="text-white/40 text-xs mb-3">instalações</p>
-
-        {/* Barra de progresso */}
-        <div className="h-2 rounded-full bg-white/10 overflow-hidden mb-3">
-          <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: `${percent}%` }}
-            transition={{ delay: 0.3 + posicao * 0.1, duration: 0.8, ease: "easeOut" }}
-            className={`h-full rounded-full bg-gradient-to-r ${styles.bar}`}
-          />
-        </div>
-
-        {/* Última instalação */}
-        {equipe.ultima_instalacao && (
-          <p className="text-white/30 text-xs">
-            Última: {format(new Date(equipe.ultima_instalacao), "dd/MM/yyyy", { locale: ptBR })}
-          </p>
+      {/* Taça */}
+      <div className="relative">
+        {/* "Asas" do 1º lugar */}
+        {posicao === 1 && (
+          <>
+            <div className="absolute top-1/2 -left-10 -translate-y-1/2 flex flex-col gap-1">
+              <div className="h-0.5 w-8 bg-gradient-to-l from-blue-400/60 to-transparent rounded-full" />
+              <div className="h-0.5 w-6 bg-gradient-to-l from-blue-400/40 to-transparent rounded-full ml-2" />
+              <div className="h-0.5 w-5 bg-gradient-to-l from-blue-400/30 to-transparent rounded-full ml-3" />
+            </div>
+            <div className="absolute top-1/2 -right-10 -translate-y-1/2 flex flex-col gap-1 items-end">
+              <div className="h-0.5 w-8 bg-gradient-to-r from-blue-400/60 to-transparent rounded-full" />
+              <div className="h-0.5 w-6 bg-gradient-to-r from-blue-400/40 to-transparent rounded-full mr-2" />
+              <div className="h-0.5 w-5 bg-gradient-to-r from-blue-400/30 to-transparent rounded-full mr-3" />
+            </div>
+          </>
         )}
+
+        {/* Corpo da taça */}
+        <div
+          className={`${size} rounded-t-[3rem] rounded-b-xl bg-gradient-to-br ${styles.cup} flex items-center justify-center shadow-2xl ${styles.glow} border border-white/20 transition-transform duration-300 group-hover:scale-105`}
+        >
+          <div
+            className={`${avatarSize} rounded-full flex items-center justify-center font-bold text-white text-lg border-2 border-white/40 shadow-inner`}
+            style={{ backgroundColor: equipe.equipe_cor || '#1e3a8a' }}
+          >
+            {getIniciais(equipe.equipe_nome)}
+          </div>
+        </div>
+        {/* Base da taça */}
+        <div className={`mx-auto -mt-1 w-3 h-3 bg-gradient-to-b ${styles.cup}`} />
+        <div className={`mx-auto w-12 h-1.5 rounded-sm bg-gradient-to-b ${styles.cup} shadow-lg`} />
       </div>
+
+      {/* Nome */}
+      <p className={`mt-3 text-white font-semibold text-sm truncate max-w-[140px] text-center ${elevated ? 'text-base' : ''}`}>
+        {equipe.equipe_nome}
+      </p>
+      <p className={`text-xs font-bold ${styles.accent}`}>
+        {equipe.quantidade_instalacoes} inst.
+      </p>
     </motion.div>
   );
 }
@@ -144,41 +158,38 @@ function RankingListItem({ equipe, posicao, maxInstalacoes, onClick }: {
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: posicao * 0.05, duration: 0.4 }}
-      className={`group flex items-center gap-4 p-4 rounded-xl border ${styles.border} ${styles.bg} backdrop-blur-xl cursor-pointer transition-all duration-300 hover:scale-[1.01] hover:shadow-lg ${styles.glow}`}
+      className="group relative flex items-center gap-4 pl-7 pr-5 py-3 rounded-full border border-white/10 bg-white/5 backdrop-blur-xl cursor-pointer transition-all duration-300 hover:bg-white/10 hover:border-white/20"
       onClick={onClick}
     >
-      {/* Posição */}
-      <div className={`w-10 h-10 rounded-full ${posicao <= 3 ? styles.medal : 'bg-white/10'} flex items-center justify-center flex-shrink-0`}>
-        {posicao <= 3 ? (
-          posicao === 1 ? (
-            <Crown className="w-4 h-4 text-amber-900" />
-          ) : (
-            <span className="text-white font-bold text-sm">{posicao}</span>
-          )
-        ) : (
-          <span className="text-white/50 font-bold text-sm">{posicao}</span>
-        )}
-      </div>
-
-      {/* Cor + Nome */}
-      <div className="flex items-center gap-3 min-w-0 flex-1">
+      {/* Avatar com posição */}
+      <div className="relative flex-shrink-0 -ml-3">
         <div
-          className="w-3 h-3 rounded-full flex-shrink-0 border border-white/20"
-          style={{ backgroundColor: equipe.equipe_cor || '#64748b' }}
-        />
-        <div className="min-w-0">
-          <h4 className="text-white font-semibold truncate">{equipe.equipe_nome}</h4>
-          {equipe.ultima_instalacao && (
-            <p className="text-white/30 text-xs">
-              Última: {format(new Date(equipe.ultima_instalacao), "dd/MM/yyyy", { locale: ptBR })}
-            </p>
-          )}
+          className="w-11 h-11 rounded-full flex items-center justify-center font-bold text-white text-sm border-2 border-white/20 shadow-lg"
+          style={{ backgroundColor: equipe.equipe_cor || '#1e3a8a' }}
+        >
+          {getIniciais(equipe.equipe_nome)}
+        </div>
+        <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full ${posicao <= 3 ? styles.medal : 'bg-slate-700'} flex items-center justify-center text-[10px] font-bold text-white border border-slate-900`}>
+          {posicao}
         </div>
       </div>
 
+      {/* Nome */}
+      <div className="min-w-0 w-40">
+        <h4 className="text-white font-semibold truncate text-sm">{equipe.equipe_nome}</h4>
+      </div>
+
+      {/* Pontos */}
+      <div className="hidden sm:flex items-center gap-1.5 flex-shrink-0">
+        <Trophy className={`w-3.5 h-3.5 ${styles.accent}`} />
+        <span className="text-white/80 font-semibold text-sm tabular-nums">
+          {equipe.quantidade_instalacoes * 100}
+        </span>
+      </div>
+
       {/* Barra de progresso */}
-      <div className="hidden sm:block w-32 lg:w-48">
-        <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
+      <div className="flex-1 min-w-0">
+        <div className="h-2.5 rounded-full bg-white/10 overflow-hidden">
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${percent}%` }}
@@ -188,14 +199,12 @@ function RankingListItem({ equipe, posicao, maxInstalacoes, onClick }: {
         </div>
       </div>
 
-      {/* Contador */}
-      <div className="text-right flex-shrink-0">
-        <div className={`text-xl font-bold ${styles.accent}`}>{equipe.quantidade_instalacoes}</div>
-        <div className="text-white/30 text-xs">inst.</div>
+      {/* Badge contador */}
+      <div className={`flex-shrink-0 px-3 py-1 rounded-full ${styles.bg} border ${styles.border} text-xs font-bold ${styles.accent}`}>
+        {equipe.quantidade_instalacoes}
       </div>
 
-      {/* Arrow */}
-      <ArrowRight className="w-4 h-4 text-white/20 group-hover:text-white/50 transition-colors flex-shrink-0" />
+      <ArrowRight className="w-4 h-4 text-white/20 group-hover:text-white/60 transition-colors flex-shrink-0" />
     </motion.div>
   );
 }
@@ -267,60 +276,37 @@ export default function RankingEquipesInstalacao() {
         <>
           {/* Pódio Top 3 */}
           {top3.length > 0 && (
-            <div className="mb-8">
-              <div className="flex items-end justify-center gap-3 sm:gap-4 lg:gap-6">
-                {/* 2º Lugar */}
+            <div className="mb-10 relative">
+              <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-40 bg-gradient-to-b from-blue-500/10 via-transparent to-transparent rounded-3xl blur-3xl pointer-events-none" />
+              <div className="relative flex items-end justify-center gap-12 sm:gap-20 pt-4 pb-8">
                 {top3[1] && (
-                  <div className="w-full max-w-[200px]">
-                    <PodiumCard
-                      equipe={top3[1]}
-                      posicao={2}
-                      maxInstalacoes={maxInstalacoes}
-                      onClick={() => setSelectedEquipe(top3[1])}
-                    />
-                  </div>
+                  <TrophyCup equipe={top3[1]} posicao={2} onClick={() => setSelectedEquipe(top3[1])} />
                 )}
-                {/* 1º Lugar - maior */}
                 {top3[0] && (
-                  <div className="w-full max-w-[240px] -mb-2 z-10">
-                    <div className="scale-110">
-                      <PodiumCard
-                        equipe={top3[0]}
-                        posicao={1}
-                        maxInstalacoes={maxInstalacoes}
-                        onClick={() => setSelectedEquipe(top3[0])}
-                      />
-                    </div>
+                  <div className="-mt-6">
+                    <TrophyCup equipe={top3[0]} posicao={1} elevated onClick={() => setSelectedEquipe(top3[0])} />
                   </div>
                 )}
-                {/* 3º Lugar */}
                 {top3[2] && (
-                  <div className="w-full max-w-[200px]">
-                    <PodiumCard
-                      equipe={top3[2]}
-                      posicao={3}
-                      maxInstalacoes={maxInstalacoes}
-                      onClick={() => setSelectedEquipe(top3[2])}
-                    />
-                  </div>
+                  <TrophyCup equipe={top3[2]} posicao={3} onClick={() => setSelectedEquipe(top3[2])} />
                 )}
               </div>
             </div>
           )}
 
-          {/* Lista restante */}
-          {restantes.length > 0 && (
-            <div className="space-y-2">
+          {/* Lista completa (top3 + restantes) */}
+          {ranking.length > 0 && (
+            <div className="space-y-3">
               <div className="flex items-center gap-2 mb-3 px-1">
                 <TrendingUp className="w-4 h-4 text-white/40" />
                 <span className="text-white/40 text-sm font-medium uppercase tracking-wider">Classificação</span>
                 <div className="flex-1 h-px bg-white/10" />
               </div>
-              {restantes.map((equipe, index) => (
+              {ranking.map((equipe, index) => (
                 <RankingListItem
                   key={equipe.equipe_id}
                   equipe={equipe}
-                  posicao={index + 4}
+                  posicao={index + 1}
                   maxInstalacoes={maxInstalacoes}
                   onClick={() => setSelectedEquipe(equipe)}
                 />
