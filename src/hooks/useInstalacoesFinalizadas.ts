@@ -35,7 +35,7 @@ export function useInstalacoesFinalizadas(mes: string) {
     queryFn: async (): Promise<InstalacaoFinalizada[]> => {
       let query = supabase
         .from("instalacoes_finalizadas")
-        .select("*, vendas:venda_id(tipo_entrega, valor_frete, atendente_id, atendente:atendente_id(nome, foto_perfil_url))")
+        .select("*, vendas:venda_id(tipo_entrega, valor_frete, atendente_id)")
         .order("finalizado_em", { ascending: false });
 
       if (mes !== "todos") {
@@ -67,13 +67,29 @@ export function useInstalacoesFinalizadas(mes: string) {
           }
         }
       }
+      const atendenteIds = Array.from(
+        new Set(rows.map((r) => r.vendas?.atendente_id).filter(Boolean))
+      );
+      const atendentesMap: Record<string, { nome: string | null; foto_perfil_url: string | null }> = {};
+      if (atendenteIds.length > 0) {
+        const { data: usuarios, error: uErr } = await supabase
+          .from("admin_users")
+          .select("user_id, nome, foto_perfil_url")
+          .in("user_id", atendenteIds as string[]);
+        if (uErr) {
+          console.error("[useInstalacoesFinalizadas] admin_users error:", uErr);
+        }
+        for (const u of (usuarios ?? []) as any[]) {
+          atendentesMap[u.user_id] = { nome: u.nome, foto_perfil_url: u.foto_perfil_url };
+        }
+      }
       return rows.map((r) => ({
         ...r,
         tipo_entrega: r.vendas?.tipo_entrega ?? null,
         valor_frete: r.vendas?.valor_frete ?? null,
         data_cadastro: pedidosMap[r.pedido_id] ?? null,
-        vendedor_nome: r.vendas?.atendente?.nome ?? null,
-        vendedor_foto_url: r.vendas?.atendente?.foto_perfil_url ?? null,
+        vendedor_nome: r.vendas?.atendente_id ? atendentesMap[r.vendas.atendente_id]?.nome ?? null : null,
+        vendedor_foto_url: r.vendas?.atendente_id ? atendentesMap[r.vendas.atendente_id]?.foto_perfil_url ?? null : null,
       })) as InstalacaoFinalizada[];
     },
   });
