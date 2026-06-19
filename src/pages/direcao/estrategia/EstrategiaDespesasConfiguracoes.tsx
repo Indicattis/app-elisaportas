@@ -963,6 +963,8 @@ function SortableSetorGroup(props: {
   readOnly?: boolean;
   clearOverride?: (id: string) => Promise<boolean>;
   hasOverride?: (id: string) => boolean;
+  simulados?: Set<string>;
+  onToggleSimulado?: (id: string) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: props.id });
   const style = {
@@ -994,6 +996,8 @@ function SortableSetorGroup(props: {
         readOnly={props.readOnly}
         clearOverride={props.clearOverride}
         hasOverride={props.hasOverride}
+        simulados={props.simulados}
+        onToggleSimulado={props.onToggleSimulado}
       />
     </div>
   );
@@ -1007,6 +1011,8 @@ function SortableFolhaRow(props: {
   readOnly?: boolean;
   clearOverride?: (id: string) => Promise<boolean>;
   hasOverride?: (id: string) => boolean;
+  simulado?: boolean;
+  onToggleSimulado?: (id: string) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: props.item.id });
   const style = {
@@ -1026,7 +1032,7 @@ function SortableFolhaRow(props: {
     </button>
   );
   return (
-    <tr ref={setNodeRef as any} style={style} className="border-b border-white/5 hover:bg-white/[0.03]">
+    <tr ref={setNodeRef as any} style={style} className={`border-b border-white/5 hover:bg-white/[0.03] ${props.simulado ? 'opacity-50 grayscale' : ''}`}>
       <FolhaRowCells
         item={props.item}
         setores={props.setores}
@@ -1036,6 +1042,8 @@ function SortableFolhaRow(props: {
         readOnly={props.readOnly}
         clearOverride={props.clearOverride}
         hasOverride={props.hasOverride}
+        simulado={props.simulado}
+        onToggleSimulado={props.onToggleSimulado}
       />
     </tr>
   );
