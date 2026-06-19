@@ -19,8 +19,6 @@ function parseDecimal(v: string): number {
   return Number.isFinite(n) ? n : 0;
 }
 
-const TOLERANCIA = 0.15;
-
 export function AdicionarPortaDialog({ open, onOpenChange, onAdd }: Props) {
   const [largura, setLargura] = useState('');
   const [altura, setAltura] = useState('');
@@ -50,8 +48,10 @@ export function AdicionarPortaDialog({ open, onOpenChange, onAdd }: Props) {
         .from('tabela_precos_portas')
         .select('id,largura,altura,valor_porta,valor_pintura,valor_instalacao')
         .eq('ativo', true)
-        .gte('largura', larguraNum - TOLERANCIA).lte('largura', larguraNum + TOLERANCIA)
-        .gte('altura', alturaNum - TOLERANCIA).lte('altura', alturaNum + TOLERANCIA);
+        .gte('largura', larguraNum)
+        .gte('altura', alturaNum)
+        .order('largura', { ascending: true })
+        .order('altura', { ascending: true });
       if (error) throw error;
       return data || [];
     },
@@ -60,8 +60,8 @@ export function AdicionarPortaDialog({ open, onOpenChange, onAdd }: Props) {
   const match = useMemo(() => {
     if (!candidatos || !candidatos.length) return null;
     return [...candidatos].sort((a, b) => {
-      const da = Math.abs(a.largura - larguraNum) + Math.abs(a.altura - alturaNum);
-      const db = Math.abs(b.largura - larguraNum) + Math.abs(b.altura - alturaNum);
+      const da = (a.largura - larguraNum) + (a.altura - alturaNum);
+      const db = (b.largura - larguraNum) + (b.altura - alturaNum);
       return da - db;
     })[0];
   }, [candidatos, larguraNum, alturaNum]);
@@ -144,7 +144,7 @@ export function AdicionarPortaDialog({ open, onOpenChange, onAdd }: Props) {
               </div>
             ) : (
               <div className="flex items-center gap-2 text-amber-300 text-sm">
-                <AlertCircle className="w-4 h-4" /> Preço não cadastrado para essa medida (tolerância 15 cm).
+                <AlertCircle className="w-4 h-4" /> Nenhum preço cadastrado a partir dessa medida.
               </div>
             )}
           </div>
