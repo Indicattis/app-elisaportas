@@ -2154,7 +2154,7 @@ className="flex h-[20px] w-full rounded-[3px]"
                           <ArrowRight className="h-3 w-3" />
                         </Button>
                       );
-                    } else if (proximaEtapa && etapaAtual !== 'finalizado' && etapaAtual !== 'aguardando_coleta' && etapaAtual !== 'instalacoes' && etapaAtual !== 'embalagem' && etapaAtual !== 'correcoes') {
+                    } else if (proximaEtapa && etapaAtual !== 'aguardando_coleta' && etapaAtual !== 'instalacoes' && etapaAtual !== 'embalagem' && etapaAtual !== 'correcoes') {
                       avancarButtons.push(
                         <Button key="avançar" size="icon" onClick={(e) => { e.stopPropagation(); setShowAcaoEtapa(true); }} title="Avançar" className="flex h-[20px] w-full rounded-[3px]">
                           <ArrowRight className="h-3 w-3" />
@@ -2306,8 +2306,8 @@ className="flex h-[20px] w-full rounded-[3px]"
                       );
                     }
 
-                    // Botão de arquivar (apenas etapa finalizado)
-                    if (etapaAtual === 'finalizado' && onArquivar) {
+                    // Botão de arquivar (apenas etapa pos_vendas)
+                    if (etapaAtual === 'pos_vendas' && onArquivar) {
                       middleButtons.push(
                         <Tooltip key="arquivar">
                           <TooltipTrigger asChild>
@@ -2956,11 +2956,11 @@ className="flex h-[20px] w-full rounded-[3px]"
                     </Button>
                   </ButtonWithTooltip>
                 );
-              } else if (proximaEtapa && etapaAtual !== 'finalizado') {
+              } else if (proximaEtapa) {
                 actionButtons.push(<Button key="avançar" size="icon" onClick={(e) => { e.stopPropagation(); setShowAcaoEtapa(true); }} title={`Avançar para ${ETAPAS_CONFIG[proximaEtapa].label}`} className="flex w-full h-[37px]">
                       <ArrowRight className="h-3.5 w-3.5" />
                     </Button>);
-              } else if (etapaAtual === 'finalizado' && onArquivar) {
+              } else if (etapaAtual === 'pos_vendas' && onArquivar) {
                 actionButtons.push(
                   <Button 
                     key="arquivar" 
