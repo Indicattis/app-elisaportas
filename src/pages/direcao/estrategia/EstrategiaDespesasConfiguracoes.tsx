@@ -442,6 +442,17 @@ function FolhaBlock({
   const reset = () => { setNome(''); setEmFolha(true); setSetor(''); setSalario(0); setSalarioMin(1518); setAuxComb(0); setBonificacao(0); setHoraExtra(0); setInsalub(0); setFgts(8); setPrev13(0); };
   const [gerenciarSetoresOpen, setGerenciarSetoresOpen] = useState(false);
 
+  // Simulação local de demissão (não persiste, só visual)
+  const [simulados, setSimulados] = useState<Set<string>>(new Set());
+  const toggleSimulado = (id: string) => {
+    setSimulados(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+  const limparSimulacao = () => setSimulados(new Set());
+
   const save = async () => {
     if (!nome.trim()) return;
     const ok = await insert({
@@ -461,8 +472,8 @@ function FolhaBlock({
     if (ok) { reset(); setAddOpen(false); }
   };
 
-  const totalSalarios = items.reduce((s, i) => s + Number(i.salario || 0), 0);
-  const totalFolha = items.reduce((s, i) => s + calcTotalFolha({
+  const totalSalarios = items.reduce((s, i) => simulados.has(i.id) ? s : s + Number(i.salario || 0), 0);
+  const totalFolha = items.reduce((s, i) => simulados.has(i.id) ? s : s + calcTotalFolha({
     salario: Number(i.salario) || 0,
     salario_minimo: Number(i.salario_minimo) || 0,
     aux_combustivel: Number(i.aux_combustivel) || 0,
