@@ -7472,6 +7472,72 @@ export type Database = {
           },
         ]
       }
+      pesquisas_satisfacao: {
+        Row: {
+          anexos: Json
+          avaliou_no_google: boolean
+          comentario: string | null
+          created_at: string
+          id: string
+          itens_avulsos: Json
+          nota_atendimento: number | null
+          nota_instalacao: number | null
+          nota_produto: number | null
+          pedido_id: string
+          quis_comprar_avulsos: boolean
+          recomendaria: boolean | null
+          respondido_por: string | null
+          updated_at: string
+        }
+        Insert: {
+          anexos?: Json
+          avaliou_no_google?: boolean
+          comentario?: string | null
+          created_at?: string
+          id?: string
+          itens_avulsos?: Json
+          nota_atendimento?: number | null
+          nota_instalacao?: number | null
+          nota_produto?: number | null
+          pedido_id: string
+          quis_comprar_avulsos?: boolean
+          recomendaria?: boolean | null
+          respondido_por?: string | null
+          updated_at?: string
+        }
+        Update: {
+          anexos?: Json
+          avaliou_no_google?: boolean
+          comentario?: string | null
+          created_at?: string
+          id?: string
+          itens_avulsos?: Json
+          nota_atendimento?: number | null
+          nota_instalacao?: number | null
+          nota_produto?: number | null
+          pedido_id?: string
+          quis_comprar_avulsos?: boolean
+          recomendaria?: boolean | null
+          respondido_por?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pesquisas_satisfacao_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: true
+            referencedRelation: "pedidos_backlog_ativo"
+            referencedColumns: ["pedido_id"]
+          },
+          {
+            foreignKeyName: "pesquisas_satisfacao_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: true
+            referencedRelation: "pedidos_producao"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pintura_fornada_config: {
         Row: {
           custo_por_fornada: number
