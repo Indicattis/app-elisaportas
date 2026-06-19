@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { useRankingEquipesInstalacao, PeriodoFiltro, RankingEquipe } from "@/hooks/useRankingEquipesInstalacao";
-import { useEquipesMembros } from "@/hooks/useEquipesMembros";
+import { useEquipesMembros, EquipeMembro } from "@/hooks/useEquipesMembros";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { EquipeMembrosList } from "@/components/cronograma/EquipeMembrosList";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -144,10 +145,11 @@ function TrophyCup({ equipe, posicao, onClick, elevated = false }: {
   );
 }
 
-function RankingListItem({ equipe, posicao, maxInstalacoes, onClick }: {
+function RankingListItem({ equipe, posicao, maxInstalacoes, membros, onClick }: {
   equipe: RankingEquipe;
   posicao: number;
   maxInstalacoes: number;
+  membros: EquipeMembro[];
   onClick: () => void;
 }) {
   const styles = getPodiumColor(posicao <= 3 ? posicao : 0);
@@ -161,15 +163,36 @@ function RankingListItem({ equipe, posicao, maxInstalacoes, onClick }: {
       className="group relative flex items-center gap-4 pl-7 pr-5 py-3 rounded-full border border-white/10 bg-white/5 backdrop-blur-xl cursor-pointer transition-all duration-300 hover:bg-white/10 hover:border-white/20"
       onClick={onClick}
     >
-      {/* Avatar com posição */}
+      {/* Fotos dos integrantes */}
       <div className="relative flex-shrink-0 -ml-3">
-        <div
-          className="w-11 h-11 rounded-full flex items-center justify-center font-bold text-white text-sm border-2 border-white/20 shadow-lg"
-          style={{ backgroundColor: equipe.equipe_cor || '#1e3a8a' }}
-        >
-          {getIniciais(equipe.equipe_nome)}
-        </div>
-        <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full ${posicao <= 3 ? styles.medal : 'bg-slate-700'} flex items-center justify-center text-[10px] font-bold text-white border border-slate-900`}>
+        {membros.length > 0 ? (
+          <div className="flex -space-x-3">
+            {membros.slice(0, 4).map((m) => (
+              <Avatar key={m.id} className="w-10 h-10 border-2 border-slate-900 shadow-lg">
+                <AvatarImage src={m.user?.foto_perfil_url} alt={m.user?.nome} />
+                <AvatarFallback
+                  className="text-xs font-bold text-white"
+                  style={{ backgroundColor: equipe.equipe_cor || '#1e3a8a' }}
+                >
+                  {m.user?.nome?.charAt(0)?.toUpperCase() || '?'}
+                </AvatarFallback>
+              </Avatar>
+            ))}
+            {membros.length > 4 && (
+              <div className="w-10 h-10 rounded-full bg-slate-700 border-2 border-slate-900 flex items-center justify-center text-[10px] font-bold text-white shadow-lg">
+                +{membros.length - 4}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div
+            className="w-11 h-11 rounded-full flex items-center justify-center font-bold text-white text-sm border-2 border-white/20 shadow-lg"
+            style={{ backgroundColor: equipe.equipe_cor || '#1e3a8a' }}
+          >
+            {getIniciais(equipe.equipe_nome)}
+          </div>
+        )}
+        <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full ${posicao <= 3 ? styles.medal : 'bg-slate-700'} flex items-center justify-center text-[10px] font-bold text-white border border-slate-900 z-10`}>
           {posicao}
         </div>
       </div>
@@ -211,6 +234,7 @@ function RankingListItem({ equipe, posicao, maxInstalacoes, onClick }: {
 
 export default function RankingEquipesInstalacao() {
   const { ranking, loading, periodo, setPeriodo, maxInstalacoes, refetch: refetchRanking } = useRankingEquipesInstalacao();
+  const { membros: todosMembros } = useEquipesMembros();
   const [selectedEquipe, setSelectedEquipe] = useState<RankingEquipe | null>(null);
 
   const breadcrumbItems = [
@@ -307,6 +331,7 @@ export default function RankingEquipesInstalacao() {
                   equipe={equipe}
                   posicao={index + 1}
                   maxInstalacoes={maxInstalacoes}
+                  membros={todosMembros.filter((m) => m.equipe_id === equipe.equipe_id)}
                   onClick={() => setSelectedEquipe(equipe)}
                 />
               ))}
