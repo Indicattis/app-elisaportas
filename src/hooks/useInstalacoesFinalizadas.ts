@@ -20,6 +20,7 @@ export interface InstalacaoFinalizada {
   cidade: string | null;
   finalizado_em: string;
   tipo_entrega?: string | null;
+  valor_frete?: number | null;
 }
 
 /**
@@ -31,7 +32,7 @@ export function useInstalacoesFinalizadas(mes: string) {
     queryFn: async (): Promise<InstalacaoFinalizada[]> => {
       let query = supabase
         .from("instalacoes_finalizadas")
-        .select("*, vendas:venda_id(tipo_entrega)")
+        .select("*, vendas:venda_id(tipo_entrega, valor_frete)")
         .order("finalizado_em", { ascending: false });
 
       if (mes !== "todos") {
@@ -46,6 +47,7 @@ export function useInstalacoesFinalizadas(mes: string) {
       return ((data ?? []) as any[]).map((r) => ({
         ...r,
         tipo_entrega: r.vendas?.tipo_entrega ?? null,
+        valor_frete: r.vendas?.valor_frete ?? null,
       })) as InstalacaoFinalizada[];
     },
   });
