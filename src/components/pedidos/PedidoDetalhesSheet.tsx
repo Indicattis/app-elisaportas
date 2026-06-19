@@ -161,8 +161,11 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
   const [parcelaEditando, setParcelaEditando] = useState<any | null>(null);
   const [confirmRegenerarOpen, setConfirmRegenerarOpen] = useState(false);
   const [gerandoParcelas, setGerandoParcelas] = useState(false);
+  const [vendaCompleta, setVendaCompleta] = useState<any>(null);
+  const [precosTabela, setPrecosTabela] = useState<Map<string, ItemTabelaPreco>>(new Map());
   
   const { userRole } = useAuth();
+  const { limites: configLimites } = useConfiguracoesVendas();
   const { verificarEAvancarManual, processos, modalOpen, setModalOpen } = usePedidoAutoAvanco();
   
   useEffect(() => {
@@ -172,8 +175,93 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
       fetchEtapasHistorico();
       fetchComentarios();
       fetchContasReceber();
+      fetchVendaCompleta();
     }
   }, [open, pedido?.id]);
+
+  const fetchVendaCompleta = async () => {
+    const vendaId = pedido?.vendas?.id || pedido?.venda_id;
+    if (!vendaId) return;
+    setPrecosTabela(new Map());
+    try {
+      const { data } = await supabase
+        .from('vendas')
+        .select(`
+          *,
+          produtos_vendas (
+            id, tipo_produto, tamanho, quantidade, largura, altura,
+            valor_produto, valor_pintura, valor_instalacao, valor_total,
+            desconto_percentual, desconto_valor, tipo_desconto,
+            descricao, faturamento,
+            catalogo_cores (nome, codigo_hex),
+            custos_itens (descricao)
+          )
+        `)
+        .eq('id', vendaId)
+        .maybeSingle();
+      setVendaCompleta(data);
+
+      const produtosVenda = (data as any)?.produtos_vendas || [];
+      const dimensoesUnicas = new Map<string, { largura: number; altura: number }>();
+      for (const produto of produtosVenda) {
+        if (produto.tipo_produto !== 'porta_enrolar' && produto.tipo_produto !== 'pintura_epoxi') continue;
+        const dim = extrairDimensoesProduto(produto);
+        if (!dim) continue;
+        const key = criarChavePrecoTabela(dim.largura, dim.altura);
+        if (!dimensoesUnicas.has(key)) dimensoesUnicas.set(key, dim);
+      }
+      if (dimensoesUnicas.size > 0) {
+        const precoMap = new Map<string, ItemTabelaPreco>();
+        await Promise.all(
+          Array.from(dimensoesUnicas.entries()).map(async ([key, dim]) => {
+            const result = await buscarPrecosPorMedidas(dim.largura, dim.altura);
+            if (result) precoMap.set(key, result);
+          })
+        );
+        setPrecosTabela(precoMap);
+      }
+    } catch (err) {
+      console.error('Erro ao buscar venda completa:', err);
+    }
+  };
+
+  const descontoTiers = useMemo(() => {
+    if (!vendaCompleta) return null;
+    const produtos = vendaCompleta.produtos_vendas || [];
+    const valorTabela = produtos.reduce((sum: number, p: any) => {
+      const qty = p.quantidade || 1;
+      return sum + ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
+    }, 0);
+    if (valorTabela === 0) return null;
+    const descontoTotal = produtos.reduce((sum: number, p: any) => {
+      const qty = p.quantidade || 1;
+      if (p.tipo_desconto === 'valor') return sum + (p.desconto_valor || 0);
+      if (p.tipo_desconto === 'percentual' && p.desconto_percentual > 0) {
+        const base = ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
+        return sum + base * (p.desconto_percentual / 100);
+      }
+      return sum;
+    }, 0);
+    if (descontoTotal <= 0) return null;
+    const totalPct = (descontoTotal / valorTabela) * 100;
+    const formaPag = vendaCompleta.forma_pagamento || '';
+    const isCartao = formaPag === 'cartao_credito';
+    const isFrio = vendaCompleta.venda_presencial === false;
+    const limAvista = configLimites?.avista ?? 3;
+    const limPresencial = configLimites?.presencial ?? 5;
+    let pctCartao = 0, pctGelo = 0, pctResp = 0;
+    let remaining = totalPct;
+    if (!isCartao) { pctCartao = Math.min(remaining, limAvista); remaining -= pctCartao; }
+    if (isFrio && remaining > 0) { pctGelo = Math.min(remaining, limPresencial); remaining -= pctGelo; }
+    if (remaining > 0) pctResp = remaining;
+    return {
+      cartao: { pct: pctCartao, valor: valorTabela * (pctCartao / 100) },
+      gelo: { pct: pctGelo, valor: valorTabela * (pctGelo / 100) },
+      responsavel: { pct: pctResp, valor: valorTabela * (pctResp / 100) },
+      totalPct,
+      totalValor: descontoTotal,
+    };
+  }, [vendaCompleta, configLimites]);
 
   const fetchContasReceber = async () => {
     const vendaId = pedido?.vendas?.id || pedido?.venda_id;
