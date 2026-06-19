@@ -88,7 +88,7 @@ export default function OrdensInstalacoesLogistica() {
     );
   }, [registros, search]);
 
-  const { total, valorTotal, ticketMedio, tempoMedioEntrega } = useMemo(() => {
+  const { total, valorTotal, tempoMedioEntrega } = useMemo(() => {
     const t = filtrados.length;
     const v = filtrados.reduce((acc, r) => acc + Number(r.valor_instalacao || 0), 0);
     const MS_DIA = 1000 * 60 * 60 * 24;
@@ -104,7 +104,6 @@ export default function OrdensInstalacoesLogistica() {
     return {
       total: t,
       valorTotal: v,
-      ticketMedio: t > 0 ? v / t : 0,
       tempoMedioEntrega: tempo,
     };
   }, [filtrados]);
