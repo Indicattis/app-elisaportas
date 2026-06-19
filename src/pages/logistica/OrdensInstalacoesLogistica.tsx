@@ -466,6 +466,33 @@ export default function OrdensInstalacoesLogistica() {
                                     </div>
                                   </DropdownMenuItem>
                                 ))}
+                                <DropdownMenuSeparator />
+                                <DropdownMenuLabel className="text-xs text-muted-foreground">
+                                  Personalizado
+                                </DropdownMenuLabel>
+                                <div className="px-2 pb-2" onClick={(e) => e.stopPropagation()}>
+                                  <form
+                                    onSubmit={(e) => {
+                                      e.preventDefault();
+                                      const input = e.currentTarget.elements.namedItem("nome") as HTMLInputElement;
+                                      const valor = input.value.trim();
+                                      if (!valor) return;
+                                      setVeiculoCarregamento(r, { id: null, nome: valor });
+                                      input.value = "";
+                                    }}
+                                    className="flex gap-1"
+                                  >
+                                    <Input
+                                      name="nome"
+                                      placeholder="Digite e Enter"
+                                      className="h-7 text-xs"
+                                      onKeyDown={(e) => e.stopPropagation()}
+                                    />
+                                    <Button type="submit" size="sm" className="h-7 px-2 text-xs">
+                                      OK
+                                    </Button>
+                                  </form>
+                                </div>
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </td>
