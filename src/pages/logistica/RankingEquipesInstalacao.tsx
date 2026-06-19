@@ -220,7 +220,6 @@ export default function RankingEquipesInstalacao() {
   ];
 
   const top3 = ranking.slice(0, 3);
-  const restantes = ranking.slice(3);
 
   return (
     <MinimalistLayout
