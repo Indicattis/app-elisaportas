@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, FileSignature, Search, Download, Trash2, FileText, FileClock, FileCheck2, Upload, Loader2, Undo2, Eye, ArrowRight } from 'lucide-react';
+import { ArrowLeft, FileSignature, Search, Download, Trash2, FileText, FileClock, FileCheck2, Upload, Loader2, Undo2, Eye, ArrowRight, FileX } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -16,6 +16,16 @@ import { GerarContratoElisaModal } from '@/components/contratos/GerarContratoEli
 import { AnexarContratoModal } from '@/components/vendas/AnexarContratoModal';
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { DelayedParticles } from '@/components/DelayedParticles';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface VendaRow {
   id: string;
@@ -56,6 +66,8 @@ export default function ContratosVendas() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [generatingVendaId, setGeneratingVendaId] = useState<string | null>(null);
   const [revertingVendaId, setRevertingVendaId] = useState<string | null>(null);
+  const [dispensarVenda, setDispensarVenda] = useState<VendaRow | null>(null);
+  const [dispensandoId, setDispensandoId] = useState<string | null>(null);
 
   const { contratos, deleteContrato, isDeleting } = useContratosVendas({});
 
