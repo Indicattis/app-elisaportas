@@ -49,11 +49,21 @@ export function useInstalacoesFinalizadas(mes: string) {
       const pedidoIds = Array.from(new Set(rows.map((r) => r.pedido_id).filter(Boolean)));
       let pedidosMap: Record<string, string> = {};
       if (pedidoIds.length > 0) {
-        const { data: pedidos } = await supabase
-          .from("pedidos_producao")
-          .select("id, created_at")
-          .in("id", pedidoIds);
-        pedidosMap = Object.fromEntries((pedidos ?? []).map((p: any) => [p.id, p.created_at]));
+        const chunkSize = 80;
+        for (let i = 0; i < pedidoIds.length; i += chunkSize) {
+          const slice = pedidoIds.slice(i, i + chunkSize);
+          const { data: pedidos, error: pErr } = await supabase
+            .from("pedidos_producao")
+            .select("id, created_at")
+            .in("id", slice);
+          if (pErr) {
+            console.error("[useInstalacoesFinalizadas] pedidos_producao error:", pErr);
+            continue;
+          }
+          for (const p of (pedidos ?? []) as any[]) {
+            pedidosMap[p.id] = p.created_at;
+          }
+        }
       }
       return rows.map((r) => ({
         ...r,

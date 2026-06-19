@@ -237,8 +237,8 @@ export default function OrdensInstalacoesLogistica() {
         </div>
       }
     >
-      <div className="min-h-screen p-4 md:p-4 lg:p-6">
-        <div className="max-w-[1800px] mx-auto space-y-4">
+      <div className="min-h-screen px-[100px] py-6">
+        <div className="w-full space-y-4">
           {/* Filtro de mês + busca */}
           <div
             className={cn(
