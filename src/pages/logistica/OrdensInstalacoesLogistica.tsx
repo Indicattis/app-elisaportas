@@ -77,9 +77,10 @@ export default function OrdensInstalacoesLogistica() {
   }, []);
 
   const filtrados = useMemo(() => {
+    const apenasInstalacoes = registros.filter((r) => r.tipo_entrega === 'instalacao');
     const q = search.trim().toLowerCase();
-    if (!q) return registros;
-    return registros.filter((r) =>
+    if (!q) return apenasInstalacoes;
+    return apenasInstalacoes.filter((r) =>
       (r.cliente_nome ?? "").toLowerCase().includes(q) ||
       (r.numero_pedido ?? "").toLowerCase().includes(q) ||
       (r.cidade ?? "").toLowerCase().includes(q) ||
