@@ -94,6 +94,46 @@ function EtapaAtualCronometro({ dataEntrada }: { dataEntrada: string }) {
   return <span className="text-xs font-mono text-green-400">{tempoDecorrido}</span>;
 }
 
+function normalizarTexto(value: string | null | undefined) {
+  return (value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function parseMedida(value: number | string | null | undefined) {
+  if (typeof value === "number") return value;
+  if (typeof value === "string") {
+    const parsed = parseFloat(value.replace(",", "."));
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  return 0;
+}
+
+function extrairDimensoesProduto(produto: {
+  largura?: number | string | null;
+  altura?: number | string | null;
+  tamanho?: string | null;
+}) {
+  const largura = parseMedida(produto.largura);
+  const altura = parseMedida(produto.altura);
+  if (largura > 0 && altura > 0) return { largura, altura };
+  if (produto.tamanho) {
+    const match = String(produto.tamanho).match(/(\d+[.,]?\d*)\s*[xX×]\s*(\d+[.,]?\d*)/);
+    if (match) {
+      return {
+        largura: parseFloat(match[1].replace(",", ".")),
+        altura: parseFloat(match[2].replace(",", ".")),
+      };
+    }
+  }
+  return null;
+}
+
+function criarChavePrecoTabela(largura: number, altura: number) {
+  return `${largura.toFixed(3)}-${altura.toFixed(3)}`;
+}
+
 export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalhesSheetProps) {
   const venda = pedido.vendas;
   const { linhas, isLoading } = usePedidoLinhas(pedido.id);
