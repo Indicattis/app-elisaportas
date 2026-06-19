@@ -3,18 +3,20 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Plus, FileText, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { Plus, FileText, Clock, CheckCircle, XCircle, AlertCircle, FileSignature } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ContratosOrcamentoModal } from '@/components/vendas/ContratosOrcamentoModal';
 
 export default function MeusOrcamentos() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [mesAtual] = useState(new Date());
   const [statusFiltro, setStatusFiltro] = useState<string>('');
+  const [contratoOrcamentoId, setContratoOrcamentoId] = useState<string | null>(null);
 
   const inicioMes = startOfMonth(mesAtual);
   const fimMes = endOfMonth(mesAtual);
@@ -43,6 +45,23 @@ export default function MeusOrcamentos() {
       return data || [];
     },
     enabled: !!user?.id
+  });
+
+  const orcamentoIds = (orcamentos || []).map(o => o.id);
+  const { data: contratosCountMap } = useQuery({
+    queryKey: ['contratos-orcamentos-counts', orcamentoIds],
+    queryFn: async () => {
+      if (orcamentoIds.length === 0) return {} as Record<string, number>;
+      const { data, error } = await supabase
+        .from('contratos_orcamentos')
+        .select('orcamento_id')
+        .in('orcamento_id', orcamentoIds);
+      if (error) throw error;
+      const map: Record<string, number> = {};
+      (data || []).forEach((r: any) => { map[r.orcamento_id] = (map[r.orcamento_id] || 0) + 1; });
+      return map;
+    },
+    enabled: orcamentoIds.length > 0,
   });
 
   const orcamentosFiltrados = orcamentos?.filter(orc => 
@@ -192,10 +211,25 @@ export default function MeusOrcamentos() {
                       {format(new Date(orcamento.created_at), "dd 'de' MMMM", { locale: ptBR })}
                     </p>
                   </div>
-                  <div className="text-right">
-                    <p className="text-lg font-bold text-white">
-                      {formatCurrency(orcamento.valor_total || 0)}
-                    </p>
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <p className="text-lg font-bold text-white">
+                        {formatCurrency(orcamento.valor_total || 0)}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); setContratoOrcamentoId(orcamento.id); }}
+                      title="Contratos do orçamento"
+                      className="relative p-2 rounded-lg bg-white/5 hover:bg-blue-500/20 border border-white/10 text-white/70 hover:text-white transition-colors"
+                    >
+                      <FileSignature className="w-4 h-4" />
+                      {!!contratosCountMap?.[orcamento.id] && (
+                        <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-blue-500 text-white text-[10px] font-semibold flex items-center justify-center">
+                          {contratosCountMap[orcamento.id]}
+                        </span>
+                      )}
+                    </button>
                   </div>
                 </div>
               </div>
@@ -216,6 +250,14 @@ export default function MeusOrcamentos() {
           </div>
         )}
       </div>
+
+      {contratoOrcamentoId && (
+        <ContratosOrcamentoModal
+          open={!!contratoOrcamentoId}
+          onOpenChange={(o) => { if (!o) setContratoOrcamentoId(null); }}
+          orcamentoId={contratoOrcamentoId}
+        />
+      )}
     </MinimalistLayout>
   );
 }
