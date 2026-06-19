@@ -87,7 +87,7 @@ export default function OrdensEntregasLogistica() {
     );
   }, [registros, search]);
 
-  const { total, valorTotal, ticketMedio, tempoMedioEntrega } = useMemo(() => {
+  const { total, valorTotal, tempoMedioEntrega } = useMemo(() => {
     const t = filtrados.length;
     const v = filtrados.reduce((acc, r) => acc + Number(r.valor_frete || 0), 0);
     const MS_DIA = 1000 * 60 * 60 * 24;
@@ -103,7 +103,6 @@ export default function OrdensEntregasLogistica() {
     return {
       total: t,
       valorTotal: v,
-      ticketMedio: t > 0 ? v / t : 0,
       tempoMedioEntrega: tempo,
     };
   }, [filtrados]);
@@ -314,12 +313,6 @@ export default function OrdensEntregasLogistica() {
               <CardContent className="p-4">
                 <div className="text-xs text-muted-foreground uppercase tracking-wide">Valor total em fretes</div>
                 <div className="text-2xl font-bold mt-1 text-emerald-500">{formatCurrency(valorTotal)}</div>
-              </CardContent>
-            </Card>
-            <Card className="bg-white/5 backdrop-blur-xl border-white/10">
-              <CardContent className="p-4">
-                <div className="text-xs text-muted-foreground uppercase tracking-wide">Ticket médio</div>
-                <div className="text-2xl font-bold mt-1 text-blue-500">{formatCurrency(ticketMedio)}</div>
               </CardContent>
             </Card>
             <Card className="bg-white/5 backdrop-blur-xl border-white/10">
