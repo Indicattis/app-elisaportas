@@ -28,12 +28,17 @@ export function InstalacoesHeaderActions({ className }: Props) {
         return (
           <Button
             key={item.path}
-            variant={isActive ? "default" : "outline"}
             size="sm"
             onClick={() => navigate(item.path)}
+            className={cn(
+              "h-10 px-5 rounded-lg border text-white transition-all duration-300 text-xs gap-1.5",
+              isActive
+                ? "bg-gradient-to-r from-blue-500 to-blue-700 border-blue-400/30 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:scale-[1.02]"
+                : "bg-gradient-to-r from-blue-500/20 to-blue-600/20 border-blue-400/20 shadow-lg shadow-blue-500/10 hover:from-blue-500/30 hover:to-blue-600/30 hover:scale-[1.02]",
+            )}
           >
-            <Icon className="h-4 w-4 mr-2" />
-            {item.label}
+            <Icon className="h-4 w-4" />
+            <span className="hidden sm:inline">{item.label}</span>
           </Button>
         );
       })}
