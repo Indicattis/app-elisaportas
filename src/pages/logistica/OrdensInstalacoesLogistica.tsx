@@ -332,6 +332,7 @@ export default function OrdensInstalacoesLogistica() {
                         <th className="text-left font-medium px-4 py-3">Carregamento</th>
                         <th className="text-right font-medium px-4 py-3">Valor</th>
                         <th className="text-right font-medium px-4 py-3">Frete</th>
+                        <th className="text-right font-medium px-4 py-3">Cadastro</th>
                         <th className="text-right font-medium px-4 py-3">Finalizado em</th>
                       </tr>
                     </thead>
@@ -449,6 +450,11 @@ export default function OrdensInstalacoesLogistica() {
                             ) : (
                               <span className="text-white/30">—</span>
                             )}
+                          </td>
+                          <td className="px-4 py-3 text-right text-xs text-muted-foreground whitespace-nowrap">
+                            {r.data_cadastro
+                              ? new Date(r.data_cadastro).toLocaleDateString("pt-BR")
+                              : <span className="text-white/30">—</span>}
                           </td>
                           <td className="px-4 py-3 text-right text-xs text-muted-foreground whitespace-nowrap">
                             {new Date(r.finalizado_em).toLocaleDateString("pt-BR")}
