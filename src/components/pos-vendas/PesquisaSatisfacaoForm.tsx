@@ -183,9 +183,9 @@ export function PesquisaSatisfacaoForm({ pedido, open, onClose, onFinalizado }: 
         recomendaria,
         comentario: comentario.trim() || null,
         quis_comprar_avulsos: quisAvulsos,
-        itens_avulsos: quisAvulsos ? itens : [],
+        itens_avulsos: (quisAvulsos ? itens : []) as any,
         avaliou_no_google: avaliouGoogle,
-        anexos,
+        anexos: anexos as any,
       });
       if (insertError) throw insertError;
 
