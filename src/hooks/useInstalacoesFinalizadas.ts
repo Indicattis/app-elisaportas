@@ -35,7 +35,7 @@ export function useInstalacoesFinalizadas(mes: string) {
     queryFn: async (): Promise<InstalacaoFinalizada[]> => {
       let query = supabase
         .from("instalacoes_finalizadas")
-        .select("*, vendas:venda_id(tipo_entrega, valor_frete, atendente_id, atendente:atendente_id(nome, foto_perfil_url))")
+        .select("*, vendas:venda_id(tipo_entrega, valor_frete, atendente_id, atendente:admin_users!fk_vendas_atendente(nome, foto_perfil_url))")
         .order("finalizado_em", { ascending: false });
 
       if (mes !== "todos") {
