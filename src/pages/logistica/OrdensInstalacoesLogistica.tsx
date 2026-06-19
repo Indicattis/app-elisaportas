@@ -87,10 +87,25 @@ export default function OrdensInstalacoesLogistica() {
     );
   }, [registros, search]);
 
-  const { total, valorTotal, ticketMedio } = useMemo(() => {
+  const { total, valorTotal, ticketMedio, tempoMedioEntrega } = useMemo(() => {
     const t = filtrados.length;
     const v = filtrados.reduce((acc, r) => acc + Number(r.valor_instalacao || 0), 0);
-    return { total: t, valorTotal: v, ticketMedio: t > 0 ? v / t : 0 };
+    const MS_DIA = 1000 * 60 * 60 * 24;
+    const dias: number[] = [];
+    filtrados.forEach((r) => {
+      if (!r.data_cadastro || !r.finalizado_em) return;
+      const ini = new Date(r.data_cadastro).getTime();
+      const fim = new Date(r.finalizado_em).getTime();
+      if (!isFinite(ini) || !isFinite(fim) || fim < ini) return;
+      dias.push((fim - ini) / MS_DIA);
+    });
+    const tempo = dias.length > 0 ? dias.reduce((a, b) => a + b, 0) / dias.length : 0;
+    return {
+      total: t,
+      valorTotal: v,
+      ticketMedio: t > 0 ? v / t : 0,
+      tempoMedioEntrega: tempo,
+    };
   }, [filtrados]);
 
   const handleRowClick = async (r: InstalacaoFinalizada) => {
@@ -281,7 +296,7 @@ export default function OrdensInstalacoesLogistica() {
           {/* Indicadores */}
           <div
             className={cn(
-              "grid grid-cols-1 md:grid-cols-3 gap-4 transition-all duration-500 delay-100",
+              "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 transition-all duration-500 delay-100",
               mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4",
             )}
           >
@@ -301,6 +316,19 @@ export default function OrdensInstalacoesLogistica() {
               <CardContent className="p-4">
                 <div className="text-xs text-muted-foreground uppercase tracking-wide">Ticket médio</div>
                 <div className="text-2xl font-bold mt-1 text-blue-500">{formatCurrency(ticketMedio)}</div>
+              </CardContent>
+            </Card>
+            <Card className="bg-white/5 backdrop-blur-xl border-white/10">
+              <CardContent className="p-4">
+                <div className="text-xs text-muted-foreground uppercase tracking-wide">Tempo médio de entrega</div>
+                <div className="text-2xl font-bold mt-1 text-purple-400">
+                  {tempoMedioEntrega > 0
+                    ? `${tempoMedioEntrega.toFixed(1)} dias`
+                    : "—"}
+                </div>
+                <div className="text-[11px] text-muted-foreground mt-0.5">
+                  Do cadastro até a finalização
+                </div>
               </CardContent>
             </Card>
           </div>
