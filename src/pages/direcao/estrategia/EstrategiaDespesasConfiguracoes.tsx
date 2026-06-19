@@ -762,8 +762,20 @@ function FolhaRowCells({
       <td className="px-2 text-right text-xs">
         {desativado ? zeroCurr : <span className="text-red-400">{formatCurrency(fgtsVal * 0.4)}</span>}
       </td>
-      <td className="px-2 text-right text-white font-semibold">{formatCurrency(total)}</td>
+      <td className="px-2 text-right text-white font-semibold">
+        {simulado ? <span className="text-white/30 line-through">{formatCurrency(total)}</span> : formatCurrency(total)}
+      </td>
       <td className="pr-1 text-right">
+        <div className="inline-flex items-center gap-1 justify-end">
+        {onToggleSimulado && (
+          <button
+            onClick={() => onToggleSimulado(item.id)}
+            title={simulado ? 'Reintegrar (cancelar simulação de demissão)' : 'Simular demissão (não persiste)'}
+            className={`p-1 rounded transition-colors ${simulado ? 'hover:bg-emerald-500/20 text-emerald-300/80 hover:text-emerald-300' : 'hover:bg-amber-500/20 text-amber-300/70 hover:text-amber-300'}`}
+          >
+            {simulado ? <UserCheck className="w-4 h-4" /> : <UserMinus className="w-4 h-4" />}
+          </button>
+        )}
         {readOnly ? (
           hasOverride?.(item.id) && clearOverride ? (
             <button
@@ -779,6 +791,7 @@ function FolhaRowCells({
             <Trash2 className="w-4 h-4" />
           </button>
         )}
+        </div>
       </td>
     </>
   );
