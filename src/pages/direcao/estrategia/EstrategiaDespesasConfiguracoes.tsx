@@ -564,6 +564,8 @@ function FolhaBlock({
                   readOnly={readOnly}
                   clearOverride={clearOverride}
                   hasOverride={hasOverride}
+                  simulados={simulados}
+                  onToggleSimulado={toggleSimulado}
                 />
               ))}
           </SortableContext>
@@ -580,6 +582,8 @@ function FolhaBlock({
             readOnly={readOnly}
             clearOverride={clearOverride}
             hasOverride={hasOverride}
+            simulados={simulados}
+            onToggleSimulado={toggleSimulado}
           />
         )}
 
