@@ -1,5 +1,5 @@
 import { useState, useRef, useMemo } from 'react';
-import { Plus, Trash2, Users, Receipt, TrendingDown, TrendingUp, Landmark, Briefcase, Truck, Banknote, Package, FileDown, GripVertical, X, Check, FolderPlus, ChevronRight, AlertTriangle, FileText, RotateCcw, Handshake, Wallet } from 'lucide-react';
+import { Plus, Trash2, Users, Receipt, TrendingDown, TrendingUp, Landmark, Briefcase, Truck, Banknote, Package, FileDown, GripVertical, X, Check, FolderPlus, ChevronRight, AlertTriangle, FileText, RotateCcw, Handshake, Wallet, UserMinus, UserCheck } from 'lucide-react';
 import GastoFormDialog from '@/components/financeiro/GastoFormDialog';
 import { useGastosPorTipoMes } from '@/hooks/useGastosPorTipoMes';
 import { useContagemGastosPorTipoMes } from '@/hooks/useContagemGastosPorTipoMes';
@@ -442,6 +442,17 @@ function FolhaBlock({
   const reset = () => { setNome(''); setEmFolha(true); setSetor(''); setSalario(0); setSalarioMin(1518); setAuxComb(0); setBonificacao(0); setHoraExtra(0); setInsalub(0); setFgts(8); setPrev13(0); };
   const [gerenciarSetoresOpen, setGerenciarSetoresOpen] = useState(false);
 
+  // Simulação local de demissão (não persiste, só visual)
+  const [simulados, setSimulados] = useState<Set<string>>(new Set());
+  const toggleSimulado = (id: string) => {
+    setSimulados(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+  const limparSimulacao = () => setSimulados(new Set());
+
   const save = async () => {
     if (!nome.trim()) return;
     const ok = await insert({
@@ -461,8 +472,8 @@ function FolhaBlock({
     if (ok) { reset(); setAddOpen(false); }
   };
 
-  const totalSalarios = items.reduce((s, i) => s + Number(i.salario || 0), 0);
-  const totalFolha = items.reduce((s, i) => s + calcTotalFolha({
+  const totalSalarios = items.reduce((s, i) => simulados.has(i.id) ? s : s + Number(i.salario || 0), 0);
+  const totalFolha = items.reduce((s, i) => simulados.has(i.id) ? s : s + calcTotalFolha({
     salario: Number(i.salario) || 0,
     salario_minimo: Number(i.salario_minimo) || 0,
     aux_combustivel: Number(i.aux_combustivel) || 0,
@@ -503,6 +514,16 @@ function FolhaBlock({
         <Users className="w-4 h-4" />
         <h3 className="font-semibold">Folha Salarial padrão</h3>
         <span className="text-white/40 text-sm">({items.length})</span>
+        {simulados.size > 0 && (
+          <button
+            onClick={limparSimulacao}
+            className="ml-2 inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full bg-amber-500/15 border border-amber-400/30 text-[11px] text-amber-200 hover:bg-amber-500/25 transition-colors"
+            title="Limpar simulação de demissões"
+          >
+            <UserMinus className="w-3 h-3" />
+            Simulando {simulados.size} demissã{simulados.size > 1 ? 'o' : 'o'}{simulados.size > 1 ? 'es' : ''} · Limpar
+          </button>
+        )}
         <div className="ml-auto flex items-center gap-1.5">
           {!readOnly && (<button
             onClick={() => setGerenciarSetoresOpen(true)}
@@ -553,6 +574,8 @@ function FolhaBlock({
                   readOnly={readOnly}
                   clearOverride={clearOverride}
                   hasOverride={hasOverride}
+                  simulados={simulados}
+                  onToggleSimulado={toggleSimulado}
                 />
               ))}
           </SortableContext>
@@ -569,6 +592,8 @@ function FolhaBlock({
             readOnly={readOnly}
             clearOverride={clearOverride}
             hasOverride={hasOverride}
+            simulados={simulados}
+            onToggleSimulado={toggleSimulado}
           />
         )}
 
@@ -669,7 +694,7 @@ function FolhaBlock({
 }
 
 function FolhaRowCells({
-  item, setores, update, remove, dragHandle, readOnly, clearOverride, hasOverride,
+  item, setores, update, remove, dragHandle, readOnly, clearOverride, hasOverride, simulado, onToggleSimulado,
 }: {
   item: DespesaPadrao;
   setores: SetorMeta[];
@@ -679,6 +704,8 @@ function FolhaRowCells({
   readOnly?: boolean;
   clearOverride?: (id: string) => Promise<boolean>;
   hasOverride?: (id: string) => boolean;
+  simulado?: boolean;
+  onToggleSimulado?: (id: string) => void;
 }) {
   const salario = Number(item.salario) || 0;
   const salario_minimo = Number(item.salario_minimo) || 0;
@@ -691,7 +718,7 @@ function FolhaRowCells({
   const fgtsVal = base * fgts_pct / 100;
   const feriasDefault = calcFeriasDefault(base, fgts_pct);
   const total = calcTotalFolha({ salario, salario_minimo, aux_combustivel, hora_extra, insalubridade_pct, fgts_pct, previsao_13_valor: 0, em_folha: item.em_folha, ferias_valor: null });
-  const desativado = item.em_folha === false;
+  const desativado = item.em_folha === false || simulado;
   const zeroCurr = <span className="text-white/30">{formatCurrency(0)}</span>;
   const zeroPct = <span className="text-white/30">0%</span>;
   return (
@@ -745,8 +772,20 @@ function FolhaRowCells({
       <td className="px-2 text-right text-xs">
         {desativado ? zeroCurr : <span className="text-red-400">{formatCurrency(fgtsVal * 0.4)}</span>}
       </td>
-      <td className="px-2 text-right text-white font-semibold">{formatCurrency(total)}</td>
+      <td className="px-2 text-right text-white font-semibold">
+        {simulado ? <span className="text-white/30 line-through">{formatCurrency(total)}</span> : formatCurrency(total)}
+      </td>
       <td className="pr-1 text-right">
+        <div className="inline-flex items-center gap-1 justify-end">
+        {onToggleSimulado && (
+          <button
+            onClick={() => onToggleSimulado(item.id)}
+            title={simulado ? 'Reintegrar (cancelar simulação de demissão)' : 'Simular demissão (não persiste)'}
+            className={`p-1 rounded transition-colors ${simulado ? 'hover:bg-emerald-500/20 text-emerald-300/80 hover:text-emerald-300' : 'hover:bg-amber-500/20 text-amber-300/70 hover:text-amber-300'}`}
+          >
+            {simulado ? <UserCheck className="w-4 h-4" /> : <UserMinus className="w-4 h-4" />}
+          </button>
+        )}
         {readOnly ? (
           hasOverride?.(item.id) && clearOverride ? (
             <button
@@ -762,6 +801,7 @@ function FolhaRowCells({
             <Trash2 className="w-4 h-4" />
           </button>
         )}
+        </div>
       </td>
     </>
   );
@@ -839,7 +879,7 @@ function FolhaColGroup() {
 }
 
 function FolhaSetorGroup({
-  meta, rows, setores, update, remove, reorder, dragHandle, readOnly, clearOverride, hasOverride,
+  meta, rows, setores, update, remove, reorder, dragHandle, readOnly, clearOverride, hasOverride, simulados, onToggleSimulado,
 }: {
   meta: SetorMeta;
   rows: DespesaPadrao[];
@@ -851,8 +891,10 @@ function FolhaSetorGroup({
   readOnly?: boolean;
   clearOverride?: (id: string) => Promise<boolean>;
   hasOverride?: (id: string) => boolean;
+  simulados?: Set<string>;
+  onToggleSimulado?: (id: string) => void;
 }) {
-  const subtotal = rows.reduce((s, i) => s + calcTotalFolha({
+  const subtotal = rows.reduce((s, i) => simulados?.has(i.id) ? s : s + calcTotalFolha({
     salario: Number(i.salario) || 0,
     salario_minimo: Number(i.salario_minimo) || 0,
     aux_combustivel: Number(i.aux_combustivel) || 0,
@@ -907,6 +949,8 @@ function FolhaSetorGroup({
                     readOnly={readOnly}
                     clearOverride={clearOverride}
                     hasOverride={hasOverride}
+                    simulado={simulados?.has(i.id) ?? false}
+                    onToggleSimulado={onToggleSimulado}
                   />
                 ))}
               </tbody>
@@ -929,6 +973,8 @@ function SortableSetorGroup(props: {
   readOnly?: boolean;
   clearOverride?: (id: string) => Promise<boolean>;
   hasOverride?: (id: string) => boolean;
+  simulados?: Set<string>;
+  onToggleSimulado?: (id: string) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: props.id });
   const style = {
@@ -960,6 +1006,8 @@ function SortableSetorGroup(props: {
         readOnly={props.readOnly}
         clearOverride={props.clearOverride}
         hasOverride={props.hasOverride}
+        simulados={props.simulados}
+        onToggleSimulado={props.onToggleSimulado}
       />
     </div>
   );
@@ -973,6 +1021,8 @@ function SortableFolhaRow(props: {
   readOnly?: boolean;
   clearOverride?: (id: string) => Promise<boolean>;
   hasOverride?: (id: string) => boolean;
+  simulado?: boolean;
+  onToggleSimulado?: (id: string) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: props.item.id });
   const style = {
@@ -992,7 +1042,7 @@ function SortableFolhaRow(props: {
     </button>
   );
   return (
-    <tr ref={setNodeRef as any} style={style} className="border-b border-white/5 hover:bg-white/[0.03]">
+    <tr ref={setNodeRef as any} style={style} className={`border-b border-white/5 hover:bg-white/[0.03] ${props.simulado ? 'opacity-50 grayscale' : ''}`}>
       <FolhaRowCells
         item={props.item}
         setores={props.setores}
@@ -1002,6 +1052,8 @@ function SortableFolhaRow(props: {
         readOnly={props.readOnly}
         clearOverride={props.clearOverride}
         hasOverride={props.hasOverride}
+        simulado={props.simulado}
+        onToggleSimulado={props.onToggleSimulado}
       />
     </tr>
   );
