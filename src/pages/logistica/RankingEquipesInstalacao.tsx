@@ -331,6 +331,7 @@ export default function RankingEquipesInstalacao() {
                   equipe={equipe}
                   posicao={index + 1}
                   maxInstalacoes={maxInstalacoes}
+                  membros={todosMembros.filter((m) => m.equipe_id === equipe.equipe_id)}
                   onClick={() => setSelectedEquipe(equipe)}
                 />
               ))}
