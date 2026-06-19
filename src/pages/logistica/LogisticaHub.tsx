@@ -6,13 +6,11 @@ import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { DelayedParticles } from '@/components/DelayedParticles';
 
 const menuItems = [
-  
   { label: "Calendário", icon: Truck, path: "/logistica/expedicao" },
-  { label: "Frota", icon: Car, path: "/logistica/frota" },
   { label: "Instalações", icon: CalendarDays, path: "/logistica/instalacoes" },
   { label: "Entregas", icon: PackageCheck, path: "/logistica/entregas" },
+  { label: "Frota", icon: Car, path: "/logistica/frota" },
   { label: "Frete", icon: Package, path: "/logistica/frete" },
-  
   { label: "Pedidos s/ Entrega", icon: AlertCircle, path: "/logistica/pedidos-sem-entrega" },
 ];
 
