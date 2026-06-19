@@ -37,8 +37,10 @@ export function AdicionarPortaDialog({ open, onOpenChange, onAdd }: Props) {
     }
   }, [open]);
 
-  const larguraNum = parseDecimal(largura);
-  const alturaNum = parseDecimal(altura);
+  const larguraBase = parseDecimal(largura);
+  const alturaBase = parseDecimal(altura);
+  const larguraNum = larguraBase > 0 ? larguraBase + (guia ? 0.30 : 0) : 0;
+  const alturaNum = alturaBase > 0 ? alturaBase + (rolo ? 0.50 : 0) : 0;
 
   const { data: candidatos, isFetching } = useQuery({
     queryKey: ['precos-porta-match', larguraNum, alturaNum],
