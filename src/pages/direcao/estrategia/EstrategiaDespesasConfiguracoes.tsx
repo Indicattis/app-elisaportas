@@ -869,7 +869,7 @@ function FolhaColGroup() {
 }
 
 function FolhaSetorGroup({
-  meta, rows, setores, update, remove, reorder, dragHandle, readOnly, clearOverride, hasOverride,
+  meta, rows, setores, update, remove, reorder, dragHandle, readOnly, clearOverride, hasOverride, simulados, onToggleSimulado,
 }: {
   meta: SetorMeta;
   rows: DespesaPadrao[];
@@ -881,8 +881,10 @@ function FolhaSetorGroup({
   readOnly?: boolean;
   clearOverride?: (id: string) => Promise<boolean>;
   hasOverride?: (id: string) => boolean;
+  simulados?: Set<string>;
+  onToggleSimulado?: (id: string) => void;
 }) {
-  const subtotal = rows.reduce((s, i) => s + calcTotalFolha({
+  const subtotal = rows.reduce((s, i) => simulados?.has(i.id) ? s : s + calcTotalFolha({
     salario: Number(i.salario) || 0,
     salario_minimo: Number(i.salario_minimo) || 0,
     aux_combustivel: Number(i.aux_combustivel) || 0,
@@ -937,6 +939,8 @@ function FolhaSetorGroup({
                     readOnly={readOnly}
                     clearOverride={clearOverride}
                     hasOverride={hasOverride}
+                    simulado={simulados?.has(i.id) ?? false}
+                    onToggleSimulado={onToggleSimulado}
                   />
                 ))}
               </tbody>
