@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, FileSignature, Search, Download, Trash2, FileText, FileClock, FileCheck2, Upload, Loader2, Undo2, Eye, ArrowRight } from 'lucide-react';
+import { ArrowLeft, FileSignature, Search, Download, Trash2, FileText, FileClock, FileCheck2, Upload, Loader2, Undo2, Eye, ArrowRight, FileX } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -16,6 +16,16 @@ import { GerarContratoElisaModal } from '@/components/contratos/GerarContratoEli
 import { AnexarContratoModal } from '@/components/vendas/AnexarContratoModal';
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { DelayedParticles } from '@/components/DelayedParticles';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface VendaRow {
   id: string;
@@ -56,6 +66,8 @@ export default function ContratosVendas() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [generatingVendaId, setGeneratingVendaId] = useState<string | null>(null);
   const [revertingVendaId, setRevertingVendaId] = useState<string | null>(null);
+  const [dispensarVenda, setDispensarVenda] = useState<VendaRow | null>(null);
+  const [dispensandoId, setDispensandoId] = useState<string | null>(null);
 
   const { contratos, deleteContrato, isDeleting } = useContratosVendas({});
 
@@ -524,6 +536,22 @@ export default function ContratosVendas() {
                       setGeneratingVendaId(v.id);
                       setModalOpen(true);
                     }}
+                    extraRow={(v) => (
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        className="bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-400/30"
+                        title="Dispensar Contrato"
+                        disabled={dispensandoId === v.id || generatingVendaId === v.id}
+                        onClick={() => setDispensarVenda(v)}
+                      >
+                        {dispensandoId === v.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <FileX className="w-4 h-4" />
+                        )}
+                      </Button>
+                    )}
                   />
                 )}
               </Column>
@@ -665,6 +693,50 @@ export default function ContratosVendas() {
           clienteNome={anexarVenda.nome}
         />
       )}
+
+      <AlertDialog
+        open={!!dispensarVenda}
+        onOpenChange={(o) => { if (!o && !dispensandoId) setDispensarVenda(null); }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Dispensar contrato?</AlertDialogTitle>
+            <AlertDialogDescription>
+              A venda de <strong>{dispensarVenda?.cliente_nome || 'cliente'}</strong> será enviada para <strong>Pendente de Faturamento</strong> sem contrato assinado. Esta ação ficará registrada e pode ser revertida pela equipe administrativa.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={!!dispensandoId}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={!!dispensandoId}
+              onClick={async (e) => {
+                e.preventDefault();
+                if (!dispensarVenda) return;
+                setDispensandoId(dispensarVenda.id);
+                const { error } = await supabase
+                  .from('vendas')
+                  .update({
+                    contrato_dispensado: true,
+                    contrato_dispensado_em: new Date().toISOString(),
+                    contrato_dispensado_por: user?.id ?? null,
+                  })
+                  .eq('id', dispensarVenda.id);
+                setDispensandoId(null);
+                if (error) {
+                  toast.error('Erro ao dispensar contrato');
+                  return;
+                }
+                setVendas((prev) => prev.filter((x) => x.id !== dispensarVenda.id));
+                setDispensarVenda(null);
+                toast.success('Contrato dispensado. Venda enviada para Pendente de Faturamento.');
+              }}
+            >
+              {dispensandoId ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              Dispensar contrato
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
