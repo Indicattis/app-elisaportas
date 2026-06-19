@@ -284,6 +284,8 @@ import DirecaoFinanceiroHub from "./pages/direcao/financeiro/DirecaoFinanceiroHu
 
 // Hub de Logística Minimalista
 import LogisticaHub from "./pages/logistica/LogisticaHub";
+import PosVendasHub from "./pages/pos-vendas/PosVendasHub";
+import PosVendasPedidos from "./pages/pos-vendas/PosVendasPedidos";
 
 import ExpedicaoMinimalista from "./pages/logistica/ExpedicaoMinimalista";
 import NovaNeoForm from "./pages/logistica/NovaNeoForm";
