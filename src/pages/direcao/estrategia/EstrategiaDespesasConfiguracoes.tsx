@@ -514,6 +514,16 @@ function FolhaBlock({
         <Users className="w-4 h-4" />
         <h3 className="font-semibold">Folha Salarial padrão</h3>
         <span className="text-white/40 text-sm">({items.length})</span>
+        {simulados.size > 0 && (
+          <button
+            onClick={limparSimulacao}
+            className="ml-2 inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full bg-amber-500/15 border border-amber-400/30 text-[11px] text-amber-200 hover:bg-amber-500/25 transition-colors"
+            title="Limpar simulação de demissões"
+          >
+            <UserMinus className="w-3 h-3" />
+            Simulando {simulados.size} demissã{simulados.size > 1 ? 'o' : 'o'}{simulados.size > 1 ? 'es' : ''} · Limpar
+          </button>
+        )}
         <div className="ml-auto flex items-center gap-1.5">
           {!readOnly && (<button
             onClick={() => setGerenciarSetoresOpen(true)}
