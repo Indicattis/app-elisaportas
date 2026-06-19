@@ -120,6 +120,29 @@ export function AdicionarPortaDialog({ open, onOpenChange, onAdd }: Props) {
             <Toggle label="Rolo escondido (+50 cm altura)" value={rolo} onChange={setRolo} />
           </div>
 
+          {(larguraBase > 0 || alturaBase > 0) && (guia || rolo) && (
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-lg bg-blue-500/10 border border-blue-400/20 px-3 py-2">
+                <div className="text-[10px] uppercase tracking-wider text-blue-200/70">Largura final</div>
+                <div className="text-sm font-semibold text-blue-200">
+                  {larguraNum > 0 ? `${larguraNum.toFixed(2).replace('.', ',')} m` : '—'}
+                  {guia && larguraBase > 0 && (
+                    <span className="ml-2 text-[10px] text-blue-200/60">({larguraBase.toFixed(2).replace('.', ',')} + 0,30)</span>
+                  )}
+                </div>
+              </div>
+              <div className="rounded-lg bg-blue-500/10 border border-blue-400/20 px-3 py-2">
+                <div className="text-[10px] uppercase tracking-wider text-blue-200/70">Altura final</div>
+                <div className="text-sm font-semibold text-blue-200">
+                  {alturaNum > 0 ? `${alturaNum.toFixed(2).replace('.', ',')} m` : '—'}
+                  {rolo && alturaBase > 0 && (
+                    <span className="ml-2 text-[10px] text-blue-200/60">({alturaBase.toFixed(2).replace('.', ',')} + 0,50)</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="space-y-2">
             <Toggle label="Pintura Epóxi — mais de 10 cores" value={pintura} onChange={setPintura} />
             <Toggle label="Instalação Equipe Elisa Portas" value={instalacao} onChange={setInstalacao} />
