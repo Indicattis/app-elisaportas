@@ -684,7 +684,7 @@ function FolhaBlock({
 }
 
 function FolhaRowCells({
-  item, setores, update, remove, dragHandle, readOnly, clearOverride, hasOverride,
+  item, setores, update, remove, dragHandle, readOnly, clearOverride, hasOverride, simulado, onToggleSimulado,
 }: {
   item: DespesaPadrao;
   setores: SetorMeta[];
@@ -694,6 +694,8 @@ function FolhaRowCells({
   readOnly?: boolean;
   clearOverride?: (id: string) => Promise<boolean>;
   hasOverride?: (id: string) => boolean;
+  simulado?: boolean;
+  onToggleSimulado?: (id: string) => void;
 }) {
   const salario = Number(item.salario) || 0;
   const salario_minimo = Number(item.salario_minimo) || 0;
@@ -706,7 +708,7 @@ function FolhaRowCells({
   const fgtsVal = base * fgts_pct / 100;
   const feriasDefault = calcFeriasDefault(base, fgts_pct);
   const total = calcTotalFolha({ salario, salario_minimo, aux_combustivel, hora_extra, insalubridade_pct, fgts_pct, previsao_13_valor: 0, em_folha: item.em_folha, ferias_valor: null });
-  const desativado = item.em_folha === false;
+  const desativado = item.em_folha === false || simulado;
   const zeroCurr = <span className="text-white/30">{formatCurrency(0)}</span>;
   const zeroPct = <span className="text-white/30">0%</span>;
   return (
