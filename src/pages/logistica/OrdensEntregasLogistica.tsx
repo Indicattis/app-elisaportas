@@ -312,7 +312,7 @@ export default function OrdensEntregasLogistica() {
             </Card>
             <Card className="bg-white/5 backdrop-blur-xl border-white/10">
               <CardContent className="p-4">
-                <div className="text-xs text-muted-foreground uppercase tracking-wide">Valor total</div>
+                <div className="text-xs text-muted-foreground uppercase tracking-wide">Valor total em fretes</div>
                 <div className="text-2xl font-bold mt-1 text-emerald-500">{formatCurrency(valorTotal)}</div>
               </CardContent>
             </Card>
