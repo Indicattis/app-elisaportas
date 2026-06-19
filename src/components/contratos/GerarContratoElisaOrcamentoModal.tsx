@@ -55,7 +55,7 @@ export function GerarContratoElisaOrcamentoModal({ open, onOpenChange, orcamento
       setLoading(true);
       const { data: orc, error } = await supabase
         .from('orcamentos')
-        .select(`*, produtos:orcamento_produtos(*, cor_ref:catalogo_cores(nome))`)
+        .select(`*, produtos:orcamento_produtos(*)`)
         .eq('id', orcamentoId)
         .maybeSingle();
 
@@ -81,11 +81,7 @@ export function GerarContratoElisaOrcamentoModal({ open, onOpenChange, orcamento
         .join('; ');
 
       const coresStr = Array.from(
-        new Set(
-          portas
-            .map((p: any) => p.cor_ref?.nome || p.cor)
-            .filter(Boolean)
-        )
+        new Set(portas.map((p: any) => p.cor).filter(Boolean))
       ).join(', ');
 
       const enderecoCompleto = [
