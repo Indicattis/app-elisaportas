@@ -536,6 +536,22 @@ export default function ContratosVendas() {
                       setGeneratingVendaId(v.id);
                       setModalOpen(true);
                     }}
+                    extraRow={(v) => (
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        className="bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-400/30"
+                        title="Dispensar Contrato"
+                        disabled={dispensandoId === v.id || generatingVendaId === v.id}
+                        onClick={() => setDispensarVenda(v)}
+                      >
+                        {dispensandoId === v.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <FileX className="w-4 h-4" />
+                        )}
+                      </Button>
+                    )}
                   />
                 )}
               </Column>
