@@ -1,68 +1,56 @@
 ## Objetivo
-Criar fluxo completo de Pós-Vendas: bot.ão no Home → Hub → Lista de pedidos na etapa `pos_vendas` → Formulário de pesquisa de satisfação que, ao ser enviado, arquiva o pedido automaticamente.
+Permitir gerar e anexar contratos diretamente em **Meus Orçamentos**, espelhando o fluxo de Contratos em Vendas, sem depender de a venda existir.
 
-## 1. Backend (migração Supabase)
+## 1. Banco — nova tabela `contratos_orcamentos`
+Migração criando tabela isolada (mesma estrutura de `contratos_vendas`):
 
-Nova tabela `pesquisas_satisfacao`:
-- `pedido_id` (uuid, FK `pedidos_producao`, único)
-- `respondido_por` (uuid, admin_users)
-- `nota_atendimento` (int 1–5)
-- `nota_produto` (int 1–5)
-- `nota_instalacao` (int 1–5)
-- `recomendaria` (boolean)
-- `comentario` (text)
-- `quis_comprar_avulsos` (boolean)
-- `itens_avulsos` (jsonb — array `[{custo_item_id, descricao, quantidade, preco_venda}]`)
-- `avaliou_no_google` (boolean)
-- `anexos` (jsonb — array `[{path, nome, tipo}]`)
+- `id uuid pk`
+- `orcamento_id uuid not null` → FK `orcamentos(id)` on delete cascade
+- `template_id uuid null` → FK `contratos_templates(id)`
+- `arquivo_url text not null`
+- `nome_arquivo text not null`
+- `tamanho_arquivo int not null`
+- `observacoes text null`
+- `uploaded_by uuid null`
 - `created_at`, `updated_at`
+- GRANTs para `authenticated` e `service_role` (sem anon)
+- RLS: SELECT/INSERT/UPDATE/DELETE para `authenticated` cujo `orcamento.atendente_id = auth.uid()` **OU** `public.has_role(auth.uid(),'admin'::user_role)`
+- Trigger `update_updated_at_column` para `updated_at`
+- Bucket de storage reaproveitado: `contratos-vendas` (mesmo bucket, prefixo `orcamentos/<id>/...`).
 
-GRANTs para `authenticated`/`service_role`, RLS permitindo leitura/escrita a usuários autenticados (mesmo padrão das demais tabelas operacionais), trigger `updated_at`.
+## 2. Hook
+`src/hooks/useContratosOrcamentos.ts` — clone enxuto de `useContratosVendas` operando sobre `contratos_orcamentos` e prefixo `orcamentos/{id}/` no bucket. Mesmas mutations: `uploadContrato`, `deleteContrato`, listagem por `orcamentoId`.
 
-Bucket de Storage `pesquisas-satisfacao` (privado) + policies em `storage.objects` para `authenticated` ler/escrever apenas nesse bucket.
+## 3. Modais
+Criados em `src/components/contratos/`:
 
-Nova route_key em `app_routes`: `pos_vendas_hub` e `pos_vendas_pedidos`.
+- **`GerarContratoElisaOrcamentoModal.tsx`** — adaptado do `GerarContratoElisaModal`:
+  - Lê de `orcamentos` + `orcamento_produtos` + `clientes` (via `cliente_id` do orçamento)
+  - Reaproveita lógica de cálculo de motores via `tabela_precos_portas_montagem` (kit_id em `orcamento_produtos.tabela_precos_porta_id` se existir; caso contrário usa qtdPortas)
+  - Mantém o mesmo `generateContratoElisaPDF`
+  - Upload via `useContratosOrcamentos`
+- **`UploadContratoOrcamentoModal.tsx`** — clone do `UploadContratoModal` operando no novo hook.
 
-## 2. Frontend
+## 4. UI em Meus Orçamentos
+`src/pages/vendas/MeusOrcamentos.tsx`:
 
-### 2.1 Home (`src/pages/Home.tsx`)
-- Adicionar item `{ label: "Pós Vendas", icon: Headset, path: "/pos-vendas" }` logo após Logística no `menuItems`.
-- Adicionar `'/pos-vendas': 'pos_vendas_'` em `routePrefixMap`.
-- Mesmo estilo azul (sem `isGold`).
+- Botão `FileSignature` em cada linha da lista (ao lado do valor), com `stopPropagation` para não navegar ao detalhe.
+- Abre um pequeno **`ContratosOrcamentoModal`** (novo, espelho do `ContratosVendaModal`): lista contratos do orçamento + botões "Gerar Contrato" e "Vincular Contrato".
+- Indicador visual sutil (badge) quando o orçamento já tem ≥1 contrato — query agregada por `orcamento_id in (...)` no carregamento.
+- Disponível para **qualquer status** (sem restrição).
 
-### 2.2 Nova página `src/pages/pos-vendas/PosVendasHub.tsx`
-- Layout idêntico a `LogisticaHub` (breadcrumb, fundo preto, partículas, botão Voltar).
-- Um único botão "Pedidos em Pós-Vendas" → `/pos-vendas/pedidos`.
+## 5. Pontos técnicos
+- Arquivos no Storage: `contratos-vendas/orcamentos/{orcamento_id}/{timestamp}-{nome}.pdf` (bucket já existe, política do bucket já permite uploads autenticados).
+- Os types do Supabase são regenerados automaticamente após a migration.
+- `uploaded_by` preenchido com `auth.uid()` quando disponível.
+- Nada do fluxo de Vendas é alterado.
 
-### 2.3 Nova página `src/pages/pos-vendas/PosVendasPedidos.tsx`
-- Lista todos `pedidos_producao` com `etapa_atual = 'pos_vendas'`.
-- Cada card mostra cliente, número do pedido, data de finalização, status do formulário (Pendente/Respondido).
-- Botão "Responder pesquisa" abre dialog/drawer com o formulário.
-- Filtro por status (pendente/respondido) e busca por cliente.
-
-### 2.4 Componente `PesquisaSatisfacaoForm.tsx`
-Campos:
-- Notas (1–5) via estrelas: atendimento, produto, instalação.
-- Switch "Recomendaria a empresa?".
-- Textarea comentário livre.
-- Switch "Cliente quis comprar itens avulsos?" → quando ligado, mostra seletor múltiplo de itens de `custos_itens` com `vendavel_avulso = true` (autocomplete + lista selecionada com quantidade editável; usa `preco_venda` do item).
-- Switch "Cliente avaliou no Google?".
-- Upload múltiplo de arquivos (drag-and-drop) → envia ao bucket `pesquisas-satisfacao/{pedido_id}/...`, salva metadados em `anexos`.
-- Ao salvar: insere em `pesquisas_satisfacao`, depois atualiza `pedidos_producao` arquivando (`arquivo_morto = true` / equivalente já usado quando o pedido é arquivado em `pos_vendas`) e remove o card da lista. Toast de sucesso.
-
-### 2.5 Rotas (`src/App.tsx`)
-- `/pos-vendas` → `PosVendasHub`
-- `/pos-vendas/pedidos` → `PosVendasPedidos`
-- Guardar com `ProtectedRoute` no mesmo padrão.
-
-## 3. Detalhes técnicos
-
-- Itens avulsos: query `from('custos_itens').select('id,descricao,preco_venda,unidade,categoria').eq('vendavel_avulso', true).order('descricao')`. Persistir snapshot (descrição + preço no momento) no jsonb para histórico estável.
-- Anexos: usar `supabase.storage.from('pesquisas-satisfacao').upload(...)` com path `${pedido_id}/${crypto.randomUUID()}-${file.name}`; rate-limit simples e limite 10 MB/arquivo.
-- Arquivamento automático: usar exatamente o mesmo update que o botão "Arquivar" já dispara em `pos_vendas` (a verificar no `PedidoCard` para reaproveitar a mesma coluna/flag).
-- Permissões: adicionar entradas `pos_vendas_hub` e `pos_vendas_pedidos` em `app_routes`; usuários com bypass veem tudo.
-
-## 4. Fora do escopo
-- Edição/exclusão de pesquisas já respondidas (somente leitura futura — pode entrar em iteração seguinte).
-- Relatórios/dashboards das respostas.
-- Disparo de e-mail/WhatsApp ao cliente.
+## Arquivos
+```text
+supabase/migrations/<timestamp>_contratos_orcamentos.sql   (novo)
+src/hooks/useContratosOrcamentos.ts                        (novo)
+src/components/contratos/GerarContratoElisaOrcamentoModal.tsx (novo)
+src/components/contratos/UploadContratoOrcamentoModal.tsx  (novo)
+src/components/vendas/ContratosOrcamentoModal.tsx          (novo)
+src/pages/vendas/MeusOrcamentos.tsx                        (editar)
+```
