@@ -46,8 +46,7 @@ export function useRankingEquipesInstalacao() {
 
       const { data: equipesData, error: equipesError } = await supabase
         .from('equipes_instalacao')
-        .select('id, nome, cor, ativa')
-        .eq('ativa', true);
+        .select('id, nome, cor, ativa');
 
       if (equipesError) throw equipesError;
 
@@ -55,65 +54,33 @@ export function useRankingEquipesInstalacao() {
         (equipesData || []).map(eq => [eq.id, eq])
       );
 
-      let queryInstalacoes = supabase
-        .from('instalacoes')
-        .select(`
-          id,
-          responsavel_instalacao_id,
-          metragem_quadrada,
-          instalacao_concluida_em,
-          nome_cliente
-        `)
-        .eq('instalacao_concluida', true)
-        .eq('tipo_instalacao', 'elisa')
-        .not('responsavel_instalacao_id', 'is', null);
-
-      let queryNeoInstalacoes = supabase
-        .from('neo_instalacoes')
-        .select(`
-          id,
-          equipe_id,
-          concluida_em,
-          nome_cliente
-        `)
-        .eq('concluida', true)
-        .eq('tipo_responsavel', 'equipe_interna')
-        .not('equipe_id', 'is', null);
+      let queryFinalizadas = supabase
+        .from('instalacoes_finalizadas')
+        .select('id, cliente_nome, finalizado_em, equipe_instalacao_id, equipe_instalacao_nome')
+        .not('equipe_instalacao_id', 'is', null);
 
       if (dataInicio && dataFim) {
-        queryInstalacoes = queryInstalacoes
-          .gte('instalacao_concluida_em', dataInicio.toISOString())
-          .lte('instalacao_concluida_em', dataFim.toISOString());
-        
-        queryNeoInstalacoes = queryNeoInstalacoes
-          .gte('concluida_em', dataInicio.toISOString())
-          .lte('concluida_em', dataFim.toISOString());
+        queryFinalizadas = queryFinalizadas
+          .gte('finalizado_em', dataInicio.toISOString())
+          .lte('finalizado_em', dataFim.toISOString());
       }
 
-      const [instalacoesResult, neoInstalacoesResult] = await Promise.all([
-        queryInstalacoes,
-        queryNeoInstalacoes
-      ]);
-
-      if (instalacoesResult.error) throw instalacoesResult.error;
-      if (neoInstalacoesResult.error) throw neoInstalacoesResult.error;
-
-      const instalacoesData = instalacoesResult.data || [];
-      const neoInstalacoesData = neoInstalacoesResult.data || [];
+      const { data: finalizadasData, error: finalizadasError } = await queryFinalizadas;
+      if (finalizadasError) throw finalizadasError;
 
       const agrupamento = new Map<string, RankingEquipe>();
 
-      instalacoesData.forEach((instalacao: any) => {
-        const equipe = equipesMap.get(instalacao.responsavel_instalacao_id);
-        if (!equipe) return;
+      (finalizadasData || []).forEach((row: any) => {
+        const equipeId = row.equipe_instalacao_id as string;
+        const equipe = equipesMap.get(equipeId);
+        const nome = equipe?.nome || row.equipe_instalacao_nome || 'Equipe';
+        const cor = equipe?.cor ?? null;
 
-        const equipeId = equipe.id;
-        
         if (!agrupamento.has(equipeId)) {
           agrupamento.set(equipeId, {
             equipe_id: equipeId,
-            equipe_nome: equipe.nome,
-            equipe_cor: equipe.cor,
+            equipe_nome: nome,
+            equipe_cor: cor,
             quantidade_instalacoes: 0,
             metragem_total: 0,
             ultima_instalacao: null,
@@ -123,52 +90,17 @@ export function useRankingEquipesInstalacao() {
 
         const item = agrupamento.get(equipeId)!;
         item.quantidade_instalacoes += 1;
-        item.metragem_total += instalacao.metragem_quadrada || 0;
         item.instalacoes_detalhes.push({
-          id: instalacao.id,
-          nome_cliente: instalacao.nome_cliente,
-          data_conclusao: instalacao.instalacao_concluida_em,
-          metragem: instalacao.metragem_quadrada,
+          id: row.id,
+          nome_cliente: row.cliente_nome,
+          data_conclusao: row.finalizado_em,
+          metragem: null,
           origem: 'pedido'
         });
-        
-        if (!item.ultima_instalacao || 
-            (instalacao.instalacao_concluida_em && instalacao.instalacao_concluida_em > item.ultima_instalacao)) {
-          item.ultima_instalacao = instalacao.instalacao_concluida_em;
-        }
-      });
 
-      neoInstalacoesData.forEach((neo: any) => {
-        const equipe = equipesMap.get(neo.equipe_id);
-        if (!equipe) return;
-
-        const equipeId = equipe.id;
-        
-        if (!agrupamento.has(equipeId)) {
-          agrupamento.set(equipeId, {
-            equipe_id: equipeId,
-            equipe_nome: equipe.nome,
-            equipe_cor: equipe.cor,
-            quantidade_instalacoes: 0,
-            metragem_total: 0,
-            ultima_instalacao: null,
-            instalacoes_detalhes: []
-          });
-        }
-
-        const item = agrupamento.get(equipeId)!;
-        item.quantidade_instalacoes += 1;
-        item.instalacoes_detalhes.push({
-          id: neo.id,
-          nome_cliente: neo.nome_cliente,
-          data_conclusao: neo.concluida_em,
-          metragem: null,
-          origem: 'neo'
-        });
-        
-        if (!item.ultima_instalacao || 
-            (neo.concluida_em && neo.concluida_em > item.ultima_instalacao)) {
-          item.ultima_instalacao = neo.concluida_em;
+        if (!item.ultima_instalacao ||
+            (row.finalizado_em && row.finalizado_em > item.ultima_instalacao)) {
+          item.ultima_instalacao = row.finalizado_em;
         }
       });
 
