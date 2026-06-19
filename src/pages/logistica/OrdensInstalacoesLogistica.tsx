@@ -186,7 +186,7 @@ export default function OrdensInstalacoesLogistica() {
 
   const setVeiculoCarregamento = async (
     r: InstalacaoFinalizada,
-    veiculo: { id: string; nome: string },
+    veiculo: { id: string | null; nome: string },
   ) => {
     const { data: oc } = await supabase
       .from("ordens_carregamento")
@@ -207,10 +207,10 @@ export default function OrdensInstalacoesLogistica() {
       })
       .eq("id", oc.id);
     if (error) {
-      toast.error("Erro ao definir veículo");
+      toast.error("Erro ao definir carregamento");
       return;
     }
-    toast.success(`Veículo definido: ${veiculo.nome}`);
+    toast.success(`Carregamento definido: ${veiculo.nome}`);
     refresh();
   };
 
