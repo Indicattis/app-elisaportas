@@ -36,7 +36,7 @@ export function useItensNaoConcluidosPorEtapa() {
       return (data || [])
         .filter((row: any) => {
           const etapa = row.pedidos_producao?.etapa_atual;
-          return etapa && etapa !== "finalizado" && etapa !== "arquivo_morto";
+          return etapa && etapa !== "finalizado" && etapa !== "pos_vendas" && etapa !== "arquivo_morto";
         })
         .map((row: any) => ({
           id: row.id,

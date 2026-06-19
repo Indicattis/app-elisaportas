@@ -52,6 +52,7 @@ export function usePedidosContadores() {
         instalacoes: 0,
         correcoes: 0,
         finalizado: 0,
+        pos_vendas: 0,
         aguardando_cliente: 0,
       };
 

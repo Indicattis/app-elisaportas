@@ -1,48 +1,44 @@
 ## Objetivo
 
-Replicar 3 seções da `VendaPendenteDetalhesSheet` na `PedidoDetalhesSheet` (a "downbar" que abre ao clicar num pedido), substituindo/adicionando blocos com o mesmo visual e cálculos da venda pendente:
-
-1. **Itens da Venda** (tabela rica) — Produto / Tabela / Desc-Acrés / Vendido, com totais (Produtos, Frete, Total Geral) e badge "Fat" nos itens faturados.
-2. **Info Cards** (grid 2/3 cols) — Data Venda, Dias Pendente, Tipo Entrega, Pagamento, Parcelas, Pago na Entrega, Desc/Crédito, Lucro, Temperatura.
-3. **Descontos por Faixa** — Cartão / Frio / Diretor com percentuais e valores, usando os mesmos limites de `useConfiguracoesVendas`.
-
-## Arquivos afetados
-
-- `src/components/pedidos/PedidoDetalhesSheet.tsx` — única alteração.
+Inserir uma nova etapa de pedido chamada **Pós-Vendas** após **Finalizado**. O botão de arquivar deixa de existir em Finalizado e passa a existir apenas em Pós-Vendas. A transição Finalizado → Pós-Vendas é manual (botão).
 
 ## Mudanças
 
-### 1. Estado e busca complementar
-- Adicionar `vendaCompleta` (state) e `precosTabela` (Map), análogos aos da `VendaPendenteDetalhesSheet`.
-- Novo `fetchVendaCompleta`: carrega a venda com `produtos_vendas (*, catalogo_cores(*), custos_itens(descricao), faturamento:produtos_faturados(*))`, mais `forma_pagamento`, `venda_presencial`, `valor_frete`, `valor_credito`, `valor_desconto_total`, `lucro_total`, `tipo_entrega`, `metodo_pagamento`, `metodo_pagamento_entrega`, `pagamento_na_entrega`, `numero_parcelas`, `data_venda`.
-- Carregar `precosTabela` via `buscarPrecosPorMedidas` com base nas dimensões dos produtos (igual à venda pendente).
-- Disparar no `useEffect` existente quando `open && pedido?.id`.
+### 1. Banco (migration)
+- Adicionar `'pos_vendas'` ao enum/tipo de etapas usado em `pedidos_producao.etapa_atual` e `pedidos_etapas.etapa` (se for enum Postgres, `ALTER TYPE ... ADD VALUE`; se for `text`, apenas garantir que dados antigos continuam válidos).
+- Permitir que `etapa_responsaveis` aceite a chave `pos_vendas` (sem mudança estrutural se a coluna já é `text`).
+- Não migrar dados existentes: pedidos hoje em `finalizado` permanecem em `finalizado` até o usuário avançá-los manualmente.
 
-### 2. Hook de descontos por faixa
-- Importar `useConfiguracoesVendas` e criar `descontoTiers` via `useMemo` com a mesma lógica da `VendaPendenteDetalhesSheet` (linhas 100–153), usando `vendaCompleta`.
+### 2. Tipos/constantes (`src/types/pedidoEtapa.ts`)
+- Adicionar `pos_vendas` em `EtapaPedido`, `ETAPAS_CONFIG` (label "Pós-Vendas", cor `bg-emerald-500`, ícone `Headset` ou `LifeBuoy`, sem checkboxes), `ORDEM_ETAPAS` (logo após `finalizado`) e `LIMITES_ETAPA_SEGUNDOS` (`Infinity`).
 
-### 3. Substituir o Collapsible "Itens da Venda"
-- Trocar o bloco atual (linhas 822–902) pela versão em tabela da `VendaPendenteDetalhesSheet` (linhas 394–594), com:
-  - colunas Produto / Tabela / Desc-Acrés / Vendido,
-  - footer com Produtos, Frete (se `valor_frete > 0`) e Total Geral,
-  - badge "Fat" quando `produto.faturamento` existir,
-  - resolução de preço de tabela via `precosTabela` quando houver dimensões,
-  - fallback de loading quando `vendaCompleta` ainda não estiver carregada.
+### 3. Fluxograma (`src/utils/pedidoFluxograma.ts`)
+- Adicionar `pos_vendas` em `FLUXOGRAMA_ETAPAS`.
+- Em `determinarFluxograma`, inserir `pos_vendas` logo após `finalizado` em todos os caminhos (inclusive manutenção).
 
-### 4. Adicionar bloco "Info Cards" logo depois de "Itens da Venda"
-- Copiar o grid `grid-cols-2 sm:grid-cols-3 gap-3` (linhas 596–713) — mantendo dependências:
-  - `diasPendente = differenceInDays(new Date(), new Date(venda.data_venda))`;
-  - `tipoEntregaLabel` derivado de `vendaCompleta?.tipo_entrega` (mesmo mapeamento de ícone/cor da origem — extrair para helper local ou inline);
-  - usar `FORMAS_PAGAMENTO_LABELS` já presente no arquivo.
+### 4. UI – Gestão da Fábrica (`src/pages/direcao/GestaoFabricaDirecao.tsx`)
+- Renderizar nova `TabsTrigger` `pos_vendas` no grupo verde, posicionada entre Finalizado e Arquivo Morto, com avatar de responsável (mesmo padrão das outras).
+- Atualizar os arrays `(['finalizado'] as const)`, contadores, `hideOrdensStatus`, e `Select` de etapas para incluir `pos_vendas`.
+- Mostrar mesmas listas/colunas que Finalizado (reaproveitar o bloco de render).
 
-### 5. Adicionar bloco "Descontos por Faixa" logo depois dos Info Cards
-- Copiar o bloco (linhas 715–752) condicionado a `descontoTiers`.
+### 5. Botão de avançar / arquivar (`src/components/pedidos/PedidoCard.tsx`)
+- Substituir, na etapa `finalizado`, o botão "Arquivar" por "Enviar para Pós-Vendas" (ícone `ArrowRight`/`Headset`), que move o pedido para `pos_vendas` via `avancarEtapa`/UPSERT em `pedidos_etapas` (seguindo o padrão já existente).
+- Mover o botão "Arquivar Pedido" (com `ArquivarPedidoModal`) para aparecer apenas quando `etapaAtual === 'pos_vendas'`.
 
-### 6. Imports
-- Adicionar: `useMemo`, `differenceInDays`, `ptBR`, ícones faltantes (`Calendar`, `Clock`, `Truck`, `CreditCard`, `Percent`, `Flame`, `Snowflake`, `ShoppingCart`), `buscarPrecosPorMedidas`, `useConfiguracoesVendas`, tipo `ItemTabelaPreco`.
-- Trazer as funções `normalizarTexto`, `parseMedida`, `extrairDimensoesProduto`, `criarChavePrecoTabela` (copiar para o topo do arquivo — pequenas e isoladas).
+### 6. Outras telas que listam etapas
+- `src/pages/administrativo/PedidosAdminMinimalista.tsx`: adicionar opção "Pós-Vendas" no `Select` e nas tabs, entre Finalizado e Arquivo Morto.
+- `src/hooks/useItensNaoConcluidosPorEtapa.ts`: incluir `pos_vendas` no filtro de exclusão (junto a `finalizado` e `arquivo_morto`), pois não é uma etapa "em produção".
+- Demais lugares onde `'finalizado'` é citado como etapa terminal (contadores, fluxograma do `PedidoFluxogramaMap`, hooks de etapas) — incluir `pos_vendas` quando fizer sentido (apenas como passagem visual, sem alterar regras de produção).
 
-## Fora de escopo
+### 7. Retrocesso e avanço
+- `useGestaoOrdensProducao` / `usePedidosEtapas`: garantir que `avancarEtapa` reconhece `finalizado → pos_vendas` e que o retrocesso de `pos_vendas → finalizado` funciona com a mesma lógica unificada de UPSERT já em uso.
 
-- Nenhuma alteração em business logic, schema ou nas demais seções da sheet (linhas, ordens, parcelas, comentários, histórico).
-- Sem mudança nos hooks/listagens que abrem a sheet — apenas o conteúdo interno.
+## Notas
+
+- A etapa **não** está no fluxo de produção (não gera ordens, não pausa metas).
+- Pedidos já arquivados permanecem em Arquivo Morto.
+- Não há automação de tempo — somente botão manual.
+
+## Observação técnica
+
+Antes de codar, vou verificar se `pedidos_producao.etapa_atual` é `text` ou enum Postgres para escolher entre `ALTER TYPE` ou nenhuma migration. Se for enum, a migration é obrigatória e roda antes das mudanças de código.

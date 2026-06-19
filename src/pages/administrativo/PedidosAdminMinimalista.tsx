@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { useQueryClient } from "@tanstack/react-query";
-import { Package, RefreshCw, Factory, CheckCircle, Paintbrush, Truck, HardHat, AlertTriangle, CheckCircle2, ShieldCheck, Archive } from "lucide-react";
+import { Package, RefreshCw, Factory, CheckCircle, Paintbrush, Truck, HardHat, AlertTriangle, CheckCircle2, ShieldCheck, Archive, Headset } from "lucide-react";
 import type { EtapaPedido } from "@/types/pedidoEtapa";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -111,6 +111,14 @@ const ETAPAS_CONFIG: EtapaConfig[] = [
     icon: CheckCircle2, 
     color: 'text-green-400', 
     bgColor: 'bg-green-500/20' 
+  },
+  { 
+    id: 'pos_vendas', 
+    label: 'Pós-Vendas', 
+    shortLabel: 'Pós-Vendas',
+    icon: Headset, 
+    color: 'text-emerald-400', 
+    bgColor: 'bg-emerald-500/20' 
   },
 ];
 
@@ -552,7 +560,7 @@ export default function PedidosAdminMinimalista() {
 
           {/* Grupo Verde: Finalizados */}
           <div className="flex gap-1 border-2 border-green-500/50 rounded-lg p-1">
-            {(['finalizado'] as const).map((etapaId) => {
+            {(['finalizado', 'pos_vendas'] as const).map((etapaId) => {
               const etapa = ETAPAS_CONFIG.find(e => e.id === etapaId);
               if (!etapa) return null;
               const Icon = etapa.icon;
