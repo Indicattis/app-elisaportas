@@ -331,6 +331,7 @@ export default function OrdensInstalacoesLogistica() {
                         <th className="text-left font-medium px-4 py-3">Autorizado</th>
                         <th className="text-left font-medium px-4 py-3">Carregamento</th>
                         <th className="text-right font-medium px-4 py-3">Valor</th>
+                        <th className="text-right font-medium px-4 py-3">Frete</th>
                         <th className="text-right font-medium px-4 py-3">Finalizado em</th>
                       </tr>
                     </thead>
@@ -441,6 +442,13 @@ export default function OrdensInstalacoesLogistica() {
                           </td>
                           <td className="px-4 py-3 text-right font-semibold text-emerald-500 whitespace-nowrap">
                             {formatCurrency(Number(r.valor_instalacao || 0))}
+                          </td>
+                          <td className="px-4 py-3 text-right text-xs whitespace-nowrap">
+                            {r.valor_frete != null && Number(r.valor_frete) > 0 ? (
+                              <span className="text-amber-400">{formatCurrency(Number(r.valor_frete))}</span>
+                            ) : (
+                              <span className="text-white/30">—</span>
+                            )}
                           </td>
                           <td className="px-4 py-3 text-right text-xs text-muted-foreground whitespace-nowrap">
                             {new Date(r.finalizado_em).toLocaleDateString("pt-BR")}
