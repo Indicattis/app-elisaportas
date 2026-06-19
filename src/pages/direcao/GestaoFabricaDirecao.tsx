@@ -1520,7 +1520,7 @@ export default function GestaoFabricaDirecao() {
                       onArquivar={handleArquivar}
                       onDeletar={handleDeletarPedido}
                       onAgendar={['aguardando_coleta','instalacoes','correcoes'].includes(etapa) ? handleAgendarPedido : undefined}
-                      hideOrdensStatus={['aguardando_coleta','instalacoes','correcoes','finalizado'].includes(etapa)}
+                      hideOrdensStatus={['aguardando_coleta','instalacoes','correcoes','finalizado','pos_vendas'].includes(etapa)}
                       
                       onCarregarOrdem={['aguardando_coleta','instalacoes','correcoes'].includes(etapa) ? handleCarregarOrdem : undefined}
                       onResetarCarregamento={['aguardando_coleta','instalacoes','correcoes'].includes(etapa) ? handleResetarCarregamento : undefined}
