@@ -16,6 +16,7 @@ export interface InstalacaoDetalhe {
 export interface RankingAutorizado {
   autorizado_id: string;
   autorizado_nome: string;
+  autorizado_logo_url: string | null;
   quantidade_instalacoes: number;
   metragem_total: number;
   ultima_instalacao: string | null;
@@ -43,94 +44,66 @@ export function useRankingAutorizadosInstalacao() {
         dataFim = endOfYear(now);
       }
 
-      // Fetch active autorizados
+      // Autorizados ativos (para nome canônico e logo)
       const { data: autorizadosData, error: autorizadosError } = await supabase
         .from('autorizados')
-        .select('id, nome')
-        .eq('ativo', true);
+        .select('id, nome, logo_url');
 
       if (autorizadosError) throw autorizadosError;
 
       const autorizadosMap = new Map(
-        (autorizadosData || []).map(a => [a.id, a])
+        (autorizadosData || []).map((a: any) => [a.id, a])
       );
 
-      // Fetch instalacoes (pedidos) done by autorizados
-      let queryInstalacoes = supabase
-        .from('instalacoes')
-        .select('id, responsavel_instalacao_id, metragem_quadrada, instalacao_concluida_em, nome_cliente')
-        .eq('instalacao_concluida', true)
-        .not('responsavel_instalacao_id', 'is', null);
-
-      // Fetch neo_instalacoes done by autorizados
-      let queryNeo = supabase
-        .from('neo_instalacoes')
-        .select('id, autorizado_id, concluida_em, nome_cliente')
-        .eq('concluida', true)
-        .eq('tipo_responsavel', 'autorizado')
-        .not('autorizado_id', 'is', null);
+      // Mesma fonte do ranking de equipes: instalacoes_finalizadas
+      let queryFinalizadas = supabase
+        .from('instalacoes_finalizadas')
+        .select('id, cliente_nome, finalizado_em, autorizado_correcao_id, autorizado_correcao_nome')
+        .not('autorizado_correcao_id', 'is', null);
 
       if (dataInicio && dataFim) {
-        queryInstalacoes = queryInstalacoes
-          .gte('instalacao_concluida_em', dataInicio.toISOString())
-          .lte('instalacao_concluida_em', dataFim.toISOString());
-        queryNeo = queryNeo
-          .gte('concluida_em', dataInicio.toISOString())
-          .lte('concluida_em', dataFim.toISOString());
+        queryFinalizadas = queryFinalizadas
+          .gte('finalizado_em', dataInicio.toISOString())
+          .lte('finalizado_em', dataFim.toISOString());
       }
 
-      const [instResult, neoResult] = await Promise.all([queryInstalacoes, queryNeo]);
-
-      if (instResult.error) throw instResult.error;
-      if (neoResult.error) throw neoResult.error;
+      const { data: finalizadasData, error: finalizadasError } = await queryFinalizadas;
+      if (finalizadasError) throw finalizadasError;
 
       const agrupamento = new Map<string, RankingAutorizado>();
 
-      const addToGroup = (autId: string, autNome: string, detalhe: InstalacaoDetalhe, metragem: number) => {
+      (finalizadasData || []).forEach((row: any) => {
+        const autId = row.autorizado_correcao_id as string;
+        const aut = autorizadosMap.get(autId);
+        const nome = aut?.nome || row.autorizado_correcao_nome || 'Autorizado';
+        const logo = aut?.logo_url ?? null;
+
         if (!agrupamento.has(autId)) {
           agrupamento.set(autId, {
             autorizado_id: autId,
-            autorizado_nome: autNome,
+            autorizado_nome: nome,
+            autorizado_logo_url: logo,
             quantidade_instalacoes: 0,
             metragem_total: 0,
             ultima_instalacao: null,
             instalacoes_detalhes: []
           });
         }
+
         const item = agrupamento.get(autId)!;
         item.quantidade_instalacoes += 1;
-        item.metragem_total += metragem;
-        item.instalacoes_detalhes.push(detalhe);
-        if (!item.ultima_instalacao || (detalhe.data_conclusao && detalhe.data_conclusao > item.ultima_instalacao)) {
-          item.ultima_instalacao = detalhe.data_conclusao;
-        }
-      };
-
-      // Process instalacoes - only those whose responsavel is an autorizado
-      (instResult.data || []).forEach((inst: any) => {
-        const aut = autorizadosMap.get(inst.responsavel_instalacao_id);
-        if (!aut) return;
-        addToGroup(aut.id, aut.nome, {
-          id: inst.id,
-          nome_cliente: inst.nome_cliente,
-          data_conclusao: inst.instalacao_concluida_em,
-          metragem: inst.metragem_quadrada,
-          origem: 'pedido'
-        }, inst.metragem_quadrada || 0);
-      });
-
-      // Process neo_instalacoes
-      (neoResult.data || []).forEach((neo: any) => {
-        const aut = autorizadosMap.get(neo.autorizado_id);
-        const nome = aut?.nome || neo.autorizado_nome || 'Autorizado';
-        const id = neo.autorizado_id;
-        addToGroup(id, nome, {
-          id: neo.id,
-          nome_cliente: neo.nome_cliente,
-          data_conclusao: neo.concluida_em,
+        item.instalacoes_detalhes.push({
+          id: row.id,
+          nome_cliente: row.cliente_nome,
+          data_conclusao: row.finalizado_em,
           metragem: null,
-          origem: 'neo'
-        }, 0);
+          origem: 'pedido'
+        });
+
+        if (!item.ultima_instalacao ||
+            (row.finalizado_em && row.finalizado_em > item.ultima_instalacao)) {
+          item.ultima_instalacao = row.finalizado_em;
+        }
       });
 
       const rankingArray = Array.from(agrupamento.values())
