@@ -10,6 +10,7 @@ export type EtapaPedido =
   | 'instalacoes'
   | 'correcoes'
   | 'finalizado'
+  | 'pos_vendas'
   | 'aguardando_cliente';
 
 export interface PedidoCheckbox {
@@ -128,6 +129,12 @@ export const ETAPAS_CONFIG: Record<EtapaPedido, {
     icon: 'CheckCircle2',
     checkboxes: []
   },
+  pos_vendas: {
+    label: 'Pós-Vendas',
+    color: 'bg-emerald-500',
+    icon: 'Headset',
+    checkboxes: []
+  },
   aguardando_cliente: {
     label: 'Aguardando Cliente',
     color: 'bg-yellow-500',
@@ -147,7 +154,8 @@ export const ORDEM_ETAPAS: EtapaPedido[] = [
   'aguardando_coleta',
   'instalacoes',
   'correcoes',
-  'finalizado'
+  'finalizado',
+  'pos_vendas'
 ];
 
 export function getProximaEtapa(etapaAtual: EtapaPedido): EtapaPedido | null {
@@ -187,5 +195,6 @@ export const LIMITES_ETAPA_SEGUNDOS: Record<EtapaPedido, number> = {
   instalacoes: 3 * 10 * 3600,      // 3 dias comerciais (30h)
   correcoes: 3 * 10 * 3600,        // 3 dias comerciais (30h)
   finalizado: Infinity,
+  pos_vendas: Infinity,
   aguardando_cliente: Infinity,
 };
