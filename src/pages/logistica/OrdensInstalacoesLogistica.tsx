@@ -222,6 +222,7 @@ export default function OrdensInstalacoesLogistica() {
     <MinimalistLayout
       title="Instalações Finalizadas"
       backPath="/logistica"
+      fullWidth
       breadcrumbItems={[
         { label: "Home", path: "/home" },
         { label: "Logística", path: "/logistica" },
@@ -237,7 +238,7 @@ export default function OrdensInstalacoesLogistica() {
         </div>
       }
     >
-      <div className="min-h-screen px-[100px] py-6">
+      <div className="min-h-screen py-6">
         <div className="w-full space-y-4">
           {/* Filtro de mês + busca */}
           <div
