@@ -21,6 +21,7 @@ export interface InstalacaoFinalizada {
   finalizado_em: string;
   tipo_entrega?: string | null;
   valor_frete?: number | null;
+  data_cadastro?: string | null;
 }
 
 /**
@@ -44,10 +45,21 @@ export function useInstalacoesFinalizadas(mes: string) {
 
       const { data, error } = await query;
       if (error) throw error;
-      return ((data ?? []) as any[]).map((r) => ({
+      const rows = (data ?? []) as any[];
+      const pedidoIds = Array.from(new Set(rows.map((r) => r.pedido_id).filter(Boolean)));
+      let pedidosMap: Record<string, string> = {};
+      if (pedidoIds.length > 0) {
+        const { data: pedidos } = await supabase
+          .from("pedidos_producao")
+          .select("id, created_at")
+          .in("id", pedidoIds);
+        pedidosMap = Object.fromEntries((pedidos ?? []).map((p: any) => [p.id, p.created_at]));
+      }
+      return rows.map((r) => ({
         ...r,
         tipo_entrega: r.vendas?.tipo_entrega ?? null,
         valor_frete: r.vendas?.valor_frete ?? null,
+        data_cadastro: pedidosMap[r.pedido_id] ?? null,
       })) as InstalacaoFinalizada[];
     },
   });
