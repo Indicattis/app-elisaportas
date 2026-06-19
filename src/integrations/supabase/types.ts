@@ -1643,6 +1643,60 @@ export type Database = {
           },
         ]
       }
+      contratos_orcamentos: {
+        Row: {
+          arquivo_url: string
+          created_at: string
+          id: string
+          nome_arquivo: string
+          observacoes: string | null
+          orcamento_id: string
+          tamanho_arquivo: number
+          template_id: string | null
+          updated_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          arquivo_url: string
+          created_at?: string
+          id?: string
+          nome_arquivo: string
+          observacoes?: string | null
+          orcamento_id: string
+          tamanho_arquivo: number
+          template_id?: string | null
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          arquivo_url?: string
+          created_at?: string
+          id?: string
+          nome_arquivo?: string
+          observacoes?: string | null
+          orcamento_id?: string
+          tamanho_arquivo?: number
+          template_id?: string | null
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contratos_orcamentos_orcamento_id_fkey"
+            columns: ["orcamento_id"]
+            isOneToOne: false
+            referencedRelation: "orcamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contratos_orcamentos_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "contratos_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contratos_templates: {
         Row: {
           ativo: boolean | null
