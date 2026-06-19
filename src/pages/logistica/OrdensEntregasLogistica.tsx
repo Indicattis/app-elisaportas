@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
-import { InstalacoesHeaderActions } from "@/components/instalacoes/InstalacoesHeaderActions";
 import { PedidoDetalhesSheet } from "@/components/pedidos/PedidoDetalhesSheet";
 import { useInstalacoesFinalizadas, InstalacaoFinalizada } from "@/hooks/useInstalacoesFinalizadas";
 import { supabase } from "@/integrations/supabase/client";
@@ -45,7 +44,7 @@ function shiftMes(key: string, delta: number): string {
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
 }
 
-export default function OrdensInstalacoesLogistica() {
+export default function OrdensEntregasLogistica() {
   const [mounted, setMounted] = useState(false);
   const [mes, setMes] = useState<string>(mesAtualKey());
   const [search, setSearch] = useState("");
@@ -77,10 +76,10 @@ export default function OrdensInstalacoesLogistica() {
   }, []);
 
   const filtrados = useMemo(() => {
-    const apenasInstalacoes = registros.filter((r) => r.tipo_entrega === 'instalacao');
+    const apenasEntregas = registros.filter((r) => r.tipo_entrega === 'entrega');
     const q = search.trim().toLowerCase();
-    if (!q) return apenasInstalacoes;
-    return apenasInstalacoes.filter((r) =>
+    if (!q) return apenasEntregas;
+    return apenasEntregas.filter((r) =>
       (r.cliente_nome ?? "").toLowerCase().includes(q) ||
       (r.numero_pedido ?? "").toLowerCase().includes(q) ||
       (r.cidade ?? "").toLowerCase().includes(q) ||
@@ -236,18 +235,17 @@ export default function OrdensInstalacoesLogistica() {
 
   return (
     <MinimalistLayout
-      title="Instalações Finalizadas"
-      subtitle="Acompanhe as instalações concluídas e seus indicadores"
+      title="Entregas Finalizadas"
+      subtitle="Acompanhe as entregas concluídas e seus indicadores"
       backPath="/logistica"
       fullWidth
       breadcrumbItems={[
         { label: "Home", path: "/home" },
         { label: "Logística", path: "/logistica" },
-        { label: "Instalações" },
+        { label: "Entregas" },
       ]}
       headerActions={
         <div className="flex flex-wrap items-center gap-2">
-          <InstalacoesHeaderActions />
           <Button
             size="sm"
             onClick={() => refetch()}

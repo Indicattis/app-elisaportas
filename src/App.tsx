@@ -325,6 +325,7 @@ import EquipesMinimalista from "./pages/logistica/EquipesMinimalista";
 import EquipesDirecao from "./pages/direcao/EquipesDirecao";
 import CronogramaMinimalista from "./pages/logistica/CronogramaMinimalista";
 import OrdensInstalacoesLogistica from "./pages/logistica/OrdensInstalacoesLogistica";
+import OrdensEntregasLogistica from "./pages/logistica/OrdensEntregasLogistica";
 import RankingEquipesInstalacao from "./pages/logistica/RankingEquipesInstalacao";
 import RankingAutorizadosInstalacao from "./pages/logistica/RankingAutorizadosInstalacao";
 
@@ -623,6 +624,7 @@ const App = () => (
                 <Route path="/logistica/pedidos-sem-entrega" element={<ProtectedRoute routeKey="logistica_pedidos_sem_entrega"><PedidosPagosSemEntrega /></ProtectedRoute>} />
                 
                 <Route path="/logistica/instalacoes" element={<ProtectedRoute routeKey="logistica_hub"><OrdensInstalacoesLogistica /></ProtectedRoute>} />
+                <Route path="/logistica/entregas" element={<ProtectedRoute routeKey="logistica_hub"><OrdensEntregasLogistica /></ProtectedRoute>} />
                 <Route path="/logistica/instalacoes/ordens-instalacoes" element={<ProtectedRoute routeKey="logistica_hub"><OrdensInstalacoesLogistica /></ProtectedRoute>} />
                 <Route path="/logistica/instalacoes/equipes" element={<ProtectedRoute routeKey="logistica_hub"><EquipesMinimalista /></ProtectedRoute>} />
                 <Route path="/logistica/instalacoes/cronograma" element={<ProtectedRoute routeKey="logistica_hub"><CronogramaMinimalista /></ProtectedRoute>} />
