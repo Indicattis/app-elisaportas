@@ -140,10 +140,10 @@ export function CidadeCollapsible({
             Nenhum autorizado nesta cidade
           </div>
         ) : (
-          <div className="mt-2 rounded-lg overflow-hidden border border-primary/10">
+          <div className="mt-2 rounded-lg overflow-hidden border border-white/10 bg-white/[0.03] backdrop-blur-sm">
             <Table className="text-xs">
               <TableHeader>
-                <TableRow className="border-primary/10 hover:bg-transparent">
+                <TableRow className="border-white/10 hover:bg-transparent">
                   <TableHead className="text-xs text-white/70 w-10"></TableHead>
                   <TableHead className="text-xs text-white/70">Autorizado</TableHead>
                   <TableHead className="text-xs text-white/70">Etapa</TableHead>
@@ -204,11 +204,11 @@ function AutorizadoRow({ autorizado, onEdit, onDelete, onTogglePremium }: Autori
   const formatCurrency = (val?: number) => val != null ? `R$ ${val.toFixed(2)}` : '-';
   
   return (
-    <TableRow className="border-primary/10 hover:bg-primary/5">
+    <TableRow className="border-white/10 hover:bg-white/5">
       <TableCell className="w-10 pr-0">
         <Avatar className="h-7 w-7">
           {autorizado.logo_url && <AvatarImage src={autorizado.logo_url} alt={autorizado.nome} />}
-          <AvatarFallback className="text-[10px] bg-primary/20 text-primary">
+          <AvatarFallback className="text-[10px] bg-white/10 text-white/70">
             {autorizado.nome.substring(0, 2).toUpperCase()}
           </AvatarFallback>
         </Avatar>
@@ -251,7 +251,7 @@ function AutorizadoRow({ autorizado, onEdit, onDelete, onTogglePremium }: Autori
           <Button 
             variant="ghost" 
             size="icon"
-            className="h-7 w-7 hover:bg-primary/10"
+            className="h-7 w-7 hover:bg-white/10"
             onClick={() => onEdit(autorizado.id)}
           >
             <Edit className="h-3.5 w-3.5 text-white/60" />
@@ -259,7 +259,7 @@ function AutorizadoRow({ autorizado, onEdit, onDelete, onTogglePremium }: Autori
           <Button 
             variant="ghost" 
             size="icon"
-            className="h-7 w-7 hover:bg-primary/10"
+            className="h-7 w-7 hover:bg-white/10"
             onClick={() => onTogglePremium(autorizado.id, isPremium)}
           >
             <Star className={cn(
@@ -327,10 +327,10 @@ export function OrfaosCollapsible({
         </div>
       </CollapsibleTrigger>
       <CollapsibleContent>
-        <div className="mt-2 rounded-lg overflow-hidden border border-amber-500/20">
+        <div className="mt-2 rounded-lg overflow-hidden border border-white/10 bg-white/[0.03] backdrop-blur-sm">
           <Table className="text-xs">
               <TableHeader>
-              <TableRow className="border-amber-500/20 hover:bg-transparent">
+              <TableRow className="border-white/10 hover:bg-transparent">
                 <TableHead className="text-xs text-white/70 w-10"></TableHead>
                 <TableHead className="text-xs text-white/70">Autorizado</TableHead>
                 <TableHead className="text-xs text-white/70">Cidade (texto)</TableHead>
@@ -348,11 +348,11 @@ export function OrfaosCollapsible({
               {[...autorizados]
                 .sort((a, b) => (a.etapa === 'premium' ? -1 : 1) - (b.etapa === 'premium' ? -1 : 1))
                 .map(aut => (
-                <TableRow key={aut.id} className="border-amber-500/20 hover:bg-amber-500/5">
+                <TableRow key={aut.id} className="border-white/10 hover:bg-white/5">
                   <TableCell className="w-10 pr-0">
                     <Avatar className="h-7 w-7">
                       {aut.logo_url && <AvatarImage src={aut.logo_url} alt={aut.nome} />}
-                      <AvatarFallback className="text-[10px] bg-primary/20 text-primary">
+                      <AvatarFallback className="text-[10px] bg-white/10 text-white/70">
                         {aut.nome.substring(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
@@ -398,7 +398,7 @@ export function OrfaosCollapsible({
                       <Button 
                         variant="ghost" 
                         size="icon"
-                        className="h-7 w-7 hover:bg-primary/10"
+                        className="h-7 w-7 hover:bg-white/10"
                         onClick={() => onEditAutorizado(aut.id)}
                       >
                         <Edit className="h-3.5 w-3.5 text-white/60" />
@@ -406,7 +406,7 @@ export function OrfaosCollapsible({
                       <Button 
                         variant="ghost" 
                         size="icon"
-                        className="h-7 w-7 hover:bg-primary/10"
+                        className="h-7 w-7 hover:bg-white/10"
                         onClick={() => onTogglePremium(aut.id, aut.etapa === 'premium')}
                       >
                         <Star className={cn(
