@@ -1,12 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Star, Upload, X, Loader2, Plus, Trash2 } from 'lucide-react';
+import { Star, Upload, X, Loader2, Plus, Trash2, ClipboardCheck, MessageSquare, ShoppingBag, Globe, Paperclip, ThumbsUp } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -221,49 +219,75 @@ export function PesquisaSatisfacaoForm({ pedido, open, onClose, onFinalizado }: 
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Pesquisa de satisfação</DialogTitle>
-          <DialogDescription>
-            Pedido #{pedido.numero_pedido} — {pedido.cliente_nome}
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden p-0 flex flex-col">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-6 border-b">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold flex items-center gap-3">
+              <div className="p-2.5 bg-primary/10 rounded-xl">
+                <ClipboardCheck className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <span>Pesquisa de satisfação</span>
+                <p className="text-sm font-normal text-muted-foreground">
+                  Pedido #{pedido.numero_pedido} — {pedido.cliente_nome}
+                </p>
+              </div>
+            </DialogTitle>
+          </DialogHeader>
 
-        <div className="space-y-5 py-2">
-          <div className="grid gap-4 md:grid-cols-3">
-            <div>
-              <Label>Atendimento</Label>
+          <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground bg-background/60 backdrop-blur-sm rounded-lg px-3 py-2 border border-primary/10">
+            <ThumbsUp className="w-3.5 h-3.5 text-primary" />
+            <span>Avalie a experiência do cliente. O pedido será arquivado ao enviar.</span>
+          </div>
+        </div>
+
+        {/* Form */}
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+          <div className="grid gap-4 md:grid-cols-3 p-4 rounded-xl bg-background/40 border border-border/60">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-foreground/90">Atendimento</Label>
               <StarRating value={notaAtendimento} onChange={setNotaAtendimento} />
             </div>
-            <div>
-              <Label>Produto</Label>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-foreground/90">Produto</Label>
               <StarRating value={notaProduto} onChange={setNotaProduto} />
             </div>
-            <div>
-              <Label>Instalação</Label>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-foreground/90">Instalação</Label>
               <StarRating value={notaInstalacao} onChange={setNotaInstalacao} />
             </div>
           </div>
 
-          <div className="flex items-center justify-between gap-3">
-            <Label>Recomendaria a empresa?</Label>
+          <div className="flex items-center justify-between gap-3 p-4 rounded-xl bg-background/40 border border-border/60">
+            <Label className="text-sm font-medium text-foreground/90 flex items-center gap-2">
+              <ThumbsUp className="w-4 h-4 text-primary" />
+              Recomendaria a empresa?
+            </Label>
             <Switch checked={recomendaria} onCheckedChange={setRecomendaria} />
           </div>
 
-          <div>
-            <Label>Comentário do cliente</Label>
+          <div className="space-y-1.5">
+            <Label className="text-sm font-medium text-foreground/90 flex items-center gap-2">
+              <MessageSquare className="w-4 h-4 text-primary" />
+              Comentário do cliente
+            </Label>
             <Textarea
               rows={3}
               value={comentario}
               onChange={(e) => setComentario(e.target.value)}
               placeholder="Observações livres..."
               maxLength={1000}
+              className="bg-background/60 border-border/60 focus:border-primary/40 focus:ring-primary/20 resize-none"
             />
           </div>
 
-          <div className="rounded-lg border p-3 space-y-3">
+          <div className="rounded-xl border border-border/60 bg-background/40 p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <Label>Cliente quis comprar itens avulsos?</Label>
+              <Label className="text-sm font-medium text-foreground/90 flex items-center gap-2">
+                <ShoppingBag className="w-4 h-4 text-primary" />
+                Cliente quis comprar itens avulsos?
+              </Label>
               <Switch checked={quisAvulsos} onCheckedChange={setQuisAvulsos} />
             </div>
 
@@ -271,7 +295,7 @@ export function PesquisaSatisfacaoForm({ pedido, open, onClose, onFinalizado }: 
               <div className="space-y-3">
                 <div className="flex gap-2">
                   <Select value={novoItemId} onValueChange={setNovoItemId}>
-                    <SelectTrigger className="flex-1">
+                    <SelectTrigger className="flex-1 bg-background/60 border-border/60">
                       <SelectValue placeholder="Selecione um item" />
                     </SelectTrigger>
                     <SelectContent>
@@ -294,7 +318,7 @@ export function PesquisaSatisfacaoForm({ pedido, open, onClose, onFinalizado }: 
                     {itens.map((item, idx) => (
                       <div
                         key={item.custo_item_id}
-                        className="flex items-center gap-2 p-2 border rounded"
+                        className="flex items-center gap-2 p-2 border border-border/60 rounded-lg bg-background/60"
                       >
                         <span className="flex-1 text-sm">{item.descricao}</span>
                         <Input
@@ -346,18 +370,24 @@ export function PesquisaSatisfacaoForm({ pedido, open, onClose, onFinalizado }: 
             )}
           </div>
 
-          <div className="flex items-center justify-between gap-3">
-            <Label>Cliente avaliou a empresa no Google?</Label>
+          <div className="flex items-center justify-between gap-3 p-4 rounded-xl bg-background/40 border border-border/60">
+            <Label className="text-sm font-medium text-foreground/90 flex items-center gap-2">
+              <Globe className="w-4 h-4 text-primary" />
+              Cliente avaliou a empresa no Google?
+            </Label>
             <Switch checked={avaliouGoogle} onCheckedChange={setAvaliouGoogle} />
           </div>
 
           <div className="space-y-2">
-            <Label>Anexos (máx. {MAX_MB} MB por arquivo)</Label>
-            <label className="flex items-center justify-center gap-2 border-2 border-dashed rounded-lg p-4 cursor-pointer hover:bg-muted/50 transition">
+            <Label className="text-sm font-medium text-foreground/90 flex items-center gap-2">
+              <Paperclip className="w-4 h-4 text-primary" />
+              Anexos (máx. {MAX_MB} MB por arquivo)
+            </Label>
+            <label className="flex items-center justify-center gap-2 border-2 border-dashed border-border/60 rounded-xl p-5 cursor-pointer hover:bg-background/60 bg-background/30 transition">
               {uploading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
-                <Upload className="w-4 h-4" />
+                <Upload className="w-4 h-4 text-primary" />
               )}
               <span className="text-sm">
                 {uploading ? 'Enviando...' : 'Clique para selecionar arquivos'}
@@ -375,7 +405,7 @@ export function PesquisaSatisfacaoForm({ pedido, open, onClose, onFinalizado }: 
                 {anexos.map((a) => (
                   <li
                     key={a.path}
-                    className="flex items-center gap-2 text-sm p-2 border rounded"
+                    className="flex items-center gap-2 text-sm p-2 border border-border/60 rounded-lg bg-background/60"
                   >
                     <span className="flex-1 truncate">{a.nome}</span>
                     <Button
@@ -392,15 +422,29 @@ export function PesquisaSatisfacaoForm({ pedido, open, onClose, onFinalizado }: 
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={salvando}>
+        {/* Footer */}
+        <div className="p-5 border-t bg-gradient-to-r from-muted/30 via-muted/10 to-transparent flex items-center justify-end gap-3">
+          <Button
+            variant="outline"
+            onClick={onClose}
+            disabled={salvando}
+            className="h-11 px-5 bg-background/80 hover:bg-background border-dashed"
+          >
             Cancelar
           </Button>
-          <Button onClick={handleSalvar} disabled={salvando || uploading}>
-            {salvando && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+          <Button
+            onClick={handleSalvar}
+            disabled={salvando || uploading}
+            className="h-11 px-6 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20"
+          >
+            {salvando ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <ClipboardCheck className="h-4 w-4 mr-2" />
+            )}
             Enviar e arquivar pedido
           </Button>
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );
