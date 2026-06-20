@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { MapaEstadosBrasil } from './MapaEstadosBrasil';
 import { MapaMunicipiosEstado } from './MapaMunicipiosEstado';
 import { useFreteCidadesPorEstado } from '@/hooks/useFreteCidadesPorEstado';
+import { useMacroRegioesBrasil, type MacroRegiao } from '@/hooks/useMacroRegioesBrasil';
+import { supabase } from '@/integrations/supabase/client';
 import type { FreteRegiao, FreteRegiaoCidade } from '@/hooks/useFreteRegioes';
 import { MapPinned, ArrowLeft, X } from 'lucide-react';
 
@@ -58,6 +60,70 @@ export function RegiaoFormDialog({ open, onOpenChange, editing, outrasRegioes, o
   }, [cidades]);
 
   const cidadesValidasQuery = useFreteCidadesPorEstado(ufAberto ?? undefined);
+  const macroRegioesQuery = useMacroRegioesBrasil();
+
+  // Cache de cidades por UF carregadas via botão de macrorregião
+  const [ufCidadesCache, setUfCidadesCache] = useState<Record<string, FreteRegiaoCidade[]>>({});
+  const [loadingMacro, setLoadingMacro] = useState<MacroRegiao['sigla'] | null>(null);
+
+  const fetchCidadesParaUfs = async (ufs: string[]): Promise<Record<string, FreteRegiaoCidade[]>> => {
+    const faltando = ufs.filter(u => !ufCidadesCache[u]);
+    if (faltando.length === 0) return ufCidadesCache;
+    const { data, error } = await supabase
+      .from('frete_cidades')
+      .select('id, cidade, estado')
+      .in('estado', faltando)
+      .eq('ativo', true);
+    if (error) throw error;
+    const novo: Record<string, FreteRegiaoCidade[]> = { ...ufCidadesCache };
+    faltando.forEach(u => (novo[u] = []));
+    (data ?? []).forEach(c => {
+      novo[c.estado] = novo[c.estado] || [];
+      novo[c.estado].push({ id: c.id, nome: c.cidade, estado: c.estado });
+    });
+    setUfCidadesCache(novo);
+    return novo;
+  };
+
+  const handleMacroClick = async (regiao: MacroRegiao) => {
+    setLoadingMacro(regiao.sigla);
+    try {
+      const cache = await fetchCidadesParaUfs(regiao.ufs);
+      const disponiveis: FreteRegiaoCidade[] = [];
+      regiao.ufs.forEach(u => (cache[u] ?? []).forEach(c => {
+        if (!disabledCidades.has(c.id)) disponiveis.push(c);
+      }));
+      if (disponiveis.length === 0) return;
+      const todasJaSelecionadas = disponiveis.every(c => cidades.has(c.id));
+      setCidades(prev => {
+        const next = new Map(prev);
+        if (todasJaSelecionadas) {
+          disponiveis.forEach(c => next.delete(c.id));
+        } else {
+          disponiveis.forEach(c => next.set(c.id, c));
+        }
+        return next;
+      });
+    } finally {
+      setLoadingMacro(null);
+    }
+  };
+
+  // Status de cada botão de macrorregião (none | partial | all)
+  const macroStatus = useMemo(() => {
+    const out: Record<string, { status: 'none' | 'partial' | 'all'; total: number }> = {};
+    (macroRegioesQuery.data ?? []).forEach(r => {
+      const todas: FreteRegiaoCidade[] = [];
+      r.ufs.forEach(u => (ufCidadesCache[u] ?? []).forEach(c => {
+        if (!disabledCidades.has(c.id)) todas.push(c);
+      }));
+      if (todas.length === 0) { out[r.sigla] = { status: 'none', total: 0 }; return; }
+      const sel = todas.filter(c => cidades.has(c.id)).length;
+      const status = sel === 0 ? 'none' : sel === todas.length ? 'all' : 'partial';
+      out[r.sigla] = { status, total: todas.length };
+    });
+    return out;
+  }, [macroRegioesQuery.data, ufCidadesCache, cidades, disabledCidades]);
 
   const handleSave = async () => {
     if (!nome.trim() || cidades.size === 0) return;
@@ -121,6 +187,36 @@ export function RegiaoFormDialog({ open, onOpenChange, editing, outrasRegioes, o
                 </span>
               </div>
             </div>
+
+            {!ufAberto && (
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {(macroRegioesQuery.data ?? []).map(r => {
+                  const st = macroStatus[r.sigla] ?? { status: 'none' as const, total: 0 };
+                  const base = 'h-7 px-3 text-[11px] rounded-full border transition-all';
+                  const cls =
+                    st.status === 'all'
+                      ? 'bg-blue-500/30 border-blue-400/50 text-blue-100 hover:bg-blue-500/40'
+                      : st.status === 'partial'
+                      ? 'bg-blue-500/10 border-blue-400/40 text-blue-200 hover:bg-blue-500/20'
+                      : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white';
+                  return (
+                    <button
+                      key={r.sigla}
+                      type="button"
+                      onClick={() => handleMacroClick(r)}
+                      disabled={loadingMacro !== null}
+                      title={`${r.nome} — ${r.ufs.join(', ')}`}
+                      className={`${base} ${cls} disabled:opacity-50`}
+                    >
+                      {loadingMacro === r.sigla ? '...' : r.nome}
+                    </button>
+                  );
+                })}
+                <span className="ml-1 text-[10px] text-white/40 self-center">
+                  clique para incluir/remover todas as cidades cadastradas da região
+                </span>
+              </div>
+            )}
 
             <div className="rounded-xl border border-white/10 bg-white/[0.02] p-2">
               {ufAberto ? (
