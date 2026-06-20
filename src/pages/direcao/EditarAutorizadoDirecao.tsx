@@ -80,8 +80,20 @@ export default function EditarAutorizadoDirecao() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const contexto = pathname.startsWith('/logistica') ? 'logistica' : pathname.startsWith('/autorizados') ? 'home' : 'direcao';
-  const basePath = contexto === 'home' ? '/autorizados' : `/${contexto}/autorizados`;
+  const isVendedorMode = pathname.startsWith('/vendas/meus-parceiros');
+  const contexto = isVendedorMode
+    ? 'vendas'
+    : pathname.startsWith('/logistica')
+      ? 'logistica'
+      : pathname.startsWith('/autorizados')
+        ? 'home'
+        : 'direcao';
+  const basePath = isVendedorMode
+    ? '/vendas/meus-parceiros'
+    : contexto === 'home'
+      ? '/autorizados'
+      : `/${contexto}/autorizados`;
+  const { user: authUser } = useAuth();
 
   useEffect(() => {
     const timer = setTimeout(() => setMounted(true), 50);
@@ -107,6 +119,24 @@ export default function EditarAutorizadoDirecao() {
       if (error) throw error;
 
       if (data) {
+        // No modo vendedor, só pode editar o próprio autorizado
+        if (isVendedorMode) {
+          const { data: me } = await supabase
+            .from('admin_users')
+            .select('id')
+            .eq('user_id', authUser?.id)
+            .maybeSingle();
+          if (!me || data.vendedor_id !== me.id) {
+            toast({
+              variant: 'destructive',
+              title: 'Sem permissão',
+              description: 'Você não é o responsável por este autorizado.',
+            });
+            navigate('/vendas/meus-parceiros');
+            return;
+          }
+        }
+
         setContratoUrl(data.contrato_url);
         setContratoNome(data.contrato_nome_arquivo);
         setForm({
@@ -191,7 +221,7 @@ export default function EditarAutorizadoDirecao() {
     if (!form.whatsapp.trim()) newErrors.whatsapp = "WhatsApp é obrigatório";
     if (!form.responsavel.trim()) newErrors.responsavel = "Responsável é obrigatório";
     if (!form.telefone.trim()) newErrors.telefone = "Telefone é obrigatório";
-    if (!form.vendedor_id) newErrors.vendedor_id = "Atendente é obrigatório";
+    if (!isVendedorMode && !form.vendedor_id) newErrors.vendedor_id = "Atendente é obrigatório";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -238,63 +268,70 @@ export default function EditarAutorizadoDirecao() {
     try {
       setSaving(true);
 
+      const basePayload: Record<string, any> = {
+        nome: form.nome,
+        email: form.email || null,
+        telefone: form.telefone,
+        whatsapp: form.whatsapp,
+        responsavel: form.responsavel,
+        cidade: form.cidade,
+        estado: form.estado,
+        cep: form.cep,
+        logo_url: form.logo_url || null,
+        updated_at: new Date().toISOString(),
+      };
+      const fullPayload: Record<string, any> = {
+        ...basePayload,
+        endereco: null,
+        regiao: null,
+        ativo: form.ativo,
+        vendedor_id: form.vendedor_id,
+        vendedor_responsavel_id: form.vendedor_responsavel_id || null,
+        etapa: form.etapa as 'ativo' | 'perdido' | 'premium',
+        contrato_url: contratoUrl,
+        contrato_nome_arquivo: contratoNome,
+        chave_pix: form.chave_pix || null,
+      };
+
       const { error } = await supabase
         .from('autorizados')
-        .update({
-          nome: form.nome,
-          email: form.email || null,
-          telefone: form.telefone,
-          whatsapp: form.whatsapp,
-          responsavel: form.responsavel,
-          endereco: null,
-          cidade: form.cidade,
-          estado: form.estado,
-          cep: form.cep,
-          regiao: null,
-          ativo: form.ativo,
-          logo_url: form.logo_url || null,
-          vendedor_id: form.vendedor_id,
-          vendedor_responsavel_id: form.vendedor_responsavel_id || null,
-          etapa: form.etapa as 'ativo' | 'perdido' | 'premium',
-          contrato_url: contratoUrl,
-          contrato_nome_arquivo: contratoNome,
-          chave_pix: form.chave_pix || null,
-          updated_at: new Date().toISOString(),
-        })
+        .update(isVendedorMode ? basePayload : fullPayload)
         .eq('id', id);
 
       if (error) throw error;
 
-      // Sincronizar cidades secundárias (deletar todas e reinserir)
-      await supabase
-        .from('autorizado_cidades_secundarias')
-        .delete()
-        .eq('autorizado_id', id!);
-
-      if (cidadesSecundarias.length > 0) {
-        const { error: secError } = await supabase
-          .from('autorizado_cidades_secundarias')
-          .insert(cidadesSecundarias.map(c => ({
-            autorizado_id: id!,
-            cidade: c.cidade,
-            estado: c.estado,
-          })));
-        if (secError) console.error('Erro ao salvar cidades secundárias:', secError);
-      }
-
-      // Salvar preços de instalação
-      const { data: { user } } = await supabase.auth.getUser();
-      const tamanhos: ('P' | 'G' | 'GG')[] = ['P', 'G', 'GG'];
-      for (const tamanho of tamanhos) {
+      if (!isVendedorMode) {
+        // Sincronizar cidades secundárias (deletar todas e reinserir)
         await supabase
-          .from('autorizado_precos_portas')
-          .upsert({
-            autorizado_id: id!,
-            tamanho,
-            valor: precos[tamanho],
-            created_by: user?.id,
-            updated_at: new Date().toISOString(),
-          }, { onConflict: 'autorizado_id,tamanho' });
+          .from('autorizado_cidades_secundarias')
+          .delete()
+          .eq('autorizado_id', id!);
+
+        if (cidadesSecundarias.length > 0) {
+          const { error: secError } = await supabase
+            .from('autorizado_cidades_secundarias')
+            .insert(cidadesSecundarias.map(c => ({
+              autorizado_id: id!,
+              cidade: c.cidade,
+              estado: c.estado,
+            })));
+          if (secError) console.error('Erro ao salvar cidades secundárias:', secError);
+        }
+
+        // Salvar preços de instalação
+        const { data: { user } } = await supabase.auth.getUser();
+        const tamanhos: ('P' | 'G' | 'GG')[] = ['P', 'G', 'GG'];
+        for (const tamanho of tamanhos) {
+          await supabase
+            .from('autorizado_precos_portas')
+            .upsert({
+              autorizado_id: id!,
+              tamanho,
+              valor: precos[tamanho],
+              created_by: user?.id,
+              updated_at: new Date().toISOString(),
+            }, { onConflict: 'autorizado_id,tamanho' });
+        }
       }
 
       // Geocodificar
@@ -309,6 +346,7 @@ export default function EditarAutorizadoDirecao() {
       }
 
       queryClient.invalidateQueries({ queryKey: ['autorizados-performance'] });
+      if (isVendedorMode) queryClient.invalidateQueries({ queryKey: ['meus-parceiros'] });
 
       toast({ title: 'Sucesso', description: 'Autorizado atualizado com sucesso.' });
       navigate(basePath);
@@ -379,15 +417,26 @@ export default function EditarAutorizadoDirecao() {
     }
   }, [form.estado]);
 
-  const breadcrumbItems = [
-    { label: "Home", path: "/home" },
-    ...(contexto !== 'home' ? [{ label: contexto === 'logistica' ? "Logística" : "Direção", path: contexto === 'logistica' ? '/logistica' : '/direcao' }] : []),
-    { label: "Autorizados", path: basePath },
-    ...(estadoInfo ? [{ label: estadoInfo.nome, path: `${basePath}/estado/${estadoInfo.id}` }] : []),
-    { label: "Editar" }
-  ];
+  const breadcrumbItems = isVendedorMode
+    ? [
+        { label: "Home", path: "/home" },
+        { label: "Vendas", path: "/vendas" },
+        { label: "Meus Parceiros", path: "/vendas/meus-parceiros" },
+        { label: "Editar" },
+      ]
+    : [
+        { label: "Home", path: "/home" },
+        ...(contexto !== 'home' ? [{ label: contexto === 'logistica' ? "Logística" : "Direção", path: contexto === 'logistica' ? '/logistica' : '/direcao' }] : []),
+        { label: "Autorizados", path: basePath },
+        ...(estadoInfo ? [{ label: estadoInfo.nome, path: `${basePath}/estado/${estadoInfo.id}` }] : []),
+        { label: "Editar" },
+      ];
 
-  const backPath = estadoInfo ? `${basePath}/estado/${estadoInfo.id}` : basePath;
+  const backPath = isVendedorMode
+    ? '/vendas/meus-parceiros'
+    : estadoInfo
+      ? `${basePath}/estado/${estadoInfo.id}`
+      : basePath;
 
   if (loading) {
     return (
@@ -414,9 +463,10 @@ export default function EditarAutorizadoDirecao() {
               >
                 <ArrowLeft className="w-5 h-5 text-white/80" />
               </button>
-              <h1 className="text-lg font-semibold text-white">Editar Autorizado</h1>
+              <h1 className="text-lg font-semibold text-white">{isVendedorMode ? 'Editar Meu Autorizado' : 'Editar Autorizado'}</h1>
             </div>
             <div className="flex items-center gap-2">
+              {!isVendedorMode && (
               <Button
                 type="button"
                 variant="outline"
@@ -428,7 +478,8 @@ export default function EditarAutorizadoDirecao() {
                 {geocoding ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <MapPin className="w-4 h-4 mr-1" />}
                 Geocodificar
               </Button>
-              {isAdmin && (
+              )}
+              {!isVendedorMode && isAdmin && (
                 <Button
                   type="button"
                   variant="outline"
@@ -458,13 +509,14 @@ export default function EditarAutorizadoDirecao() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                  <div className="md:col-span-6 space-y-2">
+                  <div className={`${isVendedorMode ? 'md:col-span-12' : 'md:col-span-6'} space-y-2`}>
                     <Label className="text-white/70 text-xs uppercase tracking-wide">Nome *</Label>
                     <Input placeholder="Nome do autorizado" value={form.nome}
                       onChange={(e) => setForm({ ...form, nome: e.target.value })}
                       className={`bg-white/5 border-white/10 text-white ${errors.nome ? "border-red-500" : ""}`} />
                     {errors.nome && <p className="text-xs text-red-500">{errors.nome}</p>}
                   </div>
+                  {!isVendedorMode && (
                   <div className="md:col-span-4 space-y-2">
                     <Label className="text-white/70 text-xs uppercase tracking-wide">Etapa</Label>
                     <Select value={form.etapa} onValueChange={(v) => setForm({ ...form, etapa: v })}>
@@ -478,6 +530,8 @@ export default function EditarAutorizadoDirecao() {
                       </SelectContent>
                     </Select>
                   </div>
+                  )}
+                  {!isVendedorMode && (
                   <div className="md:col-span-2 space-y-2">
                     <Label className="text-white/70 text-xs uppercase tracking-wide">Status</Label>
                     <div className="flex items-center gap-2 h-10 px-3 rounded-md bg-white/5 border border-white/10">
@@ -485,6 +539,7 @@ export default function EditarAutorizadoDirecao() {
                       <Label htmlFor="ativo" className="text-white/80 text-sm cursor-pointer">{form.ativo ? 'Ativo' : 'Inativo'}</Label>
                     </div>
                   </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -527,12 +582,14 @@ export default function EditarAutorizadoDirecao() {
                       className={`bg-white/5 border-white/10 text-white ${errors.whatsapp ? "border-red-500" : ""}`} />
                     {errors.whatsapp && <p className="text-xs text-red-500">{errors.whatsapp}</p>}
                   </div>
+                  {!isVendedorMode && (
                   <div className="md:col-span-2 space-y-2">
                     <Label className="text-white/70 text-xs uppercase tracking-wide">Chave Pix</Label>
                     <Input placeholder="CPF/CNPJ, e-mail, telefone ou chave aleatória" value={form.chave_pix}
                       onChange={(e) => setForm({ ...form, chave_pix: e.target.value })}
                       className="bg-white/5 border-white/10 text-white" />
                   </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -585,6 +642,7 @@ export default function EditarAutorizadoDirecao() {
                   </div>
                 </div>
 
+                {!isVendedorMode && (
                 <div className="pt-4 border-t border-white/10 space-y-3">
                   <div>
                     <Label className="text-white/80 text-sm font-medium">Cidades Secundárias</Label>
@@ -641,10 +699,12 @@ export default function EditarAutorizadoDirecao() {
                     </div>
                   </div>
                 </div>
+                )}
               </CardContent>
             </Card>
 
             {/* SEÇÃO 4: Equipe */}
+            {!isVendedorMode && (
             <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
               <CardHeader className="pb-4">
                 <div className="flex items-center gap-2">
@@ -685,8 +745,10 @@ export default function EditarAutorizadoDirecao() {
                 </div>
               </CardContent>
             </Card>
+            )}
 
             {/* SEÇÃO 5: Preços de Instalação */}
+            {!isVendedorMode && (
             <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
               <CardHeader className="pb-4">
                 <div className="flex items-center gap-2">
@@ -723,6 +785,7 @@ export default function EditarAutorizadoDirecao() {
                 </div>
               </CardContent>
             </Card>
+            )}
 
             {/* SEÇÃO 6: Arquivos */}
             <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
@@ -748,7 +811,7 @@ export default function EditarAutorizadoDirecao() {
                       />
                     )}
                   </div>
-                  {id && (
+                  {!isVendedorMode && id && (
                     <div className="space-y-2">
                       <Label className="text-white/70 text-xs uppercase tracking-wide flex items-center gap-1.5">
                         <FileText className="w-3 h-3" /> Contrato
