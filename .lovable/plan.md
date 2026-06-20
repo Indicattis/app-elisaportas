@@ -1,30 +1,58 @@
-## Botões de macrorregião do Brasil
+## Objetivo
 
-Adicionar uma barra de botões acima do mapa do Brasil no `RegiaoFormDialog.tsx` com as 5 macrorregiões: **Norte, Nordeste, Centro-Oeste, Sudeste, Sul**.
+Permitir que o vendedor clique em um Autorizado em **Meus Parceiros** e abra uma nova página para editar o cadastro básico desse parceiro.
 
-### Comportamento
+## Escopo
 
-- Clicar em um botão (ex: Sudeste) seleciona **todas as cidades cadastradas em `frete_cidades`** dos estados daquela região (SP, RJ, MG, ES), respeitando:
-  - Cidades já em outra região da mesma transportadora são ignoradas (continuam bloqueadas).
-  - Clicar novamente no mesmo botão **desmarca** apenas as cidades daquela região (toggle).
-- Estado visual: botão fica "ativo" (preenchido) quando todas as cidades disponíveis da região já estão selecionadas; "parcial" (outline destacado) quando algumas estão; "inativo" caso contrário.
-- Tooltip no botão mostrando "X cidades disponíveis nos estados Y".
+- Apenas parceiros do tipo **autorizado** abrem a página de edição. Representante e Franqueado continuam sem ação ao clicar (ou navegam para visualização atual, sem alteração).
+- A página reaproveita `EditarAutorizadoDirecao.tsx` numa nova rota acessível ao vendedor, com modo "vendedor" que oculta campos sensíveis.
+- Vendedor só consegue abrir/editar autorizados onde ele é o `vendedor_id`.
 
-### Fonte de dados
+## Mudanças
 
-- **API IBGE** `https://servicodados.ibge.gov.br/api/v1/localidades/regioes` — chamada uma vez ao montar o dialog, cacheada em memória (sessão).
-- Resposta mapeia `sigla` (N/NE/CO/SE/S) → lista de UFs. Fallback estático embutido caso a API falhe (as 5 regiões são imutáveis).
-- Para listar cidades por região, usamos as UFs retornadas + hook existente `useFreteCidadesPorEstado` (ou query agregada em `frete_cidades` filtrando por `estado IN (...)`).
+### 1. Nova rota em `src/App.tsx`
+```
+/vendas/meus-parceiros/:id/editar  →  EditarAutorizadoDirecao (modo vendedor)
+```
+Protegida por `ProtectedRoute` com a mesma `routeKey` usada por Meus Parceiros (ex.: `vendas_meus_parceiros`). Sem exigir `logistica_autorizados`.
 
-### Arquivos
+### 2. `EditarAutorizadoDirecao.tsx` — modo vendedor
+- Detectar contexto via `useLocation().pathname.startsWith('/vendas/meus-parceiros')` → `isVendedorMode = true`.
+- Quando `isVendedorMode`:
+  - Ao carregar o autorizado, verificar se `vendedor_id` corresponde ao `admin_users.id` do usuário logado. Se não, redirecionar para `/vendas/meus-parceiros` com toast "Sem permissão".
+  - Ocultar/desabilitar campos sensíveis:
+    - Etapa (Select)
+    - Vendedor Responsável
+    - Vendedor (dono)
+    - Status Ativo (Switch)
+    - Chave PIX
+    - Seção de Contrato (`ContratoUpload`)
+    - Seção de cidades secundárias / preços (se existirem na página)
+  - Mostrar apenas: Logo, Nome, Responsável, E-mail, Telefone, WhatsApp, CEP, Estado, Cidade.
+  - Breadcrumb e botão "Voltar" apontam para `/vendas/meus-parceiros`.
+  - Header/título: "Editar Meu Autorizado".
+- No `update` do submit, enviar apenas os campos permitidos quando `isVendedorMode`.
 
-- **Novo:** `src/hooks/useMacroRegioesBrasil.ts` — busca/cacheia regiões do IBGE, expõe `{ regioes: { sigla, nome, ufs: string[] }[], isLoading }`.
-- **Editado:** `src/components/logistica/RegiaoFormDialog.tsx`
-  - Novo componente interno `MacroRegiaoButtons` renderizado acima do `MapaEstadosBrasil` (apenas no modo "Brasil", não no modo drill-down de estado).
-  - Lógica de toggle que adiciona/remove `cidade_id` em lote no estado `selectedCidades`, filtrando cidades já bloqueadas em outras regiões da transportadora.
+### 3. `src/pages/vendas/MeusParceiros.tsx`
+- Trocar o `navigate` da linha:
+  - Se `tipo === 'autorizado'` → `/vendas/meus-parceiros/${id}/editar`.
+  - Caso contrário, manter comportamento atual (ou remover cursor-pointer/ArrowRight para outros tipos — manter por ora).
+- Botão de transferência (UserCheck) continua funcionando via `stopPropagation`.
 
-### Fora de escopo
+## Detalhes técnicos
 
-- Não altera o mapa municipal (drill-down) — botões só aparecem na visão Brasil.
-- Não cria botões para mesorregiões dentro de um estado.
-- Não muda schema do banco.
+- A checagem de propriedade usa: `admin_users` → `id` via `user_id = auth.uid()`, comparando com `autorizado.vendedor_id`. Mesmo padrão já usado na query de Meus Parceiros.
+- RLS de `autorizados`: validar que policies de UPDATE permitem o vendedor atualizar o próprio autorizado. Caso negue, criar policy:
+  ```sql
+  CREATE POLICY "Vendedor edita seu autorizado"
+  ON public.autorizados FOR UPDATE TO authenticated
+  USING (vendedor_id = (SELECT id FROM admin_users WHERE user_id = auth.uid()))
+  WITH CHECK (vendedor_id = (SELECT id FROM admin_users WHERE user_id = auth.uid()));
+  ```
+  Confirmar policies atuais antes de criar nova (somente se faltar).
+
+## Fora de escopo
+
+- Mudar etapa/vendedor/contrato/preços pelo vendedor.
+- Criar novo autorizado pelo vendedor.
+- Edição de representantes e franqueados.
