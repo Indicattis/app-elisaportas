@@ -2,11 +2,17 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+export interface FreteRegiaoCidade {
+  id: string;     // cidade_id (frete_cidades.id)
+  nome: string;
+  estado: string;
+}
+
 export interface FreteRegiao {
   id: string;
   transportadora_id: string;
   nome: string;
-  estados: string[];
+  cidades: FreteRegiaoCidade[];
 }
 
 export function useFreteRegioes(transportadoraId?: string) {
@@ -18,7 +24,7 @@ export function useFreteRegioes(transportadoraId?: string) {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from('frete_regioes')
-        .select('id, transportadora_id, nome, frete_regiao_estados(estado)')
+        .select('id, transportadora_id, nome, frete_regiao_cidades(cidade_id, frete_cidades(id, cidade, estado))')
         .eq('transportadora_id', transportadoraId)
         .order('nome');
       if (error) throw error;
@@ -26,13 +32,17 @@ export function useFreteRegioes(transportadoraId?: string) {
         id: r.id,
         transportadora_id: r.transportadora_id,
         nome: r.nome,
-        estados: (r.frete_regiao_estados ?? []).map((e: any) => e.estado).sort(),
+        cidades: ((r.frete_regiao_cidades ?? [])
+          .map((rc: any) => rc.frete_cidades)
+          .filter(Boolean)
+          .map((c: any) => ({ id: c.id, nome: c.cidade, estado: c.estado })) as FreteRegiaoCidade[])
+          .sort((a, b) => (a.estado + a.nome).localeCompare(b.estado + b.nome)),
       })) as FreteRegiao[];
     },
   });
 
   const saveRegiao = useMutation({
-    mutationFn: async (input: { id?: string; nome: string; estados: string[] }) => {
+    mutationFn: async (input: { id?: string; nome: string; cidadeIds: string[] }) => {
       if (!transportadoraId) throw new Error('Transportadora não selecionada');
       let regiaoId = input.id;
       if (regiaoId) {
@@ -46,11 +56,11 @@ export function useFreteRegioes(transportadoraId?: string) {
         if (error) throw error;
         regiaoId = data.id;
       }
-      // Reset estados
-      await (supabase as any).from('frete_regiao_estados').delete().eq('regiao_id', regiaoId);
-      if (input.estados.length) {
-        const rows = input.estados.map(e => ({ regiao_id: regiaoId, estado: e }));
-        const { error: e2 } = await (supabase as any).from('frete_regiao_estados').insert(rows);
+      // Reset cidades
+      await (supabase as any).from('frete_regiao_cidades').delete().eq('regiao_id', regiaoId);
+      if (input.cidadeIds.length) {
+        const rows = input.cidadeIds.map(cid => ({ regiao_id: regiaoId, cidade_id: cid }));
+        const { error: e2 } = await (supabase as any).from('frete_regiao_cidades').insert(rows);
         if (e2) throw e2;
       }
       return regiaoId;
