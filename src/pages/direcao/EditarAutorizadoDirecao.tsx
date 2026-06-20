@@ -509,13 +509,14 @@ export default function EditarAutorizadoDirecao() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                  <div className="md:col-span-6 space-y-2">
+                  <div className={`${isVendedorMode ? 'md:col-span-12' : 'md:col-span-6'} space-y-2`}>
                     <Label className="text-white/70 text-xs uppercase tracking-wide">Nome *</Label>
                     <Input placeholder="Nome do autorizado" value={form.nome}
                       onChange={(e) => setForm({ ...form, nome: e.target.value })}
                       className={`bg-white/5 border-white/10 text-white ${errors.nome ? "border-red-500" : ""}`} />
                     {errors.nome && <p className="text-xs text-red-500">{errors.nome}</p>}
                   </div>
+                  {!isVendedorMode && (
                   <div className="md:col-span-4 space-y-2">
                     <Label className="text-white/70 text-xs uppercase tracking-wide">Etapa</Label>
                     <Select value={form.etapa} onValueChange={(v) => setForm({ ...form, etapa: v })}>
@@ -529,6 +530,8 @@ export default function EditarAutorizadoDirecao() {
                       </SelectContent>
                     </Select>
                   </div>
+                  )}
+                  {!isVendedorMode && (
                   <div className="md:col-span-2 space-y-2">
                     <Label className="text-white/70 text-xs uppercase tracking-wide">Status</Label>
                     <div className="flex items-center gap-2 h-10 px-3 rounded-md bg-white/5 border border-white/10">
@@ -536,6 +539,7 @@ export default function EditarAutorizadoDirecao() {
                       <Label htmlFor="ativo" className="text-white/80 text-sm cursor-pointer">{form.ativo ? 'Ativo' : 'Inativo'}</Label>
                     </div>
                   </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -578,12 +582,14 @@ export default function EditarAutorizadoDirecao() {
                       className={`bg-white/5 border-white/10 text-white ${errors.whatsapp ? "border-red-500" : ""}`} />
                     {errors.whatsapp && <p className="text-xs text-red-500">{errors.whatsapp}</p>}
                   </div>
+                  {!isVendedorMode && (
                   <div className="md:col-span-2 space-y-2">
                     <Label className="text-white/70 text-xs uppercase tracking-wide">Chave Pix</Label>
                     <Input placeholder="CPF/CNPJ, e-mail, telefone ou chave aleatória" value={form.chave_pix}
                       onChange={(e) => setForm({ ...form, chave_pix: e.target.value })}
                       className="bg-white/5 border-white/10 text-white" />
                   </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -636,6 +642,7 @@ export default function EditarAutorizadoDirecao() {
                   </div>
                 </div>
 
+                {!isVendedorMode && (
                 <div className="pt-4 border-t border-white/10 space-y-3">
                   <div>
                     <Label className="text-white/80 text-sm font-medium">Cidades Secundárias</Label>
@@ -692,10 +699,12 @@ export default function EditarAutorizadoDirecao() {
                     </div>
                   </div>
                 </div>
+                )}
               </CardContent>
             </Card>
 
             {/* SEÇÃO 4: Equipe */}
+            {!isVendedorMode && (
             <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
               <CardHeader className="pb-4">
                 <div className="flex items-center gap-2">
@@ -736,8 +745,10 @@ export default function EditarAutorizadoDirecao() {
                 </div>
               </CardContent>
             </Card>
+            )}
 
             {/* SEÇÃO 5: Preços de Instalação */}
+            {!isVendedorMode && (
             <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
               <CardHeader className="pb-4">
                 <div className="flex items-center gap-2">
@@ -774,6 +785,7 @@ export default function EditarAutorizadoDirecao() {
                 </div>
               </CardContent>
             </Card>
+            )}
 
             {/* SEÇÃO 6: Arquivos */}
             <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
@@ -799,7 +811,7 @@ export default function EditarAutorizadoDirecao() {
                       />
                     )}
                   </div>
-                  {id && (
+                  {!isVendedorMode && id && (
                     <div className="space-y-2">
                       <Label className="text-white/70 text-xs uppercase tracking-wide flex items-center gap-1.5">
                         <FileText className="w-3 h-3" /> Contrato
