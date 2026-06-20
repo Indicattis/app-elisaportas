@@ -210,7 +210,13 @@ export default function MeusParceiros() {
             return (
               <div
                 key={parceiro.id}
-                onClick={() => navigate(`/dashboard/parceiros/${parceiro.tipo_parceiro}/${parceiro.id}`)}
+                onClick={() => {
+                  if (tipo === 'autorizado') {
+                    navigate(`/vendas/meus-parceiros/${parceiro.id}/editar`);
+                  } else {
+                    navigate(`/dashboard/parceiros/${parceiro.tipo_parceiro}/${parceiro.id}`);
+                  }
+                }}
                 className="group relative flex items-center gap-4 pl-3 pr-4 py-3 rounded-full border border-white/10 bg-white/5 backdrop-blur-xl cursor-pointer transition-all duration-300 hover:bg-white/10 hover:border-white/20"
               >
                 {/* Avatar com inicial + ícone do tipo */}
