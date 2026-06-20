@@ -73,7 +73,7 @@ export default function FreteValoresTransportadoras() {
           <div className="p-3 rounded-2xl bg-primary/10"><MapPinned className="h-7 w-7 text-primary" /></div>
           <div>
             <div className="text-white font-medium">Nenhuma região cadastrada</div>
-            <div className="text-xs text-white/50 mt-1">Crie uma região selecionando estados no mapa.</div>
+            <div className="text-xs text-white/50 mt-1">Crie uma região escolhendo cidades dentro de cada estado.</div>
           </div>
           <Button onClick={openNew} className="bg-primary text-primary-foreground mt-2">
             <Plus className="h-4 w-4 mr-1.5" /> Nova região
@@ -107,7 +107,7 @@ export default function FreteValoresTransportadoras() {
           <AlertDialogHeader>
             <AlertDialogTitle className="text-white">Excluir região</AlertDialogTitle>
             <AlertDialogDescription className="text-white/60">
-              Os estados e preços por largura desta região serão removidos. Esta ação não pode ser desfeita.
+              As cidades e preços por largura desta região serão removidos. Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
