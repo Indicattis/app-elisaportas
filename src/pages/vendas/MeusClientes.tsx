@@ -247,7 +247,6 @@ export default function MeusClientes() {
           clientesFiltrados.map((cliente) => {
             const isCR = cliente.tipo_cliente === 'CR';
             const s = getTipoStyle(isCR);
-            const percent = isCR ? 100 : 50;
 
             return (
               <div
