@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useQuery } from '@tanstack/react-query';
-import { FileDown, Loader2 } from 'lucide-react';
+import { FileDown, Loader2, FileSignature, FileCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { generateContratoElisaPDF, ContratoElisaData } from '@/utils/contratoElisaPDFGenerator';
@@ -139,42 +139,71 @@ export function GerarContratoElisaOrcamentoModal({ open, onOpenChange, orcamento
   };
 
   const fields = useMemo(() => [
-    { key: 'comprador_nome', label: 'Nome do comprador', type: 'input' },
-    { key: 'comprador_documento', label: 'CPF / CNPJ', type: 'input' },
-    { key: 'comprador_endereco', label: 'Endereço completo', type: 'textarea' },
-    { key: 'quantidade_portas', label: 'Quantidade de portas', type: 'input' },
-    { key: 'material_detalhado', label: 'Material detalhado', type: 'textarea' },
-    { key: 'quantidade_motores', label: 'Motores (qtd + peso)', type: 'input' },
-    { key: 'cor', label: 'Cor da pintura (ou GALVANIZADA)', type: 'select' },
-    { key: 'dimensoes', label: 'Dimensões da(s) porta(s)', type: 'input' },
-    { key: 'valor_total', label: 'Valor total', type: 'input' },
-    { key: 'condicao_pagamento', label: 'Condição de pagamento', type: 'textarea' },
-    { key: 'cidade_assinatura', label: 'Cidade da assinatura', type: 'input' },
-    { key: 'data_assinatura', label: 'Data da assinatura', type: 'input' },
+    { key: 'comprador_nome', label: 'Nome do comprador', type: 'input' as const, icon: 'user' },
+    { key: 'comprador_documento', label: 'CPF / CNPJ', type: 'input' as const, icon: 'doc' },
+    { key: 'comprador_endereco', label: 'Endereço completo', type: 'textarea' as const, icon: 'map' },
+    { key: 'quantidade_portas', label: 'Quantidade de portas', type: 'input' as const, icon: 'hash' },
+    { key: 'material_detalhado', label: 'Material detalhado', type: 'textarea' as const, icon: 'box' },
+    { key: 'quantidade_motores', label: 'Motores (qtd + peso)', type: 'input' as const, icon: 'zap' },
+    { key: 'cor', label: 'Cor da pintura (ou GALVANIZADA)', type: 'select' as const, icon: 'palette' },
+    { key: 'dimensoes', label: 'Dimensões da(s) porta(s)', type: 'input' as const, icon: 'ruler' },
+    { key: 'valor_total', label: 'Valor total', type: 'input' as const, icon: 'dollar' },
+    { key: 'condicao_pagamento', label: 'Condição de pagamento', type: 'textarea' as const, icon: 'credit' },
+    { key: 'cidade_assinatura', label: 'Cidade da assinatura', type: 'input' as const, icon: 'city' },
+    { key: 'data_assinatura', label: 'Data da assinatura', type: 'input' as const, icon: 'calendar' },
   ] as const, []);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
-        <DialogHeader>
-          <DialogTitle>Gerar Contrato — GRUPO ELISA (Orçamento)</DialogTitle>
-        </DialogHeader>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden p-0">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-6 border-b">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold flex items-center gap-3">
+              <div className="p-2.5 bg-primary/10 rounded-xl">
+                <FileSignature className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <span>Gerar Contrato — GRUPO ELISA</span>
+                <p className="text-sm font-normal text-muted-foreground">Orçamento</p>
+              </div>
+            </DialogTitle>
+          </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto pr-1">
+          {/* Info badge */}
+          <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground bg-background/60 backdrop-blur-sm rounded-lg px-3 py-2 border border-primary/10">
+            <FileCheck className="w-3.5 h-3.5 text-primary" />
+            <span>Preencha os dados abaixo para gerar o contrato em PDF e salvá-lo automaticamente.</span>
+          </div>
+        </div>
+
+        {/* Form */}
+        <div className="flex-1 overflow-y-auto px-6 py-5">
           {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-6 w-6 animate-spin" />
+            <div className="flex flex-col items-center justify-center py-12 gap-3">
+              <div className="w-10 h-10 rounded-full border-4 border-muted border-t-primary animate-spin" />
+              <span className="text-sm text-muted-foreground">Carregando dados do orçamento...</span>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {fields.map(f => (
-                <div key={f.key} className={f.type === 'textarea' ? 'md:col-span-2 space-y-1' : 'space-y-1'}>
-                  <Label htmlFor={f.key}>{f.label}</Label>
+                <div key={f.key} className={f.type === 'textarea' ? 'md:col-span-2 space-y-1.5' : 'space-y-1.5'}>
+                  <Label htmlFor={f.key} className="text-sm font-medium text-foreground/90 flex items-center gap-2">
+                    {f.label}
+                  </Label>
                   {f.type === 'textarea' ? (
-                    <Textarea id={f.key} rows={3} value={form[f.key]} onChange={e => update(f.key, e.target.value)} />
+                    <Textarea
+                      id={f.key}
+                      rows={3}
+                      value={form[f.key]}
+                      onChange={e => update(f.key, e.target.value)}
+                      className="bg-background/60 border-border/60 focus:border-primary/40 focus:ring-primary/20 resize-none"
+                    />
                   ) : f.type === 'select' ? (
                     <Select value={form[f.key] || 'GALVANIZADA'} onValueChange={v => update(f.key, v)}>
-                      <SelectTrigger id={f.key}><SelectValue placeholder="Selecione a cor" /></SelectTrigger>
+                      <SelectTrigger id={f.key} className="bg-background/60 border-border/60 focus:ring-primary/20">
+                        <SelectValue placeholder="Selecione a cor" />
+                      </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="GALVANIZADA">GALVANIZADA</SelectItem>
                         {(cores || []).filter(c => c.nome && c.nome.toUpperCase() !== 'GALVANIZADA').map(c => (
@@ -186,7 +215,12 @@ export function GerarContratoElisaOrcamentoModal({ open, onOpenChange, orcamento
                       </SelectContent>
                     </Select>
                   ) : (
-                    <Input id={f.key} value={form[f.key]} onChange={e => update(f.key, e.target.value)} />
+                    <Input
+                      id={f.key}
+                      value={form[f.key]}
+                      onChange={e => update(f.key, e.target.value)}
+                      className="bg-background/60 border-border/60 focus:border-primary/40 focus:ring-primary/20"
+                    />
                   )}
                 </div>
               ))}
@@ -194,13 +228,29 @@ export function GerarContratoElisaOrcamentoModal({ open, onOpenChange, orcamento
           )}
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isUploading}>Cancelar</Button>
-          <Button onClick={handleGerar} disabled={loading || isUploading || !orcamentoId}>
-            {isUploading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileDown className="h-4 w-4 mr-2" />}
+        {/* Footer */}
+        <div className="p-5 border-t bg-gradient-to-r from-muted/30 via-muted/10 to-transparent flex items-center justify-end gap-3">
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isUploading}
+            className="h-11 px-5 bg-background/80 hover:bg-background border-dashed"
+          >
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleGerar}
+            disabled={loading || isUploading || !orcamentoId}
+            className="h-11 px-6 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20"
+          >
+            {isUploading ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <FileDown className="h-4 w-4 mr-2" />
+            )}
             Gerar e salvar
           </Button>
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );
