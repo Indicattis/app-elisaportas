@@ -27,8 +27,20 @@ export default function MeusClientes() {
     queryKey: ['meus-clientes', user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
-      
-      const { data, error } = await supabase
+
+      // Buscar IDs dos clientes do vendedor
+      const { data: idsData, error: idsError } = await supabase
+        .from('clientes')
+        .select('id')
+        .eq('created_by', user.id)
+        .eq('ativo', true);
+
+      if (idsError) throw idsError;
+      const ids = idsData?.map(c => c.id) || [];
+      if (ids.length === 0) return [];
+
+      // Buscar detalhes dos clientes
+      const { data: clientesData, error: clientesError } = await supabase
         .from('clientes')
         .select(`
           id,
@@ -43,12 +55,34 @@ export default function MeusClientes() {
           fidelizado,
           parceiro
         `)
-        .eq('created_by', user.id)
-        .eq('ativo', true)
+        .in('id', ids)
         .order('nome', { ascending: true });
-      
-      if (error) throw error;
-      return data || [];
+
+      if (clientesError) throw clientesError;
+
+      // Buscar vendas desses clientes
+      const { data: vendasData, error: vendasError } = await supabase
+        .from('vendas')
+        .select('cliente_id, valor_venda')
+        .in('cliente_id', ids)
+        .not('cliente_id', 'is', null);
+
+      if (vendasError) throw vendasError;
+
+      // Agregar vendas por cliente
+      const agg: Record<string, { qtd: number; total: number }> = {};
+      vendasData?.forEach((v) => {
+        const id = v.cliente_id as string;
+        if (!agg[id]) agg[id] = { qtd: 0, total: 0 };
+        agg[id].qtd += 1;
+        agg[id].total += Number(v.valor_venda || 0);
+      });
+
+      return (clientesData || []).map((c) => ({
+        ...c,
+        qtd_compras: agg[c.id]?.qtd || 0,
+        valor_total: agg[c.id]?.total || 0,
+      }));
     },
     enabled: !!user?.id
   });
@@ -213,7 +247,6 @@ export default function MeusClientes() {
           clientesFiltrados.map((cliente) => {
             const isCR = cliente.tipo_cliente === 'CR';
             const s = getTipoStyle(isCR);
-            const percent = isCR ? 100 : 50;
 
             return (
               <div
@@ -257,14 +290,16 @@ export default function MeusClientes() {
                   </div>
                 )}
 
-                {/* Barra */}
-                <div className="flex-1 min-w-0">
-                  <div className="h-2.5 rounded-full bg-white/10 overflow-hidden">
-                    <div
-                      className={`h-full rounded-full bg-gradient-to-r ${s.bar} transition-all duration-500`}
-                      style={{ width: `${percent}%` }}
-                    />
+                {/* Compras e valor total */}
+                <div className="flex-1 min-w-0 flex items-center gap-4">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-white/90 font-semibold text-sm">{(cliente as any).qtd_compras || 0}</span>
+                    <span className="text-white/50 text-xs">compra{(cliente as any).qtd_compras === 1 ? '' : 's'}</span>
                   </div>
+                  <div className="w-px h-4 bg-white/10" />
+                  <span className="text-white/90 font-semibold text-sm">
+                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format((cliente as any).valor_total || 0)}
+                  </span>
                 </div>
 
                 {/* Badge tipo */}
