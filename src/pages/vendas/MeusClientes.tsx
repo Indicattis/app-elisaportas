@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Plus, Search, Users, Target, Star, Triangle, UserCheck, MapPin, ArrowRight, UserPlus } from 'lucide-react';
+import { Plus, Search, Users, Target, Star, Triangle, UserCheck, MapPin, ArrowRight, UserPlus, ArrowUpDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
@@ -10,10 +10,18 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { NovoClienteMinimalistaModal } from '@/components/clientes/NovoClienteMinimalistaModal';
 import { DelegarClienteModal } from '@/components/clientes/DelegarClienteModal';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 const META_CR = 500;
 
 type TipoFiltro = '' | 'CR' | 'CE' | 'fidelizado' | 'parceiro';
+type OrdenacaoFiltro = 'nome' | 'valor_desc' | 'valor_asc' | 'qtd_desc' | 'qtd_asc';
 
 export default function MeusClientes() {
   const navigate = useNavigate();
@@ -22,6 +30,9 @@ export default function MeusClientes() {
   const [modalOpen, setModalOpen] = useState(false);
   const [delegarCliente, setDelegarCliente] = useState<{ id: string; nome: string } | null>(null);
   const [tipoFiltro, setTipoFiltro] = useState<TipoFiltro>('');
+  const [ordenacao, setOrdenacao] = useState<OrdenacaoFiltro>('nome');
+  const [estadoFiltro, setEstadoFiltro] = useState<string>('');
+  const [cidadeFiltro, setCidadeFiltro] = useState<string>('');
 
   const { data: clientes, isLoading } = useQuery({
     queryKey: ['meus-clientes', user?.id],
@@ -96,19 +107,46 @@ export default function MeusClientes() {
     return { total, totalCR, totalFid, percentual };
   }, [clientes]);
 
-  const clientesFiltrados = (clientes || []).filter(cliente => {
-    const matchBusca =
-      cliente.nome.toLowerCase().includes(busca.toLowerCase()) ||
-      cliente.cpf_cnpj?.includes(busca) ||
-      cliente.telefone?.includes(busca);
-    if (!matchBusca) return false;
-    if (!tipoFiltro) return true;
-    if (tipoFiltro === 'CR') return cliente.tipo_cliente === 'CR';
-    if (tipoFiltro === 'CE') return cliente.tipo_cliente !== 'CR';
-    if (tipoFiltro === 'fidelizado') return !!cliente.fidelizado;
-    if (tipoFiltro === 'parceiro') return !!cliente.parceiro;
-    return true;
-  });
+  // Opções únicas de estado / cidade
+  const estadosDisponiveis = useMemo(() => {
+    const set = new Set<string>();
+    (clientes || []).forEach(c => { if (c.estado) set.add(c.estado); });
+    return Array.from(set).sort();
+  }, [clientes]);
+
+  const cidadesDisponiveis = useMemo(() => {
+    const set = new Set<string>();
+    (clientes || [])
+      .filter(c => !estadoFiltro || c.estado === estadoFiltro)
+      .forEach(c => { if (c.cidade) set.add(c.cidade); });
+    return Array.from(set).sort();
+  }, [clientes, estadoFiltro]);
+
+  const clientesFiltrados = (clientes || [])
+    .filter(cliente => {
+      const matchBusca =
+        cliente.nome.toLowerCase().includes(busca.toLowerCase()) ||
+        cliente.cpf_cnpj?.includes(busca) ||
+        cliente.telefone?.includes(busca);
+      if (!matchBusca) return false;
+      if (estadoFiltro && cliente.estado !== estadoFiltro) return false;
+      if (cidadeFiltro && cliente.cidade !== cidadeFiltro) return false;
+      if (!tipoFiltro) return true;
+      if (tipoFiltro === 'CR') return cliente.tipo_cliente === 'CR';
+      if (tipoFiltro === 'CE') return cliente.tipo_cliente !== 'CR';
+      if (tipoFiltro === 'fidelizado') return !!cliente.fidelizado;
+      if (tipoFiltro === 'parceiro') return !!cliente.parceiro;
+      return true;
+    })
+    .sort((a: any, b: any) => {
+      switch (ordenacao) {
+        case 'valor_desc': return (b.valor_total || 0) - (a.valor_total || 0);
+        case 'valor_asc':  return (a.valor_total || 0) - (b.valor_total || 0);
+        case 'qtd_desc':   return (b.qtd_compras || 0) - (a.qtd_compras || 0);
+        case 'qtd_asc':    return (a.qtd_compras || 0) - (b.qtd_compras || 0);
+        default:           return (a.nome || '').localeCompare(b.nome || '');
+      }
+    });
 
   const getIniciais = (nome?: string | null) => {
     if (!nome) return '?';
@@ -235,6 +273,64 @@ export default function MeusClientes() {
             {opt.label}
           </button>
         ))}
+      </div>
+
+      {/* Ordenação + Estado/Cidade */}
+      <div className="flex flex-wrap gap-2 mb-6">
+        <Select value={ordenacao} onValueChange={(v) => setOrdenacao(v as OrdenacaoFiltro)}>
+          <SelectTrigger className="w-[200px] bg-primary/5 border-primary/10 text-white">
+            <ArrowUpDown className="w-3.5 h-3.5 mr-1 text-white/50" />
+            <SelectValue placeholder="Ordenar" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="nome">Nome (A-Z)</SelectItem>
+            <SelectItem value="valor_desc">Maior valor comprado</SelectItem>
+            <SelectItem value="valor_asc">Menor valor comprado</SelectItem>
+            <SelectItem value="qtd_desc">Mais compras</SelectItem>
+            <SelectItem value="qtd_asc">Menos compras</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={estadoFiltro || 'all'}
+          onValueChange={(v) => { setEstadoFiltro(v === 'all' ? '' : v); setCidadeFiltro(''); }}
+        >
+          <SelectTrigger className="w-[160px] bg-primary/5 border-primary/10 text-white">
+            <MapPin className="w-3.5 h-3.5 mr-1 text-white/50" />
+            <SelectValue placeholder="Estado" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos estados</SelectItem>
+            {estadosDisponiveis.map(uf => (
+              <SelectItem key={uf} value={uf}>{uf}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={cidadeFiltro || 'all'}
+          onValueChange={(v) => setCidadeFiltro(v === 'all' ? '' : v)}
+        >
+          <SelectTrigger className="w-[200px] bg-primary/5 border-primary/10 text-white">
+            <MapPin className="w-3.5 h-3.5 mr-1 text-white/50" />
+            <SelectValue placeholder="Cidade" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas cidades</SelectItem>
+            {cidadesDisponiveis.map(c => (
+              <SelectItem key={c} value={c}>{c}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {(estadoFiltro || cidadeFiltro || ordenacao !== 'nome') && (
+          <button
+            onClick={() => { setEstadoFiltro(''); setCidadeFiltro(''); setOrdenacao('nome'); }}
+            className="px-3 py-1.5 rounded-full text-sm bg-white/5 text-white/70 hover:bg-white/10"
+          >
+            Limpar
+          </button>
+        )}
       </div>
 
       {/* Lista de clientes */}
