@@ -140,10 +140,10 @@ export function CidadeCollapsible({
             Nenhum autorizado nesta cidade
           </div>
         ) : (
-          <div className="mt-2 rounded-lg overflow-hidden border border-primary/10">
+          <div className="mt-2 rounded-lg overflow-hidden border border-white/10 bg-white/[0.03] backdrop-blur-sm">
             <Table className="text-xs">
               <TableHeader>
-                <TableRow className="border-primary/10 hover:bg-transparent">
+                <TableRow className="border-white/10 hover:bg-transparent">
                   <TableHead className="text-xs text-white/70 w-10"></TableHead>
                   <TableHead className="text-xs text-white/70">Autorizado</TableHead>
                   <TableHead className="text-xs text-white/70">Etapa</TableHead>
