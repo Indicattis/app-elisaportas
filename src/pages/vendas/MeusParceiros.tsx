@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Handshake, Building2, Users, Store, MapPin, Phone } from 'lucide-react';
+import { Handshake, Building2, Users, Store, MapPin, Phone, ArrowRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
@@ -66,19 +66,56 @@ export default function MeusParceiros() {
     }
   };
 
-  const getTipoColor = (tipo: TipoParceiro) => {
+  const getTipoStyle = (tipo: TipoParceiro) => {
     switch (tipo) {
-      case 'autorizado': return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
-      case 'representante': return 'bg-purple-500/20 text-purple-400 border-purple-500/30';
-      case 'franqueado': return 'bg-green-500/20 text-green-400 border-green-500/30';
-      default: return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
+      case 'autorizado':
+        return {
+          bar: 'from-blue-400 to-blue-600',
+          ring: 'ring-blue-400/40',
+          avatarBg: 'bg-gradient-to-br from-blue-500/30 to-blue-700/20',
+          iconColor: 'text-blue-300',
+          badgeBg: 'bg-blue-500/15 border-blue-400/30 text-blue-300',
+        };
+      case 'representante':
+        return {
+          bar: 'from-purple-400 to-purple-600',
+          ring: 'ring-purple-400/40',
+          avatarBg: 'bg-gradient-to-br from-purple-500/30 to-purple-700/20',
+          iconColor: 'text-purple-300',
+          badgeBg: 'bg-purple-500/15 border-purple-400/30 text-purple-300',
+        };
+      case 'franqueado':
+        return {
+          bar: 'from-emerald-400 to-green-500',
+          ring: 'ring-emerald-400/40',
+          avatarBg: 'bg-gradient-to-br from-emerald-500/30 to-green-600/20',
+          iconColor: 'text-emerald-300',
+          badgeBg: 'bg-emerald-500/15 border-emerald-400/30 text-emerald-300',
+        };
+      default:
+        return {
+          bar: 'from-slate-400 to-slate-500',
+          ring: 'ring-white/20',
+          avatarBg: 'bg-white/10',
+          iconColor: 'text-white/70',
+          badgeBg: 'bg-white/10 border-white/15 text-white/70',
+        };
     }
+  };
+
+  const getIniciais = (nome?: string | null) => {
+    if (!nome) return '?';
+    return nome.trim().split(' ').filter(Boolean).slice(0, 2).map(p => p[0]?.toUpperCase() ?? '').join('') || '?';
   };
 
   // Contadores por tipo
   const autorizados = parceiros?.filter(p => p.tipo_parceiro === 'autorizado').length || 0;
   const representantes = parceiros?.filter(p => p.tipo_parceiro === 'representante').length || 0;
   const franqueados = parceiros?.filter(p => p.tipo_parceiro === 'franqueado').length || 0;
+
+  const totalParceiros = parceiros?.length || 1;
+  const countByTipo = (tipo: TipoParceiro) =>
+    parceiros?.filter(p => p.tipo_parceiro === tipo).length || 0;
 
   return (
     <MinimalistLayout 
@@ -90,96 +127,137 @@ export default function MeusParceiros() {
         { label: "Meus Parceiros" }
       ]}
     >
-      {/* Cards de contagem */}
+      {/* Cards de estatísticas (índices coloridos) */}
       <div className="grid grid-cols-3 gap-4 mb-6">
-        <button
-          onClick={() => setTipoFiltro(tipoFiltro === 'autorizado' ? '' : 'autorizado')}
-          className={`bg-primary/5 border rounded-xl p-4 backdrop-blur-sm text-center transition-all ${
-            tipoFiltro === 'autorizado' ? 'border-blue-500/50 bg-blue-500/10' : 'border-primary/10 hover:bg-primary/10'
-          }`}
-        >
-          <Store className="w-5 h-5 text-blue-400 mx-auto mb-2" />
-          <p className="text-2xl font-bold text-white">{autorizados}</p>
-          <p className="text-xs text-white/60">Autorizados</p>
-        </button>
-        
-        <button
-          onClick={() => setTipoFiltro(tipoFiltro === 'representante' ? '' : 'representante')}
-          className={`bg-primary/5 border rounded-xl p-4 backdrop-blur-sm text-center transition-all ${
-            tipoFiltro === 'representante' ? 'border-purple-500/50 bg-purple-500/10' : 'border-primary/10 hover:bg-primary/10'
-          }`}
-        >
-          <Users className="w-5 h-5 text-purple-400 mx-auto mb-2" />
-          <p className="text-2xl font-bold text-white">{representantes}</p>
-          <p className="text-xs text-white/60">Representantes</p>
-        </button>
-        
-        <button
-          onClick={() => setTipoFiltro(tipoFiltro === 'franqueado' ? '' : 'franqueado')}
-          className={`bg-primary/5 border rounded-xl p-4 backdrop-blur-sm text-center transition-all ${
-            tipoFiltro === 'franqueado' ? 'border-green-500/50 bg-green-500/10' : 'border-primary/10 hover:bg-primary/10'
-          }`}
-        >
-          <Building2 className="w-5 h-5 text-green-400 mx-auto mb-2" />
-          <p className="text-2xl font-bold text-white">{franqueados}</p>
-          <p className="text-xs text-white/60">Franqueados</p>
-        </button>
+        <div className="relative overflow-hidden rounded-2xl p-4 backdrop-blur-xl border border-blue-400/20 bg-gradient-to-br from-blue-500/15 via-blue-600/5 to-transparent">
+          <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-blue-500/20 blur-2xl" />
+          <div className="relative flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-500/20 border border-blue-400/30 flex items-center justify-center">
+              <Store className="w-5 h-5 text-blue-300" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-white leading-none">{autorizados}</p>
+              <p className="text-xs text-blue-200/70 mt-1">Autorizados</p>
+            </div>
+          </div>
+        </div>
+        <div className="relative overflow-hidden rounded-2xl p-4 backdrop-blur-xl border border-purple-400/20 bg-gradient-to-br from-purple-500/15 via-purple-600/5 to-transparent">
+          <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-purple-500/20 blur-2xl" />
+          <div className="relative flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-purple-500/20 border border-purple-400/30 flex items-center justify-center">
+              <Users className="w-5 h-5 text-purple-300" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-white leading-none">{representantes}</p>
+              <p className="text-xs text-purple-200/70 mt-1">Representantes</p>
+            </div>
+          </div>
+        </div>
+        <div className="relative overflow-hidden rounded-2xl p-4 backdrop-blur-xl border border-emerald-400/20 bg-gradient-to-br from-emerald-500/15 via-green-600/5 to-transparent">
+          <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-emerald-500/20 blur-2xl" />
+          <div className="relative flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center">
+              <Building2 className="w-5 h-5 text-emerald-300" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-white leading-none">{franqueados}</p>
+              <p className="text-xs text-emerald-200/70 mt-1">Franqueados</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Filtro por tipo */}
+      <div className="flex flex-wrap gap-2 mb-6">
+        {([
+          { value: '', label: 'Todos' },
+          { value: 'autorizado', label: 'Autorizados' },
+          { value: 'representante', label: 'Representantes' },
+          { value: 'franqueado', label: 'Franqueados' },
+        ] as { value: TipoParceiro | ''; label: string }[]).map(opt => (
+          <button
+            key={opt.value}
+            onClick={() => setTipoFiltro(opt.value)}
+            className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
+              tipoFiltro === opt.value
+                ? 'bg-blue-500 text-white'
+                : 'bg-primary/5 text-white/70 hover:bg-primary/10'
+            }`}
+          >
+            {opt.label}
+          </button>
+        ))}
       </div>
 
       {/* Lista de parceiros */}
       <div className="space-y-3">
         {isLoading ? (
           Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-24 bg-white/5" />
+            <Skeleton key={i} className="h-20 bg-white/5" />
           ))
         ) : parceirosFiltrados.length > 0 ? (
           parceirosFiltrados.map((parceiro) => {
-            const TipoIcon = getTipoIcon(parceiro.tipo_parceiro as TipoParceiro);
+            const tipo = parceiro.tipo_parceiro as TipoParceiro;
+            const TipoIcon = getTipoIcon(tipo);
             const etapaAtual = getCurrentEtapa(parceiro);
-            const etapasInfo = getEtapasByTipo(parceiro.tipo_parceiro as TipoParceiro);
-            
+            const etapasInfo = getEtapasByTipo(tipo);
+            const s = getTipoStyle(tipo);
+            const sameTipoCount = Math.max(1, countByTipo(tipo));
+            const percent = Math.min(100, Math.max(8, (sameTipoCount / totalParceiros) * 100));
+
             return (
               <div
                 key={parceiro.id}
                 onClick={() => navigate(`/dashboard/parceiros/${parceiro.tipo_parceiro}/${parceiro.id}`)}
-                className="bg-primary/5 border border-primary/10 rounded-xl p-4 backdrop-blur-sm
-                           hover:bg-primary/10 transition-colors cursor-pointer"
+                className="group relative flex items-center gap-4 pl-3 pr-4 py-3 rounded-full border border-white/10 bg-white/5 backdrop-blur-xl cursor-pointer transition-all duration-300 hover:bg-white/10 hover:border-white/20"
               >
-                <div className="flex items-start gap-4">
-                  <div className={`p-2 rounded-lg ${getTipoColor(parceiro.tipo_parceiro as TipoParceiro).split(' ').slice(0, 2).join(' ')}`}>
-                    <TipoIcon className="w-5 h-5" />
+                {/* Avatar com inicial + ícone do tipo */}
+                <div className="relative flex-shrink-0">
+                  <div className={`w-11 h-11 rounded-full ${s.avatarBg} ring-2 ${s.ring} flex items-center justify-center font-bold text-white text-sm shadow-lg`}>
+                    {getIniciais(parceiro.nome)}
                   </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="text-white font-medium truncate">{parceiro.nome}</h3>
-                      <span className={`text-xs px-2 py-0.5 rounded-full border ${getTipoColor(parceiro.tipo_parceiro as TipoParceiro)}`}>
-                        {TIPO_PARCEIRO_LABELS[parceiro.tipo_parceiro as TipoParceiro]}
-                      </span>
-                    </div>
-                    
-                    {etapaAtual && (
-                      <p className="text-sm text-white/60 mb-2">
-                        Etapa: {etapasInfo.etapas[etapaAtual] || etapaAtual}
-                      </p>
-                    )}
-                    
-                    <div className="flex items-center gap-4 text-xs text-white/50">
-                      {(parceiro.cidade || parceiro.estado) && (
-                        <div className="flex items-center gap-1">
-                          <MapPin className="w-3 h-3" />
-                          <span>{[parceiro.cidade, parceiro.estado].filter(Boolean).join(' - ')}</span>
-                        </div>
-                      )}
-                      {parceiro.telefone && (
-                        <div className="flex items-center gap-1">
-                          <Phone className="w-3 h-3" />
-                          <span>{parceiro.telefone}</span>
-                        </div>
-                      )}
-                    </div>
+                  <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-slate-900 border border-white/10 flex items-center justify-center">
+                    <TipoIcon className={`w-3 h-3 ${s.iconColor}`} />
                   </div>
                 </div>
+
+                {/* Nome + etapa */}
+                <div className="min-w-0 w-44 sm:w-52">
+                  <h4 className="text-white font-semibold truncate text-sm">
+                    {parceiro.nome}
+                  </h4>
+                  <p className="text-[11px] text-white/50 truncate">
+                    {etapaAtual ? (etapasInfo.etapas[etapaAtual] || etapaAtual) : TIPO_PARCEIRO_LABELS[tipo]}
+                  </p>
+                </div>
+
+                {/* Localização */}
+                {(parceiro.cidade || parceiro.estado) && (
+                  <div className="hidden sm:flex items-center gap-1.5 flex-shrink-0">
+                    <MapPin className={`w-3.5 h-3.5 ${s.iconColor}`} />
+                    <span className="text-white/90 font-semibold text-sm truncate max-w-[160px]">
+                      {[parceiro.cidade, parceiro.estado].filter(Boolean).join(' - ')}
+                    </span>
+                  </div>
+                )}
+
+                {/* Barra proporcional */}
+                <div className="flex-1 min-w-0">
+                  <div className="h-2.5 rounded-full bg-white/10 overflow-hidden">
+                    <div
+                      className={`h-full rounded-full bg-gradient-to-r ${s.bar} transition-all duration-500`}
+                      style={{ width: `${percent}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Badge tipo */}
+                <div className={`relative flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full border ${s.badgeBg}`}>
+                  <TipoIcon className="w-3.5 h-3.5" />
+                  <span className="text-xs font-bold">{TIPO_PARCEIRO_LABELS[tipo]}</span>
+                </div>
+
+                <ArrowRight className="w-4 h-4 text-white/20 group-hover:text-white/60 transition-colors flex-shrink-0" />
               </div>
             );
           })
