@@ -4,9 +4,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { MapaEstadosBrasil } from './MapaEstadosBrasil';
-import { MapaMunicipiosEstado } from './MapaMunicipiosEstado';
+import { MapaMunicipiosEstado, normalizeCity } from './MapaMunicipiosEstado';
 import { useFreteCidadesPorEstado } from '@/hooks/useFreteCidadesPorEstado';
 import { useMacroRegioesBrasil, type MacroRegiao } from '@/hooks/useMacroRegioesBrasil';
+import { useMesorregioesEstado, type Mesorregiao } from '@/hooks/useMesorregioesEstado';
 import { supabase } from '@/integrations/supabase/client';
 import type { FreteRegiao, FreteRegiaoCidade } from '@/hooks/useFreteRegioes';
 import { MapPinned, ArrowLeft, X } from 'lucide-react';
@@ -61,6 +62,49 @@ export function RegiaoFormDialog({ open, onOpenChange, editing, outrasRegioes, o
 
   const cidadesValidasQuery = useFreteCidadesPorEstado(ufAberto ?? undefined);
   const macroRegioesQuery = useMacroRegioesBrasil();
+  const mesoRegioesQuery = useMesorregioesEstado(ufAberto ?? undefined);
+
+  // Para cada meso do estado aberto, computa cidades disponíveis (cadastradas em frete_cidades, não bloqueadas)
+  const mesoDisponiveis = useMemo(() => {
+    const out: Record<number, FreteRegiaoCidade[]> = {};
+    if (!ufAberto || !mesoRegioesQuery.data) return out;
+    const validas = cidadesValidasQuery.data ?? [];
+    const byNorm = new Map<string, { id: string; nome: string }>();
+    validas.forEach(c => byNorm.set(normalizeCity(c.nome), { id: c.id, nome: c.nome }));
+    mesoRegioesQuery.data.forEach(m => {
+      const lista: FreteRegiaoCidade[] = [];
+      m.municipiosNorm.forEach(n => {
+        const ref = byNorm.get(n);
+        if (ref && !disabledCidades.has(ref.id)) {
+          lista.push({ id: ref.id, nome: ref.nome, estado: ufAberto });
+        }
+      });
+      out[m.id] = lista;
+    });
+    return out;
+  }, [ufAberto, mesoRegioesQuery.data, cidadesValidasQuery.data, disabledCidades]);
+
+  const mesoStatus = useMemo(() => {
+    const out: Record<number, 'none' | 'partial' | 'all'> = {};
+    Object.entries(mesoDisponiveis).forEach(([id, lista]) => {
+      if (lista.length === 0) { out[+id] = 'none'; return; }
+      const sel = lista.filter(c => cidades.has(c.id)).length;
+      out[+id] = sel === 0 ? 'none' : sel === lista.length ? 'all' : 'partial';
+    });
+    return out;
+  }, [mesoDisponiveis, cidades]);
+
+  const handleMesoClick = (meso: Mesorregiao) => {
+    const lista = mesoDisponiveis[meso.id] ?? [];
+    if (lista.length === 0) return;
+    const todasJaSelecionadas = lista.every(c => cidades.has(c.id));
+    setCidades(prev => {
+      const next = new Map(prev);
+      if (todasJaSelecionadas) lista.forEach(c => next.delete(c.id));
+      else lista.forEach(c => next.set(c.id, c));
+      return next;
+    });
+  };
 
   // Cache de cidades por UF carregadas via botão de macrorregião
   const [ufCidadesCache, setUfCidadesCache] = useState<Record<string, FreteRegiaoCidade[]>>({});
@@ -215,6 +259,43 @@ export function RegiaoFormDialog({ open, onOpenChange, editing, outrasRegioes, o
                 <span className="ml-1 text-[10px] text-white/40 self-center">
                   clique para incluir/remover todas as cidades cadastradas da região
                 </span>
+              </div>
+            )}
+
+            {ufAberto && (
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {mesoRegioesQuery.isLoading && (
+                  <span className="text-[11px] text-white/40">Carregando mesorregiões…</span>
+                )}
+                {(mesoRegioesQuery.data ?? []).map(m => {
+                  const total = (mesoDisponiveis[m.id] ?? []).length;
+                  const status = mesoStatus[m.id] ?? 'none';
+                  const base = 'h-7 px-3 text-[11px] rounded-full border transition-all';
+                  const cls =
+                    status === 'all'
+                      ? 'bg-blue-500/30 border-blue-400/50 text-blue-100 hover:bg-blue-500/40'
+                      : status === 'partial'
+                      ? 'bg-blue-500/10 border-blue-400/40 text-blue-200 hover:bg-blue-500/20'
+                      : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white';
+                  return (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => handleMesoClick(m)}
+                      disabled={total === 0}
+                      title={`${m.nome} — ${total} cidade${total !== 1 ? 's' : ''} cadastrada${total !== 1 ? 's' : ''}`}
+                      className={`${base} ${cls} disabled:opacity-40 disabled:cursor-not-allowed`}
+                    >
+                      {m.nome}
+                      {total > 0 && <span className="ml-1.5 opacity-60">({total})</span>}
+                    </button>
+                  );
+                })}
+                {mesoRegioesQuery.data && mesoRegioesQuery.data.length > 0 && (
+                  <span className="ml-1 text-[10px] text-white/40 self-center">
+                    clique para incluir/remover as cidades da mesorregião
+                  </span>
+                )}
               </div>
             )}
 
