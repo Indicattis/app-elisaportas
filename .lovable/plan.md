@@ -1,56 +1,75 @@
 ## Objetivo
-Permitir gerar e anexar contratos diretamente em **Meus Orçamentos**, espelhando o fluxo de Contratos em Vendas, sem depender de a venda existir.
 
-## 1. Banco — nova tabela `contratos_orcamentos`
-Migração criando tabela isolada (mesma estrutura de `contratos_vendas`):
+Em **Logística → Frete → Valores Transportadoras**, trocar o cadastro atual (valor por estado x P/G/GG) por:
 
-- `id uuid pk`
-- `orcamento_id uuid not null` → FK `orcamentos(id)` on delete cascade
-- `template_id uuid null` → FK `contratos_templates(id)`
-- `arquivo_url text not null`
-- `nome_arquivo text not null`
-- `tamanho_arquivo int not null`
-- `observacoes text null`
-- `uploaded_by uuid null`
-- `created_at`, `updated_at`
-- GRANTs para `authenticated` e `service_role` (sem anon)
-- RLS: SELECT/INSERT/UPDATE/DELETE para `authenticated` cujo `orcamento.atendente_id = auth.uid()` **OU** `public.has_role(auth.uid(),'admin'::user_role)`
-- Trigger `update_updated_at_column` para `updated_at`
-- Bucket de storage reaproveitado: `contratos-vendas` (mesmo bucket, prefixo `orcamentos/<id>/...`).
+1. **Regiões** desenhadas em um mapa do Brasil (grupo de estados + nome).
+2. **Preços por largura** (larguras distintas da Tabela de Kits) para cada região.
 
-## 2. Hook
-`src/hooks/useContratosOrcamentos.ts` — clone enxuto de `useContratosVendas` operando sobre `contratos_orcamentos` e prefixo `orcamentos/{id}/` no bucket. Mesmas mutations: `uploadContrato`, `deleteContrato`, listagem por `orcamentoId`.
+## Fluxo de uso
 
-## 3. Modais
-Criados em `src/components/contratos/`:
+1. Usuário escolhe a transportadora no header (igual hoje).
+2. Aparece uma lista das **regiões** já cadastradas dessa transportadora, com botão **"Nova região"**.
+3. Ao clicar **Nova região** abre um modal com:
+   - Campo **Nome da região** (ex.: "Sul", "Sudeste expandido").
+   - **Mapa do Brasil** (SVG clicável) onde o usuário clica/desmarca estados. Estados já usados por outra região da mesma transportadora ficam **desabilitados** (cinza, com tooltip mostrando o nome da região dona).
+   - Botão Salvar.
+4. Cada região aparece como um card expansível mostrando:
+   - Mini-mapa com os estados pintados + chips dos estados.
+   - Tabela de larguras: uma linha por largura distinta ativa em `tabela_precos_portas`, com input **R$**.
+   - Botões: editar região (nome/estados), excluir.
+5. Salvar preço chama upsert por (região, largura).
 
-- **`GerarContratoElisaOrcamentoModal.tsx`** — adaptado do `GerarContratoElisaModal`:
-  - Lê de `orcamentos` + `orcamento_produtos` + `clientes` (via `cliente_id` do orçamento)
-  - Reaproveita lógica de cálculo de motores via `tabela_precos_portas_montagem` (kit_id em `orcamento_produtos.tabela_precos_porta_id` se existir; caso contrário usa qtdPortas)
-  - Mantém o mesmo `generateContratoElisaPDF`
-  - Upload via `useContratosOrcamentos`
-- **`UploadContratoOrcamentoModal.tsx`** — clone do `UploadContratoModal` operando no novo hook.
+## Modelo de dados
 
-## 4. UI em Meus Orçamentos
-`src/pages/vendas/MeusOrcamentos.tsx`:
+Duas novas tabelas; a antiga `frete_transportadoras` é descartada.
 
-- Botão `FileSignature` em cada linha da lista (ao lado do valor), com `stopPropagation` para não navegar ao detalhe.
-- Abre um pequeno **`ContratosOrcamentoModal`** (novo, espelho do `ContratosVendaModal`): lista contratos do orçamento + botões "Gerar Contrato" e "Vincular Contrato".
-- Indicador visual sutil (badge) quando o orçamento já tem ≥1 contrato — query agregada por `orcamento_id in (...)` no carregamento.
-- Disponível para **qualquer status** (sem restrição).
-
-## 5. Pontos técnicos
-- Arquivos no Storage: `contratos-vendas/orcamentos/{orcamento_id}/{timestamp}-{nome}.pdf` (bucket já existe, política do bucket já permite uploads autenticados).
-- Os types do Supabase são regenerados automaticamente após a migration.
-- `uploaded_by` preenchido com `auth.uid()` quando disponível.
-- Nada do fluxo de Vendas é alterado.
-
-## Arquivos
 ```text
-supabase/migrations/<timestamp>_contratos_orcamentos.sql   (novo)
-src/hooks/useContratosOrcamentos.ts                        (novo)
-src/components/contratos/GerarContratoElisaOrcamentoModal.tsx (novo)
-src/components/contratos/UploadContratoOrcamentoModal.tsx  (novo)
-src/components/vendas/ContratosOrcamentoModal.tsx          (novo)
-src/pages/vendas/MeusOrcamentos.tsx                        (editar)
+frete_regioes
+  id, transportadora_id (FK), nome, created_at, updated_at
+  UNIQUE (transportadora_id, nome)
+
+frete_regiao_estados
+  id, regiao_id (FK cascade), estado (text, 2 letras)
+  UNIQUE (regiao_id, estado)
+  + índice/constraint garantindo unicidade do estado por transportadora
+   (via trigger: estado não pode existir em outra região da mesma transportadora)
+
+frete_regiao_larguras
+  id, regiao_id (FK cascade), largura (numeric), valor (numeric)
+  UNIQUE (regiao_id, largura)
 ```
+
+GRANTs padrão (`authenticated`, `service_role`), RLS aberta para `authenticated` (mesmo padrão das tabelas atuais de frete).
+
+## Frontend
+
+Arquivos novos:
+- `src/components/logistica/MapaEstadosBrasil.tsx` — SVG do Brasil com estados clicáveis; props `value: string[]`, `onChange`, `disabledStates: Record<string, string>` (estado → nome da região dona, para tooltip).
+- `src/components/logistica/RegiaoFormDialog.tsx` — modal Nova/Editar região (nome + mapa).
+- `src/components/logistica/RegiaoCard.tsx` — card expansível com mini-mapa, chips de estados, tabela de larguras com inputs e save por linha (debounce/blur).
+- `src/hooks/useFreteRegioes.ts` — lista/CRUD de regiões + estados.
+- `src/hooks/useFreteRegiaoLarguras.ts` — lista/upsert de preços por largura.
+- `src/hooks/useLargurasKits.ts` — `SELECT DISTINCT largura FROM tabela_precos_portas WHERE ativo ORDER BY largura`.
+
+Arquivos editados:
+- `src/pages/logistica/FreteValoresTransportadoras.tsx` — reescrito para nova UX (lista de regiões + botão Nova região). Mantém header com seletor de transportadora.
+- `src/hooks/useFreteTransportadoras.ts` — removido (sem outros consumidores).
+
+Visual: mesmo padrão glassmorphism (`bg-white/5`, `backdrop-blur-xl`, `border-white/10`, accent azul).
+
+## SVG do mapa
+
+Usar um SVG estático do Brasil com `<path id="SP">…</path>` por UF (27 paths). Estados:
+- Não selecionado: `fill-white/5 stroke-white/20`.
+- Selecionado: `fill-blue-500/40 stroke-blue-400`.
+- Desabilitado (em outra região): `fill-white/[0.03] stroke-white/10 cursor-not-allowed`.
+Hover mostra sigla + nome via tooltip simples.
+
+## Migração de dados antigos
+
+Migration faz `DROP TABLE IF EXISTS public.frete_transportadoras CASCADE` antes de criar as novas tabelas. Nenhum dado preservado (escolha do usuário).
+
+## Fora de escopo
+
+- Consumo do novo frete em orçamentos/vendas (somente cadastro nesta etapa).
+- Edição/uso da tabela antiga em qualquer outro lugar (não há consumidores).
