@@ -1,75 +1,56 @@
-## Objetivo
+## Mudança
 
-Em **Logística → Frete → Valores Transportadoras**, trocar o cadastro atual (valor por estado x P/G/GG) por:
+A região passa a ser um conjunto de **cidades** (não mais de estados). O fluxo agora é:
 
-1. **Regiões** desenhadas em um mapa do Brasil (grupo de estados + nome).
-2. **Preços por largura** (larguras distintas da Tabela de Kits) para cada região.
+1. **Mapa do Brasil** (igual hoje).
+2. Usuário clica num **estado** → a tela faz drill-down e mostra o **mapa de municípios** desse estado.
+3. Usuário clica/desmarca cidades. Só são selecionáveis as cidades existentes em `frete_cidades`; demais aparecem desabilitadas (cinza, sem clique).
+4. Botão **Voltar ao Brasil** permite repetir o processo em outro estado. Estados que já têm cidades na região aparecem destacados no mapa do Brasil.
+5. Cidades selecionadas ficam listadas como chips abaixo do mapa, agrupadas por UF, com botão de remover.
 
-## Fluxo de uso
+Tudo isso dentro do mesmo dialog "Nova/Editar região" (nome no topo, área do mapa no meio, chips no rodapé).
 
-1. Usuário escolhe a transportadora no header (igual hoje).
-2. Aparece uma lista das **regiões** já cadastradas dessa transportadora, com botão **"Nova região"**.
-3. Ao clicar **Nova região** abre um modal com:
-   - Campo **Nome da região** (ex.: "Sul", "Sudeste expandido").
-   - **Mapa do Brasil** (SVG clicável) onde o usuário clica/desmarca estados. Estados já usados por outra região da mesma transportadora ficam **desabilitados** (cinza, com tooltip mostrando o nome da região dona).
-   - Botão Salvar.
-4. Cada região aparece como um card expansível mostrando:
-   - Mini-mapa com os estados pintados + chips dos estados.
-   - Tabela de larguras: uma linha por largura distinta ativa em `tabela_precos_portas`, com input **R$**.
-   - Botões: editar região (nome/estados), excluir.
-5. Salvar preço chama upsert por (região, largura).
+## Banco
 
-## Modelo de dados
-
-Duas novas tabelas; a antiga `frete_transportadoras` é descartada.
+Trocar a tabela de estados por uma de cidades; manter regiões e preços por largura.
 
 ```text
-frete_regioes
-  id, transportadora_id (FK), nome, created_at, updated_at
-  UNIQUE (transportadora_id, nome)
+DROP TABLE frete_regiao_estados
 
-frete_regiao_estados
-  id, regiao_id (FK cascade), estado (text, 2 letras)
-  UNIQUE (regiao_id, estado)
-  + índice/constraint garantindo unicidade do estado por transportadora
-   (via trigger: estado não pode existir em outra região da mesma transportadora)
-
-frete_regiao_larguras
-  id, regiao_id (FK cascade), largura (numeric), valor (numeric)
-  UNIQUE (regiao_id, largura)
+CREATE frete_regiao_cidades
+  id, regiao_id (FK cascade), cidade_id (FK → frete_cidades)
+  UNIQUE (regiao_id, cidade_id)
+  + trigger: cidade_id não pode existir em outra região da mesma transportadora
 ```
 
-GRANTs padrão (`authenticated`, `service_role`), RLS aberta para `authenticated` (mesmo padrão das tabelas atuais de frete).
+GRANTs + RLS no mesmo padrão das demais tabelas de frete.
+
+`frete_regioes` e `frete_regiao_larguras` continuam idênticos.
+
+## Carregamento do mapa de municípios
+
+- **Fonte:** `https://cdn.jsdelivr.net/gh/tbrugz/geodata-br@master/geojson/geojs-XX-mun.json` (XX = código IBGE da UF, ex.: 35 = SP).
+- **Lazy:** baixa só quando o usuário entra no estado; cache em memória por sessão.
+- Mostra **spinner** durante o download.
+- Match polígono ↔ `frete_cidades`: normalizar nome (uppercase + remover acentos) e filtrar por `estado`. Polígono sem match em `frete_cidades` fica em cinza desabilitado (com tooltip "cidade não cadastrada em frete").
+- Cidades já usadas por outra região da transportadora ficam **desabilitadas** com tooltip ("já em <nome>").
 
 ## Frontend
 
-Arquivos novos:
-- `src/components/logistica/MapaEstadosBrasil.tsx` — SVG do Brasil com estados clicáveis; props `value: string[]`, `onChange`, `disabledStates: Record<string, string>` (estado → nome da região dona, para tooltip).
-- `src/components/logistica/RegiaoFormDialog.tsx` — modal Nova/Editar região (nome + mapa).
-- `src/components/logistica/RegiaoCard.tsx` — card expansível com mini-mapa, chips de estados, tabela de larguras com inputs e save por linha (debounce/blur).
-- `src/hooks/useFreteRegioes.ts` — lista/CRUD de regiões + estados.
-- `src/hooks/useFreteRegiaoLarguras.ts` — lista/upsert de preços por largura.
-- `src/hooks/useLargurasKits.ts` — `SELECT DISTINCT largura FROM tabela_precos_portas WHERE ativo ORDER BY largura`.
+Novos:
+- `src/components/logistica/MapaMunicipiosEstado.tsx` — fetch + render do mapa estadual, com seleção por clique e props equivalentes ao MapaEstadosBrasil.
 
-Arquivos editados:
-- `src/pages/logistica/FreteValoresTransportadoras.tsx` — reescrito para nova UX (lista de regiões + botão Nova região). Mantém header com seletor de transportadora.
-- `src/hooks/useFreteTransportadoras.ts` — removido (sem outros consumidores).
+Editados:
+- `src/components/logistica/MapaEstadosBrasil.tsx` — adicionar prop `highlightedStates: Set<string>` para destacar estados que já contém cidades na região em edição.
+- `src/components/logistica/RegiaoFormDialog.tsx` — passa a ter modo país/estado, controla cidades selecionadas (array de `cidade_id`), exibe chips por UF com remover. Validação: nome + pelo menos 1 cidade.
+- `src/components/logistica/RegiaoCard.tsx` — exibir contagem por estado e lista de cidades em vez de chips de UF; preços por largura permanecem iguais.
+- `src/hooks/useFreteRegioes.ts` — `estados` → `cidades` (array de `{ id, nome, estado }`). `saveRegiao` agora persiste em `frete_regiao_cidades`.
+- `src/pages/logistica/FreteValoresTransportadoras.tsx` — pequenas adaptações de labels.
 
-Visual: mesmo padrão glassmorphism (`bg-white/5`, `backdrop-blur-xl`, `border-white/10`, accent azul).
-
-## SVG do mapa
-
-Usar um SVG estático do Brasil com `<path id="SP">…</path>` por UF (27 paths). Estados:
-- Não selecionado: `fill-white/5 stroke-white/20`.
-- Selecionado: `fill-blue-500/40 stroke-blue-400`.
-- Desabilitado (em outra região): `fill-white/[0.03] stroke-white/10 cursor-not-allowed`.
-Hover mostra sigla + nome via tooltip simples.
-
-## Migração de dados antigos
-
-Migration faz `DROP TABLE IF EXISTS public.frete_transportadoras CASCADE` antes de criar as novas tabelas. Nenhum dado preservado (escolha do usuário).
+Removidos:
+- `frete_regiao_estados` (tabela + qualquer referência em hooks/types).
 
 ## Fora de escopo
 
-- Consumo do novo frete em orçamentos/vendas (somente cadastro nesta etapa).
-- Edição/uso da tabela antiga em qualquer outro lugar (não há consumidores).
+- Mostrar/calcular frete baseado nesse novo modelo em orçamentos/vendas (apenas cadastro).
+- Importar cidades faltantes em `frete_cidades` automaticamente (usuário continua usando a tela existente de Fretes Internos para cadastrar cidades).

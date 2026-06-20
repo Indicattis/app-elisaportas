@@ -17,14 +17,19 @@ interface Props {
   disabledStates?: Record<string, string>; // estado -> nome da região dona
   readOnly?: boolean;
   height?: number;
+  /** Quando preenchido, recebe o UF clicado (modo navegação para drill-down). */
+  onStateClick?: (uf: string) => void;
+  /** UFs que devem aparecer destacados (ex.: estados que já possuem cidades na região atual). */
+  highlightedStates?: Set<string>;
 }
 
-export function MapaEstadosBrasil({ value, onChange, disabledStates = {}, readOnly, height = 480 }: Props) {
+export function MapaEstadosBrasil({ value, onChange, disabledStates = {}, readOnly, height = 480, onStateClick, highlightedStates }: Props) {
   const [hover, setHover] = useState<string | null>(null);
   const { width: W, height: H, paths } = mapData as { width: number; height: number; paths: Record<string, string> };
   const selected = new Set(value);
 
   const toggle = (uf: string) => {
+    if (onStateClick) { onStateClick(uf); return; }
     if (readOnly || !onChange) return;
     if (disabledStates[uf]) return;
     const next = new Set(selected);
@@ -39,6 +44,7 @@ export function MapaEstadosBrasil({ value, onChange, disabledStates = {}, readOn
           const isSel = selected.has(uf);
           const isDis = !!disabledStates[uf] && !isSel;
           const isHover = hover === uf;
+          const isHighlighted = highlightedStates?.has(uf);
           return (
             <path
               key={uf}
@@ -48,18 +54,20 @@ export function MapaEstadosBrasil({ value, onChange, disabledStates = {}, readOn
               onMouseLeave={() => setHover(null)}
               className={cn(
                 'transition-colors',
-                readOnly ? 'cursor-default' : isDis ? 'cursor-not-allowed' : 'cursor-pointer',
+                readOnly && !onStateClick ? 'cursor-default' : isDis ? 'cursor-not-allowed' : 'cursor-pointer',
               )}
               style={{
                 fill: isSel
                   ? 'rgba(59,130,246,0.55)'
+                  : isHighlighted
+                    ? 'rgba(34,197,94,0.35)'
                   : isDis
                     ? 'rgba(255,255,255,0.03)'
                     : isHover
                       ? 'rgba(255,255,255,0.12)'
                       : 'rgba(255,255,255,0.05)',
-                stroke: isSel ? 'rgb(96,165,250)' : 'rgba(255,255,255,0.18)',
-                strokeWidth: isSel || isHover ? 1.2 : 0.6,
+                stroke: isSel ? 'rgb(96,165,250)' : isHighlighted ? 'rgb(74,222,128)' : 'rgba(255,255,255,0.18)',
+                strokeWidth: isSel || isHover || isHighlighted ? 1.2 : 0.6,
               }}
             >
               <title>
@@ -74,6 +82,7 @@ export function MapaEstadosBrasil({ value, onChange, disabledStates = {}, readOn
         <div className="pointer-events-none absolute top-2 right-2 rounded-md bg-black/70 border border-white/10 backdrop-blur px-2.5 py-1.5 text-xs text-white">
           <div className="font-medium">{hover} — {ESTADOS_NOMES[hover]}</div>
           {disabledStates[hover] && <div className="text-white/60 text-[10px] mt-0.5">já em "{disabledStates[hover]}"</div>}
+          {onStateClick && !disabledStates[hover] && <div className="text-white/60 text-[10px] mt-0.5">clique para selecionar cidades</div>}
         </div>
       )}
     </div>

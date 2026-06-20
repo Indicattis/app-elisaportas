@@ -4021,28 +4021,35 @@ export type Database = {
         }
         Relationships: []
       }
-      frete_regiao_estados: {
+      frete_regiao_cidades: {
         Row: {
+          cidade_id: string
           created_at: string
-          estado: string
           id: string
           regiao_id: string
         }
         Insert: {
+          cidade_id: string
           created_at?: string
-          estado: string
           id?: string
           regiao_id: string
         }
         Update: {
+          cidade_id?: string
           created_at?: string
-          estado?: string
           id?: string
           regiao_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "frete_regiao_estados_regiao_id_fkey"
+            foreignKeyName: "frete_regiao_cidades_cidade_id_fkey"
+            columns: ["cidade_id"]
+            isOneToOne: false
+            referencedRelation: "frete_cidades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "frete_regiao_cidades_regiao_id_fkey"
             columns: ["regiao_id"]
             isOneToOne: false
             referencedRelation: "frete_regioes"
