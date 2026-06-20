@@ -80,8 +80,20 @@ export default function EditarAutorizadoDirecao() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const contexto = pathname.startsWith('/logistica') ? 'logistica' : pathname.startsWith('/autorizados') ? 'home' : 'direcao';
-  const basePath = contexto === 'home' ? '/autorizados' : `/${contexto}/autorizados`;
+  const isVendedorMode = pathname.startsWith('/vendas/meus-parceiros');
+  const contexto = isVendedorMode
+    ? 'vendas'
+    : pathname.startsWith('/logistica')
+      ? 'logistica'
+      : pathname.startsWith('/autorizados')
+        ? 'home'
+        : 'direcao';
+  const basePath = isVendedorMode
+    ? '/vendas/meus-parceiros'
+    : contexto === 'home'
+      ? '/autorizados'
+      : `/${contexto}/autorizados`;
+  const { user: authUser } = useAuth();
 
   useEffect(() => {
     const timer = setTimeout(() => setMounted(true), 50);
@@ -107,6 +119,24 @@ export default function EditarAutorizadoDirecao() {
       if (error) throw error;
 
       if (data) {
+        // No modo vendedor, só pode editar o próprio autorizado
+        if (isVendedorMode) {
+          const { data: me } = await supabase
+            .from('admin_users')
+            .select('id')
+            .eq('user_id', authUser?.id)
+            .maybeSingle();
+          if (!me || data.vendedor_id !== me.id) {
+            toast({
+              variant: 'destructive',
+              title: 'Sem permissão',
+              description: 'Você não é o responsável por este autorizado.',
+            });
+            navigate('/vendas/meus-parceiros');
+            return;
+          }
+        }
+
         setContratoUrl(data.contrato_url);
         setContratoNome(data.contrato_nome_arquivo);
         setForm({
@@ -191,7 +221,7 @@ export default function EditarAutorizadoDirecao() {
     if (!form.whatsapp.trim()) newErrors.whatsapp = "WhatsApp é obrigatório";
     if (!form.responsavel.trim()) newErrors.responsavel = "Responsável é obrigatório";
     if (!form.telefone.trim()) newErrors.telefone = "Telefone é obrigatório";
-    if (!form.vendedor_id) newErrors.vendedor_id = "Atendente é obrigatório";
+    if (!isVendedorMode && !form.vendedor_id) newErrors.vendedor_id = "Atendente é obrigatório";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -238,63 +268,70 @@ export default function EditarAutorizadoDirecao() {
     try {
       setSaving(true);
 
+      const basePayload: Record<string, any> = {
+        nome: form.nome,
+        email: form.email || null,
+        telefone: form.telefone,
+        whatsapp: form.whatsapp,
+        responsavel: form.responsavel,
+        cidade: form.cidade,
+        estado: form.estado,
+        cep: form.cep,
+        logo_url: form.logo_url || null,
+        updated_at: new Date().toISOString(),
+      };
+      const fullPayload: Record<string, any> = {
+        ...basePayload,
+        endereco: null,
+        regiao: null,
+        ativo: form.ativo,
+        vendedor_id: form.vendedor_id,
+        vendedor_responsavel_id: form.vendedor_responsavel_id || null,
+        etapa: form.etapa as 'ativo' | 'perdido' | 'premium',
+        contrato_url: contratoUrl,
+        contrato_nome_arquivo: contratoNome,
+        chave_pix: form.chave_pix || null,
+      };
+
       const { error } = await supabase
         .from('autorizados')
-        .update({
-          nome: form.nome,
-          email: form.email || null,
-          telefone: form.telefone,
-          whatsapp: form.whatsapp,
-          responsavel: form.responsavel,
-          endereco: null,
-          cidade: form.cidade,
-          estado: form.estado,
-          cep: form.cep,
-          regiao: null,
-          ativo: form.ativo,
-          logo_url: form.logo_url || null,
-          vendedor_id: form.vendedor_id,
-          vendedor_responsavel_id: form.vendedor_responsavel_id || null,
-          etapa: form.etapa as 'ativo' | 'perdido' | 'premium',
-          contrato_url: contratoUrl,
-          contrato_nome_arquivo: contratoNome,
-          chave_pix: form.chave_pix || null,
-          updated_at: new Date().toISOString(),
-        })
+        .update(isVendedorMode ? basePayload : fullPayload)
         .eq('id', id);
 
       if (error) throw error;
 
-      // Sincronizar cidades secundárias (deletar todas e reinserir)
-      await supabase
-        .from('autorizado_cidades_secundarias')
-        .delete()
-        .eq('autorizado_id', id!);
-
-      if (cidadesSecundarias.length > 0) {
-        const { error: secError } = await supabase
-          .from('autorizado_cidades_secundarias')
-          .insert(cidadesSecundarias.map(c => ({
-            autorizado_id: id!,
-            cidade: c.cidade,
-            estado: c.estado,
-          })));
-        if (secError) console.error('Erro ao salvar cidades secundárias:', secError);
-      }
-
-      // Salvar preços de instalação
-      const { data: { user } } = await supabase.auth.getUser();
-      const tamanhos: ('P' | 'G' | 'GG')[] = ['P', 'G', 'GG'];
-      for (const tamanho of tamanhos) {
+      if (!isVendedorMode) {
+        // Sincronizar cidades secundárias (deletar todas e reinserir)
         await supabase
-          .from('autorizado_precos_portas')
-          .upsert({
-            autorizado_id: id!,
-            tamanho,
-            valor: precos[tamanho],
-            created_by: user?.id,
-            updated_at: new Date().toISOString(),
-          }, { onConflict: 'autorizado_id,tamanho' });
+          .from('autorizado_cidades_secundarias')
+          .delete()
+          .eq('autorizado_id', id!);
+
+        if (cidadesSecundarias.length > 0) {
+          const { error: secError } = await supabase
+            .from('autorizado_cidades_secundarias')
+            .insert(cidadesSecundarias.map(c => ({
+              autorizado_id: id!,
+              cidade: c.cidade,
+              estado: c.estado,
+            })));
+          if (secError) console.error('Erro ao salvar cidades secundárias:', secError);
+        }
+
+        // Salvar preços de instalação
+        const { data: { user } } = await supabase.auth.getUser();
+        const tamanhos: ('P' | 'G' | 'GG')[] = ['P', 'G', 'GG'];
+        for (const tamanho of tamanhos) {
+          await supabase
+            .from('autorizado_precos_portas')
+            .upsert({
+              autorizado_id: id!,
+              tamanho,
+              valor: precos[tamanho],
+              created_by: user?.id,
+              updated_at: new Date().toISOString(),
+            }, { onConflict: 'autorizado_id,tamanho' });
+        }
       }
 
       // Geocodificar
@@ -309,6 +346,7 @@ export default function EditarAutorizadoDirecao() {
       }
 
       queryClient.invalidateQueries({ queryKey: ['autorizados-performance'] });
+      if (isVendedorMode) queryClient.invalidateQueries({ queryKey: ['meus-parceiros'] });
 
       toast({ title: 'Sucesso', description: 'Autorizado atualizado com sucesso.' });
       navigate(basePath);
@@ -379,15 +417,26 @@ export default function EditarAutorizadoDirecao() {
     }
   }, [form.estado]);
 
-  const breadcrumbItems = [
-    { label: "Home", path: "/home" },
-    ...(contexto !== 'home' ? [{ label: contexto === 'logistica' ? "Logística" : "Direção", path: contexto === 'logistica' ? '/logistica' : '/direcao' }] : []),
-    { label: "Autorizados", path: basePath },
-    ...(estadoInfo ? [{ label: estadoInfo.nome, path: `${basePath}/estado/${estadoInfo.id}` }] : []),
-    { label: "Editar" }
-  ];
+  const breadcrumbItems = isVendedorMode
+    ? [
+        { label: "Home", path: "/home" },
+        { label: "Vendas", path: "/vendas" },
+        { label: "Meus Parceiros", path: "/vendas/meus-parceiros" },
+        { label: "Editar" },
+      ]
+    : [
+        { label: "Home", path: "/home" },
+        ...(contexto !== 'home' ? [{ label: contexto === 'logistica' ? "Logística" : "Direção", path: contexto === 'logistica' ? '/logistica' : '/direcao' }] : []),
+        { label: "Autorizados", path: basePath },
+        ...(estadoInfo ? [{ label: estadoInfo.nome, path: `${basePath}/estado/${estadoInfo.id}` }] : []),
+        { label: "Editar" },
+      ];
 
-  const backPath = estadoInfo ? `${basePath}/estado/${estadoInfo.id}` : basePath;
+  const backPath = isVendedorMode
+    ? '/vendas/meus-parceiros'
+    : estadoInfo
+      ? `${basePath}/estado/${estadoInfo.id}`
+      : basePath;
 
   if (loading) {
     return (
@@ -414,9 +463,10 @@ export default function EditarAutorizadoDirecao() {
               >
                 <ArrowLeft className="w-5 h-5 text-white/80" />
               </button>
-              <h1 className="text-lg font-semibold text-white">Editar Autorizado</h1>
+              <h1 className="text-lg font-semibold text-white">{isVendedorMode ? 'Editar Meu Autorizado' : 'Editar Autorizado'}</h1>
             </div>
             <div className="flex items-center gap-2">
+              {!isVendedorMode && (
               <Button
                 type="button"
                 variant="outline"
@@ -428,7 +478,8 @@ export default function EditarAutorizadoDirecao() {
                 {geocoding ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <MapPin className="w-4 h-4 mr-1" />}
                 Geocodificar
               </Button>
-              {isAdmin && (
+              )}
+              {!isVendedorMode && isAdmin && (
                 <Button
                   type="button"
                   variant="outline"
