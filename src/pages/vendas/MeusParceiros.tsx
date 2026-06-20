@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Handshake, Building2, Users, Store, MapPin, Phone, ArrowRight } from 'lucide-react';
+import { Handshake, Building2, Users, Store, MapPin, Phone, ArrowRight, UserCheck } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TIPO_PARCEIRO_LABELS, getEtapasByTipo, getCurrentEtapa } from '@/utils/parceiros';
+import { TransferirParceiroModal } from '@/components/parceiros/TransferirParceiroModal';
 
 type TipoParceiro = 'autorizado' | 'representante' | 'franqueado';
 
@@ -14,6 +15,7 @@ export default function MeusParceiros() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [tipoFiltro, setTipoFiltro] = useState<TipoParceiro | ''>('');
+  const [transferirParceiro, setTransferirParceiro] = useState<{ id: string; nome: string } | null>(null);
 
   const { data: parceiros, isLoading } = useQuery({
     queryKey: ['meus-parceiros', user?.id],
@@ -257,6 +259,19 @@ export default function MeusParceiros() {
                   <span className="text-xs font-bold">{TIPO_PARCEIRO_LABELS[tipo]}</span>
                 </div>
 
+                {/* Transferir */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setTransferirParceiro({ id: parceiro.id, nome: parceiro.nome });
+                  }}
+                  title="Transferir para outro colaborador"
+                  className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full border border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white transition"
+                >
+                  <UserCheck className="w-4 h-4" />
+                </button>
+
                 <ArrowRight className="w-4 h-4 text-white/20 group-hover:text-white/60 transition-colors flex-shrink-0" />
               </div>
             );
@@ -270,6 +285,15 @@ export default function MeusParceiros() {
           </div>
         )}
       </div>
+
+      {transferirParceiro && (
+        <TransferirParceiroModal
+          open={!!transferirParceiro}
+          onOpenChange={(o) => { if (!o) setTransferirParceiro(null); }}
+          parceiroId={transferirParceiro.id}
+          parceiroNome={transferirParceiro.nome}
+        />
+      )}
     </MinimalistLayout>
   );
 }
