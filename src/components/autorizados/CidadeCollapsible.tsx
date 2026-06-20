@@ -204,11 +204,11 @@ function AutorizadoRow({ autorizado, onEdit, onDelete, onTogglePremium }: Autori
   const formatCurrency = (val?: number) => val != null ? `R$ ${val.toFixed(2)}` : '-';
   
   return (
-    <TableRow className="border-primary/10 hover:bg-primary/5">
+    <TableRow className="border-white/10 hover:bg-white/5">
       <TableCell className="w-10 pr-0">
         <Avatar className="h-7 w-7">
           {autorizado.logo_url && <AvatarImage src={autorizado.logo_url} alt={autorizado.nome} />}
-          <AvatarFallback className="text-[10px] bg-primary/20 text-primary">
+          <AvatarFallback className="text-[10px] bg-white/10 text-white/70">
             {autorizado.nome.substring(0, 2).toUpperCase()}
           </AvatarFallback>
         </Avatar>
@@ -251,7 +251,7 @@ function AutorizadoRow({ autorizado, onEdit, onDelete, onTogglePremium }: Autori
           <Button 
             variant="ghost" 
             size="icon"
-            className="h-7 w-7 hover:bg-primary/10"
+            className="h-7 w-7 hover:bg-white/10"
             onClick={() => onEdit(autorizado.id)}
           >
             <Edit className="h-3.5 w-3.5 text-white/60" />
@@ -259,7 +259,7 @@ function AutorizadoRow({ autorizado, onEdit, onDelete, onTogglePremium }: Autori
           <Button 
             variant="ghost" 
             size="icon"
-            className="h-7 w-7 hover:bg-primary/10"
+            className="h-7 w-7 hover:bg-white/10"
             onClick={() => onTogglePremium(autorizado.id, isPremium)}
           >
             <Star className={cn(
