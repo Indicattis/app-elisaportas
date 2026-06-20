@@ -1,58 +1,39 @@
 ## Objetivo
 
-Permitir que o vendedor clique em um Autorizado em **Meus Parceiros** e abra uma nova página para editar o cadastro básico desse parceiro.
+Aplicar em **Meus Clientes** o mesmo layout em pílula usado em **Meus Parceiros**, mantendo as funcionalidades atuais (busca, novo cliente, delegar, meta CR, fidelizado/parceiro).
 
-## Escopo
+## Mudanças em `src/pages/vendas/MeusClientes.tsx`
 
-- Apenas parceiros do tipo **autorizado** abrem a página de edição. Representante e Franqueado continuam sem ação ao clicar (ou navegam para visualização atual, sem alteração).
-- A página reaproveita `EditarAutorizadoDirecao.tsx` numa nova rota acessível ao vendedor, com modo "vendedor" que oculta campos sensíveis.
-- Vendedor só consegue abrir/editar autorizados onde ele é o `vendedor_id`.
+### Cards de estatísticas (topo)
+Substituir o card único da Meta CR por um grid de 3 cards no estilo dos parceiros (gradiente + ícone + glow):
+- **Total** (azul, `Users`) — total de clientes
+- **CR** (esmeralda, `Target`) — clientes recorrentes (`tipo_cliente = 'CR'`) com `X/META_CR`
+- **Fidelizados** (âmbar, `Star`) — total `fidelizado = true`
 
-## Mudanças
+A barra de progresso da meta CR vira uma linha fina dentro do próprio card CR (mantém o cálculo de percentual).
 
-### 1. Nova rota em `src/App.tsx`
-```
-/vendas/meus-parceiros/:id/editar  →  EditarAutorizadoDirecao (modo vendedor)
-```
-Protegida por `ProtectedRoute` com a mesma `routeKey` usada por Meus Parceiros (ex.: `vendas_meus_parceiros`). Sem exigir `logistica_autorizados`.
+### Filtros em pílulas
+Logo abaixo dos cards, pílulas no mesmo padrão dos parceiros:
+- Todos · CR · CE · Fidelizados · Parceiros (clique alterna o filtro `tipoFiltro`).
 
-### 2. `EditarAutorizadoDirecao.tsx` — modo vendedor
-- Detectar contexto via `useLocation().pathname.startsWith('/vendas/meus-parceiros')` → `isVendedorMode = true`.
-- Quando `isVendedorMode`:
-  - Ao carregar o autorizado, verificar se `vendedor_id` corresponde ao `admin_users.id` do usuário logado. Se não, redirecionar para `/vendas/meus-parceiros` com toast "Sem permissão".
-  - Ocultar/desabilitar campos sensíveis:
-    - Etapa (Select)
-    - Vendedor Responsável
-    - Vendedor (dono)
-    - Status Ativo (Switch)
-    - Chave PIX
-    - Seção de Contrato (`ContratoUpload`)
-    - Seção de cidades secundárias / preços (se existirem na página)
-  - Mostrar apenas: Logo, Nome, Responsável, E-mail, Telefone, WhatsApp, CEP, Estado, Cidade.
-  - Breadcrumb e botão "Voltar" apontam para `/vendas/meus-parceiros`.
-  - Header/título: "Editar Meu Autorizado".
-- No `update` do submit, enviar apenas os campos permitidos quando `isVendedorMode`.
+A busca por texto permanece, mas estilizada como input compacto acima das pílulas (ou inline ao lado), no mesmo visual já presente.
 
-### 3. `src/pages/vendas/MeusParceiros.tsx`
-- Trocar o `navigate` da linha:
-  - Se `tipo === 'autorizado'` → `/vendas/meus-parceiros/${id}/editar`.
-  - Caso contrário, manter comportamento atual (ou remover cursor-pointer/ArrowRight para outros tipos — manter por ora).
-- Botão de transferência (UserCheck) continua funcionando via `stopPropagation`.
+### Lista em pílulas (igual a Meus Parceiros)
+Trocar o grid de cards por linhas em formato pill:
+- Avatar circular com iniciais + ring colorida (azul para CE, esmeralda para CR).
+- Badge inferior no avatar com ícone (`Users` ou `Target`).
+- Bloco "Nome + tipo/CPF" com truncamento.
+- Localização (cidade - estado) com ícone `MapPin`.
+- Barra horizontal proporcional ao "peso" do cliente (CR = 100%, CE = 50%, ou simplesmente proporcional à contagem do tipo dentro do total — mesmo padrão usado nos parceiros).
+- Badges discretos para `fidelizado` (Star âmbar) e `parceiro` (Triangle roxo) quando aplicáveis.
+- Botão circular `UserCheck` para delegar (mantém `stopPropagation`).
+- `ArrowRight` no fim, com hover.
 
-## Detalhes técnicos
+Clique na linha navega para `/vendas/meus-clientes/:id` (comportamento atual).
 
-- A checagem de propriedade usa: `admin_users` → `id` via `user_id = auth.uid()`, comparando com `autorizado.vendedor_id`. Mesmo padrão já usado na query de Meus Parceiros.
-- RLS de `autorizados`: validar que policies de UPDATE permitem o vendedor atualizar o próprio autorizado. Caso negue, criar policy:
-  ```sql
-  CREATE POLICY "Vendedor edita seu autorizado"
-  ON public.autorizados FOR UPDATE TO authenticated
-  USING (vendedor_id = (SELECT id FROM admin_users WHERE user_id = auth.uid()))
-  WITH CHECK (vendedor_id = (SELECT id FROM admin_users WHERE user_id = auth.uid()));
-  ```
-  Confirmar policies atuais antes de criar nova (somente se faltar).
+### Estado vazio
+Mesmo bloco centralizado de Meus Parceiros (ícone grande, texto, e botão "Cadastrar cliente" no estilo outline atual).
 
 ## Fora de escopo
-
-- Mudar etapa/vendedor/contrato/preços pelo vendedor.
-- Criar novo autorizado pelo vendedor.
-- Edição de representantes e franqueados.
+- Sem mudanças nas queries, no modal de novo cliente, no modal de delegar, ou na navegação para detalhes.
+- Sem mudanças na meta CR (`META_CR = 500`) nem nas regras de filtragem por CPF/CNPJ/telefone.
