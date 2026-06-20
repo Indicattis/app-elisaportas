@@ -4021,43 +4021,95 @@ export type Database = {
         }
         Relationships: []
       }
-      frete_transportadoras: {
+      frete_regiao_estados: {
         Row: {
-          ativo: boolean
           created_at: string
           estado: string
           id: string
-          transportadora_id: string
-          updated_at: string
-          valor_porta_g: number
-          valor_porta_gg: number
-          valor_porta_p: number
+          regiao_id: string
         }
         Insert: {
-          ativo?: boolean
           created_at?: string
           estado: string
           id?: string
-          transportadora_id: string
-          updated_at?: string
-          valor_porta_g?: number
-          valor_porta_gg?: number
-          valor_porta_p?: number
+          regiao_id: string
         }
         Update: {
-          ativo?: boolean
           created_at?: string
           estado?: string
           id?: string
-          transportadora_id?: string
-          updated_at?: string
-          valor_porta_g?: number
-          valor_porta_gg?: number
-          valor_porta_p?: number
+          regiao_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "frete_transportadoras_transportadora_id_fkey"
+            foreignKeyName: "frete_regiao_estados_regiao_id_fkey"
+            columns: ["regiao_id"]
+            isOneToOne: false
+            referencedRelation: "frete_regioes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      frete_regiao_larguras: {
+        Row: {
+          created_at: string
+          id: string
+          largura: number
+          regiao_id: string
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          largura: number
+          regiao_id: string
+          updated_at?: string
+          valor?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          largura?: number
+          regiao_id?: string
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "frete_regiao_larguras_regiao_id_fkey"
+            columns: ["regiao_id"]
+            isOneToOne: false
+            referencedRelation: "frete_regioes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      frete_regioes: {
+        Row: {
+          created_at: string
+          id: string
+          nome: string
+          transportadora_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nome: string
+          transportadora_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nome?: string
+          transportadora_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "frete_regioes_transportadora_id_fkey"
             columns: ["transportadora_id"]
             isOneToOne: false
             referencedRelation: "transportadoras"
