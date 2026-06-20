@@ -290,14 +290,16 @@ export default function MeusClientes() {
                   </div>
                 )}
 
-                {/* Barra */}
-                <div className="flex-1 min-w-0">
-                  <div className="h-2.5 rounded-full bg-white/10 overflow-hidden">
-                    <div
-                      className={`h-full rounded-full bg-gradient-to-r ${s.bar} transition-all duration-500`}
-                      style={{ width: `${percent}%` }}
-                    />
+                {/* Compras e valor total */}
+                <div className="flex-1 min-w-0 flex items-center gap-4">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-white/90 font-semibold text-sm">{(cliente as any).qtd_compras || 0}</span>
+                    <span className="text-white/50 text-xs">compra{(cliente as any).qtd_compras === 1 ? '' : 's'}</span>
                   </div>
+                  <div className="w-px h-4 bg-white/10" />
+                  <span className="text-white/90 font-semibold text-sm">
+                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format((cliente as any).valor_total || 0)}
+                  </span>
                 </div>
 
                 {/* Badge tipo */}
