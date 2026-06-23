@@ -13,7 +13,9 @@ interface RegistroCadastro {
   estado: string | null;
   created_at: string;
   created_by: string | null;
+  vendedor_responsavel_id: string | null;
   admin_users: { nome: string | null } | null;
+  vendedor_responsavel: { nome: string | null } | null;
 }
 
 const PAGE_SIZE = 20;
@@ -30,7 +32,7 @@ export function HistoricoCadastrosAutorizados() {
       setLoading(true);
       const { data, error } = await supabase
         .from('autorizados')
-        .select('id, nome, cidade, estado, created_at, created_by, admin_users:created_by(nome)')
+        .select('id, nome, cidade, estado, created_at, created_by, vendedor_responsavel_id, admin_users:created_by(nome), vendedor_responsavel:vendedor_responsavel_id(nome)')
         .order('created_at', { ascending: false });
       if (cancelado) return;
       if (error) {
@@ -98,6 +100,7 @@ export function HistoricoCadastrosAutorizados() {
                     <th className="font-medium py-2 px-3">Autorizado</th>
                     <th className="font-medium py-2 px-3">Data de cadastro</th>
                     <th className="font-medium py-2 px-3">Cadastrado por</th>
+                    <th className="font-medium py-2 px-3">Vendedor responsável</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -118,6 +121,9 @@ export function HistoricoCadastrosAutorizados() {
                       </td>
                       <td className="py-2.5 px-3 text-white/70">
                         {r.admin_users?.nome ?? '—'}
+                      </td>
+                      <td className="py-2.5 px-3 text-white/70">
+                        {r.vendedor_responsavel?.nome ?? '—'}
                       </td>
                     </tr>
                   ))}
