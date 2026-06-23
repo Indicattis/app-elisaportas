@@ -8,6 +8,7 @@ import { ptBR } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useContratosVendas } from '@/hooks/useContratosVendas';
+import { isVendaFaturada } from '@/lib/faturamentoStatus';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -84,7 +85,7 @@ export default function ContratosVendas() {
       setLoadingVendas(true);
       const query = supabase
         .from('vendas')
-        .select('id, cliente_nome, cpf_cliente, cidade, data_venda, valor_venda, atendente_id, contrato_url, contrato_assinado_em')
+        .select('id, cliente_nome, cpf_cliente, cidade, data_venda, valor_venda, atendente_id, contrato_url, contrato_assinado_em, frete_aprovado, produtos_vendas(faturamento), pedidos_producao(id)')
         .eq('is_rascunho', false)
         .eq('contrato_dispensado', false)
         .eq('dispensada_sistema', false)
@@ -94,7 +95,14 @@ export default function ContratosVendas() {
 
       const { data, error } = await query;
       if (!error && data) {
-        const rows = data as any as VendaRow[];
+        const filtered = (data as any[]).filter((v) => {
+          // Aligne com Gestão de Fábrica: oculta vendas já faturadas ou com pedido vinculado
+          if (isVendaFaturada(v)) return false;
+          if ((v.pedidos_producao || []).length > 0) return false;
+          if (v.contrato_url === 'legado') return false;
+          return true;
+        });
+        const rows = filtered as any as VendaRow[];
         setVendas(rows);
 
         const atendenteIds = Array.from(
