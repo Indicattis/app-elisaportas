@@ -30,6 +30,7 @@ interface ParceiroForm {
   vendedor_responsavel_id: string;
   etapa: string;
   chave_pix: string;
+  cpf_cnpj: string;
 }
 
 interface CidadeSecundaria {
@@ -55,6 +56,7 @@ export default function NovoAutorizadoDirecao() {
     vendedor_responsavel_id: "",
     etapa: order[0],
     chave_pix: "",
+    cpf_cnpj: "",
   });
 
   const [cidadesDisponiveis, setCidadesDisponiveis] = useState<string[]>([]);
@@ -186,6 +188,7 @@ export default function NovoAutorizadoDirecao() {
           tipo_parceiro: 'autorizado' as const,
           etapa: form.etapa as 'ativo' | 'perdido' | 'premium',
           chave_pix: form.chave_pix || null,
+          cpf_cnpj: form.cpf_cnpj || null,
           created_by: user?.id ?? null,
         }])
         .select('id')
@@ -300,6 +303,12 @@ export default function NovoAutorizadoDirecao() {
                       <Label className="text-white/80">Chave Pix</Label>
                       <Input placeholder="CPF/CNPJ, e-mail, telefone ou chave aleatória" value={form.chave_pix}
                         onChange={(e) => setForm({ ...form, chave_pix: e.target.value })}
+                        className="bg-white/5 border-white/10 text-white" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-white/80">CPF/CNPJ</Label>
+                      <Input placeholder="CPF ou CNPJ do parceiro" value={form.cpf_cnpj}
+                        onChange={(e) => setForm({ ...form, cpf_cnpj: e.target.value })}
                         className="bg-white/5 border-white/10 text-white" />
                     </div>
                     <div className="space-y-2">
