@@ -21,6 +21,8 @@ import { createPortal } from 'react-dom';
 import { VisitasHistoricoPanel } from '@/components/vendas/VisitasHistoricoPanel';
 import { logVisitaHistorico, diffVisita } from '@/lib/visitasHistorico';
 import { useAuth } from '@/hooks/useAuth';
+import { addDays, startOfWeek, format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 interface VisitaAgendada {
   id: string;
@@ -249,6 +251,40 @@ export default function VisitasTecnicasCalendario() {
   const month = cursor.getMonth();
   const grid = useMemo(() => buildGrid(year, month), [year, month]);
 
+  // Mobile: visualização semanal (estilo logística)
+  const [weekStart, setWeekStart] = useState<Date>(() => startOfWeek(new Date(), { weekStartsOn: 0 }));
+  const weekDays = useMemo(
+    () => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)),
+    [weekStart]
+  );
+
+  const { data: visitasSemana = [] } = useQuery({
+    queryKey: ['visitas-semana', dateToYmd(weekStart)],
+    queryFn: async () => {
+      const inicio = dateToYmd(weekDays[0]);
+      const fim = dateToYmd(weekDays[6]);
+      const { data, error } = await supabase
+        .from('visitas_tecnicas_agendadas')
+        .select('*')
+        .gte('data_visita', inicio)
+        .lte('data_visita', fim)
+        .order('data_visita').order('hora_inicio');
+      if (error) throw error;
+      return (data || []) as VisitaAgendada[];
+    },
+  });
+
+  const visitasSemanaPorDia = useMemo(() => {
+    const map = new Map<string, VisitaAgendada[]>();
+    visitasSemana.forEach(v => {
+      const k = toDateOnly(v.data_visita);
+      const arr = map.get(k) || [];
+      arr.push(v);
+      map.set(k, arr);
+    });
+    return map;
+  }, [visitasSemana]);
+
   const { data: visitas = [], isLoading } = useQuery({
     queryKey: ['visitas-agendadas', year, month],
     queryFn: async () => {
@@ -418,6 +454,7 @@ export default function VisitasTecnicasCalendario() {
       toast.success(editing ? 'Visita atualizada' : 'Visita agendada');
       setDialogOpen(false);
       qc.invalidateQueries({ queryKey: ['visitas-agendadas'] });
+      qc.invalidateQueries({ queryKey: ['visitas-semana'] });
       qc.invalidateQueries({ queryKey: ['visitas-a-concluir'] });
       qc.invalidateQueries({ queryKey: ['visitas-historico'] });
     },
@@ -443,6 +480,7 @@ export default function VisitasTecnicasCalendario() {
       toast.success('Visita excluída');
       setDialogOpen(false);
       qc.invalidateQueries({ queryKey: ['visitas-agendadas'] });
+      qc.invalidateQueries({ queryKey: ['visitas-semana'] });
       qc.invalidateQueries({ queryKey: ['visitas-a-concluir'] });
       qc.invalidateQueries({ queryKey: ['visitas-historico'] });
     },
@@ -468,6 +506,7 @@ export default function VisitasTecnicasCalendario() {
     onSuccess: () => {
       setDialogOpen(false);
       qc.invalidateQueries({ queryKey: ['visitas-agendadas'] });
+      qc.invalidateQueries({ queryKey: ['visitas-semana'] });
       qc.invalidateQueries({ queryKey: ['visitas-a-concluir'] });
       qc.invalidateQueries({ queryKey: ['visitas-historico'] });
     },
@@ -500,6 +539,7 @@ export default function VisitasTecnicasCalendario() {
     onSuccess: () => {
       toast.success('Visita reagendada');
       qc.invalidateQueries({ queryKey: ['visitas-agendadas'] });
+      qc.invalidateQueries({ queryKey: ['visitas-semana'] });
       qc.invalidateQueries({ queryKey: ['visitas-a-concluir'] });
       qc.invalidateQueries({ queryKey: ['visitas-historico'] });
     },
@@ -622,7 +662,102 @@ export default function VisitasTecnicasCalendario() {
         >
         {tab === 'calendario' && (
         <>
-        <div className="rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 p-2 sm:p-4">
+        {/* Mobile: visualização semanal estilo logística */}
+        <div className="lg:hidden rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 p-3 mb-4">
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <button
+              className="p-2 rounded-lg bg-white/5 border border-white/10 text-white/70 hover:bg-white/10"
+              onClick={() => setWeekStart(addDays(weekStart, -7))}
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <div className="text-center flex-1 min-w-0">
+              <p className="text-xs font-medium text-white truncate">
+                {format(weekStart, "dd 'de' MMM", { locale: ptBR })} – {format(addDays(weekStart, 6), "dd 'de' MMM 'de' yyyy", { locale: ptBR })}
+              </p>
+              <button
+                onClick={() => setWeekStart(startOfWeek(new Date(), { weekStartsOn: 0 }))}
+                className="text-[11px] text-blue-300 hover:text-blue-200"
+              >
+                Ir para hoje
+              </button>
+            </div>
+            <button
+              className="p-2 rounded-lg bg-white/5 border border-white/10 text-white/70 hover:bg-white/10"
+              onClick={() => setWeekStart(addDays(weekStart, 7))}
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div className="space-y-2">
+            {weekDays.map(day => {
+              const dateStr = dateToYmd(day);
+              const list = visitasSemanaPorDia.get(dateStr) || [];
+              const today = isToday(day);
+              return (
+                <div
+                  key={dateStr}
+                  className={`rounded-lg border p-3 ${today ? 'bg-blue-500/10 border-blue-400/40' : 'bg-white/[0.03] border-white/5'}`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-baseline gap-2">
+                      <span className={`text-xl font-semibold ${today ? 'text-blue-300' : 'text-white'}`}>
+                        {day.getDate()}
+                      </span>
+                      <div className="flex flex-col leading-tight">
+                        <span className="text-xs text-white/70 capitalize">{format(day, 'EEEE', { locale: ptBR })}</span>
+                        <span className="text-[10px] text-white/40 capitalize">{format(day, "MMM 'de' yyyy", { locale: ptBR })}</span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => openCreate(dateStr)}
+                      className="p-1.5 rounded-md bg-blue-500/15 border border-blue-400/20 text-blue-200 hover:bg-blue-500/25"
+                      aria-label="Agendar visita"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  {list.length === 0 ? (
+                    <div className="text-xs text-white/30 py-1">Sem visitas</div>
+                  ) : (
+                    <ul className="space-y-1.5">
+                      {list.map(v => {
+                        const cls =
+                          v.status === 'cancelada'
+                            ? 'bg-red-500/15 text-red-200 line-through'
+                            : (v.status === 'realizada' || v.status === 'concluida')
+                            ? 'bg-emerald-500/15 text-emerald-200'
+                            : 'bg-blue-500/20 text-blue-100';
+                        const local = [v.cidade, v.estado].filter(Boolean).join('/');
+                        return (
+                          <li key={v.id}>
+                            <button
+                              onClick={() => openDetail(v)}
+                              className={`w-full text-left px-2.5 py-2 rounded-md ${cls} flex items-center gap-2`}
+                            >
+                              <span className="text-[11px] font-mono opacity-80 shrink-0">
+                                {(v.hora_inicio || '').slice(0, 5)}
+                              </span>
+                              <div className="min-w-0 flex-1">
+                                <div className="text-xs font-medium truncate">{v.titulo}</div>
+                                {local && <div className="text-[10px] opacity-70 truncate">{local}</div>}
+                              </div>
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Desktop / tablet: grid mensal */}
+        <div className="hidden lg:block rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 p-2 sm:p-4">
           <DndContext sensors={dndSensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
           <div className="flex items-center justify-between mb-4">
             <button
