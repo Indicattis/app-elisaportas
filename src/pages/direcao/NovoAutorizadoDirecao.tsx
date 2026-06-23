@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { ArrowLeft, Upload, User, Plus, X } from "lucide-react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { getEtapasByTipo } from "@/utils/parceiros";
