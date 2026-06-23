@@ -413,6 +413,15 @@ export function OrfaosCollapsible({
                       >
                         <Edit className="h-3.5 w-3.5 text-white/60" />
                       </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 hover:bg-white/10"
+                        title="Gerar Contrato de Parceria"
+                        onClick={() => gerarContratoAutorizado(aut.id)}
+                      >
+                        <FileSignature className="h-3.5 w-3.5 text-blue-400" />
+                      </Button>
                       <Button 
                         variant="ghost" 
                         size="icon"
