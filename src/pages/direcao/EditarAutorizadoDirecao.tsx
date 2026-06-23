@@ -33,6 +33,7 @@ interface ParceiroForm {
   vendedor_responsavel_id: string;
   etapa: string;
   chave_pix: string;
+  cpf_cnpj: string;
 }
 
 interface CidadeSecundaria {
@@ -60,6 +61,7 @@ export default function EditarAutorizadoDirecao() {
     vendedor_responsavel_id: "",
     etapa: order[0],
     chave_pix: "",
+    cpf_cnpj: "",
   });
 
   const [cidadesDisponiveis, setCidadesDisponiveis] = useState<string[]>([]);
