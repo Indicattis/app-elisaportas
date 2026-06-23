@@ -10,7 +10,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useCriteriosNegociacao, useObservacoesNegociacao, CriterioNegociacao } from "@/hooks/useCriteriosNegociacao";
-import { ArrowLeft, Plus, Edit, Trash2, Loader2, MapPin, Save, ExternalLink } from "lucide-react";
+import { ArrowLeft, Plus, Edit, Trash2, Loader2, MapPin, Save, ExternalLink, FileSignature } from "lucide-react";
+import { gerarContratoAutorizado } from "@/utils/gerarContratoAutorizado";
 
 interface Autorizado {
   id: string;
@@ -151,6 +152,10 @@ export default function AutorizadoNegociacao() {
             <Button variant="outline" size="sm" onClick={() => navigate(`/dashboard/parceiros/${id}/edit/autorizado`)}>
               <ExternalLink className="h-4 w-4 mr-2" />
               Editar Cadastro
+            </Button>
+            <Button variant="outline" size="sm" className="ml-2" onClick={() => id && gerarContratoAutorizado(id)}>
+              <FileSignature className="h-4 w-4 mr-2" />
+              Gerar Contrato
             </Button>
           </div>
         </CardHeader>
