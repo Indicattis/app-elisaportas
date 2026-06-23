@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { ArrowLeft, Upload, User, Plus, X } from "lucide-react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { getEtapasByTipo } from "@/utils/parceiros";
@@ -66,6 +67,7 @@ export default function NovoAutorizadoDirecao() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [estadoInfo, setEstadoInfo] = useState<{ id: string; nome: string; sigla: string } | null>(null);
   const { toast } = useToast();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const contexto = pathname.startsWith('/logistica') ? 'logistica' : pathname.startsWith('/autorizados') ? 'home' : 'direcao';
@@ -184,6 +186,7 @@ export default function NovoAutorizadoDirecao() {
           tipo_parceiro: 'autorizado' as const,
           etapa: form.etapa as 'ativo' | 'perdido' | 'premium',
           chave_pix: form.chave_pix || null,
+          created_by: user?.id ?? null,
         }])
         .select('id')
         .single();

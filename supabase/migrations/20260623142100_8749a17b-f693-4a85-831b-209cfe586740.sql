@@ -1,0 +1,2 @@
+ALTER TABLE public.autorizados ADD COLUMN IF NOT EXISTS created_by uuid REFERENCES public.admin_users(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS idx_autorizados_created_by ON public.autorizados(created_by);

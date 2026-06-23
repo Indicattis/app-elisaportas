@@ -1,39 +1,34 @@
 ## Objetivo
 
-Aplicar em **Meus Clientes** o mesmo layout em pílula usado em **Meus Parceiros**, mantendo as funcionalidades atuais (busca, novo cliente, delegar, meta CR, fidelizado/parceiro).
+Na página **Autorizados** (`/autorizados`, `/direcao/autorizados`, `/logistica/autorizados`), adicionar uma nova seção abaixo das seções existentes mostrando o **registro de cadastro de autorizados**: nome do autorizado, data em que foi cadastrado e por quem.
 
-## Mudanças em `src/pages/vendas/MeusClientes.tsx`
+## Mudanças
 
-### Cards de estatísticas (topo)
-Substituir o card único da Meta CR por um grid de 3 cards no estilo dos parceiros (gradiente + ícone + glow):
-- **Total** (azul, `Users`) — total de clientes
-- **CR** (esmeralda, `Target`) — clientes recorrentes (`tipo_cliente = 'CR'`) com `X/META_CR`
-- **Fidelizados** (âmbar, `Star`) — total `fidelizado = true`
+### 1. Banco de dados (migration)
 
-A barra de progresso da meta CR vira uma linha fina dentro do próprio card CR (mantém o cálculo de percentual).
+Adicionar à tabela `autorizados` uma coluna para rastrear o autor do cadastro:
 
-### Filtros em pílulas
-Logo abaixo dos cards, pílulas no mesmo padrão dos parceiros:
-- Todos · CR · CE · Fidelizados · Parceiros (clique alterna o filtro `tipoFiltro`).
+- `created_by uuid null` — referencia `admin_users(id)`, sem `ON DELETE` para não perder histórico se o usuário for arquivado.
 
-A busca por texto permanece, mas estilizada como input compacto acima das pílulas (ou inline ao lado), no mesmo visual já presente.
+Registros já existentes ficarão com `created_by = null` (mostrados como "—" na UI, já que não temos como recuperar essa informação retroativamente).
 
-### Lista em pílulas (igual a Meus Parceiros)
-Trocar o grid de cards por linhas em formato pill:
-- Avatar circular com iniciais + ring colorida (azul para CE, esmeralda para CR).
-- Badge inferior no avatar com ícone (`Users` ou `Target`).
-- Bloco "Nome + tipo/CPF" com truncamento.
-- Localização (cidade - estado) com ícone `MapPin`.
-- Barra horizontal proporcional ao "peso" do cliente (CR = 100%, CE = 50%, ou simplesmente proporcional à contagem do tipo dentro do total — mesmo padrão usado nos parceiros).
-- Badges discretos para `fidelizado` (Star âmbar) e `parceiro` (Triangle roxo) quando aplicáveis.
-- Botão circular `UserCheck` para delegar (mantém `stopPropagation`).
-- `ArrowRight` no fim, com hover.
+Atualizar o ponto único de criação de autorizados (hook/serviço de cadastro de autorizados) para preencher `created_by` com o `user.id` do usuário logado.
 
-Clique na linha navega para `/vendas/meus-clientes/:id` (comportamento atual).
+### 2. Frontend — `src/pages/direcao/AutorizadosPrecosDirecao.tsx`
 
-### Estado vazio
-Mesmo bloco centralizado de Meus Parceiros (ícone grande, texto, e botão "Cadastrar cliente" no estilo outline atual).
+Adicionar uma nova seção "Histórico de Cadastros" no final do conteúdo (após as seções existentes de Estados e Acordos):
 
-## Fora de escopo
-- Sem mudanças nas queries, no modal de novo cliente, no modal de delegar, ou na navegação para detalhes.
-- Sem mudanças na meta CR (`META_CR = 500`) nem nas regras de filtragem por CPF/CNPJ/telefone.
+- Card com mesmo estilo glassmorphism do restante da página (`bg-white/5`, `backdrop-blur-xl`, `border-white/10`).
+- Tabela com colunas:
+  - **Autorizado** (nome + cidade/UF como subtítulo)
+  - **Data de cadastro** (`created_at` formatado `dd/MM/yyyy HH:mm`)
+  - **Cadastrado por** (nome do admin via join com `admin_users`; "—" quando null)
+- Ordenação: mais recente primeiro.
+- Busca por nome do autorizado (input simples) e seletor de ano, reaproveitando o mesmo padrão visual da seção de acordos.
+- Paginação simples (ex.: 20 por página) para não carregar todos de uma vez se a lista crescer.
+
+### 3. Detalhes técnicos
+
+- Query: `supabase.from('autorizados').select('id, nome, cidade, estado, created_at, created_by, admin_users:created_by(nome)').order('created_at', { ascending: false })`.
+- Não alteramos lógica de negócio nem outras telas — apenas registro do autor no cadastro novo e exibição.
+- Sem mudanças de RLS necessárias (a tabela `autorizados` já tem políticas de leitura).
