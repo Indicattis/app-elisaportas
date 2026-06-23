@@ -3191,6 +3191,59 @@ export type Database = {
         }
         Relationships: []
       }
+      entradas: {
+        Row: {
+          banco_id: string | null
+          categoria: string
+          created_at: string
+          created_by: string | null
+          data: string
+          descricao: string | null
+          id: string
+          observacoes: string | null
+          responsavel_id: string | null
+          status: string
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          banco_id?: string | null
+          categoria: string
+          created_at?: string
+          created_by?: string | null
+          data: string
+          descricao?: string | null
+          id?: string
+          observacoes?: string | null
+          responsavel_id?: string | null
+          status?: string
+          updated_at?: string
+          valor: number
+        }
+        Update: {
+          banco_id?: string | null
+          categoria?: string
+          created_at?: string
+          created_by?: string | null
+          data?: string
+          descricao?: string | null
+          id?: string
+          observacoes?: string | null
+          responsavel_id?: string | null
+          status?: string
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entradas_banco_id_fkey"
+            columns: ["banco_id"]
+            isOneToOne: false
+            referencedRelation: "bancos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       equipes_instalacao: {
         Row: {
           ativa: boolean

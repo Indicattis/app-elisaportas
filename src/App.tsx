@@ -354,6 +354,7 @@ import FaturamentoVendaMinimalista from "./pages/administrativo/FaturamentoVenda
 import CustosMinimalista from "./pages/administrativo/CustosMinimalista";
 import GastosPage from "./pages/administrativo/GastosPage";
 import BancosPage from "./pages/administrativo/BancosPage";
+import EntradasPage from "./pages/administrativo/EntradasPage";
 
 import CaixaHub from "./pages/administrativo/CaixaHub";
 import ContasReceberMinimalista from "./pages/administrativo/ContasReceberMinimalista";
@@ -663,6 +664,7 @@ const App = () => (
                 <Route path="/financeiro/faturamento/produtos" element={<ProtectedRoute routeKey="administrativo_hub"><FaturamentoProdutosMinimalista /></ProtectedRoute>} />
                 <Route path="/financeiro/faturamento/:id" element={<ProtectedRoute routeKey="administrativo_hub"><FaturamentoVendaMinimalista /></ProtectedRoute>} />
                 <Route path="/financeiro/gastos" element={<ProtectedRoute routeKey="admin_gastos"><GastosPage /></ProtectedRoute>} />
+                <Route path="/financeiro/entradas" element={<ProtectedRoute routeKey="admin_entradas"><EntradasPage /></ProtectedRoute>} />
                 <Route path="/financeiro/custo-folha" element={<ProtectedRoute routeKey="administrativo_hub"><CustoFolhaMensal /></ProtectedRoute>} />
                 <Route path="/financeiro/bancos" element={<ProtectedRoute routeKey="admin_bancos"><BancosPage /></ProtectedRoute>} />
 
