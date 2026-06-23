@@ -1,10 +1,11 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Receipt, BadgeDollarSign, DollarSign, Lock, ArrowLeft, Users, Scale } from "lucide-react";
+import { Receipt, BadgeDollarSign, DollarSign, Lock, ArrowLeft, Users, Scale, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 const menuItems = [
   { label: "Gastos", icon: DollarSign, path: "/financeiro/gastos", ativo: true, cor: "orange" },
+  { label: "Entradas", icon: TrendingUp, path: "/financeiro/entradas", ativo: true, cor: "green" },
   { label: "Faturamento", icon: Receipt, path: "/financeiro/faturamento", ativo: true },
   
   { label: "Contas a Pagar", icon: BadgeDollarSign, path: "/financeiro/caixa/contas-a-pagar", ativo: false },
@@ -69,8 +70,11 @@ export default function FinanceiroHub() {
             const Icon = item.icon;
             const delay = 100 + index * 80;
             const isOrange = (item as any).cor === 'orange';
+            const isGreen = (item as any).cor === 'green';
             const activeGradient = isOrange
               ? 'bg-gradient-to-r from-orange-500 to-orange-700 hover:from-orange-400 hover:to-orange-600 shadow-orange-500/20 border-orange-400/30'
+              : isGreen
+              ? 'bg-gradient-to-r from-emerald-500 to-emerald-700 hover:from-emerald-400 hover:to-emerald-600 shadow-emerald-500/20 border-emerald-400/30'
               : 'bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 shadow-blue-500/20 border-blue-400/30';
             
             return (
@@ -115,8 +119,11 @@ export default function FinanceiroHub() {
             const Icon = item.icon;
             const delay = 200 + index * 80;
             const isOrange = (item as any).cor === 'orange';
+            const isGreen = (item as any).cor === 'green';
             const activeGradient = isOrange
               ? 'bg-gradient-to-r from-orange-500 to-orange-700 hover:from-orange-400 hover:to-orange-600 shadow-orange-500/20 border-orange-400/30'
+              : isGreen
+              ? 'bg-gradient-to-r from-emerald-500 to-emerald-700 hover:from-emerald-400 hover:to-emerald-600 shadow-emerald-500/20 border-emerald-400/30'
               : 'bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 shadow-blue-500/20 border-blue-400/30';
             
             return (
