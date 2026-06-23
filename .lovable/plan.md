@@ -1,72 +1,33 @@
-## Objetivo
+## Geração de Contrato do Autorizado
 
-Adicionar uma nova página **Entradas** em Financeiro, espelhando exatamente o layout e o design de **Gastos** (`/financeiro/gastos`), mas para registrar valores recebidos. Sem impacto no DRE — apenas registro.
+Adicionar funcionalidade para gerar PDF do "Termo de Parceria com Instalador Autorizado" preenchido com os dados do autorizado selecionado.
 
-## Mudanças
+### 1. Banco de dados
+- Migration: adicionar coluna `cpf_cnpj text` na tabela `autorizados` (nullable).
 
-### 1. Banco de dados (migration)
+### 2. Cadastro do Autorizado
+- Adicionar campo "CPF/CNPJ" no formulário de criação/edição de autorizado (telas: `NovoAutorizadoDirecao`, `EditarAutorizadoDirecao` e qualquer dialog usado em `/autorizados`). Campo opcional, com máscara automática (CPF se ≤11 dígitos, CNPJ se 14).
 
-Nova tabela `public.entradas` espelhando `gastos`, mas com **categoria como texto livre** (sem FK para tipos):
+### 3. Geração do PDF
+- Novo util `src/utils/contratoAutorizadoPDFGenerator.ts` usando `jsPDF` (já no projeto), no mesmo padrão do `contratoPDFGenerator.ts`:
+  - Cabeçalho com logo Elisa + dados da empresa (`company_settings`).
+  - Título: "TERMO DE PARCERIA COM INSTALADOR AUTORIZADO".
+  - Corpo fixo do contrato (texto enviado no .docx), com substituição de:
+    - `{{parceiro_nome}}` → nome do autorizado
+    - `{{parceiro_cpf_cnpj}}` → CPF/CNPJ (ou linhas em branco se vazio)
+    - `{{cidade_data}}` → "Caxias do Sul/RS, DD de Mês de AAAA" (data atual)
+  - Seções numeradas 1 a 5 (Objeto, Responsabilidades, Autonomia, Identificação, Vigência).
+  - Bloco de assinaturas: Grupo Elisa (esquerda) + Parceiro Autorizado com nome + CPF/CNPJ (direita).
+  - Footer com site/email/telefone e paginação.
+  - Nome do arquivo: `contrato_parceria_{nome_slug}_{timestamp}.pdf`.
 
-```
-id uuid PK
-categoria text         -- texto livre digitado pelo usuário
-descricao text null
-valor numeric not null
-data date not null
-responsavel_id uuid null -> admin_users(id)
-banco_id uuid null      -> bancos(id)
-status text default 'recebido'  -- 'recebido' | 'previsto'
-observacoes text null
-created_by uuid null
-created_at / updated_at timestamps
-```
+### 4. Botões de ação
+- **Card do autorizado** (`AutorizadosGrid.tsx`, `AutorizadosList.tsx`, `AutorizadosKanban.tsx`): novo ícone `FileSignature` ao lado de visualizar/editar, com tooltip "Gerar Contrato de Parceria".
+- **Página de detalhes** (`AutorizadoNegociacao.tsx`): botão "Gerar Contrato" no header.
+- Ao clicar: busca dados completos do autorizado + `company_settings` e chama o gerador. Se `cpf_cnpj` estiver vazio, exibe `toast.warning` informando que o PDF será gerado com campo em branco mas permite seguir.
 
-- `GRANT` para `authenticated` e `service_role`.
-- RLS espelhando a tabela `gastos` (políticas equivalentes às existentes).
-- Trigger `updated_at` reutilizando `public.update_updated_at_column`.
-
-### 2. Hub Financeiro — `src/pages/administrativo/FinanceiroHub.tsx`
-
-Adicionar novo item de menu logo abaixo de "Gastos":
-
-```
-{ label: "Entradas", icon: TrendingUp, path: "/financeiro/entradas", ativo: true, cor: "green" }
-```
-
-Adicionar suporte ao gradiente verde no botão (espelhando o tratamento `cor: 'orange'` usado em Gastos), com tons `from-emerald-500 to-emerald-700`.
-
-### 3. Hook — `src/hooks/useEntradas.ts`
-
-Clone do `useGastos.ts`:
-
-- Sem fetch de `tipos_custos` (categoria é string).
-- Mantém joins para `admin_users` (responsável) e `bancos`.
-- Mesmas funções: `saveEntrada`, `updateEntrada`, `deleteEntrada`.
-- Mesmos parâmetros: `mesFiltro`, `ordenarPor` (`'cadastro' | 'pagamento'`).
-
-### 4. Página — `src/pages/administrativo/EntradasPage.tsx`
-
-Clone visual de `GastosPage.tsx`:
-
-- Mesmo cabeçalho, filtros (mês, responsável, banco, categoria), busca, totalizador.
-- Remove filtro "DRE" (não se aplica).
-- Coluna "Tipo" vira "Categoria" com `Input` livre (com `<datalist>` sugerindo categorias já usadas).
-- Botão principal "Nova Entrada" em verde no mesmo estilo do "Novo Gasto".
-- Exportação PDF/CSV preservada, ajustando títulos e colunas.
-- Reaproveita o mesmo dialog de cadastro (clone) com os campos: categoria (texto livre + sugestões), descrição, valor, data, responsável, banco, status (`recebido` / `previsto`), observações.
-
-### 5. Componente de form — `src/components/financeiro/EntradaFormDialog.tsx`
-
-Clone de `GastoFormDialog.tsx` adaptado (sem seletor de tipo_custo; categoria virá como input livre).
-
-### 6. Roteamento — `src/App.tsx`
-
-Adicionar rota `/financeiro/entradas` → `EntradasPage` (lazy import no mesmo padrão das demais).
-
-### 7. Detalhes técnicos
-
-- Idêntico padrão de cores e glassmorphism do restante (tema escuro, `bg-white/5`, `backdrop-blur-xl`, `border-white/10`).
-- Mesma paleta dos botões, mesmo modal, mesma estrutura de tabela.
-- Datas seguem o padrão do projeto (`T12:00:00.000Z` na escrita).
-- Sem alteração no DRE / fluxo de gastos atual.
+### 5. Detalhes técnicos
+- Sem alterações em storage ou tabela de contratos — apenas download direto.
+- Reaproveitar `useCompanySettings` para puxar dados da empresa.
+- Datas formatadas em pt-BR.
+- Sem mudanças em RLS (apenas nova coluna).

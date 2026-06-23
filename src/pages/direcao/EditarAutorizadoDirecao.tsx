@@ -33,6 +33,7 @@ interface ParceiroForm {
   vendedor_responsavel_id: string;
   etapa: string;
   chave_pix: string;
+  cpf_cnpj: string;
 }
 
 interface CidadeSecundaria {
@@ -60,6 +61,7 @@ export default function EditarAutorizadoDirecao() {
     vendedor_responsavel_id: "",
     etapa: order[0],
     chave_pix: "",
+    cpf_cnpj: "",
   });
 
   const [cidadesDisponiveis, setCidadesDisponiveis] = useState<string[]>([]);
@@ -154,6 +156,7 @@ export default function EditarAutorizadoDirecao() {
           vendedor_responsavel_id: (data as any).vendedor_responsavel_id || "",
           etapa: data.etapa || order[0],
           chave_pix: (data as any).chave_pix || "",
+          cpf_cnpj: (data as any).cpf_cnpj || "",
         });
 
         if (data.estado) {
@@ -291,6 +294,7 @@ export default function EditarAutorizadoDirecao() {
         contrato_url: contratoUrl,
         contrato_nome_arquivo: contratoNome,
         chave_pix: form.chave_pix || null,
+        cpf_cnpj: form.cpf_cnpj || null,
       };
 
       const { error } = await supabase
@@ -587,6 +591,14 @@ export default function EditarAutorizadoDirecao() {
                     <Label className="text-white/70 text-xs uppercase tracking-wide">Chave Pix</Label>
                     <Input placeholder="CPF/CNPJ, e-mail, telefone ou chave aleatória" value={form.chave_pix}
                       onChange={(e) => setForm({ ...form, chave_pix: e.target.value })}
+                      className="bg-white/5 border-white/10 text-white" />
+                  </div>
+                  )}
+                  {!isVendedorMode && (
+                  <div className="md:col-span-2 space-y-2">
+                    <Label className="text-white/70 text-xs uppercase tracking-wide">CPF/CNPJ</Label>
+                    <Input placeholder="CPF ou CNPJ do parceiro" value={form.cpf_cnpj}
+                      onChange={(e) => setForm({ ...form, cpf_cnpj: e.target.value })}
                       className="bg-white/5 border-white/10 text-white" />
                   </div>
                   )}

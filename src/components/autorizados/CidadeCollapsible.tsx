@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Building2, ChevronDown, Edit, Star, Trash2, Pencil, GripVertical } from 'lucide-react';
+import { Building2, ChevronDown, Edit, Star, Trash2, Pencil, GripVertical, FileSignature } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -27,6 +27,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
 import type { Cidade, AutorizadoResumo } from '@/hooks/useEstadosCidades';
+import { gerarContratoAutorizado } from '@/utils/gerarContratoAutorizado';
 
 interface CidadeCollapsibleProps {
   cidade: Cidade;
@@ -256,6 +257,15 @@ function AutorizadoRow({ autorizado, onEdit, onDelete, onTogglePremium }: Autori
           >
             <Edit className="h-3.5 w-3.5 text-white/60" />
           </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 hover:bg-white/10"
+            title="Gerar Contrato de Parceria"
+            onClick={() => gerarContratoAutorizado(autorizado.id)}
+          >
+            <FileSignature className="h-3.5 w-3.5 text-blue-400" />
+          </Button>
           <Button 
             variant="ghost" 
             size="icon"
@@ -402,6 +412,15 @@ export function OrfaosCollapsible({
                         onClick={() => onEditAutorizado(aut.id)}
                       >
                         <Edit className="h-3.5 w-3.5 text-white/60" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 hover:bg-white/10"
+                        title="Gerar Contrato de Parceria"
+                        onClick={() => gerarContratoAutorizado(aut.id)}
+                      >
+                        <FileSignature className="h-3.5 w-3.5 text-blue-400" />
                       </Button>
                       <Button 
                         variant="ghost" 

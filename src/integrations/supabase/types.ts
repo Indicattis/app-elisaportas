@@ -615,6 +615,7 @@ export type Database = {
           contrato_tamanho_arquivo: number | null
           contrato_uploaded_at: string | null
           contrato_url: string | null
+          cpf_cnpj: string | null
           created_at: string
           created_by: string | null
           email: string | null
@@ -653,6 +654,7 @@ export type Database = {
           contrato_tamanho_arquivo?: number | null
           contrato_uploaded_at?: string | null
           contrato_url?: string | null
+          cpf_cnpj?: string | null
           created_at?: string
           created_by?: string | null
           email?: string | null
@@ -691,6 +693,7 @@ export type Database = {
           contrato_tamanho_arquivo?: number | null
           contrato_uploaded_at?: string | null
           contrato_url?: string | null
+          cpf_cnpj?: string | null
           created_at?: string
           created_by?: string | null
           email?: string | null
