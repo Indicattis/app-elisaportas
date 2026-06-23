@@ -616,6 +616,7 @@ export type Database = {
           contrato_uploaded_at: string | null
           contrato_url: string | null
           created_at: string
+          created_by: string | null
           email: string | null
           endereco: string | null
           estado: string | null
@@ -653,6 +654,7 @@ export type Database = {
           contrato_uploaded_at?: string | null
           contrato_url?: string | null
           created_at?: string
+          created_by?: string | null
           email?: string | null
           endereco?: string | null
           estado?: string | null
@@ -690,6 +692,7 @@ export type Database = {
           contrato_uploaded_at?: string | null
           contrato_url?: string | null
           created_at?: string
+          created_by?: string | null
           email?: string | null
           endereco?: string | null
           estado?: string | null
@@ -718,6 +721,13 @@ export type Database = {
           whatsapp?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "autorizados_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "autorizados_vendedor_id_fkey"
             columns: ["vendedor_id"]
