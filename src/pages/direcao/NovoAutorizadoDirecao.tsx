@@ -184,6 +184,7 @@ export default function NovoAutorizadoDirecao() {
           tipo_parceiro: 'autorizado' as const,
           etapa: form.etapa as 'ativo' | 'perdido' | 'premium',
           chave_pix: form.chave_pix || null,
+          created_by: user?.id ?? null,
         }])
         .select('id')
         .single();

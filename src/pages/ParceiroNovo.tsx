@@ -149,7 +149,8 @@ export default function ParceiroNovo() {
         vendedor_id: form.vendedor_id,
         tipo_parceiro: form.tipo_parceiro,
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        created_by: user?.id ?? null,
       };
 
       // Adicionar campos específicos por tipo
