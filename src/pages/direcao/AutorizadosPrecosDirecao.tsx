@@ -339,7 +339,7 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
       backPath={backPath}
       breadcrumbItems={[
         { label: "Home", path: "/home" },
-        { label: breadcrumbLabel, path: backPath },
+        ...(contexto !== 'home' ? [{ label: breadcrumbLabel, path: backPath }] : []),
         { label: "Autorizados" }
       ]}
       headerActions={headerActions}
