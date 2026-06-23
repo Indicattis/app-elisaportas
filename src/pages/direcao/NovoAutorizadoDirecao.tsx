@@ -67,6 +67,7 @@ export default function NovoAutorizadoDirecao() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [estadoInfo, setEstadoInfo] = useState<{ id: string; nome: string; sigla: string } | null>(null);
   const { toast } = useToast();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const contexto = pathname.startsWith('/logistica') ? 'logistica' : pathname.startsWith('/autorizados') ? 'home' : 'direcao';
