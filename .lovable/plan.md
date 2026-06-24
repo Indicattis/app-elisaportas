@@ -1,30 +1,30 @@
 ## Objetivo
 
-Adicionar um campo **Tipo** ao cadastrar/editar uma visita técnica, com duas opções padrão:
-- **Visita técnica** (selecionada por padrão)
-- **Manutenção**
+Em **Pós-Vendas → Pedidos**, trocar a listagem atual por um visual em "pílula" igual ao do **Ranking de Equipes**, e adicionar um botão que abre a downbar (Sheet) de detalhes do pedido — a mesma usada em Gestão de Pedidos.
 
 ## Mudanças
 
-### 1. Banco de dados
-- Migration em `visitas_tecnicas_agendadas`:
-  - Nova coluna `tipo text NOT NULL DEFAULT 'visita_tecnica'`
-  - CHECK constraint aceitando `'visita_tecnica'` ou `'manutencao'`
-  - Backfill: registros existentes ficam como `'visita_tecnica'`
+### 1. `src/pages/pos-vendas/PosVendasPedidos.tsx`
 
-### 2. UI — `src/pages/vendas/VisitasTecnicasCalendario.tsx`
-- Adicionar `tipo` ao state do formulário (default `'visita_tecnica'`)
-- Novo `<Select>` no dialog de criar/editar visita, logo acima ou ao lado do campo Título, com as opções "Visita técnica" e "Manutenção"
-- Incluir `tipo` no insert/update e no carregamento ao editar
-- Exibir um badge discreto (texto pequeno) no card da visita na grade do calendário e no popover de detalhes, diferenciando manutenção (ex.: cor âmbar) de visita técnica (azul)
+- Substituir os cards atuais por linhas no estilo `RankingListItem` (`logistica/RankingEquipesInstalacao.tsx`):
+  - Container `rounded-full border-white/10 bg-white/5 backdrop-blur-xl`, animação `motion` com `initial/animate` (delay por índice).
+  - Avatar circular à esquerda com inicial do cliente (cor azul padrão), badge numérica de posição opcional removida (não é ranking).
+  - Nome do cliente em destaque + `Badge` com `#numero_pedido`.
+  - Status "Pendente"/"Respondido" mantido (badge âmbar/esmeralda).
+  - Telefone como subtexto discreto.
+  - `ArrowRight` à direita no hover.
+- Manter filtros (Pendentes/Respondidos/Todos) e busca atuais, sem alterar o layout do header.
+- Ações por linha (lado direito):
+  - **Botão "Ver pedido"** (ícone `Info`/`Eye`) → abre `PedidoDetalhesSheet` com o pedido completo.
+  - Botão "Responder pesquisa" mantido (desabilitado se já respondido).
 
-### 3. Histórico
-- `src/lib/visitasHistorico.ts`: incluir `tipo` no `diffVisita` para registrar alteração de tipo
-- `src/components/vendas/VisitasHistoricoPanel.tsx`: nenhuma mudança necessária (já mostra campos alterados genericamente)
+### 2. Integração com `PedidoDetalhesSheet`
 
-### 4. Tela de conclusão
-- `VisitaTecnicaConclusao.tsx`: apenas exibir o tipo se já estiver carregando os dados da visita (sem alterar fluxo)
+- `PedidoDetalhesSheet` espera um objeto pedido com join de `vendas`. Ao clicar em "Ver pedido", buscar o pedido completo via `supabase.from('pedidos_producao').select('*, vendas(*)').eq('id', pedidoId).maybeSingle()` (sob demanda, com `useState` para o pedido selecionado + loading inline).
+- Renderizar `<PedidoDetalhesSheet pedido={pedidoSelecionadoFull} open={!!pedidoSelecionadoFull} onOpenChange={...} />` no final da página.
+- Estado da pesquisa (`pedidoSelecionado` para `PesquisaSatisfacaoForm`) permanece separado.
 
-## Fora do escopo
-- Não criar tabela de "tipos customizáveis" — fica fixo nas duas opções por enquanto
-- Sem impacto em DRE, financeiro ou produção
+## Fora de escopo
+
+- Nenhuma alteração na lógica de pesquisa de satisfação, no arquivamento ou no `PedidoDetalhesSheet`.
+- Sem mudanças de banco de dados.
