@@ -265,7 +265,7 @@ export default function ContratosVendas() {
       }
       const { error } = await supabase
         .from('vendas')
-        .update({ contrato_url: null, contrato_assinado_em: null })
+        .update({ contrato_url: null, contrato_assinado_em: null, contrato_liberado_faturamento: false })
         .eq('id', v.id);
       if (error) throw error;
       setRefreshKey(k => k + 1);
@@ -276,6 +276,25 @@ export default function ContratosVendas() {
     } finally {
       setRevertingVendaId(null);
     }
+  };
+
+  const handleLiberarFaturamento = async (v: VendaRow) => {
+    setRevertingVendaId(v.id);
+    const { error } = await supabase
+      .from('vendas')
+      .update({
+        contrato_liberado_faturamento: true,
+        contrato_liberado_em: new Date().toISOString(),
+        contrato_liberado_por: user?.id ?? null,
+      })
+      .eq('id', v.id);
+    setRevertingVendaId(null);
+    if (error) {
+      toast.error('Erro ao liberar venda');
+      return;
+    }
+    setVendas(prev => prev.filter(x => x.id !== v.id));
+    toast.success('Venda liberada para Pend. Faturamento');
   };
 
   const renderDescontoAcrescimo = (vendaId: string) => {
