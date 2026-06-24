@@ -1,30 +1,30 @@
+
 ## Objetivo
 
-Em **Pós-Vendas → Pedidos**, trocar a listagem atual por um visual em "pílula" igual ao do **Ranking de Equipes**, e adicionar um botão que abre a downbar (Sheet) de detalhes do pedido — a mesma usada em Gestão de Pedidos.
+- Mover a página **Contratos** (gerencial, vê todas as vendas) para **Home > Direção > Vendas**.
+- Criar **Meus Contratos** em **Home > Vendas**, com a mesma UI/fluxo, mas listando apenas as vendas do vendedor logado.
 
 ## Mudanças
 
-### 1. `src/pages/pos-vendas/PosVendasPedidos.tsx`
+### 1. Mover Contratos para Direção > Vendas
+- Atualizar rota em `src/App.tsx`: `/vendas/contratos` → `/direcao/vendas/contratos` (mesmo componente `ContratosVendas`, sob `ProtectedRoute` com `routeKey="direcao_vendas"`).
+- Adicionar item no menu `src/pages/direcao/VendasHubDirecao.tsx`: "Contratos" → `/direcao/vendas/contratos`.
+- Em `ContratosVendas.tsx`, atualizar breadcrumb para `Home > Direção > Vendas > Contratos` e o botão "voltar" para `/direcao/vendas`.
 
-- Substituir os cards atuais por linhas no estilo `RankingListItem` (`logistica/RankingEquipesInstalacao.tsx`):
-  - Container `rounded-full border-white/10 bg-white/5 backdrop-blur-xl`, animação `motion` com `initial/animate` (delay por índice).
-  - Avatar circular à esquerda com inicial do cliente (cor azul padrão), badge numérica de posição opcional removida (não é ranking).
-  - Nome do cliente em destaque + `Badge` com `#numero_pedido`.
-  - Status "Pendente"/"Respondido" mantido (badge âmbar/esmeralda).
-  - Telefone como subtexto discreto.
-  - `ArrowRight` à direita no hover.
-- Manter filtros (Pendentes/Respondidos/Todos) e busca atuais, sem alterar o layout do header.
-- Ações por linha (lado direito):
-  - **Botão "Ver pedido"** (ícone `Info`/`Eye`) → abre `PedidoDetalhesSheet` com o pedido completo.
-  - Botão "Responder pesquisa" mantido (desabilitado se já respondido).
+### 2. Refatorar `ContratosVendas` para aceitar escopo
+- Adicionar prop opcional `scope?: 'all' | 'meus'` (default `'all'`).
+- Quando `scope === 'meus'`, filtrar a query de `vendas` por `atendente_id = user.id` (ou `user_id` correspondente no `admin_users`, seguindo o mesmo mapeamento já usado para vendedores).
+- Ajustar título/breadcrumb conforme o scope ("Contratos" vs "Meus Contratos").
+- Esconder coluna "Vendedor" quando `scope === 'meus'` (opcional, mas reduz ruído).
 
-### 2. Integração com `PedidoDetalhesSheet`
+### 3. Nova página Meus Contratos
+- Criar `src/pages/vendas/MeusContratos.tsx` que apenas renderiza `<ContratosVendas scope="meus" />`.
+- Registrar rota `/vendas/contratos` apontando para `MeusContratos` (mantém URL antiga para vendedores).
+- Atualizar o item do menu em `src/pages/vendas/VendasHub.tsx`: rótulo "Contratos" → **"Meus Contratos"** (mesmo path).
 
-- `PedidoDetalhesSheet` espera um objeto pedido com join de `vendas`. Ao clicar em "Ver pedido", buscar o pedido completo via `supabase.from('pedidos_producao').select('*, vendas(*)').eq('id', pedidoId).maybeSingle()` (sob demanda, com `useState` para o pedido selecionado + loading inline).
-- Renderizar `<PedidoDetalhesSheet pedido={pedidoSelecionadoFull} open={!!pedidoSelecionadoFull} onOpenChange={...} />` no final da página.
-- Estado da pesquisa (`pedidoSelecionado` para `PesquisaSatisfacaoForm`) permanece separado.
+### 4. Funcionalidade preservada
+- Abas Pendente / Gerado / Assinado, ações de gerar, anexar, dispensar, retornar e liberar para Pend. Faturamento permanecem iguais — apenas a lista é filtrada quando `scope='meus'`.
 
 ## Fora de escopo
-
-- Nenhuma alteração na lógica de pesquisa de satisfação, no arquivamento ou no `PedidoDetalhesSheet`.
-- Sem mudanças de banco de dados.
+- Sem alterações no banco, RLS ou hooks de Pend. Faturamento.
+- Sem mudar permissões (`useBulkRouteAccess`); se desejar restringir o item Direção a perfis específicos depois, fazemos em separado.
