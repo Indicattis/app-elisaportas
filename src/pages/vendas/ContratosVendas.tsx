@@ -445,6 +445,7 @@ export default function ContratosVendas() {
   const TABS: Array<{ key: TabKey; label: string; icon: typeof FileClock; count: number }> = [
     { key: 'pendentes', label: 'Pendente de Contrato', icon: FileClock, count: pendentes.length },
     { key: 'gerados', label: 'Contrato Gerado', icon: FileText, count: gerados.length },
+    { key: 'assinados', label: 'Contrato Assinado', icon: FileCheck2, count: assinados.length },
   ];
   const activeIndex = Math.max(0, TABS.findIndex(t => t.key === activeTab));
   const cols = TABS.length;
