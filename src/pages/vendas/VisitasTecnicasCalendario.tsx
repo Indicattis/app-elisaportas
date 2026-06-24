@@ -902,6 +902,21 @@ export default function VisitasTecnicasCalendario() {
           </DialogHeader>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-4">
             <div className="md:col-span-2">
+              <label className="text-[11px] uppercase tracking-wider text-white/50 font-medium">Tipo *</label>
+              <Select
+                value={form.tipo}
+                onValueChange={(v) => setForm({ ...form, tipo: v as 'visita_tecnica' | 'manutencao' })}
+              >
+                <SelectTrigger className="mt-1 bg-white/5 border-white/10 text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-900 border-white/10 text-white">
+                  <SelectItem value="visita_tecnica">Visita técnica</SelectItem>
+                  <SelectItem value="manutencao">Manutenção</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="md:col-span-2">
               <label className="text-[11px] uppercase tracking-wider text-white/50 font-medium">Título *</label>
               <Input className="mt-1 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus-visible:ring-blue-500/50 focus-visible:border-blue-400/50" value={form.titulo} onChange={e => setForm({ ...form, titulo: e.target.value })} />
             </div>
