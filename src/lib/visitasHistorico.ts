@@ -42,7 +42,7 @@ export async function logVisitaHistorico(p: LogVisitaParams) {
 }
 
 export function diffVisita(antes: Record<string, any>, depois: Record<string, any>): Record<string, { de: any; para: any }> {
-  const campos = ['titulo','data_visita','hora_inicio','responsavel_id','telefone_contato','cep','endereco','numero','complemento','bairro','cidade','estado','observacoes'];
+  const campos = ['titulo','tipo','data_visita','hora_inicio','responsavel_id','telefone_contato','cep','endereco','numero','complemento','bairro','cidade','estado','observacoes'];
   const diff: Record<string, { de: any; para: any }> = {};
   for (const k of campos) {
     let a = antes?.[k] ?? null;
