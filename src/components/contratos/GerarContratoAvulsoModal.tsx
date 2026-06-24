@@ -131,10 +131,10 @@ export function GerarContratoAvulsoModal({ open, onOpenChange }: GerarContratoAv
     }
   };
 
-  const Field = ({ id, label, value, onChange, placeholder, type = "text" }: { id: keyof FormState; label: string; value: string; onChange: (e: any) => void; placeholder?: string; type?: string }) => (
+  const field = (id: keyof FormState, label: string, placeholder?: string) => (
     <div className="space-y-1.5">
       <Label htmlFor={id}>{label}</Label>
-      <Input id={id} type={type} value={value} onChange={onChange} placeholder={placeholder} />
+      <Input id={id} value={(form[id] as string) || ""} onChange={update(id)} placeholder={placeholder} />
     </div>
   );
 
@@ -163,31 +163,31 @@ export function GerarContratoAvulsoModal({ open, onOpenChange }: GerarContratoAv
           <section className="space-y-3">
             <h3 className="text-sm font-semibold">Cliente</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <Field id="cliente_nome" label="Nome *" value={form.cliente_nome} onChange={update("cliente_nome")} />
-              <Field id="cliente_cpf" label="CPF/CNPJ" value={form.cliente_cpf || ""} onChange={update("cliente_cpf")} />
-              <Field id="cliente_telefone" label="Telefone" value={form.cliente_telefone || ""} onChange={update("cliente_telefone")} />
-              <Field id="cliente_email" label="E-mail" value={form.cliente_email || ""} onChange={update("cliente_email")} />
-              <Field id="cliente_endereco" label="Endereço" value={form.cliente_endereco || ""} onChange={update("cliente_endereco")} />
-              <Field id="cliente_bairro" label="Bairro" value={form.cliente_bairro || ""} onChange={update("cliente_bairro")} />
-              <Field id="cliente_cidade" label="Cidade" value={form.cliente_cidade || ""} onChange={update("cliente_cidade")} />
-              <Field id="cliente_estado" label="Estado" value={form.cliente_estado || ""} onChange={update("cliente_estado")} />
-              <Field id="cliente_cep" label="CEP" value={form.cliente_cep || ""} onChange={update("cliente_cep")} />
+              {field("cliente_nome", "Nome *")}
+              {field("cliente_cpf", "CPF/CNPJ")}
+              {field("cliente_telefone", "Telefone")}
+              {field("cliente_email", "E-mail")}
+              {field("cliente_endereco", "Endereço")}
+              {field("cliente_bairro", "Bairro")}
+              {field("cliente_cidade", "Cidade")}
+              {field("cliente_estado", "Estado")}
+              {field("cliente_cep", "CEP")}
             </div>
           </section>
 
           <section className="space-y-3">
             <h3 className="text-sm font-semibold">Venda</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <Field id="venda_numero" label="Número da venda" value={form.venda_numero} onChange={update("venda_numero")} placeholder="Opcional" />
-              <Field id="venda_data" label="Data da venda" value={form.venda_data} onChange={update("venda_data")} />
-              <Field id="venda_previsao_entrega" label="Previsão de entrega" value={form.venda_previsao_entrega || ""} onChange={update("venda_previsao_entrega")} />
-              <Field id="venda_valor_total" label="Valor total" value={form.venda_valor_total} onChange={update("venda_valor_total")} />
-              <Field id="venda_valor_produtos" label="Valor dos produtos" value={form.venda_valor_produtos} onChange={update("venda_valor_produtos")} />
-              <Field id="venda_valor_instalacao" label="Valor instalação" value={form.venda_valor_instalacao} onChange={update("venda_valor_instalacao")} />
-              <Field id="venda_valor_frete" label="Valor frete" value={form.venda_valor_frete} onChange={update("venda_valor_frete")} />
-              <Field id="venda_valor_entrada" label="Valor de entrada" value={form.venda_valor_entrada} onChange={update("venda_valor_entrada")} />
-              <Field id="venda_forma_pagamento" label="Forma de pagamento" value={form.venda_forma_pagamento || ""} onChange={update("venda_forma_pagamento")} />
-              <Field id="venda_numero_parcelas" label="Nº de parcelas" value={form.venda_numero_parcelas || ""} onChange={update("venda_numero_parcelas")} />
+              {field("venda_numero", "Número da venda", "Opcional")}
+              {field("venda_data", "Data da venda")}
+              {field("venda_previsao_entrega", "Previsão de entrega")}
+              {field("venda_valor_total", "Valor total")}
+              {field("venda_valor_produtos", "Valor dos produtos")}
+              {field("venda_valor_instalacao", "Valor instalação")}
+              {field("venda_valor_frete", "Valor frete")}
+              {field("venda_valor_entrada", "Valor de entrada")}
+              {field("venda_forma_pagamento", "Forma de pagamento")}
+              {field("venda_numero_parcelas", "Nº de parcelas")}
             </div>
           </section>
 
@@ -198,15 +198,15 @@ export function GerarContratoAvulsoModal({ open, onOpenChange }: GerarContratoAv
               <Textarea id="produtos_lista" rows={4} value={form.produtos_lista} onChange={update("produtos_lista")} placeholder="Uma linha por produto" />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <Field id="produtos_quantidade_total" label="Quantidade total" value={form.produtos_quantidade_total} onChange={update("produtos_quantidade_total")} />
+              {field("produtos_quantidade_total", "Quantidade total")}
             </div>
           </section>
 
           <section className="space-y-3">
             <h3 className="text-sm font-semibold">Atendente</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <Field id="atendente_nome" label="Nome do atendente" value={form.atendente_nome} onChange={update("atendente_nome")} />
-              <Field id="atendente_telefone" label="Telefone do atendente" value={form.atendente_telefone || ""} onChange={update("atendente_telefone")} />
+              {field("atendente_nome", "Nome do atendente")}
+              {field("atendente_telefone", "Telefone do atendente")}
             </div>
           </section>
 
