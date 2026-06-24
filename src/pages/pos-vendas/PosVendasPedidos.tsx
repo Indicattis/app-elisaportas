@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, ClipboardList, CheckCircle2, Clock, Search } from 'lucide-react';
+import { ArrowLeft, ClipboardList, CheckCircle2, Clock, Search, ArrowRight, Eye } from 'lucide-react';
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { DelayedParticles } from '@/components/DelayedParticles';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,8 +9,15 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { PesquisaSatisfacaoForm } from '@/components/pos-vendas/PesquisaSatisfacaoForm';
+import { PedidoDetalhesSheet } from '@/components/pedidos/PedidoDetalhesSheet';
+import { motion } from 'framer-motion';
+import { toast } from 'sonner';
 
 type FiltroStatus = 'todos' | 'pendentes' | 'respondidos';
+
+function getInicial(nome: string) {
+  return (nome?.trim()?.charAt(0) || '?').toUpperCase();
+}
 
 export default function PosVendasPedidos() {
   const navigate = useNavigate();
@@ -19,6 +26,8 @@ export default function PosVendasPedidos() {
   const [filtro, setFiltro] = useState<FiltroStatus>('pendentes');
   const [busca, setBusca] = useState('');
   const [pedidoSelecionado, setPedidoSelecionado] = useState<any | null>(null);
+  const [pedidoDetalhes, setPedidoDetalhes] = useState<any | null>(null);
+  const [loadingDetalhes, setLoadingDetalhes] = useState<string | null>(null);
 
   useEffect(() => {
     const t = setTimeout(() => setMounted(true), 50);
@@ -77,6 +86,28 @@ export default function PosVendasPedidos() {
     setPedidoSelecionado(null);
     queryClient.invalidateQueries({ queryKey: ['pos-vendas-pedidos'] });
     queryClient.invalidateQueries({ queryKey: ['pos-vendas-pesquisas'] });
+  };
+
+  const handleVerPedido = async (pedidoId: string) => {
+    try {
+      setLoadingDetalhes(pedidoId);
+      const { data, error } = await supabase
+        .from('pedidos_producao')
+        .select('*, vendas(*)')
+        .eq('id', pedidoId)
+        .maybeSingle();
+      if (error) throw error;
+      if (!data) {
+        toast.error('Pedido não encontrado');
+        return;
+      }
+      setPedidoDetalhes(data);
+    } catch (err: any) {
+      console.error(err);
+      toast.error('Erro ao carregar pedido');
+    } finally {
+      setLoadingDetalhes(null);
+    }
   };
 
   return (
@@ -141,42 +172,71 @@ export default function PosVendasPedidos() {
             <p className="text-white/60">Nenhum pedido nesta categoria.</p>
           </div>
         ) : (
-          <div className="grid gap-3">
-            {listaFiltrada.map((p: any) => {
+          <div className="space-y-3">
+            {listaFiltrada.map((p: any, index: number) => {
               const respondeu = respondidosSet.has(p.id);
+              const carregando = loadingDetalhes === p.id;
               return (
-                <div
+                <motion.div
                   key={p.id}
-                  className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl p-4 flex items-center gap-4 hover:bg-white/10 transition"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.04, duration: 0.35 }}
+                  className="group relative flex items-center gap-4 pl-3 pr-3 py-2.5 rounded-full border border-white/10 bg-white/5 backdrop-blur-xl transition-all duration-300 hover:bg-white/10 hover:border-white/20"
                 >
-                  <div className="flex-1 min-w-0">
+                  {/* Avatar */}
+                  <div className="relative flex-shrink-0">
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white text-sm border-2 border-white/20 shadow-lg bg-gradient-to-br from-blue-500 to-blue-700">
+                      {getInicial(p.cliente_nome)}
+                    </div>
+                  </div>
+
+                  {/* Nome + telefone */}
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-white font-medium truncate">{p.cliente_nome}</span>
-                      <Badge variant="outline" className="border-white/10 text-white/60">
+                      <h4 className="text-white font-semibold truncate text-sm">{p.cliente_nome}</h4>
+                      <Badge variant="outline" className="border-white/10 text-white/60 text-[10px]">
                         #{p.numero_pedido}
                       </Badge>
                       {respondeu ? (
-                        <Badge className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                        <Badge className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px]">
                           <CheckCircle2 className="w-3 h-3 mr-1" /> Respondido
                         </Badge>
                       ) : (
-                        <Badge className="bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                        <Badge className="bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px]">
                           <Clock className="w-3 h-3 mr-1" /> Pendente
                         </Badge>
                       )}
                     </div>
                     {p.cliente_telefone && (
-                      <p className="text-xs text-white/40 mt-1">{p.cliente_telefone}</p>
+                      <p className="text-xs text-white/40 mt-0.5 truncate">{p.cliente_telefone}</p>
                     )}
                   </div>
-                  <Button
-                    size="sm"
-                    disabled={respondeu}
-                    onClick={() => setPedidoSelecionado(p)}
-                  >
-                    {respondeu ? 'Já respondido' : 'Responder pesquisa'}
-                  </Button>
-                </div>
+
+                  {/* Ações */}
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={carregando}
+                      onClick={() => handleVerPedido(p.id)}
+                      className="rounded-full bg-white/5 border-white/10 text-white hover:bg-white/10 gap-1.5"
+                    >
+                      <Eye className="w-4 h-4" />
+                      Ver pedido
+                    </Button>
+                    <Button
+                      size="sm"
+                      disabled={respondeu}
+                      onClick={() => setPedidoSelecionado(p)}
+                      className="rounded-full"
+                    >
+                      {respondeu ? 'Já respondido' : 'Responder pesquisa'}
+                    </Button>
+                  </div>
+
+                  <ArrowRight className="w-4 h-4 text-white/20 group-hover:text-white/60 transition-colors flex-shrink-0" />
+                </motion.div>
               );
             })}
           </div>
@@ -189,6 +249,14 @@ export default function PosVendasPedidos() {
           open={!!pedidoSelecionado}
           onClose={() => setPedidoSelecionado(null)}
           onFinalizado={handleFinalizado}
+        />
+      )}
+
+      {pedidoDetalhes && (
+        <PedidoDetalhesSheet
+          pedido={pedidoDetalhes}
+          open={!!pedidoDetalhes}
+          onOpenChange={(open) => !open && setPedidoDetalhes(null)}
         />
       )}
     </div>
