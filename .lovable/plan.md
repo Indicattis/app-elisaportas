@@ -1,33 +1,30 @@
-## Geração de Contrato do Autorizado
+## Objetivo
 
-Adicionar funcionalidade para gerar PDF do "Termo de Parceria com Instalador Autorizado" preenchido com os dados do autorizado selecionado.
+Adicionar um campo **Tipo** ao cadastrar/editar uma visita técnica, com duas opções padrão:
+- **Visita técnica** (selecionada por padrão)
+- **Manutenção**
+
+## Mudanças
 
 ### 1. Banco de dados
-- Migration: adicionar coluna `cpf_cnpj text` na tabela `autorizados` (nullable).
+- Migration em `visitas_tecnicas_agendadas`:
+  - Nova coluna `tipo text NOT NULL DEFAULT 'visita_tecnica'`
+  - CHECK constraint aceitando `'visita_tecnica'` ou `'manutencao'`
+  - Backfill: registros existentes ficam como `'visita_tecnica'`
 
-### 2. Cadastro do Autorizado
-- Adicionar campo "CPF/CNPJ" no formulário de criação/edição de autorizado (telas: `NovoAutorizadoDirecao`, `EditarAutorizadoDirecao` e qualquer dialog usado em `/autorizados`). Campo opcional, com máscara automática (CPF se ≤11 dígitos, CNPJ se 14).
+### 2. UI — `src/pages/vendas/VisitasTecnicasCalendario.tsx`
+- Adicionar `tipo` ao state do formulário (default `'visita_tecnica'`)
+- Novo `<Select>` no dialog de criar/editar visita, logo acima ou ao lado do campo Título, com as opções "Visita técnica" e "Manutenção"
+- Incluir `tipo` no insert/update e no carregamento ao editar
+- Exibir um badge discreto (texto pequeno) no card da visita na grade do calendário e no popover de detalhes, diferenciando manutenção (ex.: cor âmbar) de visita técnica (azul)
 
-### 3. Geração do PDF
-- Novo util `src/utils/contratoAutorizadoPDFGenerator.ts` usando `jsPDF` (já no projeto), no mesmo padrão do `contratoPDFGenerator.ts`:
-  - Cabeçalho com logo Elisa + dados da empresa (`company_settings`).
-  - Título: "TERMO DE PARCERIA COM INSTALADOR AUTORIZADO".
-  - Corpo fixo do contrato (texto enviado no .docx), com substituição de:
-    - `{{parceiro_nome}}` → nome do autorizado
-    - `{{parceiro_cpf_cnpj}}` → CPF/CNPJ (ou linhas em branco se vazio)
-    - `{{cidade_data}}` → "Caxias do Sul/RS, DD de Mês de AAAA" (data atual)
-  - Seções numeradas 1 a 5 (Objeto, Responsabilidades, Autonomia, Identificação, Vigência).
-  - Bloco de assinaturas: Grupo Elisa (esquerda) + Parceiro Autorizado com nome + CPF/CNPJ (direita).
-  - Footer com site/email/telefone e paginação.
-  - Nome do arquivo: `contrato_parceria_{nome_slug}_{timestamp}.pdf`.
+### 3. Histórico
+- `src/lib/visitasHistorico.ts`: incluir `tipo` no `diffVisita` para registrar alteração de tipo
+- `src/components/vendas/VisitasHistoricoPanel.tsx`: nenhuma mudança necessária (já mostra campos alterados genericamente)
 
-### 4. Botões de ação
-- **Card do autorizado** (`AutorizadosGrid.tsx`, `AutorizadosList.tsx`, `AutorizadosKanban.tsx`): novo ícone `FileSignature` ao lado de visualizar/editar, com tooltip "Gerar Contrato de Parceria".
-- **Página de detalhes** (`AutorizadoNegociacao.tsx`): botão "Gerar Contrato" no header.
-- Ao clicar: busca dados completos do autorizado + `company_settings` e chama o gerador. Se `cpf_cnpj` estiver vazio, exibe `toast.warning` informando que o PDF será gerado com campo em branco mas permite seguir.
+### 4. Tela de conclusão
+- `VisitaTecnicaConclusao.tsx`: apenas exibir o tipo se já estiver carregando os dados da visita (sem alterar fluxo)
 
-### 5. Detalhes técnicos
-- Sem alterações em storage ou tabela de contratos — apenas download direto.
-- Reaproveitar `useCompanySettings` para puxar dados da empresa.
-- Datas formatadas em pt-BR.
-- Sem mudanças em RLS (apenas nova coluna).
+## Fora do escopo
+- Não criar tabela de "tipos customizáveis" — fica fixo nas duas opções por enquanto
+- Sem impacto em DRE, financeiro ou produção

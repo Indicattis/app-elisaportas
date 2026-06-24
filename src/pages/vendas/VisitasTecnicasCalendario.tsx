@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
@@ -27,6 +28,7 @@ import { ptBR } from 'date-fns/locale';
 interface VisitaAgendada {
   id: string;
   titulo: string;
+  tipo: 'visita_tecnica' | 'manutencao';
   data_visita: string;
   hora_inicio: string;
   responsavel_id: string | null;
@@ -190,6 +192,9 @@ function DraggableVisitaChip({ visita, onOpen, onDelete }: { visita: VisitaAgend
         className={`w-full text-left text-[10px] sm:text-xs px-1 sm:px-2 py-0.5 sm:py-1.5 rounded truncate ${cls} ${isDragging ? 'opacity-30' : ''} ${disabled ? 'cursor-pointer' : 'cursor-grab active:cursor-grabbing'}`}
       >
         <span className="opacity-70">{(visita.hora_inicio || '').slice(0, 5)}</span>
+        {visita.tipo === 'manutencao' && (
+          <span className="ml-1 px-1 py-px rounded bg-amber-500/30 text-amber-100 text-[9px] uppercase tracking-wide">Man</span>
+        )}
         <span className="hidden sm:inline"> {visita.titulo}</span>
       </button>
       {onDelete && (
@@ -207,6 +212,7 @@ function DraggableVisitaChip({ visita, onOpen, onDelete }: { visita: VisitaAgend
 
 const emptyForm = {
   titulo: '',
+  tipo: 'visita_tecnica' as 'visita_tecnica' | 'manutencao',
   data_visita: '',
   hora_inicio: '09:00',
   responsavel_id: '',
@@ -352,6 +358,7 @@ export default function VisitasTecnicasCalendario() {
     setEditing(v);
     setForm({
       titulo: v.titulo || '',
+      tipo: (v.tipo as 'visita_tecnica' | 'manutencao') || 'visita_tecnica',
       data_visita: toDateOnly(v.data_visita),
       hora_inicio: (v.hora_inicio || '').slice(0, 5),
       responsavel_id: v.responsavel_id || '',
@@ -397,6 +404,7 @@ export default function VisitasTecnicasCalendario() {
       if (!form.hora_inicio) throw new Error('Informe o horário');
       const payload: any = {
         titulo: form.titulo.trim(),
+        tipo: form.tipo,
         data_visita: `${form.data_visita}T12:00:00.000Z`,
         hora_inicio: form.hora_inicio,
         responsavel_id: form.responsavel_id || null,
@@ -896,6 +904,21 @@ export default function VisitasTecnicasCalendario() {
             </p>
           </DialogHeader>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-4">
+            <div className="md:col-span-2">
+              <label className="text-[11px] uppercase tracking-wider text-white/50 font-medium">Tipo *</label>
+              <Select
+                value={form.tipo}
+                onValueChange={(v) => setForm({ ...form, tipo: v as 'visita_tecnica' | 'manutencao' })}
+              >
+                <SelectTrigger className="mt-1 bg-white/5 border-white/10 text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-900 border-white/10 text-white">
+                  <SelectItem value="visita_tecnica">Visita técnica</SelectItem>
+                  <SelectItem value="manutencao">Manutenção</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <div className="md:col-span-2">
               <label className="text-[11px] uppercase tracking-wider text-white/50 font-medium">Título *</label>
               <Input className="mt-1 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus-visible:ring-blue-500/50 focus-visible:border-blue-400/50" value={form.titulo} onChange={e => setForm({ ...form, titulo: e.target.value })} />
