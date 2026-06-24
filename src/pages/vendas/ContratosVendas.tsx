@@ -72,7 +72,7 @@ export default function ContratosVendas() {
 
   const { contratos, deleteContrato, isDeleting } = useContratosVendas({});
 
-  type TabKey = 'pendentes' | 'gerados' | 'assinados';
+  type TabKey = 'pendentes' | 'gerados';
   const [activeTab, setActiveTab] = useState<TabKey>('pendentes');
 
   useEffect(() => {
@@ -159,18 +159,17 @@ export default function ContratosVendas() {
     );
   };
 
-  const { pendentes, gerados, assinados } = useMemo(() => {
+  const { pendentes, gerados } = useMemo(() => {
     const pendentes: VendaRow[] = [];
     const gerados: VendaRow[] = [];
-    const assinados: VendaRow[] = [];
     vendas.filter(matchesSearch).forEach(v => {
       const hasContratoUrl = !!v.contrato_url && v.contrato_url !== 'legado';
       const hasGerado = ((contratosByVenda as any)[v.id] || []).length > 0;
-      if (hasContratoUrl) assinados.push(v);
-      else if (hasGerado) gerados.push(v);
+      if (hasContratoUrl) return; // já em Pend. Faturamento
+      if (hasGerado) gerados.push(v);
       else pendentes.push(v);
     });
-    return { pendentes, gerados, assinados };
+    return { pendentes, gerados };
   }, [vendas, contratosByVenda, search]);
 
   const renderContratoFiles = (vendaId: string, allowDelete: boolean) => {
@@ -425,7 +424,6 @@ export default function ContratosVendas() {
   const TABS: Array<{ key: TabKey; label: string; icon: typeof FileClock; count: number }> = [
     { key: 'pendentes', label: 'Pendente de Contrato', icon: FileClock, count: pendentes.length },
     { key: 'gerados', label: 'Contrato Gerado', icon: FileText, count: gerados.length },
-    { key: 'assinados', label: 'Contrato Assinado', icon: FileCheck2, count: assinados.length },
   ];
   const activeIndex = Math.max(0, TABS.findIndex(t => t.key === activeTab));
   const cols = TABS.length;
