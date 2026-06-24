@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingCart, DollarSign, Users, ExternalLink, ArrowLeft, Lock, Handshake, FileText } from 'lucide-react';
+import { ShoppingCart, DollarSign, Users, ExternalLink, ArrowLeft, Lock, Handshake, FileText, FileSignature } from 'lucide-react';
 
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { DelayedParticles } from '@/components/DelayedParticles';
@@ -12,6 +12,7 @@ const menuItems = [
   { label: 'Clientes', icon: Users, path: '/direcao/vendas/clientes', routePrefix: 'direcao_vendas' },
   { label: 'Parceiros', icon: Handshake, path: '/direcao/vendas/parceiros', routePrefix: 'direcao_vendas' },
   { label: 'Requisições Representantes', icon: FileText, path: '/direcao/vendas/requisicoes-representantes', routePrefix: 'direcao_vendas', variant: 'orange' as const },
+  { label: 'Contratos', icon: FileSignature, path: '/direcao/vendas/contratos', routePrefix: 'direcao_vendas' },
   { label: 'CRM', icon: ExternalLink, path: 'https://crm.elisaportas.com', external: true as const, variant: 'slate' as const },
 ];
 
