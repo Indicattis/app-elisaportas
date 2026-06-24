@@ -38,6 +38,7 @@ interface VendaRow {
   contrato_url: string | null;
   contrato_assinado_em: string | null;
   atendente_id: string | null;
+  contrato_liberado_faturamento: boolean | null;
 }
 
 interface VendedorInfo {
@@ -72,7 +73,7 @@ export default function ContratosVendas() {
 
   const { contratos, deleteContrato, isDeleting } = useContratosVendas({});
 
-  type TabKey = 'pendentes' | 'gerados';
+  type TabKey = 'pendentes' | 'gerados' | 'assinados';
   const [activeTab, setActiveTab] = useState<TabKey>('pendentes');
 
   useEffect(() => {
@@ -85,12 +86,12 @@ export default function ContratosVendas() {
       setLoadingVendas(true);
       const query = supabase
         .from('vendas')
-        .select('id, cliente_nome, cpf_cliente, cidade, data_venda, valor_venda, atendente_id, contrato_url, contrato_assinado_em, frete_aprovado, produtos_vendas(faturamento), pedidos_producao(id)')
+        .select('id, cliente_nome, cpf_cliente, cidade, data_venda, valor_venda, atendente_id, contrato_url, contrato_assinado_em, contrato_liberado_faturamento, frete_aprovado, produtos_vendas(faturamento), pedidos_producao(id)')
         .eq('is_rascunho', false)
         .eq('contrato_dispensado', false)
         .eq('dispensada_sistema', false)
         .neq('status_aprovacao', 'reprovado')
-        .is('contrato_url', null)
+        .eq('contrato_liberado_faturamento', false)
         .order('data_venda', { ascending: false })
         .limit(5000);
 
@@ -159,17 +160,18 @@ export default function ContratosVendas() {
     );
   };
 
-  const { pendentes, gerados } = useMemo(() => {
+  const { pendentes, gerados, assinados } = useMemo(() => {
     const pendentes: VendaRow[] = [];
     const gerados: VendaRow[] = [];
+    const assinados: VendaRow[] = [];
     vendas.filter(matchesSearch).forEach(v => {
       const hasContratoUrl = !!v.contrato_url && v.contrato_url !== 'legado';
       const hasGerado = ((contratosByVenda as any)[v.id] || []).length > 0;
-      if (hasContratoUrl) return; // já em Pend. Faturamento
-      if (hasGerado) gerados.push(v);
+      if (hasContratoUrl) assinados.push(v);
+      else if (hasGerado) gerados.push(v);
       else pendentes.push(v);
     });
-    return { pendentes, gerados };
+    return { pendentes, gerados, assinados };
   }, [vendas, contratosByVenda, search]);
 
   const renderContratoFiles = (vendaId: string, allowDelete: boolean) => {
@@ -263,7 +265,7 @@ export default function ContratosVendas() {
       }
       const { error } = await supabase
         .from('vendas')
-        .update({ contrato_url: null, contrato_assinado_em: null })
+        .update({ contrato_url: null, contrato_assinado_em: null, contrato_liberado_faturamento: false })
         .eq('id', v.id);
       if (error) throw error;
       setRefreshKey(k => k + 1);
@@ -274,6 +276,25 @@ export default function ContratosVendas() {
     } finally {
       setRevertingVendaId(null);
     }
+  };
+
+  const handleLiberarFaturamento = async (v: VendaRow) => {
+    setRevertingVendaId(v.id);
+    const { error } = await supabase
+      .from('vendas')
+      .update({
+        contrato_liberado_faturamento: true,
+        contrato_liberado_em: new Date().toISOString(),
+        contrato_liberado_por: user?.id ?? null,
+      })
+      .eq('id', v.id);
+    setRevertingVendaId(null);
+    if (error) {
+      toast.error('Erro ao liberar venda');
+      return;
+    }
+    setVendas(prev => prev.filter(x => x.id !== v.id));
+    toast.success('Venda liberada para Pend. Faturamento');
   };
 
   const renderDescontoAcrescimo = (vendaId: string) => {
@@ -424,6 +445,7 @@ export default function ContratosVendas() {
   const TABS: Array<{ key: TabKey; label: string; icon: typeof FileClock; count: number }> = [
     { key: 'pendentes', label: 'Pendente de Contrato', icon: FileClock, count: pendentes.length },
     { key: 'gerados', label: 'Contrato Gerado', icon: FileText, count: gerados.length },
+    { key: 'assinados', label: 'Contrato Assinado', icon: FileCheck2, count: assinados.length },
   ];
   const activeIndex = Math.max(0, TABS.findIndex(t => t.key === activeTab));
   const cols = TABS.length;
@@ -607,6 +629,64 @@ export default function ContratosVendas() {
               </Column>
             )}
 
+            {activeTab === 'assinados' && (
+              <Column
+                title="Contrato Assinado"
+                icon={<FileCheck2 className="w-4 h-4" strokeWidth={1.8} />}
+                accent="bg-gradient-to-br from-emerald-500 to-emerald-700 shadow-lg shadow-emerald-500/20"
+                count={assinados.length}
+              >
+                {assinados.length === 0 ? (
+                  <div className="text-center text-white/40 text-xs py-6">Nenhuma venda</div>
+                ) : (
+                  <TableView
+                    rows={assinados}
+                    actionLabel="Liberar para Pend. Faturamento"
+                    actionIcon={ArrowRight}
+                    actionClass="bg-gradient-to-r from-yellow-500 to-yellow-700 hover:from-yellow-400 hover:to-yellow-600 text-white border border-yellow-400/30"
+                    onAction={(v) => handleLiberarFaturamento(v)}
+                    extraRow={(v) => (
+                      <>
+                        {renderContratoFiles(v.id, false)}
+                        {v.contrato_url && v.contrato_url !== 'legado' && (
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7 text-white/80 hover:text-white hover:bg-white/10 border border-white/10"
+                            onClick={async () => {
+                              const { data } = await supabase.storage
+                                .from('contratos-vendas')
+                                .createSignedUrl(v.contrato_url as string, 300);
+                              if (data?.signedUrl) window.open(data.signedUrl, '_blank');
+                            }}
+                            title="Baixar contrato assinado"
+                          >
+                            <Download className="w-4 h-4" />
+                          </Button>
+                        )}
+                        {v.contrato_url && (
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7 text-white/70 hover:text-white hover:bg-white/10 border border-white/10"
+                            disabled={revertingVendaId === v.id}
+                            onClick={() => handleRetornarParaGerado(v)}
+                            title="Retornar para Gerado"
+                          >
+                            {revertingVendaId === v.id ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Undo2 className="w-4 h-4" />
+                            )}
+                          </Button>
+                        )}
+                      </>
+                    )}
+                  />
+                )}
+              </Column>
+            )}
+
           </div>
         )}
       </div>
@@ -665,6 +745,9 @@ export default function ContratosVendas() {
                     contrato_dispensado: true,
                     contrato_dispensado_em: new Date().toISOString(),
                     contrato_dispensado_por: user?.id ?? null,
+                    contrato_liberado_faturamento: true,
+                    contrato_liberado_em: new Date().toISOString(),
+                    contrato_liberado_por: user?.id ?? null,
                   })
                   .eq('id', dispensarVenda.id);
                 setDispensandoId(null);

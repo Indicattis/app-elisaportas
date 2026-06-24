@@ -9764,6 +9764,9 @@ export type Database = {
           contrato_dispensado: boolean
           contrato_dispensado_em: string | null
           contrato_dispensado_por: string | null
+          contrato_liberado_em: string | null
+          contrato_liberado_faturamento: boolean
+          contrato_liberado_por: string | null
           contrato_url: string | null
           cpf_cliente: string | null
           created_at: string
@@ -9828,6 +9831,9 @@ export type Database = {
           contrato_dispensado?: boolean
           contrato_dispensado_em?: string | null
           contrato_dispensado_por?: string | null
+          contrato_liberado_em?: string | null
+          contrato_liberado_faturamento?: boolean
+          contrato_liberado_por?: string | null
           contrato_url?: string | null
           cpf_cliente?: string | null
           created_at?: string
@@ -9892,6 +9898,9 @@ export type Database = {
           contrato_dispensado?: boolean
           contrato_dispensado_em?: string | null
           contrato_dispensado_por?: string | null
+          contrato_liberado_em?: string | null
+          contrato_liberado_faturamento?: boolean
+          contrato_liberado_por?: string | null
           contrato_url?: string | null
           cpf_cliente?: string | null
           created_at?: string

@@ -71,6 +71,7 @@ export const useVendasPendenteFaturamento = () => {
         .eq("is_rascunho", false)
         .eq("dispensada_sistema", false)
         .or("contrato_url.not.is.null,contrato_dispensado.eq.true")
+        .eq("contrato_liberado_faturamento", true)
         .order("data_venda", { ascending: false });
 
       if (error) throw error;
