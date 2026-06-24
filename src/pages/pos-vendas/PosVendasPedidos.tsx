@@ -44,7 +44,7 @@ export default function PosVendasPedidos() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('pedidos_producao')
-        .select('id, numero_pedido, cliente_nome, cliente_telefone, data_entrega, updated_at')
+        .select('id, numero_pedido, cliente_nome, cliente_telefone, data_entrega, updated_at, vendas!inner(atendente:admin_users!fk_vendas_atendente(nome, foto_perfil_url))')
         .eq('etapa_atual', 'pos_vendas')
         .eq('arquivado', false)
         .order('updated_at', { ascending: false });
@@ -176,6 +176,9 @@ export default function PosVendasPedidos() {
             {listaFiltrada.map((p: any, index: number) => {
               const respondeu = respondidosSet.has(p.id);
               const carregando = loadingDetalhes === p.id;
+              const vendedor = p.vendas?.atendente;
+              const vendedorFoto = vendedor?.foto_perfil_url;
+              const vendedorNome = vendedor?.nome || p.cliente_nome;
               return (
                 <motion.div
                   key={p.id}
@@ -186,9 +189,21 @@ export default function PosVendasPedidos() {
                 >
                   {/* Avatar */}
                   <div className="relative flex-shrink-0">
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white text-sm border-2 border-white/20 shadow-lg bg-gradient-to-br from-blue-500 to-blue-700">
-                      {getInicial(p.cliente_nome)}
-                    </div>
+                    {vendedorFoto ? (
+                      <img
+                        src={vendedorFoto}
+                        alt={vendedorNome}
+                        title={vendedorNome}
+                        className="w-10 h-10 rounded-full object-cover border-2 border-white/20 shadow-lg"
+                      />
+                    ) : (
+                      <div
+                        title={vendedorNome}
+                        className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white text-sm border-2 border-white/20 shadow-lg bg-gradient-to-br from-blue-500 to-blue-700"
+                      >
+                        {getInicial(vendedorNome)}
+                      </div>
+                    )}
                   </div>
 
                   {/* Nome + telefone */}
