@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatCurrency } from '@/lib/utils';
 import { GerarContratoElisaModal } from '@/components/contratos/GerarContratoElisaModal';
+import { GerarContratoAvulsoModal } from '@/components/contratos/GerarContratoAvulsoModal';
 import { AnexarContratoModal } from '@/components/vendas/AnexarContratoModal';
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { DelayedParticles } from '@/components/DelayedParticles';
@@ -92,6 +93,7 @@ export default function ContratosVendas({ scope = 'all' }: ContratosVendasProps 
   const [revertingVendaId, setRevertingVendaId] = useState<string | null>(null);
   const [dispensarVenda, setDispensarVenda] = useState<VendaRow | null>(null);
   const [dispensandoId, setDispensandoId] = useState<string | null>(null);
+  const [avulsoOpen, setAvulsoOpen] = useState(false);
 
   const { contratos, deleteContrato, isDeleting } = useContratosVendas({});
 
@@ -508,6 +510,17 @@ export default function ContratosVendas({ scope = 'all' }: ContratosVendasProps 
             <h1 className="text-2xl font-semibold text-white">{pageTitle}</h1>
             <p className="text-sm text-white/60">{pageSubtitle}</p>
           </div>
+          {!isMeus && (
+            <div className="ml-auto">
+              <Button
+                onClick={() => setAvulsoOpen(true)}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                Gerar Contrato Avulso
+              </Button>
+            </div>
+          )}
         </div>
 
         <div className="mb-4 p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
