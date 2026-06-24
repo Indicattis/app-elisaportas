@@ -743,6 +743,8 @@ export default function ContratosVendas({ scope = 'all' }: ContratosVendasProps 
         }}
       />
 
+      <GerarContratoAvulsoModal open={avulsoOpen} onOpenChange={setAvulsoOpen} />
+
       {anexarVenda && (
         <AnexarContratoModal
           open={anexarOpen}
