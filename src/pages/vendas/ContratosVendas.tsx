@@ -90,6 +90,7 @@ export default function ContratosVendas() {
         .eq('contrato_dispensado', false)
         .eq('dispensada_sistema', false)
         .neq('status_aprovacao', 'reprovado')
+        .is('contrato_url', null)
         .order('data_venda', { ascending: false })
         .limit(5000);
 
