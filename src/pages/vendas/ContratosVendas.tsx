@@ -389,7 +389,7 @@ export default function ContratosVendas({ scope = 'all' }: ContratosVendasProps 
       <table className="w-full text-sm">
         <thead>
           <tr className="text-left text-[11px] uppercase tracking-wide text-white/40 border-b border-white/10">
-            <th className="px-3 py-2 font-medium">Vendedor</th>
+            {!isMeus && <th className="px-3 py-2 font-medium">Vendedor</th>}
             <th className="px-3 py-2 font-medium">Data</th>
             <th className="px-3 py-2 font-medium">Cliente</th>
             <th className="px-3 py-2 font-medium">CPF/CNPJ</th>
@@ -402,7 +402,7 @@ export default function ContratosVendas({ scope = 'all' }: ContratosVendasProps 
         <tbody>
           {rows.map(v => (
             <tr key={v.id} className="border-b border-white/5 hover:bg-white/[0.03] transition-colors align-middle">
-              <td className="px-3 py-2">{renderVendedor(v.atendente_id)}</td>
+              {!isMeus && <td className="px-3 py-2">{renderVendedor(v.atendente_id)}</td>}
               <td className="px-3 py-2 text-white/80 whitespace-nowrap">
                 {format(new Date(v.data_venda), 'dd/MM/yyyy', { locale: ptBR })}
               </td>
