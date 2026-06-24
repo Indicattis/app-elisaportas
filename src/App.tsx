@@ -95,6 +95,7 @@ import VendasNova from "./pages/VendasNova";
 import ContratoVendas from "./pages/ContratoVendas";
 import ContratoTemplates from "./pages/ContratoTemplates";
 import ContratosVendasHub from "./pages/vendas/ContratosVendas";
+import MeusContratos from "./pages/vendas/MeusContratos";
 import Suporte from "./pages/Suporte";
 import Clientes from "./pages/Clientes";
 import Fornecedores from "./pages/Fornecedores";
@@ -493,7 +494,7 @@ const App = () => (
                 <Route path="/vendas/visitas-tecnicas" element={<ProtectedRoute routeKey="vendas_visitas_tecnicas"><VisitasTecnicasCalendario /></ProtectedRoute>} />
                 <Route path="/vendas/visitas-tecnicas/realizadas" element={<ProtectedRoute routeKey="vendas_visitas_tecnicas_realizadas"><VisitasTecnicasRealizadas /></ProtectedRoute>} />
                 <Route path="/vendas/visitas-tecnicas/:visitaId/concluir" element={<ProtectedRoute routeKey="vendas_visitas_tecnicas"><VisitaTecnicaConclusao /></ProtectedRoute>} />
-                <Route path="/vendas/contratos" element={<ProtectedRoute routeKey="vendas_hub"><ContratosVendasHub /></ProtectedRoute>} />
+                <Route path="/vendas/contratos" element={<ProtectedRoute routeKey="vendas_hub"><MeusContratos /></ProtectedRoute>} />
                 <Route path="/vendas/precos" element={<ProtectedRoute routeKeyPrefix="vendas_"><PrecosVendas /></ProtectedRoute>} />
 
                 {/* Hub da Fábrica Minimalista */}
@@ -511,6 +512,7 @@ const App = () => (
                 <Route path="/direcao/vendas/todas" element={<ProtectedRoute routeKey="direcao_hub"><VendasDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/vendas/parceiros" element={<ProtectedRoute routeKey="direcao_vendas"><ParceirosDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/vendas/requisicoes-representantes" element={<ProtectedRoute routeKey="direcao_vendas"><RequisicoesRepresentantesDirecao /></ProtectedRoute>} />
+                <Route path="/direcao/vendas/contratos" element={<ProtectedRoute routeKey="direcao_vendas"><ContratosVendasHub /></ProtectedRoute>} />
                 <Route path="/direcao/estrategia/precos/regras-vendas" element={<ProtectedRoute routeKey="direcao_regras_vendas"><RegrasVendasDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/vendas/clientes" element={<ProtectedRoute routeKey="direcao_vendas"><ClientesDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/vendas/tabela-precos" element={<ProtectedRoute routeKey="direcao_tabela_precos"><TabelaPrecos readOnly /></ProtectedRoute>} />
