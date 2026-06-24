@@ -745,6 +745,9 @@ export default function ContratosVendas() {
                     contrato_dispensado: true,
                     contrato_dispensado_em: new Date().toISOString(),
                     contrato_dispensado_por: user?.id ?? null,
+                    contrato_liberado_faturamento: true,
+                    contrato_liberado_em: new Date().toISOString(),
+                    contrato_liberado_por: user?.id ?? null,
                   })
                   .eq('id', dispensarVenda.id);
                 setDispensandoId(null);
