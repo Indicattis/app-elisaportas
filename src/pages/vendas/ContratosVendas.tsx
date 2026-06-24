@@ -607,67 +607,6 @@ export default function ContratosVendas() {
               </Column>
             )}
 
-            {activeTab === 'assinados' && (
-              <Column
-                title="Contrato Assinado"
-                icon={<FileCheck2 className="w-4 h-4" strokeWidth={1.8} />}
-                accent="bg-gradient-to-br from-emerald-500 to-emerald-700 shadow-lg shadow-emerald-500/20"
-                count={assinados.length}
-              >
-                {assinados.length === 0 ? (
-                  <div className="text-center text-white/40 text-xs py-6">Nenhuma venda</div>
-                ) : (
-                  <TableView
-                    rows={assinados}
-                    extraRow={(v) => (
-                      <>
-                        {renderContratoFiles(v.id, false)}
-                        {v.contrato_url && v.contrato_url !== 'legado' && (
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-7 w-7 text-white/80 hover:text-white hover:bg-white/10 border border-white/10"
-                            onClick={async () => {
-                              const { data } = await supabase.storage
-                                .from('contratos-vendas')
-                                .createSignedUrl(v.contrato_url as string, 300);
-                              if (data?.signedUrl) window.open(data.signedUrl, '_blank');
-                            }}
-                            title="Baixar contrato assinado"
-                          >
-                            <Download className="w-4 h-4" />
-                          </Button>
-                        )}
-                        {v.contrato_url && (
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-7 w-7 text-white/70 hover:text-white hover:bg-white/10 border border-white/10"
-                            disabled={revertingVendaId === v.id}
-                            onClick={() => handleRetornarParaGerado(v)}
-                            title="Retornar para Gerado"
-                          >
-                            {revertingVendaId === v.id ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                              <Undo2 className="w-4 h-4" />
-                            )}
-                          </Button>
-                        )}
-                        <Button
-                          size="icon"
-                          className="bg-gradient-to-r from-yellow-500 to-yellow-700 hover:from-yellow-400 hover:to-yellow-600 text-white border border-yellow-400/30 h-7 w-7"
-                          onClick={() => toast.success('Venda já está em Pend. Faturamento')}
-                          title="Já em Pend. Faturamento"
-                        >
-                          <ArrowRight className="w-4 h-4" />
-                        </Button>
-                      </>
-                    )}
-                  />
-                )}
-              </Column>
-            )}
           </div>
         )}
       </div>
