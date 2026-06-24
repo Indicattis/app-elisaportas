@@ -52,9 +52,31 @@ interface BalancoInfo {
   tipo: string | null;
 }
 
-export default function ContratosVendas() {
+interface ContratosVendasProps {
+  scope?: 'all' | 'meus';
+}
+
+export default function ContratosVendas({ scope = 'all' }: ContratosVendasProps = {}) {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const isMeus = scope === 'meus';
+  const backPath = isMeus ? '/vendas' : '/direcao/vendas';
+  const breadcrumbItems = isMeus
+    ? [
+        { label: 'Home', path: '/home' },
+        { label: 'Vendas', path: '/vendas' },
+        { label: 'Meus Contratos' },
+      ]
+    : [
+        { label: 'Home', path: '/home' },
+        { label: 'Direção', path: '/direcao' },
+        { label: 'Vendas', path: '/direcao/vendas' },
+        { label: 'Contratos' },
+      ];
+  const pageTitle = isMeus ? 'Meus Contratos' : 'Contratos';
+  const pageSubtitle = isMeus
+    ? 'Acompanhe o ciclo de contratos das suas vendas.'
+    : 'Acompanhe o ciclo de contratos de cada venda.';
   const [mounted, setMounted] = useState(false);
   const [search, setSearch] = useState('');
   const [vendas, setVendas] = useState<VendaRow[]>([]);
@@ -84,7 +106,7 @@ export default function ContratosVendas() {
   useEffect(() => {
     (async () => {
       setLoadingVendas(true);
-      const query = supabase
+      let query = supabase
         .from('vendas')
         .select('id, cliente_nome, cpf_cliente, cidade, data_venda, valor_venda, atendente_id, contrato_url, contrato_assinado_em, contrato_liberado_faturamento, frete_aprovado, produtos_vendas(faturamento), pedidos_producao(id)')
         .eq('is_rascunho', false)
@@ -94,6 +116,15 @@ export default function ContratosVendas() {
         .eq('contrato_liberado_faturamento', false)
         .order('data_venda', { ascending: false })
         .limit(5000);
+
+      if (isMeus) {
+        if (!user?.id) {
+          setVendas([]);
+          setLoadingVendas(false);
+          return;
+        }
+        query = query.eq('atendente_id', user.id);
+      }
 
       const { data, error } = await query;
       if (!error && data) {
@@ -142,7 +173,7 @@ export default function ContratosVendas() {
       }
       setLoadingVendas(false);
     })();
-  }, [user, refreshKey]);
+  }, [user, refreshKey, isMeus]);
 
   const contratosByVenda = useMemo(() => {
     const map: Record<string, typeof contratos extends (infer T)[] | undefined ? T[] : never> = {} as any;
@@ -455,16 +486,12 @@ export default function ContratosVendas() {
       <DelayedParticles />
 
       <AnimatedBreadcrumb
-        items={[
-          { label: 'Home', path: '/home' },
-          { label: 'Vendas', path: '/vendas' },
-          { label: 'Contratos' },
-        ]}
+        items={breadcrumbItems}
         mounted={mounted}
       />
 
       <button
-        onClick={() => navigate('/vendas')}
+        onClick={() => navigate(backPath)}
         className="fixed top-4 left-4 z-50 p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 hover:bg-white/10 transition-all"
       >
         <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-lg shadow-blue-500/20">
@@ -478,10 +505,8 @@ export default function ContratosVendas() {
             <FileSignature className="w-6 h-6" strokeWidth={1.5} />
           </div>
           <div>
-            <h1 className="text-2xl font-semibold text-white">Contratos</h1>
-            <p className="text-sm text-white/60">
-              Acompanhe o ciclo de contratos de cada venda.
-            </p>
+            <h1 className="text-2xl font-semibold text-white">{pageTitle}</h1>
+            <p className="text-sm text-white/60">{pageSubtitle}</p>
           </div>
         </div>
 
