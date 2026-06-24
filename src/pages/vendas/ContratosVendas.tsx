@@ -658,8 +658,8 @@ export default function ContratosVendas() {
                         <Button
                           size="icon"
                           className="bg-gradient-to-r from-yellow-500 to-yellow-700 hover:from-yellow-400 hover:to-yellow-600 text-white border border-yellow-400/30 h-7 w-7"
-                          onClick={() => navigate(`/financeiro/faturamento/${v.id}`)}
-                          title="Avançar para Pend. Faturamento"
+                          onClick={() => toast.success('Venda já está em Pend. Faturamento')}
+                          title="Já em Pend. Faturamento"
                         >
                           <ArrowRight className="w-4 h-4" />
                         </Button>
