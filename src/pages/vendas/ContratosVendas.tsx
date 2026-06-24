@@ -72,7 +72,7 @@ export default function ContratosVendas() {
 
   const { contratos, deleteContrato, isDeleting } = useContratosVendas({});
 
-  type TabKey = 'pendentes' | 'gerados' | 'assinados';
+  type TabKey = 'pendentes' | 'gerados';
   const [activeTab, setActiveTab] = useState<TabKey>('pendentes');
 
   useEffect(() => {
@@ -90,6 +90,7 @@ export default function ContratosVendas() {
         .eq('contrato_dispensado', false)
         .eq('dispensada_sistema', false)
         .neq('status_aprovacao', 'reprovado')
+        .is('contrato_url', null)
         .order('data_venda', { ascending: false })
         .limit(5000);
 
@@ -158,18 +159,17 @@ export default function ContratosVendas() {
     );
   };
 
-  const { pendentes, gerados, assinados } = useMemo(() => {
+  const { pendentes, gerados } = useMemo(() => {
     const pendentes: VendaRow[] = [];
     const gerados: VendaRow[] = [];
-    const assinados: VendaRow[] = [];
     vendas.filter(matchesSearch).forEach(v => {
       const hasContratoUrl = !!v.contrato_url && v.contrato_url !== 'legado';
       const hasGerado = ((contratosByVenda as any)[v.id] || []).length > 0;
-      if (hasContratoUrl) assinados.push(v);
-      else if (hasGerado) gerados.push(v);
+      if (hasContratoUrl) return; // já em Pend. Faturamento
+      if (hasGerado) gerados.push(v);
       else pendentes.push(v);
     });
-    return { pendentes, gerados, assinados };
+    return { pendentes, gerados };
   }, [vendas, contratosByVenda, search]);
 
   const renderContratoFiles = (vendaId: string, allowDelete: boolean) => {
@@ -424,7 +424,6 @@ export default function ContratosVendas() {
   const TABS: Array<{ key: TabKey; label: string; icon: typeof FileClock; count: number }> = [
     { key: 'pendentes', label: 'Pendente de Contrato', icon: FileClock, count: pendentes.length },
     { key: 'gerados', label: 'Contrato Gerado', icon: FileText, count: gerados.length },
-    { key: 'assinados', label: 'Contrato Assinado', icon: FileCheck2, count: assinados.length },
   ];
   const activeIndex = Math.max(0, TABS.findIndex(t => t.key === activeTab));
   const cols = TABS.length;
@@ -608,67 +607,6 @@ export default function ContratosVendas() {
               </Column>
             )}
 
-            {activeTab === 'assinados' && (
-              <Column
-                title="Contrato Assinado"
-                icon={<FileCheck2 className="w-4 h-4" strokeWidth={1.8} />}
-                accent="bg-gradient-to-br from-emerald-500 to-emerald-700 shadow-lg shadow-emerald-500/20"
-                count={assinados.length}
-              >
-                {assinados.length === 0 ? (
-                  <div className="text-center text-white/40 text-xs py-6">Nenhuma venda</div>
-                ) : (
-                  <TableView
-                    rows={assinados}
-                    extraRow={(v) => (
-                      <>
-                        {renderContratoFiles(v.id, false)}
-                        {v.contrato_url && v.contrato_url !== 'legado' && (
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-7 w-7 text-white/80 hover:text-white hover:bg-white/10 border border-white/10"
-                            onClick={async () => {
-                              const { data } = await supabase.storage
-                                .from('contratos-vendas')
-                                .createSignedUrl(v.contrato_url as string, 300);
-                              if (data?.signedUrl) window.open(data.signedUrl, '_blank');
-                            }}
-                            title="Baixar contrato assinado"
-                          >
-                            <Download className="w-4 h-4" />
-                          </Button>
-                        )}
-                        {v.contrato_url && (
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-7 w-7 text-white/70 hover:text-white hover:bg-white/10 border border-white/10"
-                            disabled={revertingVendaId === v.id}
-                            onClick={() => handleRetornarParaGerado(v)}
-                            title="Retornar para Gerado"
-                          >
-                            {revertingVendaId === v.id ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                              <Undo2 className="w-4 h-4" />
-                            )}
-                          </Button>
-                        )}
-                        <Button
-                          size="icon"
-                          className="bg-gradient-to-r from-yellow-500 to-yellow-700 hover:from-yellow-400 hover:to-yellow-600 text-white border border-yellow-400/30 h-7 w-7"
-                          onClick={() => toast.success('Venda já está em Pend. Faturamento')}
-                          title="Já em Pend. Faturamento"
-                        >
-                          <ArrowRight className="w-4 h-4" />
-                        </Button>
-                      </>
-                    )}
-                  />
-                )}
-              </Column>
-            )}
           </div>
         )}
       </div>
