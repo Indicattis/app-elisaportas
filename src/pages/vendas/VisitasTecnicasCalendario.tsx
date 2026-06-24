@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
@@ -27,6 +28,7 @@ import { ptBR } from 'date-fns/locale';
 interface VisitaAgendada {
   id: string;
   titulo: string;
+  tipo: 'visita_tecnica' | 'manutencao';
   data_visita: string;
   hora_inicio: string;
   responsavel_id: string | null;
@@ -207,6 +209,7 @@ function DraggableVisitaChip({ visita, onOpen, onDelete }: { visita: VisitaAgend
 
 const emptyForm = {
   titulo: '',
+  tipo: 'visita_tecnica' as 'visita_tecnica' | 'manutencao',
   data_visita: '',
   hora_inicio: '09:00',
   responsavel_id: '',
@@ -352,6 +355,7 @@ export default function VisitasTecnicasCalendario() {
     setEditing(v);
     setForm({
       titulo: v.titulo || '',
+      tipo: (v.tipo as 'visita_tecnica' | 'manutencao') || 'visita_tecnica',
       data_visita: toDateOnly(v.data_visita),
       hora_inicio: (v.hora_inicio || '').slice(0, 5),
       responsavel_id: v.responsavel_id || '',
@@ -397,6 +401,7 @@ export default function VisitasTecnicasCalendario() {
       if (!form.hora_inicio) throw new Error('Informe o horário');
       const payload: any = {
         titulo: form.titulo.trim(),
+        tipo: form.tipo,
         data_visita: `${form.data_visita}T12:00:00.000Z`,
         hora_inicio: form.hora_inicio,
         responsavel_id: form.responsavel_id || null,
