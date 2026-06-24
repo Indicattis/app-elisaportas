@@ -192,6 +192,9 @@ function DraggableVisitaChip({ visita, onOpen, onDelete }: { visita: VisitaAgend
         className={`w-full text-left text-[10px] sm:text-xs px-1 sm:px-2 py-0.5 sm:py-1.5 rounded truncate ${cls} ${isDragging ? 'opacity-30' : ''} ${disabled ? 'cursor-pointer' : 'cursor-grab active:cursor-grabbing'}`}
       >
         <span className="opacity-70">{(visita.hora_inicio || '').slice(0, 5)}</span>
+        {visita.tipo === 'manutencao' && (
+          <span className="ml-1 px-1 py-px rounded bg-amber-500/30 text-amber-100 text-[9px] uppercase tracking-wide">Man</span>
+        )}
         <span className="hidden sm:inline"> {visita.titulo}</span>
       </button>
       {onDelete && (
