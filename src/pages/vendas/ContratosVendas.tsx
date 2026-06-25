@@ -94,6 +94,7 @@ export default function ContratosVendas({ scope = 'all' }: ContratosVendasProps 
   const [dispensarVenda, setDispensarVenda] = useState<VendaRow | null>(null);
   const [dispensandoId, setDispensandoId] = useState<string | null>(null);
   const [avulsoOpen, setAvulsoOpen] = useState(false);
+  const [liberarVenda, setLiberarVenda] = useState<VendaRow | null>(null);
 
   const { contratos, deleteContrato, isDeleting } = useContratosVendas({});
 
@@ -679,10 +680,10 @@ export default function ContratosVendas({ scope = 'all' }: ContratosVendasProps 
                 ) : (
                   <TableView
                     rows={assinados}
-                    actionLabel="Liberar para Pend. Faturamento"
-                    actionIcon={ArrowRight}
+                    actionLabel={isMeus ? undefined : "Liberar para Pend. Faturamento"}
+                    actionIcon={isMeus ? undefined : ArrowRight}
                     actionClass="bg-gradient-to-r from-yellow-500 to-yellow-700 hover:from-yellow-400 hover:to-yellow-600 text-white border border-yellow-400/30"
-                    onAction={(v) => handleLiberarFaturamento(v)}
+                    onAction={isMeus ? undefined : (v) => setLiberarVenda(v)}
                     extraRow={(v) => (
                       <>
                         {renderContratoFiles(v.id, false)}
@@ -802,6 +803,38 @@ export default function ContratosVendas({ scope = 'all' }: ContratosVendasProps 
             >
               {dispensandoId ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
               Dispensar contrato
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={!!liberarVenda}
+        onOpenChange={(o) => { if (!o && !revertingVendaId) setLiberarVenda(null); }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Liberar para Pend. Faturamento?</AlertDialogTitle>
+            <AlertDialogDescription>
+              A venda de <strong>{liberarVenda?.cliente_nome || 'cliente'}</strong>
+              {liberarVenda?.valor_venda ? <> no valor de <strong>{formatCurrency(liberarVenda.valor_venda)}</strong></> : null}
+              {' '}será movida para <strong>Pend. Faturamento</strong> na Gestão de Pedidos. Confirma a liberação?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={!!revertingVendaId}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={!!revertingVendaId}
+              onClick={async (e) => {
+                e.preventDefault();
+                if (!liberarVenda) return;
+                const v = liberarVenda;
+                await handleLiberarFaturamento(v);
+                setLiberarVenda(null);
+              }}
+            >
+              {revertingVendaId ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              Confirmar liberação
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
