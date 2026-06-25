@@ -112,13 +112,12 @@ export async function exportTiposCustosPDF(
 
   const categoriaPorId = new Map(categorias.map((c) => [c.id, c.nome]));
 
-  const head = [["Nome", "Categoria", "Gastos", "Total gasto", "Valor projetado"]];
+  const head = [["Nome", "Categoria", "Total gasto", "Valor projetado"]];
   const columnStyles: Record<number, any> = {
     0: { cellWidth: 55 },
     1: { cellWidth: "auto" },
-    2: { cellWidth: 18, halign: "center" },
+    2: { cellWidth: 32, halign: "right" },
     3: { cellWidth: 32, halign: "right" },
-    4: { cellWidth: 32, halign: "right" },
   };
 
   let totalGastoGeral = 0;
@@ -130,7 +129,6 @@ export async function exportTiposCustosPDF(
     rows.forEach((r) => {
       const projetado = Number(r.valor_maximo_mensal || 0);
       const totalGasto = Number(totaisGastos[r.id] || 0);
-      const qtd = Number(contagemGastos[r.id] || 0);
       totalGastoGeral += totalGasto;
       totalProjetadoGeral += projetado;
       body.push([
@@ -141,10 +139,6 @@ export async function exportTiposCustosPDF(
         {
           content: categoriaPorId.get(r.categoria_id || "") || "-",
           styles: { fontStyle: "bold", fillColor: [225, 235, 245], textColor: [20, 20, 20] },
-        },
-        {
-          content: String(qtd),
-          styles: { halign: "center", fontStyle: "bold", fillColor: [225, 235, 245], textColor: [20, 20, 20] },
         },
         {
           content: fmtBRL(totalGasto),
@@ -165,7 +159,6 @@ export async function exportTiposCustosPDF(
           },
           {
             content: g.descricao || "-",
-            colSpan: 2,
             styles: { textColor: [110, 110, 110], fillColor: [250, 250, 250] },
           },
           {
