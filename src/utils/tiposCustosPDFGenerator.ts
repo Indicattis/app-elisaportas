@@ -161,16 +161,16 @@ export async function exportTiposCustosPDF(
         body.push([
           {
             content: `   ↳ ${format(new Date(g.data + "T12:00:00"), "dd/MM/yyyy")}`,
-            styles: { fontStyle: "italic", textColor: [110, 110, 110], fillColor: [250, 250, 250] },
+            styles: { textColor: [110, 110, 110], fillColor: [250, 250, 250] },
           },
           {
             content: g.descricao || "-",
             colSpan: 2,
-            styles: { fontStyle: "italic", textColor: [110, 110, 110], fillColor: [250, 250, 250] },
+            styles: { textColor: [110, 110, 110], fillColor: [250, 250, 250] },
           },
           {
             content: fmtBRL(g.valor),
-            styles: { halign: "right", fontStyle: "italic", textColor: [110, 110, 110], fillColor: [250, 250, 250] },
+            styles: { halign: "right", textColor: [110, 110, 110], fillColor: [250, 250, 250] },
           },
           { content: "", styles: { fillColor: [250, 250, 250] } },
         ]);
