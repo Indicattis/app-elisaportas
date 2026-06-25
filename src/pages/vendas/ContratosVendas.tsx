@@ -94,6 +94,7 @@ export default function ContratosVendas({ scope = 'all' }: ContratosVendasProps 
   const [dispensarVenda, setDispensarVenda] = useState<VendaRow | null>(null);
   const [dispensandoId, setDispensandoId] = useState<string | null>(null);
   const [avulsoOpen, setAvulsoOpen] = useState(false);
+  const [liberarVenda, setLiberarVenda] = useState<VendaRow | null>(null);
 
   const { contratos, deleteContrato, isDeleting } = useContratosVendas({});
 
@@ -679,10 +680,10 @@ export default function ContratosVendas({ scope = 'all' }: ContratosVendasProps 
                 ) : (
                   <TableView
                     rows={assinados}
-                    actionLabel="Liberar para Pend. Faturamento"
-                    actionIcon={ArrowRight}
+                    actionLabel={isMeus ? undefined : "Liberar para Pend. Faturamento"}
+                    actionIcon={isMeus ? undefined : ArrowRight}
                     actionClass="bg-gradient-to-r from-yellow-500 to-yellow-700 hover:from-yellow-400 hover:to-yellow-600 text-white border border-yellow-400/30"
-                    onAction={(v) => handleLiberarFaturamento(v)}
+                    onAction={isMeus ? undefined : (v) => setLiberarVenda(v)}
                     extraRow={(v) => (
                       <>
                         {renderContratoFiles(v.id, false)}
