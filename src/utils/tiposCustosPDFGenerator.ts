@@ -31,31 +31,6 @@ export async function exportTiposCustosPDF(
   const totaisGastos = opts?.totaisGastos ?? {};
   const mesReferencia = opts?.mesReferencia ?? null;
 
-  // Pre-carregar gastos individuais por tipo (se houver mês selecionado)
-  const gastosPorTipo: Record<string, Array<{ data: string; descricao: string | null; valor: number }>> = {};
-  if (mesReferencia) {
-    const [y, m] = mesReferencia.split("-").map(Number);
-    const start = `${mesReferencia}-01`;
-    const end = new Date(y, m, 0).toISOString().split("T")[0];
-    const ids = items.map((i) => i.id);
-    if (ids.length > 0) {
-      const { data } = await supabase
-        .from("gastos" as any)
-        .select("tipo_custo_id, data, descricao, valor")
-        .in("tipo_custo_id", ids)
-        .gte("data", start)
-        .lte("data", end)
-        .order("data", { ascending: true });
-      (data as any[] | null)?.forEach((g) => {
-        (gastosPorTipo[g.tipo_custo_id] ||= []).push({
-          data: g.data,
-          descricao: g.descricao,
-          valor: Number(g.valor) || 0,
-        });
-      });
-    }
-  }
-
   const pdf = new jsPDF("p", "mm", "a4");
   const pageWidth = pdf.internal.pageSize.width;
   const pageHeight = pdf.internal.pageSize.height;
@@ -110,14 +85,11 @@ export async function exportTiposCustosPDF(
   );
   y += 14;
 
-  const categoriaPorId = new Map(categorias.map((c) => [c.id, c.nome]));
-
-  const head = [["Nome", "Categoria", "Total gasto", "Valor projetado"]];
+  const head = [["Nome", "Total gasto", "Valor projetado"]];
   const columnStyles: Record<number, any> = {
-    0: { cellWidth: 55 },
-    1: { cellWidth: "auto" },
-    2: { cellWidth: 32, halign: "right" },
-    3: { cellWidth: 32, halign: "right" },
+    0: { cellWidth: "auto" },
+    1: { cellWidth: 40, halign: "right" },
+    2: { cellWidth: 40, halign: "right" },
   };
 
   let totalGastoGeral = 0;
@@ -137,10 +109,6 @@ export async function exportTiposCustosPDF(
           styles: { fontStyle: "bold", fillColor: [225, 235, 245], textColor: [20, 20, 20] },
         },
         {
-          content: categoriaPorId.get(r.categoria_id || "") || "-",
-          styles: { fontStyle: "bold", fillColor: [225, 235, 245], textColor: [20, 20, 20] },
-        },
-        {
           content: fmtBRL(totalGasto),
           styles: { halign: "right", fontStyle: "bold", fillColor: [225, 235, 245], textColor: [20, 20, 20] },
         },
@@ -149,25 +117,6 @@ export async function exportTiposCustosPDF(
           styles: { halign: "right", fontStyle: "bold", fillColor: [225, 235, 245], textColor: [20, 20, 20] },
         },
       ]);
-
-      const lancamentos = gastosPorTipo[r.id] || [];
-      lancamentos.forEach((g) => {
-        body.push([
-          {
-            content: `   ↳ ${format(new Date(g.data + "T12:00:00"), "dd/MM/yyyy")}`,
-            styles: { textColor: [110, 110, 110], fillColor: [250, 250, 250] },
-          },
-          {
-            content: g.descricao || "-",
-            styles: { textColor: [110, 110, 110], fillColor: [250, 250, 250] },
-          },
-          {
-            content: fmtBRL(g.valor),
-            styles: { halign: "right", textColor: [110, 110, 110], fillColor: [250, 250, 250] },
-          },
-          { content: "", styles: { fillColor: [250, 250, 250] } },
-        ]);
-      });
     });
 
     autoTable(pdf, {
