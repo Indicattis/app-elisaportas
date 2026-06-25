@@ -155,11 +155,26 @@ export async function exportTiposCustosPDF(
       totalGastoGeral += totalGasto;
       totalProjetadoGeral += projetado;
       body.push([
-        r.nome,
-        categoriaPorId.get(r.categoria_id || "") || "-",
-        String(qtd),
-        fmtBRL(totalGasto),
-        fmtBRL(projetado),
+        {
+          content: r.nome,
+          styles: { fontStyle: "bold", fillColor: [225, 235, 245], textColor: [20, 20, 20] },
+        },
+        {
+          content: categoriaPorId.get(r.categoria_id || "") || "-",
+          styles: { fontStyle: "bold", fillColor: [225, 235, 245], textColor: [20, 20, 20] },
+        },
+        {
+          content: String(qtd),
+          styles: { halign: "center", fontStyle: "bold", fillColor: [225, 235, 245], textColor: [20, 20, 20] },
+        },
+        {
+          content: fmtBRL(totalGasto),
+          styles: { halign: "right", fontStyle: "bold", fillColor: [225, 235, 245], textColor: [20, 20, 20] },
+        },
+        {
+          content: fmtBRL(projetado),
+          styles: { halign: "right", fontStyle: "bold", fillColor: [225, 235, 245], textColor: [20, 20, 20] },
+        },
       ]);
 
       const lancamentos = gastosPorTipo[r.id] || [];
