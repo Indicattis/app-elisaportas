@@ -111,13 +111,6 @@ export async function exportTiposCustosPDF(
   y += 14;
 
   const categoriaPorId = new Map(categorias.map((c) => [c.id, c.nome]));
-  const grupos: Array<{ nome: string; rows: TipoCusto[] }> = [];
-  categorias.forEach((cat) => {
-    const rows = items.filter((i) => i.categoria_id === cat.id);
-    if (rows.length > 0) grupos.push({ nome: cat.nome, rows });
-  });
-  const semCat = items.filter((i) => !i.categoria_id);
-  if (semCat.length > 0) grupos.push({ nome: "Sem categoria", rows: semCat });
 
   const head = [["Nome", "Categoria", "Gastos", "Total gasto", "Valor projetado"]];
   const columnStyles: Record<number, any> = {
@@ -131,27 +124,13 @@ export async function exportTiposCustosPDF(
   let totalGastoGeral = 0;
   let totalProjetadoGeral = 0;
 
-  grupos.forEach(({ nome, rows }) => {
-    if (y + 25 > pageHeight - 20) {
-      pdf.addPage();
-      y = 20;
-    }
-
-    pdf.setFontSize(11);
-    pdf.setTextColor(0, 0, 0);
-    pdf.setFont("helvetica", "bold");
-    pdf.text(`${nome}  (${rows.length})`, margin, y);
-    y += 4;
-
-    let subtotalGasto = 0;
-    let subtotalProjetado = 0;
+  {
+    const rows = items;
     const body: any[] = [];
     rows.forEach((r) => {
       const projetado = Number(r.valor_maximo_mensal || 0);
       const totalGasto = Number(totaisGastos[r.id] || 0);
       const qtd = Number(contagemGastos[r.id] || 0);
-      subtotalGasto += totalGasto;
-      subtotalProjetado += projetado;
       totalGastoGeral += totalGasto;
       totalProjetadoGeral += projetado;
       body.push([
@@ -198,22 +177,6 @@ export async function exportTiposCustosPDF(
       });
     });
 
-    body.push([
-      {
-        content: "Subtotal da categoria",
-        colSpan: 3,
-        styles: { halign: "right", fontStyle: "bold", fillColor: [240, 240, 240] },
-      } as any,
-      {
-        content: fmtBRL(subtotalGasto),
-        styles: { halign: "right", fontStyle: "bold", fillColor: [240, 240, 240] },
-      } as any,
-      {
-        content: fmtBRL(subtotalProjetado),
-        styles: { halign: "right", fontStyle: "bold", fillColor: [240, 240, 240] },
-      } as any,
-    ]);
-
     autoTable(pdf, {
       head,
       body,
@@ -239,7 +202,7 @@ export async function exportTiposCustosPDF(
     });
 
     y = ((pdf as any).lastAutoTable?.finalY || y) + 8;
-  });
+  }
 
   // Grand totals
   if (y + 30 > pageHeight - 20) {
