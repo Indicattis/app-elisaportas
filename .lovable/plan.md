@@ -1,26 +1,30 @@
-## Adicionar "Gerar Contrato Avulso" em Direção > Vendas > Contratos
+## Problema
 
-### Objetivo
-Permitir gerar um contrato (PDF) sem vínculo com uma venda, preenchendo manualmente os dados do cliente e da venda.
+O botão "Regenerar linhas da ordem" falha com erro de constraint:
+```
+update or delete on table "linhas_ordens" violates foreign key constraint
+"pontuacao_colaboradores_linha_id_fkey" on table "pontuacao_colaboradores"
+```
 
-### UX
-- Em `src/pages/vendas/ContratosVendas.tsx`, no header (apenas quando `scope === 'all'`), adicionar botão "Gerar Contrato Avulso" ao lado dos controles existentes.
-- Botão abre um novo modal `GerarContratoAvulsoModal`.
+A função `regenerar_linhas_ordem` tenta apagar todas as linhas da ordem, mas algumas já têm pontuação registrada em `pontuacao_colaboradores` (FK `linha_id` NOT NULL).
 
-### Novo modal: `src/components/contratos/GerarContratoAvulsoModal.tsx`
-- Seleção de Template (usa `useContratosTemplates`, só ativos).
-- Formulário manual com campos editáveis correspondentes às variáveis do contrato:
-  - **Cliente**: nome*, CPF/CNPJ, telefone, email, endereço, bairro, cidade, estado, CEP.
-  - **Venda**: número (livre, default `AVULSO-<timestamp>`), data (default hoje), valor total, valor produtos, valor instalação, valor frete, forma de pagamento, número de parcelas, valor de entrada, previsão de entrega.
-  - **Produtos**: lista (textarea livre), quantidade total.
-  - **Atendente**: nome (default = usuário logado), telefone.
-- Empresa e `data_geracao` preenchidos automaticamente (via `useCompanySettings` + `new Date()`).
-- Preview do conteúdo (igual ao `GerarContratoModal`) usando `substituirVariaveis`.
-- Botão "Gerar PDF" chama `generateContratoPDF` com `numeroContrato = CONT-AVULSO-<timestamp>`.
+## Solução
 
-### Sem persistência
-- Não grava em `contratos_vendas` nem em `vendas` — é apenas geração de PDF avulso. (Pode ser ampliado depois se necessário.)
+Atualizar a função RPC `regenerar_linhas_ordem` para, antes do `DELETE FROM linhas_ordens`, executar:
 
-### Fora de escopo
-- Sem alterações de banco, RLS ou hooks de Pend. Faturamento.
-- Sem mudanças em "Meus Contratos" (vendedor) — botão só aparece no escopo Direção.
+```sql
+DELETE FROM pontuacao_colaboradores
+WHERE ordem_id = p_ordem_id AND tipo_ordem = p_tipo_ordem;
+```
+
+Isso remove os registros de pontuação atrelados às linhas que serão regeneradas. Quando as linhas forem concluídas novamente, a pontuação será recalculada normalmente pelo fluxo existente.
+
+### Implementação (migration)
+
+Recriar `public.regenerar_linhas_ordem(p_ordem_id uuid, p_tipo_ordem text)` mantendo toda a lógica atual e apenas inserindo a limpeza de `pontuacao_colaboradores` imediatamente antes do `DELETE FROM linhas_ordens`.
+
+Nenhuma alteração no frontend é necessária — o botão já chama essa RPC.
+
+### Aviso ao usuário
+
+Pontos já contabilizados de linhas regeneradas serão removidos e re-creditados quando as linhas forem concluídas de novo. Isso pode causar variação temporária no ranking/metas se a regeneração for feita em ordens já parcialmente concluídas.
