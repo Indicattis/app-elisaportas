@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { TipoCusto } from "@/hooks/useTiposCustos";
 import type { CategoriaDespesa } from "@/hooks/useDespesasCategorias";
+import { supabase } from "@/integrations/supabase/client";
 
 const fmtBRL = (n: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(n || 0);
@@ -16,11 +17,45 @@ const slug = (s: string) =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 
-export function exportTiposCustosPDF(
+export async function exportTiposCustosPDF(
   titulo: string,
   items: TipoCusto[],
   categorias: CategoriaDespesa[],
+  opts?: {
+    contagemGastos?: Record<string, number>;
+    totaisGastos?: Record<string, number>;
+    mesReferencia?: string | null;
+  },
 ) {
+  const contagemGastos = opts?.contagemGastos ?? {};
+  const totaisGastos = opts?.totaisGastos ?? {};
+  const mesReferencia = opts?.mesReferencia ?? null;
+
+  // Pre-carregar gastos individuais por tipo (se houver mês selecionado)
+  const gastosPorTipo: Record<string, Array<{ data: string; descricao: string | null; valor: number }>> = {};
+  if (mesReferencia) {
+    const [y, m] = mesReferencia.split("-").map(Number);
+    const start = `${mesReferencia}-01`;
+    const end = new Date(y, m, 0).toISOString().split("T")[0];
+    const ids = items.map((i) => i.id);
+    if (ids.length > 0) {
+      const { data } = await supabase
+        .from("gastos" as any)
+        .select("tipo_custo_id, data, descricao, valor")
+        .in("tipo_custo_id", ids)
+        .gte("data", start)
+        .lte("data", end)
+        .order("data", { ascending: true });
+      (data as any[] | null)?.forEach((g) => {
+        (gastosPorTipo[g.tipo_custo_id] ||= []).push({
+          data: g.data,
+          descricao: g.descricao,
+          valor: Number(g.valor) || 0,
+        });
+      });
+    }
+  }
+
   const pdf = new jsPDF("p", "mm", "a4");
   const pageWidth = pdf.internal.pageSize.width;
   const pageHeight = pdf.internal.pageSize.height;
@@ -75,6 +110,7 @@ export function exportTiposCustosPDF(
   );
   y += 14;
 
+  const categoriaPorId = new Map(categorias.map((c) => [c.id, c.nome]));
   const grupos: Array<{ nome: string; rows: TipoCusto[] }> = [];
   categorias.forEach((cat) => {
     const rows = items.filter((i) => i.categoria_id === cat.id);
@@ -83,17 +119,17 @@ export function exportTiposCustosPDF(
   const semCat = items.filter((i) => !i.categoria_id);
   if (semCat.length > 0) grupos.push({ nome: "Sem categoria", rows: semCat });
 
-  const head = [["Nome", "Descrição", "Valor projetado", "DRE", "Ativo"]];
+  const head = [["Nome", "Categoria", "Gastos", "Total gasto", "Valor projetado"]];
   const columnStyles: Record<number, any> = {
     0: { cellWidth: 55 },
     1: { cellWidth: "auto" },
-    2: { cellWidth: 32, halign: "right" },
-    3: { cellWidth: 16, halign: "center" },
-    4: { cellWidth: 16, halign: "center" },
+    2: { cellWidth: 18, halign: "center" },
+    3: { cellWidth: 32, halign: "right" },
+    4: { cellWidth: 32, halign: "right" },
   };
 
-  let totalGeral = 0;
-  let totalAtivos = 0;
+  let totalGastoGeral = 0;
+  let totalProjetadoGeral = 0;
 
   grupos.forEach(({ nome, rows }) => {
     if (y + 25 > pageHeight - 20) {
@@ -107,33 +143,60 @@ export function exportTiposCustosPDF(
     pdf.text(`${nome}  (${rows.length})`, margin, y);
     y += 4;
 
-    let subtotal = 0;
-    const body = rows.map((r) => {
-      const valor = Number(r.valor_maximo_mensal || 0);
-      subtotal += valor;
-      totalGeral += valor;
-      if (r.ativo) totalAtivos += valor;
-      return [
+    let subtotalGasto = 0;
+    let subtotalProjetado = 0;
+    const body: any[] = [];
+    rows.forEach((r) => {
+      const projetado = Number(r.valor_maximo_mensal || 0);
+      const totalGasto = Number(totaisGastos[r.id] || 0);
+      const qtd = Number(contagemGastos[r.id] || 0);
+      subtotalGasto += totalGasto;
+      subtotalProjetado += projetado;
+      totalGastoGeral += totalGasto;
+      totalProjetadoGeral += projetado;
+      body.push([
         r.nome,
-        r.descricao || "-",
-        fmtBRL(valor),
-        r.aparece_no_dre ? "Sim" : "Não",
-        r.ativo ? "Sim" : "Não",
-      ];
+        categoriaPorId.get(r.categoria_id || "") || "-",
+        String(qtd),
+        fmtBRL(totalGasto),
+        fmtBRL(projetado),
+      ]);
+
+      const lancamentos = gastosPorTipo[r.id] || [];
+      lancamentos.forEach((g) => {
+        body.push([
+          {
+            content: `   ↳ ${format(new Date(g.data + "T12:00:00"), "dd/MM/yyyy")}`,
+            styles: { fontStyle: "italic", textColor: [110, 110, 110], fillColor: [250, 250, 250] },
+          },
+          {
+            content: g.descricao || "-",
+            colSpan: 2,
+            styles: { fontStyle: "italic", textColor: [110, 110, 110], fillColor: [250, 250, 250] },
+          },
+          {
+            content: fmtBRL(g.valor),
+            styles: { halign: "right", fontStyle: "italic", textColor: [110, 110, 110], fillColor: [250, 250, 250] },
+          },
+          { content: "", styles: { fillColor: [250, 250, 250] } },
+        ]);
+      });
     });
 
     body.push([
       {
         content: "Subtotal da categoria",
-        colSpan: 2,
+        colSpan: 3,
         styles: { halign: "right", fontStyle: "bold", fillColor: [240, 240, 240] },
       } as any,
       {
-        content: fmtBRL(subtotal),
+        content: fmtBRL(subtotalGasto),
         styles: { halign: "right", fontStyle: "bold", fillColor: [240, 240, 240] },
       } as any,
-      { content: "", styles: { fillColor: [240, 240, 240] } } as any,
-      { content: "", styles: { fillColor: [240, 240, 240] } } as any,
+      {
+        content: fmtBRL(subtotalProjetado),
+        styles: { halign: "right", fontStyle: "bold", fillColor: [240, 240, 240] },
+      } as any,
     ]);
 
     autoTable(pdf, {
@@ -158,17 +221,6 @@ export function exportTiposCustosPDF(
       margin: { left: margin, right: margin },
       theme: "striped",
       alternateRowStyles: { fillColor: [248, 248, 248] },
-      didParseCell(data) {
-        if (
-          data.section === "body" &&
-          (data.column.index === 3 || data.column.index === 4) &&
-          (data.cell.raw === "Sim" || data.cell.raw === "Não")
-        ) {
-          data.cell.styles.textColor =
-            data.cell.raw === "Sim" ? [22, 163, 74] : [220, 38, 38];
-          data.cell.styles.fontStyle = "bold";
-        }
-      },
     });
 
     y = ((pdf as any).lastAutoTable?.finalY || y) + 8;
@@ -187,18 +239,18 @@ export function exportTiposCustosPDF(
   pdf.setFontSize(10);
   pdf.setFont("helvetica", "normal");
   pdf.setTextColor(80, 80, 80);
-  pdf.text("Total geral:", margin, y);
+  pdf.text("Total gasto no mês:", margin, y);
   pdf.setFont("helvetica", "bold");
   pdf.setTextColor(0, 0, 0);
-  pdf.text(fmtBRL(totalGeral), margin + 45, y);
+  pdf.text(fmtBRL(totalGastoGeral), margin + 50, y);
 
   pdf.setFontSize(12);
   pdf.setFont("helvetica", "normal");
   pdf.setTextColor(80, 80, 80);
-  pdf.text("Total mensal (ativos):", pageWidth - margin - 70, y);
+  pdf.text("Total projetado:", pageWidth - margin - 70, y);
   pdf.setFont("helvetica", "bold");
   pdf.setTextColor(0, 0, 0);
-  pdf.text(fmtBRL(totalAtivos), pageWidth - margin, y, { align: "right" });
+  pdf.text(fmtBRL(totalProjetadoGeral), pageWidth - margin, y, { align: "right" });
 
   // Footer
   pdf.setFontSize(8);
