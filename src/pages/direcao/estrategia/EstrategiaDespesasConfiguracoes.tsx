@@ -1351,7 +1351,7 @@ function TiposCustoBlock({
             Gerenciar categorias
           </button>)}
           <button
-            onClick={() => exportTiposCustosPDF(titulo, items, categorias)}
+            onClick={() => { void exportTiposCustosPDF(titulo, items, categorias, { contagemGastos, totaisGastos, mesReferencia }); }}
             className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-white/80 hover:text-white transition-colors"
           >
             <FileText className="w-3.5 h-3.5" />
