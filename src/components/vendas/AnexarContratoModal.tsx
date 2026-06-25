@@ -65,7 +65,7 @@ export function AnexarContratoModal({ open, onOpenChange, vendaId, clienteNome }
 
       if (updErr) throw updErr;
 
-      toast.success("Contrato anexado! Venda enviada para faturamento.");
+      toast.success("Contrato anexado! Aguardando liberação da Direção para faturamento.");
       queryClient.invalidateQueries({ queryKey: ["vendas-assinatura-contrato"] });
       queryClient.invalidateQueries({ queryKey: ["vendas-pendente-faturamento"] });
       queryClient.invalidateQueries({ queryKey: ["vendas-pendente-pedido"] });

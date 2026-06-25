@@ -1,65 +1,29 @@
-## Objetivo
+## Problema
 
-No PDF exportado de cada seção em **Direção → Estratégia → Despesas → maio/2026**, usar exatamente as colunas da tabela:
+Hoje qualquer usuário (vendedor em **Meus Contratos** e diretor em **Direção › Vendas › Contratos**) vê o botão "Liberar para Pend. Faturamento" na aba **Contrato Assinado**. Quando o vendedor clica nesse botão logo após anexar o assinado, a venda some da aba e cai direto em **Pend. Faturamento** da Gestão de Pedidos — sem passar por nenhuma confirmação da Direção.
 
-**Nome | Categoria | Gastos | Total gasto | Valor projetado**
-
-E, abaixo de cada tipo de despesa, listar os gastos individuais registrados no mês.
+Verifiquei no banco: várias vendas têm `contrato_liberado_em` praticamente igual a `contrato_assinado_em`, confirmando que a liberação está acontecendo logo na sequência da assinatura, sem etapa de revisão.
 
 ## Mudanças
 
-### 1. `src/utils/tiposCustosPDFGenerator.ts` — refatorar `exportTiposCustosPDF`
+### 1. Restringir a ação de "Liberar para Faturamento" à Direção
+Arquivo: `src/pages/vendas/ContratosVendas.tsx`
 
-- Tornar a função `async`.
-- Nova assinatura:
-  ```ts
-  exportTiposCustosPDF(
-    titulo: string,
-    items: TipoCusto[],
-    categorias: CategoriaDespesa[],
-    opts?: {
-      contagemGastos?: Record<string, number>;
-      totaisGastos?: Record<string, number>;
-      mesReferencia?: string | null;
-    }
-  )
-  ```
-- Tabela com colunas: `Nome | Categoria | Gastos | Total gasto | Valor projetado`.
-  - **Nome**: `r.nome`
-  - **Categoria**: nome da categoria correspondente (`-` se nenhuma)
-  - **Gastos**: `contagemGastos[r.id] ?? 0`
-  - **Total gasto**: `fmtBRL(totaisGastos[r.id] ?? 0)`
-  - **Valor projetado**: `fmtBRL(r.valor_maximo_mensal)`
-- Manter o agrupamento por categoria como hoje (cabeçalho com nome da categoria e subtotal por categoria — somando Total gasto e Valor projetado).
-- Quando `mesReferencia` está definido, para cada tipo buscar via Supabase os gastos do mês:
-  ```ts
-  supabase.from("gastos")
-    .select("data, descricao, valor")
-    .eq("tipo_custo_id", r.id)
-    .gte("data", `${mes}-01`).lte("data", end)
-    .order("data", { ascending: true });
-  ```
-  Inserir, logo abaixo da linha do tipo (na mesma `body`), uma linha por gasto formatada como:
-  - col Nome: `↳ dd/MM/yyyy`
-  - col Categoria + Gastos (colSpan 2): descrição (ou "-")
-  - col Total gasto: `fmtBRL(valor)`
-  - col Valor projetado: vazio
-  Estilo discreto (fonte menor, itálico, fundo `#fafafa`, sem riscar layout).
-- Totais gerais na rodapé passam a mostrar: **Total gasto do mês** e **Total projetado** (mantendo "Total mensal (ativos)" se quiser, mas usando projetado dos ativos).
+- Na aba **Contrato Assinado**, só renderizar o botão `Liberar para Pend. Faturamento` (e o handler `handleLiberarFaturamento`) quando `scope !== 'meus'`. Em **Meus Contratos** a venda fica visível na aba assinados apenas como acompanhamento — sem ação de avanço.
+- Vendedor continua podendo ver os arquivos (visualizar/baixar) e, se quiser corrigir, usar "Retornar para Gerado".
 
-### 2. `EstrategiaDespesasConfiguracoes.tsx` — `SectionExpense`
+### 2. Adicionar diálogo de confirmação na Direção
+Mesma página, somente no modo Direção:
 
-Atualizar a chamada (linha 1354):
-```ts
-onClick={() => exportTiposCustosPDF(titulo, items, categorias, {
-  contagemGastos,
-  totaisGastos,
-  mesReferencia,
-})}
-```
-Como a função vira `async`, envolver em `() => { void exportTiposCustosPDF(...); }`.
+- Substituir o `onAction` que chama `handleLiberarFaturamento` direto por um `AlertDialog` que exibe nome do cliente, valor da venda e a mensagem: "Esta venda será movida para Pend. Faturamento na Gestão de Pedidos. Confirma a liberação?".
+- Botão de confirmação roda o `handleLiberarFaturamento` atual (que já grava `contrato_liberado_faturamento=true`, `contrato_liberado_em`, `contrato_liberado_por`).
 
-### Sem outras alterações
+### 3. Mensagem do `AnexarContratoModal`
+Arquivo: `src/components/vendas/AnexarContratoModal.tsx`
 
-- Hooks, schema e componentes de UI permanecem como estão.
-- A busca de gastos individuais é feita só na hora de gerar o PDF, evitando carga adicional na tela.
+- Trocar o toast atual "Contrato anexado! Venda enviada para faturamento." por "Contrato anexado! Aguardando liberação da Direção para faturamento." — assim o vendedor entende que ainda há uma etapa.
+
+### Fora do escopo
+- Não mexer no comportamento de "Dispensar contrato" (essa ação continua liberando direto, como já é hoje, porque é fluxo administrativo).
+- Não alterar `useVendasPendenteFaturamento` — ele já exige `contrato_liberado_faturamento=true`, então essa parte está correta.
+- Sem migration: o flag e os campos de auditoria já existem.
