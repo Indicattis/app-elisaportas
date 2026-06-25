@@ -807,6 +807,38 @@ export default function ContratosVendas({ scope = 'all' }: ContratosVendasProps 
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog
+        open={!!liberarVenda}
+        onOpenChange={(o) => { if (!o && !revertingVendaId) setLiberarVenda(null); }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Liberar para Pend. Faturamento?</AlertDialogTitle>
+            <AlertDialogDescription>
+              A venda de <strong>{liberarVenda?.cliente_nome || 'cliente'}</strong>
+              {liberarVenda?.valor_venda ? <> no valor de <strong>{formatCurrency(liberarVenda.valor_venda)}</strong></> : null}
+              {' '}será movida para <strong>Pend. Faturamento</strong> na Gestão de Pedidos. Confirma a liberação?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={!!revertingVendaId}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={!!revertingVendaId}
+              onClick={async (e) => {
+                e.preventDefault();
+                if (!liberarVenda) return;
+                const v = liberarVenda;
+                await handleLiberarFaturamento(v);
+                setLiberarVenda(null);
+              }}
+            >
+              {revertingVendaId ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              Confirmar liberação
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
