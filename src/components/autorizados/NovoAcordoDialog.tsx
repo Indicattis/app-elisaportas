@@ -97,9 +97,6 @@ export function NovoAcordoDialog({
     if (!clienteNome || !clienteCidade || !clienteEstado || !autorizadoId) {
       return;
     }
-    if (!acordoParaEditar && !vendaVinculada?.id) {
-      return;
-    }
 
     setSaving(true);
     try {
@@ -304,7 +301,7 @@ export function NovoAcordoDialog({
           </Button>
           <Button
             onClick={handleSave}
-            disabled={saving || !clienteNome || !clienteCidade || !clienteEstado || !autorizadoId || (!acordoParaEditar && !vendaVinculada?.id)}
+            disabled={saving || !clienteNome || !clienteCidade || !clienteEstado || !autorizadoId}
             className="bg-primary hover:bg-primary/90"
           >
             {saving ? 'Salvando...' : acordoParaEditar ? 'Salvar Alterações' : 'Salvar Acordo'}
