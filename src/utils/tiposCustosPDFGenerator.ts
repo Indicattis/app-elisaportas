@@ -4,7 +4,6 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { TipoCusto } from "@/hooks/useTiposCustos";
 import type { CategoriaDespesa } from "@/hooks/useDespesasCategorias";
-import { supabase } from "@/integrations/supabase/client";
 
 const fmtBRL = (n: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(n || 0);
@@ -27,9 +26,7 @@ export async function exportTiposCustosPDF(
     mesReferencia?: string | null;
   },
 ) {
-  const contagemGastos = opts?.contagemGastos ?? {};
   const totaisGastos = opts?.totaisGastos ?? {};
-  const mesReferencia = opts?.mesReferencia ?? null;
 
   const pdf = new jsPDF("p", "mm", "a4");
   const pageWidth = pdf.internal.pageSize.width;
@@ -95,56 +92,58 @@ export async function exportTiposCustosPDF(
   let totalGastoGeral = 0;
   let totalProjetadoGeral = 0;
 
-  {
-    const rows = items;
-    const body: any[] = [];
-    rows.forEach((r) => {
-      const projetado = Number(r.valor_maximo_mensal || 0);
-      const totalGasto = Number(totaisGastos[r.id] || 0);
-      totalGastoGeral += totalGasto;
-      totalProjetadoGeral += projetado;
-      body.push([
-        {
-          content: r.nome,
-          styles: { fontStyle: "bold", fillColor: [225, 235, 245], textColor: [20, 20, 20] },
-        },
-        {
-          content: fmtBRL(totalGasto),
-          styles: { halign: "right", fontStyle: "bold", fillColor: [225, 235, 245], textColor: [20, 20, 20] },
-        },
-        {
-          content: fmtBRL(projetado),
-          styles: { halign: "right", fontStyle: "bold", fillColor: [225, 235, 245], textColor: [20, 20, 20] },
-        },
-      ]);
-    });
+  const rows = items;
+  const body: any[] = [];
+  rows.forEach((r, idx) => {
+    const projetado = Number(r.valor_maximo_mensal || 0);
+    const totalGasto = Number(totaisGastos[r.id] || 0);
+    totalGastoGeral += totalGasto;
+    totalProjetadoGeral += projetado;
 
-    autoTable(pdf, {
-      head,
-      body,
-      startY: y + 2,
-      styles: {
-        fontSize: 8,
-        cellPadding: 1.6,
-        valign: "middle",
-        lineColor: [220, 220, 220],
-        lineWidth: 0.2,
-      },
-      headStyles: {
-        fillColor: primaryColor,
-        textColor: [255, 255, 255],
-        fontStyle: "bold",
-        fontSize: 8,
-        halign: "center",
-      },
-      columnStyles,
-      margin: { left: margin, right: margin },
-      theme: "striped",
-      alternateRowStyles: { fillColor: [248, 248, 248] },
-    });
+    const even = idx % 2 === 0;
+    const fillColor: [number, number, number] = even ? [255, 255, 255] : [245, 245, 245];
+    const fontStyle = "normal";
 
-    y = ((pdf as any).lastAutoTable?.finalY || y) + 8;
-  }
+    body.push([
+      {
+        content: r.nome,
+        styles: { fontStyle, fillColor, textColor: [20, 20, 20] },
+      },
+      {
+        content: fmtBRL(totalGasto),
+        styles: { halign: "right", fontStyle, fillColor, textColor: [20, 20, 20] },
+      },
+      {
+        content: fmtBRL(projetado),
+        styles: { halign: "right", fontStyle, fillColor, textColor: [20, 20, 20] },
+      },
+    ]);
+  });
+
+  autoTable(pdf, {
+    head,
+    body,
+    startY: y + 2,
+    styles: {
+      fontSize: 8,
+      cellPadding: 1.6,
+      valign: "middle",
+      lineColor: [220, 220, 220],
+      lineWidth: 0.2,
+    },
+    headStyles: {
+      fillColor: primaryColor,
+      textColor: [255, 255, 255],
+      fontStyle: "bold",
+      fontSize: 8,
+      halign: "center",
+    },
+    columnStyles,
+    margin: { left: margin, right: margin },
+    theme: "plain",
+  });
+
+  y = ((pdf as any).lastAutoTable?.finalY || y) + 8;
 
   // Grand totals
   if (y + 30 > pageHeight - 20) {
