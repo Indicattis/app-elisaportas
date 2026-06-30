@@ -28,6 +28,7 @@ export function useAnyRouteAccess(routeKeys: string[]) {
       return checks.some((check) => Boolean(check.data));
     },
     enabled: !!user?.id && normalizedRouteKeys.length > 0,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 }

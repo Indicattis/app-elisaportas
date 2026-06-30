@@ -24,6 +24,7 @@ export function useRouteAccessByPrefix(prefix: string) {
       return (data && data.length > 0) || false;
     },
     enabled: !!user?.id && !!prefix,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 }

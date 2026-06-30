@@ -77,6 +77,8 @@ export default function Home() {
       return data?.map(r => r.route_key) || [];
     },
     enabled: !!user?.id && !hasBypassPermissions,
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 
   // Verificar se usuário tem acesso a um módulo (hub ou qualquer sub-rota)
