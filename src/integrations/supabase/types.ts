@@ -5213,8 +5213,9 @@ export type Database = {
           descricao: string | null
           id: string
           status: string
+          terceiro_nome: string | null
           updated_at: string
-          usuario_id: string
+          usuario_id: string | null
           valor: number
         }
         Insert: {
@@ -5223,8 +5224,9 @@ export type Database = {
           descricao?: string | null
           id?: string
           status?: string
+          terceiro_nome?: string | null
           updated_at?: string
-          usuario_id: string
+          usuario_id?: string | null
           valor: number
         }
         Update: {
@@ -5233,8 +5235,9 @@ export type Database = {
           descricao?: string | null
           id?: string
           status?: string
+          terceiro_nome?: string | null
           updated_at?: string
-          usuario_id?: string
+          usuario_id?: string | null
           valor?: number
         }
         Relationships: [
