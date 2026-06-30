@@ -4,7 +4,8 @@ import { useToast } from "@/hooks/use-toast";
 
 export interface Multa {
   id: string;
-  usuario_id: string;
+  usuario_id: string | null;
+  terceiro_nome?: string | null;
   valor: number;
   data_vencimento: string;
   descricao: string | null;
@@ -30,15 +31,16 @@ export function useMultas() {
 
       return (data || []).map((m: any) => ({
         ...m,
-        usuario_nome: m.admin_users?.nome || "Usuário desconhecido",
+        usuario_nome: m.admin_users?.nome || m.terceiro_nome || "Usuário desconhecido",
       })) as Multa[];
     },
   });
 
   const createMulta = useMutation({
-    mutationFn: async (multa: { usuario_id: string; valor: number; data_vencimento: string; descricao?: string }) => {
+    mutationFn: async (multa: { usuario_id?: string | null; terceiro_nome?: string | null; valor: number; data_vencimento: string; descricao?: string }) => {
       const { error } = await supabase.from("multas").insert({
-        usuario_id: multa.usuario_id,
+        usuario_id: multa.usuario_id || null,
+        terceiro_nome: multa.terceiro_nome || null,
         valor: multa.valor,
         data_vencimento: multa.data_vencimento,
         descricao: multa.descricao || null,
