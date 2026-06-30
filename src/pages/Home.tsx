@@ -30,9 +30,14 @@ const routeKeyMap: Record<string, string[]> = {
     'admin_entradas',
     'admin_bancos',
     'admin_faturamento',
+    'admin_faturamento_vendas',
+    'admin_faturamento_produtos',
+    'admin_custos',
     'admin_caixa',
+    'admin_caixa_gestao',
     'admin_contas_receber',
     'admin_contas_pagar',
+    'admin_cobrancas',
   ],
 };
 
