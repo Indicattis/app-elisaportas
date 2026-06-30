@@ -474,7 +474,7 @@ const App = () => (
             <Route path="/marketing/conversoes-hub" element={<ProtectedRoute routeKey="marketing_conversoes"><ConversoesHub /></ProtectedRoute>} />
              <Route path="/marketing/videos-ideias" element={<ProtectedRoute routeKey="marketing_videos_ideias"><VideosIdeias /></ProtectedRoute>} />
             <Route path="/marketing/atividades" element={<ProtectedRoute routeKeyPrefix="marketing_"><AtividadesMarketing /></ProtectedRoute>} />
-            <Route path="/financeiro/balanco-descontos" element={<ProtectedRoute routeKey="administrativo_hub"><BalancoDescontos /></ProtectedRoute>} />
+            <Route path="/financeiro/balanco-descontos" element={<ProtectedRoute routeKey="financeiro_hub"><BalancoDescontos /></ProtectedRoute>} />
             <Route path="/marketing/balanco-descontos" element={<Navigate to="/financeiro/balanco-descontos" replace />} />
 
                 {/* Hub de Vendas Minimalista */}
@@ -667,21 +667,21 @@ const App = () => (
                 <Route path="/fabrica/montagem-pedidos" element={<ProtectedRoute routeKey="administrativo_hub"><PedidosAdminMinimalista /></ProtectedRoute>} />
                 <Route path="/fabrica/montagem-pedidos/:id" element={<ProtectedRoute routeKey="administrativo_hub"><PedidoViewMinimalista /></ProtectedRoute>} />
                 <Route path="/administrativo/vendas/:id" element={<ProtectedRoute routeKey="administrativo_hub"><VendaDetalhesMinimalista /></ProtectedRoute>} />
-                <Route path="/financeiro" element={<ProtectedRoute routeKey="administrativo_hub"><FinanceiroHub /></ProtectedRoute>} />
-                <Route path="/financeiro/faturamento" element={<ProtectedRoute routeKey="administrativo_hub"><FaturamentoHub /></ProtectedRoute>} />
-                <Route path="/financeiro/faturamento/vendas" element={<ProtectedRoute routeKey="administrativo_hub"><FaturamentoVendasMinimalista /></ProtectedRoute>} />
-                <Route path="/financeiro/faturamento/produtos" element={<ProtectedRoute routeKey="administrativo_hub"><FaturamentoProdutosMinimalista /></ProtectedRoute>} />
-                <Route path="/financeiro/faturamento/:id" element={<ProtectedRoute routeKey="administrativo_hub"><FaturamentoVendaMinimalista /></ProtectedRoute>} />
+                <Route path="/financeiro" element={<ProtectedRoute routeKey="financeiro_hub"><FinanceiroHub /></ProtectedRoute>} />
+                <Route path="/financeiro/faturamento" element={<ProtectedRoute routeKey="admin_faturamento"><FaturamentoHub /></ProtectedRoute>} />
+                <Route path="/financeiro/faturamento/vendas" element={<ProtectedRoute routeKey="admin_faturamento_vendas"><FaturamentoVendasMinimalista /></ProtectedRoute>} />
+                <Route path="/financeiro/faturamento/produtos" element={<ProtectedRoute routeKey="admin_faturamento_produtos"><FaturamentoProdutosMinimalista /></ProtectedRoute>} />
+                <Route path="/financeiro/faturamento/:id" element={<ProtectedRoute routeKey="admin_faturamento"><FaturamentoVendaMinimalista /></ProtectedRoute>} />
                 <Route path="/financeiro/gastos" element={<ProtectedRoute routeKey="admin_gastos"><GastosPage /></ProtectedRoute>} />
                 <Route path="/financeiro/entradas" element={<ProtectedRoute routeKey="admin_entradas"><EntradasPage /></ProtectedRoute>} />
-                <Route path="/financeiro/custo-folha" element={<ProtectedRoute routeKey="administrativo_hub"><CustoFolhaMensal /></ProtectedRoute>} />
+                <Route path="/financeiro/custo-folha" element={<ProtectedRoute routeKey="financeiro_hub"><CustoFolhaMensal /></ProtectedRoute>} />
                 <Route path="/financeiro/bancos" element={<ProtectedRoute routeKey="admin_bancos"><BancosPage /></ProtectedRoute>} />
 
                 {/* Hub de Caixa Minimalista */}
-                <Route path="/financeiro/caixa" element={<ProtectedRoute routeKey="administrativo_hub"><CaixaHub /></ProtectedRoute>} />
+                <Route path="/financeiro/caixa" element={<ProtectedRoute routeKey="admin_caixa"><CaixaHub /></ProtectedRoute>} />
                 <Route path="/financeiro/caixa/gestao" element={<Navigate to="/financeiro" replace />} />
-                <Route path="/financeiro/caixa/contas-a-receber" element={<ProtectedRoute routeKey="administrativo_hub"><ContasReceberMinimalista /></ProtectedRoute>} />
-                <Route path="/financeiro/caixa/contas-a-pagar" element={<ProtectedRoute routeKey="administrativo_hub"><ContasPagarMinimalista /></ProtectedRoute>} />
+                <Route path="/financeiro/caixa/contas-a-receber" element={<ProtectedRoute routeKey="admin_contas_receber"><ContasReceberMinimalista /></ProtectedRoute>} />
+                <Route path="/financeiro/caixa/contas-a-pagar" element={<ProtectedRoute routeKey="admin_contas_pagar"><ContasPagarMinimalista /></ProtectedRoute>} />
 
                 {/* Redirect compatibilidade: rotas antigas /administrativo/financeiro/* → /financeiro/* */}
                 <Route path="/administrativo/financeiro" element={<Navigate to="/financeiro" replace />} />
