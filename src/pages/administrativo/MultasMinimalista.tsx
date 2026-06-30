@@ -190,6 +190,8 @@ export default function MultasMinimalista() {
   const [searchTerm, setSearchTerm] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [usuarioId, setUsuarioId] = useState('');
+  const [terceiroNome, setTerceiroNome] = useState('');
+  const [tipoResponsavel, setTipoResponsavel] = useState<'colaborador' | 'terceiro'>('colaborador');
   const [valor, setValor] = useState('');
   const [descricao, setDescricao] = useState('');
   const [dataVencimento, setDataVencimento] = useState<Date>();
@@ -224,14 +226,25 @@ export default function MultasMinimalista() {
   const multasEtapa = filtered.filter(m => m.status === statusAtivo);
 
   const handleSubmit = () => {
-    if (!usuarioId || !valor || !dataVencimento) return;
+    const isColab = tipoResponsavel === 'colaborador';
+    if (!valor || !dataVencimento) return;
+    if (isColab && !usuarioId) return;
+    if (!isColab && !terceiroNome.trim()) return;
     const dataStr = format(dataVencimento, 'yyyy-MM-dd');
     createMulta.mutate(
-      { usuario_id: usuarioId, valor: Number(valor), data_vencimento: dataStr, descricao: descricao || undefined },
+      {
+        usuario_id: isColab ? usuarioId : null,
+        terceiro_nome: isColab ? null : terceiroNome.trim(),
+        valor: Number(valor),
+        data_vencimento: dataStr,
+        descricao: descricao || undefined,
+      },
       {
         onSuccess: () => {
           setDialogOpen(false);
           setUsuarioId('');
+          setTerceiroNome('');
+          setTipoResponsavel('colaborador');
           setValor('');
           setDescricao('');
           setDataVencimento(undefined);
@@ -269,18 +282,59 @@ export default function MultasMinimalista() {
               </DialogHeader>
               <div className="space-y-4 mt-2">
                 <div>
-                  <label className="text-sm text-white/70 mb-1 block">Colaborador</label>
-                  <select
-                    value={usuarioId}
-                    onChange={e => setUsuarioId(e.target.value)}
-                    className="w-full h-10 rounded-md border border-white/10 bg-white/5 px-3 text-white text-sm"
-                  >
-                    <option value="" className="bg-zinc-900">Selecione...</option>
-                    {users?.map(u => (
-                      <option key={u.id} value={u.id} className="bg-zinc-900">{u.nome}</option>
-                    ))}
-                  </select>
+                  <label className="text-sm text-white/70 mb-1 block">Tipo de responsável</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setTipoResponsavel('colaborador')}
+                      className={cn(
+                        'h-10 rounded-md border text-sm transition',
+                        tipoResponsavel === 'colaborador'
+                          ? 'bg-blue-500/20 border-blue-400/50 text-white'
+                          : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
+                      )}
+                    >
+                      Colaborador
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTipoResponsavel('terceiro')}
+                      className={cn(
+                        'h-10 rounded-md border text-sm transition',
+                        tipoResponsavel === 'terceiro'
+                          ? 'bg-blue-500/20 border-blue-400/50 text-white'
+                          : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
+                      )}
+                    >
+                      Terceiro
+                    </button>
+                  </div>
                 </div>
+                {tipoResponsavel === 'colaborador' ? (
+                  <div>
+                    <label className="text-sm text-white/70 mb-1 block">Colaborador</label>
+                    <select
+                      value={usuarioId}
+                      onChange={e => setUsuarioId(e.target.value)}
+                      className="w-full h-10 rounded-md border border-white/10 bg-white/5 px-3 text-white text-sm"
+                    >
+                      <option value="" className="bg-zinc-900">Selecione...</option>
+                      {users?.map(u => (
+                        <option key={u.id} value={u.id} className="bg-zinc-900">{u.nome}</option>
+                      ))}
+                    </select>
+                  </div>
+                ) : (
+                  <div>
+                    <label className="text-sm text-white/70 mb-1 block">Nome do terceiro</label>
+                    <Input
+                      value={terceiroNome}
+                      onChange={e => setTerceiroNome(e.target.value)}
+                      placeholder="Ex.: Transportadora X, Fornecedor Y..."
+                      className="bg-white/5 border-white/10 text-white"
+                    />
+                  </div>
+                )}
                 <div>
                   <label className="text-sm text-white/70 mb-1 block">Valor (R$)</label>
                   <Input
@@ -322,7 +376,16 @@ export default function MultasMinimalista() {
                     className="bg-white/5 border-white/10 text-white"
                   />
                 </div>
-                <Button onClick={handleSubmit} disabled={!usuarioId || !valor || !dataVencimento || createMulta.isPending} className="w-full bg-blue-600 hover:bg-blue-700 text-white">
+                <Button
+                  onClick={handleSubmit}
+                  disabled={
+                    !valor ||
+                    !dataVencimento ||
+                    (tipoResponsavel === 'colaborador' ? !usuarioId : !terceiroNome.trim()) ||
+                    createMulta.isPending
+                  }
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                >
                   {createMulta.isPending ? 'Salvando...' : 'Cadastrar Multa'}
                 </Button>
               </div>
