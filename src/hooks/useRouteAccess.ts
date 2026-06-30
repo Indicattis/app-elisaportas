@@ -23,7 +23,8 @@ export function useRouteAccess(routeKey: string) {
       if (error) throw error;
       return data || false;
     },
-    enabled: !!user?.id,
-    staleTime: 5 * 60 * 1000, // 5 minutos
+    enabled: !!user?.id && !!routeKey,
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 }

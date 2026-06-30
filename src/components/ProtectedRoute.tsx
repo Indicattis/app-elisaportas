@@ -2,21 +2,24 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouteAccess } from "@/hooks/useRouteAccess";
 import { useRouteAccessByPrefix } from "@/hooks/useRouteAccessByPrefix";
+import { useAnyRouteAccess } from "@/hooks/useAnyRouteAccess";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
   routeKey?: string;
+  alternativeRouteKeys?: string[];
   routeKeyPrefix?: string;
   requireAdmin?: boolean;
 }
 
-export function ProtectedRoute({ children, routeKey, routeKeyPrefix, requireAdmin = false }: ProtectedRouteProps) {
+export function ProtectedRoute({ children, routeKey, alternativeRouteKeys = [], routeKeyPrefix, requireAdmin = false }: ProtectedRouteProps) {
   const { user, loading, isAdmin, hasBypassPermissions } = useAuth();
   const location = useLocation();
   const { data: hasAccess, isLoading: accessLoading } = useRouteAccess(routeKey || '');
+  const { data: hasAlternativeAccess, isLoading: alternativeAccessLoading } = useAnyRouteAccess(alternativeRouteKeys);
   const { data: hasPrefixAccess, isLoading: prefixLoading } = useRouteAccessByPrefix(routeKeyPrefix || '');
 
-  const isCheckingAccess = (routeKey && accessLoading) || (routeKeyPrefix && prefixLoading);
+  const isCheckingAccess = (routeKey && accessLoading) || (alternativeRouteKeys.length > 0 && alternativeAccessLoading) || (routeKeyPrefix && prefixLoading);
 
   if (loading || isCheckingAccess) {
     return (
@@ -37,7 +40,7 @@ export function ProtectedRoute({ children, routeKey, routeKeyPrefix, requireAdmi
 
   // Verificação de acesso: routeKey exato OU routeKeyPrefix
   if (!hasBypassPermissions) {
-    if (routeKey && !hasAccess) {
+    if (routeKey && !hasAccess && !hasAlternativeAccess) {
       return <Navigate to="/forbidden" replace />;
     }
     if (routeKeyPrefix && !hasPrefixAccess) {
