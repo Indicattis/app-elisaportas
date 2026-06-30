@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Search, Plus, AlertCircle, RefreshCw, Trash2, Calendar, DollarSign, AlertTriangle, AlertOctagon, CheckCircle2, ChevronRight } from 'lucide-react';
+import { Search, Plus, AlertCircle, RefreshCw, Trash2, Calendar, DollarSign, AlertTriangle, AlertOctagon, CheckCircle2, ArrowRight, User } from 'lucide-react';
 import { format, parseISO, isBefore, isToday } from 'date-fns';
+import { motion } from 'framer-motion';
 import { ptBR } from 'date-fns/locale';
 
 import { MinimalistLayout } from '@/components/MinimalistLayout';
@@ -95,6 +96,7 @@ function getNextEtapa(status: MultaStatus): MultaStatus | null {
 
 function MultaCard({
   multa,
+  index,
   podeAvancar,
   proximaLabel,
   responsavelNome,
@@ -102,6 +104,7 @@ function MultaCard({
   onExcluir,
 }: {
   multa: Multa;
+  index: number;
   podeAvancar: boolean;
   proximaLabel: string | null;
   responsavelNome: string | null;
@@ -113,76 +116,116 @@ function MultaCard({
   const venc = parseISO(multa.data_vencimento + 'T12:00:00');
   const vencido = isBefore(venc, hoje);
   const venceHoje = isToday(venc);
+  const isTerceiro = !multa.usuario_id;
+  const inicial = (multa.usuario_nome?.trim()?.charAt(0) || '?').toUpperCase();
 
   return (
-    <div className="p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-200">
-      <div className="flex flex-col md:flex-row md:items-center gap-4">
-        <div className="flex-1 min-w-0">
-          {(vencido || venceHoje) && multa.status !== 'paga' && multa.status !== 'concluida' && (
-            <div className="flex items-center gap-2 mb-1">
-              <Badge className={`text-[10px] px-1.5 py-0 ${vencido ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'bg-amber-500/20 text-amber-400 border-amber-500/30'}`}>
-                {vencido ? 'Vencida' : 'Vence Hoje'}
-              </Badge>
-            </div>
-          )}
-          <h3 className="text-white font-medium truncate">{multa.usuario_nome}</h3>
-          {multa.descricao && (
-            <p className="text-sm text-white/50 mt-1 truncate">{multa.descricao}</p>
-          )}
-        </div>
-
-        <div className="flex items-center gap-4 md:gap-6">
-          <div className="text-center">
-            <div className="text-xs text-white/50 mb-0.5">Vencimento</div>
-            <div className={`text-sm font-medium flex items-center gap-1 ${vencido ? 'text-red-400' : venceHoje ? 'text-amber-400' : 'text-white'}`}>
-              <Calendar className="w-3 h-3" />
-              {format(venc, 'dd/MM/yyyy', { locale: ptBR })}
-            </div>
-          </div>
-
-          <div className="text-right min-w-[100px]">
-            <div className="text-xs text-white/50 mb-0.5">Valor</div>
-            <div className="text-base font-semibold text-amber-400 flex items-center justify-end gap-1">
-              <DollarSign className="w-4 h-4" />
-              {formatCurrency(multa.valor).replace('R$', '').trim()}
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {proximaLabel && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={onAvancar}
-                        disabled={!podeAvancar}
-                        className="text-white/80 hover:text-white hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
-                      >
-                        {proximaLabel}
-                        <ChevronRight className="w-4 h-4 ml-1" />
-                      </Button>
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {podeAvancar
-                      ? `Avançar para ${proximaLabel}`
-                      : responsavelNome
-                        ? `Somente ${responsavelNome} (ou administrador) pode avançar`
-                        : 'Atribua um responsável para avançar'}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+    <motion.div
+      initial={{ opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: index * 0.04, duration: 0.35 }}
+      className="group relative flex items-center gap-4 pl-3 pr-3 py-2.5 rounded-full border border-white/10 bg-white/5 backdrop-blur-xl transition-all duration-300 hover:bg-white/10 hover:border-white/20"
+    >
+      {/* Avatar */}
+      <div className="relative flex-shrink-0">
+        {multa.usuario_foto ? (
+          <img
+            src={multa.usuario_foto}
+            alt={multa.usuario_nome}
+            title={multa.usuario_nome}
+            className="w-10 h-10 rounded-full object-cover border-2 border-white/20 shadow-lg"
+          />
+        ) : (
+          <div
+            title={multa.usuario_nome}
+            className={cn(
+              'w-10 h-10 rounded-full flex items-center justify-center font-bold text-white text-sm border-2 border-white/20 shadow-lg',
+              isTerceiro
+                ? 'bg-gradient-to-br from-purple-500 to-purple-700'
+                : 'bg-gradient-to-br from-blue-500 to-blue-700'
             )}
-            <Button size="icon" variant="ghost" onClick={onExcluir} className="text-red-400 hover:text-red-300 hover:bg-red-500/20" title="Excluir">
-              <Trash2 className="w-4 h-4" />
-            </Button>
+          >
+            {isTerceiro ? <User className="w-4 h-4" /> : inicial}
           </div>
-        </div>
+        )}
       </div>
-    </div>
+
+      {/* Nome + dados */}
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2 flex-wrap">
+          <h4 className="text-white font-semibold truncate text-sm">{multa.usuario_nome}</h4>
+          {isTerceiro && (
+            <Badge variant="outline" className="border-purple-500/30 text-purple-300 text-[10px]">
+              Terceiro
+            </Badge>
+          )}
+          {(vencido || venceHoje) && multa.status !== 'paga' && multa.status !== 'concluida' && (
+            <Badge
+              className={cn(
+                'text-[10px] px-1.5 py-0 border',
+                vencido
+                  ? 'bg-red-500/20 text-red-300 border-red-500/30'
+                  : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+              )}
+            >
+              {vencido ? 'Vencida' : 'Vence hoje'}
+            </Badge>
+          )}
+          <Badge variant="outline" className="border-white/10 text-white/60 text-[10px] gap-1">
+            <Calendar className="w-3 h-3" />
+            {format(venc, 'dd/MM/yyyy', { locale: ptBR })}
+          </Badge>
+          <Badge className="bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] gap-1">
+            <DollarSign className="w-3 h-3" />
+            {formatCurrency(multa.valor).replace('R$', '').trim()}
+          </Badge>
+        </div>
+        {multa.descricao && (
+          <p className="text-xs text-white/40 mt-0.5 truncate">{multa.descricao}</p>
+        )}
+      </div>
+
+      {/* Ações */}
+      <div className="flex items-center gap-2 flex-shrink-0">
+        {proximaLabel && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span>
+                  <Button
+                    size="sm"
+                    onClick={onAvancar}
+                    disabled={!podeAvancar}
+                    className="rounded-full disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {proximaLabel}
+                    <ArrowRight className="w-3.5 h-3.5 ml-1" />
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                {podeAvancar
+                  ? `Avançar para ${proximaLabel}`
+                  : responsavelNome
+                    ? `Somente ${responsavelNome} (ou administrador) pode avançar`
+                    : 'Atribua um responsável para avançar'}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+        <Button
+          size="icon"
+          variant="outline"
+          onClick={onExcluir}
+          className="rounded-full bg-white/5 border-white/10 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+          title="Excluir"
+        >
+          <Trash2 className="w-4 h-4" />
+        </Button>
+      </div>
+
+      <ArrowRight className="w-4 h-4 text-white/20 group-hover:text-white/60 transition-colors flex-shrink-0" />
+    </motion.div>
   );
 }
 
@@ -485,13 +528,14 @@ export default function MultasMinimalista() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {multasEtapa.map((multa) => {
+                  {multasEtapa.map((multa, idx) => {
                     const proxima = getNextEtapa(multa.status as MultaStatus);
                     const proximaLabel = proxima ? ETAPAS.find((e) => e.value === proxima)!.label : null;
                     return (
                       <MultaCard
                         key={multa.id}
                         multa={multa}
+                        index={idx}
                         podeAvancar={podeAvancar && !!proxima}
                         proximaLabel={proximaLabel}
                         responsavelNome={respAtual?.nome || null}
