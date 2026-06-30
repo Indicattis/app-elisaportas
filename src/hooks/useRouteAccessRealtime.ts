@@ -27,9 +27,11 @@ export function useRouteAccessRealtime() {
         },
         () => {
           queryClient.invalidateQueries({ queryKey: ['route-access'] });
+          queryClient.invalidateQueries({ queryKey: ['route-access-any'] });
           queryClient.invalidateQueries({ queryKey: ['route-access-prefix'] });
           queryClient.invalidateQueries({ queryKey: ['bulk-route-access'] });
           queryClient.invalidateQueries({ queryKey: ['first-accessible-route'] });
+          queryClient.invalidateQueries({ queryKey: ['user-home-access'] });
         }
       )
       .subscribe();
