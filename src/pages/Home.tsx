@@ -43,7 +43,7 @@ const routeKeyMap: Record<string, string[]> = {
 
 const menuItems = [
   { label: "Direção", icon: Shield, path: "/direcao", isGold: true },
-  { label: "Autorizados", icon: Users, path: "/autorizados" },
+  { label: "Autorizados", icon: Users, path: "/autorizados", isGreen: true },
   { label: "Marketing", icon: BarChart3, path: "/marketing" },
   { label: "Vendas", icon: ShoppingCart, path: "/vendas" },
   { label: "Fábrica", icon: Factory, path: "/fabrica" },
@@ -322,7 +322,9 @@ export default function Home() {
                              ${canAccess 
                                ? item.isGold 
                                  ? 'bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 border-amber-300/50 shadow-lg shadow-amber-500/20 text-white cursor-pointer hover:shadow-xl' 
-                                 : 'bg-gradient-to-r from-blue-500 to-blue-700 border-blue-400/30 text-white cursor-pointer hover:from-blue-400 hover:to-blue-600'
+                                 : item.isGreen
+                                   ? 'bg-gradient-to-r from-emerald-500 to-emerald-700 border-emerald-400/30 text-white cursor-pointer hover:from-emerald-400 hover:to-emerald-600 shadow-lg shadow-emerald-500/20'
+                                   : 'bg-gradient-to-r from-blue-500 to-blue-700 border-blue-400/30 text-white cursor-pointer hover:from-blue-400 hover:to-blue-600'
                                : 'bg-zinc-800/50 border-zinc-700/30 text-zinc-500 cursor-not-allowed'
                              }`}
                 >
