@@ -528,13 +528,14 @@ export default function MultasMinimalista() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {multasEtapa.map((multa) => {
+                  {multasEtapa.map((multa, idx) => {
                     const proxima = getNextEtapa(multa.status as MultaStatus);
                     const proximaLabel = proxima ? ETAPAS.find((e) => e.value === proxima)!.label : null;
                     return (
                       <MultaCard
                         key={multa.id}
                         multa={multa}
+                        index={idx}
                         podeAvancar={podeAvancar && !!proxima}
                         proximaLabel={proximaLabel}
                         responsavelNome={respAtual?.nome || null}
