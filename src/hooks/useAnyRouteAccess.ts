@@ -13,19 +13,16 @@ export function useAnyRouteAccess(routeKeys: string[]) {
       if (hasBypassPermissions) return true;
       if (normalizedRouteKeys.length === 0) return false;
 
-      const checks = await Promise.all(
-        normalizedRouteKeys.map((routeKey) =>
-          supabase.rpc('has_route_access' as any, {
-            _user_id: user.id,
-            _route_key: routeKey,
-          })
-        )
-      );
+      const { data, error } = await supabase
+        .from('user_route_access' as any)
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('can_access', true)
+        .in('route_key', normalizedRouteKeys)
+        .limit(1);
 
-      const error = checks.find((check) => check.error)?.error;
       if (error) throw error;
-
-      return checks.some((check) => Boolean(check.data));
+      return (data && data.length > 0) || false;
     },
     enabled: !!user?.id && normalizedRouteKeys.length > 0,
     staleTime: 0,
