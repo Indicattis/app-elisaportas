@@ -22,6 +22,20 @@ const routePrefixMap: Record<string, string> = {
   '/administrativo': 'administrativo_'
 };
 
+const routeKeyMap: Record<string, string[]> = {
+  '/financeiro': [
+    'financeiro_hub',
+    'admin_financeiro',
+    'admin_gastos',
+    'admin_entradas',
+    'admin_bancos',
+    'admin_faturamento',
+    'admin_caixa',
+    'admin_contas_receber',
+    'admin_contas_pagar',
+  ],
+};
+
 const menuItems = [
   { label: "Direção", icon: Shield, path: "/direcao", isGold: true },
   { label: "Autorizados", icon: Users, path: "/autorizados" },
@@ -68,6 +82,11 @@ export default function Home() {
   // Verificar se usuário tem acesso a um módulo (hub ou qualquer sub-rota)
   const hasAccess = (path: string): boolean => {
     if (hasBypassPermissions) return true;
+    
+    const routeKeys = routeKeyMap[path];
+    if (routeKeys) {
+      return userAccess?.some(key => routeKeys.includes(key)) || false;
+    }
     
     const prefix = routePrefixMap[path];
     if (!prefix) return true;
