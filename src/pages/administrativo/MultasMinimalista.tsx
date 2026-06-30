@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, Plus, AlertCircle, RefreshCw, Trash2, Calendar, DollarSign, AlertTriangle, AlertOctagon, CheckCircle2, ArrowRight, User } from 'lucide-react';
+import { Search, Plus, AlertCircle, RefreshCw, Trash2, Calendar, DollarSign, AlertTriangle, AlertOctagon, CheckCircle2, ArrowRight, User, Clock } from 'lucide-react';
 import { format, parseISO, isBefore, isToday } from 'date-fns';
 import { motion } from 'framer-motion';
 import { ptBR } from 'date-fns/locale';
@@ -118,6 +118,18 @@ function MultaCard({
   const venceHoje = isToday(venc);
   const isTerceiro = !multa.usuario_id;
   const inicial = (multa.usuario_nome?.trim()?.charAt(0) || '?').toUpperCase();
+  const etapa = ETAPAS.find((e) => e.value === (multa.status as MultaStatus));
+  const statusLabel = etapa?.label ?? multa.status;
+  const statusPill = etapa?.pill ?? 'bg-white/10 text-white/70';
+  const StatusIcon = etapa?.icon ?? AlertCircle;
+  const alerta =
+    multa.status !== 'paga' && multa.status !== 'concluida'
+      ? vencido
+        ? { label: 'Vencida', cls: 'bg-red-500/20 text-red-300 border-red-500/30' }
+        : venceHoje
+          ? { label: 'Vence hoje', cls: 'bg-amber-500/20 text-amber-300 border-amber-500/30' }
+          : null
+      : null;
 
   return (
     <motion.div
@@ -154,35 +166,27 @@ function MultaCard({
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 flex-wrap">
           <h4 className="text-white font-semibold truncate text-sm">{multa.usuario_nome}</h4>
+          <Badge variant="outline" className="border-white/10 text-white/60 text-[10px]">
+            {formatCurrency(multa.valor)}
+          </Badge>
+          <Badge className={cn('border border-white/10 text-[10px]', statusPill)}>
+            <StatusIcon className="w-3 h-3 mr-1" /> {statusLabel}
+          </Badge>
           {isTerceiro && (
             <Badge variant="outline" className="border-purple-500/30 text-purple-300 text-[10px]">
               Terceiro
             </Badge>
           )}
-          {(vencido || venceHoje) && multa.status !== 'paga' && multa.status !== 'concluida' && (
-            <Badge
-              className={cn(
-                'text-[10px] px-1.5 py-0 border',
-                vencido
-                  ? 'bg-red-500/20 text-red-300 border-red-500/30'
-                  : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
-              )}
-            >
-              {vencido ? 'Vencida' : 'Vence hoje'}
+          {alerta && (
+            <Badge className={cn('border text-[10px]', alerta.cls)}>
+              <Clock className="w-3 h-3 mr-1" /> {alerta.label}
             </Badge>
           )}
-          <Badge variant="outline" className="border-white/10 text-white/60 text-[10px] gap-1">
-            <Calendar className="w-3 h-3" />
-            {format(venc, 'dd/MM/yyyy', { locale: ptBR })}
-          </Badge>
-          <Badge className="bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] gap-1">
-            <DollarSign className="w-3 h-3" />
-            {formatCurrency(multa.valor).replace('R$', '').trim()}
-          </Badge>
         </div>
-        {multa.descricao && (
-          <p className="text-xs text-white/40 mt-0.5 truncate">{multa.descricao}</p>
-        )}
+        <p className="text-xs text-white/40 mt-0.5 truncate">
+          Vence em {format(venc, 'dd/MM/yyyy', { locale: ptBR })}
+          {multa.descricao ? ` • ${multa.descricao}` : ''}
+        </p>
       </div>
 
       {/* Ações */}
@@ -199,7 +203,6 @@ function MultaCard({
                     className="rounded-full disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     {proximaLabel}
-                    <ArrowRight className="w-3.5 h-3.5 ml-1" />
                   </Button>
                 </span>
               </TooltipTrigger>
