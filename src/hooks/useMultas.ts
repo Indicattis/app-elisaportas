@@ -13,6 +13,7 @@ export interface Multa {
   created_at: string;
   updated_at: string;
   usuario_nome?: string;
+  usuario_foto?: string | null;
 }
 
 export function useMultas() {
@@ -24,7 +25,7 @@ export function useMultas() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("multas")
-        .select("*, admin_users!multas_usuario_id_fkey(nome)")
+        .select("*, admin_users!multas_usuario_id_fkey(nome, foto_perfil_url)")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -32,6 +33,7 @@ export function useMultas() {
       return (data || []).map((m: any) => ({
         ...m,
         usuario_nome: m.admin_users?.nome || m.terceiro_nome || "Usuário desconhecido",
+        usuario_foto: m.admin_users?.foto_perfil_url || null,
       })) as Multa[];
     },
   });
