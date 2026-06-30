@@ -6,6 +6,11 @@ import { BrowserRouter, Routes, Route, NavLink, Navigate, useParams, useLocation
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { useRouteAccessRealtime } from "@/hooks/useRouteAccessRealtime";
+
+function RouteAccessRealtimeSync() {
+  useRouteAccessRealtime();
+  return null;
+}
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AppSidebar } from "@/components/AppSidebar";
