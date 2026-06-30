@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, NavLink, Navigate, useParams, useLocation } from "react-router-dom";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import { useRouteAccessRealtime } from "@/hooks/useRouteAccessRealtime";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AppSidebar } from "@/components/AppSidebar";
@@ -446,6 +447,7 @@ const App = () => (
             <Toaster />
             <Sonner />
             <BrowserRouter>
+              <RouteAccessRealtimeSync />
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
