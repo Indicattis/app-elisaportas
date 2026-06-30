@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Edit2, Trash2, MoreHorizontal, Check, X, CheckCircle2, XCircle, ChevronLeft, ChevronRight, CalendarDays, DollarSign } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, MoreHorizontal, Check, X, CheckCircle2, XCircle, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, CalendarDays, DollarSign } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -88,6 +88,7 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
   const [rejectingId, setRejectingId] = useState<string | null>(null);
   const [anoSelecionado, setAnoSelecionado] = useState(new Date().getFullYear());
   const [mesSelecionado, setMesSelecionado] = useState<number | null>(null);
+  const [acordosAberto, setAcordosAberto] = useState(false);
 
   // Buscar preços padrões dos autorizados
   useEffect(() => {
@@ -393,76 +394,96 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
 
               {/* Seção Acordos - Grid de Meses */}
               <div>
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-sm font-medium text-white/70">Acordos com Autorizados</h2>
+                <button
+                  onClick={() => setAcordosAberto(prev => !prev)}
+                  className="w-full flex items-center justify-between mb-4 group"
+                >
+                  <div className="flex items-center gap-3">
+                    <h2 className="text-sm font-medium text-white/70 group-hover:text-white/90 transition-colors">Acordos com Autorizados</h2>
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                      <span className="text-xs font-bold text-emerald-400">{acordos.length}</span>
+                      <span className="text-xs text-white/40">acordo{acordos.length !== 1 ? 's' : ''}</span>
+                    </div>
+                  </div>
                   <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setAnoSelecionado(prev => prev - 1)}
-                      className="h-8 w-8 p-0 text-white/60 hover:text-white hover:bg-white/10"
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <span className="text-sm font-semibold text-white/90 min-w-[4rem] text-center">{anoSelecionado}</span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setAnoSelecionado(prev => prev + 1)}
-                      className="h-8 w-8 p-0 text-white/60 hover:text-white hover:bg-white/10"
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-
-                {loadingAcordos ? (
-                  <div className="flex items-center justify-center py-12">
-                    <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                    {MESES.map((mes, index) => {
-                      const acordosDoMes = acordosPorMes[index] || [];
-                      const total = acordosDoMes.length;
-                      const valorTotal = acordosDoMes.reduce((sum, a) => sum + a.valor_acordado, 0);
-                      const pendentes = acordosDoMes.filter(a => !a.aprovado_direcao && !a.reprovado_direcao).length;
-                      const mesAtual = new Date().getMonth() === index && new Date().getFullYear() === anoSelecionado;
-
-                      return (
-                        <Card
-                          key={index}
-                          onClick={() => navigate(`${routePrefix}/acordos/${anoSelecionado}/${index}`)}
-                          className={`cursor-pointer transition-all duration-200 hover:scale-[1.02] backdrop-blur-xl border ${
-                            mesAtual
-                              ? 'bg-blue-500/10 border-blue-400/30 shadow-lg shadow-blue-500/10'
-                              : total > 0
-                                ? 'bg-white/5 border-white/10 hover:bg-white/10'
-                                : 'bg-white/[0.02] border-white/5 hover:bg-white/5'
-                          }`}
+                    {acordosAberto && (
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => { e.stopPropagation(); setAnoSelecionado(prev => prev - 1); }}
+                          className="h-8 w-8 p-0 text-white/60 hover:text-white hover:bg-white/10"
                         >
-                          <CardContent className="p-3 space-y-2">
-                            <div className="flex items-center justify-between">
-                              <span className={`text-sm font-medium ${mesAtual ? 'text-blue-300' : 'text-white/80'}`}>
-                                {mes}
-                              </span>
-                              {pendentes > 0 && (
-                                <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 text-[10px] px-1.5 py-0">
-                                  {pendentes} pendente{pendentes > 1 ? 's' : ''}
-                                </Badge>
-                              )}
-                            </div>
-                            <div className="flex items-end justify-between">
-                              <span className="text-lg font-bold text-white/90">{total}</span>
-                              {valorTotal > 0 && (
-                                <span className="text-xs text-green-400/80">{formatCurrency(valorTotal)}</span>
-                              )}
-                            </div>
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
+                          <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        <span className="text-sm font-semibold text-white/90 min-w-[4rem] text-center">{anoSelecionado}</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => { e.stopPropagation(); setAnoSelecionado(prev => prev + 1); }}
+                          className="h-8 w-8 p-0 text-white/60 hover:text-white hover:bg-white/10"
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
+                    {acordosAberto ? (
+                      <ChevronUp className="h-4 w-4 text-white/60 group-hover:text-white/90 transition-colors" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4 text-white/60 group-hover:text-white/90 transition-colors" />
+                    )}
                   </div>
+                </button>
+
+                {acordosAberto && (
+                  loadingAcordos ? (
+                    <div className="flex items-center justify-center py-12">
+                      <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                      {MESES.map((mes, index) => {
+                        const acordosDoMes = acordosPorMes[index] || [];
+                        const total = acordosDoMes.length;
+                        const valorTotal = acordosDoMes.reduce((sum, a) => sum + a.valor_acordado, 0);
+                        const pendentes = acordosDoMes.filter(a => !a.aprovado_direcao && !a.reprovado_direcao).length;
+                        const mesAtual = new Date().getMonth() === index && new Date().getFullYear() === anoSelecionado;
+
+                        return (
+                          <Card
+                            key={index}
+                            onClick={() => navigate(`${routePrefix}/acordos/${anoSelecionado}/${index}`)}
+                            className={`cursor-pointer transition-all duration-200 hover:scale-[1.02] backdrop-blur-xl border ${
+                              mesAtual
+                                ? 'bg-blue-500/10 border-blue-400/30 shadow-lg shadow-blue-500/10'
+                                : total > 0
+                                  ? 'bg-white/5 border-white/10 hover:bg-white/10'
+                                  : 'bg-white/[0.02] border-white/5 hover:bg-white/5'
+                            }`}
+                          >
+                            <CardContent className="p-3 space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className={`text-sm font-medium ${mesAtual ? 'text-blue-300' : 'text-white/80'}`}>
+                                  {mes}
+                                </span>
+                                {pendentes > 0 && (
+                                  <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 text-[10px] px-1.5 py-0">
+                                    {pendentes} pendente{pendentes > 1 ? 's' : ''}
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className="flex items-end justify-between">
+                                <span className="text-lg font-bold text-white/90">{total}</span>
+                                {valorTotal > 0 && (
+                                  <span className="text-xs text-green-400/80">{formatCurrency(valorTotal)}</span>
+                                )}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
+                    </div>
+                  )
                 )}
               </div>
 
