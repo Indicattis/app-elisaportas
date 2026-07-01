@@ -140,6 +140,7 @@ export function useAcordosAutorizados() {
         pago_em: (acordo as any).pago_em || undefined,
         pago_por: (acordo as any).pago_por || undefined,
         valor_pago: Number((acordo as any).valor_pago ?? 0),
+        venda_id: (acordo as any).venda_id ?? null,
         criador: acordo.created_by ? criadoresMap[acordo.created_by] : undefined
       }));
 
