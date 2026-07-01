@@ -87,6 +87,7 @@ export default function AcordosMesAutorizados() {
   const [acordoParaEditar, setAcordoParaEditar] = useState<AcordoAutorizado | null>(null);
   const [acordoParaDeletar, setAcordoParaDeletar] = useState<AcordoAutorizado | null>(null);
   const [precosMap, setPrecosMap] = useState<Map<string, { P: number; G: number; GG: number }>>(new Map());
+  const [instalacoesMap, setInstalacoesMap] = useState<Map<string, number>>(new Map());
   const [kmPorCidade, setKmPorCidade] = useState<Map<string, number | null>>(new Map());
   const [approvingId, setApprovingId] = useState<string | null>(null);
   const [rejectingId, setRejectingId] = useState<string | null>(null);
@@ -106,6 +107,24 @@ export default function AcordosMesAutorizados() {
           map.set(row.autorizado_id, existing);
         });
         setPrecosMap(map);
+      });
+  }, [acordos]);
+
+  useEffect(() => {
+    const vendaIds = [...new Set(acordos.map(a => a.venda_id).filter(Boolean) as string[])];
+    if (vendaIds.length === 0) { setInstalacoesMap(new Map()); return; }
+    supabase
+      .from('produtos_vendas')
+      .select('venda_id, valor_total')
+      .in('venda_id', vendaIds)
+      .eq('tipo_produto', 'instalacao')
+      .then(({ data }) => {
+        const map = new Map<string, number>();
+        data?.forEach((row: any) => {
+          const atual = map.get(row.venda_id) ?? 0;
+          map.set(row.venda_id, atual + Number(row.valor_total || 0));
+        });
+        setInstalacoesMap(map);
       });
   }, [acordos]);
 
@@ -392,6 +411,7 @@ export default function AcordosMesAutorizados() {
                       <TableHead className="text-xs text-white/70 text-center w-16">Km</TableHead>
                       <TableHead className="text-xs text-white/70 text-center w-20">Data</TableHead>
                       <TableHead className="text-xs text-white/70 text-right w-24">Valor</TableHead>
+                      <TableHead className="text-xs text-white/70 text-right w-28">Instalação (Venda)</TableHead>
                       <TableHead className="text-xs text-white/70 text-right w-28">Valor excesso</TableHead>
                       <TableHead className="text-xs text-white/70 text-right w-24">Pago</TableHead>
                       <TableHead className="text-xs text-white/70 text-right w-24">Restante</TableHead>
@@ -411,7 +431,7 @@ export default function AcordosMesAutorizados() {
                     <TooltipProvider>
                       {(() => {
                         const colSpan =
-                          16 +
+                          17 +
                           ((contexto === 'direcao' || contexto === 'home') ? 1 : 0) +
                           ((contexto === 'logistica' || contexto === 'home') ? 1 : 0);
                         return acordosAgrupados.map((grupo, idx) => (
@@ -467,6 +487,15 @@ export default function AcordosMesAutorizados() {
                                 </TableCell>
                                 <TableCell className="text-right font-medium text-green-400">
                                   {formatCurrency(acordo.valor_acordado)}
+                                </TableCell>
+                                <TableCell className="text-right font-medium">
+                                  {acordo.venda_id ? (
+                                    <span className="text-blue-300">
+                                      {formatCurrency(instalacoesMap.get(acordo.venda_id) ?? 0)}
+                                    </span>
+                                  ) : (
+                                    <span className="text-white/40">—</span>
+                                  )}
                                 </TableCell>
                                 <TableCell className="text-right font-medium">
                                   {acordo.portas.length > 0 ? (() => {
