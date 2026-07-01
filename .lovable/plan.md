@@ -1,29 +1,26 @@
-## Problema
+## Adicionar coluna "Instalação (Venda)" na tabela de Acordos do Mês
 
-Hoje qualquer usuário (vendedor em **Meus Contratos** e diretor em **Direção › Vendas › Contratos**) vê o botão "Liberar para Pend. Faturamento" na aba **Contrato Assinado**. Quando o vendedor clica nesse botão logo após anexar o assinado, a venda some da aba e cai direto em **Pend. Faturamento** da Gestão de Pedidos — sem passar por nenhuma confirmação da Direção.
+Adicionar uma nova coluna à direita de **Valor**, mostrando o valor do produto do tipo "instalação" da venda vinculada ao acordo.
 
-Verifiquei no banco: várias vendas têm `contrato_liberado_em` praticamente igual a `contrato_assinado_em`, confirmando que a liberação está acontecendo logo na sequência da assinatura, sem etapa de revisão.
+### Onde
+`src/pages/direcao/AcordosMesAutorizados.tsx` — tabela em `/autorizados/acordos/:ano/:mes`.
 
-## Mudanças
+### Passos
+1. **Buscar valores de instalação por venda**
+   - Após carregar `acordos`, coletar todos os `venda_id` não nulos.
+   - Consultar `produtos_vendas` filtrando por esses `venda_id` e `tipo_produto = 'instalacao'`.
+   - Somar `valor_total` por `venda_id` e guardar em `Map<vendaId, number>` (estado local `instalacoesMap`).
 
-### 1. Restringir a ação de "Liberar para Faturamento" à Direção
-Arquivo: `src/pages/vendas/ContratosVendas.tsx`
+2. **Nova coluna na tabela**
+   - Adicionar `<TableHead>` "Instalação (Venda)" imediatamente após a coluna "Valor" (antes de "Valor excesso").
+   - Adicionar `<TableCell>` correspondente em cada linha:
+     - Se o acordo tem `venda_id` e há valor no map → exibe `formatCurrency(valor)` em azul/branco.
+     - Se tem `venda_id` mas sem produto de instalação → exibe `R$ 0,00` em cinza.
+     - Se não tem `venda_id` (acordo avulso) → exibe `—`.
 
-- Na aba **Contrato Assinado**, só renderizar o botão `Liberar para Pend. Faturamento` (e o handler `handleLiberarFaturamento`) quando `scope !== 'meus'`. Em **Meus Contratos** a venda fica visível na aba assinados apenas como acompanhamento — sem ação de avanço.
-- Vendedor continua podendo ver os arquivos (visualizar/baixar) e, se quiser corrigir, usar "Retornar para Gerado".
+3. **Ajustar colSpan** do cabeçalho de grupo de autorizado (`colSpan = 16 + …`) para `17 + …`, refletindo a nova coluna.
 
-### 2. Adicionar diálogo de confirmação na Direção
-Mesma página, somente no modo Direção:
-
-- Substituir o `onAction` que chama `handleLiberarFaturamento` direto por um `AlertDialog` que exibe nome do cliente, valor da venda e a mensagem: "Esta venda será movida para Pend. Faturamento na Gestão de Pedidos. Confirma a liberação?".
-- Botão de confirmação roda o `handleLiberarFaturamento` atual (que já grava `contrato_liberado_faturamento=true`, `contrato_liberado_em`, `contrato_liberado_por`).
-
-### 3. Mensagem do `AnexarContratoModal`
-Arquivo: `src/components/vendas/AnexarContratoModal.tsx`
-
-- Trocar o toast atual "Contrato anexado! Venda enviada para faturamento." por "Contrato anexado! Aguardando liberação da Direção para faturamento." — assim o vendedor entende que ainda há uma etapa.
-
-### Fora do escopo
-- Não mexer no comportamento de "Dispensar contrato" (essa ação continua liberando direto, como já é hoje, porque é fluxo administrativo).
-- Não alterar `useVendasPendenteFaturamento` — ele já exige `contrato_liberado_faturamento=true`, então essa parte está correta.
-- Sem migration: o flag e os campos de auditoria já existem.
+### Detalhes técnicos
+- A tabela `produtos_vendas` já tem RLS ativo; usar `supabase.from('produtos_vendas').select('venda_id, valor_total').in('venda_id', ids).eq('tipo_produto', 'instalacao')`.
+- Manter `useEffect` disparado quando `acordos` muda, semelhante ao já existente para `precosMap`.
+- Sem alterações no banco de dados.
