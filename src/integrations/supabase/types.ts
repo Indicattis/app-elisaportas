@@ -747,6 +747,30 @@ export type Database = {
           },
         ]
       }
+      autorizados_meta_config: {
+        Row: {
+          id: string
+          meta_por_cidade: number
+          total_cidades_brasil: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          id?: string
+          meta_por_cidade?: number
+          total_cidades_brasil?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          id?: string
+          meta_por_cidade?: number
+          total_cidades_brasil?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       autorizados_terceiros: {
         Row: {
           ativo: boolean
