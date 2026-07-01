@@ -14,6 +14,7 @@ import { useEstadosCidades } from '@/hooks/useEstadosCidades';
 import { SortableEstadoCard } from '@/components/autorizados/EstadoCard';
 import { NovoEstadoDialog } from '@/components/autorizados/NovoEstadoDialog';
 import { HistoricoCadastrosAutorizados } from '@/components/autorizados/HistoricoCadastrosAutorizados';
+import { IndicadoresAutorizados } from '@/components/autorizados/IndicadoresAutorizados';
 import { useAcordosAutorizados, type AcordoAutorizado, type NovoAcordo } from '@/hooks/useAcordosAutorizados';
 import { NovoAcordoDialog } from '@/components/autorizados/NovoAcordoDialog';
 import { formatCurrency } from '@/lib/utils';
@@ -356,6 +357,8 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
       headerActions={headerActions}
     >
       <div className="space-y-8">
+          <IndicadoresAutorizados />
+
           {/* Seção Estados */}
           {loadingEstados ? (
             <div className="flex items-center justify-center py-20">
