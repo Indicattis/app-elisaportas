@@ -410,7 +410,7 @@ export default function AcordosMesAutorizados() {
                       <TableHead className="text-xs text-white/70 w-40">Cidade</TableHead>
                       <TableHead className="text-xs text-white/70 text-center w-16">Km</TableHead>
                       <TableHead className="text-xs text-white/70 text-center w-20">Data</TableHead>
-                      <TableHead className="text-xs text-white/70 text-right w-24">Valor</TableHead>
+                      <TableHead className="text-xs text-white/70 text-right w-28">Valor negociado</TableHead>
                       <TableHead className="text-xs text-white/70 text-right w-28">Instalação (Venda)</TableHead>
                       <TableHead className="text-xs text-white/70 text-right w-28">Valor excesso</TableHead>
                       <TableHead className="text-xs text-white/70 text-right w-24">Pago</TableHead>
