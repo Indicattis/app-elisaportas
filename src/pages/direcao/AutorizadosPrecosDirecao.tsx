@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Edit2, Trash2, MoreHorizontal, Check, X, CheckCircle2, XCircle, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, CalendarDays, DollarSign } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, MoreHorizontal, Check, X, CheckCircle2, XCircle, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, CalendarDays, DollarSign, History } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -89,6 +89,7 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
   const [anoSelecionado, setAnoSelecionado] = useState(new Date().getFullYear());
   const [mesSelecionado, setMesSelecionado] = useState<number | null>(null);
   const [acordosAberto, setAcordosAberto] = useState(false);
+  const [historicoOpen, setHistoricoOpen] = useState(false);
 
   // Buscar preços padrões dos autorizados
   useEffect(() => {
@@ -305,6 +306,14 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
 
   const headerActions = (
     <>
+      <Button
+        size="sm"
+        onClick={() => setHistoricoOpen(true)}
+        className="h-10 px-5 rounded-lg bg-white/5 border border-white/10 text-white hover:bg-white/10 hover:scale-[1.02] transition-all duration-300 text-xs gap-1.5"
+      >
+        <History className="h-4 w-4" />
+        <span className="hidden sm:inline">Histórico de Cadastros</span>
+      </Button>
       <Button
         size="sm"
         onClick={() => navigate(`${routePrefix}/novo`)}
@@ -713,8 +722,16 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
             )}
            </DialogContent>
         </Dialog>
-        <HistoricoCadastrosAutorizados />
       </div>
+
+      <Dialog open={historicoOpen} onOpenChange={setHistoricoOpen}>
+        <DialogContent className="max-w-5xl max-h-[85vh] overflow-y-auto bg-black/90 border-white/10 backdrop-blur-xl">
+          <DialogHeader>
+            <DialogTitle className="text-white">Histórico de Cadastros</DialogTitle>
+          </DialogHeader>
+          <HistoricoCadastrosAutorizados />
+        </DialogContent>
+      </Dialog>
 
       <NovoEstadoDialog
         open={novoEstadoOpen}
