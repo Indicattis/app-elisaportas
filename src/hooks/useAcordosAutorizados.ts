@@ -32,6 +32,7 @@ export interface AcordoAutorizado {
   pago_em?: string;
   pago_por?: string;
   valor_pago: number;
+  venda_id?: string | null;
   criador?: {
     nome: string;
     foto_perfil_url?: string;
