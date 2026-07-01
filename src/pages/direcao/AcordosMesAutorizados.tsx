@@ -411,6 +411,7 @@ export default function AcordosMesAutorizados() {
                       <TableHead className="text-xs text-white/70 text-center w-16">Km</TableHead>
                       <TableHead className="text-xs text-white/70 text-center w-20">Data</TableHead>
                       <TableHead className="text-xs text-white/70 text-right w-24">Valor</TableHead>
+                      <TableHead className="text-xs text-white/70 text-right w-28">Instalação (Venda)</TableHead>
                       <TableHead className="text-xs text-white/70 text-right w-28">Valor excesso</TableHead>
                       <TableHead className="text-xs text-white/70 text-right w-24">Pago</TableHead>
                       <TableHead className="text-xs text-white/70 text-right w-24">Restante</TableHead>
@@ -430,7 +431,7 @@ export default function AcordosMesAutorizados() {
                     <TooltipProvider>
                       {(() => {
                         const colSpan =
-                          16 +
+                          17 +
                           ((contexto === 'direcao' || contexto === 'home') ? 1 : 0) +
                           ((contexto === 'logistica' || contexto === 'home') ? 1 : 0);
                         return acordosAgrupados.map((grupo, idx) => (
@@ -486,6 +487,15 @@ export default function AcordosMesAutorizados() {
                                 </TableCell>
                                 <TableCell className="text-right font-medium text-green-400">
                                   {formatCurrency(acordo.valor_acordado)}
+                                </TableCell>
+                                <TableCell className="text-right font-medium">
+                                  {acordo.venda_id ? (
+                                    <span className="text-blue-300">
+                                      {formatCurrency(instalacoesMap.get(acordo.venda_id) ?? 0)}
+                                    </span>
+                                  ) : (
+                                    <span className="text-white/40">—</span>
+                                  )}
                                 </TableCell>
                                 <TableCell className="text-right font-medium">
                                   {acordo.portas.length > 0 ? (() => {
