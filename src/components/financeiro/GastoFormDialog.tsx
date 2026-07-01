@@ -58,10 +58,10 @@ export default function GastoFormDialog({ open, onOpenChange, defaultMes, gasto,
 
   const tiposAtivos = useMemo(() => {
     const ativos = tiposCustos.filter((t) => t.ativo);
-    if (defaultCategoria && !gasto) {
-      return ativos.filter((t) => t.tipo === defaultCategoria);
-    }
-    return ativos;
+    const filtrados = defaultCategoria && !gasto
+      ? ativos.filter((t) => t.tipo === defaultCategoria)
+      : ativos;
+    return [...filtrados].sort((a, b) => a.nome.localeCompare(b.nome));
   }, [tiposCustos, defaultCategoria, gasto]);
 
   const descricoesUnicas = useMemo(
