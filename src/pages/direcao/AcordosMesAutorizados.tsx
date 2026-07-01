@@ -87,6 +87,7 @@ export default function AcordosMesAutorizados() {
   const [acordoParaEditar, setAcordoParaEditar] = useState<AcordoAutorizado | null>(null);
   const [acordoParaDeletar, setAcordoParaDeletar] = useState<AcordoAutorizado | null>(null);
   const [precosMap, setPrecosMap] = useState<Map<string, { P: number; G: number; GG: number }>>(new Map());
+  const [instalacoesMap, setInstalacoesMap] = useState<Map<string, number>>(new Map());
   const [kmPorCidade, setKmPorCidade] = useState<Map<string, number | null>>(new Map());
   const [approvingId, setApprovingId] = useState<string | null>(null);
   const [rejectingId, setRejectingId] = useState<string | null>(null);
@@ -106,6 +107,24 @@ export default function AcordosMesAutorizados() {
           map.set(row.autorizado_id, existing);
         });
         setPrecosMap(map);
+      });
+  }, [acordos]);
+
+  useEffect(() => {
+    const vendaIds = [...new Set(acordos.map(a => a.venda_id).filter(Boolean) as string[])];
+    if (vendaIds.length === 0) { setInstalacoesMap(new Map()); return; }
+    supabase
+      .from('produtos_vendas')
+      .select('venda_id, valor_total')
+      .in('venda_id', vendaIds)
+      .eq('tipo_produto', 'instalacao')
+      .then(({ data }) => {
+        const map = new Map<string, number>();
+        data?.forEach((row: any) => {
+          const atual = map.get(row.venda_id) ?? 0;
+          map.set(row.venda_id, atual + Number(row.valor_total || 0));
+        });
+        setInstalacoesMap(map);
       });
   }, [acordos]);
 
