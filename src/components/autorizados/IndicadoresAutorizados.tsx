@@ -15,6 +15,7 @@ interface Config {
 
 export function IndicadoresAutorizados() {
   const [qtdAutorizados, setQtdAutorizados] = useState(0);
+  const [qtdCidades, setQtdCidades] = useState(0);
   const [config, setConfig] = useState<Config | null>(null);
   const [loading, setLoading] = useState(true);
   const [editOpen, setEditOpen] = useState(false);
@@ -23,11 +24,13 @@ export function IndicadoresAutorizados() {
 
   const load = async () => {
     setLoading(true);
-    const [{ count }, { data: cfg }] = await Promise.all([
+    const [{ count }, { count: countCidades }, { data: cfg }] = await Promise.all([
       supabase.from('autorizados').select('*', { count: 'exact', head: true }),
+      supabase.from('cidades_autorizados').select('*', { count: 'exact', head: true }),
       supabase.from('autorizados_meta_config').select('*').order('updated_at', { ascending: false }).limit(1).maybeSingle(),
     ]);
     setQtdAutorizados(count ?? 0);
+    setQtdCidades(countCidades ?? 0);
     if (cfg) {
       setConfig(cfg as Config);
       setMetaInput(String(cfg.meta_por_cidade));
@@ -37,7 +40,7 @@ export function IndicadoresAutorizados() {
 
   useEffect(() => { load(); }, []);
 
-  const metaTotal = config ? Number(config.meta_por_cidade) * Number(config.total_cidades_brasil) : 0;
+  const metaTotal = config ? Number(config.meta_por_cidade) * qtdCidades : 0;
   const percentual = metaTotal > 0 ? (qtdAutorizados / metaTotal) * 100 : 0;
 
   const salvarMeta = async () => {
@@ -81,7 +84,7 @@ export function IndicadoresAutorizados() {
     {
       label: 'Meta de Autorizados por Cidade',
       value: loading ? '—' : Number(config?.meta_por_cidade ?? 0).toLocaleString('pt-BR'),
-      hint: config ? `Meta total: ${metaTotal.toLocaleString('pt-BR')} (${config.total_cidades_brasil.toLocaleString('pt-BR')} cidades)` : undefined,
+      hint: config ? `Meta total: ${metaTotal.toLocaleString('pt-BR')} (${qtdCidades.toLocaleString('pt-BR')} cidades cadastradas)` : undefined,
       icon: Target,
       accent: 'from-emerald-500/20 to-emerald-600/10 border-emerald-400/20 text-emerald-300',
       iconBg: 'bg-emerald-500/20 text-emerald-300',
@@ -96,7 +99,7 @@ export function IndicadoresAutorizados() {
       ),
     },
     {
-      label: '% de Cobertura no Brasil',
+      label: '% de Cobertura',
       value: loading ? '—' : `${percentual.toFixed(2)}%`,
       hint: !loading && metaTotal > 0 ? `${qtdAutorizados.toLocaleString('pt-BR')} / ${metaTotal.toLocaleString('pt-BR')}` : undefined,
       icon: PieChart,
@@ -146,7 +149,7 @@ export function IndicadoresAutorizados() {
                 className="bg-white/5 border-white/10 text-white mt-1"
               />
               <p className="text-[11px] text-white/40 mt-1">
-                Base: {config?.total_cidades_brasil.toLocaleString('pt-BR') ?? 5570} cidades no Brasil
+                Base: {qtdCidades.toLocaleString('pt-BR')} cidades cadastradas
               </p>
             </div>
           </div>
