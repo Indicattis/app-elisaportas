@@ -97,6 +97,9 @@ export function NovoAcordoDialog({
     if (!clienteNome || !clienteCidade || !clienteEstado || !autorizadoId) {
       return;
     }
+    if (!acordoParaEditar && !vendaVinculada?.id) {
+      return;
+    }
 
     setSaving(true);
     try {
@@ -142,6 +145,7 @@ export function NovoAcordoDialog({
         <div className="space-y-4 py-4">
           {/* Vincular a pedido */}
           {!acordoParaEditar && (
+            <>
             <SeletorVendaExistente
               vendaSelecionada={vendaVinculada}
               onSelect={(v) => {
@@ -155,6 +159,12 @@ export function NovoAcordoDialog({
                 if (v.cliente_estado && !clienteEstado) setClienteEstado(v.cliente_estado);
               }}
             />
+            {!vendaVinculada?.id && (
+              <p className="text-xs text-amber-400">
+                Vincular uma venda é obrigatório para criar um acordo.
+              </p>
+            )}
+            </>
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -301,7 +311,7 @@ export function NovoAcordoDialog({
           </Button>
           <Button
             onClick={handleSave}
-            disabled={saving || !clienteNome || !clienteCidade || !clienteEstado || !autorizadoId}
+            disabled={saving || !clienteNome || !clienteCidade || !clienteEstado || !autorizadoId || (!acordoParaEditar && !vendaVinculada?.id)}
             className="bg-primary hover:bg-primary/90"
           >
             {saving ? 'Salvando...' : acordoParaEditar ? 'Salvar Alterações' : 'Salvar Acordo'}
