@@ -5,6 +5,7 @@ import { addDays } from 'date-fns';
 import { PagamentoData } from '@/components/vendas/PagamentoSection';
 import { MetodoPagamento } from '@/components/vendas/MetodoPagamentoCard';
 import { validarDesconto, getTipoAutorizacaoNecessaria } from '@/utils/descontoVendasRules';
+import { gerarProximoNumero, formatarNumeroPedido } from '@/utils/numberingService';
 
 export interface ProdutoVenda {
   id?: string;
@@ -348,9 +349,14 @@ export function useVendas() {
       // Extrair o método de pagamento principal (primeiro método válido)
       const metodoPrincipal = pagamentoData?.metodos?.[0]?.tipo || vendaData.forma_pagamento;
       const empresaReceptoraPrincipal = pagamentoData?.metodos?.[0]?.empresa_receptora_id || null;
-      
+
+      // Gerar número do pedido já no cadastro da venda (compartilhado com pedidos_producao)
+      const numeroSeq = await gerarProximoNumero('pedido');
+      const numeroPedidoVenda = formatarNumeroPedido(numeroSeq);
+
       const vendaPayload = {
         ...vendaDataLimpo,
+        numero_pedido: numeroPedidoVenda,
         cliente_id: clienteId,
         cpf_cliente: vendaData.cpf_cliente || null,
         atendente_id: adminUser.user_id,
