@@ -60,6 +60,7 @@ const menuItems = [
 export default function Home() {
   const navigate = useNavigate();
   const { user, userRole, signOut, hasBypassPermissions } = useAuth();
+  const { data: indices, isLoading: indicesLoading } = useHomeIndices();
   const [mounted, setMounted] = useState(false);
   
   
