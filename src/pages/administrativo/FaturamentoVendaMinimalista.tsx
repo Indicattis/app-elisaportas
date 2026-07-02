@@ -69,6 +69,9 @@ interface Venda {
   estado?: string;
   cep?: string;
   bairro?: string;
+  cliente_id?: string;
+  endereco?: string;
+  numero?: string;
   valor_venda: number;
   valor_frete: number;
   valor_instalacao: number;
@@ -92,6 +95,8 @@ interface Venda {
   valor_a_receber?: number;
   quantidade_parcelas?: number;
   data_pagamento?: string;
+  contrato_url?: string;
+  contrato_dispensado?: boolean;
 }
 
 const formatCurrency = (value: number) => {
@@ -851,12 +856,28 @@ export default function FaturamentoVendaMinimalista() {
       setLoading(true);
       const { data, error } = await supabase
         .from("vendas")
-        .select("id, cliente_nome, cliente_telefone, cliente_email, cpf_cliente, cidade, estado, cep, bairro, valor_venda, valor_frete, valor_instalacao, valor_credito, lucro_total, frete_aprovado, comprovante_url, comprovante_nome, lucro_instalacao, custo_instalacao, instalacao_faturada, metodo_pagamento, numero_parcelas, intervalo_boletos, empresa_receptora_id, data_venda, forma_pagamento, venda_presencial, pagamento_na_entrega, valor_entrada, valor_a_receber, quantidade_parcelas, contrato_url, contrato_dispensado")
+        .select("id, cliente_id, cliente_nome, cliente_telefone, cliente_email, cpf_cliente, cidade, estado, cep, bairro, valor_venda, valor_frete, valor_instalacao, valor_credito, lucro_total, frete_aprovado, comprovante_url, comprovante_nome, lucro_instalacao, custo_instalacao, instalacao_faturada, metodo_pagamento, numero_parcelas, intervalo_boletos, empresa_receptora_id, data_venda, forma_pagamento, venda_presencial, pagamento_na_entrega, valor_entrada, valor_a_receber, quantidade_parcelas, contrato_url, contrato_dispensado")
         .eq("id", id)
         .single();
 
       if (error) throw error;
-      setVenda(data);
+
+      let vendaData = data as Venda;
+      if (vendaData?.cliente_id) {
+        const { data: clienteData, error: clienteError } = await supabase
+          .from("clientes")
+          .select("endereco, numero")
+          .eq("id", vendaData.cliente_id)
+          .single();
+        if (!clienteError && clienteData) {
+          vendaData = {
+            ...vendaData,
+            endereco: clienteData.endereco,
+            numero: clienteData.numero,
+          };
+        }
+      }
+      setVenda(vendaData);
     } catch (error) {
       console.error("Erro ao buscar venda:", error);
       toast({
@@ -1328,6 +1349,8 @@ export default function FaturamentoVendaMinimalista() {
                 { label: 'CPF/CNPJ', value: venda.cpf_cliente },
                 { label: 'Telefone', value: venda.cliente_telefone },
                 { label: 'E-mail', value: venda.cliente_email },
+                { label: 'Endereço', value: venda.endereco },
+                { label: 'Número', value: venda.numero },
                 { label: 'CEP', value: venda.cep },
                 { label: 'Bairro', value: venda.bairro },
                 { label: 'Cidade', value: venda.cidade },
