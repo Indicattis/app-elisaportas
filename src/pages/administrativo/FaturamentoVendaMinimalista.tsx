@@ -1349,6 +1349,8 @@ export default function FaturamentoVendaMinimalista() {
                 { label: 'CPF/CNPJ', value: venda.cpf_cliente },
                 { label: 'Telefone', value: venda.cliente_telefone },
                 { label: 'E-mail', value: venda.cliente_email },
+                { label: 'Endereço', value: venda.endereco },
+                { label: 'Número', value: venda.numero },
                 { label: 'CEP', value: venda.cep },
                 { label: 'Bairro', value: venda.bairro },
                 { label: 'Cidade', value: venda.cidade },
