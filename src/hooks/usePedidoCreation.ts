@@ -23,7 +23,7 @@ export const usePedidoCreation = () => {
       // Buscar dados da venda
       const { data: venda, error: vendaError } = await supabase
         .from('vendas')
-        .select('*, pagamento_na_entrega, valor_venda, metodo_pagamento')
+        .select('*, pagamento_na_entrega, valor_venda, metodo_pagamento, numero_pedido')
         .eq('id', vendaId)
         .single();
 
@@ -46,9 +46,12 @@ export const usePedidoCreation = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não autenticado');
 
-      // Gerar número do pedido (sequencial global)
-      const numeroSequencial = await gerarProximoNumero('pedido');
-      const numeroPedido = formatarNumeroPedido(numeroSequencial);
+      // Reutilizar número já cadastrado na venda; senão gerar (fallback legado)
+      let numeroPedido = (venda as any).numero_pedido as string | null;
+      if (!numeroPedido) {
+        const numeroSequencial = await gerarProximoNumero('pedido');
+        numeroPedido = formatarNumeroPedido(numeroSequencial);
+      }
 
       // Gerar número mensal (reinicia todo mês)
       const { data: numeroMesData } = await supabase.rpc('gerar_proximo_numero_mes');
