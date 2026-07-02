@@ -34,6 +34,7 @@ import { VendaBloqueadaDialog } from "@/components/vendas/VendaBloqueadaDialog";
 import { validarDesconto, getTipoAutorizacaoNecessaria } from "@/utils/descontoVendasRules";
 import { useConfiguracoesVendasPublicas } from "@/hooks/useConfiguracoesVendasPublicas";
 import { AutorizacaoDescontoModal } from "@/components/vendas/AutorizacaoDescontoModal";
+import { gerarProximoNumero, formatarNumeroPedido } from "@/utils/numberingService";
 
 export default function MinhasVendasEditar() {
   const { id } = useParams<{ id: string }>();
@@ -551,12 +552,20 @@ export default function MinhasVendasEditar() {
       const valorVenda = valorProdutos + valorFrete + valorCredito;
       const valorAReceber = valorVenda;
 
+      // Garantir que a venda tenha número do pedido antes de sair de rascunho
+      let numeroPedidoParaAtribuir: string | null = null;
+      if (!(venda as any)?.numero_pedido) {
+        const seq = await gerarProximoNumero('pedido');
+        numeroPedidoParaAtribuir = formatarNumeroPedido(seq);
+      }
+
       const { data, error } = await supabase
         .from('vendas')
         .update({
           is_rascunho: false,
           valor_venda: valorVenda,
           valor_a_receber: valorAReceber,
+          ...(numeroPedidoParaAtribuir ? { numero_pedido: numeroPedidoParaAtribuir } : {}),
         })
         .eq('id', id)
         .select('id')
