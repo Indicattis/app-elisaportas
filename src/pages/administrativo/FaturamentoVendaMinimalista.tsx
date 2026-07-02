@@ -69,6 +69,9 @@ interface Venda {
   estado?: string;
   cep?: string;
   bairro?: string;
+  cliente_id?: string;
+  endereco?: string;
+  numero?: string;
   valor_venda: number;
   valor_frete: number;
   valor_instalacao: number;
@@ -92,6 +95,8 @@ interface Venda {
   valor_a_receber?: number;
   quantidade_parcelas?: number;
   data_pagamento?: string;
+  contrato_url?: string;
+  contrato_dispensado?: boolean;
 }
 
 const formatCurrency = (value: number) => {
