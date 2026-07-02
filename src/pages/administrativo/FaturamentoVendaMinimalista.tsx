@@ -62,6 +62,13 @@ const safeParseDate = (dateStr: string | null | undefined): Date | null => {
 interface Venda {
   id: string;
   cliente_nome: string;
+  cliente_telefone?: string;
+  cliente_email?: string;
+  cpf_cliente?: string;
+  cidade?: string;
+  estado?: string;
+  cep?: string;
+  bairro?: string;
   valor_venda: number;
   valor_frete: number;
   valor_instalacao: number;
@@ -844,7 +851,7 @@ export default function FaturamentoVendaMinimalista() {
       setLoading(true);
       const { data, error } = await supabase
         .from("vendas")
-        .select("id, cliente_nome, valor_venda, valor_frete, valor_instalacao, valor_credito, lucro_total, frete_aprovado, comprovante_url, comprovante_nome, lucro_instalacao, custo_instalacao, instalacao_faturada, metodo_pagamento, numero_parcelas, intervalo_boletos, empresa_receptora_id, data_venda, forma_pagamento, venda_presencial, pagamento_na_entrega, valor_entrada, valor_a_receber, quantidade_parcelas, contrato_url, contrato_dispensado")
+        .select("id, cliente_nome, cliente_telefone, cliente_email, cpf_cliente, cidade, estado, cep, bairro, valor_venda, valor_frete, valor_instalacao, valor_credito, lucro_total, frete_aprovado, comprovante_url, comprovante_nome, lucro_instalacao, custo_instalacao, instalacao_faturada, metodo_pagamento, numero_parcelas, intervalo_boletos, empresa_receptora_id, data_venda, forma_pagamento, venda_presencial, pagamento_na_entrega, valor_entrada, valor_a_receber, quantidade_parcelas, contrato_url, contrato_dispensado")
         .eq("id", id)
         .single();
 
@@ -1308,6 +1315,32 @@ export default function FaturamentoVendaMinimalista() {
             <p className="text-sm font-bold text-emerald-400">{formatCurrency(totalLucro)}</p>
           </div>
         </div>
+
+        {/* Dados do Cliente */}
+        <Card className="bg-white/5 border-white/10">
+          <CardHeader>
+            <CardTitle className="text-base text-white">Dados do Cliente</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+              {[
+                { label: 'Nome', value: venda.cliente_nome },
+                { label: 'CPF/CNPJ', value: venda.cpf_cliente },
+                { label: 'Telefone', value: venda.cliente_telefone },
+                { label: 'E-mail', value: venda.cliente_email },
+                { label: 'CEP', value: venda.cep },
+                { label: 'Bairro', value: venda.bairro },
+                { label: 'Cidade', value: venda.cidade },
+                { label: 'Estado', value: venda.estado },
+              ].map((f) => (
+                <div key={f.label} className="bg-white/5 border border-white/10 rounded-lg p-2">
+                  <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">{f.label}</p>
+                  <p className="text-sm text-white truncate">{f.value || '-'}</p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Tabela de Produtos */}
         <Card className="bg-white/5 border-white/10">
