@@ -2,14 +2,16 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import logoPortasEnrolar from "@/assets/logo-portas-enrolar.ico";
-import { ShoppingCart, Factory, Shield, Truck, Building2, LogOut, LayoutDashboard, PanelLeft, Settings, Lock, BarChart3, Calendar, User, ClipboardList, Sun, Moon, Monitor, DollarSign, Users, BookOpen, Target, Headset } from "lucide-react";
+import { ShoppingCart, Factory, Shield, Truck, Building2, LogOut, LayoutDashboard, PanelLeft, Settings, Lock, BarChart3, Calendar, User, ClipboardList, Sun, Moon, Monitor, DollarSign, Users, BookOpen, Target, Headset, TrendingUp, FileCheck, FileX } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useHomeIndices } from "@/hooks/useHomeIndices";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 import { DelayedParticles } from "@/components/DelayedParticles";
 import { MinhasTarefasFullscreen } from "@/components/MinhasTarefasFullscreen";
 import { useTheme } from "@/components/ThemeProvider";
+import { formatCurrency } from "@/lib/utils";
 
 // Mapeamento de path para prefixo de route_key no banco
 const routePrefixMap: Record<string, string> = {
