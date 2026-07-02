@@ -170,7 +170,10 @@ export default function GastosPage() {
   const formatCurrency = (v: number) =>
     v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-  const tiposAtivos = tiposCustos.filter((t) => t.ativo);
+  const tiposAtivos = tiposCustos
+    .filter((t) => t.ativo)
+    .slice()
+    .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }));
 
   const gerarPDF = () => {
     const doc = new jsPDF({ orientation: "landscape", format: "a4" });
