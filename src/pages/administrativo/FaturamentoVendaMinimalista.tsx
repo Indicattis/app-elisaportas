@@ -856,12 +856,28 @@ export default function FaturamentoVendaMinimalista() {
       setLoading(true);
       const { data, error } = await supabase
         .from("vendas")
-        .select("id, cliente_nome, cliente_telefone, cliente_email, cpf_cliente, cidade, estado, cep, bairro, valor_venda, valor_frete, valor_instalacao, valor_credito, lucro_total, frete_aprovado, comprovante_url, comprovante_nome, lucro_instalacao, custo_instalacao, instalacao_faturada, metodo_pagamento, numero_parcelas, intervalo_boletos, empresa_receptora_id, data_venda, forma_pagamento, venda_presencial, pagamento_na_entrega, valor_entrada, valor_a_receber, quantidade_parcelas, contrato_url, contrato_dispensado")
+        .select("id, cliente_id, cliente_nome, cliente_telefone, cliente_email, cpf_cliente, cidade, estado, cep, bairro, valor_venda, valor_frete, valor_instalacao, valor_credito, lucro_total, frete_aprovado, comprovante_url, comprovante_nome, lucro_instalacao, custo_instalacao, instalacao_faturada, metodo_pagamento, numero_parcelas, intervalo_boletos, empresa_receptora_id, data_venda, forma_pagamento, venda_presencial, pagamento_na_entrega, valor_entrada, valor_a_receber, quantidade_parcelas, contrato_url, contrato_dispensado")
         .eq("id", id)
         .single();
 
       if (error) throw error;
-      setVenda(data);
+
+      let vendaData = data as Venda;
+      if (vendaData?.cliente_id) {
+        const { data: clienteData, error: clienteError } = await supabase
+          .from("clientes")
+          .select("endereco, numero")
+          .eq("id", vendaData.cliente_id)
+          .single();
+        if (!clienteError && clienteData) {
+          vendaData = {
+            ...vendaData,
+            endereco: clienteData.endereco,
+            numero: clienteData.numero,
+          };
+        }
+      }
+      setVenda(vendaData);
     } catch (error) {
       console.error("Erro ao buscar venda:", error);
       toast({
