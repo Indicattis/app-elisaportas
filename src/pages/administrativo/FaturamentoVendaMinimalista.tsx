@@ -62,6 +62,13 @@ const safeParseDate = (dateStr: string | null | undefined): Date | null => {
 interface Venda {
   id: string;
   cliente_nome: string;
+  cliente_telefone?: string;
+  cliente_email?: string;
+  cpf_cliente?: string;
+  cidade?: string;
+  estado?: string;
+  cep?: string;
+  bairro?: string;
   valor_venda: number;
   valor_frete: number;
   valor_instalacao: number;
