@@ -1235,6 +1235,7 @@ export type Database = {
           fidelizado: boolean | null
           id: string
           nome: string
+          numero: string | null
           observacoes: string | null
           parceiro: boolean | null
           telefone: string | null
@@ -1256,6 +1257,7 @@ export type Database = {
           fidelizado?: boolean | null
           id?: string
           nome: string
+          numero?: string | null
           observacoes?: string | null
           parceiro?: boolean | null
           telefone?: string | null
@@ -1277,6 +1279,7 @@ export type Database = {
           fidelizado?: boolean | null
           id?: string
           nome?: string
+          numero?: string | null
           observacoes?: string | null
           parceiro?: boolean | null
           telefone?: string | null
