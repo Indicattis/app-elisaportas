@@ -1,26 +1,26 @@
-## Adicionar coluna "Instalação (Venda)" na tabela de Acordos do Mês
+Adicionar três índices visíveis na `/home` (página inicial central com os botões de módulos): **Faturamento atual do mês**, **Autorizados com contratos** e **Autorizados sem contratos**.
 
-Adicionar uma nova coluna à direita de **Valor**, mostrando o valor do produto do tipo "instalação" da venda vinculada ao acordo.
+### O que será feito
 
-### Onde
-`src/pages/direcao/AcordosMesAutorizados.tsx` — tabela em `/autorizados/acordos/:ano/:mes`.
+1. **Novo hook de dados** — criar `src/hooks/useHomeIndices.ts` com três consultas agregadas (ou uma única queryFn paralela):
+   - **Faturamento do mês:** reutilizar a fórmula canônica `calcularFaturamentoLiquido` e o filtro `isVendaValida` (vendas >= R$ 500, excluindo rascunhos/testes). Buscar vendas do mês atual (`data_venda` entre início e fim do mês), somar `valor_venda + valor_credito - valor_frete`.
+   - **Autorizados com contratos:** contar `autorizados` ativos (`ativo = true`) onde `contrato_url IS NOT NULL`.
+   - **Autorizados sem contratos:** contar `autorizados` ativos (`ativo = true`) onde `contrato_url IS NULL`.
 
-### Passos
-1. **Buscar valores de instalação por venda**
-   - Após carregar `acordos`, coletar todos os `venda_id` não nulos.
-   - Consultar `produtos_vendas` filtrando por esses `venda_id` e `tipo_produto = 'instalacao'`.
-   - Somar `valor_total` por `venda_id` e guardar em `Map<vendaId, number>` (estado local `instalacoesMap`).
+2. **Integrar em `src/pages/Home.tsx`** — exibir os três índices como cards estilizados logo acima da lista de botões de módulos (ou dentro da seção "Acesso Rápido", a depender do encaixe visual). Os cards seguirão o design glassmorphism já existente na página: `bg-white/5`, `backdrop-blur-xl`, `border-white/10`, texto branco/azul.
 
-2. **Nova coluna na tabela**
-   - Adicionar `<TableHead>` "Instalação (Venda)" imediatamente após a coluna "Valor" (antes de "Valor excesso").
-   - Adicionar `<TableCell>` correspondente em cada linha:
-     - Se o acordo tem `venda_id` e há valor no map → exibe `formatCurrency(valor)` em azul/branco.
-     - Se tem `venda_id` mas sem produto de instalação → exibe `R$ 0,00` em cinza.
-     - Se não tem `venda_id` (acordo avulso) → exibe `—`.
+3. **Ícones e layout** — usar ícones do lucide-react (ex.: `TrendingUp`, `FileCheck`, `FileX`) em cards de 3 colunas no desktop, empilhados no mobile, respeitando a responsividade atual da página.
 
-3. **Ajustar colSpan** do cabeçalho de grupo de autorizado (`colSpan = 16 + …`) para `17 + …`, refletindo a nova coluna.
+4. **Verificação de permissões** — antes de implementar, confirmar se as RLS policies de `vendas` e `autorizados` permitem leitura para todos os usuários autenticados. Caso contrário, propor ajuste mínimo de políticas (sem abrir dados sensíveis) ou exibir os cards apenas para perfis com acesso, conforme a preferência do usuário.
 
-### Detalhes técnicos
-- A tabela `produtos_vendas` já tem RLS ativo; usar `supabase.from('produtos_vendas').select('venda_id, valor_total').in('venda_id', ids).eq('tipo_produto', 'instalacao')`.
-- Manter `useEffect` disparado quando `acordos` muda, semelhante ao já existente para `precosMap`.
-- Sem alterações no banco de dados.
+### Arquivos afetados
+
+- `src/hooks/useHomeIndices.ts` (novo)
+- `src/pages/Home.tsx` (edição)
+- `src/utils/faturamentoCalc.ts` (já existente, apenas reutilizado)
+
+### Critério de aceitação
+
+- Na `/home`, o usuário vê três cards com os valores atualizados: faturamento líquido do mês, total de autorizados com contrato e total de autorizados sem contrato.
+- Os números utilizam os cálculos e filtros já consolidados no projeto (sem criar lógica divergente).
+- O layout mantém a estética atual da página inicial (escura, glassmorphism) e funciona em mobile.

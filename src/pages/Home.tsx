@@ -2,14 +2,16 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import logoPortasEnrolar from "@/assets/logo-portas-enrolar.ico";
-import { ShoppingCart, Factory, Shield, Truck, Building2, LogOut, LayoutDashboard, PanelLeft, Settings, Lock, BarChart3, Calendar, User, ClipboardList, Sun, Moon, Monitor, DollarSign, Users, BookOpen, Target, Headset } from "lucide-react";
+import { ShoppingCart, Factory, Shield, Truck, Building2, LogOut, LayoutDashboard, PanelLeft, Settings, Lock, BarChart3, Calendar, User, ClipboardList, Sun, Moon, Monitor, DollarSign, Users, BookOpen, Target, Headset, TrendingUp, FileCheck, FileX } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useHomeIndices } from "@/hooks/useHomeIndices";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 import { DelayedParticles } from "@/components/DelayedParticles";
 import { MinhasTarefasFullscreen } from "@/components/MinhasTarefasFullscreen";
 import { useTheme } from "@/components/ThemeProvider";
+import { formatCurrency } from "@/lib/utils";
 
 // Mapeamento de path para prefixo de route_key no banco
 const routePrefixMap: Record<string, string> = {
@@ -58,6 +60,7 @@ const menuItems = [
 export default function Home() {
   const navigate = useNavigate();
   const { user, userRole, signOut, hasBypassPermissions } = useAuth();
+  const { data: indices, isLoading: indicesLoading } = useHomeIndices();
   const [mounted, setMounted] = useState(false);
   
   
@@ -289,6 +292,48 @@ export default function Home() {
                 alt="Logo" 
                 className="w-20 h-20 object-contain drop-shadow-2xl" 
               />
+            </div>
+          </div>
+        </div>
+
+        {/* Índices */}
+        <div
+          className="w-full mb-6"
+          style={{
+            opacity: mounted ? 1 : 0,
+            transform: mounted ? 'translateY(0)' : 'translateY(20px)',
+            transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 400ms'
+          }}
+        >
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="p-3 rounded-xl bg-white/5 border border-white/10 backdrop-blur-xl flex flex-col gap-2">
+              <div className="flex items-center gap-2 text-white/60">
+                <TrendingUp className="w-4 h-4" strokeWidth={1.5} />
+                <span className="text-[10px] uppercase tracking-wider">Faturamento mês</span>
+              </div>
+              <div className="text-lg font-bold text-white truncate">
+                {indicesLoading ? '—' : formatCurrency(indices?.faturamentoMes || 0)}
+              </div>
+            </div>
+
+            <div className="p-3 rounded-xl bg-white/5 border border-white/10 backdrop-blur-xl flex flex-col gap-2">
+              <div className="flex items-center gap-2 text-emerald-400/80">
+                <FileCheck className="w-4 h-4" strokeWidth={1.5} />
+                <span className="text-[10px] uppercase tracking-wider">Com contrato</span>
+              </div>
+              <div className="text-lg font-bold text-white">
+                {indicesLoading ? '—' : indices?.autorizadosComContrato || 0}
+              </div>
+            </div>
+
+            <div className="p-3 rounded-xl bg-white/5 border border-white/10 backdrop-blur-xl flex flex-col gap-2">
+              <div className="flex items-center gap-2 text-amber-400/80">
+                <FileX className="w-4 h-4" strokeWidth={1.5} />
+                <span className="text-[10px] uppercase tracking-wider">Sem contrato</span>
+              </div>
+              <div className="text-lg font-bold text-white">
+                {indicesLoading ? '—' : indices?.autorizadosSemContrato || 0}
+              </div>
             </div>
           </div>
         </div>
