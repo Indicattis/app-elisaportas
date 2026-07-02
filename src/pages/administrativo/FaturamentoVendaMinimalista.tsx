@@ -61,6 +61,7 @@ const safeParseDate = (dateStr: string | null | undefined): Date | null => {
 
 interface Venda {
   id: string;
+  numero_pedido?: string;
   cliente_nome: string;
   cliente_telefone?: string;
   cliente_email?: string;
@@ -856,7 +857,7 @@ export default function FaturamentoVendaMinimalista() {
       setLoading(true);
       const { data, error } = await supabase
         .from("vendas")
-        .select("id, cliente_id, cliente_nome, cliente_telefone, cliente_email, cpf_cliente, cidade, estado, cep, bairro, valor_venda, valor_frete, valor_instalacao, valor_credito, lucro_total, frete_aprovado, comprovante_url, comprovante_nome, lucro_instalacao, custo_instalacao, instalacao_faturada, metodo_pagamento, numero_parcelas, intervalo_boletos, empresa_receptora_id, data_venda, forma_pagamento, venda_presencial, pagamento_na_entrega, valor_entrada, valor_a_receber, quantidade_parcelas, contrato_url, contrato_dispensado")
+        .select("id, numero_pedido, cliente_id, cliente_nome, cliente_telefone, cliente_email, cpf_cliente, cidade, estado, cep, bairro, valor_venda, valor_frete, valor_instalacao, valor_credito, lucro_total, frete_aprovado, comprovante_url, comprovante_nome, lucro_instalacao, custo_instalacao, instalacao_faturada, metodo_pagamento, numero_parcelas, intervalo_boletos, empresa_receptora_id, data_venda, forma_pagamento, venda_presencial, pagamento_na_entrega, valor_entrada, valor_a_receber, quantidade_parcelas, contrato_url, contrato_dispensado")
         .eq("id", id)
         .single();
 
@@ -1345,6 +1346,7 @@ export default function FaturamentoVendaMinimalista() {
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
               {[
+                { label: 'Nº do Pedido', value: venda.numero_pedido },
                 { label: 'Nome', value: venda.cliente_nome },
                 { label: 'CPF/CNPJ', value: venda.cpf_cliente },
                 { label: 'Telefone', value: venda.cliente_telefone },

@@ -9819,6 +9819,7 @@ export type Database = {
           lucro_total: number | null
           metodo_pagamento: string | null
           numero_parcelas: number | null
+          numero_pedido: string | null
           observacoes_venda: string | null
           pagamento_na_entrega: boolean | null
           pago_na_instalacao: boolean | null
@@ -9886,6 +9887,7 @@ export type Database = {
           lucro_total?: number | null
           metodo_pagamento?: string | null
           numero_parcelas?: number | null
+          numero_pedido?: string | null
           observacoes_venda?: string | null
           pagamento_na_entrega?: boolean | null
           pago_na_instalacao?: boolean | null
@@ -9953,6 +9955,7 @@ export type Database = {
           lucro_total?: number | null
           metodo_pagamento?: string | null
           numero_parcelas?: number | null
+          numero_pedido?: string | null
           observacoes_venda?: string | null
           pagamento_na_entrega?: boolean | null
           pago_na_instalacao?: boolean | null
