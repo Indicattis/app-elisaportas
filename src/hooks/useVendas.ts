@@ -5,6 +5,7 @@ import { addDays } from 'date-fns';
 import { PagamentoData } from '@/components/vendas/PagamentoSection';
 import { MetodoPagamento } from '@/components/vendas/MetodoPagamentoCard';
 import { validarDesconto, getTipoAutorizacaoNecessaria } from '@/utils/descontoVendasRules';
+import { gerarProximoNumero, formatarNumeroPedido } from '@/utils/numberingService';
 
 export interface ProdutoVenda {
   id?: string;
