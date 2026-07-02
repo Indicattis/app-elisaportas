@@ -296,6 +296,48 @@ export default function Home() {
           </div>
         </div>
 
+        {/* Índices */}
+        <div
+          className="w-full mb-6"
+          style={{
+            opacity: mounted ? 1 : 0,
+            transform: mounted ? 'translateY(0)' : 'translateY(20px)',
+            transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 400ms'
+          }}
+        >
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="p-3 rounded-xl bg-white/5 border border-white/10 backdrop-blur-xl flex flex-col gap-2">
+              <div className="flex items-center gap-2 text-white/60">
+                <TrendingUp className="w-4 h-4" strokeWidth={1.5} />
+                <span className="text-[10px] uppercase tracking-wider">Faturamento mês</span>
+              </div>
+              <div className="text-lg font-bold text-white truncate">
+                {indicesLoading ? '—' : formatCurrency(indices?.faturamentoMes || 0)}
+              </div>
+            </div>
+
+            <div className="p-3 rounded-xl bg-white/5 border border-white/10 backdrop-blur-xl flex flex-col gap-2">
+              <div className="flex items-center gap-2 text-emerald-400/80">
+                <FileCheck className="w-4 h-4" strokeWidth={1.5} />
+                <span className="text-[10px] uppercase tracking-wider">Com contrato</span>
+              </div>
+              <div className="text-lg font-bold text-white">
+                {indicesLoading ? '—' : indices?.autorizadosComContrato || 0}
+              </div>
+            </div>
+
+            <div className="p-3 rounded-xl bg-white/5 border border-white/10 backdrop-blur-xl flex flex-col gap-2">
+              <div className="flex items-center gap-2 text-amber-400/80">
+                <FileX className="w-4 h-4" strokeWidth={1.5} />
+                <span className="text-[10px] uppercase tracking-wider">Sem contrato</span>
+              </div>
+              <div className="text-lg font-bold text-white">
+                {indicesLoading ? '—' : indices?.autorizadosSemContrato || 0}
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Lista de botões */}
         <div className="w-full flex flex-col gap-3">
         {menuItems.map((item, index) => {
