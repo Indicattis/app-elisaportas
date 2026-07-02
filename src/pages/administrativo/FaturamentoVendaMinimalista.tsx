@@ -1316,6 +1316,32 @@ export default function FaturamentoVendaMinimalista() {
           </div>
         </div>
 
+        {/* Dados do Cliente */}
+        <Card className="bg-white/5 border-white/10">
+          <CardHeader>
+            <CardTitle className="text-base text-white">Dados do Cliente</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+              {[
+                { label: 'Nome', value: venda.cliente_nome },
+                { label: 'CPF/CNPJ', value: venda.cpf_cliente },
+                { label: 'Telefone', value: venda.cliente_telefone },
+                { label: 'E-mail', value: venda.cliente_email },
+                { label: 'CEP', value: venda.cep },
+                { label: 'Bairro', value: venda.bairro },
+                { label: 'Cidade', value: venda.cidade },
+                { label: 'Estado', value: venda.estado },
+              ].map((f) => (
+                <div key={f.label} className="bg-white/5 border border-white/10 rounded-lg p-2">
+                  <p className="text-[10px] uppercase tracking-wider text-white/50 mb-1">{f.label}</p>
+                  <p className="text-sm text-white truncate">{f.value || '-'}</p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Tabela de Produtos */}
         <Card className="bg-white/5 border-white/10">
           <CardHeader>
