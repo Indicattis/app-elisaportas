@@ -1,0 +1,1 @@
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.gastos TO authenticated; GRANT ALL ON public.gastos TO service_role;
