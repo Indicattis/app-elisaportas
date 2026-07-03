@@ -51,9 +51,9 @@ export default function PosVendasPedidos() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('pedidos_producao')
-        .select('id, numero_pedido, cliente_nome, cliente_telefone, created_at, updated_at, vendas!inner(atendente:admin_users!fk_vendas_atendente(nome, foto_perfil_url))')
-
+        .select('id, numero_pedido, cliente_nome, cliente_telefone, created_at, updated_at, vendas!inner(data_venda, atendente:admin_users!fk_vendas_atendente(nome, foto_perfil_url))')
         .eq('etapa_atual', 'pos_vendas')
+
         .eq('arquivado', false)
         .order('updated_at', { ascending: false });
       if (error) throw error;
