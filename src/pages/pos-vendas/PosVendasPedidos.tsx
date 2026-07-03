@@ -22,9 +22,9 @@ function getInicial(nome: string) {
 }
 
 export default function PosVendasPedidos() {
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [mounted, setMounted] = useState(false);
+
   const [filtro, setFiltro] = useSessionFilters<FiltroStatus>({ key: 'pos-vendas-pedidos-filtro', defaultValue: 'pendentes' });
   const [busca, setBusca] = useSessionFilters<string>({ key: 'pos-vendas-pedidos-busca', defaultValue: '' });
   const [ordenacao, setOrdenacao] = useSessionFilters<Ordenacao>({ key: 'pos-vendas-pedidos-ordenacao', defaultValue: 'desc' });
