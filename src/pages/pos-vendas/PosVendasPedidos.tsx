@@ -245,7 +245,7 @@ export default function PosVendasPedidos() {
                     )}
                   </div>
 
-                  {/* Nome + telefone */}
+                  {/* Nome + telefone + datas */}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h4 className="text-white font-semibold truncate text-sm">{p.cliente_nome}</h4>
@@ -262,10 +262,21 @@ export default function PosVendasPedidos() {
                         </Badge>
                       )}
                     </div>
-                    {p.cliente_telefone && (
-                      <p className="text-xs text-white/40 mt-0.5 truncate">{p.cliente_telefone}</p>
-                    )}
+                    <div className="flex items-center gap-3 flex-wrap mt-0.5">
+                      {p.cliente_telefone && (
+                        <p className="text-xs text-white/40 truncate">{p.cliente_telefone}</p>
+                      )}
+                      <div className="flex items-center gap-1 text-[10px] text-white/50">
+                        <Calendar className="w-3 h-3" />
+                        <span>Pedido: {formatarData(p.created_at)}</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-[10px] text-white/50">
+                        <CheckCircle2 className="w-3 h-3" />
+                        <span>Finalizado: {formatarData(finalizadoMap.get(p.id))}</span>
+                      </div>
+                    </div>
                   </div>
+
 
                   {/* Ações */}
                   <div className="flex items-center gap-2 flex-shrink-0">
