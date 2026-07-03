@@ -74,6 +74,21 @@ export default function PosVendasPedidos() {
     },
   });
 
+  const { data: etapasFinalizado = [] } = useQuery({
+    queryKey: ['pos-vendas-finalizado', pedidos.map((p) => p.id)],
+    enabled: pedidos.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('pedidos_etapas')
+        .select('pedido_id, data_entrada')
+        .eq('etapa', 'finalizado')
+        .in('pedido_id', pedidos.map((p: any) => p.id));
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+
   const respondidosSet = useMemo(() => new Set(respondidos), [respondidos]);
 
   const listaFiltrada = useMemo(() => {
