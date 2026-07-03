@@ -35,8 +35,8 @@ export default function PosVendasPedidos() {
     supabase.functions.invoke('init-pesquisas-satisfacao-bucket').catch(() => {});
   }, []);
 
-
   const { data: pedidos = [], isLoading } = useQuery({
+
     queryKey: ['pos-vendas-pedidos'],
     queryFn: async () => {
       const { data, error } = await supabase
