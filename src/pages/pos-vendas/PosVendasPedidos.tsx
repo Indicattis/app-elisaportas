@@ -87,9 +87,17 @@ export default function PosVendasPedidos() {
       return data || [];
     },
   });
-
-
   const respondidosSet = useMemo(() => new Set(respondidos), [respondidos]);
+  const finalizadoMap = useMemo(() => {
+    const map = new Map<string, string>();
+    etapasFinalizado.forEach((e: any) => {
+      if (e.pedido_id && e.data_entrada) {
+        map.set(e.pedido_id, e.data_entrada);
+      }
+    });
+    return map;
+  }, [etapasFinalizado]);
+
 
   const listaFiltrada = useMemo(() => {
     const termo = busca.trim().toLowerCase();
