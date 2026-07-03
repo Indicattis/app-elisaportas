@@ -275,19 +275,24 @@ export default function PosVendasPedidos() {
                         </Badge>
                       )}
                     </div>
-                    <div className="flex items-center gap-3 flex-wrap mt-0.5">
+                    <div className="flex items-center gap-2 flex-wrap mt-0.5">
                       {p.cliente_telefone && (
                         <p className="text-xs text-white/40 truncate">{p.cliente_telefone}</p>
                       )}
-                      <div className="flex items-center gap-1 text-[10px] text-white/50">
+                      <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/15 border border-blue-500/30 text-blue-300 text-[10px]">
                         <Calendar className="w-3 h-3" />
                         <span>Pedido: {formatarData(p.created_at)}</span>
                       </div>
-                      <div className="flex items-center gap-1 text-[10px] text-white/50">
+                      <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-[10px]">
                         <CheckCircle2 className="w-3 h-3" />
                         <span>Finalizado: {formatarData(finalizadoMap.get(p.id))}</span>
                       </div>
+                      <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-500/15 border border-purple-500/30 text-purple-300 text-[10px]">
+                        <ClipboardList className="w-3 h-3" />
+                        <span>Venda: {formatarData(p.vendas?.data_venda)}</span>
+                      </div>
                     </div>
+
                   </div>
 
 
