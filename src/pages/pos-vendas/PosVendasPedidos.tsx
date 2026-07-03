@@ -174,53 +174,8 @@ export default function PosVendasPedidos() {
       fullWidth={false}
     >
       <div className="relative z-10">
-
-
-        <div className="flex flex-col md:flex-row gap-3 mb-6">
-          <div className="relative flex-1">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
-            <Input
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-              placeholder="Buscar por cliente ou número do pedido"
-              className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/30"
-            />
-          </div>
-          <div className="flex gap-2">
-            {(['pendentes', 'respondidos', 'todos'] as FiltroStatus[]).map((f) => (
-              <Button
-                key={f}
-                variant={filtro === f ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setFiltro(f)}
-                className={filtro === f ? '' : 'bg-white/5 border-white/10 text-white hover:bg-white/10'}
-              >
-                {f === 'pendentes' ? 'Pendentes' : f === 'respondidos' ? 'Respondidos' : 'Todos'}
-              </Button>
-            ))}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setOrdenacao(ordenacao === 'desc' ? 'asc' : 'desc')}
-              className="bg-white/5 border-white/10 text-white hover:bg-white/10 gap-1.5"
-              title={ordenacao === 'desc' ? 'Mais recentes primeiro' : 'Mais antigos primeiro'}
-            >
-              {ordenacao === 'desc' ? (
-                <>
-                  <ArrowDownWideNarrow className="w-4 h-4" />
-                  Mais recentes
-                </>
-              ) : (
-                <>
-                  <ArrowUpNarrowWide className="w-4 h-4" />
-                  Mais antigos
-                </>
-              )}
-            </Button>
-          </div>
-        </div>
-
         {isLoading ? (
+
           <p className="text-white/50">Carregando...</p>
         ) : listaFiltrada.length === 0 ? (
           <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl p-12 text-center">
