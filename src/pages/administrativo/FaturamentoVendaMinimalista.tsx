@@ -1344,7 +1344,7 @@ export default function FaturamentoVendaMinimalista() {
             <CardTitle className="text-base text-white">Dados do Cliente</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+            <div className="grid grid-cols-2 md:grid-cols-6 gap-3 text-xs">
               {[
                 { label: 'Nº do Pedido', value: venda.numero_pedido },
                 { label: 'Nome', value: venda.cliente_nome },
