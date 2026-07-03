@@ -47,12 +47,11 @@ export default function PosVendasPedidos() {
   }, []);
 
   const { data: pedidos = [], isLoading } = useQuery({
-
     queryKey: ['pos-vendas-pedidos'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('pedidos_producao')
-        .select('id, numero_pedido, cliente_nome, cliente_telefone, data_entrega, updated_at, vendas!inner(atendente:admin_users!fk_vendas_atendente(nome, foto_perfil_url))')
+        .select('id, numero_pedido, cliente_nome, cliente_telefone, data_entrega, created_at, updated_at, vendas!inner(atendente:admin_users!fk_vendas_atendente(nome, foto_perfil_url))')
         .eq('etapa_atual', 'pos_vendas')
         .eq('arquivado', false)
         .order('updated_at', { ascending: false });
@@ -60,6 +59,7 @@ export default function PosVendasPedidos() {
       return data || [];
     },
   });
+
 
   const { data: respondidos = [] } = useQuery({
     queryKey: ['pos-vendas-pesquisas', pedidos.map((p) => p.id)],
