@@ -14,14 +14,22 @@ import { useSessionFilters } from '@/hooks/useSessionFilters';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
-
 type FiltroStatus = 'todos' | 'pendentes' | 'respondidos';
-
 type Ordenacao = 'desc' | 'asc';
+
+function formatarData(data: string | null | undefined): string {
+  if (!data) return '-';
+  try {
+    return format(parseISO(data), 'dd/MM/yyyy', { locale: ptBR });
+  } catch {
+    return '-';
+  }
+}
 
 function getInicial(nome: string) {
   return (nome?.trim()?.charAt(0) || '?').toUpperCase();
 }
+
 
 export default function PosVendasPedidos() {
   const queryClient = useQueryClient();
