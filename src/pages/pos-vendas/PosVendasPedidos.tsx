@@ -12,9 +12,8 @@ import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { useSessionFilters } from '@/hooks/useSessionFilters';
 
-
-
 type FiltroStatus = 'todos' | 'pendentes' | 'respondidos';
+
 type Ordenacao = 'desc' | 'asc';
 
 function getInicial(nome: string) {
