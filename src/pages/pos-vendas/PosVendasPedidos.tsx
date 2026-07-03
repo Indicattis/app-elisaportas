@@ -1,9 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, ClipboardList, CheckCircle2, Clock, Search, ArrowRight, Eye } from 'lucide-react';
-import { ArrowUpNarrowWide, ArrowDownWideNarrow } from 'lucide-react';
-import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
+import { ClipboardList, CheckCircle2, Clock, Search, ArrowRight, Eye, ArrowUpNarrowWide, ArrowDownWideNarrow } from 'lucide-react';
+import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { DelayedParticles } from '@/components/DelayedParticles';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
@@ -14,6 +12,7 @@ import { PedidoDetalhesSheet } from '@/components/pedidos/PedidoDetalhesSheet';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { useSessionFilters } from '@/hooks/useSessionFilters';
+
 
 type FiltroStatus = 'todos' | 'pendentes' | 'respondidos';
 type Ordenacao = 'desc' | 'asc';
