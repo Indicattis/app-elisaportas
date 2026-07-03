@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ClipboardList, CheckCircle2, Clock, Search, ArrowRight, Eye, ArrowUpNarrowWide, ArrowDownWideNarrow } from 'lucide-react';
+import { ClipboardList, CheckCircle2, Clock, Search, ArrowRight, Eye, ArrowUpNarrowWide, ArrowDownWideNarrow, Calendar } from 'lucide-react';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
@@ -11,16 +11,27 @@ import { PedidoDetalhesSheet } from '@/components/pedidos/PedidoDetalhesSheet';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { useSessionFilters } from '@/hooks/useSessionFilters';
+import { format, parseISO } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 type FiltroStatus = 'todos' | 'pendentes' | 'respondidos';
-
 type Ordenacao = 'desc' | 'asc';
+
+function formatarData(data: string | null | undefined): string {
+  if (!data) return '-';
+  try {
+    return format(parseISO(data), 'dd/MM/yyyy', { locale: ptBR });
+  } catch {
+    return '-';
+  }
+}
 
 function getInicial(nome: string) {
   return (nome?.trim()?.charAt(0) || '?').toUpperCase();
 }
 
 export default function PosVendasPedidos() {
+
   const queryClient = useQueryClient();
 
   const [filtro, setFiltro] = useSessionFilters<FiltroStatus>({ key: 'pos-vendas-pedidos-filtro', defaultValue: 'pendentes' });
@@ -36,12 +47,12 @@ export default function PosVendasPedidos() {
   }, []);
 
   const { data: pedidos = [], isLoading } = useQuery({
-
     queryKey: ['pos-vendas-pedidos'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('pedidos_producao')
-        .select('id, numero_pedido, cliente_nome, cliente_telefone, data_entrega, updated_at, vendas!inner(atendente:admin_users!fk_vendas_atendente(nome, foto_perfil_url))')
+        .select('id, numero_pedido, cliente_nome, cliente_telefone, created_at, updated_at, vendas!inner(atendente:admin_users!fk_vendas_atendente(nome, foto_perfil_url))')
+
         .eq('etapa_atual', 'pos_vendas')
         .eq('arquivado', false)
         .order('updated_at', { ascending: false });
@@ -51,6 +62,7 @@ export default function PosVendasPedidos() {
   });
 
   const { data: respondidos = [] } = useQuery({
+
     queryKey: ['pos-vendas-pesquisas', pedidos.map((p) => p.id)],
     enabled: pedidos.length > 0,
     queryFn: async () => {
@@ -63,7 +75,32 @@ export default function PosVendasPedidos() {
     },
   });
 
+  const { data: etapasFinalizado = [] } = useQuery({
+    queryKey: ['pos-vendas-finalizado', pedidos.map((p) => p.id)],
+    enabled: pedidos.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('pedidos_etapas')
+        .select('pedido_id, data_entrada')
+        .eq('etapa', 'finalizado')
+        .in('pedido_id', pedidos.map((p: any) => p.id));
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
   const respondidosSet = useMemo(() => new Set(respondidos), [respondidos]);
+
+  const finalizadoMap = useMemo(() => {
+    const map = new Map<string, string>();
+    etapasFinalizado.forEach((e: any) => {
+      if (e.pedido_id && e.data_entrada) {
+        map.set(e.pedido_id, e.data_entrada);
+      }
+    });
+    return map;
+  }, [etapasFinalizado]);
+
 
   const listaFiltrada = useMemo(() => {
     const termo = busca.trim().toLowerCase();
@@ -89,7 +126,9 @@ export default function PosVendasPedidos() {
     setPedidoSelecionado(null);
     queryClient.invalidateQueries({ queryKey: ['pos-vendas-pedidos'] });
     queryClient.invalidateQueries({ queryKey: ['pos-vendas-pesquisas'] });
+    queryClient.invalidateQueries({ queryKey: ['pos-vendas-finalizado'] });
   };
+
 
   const handleVerPedido = async (pedidoId: string) => {
     try {
@@ -211,7 +250,7 @@ export default function PosVendasPedidos() {
                     )}
                   </div>
 
-                  {/* Nome + telefone */}
+                  {/* Nome + telefone + datas */}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h4 className="text-white font-semibold truncate text-sm">{p.cliente_nome}</h4>
@@ -228,10 +267,21 @@ export default function PosVendasPedidos() {
                         </Badge>
                       )}
                     </div>
-                    {p.cliente_telefone && (
-                      <p className="text-xs text-white/40 mt-0.5 truncate">{p.cliente_telefone}</p>
-                    )}
+                    <div className="flex items-center gap-3 flex-wrap mt-0.5">
+                      {p.cliente_telefone && (
+                        <p className="text-xs text-white/40 truncate">{p.cliente_telefone}</p>
+                      )}
+                      <div className="flex items-center gap-1 text-[10px] text-white/50">
+                        <Calendar className="w-3 h-3" />
+                        <span>Pedido: {formatarData(p.created_at)}</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-[10px] text-white/50">
+                        <CheckCircle2 className="w-3 h-3" />
+                        <span>Finalizado: {formatarData(finalizadoMap.get(p.id))}</span>
+                      </div>
+                    </div>
                   </div>
+
 
                   {/* Ações */}
                   <div className="flex items-center gap-2 flex-shrink-0">
