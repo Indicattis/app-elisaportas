@@ -30,8 +30,8 @@ function getInicial(nome: string) {
   return (nome?.trim()?.charAt(0) || '?').toUpperCase();
 }
 
-
 export default function PosVendasPedidos() {
+
   const queryClient = useQueryClient();
 
   const [filtro, setFiltro] = useSessionFilters<FiltroStatus>({ key: 'pos-vendas-pedidos-filtro', defaultValue: 'pendentes' });
