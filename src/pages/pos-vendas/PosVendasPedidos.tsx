@@ -88,7 +88,9 @@ export default function PosVendasPedidos() {
       return data || [];
     },
   });
+
   const respondidosSet = useMemo(() => new Set(respondidos), [respondidos]);
+
   const finalizadoMap = useMemo(() => {
     const map = new Map<string, string>();
     etapasFinalizado.forEach((e: any) => {
