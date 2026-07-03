@@ -60,8 +60,8 @@ export default function PosVendasPedidos() {
     },
   });
 
-
   const { data: respondidos = [] } = useQuery({
+
     queryKey: ['pos-vendas-pesquisas', pedidos.map((p) => p.id)],
     enabled: pedidos.length > 0,
     queryFn: async () => {
