@@ -123,7 +123,9 @@ export default function PosVendasPedidos() {
     setPedidoSelecionado(null);
     queryClient.invalidateQueries({ queryKey: ['pos-vendas-pedidos'] });
     queryClient.invalidateQueries({ queryKey: ['pos-vendas-pesquisas'] });
+    queryClient.invalidateQueries({ queryKey: ['pos-vendas-finalizado'] });
   };
+
 
   const handleVerPedido = async (pedidoId: string) => {
     try {
