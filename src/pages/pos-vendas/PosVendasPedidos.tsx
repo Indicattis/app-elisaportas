@@ -23,7 +23,6 @@ function getInicial(nome: string) {
 
 export default function PosVendasPedidos() {
   const queryClient = useQueryClient();
-  const [mounted, setMounted] = useState(false);
 
   const [filtro, setFiltro] = useSessionFilters<FiltroStatus>({ key: 'pos-vendas-pedidos-filtro', defaultValue: 'pendentes' });
   const [busca, setBusca] = useSessionFilters<string>({ key: 'pos-vendas-pedidos-busca', defaultValue: '' });
@@ -32,15 +31,11 @@ export default function PosVendasPedidos() {
   const [pedidoDetalhes, setPedidoDetalhes] = useState<any | null>(null);
   const [loadingDetalhes, setLoadingDetalhes] = useState<string | null>(null);
 
-  useEffect(() => {
-    const t = setTimeout(() => setMounted(true), 50);
-    return () => clearTimeout(t);
-  }, []);
-
   // Inicializa bucket de anexos (idempotente)
   useEffect(() => {
     supabase.functions.invoke('init-pesquisas-satisfacao-bucket').catch(() => {});
   }, []);
+
 
   const { data: pedidos = [], isLoading } = useQuery({
     queryKey: ['pos-vendas-pedidos'],
