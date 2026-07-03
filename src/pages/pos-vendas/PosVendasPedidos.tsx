@@ -285,6 +285,6 @@ export default function PosVendasPedidos() {
           onOpenChange={(open) => !open && setPedidoDetalhes(null)}
         />
       )}
-    </div>
+    </MinimalistLayout>
   );
 }
