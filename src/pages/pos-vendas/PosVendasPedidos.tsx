@@ -156,7 +156,11 @@ export default function PosVendasPedidos() {
   };
 
   const filtrosHeader = (
-    <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
+    <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto items-start md:items-center">
+      <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-medium shrink-0">
+        <Clock className="w-3.5 h-3.5" />
+        <span>{pendentesCount} pendente{pendentesCount === 1 ? '' : 's'}</span>
+      </div>
       <div className="relative flex-1 md:w-[260px]">
         <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
         <Input
@@ -167,6 +171,7 @@ export default function PosVendasPedidos() {
         />
       </div>
       <div className="flex gap-2 flex-wrap">
+
         {(['pendentes', 'respondidos', 'todos'] as FiltroStatus[]).map((f) => (
           <Button
             key={f}
