@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, ClipboardList, CheckCircle2, Clock, Search, ArrowRight, Eye } from 'lucide-react';
+import { ArrowUpNarrowWide, ArrowDownWideNarrow } from 'lucide-react';
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { DelayedParticles } from '@/components/DelayedParticles';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,8 +13,10 @@ import { PesquisaSatisfacaoForm } from '@/components/pos-vendas/PesquisaSatisfac
 import { PedidoDetalhesSheet } from '@/components/pedidos/PedidoDetalhesSheet';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
+import { useSessionFilters } from '@/hooks/useSessionFilters';
 
 type FiltroStatus = 'todos' | 'pendentes' | 'respondidos';
+type Ordenacao = 'desc' | 'asc';
 
 function getInicial(nome: string) {
   return (nome?.trim()?.charAt(0) || '?').toUpperCase();
@@ -23,8 +26,9 @@ export default function PosVendasPedidos() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [mounted, setMounted] = useState(false);
-  const [filtro, setFiltro] = useState<FiltroStatus>('pendentes');
-  const [busca, setBusca] = useState('');
+  const [filtro, setFiltro] = useSessionFilters<FiltroStatus>({ key: 'pos-vendas-pedidos-filtro', defaultValue: 'pendentes' });
+  const [busca, setBusca] = useSessionFilters<string>({ key: 'pos-vendas-pedidos-busca', defaultValue: '' });
+  const [ordenacao, setOrdenacao] = useSessionFilters<Ordenacao>({ key: 'pos-vendas-pedidos-ordenacao', defaultValue: 'desc' });
   const [pedidoSelecionado, setPedidoSelecionado] = useState<any | null>(null);
   const [pedidoDetalhes, setPedidoDetalhes] = useState<any | null>(null);
   const [loadingDetalhes, setLoadingDetalhes] = useState<string | null>(null);
@@ -70,7 +74,7 @@ export default function PosVendasPedidos() {
 
   const listaFiltrada = useMemo(() => {
     const termo = busca.trim().toLowerCase();
-    return pedidos.filter((p: any) => {
+    const filtrada = pedidos.filter((p: any) => {
       const respondeu = respondidosSet.has(p.id);
       if (filtro === 'pendentes' && respondeu) return false;
       if (filtro === 'respondidos' && !respondeu) return false;
@@ -80,7 +84,13 @@ export default function PosVendasPedidos() {
         (p.numero_pedido || '').toLowerCase().includes(termo)
       );
     });
-  }, [pedidos, respondidosSet, filtro, busca]);
+    const ordenada = [...filtrada].sort((a: any, b: any) => {
+      const ta = new Date(a.updated_at || 0).getTime();
+      const tb = new Date(b.updated_at || 0).getTime();
+      return ordenacao === 'asc' ? ta - tb : tb - ta;
+    });
+    return ordenada;
+  }, [pedidos, respondidosSet, filtro, busca, ordenacao]);
 
   const handleFinalizado = () => {
     setPedidoSelecionado(null);
@@ -161,6 +171,25 @@ export default function PosVendasPedidos() {
                 {f === 'pendentes' ? 'Pendentes' : f === 'respondidos' ? 'Respondidos' : 'Todos'}
               </Button>
             ))}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setOrdenacao(ordenacao === 'desc' ? 'asc' : 'desc')}
+              className="bg-white/5 border-white/10 text-white hover:bg-white/10 gap-1.5"
+              title={ordenacao === 'desc' ? 'Mais recentes primeiro' : 'Mais antigos primeiro'}
+            >
+              {ordenacao === 'desc' ? (
+                <>
+                  <ArrowDownWideNarrow className="w-4 h-4" />
+                  Mais recentes
+                </>
+              ) : (
+                <>
+                  <ArrowUpNarrowWide className="w-4 h-4" />
+                  Mais antigos
+                </>
+              )}
+            </Button>
           </div>
         </div>
 
