@@ -1,10 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, ClipboardList, CheckCircle2, Clock, Search, ArrowRight, Eye } from 'lucide-react';
-import { ArrowUpNarrowWide, ArrowDownWideNarrow } from 'lucide-react';
-import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
-import { DelayedParticles } from '@/components/DelayedParticles';
+import { ClipboardList, CheckCircle2, Clock, Search, ArrowRight, Eye, ArrowUpNarrowWide, ArrowDownWideNarrow } from 'lucide-react';
+import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -16,6 +13,7 @@ import { toast } from 'sonner';
 import { useSessionFilters } from '@/hooks/useSessionFilters';
 
 type FiltroStatus = 'todos' | 'pendentes' | 'respondidos';
+
 type Ordenacao = 'desc' | 'asc';
 
 function getInicial(nome: string) {
@@ -23,9 +21,8 @@ function getInicial(nome: string) {
 }
 
 export default function PosVendasPedidos() {
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [mounted, setMounted] = useState(false);
+
   const [filtro, setFiltro] = useSessionFilters<FiltroStatus>({ key: 'pos-vendas-pedidos-filtro', defaultValue: 'pendentes' });
   const [busca, setBusca] = useSessionFilters<string>({ key: 'pos-vendas-pedidos-busca', defaultValue: '' });
   const [ordenacao, setOrdenacao] = useSessionFilters<Ordenacao>({ key: 'pos-vendas-pedidos-ordenacao', defaultValue: 'desc' });
@@ -33,17 +30,13 @@ export default function PosVendasPedidos() {
   const [pedidoDetalhes, setPedidoDetalhes] = useState<any | null>(null);
   const [loadingDetalhes, setLoadingDetalhes] = useState<string | null>(null);
 
-  useEffect(() => {
-    const t = setTimeout(() => setMounted(true), 50);
-    return () => clearTimeout(t);
-  }, []);
-
   // Inicializa bucket de anexos (idempotente)
   useEffect(() => {
     supabase.functions.invoke('init-pesquisas-satisfacao-bucket').catch(() => {});
   }, []);
 
   const { data: pedidos = [], isLoading } = useQuery({
+
     queryKey: ['pos-vendas-pedidos'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -120,80 +113,63 @@ export default function PosVendasPedidos() {
     }
   };
 
+  const filtrosHeader = (
+    <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
+      <div className="relative flex-1 md:w-[260px]">
+        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
+        <Input
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+          placeholder="Buscar por cliente ou número do pedido"
+          className="pl-9 h-9 bg-white/5 border-white/10 text-white placeholder:text-white/30"
+        />
+      </div>
+      <div className="flex gap-2 flex-wrap">
+        {(['pendentes', 'respondidos', 'todos'] as FiltroStatus[]).map((f) => (
+          <Button
+            key={f}
+            variant={filtro === f ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setFiltro(f)}
+            className={filtro === f ? '' : 'bg-white/5 border-white/10 text-white hover:bg-white/10'}
+          >
+            {f === 'pendentes' ? 'Pendentes' : f === 'respondidos' ? 'Respondidos' : 'Todos'}
+          </Button>
+        ))}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setOrdenacao(ordenacao === 'desc' ? 'asc' : 'desc')}
+          className="bg-white/5 border-white/10 text-white hover:bg-white/10 gap-1.5"
+          title={ordenacao === 'desc' ? 'Mais recentes primeiro' : 'Mais antigos primeiro'}
+        >
+          {ordenacao === 'desc' ? (
+            <>
+              <ArrowDownWideNarrow className="w-4 h-4" />
+              Mais recentes
+            </>
+          ) : (
+            <>
+              <ArrowUpNarrowWide className="w-4 h-4" />
+              Mais antigos
+            </>
+          )}
+        </Button>
+      </div>
+    </div>
+  );
+
   return (
-    <div className="min-h-screen bg-black relative overflow-hidden">
-      <DelayedParticles />
-      <AnimatedBreadcrumb
-        items={[
-          { label: 'Home', path: '/home' },
-          { label: 'Pós-Vendas', path: '/pos-vendas' },
-          { label: 'Pedidos' },
-        ]}
-        mounted={mounted}
-      />
-
-      <button
-        onClick={() => navigate('/pos-vendas')}
-        className="fixed top-4 left-4 z-50 p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 hover:bg-white/10 transition-all duration-300"
-      >
-        <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-lg shadow-blue-500/20">
-          <ArrowLeft className="w-5 h-5" strokeWidth={1.5} />
-        </div>
-      </button>
-
-      <div className="relative z-10 max-w-5xl mx-auto px-6 pt-24 pb-12">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-white">Pedidos em Pós-Vendas</h1>
-          <p className="text-white/50 mt-2">
-            Preencha a pesquisa de satisfação. Ao enviar, o pedido é arquivado automaticamente.
-          </p>
-        </div>
-
-        <div className="flex flex-col md:flex-row gap-3 mb-6">
-          <div className="relative flex-1">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
-            <Input
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-              placeholder="Buscar por cliente ou número do pedido"
-              className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/30"
-            />
-          </div>
-          <div className="flex gap-2">
-            {(['pendentes', 'respondidos', 'todos'] as FiltroStatus[]).map((f) => (
-              <Button
-                key={f}
-                variant={filtro === f ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setFiltro(f)}
-                className={filtro === f ? '' : 'bg-white/5 border-white/10 text-white hover:bg-white/10'}
-              >
-                {f === 'pendentes' ? 'Pendentes' : f === 'respondidos' ? 'Respondidos' : 'Todos'}
-              </Button>
-            ))}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setOrdenacao(ordenacao === 'desc' ? 'asc' : 'desc')}
-              className="bg-white/5 border-white/10 text-white hover:bg-white/10 gap-1.5"
-              title={ordenacao === 'desc' ? 'Mais recentes primeiro' : 'Mais antigos primeiro'}
-            >
-              {ordenacao === 'desc' ? (
-                <>
-                  <ArrowDownWideNarrow className="w-4 h-4" />
-                  Mais recentes
-                </>
-              ) : (
-                <>
-                  <ArrowUpNarrowWide className="w-4 h-4" />
-                  Mais antigos
-                </>
-              )}
-            </Button>
-          </div>
-        </div>
-
+    <MinimalistLayout
+      title="Pedidos em Pós-Vendas"
+      subtitle="Preencha a pesquisa de satisfação. Ao enviar, o pedido é arquivado automaticamente."
+      backPath="/pos-vendas"
+      headerActions={filtrosHeader}
+      fullWidth={false}
+    >
+      <div className="relative z-10">
         {isLoading ? (
+
           <p className="text-white/50">Carregando...</p>
         ) : listaFiltrada.length === 0 ? (
           <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl p-12 text-center">
@@ -303,6 +279,6 @@ export default function PosVendasPedidos() {
           onOpenChange={(open) => !open && setPedidoDetalhes(null)}
         />
       )}
-    </div>
+    </MinimalistLayout>
   );
 }
