@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ClipboardList, CheckCircle2, Clock, Search, ArrowRight, Eye, ArrowUpNarrowWide, ArrowDownWideNarrow } from 'lucide-react';
+import { ClipboardList, CheckCircle2, Clock, Search, ArrowRight, Eye, ArrowUpNarrowWide, ArrowDownWideNarrow, Calendar } from 'lucide-react';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
@@ -11,6 +11,9 @@ import { PedidoDetalhesSheet } from '@/components/pedidos/PedidoDetalhesSheet';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { useSessionFilters } from '@/hooks/useSessionFilters';
+import { format, parseISO } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+
 
 type FiltroStatus = 'todos' | 'pendentes' | 'respondidos';
 
