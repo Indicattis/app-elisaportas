@@ -100,8 +100,6 @@ export default function PosVendasPedidos() {
     });
     return map;
   }, [etapasFinalizado]);
-
-
   const listaFiltrada = useMemo(() => {
     const termo = busca.trim().toLowerCase();
     const filtrada = pedidos.filter((p: any) => {
@@ -121,6 +119,11 @@ export default function PosVendasPedidos() {
     });
     return ordenada;
   }, [pedidos, respondidosSet, filtro, busca, ordenacao]);
+
+  const pendentesCount = useMemo(() => {
+    return pedidos.filter((p: any) => !respondidosSet.has(p.id)).length;
+  }, [pedidos, respondidosSet]);
+
 
   const handleFinalizado = () => {
     setPedidoSelecionado(null);
