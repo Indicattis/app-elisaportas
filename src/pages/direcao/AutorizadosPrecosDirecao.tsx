@@ -12,6 +12,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { useEstadosCidades } from '@/hooks/useEstadosCidades';
 import { SortableEstadoCard } from '@/components/autorizados/EstadoCard';
+import { REGIOES_ORDEM, getRegiao, type RegiaoBrasil } from '@/utils/regioesBrasil';
 import { NovoEstadoDialog } from '@/components/autorizados/NovoEstadoDialog';
 import { HistoricoCadastrosAutorizados } from '@/components/autorizados/HistoricoCadastrosAutorizados';
 import { IndicadoresAutorizados } from '@/components/autorizados/IndicadoresAutorizados';
@@ -128,6 +129,27 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
       const newOrder = arrayMove(estados, oldIndex, newIndex);
       reordenarEstados(newOrder);
     }
+  };
+
+  const handleDragEndRegiao = (regiao: RegiaoBrasil) => (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const doRegiao = estados.filter(e => getRegiao(e.sigla) === regiao);
+    const oldIdx = doRegiao.findIndex(e => e.id === active.id);
+    const newIdx = doRegiao.findIndex(e => e.id === over.id);
+    if (oldIdx < 0 || newIdx < 0) return;
+    const reord = arrayMove(doRegiao, oldIdx, newIdx);
+    const idOrder = new Map(reord.map((e, i) => [e.id, i]));
+    // Reconstruct full list keeping non-region items in place, region items in new order
+    const iterReord = reord[Symbol.iterator]();
+    const novaLista = estados.map(e => {
+      if (getRegiao(e.sigla) === regiao) {
+        return iterReord.next().value!;
+      }
+      return e;
+    });
+    reordenarEstados(novaLista);
+    void idOrder;
   };
 
   const handleCloseEstadoDialog = (open: boolean) => {
