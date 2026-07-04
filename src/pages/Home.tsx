@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import logoPortasEnrolar from "@/assets/logo-portas-enrolar.ico";
-import { ShoppingCart, Factory, Shield, Truck, Building2, LogOut, LayoutDashboard, PanelLeft, Settings, Lock, BarChart3, Calendar, User, ClipboardList, Sun, Moon, Monitor, DollarSign, Users, BookOpen, Target, Headset, TrendingUp, FileCheck, FileX } from "lucide-react";
+import { ShoppingCart, Factory, Shield, Truck, Building2, LogOut, LayoutDashboard, PanelLeft, Settings, Lock, BarChart3, Calendar, User, ClipboardList, Sun, Moon, Monitor, DollarSign, Users, BookOpen, Target, Headset, TrendingUp } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useHomeIndices } from "@/hooks/useHomeIndices";
 import { supabase } from "@/integrations/supabase/client";
