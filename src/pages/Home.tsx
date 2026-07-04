@@ -306,14 +306,29 @@ export default function Home() {
           }}
         >
           <div className="grid grid-cols-1 gap-2">
-            <div className="p-2 rounded-xl bg-white/5 border border-white/10 backdrop-blur-xl flex flex-col gap-1">
-              <div className="flex items-center gap-1.5 text-white/60">
-                <TrendingUp className="w-3.5 h-3.5" strokeWidth={1.5} />
-                <span className="text-[9px] uppercase tracking-wider">Faturamento mês</span>
+            <div className="relative overflow-hidden rounded-3xl bg-white/5 border border-white/10 backdrop-blur-xl p-8 flex flex-col items-center justify-center shadow-2xl">
+              {/* Subtle background accent */}
+              <div className="absolute -top-12 -right-12 w-24 h-24 bg-blue-500/10 blur-3xl rounded-full" />
+
+              {/* Icon and Label */}
+              <div className="flex flex-col items-center gap-2 mb-4">
+                <div className="bg-blue-500/10 p-2 rounded-lg">
+                  <TrendingUp className="w-5 h-5 text-blue-400" strokeWidth={1.5} />
+                </div>
+                <span className="text-white/50 text-xs font-semibold tracking-widest uppercase">
+                  Faturamento Mês
+                </span>
               </div>
-              <div className="text-sm font-bold text-white truncate">
-                {indicesLoading ? '—' : formatCurrency(indices?.faturamentoMes || 0)}
+
+              {/* Value */}
+              <div className="flex flex-col items-center">
+                <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight text-center">
+                  {indicesLoading ? '—' : formatCurrency(indices?.faturamentoMes || 0)}
+                </h2>
               </div>
+
+              {/* Visual decoration */}
+              <div className="mt-6 w-12 h-1 bg-blue-500/40 rounded-full" />
             </div>
           </div>
         </div>
