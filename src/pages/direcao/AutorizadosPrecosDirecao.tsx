@@ -405,35 +405,48 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
                   </Button>
                 </div>
               ) : (
-                <div className="space-y-6">
+                <div className="space-y-8">
                   {REGIOES_ORDEM.map(regiao => {
                     const doRegiao = estados.filter(e => getRegiao(e.sigla) === regiao);
                     if (doRegiao.length === 0) return null;
                     return (
-                      <div key={regiao}>
-                        <div className="flex items-center gap-2 mb-2">
-                          <h3 className="text-xs font-semibold uppercase tracking-wider text-white/50">
-                            {regiao}
-                          </h3>
-                          <span className="text-[10px] font-medium text-white/40 px-1.5 py-0.5 rounded bg-white/5 border border-white/10">
-                            {doRegiao.length} {doRegiao.length === 1 ? 'estado' : 'estados'}
-                          </span>
-                          <div className="flex-1 h-px bg-white/5" />
-                        </div>
-                        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEndRegiao(regiao)}>
-                          <SortableContext items={doRegiao.map(e => e.id)} strategy={rectSortingStrategy}>
-                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                              {doRegiao.map(estado => (
-                                <SortableEstadoCard
-                                  key={estado.id}
-                                  estado={estado}
-                                  onClick={() => navigate(`${routePrefix}/estado/${estado.id}`)}
-                                  isSelected={false}
-                                />
-                              ))}
+                      <div
+                        key={regiao}
+                        className="relative bg-white/5 backdrop-blur-xl rounded-xl border border-white/10 overflow-hidden"
+                      >
+                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-400/40 via-blue-500/30 to-blue-600/20" />
+                        <div className="p-4">
+                          <div className="flex items-center gap-3 mb-4">
+                            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                              <span className="text-xs font-bold text-blue-400 uppercase tracking-wider">
+                                {regiao.slice(0, 2)}
+                              </span>
                             </div>
-                          </SortableContext>
-                        </DndContext>
+                            <div className="flex flex-col">
+                              <h3 className="text-sm font-semibold uppercase tracking-wider text-white/80">
+                                {regiao}
+                              </h3>
+                              <span className="text-[10px] text-white/40">
+                                {doRegiao.length} {doRegiao.length === 1 ? 'estado cadastrado' : 'estados cadastrados'}
+                              </span>
+                            </div>
+                            <div className="flex-1" />
+                          </div>
+                          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEndRegiao(regiao)}>
+                            <SortableContext items={doRegiao.map(e => e.id)} strategy={rectSortingStrategy}>
+                              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                {doRegiao.map(estado => (
+                                  <SortableEstadoCard
+                                    key={estado.id}
+                                    estado={estado}
+                                    onClick={() => navigate(`${routePrefix}/estado/${estado.id}`)}
+                                    isSelected={false}
+                                  />
+                                ))}
+                              </div>
+                            </SortableContext>
+                          </DndContext>
+                        </div>
                       </div>
                     );
                   })}
