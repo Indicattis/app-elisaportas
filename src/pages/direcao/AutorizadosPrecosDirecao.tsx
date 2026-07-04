@@ -405,20 +405,39 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
                   </Button>
                 </div>
               ) : (
-                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                  <SortableContext items={estados.map(e => e.id)} strategy={rectSortingStrategy}>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                      {estados.map(estado => (
-                        <SortableEstadoCard
-                          key={estado.id}
-                          estado={estado}
-                          onClick={() => navigate(`${routePrefix}/estado/${estado.id}`)}
-                          isSelected={false}
-                        />
-                      ))}
-                    </div>
-                  </SortableContext>
-                </DndContext>
+                <div className="space-y-6">
+                  {REGIOES_ORDEM.map(regiao => {
+                    const doRegiao = estados.filter(e => getRegiao(e.sigla) === regiao);
+                    if (doRegiao.length === 0) return null;
+                    return (
+                      <div key={regiao}>
+                        <div className="flex items-center gap-2 mb-2">
+                          <h3 className="text-xs font-semibold uppercase tracking-wider text-white/50">
+                            {regiao}
+                          </h3>
+                          <span className="text-[10px] font-medium text-white/40 px-1.5 py-0.5 rounded bg-white/5 border border-white/10">
+                            {doRegiao.length} {doRegiao.length === 1 ? 'estado' : 'estados'}
+                          </span>
+                          <div className="flex-1 h-px bg-white/5" />
+                        </div>
+                        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEndRegiao(regiao)}>
+                          <SortableContext items={doRegiao.map(e => e.id)} strategy={rectSortingStrategy}>
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                              {doRegiao.map(estado => (
+                                <SortableEstadoCard
+                                  key={estado.id}
+                                  estado={estado}
+                                  onClick={() => navigate(`${routePrefix}/estado/${estado.id}`)}
+                                  isSelected={false}
+                                />
+                              ))}
+                            </div>
+                          </SortableContext>
+                        </DndContext>
+                      </div>
+                    );
+                  })}
+                </div>
               )}
             </div>
           )}
