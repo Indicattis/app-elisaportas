@@ -306,29 +306,29 @@ export default function Home() {
           }}
         >
           <div className="grid grid-cols-1 gap-2">
-            <div className="relative overflow-hidden rounded-3xl bg-white/5 border border-white/10 backdrop-blur-xl p-8 flex flex-col items-center justify-center shadow-2xl">
+            <div className="relative overflow-hidden rounded-3xl bg-white/5 border border-white/10 backdrop-blur-xl py-4 px-6 flex flex-col items-center justify-center shadow-2xl">
               {/* Subtle background accent */}
               <div className="absolute -top-12 -right-12 w-24 h-24 bg-blue-500/10 blur-3xl rounded-full" />
 
               {/* Icon and Label */}
-              <div className="flex flex-col items-center gap-2 mb-4">
-                <div className="bg-blue-500/10 p-2 rounded-lg">
-                  <TrendingUp className="w-5 h-5 text-blue-400" strokeWidth={1.5} />
+              <div className="flex flex-col items-center gap-1 mb-2">
+                <div className="bg-blue-500/10 p-1.5 rounded-lg">
+                  <TrendingUp className="w-4 h-4 text-blue-400" strokeWidth={1.5} />
                 </div>
-                <span className="text-white/50 text-xs font-semibold tracking-widest uppercase">
+                <span className="text-white/50 text-[10px] font-semibold tracking-widest uppercase">
                   Faturamento Mês
                 </span>
               </div>
 
               {/* Value */}
               <div className="flex flex-col items-center">
-                <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight text-center">
+                <h2 className="text-3xl md:text-4xl font-bold text-white tracking-tight text-center">
                   {indicesLoading ? '—' : formatCurrency(indices?.faturamentoMes || 0)}
                 </h2>
               </div>
 
               {/* Visual decoration */}
-              <div className="mt-6 w-12 h-1 bg-blue-500/40 rounded-full" />
+              <div className="mt-3 w-10 h-0.5 bg-blue-500/40 rounded-full" />
             </div>
           </div>
         </div>
