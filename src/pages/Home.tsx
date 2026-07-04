@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import logoPortasEnrolar from "@/assets/logo-portas-enrolar.ico";
-import { ShoppingCart, Factory, Shield, Truck, Building2, LogOut, LayoutDashboard, PanelLeft, Settings, Lock, BarChart3, Calendar, User, ClipboardList, Sun, Moon, Monitor, DollarSign, Users, BookOpen, Target, Headset, TrendingUp, FileCheck, FileX } from "lucide-react";
+import { ShoppingCart, Factory, Shield, Truck, Building2, LogOut, LayoutDashboard, PanelLeft, Settings, Lock, BarChart3, Calendar, User, ClipboardList, Sun, Moon, Monitor, DollarSign, Users, BookOpen, Target, Headset, TrendingUp } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useHomeIndices } from "@/hooks/useHomeIndices";
 import { supabase } from "@/integrations/supabase/client";
@@ -305,7 +305,7 @@ export default function Home() {
             transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 400ms'
           }}
         >
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <div className="grid grid-cols-1 gap-2">
             <div className="p-2 rounded-xl bg-white/5 border border-white/10 backdrop-blur-xl flex flex-col gap-1">
               <div className="flex items-center gap-1.5 text-white/60">
                 <TrendingUp className="w-3.5 h-3.5" strokeWidth={1.5} />
@@ -313,26 +313,6 @@ export default function Home() {
               </div>
               <div className="text-sm font-bold text-white truncate">
                 {indicesLoading ? '—' : formatCurrency(indices?.faturamentoMes || 0)}
-              </div>
-            </div>
-
-            <div className="p-2 rounded-xl bg-white/5 border border-white/10 backdrop-blur-xl flex flex-col gap-1">
-              <div className="flex items-center gap-1.5 text-emerald-400/80">
-                <FileCheck className="w-3.5 h-3.5" strokeWidth={1.5} />
-                <span className="text-[9px] uppercase tracking-wider">Com contrato</span>
-              </div>
-              <div className="text-sm font-bold text-white">
-                {indicesLoading ? '—' : indices?.autorizadosComContrato || 0}
-              </div>
-            </div>
-
-            <div className="p-2 rounded-xl bg-white/5 border border-white/10 backdrop-blur-xl flex flex-col gap-1">
-              <div className="flex items-center gap-1.5 text-amber-400/80">
-                <FileX className="w-3.5 h-3.5" strokeWidth={1.5} />
-                <span className="text-[9px] uppercase tracking-wider">Sem contrato</span>
-              </div>
-              <div className="text-sm font-bold text-white">
-                {indicesLoading ? '—' : indices?.autorizadosSemContrato || 0}
               </div>
             </div>
           </div>
