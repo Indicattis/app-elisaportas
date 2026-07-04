@@ -1,39 +1,35 @@
 ## Objetivo
+Cadastrar as 10 cidades mais populosas de cada um dos 24 estados que hoje não possuem cidades em `cidades_autorizados` (todos exceto PR, SC e RS).
 
-Separar visualmente os cards de estados em `/autorizados` por região do Brasil (Norte, Nordeste, Centro-Oeste, Sudeste, Sul), mantendo o comportamento atual (drag-and-drop, indicadores, navegação).
+## Como
+Um único INSERT em `cidades_autorizados` (via tool de dados), preenchendo `estado_id`, `nome` e `ordem` (1 a 10, seguindo o ranking populacional IBGE mais recente).
 
-## Como será
+## Cidades por estado (top 10 por população)
 
-Em vez de uma única grade com todos os estados, a seção "Estados Cadastrados" passará a exibir **5 sub-seções colapsáveis**, uma por região:
+- **AC:** Rio Branco, Cruzeiro do Sul, Sena Madureira, Tarauacá, Feijó, Brasiléia, Plácido de Castro, Senador Guiomard, Xapuri, Mâncio Lima
+- **AL:** Maceió, Arapiraca, Rio Largo, Palmeira dos Índios, Penedo, União dos Palmares, São Miguel dos Campos, Coruripe, Delmiro Gouveia, Campo Alegre
+- **AM:** Manaus, Parintins, Itacoatiara, Manacapuru, Coari, Tabatinga, Maués, Tefé, Iranduba, Humaitá
+- **AP:** Macapá, Santana, Laranjal do Jari, Oiapoque, Mazagão, Porto Grande, Tartarugalzinho, Pedra Branca do Amapari, Vitória do Jari, Amapá
+- **BA:** Salvador, Feira de Santana, Vitória da Conquista, Camaçari, Itabuna, Juazeiro, Lauro de Freitas, Ilhéus, Jequié, Teixeira de Freitas
+- **CE:** Fortaleza, Caucaia, Juazeiro do Norte, Maracanaú, Sobral, Crato, Itapipoca, Maranguape, Iguatu, Quixadá
+- **DF:** Brasília (única cidade — inserida como registro único)
+- **ES:** Serra, Vila Velha, Cariacica, Vitória, Cachoeiro de Itapemirim, Linhares, São Mateus, Colatina, Guarapari, Aracruz
+- **GO:** Goiânia, Aparecida de Goiânia, Anápolis, Rio Verde, Luziânia, Águas Lindas de Goiás, Valparaíso de Goiás, Trindade, Formosa, Novo Gama
+- **MA:** São Luís, Imperatriz, São José de Ribamar, Timon, Caxias, Codó, Paço do Lumiar, Açailândia, Bacabal, Balsas
+- **MG:** Belo Horizonte, Uberlândia, Contagem, Juiz de Fora, Betim, Montes Claros, Ribeirão das Neves, Uberaba, Governador Valadares, Ipatinga
+- **MS:** Campo Grande, Dourados, Três Lagoas, Corumbá, Ponta Porã, Naviraí, Nova Andradina, Sidrolândia, Aquidauana, Paranaíba
+- **MT:** Cuiabá, Várzea Grande, Rondonópolis, Sinop, Tangará da Serra, Cáceres, Sorriso, Lucas do Rio Verde, Barra do Garças, Primavera do Leste
+- **PA:** Belém, Ananindeua, Santarém, Marabá, Parauapebas, Castanhal, Abaetetuba, Cametá, Marituba, Bragança
+- **PB:** João Pessoa, Campina Grande, Santa Rita, Patos, Bayeux, Sousa, Cajazeiras, Cabedelo, Guarabira, Sapé
+- **PE:** Recife, Jaboatão dos Guararapes, Olinda, Caruaru, Petrolina, Paulista, Cabo de Santo Agostinho, Camaragibe, Garanhuns, Vitória de Santo Antão
+- **PI:** Teresina, Parnaíba, Picos, Piripiri, Floriano, Campo Maior, Barras, União, Altos, Pedro II
+- **RJ:** Rio de Janeiro, São Gonçalo, Duque de Caxias, Nova Iguaçu, Niterói, Belford Roxo, São João de Meriti, Campos dos Goytacazes, Petrópolis, Volta Redonda
+- **RN:** Natal, Mossoró, Parnamirim, São Gonçalo do Amarante, Macaíba, Ceará-Mirim, Caicó, Assú, Currais Novos, Nova Cruz
+- **RO:** Porto Velho, Ji-Paraná, Ariquemes, Vilhena, Cacoal, Rolim de Moura, Jaru, Guajará-Mirim, Pimenta Bueno, Ouro Preto do Oeste
+- **RR:** Boa Vista, Rorainópolis, Caracaraí, Alto Alegre, Mucajaí, Cantá, Pacaraima, Bonfim, São João da Baliza, Normandia
+- **SE:** Aracaju, Nossa Senhora do Socorro, Lagarto, Itabaiana, São Cristóvão, Estância, Tobias Barreto, Itabaianinha, Simão Dias, Propriá
+- **SP:** São Paulo, Guarulhos, Campinas, São Bernardo do Campo, Santo André, Osasco, São José dos Campos, Ribeirão Preto, Sorocaba, Santos
+- **TO:** Palmas, Araguaína, Gurupi, Porto Nacional, Paraíso do Tocantins, Colinas do Tocantins, Guaraí, Tocantinópolis, Dianópolis, Formoso do Araguaia
 
-```text
-Estados Cadastrados  [4/27]
-
-Sul                                                    [3 estados]
-[RS] [SC] [PR]
-
-Sudeste                                                [1 estado]
-[SP]
-
-Nordeste                                               [0 estados]
-(vazio — oculto por padrão)
-
-...
-```
-
-Regras:
-- Cada região mostra apenas os estados cadastrados naquele grupo, usando o mesmo `SortableEstadoCard`.
-- Regiões sem nenhum estado cadastrado ficam ocultas (ou com um placeholder discreto — ver pergunta abaixo).
-- Cabeçalho de cada região tem título + contador de estados.
-- Ordenação (drag-and-drop) continua funcionando, mas restrita a dentro da mesma região (arrastar entre regiões não faz sentido pois a região é derivada da sigla).
-
-## Detalhes técnicos
-
-- Novo utilitário `src/utils/regioesBrasil.ts` com mapa `sigla → região` (constante fixa, 27 UFs) e ordem canônica das regiões.
-- `src/pages/direcao/AutorizadosPrecosDirecao.tsx`: substituir a grade única por um `map` das regiões, agrupando `estados` por `regiao`. Cada região tem seu próprio `DndContext` + `SortableContext` para preservar a reordenação por região.
-- `reordenarEstados` em `useEstadosCidades.ts` já grava `ordem` global — vamos ajustá-lo para receber a lista completa reordenada (região reordenada + demais estados na ordem atual) e persistir o `ordem` de todos, para que a ordem visual dentro da região seja respeitada.
-- Nenhuma mudança de schema no banco.
-
-## Pergunta
-
-Regiões sem estados cadastrados devem ficar **ocultas** (padrão limpo) ou aparecer com um placeholder tipo "Nenhum estado nesta região"?
+## Confirmação
+- Confirma o cadastro dessas 24 listas exatamente como acima? Se preferir, posso trocar o DF por uma lista de regiões administrativas (ex.: Ceilândia, Taguatinga, Samambaia…) em vez de só "Brasília".
