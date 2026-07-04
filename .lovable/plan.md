@@ -1,19 +1,39 @@
 ## Objetivo
-Ter um numeral único compartilhado entre venda e pedido, e exibi-lo na seção "Dados do Cliente" do Faturamento da Venda.
 
-## Passos
+Separar visualmente os cards de estados em `/autorizados` por região do Brasil (Norte, Nordeste, Centro-Oeste, Sudeste, Sul), mantendo o comportamento atual (drag-and-drop, indicadores, navegação).
 
-1. **Migração DB**
-   - Adicionar coluna `numero_pedido text` em `public.vendas`.
-   - Backfill: `UPDATE vendas v SET numero_pedido = p.numero_pedido FROM pedidos_producao p WHERE p.venda_id = v.id AND v.numero_pedido IS NULL;`.
-   - Trigger `sync_numero_pedido_vendas`:
-     - AFTER INSERT/UPDATE OF `numero_pedido` em `pedidos_producao` → propaga para `vendas` pelo `venda_id`.
-     - BEFORE INSERT em `pedidos_producao` quando a venda já tiver `numero_pedido` e o pedido não → copia da venda (mantém consistência nos dois sentidos).
-   - Índice em `vendas(numero_pedido)` para busca.
+## Como será
 
-2. **Faturamento Venda** (`src/pages/administrativo/FaturamentoVendaMinimalista.tsx`)
-   - Incluir `numero_pedido` no `.select()` de `vendas`.
-   - Adicionar campo **"Nº do Pedido"** como primeiro item da grid em "Dados do Cliente".
+Em vez de uma única grade com todos os estados, a seção "Estados Cadastrados" passará a exibir **5 sub-seções colapsáveis**, uma por região:
 
-## Fora do escopo
-Não altero outras telas nesta iteração (podem continuar lendo `pedidos_producao.numero_pedido` normalmente; o trigger apenas espelha).
+```text
+Estados Cadastrados  [4/27]
+
+Sul                                                    [3 estados]
+[RS] [SC] [PR]
+
+Sudeste                                                [1 estado]
+[SP]
+
+Nordeste                                               [0 estados]
+(vazio — oculto por padrão)
+
+...
+```
+
+Regras:
+- Cada região mostra apenas os estados cadastrados naquele grupo, usando o mesmo `SortableEstadoCard`.
+- Regiões sem nenhum estado cadastrado ficam ocultas (ou com um placeholder discreto — ver pergunta abaixo).
+- Cabeçalho de cada região tem título + contador de estados.
+- Ordenação (drag-and-drop) continua funcionando, mas restrita a dentro da mesma região (arrastar entre regiões não faz sentido pois a região é derivada da sigla).
+
+## Detalhes técnicos
+
+- Novo utilitário `src/utils/regioesBrasil.ts` com mapa `sigla → região` (constante fixa, 27 UFs) e ordem canônica das regiões.
+- `src/pages/direcao/AutorizadosPrecosDirecao.tsx`: substituir a grade única por um `map` das regiões, agrupando `estados` por `regiao`. Cada região tem seu próprio `DndContext` + `SortableContext` para preservar a reordenação por região.
+- `reordenarEstados` em `useEstadosCidades.ts` já grava `ordem` global — vamos ajustá-lo para receber a lista completa reordenada (região reordenada + demais estados na ordem atual) e persistir o `ordem` de todos, para que a ordem visual dentro da região seja respeitada.
+- Nenhuma mudança de schema no banco.
+
+## Pergunta
+
+Regiões sem estados cadastrados devem ficar **ocultas** (padrão limpo) ou aparecer com um placeholder tipo "Nenhum estado nesta região"?
