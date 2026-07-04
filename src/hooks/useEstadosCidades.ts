@@ -8,6 +8,8 @@ export interface Estado {
   nome: string;
   totalAutorizados: number;
   totalCidades: number;
+  cidadesCobertas: number;
+  percentualCobertura: number;
 }
 
 export interface AutorizadoResumo {
@@ -55,7 +57,7 @@ export const useEstadosCidades = () => {
       // Buscar autorizados ativos para contar
       const { data: autorizados, error: errorAutorizados } = await supabase
         .from('autorizados')
-        .select('id, estado')
+        .select('id, cidade, estado')
         .eq('ativo', true)
         .in('etapa', ['ativo', 'premium']);
       
@@ -64,9 +66,25 @@ export const useEstadosCidades = () => {
       // Buscar cidades cadastradas por estado
       const { data: cidadesCadastradas, error: errorCidades } = await supabase
         .from('cidades_autorizados')
-        .select('id, estado_id');
+        .select('id, estado_id, nome');
       
       if (errorCidades) throw errorCidades;
+
+      // Buscar cidades secundárias e meta
+      const [{ data: secundarias }, { data: cfgMeta }] = await Promise.all([
+        supabase.from('autorizado_cidades_secundarias').select('cidade, estado'),
+        supabase.from('autorizados_meta_config').select('meta_por_cidade').order('updated_at', { ascending: false }).limit(1).maybeSingle(),
+      ]);
+      const meta = Number((cfgMeta as any)?.meta_por_cidade ?? 0);
+
+      const norm = (s: any) => String(s ?? '').trim().toLowerCase();
+      const key = (cidade: any, estado: any) => `${norm(cidade)}|${norm(estado)}`;
+      const contagem = new Map<string, number>();
+      [...(autorizados || []), ...(secundarias || [])].forEach((a: any) => {
+        if (!a.cidade || !a.estado) return;
+        const k = key(a.cidade, a.estado);
+        contagem.set(k, (contagem.get(k) ?? 0) + 1);
+      });
 
       // Montar estados com contadores
       const estadosComContadores = (estadosCadastrados || []).map(estado => {
@@ -74,14 +92,26 @@ export const useEstadosCidades = () => {
           a => a.estado?.toUpperCase() === estado.sigla.toUpperCase()
         ).length;
         
-        const totalCidades = (cidadesCadastradas || []).filter(
+        const cidadesDoEstado = (cidadesCadastradas || []).filter(
           c => c.estado_id === estado.id
-        ).length;
+        );
+        const totalCidades = cidadesDoEstado.length;
+
+        let cidadesCobertas = 0;
+        if (meta > 0) {
+          cidadesDoEstado.forEach((c: any) => {
+            const k = key(c.nome, estado.sigla);
+            if ((contagem.get(k) ?? 0) >= meta) cidadesCobertas++;
+          });
+        }
+        const percentualCobertura = totalCidades > 0 ? (cidadesCobertas / totalCidades) * 100 : 0;
 
         return {
           ...estado,
           totalAutorizados,
-          totalCidades
+          totalCidades,
+          cidadesCobertas,
+          percentualCobertura,
         };
       });
 

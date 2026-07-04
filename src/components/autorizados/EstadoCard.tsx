@@ -11,6 +11,27 @@ interface EstadoCardProps {
   isSelected: boolean;
 }
 
+function CoberturaBadge({ estado }: { estado: Estado }) {
+  const pct = Number(estado.percentualCobertura ?? 0);
+  const color =
+    pct >= 80
+      ? 'bg-emerald-500/15 text-emerald-300 border-emerald-400/30'
+      : pct >= 50
+      ? 'bg-amber-500/15 text-amber-300 border-amber-400/30'
+      : 'bg-rose-500/15 text-rose-300 border-rose-400/30';
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-[10px] font-semibold tabular-nums',
+        color,
+      )}
+      title={`${estado.cidadesCobertas ?? 0} de ${estado.totalCidades} cidades atingem a meta`}
+    >
+      {pct.toFixed(1)}%
+    </span>
+  );
+}
+
 export function EstadoCard({ estado, onClick, isSelected }: EstadoCardProps) {
   return (
     <Card
@@ -26,7 +47,10 @@ export function EstadoCard({ estado, onClick, isSelected }: EstadoCardProps) {
             <h3 className="text-lg font-bold text-white">{estado.sigla}</h3>
             <p className="text-sm text-white/60">{estado.nome}</p>
           </div>
-          <MapPin className="h-6 w-6 text-blue-400/70" />
+          <div className="flex items-center gap-2">
+            <CoberturaBadge estado={estado} />
+            <MapPin className="h-6 w-6 text-blue-400/70" />
+          </div>
         </div>
         <div className="mt-3 flex gap-4 text-xs text-white/70">
           <div className="flex items-center gap-1">
@@ -91,7 +115,10 @@ export function SortableEstadoCard({ estado, onClick, isSelected }: SortableEsta
                 <p className="text-sm text-white/60">{estado.nome}</p>
               </div>
             </div>
-            <MapPin className="h-6 w-6 text-blue-400/70" />
+            <div className="flex items-center gap-2">
+              <CoberturaBadge estado={estado} />
+              <MapPin className="h-6 w-6 text-blue-400/70" />
+            </div>
           </div>
           <div className="mt-3 flex gap-4 text-xs text-white/70">
             <div className="flex items-center gap-1">
