@@ -11,7 +11,7 @@ import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 import { DelayedParticles } from "@/components/DelayedParticles";
 import { MinhasTarefasFullscreen } from "@/components/MinhasTarefasFullscreen";
 import { useTheme } from "@/components/ThemeProvider";
-import { formatCurrency } from "@/lib/utils";
+
 
 // Mapeamento de path para prefixo de route_key no banco
 const routePrefixMap: Record<string, string> = {
