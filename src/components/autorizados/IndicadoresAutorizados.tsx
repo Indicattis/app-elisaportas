@@ -33,7 +33,7 @@ export function IndicadoresAutorizados() {
       { data: secundarias },
       { data: cfg },
     ] = await Promise.all([
-      supabase.from('autorizados').select('*', { count: 'exact', head: true }),
+      supabase.from('autorizados').select('*', { count: 'exact', head: true }).eq('ativo', true),
       supabase.from('cidades_autorizados').select('nome, estado_id'),
       supabase.from('estados_autorizados').select('id, sigla'),
       supabase.from('autorizados').select('cidade, estado').eq('ativo', true),
