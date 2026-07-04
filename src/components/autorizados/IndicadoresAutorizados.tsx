@@ -16,6 +16,7 @@ interface Config {
 export function IndicadoresAutorizados() {
   const [qtdAutorizados, setQtdAutorizados] = useState(0);
   const [qtdCidades, setQtdCidades] = useState(0);
+  const [qtdCidadesCobertas, setQtdCidadesCobertas] = useState(0);
   const [config, setConfig] = useState<Config | null>(null);
   const [loading, setLoading] = useState(true);
   const [editOpen, setEditOpen] = useState(false);
@@ -24,24 +25,59 @@ export function IndicadoresAutorizados() {
 
   const load = async () => {
     setLoading(true);
-    const [{ count }, { count: countCidades }, { data: cfg }] = await Promise.all([
+    const [
+      { count },
+      { data: cidadesMaster },
+      { data: estados },
+      { data: autorizadosData },
+      { data: secundarias },
+      { data: cfg },
+    ] = await Promise.all([
       supabase.from('autorizados').select('*', { count: 'exact', head: true }),
-      supabase.from('cidades_autorizados').select('*', { count: 'exact', head: true }),
+      supabase.from('cidades_autorizados').select('nome, estado_id'),
+      supabase.from('estados_autorizados').select('id, sigla'),
+      supabase.from('autorizados').select('cidade, estado').eq('ativo', true),
+      supabase.from('autorizado_cidades_secundarias').select('cidade, estado'),
       supabase.from('autorizados_meta_config').select('*').order('updated_at', { ascending: false }).limit(1).maybeSingle(),
     ]);
     setQtdAutorizados(count ?? 0);
-    setQtdCidades(countCidades ?? 0);
     if (cfg) {
       setConfig(cfg as Config);
       setMetaInput(String(cfg.meta_por_cidade));
     }
+
+    const meta = Number((cfg as any)?.meta_por_cidade ?? 0);
+    const estadoById = new Map<string, string>();
+    (estados ?? []).forEach((e: any) => estadoById.set(e.id, (e.sigla ?? '').toUpperCase()));
+
+    const norm = (s: any) => String(s ?? '').trim().toLowerCase();
+    const key = (cidade: any, estado: any) => `${norm(cidade)}|${norm(estado)}`;
+
+    const contagem = new Map<string, number>();
+    [...(autorizadosData ?? []), ...(secundarias ?? [])].forEach((a: any) => {
+      if (!a.cidade || !a.estado) return;
+      const k = key(a.cidade, a.estado);
+      contagem.set(k, (contagem.get(k) ?? 0) + 1);
+    });
+
+    const cidadesTotal = cidadesMaster ?? [];
+    setQtdCidades(cidadesTotal.length);
+    let cobertas = 0;
+    if (meta > 0) {
+      cidadesTotal.forEach((c: any) => {
+        const sigla = estadoById.get(c.estado_id) ?? '';
+        const k = key(c.nome, sigla);
+        if ((contagem.get(k) ?? 0) >= meta) cobertas++;
+      });
+    }
+    setQtdCidadesCobertas(cobertas);
     setLoading(false);
   };
 
   useEffect(() => { load(); }, []);
 
   const metaTotal = config ? Number(config.meta_por_cidade) * qtdCidades : 0;
-  const percentual = metaTotal > 0 ? (qtdAutorizados / metaTotal) * 100 : 0;
+  const percentual = qtdCidades > 0 ? (qtdCidadesCobertas / qtdCidades) * 100 : 0;
 
   const salvarMeta = async () => {
     const valor = Number(metaInput.replace(',', '.'));
@@ -101,7 +137,9 @@ export function IndicadoresAutorizados() {
     {
       label: '% de Cobertura',
       value: loading ? '—' : `${percentual.toFixed(2)}%`,
-      hint: !loading && metaTotal > 0 ? `${qtdAutorizados.toLocaleString('pt-BR')} / ${metaTotal.toLocaleString('pt-BR')}` : undefined,
+      hint: !loading && qtdCidades > 0
+        ? `${qtdCidadesCobertas.toLocaleString('pt-BR')} de ${qtdCidades.toLocaleString('pt-BR')} cidades com ≥ ${Number(config?.meta_por_cidade ?? 0).toLocaleString('pt-BR')} autorizado(s)`
+        : undefined,
       icon: PieChart,
       accent: 'from-purple-500/20 to-purple-600/10 border-purple-400/20 text-purple-300',
       iconBg: 'bg-purple-500/20 text-purple-300',
