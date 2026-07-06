@@ -207,6 +207,20 @@ export default function VisitaTecnicaConclusao() {
     carregarConclusao(existente);
   }, [existente, carregarConclusao]);
 
+  const { data: concluidoPor } = useQuery({
+    queryKey: ['visita-concluido-por', existente?.conclusao?.concluido_por],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('admin_users')
+        .select('nome, user_id')
+        .eq('user_id', existente?.conclusao?.concluido_por)
+        .maybeSingle();
+      if (error) throw error;
+      return data as { nome: string; user_id: string } | null;
+    },
+    enabled: !!readOnly && !!existente?.conclusao?.concluido_por,
+  });
+
   const iniciarEdicao = () => {
     setReadOnly(false);
     setPortas(prev => prev.map(p => ({ ...p, expandido: true })));
