@@ -2,6 +2,41 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
+async function compressImage(file: File, maxDim = 1600, quality = 0.8): Promise<Blob> {
+  try {
+    const dataUrl: string = await new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result as string);
+      r.onerror = () => reject(r.error);
+      r.readAsDataURL(file);
+    });
+    const img: HTMLImageElement = await new Promise((resolve, reject) => {
+      const i = new Image();
+      i.onload = () => resolve(i);
+      i.onerror = () => reject(new Error('Falha ao ler imagem'));
+      i.src = dataUrl;
+    });
+    let { width, height } = img;
+    if (width > maxDim || height > maxDim) {
+      const ratio = Math.min(maxDim / width, maxDim / height);
+      width = Math.round(width * ratio);
+      height = Math.round(height * ratio);
+    }
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return file;
+    ctx.drawImage(img, 0, 0, width, height);
+    const blob: Blob | null = await new Promise((resolve) =>
+      canvas.toBlob((b) => resolve(b), 'image/jpeg', quality)
+    );
+    return blob ?? file;
+  } catch {
+    return file;
+  }
+}
+
 export interface Conferencia {
   id: string;
   veiculo_id: string;
@@ -86,13 +121,17 @@ export function useConferencias(veiculoId?: string) {
 
   const uploadFotoConferenciaMutation = useMutation({
     mutationFn: async ({ file, veiculo_id }: { file: File; veiculo_id: string }) => {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `conferencia-${veiculo_id}-${Date.now()}.${fileExt}`;
+      // Compress/resize image to avoid "Load failed" on mobile with large photos
+      const compressed = await compressImage(file, 1600, 0.8);
+      const fileName = `conferencia-${veiculo_id}-${Date.now()}.jpg`;
       const filePath = `${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('veiculos-fotos')
-        .upload(filePath, file);
+        .upload(filePath, compressed, {
+          contentType: 'image/jpeg',
+          upsert: false,
+        });
 
       if (uploadError) throw uploadError;
 
