@@ -44,7 +44,7 @@ interface VisitaAgendada {
   status: string;
 }
 
-interface Responsavel { id: string; nome: string }
+interface Responsavel { id: string; nome: string; foto_perfil_url?: string | null }
 
 const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS_SEM = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
@@ -498,7 +498,7 @@ export default function VisitasTecnicasCalendario() {
     queryKey: ['admin-users-ativos'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('admin_users').select('id, nome').eq('ativo', true).order('nome');
+        .from('admin_users').select('id, nome, foto_perfil_url').eq('ativo', true).order('nome');
       if (error) throw error;
       return (data || []) as Responsavel[];
     },
