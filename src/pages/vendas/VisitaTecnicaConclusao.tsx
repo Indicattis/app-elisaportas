@@ -609,15 +609,15 @@ function PortaCard({
           <div><label className={labelCls}>Altura do vão (m) *</label>
             <Input type="number" step="0.01" className={inputCls} value={p.altura_vao} onChange={e => onUpdate({ altura_vao: e.target.value })} disabled={readOnly} />
           </div>
-          <div><label className={labelCls}>Largura total (m)</label>
+          <div><label className={labelCls}>Largura total (m) *</label>
             <Input type="number" step="0.01" className={inputCls} value={p.largura_total} onChange={e => onUpdate({ largura_total: e.target.value })} disabled={readOnly} />
           </div>
-          <div><label className={labelCls}>Altura total (m)</label>
+          <div><label className={labelCls}>Altura total (m) *</label>
             <Input type="number" step="0.01" className={inputCls} value={p.altura_total} onChange={e => onUpdate({ altura_total: e.target.value })} disabled={readOnly} />
           </div>
 
           {/* Meia cana */}
-          <div><label className={labelCls}>Meia cana</label>
+          <div><label className={labelCls}>Meia cana *</label>
             <Select value={p.meia_cana_tipo || ''} onValueChange={v => onUpdate({ meia_cana_tipo: v })} disabled={readOnly}>
               <SelectTrigger className={selectTriggerCls}><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent className={selectContentCls}>
@@ -674,7 +674,7 @@ function PortaCard({
           )}
 
           {/* Caixa motor + Guia */}
-          <div><label className={labelCls}>Tipo de caixa</label>
+          <div><label className={labelCls}>Tipo de caixa *</label>
             <Select value={p.caixa_motor || ''} onValueChange={v => onUpdate({ caixa_motor: v })} disabled={readOnly}>
               <SelectTrigger className={selectTriggerCls}><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent className={selectContentCls}>
@@ -685,7 +685,7 @@ function PortaCard({
               </SelectContent>
             </Select>
           </div>
-          <div><label className={labelCls}>Tamanho do guia</label>
+          <div><label className={labelCls}>Tamanho do guia *</label>
             <Select value={p.guia_tamanho || ''} onValueChange={v => onUpdate({ guia_tamanho: v })} disabled={readOnly}>
               <SelectTrigger className={selectTriggerCls}><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent className={selectContentCls}>
