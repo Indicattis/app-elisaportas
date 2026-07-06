@@ -43,6 +43,7 @@ interface VisitaAgendada {
   estado: string | null;
   observacoes: string | null;
   status: string;
+  tem_conclusao?: boolean;
 }
 
 interface Responsavel { id: string; nome: string; foto_perfil_url?: string | null }
@@ -237,6 +238,27 @@ const STATUS_META: Record<string, { key: ListaFiltro; label: string; badgeClass:
   cancelada: { key: 'cancelada',     label: 'Cancelada',    badgeClass: 'bg-rose-500/20 text-rose-300 border-rose-500/30',           Icon: XCircle },
 };
 
+function getStatusMeta(visita: VisitaAgendada) {
+  const status = visita.status === 'agendada' && visita.tem_conclusao ? 'realizada' : visita.status;
+  return STATUS_META[status] || STATUS_META.agendada;
+}
+
+async function mapVisitasComConclusao(rows: any[]): Promise<VisitaAgendada[]> {
+  const ids = rows.map((v) => v.id).filter(Boolean);
+  if (ids.length === 0) return rows as VisitaAgendada[];
+
+  const { data } = await supabase
+    .from('visitas_tecnicas_conclusoes')
+    .select('visita_id')
+    .in('visita_id', ids);
+
+  const visitasComConclusao = new Set((data || []).map((c: any) => c.visita_id));
+  return rows.map((v) => ({
+    ...v,
+    tem_conclusao: visitasComConclusao.has(v.id),
+  })) as VisitaAgendada[];
+}
+
 function getInicial(nome: string) {
   return (nome?.trim()?.charAt(0) || '?').toUpperCase();
 }
@@ -263,7 +285,7 @@ function VisitasListaPanel({
   const counts = useMemo(() => {
     const c: Record<ListaFiltro, number> = { pendente: 0, em_andamento: 0, concluida: 0, cancelada: 0, todos: visitas.length };
     visitas.forEach(v => {
-      const meta = STATUS_META[v.status];
+      const meta = getStatusMeta(v);
       if (meta) c[meta.key] += 1;
     });
     return c;
@@ -274,7 +296,7 @@ function VisitasListaPanel({
   const listaFiltrada = useMemo(() => {
     const termo = busca.trim().toLowerCase();
     return visitas.filter(v => {
-      const meta = STATUS_META[v.status];
+      const meta = getStatusMeta(v);
       if (filtro !== 'todos' && meta?.key !== filtro) return false;
       if (!termo) return true;
       return (
@@ -337,7 +359,7 @@ function VisitasListaPanel({
       ) : (
         <div className="space-y-2">
           {listaFiltrada.map(v => {
-            const meta = STATUS_META[v.status] || STATUS_META.agendada;
+            const meta = getStatusMeta(v);
             const StatusIcon = meta.Icon;
             const ymd = toDateOnly(v.data_visita);
             const dia = ymd.slice(8, 10);
@@ -479,7 +501,7 @@ export default function VisitasTecnicasCalendario() {
         .lte('data_visita', fim)
         .order('data_visita').order('hora_inicio');
       if (error) throw error;
-      return (data || []) as VisitaAgendada[];
+      return mapVisitasComConclusao(data || []);
     },
   });
 
@@ -507,7 +529,7 @@ export default function VisitasTecnicasCalendario() {
         .lte('data_visita', fim)
         .order('data_visita').order('hora_inicio');
       if (error) throw error;
-      return (data || []) as VisitaAgendada[];
+      return mapVisitasComConclusao(data || []);
     },
   });
 
@@ -544,7 +566,7 @@ export default function VisitasTecnicasCalendario() {
         .order('data_visita', { ascending: false })
         .order('hora_inicio', { ascending: false });
       if (error) throw error;
-      return (data || []) as VisitaAgendada[];
+      return mapVisitasComConclusao(data || []);
     },
   });
 
