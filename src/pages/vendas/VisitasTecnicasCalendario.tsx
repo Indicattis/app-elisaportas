@@ -243,6 +243,22 @@ function getStatusMeta(visita: VisitaAgendada) {
   return STATUS_META[status] || STATUS_META.agendada;
 }
 
+async function mapVisitasComConclusao(rows: any[]): Promise<VisitaAgendada[]> {
+  const ids = rows.map((v) => v.id).filter(Boolean);
+  if (ids.length === 0) return rows as VisitaAgendada[];
+
+  const { data } = await supabase
+    .from('visitas_tecnicas_conclusoes')
+    .select('visita_id')
+    .in('visita_id', ids);
+
+  const visitasComConclusao = new Set((data || []).map((c: any) => c.visita_id));
+  return rows.map((v) => ({
+    ...v,
+    tem_conclusao: visitasComConclusao.has(v.id),
+  })) as VisitaAgendada[];
+}
+
 function getInicial(nome: string) {
   return (nome?.trim()?.charAt(0) || '?').toUpperCase();
 }
@@ -480,15 +496,12 @@ export default function VisitasTecnicasCalendario() {
       const fim = dateToYmd(weekDays[6]);
       const { data, error } = await supabase
         .from('visitas_tecnicas_agendadas')
-        .select('*, visitas_tecnicas_conclusoes!left(id)')
+        .select('*')
         .gte('data_visita', inicio)
         .lte('data_visita', fim)
         .order('data_visita').order('hora_inicio');
       if (error) throw error;
-      return (data || []).map((v: any) => ({
-        ...v,
-        tem_conclusao: Array.isArray(v.visitas_tecnicas_conclusoes) && v.visitas_tecnicas_conclusoes.length > 0,
-      })) as VisitaAgendada[];
+      return mapVisitasComConclusao(data || []);
     },
   });
 
@@ -511,15 +524,12 @@ export default function VisitasTecnicasCalendario() {
       const fim = `${year}-${String(month + 1).padStart(2, '0')}-${String(last).padStart(2, '0')}`;
       const { data, error } = await supabase
         .from('visitas_tecnicas_agendadas')
-        .select('*, visitas_tecnicas_conclusoes!left(id)')
+        .select('*')
         .gte('data_visita', inicio)
         .lte('data_visita', fim)
         .order('data_visita').order('hora_inicio');
       if (error) throw error;
-      return (data || []).map((v: any) => ({
-        ...v,
-        tem_conclusao: Array.isArray(v.visitas_tecnicas_conclusoes) && v.visitas_tecnicas_conclusoes.length > 0,
-      })) as VisitaAgendada[];
+      return mapVisitasComConclusao(data || []);
     },
   });
 
@@ -556,7 +566,7 @@ export default function VisitasTecnicasCalendario() {
         .order('data_visita', { ascending: false })
         .order('hora_inicio', { ascending: false });
       if (error) throw error;
-      return (data || []) as VisitaAgendada[];
+      return mapVisitasComConclusao(data || []);
     },
   });
 
