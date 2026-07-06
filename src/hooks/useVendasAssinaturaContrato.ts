@@ -131,6 +131,19 @@ export const useVendasAssinaturaContrato = () => {
         if (max > 0) parcelasPorVenda.set(vendaId, max);
       });
 
+      // Buscar contratos gerados (contratos_vendas) para determinar sub-status
+      const vendaIdsAll = vendas.map((v: any) => v.id).filter(Boolean);
+      const contratosGeradosPorVenda = new Set<string>();
+      if (vendaIdsAll.length > 0) {
+        const { data: contratosGerados } = await supabase
+          .from('contratos_vendas')
+          .select('venda_id')
+          .in('venda_id', vendaIdsAll);
+        (contratosGerados || []).forEach((c: any) => {
+          if (c?.venda_id) contratosGeradosPorVenda.add(c.venda_id);
+        });
+      }
+
       // Filter: NOT faturada + no pedido + not reprovado + sem contrato
       return vendas
         .filter((v: any) => {
@@ -228,6 +241,11 @@ export const useVendasAssinaturaContrato = () => {
             venda_presencial: v.venda_presencial ?? null,
             cores: Array.from(coresUnicas.values()),
             portas_info: portasInfo,
+            contrato_status: (v.contrato_url && v.contrato_url !== 'legado')
+              ? 'assinado' as const
+              : contratosGeradosPorVenda.has(v.id)
+                ? 'gerado' as const
+                : 'pendente' as const,
           };
         });
     },
