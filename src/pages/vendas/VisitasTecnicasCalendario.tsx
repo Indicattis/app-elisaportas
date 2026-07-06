@@ -345,7 +345,7 @@ export default function VisitasTecnicasCalendario() {
 
   const openCreate = (dateStr?: string) => {
     setEditing(null);
-    setForm({ ...emptyForm, data_visita: dateStr || '' });
+    setForm({ ...emptyForm, data_visita: dateStr || '', responsavel_id: usuario_id || '' });
     setDialogOpen(true);
   };
 
