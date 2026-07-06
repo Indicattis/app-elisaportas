@@ -593,7 +593,21 @@ export default function VisitaTecnicaConclusao() {
             <Button
               size="lg"
               className="bg-gradient-to-br from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 text-white shadow-lg shadow-blue-500/30 h-12 px-8"
-              onClick={() => { startCron(); setIniciado(true); }}
+              onClick={async () => {
+                startCron();
+                setIniciado(true);
+                if (visitaId && visita?.status === 'agendada') {
+                  await supabase
+                    .from('visitas_tecnicas_agendadas')
+                    .update({ status: 'realizada' } as any)
+                    .eq('id', visitaId);
+                  qc.invalidateQueries({ queryKey: ['visita-tecnica', visitaId] });
+                  qc.invalidateQueries({ queryKey: ['visitas-a-concluir'] });
+                  qc.invalidateQueries({ queryKey: ['visitas-lista-todas'] });
+                  qc.invalidateQueries({ queryKey: ['visitas-agendadas'] });
+                  qc.invalidateQueries({ queryKey: ['visitas-semana'] });
+                }
+              }}
             >
               <Play className="w-5 h-5 mr-2" /> Iniciar Medição
             </Button>
