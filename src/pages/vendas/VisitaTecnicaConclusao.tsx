@@ -637,6 +637,7 @@ function PortaCard({
               <SelectContent className={selectContentCls}>
                 <SelectItem value="somente_motor">Caixa somente no motor</SelectItem>
                 <SelectItem value="total">Caixa total</SelectItem>
+                <SelectItem value="caixa_l">Caixa L</SelectItem>
                 <SelectItem value="sem_caixa">Sem caixa</SelectItem>
               </SelectContent>
             </Select>
