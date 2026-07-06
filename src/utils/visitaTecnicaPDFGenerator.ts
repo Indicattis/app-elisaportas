@@ -32,8 +32,8 @@ function fmtDataBR(ymd?: string | null) {
 }
 
 /**
- * Desenha um vão com a porta dentro, escalando para caber na área.
- * larguras/alturas em cm.
+ * Desenha um vão com a porta dentro, com cotas externas (fora das linhas).
+ * larguras/alturas em cm. Retorna a altura total ocupada.
  */
 function desenharVaoPorta(
   doc: jsPDF,
@@ -46,52 +46,90 @@ function desenharVaoPorta(
   portaL: number,
   portaA: number,
 ) {
+  // Reservar margem interna para as cotas externas
+  const padTop = 8;    // cota largura do vão
+  const padBottom = 10; // cota largura da porta
+  const padLeft = 14;  // cota altura do vão
+  const padRight = 14; // cota altura da porta
+
+  const areaW = maxW - padLeft - padRight;
+  const areaH = maxH - padTop - padBottom;
+
   const refL = Math.max(vaoL, portaL, 1);
   const refA = Math.max(vaoA, portaA, 1);
-  const scale = Math.min(maxW / refL, maxH / refA);
+  const scale = Math.min(areaW / refL, areaH / refA);
+
   const vw = vaoL * scale;
   const vh = vaoA * scale;
   const pw = portaL * scale;
   const ph = portaA * scale;
-  // Centralizar
-  const cx = x + (maxW - vw) / 2;
-  const cy = y + (maxH - vh) / 2;
 
-  // Vão (tracejado)
-  doc.setDrawColor(120, 120, 120);
+  // Vão centralizado na área
+  const cx = x + padLeft + (areaW - vw) / 2;
+  const cy = y + padTop + (areaH - vh) / 2;
+
+  // Vão (tracejado, cinza)
+  doc.setDrawColor(130, 130, 130);
   doc.setLineWidth(0.4);
   doc.setLineDashPattern([1.2, 1.2], 0);
   doc.rect(cx, cy, vw, vh);
-
-  // Porta (sólido) centralizada no vão
   doc.setLineDashPattern([], 0);
-  doc.setDrawColor(41, 128, 185);
-  doc.setLineWidth(0.6);
-  doc.setFillColor(41, 128, 185);
+
+  // Porta (azul) centralizada no vão
   const px = cx + (vw - pw) / 2;
   const py = cy + (vh - ph) / 2;
-  // preenchimento leve
-  const gState = (doc as any).GState ? new (doc as any).GState({ opacity: 0.12 }) : null;
+  doc.setDrawColor(41, 128, 185);
+  doc.setLineWidth(0.7);
+  doc.setFillColor(41, 128, 185);
+  const gState = (doc as any).GState ? new (doc as any).GState({ opacity: 0.14 }) : null;
   if (gState) (doc as any).setGState(gState);
   doc.rect(px, py, pw, ph, 'F');
   if (gState) (doc as any).setGState(new (doc as any).GState({ opacity: 1 }));
   doc.rect(px, py, pw, ph, 'S');
 
-  // Cotas
-  doc.setFontSize(7);
-  doc.setTextColor(80, 80, 80);
-  // Largura do vão (topo)
-  doc.text(`Vão: ${fmtNum(vaoL)} cm`, cx + vw / 2, cy - 1.5, { align: 'center' });
-  // Altura do vão (direita)
-  doc.text(`${fmtNum(vaoA)} cm`, cx + vw + 1.5, cy + vh / 2, { angle: 90 });
-  // Largura porta (baixo)
-  doc.setTextColor(41, 128, 185);
-  doc.text(`Porta: ${fmtNum(portaL)} cm`, cx + vw / 2, cy + vh + 4, { align: 'center' });
-  // Altura porta (esquerda)
-  doc.text(`${fmtNum(portaA)} cm`, cx - 1.5, cy + vh / 2, { angle: 90, align: 'right' });
-  doc.setTextColor(0, 0, 0);
+  // ---------- Cotas externas (linhas + tick + rótulo fora) ----------
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.5);
 
-  return { bottomY: cy + vh + 6 };
+  const tick = 1.2;
+
+  // Vão — Largura (acima do vão)
+  const dimTopY = cy - 4;
+  doc.setDrawColor(130, 130, 130);
+  doc.setLineWidth(0.3);
+  doc.line(cx, dimTopY, cx + vw, dimTopY);
+  doc.line(cx, dimTopY - tick, cx, dimTopY + tick);
+  doc.line(cx + vw, dimTopY - tick, cx + vw, dimTopY + tick);
+  doc.setTextColor(90, 90, 90);
+  doc.text(`Vão ${fmtNum(vaoL)} cm`, cx + vw / 2, dimTopY - 1.5, { align: 'center' });
+
+  // Vão — Altura (à direita do vão)
+  const dimRightX = cx + vw + 5;
+  doc.line(dimRightX, cy, dimRightX, cy + vh);
+  doc.line(dimRightX - tick, cy, dimRightX + tick, cy);
+  doc.line(dimRightX - tick, cy + vh, dimRightX + tick, cy + vh);
+  doc.text(`${fmtNum(vaoA)} cm`, dimRightX + 3, cy + vh / 2, { angle: 90, align: 'center' });
+
+  // Porta — Largura (abaixo da porta)
+  const dimBottomY = py + ph + 5;
+  doc.setDrawColor(41, 128, 185);
+  doc.line(px, dimBottomY, px + pw, dimBottomY);
+  doc.line(px, dimBottomY - tick, px, dimBottomY + tick);
+  doc.line(px + pw, dimBottomY - tick, px + pw, dimBottomY + tick);
+  doc.setTextColor(41, 128, 185);
+  doc.text(`Porta ${fmtNum(portaL)} cm`, px + pw / 2, dimBottomY + 3, { align: 'center' });
+
+  // Porta — Altura (à esquerda da porta)
+  const dimLeftX = px - 5;
+  doc.line(dimLeftX, py, dimLeftX, py + ph);
+  doc.line(dimLeftX - tick, py, dimLeftX + tick, py);
+  doc.line(dimLeftX - tick, py + ph, dimLeftX + tick, py + ph);
+  doc.text(`${fmtNum(portaA)} cm`, dimLeftX - 3, py + ph / 2, { angle: 90, align: 'center' });
+
+  doc.setTextColor(0, 0, 0);
+  doc.setFont('helvetica', 'normal');
+
+  return { bottomY: y + maxH };
 }
 
 export async function gerarPDFVisitaTecnica(visitaId: string) {
@@ -191,6 +229,23 @@ export async function gerarPDFVisitaTecnica(visitaId: string) {
   doc.line(margin, y, pageW - margin, y);
   y += 5;
 
+  // Observações gerais da conclusão
+  if (conclusao?.observacoes_gerais) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(30, 30, 30);
+    doc.text('Observações gerais da visita', margin, y);
+    y += 4;
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(70, 70, 70);
+    const wrapped = doc.splitTextToSize(conclusao.observacoes_gerais, pageW - margin * 2);
+    doc.text(wrapped, margin, y);
+    y += wrapped.length * 4 + 3;
+    doc.setDrawColor(220, 220, 220);
+    doc.line(margin, y, pageW - margin, y);
+    y += 5;
+  }
+
   // Portas
   if (portas.length === 0) {
     doc.setFont('helvetica', 'italic');
@@ -200,40 +255,23 @@ export async function gerarPDFVisitaTecnica(visitaId: string) {
     for (let i = 0; i < portas.length; i++) {
       const p = portas[i];
       // quebra de página se necessário
-      if (y > pageH - 90) {
+      if (y > pageH - 110) {
         doc.addPage();
         y = margin + 5;
       }
 
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(10);
+      doc.setFontSize(10.5);
       doc.setTextColor(30, 30, 30);
       const sub = `Vão ${i + 1}${p.tipo_servico ? ` — ${p.tipo_servico}` : ''}${p.posicao_porta ? ` (${p.posicao_porta})` : ''}`;
       doc.text(sub, margin, y);
-      y += 4;
+      y += 5;
 
-      // Tabela de medidas
-      const diffL = (p.largura_total ?? 0) - (p.largura_vao ?? 0);
-      const diffA = (p.altura_total ?? 0) - (p.altura_vao ?? 0);
-      autoTable(doc, {
-        startY: y,
-        margin: { left: margin, right: pageW - margin - 90 },
-        theme: 'grid',
-        styles: { fontSize: 8, cellPadding: 1.5, textColor: [40, 40, 40] },
-        headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
-        head: [['Medida', 'Vão (cm)', 'Porta (cm)', 'Δ (cm)']],
-        body: [
-          ['Largura', fmtNum(p.largura_vao), fmtNum(p.largura_total), fmtNum(diffL)],
-          ['Altura', fmtNum(p.altura_vao), fmtNum(p.altura_total), fmtNum(diffA)],
-        ],
-      });
-      const afterTableY = (doc as any).lastAutoTable?.finalY ?? y + 20;
-
-      // Ilustração ao lado direito
-      const drawX = pageW - margin - 80;
+      // Ilustração (à direita) + Tabela (à esquerda), lado a lado
+      const drawW = 95;
+      const drawH = 75;
+      const drawX = pageW - margin - drawW;
       const drawY = y;
-      const drawW = 80;
-      const drawH = 55;
       desenharVaoPorta(
         doc, drawX, drawY, drawW, drawH,
         Number(p.largura_vao) || 0,
@@ -242,25 +280,108 @@ export async function gerarPDFVisitaTecnica(visitaId: string) {
         Number(p.altura_total) || 0,
       );
 
-      y = Math.max(afterTableY, drawY + drawH) + 3;
+      // Tabela de medidas à esquerda
+      const diffL = (p.largura_total ?? 0) - (p.largura_vao ?? 0);
+      const diffA = (p.altura_total ?? 0) - (p.altura_vao ?? 0);
+      autoTable(doc, {
+        startY: y,
+        margin: { left: margin, right: margin + drawW + 4 },
+        tableWidth: pageW - margin * 2 - drawW - 4,
+        theme: 'grid',
+        styles: { fontSize: 8.5, cellPadding: 2, textColor: [40, 40, 40] },
+        headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
+        head: [['Medida', 'Vão (cm)', 'Porta (cm)', 'Δ (cm)']],
+        body: [
+          ['Largura', fmtNum(p.largura_vao), fmtNum(p.largura_total), fmtNum(diffL)],
+          ['Altura', fmtNum(p.altura_vao), fmtNum(p.altura_total), fmtNum(diffA)],
+        ],
+      });
+      const afterTableY = (doc as any).lastAutoTable?.finalY ?? y + 20;
+      y = Math.max(afterTableY, drawY + drawH) + 4;
 
-      // Extras
-      const extras: string[] = [];
-      if (p.caixa_motor) extras.push(`Caixa motor: ${p.caixa_motor}`);
-      if (p.guia_tamanho) extras.push(`Guia: ${p.guia_tamanho}`);
-      if (p.meia_cana_tipo) extras.push(`Meia-cana: ${p.meia_cana_tipo}`);
+      // Detalhes preenchidos (grade 2 colunas)
+      const detalhes: Array<[string, string]> = [];
+      const push = (k: string, v: any) => {
+        if (v === null || v === undefined || v === '' || v === false) return;
+        detalhes.push([k, String(v)]);
+      };
+      push('Tipo de serviço', p.tipo_servico);
+      push('Posição da porta', p.posicao_porta);
+      push('Dificuldade', p.dificuldade_instalacao);
+      push('Caixa do motor', p.caixa_motor);
+      push('Posição do motor', p.posicao_motor);
+      push('Tipo de guia', p.tipo_guia);
+      push('Tamanho da guia', p.guia_tamanho);
+      push('Posição da guia', p.posicao_guia);
+      push('Meia-cana', p.meia_cana_tipo);
+      push('Especif. meia-cana', p.meia_cana_especificacoes);
+      push('Posição da testeira', p.posicao_testeira);
+      if (p.tem_tubo_afastamento) push('Tubo de afastamento', `Sim${p.distancia_tubo_cm ? ` (${fmtNum(p.distancia_tubo_cm)} cm)` : ''}`);
+      if (p.tem_tiras_frontais) push('Tiras frontais', `Sim${p.qtd_tiras_frontais ? ` (${p.qtd_tiras_frontais})` : ''}`);
+      if (p.tem_tubo_tiras_frontais) push('Tubo p/ tiras frontais', 'Sim');
+      if (p.tem_controle_adicional) push('Controle adicional', `Sim${p.qtd_controle_adicional ? ` (${p.qtd_controle_adicional})` : ''}`);
+      if (p.retirar_portao_local) push('Retirar portão no local', 'Sim');
+
       if (Array.isArray(p.cores) && p.cores.length) {
-        const nomes = p.cores.map((c: any) => c?.nome || c?.codigo_hex || '').filter(Boolean).join(', ');
-        if (nomes) extras.push(`Cores: ${nomes}`);
+        const nomes = p.cores
+          .map((c: any) => c?.nome || c?.codigo_hex || c?.codigo || '')
+          .filter(Boolean)
+          .join(', ');
+        if (nomes) push('Cores', nomes);
       }
-      if (p.observacoes) extras.push(`Obs.: ${p.observacoes}`);
-      if (extras.length) {
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(8);
+      if (Array.isArray(p.acessorios) && p.acessorios.length) {
+        const nomes = p.acessorios
+          .map((a: any) => {
+            if (typeof a === 'string') return a;
+            const n = a?.nome || a?.descricao || a?.tipo || '';
+            const q = a?.quantidade || a?.qtd;
+            return n ? (q ? `${n} (${q})` : n) : '';
+          })
+          .filter(Boolean)
+          .join(', ');
+        if (nomes) push('Acessórios', nomes);
+      }
+
+      if (detalhes.length) {
+        const body: any[][] = [];
+        for (let k = 0; k < detalhes.length; k += 2) {
+          const a = detalhes[k];
+          const b = detalhes[k + 1];
+          body.push([
+            { content: a[0], styles: { fontStyle: 'bold', textColor: [90, 90, 90] } },
+            a[1],
+            b ? { content: b[0], styles: { fontStyle: 'bold', textColor: [90, 90, 90] } } : '',
+            b ? b[1] : '',
+          ]);
+        }
+        autoTable(doc, {
+          startY: y,
+          margin: { left: margin, right: margin },
+          theme: 'plain',
+          styles: { fontSize: 8, cellPadding: 1.2, textColor: [40, 40, 40] },
+          columnStyles: {
+            0: { cellWidth: 38 },
+            1: { cellWidth: 'auto' },
+            2: { cellWidth: 38 },
+            3: { cellWidth: 'auto' },
+          },
+          body,
+        });
+        y = (doc as any).lastAutoTable?.finalY ?? y;
+        y += 2;
+      }
+
+      if (p.observacoes) {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8.5);
         doc.setTextColor(90, 90, 90);
-        const wrapped = doc.splitTextToSize(extras.join('  ·  '), pageW - margin * 2);
+        doc.text('Observações:', margin, y);
+        y += 3.5;
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(60, 60, 60);
+        const wrapped = doc.splitTextToSize(p.observacoes, pageW - margin * 2);
         doc.text(wrapped, margin, y);
-        y += wrapped.length * 3.6;
+        y += wrapped.length * 3.8;
       }
 
       y += 4;
