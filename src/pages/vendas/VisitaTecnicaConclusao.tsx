@@ -207,6 +207,15 @@ export default function VisitaTecnicaConclusao() {
     carregarConclusao(existente);
   }, [existente, carregarConclusao]);
 
+  const iniciarEdicao = () => {
+    setReadOnly(false);
+    setPortas(prev => prev.map(p => ({ ...p, expandido: true })));
+  };
+
+  const cancelarEdicao = () => {
+    carregarConclusao(existente);
+  };
+
   const updatePorta = (id: string, patch: Partial<PortaForm>) => {
     setPortas(prev => prev.map(p => p.id === id ? { ...p, ...patch } : p));
   };
