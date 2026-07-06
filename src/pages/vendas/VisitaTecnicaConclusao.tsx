@@ -175,7 +175,6 @@ export default function VisitaTecnicaConclusao() {
       caixa_motor: p.caixa_motor || '',
       guia_tamanho: p.guia_tamanho || '',
       acessorios: (p.acessorios as AcessorioSel[]) || [],
-      tipo_servico: p.tipo_servico || '',
       posicao_porta: p.posicao_porta || '',
       posicao_motor: p.posicao_motor || '',
       posicao_guia: p.posicao_guia || '',
@@ -300,7 +299,6 @@ export default function VisitaTecnicaConclusao() {
             caixa_motor: p.caixa_motor || null,
             guia_tamanho: p.guia_tamanho || null,
             acessorios: p.acessorios,
-            tipo_servico: p.tipo_servico || null,
             posicao_porta: p.posicao_porta || null,
             posicao_motor: p.posicao_motor || null,
             posicao_guia: p.posicao_guia || null,
@@ -652,17 +650,6 @@ function PortaCard({
             </Select>
           </div>
 
-          {/* Tipo de serviço */}
-          <div><label className={labelCls}>Tipo de serviço</label>
-            <Select value={p.tipo_servico || ''} onValueChange={v => onUpdate({ tipo_servico: v })} disabled={readOnly}>
-              <SelectTrigger className={selectTriggerCls}><SelectValue placeholder="Selecione" /></SelectTrigger>
-              <SelectContent className={selectContentCls}>
-                <SelectItem value="instalacao">Instalação</SelectItem>
-                <SelectItem value="entrega">Entrega</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div /> {/* spacer */}
 
           {/* Posicionamentos */}
           <div><label className={labelCls}>Posicionamento da porta</label>
