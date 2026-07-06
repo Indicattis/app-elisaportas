@@ -32,8 +32,8 @@ function fmtDataBR(ymd?: string | null) {
 }
 
 /**
- * Desenha um vão com a porta dentro, escalando para caber na área.
- * larguras/alturas em cm.
+ * Desenha um vão com a porta dentro, com cotas externas (fora das linhas).
+ * larguras/alturas em cm. Retorna a altura total ocupada.
  */
 function desenharVaoPorta(
   doc: jsPDF,
@@ -46,52 +46,90 @@ function desenharVaoPorta(
   portaL: number,
   portaA: number,
 ) {
+  // Reservar margem interna para as cotas externas
+  const padTop = 8;    // cota largura do vão
+  const padBottom = 10; // cota largura da porta
+  const padLeft = 14;  // cota altura do vão
+  const padRight = 14; // cota altura da porta
+
+  const areaW = maxW - padLeft - padRight;
+  const areaH = maxH - padTop - padBottom;
+
   const refL = Math.max(vaoL, portaL, 1);
   const refA = Math.max(vaoA, portaA, 1);
-  const scale = Math.min(maxW / refL, maxH / refA);
+  const scale = Math.min(areaW / refL, areaH / refA);
+
   const vw = vaoL * scale;
   const vh = vaoA * scale;
   const pw = portaL * scale;
   const ph = portaA * scale;
-  // Centralizar
-  const cx = x + (maxW - vw) / 2;
-  const cy = y + (maxH - vh) / 2;
 
-  // Vão (tracejado)
-  doc.setDrawColor(120, 120, 120);
+  // Vão centralizado na área
+  const cx = x + padLeft + (areaW - vw) / 2;
+  const cy = y + padTop + (areaH - vh) / 2;
+
+  // Vão (tracejado, cinza)
+  doc.setDrawColor(130, 130, 130);
   doc.setLineWidth(0.4);
   doc.setLineDashPattern([1.2, 1.2], 0);
   doc.rect(cx, cy, vw, vh);
-
-  // Porta (sólido) centralizada no vão
   doc.setLineDashPattern([], 0);
-  doc.setDrawColor(41, 128, 185);
-  doc.setLineWidth(0.6);
-  doc.setFillColor(41, 128, 185);
+
+  // Porta (azul) centralizada no vão
   const px = cx + (vw - pw) / 2;
   const py = cy + (vh - ph) / 2;
-  // preenchimento leve
-  const gState = (doc as any).GState ? new (doc as any).GState({ opacity: 0.12 }) : null;
+  doc.setDrawColor(41, 128, 185);
+  doc.setLineWidth(0.7);
+  doc.setFillColor(41, 128, 185);
+  const gState = (doc as any).GState ? new (doc as any).GState({ opacity: 0.14 }) : null;
   if (gState) (doc as any).setGState(gState);
   doc.rect(px, py, pw, ph, 'F');
   if (gState) (doc as any).setGState(new (doc as any).GState({ opacity: 1 }));
   doc.rect(px, py, pw, ph, 'S');
 
-  // Cotas
-  doc.setFontSize(7);
-  doc.setTextColor(80, 80, 80);
-  // Largura do vão (topo)
-  doc.text(`Vão: ${fmtNum(vaoL)} cm`, cx + vw / 2, cy - 1.5, { align: 'center' });
-  // Altura do vão (direita)
-  doc.text(`${fmtNum(vaoA)} cm`, cx + vw + 1.5, cy + vh / 2, { angle: 90 });
-  // Largura porta (baixo)
-  doc.setTextColor(41, 128, 185);
-  doc.text(`Porta: ${fmtNum(portaL)} cm`, cx + vw / 2, cy + vh + 4, { align: 'center' });
-  // Altura porta (esquerda)
-  doc.text(`${fmtNum(portaA)} cm`, cx - 1.5, cy + vh / 2, { angle: 90, align: 'right' });
-  doc.setTextColor(0, 0, 0);
+  // ---------- Cotas externas (linhas + tick + rótulo fora) ----------
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.5);
 
-  return { bottomY: cy + vh + 6 };
+  const tick = 1.2;
+
+  // Vão — Largura (acima do vão)
+  const dimTopY = cy - 4;
+  doc.setDrawColor(130, 130, 130);
+  doc.setLineWidth(0.3);
+  doc.line(cx, dimTopY, cx + vw, dimTopY);
+  doc.line(cx, dimTopY - tick, cx, dimTopY + tick);
+  doc.line(cx + vw, dimTopY - tick, cx + vw, dimTopY + tick);
+  doc.setTextColor(90, 90, 90);
+  doc.text(`Vão ${fmtNum(vaoL)} cm`, cx + vw / 2, dimTopY - 1.5, { align: 'center' });
+
+  // Vão — Altura (à direita do vão)
+  const dimRightX = cx + vw + 5;
+  doc.line(dimRightX, cy, dimRightX, cy + vh);
+  doc.line(dimRightX - tick, cy, dimRightX + tick, cy);
+  doc.line(dimRightX - tick, cy + vh, dimRightX + tick, cy + vh);
+  doc.text(`${fmtNum(vaoA)} cm`, dimRightX + 3, cy + vh / 2, { angle: 90, align: 'center' });
+
+  // Porta — Largura (abaixo da porta)
+  const dimBottomY = py + ph + 5;
+  doc.setDrawColor(41, 128, 185);
+  doc.line(px, dimBottomY, px + pw, dimBottomY);
+  doc.line(px, dimBottomY - tick, px, dimBottomY + tick);
+  doc.line(px + pw, dimBottomY - tick, px + pw, dimBottomY + tick);
+  doc.setTextColor(41, 128, 185);
+  doc.text(`Porta ${fmtNum(portaL)} cm`, px + pw / 2, dimBottomY + 3, { align: 'center' });
+
+  // Porta — Altura (à esquerda da porta)
+  const dimLeftX = px - 5;
+  doc.line(dimLeftX, py, dimLeftX, py + ph);
+  doc.line(dimLeftX - tick, py, dimLeftX + tick, py);
+  doc.line(dimLeftX - tick, py + ph, dimLeftX + tick, py + ph);
+  doc.text(`${fmtNum(portaA)} cm`, dimLeftX - 3, py + ph / 2, { angle: 90, align: 'center' });
+
+  doc.setTextColor(0, 0, 0);
+  doc.setFont('helvetica', 'normal');
+
+  return { bottomY: y + maxH };
 }
 
 export async function gerarPDFVisitaTecnica(visitaId: string) {
