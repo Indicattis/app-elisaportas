@@ -491,7 +491,12 @@ export default function VisitaTecnicaConclusao() {
             </Button>
           </div>
         ) : (
-        <div className="space-y-4">
+        <div className={cn(
+          "space-y-4 rounded-2xl border transition-all duration-500",
+          iniciado && !readOnly
+            ? "bg-blue-500/[0.03] border-blue-400/30 shadow-[0_0_40px_-15px_rgba(59,130,246,0.2)] p-4"
+            : "border-transparent bg-transparent p-0"
+        )}>
           {portas.map((p, idx) => (
             <PortaCard
               key={p.id}
