@@ -256,6 +256,28 @@ export default function VisitaTecnicaConclusao() {
     });
   };
 
+  const validarPorta = (p: PortaForm): string | null => {
+    if (!p.largura_vao || !p.altura_vao) return 'Largura e altura do vão são obrigatórias';
+    if (!p.largura_total || !p.altura_total) return 'Largura e altura total são obrigatórias';
+    if (!p.meia_cana_tipo) return 'Meia cana é obrigatória';
+    if (p.cores.length === 0) return 'Selecione pelo menos uma cor de pintura';
+    if (!p.caixa_motor) return 'Tipo de caixa é obrigatório';
+    if (!p.guia_tamanho) return 'Tamanho do guia é obrigatório';
+    if (!p.posicao_porta) return 'Posicionamento da porta é obrigatório';
+    if (!p.posicao_motor) return 'Posicionamento do motor é obrigatório';
+    if (!p.posicao_guia) return 'Posicionamento do guia é obrigatório';
+    if (!p.posicao_testeira) return 'Posicionamento da testeira é obrigatório';
+    if (!p.tipo_guia) return 'Tipo do guia é obrigatório';
+    if (!p.dificuldade_instalacao) return 'Dificuldade da instalação é obrigatória';
+    if (p.tem_tiras_frontais && !p.qtd_tiras_frontais) return 'Informe a quantidade de tiras frontais';
+    if (p.tem_controle_adicional && !p.qtd_controle_adicional) return 'Informe a quantidade de controles adicionais';
+    if (p.tem_tubo_afastamento && !p.distancia_tubo_cm) return 'Informe a distância do tubo de afastamento';
+    if (p.acessorios.length === 0) return 'Selecione pelo menos um acessório';
+    if (!p.observacoes.trim()) return 'Observações da porta são obrigatórias';
+    if (p.fotos.length === 0 && p.novasFotos.length === 0) return 'Adicione pelo menos uma foto da porta';
+    return null;
+  };
+
   const concluirMut = useMutation({
     mutationFn: async () => {
       if (portas.length === 0) throw new Error('Adicione pelo menos uma porta');
