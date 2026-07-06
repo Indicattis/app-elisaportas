@@ -245,6 +245,8 @@ export default function VisitasTecnicasCalendario() {
   const [tabDirection, setTabDirection] = useState<'left' | 'right'>('right');
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedVisita, setSelectedVisita] = useState<VisitaAgendada | null>(null);
+  const [listaFiltro, setListaFiltro] = useState<'pendente' | 'em_andamento' | 'concluida' | 'cancelada' | 'todos'>('pendente');
+  const [listaBusca, setListaBusca] = useState('');
   const handleTabChange = (next: 'calendario' | 'concluir') => {
     if (next === tab) return;
     setTabDirection(next === 'concluir' ? 'right' : 'left');
