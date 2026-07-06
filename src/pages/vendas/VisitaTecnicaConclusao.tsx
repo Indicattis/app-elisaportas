@@ -655,9 +655,9 @@ export default function VisitaTecnicaConclusao() {
               <Button
                 variant="ghost"
                 className="text-white/70 hover:text-white hover:bg-white/10"
-                onClick={() => navigate('/vendas/visitas-tecnicas')}
+                onClick={() => existente ? cancelarEdicao() : navigate('/vendas/visitas-tecnicas')}
               >
-                Cancelar
+                {existente ? 'Cancelar edição' : 'Cancelar'}
               </Button>
               <Tooltip>
                 <TooltipTrigger asChild>
