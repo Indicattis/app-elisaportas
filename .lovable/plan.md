@@ -1,34 +1,52 @@
-Adicionar ações na Ficha de visita técnica (tela readOnly) para que o usuário possa editar a conclusão ou concluir a visita, conforme o status.
+## Objetivo
+Adicionar um botão "Gerar PDF" em cada visita técnica concluída na listagem `/vendas/visitas-tecnicas`, produzindo um relatório simples com logo da empresa e uma ilustração do vão comparando medidas originais (vão) e finais (porta).
 
-### Contexto
-A rota `/vendas/visitas-tecnicas/:visitaId/concluir` renderiza `VisitaTecnicaConclusao`. Hoje o componente alterna automaticamente entre modo de preenchimento (`!readOnly`) e modo Ficha (`readOnly`) baseado na existência de um registro em `visitas_tecnicas_conclusoes`. Quando a Ficha é exibida, não há botão de ação, o que gera a pergunta do usuário.
+## Escopo
+- Somente visitas com conclusão (`tem_conclusao === true`) exibem o botão. Visitas ainda pendentes/agendadas não geram PDF.
+- Apenas frontend/apresentação — nenhuma alteração de banco.
 
-### O que será feito
+## Arquivos
+1. **Novo:** `src/utils/visitaTecnicaPDFGenerator.ts`
+   - Usa `jspdf` (já presente no projeto, mesmo padrão dos outros geradores).
+   - Função `gerarPDFVisitaTecnica(visitaId: string)`:
+     - Busca `visitas_tecnicas_agendadas` + responsável (`admin_users`).
+     - Busca `visitas_tecnicas_conclusoes` da visita → suas `visitas_tecnicas_portas` (ordenadas).
+     - Monta PDF A4 retrato:
+       - **Cabeçalho:** logo (`src/assets/logo-empresa.png`) + título "Relatório de Visita Técnica" + nº/data.
+       - **Bloco cliente:** título, endereço completo, telefone, responsável, data/hora.
+       - **Para cada porta (ordem):**
+         - Subtítulo "Vão N — <tipo_serviço/posição>".
+         - Tabela compacta: Largura do vão, Altura do vão, Largura total da porta, Altura total da porta, diferença (porta − vão) em cm.
+         - **Ilustração vetorial** desenhada com primitivas do jsPDF (retângulos + cotas):
+           - Retângulo externo tracejado = vão (largura_vao × altura_vao).
+           - Retângulo interno sólido = porta (largura_total × altura_total), centralizado.
+           - Cotas laterais/superiores com valores em cm, legenda "Vão" (tracejado) e "Porta" (sólido).
+           - Escala automática para caber em ~80×80 mm mantendo proporção.
+         - Detalhes extras curtos: caixa motor, guia, meia-cana, cores (se presentes).
+       - Quebra de página quando necessário.
+     - Rodapé com paginação e data de geração.
+     - `doc.save(\`visita-tecnica-<titulo>-<data>.pdf\`)`.
 
-1. **Botão "Editar conclusão" na Ficha**
-   - Sempre visível quando `readOnly === true` e a visita possui conclusão salva.
-   - Ao clicar, altera o estado local para `readOnly = false` e expande as portas para edição.
-   - O usuário reutiliza o formulário existente; ao salvar, o `upsert` em `visitas_tecnicas_conclusoes` e o delete/reinsert em `visitas_tecnicas_portas` mantêm os dados atualizados.
+2. **Editar:** `src/pages/vendas/VisitasTecnicasCalendario.tsx`
+   - Importar ícone `FileDown` (lucide) e a função nova.
+   - No card/linha da listagem, quando `getStatusMeta(v) === 'realizada'` ou `'concluida'`, adicionar botão "PDF" ao lado das ações existentes, chamando `gerarPDFVisitaTecnica(v.id)` com toast de sucesso/erro.
+   - Manter responsividade mobile já implementada (botão ícone-only em telas pequenas).
 
-2. **Botão "Concluir visita" na Ficha (status pendente)**
-   - Visível apenas quando `readOnly === true` e `visita.status !== 'concluida'`.
-   - Executa uma mutação leve que:
-     - Atualiza `visitas_tecnicas_agendadas.status` para `'concluida'`.
-     - Registra histórico em `visitas_tecnicas_historico` com ação `concluida`.
-     - Invalida queries de visitas e redireciona para `/vendas/visitas-tecnicas`.
+## Ilustração — detalhes técnicos
+```text
+      ← largura_vao (cm) →
+   ┌───────────────────────────┐   ▲
+   │  ┌─────────────────────┐  │   │
+   │  │                     │  │   altura_vao
+   │  │       PORTA         │  │   │
+   │  │  (largura_total ×   │  │   │
+   │  │   altura_total)     │  │   │
+   │  └─────────────────────┘  │   │
+   └───────────────────────────┘   ▼
+   Tracejado = Vão  |  Sólido = Porta
+```
+Cotas desenhadas com `doc.line` + `doc.text`; tracejado via `doc.setLineDashPattern([1,1], 0)`.
 
-3. **Indicador de status**
-   - Exibir um badge na Ficha informando o status atual da visita (`concluida`, `realizada`, `agendada`, `cancelada`), alinhado ao estilo glassmorphism do projeto.
-
-4. **Cancelar edição**
-   - Quando o usuário clicar em "Editar conclusão", o botão "Cancelar" volta para `readOnly = true` sem salvar.
-
-### Arquivos alterados
-- `src/pages/vendas/VisitaTecnicaConclusao.tsx`
-
-### Não será alterado
-- Não há necessidade de migração de banco; a lógica de atualização de status e histórico já usa tabelas existentes.
-
-### Validação
-- Build do projeto sem erros.
-- Verificação manual no preview: acessar Ficha de uma visita concluída e verificar botão "Editar conclusão"; acessar Ficha de uma visita com conclusão salva mas status pendente e verificar ambos os botões.
+## Fora de escopo
+- Fotos das portas (`visitas_tecnicas_portas_fotos`) — manter simples conforme pedido.
+- Alteração de status, permissões ou dados.
