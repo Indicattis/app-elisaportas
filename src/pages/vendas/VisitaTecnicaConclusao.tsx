@@ -645,6 +645,19 @@ function PortaCard({
           {/* Pintura - cores */}
           <div className="md:col-span-2">
             <label className={labelCls}>Pintura — Cores *</label>
+            {p.cores.length > 0 && (
+              <div className="mt-1 flex flex-wrap gap-1.5">
+                {p.cores.map(cor => (
+                  <span
+                    key={cor.id}
+                    className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-500/20 border border-blue-400/40 text-white/90"
+                  >
+                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: cor.codigo_hex }} />
+                    {cor.nome}
+                  </span>
+                ))}
+              </div>
+            )}
             <div className="mt-1 flex flex-wrap gap-2 p-2 rounded-md bg-white/[0.02] border border-white/10 max-h-40 overflow-y-auto">
               {cores.length === 0 && <span className="text-white/40 text-xs">Nenhuma cor cadastrada</span>}
               {cores.map(c => {
