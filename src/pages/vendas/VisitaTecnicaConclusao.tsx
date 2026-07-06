@@ -522,13 +522,24 @@ export default function VisitaTecnicaConclusao() {
               >
                 Cancelar
               </Button>
-              <Button
-                className="bg-gradient-to-br from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 text-white shadow-lg shadow-blue-500/30"
-                onClick={() => concluirMut.mutate()}
-                disabled={concluirMut.isPending}
-              >
-                {concluirMut.isPending ? 'Concluindo...' : 'Concluir visita'}
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span>
+                    <Button
+                      className="bg-gradient-to-br from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 text-white shadow-lg shadow-blue-500/30"
+                      onClick={() => concluirMut.mutate()}
+                      disabled={concluirMut.isPending || !!erroFormulario}
+                    >
+                      {concluirMut.isPending ? 'Concluindo...' : 'Concluir visita'}
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                {erroFormulario && (
+                  <TooltipContent>
+                    <p className="text-xs max-w-xs">{erroFormulario}</p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
             </div>
           )}
         </div>
