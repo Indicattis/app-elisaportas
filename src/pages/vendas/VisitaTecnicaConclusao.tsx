@@ -634,16 +634,22 @@ function PortaCard({
               {cores.length === 0 && <span className="text-white/40 text-xs">Nenhuma cor cadastrada</span>}
               {cores.map(c => {
                 const sel = !!p.cores.find(x => x.id === c.id);
+                const temSelecao = p.cores.length > 0;
                 return (
                   <button
                     key={c.id}
                     onClick={() => !readOnly && onToggleCor(c)}
                     disabled={readOnly}
-                    className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-xs border transition-colors ${
-                      sel ? 'bg-blue-500/30 border-blue-400/50 text-white' : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
-                    }`}
+                    className={cn(
+                      "flex items-center gap-1.5 px-2 py-1 rounded-md text-xs border transition-colors",
+                      sel
+                        ? "bg-blue-500/30 border-blue-400/50 text-white"
+                        : temSelecao
+                          ? "bg-black/20 border-white/5 text-white/40 hover:bg-white/5"
+                          : "bg-white/5 border-white/10 text-white/70 hover:bg-white/10"
+                    )}
                   >
-                    <span className="w-3 h-3 rounded-full border border-white/20" style={{ backgroundColor: c.codigo_hex }} />
+                    <span className={cn("w-3 h-3 rounded-full border", sel ? "border-white/40" : "border-white/10")} style={{ backgroundColor: c.codigo_hex }} />
                     {c.nome}
                   </button>
                 );
