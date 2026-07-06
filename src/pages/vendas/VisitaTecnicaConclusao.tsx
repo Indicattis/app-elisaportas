@@ -157,18 +157,18 @@ export default function VisitaTecnicaConclusao() {
     enabled: !!visitaId,
   });
 
-  useEffect(() => {
-    if (!existente) return;
+  const carregarConclusao = useCallback((dados: typeof existente) => {
+    if (!dados) return;
     setReadOnly(true);
     setIniciado(true);
-    setObsGerais(existente.conclusao.observacoes_gerais || '');
+    setObsGerais(dados.conclusao.observacoes_gerais || '');
     const fotosPorPorta = new Map<string, any[]>();
-    for (const f of existente.fotos) {
+    for (const f of dados.fotos) {
       const arr = fotosPorPorta.get(f.porta_id) || [];
       arr.push(f);
       fotosPorPorta.set(f.porta_id, arr);
     }
-    setPortas(existente.portas.map((p: any, idx: number) => ({
+    setPortas(dados.portas.map((p: any, idx: number) => ({
       id: p.id, dbId: p.id, ordem: p.ordem ?? idx,
       largura_vao: p.largura_vao?.toString() || '',
       altura_vao: p.altura_vao?.toString() || '',
@@ -201,7 +201,11 @@ export default function VisitaTecnicaConclusao() {
       legendasNovas: [],
       expandido: false,
     })));
-  }, [existente]);
+  }, []);
+
+  useEffect(() => {
+    carregarConclusao(existente);
+  }, [existente, carregarConclusao]);
 
   const updatePorta = (id: string, patch: Partial<PortaForm>) => {
     setPortas(prev => prev.map(p => p.id === id ? { ...p, ...patch } : p));
