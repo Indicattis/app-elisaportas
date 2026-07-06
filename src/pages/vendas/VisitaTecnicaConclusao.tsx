@@ -10,6 +10,9 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import {
+  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
+} from '@/components/ui/dialog';
+import {
   Tooltip, TooltipContent, TooltipTrigger,
 } from '@/components/ui/tooltip';
 import {
@@ -100,6 +103,7 @@ export default function VisitaTecnicaConclusao() {
   const [obsGerais, setObsGerais] = useState('');
   const [readOnly, setReadOnly] = useState(false);
   const [iniciado, setIniciado] = useState(false);
+  const [lightbox, setLightbox] = useState<{ open: boolean; url: string; legenda: string }>({ open: false, url: '', legenda: '' });
   const { segundosDecorridos, isRunning, start: startCron } = useCronometro();
 
   useEffect(() => { const t = setTimeout(() => setMounted(true), 50); return () => clearTimeout(t); }, []);
@@ -497,6 +501,37 @@ export default function VisitaTecnicaConclusao() {
             ? "bg-blue-500/[0.03] border-blue-400/30 shadow-[0_0_40px_-15px_rgba(59,130,246,0.2)] p-4"
             : "border-transparent bg-transparent p-0"
         )}>
+          {readOnly && (
+            <div className="rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 p-4">
+              <h2 className="text-sm font-medium text-white mb-3 flex items-center gap-2">
+                <Upload className="w-4 h-4 text-blue-300" /> Mídias da visita
+              </h2>
+              {portas.every(p => p.fotos.length === 0) ? (
+                <p className="text-white/40 text-sm">Nenhuma mídia registrada</p>
+              ) : (
+                <div className="space-y-4">
+                  {portas.filter(p => p.fotos.length > 0).map((p, idx) => (
+                    <div key={p.id}>
+                      <h3 className="text-xs uppercase tracking-wider text-white/50 font-medium mb-2">Porta {idx + 1}</h3>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                        {p.fotos.map((f, i) => (
+                          <button
+                            key={f.id}
+                            onClick={() => setLightbox({ open: true, url: f.url, legenda: f.legenda || `Foto ${i + 1}` })}
+                            className="relative rounded-md overflow-hidden bg-white/5 border border-white/10 hover:border-blue-400/50 transition-colors text-left"
+                          >
+                            <img src={f.url} alt={f.legenda} className="w-full h-24 object-cover" />
+                            {f.legenda && <div className="text-[10px] text-white/70 p-1 bg-black/40 truncate">{f.legenda}</div>}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {portas.map((p, idx) => (
             <PortaCard
               key={p.id}
@@ -516,6 +551,7 @@ export default function VisitaTecnicaConclusao() {
                 const cur = portas.find(x => x.id === p.id)!;
                 updatePorta(p.id, { legendasNovas: cur.legendasNovas.map((l, k) => k === i ? v : l) });
               }}
+              onFotoClick={(url, legenda) => setLightbox({ open: true, url, legenda })}
             />
           ))}
 
@@ -571,6 +607,15 @@ export default function VisitaTecnicaConclusao() {
           )}
         </div>
         )}
+
+        <Dialog open={lightbox.open} onOpenChange={open => setLightbox(prev => ({ ...prev, open }))}>
+          <DialogContent className="max-w-4xl bg-black/90 backdrop-blur-xl border-white/10 p-1">
+            <DialogHeader>
+              <DialogTitle className="text-white text-sm">{lightbox.legenda}</DialogTitle>
+            </DialogHeader>
+            <img src={lightbox.url} alt={lightbox.legenda} className="w-full max-h-[80vh] object-contain rounded-md" />
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
@@ -590,12 +635,13 @@ interface PortaCardProps {
   onFilesAdded: (files: FileList | null) => void;
   onRemoverNovaFoto: (i: number) => void;
   onLegendaNova: (i: number, v: string) => void;
+  onFotoClick?: (url: string, legenda: string) => void;
 }
 
 function PortaCard({
   porta: p, idx, cores, acessorios, readOnly,
   onUpdate, onRemove, onToggleCor, onToggleAcessorio, onSetAcessorioQtd,
-  onFilesAdded, onRemoverNovaFoto, onLegendaNova,
+  onFilesAdded, onRemoverNovaFoto, onLegendaNova, onFotoClick,
 }: PortaCardProps) {
   const resumo = useMemo(() => {
     const dims = (p.largura_total && p.altura_total) ? `${p.largura_total}m × ${p.altura_total}m` : 'sem medidas';
@@ -870,10 +916,14 @@ function PortaCard({
             {(p.fotos.length > 0 || p.novasFotos.length > 0) && (
               <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {p.fotos.map(f => (
-                  <div key={f.id} className="relative rounded-md overflow-hidden bg-white/5 border border-white/10">
+                  <button
+                    key={f.id}
+                    onClick={() => onFotoClick?.(f.url, f.legenda || '')}
+                    className="relative rounded-md overflow-hidden bg-white/5 border border-white/10 hover:border-blue-400/50 transition-colors text-left"
+                  >
                     <img src={f.url} alt={f.legenda} className="w-full h-32 object-cover" />
                     {f.legenda && <div className="text-[10px] text-white/70 p-1 bg-black/40">{f.legenda}</div>}
-                  </div>
+                  </button>
                 ))}
                 {p.novasFotos.map((file, i) => (
                   <div key={i} className="relative rounded-md overflow-hidden bg-white/5 border border-white/10">
