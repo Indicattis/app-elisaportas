@@ -303,6 +303,32 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
     }
   };
 
+  const handleLiberarFaturamento = async () => {
+    setIsLiberandoFaturamento(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { error } = await supabase
+        .from("vendas")
+        .update({
+          contrato_liberado_faturamento: true,
+          contrato_liberado_em: new Date().toISOString(),
+          contrato_liberado_por: user?.id ?? null,
+        } as any)
+        .eq("id", venda.id);
+      if (error) throw error;
+      toast.success("Venda liberada para Pend. Faturamento");
+      queryClient.invalidateQueries({ queryKey: ["vendas-assinatura-contrato"] });
+      queryClient.invalidateQueries({ queryKey: ["vendas-pendente-faturamento"] });
+      queryClient.invalidateQueries({ queryKey: ["vendas-pendente-pedido"] });
+      queryClient.invalidateQueries({ queryKey: ["pedidos-contadores"] });
+    } catch (e) {
+      console.error(e);
+      toast.error("Erro ao liberar venda");
+    } finally {
+      setIsLiberandoFaturamento(false);
+    }
+  };
+
   return (
     <TooltipProvider>
       <Card
