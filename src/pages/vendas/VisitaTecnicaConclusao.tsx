@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Plus, Trash2, Upload, X, Loader2, ChevronDown, ChevronUp, Play, Clock, Pencil, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Upload, X, Loader2, ChevronDown, ChevronUp, Play, Clock, Pencil, CheckCircle2, User } from 'lucide-react';
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { DelayedParticles } from '@/components/DelayedParticles';
 import { Button } from '@/components/ui/button';
@@ -206,6 +206,20 @@ export default function VisitaTecnicaConclusao() {
   useEffect(() => {
     carregarConclusao(existente);
   }, [existente, carregarConclusao]);
+
+  const { data: concluidoPor } = useQuery({
+    queryKey: ['visita-concluido-por', existente?.conclusao?.concluido_por],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('admin_users')
+        .select('nome, user_id')
+        .eq('user_id', existente?.conclusao?.concluido_por)
+        .maybeSingle();
+      if (error) throw error;
+      return data as { nome: string; user_id: string } | null;
+    },
+    enabled: !!readOnly && !!existente?.conclusao?.concluido_por,
+  });
 
   const iniciarEdicao = () => {
     setReadOnly(false);
@@ -549,6 +563,22 @@ export default function VisitaTecnicaConclusao() {
               )}
             </div>
           )}
+        </div>
+
+        <div className="mb-4 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-blue-500/10 border border-blue-400/20">
+              <User className="w-4 h-4 text-blue-300" />
+            </div>
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-white/50 font-medium">
+                {readOnly ? 'Concluído por' : 'Responsável pela visita'}
+              </p>
+              <p className="text-sm font-medium text-white">
+                {(readOnly ? concluidoPor?.nome : userRole?.nome) || '—'}
+              </p>
+            </div>
+          </div>
         </div>
 
         {!iniciado && !readOnly ? (
