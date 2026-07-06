@@ -565,6 +565,22 @@ export default function VisitaTecnicaConclusao() {
           )}
         </div>
 
+        <div className="mb-4 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-blue-500/10 border border-blue-400/20">
+              <User className="w-4 h-4 text-blue-300" />
+            </div>
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-white/50 font-medium">
+                {readOnly ? 'Concluído por' : 'Responsável pela visita'}
+              </p>
+              <p className="text-sm font-medium text-white">
+                {(readOnly ? concluidoPor?.nome : userRole?.nome) || '—'}
+              </p>
+            </div>
+          </div>
+        </div>
+
         {!iniciado && !readOnly ? (
           <div className="rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 p-10 flex flex-col items-center justify-center text-center">
             <div className="p-4 rounded-full bg-blue-500/10 border border-blue-400/20 mb-5">
