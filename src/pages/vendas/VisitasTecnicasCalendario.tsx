@@ -924,52 +924,17 @@ export default function VisitasTecnicasCalendario() {
         )}
 
         {tab === 'concluir' && (
-        <div className="rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 p-4">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <ClipboardList className="w-4 h-4 text-blue-300" />
-              <h2 className="text-sm font-semibold text-white">Visitas a concluir</h2>
-            </div>
-            <span className="text-[11px] px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-200 border border-blue-400/20">
-              {visitasAConcluir.length}
-            </span>
-          </div>
-
-          {visitasAConcluir.length === 0 ? (
-            <div className="text-center py-12 text-white/40 text-sm">
-              Nenhuma visita pendente
-            </div>
-          ) : (
-            <ul className="flex flex-col gap-1.5">
-              {visitasAConcluir.map(v => {
-                const ymd = toDateOnly(v.data_visita);
-                const dia = ymd.slice(8, 10);
-                const mes = ymd.slice(5, 7);
-                const hora = (v.hora_inicio || '').slice(0, 5);
-                const todayYmd = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
-                const atrasada = ymd < todayYmd;
-                const local = [v.cidade, v.estado].filter(Boolean).join('/');
-                return (
-                  <li key={v.id}>
-                  <button
-                      onClick={() => openDetail(v)}
-                      className="w-full text-left p-3 rounded-lg bg-white/[0.03] hover:bg-white/[0.08] border border-white/5 hover:border-white/10 transition group flex items-center gap-3"
-                    >
-                      <span className={`shrink-0 text-[11px] font-mono px-2 py-1 rounded ${atrasada ? 'bg-amber-500/20 text-amber-200' : 'bg-blue-500/15 text-blue-200'}`}>
-                        {dia}/{mes} · {hora}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <div className="text-sm text-white truncate">{v.titulo}</div>
-                        {local && <div className="text-[11px] text-white/40 truncate">{local}</div>}
-                      </div>
-                      {atrasada && <AlertCircle className="w-4 h-4 text-amber-300 shrink-0" />}
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </div>
+        <VisitasListaPanel
+          visitas={visitasLista}
+          responsaveis={responsaveis}
+          filtro={listaFiltro}
+          setFiltro={setListaFiltro}
+          busca={listaBusca}
+          setBusca={setListaBusca}
+          onOpen={openDetail}
+          onDelete={(id) => { if (confirm('Excluir esta visita?')) delMut.mutate(id); }}
+          today={today}
+        />
         )}
         </div>
       </div>
