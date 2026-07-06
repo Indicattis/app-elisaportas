@@ -610,105 +610,163 @@ export default function PedidoViewDirecao() {
       }
     >
       <div className="space-y-4">
-        {/* Grid: Informações do Cliente e Ações Rápidas */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <Card className="lg:col-span-2 bg-primary/5 border-primary/10 backdrop-blur-xl">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm flex items-center gap-2 text-white">
-                <User className="w-4 h-4" />
-                Informações do Cliente
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-sm">
-                <div>
-                  <p className="text-xs text-white/50">Cliente</p>
-                  <p className="font-medium text-white">{pedido.cliente_nome || 'Não informado'}</p>
-                </div>
-                {pedido.cidade && pedido.estado && (
-                  <div>
-                    <p className="text-xs text-white/50">Localização</p>
-                    <div className="flex items-center gap-1 text-white/80">
-                      <MapPin className="w-3 h-3" />
-                      <span className="text-xs">{pedido.cidade}, {pedido.estado}</span>
+        {/* Card principal do Cliente */}
+        {(() => {
+          const enderecoLinha1 = [pedido.endereco_rua, pedido.endereco_numero].filter(Boolean).join(', ');
+          const enderecoLinha2 = [pedido.endereco_bairro, [pedido.endereco_cidade, pedido.endereco_estado].filter(Boolean).join('/')]
+            .filter(Boolean).join(' — ');
+          const cepFmt = formatarCep(pedido.endereco_cep);
+          const temEndereco = !!(enderecoLinha1 || enderecoLinha2 || cepFmt);
+          const cpfFmt = formatarCpfCnpj(pedido.cliente_cpf);
+          const cpfLabel = pedido.cliente_cpf && pedido.cliente_cpf.replace(/\D/g, '').length === 14 ? 'CNPJ' : 'CPF';
+          const mapsQuery = encodeURIComponent([enderecoLinha1, pedido.endereco_bairro, pedido.endereco_cidade, pedido.endereco_estado].filter(Boolean).join(', '));
+          return (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35 }}
+              className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-5"
+            >
+              <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                <div className="flex items-start gap-3 min-w-0">
+                  <div className="w-11 h-11 rounded-full flex items-center justify-center font-bold text-white text-base border-2 border-white/20 shadow-lg bg-gradient-to-br from-blue-500 to-blue-700 shrink-0">
+                    {getInicialNome(pedido.cliente_nome)}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h2 className="text-white font-semibold text-base truncate">{pedido.cliente_nome || 'Cliente não informado'}</h2>
+                      <span className={chipClass('slate')}>#{pedido.numero_pedido}</span>
+                      {pedido.is_correcao && (
+                        <span className={chipClass('purple')}>
+                          <Wrench className="w-3 h-3" /> Correção
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap mt-1.5">
+                      {pedido.endereco_cidade && pedido.endereco_estado && (
+                        <span className={chipClass('blue')}>
+                          <MapPin className="w-3 h-3" />
+                          {pedido.endereco_cidade}, {pedido.endereco_estado}
+                        </span>
+                      )}
+                      {(pedido.is_correcao && correcaoData) ? (
+                        <span className={chipClass('purple')}>
+                          R$ {Number(correcaoData.custo_correcao || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </span>
+                      ) : pedido.valor_venda ? (
+                        <span className={chipClass('emerald')}>
+                          R$ {Number(pedido.valor_venda).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </span>
+                      ) : null}
+                      {pedido.forma_pagamento && (
+                        <span className={`${chipClass('cyan')} capitalize`}>{pedido.forma_pagamento}</span>
+                      )}
+                      {pedido.tipo_entrega && (
+                        <span className={`${chipClass('amber')} capitalize`}>{pedido.tipo_entrega}</span>
+                      )}
+                      {pedido.data_prevista_entrega && (
+                        <span className={chipClass('pink')}>
+                          <Clock className="w-3 h-3" />
+                          Prev: {format(new Date(pedido.data_prevista_entrega), "dd/MM/yyyy")}
+                        </span>
+                      )}
                     </div>
                   </div>
-                )}
-                {pedido.is_correcao && correcaoData ? (
-                  <div>
-                    <p className="text-xs text-white/50">Valor da Correção</p>
-                    <p className="font-medium text-purple-400">R$ {Number(correcaoData.custo_correcao || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                  </div>
-                ) : pedido.valor_venda ? (
-                  <div>
-                    <p className="text-xs text-white/50">Valor da Venda</p>
-                    <p className="font-medium text-white">R$ {Number(pedido.valor_venda).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                  </div>
-                ) : null}
-                {pedido.forma_pagamento && (
-                  <div>
-                    <p className="text-xs text-white/50">Forma de Pagamento</p>
-                    <p className="font-medium capitalize text-white">{pedido.forma_pagamento}</p>
-                  </div>
-                )}
-                {pedido.tipo_entrega && (
-                  <div>
-                    <p className="text-xs text-white/50">Tipo de Entrega</p>
-                    <p className="font-medium capitalize text-white">{pedido.tipo_entrega}</p>
-                  </div>
-                )}
-                {pedido.data_prevista_entrega && (
-                  <div>
-                    <p className="text-xs text-white/50">Data Prevista</p>
-                    <p className="font-medium text-white">{format(new Date(pedido.data_prevista_entrega), "dd/MM/yyyy")}</p>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                </div>
 
-          <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm text-white">Ações Rápidas</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {pedido.venda_id && (
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start text-sm h-9 bg-white/5 border-white/10 text-white hover:bg-white/10" 
-                  onClick={() => window.open(`/direcao/vendas/${pedido.venda_id}`, '_blank')}
-                >
-                  <ExternalLink className="w-4 h-4 mr-2" />
-                  Ver Venda
-                </Button>
-              )}
-              <Button 
-                variant="outline" 
-                className="w-full justify-start text-sm h-9 bg-white/5 border-white/10 text-white hover:bg-white/10" 
-                onClick={() => { const pdfData = prepararDadosPDF(); if (pdfData) baixarPedidoProducaoPDF(pdfData); }}
-              >
-                <FileDown className="w-4 h-4 mr-2" />
-                Baixar PDF
-              </Button>
-              <Button 
-                variant="outline" 
-                className="w-full justify-start text-sm h-9 bg-white/5 border-white/10 text-white hover:bg-white/10" 
-                onClick={() => { const pdfData = prepararDadosPDF(); if (pdfData) imprimirPedidoProducaoPDF(pdfData); }}
-              >
-                <Printer className="w-4 h-4 mr-2" />
-                Imprimir PDF
-              </Button>
-              <Button 
-                variant="outline" 
-                className="w-full justify-start text-sm h-9 bg-destructive/10 border-destructive/30 text-destructive hover:bg-destructive/20" 
-                onClick={() => setShowExcluir(true)}
-              >
-                <Trash2 className="w-4 h-4 mr-2" />
-                Excluir Pedido
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+                {/* Ações rápidas em barra */}
+                <div className="flex items-center gap-2 flex-wrap shrink-0">
+                  {pedido.venda_id && (
+                    <Button size="sm" variant="outline"
+                      className="rounded-full bg-white/5 border-white/10 text-white hover:bg-white/10 gap-1.5"
+                      onClick={() => window.open(`/direcao/vendas/${pedido.venda_id}`, '_blank')}>
+                      <ExternalLink className="w-4 h-4" /> Ver Venda
+                    </Button>
+                  )}
+                  <Button size="sm" variant="outline"
+                    className="rounded-full bg-white/5 border-white/10 text-white hover:bg-white/10 gap-1.5"
+                    onClick={() => { const pdfData = prepararDadosPDF(); if (pdfData) baixarPedidoProducaoPDF(pdfData); }}>
+                    <FileDown className="w-4 h-4" /> PDF
+                  </Button>
+                  <Button size="sm" variant="outline"
+                    className="rounded-full bg-white/5 border-white/10 text-white hover:bg-white/10 gap-1.5"
+                    onClick={() => { const pdfData = prepararDadosPDF(); if (pdfData) imprimirPedidoProducaoPDF(pdfData); }}>
+                    <Printer className="w-4 h-4" /> Imprimir
+                  </Button>
+                  <Button size="sm" variant="outline"
+                    className="rounded-full bg-destructive/10 border-destructive/30 text-destructive hover:bg-destructive/20 gap-1.5"
+                    onClick={() => setShowExcluir(true)}>
+                    <Trash2 className="w-4 h-4" /> Excluir
+                  </Button>
+                </div>
+              </div>
+
+              {/* Dados cadastrais */}
+              <div className="mt-5 pt-4 border-t border-white/10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                <div className="flex items-start gap-2">
+                  <IdCard className="w-4 h-4 text-white/40 mt-0.5 shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-[11px] uppercase tracking-wide text-white/40">{cpfLabel}</p>
+                    <p className="text-white/90 font-medium truncate">{cpfFmt || <span className="text-white/30">Não informado</span>}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Phone className="w-4 h-4 text-white/40 mt-0.5 shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-[11px] uppercase tracking-wide text-white/40">Telefone</p>
+                    {pedido.cliente_telefone ? (
+                      <a href={`tel:${pedido.cliente_telefone}`} className="text-white/90 font-medium hover:text-blue-300 truncate block">
+                        {pedido.cliente_telefone}
+                      </a>
+                    ) : (
+                      <p className="text-white/30">Não informado</p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-start gap-2 sm:col-span-2">
+                  <Mail className="w-4 h-4 text-white/40 mt-0.5 shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-[11px] uppercase tracking-wide text-white/40">E-mail</p>
+                    {pedido.cliente_email ? (
+                      <a href={`mailto:${pedido.cliente_email}`} className="text-white/90 font-medium hover:text-blue-300 truncate block">
+                        {pedido.cliente_email}
+                      </a>
+                    ) : (
+                      <p className="text-white/30">Não informado</p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-start gap-2 sm:col-span-2 lg:col-span-4">
+                  <Home className="w-4 h-4 text-white/40 mt-0.5 shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <p className="text-[11px] uppercase tracking-wide text-white/40">Endereço</p>
+                      {temEndereco && mapsQuery && (
+                        <a
+                          href={`https://www.google.com/maps/search/?api=1&query=${mapsQuery}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-[11px] text-blue-300 hover:text-blue-200 inline-flex items-center gap-1"
+                        >
+                          <ExternalLink className="w-3 h-3" /> Google Maps
+                        </a>
+                      )}
+                    </div>
+                    {temEndereco ? (
+                      <div className="text-white/90 font-medium leading-snug">
+                        {enderecoLinha1 && <p>{enderecoLinha1}</p>}
+                        {enderecoLinha2 && <p className="text-white/70 font-normal">{enderecoLinha2}</p>}
+                        {cepFmt && <p className="text-white/50 font-normal text-xs">CEP {cepFmt}</p>}
+                      </div>
+                    ) : (
+                      <p className="text-white/30">Não informado</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          );
+        })()}
 
         {/* Ficha de Visita Técnica */}
         {pedido.ficha_visita_url && (
