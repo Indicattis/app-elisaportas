@@ -86,13 +86,17 @@ export function useConferencias(veiculoId?: string) {
 
   const uploadFotoConferenciaMutation = useMutation({
     mutationFn: async ({ file, veiculo_id }: { file: File; veiculo_id: string }) => {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `conferencia-${veiculo_id}-${Date.now()}.${fileExt}`;
+      // Compress/resize image to avoid "Load failed" on mobile with large photos
+      const compressed = await compressImage(file, 1600, 0.8);
+      const fileName = `conferencia-${veiculo_id}-${Date.now()}.jpg`;
       const filePath = `${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('veiculos-fotos')
-        .upload(filePath, file);
+        .upload(filePath, compressed, {
+          contentType: 'image/jpeg',
+          upsert: false,
+        });
 
       if (uploadError) throw uploadError;
 
