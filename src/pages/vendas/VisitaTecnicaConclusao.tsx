@@ -640,7 +640,7 @@ interface PortaCardProps {
 function PortaCard({
   porta: p, idx, cores, acessorios, readOnly,
   onUpdate, onRemove, onToggleCor, onToggleAcessorio, onSetAcessorioQtd,
-  onFilesAdded, onRemoverNovaFoto, onLegendaNova,
+  onFilesAdded, onRemoverNovaFoto, onLegendaNova, onFotoClick,
 }: PortaCardProps) {
   const resumo = useMemo(() => {
     const dims = (p.largura_total && p.altura_total) ? `${p.largura_total}m × ${p.altura_total}m` : 'sem medidas';
