@@ -171,7 +171,9 @@ export default function PedidoViewDirecao() {
         .select(`
           id, numero_pedido, etapa_atual, created_at, venda_id,
           ficha_visita_url, ficha_visita_nome, observacoes, updated_at, is_correcao,
-          vendas!inner(id, cliente_nome, cidade, estado, valor_venda, forma_pagamento, tipo_entrega, data_prevista_entrega)
+          endereco_rua, endereco_numero, endereco_bairro, endereco_cidade, endereco_estado, endereco_cep,
+          cliente_email, cliente_cpf,
+          vendas!inner(id, cliente_nome, cliente_telefone, cliente_email, cpf_cliente, cep, bairro, cidade, estado, valor_venda, forma_pagamento, tipo_entrega, data_prevista_entrega)
         `)
         .eq('id', id)
         .single();
