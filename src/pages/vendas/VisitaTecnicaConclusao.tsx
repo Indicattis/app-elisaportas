@@ -488,9 +488,23 @@ export default function VisitaTecnicaConclusao() {
         }}
       >
         <div className="mb-6">
-          <h1 className="text-xl font-semibold text-white">
-            {readOnly ? 'Ficha da visita técnica' : 'Concluir visita técnica'}
-          </h1>
+          <div className="flex items-start justify-between gap-4">
+            <h1 className="text-xl font-semibold text-white">
+              {readOnly ? 'Ficha da visita técnica' : 'Concluir visita técnica'}
+            </h1>
+            {visita?.status && (
+              <span className={cn(
+                "px-2.5 py-1 rounded-full text-[10px] uppercase tracking-wider font-medium border",
+                visita.status === 'concluida' && "bg-emerald-500/15 text-emerald-200 border-emerald-400/30",
+                visita.status === 'realizada' && "bg-blue-500/15 text-blue-200 border-blue-400/30",
+                visita.status === 'agendada' && "bg-amber-500/15 text-amber-200 border-amber-400/30",
+                visita.status === 'cancelada' && "bg-red-500/15 text-red-200 border-red-400/30",
+                !['concluida','realizada','agendada','cancelada'].includes(visita.status) && "bg-white/10 text-white/70 border-white/20"
+              )}>
+                {visita.status === 'concluida' ? 'Concluída' : visita.status === 'realizada' ? 'Realizada' : visita.status === 'agendada' ? 'Agendada' : visita.status === 'cancelada' ? 'Cancelada' : visita.status}
+              </span>
+            )}
+          </div>
           {visita && (
             <p className="text-white/40 text-sm mt-1">
               {visita.titulo} — {visita.cidade ? `${visita.cidade}/${visita.estado}` : ''} —{' '}
@@ -513,6 +527,26 @@ export default function VisitaTecnicaConclusao() {
               <Clock className="w-4 h-4 text-white/60" />
               <span className="font-mono text-sm text-white/80">{formatCronometro(visita.duracao_medicao_segundos)}</span>
               <span className="text-[10px] uppercase tracking-wider text-white/40">Duração da medição</span>
+            </div>
+          )}
+          {readOnly && existente && (
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <Button
+                variant="outline"
+                className="bg-white/5 border-white/10 text-white hover:bg-white/10"
+                onClick={iniciarEdicao}
+              >
+                <Pencil className="w-4 h-4 mr-2" /> Editar conclusão
+              </Button>
+              {visita?.status !== 'concluida' && (
+                <Button
+                  className="bg-gradient-to-br from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 text-white shadow-lg shadow-blue-500/30"
+                  onClick={() => concluirStatusMut.mutate()}
+                  disabled={concluirStatusMut.isPending}
+                >
+                  <CheckCircle2 className="w-4 h-4 mr-2" /> Concluir visita
+                </Button>
+              )}
             </div>
           )}
         </div>
