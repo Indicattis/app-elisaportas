@@ -2,7 +2,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Plus, ChevronLeft, ChevronRight, FileText, Trash2, Loader2, CalendarIcon, Check, ChevronsUpDown, ClipboardList, AlertCircle, Pencil, CheckCircle2, MapPin, Phone, User, Clock, Search, XCircle, PlayCircle, ArrowRight } from 'lucide-react';
+import { ArrowLeft, Plus, ChevronLeft, ChevronRight, FileText, Trash2, Loader2, CalendarIcon, Check, ChevronsUpDown, ClipboardList, AlertCircle, Pencil, CheckCircle2, MapPin, Phone, User, Clock, Search, XCircle, PlayCircle, ArrowRight, FileDown } from 'lucide-react';
+import { gerarPDFVisitaTecnica } from '@/utils/visitaTecnicaPDFGenerator';
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { DelayedParticles } from '@/components/DelayedParticles';
 import { Button } from '@/components/ui/button';
@@ -437,6 +438,26 @@ function VisitasListaPanel({
                     <FileText className="w-3.5 h-3.5" />
                     {meta.key === 'concluida' ? 'Ver ficha' : 'Abrir'}
                   </Button>
+                  {(meta.key === 'em_andamento' || meta.key === 'concluida') && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={async () => {
+                        try {
+                          toast.loading('Gerando PDF...', { id: `pdf-${v.id}` });
+                          await gerarPDFVisitaTecnica(v.id);
+                          toast.success('PDF gerado', { id: `pdf-${v.id}` });
+                        } catch (err: any) {
+                          toast.error(err?.message || 'Falha ao gerar PDF', { id: `pdf-${v.id}` });
+                        }
+                      }}
+                      className="rounded-full h-8 bg-white/5 border-white/10 text-white hover:bg-white/10 gap-1.5"
+                      title="Gerar PDF da visita"
+                    >
+                      <FileDown className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">PDF</span>
+                    </Button>
+                  )}
                   <button
                     onClick={() => onDelete(v.id)}
                     className="p-1.5 rounded-full text-white/40 hover:text-rose-300 hover:bg-rose-500/10 transition"
