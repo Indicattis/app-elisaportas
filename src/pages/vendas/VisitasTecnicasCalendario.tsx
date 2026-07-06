@@ -694,7 +694,7 @@ export default function VisitasTecnicasCalendario() {
           <div className="flex items-center bg-white/5 backdrop-blur-xl border border-white/10 rounded-full p-1">
             {([
               { key: 'calendario' as const, label: 'Calendário' },
-              { key: 'concluir' as const, label: 'A Concluir' },
+              { key: 'concluir' as const, label: 'Lista' },
             ]).map(t => {
               const active = tab === t.key;
               return (
