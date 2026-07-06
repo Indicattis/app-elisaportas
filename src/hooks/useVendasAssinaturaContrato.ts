@@ -47,6 +47,7 @@ export const useVendasAssinaturaContrato = () => {
           contrato_url,
           contrato_dispensado,
           contrato_liberado_faturamento,
+          frete_aprovado,
           produtos_vendas (
             id,
             faturamento,
@@ -138,6 +139,7 @@ export const useVendasAssinaturaContrato = () => {
           const pedidos = v.pedidos_producao || [];
           if (pedidos.length > 0) return false;
           if (vendaIdsComPedido.has(v.id)) return false;
+          if (v.contrato_url === 'legado') return false;
           return true;
         })
         .map((v: any) => {
