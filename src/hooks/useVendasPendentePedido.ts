@@ -29,6 +29,7 @@ export interface VendaPendentePedido {
   venda_presencial?: boolean | null;
   cores: Array<{ nome: string; codigo_hex: string }>;
   portas_info: Array<{ tamanho: 'P' | 'G'; largura: number; altura: number; area: number }>;
+  contrato_status?: 'pendente' | 'gerado' | 'assinado';
 }
 
 export const useVendasPendentePedido = () => {
