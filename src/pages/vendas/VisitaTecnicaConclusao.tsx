@@ -455,6 +455,10 @@ export default function VisitaTecnicaConclusao() {
           )}
           {iniciado && !readOnly && (
             <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-500/10 border border-blue-400/20">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500" />
+              </span>
               <Clock className={`w-4 h-4 text-blue-300 ${isRunning ? 'animate-pulse' : ''}`} />
               <span className="font-mono text-base text-blue-200">{formatCronometro(segundosDecorridos)}</span>
               <span className="text-[10px] uppercase tracking-wider text-white/40">Medição em andamento</span>
@@ -487,7 +491,12 @@ export default function VisitaTecnicaConclusao() {
             </Button>
           </div>
         ) : (
-        <div className="space-y-4">
+        <div className={cn(
+          "space-y-4 rounded-2xl border transition-all duration-500",
+          iniciado && !readOnly
+            ? "bg-blue-500/[0.03] border-blue-400/30 shadow-[0_0_40px_-15px_rgba(59,130,246,0.2)] p-4"
+            : "border-transparent bg-transparent p-0"
+        )}>
           {portas.map((p, idx) => (
             <PortaCard
               key={p.id}
