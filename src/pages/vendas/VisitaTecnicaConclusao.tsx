@@ -324,6 +324,9 @@ export default function VisitaTecnicaConclusao() {
         .single();
       if (cErr) throw cErr;
 
+      // Remove portas existentes (re-conclusão) para evitar duplicidade
+      await supabase.from('visitas_tecnicas_portas').delete().eq('conclusao_id', conclusao.id);
+
       for (const p of portas) {
         const { data: portaRow, error: pErr } = await supabase
           .from('visitas_tecnicas_portas')
