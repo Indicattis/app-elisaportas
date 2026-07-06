@@ -618,7 +618,6 @@ export default function VisitaTecnicaConclusao() {
         </Dialog>
       </div>
     </div>
-    </div>
   );
 }
 
