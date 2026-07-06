@@ -602,9 +602,18 @@ export default function VisitaTecnicaConclusao() {
                   </TooltipContent>
                 )}
               </Tooltip>
-            </div>
-          )}
         </div>
+        )}
+
+        <Dialog open={lightbox.open} onOpenChange={open => setLightbox(prev => ({ ...prev, open }))}>
+          <DialogContent className="max-w-4xl bg-black/90 backdrop-blur-xl border-white/10 p-1">
+            <DialogHeader>
+              <DialogTitle className="text-white text-sm">{lightbox.legenda}</DialogTitle>
+            </DialogHeader>
+            <img src={lightbox.url} alt={lightbox.legenda} className="w-full max-h-[80vh] object-contain rounded-md" />
+          </DialogContent>
+        </Dialog>
+      </div>
         )}
       </div>
     </div>
