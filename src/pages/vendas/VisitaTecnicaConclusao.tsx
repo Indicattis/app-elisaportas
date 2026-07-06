@@ -511,7 +511,7 @@ export default function VisitaTecnicaConclusao() {
               {visita.data_visita?.slice(0, 10)} {visita.hora_inicio?.slice(0, 5)}
             </p>
           )}
-          {iniciado && !readOnly && (
+          {iniciado && !readOnly && !existente && (
             <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-500/10 border border-blue-400/20">
               <span className="relative flex h-2.5 w-2.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
