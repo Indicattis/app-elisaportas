@@ -32,6 +32,7 @@ interface VisitaAgendada {
   data_visita: string;
   hora_inicio: string;
   responsavel_id: string | null;
+  created_by?: string | null;
   telefone_contato: string | null;
   cep: string | null;
   endereco: string | null;
