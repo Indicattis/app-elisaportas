@@ -770,7 +770,7 @@ export default function PedidoViewDirecao() {
 
         {/* Ficha de Visita Técnica */}
         {pedido.ficha_visita_url && (
-          <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
+          <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm flex items-center gap-2 text-white">
                 <ClipboardList className="w-4 h-4" />
@@ -853,7 +853,7 @@ export default function PedidoViewDirecao() {
 
         {/* Produtos da Venda */}
         {pedido.produtos_venda && pedido.produtos_venda.length > 0 && (
-          <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
+          <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm flex items-center gap-2 text-white">
                 <Package className="w-4 h-4" />
@@ -953,7 +953,7 @@ export default function PedidoViewDirecao() {
 
         {/* Itens do Pedido */}
         {gruposPortas.length > 0 && (
-          <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
+          <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm flex items-center gap-2 text-white">
                 <Package className="w-4 h-4" />
@@ -1035,7 +1035,7 @@ export default function PedidoViewDirecao() {
 
         {/* Observações do Pedido */}
         {pedido.observacoes && (
-          <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
+          <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm flex items-center gap-2 text-white">
@@ -1059,7 +1059,7 @@ export default function PedidoViewDirecao() {
 
         {/* Ordens de Produção */}
         {pedido.ordens.length > 0 && (
-          <Card className="bg-primary/5 border-primary/10 backdrop-blur-xl">
+          <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm flex items-center gap-2 text-white">
                 <Hammer className="w-4 h-4" />
