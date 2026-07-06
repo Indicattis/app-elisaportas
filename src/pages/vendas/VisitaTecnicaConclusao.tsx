@@ -1,8 +1,8 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Plus, Trash2, Upload, X, Loader2, ChevronDown, ChevronUp, Play, Clock } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Upload, X, Loader2, ChevronDown, ChevronUp, Play, Clock, Pencil, CheckCircle2 } from 'lucide-react';
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { DelayedParticles } from '@/components/DelayedParticles';
 import { Button } from '@/components/ui/button';
@@ -157,18 +157,18 @@ export default function VisitaTecnicaConclusao() {
     enabled: !!visitaId,
   });
 
-  useEffect(() => {
-    if (!existente) return;
+  const carregarConclusao = useCallback((dados: typeof existente) => {
+    if (!dados) return;
     setReadOnly(true);
     setIniciado(true);
-    setObsGerais(existente.conclusao.observacoes_gerais || '');
+    setObsGerais(dados.conclusao.observacoes_gerais || '');
     const fotosPorPorta = new Map<string, any[]>();
-    for (const f of existente.fotos) {
+    for (const f of dados.fotos) {
       const arr = fotosPorPorta.get(f.porta_id) || [];
       arr.push(f);
       fotosPorPorta.set(f.porta_id, arr);
     }
-    setPortas(existente.portas.map((p: any, idx: number) => ({
+    setPortas(dados.portas.map((p: any, idx: number) => ({
       id: p.id, dbId: p.id, ordem: p.ordem ?? idx,
       largura_vao: p.largura_vao?.toString() || '',
       altura_vao: p.altura_vao?.toString() || '',
@@ -201,7 +201,20 @@ export default function VisitaTecnicaConclusao() {
       legendasNovas: [],
       expandido: false,
     })));
-  }, [existente]);
+  }, []);
+
+  useEffect(() => {
+    carregarConclusao(existente);
+  }, [existente, carregarConclusao]);
+
+  const iniciarEdicao = () => {
+    setReadOnly(false);
+    setPortas(prev => prev.map(p => ({ ...p, expandido: true })));
+  };
+
+  const cancelarEdicao = () => {
+    carregarConclusao(existente);
+  };
 
   const updatePorta = (id: string, patch: Partial<PortaForm>) => {
     setPortas(prev => prev.map(p => p.id === id ? { ...p, ...patch } : p));
@@ -405,6 +418,33 @@ export default function VisitaTecnicaConclusao() {
     onError: (e: any) => toast.error(e.message || 'Erro ao concluir'),
   });
 
+  const concluirStatusMut = useMutation({
+    mutationFn: async () => {
+      await supabase
+        .from('visitas_tecnicas_agendadas')
+        .update({ status: 'concluida' } as any)
+        .eq('id', visitaId);
+      await logVisitaHistorico({
+        visita_id: visitaId!,
+        acao: 'concluida',
+        titulo: visita?.titulo,
+        data_visita: visita?.data_visita,
+        cidade: visita?.cidade,
+        estado: visita?.estado,
+        usuario_id: userRole?.user_id || null,
+        usuario_nome: userRole?.nome || null,
+      });
+    },
+    onSuccess: () => {
+      toast.success('Visita técnica concluída');
+      qc.invalidateQueries({ queryKey: ['visitas-agendadas'] });
+      qc.invalidateQueries({ queryKey: ['visita-agendada', visitaId] });
+      qc.invalidateQueries({ queryKey: ['visitas-historico'] });
+      navigate('/vendas/visitas-tecnicas');
+    },
+    onError: (e: any) => toast.error(e.message || 'Erro ao concluir'),
+  });
+
   if (loadingVisita) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -448,16 +488,30 @@ export default function VisitaTecnicaConclusao() {
         }}
       >
         <div className="mb-6">
-          <h1 className="text-xl font-semibold text-white">
-            {readOnly ? 'Ficha da visita técnica' : 'Concluir visita técnica'}
-          </h1>
+          <div className="flex items-start justify-between gap-4">
+            <h1 className="text-xl font-semibold text-white">
+              {readOnly ? 'Ficha da visita técnica' : 'Concluir visita técnica'}
+            </h1>
+            {visita?.status && (
+              <span className={cn(
+                "px-2.5 py-1 rounded-full text-[10px] uppercase tracking-wider font-medium border",
+                visita.status === 'concluida' && "bg-emerald-500/15 text-emerald-200 border-emerald-400/30",
+                visita.status === 'realizada' && "bg-blue-500/15 text-blue-200 border-blue-400/30",
+                visita.status === 'agendada' && "bg-amber-500/15 text-amber-200 border-amber-400/30",
+                visita.status === 'cancelada' && "bg-red-500/15 text-red-200 border-red-400/30",
+                !['concluida','realizada','agendada','cancelada'].includes(visita.status) && "bg-white/10 text-white/70 border-white/20"
+              )}>
+                {visita.status === 'concluida' ? 'Concluída' : visita.status === 'realizada' ? 'Realizada' : visita.status === 'agendada' ? 'Agendada' : visita.status === 'cancelada' ? 'Cancelada' : visita.status}
+              </span>
+            )}
+          </div>
           {visita && (
             <p className="text-white/40 text-sm mt-1">
               {visita.titulo} — {visita.cidade ? `${visita.cidade}/${visita.estado}` : ''} —{' '}
               {visita.data_visita?.slice(0, 10)} {visita.hora_inicio?.slice(0, 5)}
             </p>
           )}
-          {iniciado && !readOnly && (
+          {iniciado && !readOnly && !existente && (
             <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-500/10 border border-blue-400/20">
               <span className="relative flex h-2.5 w-2.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
@@ -473,6 +527,26 @@ export default function VisitaTecnicaConclusao() {
               <Clock className="w-4 h-4 text-white/60" />
               <span className="font-mono text-sm text-white/80">{formatCronometro(visita.duracao_medicao_segundos)}</span>
               <span className="text-[10px] uppercase tracking-wider text-white/40">Duração da medição</span>
+            </div>
+          )}
+          {readOnly && existente && (
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <Button
+                variant="outline"
+                className="bg-white/5 border-white/10 text-white hover:bg-white/10"
+                onClick={iniciarEdicao}
+              >
+                <Pencil className="w-4 h-4 mr-2" /> Editar conclusão
+              </Button>
+              {visita?.status !== 'concluida' && (
+                <Button
+                  className="bg-gradient-to-br from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 text-white shadow-lg shadow-blue-500/30"
+                  onClick={() => concluirStatusMut.mutate()}
+                  disabled={concluirStatusMut.isPending}
+                >
+                  <CheckCircle2 className="w-4 h-4 mr-2" /> Concluir visita
+                </Button>
+              )}
             </div>
           )}
         </div>
@@ -581,9 +655,9 @@ export default function VisitaTecnicaConclusao() {
               <Button
                 variant="ghost"
                 className="text-white/70 hover:text-white hover:bg-white/10"
-                onClick={() => navigate('/vendas/visitas-tecnicas')}
+                onClick={() => existente ? cancelarEdicao() : navigate('/vendas/visitas-tecnicas')}
               >
-                Cancelar
+                {existente ? 'Cancelar edição' : 'Cancelar'}
               </Button>
               <Tooltip>
                 <TooltipTrigger asChild>

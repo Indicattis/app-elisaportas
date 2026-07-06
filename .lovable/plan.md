@@ -1,29 +1,34 @@
-## Objetivo
+Adicionar ações na Ficha de visita técnica (tela readOnly) para que o usuário possa editar a conclusão ou concluir a visita, conforme o status.
 
-Manter vendas na primeira etapa **"Assinatura Contrato"** da Gestão de Pedidos enquanto o contrato **não estiver liberado para faturamento** e **não estiver dispensado** — mesmo que o PDF do contrato já tenha sido anexado.
+### Contexto
+A rota `/vendas/visitas-tecnicas/:visitaId/concluir` renderiza `VisitaTecnicaConclusao`. Hoje o componente alterna automaticamente entre modo de preenchimento (`!readOnly`) e modo Ficha (`readOnly`) baseado na existência de um registro em `visitas_tecnicas_conclusoes`. Quando a Ficha é exibida, não há botão de ação, o que gera a pergunta do usuário.
 
-## Diagnóstico
+### O que será feito
 
-Hoje, em `src/hooks/useVendasAssinaturaContrato.ts`, o filtro é:
+1. **Botão "Editar conclusão" na Ficha**
+   - Sempre visível quando `readOnly === true` e a visita possui conclusão salva.
+   - Ao clicar, altera o estado local para `readOnly = false` e expande as portas para edição.
+   - O usuário reutiliza o formulário existente; ao salvar, o `upsert` em `visitas_tecnicas_conclusoes` e o delete/reinsert em `visitas_tecnicas_portas` mantêm os dados atualizados.
 
-- `is_rascunho = false`
-- `contrato_url IS NULL`
-- `contrato_dispensado = false`
-- `dispensada_sistema = false`
+2. **Botão "Concluir visita" na Ficha (status pendente)**
+   - Visível apenas quando `readOnly === true` e `visita.status !== 'concluida'`.
+   - Executa uma mutação leve que:
+     - Atualiza `visitas_tecnicas_agendadas.status` para `'concluida'`.
+     - Registra histórico em `visitas_tecnicas_historico` com ação `concluida`.
+     - Invalida queries de visitas e redireciona para `/vendas/visitas-tecnicas`.
 
-Assim que o vendedor anexa o PDF (`contrato_url` deixa de ser nulo), a venda **some da aba "Assinatura Contrato"**. Mas ela ainda não vai para "Pend. Faturamento" nem gera pedido de produção, porque o backend só cria o pedido quando `contrato_liberado_faturamento = true` (ou `contrato_dispensado = true`). Resultado: a venda "IURI BEDINOT DE QUADROS" ficou invisível na Gestão de Pedidos.
+3. **Indicador de status**
+   - Exibir um badge na Ficha informando o status atual da visita (`concluida`, `realizada`, `agendada`, `cancelada`), alinhado ao estilo glassmorphism do projeto.
 
-## Mudança
+4. **Cancelar edição**
+   - Quando o usuário clicar em "Editar conclusão", o botão "Cancelar" volta para `readOnly = true` sem salvar.
 
-Em `src/hooks/useVendasAssinaturaContrato.ts`:
+### Arquivos alterados
+- `src/pages/vendas/VisitaTecnicaConclusao.tsx`
 
-- Trocar `.is("contrato_url", null)` por `.eq("contrato_liberado_faturamento", false)`.
-- Adicionar `contrato_liberado_faturamento` na lista de colunas do `select`.
-- Manter as demais condições (`is_rascunho = false`, `contrato_dispensado = false`, `dispensada_sistema = false`, sem `pedidos_producao` vinculado, não reprovada, não faturada).
+### Não será alterado
+- Não há necessidade de migração de banco; a lógica de atualização de status e histórico já usa tabelas existentes.
 
-Isso faz a etapa "Assinatura Contrato" reunir toda venda aprovada que ainda depende de assinatura **ou** liberação de contrato — cobrindo tanto vendas sem PDF anexado quanto vendas com PDF anexado aguardando liberação.
-
-## Fora de escopo
-
-- Nenhuma alteração em contadores, layout, outras abas, ou regras de criação de pedido de produção.
-- Nenhuma migração de banco.
+### Validação
+- Build do projeto sem erros.
+- Verificação manual no preview: acessar Ficha de uma visita concluída e verificar botão "Editar conclusão"; acessar Ficha de uma visita com conclusão salva mas status pendente e verificar ambos os botões.
