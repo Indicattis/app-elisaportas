@@ -354,17 +354,18 @@ function VisitasListaPanel({
             return (
               <div
                 key={v.id}
-                className="group relative flex items-center gap-3 pl-3 pr-3 py-2.5 rounded-full border border-white/10 bg-white/5 backdrop-blur-xl transition-all duration-300 hover:bg-white/10 hover:border-white/20"
+                className="group relative flex flex-col sm:flex-row sm:items-center gap-3 p-3 sm:pl-3 sm:pr-3 sm:py-2.5 rounded-2xl sm:rounded-full border border-white/10 bg-white/5 backdrop-blur-xl transition-all duration-300 hover:bg-white/10 hover:border-white/20"
               >
+                <div className="flex items-start gap-3 sm:contents">
                 <div className="flex-shrink-0" title={`Criado por ${criadorNome}`}>
                   {criadorFoto ? (
                     <img
                       src={criadorFoto}
                       alt={criadorNome}
-                      className="w-12 h-12 rounded-full object-cover border-2 border-white/20 shadow-lg"
+                      className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover border-2 border-white/20 shadow-lg"
                     />
                   ) : (
-                    <div className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-white text-sm border-2 border-white/20 shadow-lg bg-gradient-to-br from-blue-500 to-blue-700">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center font-bold text-white text-sm border-2 border-white/20 shadow-lg bg-gradient-to-br from-blue-500 to-blue-700">
                       {getInicial(criadorNome)}
                     </div>
                   )}
@@ -372,7 +373,7 @@ function VisitasListaPanel({
 
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h4 className="text-white font-semibold truncate text-sm">{v.titulo}</h4>
+                    <h4 className="text-white font-semibold text-sm break-words min-w-0 flex-1 sm:flex-none sm:truncate">{v.titulo}</h4>
                     <span className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border ${meta.badgeClass}`}>
                       <StatusIcon className="w-3 h-3" />
                       {meta.label}
@@ -397,13 +398,14 @@ function VisitasListaPanel({
                     )}
                   </div>
                 </div>
+                </div>
 
-                <div className="flex items-center gap-1.5 flex-shrink-0">
+                <div className="flex items-center gap-1.5 flex-shrink-0 justify-end sm:justify-start w-full sm:w-auto">
                   <Button
                     size="sm"
                     variant="outline"
                     onClick={() => onOpen(v)}
-                    className="rounded-full h-8 bg-white/5 border-white/10 text-white hover:bg-white/10 gap-1.5"
+                    className="rounded-full h-8 bg-white/5 border-white/10 text-white hover:bg-white/10 gap-1.5 flex-1 sm:flex-none"
                   >
                     <FileText className="w-3.5 h-3.5" />
                     {meta.key === 'concluida' ? 'Ver ficha' : 'Abrir'}
