@@ -44,7 +44,7 @@ interface VisitaAgendada {
   status: string;
 }
 
-interface Responsavel { id: string; nome: string }
+interface Responsavel { id: string; nome: string; foto_perfil_url?: string | null }
 
 const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS_SEM = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
@@ -254,8 +254,8 @@ function VisitasListaPanel({
   today: Date;
 }) {
   const respMap = useMemo(() => {
-    const m = new Map<string, string>();
-    responsaveis.forEach(r => m.set(r.id, r.nome));
+    const m = new Map<string, { nome: string; foto?: string | null }>();
+    responsaveis.forEach(r => m.set(r.id, { nome: r.nome, foto: r.foto_perfil_url }));
     return m;
   }, [responsaveis]);
 
@@ -280,7 +280,7 @@ function VisitasListaPanel({
         (v.titulo || '').toLowerCase().includes(termo) ||
         (v.cidade || '').toLowerCase().includes(termo) ||
         (v.telefone_contato || '').toLowerCase().includes(termo) ||
-        (respMap.get(v.responsavel_id || '') || '').toLowerCase().includes(termo)
+        (respMap.get(v.responsavel_id || '')?.nome || '').toLowerCase().includes(termo)
       );
     });
   }, [visitas, filtro, busca, respMap]);
@@ -345,15 +345,26 @@ function VisitasListaPanel({
             const hora = (v.hora_inicio || '').slice(0, 5);
             const atrasada = meta.key === 'pendente' && ymd < todayYmd;
             const local = [v.cidade, v.estado].filter(Boolean).join('/');
-            const respNome = respMap.get(v.responsavel_id || '') || '—';
+            const resp = respMap.get(v.responsavel_id || '');
+            const respNome = resp?.nome || '—';
+            const respFoto = resp?.foto;
             return (
               <div
                 key={v.id}
                 className="group relative flex items-center gap-3 pl-3 pr-3 py-2.5 rounded-full border border-white/10 bg-white/5 backdrop-blur-xl transition-all duration-300 hover:bg-white/10 hover:border-white/20"
               >
-                <div className="flex-shrink-0 flex flex-col items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-blue-500/30 to-blue-700/30 border-2 border-white/10 text-white">
-                  <span className="text-[10px] leading-none text-white/60">{mes}/{ano.slice(2)}</span>
-                  <span className="text-base leading-none font-bold">{dia}</span>
+                <div className="flex-shrink-0" title={respNome}>
+                  {respFoto ? (
+                    <img
+                      src={respFoto}
+                      alt={respNome}
+                      className="w-12 h-12 rounded-full object-cover border-2 border-white/20 shadow-lg"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-white text-sm border-2 border-white/20 shadow-lg bg-gradient-to-br from-blue-500 to-blue-700">
+                      {getInicial(respNome)}
+                    </div>
+                  )}
                 </div>
 
                 <div className="min-w-0 flex-1">
@@ -374,6 +385,7 @@ function VisitasListaPanel({
                     </span>
                   </div>
                   <div className="flex items-center gap-2 flex-wrap mt-1 text-[11px] text-white/50">
+                    <span className="inline-flex items-center gap-1"><CalendarIcon className="w-3 h-3" />{dia}/{mes}/{ano.slice(2)}</span>
                     <span className="inline-flex items-center gap-1"><Clock className="w-3 h-3" />{hora || '—'}</span>
                     {local && <span className="inline-flex items-center gap-1"><MapPin className="w-3 h-3" />{local}</span>}
                     <span className="inline-flex items-center gap-1"><User className="w-3 h-3" />{respNome}</span>
@@ -498,7 +510,7 @@ export default function VisitasTecnicasCalendario() {
     queryKey: ['admin-users-ativos'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('admin_users').select('id, nome').eq('ativo', true).order('nome');
+        .from('admin_users').select('id, nome, foto_perfil_url').eq('ativo', true).order('nome');
       if (error) throw error;
       return (data || []) as Responsavel[];
     },
