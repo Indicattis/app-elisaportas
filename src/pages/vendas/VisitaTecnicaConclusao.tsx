@@ -32,7 +32,6 @@ interface PortaForm {
   largura_total: string;
   altura_total: string;
   meia_cana_tipo: string;
-  meia_cana_especificacoes: string;
   cores: Cor[];
   tem_tiras_frontais: boolean;
   qtd_tiras_frontais: string;
@@ -64,7 +63,7 @@ function novaPorta(ordem: number): PortaForm {
     id: crypto.randomUUID(),
     ordem,
     largura_vao: '', altura_vao: '', largura_total: '', altura_total: '',
-    meia_cana_tipo: '', meia_cana_especificacoes: '',
+    meia_cana_tipo: '',
     cores: [],
     tem_tiras_frontais: false, qtd_tiras_frontais: '',
     tem_controle_adicional: false, qtd_controle_adicional: '',
@@ -170,7 +169,6 @@ export default function VisitaTecnicaConclusao() {
       largura_total: p.largura_total?.toString() || '',
       altura_total: p.altura_total?.toString() || '',
       meia_cana_tipo: p.meia_cana_tipo || '',
-      meia_cana_especificacoes: p.meia_cana_especificacoes || '',
       cores: (p.cores as Cor[]) || [],
       tem_tiras_frontais: !!p.tem_tiras_frontais,
       qtd_tiras_frontais: p.qtd_tiras_frontais?.toString() || '',
@@ -296,7 +294,6 @@ export default function VisitaTecnicaConclusao() {
             largura_total: p.largura_total ? Number(p.largura_total) : null,
             altura_total: p.altura_total ? Number(p.altura_total) : null,
             meia_cana_tipo: p.meia_cana_tipo || null,
-            meia_cana_especificacoes: p.meia_cana_especificacoes || null,
             cores: p.cores,
             tem_tiras_frontais: p.tem_tiras_frontais,
             qtd_tiras_frontais: p.qtd_tiras_frontais ? Number(p.qtd_tiras_frontais) : null,
@@ -589,9 +586,6 @@ function PortaCard({
                 <SelectItem value="perfurada">Perfurada</SelectItem>
               </SelectContent>
             </Select>
-          </div>
-          <div><label className={labelCls}>Especificações meia cana</label>
-            <Input className={inputCls} value={p.meia_cana_especificacoes} onChange={e => onUpdate({ meia_cana_especificacoes: e.target.value })} disabled={readOnly} />
           </div>
 
           {/* Pintura - cores */}
