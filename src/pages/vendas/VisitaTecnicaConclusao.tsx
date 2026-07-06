@@ -603,6 +603,8 @@ export default function VisitaTecnicaConclusao() {
                   </TooltipContent>
                 )}
               </Tooltip>
+            </div>
+          )}
         </div>
         )}
 
@@ -615,8 +617,7 @@ export default function VisitaTecnicaConclusao() {
           </DialogContent>
         </Dialog>
       </div>
-        )}
-      </div>
+    </div>
     </div>
   );
 }
