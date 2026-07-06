@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Plus, ChevronLeft, ChevronRight, FileText, Trash2, Loader2, CalendarIcon, Check, ChevronsUpDown, ClipboardList, AlertCircle, Pencil, CheckCircle2, MapPin, Phone, User, Clock } from 'lucide-react';
+import { ArrowLeft, Plus, ChevronLeft, ChevronRight, FileText, Trash2, Loader2, CalendarIcon, Check, ChevronsUpDown, ClipboardList, AlertCircle, Pencil, CheckCircle2, MapPin, Phone, User, Clock, Search, XCircle, PlayCircle, ArrowRight } from 'lucide-react';
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { DelayedParticles } from '@/components/DelayedParticles';
 import { Button } from '@/components/ui/button';
@@ -327,6 +327,19 @@ export default function VisitasTecnicasCalendario() {
         .in('status', ['agendada', 'realizada'])
         .order('data_visita', { ascending: true })
         .order('hora_inicio', { ascending: true });
+      if (error) throw error;
+      return (data || []) as VisitaAgendada[];
+    },
+  });
+
+  const { data: visitasLista = [] } = useQuery({
+    queryKey: ['visitas-lista-todas'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('visitas_tecnicas_agendadas')
+        .select('*')
+        .order('data_visita', { ascending: false })
+        .order('hora_inicio', { ascending: false });
       if (error) throw error;
       return (data || []) as VisitaAgendada[];
     },
