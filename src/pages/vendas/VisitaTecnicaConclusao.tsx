@@ -697,7 +697,7 @@ function PortaCard({
 
 
           {/* Posicionamentos */}
-          <div><label className={labelCls}>Posicionamento da porta</label>
+          <div><label className={labelCls}>Posicionamento da porta *</label>
             <Select value={p.posicao_porta || ''} onValueChange={v => onUpdate({ posicao_porta: v })} disabled={readOnly}>
               <SelectTrigger className={selectTriggerCls}><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent className={selectContentCls}>
@@ -706,7 +706,7 @@ function PortaCard({
               </SelectContent>
             </Select>
           </div>
-          <div><label className={labelCls}>Posicionamento do motor</label>
+          <div><label className={labelCls}>Posicionamento do motor *</label>
             <Select value={p.posicao_motor || ''} onValueChange={v => onUpdate({ posicao_motor: v })} disabled={readOnly}>
               <SelectTrigger className={selectTriggerCls}><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent className={selectContentCls}>
@@ -715,7 +715,7 @@ function PortaCard({
               </SelectContent>
             </Select>
           </div>
-          <div><label className={labelCls}>Posicionamento do guia</label>
+          <div><label className={labelCls}>Posicionamento do guia *</label>
             <Select value={p.posicao_guia || ''} onValueChange={v => onUpdate({ posicao_guia: v })} disabled={readOnly}>
               <SelectTrigger className={selectTriggerCls}><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent className={selectContentCls}>
@@ -724,7 +724,7 @@ function PortaCard({
               </SelectContent>
             </Select>
           </div>
-          <div><label className={labelCls}>Posicionamento da testeira</label>
+          <div><label className={labelCls}>Posicionamento da testeira *</label>
             <Select value={p.posicao_testeira || ''} onValueChange={v => onUpdate({ posicao_testeira: v })} disabled={readOnly}>
               <SelectTrigger className={selectTriggerCls}><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent className={selectContentCls}>
@@ -734,7 +734,7 @@ function PortaCard({
               </SelectContent>
             </Select>
           </div>
-          <div><label className={labelCls}>Tipo do guia</label>
+          <div><label className={labelCls}>Tipo do guia *</label>
             <Select value={p.tipo_guia || ''} onValueChange={v => onUpdate({ tipo_guia: v })} disabled={readOnly}>
               <SelectTrigger className={selectTriggerCls}><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent className={selectContentCls}>
@@ -744,7 +744,7 @@ function PortaCard({
               </SelectContent>
             </Select>
           </div>
-          <div><label className={labelCls}>Dificuldade da instalação</label>
+          <div><label className={labelCls}>Dificuldade da instalação *</label>
             <Select value={p.dificuldade_instalacao || ''} onValueChange={v => onUpdate({ dificuldade_instalacao: v })} disabled={readOnly}>
               <SelectTrigger className={selectTriggerCls}><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent className={selectContentCls}>
