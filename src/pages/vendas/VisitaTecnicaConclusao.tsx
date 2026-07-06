@@ -263,6 +263,20 @@ export default function VisitaTecnicaConclusao() {
   const validarPorta = (p: PortaForm): string | null => {
     if (!p.largura_vao || !p.altura_vao) return 'Largura e altura do vão são obrigatórias';
     if (!p.largura_total || !p.altura_total) return 'Largura e altura total são obrigatórias';
+    {
+      const lv = Number(p.largura_vao);
+      const av = Number(p.altura_vao);
+      const lt = Number(p.largura_total);
+      const at = Number(p.altura_total);
+      if (lt < lv) return 'Largura final não pode ser menor que a largura da porta';
+      if (at < av) return 'Altura final não pode ser menor que a altura da porta';
+      if ((p.posicao_testeira === 'fora' || p.posicao_testeira === 'entre') && at <= av) {
+        return 'Com testeira FORA DO VÃO ou ENTRE O VÃO, a altura final deve ser MAIOR que a altura da porta';
+      }
+      if ((p.posicao_guia === 'fora' || p.posicao_guia === 'misto') && lt <= lv) {
+        return 'Com guia FORA DO VÃO ou MISTO, a largura final deve ser MAIOR que a largura da porta';
+      }
+    }
     if (!p.meia_cana_tipo) return 'Meia cana é obrigatória';
     if (p.cores.length === 0) return 'Selecione pelo menos uma cor de pintura';
     if (!p.caixa_motor) return 'Tipo de caixa é obrigatório';
