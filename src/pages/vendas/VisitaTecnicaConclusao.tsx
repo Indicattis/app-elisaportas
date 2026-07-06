@@ -531,9 +531,9 @@ function PortaCard({
   onFilesAdded, onRemoverNovaFoto, onLegendaNova,
 }: PortaCardProps) {
   const resumo = useMemo(() => {
-    const dims = (p.largura_vao && p.altura_vao) ? `${p.largura_vao}m × ${p.altura_vao}m` : 'sem medidas';
+    const dims = (p.largura_total && p.altura_total) ? `${p.largura_total}m × ${p.altura_total}m` : 'sem medidas';
     return dims;
-  }, [p.largura_vao, p.altura_vao]);
+  }, [p.largura_total, p.altura_total]);
 
   return (
     <div className="rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
