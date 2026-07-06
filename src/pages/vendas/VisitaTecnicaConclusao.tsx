@@ -10,6 +10,9 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import {
+  Tooltip, TooltipContent, TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
@@ -256,16 +259,45 @@ export default function VisitaTecnicaConclusao() {
     });
   };
 
+  const validarPorta = (p: PortaForm): string | null => {
+    if (!p.largura_vao || !p.altura_vao) return 'Largura e altura do vão são obrigatórias';
+    if (!p.largura_total || !p.altura_total) return 'Largura e altura total são obrigatórias';
+    if (!p.meia_cana_tipo) return 'Meia cana é obrigatória';
+    if (p.cores.length === 0) return 'Selecione pelo menos uma cor de pintura';
+    if (!p.caixa_motor) return 'Tipo de caixa é obrigatório';
+    if (!p.guia_tamanho) return 'Tamanho do guia é obrigatório';
+    if (!p.posicao_porta) return 'Posicionamento da porta é obrigatório';
+    if (!p.posicao_motor) return 'Posicionamento do motor é obrigatório';
+    if (!p.posicao_guia) return 'Posicionamento do guia é obrigatório';
+    if (!p.posicao_testeira) return 'Posicionamento da testeira é obrigatório';
+    if (!p.tipo_guia) return 'Tipo do guia é obrigatório';
+    if (!p.dificuldade_instalacao) return 'Dificuldade da instalação é obrigatória';
+    if (p.tem_tiras_frontais && !p.qtd_tiras_frontais) return 'Informe a quantidade de tiras frontais';
+    if (p.tem_controle_adicional && !p.qtd_controle_adicional) return 'Informe a quantidade de controles adicionais';
+    if (p.tem_tubo_afastamento && !p.distancia_tubo_cm) return 'Informe a distância do tubo de afastamento';
+    if (p.acessorios.length === 0) return 'Selecione pelo menos um acessório';
+    if (!p.observacoes.trim()) return 'Observações da porta são obrigatórias';
+    if (p.fotos.length === 0 && p.novasFotos.length === 0) return 'Adicione pelo menos uma foto da porta';
+    return null;
+  };
+  const erroFormulario = useMemo(() => {
+    if (portas.length === 0) return 'Adicione pelo menos uma porta';
+    for (let i = 0; i < portas.length; i++) {
+      const erro = validarPorta(portas[i]);
+      if (erro) return `Porta ${i + 1}: ${erro}`;
+    }
+    if (!obsGerais.trim()) return 'Observações gerais da visita são obrigatórias';
+    return null;
+  }, [portas, obsGerais]);
+
   const concluirMut = useMutation({
     mutationFn: async () => {
       if (portas.length === 0) throw new Error('Adicione pelo menos uma porta');
-      for (const p of portas) {
-        if (!p.largura_vao || !p.altura_vao) throw new Error('Largura e altura do vão são obrigatórias em todas as portas');
-        if (p.cores.length === 0) throw new Error('Selecione pelo menos uma cor de pintura por porta');
-        if (p.tem_tiras_frontais && !p.qtd_tiras_frontais) throw new Error('Informe a quantidade de tiras frontais');
-        if (p.tem_controle_adicional && !p.qtd_controle_adicional) throw new Error('Informe a quantidade de controles adicionais');
-        if (p.tem_tubo_afastamento && !p.distancia_tubo_cm) throw new Error('Informe a distância do tubo de afastamento');
+      for (let i = 0; i < portas.length; i++) {
+        const erro = validarPorta(portas[i]);
+        if (erro) throw new Error(`Porta ${i + 1}: ${erro}`);
       }
+      if (!obsGerais.trim()) throw new Error('Observações gerais da visita são obrigatórias');
 
       const { data: u } = await supabase.auth.getUser();
 
@@ -474,7 +506,7 @@ export default function VisitaTecnicaConclusao() {
           )}
 
           <div className="rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 p-4">
-            <label className={labelCls}>Observações gerais da visita</label>
+            <label className={labelCls}>Observações gerais da visita *</label>
             <Textarea
               className={inputCls}
               rows={3}
@@ -493,13 +525,24 @@ export default function VisitaTecnicaConclusao() {
               >
                 Cancelar
               </Button>
-              <Button
-                className="bg-gradient-to-br from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 text-white shadow-lg shadow-blue-500/30"
-                onClick={() => concluirMut.mutate()}
-                disabled={concluirMut.isPending}
-              >
-                {concluirMut.isPending ? 'Concluindo...' : 'Concluir visita'}
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span>
+                    <Button
+                      className="bg-gradient-to-br from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 text-white shadow-lg shadow-blue-500/30"
+                      onClick={() => concluirMut.mutate()}
+                      disabled={concluirMut.isPending || !!erroFormulario}
+                    >
+                      {concluirMut.isPending ? 'Concluindo...' : 'Concluir visita'}
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                {erroFormulario && (
+                  <TooltipContent>
+                    <p className="text-xs max-w-xs">{erroFormulario}</p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
             </div>
           )}
         </div>
@@ -566,15 +609,15 @@ function PortaCard({
           <div><label className={labelCls}>Altura do vão (m) *</label>
             <Input type="number" step="0.01" className={inputCls} value={p.altura_vao} onChange={e => onUpdate({ altura_vao: e.target.value })} disabled={readOnly} />
           </div>
-          <div><label className={labelCls}>Largura total (m)</label>
+          <div><label className={labelCls}>Largura total (m) *</label>
             <Input type="number" step="0.01" className={inputCls} value={p.largura_total} onChange={e => onUpdate({ largura_total: e.target.value })} disabled={readOnly} />
           </div>
-          <div><label className={labelCls}>Altura total (m)</label>
+          <div><label className={labelCls}>Altura total (m) *</label>
             <Input type="number" step="0.01" className={inputCls} value={p.altura_total} onChange={e => onUpdate({ altura_total: e.target.value })} disabled={readOnly} />
           </div>
 
           {/* Meia cana */}
-          <div><label className={labelCls}>Meia cana</label>
+          <div><label className={labelCls}>Meia cana *</label>
             <Select value={p.meia_cana_tipo || ''} onValueChange={v => onUpdate({ meia_cana_tipo: v })} disabled={readOnly}>
               <SelectTrigger className={selectTriggerCls}><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent className={selectContentCls}>
@@ -631,7 +674,7 @@ function PortaCard({
           )}
 
           {/* Caixa motor + Guia */}
-          <div><label className={labelCls}>Tipo de caixa</label>
+          <div><label className={labelCls}>Tipo de caixa *</label>
             <Select value={p.caixa_motor || ''} onValueChange={v => onUpdate({ caixa_motor: v })} disabled={readOnly}>
               <SelectTrigger className={selectTriggerCls}><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent className={selectContentCls}>
@@ -642,7 +685,7 @@ function PortaCard({
               </SelectContent>
             </Select>
           </div>
-          <div><label className={labelCls}>Tamanho do guia</label>
+          <div><label className={labelCls}>Tamanho do guia *</label>
             <Select value={p.guia_tamanho || ''} onValueChange={v => onUpdate({ guia_tamanho: v })} disabled={readOnly}>
               <SelectTrigger className={selectTriggerCls}><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent className={selectContentCls}>
@@ -654,7 +697,7 @@ function PortaCard({
 
 
           {/* Posicionamentos */}
-          <div><label className={labelCls}>Posicionamento da porta</label>
+          <div><label className={labelCls}>Posicionamento da porta *</label>
             <Select value={p.posicao_porta || ''} onValueChange={v => onUpdate({ posicao_porta: v })} disabled={readOnly}>
               <SelectTrigger className={selectTriggerCls}><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent className={selectContentCls}>
@@ -663,7 +706,7 @@ function PortaCard({
               </SelectContent>
             </Select>
           </div>
-          <div><label className={labelCls}>Posicionamento do motor</label>
+          <div><label className={labelCls}>Posicionamento do motor *</label>
             <Select value={p.posicao_motor || ''} onValueChange={v => onUpdate({ posicao_motor: v })} disabled={readOnly}>
               <SelectTrigger className={selectTriggerCls}><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent className={selectContentCls}>
@@ -672,7 +715,7 @@ function PortaCard({
               </SelectContent>
             </Select>
           </div>
-          <div><label className={labelCls}>Posicionamento do guia</label>
+          <div><label className={labelCls}>Posicionamento do guia *</label>
             <Select value={p.posicao_guia || ''} onValueChange={v => onUpdate({ posicao_guia: v })} disabled={readOnly}>
               <SelectTrigger className={selectTriggerCls}><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent className={selectContentCls}>
@@ -681,7 +724,7 @@ function PortaCard({
               </SelectContent>
             </Select>
           </div>
-          <div><label className={labelCls}>Posicionamento da testeira</label>
+          <div><label className={labelCls}>Posicionamento da testeira *</label>
             <Select value={p.posicao_testeira || ''} onValueChange={v => onUpdate({ posicao_testeira: v })} disabled={readOnly}>
               <SelectTrigger className={selectTriggerCls}><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent className={selectContentCls}>
@@ -691,7 +734,7 @@ function PortaCard({
               </SelectContent>
             </Select>
           </div>
-          <div><label className={labelCls}>Tipo do guia</label>
+          <div><label className={labelCls}>Tipo do guia *</label>
             <Select value={p.tipo_guia || ''} onValueChange={v => onUpdate({ tipo_guia: v })} disabled={readOnly}>
               <SelectTrigger className={selectTriggerCls}><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent className={selectContentCls}>
@@ -701,7 +744,7 @@ function PortaCard({
               </SelectContent>
             </Select>
           </div>
-          <div><label className={labelCls}>Dificuldade da instalação</label>
+          <div><label className={labelCls}>Dificuldade da instalação *</label>
             <Select value={p.dificuldade_instalacao || ''} onValueChange={v => onUpdate({ dificuldade_instalacao: v })} disabled={readOnly}>
               <SelectTrigger className={selectTriggerCls}><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent className={selectContentCls}>
@@ -734,7 +777,7 @@ function PortaCard({
 
           {/* Acessórios */}
           <div className="md:col-span-2">
-            <label className={labelCls}>Acessórios inclusos</label>
+            <label className={labelCls}>Acessórios inclusos *</label>
             <div className="mt-1 flex flex-wrap gap-2 p-2 rounded-md bg-white/[0.02] border border-white/10 max-h-40 overflow-y-auto">
               {acessorios.length === 0 && <span className="text-white/40 text-xs">Nenhum acessório cadastrado</span>}
               {acessorios.map(it => {
@@ -773,13 +816,13 @@ function PortaCard({
 
           {/* Observações */}
           <div className="md:col-span-2">
-            <label className={labelCls}>Observações da porta</label>
+            <label className={labelCls}>Observações da porta *</label>
             <Textarea className={inputCls} rows={2} value={p.observacoes} onChange={e => onUpdate({ observacoes: e.target.value })} disabled={readOnly} />
           </div>
 
           {/* Fotos */}
           <div className="md:col-span-2">
-            <label className={labelCls}>Fotos</label>
+            <label className={labelCls}>Fotos *</label>
             {(p.fotos.length > 0 || p.novasFotos.length > 0) && (
               <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {p.fotos.map(f => (
