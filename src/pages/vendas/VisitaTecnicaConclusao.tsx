@@ -281,13 +281,11 @@ export default function VisitaTecnicaConclusao() {
   const concluirMut = useMutation({
     mutationFn: async () => {
       if (portas.length === 0) throw new Error('Adicione pelo menos uma porta');
-      for (const p of portas) {
-        if (!p.largura_vao || !p.altura_vao) throw new Error('Largura e altura do vão são obrigatórias em todas as portas');
-        if (p.cores.length === 0) throw new Error('Selecione pelo menos uma cor de pintura por porta');
-        if (p.tem_tiras_frontais && !p.qtd_tiras_frontais) throw new Error('Informe a quantidade de tiras frontais');
-        if (p.tem_controle_adicional && !p.qtd_controle_adicional) throw new Error('Informe a quantidade de controles adicionais');
-        if (p.tem_tubo_afastamento && !p.distancia_tubo_cm) throw new Error('Informe a distância do tubo de afastamento');
+      for (let i = 0; i < portas.length; i++) {
+        const erro = validarPorta(portas[i]);
+        if (erro) throw new Error(`Porta ${i + 1}: ${erro}`);
       }
+      if (!obsGerais.trim()) throw new Error('Observações gerais da visita são obrigatórias');
 
       const { data: u } = await supabase.auth.getUser();
 
