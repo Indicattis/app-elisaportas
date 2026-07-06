@@ -103,6 +103,7 @@ export default function VisitaTecnicaConclusao() {
   const [obsGerais, setObsGerais] = useState('');
   const [readOnly, setReadOnly] = useState(false);
   const [iniciado, setIniciado] = useState(false);
+  const [lightbox, setLightbox] = useState<{ open: boolean; url: string; legenda: string }>({ open: false, url: '', legenda: '' });
   const { segundosDecorridos, isRunning, start: startCron } = useCronometro();
 
   useEffect(() => { const t = setTimeout(() => setMounted(true), 50); return () => clearTimeout(t); }, []);
