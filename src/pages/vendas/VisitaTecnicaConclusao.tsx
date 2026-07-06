@@ -634,6 +634,7 @@ interface PortaCardProps {
   onFilesAdded: (files: FileList | null) => void;
   onRemoverNovaFoto: (i: number) => void;
   onLegendaNova: (i: number, v: string) => void;
+  onFotoClick?: (url: string, legenda: string) => void;
 }
 
 function PortaCard({
