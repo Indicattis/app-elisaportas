@@ -227,6 +227,190 @@ const emptyForm = {
   observacoes: '',
 };
 
+type ListaFiltro = 'pendente' | 'em_andamento' | 'concluida' | 'cancelada' | 'todos';
+
+const STATUS_META: Record<string, { key: ListaFiltro; label: string; badgeClass: string; Icon: any }> = {
+  agendada:  { key: 'pendente',      label: 'Pendente',     badgeClass: 'bg-amber-500/20 text-amber-300 border-amber-500/30',       Icon: Clock },
+  realizada: { key: 'em_andamento',  label: 'Em andamento', badgeClass: 'bg-blue-500/20 text-blue-300 border-blue-500/30',           Icon: PlayCircle },
+  concluida: { key: 'concluida',     label: 'Concluída',    badgeClass: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',  Icon: CheckCircle2 },
+  cancelada: { key: 'cancelada',     label: 'Cancelada',    badgeClass: 'bg-rose-500/20 text-rose-300 border-rose-500/30',           Icon: XCircle },
+};
+
+function getInicial(nome: string) {
+  return (nome?.trim()?.charAt(0) || '?').toUpperCase();
+}
+
+function VisitasListaPanel({
+  visitas, responsaveis, filtro, setFiltro, busca, setBusca, onOpen, onDelete, today,
+}: {
+  visitas: VisitaAgendada[];
+  responsaveis: Responsavel[];
+  filtro: ListaFiltro;
+  setFiltro: (f: ListaFiltro) => void;
+  busca: string;
+  setBusca: (s: string) => void;
+  onOpen: (v: VisitaAgendada) => void;
+  onDelete: (id: string) => void;
+  today: Date;
+}) {
+  const respMap = useMemo(() => {
+    const m = new Map<string, string>();
+    responsaveis.forEach(r => m.set(r.id, r.nome));
+    return m;
+  }, [responsaveis]);
+
+  const counts = useMemo(() => {
+    const c: Record<ListaFiltro, number> = { pendente: 0, em_andamento: 0, concluida: 0, cancelada: 0, todos: visitas.length };
+    visitas.forEach(v => {
+      const meta = STATUS_META[v.status];
+      if (meta) c[meta.key] += 1;
+    });
+    return c;
+  }, [visitas]);
+
+  const todayYmd = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+
+  const listaFiltrada = useMemo(() => {
+    const termo = busca.trim().toLowerCase();
+    return visitas.filter(v => {
+      const meta = STATUS_META[v.status];
+      if (filtro !== 'todos' && meta?.key !== filtro) return false;
+      if (!termo) return true;
+      return (
+        (v.titulo || '').toLowerCase().includes(termo) ||
+        (v.cidade || '').toLowerCase().includes(termo) ||
+        (v.telefone_contato || '').toLowerCase().includes(termo) ||
+        (respMap.get(v.responsavel_id || '') || '').toLowerCase().includes(termo)
+      );
+    });
+  }, [visitas, filtro, busca, respMap]);
+
+  const filtros: { key: ListaFiltro; label: string }[] = [
+    { key: 'pendente',     label: 'Pendentes' },
+    { key: 'em_andamento', label: 'Em andamento' },
+    { key: 'concluida',    label: 'Concluídas' },
+    { key: 'cancelada',    label: 'Canceladas' },
+    { key: 'todos',        label: 'Todas' },
+  ];
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-col md:flex-row gap-2 md:items-center">
+        <div className="relative flex-1 md:max-w-sm">
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
+          <Input
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            placeholder="Buscar por título, cidade, telefone ou responsável"
+            className="pl-9 h-9 bg-white/5 border-white/10 text-white placeholder:text-white/30"
+          />
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {filtros.map(f => {
+            const active = filtro === f.key;
+            return (
+              <button
+                key={f.key}
+                onClick={() => setFiltro(f.key)}
+                className={`text-xs px-3 h-8 rounded-full border transition flex items-center gap-1.5 ${
+                  active
+                    ? 'bg-gradient-to-r from-blue-500 to-blue-700 border-blue-400/30 text-white shadow-lg shadow-blue-500/20'
+                    : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
+                }`}
+              >
+                {f.label}
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${active ? 'bg-white/20' : 'bg-white/5 text-white/50'}`}>
+                  {counts[f.key]}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {listaFiltrada.length === 0 ? (
+        <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl p-12 text-center">
+          <ClipboardList className="w-10 h-10 text-white/30 mx-auto mb-3" />
+          <p className="text-white/60 text-sm">Nenhuma visita nesta categoria.</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {listaFiltrada.map(v => {
+            const meta = STATUS_META[v.status] || STATUS_META.agendada;
+            const StatusIcon = meta.Icon;
+            const ymd = toDateOnly(v.data_visita);
+            const dia = ymd.slice(8, 10);
+            const mes = ymd.slice(5, 7);
+            const ano = ymd.slice(0, 4);
+            const hora = (v.hora_inicio || '').slice(0, 5);
+            const atrasada = meta.key === 'pendente' && ymd < todayYmd;
+            const local = [v.cidade, v.estado].filter(Boolean).join('/');
+            const respNome = respMap.get(v.responsavel_id || '') || '—';
+            return (
+              <div
+                key={v.id}
+                className="group relative flex items-center gap-3 pl-3 pr-3 py-2.5 rounded-full border border-white/10 bg-white/5 backdrop-blur-xl transition-all duration-300 hover:bg-white/10 hover:border-white/20"
+              >
+                <div className="flex-shrink-0 flex flex-col items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-blue-500/30 to-blue-700/30 border-2 border-white/10 text-white">
+                  <span className="text-[10px] leading-none text-white/60">{mes}/{ano.slice(2)}</span>
+                  <span className="text-base leading-none font-bold">{dia}</span>
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h4 className="text-white font-semibold truncate text-sm">{v.titulo}</h4>
+                    <span className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border ${meta.badgeClass}`}>
+                      <StatusIcon className="w-3 h-3" />
+                      {meta.label}
+                    </span>
+                    {atrasada && (
+                      <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border bg-amber-500/15 text-amber-200 border-amber-400/30">
+                        <AlertCircle className="w-3 h-3" />
+                        Atrasada
+                      </span>
+                    )}
+                    <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border bg-white/5 text-white/60 border-white/10">
+                      {v.tipo === 'manutencao' ? 'Manutenção' : 'Visita técnica'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap mt-1 text-[11px] text-white/50">
+                    <span className="inline-flex items-center gap-1"><Clock className="w-3 h-3" />{hora || '—'}</span>
+                    {local && <span className="inline-flex items-center gap-1"><MapPin className="w-3 h-3" />{local}</span>}
+                    <span className="inline-flex items-center gap-1"><User className="w-3 h-3" />{respNome}</span>
+                    {v.telefone_contato && (
+                      <span className="inline-flex items-center gap-1"><Phone className="w-3 h-3" />{v.telefone_contato}</span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => onOpen(v)}
+                    className="rounded-full h-8 bg-white/5 border-white/10 text-white hover:bg-white/10 gap-1.5"
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    {meta.key === 'concluida' ? 'Ver ficha' : 'Abrir'}
+                  </Button>
+                  <button
+                    onClick={() => onDelete(v.id)}
+                    className="p-1.5 rounded-full text-white/40 hover:text-rose-300 hover:bg-rose-500/10 transition"
+                    title="Excluir visita"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <ArrowRight className="w-4 h-4 text-white/20 group-hover:text-white/60 transition-colors flex-shrink-0" />
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function VisitasTecnicasCalendario() {
   const navigate = useNavigate();
   const qc = useQueryClient();
