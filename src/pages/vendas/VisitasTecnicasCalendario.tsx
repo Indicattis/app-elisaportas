@@ -345,7 +345,7 @@ export default function VisitasTecnicasCalendario() {
 
   const openCreate = (dateStr?: string) => {
     setEditing(null);
-    setForm({ ...emptyForm, data_visita: dateStr || '' });
+    setForm({ ...emptyForm, data_visita: dateStr || '', responsavel_id: usuario_id || '' });
     setDialogOpen(true);
   };
 
@@ -995,11 +995,9 @@ export default function VisitasTecnicasCalendario() {
             </div>
             <div>
               <label className="text-[11px] uppercase tracking-wider text-white/50 font-medium">Responsável</label>
-              <ResponsavelCombobox
-                value={form.responsavel_id}
-                onChange={(id) => setForm({ ...form, responsavel_id: id })}
-                responsaveis={responsaveis}
-              />
+              <div className="mt-1 flex h-10 items-center rounded-md border border-white/10 bg-white/[0.03] px-3 text-sm text-white/70 cursor-not-allowed select-none">
+                {responsaveis.find(r => r.id === form.responsavel_id)?.nome || usuario_nome || 'Usuário logado'}
+              </div>
             </div>
             <div>
               <label className="text-[11px] uppercase tracking-wider text-white/50 font-medium">Telefone de contato</label>
