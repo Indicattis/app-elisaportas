@@ -916,10 +916,14 @@ function PortaCard({
             {(p.fotos.length > 0 || p.novasFotos.length > 0) && (
               <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {p.fotos.map(f => (
-                  <div key={f.id} className="relative rounded-md overflow-hidden bg-white/5 border border-white/10">
+                  <button
+                    key={f.id}
+                    onClick={() => onFotoClick?.(f.url, f.legenda || '')}
+                    className="relative rounded-md overflow-hidden bg-white/5 border border-white/10 hover:border-blue-400/50 transition-colors text-left"
+                  >
                     <img src={f.url} alt={f.legenda} className="w-full h-32 object-cover" />
                     {f.legenda && <div className="text-[10px] text-white/70 p-1 bg-black/40">{f.legenda}</div>}
-                  </div>
+                  </button>
                 ))}
                 {p.novasFotos.map((file, i) => (
                   <div key={i} className="relative rounded-md overflow-hidden bg-white/5 border border-white/10">
