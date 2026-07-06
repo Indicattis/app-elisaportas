@@ -732,7 +732,7 @@ function PortaCard({
               </SelectContent>
             </Select>
           </div>
-          <div><label className={labelCls}>Posicionamento da testeira *</label>
+          <div><label className={labelCls}>POSICIONAMENTO DO ROLO/TESTEIRA*</label>
             <Select value={p.posicao_testeira || ''} onValueChange={v => onUpdate({ posicao_testeira: v })} disabled={readOnly}>
               <SelectTrigger className={selectTriggerCls}><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent className={selectContentCls}>
