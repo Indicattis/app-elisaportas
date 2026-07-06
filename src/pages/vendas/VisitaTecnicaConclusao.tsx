@@ -63,7 +63,7 @@ function novaPorta(ordem: number): PortaForm {
     id: crypto.randomUUID(),
     ordem,
     largura_vao: '', altura_vao: '', largura_total: '', altura_total: '',
-    meia_cana_tipo: '', meia_cana_especificacoes: '',
+    meia_cana_tipo: '',
     cores: [],
     tem_tiras_frontais: false, qtd_tiras_frontais: '',
     tem_controle_adicional: false, qtd_controle_adicional: '',
