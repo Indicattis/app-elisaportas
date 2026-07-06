@@ -728,6 +728,7 @@ function PortaCard({
               <SelectContent className={selectContentCls}>
                 <SelectItem value="dentro_vao">Dentro do vão</SelectItem>
                 <SelectItem value="fora_vao">Fora do vão</SelectItem>
+                <SelectItem value="misto">Misto</SelectItem>
               </SelectContent>
             </Select>
           </div>
