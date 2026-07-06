@@ -176,14 +176,18 @@ function DroppableDayCell({
 }
 
 function DraggableVisitaChip({ visita, onOpen, onDelete }: { visita: VisitaAgendada; onOpen: () => void; onDelete?: () => void }) {
+  const resolved = getStatusMeta(visita);
   const disabled = visita.status === 'concluida' || visita.status === 'cancelada';
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: visita.id, disabled });
   const cls =
     visita.status === 'cancelada'
-      ? 'bg-red-500/15 text-red-200 line-through'
-      : (visita.status === 'realizada' || visita.status === 'concluida')
-      ? 'bg-emerald-500/15 text-emerald-200'
-      : 'bg-blue-500/20 text-blue-100';
+      ? 'bg-rose-500/15 text-rose-200 border-rose-500/20 line-through'
+      : visita.status === 'concluida'
+      ? 'bg-emerald-500/15 text-emerald-200 border-emerald-500/20'
+      : visita.status === 'realizada'
+      ? 'bg-blue-500/15 text-blue-200 border-blue-500/20'
+      : 'bg-amber-500/15 text-amber-200 border-amber-500/20';
+  const StatusIcon = resolved.Icon;
   return (
     <div className="relative group">
       <button
@@ -191,9 +195,10 @@ function DraggableVisitaChip({ visita, onOpen, onDelete }: { visita: VisitaAgend
         {...attributes}
         {...listeners}
         onClick={(e) => { e.stopPropagation(); onOpen(); }}
-        className={`w-full text-left text-[10px] sm:text-xs px-1 sm:px-2 py-0.5 sm:py-1.5 rounded truncate ${cls} ${isDragging ? 'opacity-30' : ''} ${disabled ? 'cursor-pointer' : 'cursor-grab active:cursor-grabbing'}`}
+        className={`w-full text-left text-[10px] sm:text-xs px-1 sm:px-2 py-0.5 sm:py-1.5 rounded border truncate ${cls} ${isDragging ? 'opacity-30' : ''} ${disabled ? 'cursor-pointer' : 'cursor-grab active:cursor-grabbing'}`}
       >
-        <span className="opacity-70">{(visita.hora_inicio || '').slice(0, 5)}</span>
+        <StatusIcon className="inline w-2.5 h-2.5 sm:w-3 sm:h-3 mr-1 opacity-80" />
+        <span className="opacity-90">{(visita.hora_inicio || '').slice(0, 5)}</span>
         {visita.tipo === 'manutencao' && (
           <span className="ml-1 px-1 py-px rounded bg-amber-500/30 text-amber-100 text-[9px] uppercase tracking-wide">Man</span>
         )}
@@ -202,7 +207,7 @@ function DraggableVisitaChip({ visita, onOpen, onDelete }: { visita: VisitaAgend
       {onDelete && (
         <button
           onClick={(e) => { e.stopPropagation(); onDelete(); }}
-          className="absolute right-1 top-1/2 -translate-y-1/2 p-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 text-red-300 hover:text-red-100 hover:bg-red-500/40"
+          className="absolute right-1 top-1/2 -translate-y-1/2 p-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 text-rose-300 hover:text-rose-100 hover:bg-rose-500/40"
           title="Excluir visita"
         >
           <Trash2 className="w-3 h-3" />
