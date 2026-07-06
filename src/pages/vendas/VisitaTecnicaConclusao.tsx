@@ -277,6 +277,15 @@ export default function VisitaTecnicaConclusao() {
     if (p.fotos.length === 0 && p.novasFotos.length === 0) return 'Adicione pelo menos uma foto da porta';
     return null;
   };
+  const erroFormulario = useMemo(() => {
+    if (portas.length === 0) return 'Adicione pelo menos uma porta';
+    for (let i = 0; i < portas.length; i++) {
+      const erro = validarPorta(portas[i]);
+      if (erro) return `Porta ${i + 1}: ${erro}`;
+    }
+    if (!obsGerais.trim()) return 'Observações gerais da visita são obrigatórias';
+    return null;
+  }, [portas, obsGerais]);
 
   const concluirMut = useMutation({
     mutationFn: async () => {
