@@ -853,7 +853,33 @@ export default function VisitasTecnicasCalendario() {
                     />
                   ))}
                   {list.length > 2 && (
-                    <span className="text-[9px] sm:text-[10px] text-white/40">+{list.length - 2}</span>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <button
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-[9px] sm:text-[10px] text-blue-300 hover:text-blue-200 hover:bg-white/10 rounded px-1 py-0.5 transition-colors self-start"
+                        >
+                          +{list.length - 2} mais
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent
+                        align="start"
+                        className="w-64 p-2 bg-zinc-900/95 backdrop-blur-xl border-white/10 space-y-1"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div className="text-[10px] uppercase tracking-wider text-white/40 px-1 pb-1">
+                          {formatYmdBR(dateStr)} · {list.length} visitas
+                        </div>
+                        {list.slice(2).map(v => (
+                          <DraggableVisitaChip
+                            key={v.id}
+                            visita={v}
+                            onOpen={() => openDetail(v)}
+                            onDelete={() => { if (confirm('Excluir esta visita?')) delMut.mutate(v.id); }}
+                          />
+                        ))}
+                      </PopoverContent>
+                    </Popover>
                   )}
                 </DroppableDayCell>
               );
