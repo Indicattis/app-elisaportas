@@ -501,6 +501,37 @@ export default function VisitaTecnicaConclusao() {
             ? "bg-blue-500/[0.03] border-blue-400/30 shadow-[0_0_40px_-15px_rgba(59,130,246,0.2)] p-4"
             : "border-transparent bg-transparent p-0"
         )}>
+          {readOnly && (
+            <div className="rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 p-4">
+              <h2 className="text-sm font-medium text-white mb-3 flex items-center gap-2">
+                <Upload className="w-4 h-4 text-blue-300" /> Mídias da visita
+              </h2>
+              {portas.every(p => p.fotos.length === 0) ? (
+                <p className="text-white/40 text-sm">Nenhuma mídia registrada</p>
+              ) : (
+                <div className="space-y-4">
+                  {portas.filter(p => p.fotos.length > 0).map((p, idx) => (
+                    <div key={p.id}>
+                      <h3 className="text-xs uppercase tracking-wider text-white/50 font-medium mb-2">Porta {idx + 1}</h3>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                        {p.fotos.map((f, i) => (
+                          <button
+                            key={f.id}
+                            onClick={() => setLightbox({ open: true, url: f.url, legenda: f.legenda || `Foto ${i + 1}` })}
+                            className="relative rounded-md overflow-hidden bg-white/5 border border-white/10 hover:border-blue-400/50 transition-colors text-left"
+                          >
+                            <img src={f.url} alt={f.legenda} className="w-full h-24 object-cover" />
+                            {f.legenda && <div className="text-[10px] text-white/70 p-1 bg-black/40 truncate">{f.legenda}</div>}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {portas.map((p, idx) => (
             <PortaCard
               key={p.id}
