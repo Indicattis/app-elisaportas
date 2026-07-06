@@ -315,11 +315,11 @@ export default function VisitaTecnicaConclusao() {
 
       const { data: conclusao, error: cErr } = await supabase
         .from('visitas_tecnicas_conclusoes')
-        .insert([{
+        .upsert([{
           visita_id: visitaId,
           observacoes_gerais: obsGerais || null,
           concluido_por: u.user?.id || null,
-        }] as any)
+        }] as any, { onConflict: 'visita_id' })
         .select()
         .single();
       if (cErr) throw cErr;
