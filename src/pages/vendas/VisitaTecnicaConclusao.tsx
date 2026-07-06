@@ -291,7 +291,6 @@ export default function VisitaTecnicaConclusao() {
     if (p.tem_controle_adicional && !p.qtd_controle_adicional) return 'Informe a quantidade de controles adicionais';
     if (p.tem_tubo_afastamento && !p.distancia_tubo_cm) return 'Informe a distância do tubo de afastamento';
     if (p.acessorios.length === 0) return 'Selecione pelo menos um acessório';
-    if (!p.observacoes.trim()) return 'Observações da porta são obrigatórias';
     if (p.fotos.length === 0 && p.novasFotos.length === 0) return 'Adicione pelo menos uma foto da porta';
     return null;
   };
@@ -301,7 +300,6 @@ export default function VisitaTecnicaConclusao() {
       const erro = validarPorta(portas[i]);
       if (erro) return `Porta ${i + 1}: ${erro}`;
     }
-    if (!obsGerais.trim()) return 'Observações gerais da visita são obrigatórias';
     return null;
   }, [portas, obsGerais]);
 
@@ -312,7 +310,6 @@ export default function VisitaTecnicaConclusao() {
         const erro = validarPorta(portas[i]);
         if (erro) throw new Error(`Porta ${i + 1}: ${erro}`);
       }
-      if (!obsGerais.trim()) throw new Error('Observações gerais da visita são obrigatórias');
 
       const { data: u } = await supabase.auth.getUser();
 
@@ -521,7 +518,7 @@ export default function VisitaTecnicaConclusao() {
           )}
 
           <div className="rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 p-4">
-            <label className={labelCls}>Observações gerais da visita *</label>
+            <label className={labelCls}>Observações gerais da visita</label>
             <Textarea
               className={inputCls}
               rows={3}
@@ -851,7 +848,7 @@ function PortaCard({
 
           {/* Observações */}
           <div className="md:col-span-2">
-            <label className={labelCls}>Observações da porta *</label>
+            <label className={labelCls}>Observações da porta</label>
             <Textarea className={inputCls} rows={2} value={p.observacoes} onChange={e => onUpdate({ observacoes: e.target.value })} disabled={readOnly} />
           </div>
 
