@@ -691,6 +691,23 @@ export default function ContratosVendas({ scope = 'all' }: ContratosVendasProps 
                           <Button
                             size="icon"
                             variant="ghost"
+                            className="h-7 w-7 text-emerald-300 hover:text-emerald-200 hover:bg-emerald-500/10 border border-emerald-400/30"
+                            onClick={async () => {
+                              const { data } = await supabase.storage
+                                .from('contratos-vendas')
+                                .createSignedUrl(v.contrato_url as string, 300);
+                              if (data?.signedUrl) window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
+                              else toast.error('Não foi possível abrir o contrato assinado');
+                            }}
+                            title="Visualizar contrato assinado"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                        )}
+                        {v.contrato_url && v.contrato_url !== 'legado' && (
+                          <Button
+                            size="icon"
+                            variant="ghost"
                             className="h-7 w-7 text-white/80 hover:text-white hover:bg-white/10 border border-white/10"
                             onClick={async () => {
                               const { data } = await supabase.storage
