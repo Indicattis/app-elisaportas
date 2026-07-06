@@ -551,6 +551,7 @@ export default function VisitaTecnicaConclusao() {
                 const cur = portas.find(x => x.id === p.id)!;
                 updatePorta(p.id, { legendasNovas: cur.legendasNovas.map((l, k) => k === i ? v : l) });
               }}
+              onFotoClick={(url, legenda) => setLightbox({ open: true, url, legenda })}
             />
           ))}
 
