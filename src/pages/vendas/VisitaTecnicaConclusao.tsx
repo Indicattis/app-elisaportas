@@ -32,7 +32,6 @@ interface PortaForm {
   largura_total: string;
   altura_total: string;
   meia_cana_tipo: string;
-  meia_cana_especificacoes: string;
   cores: Cor[];
   tem_tiras_frontais: boolean;
   qtd_tiras_frontais: string;
