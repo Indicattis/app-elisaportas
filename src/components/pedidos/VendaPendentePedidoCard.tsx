@@ -48,6 +48,7 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
   const [showFinalizarDireto, setShowFinalizarDireto] = useState(false);
   const [showAnexarContrato, setShowAnexarContrato] = useState(false);
   const [showParcelas, setShowParcelas] = useState(false);
+  const [isLiberandoFaturamento, setIsLiberandoFaturamento] = useState(false);
   const isFaturamentoLayout = mode === 'faturamento' || mode === 'contrato';
 
   const { data: ultimoComentario } = useQuery({
