@@ -736,9 +736,9 @@ function PortaCard({
             <Select value={p.posicao_testeira || ''} onValueChange={v => onUpdate({ posicao_testeira: v })} disabled={readOnly}>
               <SelectTrigger className={selectTriggerCls}><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent className={selectContentCls}>
-                <SelectItem value="fora">Fora do vão</SelectItem>
-                <SelectItem value="dentro">Dentro do vão</SelectItem>
-                <SelectItem value="entre">Entre o vão</SelectItem>
+                <SelectItem value="fora">FORA DO VÃO</SelectItem>
+                <SelectItem value="dentro">DENTRO DO VÃO</SelectItem>
+                <SelectItem value="entre">ENTRE O VÃO: Pegando espaço do vão livre</SelectItem>
               </SelectContent>
             </Select>
           </div>
