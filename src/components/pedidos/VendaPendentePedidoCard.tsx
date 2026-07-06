@@ -755,11 +755,27 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
               <>
                 {/* Ação principal: Faturar (faturamento) ou Anexar Contrato (contrato) */}
                 {mode === 'contrato' ? (
-                  <div className="flex items-center justify-center" onClick={(e) => { e.stopPropagation(); setShowAnexarContrato(true); }}>
-                    <span className="text-[10px] font-medium text-blue-400/80 hover:text-blue-400 transition-colors whitespace-nowrap cursor-pointer flex items-center gap-1">
-                      <FileSignature className="h-3 w-3" /> Anexar →
-                    </span>
-                  </div>
+                  venda.contrato_status === 'assinado' ? (
+                    <div className="flex items-center justify-center" onClick={(e) => { e.stopPropagation(); handleLiberarFaturamento(); }}>
+                      <span className={cn(
+                        "text-[10px] font-medium transition-colors whitespace-nowrap cursor-pointer flex items-center gap-1",
+                        isLiberandoFaturamento ? "text-emerald-400/50" : "text-emerald-400/80 hover:text-emerald-400"
+                      )}>
+                        {isLiberandoFaturamento ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <CheckCircle2 className="h-3 w-3" />
+                        )}
+                        Liberar →
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center" onClick={(e) => { e.stopPropagation(); setShowAnexarContrato(true); }}>
+                      <span className="text-[10px] font-medium text-blue-400/80 hover:text-blue-400 transition-colors whitespace-nowrap cursor-pointer flex items-center gap-1">
+                        <FileSignature className="h-3 w-3" /> Anexar →
+                      </span>
+                    </div>
+                  )
                 ) : (
                   <div className="flex items-center justify-center" onClick={(e) => { e.stopPropagation(); navigate(`/financeiro/faturamento/${venda.id}`); }}>
                     <span className="text-[10px] font-medium text-yellow-400/80 hover:text-yellow-400 transition-colors whitespace-nowrap cursor-pointer">
