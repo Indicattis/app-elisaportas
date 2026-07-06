@@ -499,6 +499,7 @@ export default function VisitasTecnicasCalendario() {
       qc.invalidateQueries({ queryKey: ['visitas-agendadas'] });
       qc.invalidateQueries({ queryKey: ['visitas-semana'] });
       qc.invalidateQueries({ queryKey: ['visitas-a-concluir'] });
+      qc.invalidateQueries({ queryKey: ['visitas-lista-todas'] });
       qc.invalidateQueries({ queryKey: ['visitas-historico'] });
     },
     onError: (e: any) => toast.error(e.message),
@@ -525,6 +526,7 @@ export default function VisitasTecnicasCalendario() {
       qc.invalidateQueries({ queryKey: ['visitas-agendadas'] });
       qc.invalidateQueries({ queryKey: ['visitas-semana'] });
       qc.invalidateQueries({ queryKey: ['visitas-a-concluir'] });
+      qc.invalidateQueries({ queryKey: ['visitas-lista-todas'] });
       qc.invalidateQueries({ queryKey: ['visitas-historico'] });
     },
     onError: (e: any) => toast.error(e.message),
@@ -551,6 +553,7 @@ export default function VisitasTecnicasCalendario() {
       qc.invalidateQueries({ queryKey: ['visitas-agendadas'] });
       qc.invalidateQueries({ queryKey: ['visitas-semana'] });
       qc.invalidateQueries({ queryKey: ['visitas-a-concluir'] });
+      qc.invalidateQueries({ queryKey: ['visitas-lista-todas'] });
       qc.invalidateQueries({ queryKey: ['visitas-historico'] });
     },
     onError: (e: any) => toast.error(e.message),
@@ -604,6 +607,7 @@ export default function VisitasTecnicasCalendario() {
       qc.invalidateQueries({ queryKey: ['visitas-agendadas'] });
       qc.invalidateQueries({ queryKey: ['visitas-semana'] });
       qc.invalidateQueries({ queryKey: ['visitas-a-concluir'] });
+      qc.invalidateQueries({ queryKey: ['visitas-lista-todas'] });
       qc.invalidateQueries({ queryKey: ['visitas-historico'] });
     },
     onError: (e: any) => toast.error(e.message || 'Erro ao reagendar'),
