@@ -315,14 +315,17 @@ export default function VisitaTecnicaConclusao() {
 
       const { data: conclusao, error: cErr } = await supabase
         .from('visitas_tecnicas_conclusoes')
-        .insert([{
+        .upsert([{
           visita_id: visitaId,
           observacoes_gerais: obsGerais || null,
           concluido_por: u.user?.id || null,
-        }] as any)
+        }] as any, { onConflict: 'visita_id' })
         .select()
         .single();
       if (cErr) throw cErr;
+
+      // Remove portas existentes (re-conclusão) para evitar duplicidade
+      await supabase.from('visitas_tecnicas_portas').delete().eq('conclusao_id', conclusao.id);
 
       for (const p of portas) {
         const { data: portaRow, error: pErr } = await supabase
