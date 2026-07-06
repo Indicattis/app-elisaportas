@@ -68,7 +68,6 @@ function novaPorta(ordem: number): PortaForm {
     tem_controle_adicional: false, qtd_controle_adicional: '',
     caixa_motor: '', guia_tamanho: '',
     acessorios: [],
-    tipo_servico: '',
     posicao_porta: '', posicao_motor: '', posicao_guia: '', posicao_testeira: '',
     tipo_guia: '', dificuldade_instalacao: '',
     tem_tubo_afastamento: false, distancia_tubo_cm: '',
