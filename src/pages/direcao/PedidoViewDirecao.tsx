@@ -50,6 +50,41 @@ const calcularMeiaCanas = (produto: any) => {
   return null;
 };
 
+const getInicialNome = (nome?: string | null) =>
+  (nome?.trim()?.charAt(0) || '?').toUpperCase();
+
+const formatarCpfCnpj = (valor?: string | null) => {
+  if (!valor) return null;
+  const nums = valor.replace(/\D/g, '');
+  if (nums.length === 11) {
+    return nums.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+  }
+  if (nums.length === 14) {
+    return nums.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+  }
+  return valor;
+};
+
+const formatarCep = (cep?: string | null) => {
+  if (!cep) return null;
+  const nums = cep.replace(/\D/g, '');
+  if (nums.length === 8) return nums.replace(/(\d{5})(\d{3})/, '$1-$2');
+  return cep;
+};
+
+const chipClass = (cor: 'blue' | 'emerald' | 'amber' | 'purple' | 'cyan' | 'pink' | 'slate') => {
+  const map: Record<string, string> = {
+    blue: 'bg-blue-500/15 border-blue-500/30 text-blue-300',
+    emerald: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300',
+    amber: 'bg-amber-500/15 border-amber-500/30 text-amber-300',
+    purple: 'bg-purple-500/15 border-purple-500/30 text-purple-300',
+    cyan: 'bg-cyan-500/15 border-cyan-500/30 text-cyan-300',
+    pink: 'bg-pink-500/15 border-pink-500/30 text-pink-300',
+    slate: 'bg-white/5 border-white/10 text-white/70',
+  };
+  return `inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[11px] ${map[cor]}`;
+};
+
 interface PortaInfo {
   id: string;
   tipo_produto: string;
