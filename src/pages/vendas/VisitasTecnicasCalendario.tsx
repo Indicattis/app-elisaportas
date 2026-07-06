@@ -418,7 +418,7 @@ function VisitasListaPanel({
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
-                <ArrowRight className="w-4 h-4 text-white/20 group-hover:text-white/60 transition-colors flex-shrink-0" />
+                <ArrowRight className="hidden sm:block w-4 h-4 text-white/20 group-hover:text-white/60 transition-colors flex-shrink-0" />
               </div>
             );
           })}
