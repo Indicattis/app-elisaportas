@@ -349,33 +349,35 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
 
             {/* Nome cliente */}
             <div className="min-w-0">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <h3 className="font-semibold text-sm truncate">
-                    {venda.cliente_nome && venda.cliente_nome.length > 20
-                      ? `${venda.cliente_nome.substring(0, 20)}...`
-                      : venda.cliente_nome || "Cliente não informado"}
-                  </h3>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="text-xs">{venda.cliente_nome || "Cliente não informado"}</p>
-                </TooltipContent>
-              </Tooltip>
-              {mode === 'contrato' && venda.contrato_status && (
-                <Badge
-                  variant="outline"
-                  className={cn(
-                    "mt-0.5 h-4 px-1.5 text-[9px] font-medium rounded-sm",
-                    venda.contrato_status === 'assinado' && "border-emerald-500/40 bg-emerald-500/10 text-emerald-300",
-                    venda.contrato_status === 'gerado' && "border-blue-500/40 bg-blue-500/10 text-blue-300",
-                    venda.contrato_status === 'pendente' && "border-amber-500/40 bg-amber-500/10 text-amber-300",
-                  )}
-                >
-                  {venda.contrato_status === 'assinado' ? 'Contrato Assinado' :
-                   venda.contrato_status === 'gerado' ? 'Contrato Gerado' :
-                   'Pendente de Contrato'}
-                </Badge>
-              )}
+              <div className="flex items-center gap-2 min-w-0">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <h3 className="font-semibold text-sm truncate shrink-0">
+                      {venda.cliente_nome && venda.cliente_nome.length > 20
+                        ? `${venda.cliente_nome.substring(0, 20)}...`
+                        : venda.cliente_nome || "Cliente não informado"}
+                    </h3>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-xs">{venda.cliente_nome || "Cliente não informado"}</p>
+                  </TooltipContent>
+                </Tooltip>
+                {mode === 'contrato' && venda.contrato_status && (
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "h-4 px-1.5 text-[9px] font-medium rounded-sm shrink-0",
+                      venda.contrato_status === 'assinado' && "border-emerald-500/40 bg-emerald-500/10 text-emerald-300",
+                      venda.contrato_status === 'gerado' && "border-blue-500/40 bg-blue-500/10 text-blue-300",
+                      venda.contrato_status === 'pendente' && "border-amber-500/40 bg-amber-500/10 text-amber-300",
+                    )}
+                  >
+                    {venda.contrato_status === 'assinado' ? 'Contrato Assinado' :
+                     venda.contrato_status === 'gerado' ? 'Contrato Gerado' :
+                     'Pendente de Contrato'}
+                  </Badge>
+                )}
+              </div>
               {ultimoComentario?.comentario && (
                 <p className="text-[9px] text-muted-foreground truncate" title={ultimoComentario.comentario}>
                   {ultimoComentario.comentario}
