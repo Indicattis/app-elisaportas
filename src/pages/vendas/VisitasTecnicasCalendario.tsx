@@ -32,6 +32,7 @@ interface VisitaAgendada {
   data_visita: string;
   hora_inicio: string;
   responsavel_id: string | null;
+  created_by?: string | null;
   telefone_contato: string | null;
   cep: string | null;
   endereco: string | null;
@@ -347,22 +348,24 @@ function VisitasListaPanel({
             const local = [v.cidade, v.estado].filter(Boolean).join('/');
             const resp = respMap.get(v.responsavel_id || '');
             const respNome = resp?.nome || '—';
-            const respFoto = resp?.foto;
+            const criador = respMap.get(v.created_by || '');
+            const criadorNome = criador?.nome || respNome;
+            const criadorFoto = criador?.foto ?? resp?.foto;
             return (
               <div
                 key={v.id}
                 className="group relative flex items-center gap-3 pl-3 pr-3 py-2.5 rounded-full border border-white/10 bg-white/5 backdrop-blur-xl transition-all duration-300 hover:bg-white/10 hover:border-white/20"
               >
-                <div className="flex-shrink-0" title={respNome}>
-                  {respFoto ? (
+                <div className="flex-shrink-0" title={`Criado por ${criadorNome}`}>
+                  {criadorFoto ? (
                     <img
-                      src={respFoto}
-                      alt={respNome}
+                      src={criadorFoto}
+                      alt={criadorNome}
                       className="w-12 h-12 rounded-full object-cover border-2 border-white/20 shadow-lg"
                     />
                   ) : (
                     <div className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-white text-sm border-2 border-white/20 shadow-lg bg-gradient-to-br from-blue-500 to-blue-700">
-                      {getInicial(respNome)}
+                      {getInicial(criadorNome)}
                     </div>
                   )}
                 </div>
