@@ -402,6 +402,26 @@ export default function VisitasTecnicasCalendario() {
       if (!form.titulo.trim()) throw new Error('Informe o título');
       if (!form.data_visita) throw new Error('Informe a data');
       if (!form.hora_inicio) throw new Error('Informe o horário');
+      // Trava: intervalo mínimo de 30min entre visitas no mesmo dia
+      {
+        const [h, m] = form.hora_inicio.split(':').map(Number);
+        const novaMin = h * 60 + m;
+        const { data: doDia, error: errConf } = await supabase
+          .from('visitas_tecnicas_agendadas')
+          .select('id, hora_inicio, titulo, status')
+          .gte('data_visita', `${form.data_visita}T00:00:00.000Z`)
+          .lte('data_visita', `${form.data_visita}T23:59:59.999Z`)
+          .in('status', ['agendada', 'realizada']);
+        if (errConf) throw errConf;
+        const conflito = (doDia || []).find((v: any) => {
+          if (editing && v.id === editing.id) return false;
+          const [vh, vm] = String(v.hora_inicio || '00:00').split(':').map(Number);
+          return Math.abs((vh * 60 + vm) - novaMin) < 30;
+        });
+        if (conflito) {
+          throw new Error(`Conflito de horário com "${conflito.titulo}" às ${String(conflito.hora_inicio).slice(0,5)}. Mantenha ao menos 30 min de intervalo.`);
+        }
+      }
       const payload: any = {
         titulo: form.titulo.trim(),
         tipo: form.tipo,
@@ -525,6 +545,26 @@ export default function VisitasTecnicasCalendario() {
     mutationFn: async ({ visita, novaData }: { visita: VisitaAgendada; novaData: string }) => {
       const dataAnterior = toDateOnly(visita.data_visita);
       if (dataAnterior === novaData) return;
+      // Trava: intervalo mínimo de 30min ao arrastar para outro dia
+      {
+        const [vh, vm] = String(visita.hora_inicio || '00:00').split(':').map(Number);
+        const novaMin = vh * 60 + vm;
+        const { data: doDia, error: errConf } = await supabase
+          .from('visitas_tecnicas_agendadas')
+          .select('id, hora_inicio, titulo, status')
+          .gte('data_visita', `${novaData}T00:00:00.000Z`)
+          .lte('data_visita', `${novaData}T23:59:59.999Z`)
+          .in('status', ['agendada', 'realizada']);
+        if (errConf) throw errConf;
+        const conflito = (doDia || []).find((v: any) => {
+          if (v.id === visita.id) return false;
+          const [h, m] = String(v.hora_inicio || '00:00').split(':').map(Number);
+          return Math.abs((h * 60 + m) - novaMin) < 30;
+        });
+        if (conflito) {
+          throw new Error(`Conflito com "${conflito.titulo}" às ${String(conflito.hora_inicio).slice(0,5)}. Mantenha ao menos 30 min de intervalo.`);
+        }
+      }
       const { error } = await supabase
         .from('visitas_tecnicas_agendadas')
         .update({ data_visita: `${novaData}T12:00:00.000Z` })
