@@ -43,6 +43,7 @@ interface VisitaAgendada {
   estado: string | null;
   observacoes: string | null;
   status: string;
+  tem_conclusao?: boolean;
 }
 
 interface Responsavel { id: string; nome: string; foto_perfil_url?: string | null }
@@ -237,6 +238,11 @@ const STATUS_META: Record<string, { key: ListaFiltro; label: string; badgeClass:
   cancelada: { key: 'cancelada',     label: 'Cancelada',    badgeClass: 'bg-rose-500/20 text-rose-300 border-rose-500/30',           Icon: XCircle },
 };
 
+function getStatusMeta(visita: VisitaAgendada) {
+  const status = visita.status === 'agendada' && visita.tem_conclusao ? 'realizada' : visita.status;
+  return STATUS_META[status] || STATUS_META.agendada;
+}
+
 function getInicial(nome: string) {
   return (nome?.trim()?.charAt(0) || '?').toUpperCase();
 }
@@ -263,7 +269,7 @@ function VisitasListaPanel({
   const counts = useMemo(() => {
     const c: Record<ListaFiltro, number> = { pendente: 0, em_andamento: 0, concluida: 0, cancelada: 0, todos: visitas.length };
     visitas.forEach(v => {
-      const meta = STATUS_META[v.status];
+      const meta = getStatusMeta(v);
       if (meta) c[meta.key] += 1;
     });
     return c;
@@ -274,7 +280,7 @@ function VisitasListaPanel({
   const listaFiltrada = useMemo(() => {
     const termo = busca.trim().toLowerCase();
     return visitas.filter(v => {
-      const meta = STATUS_META[v.status];
+      const meta = getStatusMeta(v);
       if (filtro !== 'todos' && meta?.key !== filtro) return false;
       if (!termo) return true;
       return (
@@ -337,7 +343,7 @@ function VisitasListaPanel({
       ) : (
         <div className="space-y-2">
           {listaFiltrada.map(v => {
-            const meta = STATUS_META[v.status] || STATUS_META.agendada;
+            const meta = getStatusMeta(v);
             const StatusIcon = meta.Icon;
             const ymd = toDateOnly(v.data_visita);
             const dia = ymd.slice(8, 10);
@@ -474,12 +480,15 @@ export default function VisitasTecnicasCalendario() {
       const fim = dateToYmd(weekDays[6]);
       const { data, error } = await supabase
         .from('visitas_tecnicas_agendadas')
-        .select('*')
+        .select('*, visitas_tecnicas_conclusoes!left(id)')
         .gte('data_visita', inicio)
         .lte('data_visita', fim)
         .order('data_visita').order('hora_inicio');
       if (error) throw error;
-      return (data || []) as VisitaAgendada[];
+      return (data || []).map((v: any) => ({
+        ...v,
+        tem_conclusao: Array.isArray(v.visitas_tecnicas_conclusoes) && v.visitas_tecnicas_conclusoes.length > 0,
+      })) as VisitaAgendada[];
     },
   });
 
@@ -502,12 +511,15 @@ export default function VisitasTecnicasCalendario() {
       const fim = `${year}-${String(month + 1).padStart(2, '0')}-${String(last).padStart(2, '0')}`;
       const { data, error } = await supabase
         .from('visitas_tecnicas_agendadas')
-        .select('*')
+        .select('*, visitas_tecnicas_conclusoes!left(id)')
         .gte('data_visita', inicio)
         .lte('data_visita', fim)
         .order('data_visita').order('hora_inicio');
       if (error) throw error;
-      return (data || []) as VisitaAgendada[];
+      return (data || []).map((v: any) => ({
+        ...v,
+        tem_conclusao: Array.isArray(v.visitas_tecnicas_conclusoes) && v.visitas_tecnicas_conclusoes.length > 0,
+      })) as VisitaAgendada[];
     },
   });
 
