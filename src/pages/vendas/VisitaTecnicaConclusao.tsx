@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { logVisitaHistorico } from '@/lib/visitasHistorico';
+import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { useCronometro } from '@/hooks/useCronometro';
 import { formatCronometro } from '@/utils/timeFormat';
