@@ -46,6 +46,7 @@ export const useVendasAssinaturaContrato = () => {
           venda_presencial,
           contrato_url,
           contrato_dispensado,
+          contrato_liberado_faturamento,
           produtos_vendas (
             id,
             faturamento,
@@ -70,7 +71,7 @@ export const useVendasAssinaturaContrato = () => {
           )
         `)
         .eq("is_rascunho", false)
-        .is("contrato_url", null)
+        .eq("contrato_liberado_faturamento", false)
         .eq("contrato_dispensado", false)
         .eq("dispensada_sistema", false)
         .order("data_venda", { ascending: false });
