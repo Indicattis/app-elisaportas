@@ -40,7 +40,6 @@ interface PortaForm {
   caixa_motor: string;
   guia_tamanho: string;
   acessorios: AcessorioSel[];
-  tipo_servico: string;
   posicao_porta: string;
   posicao_motor: string;
   posicao_guia: string;
