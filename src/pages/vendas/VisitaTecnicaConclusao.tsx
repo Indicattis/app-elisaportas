@@ -631,10 +631,11 @@ function PortaCard({
           )}
 
           {/* Caixa motor + Guia */}
-          <div><label className={labelCls}>Caixa do motor</label>
+          <div><label className={labelCls}>Tipo de caixa</label>
             <Select value={p.caixa_motor || ''} onValueChange={v => onUpdate({ caixa_motor: v })} disabled={readOnly}>
               <SelectTrigger className={selectTriggerCls}><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent className={selectContentCls}>
+                <SelectItem value="somente_motor">Caixa somente no motor</SelectItem>
                 <SelectItem value="total">Caixa total</SelectItem>
                 <SelectItem value="sem_caixa">Sem caixa</SelectItem>
               </SelectContent>
