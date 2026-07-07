@@ -984,7 +984,7 @@ function PortaCard({
 
           {/* Acessórios */}
           <div className="md:col-span-2">
-            <label className={labelCls}>Acessórios inclusos *</label>
+            <label className={labelCls}>Acessórios inclusos</label>
             <div className="mt-1 flex flex-wrap gap-2 p-2 rounded-md bg-white/[0.02] border border-white/10 max-h-40 overflow-y-auto">
               {acessorios.length === 0 && <span className="text-white/40 text-xs">Nenhum acessório cadastrado</span>}
               {acessorios.map(it => {
