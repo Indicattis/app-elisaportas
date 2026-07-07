@@ -128,6 +128,18 @@ export default function ClientesDirecao() {
     resetColumns
   } = useColumnConfig('direcao_clientes_columns', COLUNAS_DISPONIVEIS);
 
+  const colunasTabela = useMemo(() => {
+    const transferirColumn = COLUNAS_DISPONIVEIS.find(col => col.id === 'transferir');
+    if (!transferirColumn || visibleColumns.some(col => col.id === 'transferir')) {
+      return visibleColumns;
+    }
+
+    const vendedorIndex = visibleColumns.findIndex(col => col.id === 'vendedor');
+    const nextColumns = [...visibleColumns];
+    nextColumns.splice(vendedorIndex >= 0 ? vendedorIndex + 1 : nextColumns.length, 0, transferirColumn);
+    return nextColumns;
+  }, [visibleColumns]);
+
   // Calcular clientes CR por vendedor
   const clientesCRPorVendedor = useMemo(() => {
     const vendedoresMap = new Map<string, { nome: string; totalCR: number; total: number }>();
@@ -466,6 +478,7 @@ export default function ClientesDirecao() {
       title="Clientes" 
       subtitle={`${totalClientes} clientes cadastrados`}
       backPath="/direcao/vendas"
+      fullWidth
       breadcrumbItems={[
         { label: "Home", path: "/home" },
         { label: "Direção", path: "/direcao" },
@@ -598,7 +611,7 @@ export default function ClientesDirecao() {
           <Table>
             <TableHeader>
               <TableRow className="border-white/10 hover:bg-transparent">
-                {visibleColumns.map(col => (
+                {colunasTabela.map(col => (
                   <TableHead 
                     key={col.id}
                     onClick={() => col.id !== 'acoes' && handleSort(col.id)}
@@ -634,7 +647,7 @@ export default function ClientesDirecao() {
             <TableBody>
               {clientesOrdenados.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={visibleColumns.length} className="text-center py-8 text-white/40">
+                  <TableCell colSpan={colunasTabela.length} className="text-center py-8 text-white/40">
                     Nenhum cliente encontrado
                   </TableCell>
                 </TableRow>
@@ -645,7 +658,7 @@ export default function ClientesDirecao() {
                     className="border-white/5 hover:bg-white/5 cursor-pointer"
                     onClick={() => handleEditarCliente(cliente)}
                   >
-                    {visibleColumns.map(col => (
+                    {colunasTabela.map(col => (
                       <TableCell 
                         key={col.id} 
                         className={cn(
