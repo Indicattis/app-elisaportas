@@ -168,6 +168,17 @@ export default function NovoAutorizadoDirecao() {
     try {
       setSaving(true);
 
+      // created_by referencia admin_users.id, não auth.users.id
+      let createdById: string | null = null;
+      if (user?.id) {
+        const { data: adminRow } = await supabase
+          .from('admin_users')
+          .select('id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        createdById = adminRow?.id ?? null;
+      }
+
       const { data: insertedData, error } = await supabase
         .from('autorizados')
         .insert([{
@@ -189,7 +200,7 @@ export default function NovoAutorizadoDirecao() {
           etapa: form.etapa as 'ativo' | 'perdido' | 'premium',
           chave_pix: form.chave_pix || null,
           cpf_cnpj: form.cpf_cnpj || null,
-          created_by: user?.id ?? null,
+          created_by: createdById,
         }])
         .select('id')
         .single();
