@@ -499,7 +499,7 @@ const App = () => (
                 <Route path="/vendas/meus-parceiros/:id/editar" element={<ProtectedRoute routeKey="vendas_hub"><EditarAutorizadoDirecao /></ProtectedRoute>} />
                 <Route path="/vendas/acompanhar-pedido" element={<ProtectedRoute routeKey="vendas_hub"><AcompanharPedido /></ProtectedRoute>} />
                 <Route path="/vendas/visitas-tecnicas" element={<ProtectedRoute routeKey="vendas_visitas_tecnicas"><VisitasTecnicasCalendario /></ProtectedRoute>} />
-                <Route path="/vendas/visitas-tecnicas/realizadas" element={<ProtectedRoute routeKey="vendas_visitas_tecnicas_realizadas"><VisitasTecnicasRealizadas /></ProtectedRoute>} />
+                <Route path="/vendas/visitas-tecnicas/realizadas" element={<ProtectedRoute routeKey="vendas_visitas_tecnicas"><VisitasTecnicasRealizadas /></ProtectedRoute>} />
                 <Route path="/vendas/visitas-tecnicas/:visitaId/concluir" element={<ProtectedRoute routeKey="vendas_visitas_tecnicas"><VisitaTecnicaConclusao /></ProtectedRoute>} />
                 <Route path="/vendas/contratos" element={<ProtectedRoute routeKey="vendas_hub"><MeusContratos /></ProtectedRoute>} />
                 <Route path="/vendas/precos" element={<ProtectedRoute routeKeyPrefix="vendas_"><PrecosVendas /></ProtectedRoute>} />
