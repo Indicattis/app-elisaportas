@@ -321,7 +321,6 @@ export default function VisitaTecnicaConclusao() {
     if (p.tem_tiras_frontais && !p.qtd_tiras_frontais) return 'Informe a quantidade de tiras frontais';
     if (p.tem_controle_adicional && !p.qtd_controle_adicional) return 'Informe a quantidade de controles adicionais';
     if (p.tem_tubo_afastamento && !p.distancia_tubo_cm) return 'Informe a distância do tubo de afastamento';
-    if (p.acessorios.length === 0) return 'Selecione pelo menos um acessório';
     if (p.fotos.length === 0 && p.novasFotos.length === 0) return 'Adicione pelo menos uma foto da porta';
     return null;
   };
@@ -985,7 +984,7 @@ function PortaCard({
 
           {/* Acessórios */}
           <div className="md:col-span-2">
-            <label className={labelCls}>Acessórios inclusos *</label>
+            <label className={labelCls}>Acessórios inclusos</label>
             <div className="mt-1 flex flex-wrap gap-2 p-2 rounded-md bg-white/[0.02] border border-white/10 max-h-40 overflow-y-auto">
               {acessorios.length === 0 && <span className="text-white/40 text-xs">Nenhum acessório cadastrado</span>}
               {acessorios.map(it => {
