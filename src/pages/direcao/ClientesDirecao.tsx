@@ -717,6 +717,15 @@ export default function ClientesDirecao() {
       </AlertDialog>
 
       <TransferirClientesModal open={transferirOpen} onOpenChange={setTransferirOpen} />
+
+      {clienteParaDelegar && (
+        <DelegarClienteModal
+          open={!!clienteParaDelegar}
+          onOpenChange={(o) => !o && setClienteParaDelegar(null)}
+          clienteId={clienteParaDelegar.id}
+          clienteNome={clienteParaDelegar.nome}
+        />
+      )}
     </MinimalistLayout>
   );
 }
