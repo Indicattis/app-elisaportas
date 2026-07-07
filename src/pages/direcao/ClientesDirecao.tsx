@@ -7,6 +7,7 @@ import { ColumnManager } from '@/components/ColumnManager';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { ClienteForm } from '@/components/clientes/ClienteForm';
 import { TransferirClientesModal } from '@/components/clientes/TransferirClientesModal';
+import { DelegarClienteModal } from '@/components/clientes/DelegarClienteModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
@@ -110,6 +111,7 @@ export default function ClientesDirecao() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [clienteParaExcluir, setClienteParaExcluir] = useState<Cliente | null>(null);
   const [transferirOpen, setTransferirOpen] = useState(false);
+  const [clienteParaDelegar, setClienteParaDelegar] = useState<Cliente | null>(null);
   
   const [sortConfig, setSortConfig] = useState<{
     column: string | null;
@@ -333,6 +335,18 @@ export default function ClientesDirecao() {
       case 'acoes':
         return (
           <div className="flex items-center justify-end gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-white/50 hover:text-blue-400 hover:bg-blue-500/10"
+              title="Transferir para outro vendedor"
+              onClick={(e) => {
+                e.stopPropagation();
+                setClienteParaDelegar(cliente);
+              }}
+            >
+              <ArrowRightLeft className="h-3.5 w-3.5" />
+            </Button>
             <Button
               variant="ghost"
               size="icon"
