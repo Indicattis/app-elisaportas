@@ -222,7 +222,6 @@ export default function ClientesDirecao() {
       case 'vendedor': return 'hidden lg:table-cell';
       case 'total': return 'hidden sm:table-cell';
       case 'ultima': return 'hidden lg:table-cell';
-      case 'transferir': return 'hidden sm:table-cell';
       default: return '';
     }
   };
