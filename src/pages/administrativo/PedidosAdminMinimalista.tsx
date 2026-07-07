@@ -149,6 +149,7 @@ export default function PedidosAdminMinimalista() {
   const { pedidos: pedidosInstalacoes, isLoading: isLoadingInstalacoes } = usePedidosEtapas("instalacoes");
   const { pedidos: pedidosCorrecoes, isLoading: isLoadingCorrecoes } = usePedidosEtapas("correcoes");
   const { pedidos: pedidosFinalizados, isLoading: isLoadingFinalizados } = usePedidosEtapas("finalizado");
+  const { pedidos: pedidosPosVendas, isLoading: isLoadingPosVendas } = usePedidosEtapas("pos_vendas");
 
   // Arquivo morto
   const { data: pedidosArquivados = [], isLoading: isLoadingArquivados } = usePedidosArquivados(
@@ -167,6 +168,7 @@ export default function PedidosAdminMinimalista() {
     instalacoes: pedidosInstalacoes,
     correcoes: pedidosCorrecoes,
     finalizado: pedidosFinalizados,
+    pos_vendas: pedidosPosVendas,
   };
 
   const loadingPorEtapa: Record<string, boolean> = {
@@ -180,6 +182,7 @@ export default function PedidosAdminMinimalista() {
     instalacoes: isLoadingInstalacoes,
     correcoes: isLoadingCorrecoes,
     finalizado: isLoadingFinalizados,
+    pos_vendas: isLoadingPosVendas,
   };
 
   // Handler para avançar etapa
