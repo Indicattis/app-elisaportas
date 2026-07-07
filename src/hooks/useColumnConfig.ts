@@ -40,6 +40,11 @@ export function useColumnConfig(storageKey: string, defaultColumns: ColumnConfig
         // Restore visibility
         if (config.visible) {
           const restoredVisible = new Set(config.visible);
+          defaultColumns.forEach(column => {
+            if (column.defaultVisible && !config.order?.includes(column.id)) {
+              restoredVisible.add(column.id);
+            }
+          });
           // Validate: at least one column must be visible among known columns
           const validVisibleCount = defaultColumns.filter(c => restoredVisible.has(c.id)).length;
           if (validVisibleCount > 0) {

@@ -68,6 +68,7 @@ const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
   { id: 'cidade', label: 'Cidade/UF', defaultVisible: true },
   { id: 'canal', label: 'Canal', defaultVisible: true },
   { id: 'vendedor', label: 'Vendedor', defaultVisible: true },
+  { id: 'transferir', label: 'Transferir', defaultVisible: true },
   { id: 'fidelizado', label: 'Fidelizado', defaultVisible: true },
   { id: 'parceiro', label: 'Parceiro', defaultVisible: true },
   { id: 'vendas', label: 'Vendas', defaultVisible: true },
@@ -221,6 +222,7 @@ export default function ClientesDirecao() {
       case 'vendedor': return 'hidden lg:table-cell';
       case 'total': return 'hidden sm:table-cell';
       case 'ultima': return 'hidden lg:table-cell';
+      case 'transferir': return 'hidden sm:table-cell';
       default: return '';
     }
   };
@@ -232,6 +234,7 @@ export default function ClientesDirecao() {
       case 'vendas': return 'text-center';
       case 'total': return 'text-right';
       case 'ultima': return 'text-center';
+      case 'transferir': return 'text-center';
       case 'acoes': return 'text-right';
       case 'vendedor': return 'text-center';
       default: return '';
@@ -300,6 +303,23 @@ export default function ClientesDirecao() {
         ) : (
           <span className="text-white/30 text-center block">-</span>
         );
+      case 'transferir':
+        return (
+          <div className="flex justify-center">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-white/50 hover:text-blue-400 hover:bg-blue-500/10"
+              title="Transferir para outro vendedor"
+              onClick={(e) => {
+                e.stopPropagation();
+                setClienteParaDelegar(cliente);
+              }}
+            >
+              <ArrowRightLeft className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        );
       case 'vendas':
         return <span className="text-white/70">{cliente.numero_vendas || 0}</span>;
       case 'total':
@@ -335,18 +355,6 @@ export default function ClientesDirecao() {
       case 'acoes':
         return (
           <div className="flex items-center justify-end gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 text-white/50 hover:text-blue-400 hover:bg-blue-500/10"
-              title="Transferir para outro vendedor"
-              onClick={(e) => {
-                e.stopPropagation();
-                setClienteParaDelegar(cliente);
-              }}
-            >
-              <ArrowRightLeft className="h-3.5 w-3.5" />
-            </Button>
             <Button
               variant="ghost"
               size="icon"
