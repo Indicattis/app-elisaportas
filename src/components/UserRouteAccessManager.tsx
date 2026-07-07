@@ -138,7 +138,7 @@ export function UserRouteAccessManager() {
       if (canAccess) {
         const { error } = await supabase
           .from('user_route_access' as any)
-          .upsert({ user_id: userId, route_key: routeKey, can_access: true });
+          .upsert({ user_id: userId, route_key: routeKey, can_access: true }, { onConflict: 'user_id,route_key' });
         if (error) throw error;
       } else {
         const { error } = await supabase
@@ -170,7 +170,7 @@ export function UserRouteAccessManager() {
 
       const { error } = await supabase
         .from('user_route_access' as any)
-        .upsert(accesses);
+        .upsert(accesses, { onConflict: 'user_id,route_key' });
       
       if (error) throw error;
     },
