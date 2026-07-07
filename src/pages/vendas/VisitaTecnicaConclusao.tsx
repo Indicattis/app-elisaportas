@@ -321,7 +321,6 @@ export default function VisitaTecnicaConclusao() {
     if (p.tem_tiras_frontais && !p.qtd_tiras_frontais) return 'Informe a quantidade de tiras frontais';
     if (p.tem_controle_adicional && !p.qtd_controle_adicional) return 'Informe a quantidade de controles adicionais';
     if (p.tem_tubo_afastamento && !p.distancia_tubo_cm) return 'Informe a distância do tubo de afastamento';
-    if (p.acessorios.length === 0) return 'Selecione pelo menos um acessório';
     if (p.fotos.length === 0 && p.novasFotos.length === 0) return 'Adicione pelo menos uma foto da porta';
     return null;
   };
