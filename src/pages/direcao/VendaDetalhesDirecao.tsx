@@ -45,6 +45,7 @@ interface Produto {
   quantidade: number;
   valor_unitario: number;
   valor_total: number;
+  tipo_desconto: 'percentual' | 'valor' | null;
   desconto_percentual: number;
   desconto_valor?: number;
   descricao?: string | null;
