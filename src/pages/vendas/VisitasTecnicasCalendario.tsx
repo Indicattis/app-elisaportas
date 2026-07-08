@@ -479,6 +479,7 @@ export default function VisitasTecnicasCalendario() {
   const qc = useQueryClient();
   const { userRole } = useAuth();
   const usuario_id = userRole?.user_id || null;
+  const admin_user_id = userRole?.id || null;
   const usuario_nome = userRole?.nome || null;
   const [mounted, setMounted] = useState(false);
   const today = new Date();
@@ -607,7 +608,7 @@ export default function VisitasTecnicasCalendario() {
 
   const openCreate = (dateStr?: string) => {
     setEditing(null);
-    setForm({ ...emptyForm, data_visita: dateStr || '', responsavel_id: usuario_id || '' });
+    setForm({ ...emptyForm, data_visita: dateStr || '', responsavel_id: admin_user_id || '' });
     setDialogOpen(true);
   };
 
