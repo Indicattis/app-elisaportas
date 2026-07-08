@@ -538,8 +538,10 @@ export default function VendaDetalhesDirecao() {
                           {formatCurrency((produto as any).valor_produto || produto.valor_unitario || 0)}
                         </TableCell>
                         <TableCell className="text-right">
-                          {produto.desconto_percentual > 0 ? (
+                          {produto.tipo_desconto === 'percentual' && produto.desconto_percentual > 0 ? (
                             <span className="text-orange-400">-{produto.desconto_percentual}%</span>
+                          ) : produto.tipo_desconto === 'valor' && (produto.desconto_valor || 0) > 0 ? (
+                            <span className="text-orange-400">-{formatCurrency(produto.desconto_valor || 0)}</span>
                           ) : (
                             <span className="text-white/40">—</span>
                           )}
