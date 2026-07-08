@@ -60,6 +60,7 @@ const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
   { id: 'frete', label: 'Frete', defaultVisible: true },
   { id: 'valor', label: 'Valor', defaultVisible: true },
   { id: 'tempo_sem_faturar', label: 'Tempo s/ Faturar', defaultVisible: true },
+  { id: 'temperatura', label: 'Temperatura', defaultVisible: true },
   { id: 'faturada', label: 'Faturada', defaultVisible: true },
 ];
 
