@@ -60,6 +60,7 @@ const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
   { id: 'frete', label: 'Frete', defaultVisible: true },
   { id: 'valor', label: 'Valor', defaultVisible: true },
   { id: 'tempo_sem_faturar', label: 'Tempo s/ Faturar', defaultVisible: true },
+  { id: 'temperatura', label: 'Temperatura', defaultVisible: true },
   { id: 'faturada', label: 'Faturada', defaultVisible: true },
 ];
 
@@ -318,6 +319,8 @@ export default function VendasDirecao() {
           case 'faturada': 
             const produtos = venda.produtos || [];
             return produtos.some((p: any) => p.faturamento === true) ? 1 : 0;
+          case 'temperatura':
+            return venda.venda_presencial === true ? 1 : venda.venda_presencial === false ? 0 : -1;
           case 'tempo_sem_faturar':
             const produtosTempo = venda.produtos || [];
             const estaFaturada = produtosTempo.some((p: any) => p.faturamento === true);
@@ -561,6 +564,14 @@ export default function VendasDirecao() {
             ? 'text-amber-400' 
             : 'text-white/60';
         return <span className={`text-[10px] md:text-sm ${corTempo}`}>{tempoFormatado}</span>;
+      case 'temperatura':
+        if (venda.venda_presencial === true) {
+          return <span className="text-[10px] md:text-sm text-orange-400">Quente</span>;
+        }
+        if (venda.venda_presencial === false) {
+          return <span className="text-[10px] md:text-sm text-blue-400">Frio</span>;
+        }
+        return <span className="text-[10px] md:text-sm text-white/30">-</span>;
       case 'valor':
         return (
           <span className={`${textClass} text-white font-medium`}>
@@ -586,6 +597,7 @@ export default function VendasDirecao() {
       case 'desconto':
       case 'acrescimo':
       case 'faturada':
+      case 'temperatura':
       case 'tempo_sem_faturar':
         return 'hidden lg:table-cell';
       default:
@@ -603,6 +615,7 @@ export default function VendasDirecao() {
       case 'acrescimo':
         return 'text-right';
       case 'faturada':
+      case 'temperatura':
       case 'tempo_sem_faturar':
         return 'text-center';
       default:
@@ -824,7 +837,7 @@ export default function VendasDirecao() {
                       className={`text-[10px] md:text-xs text-white/60 cursor-pointer hover:bg-white/5 transition-colors select-none py-2 px-1.5 md:px-2 ${getColumnAlignment(column.id)} ${getColumnResponsiveClass(column.id)}`}
                       onClick={() => handleSort(column.id)}
                     >
-                      <div className={`flex items-center gap-0.5 md:gap-1 ${column.id === 'valor' || column.id === 'frete' || column.id === 'instalacao' || column.id === 'desconto' || column.id === 'acrescimo' ? 'justify-end' : column.id === 'faturada' ? 'justify-center' : ''}`}>
+                      <div className={`flex items-center gap-0.5 md:gap-1 ${column.id === 'valor' || column.id === 'frete' || column.id === 'instalacao' || column.id === 'desconto' || column.id === 'acrescimo' ? 'justify-end' : column.id === 'faturada' || column.id === 'temperatura' ? 'justify-center' : ''}`}>
                         <span className="truncate">{column.label}</span>
                         {sortConfig.column === column.id ? (
                           sortConfig.direction === 'asc' 
