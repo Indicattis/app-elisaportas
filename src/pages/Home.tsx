@@ -308,9 +308,9 @@ export default function Home() {
             transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 400ms'
           }}
         >
-          <div className="relative overflow-hidden rounded-3xl bg-white/5 border border-white/10 backdrop-blur-xl py-4 px-6 flex flex-col items-center justify-center shadow-2xl">
+          <div className="relative overflow-hidden rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xl py-2 px-6 flex flex-col items-center justify-center shadow-2xl">
             <div className="absolute -top-12 -right-12 w-24 h-24 bg-blue-500/10 blur-3xl rounded-full" />
-            <div className="flex flex-col items-center gap-1 mb-2">
+            <div className="flex flex-col items-center gap-1 mb-1">
               <span className="text-white/50 text-[10px] font-semibold tracking-widest uppercase">
                 Faturamento Mês
               </span>
@@ -320,7 +320,7 @@ export default function Home() {
                 {indicesLoading ? '—' : formatCurrency(indices?.faturamentoMes || 0)}
               </h2>
             </div>
-            <div className="mt-3 w-10 h-0.5 bg-blue-500/40 rounded-full" />
+            <div className="mt-2 w-10 h-0.5 bg-blue-500/40 rounded-full" />
           </div>
         </div>
 
