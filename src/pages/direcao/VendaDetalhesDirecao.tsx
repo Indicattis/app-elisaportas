@@ -91,6 +91,7 @@ interface Venda {
   comprovante_url: string | null;
   atendente_id: string | null;
   tipo_entrega: 'entrega' | 'instalacao' | 'manutencao' | null;
+  venda_presencial: boolean | null;
   produtos?: Produto[];
   atendente?: Atendente;
 }
