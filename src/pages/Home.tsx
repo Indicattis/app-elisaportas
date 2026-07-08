@@ -2,10 +2,11 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import logoPortasEnrolar from "@/assets/logo-portas-enrolar.ico";
-import { ShoppingCart, Factory, Shield, Truck, Building2, LogOut, LayoutDashboard, PanelLeft, Settings, Lock, BarChart3, Calendar, User, ClipboardList, Sun, Moon, Monitor, DollarSign, Users, BookOpen, Target, Headset } from "lucide-react";
+import { ShoppingCart, Factory, Shield, Truck, Building2, LogOut, LayoutDashboard, PanelLeft, Settings, Lock, BarChart3, Calendar, User, ClipboardList, Sun, Moon, Monitor, DollarSign, Users, BookOpen, Target, Headset, TrendingUp } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useHomeIndices } from "@/hooks/useHomeIndices";
 import { supabase } from "@/integrations/supabase/client";
+import { formatCurrency } from "@/lib/utils";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { AnimatedBreadcrumb } from "@/components/AnimatedBreadcrumb";
 import { DelayedParticles } from "@/components/DelayedParticles";
@@ -298,6 +299,33 @@ export default function Home() {
 
 
         {/* Lista de botões */}
+        <div
+          className="w-full mb-3"
+          style={{
+            opacity: mounted ? 1 : 0,
+            transform: mounted ? 'translateY(0)' : 'translateY(20px)',
+            transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 400ms'
+          }}
+        >
+          <div className="relative overflow-hidden rounded-3xl bg-white/5 border border-white/10 backdrop-blur-xl py-4 px-6 flex flex-col items-center justify-center shadow-2xl">
+            <div className="absolute -top-12 -right-12 w-24 h-24 bg-blue-500/10 blur-3xl rounded-full" />
+            <div className="flex flex-col items-center gap-1 mb-2">
+              <div className="bg-blue-500/10 p-1.5 rounded-lg">
+                <TrendingUp className="w-4 h-4 text-blue-400" strokeWidth={1.5} />
+              </div>
+              <span className="text-white/50 text-[10px] font-semibold tracking-widest uppercase">
+                Faturamento Mês
+              </span>
+            </div>
+            <div className="flex flex-col items-center">
+              <h2 className="text-3xl md:text-4xl font-bold text-white tracking-tight text-center">
+                {indicesLoading ? '—' : formatCurrency(indices?.faturamentoMes || 0)}
+              </h2>
+            </div>
+            <div className="mt-3 w-10 h-0.5 bg-blue-500/40 rounded-full" />
+          </div>
+        </div>
+
         <div className="w-full flex flex-col gap-3">
         {menuItems.map((item, index) => {
             const Icon = item.icon;
