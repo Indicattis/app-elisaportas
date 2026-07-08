@@ -564,6 +564,14 @@ export default function VendasDirecao() {
             ? 'text-amber-400' 
             : 'text-white/60';
         return <span className={`text-[10px] md:text-sm ${corTempo}`}>{tempoFormatado}</span>;
+      case 'temperatura':
+        if (venda.venda_presencial === true) {
+          return <span className="text-[10px] md:text-sm text-orange-400">Quente</span>;
+        }
+        if (venda.venda_presencial === false) {
+          return <span className="text-[10px] md:text-sm text-blue-400">Frio</span>;
+        }
+        return <span className="text-[10px] md:text-sm text-white/30">-</span>;
       case 'valor':
         return (
           <span className={`${textClass} text-white font-medium`}>
