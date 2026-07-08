@@ -597,6 +597,7 @@ export default function VendasDirecao() {
       case 'desconto':
       case 'acrescimo':
       case 'faturada':
+      case 'temperatura':
       case 'tempo_sem_faturar':
         return 'hidden lg:table-cell';
       default:
