@@ -404,6 +404,19 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
                      'Pendente de Contrato'}
                   </Badge>
                 )}
+                {mode === 'faturamento' && (
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "h-4 px-1.5 text-[9px] font-medium rounded-sm shrink-0",
+                      venda.contrato_dispensado
+                        ? "border-amber-500/40 bg-amber-500/10 text-amber-300"
+                        : "border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
+                    )}
+                  >
+                    {venda.contrato_dispensado ? 'Dispensado' : 'Com Contrato'}
+                  </Badge>
+                )}
               </div>
               {ultimoComentario?.comentario && (
                 <p className="text-[9px] text-muted-foreground truncate" title={ultimoComentario.comentario}>
