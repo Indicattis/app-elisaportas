@@ -346,7 +346,7 @@ export default function VendaDetalhesDirecao() {
     >
       <div className="space-y-6">
         {/* Cards financeiros */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           <div className={`${cardClass} border-l-4 border-l-green-500`}>
             <div className="flex items-center gap-2 text-white/60 text-sm mb-1">
               <DollarSign className="w-4 h-4" />
@@ -377,6 +377,16 @@ export default function VendaDetalhesDirecao() {
               Frete
             </div>
             <p className="text-xl font-bold text-purple-400">{formatCurrency(venda.valor_frete || 0)}</p>
+          </div>
+
+          <div className={`${cardClass} border-l-4 ${venda.venda_presencial === true ? 'border-l-orange-500' : venda.venda_presencial === false ? 'border-l-blue-500' : 'border-l-white/30'}`}>
+            <div className="flex items-center gap-2 text-white/60 text-sm mb-1">
+              <Thermometer className="w-4 h-4" />
+              Temperatura
+            </div>
+            <p className={`text-xl font-bold ${venda.venda_presencial === true ? 'text-orange-400' : venda.venda_presencial === false ? 'text-blue-400' : 'text-white/30'}`}>
+              {venda.venda_presencial === true ? 'Quente' : venda.venda_presencial === false ? 'Frio' : 'Não informado'}
+            </p>
           </div>
         </div>
 
