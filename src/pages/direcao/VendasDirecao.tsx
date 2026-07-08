@@ -615,6 +615,7 @@ export default function VendasDirecao() {
       case 'acrescimo':
         return 'text-right';
       case 'faturada':
+      case 'temperatura':
       case 'tempo_sem_faturar':
         return 'text-center';
       default:
