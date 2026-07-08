@@ -298,16 +298,6 @@ export default function Home() {
         </div>
 
 
-        {/* Lista de botões */}
-        <div
-          className="w-full mb-3"
-          style={{
-            opacity: mounted ? 1 : 0,
-            transform: mounted ? 'translateY(0)' : 'translateY(20px)',
-            transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 400ms'
-          }}
-        >
-        </div>
 
         <div className="w-full flex flex-col gap-3">
         {menuItems.map((item, index) => {
