@@ -31,7 +31,8 @@ import {
   ArrowUp,
   Trash2,
   Pencil,
-  Settings
+  Settings,
+  Thermometer
 } from "lucide-react";
 import { agruparItensCatalogo } from "@/utils/agruparItensCatalogo";
 import { PagamentoResumo } from "@/components/vendas/PagamentoResumo";
