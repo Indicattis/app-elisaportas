@@ -27,6 +27,8 @@ export interface VendaPendentePedido {
   valor_a_receber_entrega: number | null;
   valor_entrada: number;
   venda_presencial?: boolean | null;
+  contrato_url?: string | null;
+  contrato_dispensado?: boolean;
   cores: Array<{ nome: string; codigo_hex: string }>;
   portas_info: Array<{ tamanho: 'P' | 'G'; largura: number; altura: number; area: number }>;
   contrato_status?: 'pendente' | 'gerado' | 'assinado';
