@@ -67,6 +67,7 @@ const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
   { id: 'percentual_desconto_acrescimo', label: '% Desc/Acrésc', defaultVisible: true },
   { id: 'valor', label: 'Valor Final', defaultVisible: true },
   { id: 'excedido_desconto', label: 'Excedido', defaultVisible: true },
+  { id: 'lucro', label: 'Lucro', defaultVisible: true },
 ];
 
 // Função auxiliar para calcular desconto total dos produtos
@@ -102,6 +103,21 @@ const calcularExcedidoDesconto = (venda: any, limAvista: number, limPresencial: 
   const excedidoValor = (excedidoPct / 100) * totalBase;
 
   return { excedidoPct, excedidoValor };
+};
+
+// Calcula o lucro real da venda (apenas faz sentido quando faturada)
+const calcularLucroReal = (venda: any, limAvista: number, limPresencial: number): number => {
+  const produtos = venda?.produtos || [];
+  const lucroItens = produtos.reduce((acc: number, p: any) => acc + (Number(p.lucro_item) || 0), 0);
+  const lucroInstalacao = Number(venda?.lucro_instalacao) || 0;
+  const lucroBruto = lucroItens + lucroInstalacao;
+  const { excedidoValor } = calcularExcedidoDesconto(venda, limAvista, limPresencial);
+  return lucroBruto - excedidoValor;
+};
+
+const vendaFaturada = (venda: any): boolean => {
+  if (!venda?.produtos || venda.produtos.length === 0) return false;
+  return venda.produtos.some((p: any) => p.faturamento === true);
 };
 
 export default function VendasDirecao() {
