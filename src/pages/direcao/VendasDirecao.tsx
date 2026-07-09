@@ -378,6 +378,10 @@ export default function VendasDirecao() {
             return produtos.some((p: any) => p.faturamento === true) ? 1 : 0;
           case 'temperatura':
             return venda.venda_presencial === true ? 1 : venda.venda_presencial === false ? 0 : -1;
+          case 'excedido_desconto': {
+            const { excedidoValor } = calcularExcedidoDesconto(venda, limAvista, limPresencial);
+            return excedidoValor;
+          }
           default: return '';
         }
       };
