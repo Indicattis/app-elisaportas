@@ -1,40 +1,48 @@
-## Bug: temperatura sempre salva como "Quente"
+## Corrigir temperatura retroativa das vendas (desde 01/05/2026)
 
-### Causa raiz
+Sua intuição está certa: quando a venda tem **desconto acima do limite básico** e **não existe registro de autorização** em `vendas_autorizacoes_desconto`, a única forma daquele desconto ter sido aceito no cadastro é o vendedor ter marcado "Fria" (o adicional de 5% só é liberado para venda fria). Isso nos permite reconstituir a origem com segurança para uma parte das vendas.
 
-A temperatura da venda é armazenada em `vendas.venda_presencial` (boolean, NOT NULL, `DEFAULT true`), onde `true = Quente` e `false = Fria`. Toda a UI (cadastro, edição, listagens, sheets, painel de direção) grava e lê a partir desse campo.
+### Diagnóstico do período (data_venda >= 2026-05-01, `is_rascunho = false`)
 
-Em `src/hooks/useVendas.ts` há **dois pontos** que sabotam o valor escolhido pelo vendedor:
+Regras vigentes em `configuracoes_vendas`: limite base à vista = **3%**, adicional fria = **+5%**, adicional responsável = **+7%** (com senha).
 
-- Linha 347 (criação de venda "cheia"):
-  ```ts
-  const { endereco, venda_presencial, cliente_id: _, ...vendaDataLimpo } = vendaData;
-  ```
-- Linha 680 (criação de rascunho):
-  ```ts
-  const { endereco, venda_presencial, cliente_id: _, ...vendaDataLimpo } = vendaData;
-  ```
+| Grupo                                                     | Vendas |
+| --------------------------------------------------------- | -----: |
+| Total no período                                          |    103 |
+| Fria dedutível (desconto > base e sem autorização)        |     69 |
+| Ambíguas — desconto ≤ base (0-3% ou 0% no cartão)         |     34 |
+| Ambíguas — desconto acima do base mas houve autorização   |      0 |
 
-Nos dois casos `venda_presencial` é retirado do objeto e **nunca reintroduzido** no `vendaPayload` que é enviado para o `insert` na tabela `vendas`. Como a coluna tem `DEFAULT true`, o Postgres grava sempre `true` (Quente), independentemente do usuário ter clicado em "Fria" no cadastro. Por isso todas as telas que exibem `venda_presencial ? 'Quente' : 'Fria'` mostram Quente.
+Ou seja, dá para virar **69 vendas para Fria** com 100% de confiança lógica. As outras 34 são ambíguas: podem ter sido Fria ou Quente, e não há como saber — ficam como estão (Quente, default do banco).
 
-Confirmado no schema:
+### Lógica exata da inferência
+
+Para cada venda no período com `is_rascunho = false`:
+
 ```text
-venda_presencial | boolean | NOT NULL | default: true
+base_total    = Σ (valor_produto + valor_pintura + valor_instalacao) * quantidade
+desc_total    = Σ desconto aplicado por produto (valor ou percentual sobre a base do item)
+pct_desc      = desc_total / base_total * 100
+limite_base   = 0  se metodo_pagamento = 'cartao_credito'
+                3  caso contrário
+teve_auth     = existe linha em vendas_autorizacoes_desconto para essa venda
+
+marcar_fria   = pct_desc > limite_base + 0.01 AND NOT teve_auth
 ```
 
-### Correção
+Se `marcar_fria` for verdadeiro → `UPDATE vendas SET venda_presencial = false`. Caso contrário, deixa como está.
 
-Incluir `venda_presencial` explicitamente no payload de insert nos dois fluxos em `src/hooks/useVendas.ts`, preservando `false` quando o usuário escolhe "Fria" e caindo para `true` (default) apenas quando vier `undefined/null`:
+Nota: o campo `venda_presencial` continua NOT NULL / default true — não vamos mexer na coluna, só nos registros.
 
-1. **Insert de venda final (~linha 357–379)** — adicionar no `vendaPayload`:
-   ```ts
-   venda_presencial: venda_presencial ?? true,
-   ```
-2. **Insert de rascunho (~linha 683–702)** — mesma linha adicional no `vendaPayload`.
+### Passos
 
-Nenhum outro lugar precisa mudar: os componentes de leitura (`PedidoDetalhesSheet`, `VendaPendenteDetalhesSheet`, hooks `useVendasPendentePedido/Faturamento/AssinaturaContrato`, `usePedidosEtapas`, `useBalancoDescontos`, `VendasDirecao`, `VendaView`, `VendaEdit` etc.) já dependem apenas do valor persistido — assim que a gravação for corrigida, "Fria" passa a aparecer corretamente em toda a aplicação.
+1. **Backup leve antes de rodar**: emitir um `SELECT` gravando em `.mnt/documents/temperatura_backup_YYYYMMDD.csv` com `id, data_venda, cliente_nome, venda_presencial` das 103 vendas do período, para poder reverter manualmente se preciso.
+2. **Executar o UPDATE em massa** via tool `supabase--insert` (é DML, não DDL), aplicando a fórmula acima. Impacto esperado: 69 vendas passam de Quente → Fria.
+3. **Validar**: rodar novo `SELECT` de contagem por temperatura no período e comparar com o esperado (`quente=34`, `fria=69`).
+4. Avisar o time comercial que as 34 vendas com desconto ≤ 3% (ou 0% em cartão) permanecem como Quente porque a origem é indeterminável — se algum vendedor identificar caso errado, ele pode corrigir manualmente na tela da venda.
 
 ### Fora de escopo
 
-- Vendas antigas já gravadas como Quente por causa do bug: não serão corrigidas retroativamente (não temos como saber a intenção original do vendedor). Se desejar, num passo seguinte podemos abrir uma tela/rotina para o setor comercial revisar essas vendas manualmente — mas isso é outro trabalho.
-- Renomear o campo `venda_presencial` para algo como `temperatura` continua fora do escopo por impacto amplo.
+- Vendas anteriores a 01/05/2026.
+- Rascunhos (`is_rascunho = true`) e vendas reprovadas.
+- Alterações de schema (a coluna continua NOT NULL / default true).
