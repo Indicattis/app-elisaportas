@@ -66,6 +66,7 @@ const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
   { id: 'desconto_acrescimo', label: 'Desconto/Acréscimo', defaultVisible: true },
   { id: 'percentual_desconto_acrescimo', label: '% Desc/Acrésc', defaultVisible: true },
   { id: 'valor', label: 'Valor Final', defaultVisible: true },
+  { id: 'excedido_desconto', label: 'Excedido', defaultVisible: true },
 ];
 
 // Função auxiliar para calcular desconto total dos produtos
