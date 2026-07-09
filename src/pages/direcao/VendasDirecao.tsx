@@ -29,7 +29,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import * as XLSX from 'xlsx';
-import { format, startOfMonth, endOfMonth, setMonth, differenceInDays } from 'date-fns';
+import { format, startOfMonth, endOfMonth, setMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { DateRange } from 'react-day-picker';
 import { supabase } from '@/integrations/supabase/client';
@@ -71,27 +71,19 @@ const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
   { id: 'previsao', label: 'Previsão Entrega', defaultVisible: true },
   { id: 'expedicao', label: 'Expedição', defaultVisible: true },
   { id: 'pagamento', label: 'Pagamento', defaultVisible: true },
-  { id: 'desconto', label: 'Desconto', defaultVisible: true },
-  { id: 'acrescimo', label: 'Acréscimo', defaultVisible: true },
   { id: 'instalacao', label: 'Instalação', defaultVisible: true },
-  { id: 'frete', label: 'Frete', defaultVisible: true },
-  { id: 'valor', label: 'Valor', defaultVisible: true },
-  { id: 'tempo_sem_faturar', label: 'Tempo s/ Faturar', defaultVisible: true },
   { id: 'temperatura', label: 'Temperatura', defaultVisible: true },
   { id: 'faturada', label: 'Faturada', defaultVisible: true },
+  { id: 'valor_tabela', label: 'Valor Tabela', defaultVisible: true },
+  { id: 'frete', label: 'Frete', defaultVisible: true },
+  { id: 'desconto_acrescimo', label: 'Desconto/Acréscimo', defaultVisible: true },
+  { id: 'valor', label: 'Valor Final', defaultVisible: true },
 ];
 
-// Função para formatar tempo decorrido
-const formatarTempoSemFaturar = (dias: number): string => {
-  if (dias === 0) return 'Hoje';
-  if (dias === 1) return '1 dia';
-  if (dias < 7) return `${dias} dias`;
-  if (dias < 30) {
-    const semanas = Math.floor(dias / 7);
-    return semanas === 1 ? '1 sem.' : `${semanas} sem.`;
-  }
-  const meses = Math.floor(dias / 30);
-  return meses === 1 ? '1 mês' : `${meses} meses`;
+// Função auxiliar para calcular desconto total dos produtos
+const calcularDescontoTotal = (venda: any) => {
+  if (!venda?.produtos) return 0;
+  return venda.produtos.reduce((acc: number, p: any) => acc + (p.desconto_valor || 0), 0);
 };
 
 export default function VendasDirecao() {
@@ -179,7 +171,7 @@ export default function VendasDirecao() {
     toggleColumn,
     setColumnOrder,
     resetColumns
-  } = useColumnConfig('direcao_vendas_columns', COLUNAS_DISPONIVEIS);
+  } = useColumnConfig('direcao_vendas_columns_v2', COLUNAS_DISPONIVEIS);
 
   useEffect(() => {
     const fetchAtendentes = async () => {
@@ -352,18 +344,19 @@ export default function VendasDirecao() {
           case 'expedicao': return venda.tipo_entrega || '';
           case 'frete': return venda.valor_frete || 0;
           case 'instalacao': return calcularValorInstalacao(venda);
-          case 'desconto': return venda.produtos?.reduce((acc: number, p: any) => acc + (p.desconto_valor || 0), 0) || 0;
-          case 'acrescimo': return venda.valor_credito || 0;
+          case 'valor_tabela': {
+            const desconto = calcularDescontoTotal(venda);
+            return (venda.valor_venda || 0) - (venda.valor_frete || 0) + desconto;
+          }
+          case 'desconto_acrescimo': {
+            const desconto = calcularDescontoTotal(venda);
+            return (venda.valor_credito || 0) - desconto;
+          }
           case 'faturada': 
             const produtos = venda.produtos || [];
             return produtos.some((p: any) => p.faturamento === true) ? 1 : 0;
           case 'temperatura':
             return venda.venda_presencial === true ? 1 : venda.venda_presencial === false ? 0 : -1;
-          case 'tempo_sem_faturar':
-            const produtosTempo = venda.produtos || [];
-            const estaFaturada = produtosTempo.some((p: any) => p.faturamento === true);
-            if (estaFaturada) return 0;
-            return differenceInDays(new Date(), new Date(venda.data_venda));
           default: return '';
         }
       };
@@ -409,11 +402,6 @@ export default function VendasDirecao() {
   // Função para renderizar célula baseado no ID da coluna
   const renderCell = useCallback((venda: any, columnId: string) => {
     // Calcular desconto total dos produtos
-    const calcularDescontoTotal = () => {
-      if (!venda.produtos) return 0;
-      return venda.produtos.reduce((acc: number, p: any) => acc + (p.desconto_valor || 0), 0);
-    };
-
     // Verificar se foi faturada (produtos com faturamento = true)
     const isFaturada = () => {
       if (!venda.produtos || venda.produtos.length === 0) return false;
@@ -503,65 +491,130 @@ export default function VendasDirecao() {
           </span>
         );
       }
-      case 'desconto':
-        const desconto = calcularDescontoTotal();
+      case 'desconto_acrescimo': {
+        const desconto = calcularDescontoTotal(venda);
+        const credito = venda.valor_credito || 0;
+        const net = credito - desconto;
         const autorizacao = venda.autorizacao_desconto?.[0];
         
-        if (desconto <= 0) {
+        if (desconto <= 0 && credito <= 0) {
           return <span className="text-[10px] md:text-sm text-white/60">-</span>;
         }
         
-        return (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="text-[10px] md:text-sm text-red-400 cursor-help underline decoration-dotted underline-offset-2">
-                -{formatCurrency(desconto)}
-              </span>
-            </TooltipTrigger>
-            <TooltipContent className="bg-zinc-900 border-zinc-700 p-3 max-w-xs">
-              <div className="space-y-2">
-                <div className="text-sm font-medium text-white flex items-center gap-1.5">
-                  <Info className="w-3.5 h-3.5 text-red-400" />
-                  Detalhes do Desconto
+        if (desconto > 0 && credito > 0) {
+          return (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex flex-col items-end text-[10px] md:text-sm leading-tight cursor-help">
+                  <span className="text-red-400">-{formatCurrency(desconto)}</span>
+                  <span className="text-green-400">+{formatCurrency(credito)}</span>
                 </div>
-                <div className="text-xs space-y-1">
-                  <p className="text-white/70">
-                    <span className="text-white/50">Valor:</span> {formatCurrency(desconto)}
-                  </p>
-                  {autorizacao && (
-                    <>
-                      <p className="text-white/70">
-                        <span className="text-white/50">Percentual:</span>{' '}
-                        {autorizacao.percentual_desconto?.toFixed(2)}%
-                      </p>
-                      <p className="text-white/70">
-                        <span className="text-white/50">Tipo:</span>{' '}
-                        {autorizacao.tipo_autorizacao === 'master' 
-                          ? 'Senha Master (Diretor)' 
-                          : 'Senha do Gerente'}
-                      </p>
-                      <p className="text-white/70">
-                        <span className="text-white/50">Autorizado por:</span>{' '}
-                        {autorizacao.autorizador?.nome || 'Não informado'}
-                      </p>
-                    </>
-                  )}
-                  {!autorizacao && (
-                    <p className="text-white/50 italic">
-                      Desconto dentro do limite automático
+              </TooltipTrigger>
+              <TooltipContent className="bg-zinc-900 border-zinc-700 p-3 max-w-xs">
+                <div className="space-y-2">
+                  <div className="text-sm font-medium text-white flex items-center gap-1.5">
+                    <Info className="w-3.5 h-3.5 text-red-400" />
+                    Detalhes do Desconto/Acréscimo
+                  </div>
+                  <div className="text-xs space-y-1">
+                    <p className="text-white/70">
+                      <span className="text-white/50">Desconto:</span>{' '}
+                      <span className="text-red-400">{formatCurrency(desconto)}</span>
                     </p>
-                  )}
+                    <p className="text-white/70">
+                      <span className="text-white/50">Acréscimo:</span>{' '}
+                      <span className="text-green-400">{formatCurrency(credito)}</span>
+                    </p>
+                    <p className="text-white/70">
+                      <span className="text-white/50">Líquido:</span>{' '}
+                      <span className={net >= 0 ? 'text-green-400' : 'text-red-400'}>
+                        {net >= 0 ? '+' : '-'}{formatCurrency(Math.abs(net))}
+                      </span>
+                    </p>
+                    {autorizacao && (
+                      <>
+                        <p className="text-white/70">
+                          <span className="text-white/50">Percentual:</span>{' '}
+                          {autorizacao.percentual_desconto?.toFixed(2)}%
+                        </p>
+                        <p className="text-white/70">
+                          <span className="text-white/50">Tipo:</span>{' '}
+                          {autorizacao.tipo_autorizacao === 'master' 
+                            ? 'Senha Master (Diretor)' 
+                            : 'Senha do Gerente'}
+                        </p>
+                        <p className="text-white/70">
+                          <span className="text-white/50">Autorizado por:</span>{' '}
+                          {autorizacao.autorizador?.nome || 'Não informado'}
+                        </p>
+                      </>
+                    )}
+                    {!autorizacao && desconto > 0 && (
+                      <p className="text-white/50 italic">
+                        Desconto dentro do limite automático
+                      </p>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </TooltipContent>
-          </Tooltip>
-        );
-      case 'acrescimo':
+              </TooltipContent>
+            </Tooltip>
+          );
+        }
+        
+        if (desconto > 0) {
+          return (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="text-[10px] md:text-sm text-red-400 cursor-help underline decoration-dotted underline-offset-2">
+                  -{formatCurrency(desconto)}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent className="bg-zinc-900 border-zinc-700 p-3 max-w-xs">
+                <div className="space-y-2">
+                  <div className="text-sm font-medium text-white flex items-center gap-1.5">
+                    <Info className="w-3.5 h-3.5 text-red-400" />
+                    Detalhes do Desconto
+                  </div>
+                  <div className="text-xs space-y-1">
+                    <p className="text-white/70">
+                      <span className="text-white/50">Valor:</span> {formatCurrency(desconto)}
+                    </p>
+                    {autorizacao && (
+                      <>
+                        <p className="text-white/70">
+                          <span className="text-white/50">Percentual:</span>{' '}
+                          {autorizacao.percentual_desconto?.toFixed(2)}%
+                        </p>
+                        <p className="text-white/70">
+                          <span className="text-white/50">Tipo:</span>{' '}
+                          {autorizacao.tipo_autorizacao === 'master' 
+                            ? 'Senha Master (Diretor)' 
+                            : 'Senha do Gerente'}
+                        </p>
+                        <p className="text-white/70">
+                          <span className="text-white/50">Autorizado por:</span>{' '}
+                          {autorizacao.autorizador?.nome || 'Não informado'}
+                        </p>
+                      </>
+                    )}
+                    {!autorizacao && (
+                      <p className="text-white/50 italic">
+                        Desconto dentro do limite automático
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          );
+        }
+        
         return (
-          <span className={`text-[10px] md:text-sm ${venda.valor_credito > 0 ? "text-green-400" : "text-white/60"}`}>
-            {venda.valor_credito > 0 ? `+${formatCurrency(venda.valor_credito)}` : '-'}
+          <span className="text-[10px] md:text-sm text-green-400">
+            +{formatCurrency(credito)}
           </span>
         );
+      }
       case 'faturada':
         const faturada = isFaturada();
         const temContrato = !!venda.contrato_url;
@@ -591,19 +644,15 @@ export default function VendasDirecao() {
             )}
           </div>
         );
-      case 'tempo_sem_faturar':
-        if (isFaturada()) {
-          return <span className="text-white/30 text-[10px] md:text-sm">-</span>;
-        }
-        const diasSemFaturar = differenceInDays(new Date(), new Date(venda.data_venda));
-        const tempoFormatado = formatarTempoSemFaturar(diasSemFaturar);
-        // Cor baseada na urgência
-        const corTempo = diasSemFaturar >= 30 
-          ? 'text-red-400' 
-          : diasSemFaturar >= 14 
-            ? 'text-amber-400' 
-            : 'text-white/60';
-        return <span className={`text-[10px] md:text-sm ${corTempo}`}>{tempoFormatado}</span>;
+      case 'valor_tabela': {
+        const desconto = calcularDescontoTotal(venda);
+        const valorTabela = (venda.valor_venda || 0) - (venda.valor_frete || 0) + desconto;
+        return (
+          <span className={`${textClass} text-white/80`}>
+            {valorTabela > 0 ? formatCurrency(valorTabela) : '-'}
+          </span>
+        );
+      }
       case 'temperatura': {
         const isQuente = venda.venda_presencial === true;
         const isFrio = venda.venda_presencial === false;
@@ -646,11 +695,10 @@ export default function VendasDirecao() {
       case 'previsao':
       case 'frete':
       case 'instalacao':
-      case 'desconto':
-      case 'acrescimo':
+      case 'valor_tabela':
+      case 'desconto_acrescimo':
       case 'faturada':
       case 'temperatura':
-      case 'tempo_sem_faturar':
         return 'hidden lg:table-cell';
       default:
         return '';
@@ -661,14 +709,13 @@ export default function VendasDirecao() {
   const getColumnAlignment = (columnId: string) => {
     switch (columnId) {
       case 'valor':
+      case 'valor_tabela':
       case 'frete':
       case 'instalacao':
-      case 'desconto':
-      case 'acrescimo':
+      case 'desconto_acrescimo':
         return 'text-right';
       case 'faturada':
       case 'temperatura':
-      case 'tempo_sem_faturar':
         return 'text-center';
       default:
         return 'text-left';
@@ -889,7 +936,7 @@ export default function VendasDirecao() {
                       className={`text-[10px] md:text-xs text-white/60 cursor-pointer hover:bg-white/5 transition-colors select-none py-2 px-1.5 md:px-2 ${getColumnAlignment(column.id)} ${getColumnResponsiveClass(column.id)}`}
                       onClick={() => handleSort(column.id)}
                     >
-                      <div className={`flex items-center gap-0.5 md:gap-1 ${column.id === 'valor' || column.id === 'frete' || column.id === 'instalacao' || column.id === 'desconto' || column.id === 'acrescimo' ? 'justify-end' : column.id === 'faturada' || column.id === 'temperatura' ? 'justify-center' : ''}`}>
+                      <div className={`flex items-center gap-0.5 md:gap-1 ${column.id === 'valor' || column.id === 'valor_tabela' || column.id === 'frete' || column.id === 'instalacao' || column.id === 'desconto_acrescimo' ? 'justify-end' : column.id === 'faturada' || column.id === 'temperatura' ? 'justify-center' : ''}`}>
                         <span className="truncate">{column.label}</span>
                         {sortConfig.column === column.id ? (
                           sortConfig.direction === 'asc' 
