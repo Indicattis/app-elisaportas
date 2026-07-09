@@ -192,7 +192,7 @@ export default function VendasDirecao() {
     toggleColumn,
     setColumnOrder,
     resetColumns
-  } = useColumnConfig('direcao_vendas_columns_v3', COLUNAS_DISPONIVEIS);
+  } = useColumnConfig('direcao_vendas_columns_v4', COLUNAS_DISPONIVEIS);
 
   useEffect(() => {
     const fetchAtendentes = async () => {
