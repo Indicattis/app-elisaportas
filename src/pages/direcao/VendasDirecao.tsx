@@ -398,6 +398,10 @@ export default function VendasDirecao() {
             const { excedidoValor } = calcularExcedidoDesconto(venda, limAvista, limPresencial);
             return excedidoValor;
           }
+          case 'lucro': {
+            if (!vendaFaturada(venda)) return -Infinity;
+            return calcularLucroReal(venda, limAvista, limPresencial);
+          }
           default: return '';
         }
       };
