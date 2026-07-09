@@ -38,21 +38,7 @@ import { getFormaPagamentoLabel } from '@/utils/formatters';
 import { useToast } from '@/hooks/use-toast';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 
-// Calcula o valor total de instalação de uma venda considerando o modelo
-// atual (linha própria com tipo_produto='instalacao') e o legado (valor_instalacao
-// embutido na linha da porta / no cabeçalho da venda).
-function calcularValorInstalacao(venda: any): number {
-  const produtos = venda?.produtos || [];
-  const somaProdutos = produtos.reduce((acc: number, p: any) => {
-    const qty = p.quantidade || 1;
-    if (p.tipo_produto === 'instalacao') {
-      return acc + ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
-    }
-    return acc + (p.valor_instalacao || 0) * qty;
-  }, 0);
-  if (somaProdutos > 0) return somaProdutos;
-  return Number(venda?.valor_instalacao) || 0;
-}
+
 import {
   Table,
   TableBody,
@@ -71,12 +57,12 @@ const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
   { id: 'previsao', label: 'Previsão Entrega', defaultVisible: true },
   { id: 'expedicao', label: 'Expedição', defaultVisible: true },
   { id: 'pagamento', label: 'Pagamento', defaultVisible: true },
-  { id: 'instalacao', label: 'Instalação', defaultVisible: true },
   { id: 'temperatura', label: 'Temperatura', defaultVisible: true },
   { id: 'faturada', label: 'Faturada', defaultVisible: true },
   { id: 'valor_tabela', label: 'Valor Tabela', defaultVisible: true },
   { id: 'frete', label: 'Frete', defaultVisible: true },
   { id: 'desconto_acrescimo', label: 'Desconto/Acréscimo', defaultVisible: true },
+  { id: 'percentual_desconto_acrescimo', label: '% Desc/Acrésc', defaultVisible: true },
   { id: 'valor', label: 'Valor Final', defaultVisible: true },
 ];
 
@@ -84,6 +70,15 @@ const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
 const calcularDescontoTotal = (venda: any) => {
   if (!venda?.produtos) return 0;
   return venda.produtos.reduce((acc: number, p: any) => acc + (p.desconto_valor || 0), 0);
+};
+
+// Calcula o percentual líquido de desconto (negativo) ou acréscimo (positivo) sobre o valor tabela
+const calcularPercentualDescontoAcrescimo = (venda: any): number => {
+  const desconto = calcularDescontoTotal(venda);
+  const credito = venda?.valor_credito || 0;
+  const valorTabela = (venda?.valor_venda || 0) - (venda?.valor_frete || 0) + desconto;
+  if (valorTabela === 0) return 0;
+  return ((credito - desconto) / valorTabela) * 100;
 };
 
 export default function VendasDirecao() {
@@ -171,7 +166,7 @@ export default function VendasDirecao() {
     toggleColumn,
     setColumnOrder,
     resetColumns
-  } = useColumnConfig('direcao_vendas_columns_v2', COLUNAS_DISPONIVEIS);
+  } = useColumnConfig('direcao_vendas_columns_v3', COLUNAS_DISPONIVEIS);
 
   useEffect(() => {
     const fetchAtendentes = async () => {
@@ -343,7 +338,7 @@ export default function VendasDirecao() {
           case 'telefone': return venda.cliente_telefone || '';
           case 'expedicao': return venda.tipo_entrega || '';
           case 'frete': return venda.valor_frete || 0;
-          case 'instalacao': return calcularValorInstalacao(venda);
+          case 'percentual_desconto_acrescimo': return calcularPercentualDescontoAcrescimo(venda);
           case 'valor_tabela': {
             const desconto = calcularDescontoTotal(venda);
             return (venda.valor_venda || 0) - (venda.valor_frete || 0) + desconto;
@@ -483,11 +478,15 @@ export default function VendasDirecao() {
             {venda.valor_frete ? formatCurrency(venda.valor_frete) : '-'}
           </span>
         );
-      case 'instalacao': {
-        const totalInst = calcularValorInstalacao(venda);
+      case 'percentual_desconto_acrescimo': {
+        const percentual = calcularPercentualDescontoAcrescimo(venda);
+        if (percentual === 0) {
+          return <span className="text-[10px] md:text-sm text-white/60">-</span>;
+        }
+        const isAcrescimo = percentual > 0;
         return (
-          <span className={textMutedClass}>
-            {totalInst > 0 ? formatCurrency(totalInst) : '-'}
+          <span className={`text-[10px] md:text-sm ${isAcrescimo ? 'text-green-400' : 'text-red-400'}`}>
+            {isAcrescimo ? '+' : '-'}{Math.abs(percentual).toFixed(2)}%
           </span>
         );
       }
@@ -694,9 +693,9 @@ export default function VendasDirecao() {
       case 'vendedor':
       case 'previsao':
       case 'frete':
-      case 'instalacao':
       case 'valor_tabela':
       case 'desconto_acrescimo':
+      case 'percentual_desconto_acrescimo':
       case 'faturada':
       case 'temperatura':
         return 'hidden lg:table-cell';
@@ -711,8 +710,8 @@ export default function VendasDirecao() {
       case 'valor':
       case 'valor_tabela':
       case 'frete':
-      case 'instalacao':
       case 'desconto_acrescimo':
+      case 'percentual_desconto_acrescimo':
         return 'text-right';
       case 'faturada':
       case 'temperatura':
@@ -936,7 +935,7 @@ export default function VendasDirecao() {
                       className={`text-[10px] md:text-xs text-white/60 cursor-pointer hover:bg-white/5 transition-colors select-none py-2 px-1.5 md:px-2 ${getColumnAlignment(column.id)} ${getColumnResponsiveClass(column.id)}`}
                       onClick={() => handleSort(column.id)}
                     >
-                      <div className={`flex items-center gap-0.5 md:gap-1 ${column.id === 'valor' || column.id === 'valor_tabela' || column.id === 'frete' || column.id === 'instalacao' || column.id === 'desconto_acrescimo' ? 'justify-end' : column.id === 'faturada' || column.id === 'temperatura' ? 'justify-center' : ''}`}>
+                      <div className={`flex items-center gap-0.5 md:gap-1 ${column.id === 'valor' || column.id === 'valor_tabela' || column.id === 'frete' || column.id === 'desconto_acrescimo' || column.id === 'percentual_desconto_acrescimo' ? 'justify-end' : column.id === 'faturada' || column.id === 'temperatura' ? 'justify-center' : ''}`}>
                         <span className="truncate">{column.label}</span>
                         {sortConfig.column === column.id ? (
                           sortConfig.direction === 'asc' 
