@@ -67,6 +67,7 @@ const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
   { id: 'percentual_desconto_acrescimo', label: '% Desc/Acrésc', defaultVisible: true },
   { id: 'valor', label: 'Valor Final', defaultVisible: true },
   { id: 'excedido_desconto', label: 'Excedido', defaultVisible: true },
+  { id: 'lucro', label: 'Lucro', defaultVisible: true },
 ];
 
 // Função auxiliar para calcular desconto total dos produtos
@@ -102,6 +103,21 @@ const calcularExcedidoDesconto = (venda: any, limAvista: number, limPresencial: 
   const excedidoValor = (excedidoPct / 100) * totalBase;
 
   return { excedidoPct, excedidoValor };
+};
+
+// Calcula o lucro real da venda (apenas faz sentido quando faturada)
+const calcularLucroReal = (venda: any, limAvista: number, limPresencial: number): number => {
+  const produtos = venda?.produtos || [];
+  const lucroItens = produtos.reduce((acc: number, p: any) => acc + (Number(p.lucro_item) || 0), 0);
+  const lucroInstalacao = Number(venda?.lucro_instalacao) || 0;
+  const lucroBruto = lucroItens + lucroInstalacao;
+  const { excedidoValor } = calcularExcedidoDesconto(venda, limAvista, limPresencial);
+  return lucroBruto - excedidoValor;
+};
+
+const vendaFaturada = (venda: any): boolean => {
+  if (!venda?.produtos || venda.produtos.length === 0) return false;
+  return venda.produtos.some((p: any) => p.faturamento === true);
 };
 
 export default function VendasDirecao() {
@@ -381,6 +397,10 @@ export default function VendasDirecao() {
           case 'excedido_desconto': {
             const { excedidoValor } = calcularExcedidoDesconto(venda, limAvista, limPresencial);
             return excedidoValor;
+          }
+          case 'lucro': {
+            if (!vendaFaturada(venda)) return -Infinity;
+            return calcularLucroReal(venda, limAvista, limPresencial);
           }
           default: return '';
         }
@@ -741,6 +761,18 @@ export default function VendasDirecao() {
           </Tooltip>
         );
       }
+      case 'lucro': {
+        if (!isFaturada()) {
+          return <span className="text-[10px] md:text-sm text-white/40">-</span>;
+        }
+        const lucroReal = calcularLucroReal(venda, limAvista, limPresencial);
+        const cls = lucroReal >= 0 ? 'text-emerald-400' : 'text-red-400';
+        return (
+          <span className={`text-[10px] md:text-sm font-medium ${cls}`}>
+            {formatCurrency(lucroReal)}
+          </span>
+        );
+      }
       default:
         return null;
     }
@@ -777,6 +809,7 @@ export default function VendasDirecao() {
       case 'desconto_acrescimo':
       case 'percentual_desconto_acrescimo':
       case 'excedido_desconto':
+      case 'lucro':
         return 'text-right';
       case 'faturada':
       case 'temperatura':
@@ -1000,7 +1033,7 @@ export default function VendasDirecao() {
                       className={`text-[10px] md:text-xs text-white/60 cursor-pointer hover:bg-white/5 transition-colors select-none py-2 px-1.5 md:px-2 ${getColumnAlignment(column.id)} ${getColumnResponsiveClass(column.id)}`}
                       onClick={() => handleSort(column.id)}
                     >
-                      <div className={`flex items-center gap-0.5 md:gap-1 ${column.id === 'valor' || column.id === 'valor_tabela' || column.id === 'frete' || column.id === 'desconto_acrescimo' || column.id === 'percentual_desconto_acrescimo' || column.id === 'excedido_desconto' ? 'justify-end' : column.id === 'faturada' || column.id === 'temperatura' ? 'justify-center' : ''}`}>
+                      <div className={`flex items-center gap-0.5 md:gap-1 ${column.id === 'valor' || column.id === 'valor_tabela' || column.id === 'frete' || column.id === 'desconto_acrescimo' || column.id === 'percentual_desconto_acrescimo' || column.id === 'excedido_desconto' || column.id === 'lucro' ? 'justify-end' : column.id === 'faturada' || column.id === 'temperatura' ? 'justify-center' : ''}`}>
                         <span className="truncate">{column.label}</span>
                         {sortConfig.column === column.id ? (
                           sortConfig.direction === 'asc' 
