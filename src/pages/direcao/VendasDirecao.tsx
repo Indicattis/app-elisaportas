@@ -695,11 +695,10 @@ export default function VendasDirecao() {
       case 'previsao':
       case 'frete':
       case 'instalacao':
-      case 'desconto':
-      case 'acrescimo':
+      case 'valor_tabela':
+      case 'desconto_acrescimo':
       case 'faturada':
       case 'temperatura':
-      case 'tempo_sem_faturar':
         return 'hidden lg:table-cell';
       default:
         return '';
