@@ -761,6 +761,18 @@ export default function VendasDirecao() {
           </Tooltip>
         );
       }
+      case 'lucro': {
+        if (!isFaturada()) {
+          return <span className="text-[10px] md:text-sm text-white/40">-</span>;
+        }
+        const lucroReal = calcularLucroReal(venda, limAvista, limPresencial);
+        const cls = lucroReal >= 0 ? 'text-emerald-400' : 'text-red-400';
+        return (
+          <span className={`text-[10px] md:text-sm font-medium ${cls}`}>
+            {formatCurrency(lucroReal)}
+          </span>
+        );
+      }
       default:
         return null;
     }
