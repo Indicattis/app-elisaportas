@@ -37,6 +37,8 @@ import { generateVendasRelatorioPDF } from '@/utils/vendasPDFGenerator';
 import { getFormaPagamentoLabel } from '@/utils/formatters';
 import { useToast } from '@/hooks/use-toast';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
+import { useConfiguracoesVendas } from '@/hooks/useConfiguracoesVendas';
+import { calcularDescontoTotal as calcularDescontoTotalRegras, calcularTotalVenda } from '@/utils/descontoVendasRules';
 
 
 import {
@@ -64,6 +66,7 @@ const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
   { id: 'desconto_acrescimo', label: 'Desconto/Acréscimo', defaultVisible: true },
   { id: 'percentual_desconto_acrescimo', label: '% Desc/Acrésc', defaultVisible: true },
   { id: 'valor', label: 'Valor Final', defaultVisible: true },
+  { id: 'excedido_desconto', label: 'Excedido', defaultVisible: true },
 ];
 
 // Função auxiliar para calcular desconto total dos produtos
@@ -79,6 +82,26 @@ const calcularPercentualDescontoAcrescimo = (venda: any): number => {
   const valorTabela = (venda?.valor_venda || 0) - (venda?.valor_frete || 0) + desconto;
   if (valorTabela === 0) return 0;
   return ((credito - desconto) / valorTabela) * 100;
+};
+
+// Calcula o valor do desconto que excedeu o limite permitido (igual ao "Excedido" do balanço de descontos)
+const calcularExcedidoDesconto = (venda: any, limAvista: number, limPresencial: number): { excedidoPct: number; excedidoValor: number } => {
+  const produtos = venda?.produtos || [];
+  const totalBase = calcularTotalVenda(produtos);
+  if (totalBase <= 0) return { excedidoPct: 0, excedidoValor: 0 };
+
+  const descontoTotal = calcularDescontoTotalRegras(produtos);
+  const pctDado = (descontoTotal / totalBase) * 100;
+
+  const formaPg = (venda?.forma_pagamento || '').trim();
+  const aptoAvista = formaPg !== '' && formaPg !== 'cartao_credito';
+  const aptoFrio = venda?.venda_presencial === true;
+  const limite = (aptoAvista ? limAvista : 0) + (aptoFrio ? limPresencial : 0);
+
+  const excedidoPct = Math.max(0, pctDado - limite);
+  const excedidoValor = (excedidoPct / 100) * totalBase;
+
+  return { excedidoPct, excedidoValor };
 };
 
 export default function VendasDirecao() {
@@ -107,6 +130,9 @@ export default function VendasDirecao() {
   }, [queryClient, toast, togglingTempId]);
   const { isAdmin, user } = useAuth();
   const { vendas, isLoading } = useVendas();
+  const { limites: limitesVendas } = useConfiguracoesVendas();
+  const limAvista = limitesVendas?.avista ?? 3;
+  const limPresencial = limitesVendas?.presencial ?? 5;
   // Filtros persistentes na sessão
   const [searchTerm, setSearchTerm] = useSessionFilters<string>({
     key: 'direcao_vendas_search',
@@ -166,7 +192,7 @@ export default function VendasDirecao() {
     toggleColumn,
     setColumnOrder,
     resetColumns
-  } = useColumnConfig('direcao_vendas_columns_v3', COLUNAS_DISPONIVEIS);
+  } = useColumnConfig('direcao_vendas_columns_v4', COLUNAS_DISPONIVEIS);
 
   useEffect(() => {
     const fetchAtendentes = async () => {
@@ -352,6 +378,10 @@ export default function VendasDirecao() {
             return produtos.some((p: any) => p.faturamento === true) ? 1 : 0;
           case 'temperatura':
             return venda.venda_presencial === true ? 1 : venda.venda_presencial === false ? 0 : -1;
+          case 'excedido_desconto': {
+            const { excedidoValor } = calcularExcedidoDesconto(venda, limAvista, limPresencial);
+            return excedidoValor;
+          }
           default: return '';
         }
       };
@@ -363,7 +393,7 @@ export default function VendasDirecao() {
       if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
       return 0;
     });
-  }, [filteredVendas, sortConfig]);
+  }, [filteredVendas, sortConfig, limAvista, limPresencial]);
 
   // Função para alternar ordenação
   const handleSort = useCallback((columnId: string) => {
@@ -678,10 +708,43 @@ export default function VendasDirecao() {
             {formatCurrency((venda.valor_venda || 0) + (venda.valor_credito || 0))}
           </span>
         );
+      case 'excedido_desconto': {
+        const { excedidoPct, excedidoValor } = calcularExcedidoDesconto(venda, limAvista, limPresencial);
+        if (excedidoValor <= 0) {
+          return <span className="text-[10px] md:text-sm text-white/40">-</span>;
+        }
+        return (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="text-[10px] md:text-sm text-red-400 cursor-help underline decoration-dotted underline-offset-2">
+                {formatCurrency(excedidoValor)}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent className="bg-zinc-900 border-zinc-700 p-3 max-w-xs">
+              <div className="space-y-2">
+                <div className="text-sm font-medium text-white flex items-center gap-1.5">
+                  <Info className="w-3.5 h-3.5 text-red-400" />
+                  Desconto Excedido
+                </div>
+                <div className="text-xs space-y-1">
+                  <p className="text-white/70">
+                    <span className="text-white/50">% Excedido:</span>{' '}
+                    <span className="text-red-400">{excedidoPct.toFixed(2)}%</span>
+                  </p>
+                  <p className="text-white/70">
+                    <span className="text-white/50">Valor:</span>{' '}
+                    <span className="text-red-400">{formatCurrency(excedidoValor)}</span>
+                  </p>
+                </div>
+              </div>
+            </TooltipContent>
+          </Tooltip>
+        );
+      }
       default:
         return null;
     }
-  }, [metodosExtraPorVenda, toggleTemperatura, togglingTempId]);
+  }, [metodosExtraPorVenda, toggleTemperatura, togglingTempId, limAvista, limPresencial]);
 
   // Classes responsivas por coluna
   const getColumnResponsiveClass = (columnId: string) => {
@@ -696,6 +759,7 @@ export default function VendasDirecao() {
       case 'valor_tabela':
       case 'desconto_acrescimo':
       case 'percentual_desconto_acrescimo':
+      case 'excedido_desconto':
       case 'faturada':
       case 'temperatura':
         return 'hidden lg:table-cell';
@@ -712,6 +776,7 @@ export default function VendasDirecao() {
       case 'frete':
       case 'desconto_acrescimo':
       case 'percentual_desconto_acrescimo':
+      case 'excedido_desconto':
         return 'text-right';
       case 'faturada':
       case 'temperatura':
@@ -935,7 +1000,7 @@ export default function VendasDirecao() {
                       className={`text-[10px] md:text-xs text-white/60 cursor-pointer hover:bg-white/5 transition-colors select-none py-2 px-1.5 md:px-2 ${getColumnAlignment(column.id)} ${getColumnResponsiveClass(column.id)}`}
                       onClick={() => handleSort(column.id)}
                     >
-                      <div className={`flex items-center gap-0.5 md:gap-1 ${column.id === 'valor' || column.id === 'valor_tabela' || column.id === 'frete' || column.id === 'desconto_acrescimo' || column.id === 'percentual_desconto_acrescimo' ? 'justify-end' : column.id === 'faturada' || column.id === 'temperatura' ? 'justify-center' : ''}`}>
+                      <div className={`flex items-center gap-0.5 md:gap-1 ${column.id === 'valor' || column.id === 'valor_tabela' || column.id === 'frete' || column.id === 'desconto_acrescimo' || column.id === 'percentual_desconto_acrescimo' || column.id === 'excedido_desconto' ? 'justify-end' : column.id === 'faturada' || column.id === 'temperatura' ? 'justify-center' : ''}`}>
                         <span className="truncate">{column.label}</span>
                         {sortConfig.column === column.id ? (
                           sortConfig.direction === 'asc' 
