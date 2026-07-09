@@ -71,14 +71,13 @@ const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
   { id: 'previsao', label: 'Previsão Entrega', defaultVisible: true },
   { id: 'expedicao', label: 'Expedição', defaultVisible: true },
   { id: 'pagamento', label: 'Pagamento', defaultVisible: true },
-  { id: 'desconto', label: 'Desconto', defaultVisible: true },
-  { id: 'acrescimo', label: 'Acréscimo', defaultVisible: true },
   { id: 'instalacao', label: 'Instalação', defaultVisible: true },
-  { id: 'frete', label: 'Frete', defaultVisible: true },
-  { id: 'valor', label: 'Valor', defaultVisible: true },
-  { id: 'tempo_sem_faturar', label: 'Tempo s/ Faturar', defaultVisible: true },
   { id: 'temperatura', label: 'Temperatura', defaultVisible: true },
   { id: 'faturada', label: 'Faturada', defaultVisible: true },
+  { id: 'valor_tabela', label: 'Valor Tabela', defaultVisible: true },
+  { id: 'frete', label: 'Frete', defaultVisible: true },
+  { id: 'desconto_acrescimo', label: 'Desconto/Acréscimo', defaultVisible: true },
+  { id: 'valor', label: 'Valor Final', defaultVisible: true },
 ];
 
 // Função auxiliar para calcular desconto total dos produtos
@@ -345,18 +344,19 @@ export default function VendasDirecao() {
           case 'expedicao': return venda.tipo_entrega || '';
           case 'frete': return venda.valor_frete || 0;
           case 'instalacao': return calcularValorInstalacao(venda);
-          case 'desconto': return venda.produtos?.reduce((acc: number, p: any) => acc + (p.desconto_valor || 0), 0) || 0;
-          case 'acrescimo': return venda.valor_credito || 0;
+          case 'valor_tabela': {
+            const desconto = calcularDescontoTotal(venda);
+            return (venda.valor_venda || 0) - (venda.valor_frete || 0) + desconto;
+          }
+          case 'desconto_acrescimo': {
+            const desconto = calcularDescontoTotal(venda);
+            return (venda.valor_credito || 0) - desconto;
+          }
           case 'faturada': 
             const produtos = venda.produtos || [];
             return produtos.some((p: any) => p.faturamento === true) ? 1 : 0;
           case 'temperatura':
             return venda.venda_presencial === true ? 1 : venda.venda_presencial === false ? 0 : -1;
-          case 'tempo_sem_faturar':
-            const produtosTempo = venda.produtos || [];
-            const estaFaturada = produtosTempo.some((p: any) => p.faturamento === true);
-            if (estaFaturada) return 0;
-            return differenceInDays(new Date(), new Date(venda.data_venda));
           default: return '';
         }
       };
@@ -402,11 +402,6 @@ export default function VendasDirecao() {
   // Função para renderizar célula baseado no ID da coluna
   const renderCell = useCallback((venda: any, columnId: string) => {
     // Calcular desconto total dos produtos
-    const calcularDescontoTotal = () => {
-      if (!venda.produtos) return 0;
-      return venda.produtos.reduce((acc: number, p: any) => acc + (p.desconto_valor || 0), 0);
-    };
-
     // Verificar se foi faturada (produtos com faturamento = true)
     const isFaturada = () => {
       if (!venda.produtos || venda.produtos.length === 0) return false;
