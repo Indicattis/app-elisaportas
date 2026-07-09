@@ -265,6 +265,18 @@ export default function BalancoDescontos() {
                           <TableCell className={`whitespace-nowrap font-medium ${statusColor(r.status_venda || r.etapa_atual)}`}>
                             {formatEtapa(r.status_venda || r.etapa_atual)}
                           </TableCell>
+                          <TableCell>
+                            <span
+                              className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                r.vendas?.venda_presencial
+                                  ? "bg-blue-500/20 text-blue-300 border border-blue-500/30"
+                                  : "bg-orange-500/20 text-orange-300 border border-orange-500/30"
+                              }`}
+                              title={r.vendas?.venda_presencial ? "Venda Fria" : "Venda Quente"}
+                            >
+                              {r.vendas?.venda_presencial ? "Frio" : "Quente"}
+                            </span>
+                          </TableCell>
                           <TableCell className="text-white/90">
                             {r.data_venda
                               ? format(new Date(r.data_venda), "dd/MM/yyyy", { locale: ptBR })
