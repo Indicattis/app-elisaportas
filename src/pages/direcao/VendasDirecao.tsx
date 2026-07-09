@@ -586,14 +586,26 @@ export default function VendasDirecao() {
             ? 'text-amber-400' 
             : 'text-white/60';
         return <span className={`text-[10px] md:text-sm ${corTempo}`}>{tempoFormatado}</span>;
-      case 'temperatura':
-        if (venda.venda_presencial === true) {
-          return <span className="text-[10px] md:text-sm text-orange-400">Quente</span>;
-        }
-        if (venda.venda_presencial === false) {
-          return <span className="text-[10px] md:text-sm text-blue-400">Frio</span>;
-        }
-        return <span className="text-[10px] md:text-sm text-white/30">-</span>;
+      case 'temperatura': {
+        const isQuente = venda.venda_presencial === true;
+        const isFrio = venda.venda_presencial === false;
+        const label = isQuente ? 'Quente' : isFrio ? 'Frio' : '-';
+        const color = isQuente ? 'text-orange-400' : isFrio ? 'text-blue-400' : 'text-white/30';
+        return (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleTemperatura(venda.id, venda.venda_presencial);
+            }}
+            disabled={togglingTempId === venda.id}
+            title="Clique para alternar entre Quente e Fria"
+            className={`text-[10px] md:text-sm ${color} hover:underline underline-offset-2 disabled:opacity-50 cursor-pointer`}
+          >
+            {label}
+          </button>
+        );
+      }
       case 'valor':
         return (
           <span className={`${textClass} text-white font-medium`}>
