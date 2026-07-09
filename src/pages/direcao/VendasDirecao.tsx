@@ -776,6 +776,7 @@ export default function VendasDirecao() {
       case 'frete':
       case 'desconto_acrescimo':
       case 'percentual_desconto_acrescimo':
+      case 'excedido_desconto':
         return 'text-right';
       case 'faturada':
       case 'temperatura':
