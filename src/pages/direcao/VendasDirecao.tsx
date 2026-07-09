@@ -38,21 +38,7 @@ import { getFormaPagamentoLabel } from '@/utils/formatters';
 import { useToast } from '@/hooks/use-toast';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 
-// Calcula o valor total de instalação de uma venda considerando o modelo
-// atual (linha própria com tipo_produto='instalacao') e o legado (valor_instalacao
-// embutido na linha da porta / no cabeçalho da venda).
-function calcularValorInstalacao(venda: any): number {
-  const produtos = venda?.produtos || [];
-  const somaProdutos = produtos.reduce((acc: number, p: any) => {
-    const qty = p.quantidade || 1;
-    if (p.tipo_produto === 'instalacao') {
-      return acc + ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
-    }
-    return acc + (p.valor_instalacao || 0) * qty;
-  }, 0);
-  if (somaProdutos > 0) return somaProdutos;
-  return Number(venda?.valor_instalacao) || 0;
-}
+import { calcularDescontoTotal, calcularPercentualDesconto, calcularTotalVenda } from '@/utils/descontoVendasRules';
 import {
   Table,
   TableBody,
