@@ -375,7 +375,9 @@ export function useVendas() {
         empresa_receptora_id: empresaReceptoraPrincipal,
         quantidade_parcelas: pagamentoData?.metodos?.[0]?.parcelas_boleto || pagamentoData?.metodos?.[0]?.parcelas_cartao || 1,
         pago_na_instalacao: false,
-        pagamento_na_entrega: pagamentoData?.pagamento_na_entrega || false
+        pagamento_na_entrega: pagamentoData?.pagamento_na_entrega || false,
+        // Temperatura da venda (Quente/Fria). Preserva false quando o vendedor escolheu "Fria".
+        venda_presencial: venda_presencial ?? true,
       };
 
       console.log('📦 Venda payload:', vendaPayload);
@@ -698,7 +700,9 @@ export function useVendas() {
         empresa_receptora_id: pagamentoData?.metodos?.[0]?.empresa_receptora_id || null,
         quantidade_parcelas: pagamentoData?.metodos?.[0]?.parcelas_boleto || pagamentoData?.metodos?.[0]?.parcelas_cartao || 1,
         pago_na_instalacao: false,
-        pagamento_na_entrega: pagamentoData?.pagamento_na_entrega || false
+        pagamento_na_entrega: pagamentoData?.pagamento_na_entrega || false,
+        // Temperatura da venda (Quente/Fria). Preserva false quando o vendedor escolheu "Fria".
+        venda_presencial: venda_presencial ?? true,
       };
 
       const { data: venda, error: vendaError } = await supabase
