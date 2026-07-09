@@ -37,6 +37,22 @@ import { generateVendasRelatorioPDF } from '@/utils/vendasPDFGenerator';
 import { getFormaPagamentoLabel } from '@/utils/formatters';
 import { useToast } from '@/hooks/use-toast';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
+
+// Calcula o valor total de instalação de uma venda considerando o modelo
+// atual (linha própria com tipo_produto='instalacao') e o legado (valor_instalacao
+// embutido na linha da porta / no cabeçalho da venda).
+function calcularValorInstalacao(venda: any): number {
+  const produtos = venda?.produtos || [];
+  const somaProdutos = produtos.reduce((acc: number, p: any) => {
+    const qty = p.quantidade || 1;
+    if (p.tipo_produto === 'instalacao') {
+      return acc + ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
+    }
+    return acc + (p.valor_instalacao || 0) * qty;
+  }, 0);
+  if (somaProdutos > 0) return somaProdutos;
+  return Number(venda?.valor_instalacao) || 0;
+}
 import {
   Table,
   TableBody,
@@ -335,7 +351,7 @@ export default function VendasDirecao() {
           case 'telefone': return venda.cliente_telefone || '';
           case 'expedicao': return venda.tipo_entrega || '';
           case 'frete': return venda.valor_frete || 0;
-          case 'instalacao': return venda.valor_instalacao || 0;
+          case 'instalacao': return calcularValorInstalacao(venda);
           case 'desconto': return venda.produtos?.reduce((acc: number, p: any) => acc + (p.desconto_valor || 0), 0) || 0;
           case 'acrescimo': return venda.valor_credito || 0;
           case 'faturada': 
@@ -479,12 +495,14 @@ export default function VendasDirecao() {
             {venda.valor_frete ? formatCurrency(venda.valor_frete) : '-'}
           </span>
         );
-      case 'instalacao':
+      case 'instalacao': {
+        const totalInst = calcularValorInstalacao(venda);
         return (
           <span className={textMutedClass}>
-            {venda.valor_instalacao ? formatCurrency(venda.valor_instalacao) : '-'}
+            {totalInst > 0 ? formatCurrency(totalInst) : '-'}
           </span>
         );
+      }
       case 'desconto':
         const desconto = calcularDescontoTotal();
         const autorizacao = venda.autorizacao_desconto?.[0];
