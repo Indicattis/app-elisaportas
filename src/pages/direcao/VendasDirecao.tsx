@@ -104,7 +104,6 @@ export default function VendasDirecao() {
   }, [queryClient, toast, togglingTempId]);
   const { isAdmin, user } = useAuth();
   const { vendas, isLoading } = useVendas();
-  const { toast } = useToast();
   // Filtros persistentes na sessão
   const [searchTerm, setSearchTerm] = useSessionFilters<string>({
     key: 'direcao_vendas_search',
