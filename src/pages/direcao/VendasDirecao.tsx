@@ -57,12 +57,12 @@ const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
   { id: 'previsao', label: 'Previsão Entrega', defaultVisible: true },
   { id: 'expedicao', label: 'Expedição', defaultVisible: true },
   { id: 'pagamento', label: 'Pagamento', defaultVisible: true },
-  { id: 'instalacao', label: 'Instalação', defaultVisible: true },
   { id: 'temperatura', label: 'Temperatura', defaultVisible: true },
   { id: 'faturada', label: 'Faturada', defaultVisible: true },
   { id: 'valor_tabela', label: 'Valor Tabela', defaultVisible: true },
   { id: 'frete', label: 'Frete', defaultVisible: true },
   { id: 'desconto_acrescimo', label: 'Desconto/Acréscimo', defaultVisible: true },
+  { id: 'percentual_desconto_acrescimo', label: '% Desc/Acrésc', defaultVisible: true },
   { id: 'valor', label: 'Valor Final', defaultVisible: true },
 ];
 
