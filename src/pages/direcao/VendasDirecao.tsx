@@ -109,6 +109,9 @@ export default function VendasDirecao() {
   }, [queryClient, toast, togglingTempId]);
   const { isAdmin, user } = useAuth();
   const { vendas, isLoading } = useVendas();
+  const { limites: limitesVendas } = useConfiguracoesVendas();
+  const limAvista = limitesVendas?.avista ?? 3;
+  const limPresencial = limitesVendas?.presencial ?? 5;
   // Filtros persistentes na sessão
   const [searchTerm, setSearchTerm] = useSessionFilters<string>({
     key: 'direcao_vendas_search',
