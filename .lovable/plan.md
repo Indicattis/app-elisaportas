@@ -1,34 +1,40 @@
-# Correção de cache no app
+## Bug: temperatura sempre salva como "Quente"
 
-## Problema
-Após um novo deploy, alguns usuários ficam com o app quebrado e só conseguem entrar em outro navegador / aba anônima. Isso acontece porque o navegador reaproveita o `index.html` antigo em cache, que aponta para arquivos JS (com hash) que já não existem mais no servidor — resultando em telas em branco ou `ChunkLoadError`.
+### Causa raiz
 
-Não há service worker envolvido; é apenas cache HTTP do HTML no navegador.
+A temperatura da venda é armazenada em `vendas.venda_presencial` (boolean, NOT NULL, `DEFAULT true`), onde `true = Quente` e `false = Fria`. Toda a UI (cadastro, edição, listagens, sheets, painel de direção) grava e lê a partir desse campo.
 
-## Solução (2 camadas)
+Em `src/hooks/useVendas.ts` há **dois pontos** que sabotam o valor escolhido pelo vendedor:
 
-### 1. Impedir cache do `index.html`
-Adicionar metatags no `<head>` do `index.html` para instruir o navegador a nunca reter o HTML:
+- Linha 347 (criação de venda "cheia"):
+  ```ts
+  const { endereco, venda_presencial, cliente_id: _, ...vendaDataLimpo } = vendaData;
+  ```
+- Linha 680 (criação de rascunho):
+  ```ts
+  const { endereco, venda_presencial, cliente_id: _, ...vendaDataLimpo } = vendaData;
+  ```
 
-```html
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-<meta http-equiv="Pragma" content="no-cache" />
-<meta http-equiv="Expires" content="0" />
+Nos dois casos `venda_presencial` é retirado do objeto e **nunca reintroduzido** no `vendaPayload` que é enviado para o `insert` na tabela `vendas`. Como a coluna tem `DEFAULT true`, o Postgres grava sempre `true` (Quente), independentemente do usuário ter clicado em "Fria" no cadastro. Por isso todas as telas que exibem `venda_presencial ? 'Quente' : 'Fria'` mostram Quente.
+
+Confirmado no schema:
+```text
+venda_presencial | boolean | NOT NULL | default: true
 ```
 
-Os arquivos JS/CSS continuam com hash no nome (`index-abc123.js`), então podem seguir em cache longo normalmente — só o HTML passa a ser sempre revalidado.
+### Correção
 
-### 2. Auto-reload em erro de chunk
-Criar `src/lib/chunkReload.ts` e importar em `src/main.tsx`. Ele escuta `window.error` e `unhandledrejection`; quando detecta mensagem típica de chunk faltando (`Failed to fetch dynamically imported module`, `ChunkLoadError`, `Loading chunk ... failed`), força um `window.location.reload()` uma única vez por sessão (guardado em `sessionStorage` para não entrar em loop).
+Incluir `venda_presencial` explicitamente no payload de insert nos dois fluxos em `src/hooks/useVendas.ts`, preservando `false` quando o usuário escolhe "Fria" e caindo para `true` (default) apenas quando vier `undefined/null`:
 
-Isso cobre usuários que já estavam com a aba aberta no momento do deploy.
+1. **Insert de venda final (~linha 357–379)** — adicionar no `vendaPayload`:
+   ```ts
+   venda_presencial: venda_presencial ?? true,
+   ```
+2. **Insert de rascunho (~linha 683–702)** — mesma linha adicional no `vendaPayload`.
 
-## Fora de escopo
-- Não instalar service worker / PWA.
-- Não mexer em headers do servidor (Lovable hosting já serve HTML com cache curto, mas a metatag garante independente da hospedagem).
-- Não alterar chunks/build do Vite — hashing já está correto.
+Nenhum outro lugar precisa mudar: os componentes de leitura (`PedidoDetalhesSheet`, `VendaPendenteDetalhesSheet`, hooks `useVendasPendentePedido/Faturamento/AssinaturaContrato`, `usePedidosEtapas`, `useBalancoDescontos`, `VendasDirecao`, `VendaView`, `VendaEdit` etc.) já dependem apenas do valor persistido — assim que a gravação for corrigida, "Fria" passa a aparecer corretamente em toda a aplicação.
 
-## Arquivos afetados
-- `index.html` — adicionar 3 metatags de cache.
-- `src/lib/chunkReload.ts` — novo, ~20 linhas.
-- `src/main.tsx` — 1 linha de import.
+### Fora de escopo
+
+- Vendas antigas já gravadas como Quente por causa do bug: não serão corrigidas retroativamente (não temos como saber a intenção original do vendedor). Se desejar, num passo seguinte podemos abrir uma tela/rotina para o setor comercial revisar essas vendas manualmente — mas isso é outro trabalho.
+- Renomear o campo `venda_presencial` para algo como `temperatura` continua fora do escopo por impacto amplo.
