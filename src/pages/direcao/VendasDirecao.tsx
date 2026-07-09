@@ -708,6 +708,39 @@ export default function VendasDirecao() {
             {formatCurrency((venda.valor_venda || 0) + (venda.valor_credito || 0))}
           </span>
         );
+      case 'excedido_desconto': {
+        const { excedidoPct, excedidoValor } = calcularExcedidoDesconto(venda, limAvista, limPresencial);
+        if (excedidoValor <= 0) {
+          return <span className="text-[10px] md:text-sm text-white/40">-</span>;
+        }
+        return (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="text-[10px] md:text-sm text-red-400 cursor-help underline decoration-dotted underline-offset-2">
+                {formatCurrency(excedidoValor)}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent className="bg-zinc-900 border-zinc-700 p-3 max-w-xs">
+              <div className="space-y-2">
+                <div className="text-sm font-medium text-white flex items-center gap-1.5">
+                  <Info className="w-3.5 h-3.5 text-red-400" />
+                  Desconto Excedido
+                </div>
+                <div className="text-xs space-y-1">
+                  <p className="text-white/70">
+                    <span className="text-white/50">% Excedido:</span>{' '}
+                    <span className="text-red-400">{excedidoPct.toFixed(2)}%</span>
+                  </p>
+                  <p className="text-white/70">
+                    <span className="text-white/50">Valor:</span>{' '}
+                    <span className="text-red-400">{formatCurrency(excedidoValor)}</span>
+                  </p>
+                </div>
+              </div>
+            </TooltipContent>
+          </Tooltip>
+        );
+      }
       default:
         return null;
     }
