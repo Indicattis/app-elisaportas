@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useVendas } from '@/hooks/useVendas';
 import { useAuth } from '@/hooks/useAuth';
@@ -79,9 +80,30 @@ const formatarTempoSemFaturar = (dias: number): string => {
 
 export default function VendasDirecao() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [togglingTempId, setTogglingTempId] = useState<string | null>(null);
+
+  const toggleTemperatura = useCallback(async (vendaId: string, atual: boolean | null | undefined) => {
+    if (togglingTempId) return;
+    const novo = !(atual === true);
+    setTogglingTempId(vendaId);
+    try {
+      const { error } = await supabase
+        .from('vendas')
+        .update({ venda_presencial: novo })
+        .eq('id', vendaId);
+      if (error) throw error;
+      await queryClient.invalidateQueries({ queryKey: ['vendas'] });
+      toast({ title: novo ? 'Marcada como Quente' : 'Marcada como Fria' });
+    } catch (e: any) {
+      toast({ title: 'Erro ao alterar temperatura', description: e?.message, variant: 'destructive' });
+    } finally {
+      setTogglingTempId(null);
+    }
+  }, [queryClient, toast, togglingTempId]);
   const { isAdmin, user } = useAuth();
   const { vendas, isLoading } = useVendas();
-  const { toast } = useToast();
   // Filtros persistentes na sessão
   const [searchTerm, setSearchTerm] = useSessionFilters<string>({
     key: 'direcao_vendas_search',
@@ -564,14 +586,26 @@ export default function VendasDirecao() {
             ? 'text-amber-400' 
             : 'text-white/60';
         return <span className={`text-[10px] md:text-sm ${corTempo}`}>{tempoFormatado}</span>;
-      case 'temperatura':
-        if (venda.venda_presencial === true) {
-          return <span className="text-[10px] md:text-sm text-orange-400">Quente</span>;
-        }
-        if (venda.venda_presencial === false) {
-          return <span className="text-[10px] md:text-sm text-blue-400">Frio</span>;
-        }
-        return <span className="text-[10px] md:text-sm text-white/30">-</span>;
+      case 'temperatura': {
+        const isQuente = venda.venda_presencial === true;
+        const isFrio = venda.venda_presencial === false;
+        const label = isQuente ? 'Quente' : isFrio ? 'Frio' : '-';
+        const color = isQuente ? 'text-orange-400' : isFrio ? 'text-blue-400' : 'text-white/30';
+        return (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleTemperatura(venda.id, venda.venda_presencial);
+            }}
+            disabled={togglingTempId === venda.id}
+            title="Clique para alternar entre Quente e Fria"
+            className={`text-[10px] md:text-sm ${color} hover:underline underline-offset-2 disabled:opacity-50 cursor-pointer`}
+          >
+            {label}
+          </button>
+        );
+      }
       case 'valor':
         return (
           <span className={`${textClass} text-white font-medium`}>
@@ -581,7 +615,7 @@ export default function VendasDirecao() {
       default:
         return null;
     }
-  }, [metodosExtraPorVenda]);
+  }, [metodosExtraPorVenda, toggleTemperatura, togglingTempId]);
 
   // Classes responsivas por coluna
   const getColumnResponsiveClass = (columnId: string) => {
