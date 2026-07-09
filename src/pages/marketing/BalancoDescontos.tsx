@@ -289,10 +289,10 @@ export default function BalancoDescontos() {
                           </TableCell>
                           <TableCell className="text-white/90 text-right">{formatMoeda(Number(r.total_venda))}</TableCell>
                           <TableCell className={`text-right ${aptoAvista ? "text-white/90" : "text-white/30"}`}>
-                            {aptoAvista && tiers.valorAvista > 0 ? formatMoeda(tiers.valorAvista) : "-"}
+                            {aptoAvista ? formatMoeda(tiers.valorAvista) : "-"}
                           </TableCell>
                           <TableCell className={`text-right ${aptoFrio ? "text-white/90" : "text-white/30"}`}>
-                            {aptoFrio && tiers.valorFrio > 0 ? formatMoeda(tiers.valorFrio) : "-"}
+                            {aptoFrio ? formatMoeda(tiers.valorFrio) : "-"}
                           </TableCell>
                           <TableCell className={`text-right ${tiers.valorGerente > 0 ? "text-amber-300" : "text-white/30"}`}>
                             {tiers.valorGerente > 0 ? formatMoeda(tiers.valorGerente) : "-"}
