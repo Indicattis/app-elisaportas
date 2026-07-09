@@ -83,6 +83,26 @@ const calcularPercentualDescontoAcrescimo = (venda: any): number => {
   return ((credito - desconto) / valorTabela) * 100;
 };
 
+// Calcula o valor do desconto que excedeu o limite permitido (igual ao "Excedido" do balanço de descontos)
+const calcularExcedidoDesconto = (venda: any, limAvista: number, limPresencial: number): { excedidoPct: number; excedidoValor: number } => {
+  const produtos = venda?.produtos || [];
+  const totalBase = calcularTotalVenda(produtos);
+  if (totalBase <= 0) return { excedidoPct: 0, excedidoValor: 0 };
+
+  const descontoTotal = calcularDescontoTotalRegras(produtos);
+  const pctDado = (descontoTotal / totalBase) * 100;
+
+  const formaPg = (venda?.forma_pagamento || '').trim();
+  const aptoAvista = formaPg !== '' && formaPg !== 'cartao_credito';
+  const aptoFrio = venda?.venda_presencial === true;
+  const limite = (aptoAvista ? limAvista : 0) + (aptoFrio ? limPresencial : 0);
+
+  const excedidoPct = Math.max(0, pctDado - limite);
+  const excedidoValor = (excedidoPct / 100) * totalBase;
+
+  return { excedidoPct, excedidoValor };
+};
+
 export default function VendasDirecao() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
