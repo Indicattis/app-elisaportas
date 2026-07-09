@@ -16,6 +16,7 @@ export interface BalancoDescontoRow {
   vendas?: {
     cliente_nome: string | null;
     forma_pagamento: string | null;
+    metodos_pagamento: string[] | null;
     venda_presencial: boolean | null;
     atendente_id: string | null;
     lucro_total: number | null;
@@ -54,18 +55,22 @@ export function useBalancoDescontos(mesISO: string) {
       const rows = (data || []) as unknown as BalancoDescontoRow[];
       const ids = rows.map((r) => r.venda_id);
       if (ids.length) {
-        const [{ data: autos }, { data: vendasData }, { data: pedidosData }] = await Promise.all([
+        const [{ data: autos }, { data: vendasData }, { data: pedidosData }, { data: contasData }] = await Promise.all([
           supabase
             .from("vendas_autorizacoes_desconto")
             .select("venda_id")
             .in("venda_id", ids),
           supabase
             .from("vendas")
-            .select("id, cliente_nome, forma_pagamento, venda_presencial, atendente_id, lucro_total, status_aprovacao, contrato_url, contrato_dispensado, frete_aprovado, produtos_vendas(faturamento)")
+            .select("id, cliente_nome, forma_pagamento, metodo_pagamento, venda_presencial, atendente_id, lucro_total, status_aprovacao, contrato_url, contrato_dispensado, frete_aprovado, produtos_vendas(faturamento)")
             .in("id", ids),
           supabase
             .from("pedidos_producao")
             .select("venda_id, etapa_atual")
+            .in("venda_id", ids),
+          supabase
+            .from("contas_receber")
+            .select("venda_id, metodo_pagamento")
             .in("venda_id", ids),
         ]);
         const autoSet = new Set((autos || []).map((a: any) => a.venda_id));
@@ -75,6 +80,24 @@ export function useBalancoDescontos(mesISO: string) {
         const pedidosMap = new Map(
           (pedidosData || []).map((p: any) => [p.venda_id, p.etapa_atual]),
         );
+        const metodosMap = new Map<string, string[]>();
+        (vendasData || []).forEach((v: any) => {
+          const metodo = v.metodo_pagamento || v.forma_pagamento;
+          if (!v?.id || !metodo) return;
+          const atuais = metodosMap.get(v.id) || [];
+          if (!atuais.includes(metodo)) {
+            atuais.push(metodo);
+            metodosMap.set(v.id, atuais);
+          }
+        });
+        (contasData || []).forEach((c: any) => {
+          if (!c?.venda_id || !c?.metodo_pagamento) return;
+          const atuais = metodosMap.get(c.venda_id) || [];
+          if (!atuais.includes(c.metodo_pagamento)) {
+            atuais.push(c.metodo_pagamento);
+            metodosMap.set(c.venda_id, atuais);
+          }
+        });
         const atendenteIds = Array.from(
           new Set(
             (vendasData || [])
@@ -105,6 +128,7 @@ export function useBalancoDescontos(mesISO: string) {
             ? {
                 cliente_nome: v.cliente_nome,
                 forma_pagamento: v.forma_pagamento,
+                metodos_pagamento: metodosMap.get(r.venda_id) || [],
                 venda_presencial: v.venda_presencial,
                 atendente_id: v.atendente_id,
                 lucro_total: v.lucro_total,

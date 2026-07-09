@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { getFormaPagamentoLabel } from "@/utils/formatters";
 import { Scale, RefreshCw, TrendingUp, TrendingDown, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -224,6 +225,7 @@ export default function BalancoDescontos() {
                       <TableHead className="text-white/60">Vendedor</TableHead>
                       <TableHead className="text-white/60">Status</TableHead>
                       <TableHead className="text-white/60">Temperatura</TableHead>
+                      <TableHead className="text-white/60">Pagamento</TableHead>
                       <TableHead className="text-white/60">Data</TableHead>
                       <TableHead className="text-white/60">Cliente</TableHead>
                       <TableHead className="text-white/60 text-right">Sem Desc.</TableHead>
@@ -242,7 +244,7 @@ export default function BalancoDescontos() {
                   <TableBody>
                     {rows.length === 0 ? (
                       <TableRow className="border-white/10">
-                      <TableCell colSpan={16} className="text-center text-white/50">
+                      <TableCell colSpan={17} className="text-center text-white/50">
                           Nenhuma venda no período. Clique em Recalcular.
                         </TableCell>
                       </TableRow>
@@ -276,6 +278,21 @@ export default function BalancoDescontos() {
                             >
                               {r.vendas?.venda_presencial ? "Frio" : "Quente"}
                             </span>
+                          </TableCell>
+                          <TableCell>
+                            {(() => {
+                              const metodos = r.vendas?.metodos_pagamento || [];
+                              if (metodos.length === 0) return <span className="text-white/30">-</span>;
+                              const [principal, secundario] = metodos;
+                              return (
+                                <div className="flex flex-col leading-tight">
+                                  <span className="text-white/90 text-xs">{getFormaPagamentoLabel(principal)}</span>
+                                  {secundario && (
+                                    <span className="text-white/50 text-[10px]">+ {getFormaPagamentoLabel(secundario)}</span>
+                                  )}
+                                </div>
+                              );
+                            })()}
                           </TableCell>
                           <TableCell className="text-white/90">
                             {r.data_venda
