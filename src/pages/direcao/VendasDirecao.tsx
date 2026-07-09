@@ -335,7 +335,7 @@ export default function VendasDirecao() {
           case 'telefone': return venda.cliente_telefone || '';
           case 'expedicao': return venda.tipo_entrega || '';
           case 'frete': return venda.valor_frete || 0;
-          case 'instalacao': return venda.valor_instalacao || 0;
+          case 'instalacao': return calcularValorInstalacao(venda);
           case 'desconto': return venda.produtos?.reduce((acc: number, p: any) => acc + (p.desconto_valor || 0), 0) || 0;
           case 'acrescimo': return venda.valor_credito || 0;
           case 'faturada': 
@@ -479,12 +479,14 @@ export default function VendasDirecao() {
             {venda.valor_frete ? formatCurrency(venda.valor_frete) : '-'}
           </span>
         );
-      case 'instalacao':
+      case 'instalacao': {
+        const totalInst = calcularValorInstalacao(venda);
         return (
           <span className={textMutedClass}>
-            {venda.valor_instalacao ? formatCurrency(venda.valor_instalacao) : '-'}
+            {totalInst > 0 ? formatCurrency(totalInst) : '-'}
           </span>
         );
+      }
       case 'desconto':
         const desconto = calcularDescontoTotal();
         const autorizacao = venda.autorizacao_desconto?.[0];
