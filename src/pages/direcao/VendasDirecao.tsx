@@ -72,6 +72,15 @@ const calcularDescontoTotal = (venda: any) => {
   return venda.produtos.reduce((acc: number, p: any) => acc + (p.desconto_valor || 0), 0);
 };
 
+// Calcula o percentual líquido de desconto (negativo) ou acréscimo (positivo) sobre o valor tabela
+const calcularPercentualDescontoAcrescimo = (venda: any): number => {
+  const desconto = calcularDescontoTotal(venda);
+  const credito = venda?.valor_credito || 0;
+  const valorTabela = (venda?.valor_venda || 0) - (venda?.valor_frete || 0) + desconto;
+  if (valorTabela === 0) return 0;
+  return ((credito - desconto) / valorTabela) * 100;
+};
+
 export default function VendasDirecao() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
