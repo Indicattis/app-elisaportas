@@ -710,8 +710,8 @@ export default function VendasDirecao() {
       case 'valor':
       case 'valor_tabela':
       case 'frete':
-      case 'instalacao':
       case 'desconto_acrescimo':
+      case 'percentual_desconto_acrescimo':
         return 'text-right';
       case 'faturada':
       case 'temperatura':
