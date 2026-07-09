@@ -81,17 +81,10 @@ const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
   { id: 'faturada', label: 'Faturada', defaultVisible: true },
 ];
 
-// Função para formatar tempo decorrido
-const formatarTempoSemFaturar = (dias: number): string => {
-  if (dias === 0) return 'Hoje';
-  if (dias === 1) return '1 dia';
-  if (dias < 7) return `${dias} dias`;
-  if (dias < 30) {
-    const semanas = Math.floor(dias / 7);
-    return semanas === 1 ? '1 sem.' : `${semanas} sem.`;
-  }
-  const meses = Math.floor(dias / 30);
-  return meses === 1 ? '1 mês' : `${meses} meses`;
+// Função auxiliar para calcular desconto total dos produtos
+const calcularDescontoTotal = (venda: any) => {
+  if (!venda?.produtos) return 0;
+  return venda.produtos.reduce((acc: number, p: any) => acc + (p.desconto_valor || 0), 0);
 };
 
 export default function VendasDirecao() {
