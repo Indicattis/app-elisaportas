@@ -478,11 +478,15 @@ export default function VendasDirecao() {
             {venda.valor_frete ? formatCurrency(venda.valor_frete) : '-'}
           </span>
         );
-      case 'instalacao': {
-        const totalInst = calcularValorInstalacao(venda);
+      case 'percentual_desconto_acrescimo': {
+        const percentual = calcularPercentualDescontoAcrescimo(venda);
+        if (percentual === 0) {
+          return <span className="text-[10px] md:text-sm text-white/60">-</span>;
+        }
+        const isAcrescimo = percentual > 0;
         return (
-          <span className={textMutedClass}>
-            {totalInst > 0 ? formatCurrency(totalInst) : '-'}
+          <span className={`text-[10px] md:text-sm ${isAcrescimo ? 'text-green-400' : 'text-red-400'}`}>
+            {isAcrescimo ? '+' : '-'}{Math.abs(percentual).toFixed(2)}%
           </span>
         );
       }
