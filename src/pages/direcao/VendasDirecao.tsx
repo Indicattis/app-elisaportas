@@ -615,7 +615,7 @@ export default function VendasDirecao() {
       default:
         return null;
     }
-  }, [metodosExtraPorVenda]);
+  }, [metodosExtraPorVenda, toggleTemperatura, togglingTempId]);
 
   // Classes responsivas por coluna
   const getColumnResponsiveClass = (columnId: string) => {
