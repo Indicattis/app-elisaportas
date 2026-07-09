@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useVendas } from '@/hooks/useVendas';
 import { useAuth } from '@/hooks/useAuth';
@@ -79,6 +80,28 @@ const formatarTempoSemFaturar = (dias: number): string => {
 
 export default function VendasDirecao() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [togglingTempId, setTogglingTempId] = useState<string | null>(null);
+
+  const toggleTemperatura = useCallback(async (vendaId: string, atual: boolean | null | undefined) => {
+    if (togglingTempId) return;
+    const novo = !(atual === true);
+    setTogglingTempId(vendaId);
+    try {
+      const { error } = await supabase
+        .from('vendas')
+        .update({ venda_presencial: novo })
+        .eq('id', vendaId);
+      if (error) throw error;
+      await queryClient.invalidateQueries({ queryKey: ['vendas'] });
+      toast({ title: novo ? 'Marcada como Quente' : 'Marcada como Fria' });
+    } catch (e: any) {
+      toast({ title: 'Erro ao alterar temperatura', description: e?.message, variant: 'destructive' });
+    } finally {
+      setTogglingTempId(null);
+    }
+  }, [queryClient, toast, togglingTempId]);
   const { isAdmin, user } = useAuth();
   const { vendas, isLoading } = useVendas();
   const { toast } = useToast();
