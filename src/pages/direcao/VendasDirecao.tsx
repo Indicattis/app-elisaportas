@@ -393,7 +393,7 @@ export default function VendasDirecao() {
       if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
       return 0;
     });
-  }, [filteredVendas, sortConfig]);
+  }, [filteredVendas, sortConfig, limAvista, limPresencial]);
 
   // Função para alternar ordenação
   const handleSort = useCallback((columnId: string) => {
