@@ -256,13 +256,14 @@ async function mapVisitasComConclusao(rows: any[]): Promise<VisitaAgendada[]> {
 
   const { data } = await supabase
     .from('visitas_tecnicas_conclusoes')
-    .select('visita_id')
+    .select('visita_id, concluido_por')
     .in('visita_id', ids);
 
-  const visitasComConclusao = new Set((data || []).map((c: any) => c.visita_id));
+  const map = new Map((data || []).map((c: any) => [c.visita_id, c.concluido_por]));
   return rows.map((v) => ({
     ...v,
-    tem_conclusao: visitasComConclusao.has(v.id),
+    tem_conclusao: map.has(v.id),
+    concluido_por: map.get(v.id) || null,
   })) as VisitaAgendada[];
 }
 
