@@ -45,6 +45,7 @@ interface VisitaAgendada {
   observacoes: string | null;
   status: string;
   tem_conclusao?: boolean;
+  concluido_por?: string | null;
 }
 
 interface Responsavel { id: string; nome: string; foto_perfil_url?: string | null }
@@ -255,13 +256,14 @@ async function mapVisitasComConclusao(rows: any[]): Promise<VisitaAgendada[]> {
 
   const { data } = await supabase
     .from('visitas_tecnicas_conclusoes')
-    .select('visita_id')
+    .select('visita_id, concluido_por')
     .in('visita_id', ids);
 
-  const visitasComConclusao = new Set((data || []).map((c: any) => c.visita_id));
+  const map = new Map((data || []).map((c: any) => [c.visita_id, c.concluido_por]));
   return rows.map((v) => ({
     ...v,
-    tem_conclusao: visitasComConclusao.has(v.id),
+    tem_conclusao: map.has(v.id),
+    concluido_por: map.get(v.id) || null,
   })) as VisitaAgendada[];
 }
 
@@ -305,11 +307,13 @@ function VisitasListaPanel({
       const meta = getStatusMeta(v);
       if (filtro !== 'todos' && meta?.key !== filtro) return false;
       if (!termo) return true;
+      const concluidoNome = (respMap.get(v.concluido_por || '')?.nome || '').toLowerCase();
       return (
         (v.titulo || '').toLowerCase().includes(termo) ||
         (v.cidade || '').toLowerCase().includes(termo) ||
         (v.telefone_contato || '').toLowerCase().includes(termo) ||
-        (respMap.get(v.responsavel_id || '')?.nome || '').toLowerCase().includes(termo)
+        (respMap.get(v.responsavel_id || '')?.nome || '').toLowerCase().includes(termo) ||
+        concluidoNome.includes(termo)
       );
     });
   }, [visitas, filtro, busca, respMap]);
@@ -379,6 +383,8 @@ function VisitasListaPanel({
             const criador = respMap.get(v.created_by || '');
             const criadorNome = criador?.nome || respNome;
             const criadorFoto = criador?.foto ?? resp?.foto;
+            const concluidoPor = respMap.get(v.concluido_por || '');
+            const concluidoPorNome = concluidoPor?.nome;
             return (
               <div
                 key={v.id}
@@ -423,6 +429,12 @@ function VisitasListaPanel({
                     <span className="inline-flex items-center gap-1"><User className="w-3 h-3" />{respNome}</span>
                     {v.telefone_contato && (
                       <span className="inline-flex items-center gap-1"><Phone className="w-3 h-3" />{v.telefone_contato}</span>
+                    )}
+                    {meta.key === 'concluida' && concluidoPorNome && (
+                      <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full border bg-emerald-500/15 text-emerald-200 border-emerald-500/30" title="Quem concluiu a visita">
+                        <CheckCircle2 className="w-3 h-3" />
+                        {concluidoPorNome}
+                      </span>
                     )}
                   </div>
                 </div>
