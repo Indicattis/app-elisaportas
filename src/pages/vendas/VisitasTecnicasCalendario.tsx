@@ -48,7 +48,7 @@ interface VisitaAgendada {
   concluido_por?: string | null;
 }
 
-interface Responsavel { id: string; nome: string; foto_perfil_url?: string | null }
+interface Responsavel { id: string; user_id?: string | null; nome: string; foto_perfil_url?: string | null }
 
 const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS_SEM = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
@@ -286,7 +286,11 @@ function VisitasListaPanel({
 }) {
   const respMap = useMemo(() => {
     const m = new Map<string, { nome: string; foto?: string | null }>();
-    responsaveis.forEach(r => m.set(r.id, { nome: r.nome, foto: r.foto_perfil_url }));
+    responsaveis.forEach(r => {
+      const entry = { nome: r.nome, foto: r.foto_perfil_url };
+      if (r.id) m.set(r.id, entry);
+      if (r.user_id) m.set(r.user_id, entry);
+    });
     return m;
   }, [responsaveis]);
 
@@ -574,7 +578,7 @@ export default function VisitasTecnicasCalendario() {
     queryKey: ['admin-users-ativos'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('admin_users').select('id, nome, foto_perfil_url').eq('ativo', true).order('nome');
+        .from('admin_users').select('id, user_id, nome, foto_perfil_url').eq('ativo', true).order('nome');
       if (error) throw error;
       return (data || []) as Responsavel[];
     },
