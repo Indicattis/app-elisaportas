@@ -45,6 +45,7 @@ interface VisitaAgendada {
   observacoes: string | null;
   status: string;
   tem_conclusao?: boolean;
+  concluido_por?: string | null;
 }
 
 interface Responsavel { id: string; nome: string; foto_perfil_url?: string | null }
