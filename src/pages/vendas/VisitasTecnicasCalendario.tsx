@@ -430,6 +430,12 @@ function VisitasListaPanel({
                     {v.telefone_contato && (
                       <span className="inline-flex items-center gap-1"><Phone className="w-3 h-3" />{v.telefone_contato}</span>
                     )}
+                    {meta.key === 'concluida' && concluidoPorNome && (
+                      <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full border bg-emerald-500/15 text-emerald-200 border-emerald-500/30" title="Quem concluiu a visita">
+                        <CheckCircle2 className="w-3 h-3" />
+                        {concluidoPorNome}
+                      </span>
+                    )}
                   </div>
                 </div>
                 </div>
