@@ -383,6 +383,8 @@ function VisitasListaPanel({
             const criador = respMap.get(v.created_by || '');
             const criadorNome = criador?.nome || respNome;
             const criadorFoto = criador?.foto ?? resp?.foto;
+            const concluidoPor = respMap.get(v.concluido_por || '');
+            const concluidoPorNome = concluidoPor?.nome;
             return (
               <div
                 key={v.id}
