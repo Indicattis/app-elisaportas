@@ -389,6 +389,7 @@ function VisitasListaPanel({
             const criadorFoto = criador?.foto ?? resp?.foto;
             const concluidoPor = respMap.get(v.concluido_por || '');
             const concluidoPorNome = concluidoPor?.nome;
+            const concluidoPorFoto = concluidoPor?.foto;
             return (
               <div
                 key={v.id}
@@ -444,6 +445,28 @@ function VisitasListaPanel({
                 </div>
                 </div>
 
+                {meta.key === 'concluida' && concluidoPorNome && (
+                  <div
+                    className="hidden sm:flex flex-shrink-0 items-center gap-2 pl-3 pr-2 py-1 rounded-full border border-emerald-500/30 bg-emerald-500/10"
+                    title={`Concluída por ${concluidoPorNome}`}
+                  >
+                    {concluidoPorFoto ? (
+                      <img
+                        src={concluidoPorFoto}
+                        alt={concluidoPorNome}
+                        className="w-6 h-6 rounded-full object-cover border border-emerald-400/40"
+                      />
+                    ) : (
+                      <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white bg-gradient-to-br from-emerald-500 to-emerald-700 border border-emerald-400/40">
+                        {getInicial(concluidoPorNome)}
+                      </div>
+                    )}
+                    <div className="flex flex-col leading-tight">
+                      <span className="text-[9px] uppercase tracking-wide text-emerald-300/70">Concluída por</span>
+                      <span className="text-[11px] text-emerald-100 font-medium truncate max-w-[140px]">{concluidoPorNome}</span>
+                    </div>
+                  </div>
+                )}
                 <div className="flex items-center gap-1.5 flex-shrink-0 justify-end sm:justify-start w-full sm:w-auto">
                   <Button
                     size="sm"
