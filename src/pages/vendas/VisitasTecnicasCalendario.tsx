@@ -307,11 +307,13 @@ function VisitasListaPanel({
       const meta = getStatusMeta(v);
       if (filtro !== 'todos' && meta?.key !== filtro) return false;
       if (!termo) return true;
+      const concluidoNome = (respMap.get(v.concluido_por || '')?.nome || '').toLowerCase();
       return (
         (v.titulo || '').toLowerCase().includes(termo) ||
         (v.cidade || '').toLowerCase().includes(termo) ||
         (v.telefone_contato || '').toLowerCase().includes(termo) ||
-        (respMap.get(v.responsavel_id || '')?.nome || '').toLowerCase().includes(termo)
+        (respMap.get(v.responsavel_id || '')?.nome || '').toLowerCase().includes(termo) ||
+        concluidoNome.includes(termo)
       );
     });
   }, [visitas, filtro, busca, respMap]);
