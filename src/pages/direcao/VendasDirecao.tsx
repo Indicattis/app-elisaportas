@@ -15,7 +15,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Search, DollarSign, ShoppingCart, Package, CalendarIcon, Download, FileText, FileSpreadsheet, ArrowUpDown, ArrowUp, ArrowDown, Check, X, Truck, Hammer, Users, BookOpen, Info, ExternalLink, Settings, MinusCircle, FileX, Loader2 } from 'lucide-react';
+import { Plus, Search, DollarSign, ShoppingCart, Package, CalendarIcon, Download, FileText, FileSpreadsheet, ArrowUpDown, ArrowUp, ArrowDown, Check, X, Truck, Hammer, Users, BookOpen, Info, ExternalLink, Settings, MinusCircle, FileX, Loader2, FileDown } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -49,6 +49,7 @@ import { useToast } from '@/hooks/use-toast';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { useConfiguracoesVendas } from '@/hooks/useConfiguracoesVendas';
 import { calcularDescontoTotal as calcularDescontoTotalRegras, calcularTotalVenda } from '@/utils/descontoVendasRules';
+import { generateFormalizacaoVendaPDF } from '@/utils/formalizacaoVendaPDFGenerator';
 
 
 import {
@@ -78,6 +79,7 @@ const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
   { id: 'valor', label: 'Valor Final', defaultVisible: true },
   { id: 'excedido_desconto', label: 'Excedido', defaultVisible: true },
   { id: 'lucro', label: 'Lucro', defaultVisible: true },
+  { id: 'formalizacao', label: 'Formalização', defaultVisible: true },
 ];
 
 // Função auxiliar para calcular desconto total dos produtos
@@ -138,6 +140,52 @@ export default function VendasDirecao() {
   const [updatingExpedicaoId, setUpdatingExpedicaoId] = useState<string | null>(null);
   const [dispensarVenda, setDispensarVenda] = useState<any | null>(null);
   const [dispensandoId, setDispensandoId] = useState<string | null>(null);
+  const [downloadingPdfId, setDownloadingPdfId] = useState<string | null>(null);
+
+  const handleDownloadFormalizacao = useCallback(async (venda: any) => {
+    if (downloadingPdfId) return;
+    setDownloadingPdfId(venda.id);
+    try {
+      const { data: produtos, error } = await supabase
+        .from('produtos_vendas')
+        .select('*, cor:catalogo_cores(nome, codigo_hex)')
+        .eq('venda_id', venda.id);
+      if (error) throw error;
+      generateFormalizacaoVendaPDF({
+        id: venda.id,
+        dataVenda: venda.data_venda,
+        dataPrevistaEntrega: venda.data_prevista_entrega,
+        cliente: {
+          nome: venda.cliente_nome,
+          cpf: venda.cpf_cliente,
+          telefone: venda.cliente_telefone,
+          email: venda.cliente_email,
+          estado: venda.estado,
+          cidade: venda.cidade,
+          cep: venda.cep,
+          bairro: venda.bairro,
+        },
+        produtos: (produtos as any) || [],
+        valores: {
+          valorVenda: venda.valor_venda || 0,
+          valorFrete: venda.valor_frete,
+          valorInstalacao: venda.valor_instalacao,
+          valorEntrada: venda.valor_entrada,
+          valorAReceber: venda.valor_a_receber,
+        },
+        formaPagamento: venda.forma_pagamento || venda.metodo_pagamento,
+        observacoes: venda.observacoes_venda,
+        atendente: venda.atendente
+          ? { nome: venda.atendente.nome, foto_perfil_url: venda.atendente.foto_perfil_url }
+          : undefined,
+      });
+      toast({ title: 'PDF gerado', description: 'Formalização da venda baixada.' });
+    } catch (e: any) {
+      toast({ title: 'Erro ao gerar PDF', description: e?.message, variant: 'destructive' });
+    } finally {
+      setDownloadingPdfId(null);
+    }
+  }, [downloadingPdfId, toast]);
 
   const updateExpedicao = useCallback(async (vendaId: string, novoTipo: string | null) => {
     if (updatingExpedicaoId) return;
@@ -869,10 +917,31 @@ export default function VendasDirecao() {
           </span>
         );
       }
+      case 'formalizacao': {
+        const isLoading = downloadingPdfId === venda.id;
+        return (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); handleDownloadFormalizacao(venda); }}
+                disabled={isLoading}
+                className="inline-flex items-center justify-center w-7 h-7 rounded-md bg-white/5 hover:bg-white/10 border border-white/10 disabled:opacity-50 text-white/80"
+                aria-label="Baixar formalização"
+              >
+                {isLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileDown className="w-3.5 h-3.5" />}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent className="bg-zinc-900 border-zinc-700 text-white text-xs">
+              Baixar PDF de formalização
+            </TooltipContent>
+          </Tooltip>
+        );
+      }
       default:
         return null;
     }
-  }, [metodosExtraPorVenda, toggleTemperatura, togglingTempId, limAvista, limPresencial]);
+  }, [metodosExtraPorVenda, toggleTemperatura, togglingTempId, limAvista, limPresencial, downloadingPdfId, handleDownloadFormalizacao]);
 
   // Classes responsivas por coluna
   const getColumnResponsiveClass = (columnId: string) => {
@@ -909,6 +978,7 @@ export default function VendasDirecao() {
         return 'text-right';
       case 'faturada':
       case 'temperatura':
+      case 'formalizacao':
         return 'text-center';
       default:
         return 'text-left';
