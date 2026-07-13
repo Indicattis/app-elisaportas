@@ -19,8 +19,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { ColumnManager } from '@/components/ColumnManager';
 import { useColumnConfig, ColumnConfig } from '@/hooks/useColumnConfig';
 import { cn } from '@/lib/utils';
-import { VendaBloqueadaDialog } from "@/components/vendas/VendaBloqueadaDialog";
-import { BlockReason } from "@/hooks/useCanEditVenda";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
@@ -82,11 +80,6 @@ export default function MinhasVendas() {
   const [sortField, setSortField] = useState<SortField>('data');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   
-  // Estados para o dialog de bloqueio
-  const [bloqueioDialogOpen, setBloqueioDialogOpen] = useState(false);
-  const [blockReason, setBlockReason] = useState<BlockReason>(null);
-  const [selectedPedidoId, setSelectedPedidoId] = useState<string | null>(null);
-
   const {
     columns,
     visibleColumns,
@@ -248,45 +241,9 @@ export default function MinhasVendas() {
     }
   };
 
-  // Função de verificação antes de editar
-  const handleEditVenda = async (venda: Venda) => {
-    try {
-      // Verificar se é o proprietário
-      const isOwner = venda.atendente_id === user?.id;
-      if (!isOwner && !isAdmin) {
-        setBlockReason('nao_proprietario');
-        setBloqueioDialogOpen(true);
-        return;
-      }
-
-      // Verificar faturamento - todos os produtos faturados E frete aprovado
-      const produtos = venda.produtos_vendas || [];
-      const todosFaturados = produtos.length > 0 && 
-        produtos.every((p: any) => p.faturamento === true);
-      const freteAprovado = venda.frete_aprovado === true;
-      const isFaturada = todosFaturados && freteAprovado;
-
-      // Verificar pedido vinculado
-      const hasPedido = !!venda.pedidos_producao?.id;
-      setSelectedPedidoId(venda.pedidos_producao?.id || null);
-
-      // Determinar bloqueio
-      if (isFaturada && hasPedido) {
-        setBlockReason('ambos');
-        setBloqueioDialogOpen(true);
-      } else if (isFaturada) {
-        setBlockReason('faturada');
-        setBloqueioDialogOpen(true);
-      } else if (hasPedido) {
-        setBlockReason('com_pedido');
-        setBloqueioDialogOpen(true);
-      } else {
-        // Pode editar - navegar para página de edição
-        navigate(`/vendas/minhas-vendas/editar/${venda.id}`);
-      }
-    } catch (error) {
-      console.error('Erro ao verificar permissões:', error);
-    }
+  // Ao clicar numa venda, apenas navegar para a página de visualização (somente leitura)
+  const handleViewVenda = (venda: Venda) => {
+    navigate(`/vendas/minhas-vendas/${venda.id}`);
   };
 
   const handleSort = (field: SortField) => {
@@ -688,7 +645,7 @@ export default function MinhasVendas() {
                   <TableRow 
                     key={venda.id}
                     className="border-white/10 hover:bg-white/5 cursor-pointer transition-colors"
-                    onClick={() => handleEditVenda(venda)}
+                    onClick={() => handleViewVenda(venda)}
                   >
                     {visibleColumns.map((col) => (
                       <TableCell key={col.id} className="text-white/80">
@@ -719,13 +676,6 @@ export default function MinhasVendas() {
         )}
       </div>
 
-      {/* Dialog de bloqueio */}
-      <VendaBloqueadaDialog
-        open={bloqueioDialogOpen}
-        onOpenChange={setBloqueioDialogOpen}
-        blockReason={blockReason}
-        pedidoId={selectedPedidoId}
-      />
     </MinimalistLayout>
   );
 }
