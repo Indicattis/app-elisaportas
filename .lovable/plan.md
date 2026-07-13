@@ -1,59 +1,44 @@
-## Objetivo
-Formalizar as regras de boleto na página `/direcao/estrategia/precos/regras-vendas`, torná-las configuráveis, e garantir que `/vendas/minhas-vendas/nova` respeite as regras carregadas do banco.
+## Correções nas regras de venda
 
-## Regras a implementar
+### 1. Inverter regra do intervalo de boleto por valor
 
-1. **Boleto libera 3% à vista** — já funciona no código (`descontoVendasRules.ts` inclui `boleto` no limite base). Apenas documentar/adicionar texto na página de regras.
-2. **Intervalos por valor da venda** — venda ≤ R$ 60.000 permite escolher entre `21, 36 ou 42` dias; venda > R$ 60.000 fica travada em `21` dias.
-3. **Split obrigatório** — havendo boleto em qualquer método, força `usar_dois_metodos=true`, Método 1 = À Vista com **mínimo 50%** do total, Método 2 = Boleto com o restante.
-4. **Máximo 3 parcelas** no boleto.
+Estado atual: `total <= valorLimiteFlex` libera `[21,36,42]`, `> valorLimiteFlex` trava em `[21]`.
 
-Todos os parâmetros (percentual mínimo de entrada, valor limite de flexibilização, intervalos permitidos, parcelas máximas) ficam **editáveis** na página de regras.
+Novo comportamento: `total > valorLimiteFlex` libera flex, `<= valorLimiteFlex` trava em padrão.
 
-## Banco (migration em `regras_vendas`)
+- `src/utils/boletoRegra.ts` — `getIntervalosBoletoPermitidos`: trocar comparador para `valorTotal > config.valorLimiteFlex ? intervalosFlex : [intervaloPadrao]`.
+- `validarRegraBoleto` — inverter a mensagem: "Vendas até R$ X exigem intervalo de N dias".
+- `src/pages/direcao/RegrasVendasDirecao.tsx` — atualizar texto explicativo do acordeão Boleto ("> R$ X: intervalos flexíveis; ≤ R$ X: só padrão").
+- `src/components/vendas/PagamentoSection.tsx` — se houver texto/banner descrevendo a regra, inverter.
 
-Adicionar colunas com defaults:
-- `boleto_entrada_percentual_min numeric NOT NULL DEFAULT 50`
-- `boleto_valor_limite_flex numeric NOT NULL DEFAULT 60000`
-- `boleto_intervalos_flex integer[] NOT NULL DEFAULT '{21,36,42}'`
-- `boleto_intervalo_padrao integer NOT NULL DEFAULT 21`
-- `boleto_parcelas_max integer NOT NULL DEFAULT 3`
+### 2. Janela de ±N dias para data de pagamento
 
-## Frontend
+Nova regra aplicada a todo `data_pagamento` (À Vista, Boleto, Cartão, Dinheiro): a data deve estar entre `hoje - N` e `hoje + N`. Padrão N=5, configurável.
 
-### `src/hooks/useRegrasVendas.ts`
-- Adicionar os 5 novos campos ao tipo `RegrasVendas` e expor via `limites.boleto` (`entradaMinPct`, `valorLimiteFlex`, `intervalosFlex`, `intervaloPadrao`, `parcelasMax`).
+**Banco** (`regras_vendas`):
+- `pagamento_data_janela_dias integer NOT NULL DEFAULT 5`
 
-### `src/utils/boletoRegra.ts`
-- Reativar `pagamentoTemBoleto` (hoje retorna `false` fixo) para detectar boleto em qualquer método.
-- Trocar constantes hard-coded por parâmetros vindos das regras: assinaturas passam a receber um objeto `config` com os 5 valores.
-- `calcularEntradaBoleto(total, config)` → entrada = `total * (entradaMinPct/100)` (piso).
-- `getIntervalosBoletoPermitidos(total, config)` → `total <= valorLimiteFlex ? intervalosFlex : [intervaloPadrao]` (inverte a regra atual).
-- `aplicarRegraBoleto(p, total, config)` — força split, seta tipo `a_vista` no M1 e `boleto` no M2, ajusta valor entrada, clampa `parcelas_boleto` a `parcelasMax`, ajusta intervalo para valor permitido.
-- `validarRegraBoleto` idem — valida com base no `config`.
+**Hook** `src/hooks/useRegrasVendas.ts`:
+- Adicionar campo ao tipo e expor em `limites.pagamentoDataJanelaDias`.
 
-### `src/components/vendas/PagamentoSection.tsx`
-- Consumir `useRegrasVendas()` (ou receber `config` via prop) e passar `config` para `aplicarRegraBoleto`, `pagamentoTemBoleto`, `getIntervalosBoletoPermitidos` e mensagens (banner com "50% mínimo", "até 3 parcelas", intervalos).
+**Validação** — criar helper `src/utils/dataPagamentoRegra.ts` com:
+- `getJanelaDataPagamento(janelaDias)` → `{ min: Date, max: Date }` (usando padrão de fuso T12:00:00 do projeto).
+- `validarDataPagamento(dataISO, janelaDias)` → `{ ok } | { ok:false, mensagem }`.
+- `validarDatasPagamento(pagamento, janelaDias)` percorre os métodos e o campo global.
 
-### `src/components/vendas/MetodoPagamentoCard.tsx`
-- Aceitar prop `parcelasBoletoMax` (default 12 para retrocompatibilidade); usada para limitar o `Select` de parcelas do boleto quando repassada por `PagamentoSection`.
+**Consumo no cadastro** `src/pages/vendas/VendaNovaMinimalista.tsx`:
+- Antes de submeter, chamar `validarDatasPagamento` com `limites.pagamentoDataJanelaDias`. Bloquear com toast.
 
-### `src/pages/vendas/VendaNovaMinimalista.tsx`
-- `validarRegraBoleto` já é chamado no submit — passar `config` das regras.
+**UI** `src/components/vendas/MetodoPagamentoCard.tsx` e `PagamentoSection.tsx`:
+- Aceitar prop opcional `dataPagamentoJanelaDias` e aplicar `min` / `max` no `<Input type="date">` de data de pagamento em cada método.
+- Texto auxiliar: "Somente entre {min} e {max}".
 
-### `src/pages/direcao/RegrasVendasDirecao.tsx`
-- Na seção "Formas de Pagamento" → acordeão "Boleto": substituir o conteúdo estático por controles editáveis (usar `draftRegras`/`setRegra` já existentes) para:
-  - `boleto_entrada_percentual_min` (Input % 0–100)
-  - `boleto_valor_limite_flex` (Input R$)
-  - `boleto_intervalos_flex` (chips add/remove; padrão 21/36/42)
-  - `boleto_intervalo_padrao` (Input dias)
-  - `boleto_parcelas_max` (Input inteiro)
-- Adicionar textos explicativos: "Boleto também adiciona +3% de desconto por pagamento à vista", "Força split em 2 métodos (M1 à vista ≥ X%, M2 boleto)", "Máx N parcelas", "≤ R$ Y: intervalos flexíveis; > R$ Y: só padrão".
-- Botão "Salvar" já existente (`salvarRegrasGerais`) cobre os novos campos automaticamente.
+**Página de regras** `src/pages/direcao/RegrasVendasDirecao.tsx`:
+- Adicionar campo numérico "Janela de data de pagamento (± dias)" no bloco de Formas de Pagamento (ou criar seção "Datas") ligado a `draftRegras.pagamento_data_janela_dias`. Texto: "Permite lançar pagamentos até N dias antes ou depois de hoje".
 
-## Memória
-Atualizar `mem://business-rules/sales/boleto-70-30-21d` refletindo: 50% mínimo (não 70% fixo), até 3 parcelas, intervalos por valor (≤60k flex, >60k travado 21d), tudo configurável em `regras_vendas`.
+### Fora de escopo
+- Nenhuma mudança em vendas já cadastradas / edição de venda existente.
+- Nenhuma outra alteração de desconto ou split.
 
-## Fora de escopo
-- Nenhuma mudança em cálculo de desconto (regra dos 3% já funciona hoje via `descontoVendasRules.ts`).
-- Nenhuma mudança em edição/faturamento de venda existente.
+### Memória
+Atualizar `mem://business-rules/sales/boleto-70-30-21d`: inverter direção da regra dos 60k (`>60k` libera flex). Adicionar nota curta sobre janela ±5 dias configurável em `regras_vendas.pagamento_data_janela_dias`.

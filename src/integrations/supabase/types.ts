@@ -8414,6 +8414,7 @@ export type Database = {
           obrigatorio_estado: boolean
           obrigatorio_nome: boolean
           obrigatorio_telefone: boolean
+          pagamento_data_janela_dias: number
           pagamento_imediato_exige_comprovante: boolean
           produto_minimo_quantidade: number
           updated_at: string
@@ -8448,6 +8449,7 @@ export type Database = {
           obrigatorio_estado?: boolean
           obrigatorio_nome?: boolean
           obrigatorio_telefone?: boolean
+          pagamento_data_janela_dias?: number
           pagamento_imediato_exige_comprovante?: boolean
           produto_minimo_quantidade?: number
           updated_at?: string
@@ -8482,6 +8484,7 @@ export type Database = {
           obrigatorio_estado?: boolean
           obrigatorio_nome?: boolean
           obrigatorio_telefone?: boolean
+          pagamento_data_janela_dias?: number
           pagamento_imediato_exige_comprovante?: boolean
           produto_minimo_quantidade?: number
           updated_at?: string
