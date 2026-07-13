@@ -232,6 +232,7 @@ import VendasHubDirecao from "./pages/direcao/VendasHubDirecao";
 import ParceirosDirecao from "./pages/direcao/ParceirosDirecao";
 import RequisicoesRepresentantesDirecao from "./pages/direcao/RequisicoesRepresentantesDirecao";
 import RegrasVendasDirecao from "./pages/direcao/RegrasVendasDirecao";
+import RegrasVendasView from "./pages/direcao/RegrasVendasView";
 import VendaDetalhesDirecao from "./pages/direcao/VendaDetalhesDirecao";
 import FaturamentoDirecao from "./pages/direcao/FaturamentoDirecao";
 import FaturamentoVendaDirecao from "./pages/direcao/FaturamentoVendaDirecao";
@@ -524,6 +525,7 @@ const App = () => (
                 <Route path="/direcao/estrategia/precos/regras-vendas" element={<ProtectedRoute routeKey="direcao_regras_vendas"><RegrasVendasDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/vendas/clientes" element={<ProtectedRoute routeKey="direcao_vendas"><ClientesDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/vendas/tabela-precos" element={<ProtectedRoute routeKey="direcao_tabela_precos"><TabelaPrecos readOnly /></ProtectedRoute>} />
+                <Route path="/direcao/vendas/regras" element={<ProtectedRoute routeKey="direcao_vendas"><RegrasVendasView /></ProtectedRoute>} />
                 <Route path="/direcao/vendas/:id" element={<ProtectedRoute routeKey="direcao_hub"><VendaDetalhesDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/vendas/:id/editar" element={<ProtectedRoute routeKey="direcao_hub"><VendaEditarDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/faturamento" element={<ProtectedRoute routeKey="direcao_hub"><FaturamentoDirecao /></ProtectedRoute>} />
