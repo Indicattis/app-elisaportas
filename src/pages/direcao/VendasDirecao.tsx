@@ -745,6 +745,7 @@ export default function VendasDirecao() {
       case 'faturada':
         const faturada = isFaturada();
         const temContrato = !!venda.contrato_url;
+        const dispensado = !!venda.contrato_dispensado || !!venda.dispensada_sistema;
         return (
           <div className="flex flex-col items-center gap-1">
             {faturada ? (
@@ -756,7 +757,14 @@ export default function VendasDirecao() {
                 <X className="w-2.5 h-2.5 md:w-3 md:h-3 text-white/30" />
               </div>
             )}
-            {!temContrato && (
+            {!temContrato && dispensado && (
+              <span className="text-[9px] text-white/40 flex items-center gap-0.5">
+                <FileX className="w-2.5 h-2.5" />
+                Contrato dispensado
+              </span>
+            )}
+            {!temContrato && !dispensado && (
+              <>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span className="text-[9px] text-orange-400 flex items-center gap-0.5 cursor-help">
@@ -768,6 +776,16 @@ export default function VendasDirecao() {
                   Venda sem contrato assinado
                 </TooltipContent>
               </Tooltip>
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); setDispensarVenda(venda); }}
+                disabled={dispensandoId === venda.id}
+                className="text-[9px] text-white/60 hover:text-white flex items-center gap-0.5 underline decoration-dotted underline-offset-2 disabled:opacity-50"
+              >
+                <MinusCircle className="w-2.5 h-2.5" />
+                Dispensar
+              </button>
+              </>
             )}
           </div>
         );
