@@ -541,7 +541,7 @@ export default function RegrasVendasDirecao() {
                           onChange={(e) => setRegra('boleto_valor_limite_flex', Number(e.target.value) || 0)}
                           className="h-9 bg-white/5 border-white/20 text-white text-right"
                         />
-                        <p className="text-[10px] text-white/50">Vendas <strong>até</strong> este valor liberam intervalos flexíveis. Acima disso, trava no intervalo padrão.</p>
+                        <p className="text-[10px] text-white/50">Vendas <strong>acima</strong> deste valor liberam intervalos flexíveis. Até esse valor, trava no intervalo padrão.</p>
                       </div>
 
                       <div className="p-3 rounded-lg bg-white/5 border border-white/10 space-y-2">
