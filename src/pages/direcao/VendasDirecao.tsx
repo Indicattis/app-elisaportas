@@ -156,7 +156,7 @@ export default function VendasDirecao() {
         .eq('id', vendaId);
       if (error) throw error;
       await queryClient.invalidateQueries({ queryKey: ['vendas'] });
-      toast({ title: novo ? 'Marcada como Fria' : 'Marcada como Quente' });
+      toast({ title: novo ? 'Marcada como Quente' : 'Marcada como Fria' });
     } catch (e: any) {
       toast({ title: 'Erro ao alterar temperatura', description: e?.message, variant: 'destructive' });
     } finally {
