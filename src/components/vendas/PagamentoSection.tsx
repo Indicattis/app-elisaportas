@@ -45,9 +45,10 @@ interface PagamentoSectionProps {
     limitePermitido: number;
     limiteMaximo: number;
   };
+  hideEmpresaReceptora?: boolean;
 }
 
-export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPresencial, onVendaPresencialChange, descontoInfo }: PagamentoSectionProps) {
+export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPresencial, onVendaPresencialChange, descontoInfo, hideEmpresaReceptora = false }: PagamentoSectionProps) {
   const { data: empresas = [], isLoading: isLoadingEmpresas } = useQuery({
     queryKey: ['empresas-emissoras-ativas'],
     queryFn: async () => {
