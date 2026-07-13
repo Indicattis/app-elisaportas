@@ -1,17 +1,20 @@
-## Objetivo
-Ao clicar numa venda em `/vendas/minhas-vendas`, abrir uma página apenas de visualização, sem tentar editar nem exibir o diálogo de bloqueio.
+## Problema
 
-## Mudanças
+Em `/direcao/vendas/todas` (`src/pages/direcao/VendasDirecao.tsx`) a coluna Temperatura está com a lógica invertida em relação ao restante do sistema:
 
-1. **`src/pages/vendas/MinhasVendas.tsx`**
-   - Substituir a lógica atual de `handleRowClick` (que checa faturamento/pedido e navega para `/editar/:id` ou abre o `bloqueioDialog`) por uma navegação direta para uma nova rota de visualização: `navigate(`/vendas/minhas-vendas/${venda.id}`)`.
-   - Remover o estado e o dialog de bloqueio (`bloqueioDialogOpen`, `blockReason`, `selectedPedidoId`) usados apenas por esse fluxo, se não forem reutilizados em outro lugar da tela.
-   - Manter os botões de "Nova venda", "Correção" e edição de rascunho como estão (rascunho ainda vai para `/editar/:id`).
+- **VendasDirecao (linhas 771-789 e 148-165):** `venda_presencial === true` é exibido como **"Frio"** e ao clicar mostra toast "Marcada como Fria".
+- **Restante do sistema** (`PedidoDetalhesSheet.tsx` linha 842 e 1273, `descontoTiers.ts`, `useVendas.ts`): `venda_presencial === true` = **"Quente"** (venda presencial → cliente quente). Esta é a convenção correta, pois `venda_presencial` também habilita o tier de desconto presencial.
 
-2. **`src/App.tsx`**
-   - Adicionar nova rota `/vendas/minhas-vendas/:id` apontando para o componente de visualização já existente `VendaDetalhesMinimalista` (mesmo componente usado em `/administrativo/vendas/:id`), protegida por `ProtectedRoute routeKey="vendas_hub"`.
-   - A rota de edição `/vendas/minhas-vendas/editar/:id` continua existindo para rascunhos.
+## Correção
 
-## Observações
-- Nenhuma mudança de regra de negócio: a edição via botão de rascunho segue igual; apenas o clique na linha da venda deixa de tentar editar e passa a apenas visualizar.
-- Se `VendaDetalhesMinimalista` já cobrir o layout desejado, não é necessário criar nova página. Caso a página apresente ações que não caibam para o atendente, ajusto para modo puramente leitura numa segunda iteração — confirme se quer isso agora.
+Em `src/pages/direcao/VendasDirecao.tsx`, apenas na coluna Temperatura:
+
+1. **Case `'temperatura'` (linhas 771-790):** trocar
+   - `isFrio = venda_presencial === true` → `isFrio = venda_presencial === false`
+   - `isQuente = venda_presencial === false` → `isQuente = venda_presencial === true`
+
+2. **`toggleTemperatura` (linhas 148-165):** ajustar o toast para refletir o novo valor corretamente
+   - `novo ? 'Marcada como Fria' : 'Marcada como Quente'` → `novo ? 'Marcada como Quente' : 'Marcada como Fria'`
+   - (a lógica de gravação `venda_presencial: novo` permanece — só o rótulo mudava)
+
+Nenhum outro arquivo é afetado; a coluna passa a exibir a mesma convenção do drawer de pedido em `/direcao/gestao-fabrica`.
