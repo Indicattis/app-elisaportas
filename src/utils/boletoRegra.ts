@@ -6,8 +6,8 @@ import type { PagamentoData } from "@/components/vendas/PagamentoSection";
  *  - Sempre que qualquer método for boleto, força split em 2 métodos:
  *      Método 1 = À Vista com ao menos `entradaMinPct`% do total
  *      Método 2 = Boleto com o restante, no máx `parcelasMax` parcelas
- *  - Intervalos: `total <= valorLimiteFlex` libera `intervalosFlex`;
- *    acima disso, trava em `intervaloPadrao`.
+ *  - Intervalos: `total > valorLimiteFlex` libera `intervalosFlex`;
+ *    até esse valor, trava em `intervaloPadrao`.
  */
 export interface BoletoConfig {
   entradaMinPct: number;
@@ -35,7 +35,7 @@ export function getIntervalosBoletoPermitidos(
   valorTotal: number,
   config: BoletoConfig = DEFAULT_BOLETO_CONFIG,
 ): number[] {
-  return valorTotal <= config.valorLimiteFlex
+  return valorTotal > config.valorLimiteFlex
     ? config.intervalosFlex
     : [config.intervaloPadrao];
 }
@@ -166,8 +166,8 @@ export function validarRegraBoleto(
     const lista = intervalosPermitidos.join(', ');
     return {
       ok: false,
-      mensagem: valorTotal > config.valorLimiteFlex
-        ? `Vendas acima de R$ ${config.valorLimiteFlex.toLocaleString('pt-BR')} exigem intervalo de ${config.intervaloPadrao} dias.`
+      mensagem: valorTotal <= config.valorLimiteFlex
+        ? `Vendas até R$ ${config.valorLimiteFlex.toLocaleString('pt-BR')} exigem intervalo de ${config.intervaloPadrao} dias.`
         : `Intervalo permitido: ${lista} dias.`,
     };
   }

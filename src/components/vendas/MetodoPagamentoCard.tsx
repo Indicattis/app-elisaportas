@@ -15,6 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { getJanelaDataPagamento } from "@/utils/dataPagamentoRegra";
 
 export interface MetodoPagamento {
   tipo: 'boleto' | 'a_vista' | 'cartao_credito' | '';
@@ -58,6 +59,8 @@ interface MetodoPagamentoCardProps {
   hideEmpresaReceptora?: boolean;
   /** Máximo de parcelas de boleto permitidas. Default 12. */
   parcelasBoletoMax?: number;
+  /** Janela ± dias permitidos para a data de pagamento. Default 5. */
+  dataPagamentoJanelaDias?: number;
 }
 
 export function MetodoPagamentoCard({
@@ -73,6 +76,7 @@ export function MetodoPagamentoCard({
   intervalosBoletoPermitidos,
   hideEmpresaReceptora = false,
   parcelasBoletoMax = 12,
+  dataPagamentoJanelaDias = 5,
 }: MetodoPagamentoCardProps) {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -102,6 +106,8 @@ export function MetodoPagamentoCard({
 
   const inputClass = "bg-white/5 border-white/10 text-white placeholder:text-white/40";
   const labelClass = "text-xs font-medium text-white/70";
+  const { min: dataMin, max: dataMax } = getJanelaDataPagamento(dataPagamentoJanelaDias);
+  const formatBR = (d: Date) => d.toLocaleDateString("pt-BR");
 
   return (
     <div className="border rounded-lg p-4 space-y-4 border-white/10 bg-white/5">
@@ -186,10 +192,14 @@ export function MetodoPagamentoCard({
                     onSelect={(date) => onChange({ ...metodo, data_pagamento: date })}
                     initialFocus
                     locale={ptBR}
+                    disabled={(date) => date < dataMin || date > dataMax}
                     className="p-3 pointer-events-auto"
                   />
                 </PopoverContent>
               </Popover>
+              <p className="text-[10px] text-white/40">
+                Permitido entre {formatBR(dataMin)} e {formatBR(dataMax)} (±{dataPagamentoJanelaDias} dias).
+              </p>
             </div>
 
             {!hideEmpresaReceptora && (

@@ -49,6 +49,7 @@ interface PagamentoSectionProps {
 export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPresencial, onVendaPresencialChange, descontoInfo, hideEmpresaReceptora = false }: PagamentoSectionProps) {
   const { limites: regrasLimites } = useRegrasVendas();
   const boletoConfig = regrasLimites.boleto;
+  const janelaDias = regrasLimites.pagamentoDataJanelaDias;
   const entradaPct = boletoConfig.entradaMinPct;
   const restantePct = Math.max(0, 100 - entradaPct);
   const { data: empresas = [], isLoading: isLoadingEmpresas } = useQuery({
@@ -285,7 +286,7 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
               à vista no Método 1 e o restante em boleto no Método 2 (até {boletoConfig.parcelasMax} parcelas)
               {intervalosBoletoPermitidos.length === 1
                 ? ` com intervalo fixo de ${boletoConfig.intervaloPadrao} dias`
-                : ` com intervalo entre ${intervalosBoletoPermitidos.join(', ')} dias (vendas até R$ ${boletoConfig.valorLimiteFlex.toLocaleString('pt-BR')})`}.
+                : ` com intervalo entre ${intervalosBoletoPermitidos.join(', ')} dias (vendas acima de R$ ${boletoConfig.valorLimiteFlex.toLocaleString('pt-BR')})`}.
             </div>
           </div>
         )}
@@ -330,6 +331,7 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
                   : paymentData.usar_dois_metodos ? "Valor da Entrada *" : "Valor Total"
               }
               tipoTravado={regraBoletoAtiva ? "a_vista" : undefined}
+              dataPagamentoJanelaDias={janelaDias}
             />
 
             {(metodo1.tipo === 'boleto' || metodo1.tipo === 'cartao_credito') && metodo1.data_pagamento && valorMetodo1 > 0 && (
@@ -364,6 +366,7 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
                 tipoTravado={regraBoletoAtiva ? "boleto" : undefined}
                 intervalosBoletoPermitidos={regraBoletoAtiva ? intervalosBoletoPermitidos : undefined}
                 parcelasBoletoMax={regraBoletoAtiva ? boletoConfig.parcelasMax : undefined}
+                dataPagamentoJanelaDias={janelaDias}
               />
 
               {(metodo2.tipo === 'boleto' || metodo2.tipo === 'cartao_credito') && metodo2.data_pagamento && valorMetodo2 > 0 && (

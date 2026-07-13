@@ -1,0 +1,1 @@
+ALTER TABLE public.regras_vendas ADD COLUMN IF NOT EXISTS pagamento_data_janela_dias integer NOT NULL DEFAULT 5;
