@@ -327,7 +327,7 @@ export default function VendaEditarDirecao() {
                   {venda.temperatura != null && (
                     <Badge variant="outline" className="flex items-center gap-1 border-primary/30">
                       <Store className="h-3 w-3" />
-                      {venda.temperatura ? 'Quente' : 'Fria'}
+                      {venda.temperatura ? 'Fria' : 'Quente'}
                     </Badge>
                   )}
                 </div>
