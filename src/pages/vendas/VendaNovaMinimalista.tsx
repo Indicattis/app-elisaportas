@@ -117,6 +117,8 @@ export default function VendaNovaMinimalista() {
   const { createVenda, isCreating } = useVendas();
   const { user } = useAuth();
   const { limites: configLimites } = useConfiguracoesVendas();
+  const { limites: regrasLimites } = useRegrasVendas();
+  const boletoConfig = regrasLimites.boleto;
   const { fretes } = useFretesCidades();
   
   const [dataEntrega, setDataEntrega] = useState<Date | undefined>();
