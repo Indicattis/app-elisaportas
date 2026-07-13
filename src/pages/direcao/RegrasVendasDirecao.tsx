@@ -493,14 +493,145 @@ export default function RegrasVendasDirecao() {
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="text-white/70 pb-4">
-                  <div className="space-y-2 pl-6">
-                    <p className="text-sm">Permite parcelamento com intervalos customizáveis entre parcelas:</p>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {[7, 15, 21, 28, 30, 45, 60].map(dias => (
-                        <Badge key={dias} variant="outline" className="text-white/60 border-white/20">
-                          {dias} dias
-                        </Badge>
-                      ))}
+                  <div className="space-y-4 pl-6">
+                    <div className="flex items-start gap-2 p-3 rounded-lg bg-green-500/10 border border-green-500/30">
+                      <CheckCircle2 className="h-4 w-4 text-green-400 mt-0.5" />
+                      <p className="text-sm text-white/80">
+                        Boleto também <strong className="text-green-300">adiciona +{limites.avista}% de desconto</strong> por pagamento à vista (via entrada obrigatória).
+                      </p>
+                    </div>
+
+                    <div className="grid gap-3 md:grid-cols-2">
+                      <div className="p-3 rounded-lg bg-white/5 border border-white/10 space-y-2">
+                        <Label className="text-xs text-white/70">Entrada mínima à vista (%)</Label>
+                        <div className="flex items-center gap-1">
+                          <Input
+                            type="number"
+                            min={0}
+                            max={100}
+                            step={5}
+                            value={(getRegra('boleto_entrada_percentual_min') as number) ?? 50}
+                            onChange={(e) => setRegra('boleto_entrada_percentual_min', Number(e.target.value) || 0)}
+                            className="h-9 bg-white/5 border-white/20 text-white text-right"
+                          />
+                          <span className="text-white/60 text-sm">%</span>
+                        </div>
+                      </div>
+
+                      <div className="p-3 rounded-lg bg-white/5 border border-white/10 space-y-2">
+                        <Label className="text-xs text-white/70">Máximo de parcelas</Label>
+                        <Input
+                          type="number"
+                          min={1}
+                          max={24}
+                          step={1}
+                          value={(getRegra('boleto_parcelas_max') as number) ?? 3}
+                          onChange={(e) => setRegra('boleto_parcelas_max', Math.max(1, parseInt(e.target.value) || 1))}
+                          className="h-9 bg-white/5 border-white/20 text-white text-right"
+                        />
+                      </div>
+
+                      <div className="p-3 rounded-lg bg-white/5 border border-white/10 space-y-2">
+                        <Label className="text-xs text-white/70">Valor limite p/ intervalos flexíveis (R$)</Label>
+                        <Input
+                          type="number"
+                          min={0}
+                          step={1000}
+                          value={(getRegra('boleto_valor_limite_flex') as number) ?? 60000}
+                          onChange={(e) => setRegra('boleto_valor_limite_flex', Number(e.target.value) || 0)}
+                          className="h-9 bg-white/5 border-white/20 text-white text-right"
+                        />
+                        <p className="text-[10px] text-white/50">Vendas <strong>até</strong> este valor liberam intervalos flexíveis. Acima disso, trava no intervalo padrão.</p>
+                      </div>
+
+                      <div className="p-3 rounded-lg bg-white/5 border border-white/10 space-y-2">
+                        <Label className="text-xs text-white/70">Intervalo padrão (dias)</Label>
+                        <Input
+                          type="number"
+                          min={1}
+                          max={120}
+                          step={1}
+                          value={(getRegra('boleto_intervalo_padrao') as number) ?? 21}
+                          onChange={(e) => setRegra('boleto_intervalo_padrao', Math.max(1, parseInt(e.target.value) || 21))}
+                          className="h-9 bg-white/5 border-white/20 text-white text-right"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="p-3 rounded-lg bg-white/5 border border-white/10 space-y-2">
+                      <Label className="text-xs text-white/70">Intervalos flexíveis permitidos (dias)</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {((getRegra('boleto_intervalos_flex') as number[]) ?? [21, 36, 42]).map((dias) => (
+                          <Badge
+                            key={dias}
+                            variant="outline"
+                            className="text-white/80 border-white/30 bg-white/5 gap-1"
+                          >
+                            {dias} dias
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const atuais = (getRegra('boleto_intervalos_flex') as number[]) ?? [];
+                                setRegra('boleto_intervalos_flex', atuais.filter((d) => d !== dias));
+                              }}
+                              className="ml-1 text-white/50 hover:text-red-300"
+                              title="Remover"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </Badge>
+                        ))}
+                      </div>
+                      <div className="flex items-center gap-2 pt-2">
+                        <Input
+                          type="number"
+                          min={1}
+                          max={120}
+                          placeholder="Adicionar dias"
+                          value={novoIntervaloBoleto}
+                          onChange={(e) => setNovoIntervaloBoleto(e.target.value)}
+                          className="h-9 w-40 bg-white/5 border-white/20 text-white"
+                        />
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => {
+                            const n = parseInt(novoIntervaloBoleto);
+                            if (!n || n <= 0) return;
+                            const atuais = (getRegra('boleto_intervalos_flex') as number[]) ?? [];
+                            if (atuais.includes(n)) { setNovoIntervaloBoleto(''); return; }
+                            setRegra('boleto_intervalos_flex', [...atuais, n].sort((a, b) => a - b));
+                            setNovoIntervaloBoleto('');
+                          }}
+                          className="h-9 bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 border border-blue-500/30"
+                        >
+                          Adicionar
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/30 space-y-1">
+                      <p className="text-xs text-blue-100/90 flex items-start gap-2">
+                        <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-blue-300" />
+                        <span>
+                          Sempre que qualquer método de pagamento for boleto, a venda força <strong>2 formas de pagamento</strong>:
+                          Método 1 = À Vista com no mínimo o percentual configurado; Método 2 = Boleto com o restante.
+                        </span>
+                      </p>
+                    </div>
+
+                    <div className="flex justify-end">
+                      <Button
+                        onClick={salvarRegrasGerais}
+                        disabled={!hasDraftChanges || isUpdatingRegras}
+                        className="bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 border border-blue-500/30"
+                      >
+                        {isUpdatingRegras ? (
+                          <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Salvando...</>
+                        ) : (
+                          <><Save className="mr-2 h-4 w-4" />Salvar Regras do Boleto</>
+                        )}
+                      </Button>
                     </div>
                   </div>
                 </AccordionContent>
