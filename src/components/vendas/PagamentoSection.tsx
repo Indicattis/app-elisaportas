@@ -16,11 +16,9 @@ import { RotateCcw } from "lucide-react";
 import {
   aplicarRegraBoleto,
   pagamentoTemBoleto,
-  BOLETO_ENTRADA_PERCENTUAL,
-  BOLETO_INTERVALO_DIAS,
-  BOLETO_LIMITE_INTERVALO_FLEXIVEL,
   getIntervalosBoletoPermitidos,
 } from "@/utils/boletoRegra";
+import { useRegrasVendas } from "@/hooks/useRegrasVendas";
 
 export interface PagamentoData {
   usar_dois_metodos: boolean;
@@ -49,6 +47,10 @@ interface PagamentoSectionProps {
 }
 
 export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPresencial, onVendaPresencialChange, descontoInfo, hideEmpresaReceptora = false }: PagamentoSectionProps) {
+  const { limites: regrasLimites } = useRegrasVendas();
+  const boletoConfig = regrasLimites.boleto;
+  const entradaPct = boletoConfig.entradaMinPct;
+  const restantePct = Math.max(0, 100 - entradaPct);
   const { data: empresas = [], isLoading: isLoadingEmpresas } = useQuery({
     queryKey: ['empresas-emissoras-ativas'],
     queryFn: async () => {
@@ -87,7 +89,7 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
   // Aplica a regra do boleto (70% à vista + 30% boleto com intervalo de 21 dias)
   // sempre que houver boleto em qualquer método.
   useEffect(() => {
-    const normalizado = aplicarRegraBoleto(paymentData, valorTotal);
+    const normalizado = aplicarRegraBoleto(paymentData, valorTotal, boletoConfig);
     if (normalizado !== paymentData) {
       onChange(normalizado);
     }
@@ -96,10 +98,14 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
     paymentData.metodos[1].tipo,
     paymentData.usar_dois_metodos,
     valorTotal,
+    boletoConfig.entradaMinPct,
+    boletoConfig.valorLimiteFlex,
+    boletoConfig.intervaloPadrao,
+    boletoConfig.parcelasMax,
   ]);
 
   const regraBoletoAtiva = pagamentoTemBoleto(paymentData);
-  const intervalosBoletoPermitidos = getIntervalosBoletoPermitidos(valorTotal);
+  const intervalosBoletoPermitidos = getIntervalosBoletoPermitidos(valorTotal, boletoConfig);
 
   const handleMetodo1Change = (metodo: MetodoPagamento) => {
     const newMetodos: [MetodoPagamento, MetodoPagamento] = [metodo, paymentData.metodos[1]];
