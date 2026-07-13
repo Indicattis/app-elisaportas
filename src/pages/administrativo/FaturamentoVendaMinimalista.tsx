@@ -1093,7 +1093,7 @@ export default function FaturamentoVendaMinimalista() {
   // Tiers alinhados com /marketing/balanco-descontos
   const _formaPg = venda?.forma_pagamento || '';
   const aptoAvista = _formaPg !== '' && _formaPg !== 'cartao_credito';
-  const aptoFrio = !!venda?.temperatura;
+  const aptoFrio = venda?.temperatura === false;
   const _limiteBase = (aptoAvista ? 3 : 0) + (aptoFrio ? 5 : 0);
   const aptoGerente = temAutorizacaoGerente || pctDescontoTotal > _limiteBase;
   const pctLimite = _limiteBase + (aptoGerente ? 7 : 0);
@@ -1126,7 +1126,7 @@ export default function FaturamentoVendaMinimalista() {
     totalVenda: _valorTabelaParaExcedente,
     descontoTotal: totalDescontosCalc,
     formaPagamento: _formaPg,
-    vendaPresencial: !!venda?.temperatura,
+    vendaPresencial: venda?.temperatura === false,
     limAvista: configLimites.avista,
     limPresencial: configLimites.presencial,
     limResponsavel: limitesVendas.adicionalResponsavel ?? 7,

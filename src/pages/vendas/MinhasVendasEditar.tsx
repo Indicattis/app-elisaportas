@@ -529,7 +529,7 @@ export default function MinhasVendasEditar() {
       const validacao = validarDesconto(
         produtosFormatados,
         venda.forma_pagamento || '',
-        venda.temperatura || false,
+        venda.temperatura === false,
         configLimites
       );
 
@@ -806,10 +806,10 @@ export default function MinhasVendasEditar() {
                   <Badge variant="secondary" className="bg-blue-500/20 text-blue-200 border-blue-500/30">
                     {getPublicoAlvoLabel(venda.publico_alvo)}
                   </Badge>
-                  {venda.temperatura && (
+                  {venda.temperatura != null && (
                     <Badge variant="outline" className="flex items-center gap-1 border-blue-500/30 text-blue-200">
                       <Store className="h-3 w-3" />
-                      Fria
+                      {venda.temperatura ? 'Quente' : 'Fria'}
                     </Badge>
                   )}
                 </div>

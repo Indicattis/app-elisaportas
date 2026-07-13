@@ -449,9 +449,9 @@ export default function VendaView() {
               </div>
             )}
             <div>
-              <p className="text-sm text-muted-foreground">Venda Fria</p>
+              <p className="text-sm text-muted-foreground">Temperatura</p>
               <Badge variant={venda.temperatura ? "default" : "secondary"} className="mt-1">
-                {venda.temperatura ? "Sim" : "Não"}
+                {venda.temperatura == null ? '—' : venda.temperatura ? 'Quente' : 'Fria'}
               </Badge>
             </div>
             <div>

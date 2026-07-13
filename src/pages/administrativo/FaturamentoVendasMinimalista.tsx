@@ -592,7 +592,7 @@ export default function FaturamentoMinimalista() {
 
     const pctTotal = (totalDesconto / tabelaTotal) * 100;
     const isCartao = venda.forma_pagamento === 'cartao_credito';
-    const isFrio = venda.temperatura === true;
+    const isFrio = venda.temperatura === false;
 
     const limAvista = configLimites.avista;
     const limPresencial = configLimites.presencial;

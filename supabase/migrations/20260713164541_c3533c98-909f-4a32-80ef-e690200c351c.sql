@@ -1,0 +1,1 @@
+UPDATE public.vendas SET temperatura = NOT temperatura WHERE temperatura IS NOT NULL;
