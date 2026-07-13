@@ -1,30 +1,39 @@
-## Permitir dispensa de contrato em /direcao/vendas/todas
+## Botão de PDF de Formalização de Venda em /direcao/vendas/todas
 
 ### Objetivo
-Na tabela de vendas em `src/pages/direcao/VendasDirecao.tsx`, permitir que o usuário com acesso à página dispense o contrato de uma venda que ainda não tem contrato assinado nem foi dispensada.
+Adicionar, em cada linha da tabela em `src/pages/direcao/VendasDirecao.tsx`, um botão para baixar um PDF de "Formalização da Venda" com o mesmo conteúdo do orçamento (dados do cliente, atendente, tabela de produtos, resumo financeiro, observações, termos e garantia), porém com o texto adaptado para confirmação da venda.
 
-### Alterações em `src/pages/direcao/VendasDirecao.tsx`
+### 1. Novo gerador de PDF
+Arquivo novo: `src/utils/formalizacaoVendaPDFGenerator.ts`
+- Base: cópia estrutural de `src/utils/orcamentoPDFGenerator.ts` (layout, logo, dados do cliente, atendente, tabela via `jspdf-autotable`, resumo, termos, garantia).
+- Interface `FormalizacaoVendaPDFData`: `{ id, numeroVenda?, dataVenda, cliente, produtos (mesmo shape usado por `vendaIndividualPDFGenerator.ts` — inclui `largura/altura/cor/valor_produto/valor_pintura/valor_instalacao/desconto_*`), valores (valorVenda, valorFrete, valorInstalacao, valorEntrada, valorAReceber), formaPagamento?, observacoes?, atendente?, dataPrevistaEntrega? }`.
+- Ajustes de texto para formalização (substituindo o vocabulário de proposta):
+  - Título do documento: `FORMALIZAÇÃO DE VENDA` (em vez de `#Proposta`).
+  - Nº: usa `numeroVenda` ou `VND-<últimos 8 do id>`.
+  - Substitui "Este orçamento tem validade de 30 dias." por bloco de confirmação:
+    - "Este documento formaliza a compra e venda dos produtos e serviços descritos acima, ratificando os valores, prazos e condições acordados entre as partes."
+    - "Ao efetuar o pagamento, o cliente declara estar ciente e de acordo com as condições, garantias e responsabilidades descritas neste documento."
+  - Rodapé: "Elisa Portas LTDA — Documento de formalização de venda".
+  - Mantém a página 2 (Informações Importantes, Responsabilidade do Cliente, Termo de Garantia) exatamente como no orçamento.
+  - Adiciona linha "Previsão de Entrega" quando `dataPrevistaEntrega` existir e linha "Forma de Pagamento" quando informada.
+- Exporta `generateFormalizacaoVendaPDF(data)` que chama `pdf.save(\`formalizacao-venda-${numeroVenda}-YYYY-MM-DD.pdf\`)`.
 
-1. Estados novos:
-   - `dispensarVenda: VendaRow | null`
-   - `dispensandoId: string | null`
-
-2. Célula `faturada` (por volta da linha 733):
-   - Quando `!venda.contrato_url && !venda.contrato_dispensado && !venda.dispensada_sistema`, além do rótulo "Sem contrato" já existente, exibir um botão pequeno "Dispensar" (ícone `FileX` ou `MinusCircle`) logo abaixo/ao lado que, ao clicar, faz `e.stopPropagation()` e chama `setDispensarVenda(venda)`.
-   - Quando `venda.contrato_dispensado === true`, trocar o texto "Sem contrato" por "Contrato dispensado" em tom mais neutro (white/40).
-
-3. Novo `AlertDialog` de confirmação (fim do JSX, seguindo padrão de `src/pages/vendas/ContratosVendas.tsx` linhas 782–825):
-   - Título: "Dispensar contrato?"
-   - Mensagem: "A venda de {cliente_nome} será marcada como sem necessidade de contrato assinado. Esta ação fica registrada e pode ser revertida pela equipe administrativa."
-   - Ao confirmar:
-     - `setDispensandoId(dispensarVenda.id)`
-     - `supabase.from('vendas').update({ contrato_dispensado: true, contrato_dispensado_em: new Date().toISOString(), contrato_dispensado_por: user?.id ?? null }).eq('id', dispensarVenda.id)`
-     - Em caso de sucesso: toast, `queryClient.invalidateQueries({ queryKey: ['vendas'] })`, fechar dialog.
-     - Em caso de erro: toast de erro.
-     - `finally`: limpar `dispensandoId`.
-   - Import `AlertDialog*` de `@/components/ui/alert-dialog` (já usado em outros pontos do projeto).
+### 2. Ação na tabela `VendasDirecao.tsx`
+- Nova coluna disponível `formalizacao` em `COLUNAS_DISPONIVEIS` (label "Formalização"), `defaultVisible: true`, alinhamento central.
+- Estado local `downloadingPdfId: string | null` para desabilitar botão durante a busca.
+- Handler `handleDownloadFormalizacao(venda)`:
+  - Busca produtos:
+    ```ts
+    supabase
+      .from('produtos_vendas')
+      .select('*, cor:catalogo_cores(nome, codigo_hex)')
+      .eq('venda_id', venda.id)
+    ```
+  - Monta o objeto e chama `generateFormalizacaoVendaPDF(...)`.
+  - Toasts de sucesso/erro (usa `useToast` já disponível na página).
+- Renderiza no `renderCell` case `'formalizacao'`: botão pequeno com ícone `FileDown` de `lucide-react` (tooltip "Baixar formalização"), `onClick` com `e.stopPropagation()`, `disabled` enquanto `downloadingPdfId === venda.id` (mostra `Loader2`).
 
 ### Fora de escopo
-- Nenhum novo schema. Colunas `contrato_dispensado`, `contrato_dispensado_em`, `contrato_dispensado_por` já existem em `vendas` e a política RLS já permite update para direção (mesma UI hoje é usada por atendente na página de contratos).
-- Nenhuma alteração em `useVendas`, `ContratosVendas.tsx` ou em qualquer outra tela.
-- Sem gate por senha/permissão adicional — quem tem acesso à rota `/direcao/vendas/todas` já é considerado autorizado.
+- Nenhum schema ou RLS novo — reuso de `produtos_vendas`, `vendas` e `catalogo_cores`.
+- Nenhuma alteração nos geradores de PDF existentes (`orcamentoPDFGenerator.ts`, `vendaIndividualPDFGenerator.ts`).
+- Nenhuma alteração nas rotas.
