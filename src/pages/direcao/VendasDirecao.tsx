@@ -15,7 +15,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Search, DollarSign, ShoppingCart, Package, CalendarIcon, Download, FileText, FileSpreadsheet, ArrowUpDown, ArrowUp, ArrowDown, Check, X, Truck, Hammer, Users, BookOpen, Info, ExternalLink, Settings, MinusCircle, FileX, Loader2 } from 'lucide-react';
+import { Plus, Search, DollarSign, ShoppingCart, Package, CalendarIcon, Download, FileText, FileSpreadsheet, ArrowUpDown, ArrowUp, ArrowDown, Check, X, Truck, Hammer, Users, BookOpen, Info, ExternalLink, Settings, MinusCircle, FileX, Loader2, FileDown } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -49,6 +49,7 @@ import { useToast } from '@/hooks/use-toast';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { useConfiguracoesVendas } from '@/hooks/useConfiguracoesVendas';
 import { calcularDescontoTotal as calcularDescontoTotalRegras, calcularTotalVenda } from '@/utils/descontoVendasRules';
+import { generateFormalizacaoVendaPDF } from '@/utils/formalizacaoVendaPDFGenerator';
 
 
 import {
@@ -78,6 +79,7 @@ const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
   { id: 'valor', label: 'Valor Final', defaultVisible: true },
   { id: 'excedido_desconto', label: 'Excedido', defaultVisible: true },
   { id: 'lucro', label: 'Lucro', defaultVisible: true },
+  { id: 'formalizacao', label: 'Formalização', defaultVisible: true },
 ];
 
 // Função auxiliar para calcular desconto total dos produtos
