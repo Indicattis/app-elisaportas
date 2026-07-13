@@ -331,6 +331,8 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
                   : paymentData.usar_dois_metodos ? "Valor da Entrada *" : "Valor Total"
               }
               tipoTravado={regraBoletoAtiva ? "a_vista" : undefined}
+              intervalosBoletoPermitidos={intervalosBoletoPermitidos}
+              parcelasBoletoMax={boletoConfig.parcelasMax}
               dataPagamentoJanelaDias={janelaDias}
             />
 
@@ -364,8 +366,8 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
                 valorFixo={true}
                 valorLabel="Valor Restante"
                 tipoTravado={regraBoletoAtiva ? "boleto" : undefined}
-                intervalosBoletoPermitidos={regraBoletoAtiva ? intervalosBoletoPermitidos : undefined}
-                parcelasBoletoMax={regraBoletoAtiva ? boletoConfig.parcelasMax : undefined}
+                intervalosBoletoPermitidos={intervalosBoletoPermitidos}
+                parcelasBoletoMax={boletoConfig.parcelasMax}
                 dataPagamentoJanelaDias={janelaDias}
               />
 
