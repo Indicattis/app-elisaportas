@@ -60,7 +60,7 @@ export interface VendaFormData {
   data_prevista_entrega?: string;
   tipo_entrega?: string;
   tipo_frete?: 'interno' | 'transportadora';
-  venda_presencial?: boolean;
+  temperatura?: boolean;
   cliente_id?: string; // ID do cliente existente selecionado
   orcamento_id?: string; // ID do orçamento se for conversão
 }
@@ -192,7 +192,7 @@ export function useVendas() {
       const validacaoServer = validarDesconto(
         portas,
         vendaData.forma_pagamento,
-        vendaData.venda_presencial,
+        vendaData.temperatura,
         {
           avista: cfgVendas?.limite_desconto_avista,
           presencial: cfgVendas?.limite_desconto_presencial,
@@ -344,7 +344,7 @@ export function useVendas() {
       }
 
       // 5. Criar venda com valores calculados
-      const { endereco, venda_presencial, cliente_id: _, ...vendaDataLimpo } = vendaData;
+      const { endereco, temperatura, cliente_id: _, ...vendaDataLimpo } = vendaData;
       
       // Extrair o método de pagamento principal (primeiro método válido)
       const metodoPrincipal = pagamentoData?.metodos?.[0]?.tipo || vendaData.forma_pagamento;
@@ -377,7 +377,7 @@ export function useVendas() {
         pago_na_instalacao: false,
         pagamento_na_entrega: pagamentoData?.pagamento_na_entrega || false,
         // Temperatura da venda (Quente/Fria). Preserva false quando o vendedor escolheu "Fria".
-        venda_presencial: venda_presencial ?? true,
+        temperatura: temperatura ?? true,
       };
 
       console.log('📦 Venda payload:', vendaPayload);
@@ -679,7 +679,7 @@ export function useVendas() {
       const valor_a_receber = valor_total_venda - valor_entrada;
 
       // 4. Criar venda como rascunho (sem validações obrigatórias)
-      const { endereco, venda_presencial, cliente_id: _, ...vendaDataLimpo } = vendaData;
+      const { endereco, temperatura, cliente_id: _, ...vendaDataLimpo } = vendaData;
       const metodoPrincipal = pagamentoData?.metodos?.[0]?.tipo || vendaData.forma_pagamento;
 
       const vendaPayload = {
@@ -702,7 +702,7 @@ export function useVendas() {
         pago_na_instalacao: false,
         pagamento_na_entrega: pagamentoData?.pagamento_na_entrega || false,
         // Temperatura da venda (Quente/Fria). Preserva false quando o vendedor escolheu "Fria".
-        venda_presencial: venda_presencial ?? true,
+        temperatura: temperatura ?? true,
       };
 
       const { data: venda, error: vendaError } = await supabase

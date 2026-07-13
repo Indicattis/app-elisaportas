@@ -92,7 +92,7 @@ export default function BalancoDescontos() {
     const descontoTotal = Number(r.desconto_dado) || 0;
     const formaPg = r.vendas?.forma_pagamento || "";
     const aptoAvista = formaPg !== "" && formaPg !== "cartao_credito";
-    const aptoFrio = !!r.vendas?.venda_presencial;
+    const aptoFrio = !!r.vendas?.temperatura;
     const limiteBase = (aptoAvista ? limAvista : 0) + (aptoFrio ? limPresencial : 0);
     const aptoGerente = !!r.tem_autorizacao_gerente || pctDado > limiteBase;
     const pctLimiteCalc = limiteBase + (aptoGerente ? limResponsavel : 0);
@@ -108,7 +108,7 @@ export default function BalancoDescontos() {
       totalVenda: total,
       descontoTotal: descontoTotal > 0 ? descontoTotal : 0,
       formaPagamento: formaPg,
-      vendaPresencial: r.vendas?.venda_presencial ?? false,
+      vendaPresencial: r.vendas?.temperatura ?? false,
       limAvista,
       limPresencial,
       limResponsavel,
@@ -270,13 +270,13 @@ export default function BalancoDescontos() {
                           <TableCell>
                             <span
                               className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                                r.vendas?.venda_presencial
+                                r.vendas?.temperatura
                                   ? "bg-blue-500/20 text-blue-300 border border-blue-500/30"
                                   : "bg-orange-500/20 text-orange-300 border border-orange-500/30"
                               }`}
-                              title={r.vendas?.venda_presencial ? "Venda Fria" : "Venda Quente"}
+                              title={r.vendas?.temperatura ? "Venda Fria" : "Venda Quente"}
                             >
-                              {r.vendas?.venda_presencial ? "Frio" : "Quente"}
+                              {r.vendas?.temperatura ? "Frio" : "Quente"}
                             </span>
                           </TableCell>
                           <TableCell>

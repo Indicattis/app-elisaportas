@@ -26,7 +26,7 @@ export interface VendaPendentePedido {
   estado: string | null;
   valor_a_receber_entrega: number | null;
   valor_entrada: number;
-  venda_presencial?: boolean | null;
+  temperatura?: boolean | null;
   contrato_url?: string | null;
   contrato_dispensado?: boolean;
   cores: Array<{ nome: string; codigo_hex: string }>;
@@ -74,7 +74,7 @@ export const useVendasPendentePedido = () => {
           valor_entrada,
           cidade,
           estado,
-          venda_presencial,
+          temperatura,
           produtos_vendas (
             id,
             faturamento,
@@ -284,7 +284,7 @@ export const useVendasPendentePedido = () => {
             estado: v.estado || null,
             valor_a_receber_entrega: valorAReceberEntrega,
             valor_entrada: Number(v.valor_entrada) || 0,
-            venda_presencial: v.venda_presencial ?? null,
+            temperatura: v.temperatura ?? null,
             cores: Array.from(coresUnicas.values()),
             portas_info: portasInfo,
           };

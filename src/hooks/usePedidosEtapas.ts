@@ -167,7 +167,7 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
             atendente_id,
             cidade,
             estado,
-            venda_presencial,
+            temperatura,
             atendente:admin_users!fk_vendas_atendente (
               nome,
               foto_perfil_url

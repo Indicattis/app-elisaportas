@@ -70,7 +70,7 @@ export default function VendasNova() {
     valor_a_receber: 0,
     data_prevista_entrega: '',
     tipo_entrega: 'instalacao',
-    venda_presencial: false
+    temperatura: false
   });
 
   const [portas, setPortas] = useState<ProdutoVenda[]>([]);
@@ -410,7 +410,7 @@ export default function VendasNova() {
     const validacao = validarDesconto(
       portas,
       formData.forma_pagamento,
-      formData.venda_presencial,
+      formData.temperatura,
       configLimitesObj
     );
 
@@ -453,7 +453,7 @@ export default function VendasNova() {
       const validacao = validarDesconto(
         produtosComDesconto,
         formData.forma_pagamento,
-        formData.venda_presencial,
+        formData.temperatura,
         configLimitesObj
       );
 
@@ -486,7 +486,7 @@ export default function VendasNova() {
     const validacao = validarDesconto(
       portas,
       formData.forma_pagamento,
-      formData.venda_presencial,
+      formData.temperatura,
       configLimitesObj
     );
 
@@ -735,11 +735,11 @@ export default function VendasNova() {
             <div className="md:col-span-3">
               <div className="flex items-center space-x-2 p-2.5 border rounded-md bg-muted/20">
                 <Checkbox 
-                  id="venda_presencial"
-                  checked={formData.venda_presencial}
-                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, venda_presencial: checked as boolean }))}
+                  id="temperatura"
+                  checked={formData.temperatura}
+                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, temperatura: checked as boolean }))}
                 />
-                <Label htmlFor="venda_presencial" className="cursor-pointer flex-1 text-xs">
+                <Label htmlFor="temperatura" className="cursor-pointer flex-1 text-xs">
                   <span className="font-medium">Venda Fria</span>
                   <span className="text-muted-foreground ml-1.5">(+5% limite de desconto)</span>
                 </Label>
@@ -877,7 +877,7 @@ export default function VendasNova() {
             
             {/* Indicador de Autorização Necessária */}
             {(() => {
-              const validacao = validarDesconto(portas, formData.forma_pagamento, formData.venda_presencial);
+              const validacao = validarDesconto(portas, formData.forma_pagamento, formData.temperatura);
               const tipoAutorizacao = getTipoAutorizacaoNecessaria(validacao);
               
               if (validacao.dentroDoLimite) {
@@ -980,7 +980,7 @@ export default function VendasNova() {
               Adicionar Desconto
             </Button>
           )}
-          {portas.length > 0 && validarDesconto(portas, formData.forma_pagamento, formData.venda_presencial).dentroDoLimite && !portas.some(p => (p.desconto_valor || 0) > 0 || (p.desconto_percentual || 0) > 0) && (
+          {portas.length > 0 && validarDesconto(portas, formData.forma_pagamento, formData.temperatura).dentroDoLimite && !portas.some(p => (p.desconto_valor || 0) > 0 || (p.desconto_percentual || 0) > 0) && (
             <Button 
               type="button"
               size="sm"
@@ -1005,7 +1005,7 @@ export default function VendasNova() {
         produtos={portas}
         onAplicarDesconto={handleAplicarDesconto}
         formaPagamento={formData.forma_pagamento}
-        vendaPresencial={formData.venda_presencial}
+        vendaPresencial={formData.temperatura}
       />
 
       <CreditoVendaModal
@@ -1024,7 +1024,7 @@ export default function VendasNova() {
           onOpenChange={setAutorizacaoDescontoOpen}
           onAutorizado={handleAutorizacaoDesconto}
           onSolicitarAprovacao={handleSolicitarAprovacao}
-          percentualDesconto={validarDesconto(portas, formData.forma_pagamento, formData.venda_presencial).percentualDesconto}
+          percentualDesconto={validarDesconto(portas, formData.forma_pagamento, formData.temperatura).percentualDesconto}
           tipoAutorizacao={tipoAutorizacaoNecessaria}
           limitePermitido={limitePermitido}
         />

@@ -92,7 +92,7 @@ interface Venda {
   comprovante_url: string | null;
   atendente_id: string | null;
   tipo_entrega: 'entrega' | 'instalacao' | 'manutencao' | null;
-  venda_presencial: boolean | null;
+  temperatura: boolean | null;
   produtos?: Produto[];
   atendente?: Atendente;
 }
@@ -380,13 +380,13 @@ export default function VendaDetalhesDirecao() {
             <p className="text-xl font-bold text-purple-400">{formatCurrency(venda.valor_frete || 0)}</p>
           </div>
 
-          <div className={`${cardClass} border-l-4 ${venda.venda_presencial === true ? 'border-l-orange-500' : venda.venda_presencial === false ? 'border-l-blue-500' : 'border-l-white/30'}`}>
+          <div className={`${cardClass} border-l-4 ${venda.temperatura === true ? 'border-l-orange-500' : venda.temperatura === false ? 'border-l-blue-500' : 'border-l-white/30'}`}>
             <div className="flex items-center gap-2 text-white/60 text-sm mb-1">
               <Thermometer className="w-4 h-4" />
               Temperatura
             </div>
-            <p className={`text-xl font-bold ${venda.venda_presencial === true ? 'text-orange-400' : venda.venda_presencial === false ? 'text-blue-400' : 'text-white/30'}`}>
-              {venda.venda_presencial === true ? 'Quente' : venda.venda_presencial === false ? 'Frio' : 'Não informado'}
+            <p className={`text-xl font-bold ${venda.temperatura === true ? 'text-orange-400' : venda.temperatura === false ? 'text-blue-400' : 'text-white/30'}`}>
+              {venda.temperatura === true ? 'Quente' : venda.temperatura === false ? 'Frio' : 'Não informado'}
             </p>
           </div>
         </div>

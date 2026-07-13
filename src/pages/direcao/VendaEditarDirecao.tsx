@@ -324,10 +324,10 @@ export default function VendaEditarDirecao() {
                 <p className="font-medium text-white">{formatDate(venda.data_venda)}</p>
                 <div className="flex items-center gap-2 mt-2">
                   <Badge variant="secondary">{getPublicoAlvoLabel(venda.publico_alvo)}</Badge>
-                  {venda.venda_presencial != null && (
+                  {venda.temperatura != null && (
                     <Badge variant="outline" className="flex items-center gap-1 border-primary/30">
                       <Store className="h-3 w-3" />
-                      {venda.venda_presencial ? 'Quente' : 'Fria'}
+                      {venda.temperatura ? 'Quente' : 'Fria'}
                     </Badge>
                   )}
                 </div>
@@ -512,7 +512,7 @@ export default function VendaEditarDirecao() {
               produtos={produtosFormatados}
               onAplicarDesconto={handleAplicarDesconto}
               formaPagamento={venda.forma_pagamento || ''}
-              vendaPresencial={venda.venda_presencial || false}
+              vendaPresencial={venda.temperatura || false}
             />
 
             <CreditoVendaModal

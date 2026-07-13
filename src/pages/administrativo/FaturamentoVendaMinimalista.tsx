@@ -90,7 +90,7 @@ interface Venda {
   empresa_receptora_id?: string;
   data_venda?: string;
   forma_pagamento?: string;
-  venda_presencial?: boolean;
+  temperatura?: boolean;
   pagamento_na_entrega?: boolean;
   valor_entrada?: number;
   valor_a_receber?: number;
@@ -857,7 +857,7 @@ export default function FaturamentoVendaMinimalista() {
       setLoading(true);
       const { data, error } = await supabase
         .from("vendas")
-        .select("id, numero_pedido, cliente_id, cliente_nome, cliente_telefone, cliente_email, cpf_cliente, cidade, estado, cep, bairro, valor_venda, valor_frete, valor_instalacao, valor_credito, lucro_total, frete_aprovado, comprovante_url, comprovante_nome, lucro_instalacao, custo_instalacao, instalacao_faturada, metodo_pagamento, numero_parcelas, intervalo_boletos, empresa_receptora_id, data_venda, forma_pagamento, venda_presencial, pagamento_na_entrega, valor_entrada, valor_a_receber, quantidade_parcelas, contrato_url, contrato_dispensado")
+        .select("id, numero_pedido, cliente_id, cliente_nome, cliente_telefone, cliente_email, cpf_cliente, cidade, estado, cep, bairro, valor_venda, valor_frete, valor_instalacao, valor_credito, lucro_total, frete_aprovado, comprovante_url, comprovante_nome, lucro_instalacao, custo_instalacao, instalacao_faturada, metodo_pagamento, numero_parcelas, intervalo_boletos, empresa_receptora_id, data_venda, forma_pagamento, temperatura, pagamento_na_entrega, valor_entrada, valor_a_receber, quantidade_parcelas, contrato_url, contrato_dispensado")
         .eq("id", id)
         .single();
 
@@ -1093,7 +1093,7 @@ export default function FaturamentoVendaMinimalista() {
   // Tiers alinhados com /marketing/balanco-descontos
   const _formaPg = venda?.forma_pagamento || '';
   const aptoAvista = _formaPg !== '' && _formaPg !== 'cartao_credito';
-  const aptoFrio = !!venda?.venda_presencial;
+  const aptoFrio = !!venda?.temperatura;
   const _limiteBase = (aptoAvista ? 3 : 0) + (aptoFrio ? 5 : 0);
   const aptoGerente = temAutorizacaoGerente || pctDescontoTotal > _limiteBase;
   const pctLimite = _limiteBase + (aptoGerente ? 7 : 0);
@@ -1126,7 +1126,7 @@ export default function FaturamentoVendaMinimalista() {
     totalVenda: _valorTabelaParaExcedente,
     descontoTotal: totalDescontosCalc,
     formaPagamento: _formaPg,
-    vendaPresencial: !!venda?.venda_presencial,
+    vendaPresencial: !!venda?.temperatura,
     limAvista: configLimites.avista,
     limPresencial: configLimites.presencial,
     limResponsavel: limitesVendas.adicionalResponsavel ?? 7,
@@ -1648,7 +1648,7 @@ export default function FaturamentoVendaMinimalista() {
                       paymentData={pagamentoData}
                       onChange={setPagamentoData}
                       valorTotal={valorTotalPagamento}
-                      vendaPresencial={venda.venda_presencial}
+                      vendaPresencial={venda.temperatura}
                     />
 
                     <div className="flex justify-end">
@@ -1884,7 +1884,7 @@ export default function FaturamentoVendaMinimalista() {
                 <div className="p-3 rounded-lg border border-white/10 bg-white/5 space-y-1">
                   <p className="text-xs text-white/50">Tipo de Venda</p>
                   <p className="text-sm font-medium">
-                    {venda.venda_presencial ? (
+                    {venda.temperatura ? (
                       <Badge className="bg-cyan-500/20 text-cyan-400 border-cyan-500/30">❄️ Fria</Badge>
                     ) : (
                       <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30">🔥 Quente</Badge>

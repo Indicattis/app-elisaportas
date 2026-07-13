@@ -529,7 +529,7 @@ export default function MinhasVendasEditar() {
       const validacao = validarDesconto(
         produtosFormatados,
         venda.forma_pagamento || '',
-        venda.venda_presencial || false,
+        venda.temperatura || false,
         configLimites
       );
 
@@ -806,7 +806,7 @@ export default function MinhasVendasEditar() {
                   <Badge variant="secondary" className="bg-blue-500/20 text-blue-200 border-blue-500/30">
                     {getPublicoAlvoLabel(venda.publico_alvo)}
                   </Badge>
-                  {venda.venda_presencial && (
+                  {venda.temperatura && (
                     <Badge variant="outline" className="flex items-center gap-1 border-blue-500/30 text-blue-200">
                       <Store className="h-3 w-3" />
                       Fria
@@ -1150,7 +1150,7 @@ export default function MinhasVendasEditar() {
               produtos={produtosFormatados}
               onAplicarDesconto={handleAplicarDesconto}
               formaPagamento={venda.forma_pagamento || ''}
-              vendaPresencial={venda.venda_presencial || false}
+              vendaPresencial={venda.temperatura || false}
             />
 
             <CreditoVendaModal

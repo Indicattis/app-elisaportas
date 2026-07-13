@@ -736,7 +736,7 @@ export default function Vendas() {
                           <ProductIconsSummary venda={venda} />
                         </TableCell>
                         <TableCell className="hidden md:table-cell text-center py-1">
-                          {venda.venda_presencial ? (
+                          {venda.temperatura ? (
                             <Badge variant="default" className="text-xs">Sim</Badge>
                           ) : (
                             <Badge variant="secondary" className="text-xs">Não</Badge>
