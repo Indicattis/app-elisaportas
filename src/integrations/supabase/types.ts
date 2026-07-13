@@ -8389,7 +8389,12 @@ export type Database = {
           acrescimo_permite_com_desconto: boolean
           avista_exige_comprovante: boolean
           bloqueia_desconto_com_credito: boolean
+          boleto_entrada_percentual_min: number
+          boleto_intervalo_padrao: number
           boleto_intervalos_dias: number[]
+          boleto_intervalos_flex: number[]
+          boleto_parcelas_max: number
+          boleto_valor_limite_flex: number
           cartao_habilita_desconto_avista: boolean
           cartao_parcelas_max: number
           cartao_parcelas_min: number
@@ -8418,7 +8423,12 @@ export type Database = {
           acrescimo_permite_com_desconto?: boolean
           avista_exige_comprovante?: boolean
           bloqueia_desconto_com_credito?: boolean
+          boleto_entrada_percentual_min?: number
+          boleto_intervalo_padrao?: number
           boleto_intervalos_dias?: number[]
+          boleto_intervalos_flex?: number[]
+          boleto_parcelas_max?: number
+          boleto_valor_limite_flex?: number
           cartao_habilita_desconto_avista?: boolean
           cartao_parcelas_max?: number
           cartao_parcelas_min?: number
@@ -8447,7 +8457,12 @@ export type Database = {
           acrescimo_permite_com_desconto?: boolean
           avista_exige_comprovante?: boolean
           bloqueia_desconto_com_credito?: boolean
+          boleto_entrada_percentual_min?: number
+          boleto_intervalo_padrao?: number
           boleto_intervalos_dias?: number[]
+          boleto_intervalos_flex?: number[]
+          boleto_parcelas_max?: number
+          boleto_valor_limite_flex?: number
           cartao_habilita_desconto_avista?: boolean
           cartao_parcelas_max?: number
           cartao_parcelas_min?: number

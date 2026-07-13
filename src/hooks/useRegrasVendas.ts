@@ -36,6 +36,12 @@ export interface RegrasVendas {
   pagamento_imediato_exige_comprovante: boolean;
   bloqueia_desconto_com_credito: boolean;
 
+  boleto_entrada_percentual_min: number;
+  boleto_valor_limite_flex: number;
+  boleto_intervalos_flex: number[];
+  boleto_intervalo_padrao: number;
+  boleto_parcelas_max: number;
+
   created_at: string;
   updated_at: string;
 }
@@ -119,6 +125,13 @@ export function useRegrasVendas() {
     totalSemSenha: avista + fria,
     totalComResponsavel: avista + fria + adicionalResponsavel,
     masterLucro,
+    boleto: {
+      entradaMinPct: regras?.boleto_entrada_percentual_min ?? 50,
+      valorLimiteFlex: regras?.boleto_valor_limite_flex ?? 60000,
+      intervalosFlex: regras?.boleto_intervalos_flex ?? [21, 36, 42],
+      intervaloPadrao: regras?.boleto_intervalo_padrao ?? 21,
+      parcelasMax: regras?.boleto_parcelas_max ?? 3,
+    },
   };
 
   return {

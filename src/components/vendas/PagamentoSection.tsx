@@ -16,11 +16,9 @@ import { RotateCcw } from "lucide-react";
 import {
   aplicarRegraBoleto,
   pagamentoTemBoleto,
-  BOLETO_ENTRADA_PERCENTUAL,
-  BOLETO_INTERVALO_DIAS,
-  BOLETO_LIMITE_INTERVALO_FLEXIVEL,
   getIntervalosBoletoPermitidos,
 } from "@/utils/boletoRegra";
+import { useRegrasVendas } from "@/hooks/useRegrasVendas";
 
 export interface PagamentoData {
   usar_dois_metodos: boolean;
@@ -49,6 +47,10 @@ interface PagamentoSectionProps {
 }
 
 export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPresencial, onVendaPresencialChange, descontoInfo, hideEmpresaReceptora = false }: PagamentoSectionProps) {
+  const { limites: regrasLimites } = useRegrasVendas();
+  const boletoConfig = regrasLimites.boleto;
+  const entradaPct = boletoConfig.entradaMinPct;
+  const restantePct = Math.max(0, 100 - entradaPct);
   const { data: empresas = [], isLoading: isLoadingEmpresas } = useQuery({
     queryKey: ['empresas-emissoras-ativas'],
     queryFn: async () => {
@@ -87,7 +89,7 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
   // Aplica a regra do boleto (70% à vista + 30% boleto com intervalo de 21 dias)
   // sempre que houver boleto em qualquer método.
   useEffect(() => {
-    const normalizado = aplicarRegraBoleto(paymentData, valorTotal);
+    const normalizado = aplicarRegraBoleto(paymentData, valorTotal, boletoConfig);
     if (normalizado !== paymentData) {
       onChange(normalizado);
     }
@@ -96,10 +98,14 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
     paymentData.metodos[1].tipo,
     paymentData.usar_dois_metodos,
     valorTotal,
+    boletoConfig.entradaMinPct,
+    boletoConfig.valorLimiteFlex,
+    boletoConfig.intervaloPadrao,
+    boletoConfig.parcelasMax,
   ]);
 
   const regraBoletoAtiva = pagamentoTemBoleto(paymentData);
-  const intervalosBoletoPermitidos = getIntervalosBoletoPermitidos(valorTotal);
+  const intervalosBoletoPermitidos = getIntervalosBoletoPermitidos(valorTotal, boletoConfig);
 
   const handleMetodo1Change = (metodo: MetodoPagamento) => {
     const newMetodos: [MetodoPagamento, MetodoPagamento] = [metodo, paymentData.metodos[1]];
@@ -275,11 +281,11 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
             <Info className="h-4 w-4 text-blue-300 mt-0.5 shrink-0" />
             <div className="text-xs text-blue-100/90">
               <strong className="text-blue-200">Regra do boleto:</strong> a venda foi
-              ajustada automaticamente para {BOLETO_ENTRADA_PERCENTUAL}% de entrada
-              à vista no Método 1 e os {100 - BOLETO_ENTRADA_PERCENTUAL}% restantes
-              em boleto no Método 2 {intervalosBoletoPermitidos.length === 1
-                ? `com intervalo fixo de ${BOLETO_INTERVALO_DIAS} dias`
-                : `com intervalo selecionável entre ${intervalosBoletoPermitidos.join(', ')} dias (venda acima de R$ ${BOLETO_LIMITE_INTERVALO_FLEXIVEL.toLocaleString('pt-BR')})`}.
+              ajustada automaticamente para no mínimo {entradaPct}% de entrada
+              à vista no Método 1 e o restante em boleto no Método 2 (até {boletoConfig.parcelasMax} parcelas)
+              {intervalosBoletoPermitidos.length === 1
+                ? ` com intervalo fixo de ${boletoConfig.intervaloPadrao} dias`
+                : ` com intervalo entre ${intervalosBoletoPermitidos.join(', ')} dias (vendas até R$ ${boletoConfig.valorLimiteFlex.toLocaleString('pt-BR')})`}.
             </div>
           </div>
         )}
@@ -314,13 +320,13 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
               hideEmpresaReceptora={hideEmpresaReceptora}
               titulo={
                 regraBoletoAtiva
-                  ? `Método 1 (Entrada ${BOLETO_ENTRADA_PERCENTUAL}% — À Vista)`
+                  ? `Método 1 (Entrada ≥ ${entradaPct}% — À Vista)`
                   : paymentData.usar_dois_metodos ? "Método 1 (Entrada)" : "Método de Pagamento"
               }
-              valorFixo={!paymentData.usar_dois_metodos || regraBoletoAtiva}
+              valorFixo={!paymentData.usar_dois_metodos}
               valorLabel={
                 regraBoletoAtiva
-                  ? `Entrada (${BOLETO_ENTRADA_PERCENTUAL}%)`
+                  ? `Entrada (mín ${entradaPct}%)`
                   : paymentData.usar_dois_metodos ? "Valor da Entrada *" : "Valor Total"
               }
               tipoTravado={regraBoletoAtiva ? "a_vista" : undefined}
@@ -352,11 +358,12 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
                 empresas={empresas}
                 isLoadingEmpresas={isLoadingEmpresas}
                 hideEmpresaReceptora={hideEmpresaReceptora}
-                titulo={regraBoletoAtiva ? `Método 2 (Boleto — ${100 - BOLETO_ENTRADA_PERCENTUAL}%)` : "Método 2 (Restante)"}
+                titulo={regraBoletoAtiva ? `Método 2 (Boleto — restante)` : "Método 2 (Restante)"}
                 valorFixo={true}
                 valorLabel="Valor Restante"
                 tipoTravado={regraBoletoAtiva ? "boleto" : undefined}
                 intervalosBoletoPermitidos={regraBoletoAtiva ? intervalosBoletoPermitidos : undefined}
+                parcelasBoletoMax={regraBoletoAtiva ? boletoConfig.parcelasMax : undefined}
               />
 
               {(metodo2.tipo === 'boleto' || metodo2.tipo === 'cartao_credito') && metodo2.data_pagamento && valorMetodo2 > 0 && (
