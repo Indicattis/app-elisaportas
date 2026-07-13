@@ -1,20 +1,29 @@
-## Problema
+## Objetivo
 
-Em `/direcao/vendas/todas` (`src/pages/direcao/VendasDirecao.tsx`) a coluna Temperatura está com a lógica invertida em relação ao restante do sistema:
+Na tela `/direcao/vendas/todas`, inverter a exibição da coluna **Temperatura** para que:
+- `temperatura = true` → **Fria** (azul, ❄️)
+- `temperatura = false` → **Quente** (laranja, 🔥)
 
-- **VendasDirecao (linhas 771-789 e 148-165):** `venda_presencial === true` é exibido como **"Frio"** e ao clicar mostra toast "Marcada como Fria".
-- **Restante do sistema** (`PedidoDetalhesSheet.tsx` linha 842 e 1273, `descontoTiers.ts`, `useVendas.ts`): `venda_presencial === true` = **"Quente"** (venda presencial → cliente quente). Esta é a convenção correta, pois `venda_presencial` também habilita o tier de desconto presencial.
+Os valores no banco **não serão alterados** — só muda o que aparece na tela e no toggle desta página.
 
-## Correção
+## Alterações
 
-Em `src/pages/direcao/VendasDirecao.tsx`, apenas na coluna Temperatura:
+Arquivo: `src/pages/direcao/VendasDirecao.tsx`
 
-1. **Case `'temperatura'` (linhas 771-790):** trocar
-   - `isFrio = venda_presencial === true` → `isFrio = venda_presencial === false`
-   - `isQuente = venda_presencial === false` → `isQuente = venda_presencial === true`
+1. **Renderização da célula (linhas ~771-774)** — trocar as condições:
+   - `isFrio = venda.temperatura === true` (antes: `=== false`)
+   - `isQuente = venda.temperatura === false` (antes: `=== true`)
+   - Labels e cores seguem esses novos flags.
 
-2. **`toggleTemperatura` (linhas 148-165):** ajustar o toast para refletir o novo valor corretamente
-   - `novo ? 'Marcada como Fria' : 'Marcada como Quente'` → `novo ? 'Marcada como Quente' : 'Marcada como Fria'`
-   - (a lógica de gravação `venda_presencial: novo` permanece — só o rótulo mudava)
+2. **Toast do toggle (linha ~159)** — inverter mensagem:
+   - `novo ? 'Marcada como Fria' : 'Marcada como Quente'`
 
-Nenhum outro arquivo é afetado; a coluna passa a exibir a mesma convenção do drawer de pedido em `/direcao/gestao-fabrica`.
+3. **Ordenação da coluna (linha ~415)** — sem mudança funcional necessária; a ordenação continua agrupando por valor booleano.
+
+4. **`aptoFrio` (linha ~99)** — manter como está (`temperatura === false`) **ou** inverter? Preciso confirmar isto no próximo passo — essa variável parece controlar cálculo de desconto, não é exibição. **Vou deixar como está**, pois o usuário pediu apenas correção da exibição da coluna.
+
+## Fora do escopo
+
+- Não altero outras telas (faturamento, vendas novas, edição, etc.).
+- Não altero migração ou dados no banco.
+- Não altero lógica de desconto de venda fria.
