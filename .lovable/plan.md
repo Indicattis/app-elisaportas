@@ -1,28 +1,30 @@
-## Adicionar página read-only de Regras de Vendas no hub /direcao/vendas
+## Permitir dispensa de contrato em /direcao/vendas/todas
 
-### 1. Novo item no menu do hub
-Arquivo: `src/pages/direcao/VendasHubDirecao.tsx`
-- Adicionar item em `menuItems`:
-  - label: "Regras de Vendas"
-  - icon: `BookOpen` (lucide-react)
-  - path: `/direcao/vendas/regras`
-  - routePrefix: `direcao_vendas`
-- Posicionar antes de "CRM".
+### Objetivo
+Na tabela de vendas em `src/pages/direcao/VendasDirecao.tsx`, permitir que o usuário com acesso à página dispense o contrato de uma venda que ainda não tem contrato assinado nem foi dispensada.
 
-### 2. Nova página read-only
-Arquivo novo: `src/pages/direcao/RegrasVendasView.tsx`
-- Reaproveita `useRegrasVendas()` para ler os valores atuais.
-- Layout no padrão `MinimalistLayout` com breadcrumbs Home › Direção › Vendas › Regras de Vendas e `backPath="/direcao/vendas"`.
-- Renderiza todas as regras em cards/acordeões seguindo a mesma estrutura visual de `RegrasVendasDirecao.tsx`, mas:
-  - Sem inputs editáveis, sem `draftRegras`, sem botão salvar.
-  - Cada valor exibido como texto/label (ex.: "Limite desconto à vista: 3%").
-  - Blocos: Descontos, Acréscimo, Boleto (inclui regra dos 60k invertida, entrada mínima, parcelas máx, intervalos), Cartão, À vista, Data de Pagamento (janela ±N dias), Campos obrigatórios, Formas de pagamento.
-- Se `isLoading`, mostra skeleton simples; se sem dados, mensagem "Nenhuma regra configurada".
+### Alterações em `src/pages/direcao/VendasDirecao.tsx`
 
-### 3. Rota
-Arquivo: `src/App.tsx` (ou onde estão as rotas de direção)
-- Registrar `<Route path="/direcao/vendas/regras" element={<RegrasVendasView />} />` dentro do mesmo wrapper de proteção usado pelas demais rotas `/direcao/vendas/*`.
+1. Estados novos:
+   - `dispensarVenda: VendaRow | null`
+   - `dispensandoId: string | null`
+
+2. Célula `faturada` (por volta da linha 733):
+   - Quando `!venda.contrato_url && !venda.contrato_dispensado && !venda.dispensada_sistema`, além do rótulo "Sem contrato" já existente, exibir um botão pequeno "Dispensar" (ícone `FileX` ou `MinusCircle`) logo abaixo/ao lado que, ao clicar, faz `e.stopPropagation()` e chama `setDispensarVenda(venda)`.
+   - Quando `venda.contrato_dispensado === true`, trocar o texto "Sem contrato" por "Contrato dispensado" em tom mais neutro (white/40).
+
+3. Novo `AlertDialog` de confirmação (fim do JSX, seguindo padrão de `src/pages/vendas/ContratosVendas.tsx` linhas 782–825):
+   - Título: "Dispensar contrato?"
+   - Mensagem: "A venda de {cliente_nome} será marcada como sem necessidade de contrato assinado. Esta ação fica registrada e pode ser revertida pela equipe administrativa."
+   - Ao confirmar:
+     - `setDispensandoId(dispensarVenda.id)`
+     - `supabase.from('vendas').update({ contrato_dispensado: true, contrato_dispensado_em: new Date().toISOString(), contrato_dispensado_por: user?.id ?? null }).eq('id', dispensarVenda.id)`
+     - Em caso de sucesso: toast, `queryClient.invalidateQueries({ queryKey: ['vendas'] })`, fechar dialog.
+     - Em caso de erro: toast de erro.
+     - `finally`: limpar `dispensandoId`.
+   - Import `AlertDialog*` de `@/components/ui/alert-dialog` (já usado em outros pontos do projeto).
 
 ### Fora de escopo
-- Não alterar a página editável existente (`/direcao/estrategia/precos/regras-vendas`).
-- Nenhuma mudança de regra de negócio ou schema.
+- Nenhum novo schema. Colunas `contrato_dispensado`, `contrato_dispensado_em`, `contrato_dispensado_por` já existem em `vendas` e a política RLS já permite update para direção (mesma UI hoje é usada por atendente na página de contratos).
+- Nenhuma alteração em `useVendas`, `ContratosVendas.tsx` ou em qualquer outra tela.
+- Sem gate por senha/permissão adicional — quem tem acesso à rota `/direcao/vendas/todas` já é considerado autorizado.
