@@ -1,46 +1,56 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import type { OrcamentoFormData } from '@/types/orcamento';
-import type { OrcamentoProduto } from '@/types/produto';
-import { distribuirCustosLogisticos, criarItensLogisticosIncluso } from './costDistribution';
 
-interface OrcamentoPDFData {
-  id?: string;
-  formData: OrcamentoFormData;
-  produtos: OrcamentoProduto[];
-  calculatedTotal: number;
-  numeroOrcamento?: string;
-  valorInstalacao?: number;
-  vendedora?: {
-    nome: string;
-    cargo: string;
-    avatar_url?: string;
-  };
+interface ProdutoVenda {
+  tipo_produto: string;
+  tamanho?: string;
+  largura?: number;
+  altura?: number;
+  cor?: { nome: string; codigo_hex?: string } | null;
+  valor_produto: number;
+  valor_pintura?: number;
+  valor_instalacao?: number;
+  desconto_percentual?: number;
+  desconto_valor?: number;
+  tipo_desconto?: string;
+  quantidade?: number;
+  descricao?: string;
+  descricao_manutencao?: string;
 }
 
-interface GeneratePDFOptions {
-  id?: string;
-  numeroOrcamento?: string;
+export interface FormalizacaoVendaPDFData {
+  id: string;
+  numeroVenda?: string;
+  dataVenda: string;
+  dataPrevistaEntrega?: string;
+  cliente: {
+    nome?: string;
+    cpf?: string;
+    telefone?: string;
+    email?: string;
+    estado?: string;
+    cidade?: string;
+    cep?: string;
+    bairro?: string;
+  };
+  produtos: ProdutoVenda[];
+  valores: {
+    valorVenda: number;
+    valorFrete?: number;
+    valorInstalacao?: number;
+    valorEntrada?: number;
+    valorAReceber?: number;
+  };
+  formaPagamento?: string;
   observacoes?: string;
-  valorInstalacao?: number;
-  modalidadeInstalacao?: string;
-  vendedora?: {
-    nome: string;
-    cargo: string;
-    avatar_url?: string;
+  atendente?: {
+    nome?: string;
+    cargo?: string;
+    foto_perfil_url?: string;
   };
 }
 
-export const generateOrcamentoPDF = (formData: OrcamentoFormData, valorTotal: number, options?: GeneratePDFOptions) => {
-  const data: OrcamentoPDFData = {
-    id: options?.id,
-    formData,
-    produtos: formData.produtos || [],
-    calculatedTotal: valorTotal,
-    numeroOrcamento: options?.numeroOrcamento,
-    valorInstalacao: options?.valorInstalacao,
-    vendedora: options?.vendedora
-  };
+export const generateFormalizacaoVendaPDF = (data: FormalizacaoVendaPDFData) => {
   const pdf = new jsPDF();
   const pageWidth = pdf.internal.pageSize.width;
   const margin = 10;
@@ -49,13 +59,20 @@ export const generateOrcamentoPDF = (formData: OrcamentoFormData, valorTotal: nu
   // Configuração de cores
   const primaryColor = [41, 128, 185] as [number, number, number];
   const grayColor = [128, 128, 128] as [number, number, number];
-  const lightGrayColor = [245, 245, 245] as [number, number, number];
+  const successColor = [34, 139, 34] as [number, number, number];
   
   // Configurar fonte padrão como sans-serif
   pdf.setFont('helvetica', 'normal');
 
   const formatCurrency = (value: number) => {
     return `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+  };
+
+  const formatDate = (dateStr?: string) => {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    return d.toLocaleDateString('pt-BR');
   };
 
   const getTipoProdutoLabel = (tipo: string) => {
@@ -65,7 +82,8 @@ export const generateOrcamentoPDF = (formData: OrcamentoFormData, valorTotal: nu
       acessorio: 'Acessório',
       manutencao: 'Manutenção',
       adicional: 'Adicional',
-      pintura_epoxi: 'Pintura Epóxi'
+      pintura_epoxi: 'Pintura Epóxi',
+      instalacao: 'Instalação',
     };
     return labels[tipo] || tipo;
   };
@@ -107,16 +125,16 @@ export const generateOrcamentoPDF = (formData: OrcamentoFormData, valorTotal: nu
   yPosition += 25;
 
   // Título do documento e número
-  pdf.setFontSize(16);
+  pdf.setFontSize(15);
   pdf.setTextColor(0, 0, 0);
   pdf.setFont('helvetica', 'bold');
-  pdf.text('#Proposta', margin, yPosition);
-  
-  const numeroOrcamento = data.numeroOrcamento || `ORC-${new Date().getFullYear()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-  pdf.setFontSize(12);
+  pdf.text('FORMALIZAÇÃO DE VENDA', margin, yPosition);
+
+  const numeroVenda = data.numeroVenda || `VND-${(data.id || '').slice(-8).toUpperCase()}`;
+  pdf.setFontSize(10);
   pdf.setFont('helvetica', 'normal');
-  pdf.text(`Nº: ${numeroOrcamento}`, 40, yPosition);
-  pdf.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth - margin - 60, yPosition);
+  pdf.text(`Nº: ${numeroVenda}`, pageWidth - margin - 60, yPosition - 4);
+  pdf.text(`Data: ${formatDate(data.dataVenda) || new Date().toLocaleDateString('pt-BR')}`, pageWidth - margin - 60, yPosition + 2);
   
   yPosition += 10;
 
@@ -128,20 +146,22 @@ export const generateOrcamentoPDF = (formData: OrcamentoFormData, valorTotal: nu
 
   // Fundo cinza claro para a seção do cliente
   pdf.setFillColor(245, 245, 245);
-  pdf.rect(margin, yPosition - 3, pageWidth - (margin * 2), 30, 'F');
+  pdf.rect(margin, yPosition - 3, pageWidth - (margin * 2), 34, 'F');
   
   pdf.setFontSize(8);
   pdf.setFont('helvetica', 'normal');
   pdf.setTextColor(0, 0, 0);
-  pdf.text(`Nome: ${data.formData.cliente_nome || 'Não informado'}`, margin + 3, yPosition + 3);
-  pdf.text(`CPF: ${data.formData.cliente_cpf || 'Não informado'}`, margin + 3, yPosition + 9);
-  pdf.text(`Telefone: ${data.formData.cliente_telefone || 'Não informado'}`, margin + 3, yPosition + 15);
-  
-  pdf.text(`Estado: ${data.formData.cliente_estado || 'Não informado'}`, pageWidth/2, yPosition + 3);
-  pdf.text(`Cidade: ${data.formData.cliente_cidade || 'Não informado'}`, pageWidth/2, yPosition + 9);
-  pdf.text(`CEP: ${data.formData.cliente_cep || 'Não informado'}`, pageWidth/2, yPosition + 15);
-  
-  yPosition += 35;
+  pdf.text(`Nome: ${data.cliente.nome || 'Não informado'}`, margin + 3, yPosition + 3);
+  pdf.text(`CPF: ${data.cliente.cpf || 'Não informado'}`, margin + 3, yPosition + 9);
+  pdf.text(`Telefone: ${data.cliente.telefone || 'Não informado'}`, margin + 3, yPosition + 15);
+  pdf.text(`Email: ${data.cliente.email || 'Não informado'}`, margin + 3, yPosition + 21);
+
+  pdf.text(`Estado: ${data.cliente.estado || 'Não informado'}`, pageWidth / 2, yPosition + 3);
+  pdf.text(`Cidade: ${data.cliente.cidade || 'Não informado'}`, pageWidth / 2, yPosition + 9);
+  pdf.text(`CEP: ${data.cliente.cep || 'Não informado'}`, pageWidth / 2, yPosition + 15);
+  pdf.text(`Bairro: ${data.cliente.bairro || 'Não informado'}`, pageWidth / 2, yPosition + 21);
+
+  yPosition += 38;
 
   // Informações da vendedora
   pdf.setFontSize(12);
@@ -151,24 +171,21 @@ export const generateOrcamentoPDF = (formData: OrcamentoFormData, valorTotal: nu
 
   // Adicionar avatar do atendente
   try {
-    // Verifica se há avatar do vendedor, senão usa a logo da empresa como fallback
-    if (data.vendedora?.avatar_url && data.vendedora.avatar_url !== '') {
-      pdf.addImage(data.vendedora.avatar_url, 'PNG', margin, yPosition, 12, 12);
+    if (data.atendente?.foto_perfil_url) {
+      pdf.addImage(data.atendente.foto_perfil_url, 'PNG', margin, yPosition, 12, 12);
     } else {
-      // Usar logo da empresa como fallback
       pdf.addImage('/lovable-uploads/9f8b49f3-817e-40f0-87b0-856e0cbe536a.png', 'PNG', margin, yPosition, 20, 20);
     }
   } catch (error) {
-    // Fallback para círculo se a imagem não carregar
     pdf.setFillColor(200, 200, 200);
     pdf.circle(margin + 10, yPosition + 10, 10, 'F');
   }
 
   pdf.setFontSize(8);
   pdf.setFont('helvetica', 'bold');
-  pdf.text(`${data.vendedora?.nome || 'Consultora de Vendas'}`, margin + 15, yPosition + 4);
+  pdf.text(`${data.atendente?.nome || 'Consultor(a) de Vendas'}`, margin + 15, yPosition + 4);
   pdf.setFont('helvetica', 'normal');
-  pdf.text(`${data.vendedora?.cargo || 'Departamento Comercial'}`, margin + 15, yPosition + 8);
+  pdf.text(`${data.atendente?.cargo || 'Departamento Comercial'}`, margin + 15, yPosition + 8);
   
   yPosition += 20;
 
@@ -178,81 +195,50 @@ export const generateOrcamentoPDF = (formData: OrcamentoFormData, valorTotal: nu
   pdf.text('Produtos e Serviços', margin, yPosition);
   yPosition += 5;
 
-  if (data.produtos.length > 0) {
-    // Distribuir custos logísticos entre produtos de porta
-    const valorFrete = parseFloat(data.formData.valor_frete) || 0;
-    const valorInstalacao = data.valorInstalacao || 0;
-    const modalidadeInstalacao = (data.formData as any).modalidade_instalacao || 'instalacao_elisa';
-    
-    // Chamar a função para distribuir os custos proporcionalmente nas portas
-    const produtosComCustosDistribuidos = distribuirCustosLogisticos(
-      data.produtos,
-      valorFrete,
-      valorInstalacao,
-      modalidadeInstalacao
-    );
-    
-    // Preparar dados da tabela com produtos
-    const tableData = produtosComCustosDistribuidos.map(produto => {
+  if (data.produtos && data.produtos.length > 0) {
+    const tableData = data.produtos.map(produto => {
       const categoria = getTipoProdutoLabel(produto.tipo_produto);
-      
-      let produto_descricao = '';
-      
-      // Para produtos de porta, incluir medidas
+      let descricao = '';
+
       if (produto.tipo_produto === 'porta_enrolar' || produto.tipo_produto === 'porta_social') {
-        if (produto.medidas) {
-          produto_descricao = `${categoria} ${produto.medidas}`;
+        if (produto.largura && produto.altura) {
+          descricao = `${categoria} ${produto.largura.toFixed(2)}m x ${produto.altura.toFixed(2)}m`;
+        } else if (produto.tamanho) {
+          descricao = `${categoria} ${produto.tamanho}`;
         } else {
-          produto_descricao = categoria;
+          descricao = categoria;
         }
-      }
-      // Para acessórios, usar a descrição se disponível
-      else if (produto.tipo_produto === 'acessorio') {
-        produto_descricao = produto.descricao || 'Acessório';
-      }
-      // Para manutenção, usar a descrição de manutenção
-      else if (produto.tipo_produto === 'manutencao') {
-        produto_descricao = produto.descricao_manutencao || 'Serviço de manutenção';
-      }
-      // Para adicionais, usar a descrição
-      else if (produto.tipo_produto === 'adicional') {
-        produto_descricao = produto.descricao || 'Adicional';
-      }
-      // Para pintura epóxi, buscar o nome da cor
-      else if (produto.tipo_produto === 'pintura_epoxi') {
-        // Aqui seria ideal ter o nome da cor, mas por enquanto mantemos uma descrição padrão
-        produto_descricao = 'Pintura Epóxi';
-      }
-      else {
-        produto_descricao = categoria;
+        if (produto.cor?.nome) descricao += ` - ${produto.cor.nome}`;
+      } else if (produto.tipo_produto === 'pintura_epoxi') {
+        descricao = produto.cor?.nome ? `Pintura Epóxi - ${produto.cor.nome}` : 'Pintura Epóxi';
+      } else if (produto.tipo_produto === 'manutencao') {
+        descricao = produto.descricao_manutencao || 'Serviço de manutenção';
+      } else {
+        descricao = produto.descricao || categoria;
       }
 
-      const quantidade = 1; // Por padrão 1 unidade, pode ser modificado conforme necessário
-      const precoUnitario = produto.valor;
-      const desconto = produto.desconto_percentual || 0;
-      const precoFinal = precoUnitario - (precoUnitario * desconto / 100);
+      const quantidade = produto.quantidade || 1;
+      const precoUnitario = (produto.valor_produto || 0) + (produto.valor_pintura || 0) + (produto.valor_instalacao || 0);
+
+      let desconto = 0;
+      if (produto.tipo_desconto === 'percentual' && produto.desconto_percentual) {
+        desconto = precoUnitario * (produto.desconto_percentual / 100);
+      } else if (produto.desconto_valor) {
+        desconto = produto.desconto_valor;
+      } else if (produto.desconto_percentual) {
+        desconto = precoUnitario * (produto.desconto_percentual / 100);
+      }
+
+      const precoFinal = (precoUnitario - desconto) * quantidade;
 
       return [
         categoria,
-        produto_descricao,
+        descricao,
         quantidade.toString(),
         formatCurrency(precoUnitario),
-        desconto > 0 ? `${desconto}%` : '-',
+        desconto > 0 ? formatCurrency(desconto) : '-',
         formatCurrency(precoFinal)
       ];
-    });
-
-    // Adicionar itens logísticos como "Incluso"
-    const itensLogisticos = criarItensLogisticosIncluso('instalacao_elisa');
-    itensLogisticos.forEach(item => {
-      tableData.push([
-        'Serviço',
-        `${item.descricao}: Incluso`,
-        '1',
-        formatCurrency(0),
-        '-',
-        formatCurrency(0)
-      ]);
     });
 
     autoTable(pdf, {
@@ -291,57 +277,95 @@ export const generateOrcamentoPDF = (formData: OrcamentoFormData, valorTotal: nu
   // Resumo
   pdf.setFontSize(12);
   pdf.setFont('helvetica', 'bold');
-  pdf.text('RESUMO', margin, yPosition);
+  pdf.text('RESUMO FINANCEIRO', margin, yPosition);
   yPosition += 10;
 
-  pdf.setFontSize(8);
+  pdf.setFontSize(9);
   pdf.setFont('helvetica', 'normal');
   
-  // Quantidade de itens - alinhado à direita máxima
-  pdf.text('Quantidade de itens:', margin, yPosition);
-  const qtyText = data.produtos.length.toString();
-  const qtyTextWidth = pdf.getTextWidth(qtyText);
-  pdf.text(qtyText, pageWidth - margin - qtyTextWidth, yPosition);
-  yPosition += 8;
+  const valorProdutos = (data.valores.valorVenda || 0) - (data.valores.valorFrete || 0);
+  pdf.text('Valor dos Produtos:', margin, yPosition);
+  const vpText = formatCurrency(valorProdutos);
+  pdf.text(vpText, pageWidth - margin - pdf.getTextWidth(vpText), yPosition);
+  yPosition += 7;
 
-  // Desconto se houver - alinhado à direita máxima
-  if (data.formData.desconto_total_percentual > 0) {
-    const subtotal = data.calculatedTotal / (1 - data.formData.desconto_total_percentual / 100);
-    const desconto = subtotal - data.calculatedTotal;
-    
-    pdf.text('Subtotal:', margin, yPosition);
-    const subtotalText = formatCurrency(subtotal);
-    const subtotalTextWidth = pdf.getTextWidth(subtotalText);
-    pdf.text(subtotalText, pageWidth - margin - subtotalTextWidth, yPosition);
-    yPosition += 8;
-    
-    pdf.setTextColor(0, 150, 0); // Verde para desconto
-    pdf.text(`Desconto (${data.formData.desconto_total_percentual}%):`, margin, yPosition);
-    const descontoText = `-${formatCurrency(desconto)}`;
-    const descontoTextWidth = pdf.getTextWidth(descontoText);
-    pdf.text(descontoText, pageWidth - margin - descontoTextWidth, yPosition);
-    yPosition += 8;
-    pdf.setTextColor(0, 0, 0); // Voltar para preto
+  if (data.valores.valorFrete && data.valores.valorFrete > 0) {
+    pdf.text('Frete:', margin, yPosition);
+    const t = formatCurrency(data.valores.valorFrete);
+    pdf.text(t, pageWidth - margin - pdf.getTextWidth(t), yPosition);
+    yPosition += 7;
   }
 
   // Linha antes do total
   pdf.setDrawColor(...grayColor);
   pdf.setLineWidth(0.5);
   pdf.line(margin, yPosition, pageWidth - margin, yPosition);
-  yPosition += 10;
+  yPosition += 8;
 
   // Total - alinhado à direita máxima
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(14);
   pdf.text('TOTAL:', margin, yPosition);
-  const totalText = formatCurrency(data.calculatedTotal);
+  const totalText = formatCurrency(data.valores.valorVenda || 0);
   const totalTextWidth = pdf.getTextWidth(totalText);
   pdf.text(totalText, pageWidth - margin - totalTextWidth, yPosition);
   
-  yPosition += 20;
+  yPosition += 12;
+
+  // Entrada / Saldo
+  if (data.valores.valorEntrada && data.valores.valorEntrada > 0) {
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(9);
+    pdf.setTextColor(...successColor);
+    pdf.text(`Entrada: ${formatCurrency(data.valores.valorEntrada)}`, margin, yPosition);
+    if (data.valores.valorAReceber && data.valores.valorAReceber > 0) {
+      pdf.setTextColor(0, 0, 0);
+      const saldoText = `Saldo a receber: ${formatCurrency(data.valores.valorAReceber)}`;
+      pdf.text(saldoText, pageWidth - margin - pdf.getTextWidth(saldoText), yPosition);
+    }
+    pdf.setTextColor(0, 0, 0);
+    yPosition += 8;
+  }
+
+  // Forma de pagamento
+  if (data.formaPagamento) {
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(9);
+    pdf.setTextColor(0, 0, 0);
+    pdf.text(`Forma de Pagamento: ${data.formaPagamento}`, margin, yPosition);
+    yPosition += 7;
+  }
+
+  // Previsão de entrega
+  if (data.dataPrevistaEntrega) {
+    pdf.text(`Previsão de Entrega: ${formatDate(data.dataPrevistaEntrega)}`, margin, yPosition);
+    yPosition += 7;
+  }
+
+  yPosition += 6;
+
+  // Bloco de confirmação
+  pdf.setFontSize(11);
+  pdf.setFont('helvetica', 'bold');
+  pdf.setTextColor(0, 0, 0);
+  pdf.text('CONFIRMAÇÃO DA VENDA', margin, yPosition);
+  yPosition += 7;
+
+  pdf.setFontSize(9);
+  pdf.setFont('helvetica', 'normal');
+  pdf.setTextColor(60, 60, 60);
+  const confirmacaoLinhas = pdf.splitTextToSize(
+    'Este documento formaliza a compra e venda dos produtos e serviços descritos acima, ratificando os valores, prazos e condições acordados entre as partes. Ao efetuar o pagamento, o cliente declara estar ciente e de acordo com as condições, garantias e responsabilidades descritas neste documento.',
+    pageWidth - 2 * margin
+  );
+  confirmacaoLinhas.forEach((l: string) => {
+    pdf.text(l, margin, yPosition);
+    yPosition += 5;
+  });
+  yPosition += 4;
 
   // Seção de Observações (se houver)
-  if (options?.observacoes && options.observacoes.trim()) {
+  if (data.observacoes && data.observacoes.trim()) {
     pdf.setFontSize(12);
     pdf.setFont('helvetica', 'bold');
     pdf.setTextColor(0, 0, 0);
@@ -352,8 +376,7 @@ export const generateOrcamentoPDF = (formData: OrcamentoFormData, valorTotal: nu
     pdf.setFont('helvetica', 'normal');
     pdf.setTextColor(...grayColor);
     
-    // Quebrar texto longo em múltiplas linhas
-    const linhasObs = pdf.splitTextToSize(options.observacoes, pageWidth - 2 * margin);
+    const linhasObs = pdf.splitTextToSize(data.observacoes, pageWidth - 2 * margin);
     linhasObs.forEach((linha: string) => {
       pdf.text(linha, margin, yPosition);
       yPosition += 5;
@@ -361,29 +384,12 @@ export const generateOrcamentoPDF = (formData: OrcamentoFormData, valorTotal: nu
     yPosition += 10;
   }
 
-  // Verificar se há espaço suficiente para informações de pagamento
-  // const remainingSpace = pdf.internal.pageSize.height - yPosition - 60; // 60 para o rodapé
-  
-  // if (remainingSpace < 30) {
-  //   pdf.addPage();
-  //   yPosition = 30;
-  // }
-
-  // Informações de pagamento
-  // pdf.setFontSize(11);
-  // pdf.setFont('helvetica', 'normal');
-  // pdf.text(`Forma de Pagamento: ${data.formData.forma_pagamento || 'Não informado'}`, margin, yPosition);
-  // yPosition += 6;
-  
-  // const modalidade = data.formData.modalidade_instalacao === 'instalacao_elisa' ? 'Instalação Elisa' : 'Autorizado Elisa';
-  // pdf.text(`Modalidade de Instalação: ${modalidade}`, margin, yPosition);
-  
   // Rodapé sempre no final da página
   yPosition = pdf.internal.pageSize.height - 15;
   pdf.setFontSize(8);
   pdf.setTextColor(...grayColor);
-  pdf.text('Este orçamento tem validade de 30 dias.', margin, yPosition);
-  pdf.text('Elisa Portas LTDA - A maior fábrica de portas de enrolar do Sul do País', margin, yPosition + 6);
+  pdf.text('Elisa Portas LTDA - Documento de formalização de venda.', margin, yPosition);
+  pdf.text('A maior fábrica de portas de enrolar do Sul do País', margin, yPosition + 6);
   pdf.text('Contato: comercial@elisaportas.com.br', margin, yPosition + 12);
 
   //NOVA PÁGINA
@@ -511,7 +517,8 @@ export const generateOrcamentoPDF = (formData: OrcamentoFormData, valorTotal: nu
   yPosition += 5;
   
   // Salvar o PDF
-  const fileName = `orcamento-${numeroOrcamento}.pdf`;
+  const dateStr = new Date().toISOString().split('T')[0];
+  const fileName = `formalizacao-venda-${numeroVenda}-${dateStr}.pdf`;
   pdf.save(fileName);
   
   return fileName;
