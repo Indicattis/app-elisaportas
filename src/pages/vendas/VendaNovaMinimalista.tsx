@@ -30,6 +30,7 @@ import { PinturaRapidaModal } from '@/components/vendas/PinturaRapidaModal';
 import { PinturaItemCatalogoModal } from '@/components/vendas/PinturaItemCatalogoModal';
 import { validarDesconto, getTipoAutorizacaoNecessaria, ConfigLimites } from '@/utils/descontoVendasRules';
 import { useConfiguracoesVendas } from '@/hooks/useConfiguracoesVendas';
+import { useRegrasVendas } from '@/hooks/useRegrasVendas';
 import { useAuth } from '@/hooks/useAuth';
 import { useFretesCidades } from '@/hooks/useFretesCidades';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -662,7 +663,7 @@ export default function VendaNovaMinimalista() {
     }
 
     // Regra do boleto: 70% entrada à vista + 30% boleto com 21 dias
-    const regraBoleto = validarRegraBoleto(pagamentoData, valorTotalMemo);
+    const regraBoleto = validarRegraBoleto(pagamentoData, valorTotalMemo, boletoConfig);
     if (regraBoleto.ok === false) {
       sonnerToast.error('Regra do boleto não atendida', {
         description: regraBoleto.mensagem,
