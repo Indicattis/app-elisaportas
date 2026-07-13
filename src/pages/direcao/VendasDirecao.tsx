@@ -140,6 +140,52 @@ export default function VendasDirecao() {
   const [updatingExpedicaoId, setUpdatingExpedicaoId] = useState<string | null>(null);
   const [dispensarVenda, setDispensarVenda] = useState<any | null>(null);
   const [dispensandoId, setDispensandoId] = useState<string | null>(null);
+  const [downloadingPdfId, setDownloadingPdfId] = useState<string | null>(null);
+
+  const handleDownloadFormalizacao = useCallback(async (venda: any) => {
+    if (downloadingPdfId) return;
+    setDownloadingPdfId(venda.id);
+    try {
+      const { data: produtos, error } = await supabase
+        .from('produtos_vendas')
+        .select('*, cor:catalogo_cores(nome, codigo_hex)')
+        .eq('venda_id', venda.id);
+      if (error) throw error;
+      generateFormalizacaoVendaPDF({
+        id: venda.id,
+        dataVenda: venda.data_venda,
+        dataPrevistaEntrega: venda.data_prevista_entrega,
+        cliente: {
+          nome: venda.cliente_nome,
+          cpf: venda.cpf_cliente,
+          telefone: venda.cliente_telefone,
+          email: venda.cliente_email,
+          estado: venda.estado,
+          cidade: venda.cidade,
+          cep: venda.cep,
+          bairro: venda.bairro,
+        },
+        produtos: (produtos as any) || [],
+        valores: {
+          valorVenda: venda.valor_venda || 0,
+          valorFrete: venda.valor_frete,
+          valorInstalacao: venda.valor_instalacao,
+          valorEntrada: venda.valor_entrada,
+          valorAReceber: venda.valor_a_receber,
+        },
+        formaPagamento: venda.forma_pagamento || venda.metodo_pagamento,
+        observacoes: venda.observacoes_venda,
+        atendente: venda.atendente
+          ? { nome: venda.atendente.nome, foto_perfil_url: venda.atendente.foto_perfil_url }
+          : undefined,
+      });
+      toast({ title: 'PDF gerado', description: 'Formalização da venda baixada.' });
+    } catch (e: any) {
+      toast({ title: 'Erro ao gerar PDF', description: e?.message, variant: 'destructive' });
+    } finally {
+      setDownloadingPdfId(null);
+    }
+  }, [downloadingPdfId, toast]);
 
   const updateExpedicao = useCallback(async (vendaId: string, novoTipo: string | null) => {
     if (updatingExpedicaoId) return;
