@@ -311,6 +311,7 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
               onChange={handleMetodo1Change}
               empresas={empresas}
               isLoadingEmpresas={isLoadingEmpresas}
+              hideEmpresaReceptora={hideEmpresaReceptora}
               titulo={
                 regraBoletoAtiva
                   ? `Método 1 (Entrada ${BOLETO_ENTRADA_PERCENTUAL}% — À Vista)`
@@ -350,6 +351,7 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
                 onChange={handleMetodo2Change}
                 empresas={empresas}
                 isLoadingEmpresas={isLoadingEmpresas}
+                hideEmpresaReceptora={hideEmpresaReceptora}
                 titulo={regraBoletoAtiva ? `Método 2 (Boleto — ${100 - BOLETO_ENTRADA_PERCENTUAL}%)` : "Método 2 (Restante)"}
                 valorFixo={true}
                 valorLabel="Valor Restante"
