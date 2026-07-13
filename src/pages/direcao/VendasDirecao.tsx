@@ -769,8 +769,8 @@ export default function VendasDirecao() {
         );
       }
       case 'temperatura': {
-        const isFrio = venda.temperatura === true;
-        const isQuente = venda.temperatura === false;
+        const isFrio = venda.temperatura === false;
+        const isQuente = venda.temperatura === true;
         const label = isQuente ? 'Quente' : isFrio ? 'Frio' : '-';
         const color = isQuente ? 'text-orange-400' : isFrio ? 'text-blue-400' : 'text-white/30';
         return (
