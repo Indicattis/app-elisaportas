@@ -913,6 +913,7 @@ export default function VendaNovaMinimalista() {
             limitePermitido: validacaoDescontoMemo.limitePermitido,
             limiteMaximo: validacaoDescontoMemo.limiteMaximoResponsavel ?? validacaoDescontoMemo.limitePermitido,
           }}
+          hideEmpresaReceptora
         />
 
         {/* Desconto / Acréscimo Global */}

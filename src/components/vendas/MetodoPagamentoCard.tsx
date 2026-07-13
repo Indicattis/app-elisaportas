@@ -55,6 +55,7 @@ interface MetodoPagamentoCardProps {
    * Se contiver 1 item, o select fica travado nesse valor.
    */
   intervalosBoletoPermitidos?: number[];
+  hideEmpresaReceptora?: boolean;
 }
 
 export function MetodoPagamentoCard({
@@ -68,6 +69,7 @@ export function MetodoPagamentoCard({
   tipoTravado,
   intervaloBoletoTravado,
   intervalosBoletoPermitidos,
+  hideEmpresaReceptora = false,
 }: MetodoPagamentoCardProps) {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -137,7 +139,7 @@ export function MetodoPagamentoCard({
       {metodo.tipo && (
         <div className="space-y-4">
           {/* Linha com Valor, Data e Empresa */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className={cn("grid grid-cols-1 gap-3", hideEmpresaReceptora ? "md:grid-cols-2" : "md:grid-cols-3")}>
             <div className="space-y-1">
               <Label className={labelClass}>{valorLabel}</Label>
               {valorFixo ? (
@@ -187,6 +189,7 @@ export function MetodoPagamentoCard({
               </Popover>
             </div>
 
+            {!hideEmpresaReceptora && (
             <div className="space-y-1">
               <Label className={labelClass}>Empresa Receptora *</Label>
               <Select
@@ -205,6 +208,7 @@ export function MetodoPagamentoCard({
                 </SelectContent>
               </Select>
             </div>
+            )}
           </div>
 
           {/* Checkbox "Já foi pago?" */}
