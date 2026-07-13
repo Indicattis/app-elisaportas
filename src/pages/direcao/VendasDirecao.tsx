@@ -136,6 +136,8 @@ export default function VendasDirecao() {
   const { toast } = useToast();
   const [togglingTempId, setTogglingTempId] = useState<string | null>(null);
   const [updatingExpedicaoId, setUpdatingExpedicaoId] = useState<string | null>(null);
+  const [dispensarVenda, setDispensarVenda] = useState<any | null>(null);
+  const [dispensandoId, setDispensandoId] = useState<string | null>(null);
 
   const updateExpedicao = useCallback(async (vendaId: string, novoTipo: string | null) => {
     if (updatingExpedicaoId) return;
