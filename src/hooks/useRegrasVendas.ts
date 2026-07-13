@@ -42,6 +42,8 @@ export interface RegrasVendas {
   boleto_intervalo_padrao: number;
   boleto_parcelas_max: number;
 
+  pagamento_data_janela_dias: number;
+
   created_at: string;
   updated_at: string;
 }
@@ -132,6 +134,7 @@ export function useRegrasVendas() {
       intervaloPadrao: regras?.boleto_intervalo_padrao ?? 21,
       parcelasMax: regras?.boleto_parcelas_max ?? 3,
     },
+    pagamentoDataJanelaDias: regras?.pagamento_data_janela_dias ?? 5,
   };
 
   return {
