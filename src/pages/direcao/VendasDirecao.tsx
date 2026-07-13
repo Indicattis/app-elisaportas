@@ -917,10 +917,31 @@ export default function VendasDirecao() {
           </span>
         );
       }
+      case 'formalizacao': {
+        const isLoading = downloadingPdfId === venda.id;
+        return (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); handleDownloadFormalizacao(venda); }}
+                disabled={isLoading}
+                className="inline-flex items-center justify-center w-7 h-7 rounded-md bg-white/5 hover:bg-white/10 border border-white/10 disabled:opacity-50 text-white/80"
+                aria-label="Baixar formalização"
+              >
+                {isLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileDown className="w-3.5 h-3.5" />}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent className="bg-zinc-900 border-zinc-700 text-white text-xs">
+              Baixar PDF de formalização
+            </TooltipContent>
+          </Tooltip>
+        );
+      }
       default:
         return null;
     }
-  }, [metodosExtraPorVenda, toggleTemperatura, togglingTempId, limAvista, limPresencial]);
+  }, [metodosExtraPorVenda, toggleTemperatura, togglingTempId, limAvista, limPresencial, downloadingPdfId, handleDownloadFormalizacao]);
 
   // Classes responsivas por coluna
   const getColumnResponsiveClass = (columnId: string) => {
@@ -957,6 +978,7 @@ export default function VendasDirecao() {
         return 'text-right';
       case 'faturada':
       case 'temperatura':
+      case 'formalizacao':
         return 'text-center';
       default:
         return 'text-left';
