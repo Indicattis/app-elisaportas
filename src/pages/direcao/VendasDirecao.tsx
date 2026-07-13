@@ -520,9 +520,12 @@ export default function VendasDirecao() {
           };
           return (
             <Popover>
-              <PopoverTrigger asChild onClick={(e) => e.stopPropagation()}>
+              <PopoverTrigger asChild>
                 <button
                   disabled={isUpdating}
+                  onClick={(e) => e.stopPropagation()}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onMouseDown={(e) => e.stopPropagation()}
                   className="mx-auto flex items-center justify-center h-6 w-6 rounded hover:bg-white/10 transition-colors disabled:opacity-50"
                   title="Alterar expedição"
                 >
