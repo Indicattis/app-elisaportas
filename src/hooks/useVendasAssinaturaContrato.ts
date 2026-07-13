@@ -43,7 +43,7 @@ export const useVendasAssinaturaContrato = () => {
           valor_entrada,
           cidade,
           estado,
-          venda_presencial,
+          temperatura,
           contrato_url,
           contrato_dispensado,
           contrato_liberado_faturamento,
@@ -238,7 +238,7 @@ export const useVendasAssinaturaContrato = () => {
             estado: v.estado || null,
             valor_a_receber_entrega: valorAReceberEntrega,
             valor_entrada: Number((v as any).valor_entrada) || 0,
-            venda_presencial: v.venda_presencial ?? null,
+            temperatura: v.temperatura ?? null,
             cores: Array.from(coresUnicas.values()),
             portas_info: portasInfo,
             contrato_status: (v.contrato_url && v.contrato_url !== 'legado')

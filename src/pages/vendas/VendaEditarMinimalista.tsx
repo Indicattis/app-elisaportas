@@ -368,7 +368,7 @@ export default function VendaEditarMinimalista() {
                 <p className="font-medium text-white">{formatDate(venda.data_venda)}</p>
                 <div className="flex items-center gap-2 mt-2">
                   <Badge variant="secondary">{getPublicoAlvoLabel(venda.publico_alvo)}</Badge>
-                  {venda.venda_presencial && (
+                  {venda.temperatura && (
                     <Badge variant="outline" className="flex items-center gap-1 border-primary/30">
                       <Store className="h-3 w-3" />
                       Fria
@@ -522,7 +522,7 @@ export default function VendaEditarMinimalista() {
               produtos={produtosFormatados}
               onAplicarDesconto={handleAplicarDesconto}
               formaPagamento={venda.forma_pagamento || ''}
-              vendaPresencial={venda.venda_presencial || false}
+              vendaPresencial={venda.temperatura || false}
             />
 
             <CreditoVendaModal

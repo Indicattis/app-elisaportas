@@ -42,7 +42,7 @@ export const useVendasPendenteFaturamento = () => {
           valor_entrada,
           cidade,
           estado,
-          venda_presencial,
+          temperatura,
           contrato_url,
           contrato_dispensado,
           produtos_vendas (
@@ -226,7 +226,7 @@ export const useVendasPendenteFaturamento = () => {
             estado: v.estado || null,
             valor_a_receber_entrega: valorAReceberEntrega,
             valor_entrada: Number((v as any).valor_entrada) || 0,
-            venda_presencial: v.venda_presencial ?? null,
+            temperatura: v.temperatura ?? null,
             cores: Array.from(coresUnicas.values()),
             portas_info: portasInfo,
           };

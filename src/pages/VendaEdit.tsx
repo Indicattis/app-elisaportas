@@ -428,7 +428,7 @@ export default function VendaEdit() {
               <p className="font-medium">{formatDate(venda.data_venda)}</p>
               <div className="flex items-center gap-2 mt-2">
                 <Badge variant="secondary">{getPublicoAlvoLabel(venda.publico_alvo)}</Badge>
-                {venda.venda_presencial && (
+                {venda.temperatura && (
                   <Badge variant="outline" className="flex items-center gap-1">
                     <Store className="h-3 w-3" />
                     Fria
@@ -614,7 +614,7 @@ export default function VendaEdit() {
             produtos={produtosFormatados}
             onAplicarDesconto={handleAplicarDesconto}
             formaPagamento={venda.forma_pagamento || ''}
-            vendaPresencial={venda.venda_presencial || false}
+            vendaPresencial={venda.temperatura || false}
           />
 
           <CreditoVendaModal

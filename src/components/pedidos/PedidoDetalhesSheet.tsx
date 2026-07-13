@@ -246,7 +246,7 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
     const totalPct = (descontoTotal / valorTabela) * 100;
     const formaPag = vendaCompleta.forma_pagamento || '';
     const isCartao = formaPag === 'cartao_credito';
-    const isFrio = vendaCompleta.venda_presencial === false;
+    const isFrio = vendaCompleta.temperatura === true;
     const limAvista = configLimites?.avista ?? 3;
     const limPresencial = configLimites?.presencial ?? 5;
     let pctCartao = 0, pctGelo = 0, pctResp = 0;
@@ -833,13 +833,13 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
                   <h2 className="text-xl font-bold text-white truncate">
                     {venda.cliente_nome}
                   </h2>
-                  {venda.venda_presencial != null && (
+                  {venda.temperatura != null && (
                     <span className={
-                      venda.venda_presencial
-                        ? "inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded border bg-orange-500/10 text-orange-400 border-orange-500/30"
-                        : "inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded border bg-cyan-500/10 text-cyan-400 border-cyan-500/30"
+                      venda.temperatura
+                        ? "inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded border bg-cyan-500/10 text-cyan-400 border-cyan-500/30"
+                        : "inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded border bg-orange-500/10 text-orange-400 border-orange-500/30"
                     }>
-                      {venda.venda_presencial ? "🔥 Quente" : "❄️ Frio"}
+                      {venda.temperatura ? "❄️ Fria" : "🔥 Quente"}
                     </span>
                   )}
                 </div>
@@ -1250,11 +1250,11 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
                     </div>
 
                     <div className="bg-white/5 rounded-xl border border-white/10 p-3 text-center">
-                      {vendaCompleta?.venda_presencial != null ? (
-                        vendaCompleta.venda_presencial ? (
-                          <Flame className="h-4 w-4 text-orange-400 mx-auto mb-1" />
-                        ) : (
+                      {vendaCompleta?.temperatura != null ? (
+                        vendaCompleta.temperatura ? (
                           <Snowflake className="h-4 w-4 text-sky-400 mx-auto mb-1" />
+                        ) : (
+                          <Flame className="h-4 w-4 text-orange-400 mx-auto mb-1" />
                         )
                       ) : (
                         <Flame className="h-4 w-4 text-white/30 mx-auto mb-1" />
@@ -1262,15 +1262,15 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
                       <p className="text-[10px] text-white/50 uppercase">Temperatura</p>
                       <p className={cn(
                         "text-sm font-semibold",
-                        vendaCompleta?.venda_presencial == null
+                        vendaCompleta?.temperatura == null
                           ? "text-white/40"
-                          : vendaCompleta.venda_presencial
-                            ? "text-orange-400"
-                            : "text-sky-400"
+                          : vendaCompleta.temperatura
+                            ? "text-sky-400"
+                            : "text-orange-400"
                       )}>
-                        {vendaCompleta?.venda_presencial == null
+                        {vendaCompleta?.temperatura == null
                           ? '—'
-                          : vendaCompleta.venda_presencial ? 'Quente' : 'Fria'}
+                          : vendaCompleta.temperatura ? 'Fria' : 'Quente'}
                       </p>
                     </div>
                   </div>

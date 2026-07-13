@@ -1,0 +1,1 @@
+ALTER TABLE public.vendas RENAME COLUMN venda_presencial TO temperatura;

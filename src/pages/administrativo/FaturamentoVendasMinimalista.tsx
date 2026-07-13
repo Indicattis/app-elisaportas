@@ -90,7 +90,7 @@ interface Venda {
   frete_aprovado?: boolean;
   metodo_pagamento?: string | null;
   forma_pagamento?: string | null;
-  venda_presencial?: boolean;
+  temperatura?: boolean;
   portas?: any[];
   produtos?: any[];
   justificativa_nao_faturada?: string | null;
@@ -434,7 +434,7 @@ export default function FaturamentoMinimalista() {
           custo_total,
           frete_aprovado,
           forma_pagamento,
-          venda_presencial,
+          temperatura,
           justificativa_nao_faturada,
           metodo_pagamento,
           data_prevista_entrega,
@@ -592,7 +592,7 @@ export default function FaturamentoMinimalista() {
 
     const pctTotal = (totalDesconto / tabelaTotal) * 100;
     const isCartao = venda.forma_pagamento === 'cartao_credito';
-    const isFrio = venda.venda_presencial === false;
+    const isFrio = venda.temperatura === true;
 
     const limAvista = configLimites.avista;
     const limPresencial = configLimites.presencial;

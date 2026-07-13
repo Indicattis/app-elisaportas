@@ -9831,6 +9831,7 @@ export type Database = {
           quantidade_parcelas: number | null
           restante_na_instalacao: boolean | null
           status_aprovacao: string
+          temperatura: boolean
           tipo_entrega: string | null
           tipo_frete: string
           updated_at: string
@@ -9843,7 +9844,6 @@ export type Database = {
           valor_frete: number | null
           valor_instalacao: number | null
           valor_venda: number | null
-          venda_presencial: boolean
         }
         Insert: {
           atendente_id: string
@@ -9899,6 +9899,7 @@ export type Database = {
           quantidade_parcelas?: number | null
           restante_na_instalacao?: boolean | null
           status_aprovacao?: string
+          temperatura?: boolean
           tipo_entrega?: string | null
           tipo_frete?: string
           updated_at?: string
@@ -9911,7 +9912,6 @@ export type Database = {
           valor_frete?: number | null
           valor_instalacao?: number | null
           valor_venda?: number | null
-          venda_presencial?: boolean
         }
         Update: {
           atendente_id?: string
@@ -9967,6 +9967,7 @@ export type Database = {
           quantidade_parcelas?: number | null
           restante_na_instalacao?: boolean | null
           status_aprovacao?: string
+          temperatura?: boolean
           tipo_entrega?: string | null
           tipo_frete?: string
           updated_at?: string
@@ -9979,7 +9980,6 @@ export type Database = {
           valor_frete?: number | null
           valor_instalacao?: number | null
           valor_venda?: number | null
-          venda_presencial?: boolean
         }
         Relationships: [
           {

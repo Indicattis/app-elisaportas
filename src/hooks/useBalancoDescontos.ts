@@ -17,7 +17,7 @@ export interface BalancoDescontoRow {
     cliente_nome: string | null;
     forma_pagamento: string | null;
     metodos_pagamento: string[] | null;
-    venda_presencial: boolean | null;
+    temperatura: boolean | null;
     atendente_id: string | null;
     lucro_total: number | null;
   } | null;
@@ -62,7 +62,7 @@ export function useBalancoDescontos(mesISO: string) {
             .in("venda_id", ids),
           supabase
             .from("vendas")
-            .select("id, cliente_nome, forma_pagamento, metodo_pagamento, venda_presencial, atendente_id, lucro_total, status_aprovacao, contrato_url, contrato_dispensado, frete_aprovado, produtos_vendas(faturamento)")
+            .select("id, cliente_nome, forma_pagamento, metodo_pagamento, temperatura, atendente_id, lucro_total, status_aprovacao, contrato_url, contrato_dispensado, frete_aprovado, produtos_vendas(faturamento)")
             .in("id", ids),
           supabase
             .from("pedidos_producao")
@@ -129,7 +129,7 @@ export function useBalancoDescontos(mesISO: string) {
                 cliente_nome: v.cliente_nome,
                 forma_pagamento: v.forma_pagamento,
                 metodos_pagamento: metodosMap.get(r.venda_id) || [],
-                venda_presencial: v.venda_presencial,
+                temperatura: v.temperatura,
                 atendente_id: v.atendente_id,
                 lucro_total: v.lucro_total,
               }

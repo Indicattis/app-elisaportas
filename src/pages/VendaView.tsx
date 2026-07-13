@@ -55,7 +55,7 @@ interface Venda {
   numero_parcelas?: number;
   valor_entrada?: number;
   publico_alvo?: string;
-  venda_presencial?: boolean;
+  temperatura?: boolean;
   pagamento_na_entrega?: boolean;
   frete_aprovado?: boolean;
   canal_aquisicao?: { nome: string };
@@ -450,8 +450,8 @@ export default function VendaView() {
             )}
             <div>
               <p className="text-sm text-muted-foreground">Venda Fria</p>
-              <Badge variant={venda.venda_presencial ? "default" : "secondary"} className="mt-1">
-                {venda.venda_presencial ? "Sim" : "Não"}
+              <Badge variant={venda.temperatura ? "default" : "secondary"} className="mt-1">
+                {venda.temperatura ? "Sim" : "Não"}
               </Badge>
             </div>
             <div>

@@ -96,7 +96,7 @@ const calcularExcedidoDesconto = (venda: any, limAvista: number, limPresencial: 
 
   const formaPg = (venda?.forma_pagamento || '').trim();
   const aptoAvista = formaPg !== '' && formaPg !== 'cartao_credito';
-  const aptoFrio = venda?.venda_presencial === true;
+  const aptoFrio = venda?.temperatura === true;
   const limite = (aptoAvista ? limAvista : 0) + (aptoFrio ? limPresencial : 0);
 
   const excedidoPct = Math.max(0, pctDado - limite);
@@ -152,7 +152,7 @@ export default function VendasDirecao() {
     try {
       const { error } = await supabase
         .from('vendas')
-        .update({ venda_presencial: novo })
+        .update({ temperatura: novo })
         .eq('id', vendaId);
       if (error) throw error;
       await queryClient.invalidateQueries({ queryKey: ['vendas'] });
@@ -412,7 +412,7 @@ export default function VendasDirecao() {
             const produtos = venda.produtos || [];
             return produtos.some((p: any) => p.faturamento === true) ? 1 : 0;
           case 'temperatura':
-            return venda.venda_presencial === true ? 1 : venda.venda_presencial === false ? 0 : -1;
+            return venda.temperatura === true ? 1 : venda.temperatura === false ? 0 : -1;
           case 'excedido_desconto': {
             const { excedidoValor } = calcularExcedidoDesconto(venda, limAvista, limPresencial);
             return excedidoValor;
@@ -769,8 +769,8 @@ export default function VendasDirecao() {
         );
       }
       case 'temperatura': {
-        const isFrio = venda.venda_presencial === true;
-        const isQuente = venda.venda_presencial === false;
+        const isFrio = venda.temperatura === true;
+        const isQuente = venda.temperatura === false;
         const label = isQuente ? 'Quente' : isFrio ? 'Frio' : '-';
         const color = isQuente ? 'text-orange-400' : isFrio ? 'text-blue-400' : 'text-white/30';
         return (
@@ -778,7 +778,7 @@ export default function VendasDirecao() {
             type="button"
             onClick={(e) => {
               e.stopPropagation();
-              toggleTemperatura(venda.id, venda.venda_presencial);
+              toggleTemperatura(venda.id, venda.temperatura);
             }}
             disabled={togglingTempId === venda.id}
             title="Clique para alternar entre Quente e Fria"

@@ -140,7 +140,7 @@ export default function VendaNovaMinimalista() {
     data_prevista_entrega: '',
     tipo_entrega: 'instalacao',
     tipo_frete: 'interno',
-    venda_presencial: null as boolean | null
+    temperatura: null as boolean | null
   });
 
   const [portas, setPortas] = useState<ProdutoVenda[]>([]);
@@ -360,8 +360,8 @@ export default function VendaNovaMinimalista() {
   );
 
   const validacaoDescontoMemo = useMemo(() => {
-    return validarDesconto(portasComAjusteGlobal, formaPagamentoAtual, formData.venda_presencial === false, configLimitesObj);
-  }, [portasComAjusteGlobal, formaPagamentoAtual, formData.venda_presencial, configLimitesObj]);
+    return validarDesconto(portasComAjusteGlobal, formaPagamentoAtual, formData.temperatura === true, configLimitesObj);
+  }, [portasComAjusteGlobal, formaPagamentoAtual, formData.temperatura, configLimitesObj]);
 
   const tipoAutorizacaoNecessariaMemo = useMemo(() => {
     return getTipoAutorizacaoNecessaria(validacaoDescontoMemo);
@@ -400,7 +400,7 @@ export default function VendaNovaMinimalista() {
     const validacao = validarDesconto(
       portasSimuladas,
       formaPagamentoAtual,
-      formData.venda_presencial === false,
+      formData.temperatura === true,
       configLimitesObj
     );
 
@@ -639,7 +639,7 @@ export default function VendaNovaMinimalista() {
     }
 
     // Temperatura da venda (Frio/Quente)
-    if (formData.venda_presencial === null || formData.venda_presencial === undefined) {
+    if (formData.temperatura === null || formData.temperatura === undefined) {
       faltantes.push('Temperatura da venda (Frio ou Quente)');
     }
 
@@ -674,7 +674,7 @@ export default function VendaNovaMinimalista() {
     const validacao = validarDesconto(
       portasComAjusteGlobal,
       formaPagamentoAtual,
-      formData.venda_presencial === false,
+      formData.temperatura === true,
       configLimitesObj
     );
 
@@ -748,7 +748,7 @@ export default function VendaNovaMinimalista() {
       const validacao = validarDesconto(
         produtosComDesconto,
         formaPagamentoAtual,
-        formData.venda_presencial === false,
+        formData.temperatura === true,
         configLimitesObj
       );
 
@@ -906,8 +906,8 @@ export default function VendaNovaMinimalista() {
           paymentData={pagamentoData}
           onChange={setPagamentoData}
           valorTotal={valorTotalMemo}
-          vendaPresencial={formData.venda_presencial}
-          onVendaPresencialChange={(v) => setFormData(prev => ({ ...prev, venda_presencial: v }))}
+          vendaPresencial={formData.temperatura}
+          onVendaPresencialChange={(v) => setFormData(prev => ({ ...prev, temperatura: v }))}
           descontoInfo={{
             percentualAplicado: validacaoDescontoMemo.percentualDesconto,
             limitePermitido: validacaoDescontoMemo.limitePermitido,
@@ -1287,7 +1287,7 @@ export default function VendaNovaMinimalista() {
           open={autorizacaoDescontoOpen}
           onOpenChange={setAutorizacaoDescontoOpen}
           onAutorizado={handleAutorizacaoDesconto}
-          percentualDesconto={validarDesconto(portas, formaPagamentoAtual, formData.venda_presencial === false).percentualDesconto}
+          percentualDesconto={validarDesconto(portas, formaPagamentoAtual, formData.temperatura === true).percentualDesconto}
           tipoAutorizacao={tipoAutorizacaoNecessaria}
           limitePermitido={limitePermitido}
         />
