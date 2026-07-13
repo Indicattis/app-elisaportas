@@ -286,7 +286,7 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
               à vista no Método 1 e o restante em boleto no Método 2 (até {boletoConfig.parcelasMax} parcelas)
               {intervalosBoletoPermitidos.length === 1
                 ? ` com intervalo fixo de ${boletoConfig.intervaloPadrao} dias`
-                : ` com intervalo entre ${intervalosBoletoPermitidos.join(', ')} dias (vendas até R$ ${boletoConfig.valorLimiteFlex.toLocaleString('pt-BR')})`}.
+                : ` com intervalo entre ${intervalosBoletoPermitidos.join(', ')} dias (vendas acima de R$ ${boletoConfig.valorLimiteFlex.toLocaleString('pt-BR')})`}.
             </div>
           </div>
         )}
