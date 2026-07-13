@@ -360,7 +360,7 @@ export default function VendaNovaMinimalista() {
   );
 
   const validacaoDescontoMemo = useMemo(() => {
-    return validarDesconto(portasComAjusteGlobal, formaPagamentoAtual, formData.temperatura === false, configLimitesObj);
+    return validarDesconto(portasComAjusteGlobal, formaPagamentoAtual, formData.temperatura === true, configLimitesObj);
   }, [portasComAjusteGlobal, formaPagamentoAtual, formData.temperatura, configLimitesObj]);
 
   const tipoAutorizacaoNecessariaMemo = useMemo(() => {
@@ -400,7 +400,7 @@ export default function VendaNovaMinimalista() {
     const validacao = validarDesconto(
       portasSimuladas,
       formaPagamentoAtual,
-      formData.temperatura === false,
+      formData.temperatura === true,
       configLimitesObj
     );
 
@@ -674,7 +674,7 @@ export default function VendaNovaMinimalista() {
     const validacao = validarDesconto(
       portasComAjusteGlobal,
       formaPagamentoAtual,
-      formData.temperatura === false,
+      formData.temperatura === true,
       configLimitesObj
     );
 
@@ -748,7 +748,7 @@ export default function VendaNovaMinimalista() {
       const validacao = validarDesconto(
         produtosComDesconto,
         formaPagamentoAtual,
-        formData.temperatura === false,
+        formData.temperatura === true,
         configLimitesObj
       );
 
@@ -1287,7 +1287,7 @@ export default function VendaNovaMinimalista() {
           open={autorizacaoDescontoOpen}
           onOpenChange={setAutorizacaoDescontoOpen}
           onAutorizado={handleAutorizacaoDesconto}
-          percentualDesconto={validarDesconto(portas, formaPagamentoAtual, formData.temperatura === false).percentualDesconto}
+          percentualDesconto={validarDesconto(portas, formaPagamentoAtual, formData.temperatura === true).percentualDesconto}
           tipoAutorizacao={tipoAutorizacaoNecessaria}
           limitePermitido={limitePermitido}
         />
