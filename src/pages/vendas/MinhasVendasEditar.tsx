@@ -529,7 +529,7 @@ export default function MinhasVendasEditar() {
       const validacao = validarDesconto(
         produtosFormatados,
         venda.forma_pagamento || '',
-        venda.temperatura || false,
+        venda.temperatura === false,
         configLimites
       );
 
