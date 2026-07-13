@@ -15,7 +15,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Search, DollarSign, ShoppingCart, Package, CalendarIcon, Download, FileText, FileSpreadsheet, ArrowUpDown, ArrowUp, ArrowDown, Check, X, Truck, Hammer, Users, BookOpen, Info, ExternalLink, Settings, MinusCircle } from 'lucide-react';
+import { Plus, Search, DollarSign, ShoppingCart, Package, CalendarIcon, Download, FileText, FileSpreadsheet, ArrowUpDown, ArrowUp, ArrowDown, Check, X, Truck, Hammer, Users, BookOpen, Info, ExternalLink, Settings, MinusCircle, FileX, Loader2 } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -28,6 +28,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import * as XLSX from 'xlsx';
 import { format, startOfMonth, endOfMonth, setMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -126,6 +136,8 @@ export default function VendasDirecao() {
   const { toast } = useToast();
   const [togglingTempId, setTogglingTempId] = useState<string | null>(null);
   const [updatingExpedicaoId, setUpdatingExpedicaoId] = useState<string | null>(null);
+  const [dispensarVenda, setDispensarVenda] = useState<any | null>(null);
+  const [dispensandoId, setDispensandoId] = useState<string | null>(null);
 
   const updateExpedicao = useCallback(async (vendaId: string, novoTipo: string | null) => {
     if (updatingExpedicaoId) return;
@@ -733,6 +745,7 @@ export default function VendasDirecao() {
       case 'faturada':
         const faturada = isFaturada();
         const temContrato = !!venda.contrato_url;
+        const dispensado = !!venda.contrato_dispensado || !!venda.dispensada_sistema;
         return (
           <div className="flex flex-col items-center gap-1">
             {faturada ? (
@@ -744,7 +757,14 @@ export default function VendasDirecao() {
                 <X className="w-2.5 h-2.5 md:w-3 md:h-3 text-white/30" />
               </div>
             )}
-            {!temContrato && (
+            {!temContrato && dispensado && (
+              <span className="text-[9px] text-white/40 flex items-center gap-0.5">
+                <FileX className="w-2.5 h-2.5" />
+                Contrato dispensado
+              </span>
+            )}
+            {!temContrato && !dispensado && (
+              <>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span className="text-[9px] text-orange-400 flex items-center gap-0.5 cursor-help">
@@ -756,6 +776,16 @@ export default function VendasDirecao() {
                   Venda sem contrato assinado
                 </TooltipContent>
               </Tooltip>
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); setDispensarVenda(venda); }}
+                disabled={dispensandoId === venda.id}
+                className="text-[9px] text-white/60 hover:text-white flex items-center gap-0.5 underline decoration-dotted underline-offset-2 disabled:opacity-50"
+              >
+                <MinusCircle className="w-2.5 h-2.5" />
+                Dispensar
+              </button>
+              </>
             )}
           </div>
         );
@@ -1143,6 +1173,52 @@ export default function VendasDirecao() {
           </TooltipProvider>
         </div>
       </div>
+
+      <AlertDialog
+        open={!!dispensarVenda}
+        onOpenChange={(o) => { if (!o && !dispensandoId) setDispensarVenda(null); }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Dispensar contrato?</AlertDialogTitle>
+            <AlertDialogDescription>
+              A venda de <strong>{dispensarVenda?.cliente_nome || 'cliente'}</strong> será marcada como sem necessidade de contrato assinado. Esta ação fica registrada e pode ser revertida pela equipe administrativa.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={!!dispensandoId}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={!!dispensandoId}
+              onClick={async (e) => {
+                e.preventDefault();
+                if (!dispensarVenda) return;
+                setDispensandoId(dispensarVenda.id);
+                try {
+                  const { error } = await supabase
+                    .from('vendas')
+                    .update({
+                      contrato_dispensado: true,
+                      contrato_dispensado_em: new Date().toISOString(),
+                      contrato_dispensado_por: user?.id ?? null,
+                    })
+                    .eq('id', dispensarVenda.id);
+                  if (error) throw error;
+                  await queryClient.invalidateQueries({ queryKey: ['vendas'] });
+                  toast({ title: 'Contrato dispensado' });
+                  setDispensarVenda(null);
+                } catch (err: any) {
+                  toast({ title: 'Erro ao dispensar contrato', description: err?.message, variant: 'destructive' });
+                } finally {
+                  setDispensandoId(null);
+                }
+              }}
+            >
+              {dispensandoId ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              Dispensar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </MinimalistLayout>
   );
 }
