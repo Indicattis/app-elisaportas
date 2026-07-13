@@ -15,7 +15,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Search, DollarSign, ShoppingCart, Package, CalendarIcon, Download, FileText, FileSpreadsheet, ArrowUpDown, ArrowUp, ArrowDown, Check, X, Truck, Hammer, Users, BookOpen, Info, ExternalLink } from 'lucide-react';
+import { Plus, Search, DollarSign, ShoppingCart, Package, CalendarIcon, Download, FileText, FileSpreadsheet, ArrowUpDown, ArrowUp, ArrowDown, Check, X, Truck, Hammer, Users, BookOpen, Info, ExternalLink, Settings, MinusCircle } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -125,6 +125,25 @@ export default function VendasDirecao() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [togglingTempId, setTogglingTempId] = useState<string | null>(null);
+  const [updatingExpedicaoId, setUpdatingExpedicaoId] = useState<string | null>(null);
+
+  const updateExpedicao = useCallback(async (vendaId: string, novoTipo: string | null) => {
+    if (updatingExpedicaoId) return;
+    setUpdatingExpedicaoId(vendaId);
+    try {
+      const { error } = await supabase
+        .from('vendas')
+        .update({ tipo_entrega: novoTipo })
+        .eq('id', vendaId);
+      if (error) throw error;
+      await queryClient.invalidateQueries({ queryKey: ['vendas'] });
+      toast({ title: 'Expedição atualizada' });
+    } catch (e: any) {
+      toast({ title: 'Erro ao atualizar expedição', description: e?.message, variant: 'destructive' });
+    } finally {
+      setUpdatingExpedicaoId(null);
+    }
+  }, [queryClient, toast, updatingExpedicaoId]);
 
   const toggleTemperatura = useCallback(async (vendaId: string, atual: boolean | null | undefined) => {
     if (togglingTempId) return;
@@ -490,13 +509,57 @@ export default function VendasDirecao() {
           </Avatar>
         );
       case 'expedicao':
-        const tipoEntrega = venda.tipo_entrega;
-        if (tipoEntrega === 'instalacao') {
-          return <Hammer className="h-3.5 w-3.5 md:h-4 md:w-4 text-orange-400 mx-auto" />;
-        } else if (tipoEntrega === 'entrega') {
-          return <Truck className="h-3.5 w-3.5 md:h-4 md:w-4 text-blue-400 mx-auto" />;
+        {
+          const tipoEntrega = venda.tipo_entrega;
+          const isUpdating = updatingExpedicaoId === venda.id;
+          const renderIcon = (tipo: string | null | undefined) => {
+            if (tipo === 'instalacao') return <Hammer className="h-3.5 w-3.5 md:h-4 md:w-4 text-orange-400" />;
+            if (tipo === 'entrega') return <Truck className="h-3.5 w-3.5 md:h-4 md:w-4 text-blue-400" />;
+            if (tipo === 'manutencao') return <Settings className="h-3.5 w-3.5 md:h-4 md:w-4 text-purple-400" />;
+            return <span className="text-white/30 text-[10px]">-</span>;
+          };
+          return (
+            <Popover>
+              <PopoverTrigger asChild onClick={(e) => e.stopPropagation()}>
+                <button
+                  disabled={isUpdating}
+                  className="mx-auto flex items-center justify-center h-6 w-6 rounded hover:bg-white/10 transition-colors disabled:opacity-50"
+                  title="Alterar expedição"
+                >
+                  {renderIcon(tipoEntrega)}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent
+                className="w-44 p-1 bg-slate-900 border-white/10"
+                align="center"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {[
+                  { value: 'instalacao', label: 'Instalação', icon: <Hammer className="h-4 w-4 text-orange-400" /> },
+                  { value: 'entrega', label: 'Entrega', icon: <Truck className="h-4 w-4 text-blue-400" /> },
+                  { value: 'manutencao', label: 'Manutenção', icon: <Settings className="h-4 w-4 text-purple-400" /> },
+                  { value: null, label: 'Nenhum', icon: <MinusCircle className="h-4 w-4 text-white/40" /> },
+                ].map((opt) => {
+                  const selected = (tipoEntrega ?? null) === opt.value;
+                  return (
+                    <button
+                      key={opt.value ?? 'nenhum'}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!selected) updateExpedicao(venda.id, opt.value);
+                      }}
+                      className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs text-white/80 hover:bg-white/10 transition-colors ${selected ? 'bg-white/5' : ''}`}
+                    >
+                      {opt.icon}
+                      <span className="flex-1 text-left">{opt.label}</span>
+                      {selected && <Check className="h-3 w-3 text-green-400" />}
+                    </button>
+                  );
+                })}
+              </PopoverContent>
+            </Popover>
+          );
         }
-        return <span className="text-white/30 text-[10px]">-</span>;
       case 'pagamento':
         {
           const todos = metodosExtraPorVenda.get(venda.id) || [];
