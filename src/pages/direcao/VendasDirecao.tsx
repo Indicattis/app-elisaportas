@@ -15,7 +15,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Search, DollarSign, ShoppingCart, Package, CalendarIcon, Download, FileText, FileSpreadsheet, ArrowUpDown, ArrowUp, ArrowDown, Check, X, Truck, Hammer, Users, BookOpen, Info, ExternalLink } from 'lucide-react';
+import { Plus, Search, DollarSign, ShoppingCart, Package, CalendarIcon, Download, FileText, FileSpreadsheet, ArrowUpDown, ArrowUp, ArrowDown, Check, X, Truck, Hammer, Users, BookOpen, Info, ExternalLink, Settings, MinusCircle } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -125,6 +125,25 @@ export default function VendasDirecao() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [togglingTempId, setTogglingTempId] = useState<string | null>(null);
+  const [updatingExpedicaoId, setUpdatingExpedicaoId] = useState<string | null>(null);
+
+  const updateExpedicao = useCallback(async (vendaId: string, novoTipo: string | null) => {
+    if (updatingExpedicaoId) return;
+    setUpdatingExpedicaoId(vendaId);
+    try {
+      const { error } = await supabase
+        .from('vendas')
+        .update({ tipo_entrega: novoTipo })
+        .eq('id', vendaId);
+      if (error) throw error;
+      await queryClient.invalidateQueries({ queryKey: ['vendas'] });
+      toast({ title: 'Expedição atualizada' });
+    } catch (e: any) {
+      toast({ title: 'Erro ao atualizar expedição', description: e?.message, variant: 'destructive' });
+    } finally {
+      setUpdatingExpedicaoId(null);
+    }
+  }, [queryClient, toast, updatingExpedicaoId]);
 
   const toggleTemperatura = useCallback(async (vendaId: string, atual: boolean | null | undefined) => {
     if (togglingTempId) return;
