@@ -189,6 +189,7 @@ export function MetodoPagamentoCard({
               </Popover>
             </div>
 
+            {!hideEmpresaReceptora && (
             <div className="space-y-1">
               <Label className={labelClass}>Empresa Receptora *</Label>
               <Select
@@ -207,6 +208,7 @@ export function MetodoPagamentoCard({
                 </SelectContent>
               </Select>
             </div>
+            )}
           </div>
 
           {/* Checkbox "Já foi pago?" */}
