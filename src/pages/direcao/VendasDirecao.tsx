@@ -96,7 +96,7 @@ const calcularExcedidoDesconto = (venda: any, limAvista: number, limPresencial: 
 
   const formaPg = (venda?.forma_pagamento || '').trim();
   const aptoAvista = formaPg !== '' && formaPg !== 'cartao_credito';
-  const aptoFrio = venda?.temperatura === true;
+  const aptoFrio = venda?.temperatura === false;
   const limite = (aptoAvista ? limAvista : 0) + (aptoFrio ? limPresencial : 0);
 
   const excedidoPct = Math.max(0, pctDado - limite);
