@@ -139,7 +139,7 @@ export function MetodoPagamentoCard({
       {metodo.tipo && (
         <div className="space-y-4">
           {/* Linha com Valor, Data e Empresa */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className={cn("grid grid-cols-1 gap-3", hideEmpresaReceptora ? "md:grid-cols-2" : "md:grid-cols-3")}>
             <div className="space-y-1">
               <Label className={labelClass}>{valorLabel}</Label>
               {valorFixo ? (
