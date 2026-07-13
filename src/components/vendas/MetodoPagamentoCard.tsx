@@ -55,6 +55,7 @@ interface MetodoPagamentoCardProps {
    * Se contiver 1 item, o select fica travado nesse valor.
    */
   intervalosBoletoPermitidos?: number[];
+  hideEmpresaReceptora?: boolean;
 }
 
 export function MetodoPagamentoCard({
@@ -68,6 +69,7 @@ export function MetodoPagamentoCard({
   tipoTravado,
   intervaloBoletoTravado,
   intervalosBoletoPermitidos,
+  hideEmpresaReceptora = false,
 }: MetodoPagamentoCardProps) {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
