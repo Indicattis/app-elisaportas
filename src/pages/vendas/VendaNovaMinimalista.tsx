@@ -36,6 +36,7 @@ import { useFretesCidades } from '@/hooks/useFretesCidades';
 import { Checkbox } from '@/components/ui/checkbox';
 import { PagamentoSection, PagamentoData, createEmptyPagamentoData } from '@/components/vendas/PagamentoSection';
 import { validarRegraBoleto } from '@/utils/boletoRegra';
+import { validarDatasPagamento } from '@/utils/dataPagamentoRegra';
 import { ClienteVendaSection } from '@/components/vendas/ClienteVendaSection';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 
@@ -669,6 +670,16 @@ export default function VendaNovaMinimalista() {
     if (regraBoleto.ok === false) {
       sonnerToast.error('Regra do boleto não atendida', {
         description: regraBoleto.mensagem,
+        duration: 6000,
+      });
+      return;
+    }
+
+    // Regra da janela de data de pagamento (±N dias)
+    const regraDataPag = validarDatasPagamento(pagamentoData, regrasLimites.pagamentoDataJanelaDias);
+    if (regraDataPag.ok === false) {
+      sonnerToast.error('Data de pagamento fora da janela permitida', {
+        description: regraDataPag.mensagem,
         duration: 6000,
       });
       return;
