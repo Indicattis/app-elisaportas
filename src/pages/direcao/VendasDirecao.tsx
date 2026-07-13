@@ -1173,6 +1173,52 @@ export default function VendasDirecao() {
           </TooltipProvider>
         </div>
       </div>
+
+      <AlertDialog
+        open={!!dispensarVenda}
+        onOpenChange={(o) => { if (!o && !dispensandoId) setDispensarVenda(null); }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Dispensar contrato?</AlertDialogTitle>
+            <AlertDialogDescription>
+              A venda de <strong>{dispensarVenda?.cliente_nome || 'cliente'}</strong> será marcada como sem necessidade de contrato assinado. Esta ação fica registrada e pode ser revertida pela equipe administrativa.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={!!dispensandoId}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={!!dispensandoId}
+              onClick={async (e) => {
+                e.preventDefault();
+                if (!dispensarVenda) return;
+                setDispensandoId(dispensarVenda.id);
+                try {
+                  const { error } = await supabase
+                    .from('vendas')
+                    .update({
+                      contrato_dispensado: true,
+                      contrato_dispensado_em: new Date().toISOString(),
+                      contrato_dispensado_por: user?.id ?? null,
+                    })
+                    .eq('id', dispensarVenda.id);
+                  if (error) throw error;
+                  await queryClient.invalidateQueries({ queryKey: ['vendas'] });
+                  toast({ title: 'Contrato dispensado' });
+                  setDispensarVenda(null);
+                } catch (err: any) {
+                  toast({ title: 'Erro ao dispensar contrato', description: err?.message, variant: 'destructive' });
+                } finally {
+                  setDispensandoId(null);
+                }
+              }}
+            >
+              {dispensandoId ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              Dispensar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </MinimalistLayout>
   );
 }
