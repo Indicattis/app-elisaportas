@@ -56,6 +56,8 @@ interface MetodoPagamentoCardProps {
    */
   intervalosBoletoPermitidos?: number[];
   hideEmpresaReceptora?: boolean;
+  /** Máximo de parcelas de boleto permitidas. Default 12. */
+  parcelasBoletoMax?: number;
 }
 
 export function MetodoPagamentoCard({
@@ -70,6 +72,7 @@ export function MetodoPagamentoCard({
   intervaloBoletoTravado,
   intervalosBoletoPermitidos,
   hideEmpresaReceptora = false,
+  parcelasBoletoMax = 12,
 }: MetodoPagamentoCardProps) {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
