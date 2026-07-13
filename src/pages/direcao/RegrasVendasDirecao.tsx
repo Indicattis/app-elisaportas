@@ -687,6 +687,48 @@ export default function RegrasVendasDirecao() {
                   </div>
                 </AccordionContent>
               </AccordionItem>
+
+              <AccordionItem value="data-pagamento" className="border-white/10">
+                <AccordionTrigger className="text-white hover:no-underline py-3">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-amber-400" />
+                    <span>Data de Pagamento</span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="text-white/70 pb-4">
+                  <div className="space-y-4 pl-6">
+                    <div className="p-3 rounded-lg bg-white/5 border border-white/10 space-y-2">
+                      <Label className="text-xs text-white/70">Janela permitida (± dias)</Label>
+                      <Input
+                        type="number"
+                        min={0}
+                        max={365}
+                        step={1}
+                        value={(getRegra('pagamento_data_janela_dias') as number) ?? 5}
+                        onChange={(e) => setRegra('pagamento_data_janela_dias', Math.max(0, parseInt(e.target.value) || 0))}
+                        className="h-9 bg-white/5 border-white/20 text-white text-right"
+                      />
+                      <p className="text-[10px] text-white/50">
+                        Ao cadastrar uma venda, a data de pagamento de qualquer método deve estar dentro dessa janela em relação a hoje (antes ou depois).
+                      </p>
+                    </div>
+
+                    <div className="flex justify-end">
+                      <Button
+                        onClick={salvarRegrasGerais}
+                        disabled={!hasDraftChanges || isUpdatingRegras}
+                        className="bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 border border-blue-500/30"
+                      >
+                        {isUpdatingRegras ? (
+                          <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Salvando...</>
+                        ) : (
+                          <><Save className="mr-2 h-4 w-4" />Salvar</>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
             </Accordion>
           </CardContent>
         </Card>
