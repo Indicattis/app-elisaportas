@@ -121,7 +121,7 @@ export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaP
     const totalPct = (descontoTotal / valorTabela) * 100;
     const formaPag = vendaCompleta.forma_pagamento || '';
     const isCartao = formaPag === 'cartao_credito';
-    const isFrio = vendaCompleta.temperatura === true;
+    const isFrio = vendaCompleta.temperatura === false;
 
     const limAvista = configLimites?.avista ?? 3;
     const limPresencial = configLimites?.presencial ?? 5;
@@ -328,10 +328,10 @@ export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaP
                   {vendaCompleta?.temperatura != null && (
                     <span className={
                       vendaCompleta.temperatura
-                        ? "inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded border bg-cyan-500/10 text-cyan-400 border-cyan-500/30"
-                        : "inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded border bg-orange-500/10 text-orange-400 border-orange-500/30"
+                        ? "inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded border bg-orange-500/10 text-orange-400 border-orange-500/30"
+                        : "inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded border bg-cyan-500/10 text-cyan-400 border-cyan-500/30"
                     }>
-                      {vendaCompleta.temperatura ? "❄️ Fria" : "🔥 Quente"}
+                      {vendaCompleta.temperatura ? "🔥 Quente" : "❄️ Fria"}
                     </span>
                   )}
                 </div>
@@ -689,9 +689,9 @@ export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaP
             <div className="bg-white/5 rounded-xl border border-white/10 p-3 text-center">
               {vendaCompleta?.temperatura != null ? (
                 vendaCompleta.temperatura ? (
-                  <Snowflake className="h-4 w-4 text-sky-400 mx-auto mb-1" />
-                ) : (
                   <Flame className="h-4 w-4 text-orange-400 mx-auto mb-1" />
+                ) : (
+                  <Snowflake className="h-4 w-4 text-sky-400 mx-auto mb-1" />
                 )
               ) : (
                 <Flame className="h-4 w-4 text-white/30 mx-auto mb-1" />
@@ -702,12 +702,12 @@ export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaP
                 vendaCompleta?.temperatura == null
                   ? "text-white/40"
                   : vendaCompleta.temperatura
-                    ? "text-sky-400"
-                    : "text-orange-400"
+                    ? "text-orange-400"
+                    : "text-sky-400"
               )}>
                 {vendaCompleta?.temperatura == null
                   ? '—'
-                  : vendaCompleta.temperatura ? 'Fria' : 'Quente'}
+                  : vendaCompleta.temperatura ? 'Quente' : 'Fria'}
               </p>
             </div>
           </div>
