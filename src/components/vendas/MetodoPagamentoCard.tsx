@@ -201,7 +201,7 @@ export function MetodoPagamentoCard({
               </Popover>
               {dataPagamentoLiberada ? (
                 <p className="text-[10px] text-amber-300/80">
-                  Janela de datas liberada por autorização do Gerente.
+                  Janela de datas liberada por autorização do Diretor.
                 </p>
               ) : (
                 <p className="text-[10px] text-white/40">
