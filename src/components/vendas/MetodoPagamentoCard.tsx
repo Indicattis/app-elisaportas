@@ -175,7 +175,10 @@ export function MetodoPagamentoCard({
           {/* Linha com Valor, Data e Empresa */}
           <div className={cn("grid grid-cols-1 gap-3", hideEmpresaReceptora ? "md:grid-cols-2" : "md:grid-cols-3")}>
             <div className="space-y-1">
-              <Label className={labelClass}>{valorLabel}</Label>
+              <Label className={cn(labelClass, "flex items-center gap-2 flex-wrap")}>
+                <span>{valorLabel}</span>
+                {entradaViolada && <AuthWarning />}
+              </Label>
               {valorFixo ? (
                 <div className={cn("h-9 px-3 py-2 border rounded-md text-sm", inputClass)}>
                   {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(metodo.valor)}
@@ -194,7 +197,10 @@ export function MetodoPagamentoCard({
             </div>
 
             <div className="space-y-1">
-              <Label className={labelClass}>Data do Pagamento *</Label>
+              <Label className={cn(labelClass, "flex items-center gap-2 flex-wrap")}>
+                <span>Data do Pagamento *</span>
+                {dataForaJanela && !dataPagamentoLiberada && <AuthWarning />}
+              </Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
