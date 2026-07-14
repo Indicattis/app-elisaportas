@@ -672,6 +672,26 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
                   <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">⚠ Valores não conferem com o total</Badge>
                 )}
               </div>
+
+              {(() => {
+                const violacoes = calcularViolacoes();
+                if (violacoes.length === 0) return null;
+                return (
+                  <div className="border-t border-white/10 pt-2 space-y-1.5">
+                    <div className="flex items-center gap-1.5 text-amber-200 text-xs font-medium">
+                      <ShieldCheck className="h-3.5 w-3.5" />
+                      {autorizadoRegras
+                        ? `Regras liberadas pelo Gerente (${violacoes.length}):`
+                        : `Regras infringidas (${violacoes.length}):`}
+                    </div>
+                    <ul className="list-disc pl-5 space-y-0.5 text-xs text-amber-100/90">
+                      {violacoes.map((v, i) => (
+                        <li key={i}>{v}</li>
+                      ))}
+                    </ul>
+                  </div>
+                );
+              })()}
             </div>
           </div>
         )}
