@@ -361,7 +361,7 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
                 <Badge
                   variant="outline"
                   className="border text-xs bg-amber-500/15 border-amber-400/40 text-amber-100"
-                  title="Entrada, data e intervalo de boletos liberados pelo Gerente."
+                  title="Entrada, data e intervalo de boletos liberados pelo Diretor."
                 >
                   <ShieldCheck className="h-3 w-3 mr-1" />
                   Regras liberadas
@@ -477,7 +477,7 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
           <div className="flex items-start gap-2 p-3 rounded-lg border border-amber-500/30 bg-amber-500/10">
             <ShieldCheck className="h-4 w-4 text-amber-300 mt-0.5 shrink-0" />
             <div className="text-xs text-amber-100/90">
-              <strong className="text-amber-200">Regras liberadas por autorização do Gerente.</strong>{' '}
+              <strong className="text-amber-200">Regras liberadas por autorização do Diretor.</strong>{' '}
               Entrada de boleto, data de pagamento e intervalo de boletos podem ser
               definidos manualmente. Reverter volta às regras padrão.
             </div>
@@ -681,7 +681,7 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
                     <div className="flex items-center gap-1.5 text-amber-200 text-xs font-medium">
                       <ShieldCheck className="h-3.5 w-3.5" />
                       {autorizadoRegras
-                        ? `Regras liberadas pelo Gerente (${violacoes.length}):`
+                        ? `Regras liberadas pelo Diretor (${violacoes.length}):`
                         : `Regras infringidas (${violacoes.length}):`}
                     </div>
                     <ul className="list-disc pl-5 space-y-0.5 text-xs text-amber-100/90">
@@ -740,7 +740,7 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
       onOpenChange={handleConfirmModalOpenChange}
       onAutorizado={handleAutorizadoRegras}
       percentualDesconto={0}
-      tipoAutorizacao="responsavel_setor"
+      tipoAutorizacao="master"
       limitePermitido={0}
       titulo="Confirmar pagamento fora das regras"
       descricao={
@@ -754,7 +754,7 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
             ))}
           </ul>
           <p>
-            Digite a senha do <span className="font-bold text-foreground">Gerente</span> para autorizar e prosseguir com a venda.
+            Digite a senha do <span className="font-bold text-foreground">Diretor</span> para autorizar e prosseguir com a venda.
           </p>
         </div>
       }
