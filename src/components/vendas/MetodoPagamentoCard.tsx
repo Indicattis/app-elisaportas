@@ -36,7 +36,7 @@ export const createEmptyMetodo = (): MetodoPagamento => ({
   empresa_receptora_id: '',
   parcelas_cartao: 1,
   parcelas_boleto: 1,
-  intervalo_boletos: 30,
+  intervalo_boletos: 21,
   comprovante_file: null,
   ja_pago: false
 });
@@ -307,7 +307,7 @@ export function MetodoPagamentoCard({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {[7, 14, 15, 21, 28, 30].map((dias) => (
+                    {[21, 36, 42].map((dias) => (
                       <SelectItem key={dias} value={dias.toString()}>
                         {dias} dias
                       </SelectItem>
