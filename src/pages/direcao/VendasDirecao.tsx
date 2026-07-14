@@ -99,7 +99,12 @@ const calcularPercentualDescontoAcrescimo = (venda: any): number => {
 };
 
 // Calcula o valor do desconto que excedeu o limite permitido (igual ao "Excedido" do balanço de descontos)
-const calcularExcedidoDesconto = (venda: any, limAvista: number, limPresencial: number): { excedidoPct: number; excedidoValor: number } => {
+const calcularExcedidoDesconto = (
+  venda: any,
+  limAvista: number,
+  limPresencial: number,
+  limResponsavel: number
+): { excedidoPct: number; excedidoValor: number } => {
   const produtos = venda?.produtos || [];
   const totalBase = calcularTotalVenda(produtos);
   if (totalBase <= 0) return { excedidoPct: 0, excedidoValor: 0 };
@@ -110,7 +115,10 @@ const calcularExcedidoDesconto = (venda: any, limAvista: number, limPresencial: 
   const formaPg = (venda?.forma_pagamento || '').trim();
   const aptoAvista = formaPg !== '' && formaPg !== 'cartao_credito';
   const aptoFrio = venda?.temperatura === false;
-  const limite = (aptoAvista ? limAvista : 0) + (aptoFrio ? limPresencial : 0);
+  const limiteBase = (aptoAvista ? limAvista : 0) + (aptoFrio ? limPresencial : 0);
+  const aptoGerente =
+    !!venda?.autorizacao_desconto?.[0] || pctDado > limiteBase;
+  const limite = limiteBase + (aptoGerente ? limResponsavel : 0);
 
   const excedidoPct = Math.max(0, pctDado - limite);
   const excedidoValor = (excedidoPct / 100) * totalBase;
@@ -119,12 +127,17 @@ const calcularExcedidoDesconto = (venda: any, limAvista: number, limPresencial: 
 };
 
 // Calcula o lucro real da venda (apenas faz sentido quando faturada)
-const calcularLucroReal = (venda: any, limAvista: number, limPresencial: number): number => {
+const calcularLucroReal = (
+  venda: any,
+  limAvista: number,
+  limPresencial: number,
+  limResponsavel: number
+): number => {
   const produtos = venda?.produtos || [];
   const lucroItens = produtos.reduce((acc: number, p: any) => acc + (Number(p.lucro_item) || 0), 0);
   const lucroInstalacao = Number(venda?.lucro_instalacao) || 0;
   const lucroBruto = lucroItens + lucroInstalacao;
-  const { excedidoValor } = calcularExcedidoDesconto(venda, limAvista, limPresencial);
+  const { excedidoValor } = calcularExcedidoDesconto(venda, limAvista, limPresencial, limResponsavel);
   return lucroBruto - excedidoValor;
 };
 

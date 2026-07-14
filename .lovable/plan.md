@@ -1,39 +1,54 @@
 ## Diagnóstico
 
-A convenção da coluna `vendas.temperatura` no restante do app é:
+Na venda `e60a7adf…` (temperatura=false → Fria, forma=à vista, produtos totalizam R$ 506 com desconto de R$ 56 = 11,07%):
 
-- `true` → **Quente**  (ex.: `PagamentoSection.tsx` linha 421: `vendaPresencial ? 'quente' : 'frio'`, `VendaEditarMinimalista.tsx` linha 374: `venda.temperatura ? 'Quente' : 'Fria'`, cálculo de tiers em várias telas usa `venda.temperatura === false` para dizer "apto Frio").
-- `false` → **Fria**
+- **Coluna "Excedido"** em `/direcao/vendas/todas` usa `calcularExcedidoDesconto` (linhas 101-118 de `VendasDirecao.tsx`), que só soma **À Vista + Frio** como limite (3% + 5% = 8%). Qualquer coisa acima de 8% cai como excedido → mostra R$ 15,55 excedido.
+- **Tooltip** usa `calcDescontoTiersAplicados` + separação Gerente/Diretor com `limResponsavel = 7%`. Nesse mesmo caso: Gerente 3,07% (R$ 15,55), Diretor 0 → nada de excesso real.
+- Em `/marketing/balanco-descontos` (`BalancoDescontos.tsx` linhas 88-116) a regra é a correta: o limite inclui a faixa Gerente quando houver autorização ou o desconto ultrapasse o limite base — só é "excedido" o que passar de À Vista + Frio + Gerente.
 
-Na venda `111ad4b2…` o banco tem `temperatura = true`, então ela é **Quente** — e por isso o cálculo de descontos (tanto o `calcDescontoTiersAplicados` quanto `calcularExcedidoDesconto`, ambos usando `temperatura === false`) corretamente não libera a faixa "Frio".
+Ou seja: `calcularExcedidoDesconto` em `VendasDirecao.tsx` está desalinhado. Vendas com desconto entre 8% e 15% aparecem "excedidas" indevidamente (é justamente a percepção "todas parecem ter excesso").
 
-O problema está **apenas na exibição** em `src/pages/direcao/VendasDirecao.tsx`, que está com o rótulo invertido em dois lugares:
-
-1. **Linhas 980-981** — a célula da coluna Temperatura mostra:
-   ```ts
-   const isFrio = venda.temperatura === true;   // ❌ invertido
-   const isQuente = venda.temperatura === false; // ❌ invertido
-   ```
-   → uma venda Quente aparece rotulada como "Frio", provocando a impressão de que os descontos deveriam entrar no tier Frio.
-
-2. **Linha 220** — o toast do toggle diz `novo ? 'Marcada como Fria' : 'Marcada como Quente'`, mas `novo` é o valor booleano gravado em `temperatura`, então também está invertido.
-
-Nenhuma outra parte da página nem outras vendas têm bug real de cálculo — a coluna "Excedido" e o tier "Frio" já usam `temperatura === false` (correto). A percepção de "excesso indevido em vendas frias" vem do rótulo trocado.
-
-## Alterações
+## Alteração
 
 Arquivo único: `src/pages/direcao/VendasDirecao.tsx`
 
-1. Inverter o mapeamento no `case 'temperatura'` (linhas 980-981):
-   ```ts
-   const isQuente = venda.temperatura === true;
-   const isFrio   = venda.temperatura === false;
-   ```
-   Mantendo o restante do bloco igual (label, cores, toggle).
+Ajustar `calcularExcedidoDesconto` (linhas 101-118) para incluir a faixa Gerente no limite, seguindo o padrão de `BalancoDescontos.tsx`:
 
-2. Corrigir o toast em `toggleTemperatura` (linha 220):
-   ```ts
-   toast({ title: novo ? 'Marcada como Quente' : 'Marcada como Fria' });
-   ```
+```ts
+const calcularExcedidoDesconto = (
+  venda: any,
+  limAvista: number,
+  limPresencial: number,
+  limResponsavel: number
+): { excedidoPct: number; excedidoValor: number } => {
+  const produtos = venda?.produtos || [];
+  const totalBase = calcularTotalVenda(produtos);
+  if (totalBase <= 0) return { excedidoPct: 0, excedidoValor: 0 };
 
-Depois disso, a venda `111ad4b2…` passa a aparecer como **Quente** na tabela, o excedido/tiers continuam calculados como já estão, e a lista fica consistente com todo o resto do app. Não há necessidade de migração de dados nem de recomputar valores existentes.
+  const descontoTotal = calcularDescontoTotalRegras(produtos);
+  const pctDado = (descontoTotal / totalBase) * 100;
+
+  const formaPg = (venda?.forma_pagamento || '').trim();
+  const aptoAvista = formaPg !== '' && formaPg !== 'cartao_credito';
+  const aptoFrio = venda?.temperatura === false;
+  const limiteBase = (aptoAvista ? limAvista : 0) + (aptoFrio ? limPresencial : 0);
+  const aptoGerente =
+    !!venda?.autorizacao_desconto?.[0] || pctDado > limiteBase;
+  const limite = limiteBase + (aptoGerente ? limResponsavel : 0);
+
+  const excedidoPct = Math.max(0, pctDado - limite);
+  const excedidoValor = (excedidoPct / 100) * totalBase;
+  return { excedidoPct, excedidoValor };
+};
+```
+
+E propagar `limResponsavel` nas duas chamadas existentes:
+
+- `calcularLucroReal(venda, limAvista, limPresencial)` → adicionar `limResponsavel` na assinatura e passar adiante para `calcularExcedidoDesconto`.
+- No `useMemo` do sort (~linha 477): `calcularExcedidoDesconto(venda, limAvista, limPresencial, limResponsavel)` e `calcularLucroReal(venda, limAvista, limPresencial, limResponsavel)`.
+- Na célula `excedido_desconto` (~linha 1005): mesma coisa.
+- Incluir `limResponsavel` nas deps do `useMemo` do sort.
+
+Nenhuma mudança de dados no banco, nenhuma outra tela alterada.
+
+Depois disso, a venda `e60a7adf…` (11%) sai da lista de "excedido" — tanto a coluna quanto o tooltip mostram consistente: Gerente 3,07%, Diretor R$ 0, Excedido "-".
