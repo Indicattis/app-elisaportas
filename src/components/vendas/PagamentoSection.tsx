@@ -675,44 +675,68 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
             </div>
           </div>
         )}
+        {/* Confirmação do bloco de pagamento */}
+        {paymentData.metodos[0].tipo && (
+          <div className="border rounded-lg p-4 flex items-center justify-between gap-3 border-white/10 bg-white/5">
+            {pagamentoConfirmado ? (
+              <>
+                <div className="flex items-center gap-2 text-emerald-300 text-sm">
+                  <CheckCircle2 className="h-4 w-4" />
+                  <span className="font-medium">Forma de pagamento confirmada</span>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleEditarPagamento}
+                  className="h-8 gap-1.5 bg-white/5 border-white/20 text-white/80 hover:bg-white/10 hover:text-white"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                  Editar
+                </Button>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-2 text-amber-200 text-sm">
+                  <AlertTriangle className="h-4 w-4" />
+                  <span>Revise os métodos acima e confirme para prosseguir com a venda.</span>
+                </div>
+                <Button
+                  type="button"
+                  onClick={handleConfirmar}
+                  className="h-9 bg-blue-500 hover:bg-blue-600 text-white"
+                >
+                  Confirmar forma de pagamento
+                </Button>
+              </>
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
 
     <AutorizacaoDescontoModal
-      open={pendingMotivo !== null}
-      onOpenChange={handleModalOpenChange}
+      open={confirmModalOpen}
+      onOpenChange={handleConfirmModalOpenChange}
       onAutorizado={handleAutorizadoRegras}
       percentualDesconto={0}
       tipoAutorizacao="responsavel_setor"
       limitePermitido={0}
-      titulo={
-        pendingMotivo === 'entrada'
-          ? 'Autorizar entrada de boleto abaixo do mínimo'
-          : pendingMotivo === 'intervalo'
-            ? 'Autorizar intervalo de boletos fora do padrão'
-            : pendingMotivo === 'data'
-              ? 'Autorizar data de pagamento fora da janela'
-              : 'Autorização do Gerente'
-      }
+      titulo="Confirmar pagamento fora das regras"
       descricao={
-        pendingMotivo === 'entrada' ? (
-          <>
-            O valor da entrada está abaixo do mínimo de{' '}
-            <span className="font-bold text-foreground">{entradaPct}%</span> exigido pela regra de boleto.
-            Digite a senha do <span className="font-bold text-foreground">Gerente</span> para autorizar.
-          </>
-        ) : pendingMotivo === 'intervalo' ? (
-          <>
-            O intervalo escolhido está fora das opções permitidas para este valor de venda.
-            Digite a senha do <span className="font-bold text-foreground">Gerente</span> para autorizar.
-          </>
-        ) : pendingMotivo === 'data' ? (
-          <>
-            A data de pagamento selecionada está fora da janela de{' '}
-            <span className="font-bold text-foreground">±{janelaDias} dias</span>.
-            Digite a senha do <span className="font-bold text-foreground">Gerente</span> para autorizar.
-          </>
-        ) : undefined
+        <div className="space-y-2">
+          <p>
+            A forma de pagamento configurada infringe {violacoesModal.length === 1 ? 'a seguinte regra' : `${violacoesModal.length} regras`}:
+          </p>
+          <ul className="list-disc pl-5 space-y-1 text-foreground">
+            {violacoesModal.map((v, i) => (
+              <li key={i}>{v}</li>
+            ))}
+          </ul>
+          <p>
+            Digite a senha do <span className="font-bold text-foreground">Gerente</span> para autorizar e prosseguir com a venda.
+          </p>
+        </div>
       }
     />
     </>
