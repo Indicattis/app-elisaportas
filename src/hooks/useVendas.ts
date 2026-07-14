@@ -574,7 +574,7 @@ export function useVendas() {
         // aceita apenas responsavel_setor/master; usamos observacoes para diferenciar).
         const senhaOk = await supabase.rpc('verificar_senha_vendas', {
           p_senha: autorizacaoRegraPagamento.senha_usada,
-          p_tipo: 'responsavel',
+          p_tipo: 'master',
         });
         if (senhaOk.error) {
           console.error('Erro ao validar senha da regra de pagamento:', senhaOk.error);
@@ -585,10 +585,10 @@ export function useVendas() {
             autorizado_por: autorizacaoRegraPagamento.autorizado_por,
             solicitado_por: autorizacaoRegraPagamento.solicitado_por,
             senha_usada: autorizacaoRegraPagamento.senha_usada,
-            tipo_autorizacao: 'responsavel_setor' as const,
+            tipo_autorizacao: 'master' as const,
             observacoes:
               autorizacaoRegraPagamento.observacoes ||
-              'Regra de pagamento liberada pelo Gerente (entrada de boleto, data de pagamento e/ou intervalo de boletos).',
+              'Regra de pagamento liberada pelo Diretor (entrada de boleto, data de pagamento e/ou intervalo de boletos).',
           };
           const { error: regraErr } = await supabase
             .from('vendas_autorizacoes_desconto')
