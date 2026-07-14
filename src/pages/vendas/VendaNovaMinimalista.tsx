@@ -721,6 +721,13 @@ export default function VendaNovaMinimalista() {
               senha_usada: autorizacaoAjuste.senha,
               tipo_autorizacao: autorizacaoAjuste.tipo,
             },
+            autorizacaoRegraPagamento: pagamentoOverride && user
+              ? {
+                  autorizado_por: pagamentoOverride.autorizadorId,
+                  solicitado_por: user.id,
+                  senha_usada: pagamentoOverride.senha,
+                }
+              : undefined,
             creditoVenda: { valorCredito: 0, percentualCredito: 0 },
           });
           navigate('/vendas/minhas-vendas');
@@ -746,6 +753,13 @@ export default function VendaNovaMinimalista() {
         },
         portas: portasComAjusteGlobal,
         pagamentoData,
+        autorizacaoRegraPagamento: pagamentoOverride && user
+          ? {
+              autorizado_por: pagamentoOverride.autorizadorId,
+              solicitado_por: user.id,
+              senha_usada: pagamentoOverride.senha,
+            }
+          : undefined,
         creditoVenda: { valorCredito, percentualCredito }
       });
       navigate('/vendas/minhas-vendas');
@@ -785,6 +799,13 @@ export default function VendaNovaMinimalista() {
           senha_usada: senhaDigitada,
           tipo_autorizacao: tipoAutorizacaoNecessaria
         },
+        autorizacaoRegraPagamento: pagamentoOverride
+          ? {
+              autorizado_por: pagamentoOverride.autorizadorId,
+              solicitado_por: user.id,
+              senha_usada: pagamentoOverride.senha,
+            }
+          : undefined,
         creditoVenda: { valorCredito: 0, percentualCredito: 0 }
       });
       navigate('/vendas/minhas-vendas');
