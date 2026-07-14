@@ -1,63 +1,75 @@
 ## Contexto
 
-Hoje `PagamentoSection.tsx` já tem um botão **"Liberar regras (senha)"** no topo que, uma vez usado, libera as três regras de pagamento (entrada mín. de boleto, intervalo de boletos e janela de data). O usuário quer inverter esse fluxo: **as regras permanecem visíveis/travadas, mas quando o usuário tentar escolher um valor proibido, o próprio sistema abre o modal de senha do Gerente para autorizar aquela alteração**.
+Hoje em `/vendas/minhas-vendas/nova`, ao selecionar boleto o sistema abre imediatamente o modal de senha do Gerente — mesmo sem o usuário ter escolhido nada fora das regras. Isso acontece porque:
+
+1. O `useEffect` que chama `aplicarRegraBoleto` normaliza M1/M2 automaticamente ao trocar o tipo, e a detecção de violação (`applyChangeWithGuard`) ainda dispara em edições subsequentes que a normalização toca (intervalo/data).
+2. Qualquer valor tocado que caia fora das faixas dispara o modal na hora, quebrando o fluxo de preenchimento livre.
+
+O usuário quer inverter o modelo: **deixar o usuário editar tudo livremente sem prompt inline**, e concentrar a checagem em uma etapa de **confirmação** ao final do bloco de pagamento. Se houver violações, o sistema **lista todas** e pede a senha do Gerente uma única vez; sem senha, o método de pagamento não é considerado confirmado (o restante do formulário não avança).
 
 ## Escopo
 
-Somente `/vendas/minhas-vendas/nova`. Sem mudanças em schema, RLS ou edge functions. Continua persistindo em `vendas_autorizacoes_desconto` como já feito hoje.
+Somente frontend/UI em `/vendas/minhas-vendas/nova`. Sem mudanças em schema, RLS, edge functions ou persistência. O registro em `vendas_autorizacoes_desconto` (via `useVendas.createVenda`) continua igual — muda apenas o gatilho e o texto do modal.
 
 ## Mudanças
 
 ### 1. `src/components/vendas/PagamentoSection.tsx`
 
-- **Remover o botão upfront "Liberar regras (senha)"** do `CardHeader`. Manter apenas o badge "Regras liberadas" + "Reverter" quando algum override estiver ativo.
-- Manter o estado `autorizadoRegras` + `senhaAutorizacaoUsada` + `autorizadorId` já existentes. Passa a ser ativado **sob demanda** (quando o modal for confirmado a partir de uma violação).
-- Adicionar estado `pendingAutorizacao: null | { motivo: 'entrada' | 'intervalo' | 'data'; apply: () => void; revert?: () => void }`. Quando setado, abre `AutorizacaoDescontoModal` com título/descrição contextualizada ("Alterar entrada mínima do boleto", "Alterar intervalo entre boletos", "Alterar data de pagamento fora da janela"). Ao autorizar, executa `apply()`, marca `autorizadoRegras=true`, chama `onOverrideChange`. Ao cancelar, executa `revert?.()` (para reverter a UI ao valor anterior) e fecha.
-- Passar novos callbacks para cada `MetodoPagamentoCard`:
-  - `onRequestEntradaOverride(valorProposto, revert)` — chamado quando o usuário edita o campo Valor do M1 abaixo da entrada mínima enquanto há boleto ativo. Se `autorizadoRegras` já for `true`, aplica direto sem modal.
-  - `onRequestIntervaloOverride(novoIntervalo, revert)` — chamado quando o usuário seleciona um intervalo fora de `intervalosBoletoPermitidos`.
-  - `onRequestDataOverride(novaData, revert)` — chamado quando o usuário seleciona data fora da janela `[dataMin, dataMax]`.
-- Ajustar o `useEffect` que aplica `aplicarRegraBoleto`: continuar aplicando split M1/M2 e forçar tipo, mas **não sobrescrever o valor de M1 quando `autorizadoRegras=true`** (comportamento já implementado). Para permitir edição do valor de entrada abaixo do mínimo antes de autorizar, o efeito não recalcula automaticamente — a violação é detectada só quando o usuário digita e a `MetodoPagamentoCard` propaga via callback.
-- Manter passagem de `intervalosBoletoPermitidos` e `dataPagamentoJanelaDias` normais (não passar `undefined` só porque autorizado; o card exibe todas as opções sempre e o parent intercepta). Remover `dataPagamentoLiberada` como flag de "libera tudo" e usá-la só para ocultar a mensagem de janela quando `autorizadoRegras=true`.
+- **Remover a interceptação inline de violações**:
+  - Deletar `applyChangeWithGuard`, `detectMotivoViolacao`, `pendingMotivo`, `pendingRevertRef`, `autorizadoConfirmadoRef`.
+  - `handleMetodo1Change` e `handleMetodo2Change` voltam a chamar `onChange` direto (sem guarda).
+- **Neutralizar o `useEffect` que auto-normaliza via `aplicarRegraBoleto`**: manter apenas a criação/limpeza do M2 quando o M1 vira boleto (split estrutural), mas **não sobrescrever valor de entrada, intervalo ou data**. Assim o usuário edita livremente sem o effect brigar com ele. A normalização "forte" volta somente se o usuário clicar em "Aplicar regra padrão" (novo botão opcional; se preferir, apenas manter o effect só para preencher os defaults iniciais ao trocar o tipo e não recalcular depois).
+- **Adicionar bloco de confirmação no fim do card** (antes do `</CardContent>`):
+  - Botão `Confirmar forma de pagamento` (primário).
+  - Estado local `pagamentoConfirmado: boolean`. Sempre que `paymentData` mudar depois de confirmar, resetar para `false` (via `useEffect` sobre um hash simples do objeto).
+  - Um badge visível quando confirmado ("✓ Pagamento confirmado" + botão "Editar" que reseta o estado).
+- **Cálculo de violações no clique de "Confirmar"**:
+  - Reaproveitar `isEntradaViolada`, `isIntervaloViolado`, `isDataViolada` para montar uma lista `violacoes: { motivo, descricao }[]`:
+    - Entrada abaixo de `entradaMinima` (mostra valor atual vs mínimo em R$ e %).
+    - Intervalo(s) fora de `intervalosBoletoPermitidos` (mostra intervalo escolhido e permitidos).
+    - Data(s) fora da janela `[dataMin, dataMax]` (mostra data escolhida e janela).
+  - Se `violacoes.length === 0`: marca `pagamentoConfirmado = true`, dispara `onOverrideChange?.(null)` (nenhuma autorização necessária).
+  - Se `violacoes.length > 0`: abre `AutorizacaoDescontoModal` já configurado com título "Confirmar pagamento fora das regras" e uma `descricao` (ReactNode) contendo a lista de violações formatada.
+- **`AutorizacaoDescontoModal` fluxo**:
+  - Ao autorizar: `setAutorizadoRegras(true)`, `setPagamentoConfirmado(true)`, `onOverrideChange({ autorizadorId, senha })`, fecha modal.
+  - Ao cancelar: **não altera** `paymentData` (nada a reverter — o usuário permanece com os valores que ele escolheu), apenas fecha o modal e mantém `pagamentoConfirmado = false`. O restante do formulário fica bloqueado até que o usuário ou ajuste os valores ou obtenha a senha.
+- **Manter** o badge "Regras liberadas" + botão "Reverter" quando `autorizadoRegras=true`.
 
 ### 2. `src/components/vendas/MetodoPagamentoCard.tsx`
 
-- Novas props opcionais:
-  - `onRequestEntradaOverride?: (valorProposto: number, revert: () => void) => boolean` — retorna `true` se pode aplicar direto (já autorizado), `false` para segurar até o modal.
-  - `onRequestIntervaloOverride?: (intervalo: number, revert: () => void) => boolean`.
-  - `onRequestDataOverride?: (data: Date, revert: () => void) => boolean`.
-- **Intervalo**: mostrar sempre a lista completa `[7, 14, 15, 21, 28, 30]`. Ao `onValueChange`, se o valor selecionado não estiver em `intervalosBoletoPermitidos` (e o array existir), chamar `onRequestIntervaloOverride`. Se retornar `true` aplica; senão, guarda o valor anterior e reverte se o parent cancelar. Remover o `disabled` quando há 1 item (a UI mostra alerta em vez de bloquear).
-- **Data**: sempre remover o `disabled` do `Calendar`. Ao `onSelect`, verificar se a data está fora de `[dataMin, dataMax]`; se estiver, chamar `onRequestDataOverride`. Preservar a mensagem "Permitido entre X e Y" como aviso.
-- **Valor do M1 (entrada)**: acionar `onRequestEntradaOverride` no `onChange` do input `valor` quando o novo valor for < entrada mínima (contexto passado pelo parent via prop nova `entradaMinimaValor?: number`; se definida, e valor abaixo dela, dispara callback).
-- Nenhuma dependência quebrada com outros consumidores: todas as novas props são opcionais e sem elas o comportamento permanece o de hoje.
+- Sem restrições inline: Calendar aceita qualquer data (já está), Select de intervalo mostra a lista completa `[7, 14, 15, 21, 28, 30]` (já está). As mensagens em cinza abaixo dos campos continuam sinalizando o intervalo/janela permitido, mas **sem bloquear**.
+- Remover as callbacks `onRequestEntradaOverride`/`onRequestIntervaloOverride`/`onRequestDataOverride` se ainda existirem — não são mais usadas.
 
 ### 3. `src/pages/vendas/VendaNovaMinimalista.tsx`
 
-- Sem mudanças de fluxo: continua consumindo `onOverrideChange` e enviando `autorizacaoRegraPagamento` no submit (já implementado).
+- Ler o novo sinal `pagamentoConfirmado` (via `onOverrideChange`? ou um novo callback dedicado `onPagamentoConfirmadoChange`).
+- **Bloquear o botão "Finalizar venda"** enquanto `pagamentoConfirmado === false`. Mensagem inline: "Confirme a forma de pagamento antes de finalizar."
+- Manter a validação atual de `validarRegraBoleto`/`validarDatasPagamento`: se `autorizacaoRegraPagamento` estiver presente, essas validações continuam sendo puladas (comportamento atual).
 
-### 4. `src/components/vendas/AutorizacaoDescontoModal.tsx`
+### 4. `src/hooks/useVendas.ts`
 
-- Nenhuma mudança — as props `titulo` e `descricao` opcionais já existem. `PagamentoSection` passará textos contextuais conforme o `motivo`.
+- Sem mudanças — a mutation já grava `vendas_autorizacoes_desconto` quando `autorizacaoRegraPagamento` é fornecida.
 
 ## Comportamento resultante
 
-- Ao selecionar boleto, split M1 À Vista + M2 Boleto continua sendo criado automaticamente.
-- Se o usuário tentar digitar valor de entrada < mínimo, o modal do Gerente abre imediatamente. Cancelar restaura o valor mínimo.
-- Se o usuário tentar selecionar intervalo fora do permitido (ex.: 7 dias em venda ≤ R$ 60k), o modal abre. Cancelar retorna ao valor permitido anterior.
-- Se o usuário tentar selecionar data fora da janela ±N dias, o modal abre. Cancelar limpa a data.
-- Após primeira autorização, todas as três regras ficam liberadas na venda em curso (evita múltiplos prompts) e o badge "Regras liberadas por Gerente" + "Reverter" aparece.
-- Reverter volta ao estado normal e reaplica `aplicarRegraBoleto`.
+- Selecionar boleto **não abre modal**. O usuário preenche entrada, intervalo e data livremente, com dicas visuais (nunca bloqueio).
+- No fim do bloco, botão `Confirmar forma de pagamento`.
+  - Todas as regras respeitadas → confirma silenciosamente (badge verde).
+  - Alguma regra violada → modal do Gerente lista **todas as regras infringidas** e exige a senha. Sem senha, `pagamentoConfirmado` permanece `false` e o botão de finalizar venda fica desabilitado.
+- Após autorização, badge "Regras liberadas" + "Reverter" continuam disponíveis.
 
 ## Detalhes técnicos
 
 ```text
-Usuário edita valor M1 = R$ 5.000 (venda R$ 30k, mín 15k)
-   └─ MetodoPagamentoCard detecta valor < entradaMinimaValor
-      └─ chama onRequestEntradaOverride(5000, revertTo=15000)
-         └─ PagamentoSection: pendingAutorizacao = { motivo:'entrada', apply, revert }
-            └─ AutorizacaoDescontoModal abre com título "Autorizar entrada abaixo de 50%"
-               ├─ OK  → apply() aplica 5000, autorizadoRegras=true, onOverrideChange({...})
-               └─ Cancelar → revert() volta a 15000
+Usuário monta pagamento livre (ex.: entrada 20%, intervalo 7d, data em 60 dias)
+   └─ clica "Confirmar forma de pagamento"
+      └─ PagamentoSection calcula violações:
+          • Entrada: R$ 6.000 (20%) < mínimo R$ 15.000 (50%)
+          • Intervalo: 7 dias (permitido: 21, 36, 42)
+          • Data: 15/09 fora da janela 10/07–20/07
+         └─ Abre AutorizacaoDescontoModal com lista das 3 violações
+            ├─ OK → autorizadoRegras=true, pagamentoConfirmado=true, grava vendas_autorizacoes_desconto ao criar venda
+            └─ Cancelar → pagamentoConfirmado=false; botão "Finalizar venda" fica desabilitado
 ```
 
-Persistência em `vendas_autorizacoes_desconto` continua no `useVendas.createVenda` (já implementado); nenhuma migration necessária.
+Sem migrations, sem alterações em edge functions.

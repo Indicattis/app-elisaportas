@@ -190,6 +190,7 @@ export default function VendaNovaMinimalista() {
   // Autorização do Gerente para liberar regras de pagamento
   // (entrada de boleto, data de pagamento, intervalo de boletos).
   const [pagamentoOverride, setPagamentoOverride] = useState<{ autorizadorId: string; senha: string } | null>(null);
+  const [pagamentoConfirmado, setPagamentoConfirmado] = useState(false);
 
   const [ajusteGlobal, setAjusteGlobal] = useState<AjusteGlobal>({
     tipo: 'desconto',
@@ -954,6 +955,7 @@ export default function VendaNovaMinimalista() {
           }}
           hideEmpresaReceptora
           onOverrideChange={setPagamentoOverride}
+          onConfirmadoChange={setPagamentoConfirmado}
         />
 
         {/* Desconto / Acréscimo Global */}
@@ -1305,7 +1307,7 @@ export default function VendaNovaMinimalista() {
           <GradientButton
             type="submit" 
             variant="blue"
-            disabled={isCreating || portas.length === 0}
+            disabled={isCreating || portas.length === 0 || !pagamentoConfirmado}
           >
             {isCreating ? 'Criando...' : 'Criar Venda'}
           </GradientButton>
