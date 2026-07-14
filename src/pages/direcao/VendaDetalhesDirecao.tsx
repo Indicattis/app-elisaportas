@@ -270,7 +270,7 @@ export default function VendaDetalhesDirecao() {
 
   if (loading) {
     return (
-      <MinimalistLayout title="Detalhes da Venda" backPath="/direcao/vendas">
+      <MinimalistLayout title="Detalhes da Venda" backPath="/direcao/vendas/todas">
         <div className="flex items-center justify-center min-h-[50vh]">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
@@ -283,7 +283,7 @@ export default function VendaDetalhesDirecao() {
 
   if (!venda) {
     return (
-      <MinimalistLayout title="Detalhes da Venda" backPath="/direcao/vendas">
+      <MinimalistLayout title="Detalhes da Venda" backPath="/direcao/vendas/todas">
         <div className="text-center py-8">
           <p className="text-white/60">Venda não encontrada</p>
           <Button onClick={() => navigate("/direcao/vendas")} className="mt-4">
@@ -307,12 +307,13 @@ export default function VendaDetalhesDirecao() {
     <MinimalistLayout 
       title="Detalhes da Venda" 
       subtitle={venda.cliente_nome}
-      backPath="/direcao/vendas"
+      backPath="/direcao/vendas/todas"
       fullWidth
       breadcrumbItems={[
         { label: "Home", path: "/home" },
         { label: "Direção", path: "/direcao" },
         { label: "Vendas", path: "/direcao/vendas" },
+        { label: "Todas as Vendas", path: "/direcao/vendas/todas" },
         { label: "Detalhes" },
       ]}
       headerActions={
