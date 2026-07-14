@@ -503,12 +503,12 @@ export default function VendasDirecao() {
           case 'temperatura':
             return venda.temperatura === true ? 1 : venda.temperatura === false ? 0 : -1;
           case 'excedido_desconto': {
-            const { excedidoValor } = calcularExcedidoDesconto(venda, limAvista, limPresencial);
+            const { excedidoValor } = calcularExcedidoDesconto(venda, limAvista, limPresencial, limResponsavel);
             return excedidoValor;
           }
           case 'lucro': {
             if (!vendaFaturada(venda)) return -Infinity;
-            return calcularLucroReal(venda, limAvista, limPresencial);
+            return calcularLucroReal(venda, limAvista, limPresencial, limResponsavel);
           }
           default: return '';
         }
@@ -1016,7 +1016,7 @@ export default function VendasDirecao() {
           </span>
         );
       case 'excedido_desconto': {
-        const { excedidoPct, excedidoValor } = calcularExcedidoDesconto(venda, limAvista, limPresencial);
+        const { excedidoPct, excedidoValor } = calcularExcedidoDesconto(venda, limAvista, limPresencial, limResponsavel);
         if (excedidoValor <= 0) {
           return <span className="text-[10px] md:text-sm text-white/40">-</span>;
         }
@@ -1052,7 +1052,7 @@ export default function VendasDirecao() {
         if (!isFaturada()) {
           return <span className="text-[10px] md:text-sm text-white/40">-</span>;
         }
-        const lucroReal = calcularLucroReal(venda, limAvista, limPresencial);
+        const lucroReal = calcularLucroReal(venda, limAvista, limPresencial, limResponsavel);
         const cls = lucroReal >= 0 ? 'text-emerald-400' : 'text-red-400';
         return (
           <span className={`text-[10px] md:text-sm font-medium ${cls}`}>
