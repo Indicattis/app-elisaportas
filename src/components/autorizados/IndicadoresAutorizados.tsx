@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Building2, Target, PieChart, Settings2 } from 'lucide-react';
+import { useEffect, useState, useMemo } from 'react';
+import { Building2, Target, PieChart, Settings2, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,15 @@ interface Config {
   total_cidades_brasil: number;
 }
 
+interface AutorizadoRow {
+  id: string;
+  nome: string;
+  cidade: string | null;
+  estado: string | null;
+  vendedor_id: string | null;
+  vendedor_responsavel_id: string | null;
+}
+
 export function IndicadoresAutorizados() {
   const [qtdAutorizados, setQtdAutorizados] = useState(0);
   const [qtdCidades, setQtdCidades] = useState(0);
@@ -22,6 +31,60 @@ export function IndicadoresAutorizados() {
   const [editOpen, setEditOpen] = useState(false);
   const [metaInput, setMetaInput] = useState('1');
   const [saving, setSaving] = useState(false);
+
+  const [listagemOpen, setListagemOpen] = useState(false);
+  const [listaAutorizados, setListaAutorizados] = useState<AutorizadoRow[]>([]);
+  const [nomesUsuarios, setNomesUsuarios] = useState<Map<string, string>>(new Map());
+  const [loadingLista, setLoadingLista] = useState(false);
+
+  const loadListagem = async () => {
+    setLoadingLista(true);
+    try {
+      const { data: autorizadosData, error } = await supabase
+        .from('autorizados')
+        .select('id, nome, cidade, estado, vendedor_id, vendedor_responsavel_id')
+        .eq('ativo', true);
+      if (error) throw error;
+      const lista = (autorizadosData ?? []) as AutorizadoRow[];
+      const userIds = Array.from(
+        new Set(
+          lista
+            .flatMap((a) => [a.vendedor_id, a.vendedor_responsavel_id])
+            .filter((v): v is string => !!v),
+        ),
+      );
+      let mapaNomes = new Map<string, string>();
+      if (userIds.length > 0) {
+        const { data: users } = await supabase
+          .from('admin_users')
+          .select('user_id, nome')
+          .in('user_id', userIds);
+        (users ?? []).forEach((u: any) => mapaNomes.set(u.user_id, u.nome));
+      }
+      setNomesUsuarios(mapaNomes);
+      setListaAutorizados(lista);
+    } catch (e: any) {
+      toast.error('Erro ao carregar lista: ' + (e.message ?? e));
+    } finally {
+      setLoadingLista(false);
+    }
+  };
+
+  const listaOrdenada = useMemo(() => {
+    const arr = [...listaAutorizados];
+    arr.sort((a, b) => {
+      const ea = (a.estado ?? '').toUpperCase();
+      const eb = (b.estado ?? '').toUpperCase();
+      if (ea !== eb) return ea.localeCompare(eb);
+      return (a.nome ?? '').localeCompare(b.nome ?? '');
+    });
+    return arr;
+  }, [listaAutorizados]);
+
+  const handleAbrirListagem = () => {
+    setListagemOpen(true);
+    loadListagem();
+  };
 
   const load = async () => {
     setLoading(true);
@@ -116,6 +179,7 @@ export function IndicadoresAutorizados() {
       icon: Building2,
       accent: 'from-blue-500/20 to-blue-600/10 border-blue-400/20 text-blue-300',
       iconBg: 'bg-blue-500/20 text-blue-300',
+      onClick: handleAbrirListagem,
     },
     {
       label: 'Meta de Autorizados por Cidade',
@@ -151,10 +215,26 @@ export function IndicadoresAutorizados() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {cards.map((c) => {
           const Icon = c.icon;
+          const clickable = !!(c as any).onClick;
           return (
             <div
               key={c.label}
-              className={`relative rounded-xl bg-gradient-to-br ${c.accent} backdrop-blur-xl border p-4 flex items-center gap-4`}
+              onClick={clickable ? (c as any).onClick : undefined}
+              role={clickable ? 'button' : undefined}
+              tabIndex={clickable ? 0 : undefined}
+              onKeyDown={
+                clickable
+                  ? (e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        (c as any).onClick?.();
+                      }
+                    }
+                  : undefined
+              }
+              className={`relative rounded-xl bg-gradient-to-br ${c.accent} backdrop-blur-xl border p-4 flex items-center gap-4 ${
+                clickable ? 'cursor-pointer hover:brightness-110 hover:border-white/30 transition-all' : ''
+              }`}
             >
               <div className={`h-11 w-11 rounded-lg flex items-center justify-center ${c.iconBg}`}>
                 <Icon className="h-5 w-5" />
@@ -197,6 +277,66 @@ export function IndicadoresAutorizados() {
             </Button>
             <Button onClick={salvarMeta} disabled={saving} className="bg-blue-500 hover:bg-blue-600 text-white">
               {saving ? 'Salvando...' : 'Salvar'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={listagemOpen} onOpenChange={setListagemOpen}>
+        <DialogContent className="bg-black/90 border-white/10 backdrop-blur-xl max-w-5xl max-h-[85vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="text-white">
+              Autorizados cadastrados
+              {!loadingLista && ` (${listaOrdenada.length})`}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-auto -mx-6 px-6">
+            {loadingLista ? (
+              <div className="py-10 text-center text-white/60 text-sm">Carregando...</div>
+            ) : listaOrdenada.length === 0 ? (
+              <div className="py-10 text-center text-white/60 text-sm">Nenhum autorizado ativo.</div>
+            ) : (
+              <table className="w-full text-sm">
+                <thead className="sticky top-0 bg-black/80 backdrop-blur-xl z-10">
+                  <tr className="text-left text-xs uppercase tracking-wider text-white/50 border-b border-white/10">
+                    <th className="py-2 px-3 font-medium">Estado</th>
+                    <th className="py-2 px-3 font-medium">Cidade</th>
+                    <th className="py-2 px-3 font-medium">Autorizado</th>
+                    <th className="py-2 px-3 font-medium">Vendedor Responsável</th>
+                    <th className="py-2 px-3 font-medium">Atendente</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {listaOrdenada.map((a, idx) => {
+                    const prevEstado = idx > 0 ? (listaOrdenada[idx - 1].estado ?? '').toUpperCase() : null;
+                    const estadoAtual = (a.estado ?? '').toUpperCase();
+                    const novoGrupo = prevEstado !== estadoAtual;
+                    return (
+                      <tr
+                        key={a.id}
+                        className={`border-b border-white/5 text-white/80 hover:bg-white/5 ${
+                          novoGrupo ? 'border-t border-white/15' : ''
+                        }`}
+                      >
+                        <td className="py-2 px-3 font-medium text-white">{estadoAtual || '—'}</td>
+                        <td className="py-2 px-3">{a.cidade || '—'}</td>
+                        <td className="py-2 px-3">{a.nome}</td>
+                        <td className="py-2 px-3">
+                          {a.vendedor_responsavel_id ? nomesUsuarios.get(a.vendedor_responsavel_id) ?? '—' : '—'}
+                        </td>
+                        <td className="py-2 px-3">
+                          {a.vendedor_id ? nomesUsuarios.get(a.vendedor_id) ?? '—' : '—'}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </div>
+          <div className="flex justify-end pt-2">
+            <Button variant="ghost" onClick={() => setListagemOpen(false)} className="text-white/70 hover:bg-white/10">
+              Fechar
             </Button>
           </div>
         </DialogContent>
