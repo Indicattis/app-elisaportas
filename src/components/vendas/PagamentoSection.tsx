@@ -7,8 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { MetodoPagamentoCard, MetodoPagamento, createEmptyMetodo } from "./MetodoPagamentoCard";
-import { useEffect } from "react";
-import { Info } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Info, ShieldCheck, Unlock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ import {
   getIntervalosBoletoPermitidos,
 } from "@/utils/boletoRegra";
 import { useRegrasVendas } from "@/hooks/useRegrasVendas";
+import { AutorizacaoDescontoModal } from "./AutorizacaoDescontoModal";
 
 export interface PagamentoData {
   usar_dois_metodos: boolean;
@@ -44,14 +45,26 @@ interface PagamentoSectionProps {
     limiteMaximo: number;
   };
   hideEmpresaReceptora?: boolean;
+  /**
+   * Callback disparado quando o Gerente libera (ou reverte) as regras de
+   * pagamento (entrada de boleto, intervalo e janela de data). O consumidor
+   * deve persistir esse registro ao criar a venda.
+   */
+  onOverrideChange?: (payload: { autorizadorId: string; senha: string } | null) => void;
 }
 
-export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPresencial, onVendaPresencialChange, descontoInfo, hideEmpresaReceptora = false }: PagamentoSectionProps) {
+export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPresencial, onVendaPresencialChange, descontoInfo, hideEmpresaReceptora = false, onOverrideChange }: PagamentoSectionProps) {
   const { limites: regrasLimites } = useRegrasVendas();
   const boletoConfig = regrasLimites.boleto;
   const janelaDias = regrasLimites.pagamentoDataJanelaDias;
   const entradaPct = boletoConfig.entradaMinPct;
   const restantePct = Math.max(0, 100 - entradaPct);
+
+  // Autorização do Gerente para relaxar as regras de pagamento
+  // (entrada mínima, intervalo de boleto e janela de data).
+  const [autorizadoRegras, setAutorizadoRegras] = useState(false);
+  const [autorizacaoModalOpen, setAutorizacaoModalOpen] = useState(false);
+
   const { data: empresas = [], isLoading: isLoadingEmpresas } = useQuery({
     queryKey: ['empresas-emissoras-ativas'],
     queryFn: async () => {
@@ -90,6 +103,7 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
   // Aplica a regra do boleto (70% à vista + 30% boleto com intervalo de 21 dias)
   // sempre que houver boleto em qualquer método.
   useEffect(() => {
+    if (autorizadoRegras) return; // regras liberadas pelo Gerente
     const normalizado = aplicarRegraBoleto(paymentData, valorTotal, boletoConfig);
     if (normalizado !== paymentData) {
       onChange(normalizado);
@@ -103,10 +117,23 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
     boletoConfig.valorLimiteFlex,
     boletoConfig.intervaloPadrao,
     boletoConfig.parcelasMax,
+    autorizadoRegras,
   ]);
 
-  const regraBoletoAtiva = pagamentoTemBoleto(paymentData);
-  const intervalosBoletoPermitidos = getIntervalosBoletoPermitidos(valorTotal, boletoConfig);
+  const regraBoletoAtiva = pagamentoTemBoleto(paymentData) && !autorizadoRegras;
+  const intervalosBoletoPermitidos = autorizadoRegras
+    ? undefined
+    : getIntervalosBoletoPermitidos(valorTotal, boletoConfig);
+
+  const handleAutorizadoRegras = (autorizadorId: string, senha: string) => {
+    setAutorizadoRegras(true);
+    onOverrideChange?.({ autorizadorId, senha });
+  };
+
+  const handleReverterAutorizacao = () => {
+    setAutorizadoRegras(false);
+    onOverrideChange?.(null);
+  };
 
   const handleMetodo1Change = (metodo: MetodoPagamento) => {
     const newMetodos: [MetodoPagamento, MetodoPagamento] = [metodo, paymentData.metodos[1]];
@@ -190,11 +217,45 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
   const cardClass = "bg-white/5 border-white/10 backdrop-blur-xl";
 
   return (
+    <>
     <Card className={cardClass}>
       <CardHeader className="pb-3 pt-4">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-semibold text-white">Forma de Pagamento</CardTitle>
           <div className="flex items-center gap-2">
+            {autorizadoRegras ? (
+              <div className="flex items-center gap-1.5">
+                <Badge
+                  variant="outline"
+                  className="border text-xs bg-amber-500/15 border-amber-400/40 text-amber-100"
+                  title="Entrada, data e intervalo de boletos liberados pelo Gerente."
+                >
+                  <ShieldCheck className="h-3 w-3 mr-1" />
+                  Regras liberadas
+                </Badge>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleReverterAutorizacao}
+                  className="h-7 gap-1.5 bg-white/5 border-white/20 text-white/80 hover:bg-white/10 hover:text-white"
+                >
+                  Reverter
+                </Button>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setAutorizacaoModalOpen(true)}
+                className="h-7 gap-1.5 bg-amber-500/10 border-amber-400/40 text-amber-100 hover:bg-amber-500/20 hover:text-amber-50"
+                title="Liberar entrada de boleto, data de pagamento e intervalo com senha do Gerente"
+              >
+                <Unlock className="h-3.5 w-3.5" />
+                Liberar regras (senha)
+              </Button>
+            )}
             {descontoInfo && (() => {
               const { percentualAplicado, limitePermitido } = descontoInfo;
               const disponivel = Math.max(0, limitePermitido - percentualAplicado);
@@ -284,9 +345,20 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
               <strong className="text-blue-200">Regra do boleto:</strong> a venda foi
               ajustada automaticamente para no mínimo {entradaPct}% de entrada
               à vista no Método 1 e o restante em boleto no Método 2 (até {boletoConfig.parcelasMax} parcelas)
-              {intervalosBoletoPermitidos.length === 1
+              {intervalosBoletoPermitidos && intervalosBoletoPermitidos.length === 1
                 ? ` com intervalo fixo de ${boletoConfig.intervaloPadrao} dias`
-                : ` com intervalo entre ${intervalosBoletoPermitidos.join(', ')} dias (vendas acima de R$ ${boletoConfig.valorLimiteFlex.toLocaleString('pt-BR')})`}.
+                : ` com intervalo entre ${(intervalosBoletoPermitidos ?? []).join(', ')} dias (vendas acima de R$ ${boletoConfig.valorLimiteFlex.toLocaleString('pt-BR')})`}.
+            </div>
+          </div>
+        )}
+
+        {autorizadoRegras && (
+          <div className="flex items-start gap-2 p-3 rounded-lg border border-amber-500/30 bg-amber-500/10">
+            <ShieldCheck className="h-4 w-4 text-amber-300 mt-0.5 shrink-0" />
+            <div className="text-xs text-amber-100/90">
+              <strong className="text-amber-200">Regras liberadas por autorização do Gerente.</strong>{' '}
+              Entrada de boleto, data de pagamento e intervalo de boletos podem ser
+              definidos manualmente. Reverter volta às regras padrão.
             </div>
           </div>
         )}
@@ -334,6 +406,7 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
               intervalosBoletoPermitidos={intervalosBoletoPermitidos}
               parcelasBoletoMax={boletoConfig.parcelasMax}
               dataPagamentoJanelaDias={janelaDias}
+              dataPagamentoLiberada={autorizadoRegras}
             />
 
             {(metodo1.tipo === 'boleto' || metodo1.tipo === 'cartao_credito') && metodo1.data_pagamento && valorMetodo1 > 0 && (
@@ -369,6 +442,7 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
                 intervalosBoletoPermitidos={intervalosBoletoPermitidos}
                 parcelasBoletoMax={boletoConfig.parcelasMax}
                 dataPagamentoJanelaDias={janelaDias}
+              dataPagamentoLiberada={autorizadoRegras}
               />
 
               {(metodo2.tipo === 'boleto' || metodo2.tipo === 'cartao_credito') && metodo2.data_pagamento && valorMetodo2 > 0 && (
@@ -482,5 +556,23 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
         )}
       </CardContent>
     </Card>
+
+    <AutorizacaoDescontoModal
+      open={autorizacaoModalOpen}
+      onOpenChange={setAutorizacaoModalOpen}
+      onAutorizado={handleAutorizadoRegras}
+      percentualDesconto={0}
+      tipoAutorizacao="responsavel_setor"
+      limitePermitido={0}
+      titulo="Liberar regras de pagamento"
+      descricao={
+        <>
+          Digite a senha do <span className="font-bold text-foreground">Gerente</span> para liberar
+          entrada de boleto abaixo de {entradaPct}%, datas de pagamento fora da janela de ±{janelaDias} dias
+          e intervalos de boleto fora das opções padrão.
+        </>
+      }
+    />
+    </>
   );
 }

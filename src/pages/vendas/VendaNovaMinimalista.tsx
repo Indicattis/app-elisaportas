@@ -187,6 +187,10 @@ export default function VendaNovaMinimalista() {
 
   const [pagamentoData, setPagamentoData] = useState<PagamentoData>(createEmptyPagamentoData());
 
+  // Autorização do Gerente para liberar regras de pagamento
+  // (entrada de boleto, data de pagamento, intervalo de boletos).
+  const [pagamentoOverride, setPagamentoOverride] = useState<{ autorizadorId: string; senha: string } | null>(null);
+
   const [ajusteGlobal, setAjusteGlobal] = useState<AjusteGlobal>({
     tipo: 'desconto',
     unidade: '%',
@@ -667,7 +671,7 @@ export default function VendaNovaMinimalista() {
 
     // Regra do boleto: 70% entrada à vista + 30% boleto com 21 dias
     const regraBoleto = validarRegraBoleto(pagamentoData, valorTotalMemo, boletoConfig);
-    if (regraBoleto.ok === false) {
+    if (regraBoleto.ok === false && !pagamentoOverride) {
       sonnerToast.error('Regra do boleto não atendida', {
         description: regraBoleto.mensagem,
         duration: 6000,
@@ -677,7 +681,7 @@ export default function VendaNovaMinimalista() {
 
     // Regra da janela de data de pagamento (±N dias)
     const regraDataPag = validarDatasPagamento(pagamentoData, regrasLimites.pagamentoDataJanelaDias);
-    if (regraDataPag.ok === false) {
+    if (regraDataPag.ok === false && !pagamentoOverride) {
       sonnerToast.error('Data de pagamento fora da janela permitida', {
         description: regraDataPag.mensagem,
         duration: 6000,
@@ -717,6 +721,13 @@ export default function VendaNovaMinimalista() {
               senha_usada: autorizacaoAjuste.senha,
               tipo_autorizacao: autorizacaoAjuste.tipo,
             },
+            autorizacaoRegraPagamento: pagamentoOverride && user
+              ? {
+                  autorizado_por: pagamentoOverride.autorizadorId,
+                  solicitado_por: user.id,
+                  senha_usada: pagamentoOverride.senha,
+                }
+              : undefined,
             creditoVenda: { valorCredito: 0, percentualCredito: 0 },
           });
           navigate('/vendas/minhas-vendas');
@@ -742,6 +753,13 @@ export default function VendaNovaMinimalista() {
         },
         portas: portasComAjusteGlobal,
         pagamentoData,
+        autorizacaoRegraPagamento: pagamentoOverride && user
+          ? {
+              autorizado_por: pagamentoOverride.autorizadorId,
+              solicitado_por: user.id,
+              senha_usada: pagamentoOverride.senha,
+            }
+          : undefined,
         creditoVenda: { valorCredito, percentualCredito }
       });
       navigate('/vendas/minhas-vendas');
@@ -781,6 +799,13 @@ export default function VendaNovaMinimalista() {
           senha_usada: senhaDigitada,
           tipo_autorizacao: tipoAutorizacaoNecessaria
         },
+        autorizacaoRegraPagamento: pagamentoOverride
+          ? {
+              autorizado_por: pagamentoOverride.autorizadorId,
+              solicitado_por: user.id,
+              senha_usada: pagamentoOverride.senha,
+            }
+          : undefined,
         creditoVenda: { valorCredito: 0, percentualCredito: 0 }
       });
       navigate('/vendas/minhas-vendas');
@@ -928,6 +953,7 @@ export default function VendaNovaMinimalista() {
             limiteMaximo: validacaoDescontoMemo.limiteMaximoResponsavel ?? validacaoDescontoMemo.limitePermitido,
           }}
           hideEmpresaReceptora
+          onOverrideChange={setPagamentoOverride}
         />
 
         {/* Desconto / Acréscimo Global */}

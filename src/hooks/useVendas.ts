@@ -74,6 +74,13 @@ export interface AutorizacaoDesconto {
   observacoes?: string;
 }
 
+export interface AutorizacaoRegraPagamento {
+  autorizado_por: string;
+  solicitado_por: string;
+  senha_usada: string;
+  observacoes?: string;
+}
+
 export interface CreditoVenda {
   valorCredito: number;
   percentualCredito: number;
@@ -120,12 +127,14 @@ export function useVendas() {
       portas, 
       pagamentoData,
       autorizacaoDesconto,
+      autorizacaoRegraPagamento,
       creditoVenda
     }: { 
       vendaData: VendaFormData; 
       portas: ProdutoVenda[];
       pagamentoData?: PagamentoData;
       autorizacaoDesconto?: AutorizacaoDesconto;
+      autorizacaoRegraPagamento?: AutorizacaoRegraPagamento;
       creditoVenda?: CreditoVenda;
     }) => {
       if (portas.length === 0) {
@@ -556,6 +565,39 @@ export function useVendas() {
           throw new Error(
             `Venda criada mas a autorização de desconto NÃO foi registrada: ${autorizacaoError.message}. Avise o suporte imediatamente.`
           );
+        }
+      }
+
+      // 9.1 Salvar autorização de regra de pagamento (entrada/data/intervalo boleto), se houver
+      if (autorizacaoRegraPagamento) {
+        // Reutiliza a tabela vendas_autorizacoes_desconto (o enum tipo_autorizacao
+        // aceita apenas responsavel_setor/master; usamos observacoes para diferenciar).
+        const senhaOk = await supabase.rpc('verificar_senha_vendas', {
+          p_senha: autorizacaoRegraPagamento.senha_usada,
+          p_tipo: 'responsavel',
+        });
+        if (senhaOk.error) {
+          console.error('Erro ao validar senha da regra de pagamento:', senhaOk.error);
+        } else if (senhaOk.data === true) {
+          const payload = {
+            venda_id: venda.id,
+            percentual_desconto: 0,
+            autorizado_por: autorizacaoRegraPagamento.autorizado_por,
+            solicitado_por: autorizacaoRegraPagamento.solicitado_por,
+            senha_usada: autorizacaoRegraPagamento.senha_usada,
+            tipo_autorizacao: 'responsavel_setor' as const,
+            observacoes:
+              autorizacaoRegraPagamento.observacoes ||
+              'Regra de pagamento liberada pelo Gerente (entrada de boleto, data de pagamento e/ou intervalo de boletos).',
+          };
+          const { error: regraErr } = await supabase
+            .from('vendas_autorizacoes_desconto')
+            .insert([payload]);
+          if (regraErr) {
+            console.error('Erro ao salvar autorização de regra de pagamento:', regraErr);
+          }
+        } else {
+          console.warn('[regra-pagamento] senha inválida — autorização não registrada.');
         }
       }
 

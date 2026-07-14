@@ -61,6 +61,8 @@ interface MetodoPagamentoCardProps {
   parcelasBoletoMax?: number;
   /** Janela ± dias permitidos para a data de pagamento. Default 5. */
   dataPagamentoJanelaDias?: number;
+  /** Quando true, libera qualquer data e oculta a mensagem de janela. */
+  dataPagamentoLiberada?: boolean;
 }
 
 export function MetodoPagamentoCard({
@@ -77,6 +79,7 @@ export function MetodoPagamentoCard({
   hideEmpresaReceptora = false,
   parcelasBoletoMax = 12,
   dataPagamentoJanelaDias = 5,
+  dataPagamentoLiberada = false,
 }: MetodoPagamentoCardProps) {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -192,14 +195,20 @@ export function MetodoPagamentoCard({
                     onSelect={(date) => onChange({ ...metodo, data_pagamento: date })}
                     initialFocus
                     locale={ptBR}
-                    disabled={(date) => date < dataMin || date > dataMax}
+                    disabled={dataPagamentoLiberada ? undefined : (date) => date < dataMin || date > dataMax}
                     className="p-3 pointer-events-auto"
                   />
                 </PopoverContent>
               </Popover>
-              <p className="text-[10px] text-white/40">
-                Permitido entre {formatBR(dataMin)} e {formatBR(dataMax)} (±{dataPagamentoJanelaDias} dias).
-              </p>
+              {dataPagamentoLiberada ? (
+                <p className="text-[10px] text-amber-300/80">
+                  Janela de datas liberada por autorização do Gerente.
+                </p>
+              ) : (
+                <p className="text-[10px] text-white/40">
+                  Permitido entre {formatBR(dataMin)} e {formatBR(dataMax)} (±{dataPagamentoJanelaDias} dias).
+                </p>
+              )}
             </div>
 
             {!hideEmpresaReceptora && (
