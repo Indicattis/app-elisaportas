@@ -1294,14 +1294,6 @@ export default function VendasDirecao() {
           </PopoverContent>
         </Popover>
 
-        {/* Botão de configuração de colunas */}
-        <ColumnManager
-          columns={columns}
-          visibleIds={visibleIds}
-          onToggle={toggleColumn}
-          onReorder={setColumnOrder}
-          onReset={resetColumns}
-        />
       </div>
 
       {/* Tabela */}
