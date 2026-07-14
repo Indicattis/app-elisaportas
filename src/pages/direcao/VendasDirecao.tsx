@@ -315,13 +315,14 @@ export default function VendasDirecao() {
       const vendaIds = vendas.map((v: any) => v.id).filter(Boolean);
       if (vendaIds.length === 0) return;
       const map = new Map<string, string[]>();
+      const parcelasMap = new Map<string, any[]>();
       // Supabase tem limite de 1000; fazer chunks de 500 por segurança
       const chunkSize = 500;
       for (let i = 0; i < vendaIds.length; i += chunkSize) {
         const slice = vendaIds.slice(i, i + chunkSize);
         const { data } = await supabase
           .from('contas_receber')
-          .select('venda_id, metodo_pagamento')
+          .select('venda_id, metodo_pagamento, numero_parcela, valor_parcela, valor_pago, data_vencimento, data_pagamento, status')
           .in('venda_id', slice);
         (data || []).forEach((conta: any) => {
           if (!conta?.venda_id || !conta?.metodo_pagamento) return;
@@ -330,9 +331,21 @@ export default function VendasDirecao() {
             atuais.push(conta.metodo_pagamento);
             map.set(conta.venda_id, atuais);
           }
+          const arr = parcelasMap.get(conta.venda_id) || [];
+          arr.push(conta);
+          parcelasMap.set(conta.venda_id, arr);
         });
       }
+      // Ordenar parcelas por método e número
+      parcelasMap.forEach((arr) => {
+        arr.sort((a, b) => {
+          const m = (a.metodo_pagamento || '').localeCompare(b.metodo_pagamento || '');
+          if (m !== 0) return m;
+          return (a.numero_parcela || 0) - (b.numero_parcela || 0);
+        });
+      });
       setMetodosExtraPorVenda(map);
+      setParcelasPorVenda(parcelasMap);
     };
     fetchMetodos();
   }, [vendas]);
