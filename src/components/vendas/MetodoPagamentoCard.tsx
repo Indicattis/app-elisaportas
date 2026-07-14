@@ -325,7 +325,10 @@ export function MetodoPagamentoCard({
               </div>
 
               <div className="space-y-1">
-                <Label className={labelClass}>Intervalo entre Boletos *</Label>
+                <Label className={cn(labelClass, "flex items-center gap-2 flex-wrap")}>
+                  <span>Intervalo entre Boletos *</span>
+                  {intervaloAtualViolado && <AuthWarning />}
+                </Label>
                 <Select
                   value={metodo.intervalo_boletos.toString()}
                   onValueChange={(value) => onChange({ ...metodo, intervalo_boletos: parseInt(value) })}
@@ -335,11 +338,25 @@ export function MetodoPagamentoCard({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {[21, 36, 42].map((dias) => (
-                      <SelectItem key={dias} value={dias.toString()}>
-                        {dias} dias
-                      </SelectItem>
-                    ))}
+                    {[21, 36, 42].map((dias) => {
+                      const requerAuth =
+                        !!intervalosBoletoPermitidos &&
+                        intervalosBoletoPermitidos.length > 0 &&
+                        !intervalosBoletoPermitidos.includes(dias);
+                      return (
+                        <SelectItem key={dias} value={dias.toString()}>
+                          <span className="inline-flex items-center gap-2">
+                            {dias} dias
+                            {requerAuth && (
+                              <span className="inline-flex items-center gap-1 text-amber-600 text-[10px] font-medium">
+                                <AlertTriangle className="h-3 w-3" />
+                                requer autorização
+                              </span>
+                            )}
+                          </span>
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
                 {intervaloBoletoTravado && (
