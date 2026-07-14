@@ -1,37 +1,50 @@
-## Problema
+## Diagnóstico
 
-Em `/vendas/minhas-vendas/nova`, ao criar uma venda com 14% de desconto, o hook `useVendas.createVendaMutation` (`src/hooks/useVendas.ts`, linhas 213-223) recalcula os limites de desconto no submit e conclui que o tier necessário é `master` (14% > limite máximo do responsável, que por padrão é 13%). Como a modal de ajuste (`AutorizacaoDescontoModal`) foi aberta com o tier calculado naquele momento (`responsavel_setor`), o payload `autorizacaoDesconto.tipo_autorizacao` chega como `responsavel_setor` e o servidor rejeita com a mensagem:
+Em `src/hooks/useConfiguracoesVendas.ts` (linhas 165-172) o hook expõe um objeto `configuracoesMescladas` reconstruído a cada render:
 
-> "Desconto de 14.00% excede o limite máximo do responsável. Apenas a senha master pode autorizar."
+```ts
+const configuracoesMescladas = configuracoes
+  ? { ...configuracoes, limite_desconto_avista: ..., ... }
+  : configuracoes;
+```
 
-Ou seja: mesmo que o usuário tenha digitado a senha correta, a checagem rígida de tier feita depois da validação da senha bloqueia a venda. É o comportamento legado que o usuário quer eliminar — a autorização por senha deve valer independente do "rótulo" que a modal atribuiu.
+Isso é retornado como `configuracoes` para o consumidor. Como `{...}` cria uma referência nova a cada render, o `useEffect` em `RegrasVendasDirecao.tsx` (linhas 86-96) que depende de `[configuracoes]` dispara **em todo render** e reseta os estados locais `senhaResponsavel`, `senhaMaster`, `responsavelSenhaResponsavel`, `responsavelSenhaMaster`, `limiteAvista`, etc. para os valores do servidor.
 
-## Solução
+Resultado: quando o usuário digita na senha ou seleciona um responsável, o próximo render (disparado pelo próprio `setState`) reconstrói `configuracoesMescladas` → o `useEffect` dispara → sobrescreve o input com o valor antigo. Visualmente, "não é possível fazer nenhuma alteração".
 
-Trocar a checagem rígida de tier no servidor por uma verificação centrada na **senha fornecida**: se a senha bater com a senha master, autoriza qualquer percentual; se bater com a senha do responsável, autoriza dentro do limite do responsável; caso contrário, rejeita.
+O botão "Salvar Alterações" fica permanentemente desabilitado pelo mesmo motivo: `hasChanges` sempre compara valores iguais, porque o estado local foi reescrito antes de comparar.
 
-### Alterações
+## Correção
 
-**`src/hooks/useVendas.ts`** (bloco de validação autoritativa de desconto, ~linhas 194-243):
+Memoizar `configuracoesMescladas` em `useConfiguracoesVendas` para que a referência só mude quando os dados subjacentes mudam.
 
-1. Manter o cálculo autoritativo de `validacaoServer` e `tipoAutorizacaoRequerido`.
-2. Se `tipoAutorizacaoRequerido` for `null`, seguir como hoje (descartar `autorizacaoDesconto`).
-3. Se autorização é necessária mas `autorizacaoDesconto?.senha_usada` não veio, lançar o erro atual "É necessária autorização por senha".
-4. **Remover** a checagem `if (tipoAutorizacaoRequerido === 'master' && autorizacaoDesconto.tipo_autorizacao !== 'master')` (linhas 219-223).
-5. Substituir a única chamada de RPC por uma verificação em cascata:
-   - Chamar `verificar_senha_vendas` com `p_tipo: 'master'`. Se retornar `true`, tratar como autorização master (independente do que o cliente enviou).
-   - Caso contrário, se `tipoAutorizacaoRequerido === 'responsavel_setor'`, chamar `verificar_senha_vendas` com `p_tipo: 'responsavel'`. Se retornar `true`, tratar como autorização de responsável.
-   - Se nenhuma bater, lançar `"Senha de autorização inválida..."` (mensagem já existente).
-6. Antes de gravar, sobrescrever `autorizacaoDesconto.tipo_autorizacao` com o tier efetivamente validado (`'master'` ou `'responsavel_setor'`) e re-sincronizar `percentual_desconto` com `validacaoServer.percentualDesconto` (já feito hoje).
+### Alteração
 
-### Efeito prático
+**`src/hooks/useConfiguracoesVendas.ts`**
 
-- Se o usuário digita a senha do Diretor em qualquer modal (mesmo quando aberto como "responsável"), a venda é aceita e registrada como `tipo_autorizacao='master'` em `vendas_autorizacoes_desconto`.
-- Se o usuário digita a senha do Gerente e o desconto realmente cabe no limite do responsável, aceita.
-- Se digita a senha errada ou usa senha de responsável para desconto que exige master, retorna o erro genérico de senha inválida (não mais o erro "restrição legada").
+1. Importar `useMemo` do React.
+2. Envolver a construção de `configuracoesMescladas` em `useMemo`, com deps: `[configuracoes, limitesRegras.avista, limitesRegras.presencial, limitesRegras.adicionalResponsavel]`.
+
+```ts
+const configuracoesMescladas = useMemo(() => (
+  configuracoes
+    ? {
+        ...configuracoes,
+        limite_desconto_avista: limitesRegras.avista,
+        limite_desconto_presencial: limitesRegras.presencial,
+        limite_adicional_responsavel: limitesRegras.adicionalResponsavel,
+      }
+    : configuracoes
+), [configuracoes, limitesRegras.avista, limitesRegras.presencial, limitesRegras.adicionalResponsavel]);
+```
+
+### Efeito
+
+- A referência de `configuracoes` só muda quando o servidor retorna dados diferentes.
+- O `useEffect` de inicialização em `RegrasVendasDirecao.tsx` só executa no mount e após um update real, não a cada tecla digitada.
+- Inputs de senha, selects de responsável e limites de desconto ficam editáveis. `hasChanges` passa a detectar diferenças e habilita o botão "Salvar Alterações".
 
 ### Fora de escopo
 
-- Nada muda no `AutorizacaoDescontoModal`, nas modais de UX ou no fluxo de `Aplicar Ajuste`.
-- Nada muda no schema, RLS, ou nas RPCs. Continuamos usando `verificar_senha_vendas` já existente.
-- Nada muda na aprovação de regras de pagamento (`autorizacaoRegraPagamento`).
+- Não mexer no schema, RLS, ou nas mutations. As policies já permitem update para o usuário (has_route_access retorna true).
+- Não mexer no layout do `RegrasVendasDirecao.tsx`.
