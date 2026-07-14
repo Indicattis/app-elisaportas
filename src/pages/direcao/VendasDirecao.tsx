@@ -1091,7 +1091,6 @@ export default function VendasDirecao() {
       case 'valor_tabela':
       case 'frete':
       case 'desconto_acrescimo':
-      case 'percentual_desconto_acrescimo':
       case 'excedido_desconto':
       case 'lucro':
         return 'text-right';
