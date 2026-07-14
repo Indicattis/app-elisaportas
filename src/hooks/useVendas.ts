@@ -568,6 +568,39 @@ export function useVendas() {
         }
       }
 
+      // 9.1 Salvar autorização de regra de pagamento (entrada/data/intervalo boleto), se houver
+      if (autorizacaoRegraPagamento) {
+        // Reutiliza a tabela vendas_autorizacoes_desconto (o enum tipo_autorizacao
+        // aceita apenas responsavel_setor/master; usamos observacoes para diferenciar).
+        const senhaOk = await supabase.rpc('verificar_senha_vendas', {
+          p_senha: autorizacaoRegraPagamento.senha_usada,
+          p_tipo: 'responsavel',
+        });
+        if (senhaOk.error) {
+          console.error('Erro ao validar senha da regra de pagamento:', senhaOk.error);
+        } else if (senhaOk.data === true) {
+          const payload = {
+            venda_id: venda.id,
+            percentual_desconto: 0,
+            autorizado_por: autorizacaoRegraPagamento.autorizado_por,
+            solicitado_por: autorizacaoRegraPagamento.solicitado_por,
+            senha_usada: autorizacaoRegraPagamento.senha_usada,
+            tipo_autorizacao: 'responsavel_setor' as const,
+            observacoes:
+              autorizacaoRegraPagamento.observacoes ||
+              'Regra de pagamento liberada pelo Gerente (entrada de boleto, data de pagamento e/ou intervalo de boletos).',
+          };
+          const { error: regraErr } = await supabase
+            .from('vendas_autorizacoes_desconto')
+            .insert([payload]);
+          if (regraErr) {
+            console.error('Erro ao salvar autorização de regra de pagamento:', regraErr);
+          }
+        } else {
+          console.warn('[regra-pagamento] senha inválida — autorização não registrada.');
+        }
+      }
+
       // 10. Buscar a instalação para geocodificar
       const { data: instalacao } = await supabase
         .from('instalacoes')
