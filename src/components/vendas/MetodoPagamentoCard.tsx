@@ -118,6 +118,22 @@ export function MetodoPagamentoCard({
   const { min: dataMin, max: dataMax } = getJanelaDataPagamento(dataPagamentoJanelaDias);
   const formatBR = (d: Date) => d.toLocaleDateString("pt-BR");
 
+  const AuthWarning = ({ text = "Requer autorização do Diretor" }: { text?: string }) => (
+    <span
+      className="inline-flex items-center gap-1 rounded-full border border-amber-400/40 bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-100"
+      title={text}
+    >
+      <AlertTriangle className="h-3 w-3" />
+      {text}
+    </span>
+  );
+
+  const intervaloAtualViolado =
+    metodo.tipo === 'boleto' &&
+    !!intervalosBoletoPermitidos &&
+    intervalosBoletoPermitidos.length > 0 &&
+    !intervalosBoletoPermitidos.includes(metodo.intervalo_boletos);
+
   return (
     <div className="border rounded-lg p-4 space-y-4 border-white/10 bg-white/5">
       <h4 className="font-medium text-xs text-white/50">{titulo}</h4>
