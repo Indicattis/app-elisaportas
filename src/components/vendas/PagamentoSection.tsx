@@ -612,19 +612,40 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
     </Card>
 
     <AutorizacaoDescontoModal
-      open={autorizacaoModalOpen}
-      onOpenChange={setAutorizacaoModalOpen}
+      open={pendingMotivo !== null}
+      onOpenChange={handleModalOpenChange}
       onAutorizado={handleAutorizadoRegras}
       percentualDesconto={0}
       tipoAutorizacao="responsavel_setor"
       limitePermitido={0}
-      titulo="Liberar regras de pagamento"
+      titulo={
+        pendingMotivo === 'entrada'
+          ? 'Autorizar entrada de boleto abaixo do mínimo'
+          : pendingMotivo === 'intervalo'
+            ? 'Autorizar intervalo de boletos fora do padrão'
+            : pendingMotivo === 'data'
+              ? 'Autorizar data de pagamento fora da janela'
+              : 'Autorização do Gerente'
+      }
       descricao={
-        <>
-          Digite a senha do <span className="font-bold text-foreground">Gerente</span> para liberar
-          entrada de boleto abaixo de {entradaPct}%, datas de pagamento fora da janela de ±{janelaDias} dias
-          e intervalos de boleto fora das opções padrão.
-        </>
+        pendingMotivo === 'entrada' ? (
+          <>
+            O valor da entrada está abaixo do mínimo de{' '}
+            <span className="font-bold text-foreground">{entradaPct}%</span> exigido pela regra de boleto.
+            Digite a senha do <span className="font-bold text-foreground">Gerente</span> para autorizar.
+          </>
+        ) : pendingMotivo === 'intervalo' ? (
+          <>
+            O intervalo escolhido está fora das opções permitidas para este valor de venda.
+            Digite a senha do <span className="font-bold text-foreground">Gerente</span> para autorizar.
+          </>
+        ) : pendingMotivo === 'data' ? (
+          <>
+            A data de pagamento selecionada está fora da janela de{' '}
+            <span className="font-bold text-foreground">±{janelaDias} dias</span>.
+            Digite a senha do <span className="font-bold text-foreground">Gerente</span> para autorizar.
+          </>
+        ) : undefined
       }
     />
     </>
