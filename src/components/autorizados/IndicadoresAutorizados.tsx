@@ -57,9 +57,9 @@ export function IndicadoresAutorizados() {
       if (userIds.length > 0) {
         const { data: users } = await supabase
           .from('admin_users')
-          .select('user_id, nome')
-          .in('user_id', userIds);
-        (users ?? []).forEach((u: any) => mapaNomes.set(u.user_id, u.nome));
+          .select('id, nome')
+          .in('id', userIds);
+        (users ?? []).forEach((u: any) => mapaNomes.set(u.id, u.nome));
       }
       setNomesUsuarios(mapaNomes);
       setListaAutorizados(lista);
