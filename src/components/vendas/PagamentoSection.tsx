@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { MetodoPagamentoCard, MetodoPagamento, createEmptyMetodo } from "./MetodoPagamentoCard";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Info, ShieldCheck, Unlock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -18,6 +18,7 @@ import {
   pagamentoTemBoleto,
   getIntervalosBoletoPermitidos,
 } from "@/utils/boletoRegra";
+import { getJanelaDataPagamento } from "@/utils/dataPagamentoRegra";
 import { useRegrasVendas } from "@/hooks/useRegrasVendas";
 import { AutorizacaoDescontoModal } from "./AutorizacaoDescontoModal";
 
@@ -63,7 +64,61 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
   // Autorização do Gerente para relaxar as regras de pagamento
   // (entrada mínima, intervalo de boleto e janela de data).
   const [autorizadoRegras, setAutorizadoRegras] = useState(false);
-  const [autorizacaoModalOpen, setAutorizacaoModalOpen] = useState(false);
+  const [pendingMotivo, setPendingMotivo] = useState<null | 'entrada' | 'intervalo' | 'data'>(null);
+  const pendingRevertRef = useRef<null | (() => void)>(null);
+  const autorizadoConfirmadoRef = useRef(false);
+
+  const entradaMinima = valorTotal * (entradaPct / 100);
+
+  const isEntradaViolada = (data: PagamentoData) => {
+    if (!pagamentoTemBoleto(data) || valorTotal <= 0) return false;
+    const m1 = data.metodos[0];
+    if (m1?.tipo !== 'a_vista') return false;
+    return (m1.valor ?? 0) + 0.02 < entradaMinima;
+  };
+  const isIntervaloViolado = (m: MetodoPagamento) => {
+    if (m?.tipo !== 'boleto') return false;
+    const permitidos = getIntervalosBoletoPermitidos(valorTotal, boletoConfig);
+    return !permitidos.includes(m.intervalo_boletos);
+  };
+  const isDataViolada = (m: MetodoPagamento) => {
+    if (!m?.data_pagamento) return false;
+    const { min, max } = getJanelaDataPagamento(janelaDias);
+    const d = new Date(m.data_pagamento);
+    d.setHours(0, 0, 0, 0);
+    return d < min || d > max;
+  };
+
+  const detectMotivoViolacao = (
+    next: PagamentoData,
+    prev: PagamentoData,
+  ): 'entrada' | 'intervalo' | 'data' | null => {
+    const [nm1, nm2] = next.metodos;
+    const [pm1, pm2] = prev.metodos;
+    // Só ativa modal para violações introduzidas nesta mudança.
+    if (isEntradaViolada(next) && !isEntradaViolada(prev)) return 'entrada';
+    if (
+      (isIntervaloViolado(nm1) && !isIntervaloViolado(pm1)) ||
+      (isIntervaloViolado(nm2) && !isIntervaloViolado(pm2))
+    ) return 'intervalo';
+    if (
+      (isDataViolada(nm1) && !isDataViolada(pm1)) ||
+      (isDataViolada(nm2) && !isDataViolada(pm2))
+    ) return 'data';
+    return null;
+  };
+
+  const applyChangeWithGuard = (next: PagamentoData) => {
+    const prev = paymentData;
+    onChange(next);
+    if (autorizadoRegras) return;
+    const motivo = detectMotivoViolacao(next, prev);
+    if (motivo) {
+      pendingRevertRef.current = () => onChange(prev);
+      autorizadoConfirmadoRef.current = false;
+      setPendingMotivo(motivo);
+    }
+  };
 
   const { data: empresas = [], isLoading: isLoadingEmpresas } = useQuery({
     queryKey: ['empresas-emissoras-ativas'],
@@ -126,8 +181,21 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
     : getIntervalosBoletoPermitidos(valorTotal, boletoConfig);
 
   const handleAutorizadoRegras = (autorizadorId: string, senha: string) => {
+    autorizadoConfirmadoRef.current = true;
     setAutorizadoRegras(true);
     onOverrideChange?.({ autorizadorId, senha });
+    pendingRevertRef.current = null;
+    setPendingMotivo(null);
+  };
+
+  const handleModalOpenChange = (open: boolean) => {
+    if (open) return;
+    if (!autorizadoConfirmadoRef.current && pendingRevertRef.current) {
+      pendingRevertRef.current();
+    }
+    autorizadoConfirmadoRef.current = false;
+    pendingRevertRef.current = null;
+    setPendingMotivo(null);
   };
 
   const handleReverterAutorizacao = () => {
@@ -137,7 +205,6 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
 
   const handleMetodo1Change = (metodo: MetodoPagamento) => {
     const newMetodos: [MetodoPagamento, MetodoPagamento] = [metodo, paymentData.metodos[1]];
-    
     // Se estiver usando 2 métodos, recalcular o valor restante
     if (paymentData.usar_dois_metodos) {
       const valorRestante = Math.max(0, valorTotal - metodo.valor);
@@ -146,13 +213,12 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
       // Se for método único, o valor é o total
       newMetodos[0] = { ...metodo, valor: valorTotal };
     }
-    
-    onChange({ ...paymentData, metodos: newMetodos });
+    applyChangeWithGuard({ ...paymentData, metodos: newMetodos });
   };
 
   const handleMetodo2Change = (metodo: MetodoPagamento) => {
     const newMetodos: [MetodoPagamento, MetodoPagamento] = [paymentData.metodos[0], metodo];
-    onChange({ ...paymentData, metodos: newMetodos });
+    applyChangeWithGuard({ ...paymentData, metodos: newMetodos });
   };
 
   const handleToggleDoisMetodos = (checked: boolean) => {
