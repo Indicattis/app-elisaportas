@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Upload, X, CreditCard, Banknote, QrCode, Wallet, CalendarIcon, CheckCircle2 } from "lucide-react";
+import { Upload, X, CreditCard, Banknote, QrCode, Wallet, CalendarIcon, CheckCircle2, AlertTriangle } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -63,6 +63,10 @@ interface MetodoPagamentoCardProps {
   dataPagamentoJanelaDias?: number;
   /** Quando true, libera qualquer data e oculta a mensagem de janela. */
   dataPagamentoLiberada?: boolean;
+  /** Sinaliza que a entrada informada está abaixo do mínimo (requer autorização do Diretor). */
+  entradaViolada?: boolean;
+  /** Sinaliza que a data de pagamento está fora da janela permitida (requer autorização do Diretor). */
+  dataForaJanela?: boolean;
 }
 
 export function MetodoPagamentoCard({
@@ -80,6 +84,8 @@ export function MetodoPagamentoCard({
   parcelasBoletoMax = 12,
   dataPagamentoJanelaDias = 5,
   dataPagamentoLiberada = false,
+  entradaViolada = false,
+  dataForaJanela = false,
 }: MetodoPagamentoCardProps) {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -111,6 +117,22 @@ export function MetodoPagamentoCard({
   const labelClass = "text-xs font-medium text-white/70";
   const { min: dataMin, max: dataMax } = getJanelaDataPagamento(dataPagamentoJanelaDias);
   const formatBR = (d: Date) => d.toLocaleDateString("pt-BR");
+
+  const AuthWarning = ({ text = "Requer autorização do Diretor" }: { text?: string }) => (
+    <span
+      className="inline-flex items-center gap-1 rounded-full border border-amber-400/40 bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-100"
+      title={text}
+    >
+      <AlertTriangle className="h-3 w-3" />
+      {text}
+    </span>
+  );
+
+  const intervaloAtualViolado =
+    metodo.tipo === 'boleto' &&
+    !!intervalosBoletoPermitidos &&
+    intervalosBoletoPermitidos.length > 0 &&
+    !intervalosBoletoPermitidos.includes(metodo.intervalo_boletos);
 
   return (
     <div className="border rounded-lg p-4 space-y-4 border-white/10 bg-white/5">
@@ -153,7 +175,10 @@ export function MetodoPagamentoCard({
           {/* Linha com Valor, Data e Empresa */}
           <div className={cn("grid grid-cols-1 gap-3", hideEmpresaReceptora ? "md:grid-cols-2" : "md:grid-cols-3")}>
             <div className="space-y-1">
-              <Label className={labelClass}>{valorLabel}</Label>
+              <Label className={cn(labelClass, "flex items-center gap-2 flex-wrap")}>
+                <span>{valorLabel}</span>
+                {entradaViolada && <AuthWarning />}
+              </Label>
               {valorFixo ? (
                 <div className={cn("h-9 px-3 py-2 border rounded-md text-sm", inputClass)}>
                   {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(metodo.valor)}
@@ -172,7 +197,10 @@ export function MetodoPagamentoCard({
             </div>
 
             <div className="space-y-1">
-              <Label className={labelClass}>Data do Pagamento *</Label>
+              <Label className={cn(labelClass, "flex items-center gap-2 flex-wrap")}>
+                <span>Data do Pagamento *</span>
+                {dataForaJanela && !dataPagamentoLiberada && <AuthWarning />}
+              </Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
@@ -297,7 +325,10 @@ export function MetodoPagamentoCard({
               </div>
 
               <div className="space-y-1">
-                <Label className={labelClass}>Intervalo entre Boletos *</Label>
+                <Label className={cn(labelClass, "flex items-center gap-2 flex-wrap")}>
+                  <span>Intervalo entre Boletos *</span>
+                  {intervaloAtualViolado && <AuthWarning />}
+                </Label>
                 <Select
                   value={metodo.intervalo_boletos.toString()}
                   onValueChange={(value) => onChange({ ...metodo, intervalo_boletos: parseInt(value) })}
@@ -307,11 +338,25 @@ export function MetodoPagamentoCard({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {[21, 36, 42].map((dias) => (
-                      <SelectItem key={dias} value={dias.toString()}>
-                        {dias} dias
-                      </SelectItem>
-                    ))}
+                    {[21, 36, 42].map((dias) => {
+                      const requerAuth =
+                        !!intervalosBoletoPermitidos &&
+                        intervalosBoletoPermitidos.length > 0 &&
+                        !intervalosBoletoPermitidos.includes(dias);
+                      return (
+                        <SelectItem key={dias} value={dias.toString()}>
+                          <span className="inline-flex items-center gap-2">
+                            {dias} dias
+                            {requerAuth && (
+                              <span className="inline-flex items-center gap-1 text-amber-600 text-[10px] font-medium">
+                                <AlertTriangle className="h-3 w-3" />
+                                requer autorização
+                              </span>
+                            )}
+                          </span>
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
                 {intervaloBoletoTravado && (
