@@ -528,6 +528,8 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
               parcelasBoletoMax={boletoConfig.parcelasMax}
               dataPagamentoJanelaDias={janelaDias}
               dataPagamentoLiberada={autorizadoRegras}
+              entradaViolada={!autorizadoRegras && isEntradaViolada(paymentData)}
+              dataForaJanela={!autorizadoRegras && isDataViolada(metodo1)}
             />
 
             {(metodo1.tipo === 'boleto' || metodo1.tipo === 'cartao_credito') && metodo1.data_pagamento && valorMetodo1 > 0 && (
@@ -564,6 +566,7 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
                 parcelasBoletoMax={boletoConfig.parcelasMax}
                 dataPagamentoJanelaDias={janelaDias}
               dataPagamentoLiberada={autorizadoRegras}
+              dataForaJanela={!autorizadoRegras && isDataViolada(metodo2)}
               />
 
               {(metodo2.tipo === 'boleto' || metodo2.tipo === 'cartao_credito') && metodo2.data_pagamento && valorMetodo2 > 0 && (
