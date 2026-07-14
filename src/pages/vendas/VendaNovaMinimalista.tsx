@@ -955,6 +955,7 @@ export default function VendaNovaMinimalista() {
           }}
           hideEmpresaReceptora
           onOverrideChange={setPagamentoOverride}
+          onConfirmadoChange={setPagamentoConfirmado}
         />
 
         {/* Desconto / Acréscimo Global */}
