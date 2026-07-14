@@ -1,31 +1,53 @@
-## Diagnóstico
+## Objetivo
 
-Na venda `27582af7…`, o banco tem `temperatura = true`, que em toda a aplicação significa **Quente** (`VendaEditarMinimalista.tsx:374`: `venda.temperatura ? 'Quente' : 'Fria'`). O cálculo dos tiers de desconto em `FaturamentoVendaMinimalista.tsx:1129` está correto — usa `vendaPresencial: venda?.temperatura === false`, ou seja, só libera a faixa "Frio" quando a venda é fria. Como esta venda é Quente, o desconto não entra no tier "Frio", que é o comportamento esperado.
+Na tabela de `/direcao/vendas/todas`, ao passar o mouse sobre a célula "Desconto/Acréscimo", exibir no tooltip a **quebra do desconto por faixa**: À Vista (cartão / forma de pagamento), Frio (temperatura) e Gerente/Diretor (adicional com senha) — usando a mesma distribuição já usada na tela de faturamento.
 
-O problema está apenas no **badge visual** em `FaturamentoVendaMinimalista.tsx:1887-1890`, que está invertido em relação ao restante do sistema:
+## Alterações
 
-```tsx
-{venda.temperatura ? (
-  <Badge …>❄️ Fria</Badge>      // ❌ true está sendo rotulado como Fria
-) : (
-  <Badge …>🔥 Quente</Badge>    // ❌ false como Quente
-)}
-```
+Arquivo único: `src/pages/direcao/VendasDirecao.tsx`
 
-Isso faz o usuário ver "Fria" numa venda Quente e concluir que o tier de desconto não foi aplicado.
+1. Importar o utilitário existente:
+   ```ts
+   import { calcDescontoTiersAplicados } from '@/utils/descontoTiers';
+   ```
 
-## Alteração
+2. Dentro do `case 'desconto_acrescimo'` (linhas ~669-790), quando `desconto > 0`, calcular:
+   ```ts
+   const totalBase = calcularTotalVenda(venda.produtos || []);
+   const tiers = calcDescontoTiersAplicados({
+     totalVenda: totalBase,
+     descontoTotal: desconto,
+     formaPagamento: venda.forma_pagamento,
+     vendaPresencial: venda.temperatura === false, // fria => apto frio
+     limAvista,
+     limPresencial,
+   });
+   ```
 
-Arquivo: `src/pages/administrativo/FaturamentoVendaMinimalista.tsx` (linhas 1887-1890)
+3. Nos dois `TooltipContent` já existentes (o de desconto+crédito e o de só desconto), adicionar uma seção "Distribuição do desconto" logo após a linha "Valor/Desconto" e antes do bloco de autorização:
 
-Inverter o badge para casar com o padrão do sistema:
+   ```tsx
+   <div className="pt-1 mt-1 border-t border-white/10 space-y-0.5">
+     <p className="text-white/50 text-[10px] uppercase tracking-wider">Distribuição</p>
+     <p className="text-white/70">
+       <span className="text-white/50">À Vista ({limAvista}%):</span>{' '}
+       <span className={tiers.valorAvista > 0 ? 'text-emerald-400' : 'text-white/40'}>
+         {formatCurrency(tiers.valorAvista)} ({tiers.pctAvista.toFixed(2)}%)
+       </span>
+     </p>
+     <p className="text-white/70">
+       <span className="text-white/50">Frio ({limPresencial}%):</span>{' '}
+       <span className={tiers.valorFrio > 0 ? 'text-cyan-400' : 'text-white/40'}>
+         {formatCurrency(tiers.valorFrio)} ({tiers.pctFrio.toFixed(2)}%)
+       </span>
+     </p>
+     <p className="text-white/70">
+       <span className="text-white/50">Diretor:</span>{' '}
+       <span className={tiers.valorGerente > 0 ? 'text-amber-400' : 'text-white/40'}>
+         {formatCurrency(tiers.valorGerente)} ({tiers.pctGerente.toFixed(2)}%)
+       </span>
+     </p>
+   </div>
+   ```
 
-```tsx
-{venda.temperatura ? (
-  <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30">🔥 Quente</Badge>
-) : (
-  <Badge className="bg-cyan-500/20 text-cyan-400 border-cyan-500/30">❄️ Fria</Badge>
-)}
-```
-
-Nenhuma outra mudança — a lógica de tiers já está correta.
+Nenhuma outra mudança — colunas, ordenação e lógica de excedido permanecem iguais.
