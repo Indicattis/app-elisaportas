@@ -190,6 +190,7 @@ export default function VendaNovaMinimalista() {
   // Autorização do Gerente para liberar regras de pagamento
   // (entrada de boleto, data de pagamento, intervalo de boletos).
   const [pagamentoOverride, setPagamentoOverride] = useState<{ autorizadorId: string; senha: string } | null>(null);
+  const [pagamentoConfirmado, setPagamentoConfirmado] = useState(false);
 
   const [ajusteGlobal, setAjusteGlobal] = useState<AjusteGlobal>({
     tipo: 'desconto',
