@@ -74,6 +74,13 @@ export interface AutorizacaoDesconto {
   observacoes?: string;
 }
 
+export interface AutorizacaoRegraPagamento {
+  autorizado_por: string;
+  solicitado_por: string;
+  senha_usada: string;
+  observacoes?: string;
+}
+
 export interface CreditoVenda {
   valorCredito: number;
   percentualCredito: number;
@@ -120,12 +127,14 @@ export function useVendas() {
       portas, 
       pagamentoData,
       autorizacaoDesconto,
+      autorizacaoRegraPagamento,
       creditoVenda
     }: { 
       vendaData: VendaFormData; 
       portas: ProdutoVenda[];
       pagamentoData?: PagamentoData;
       autorizacaoDesconto?: AutorizacaoDesconto;
+      autorizacaoRegraPagamento?: AutorizacaoRegraPagamento;
       creditoVenda?: CreditoVenda;
     }) => {
       if (portas.length === 0) {
