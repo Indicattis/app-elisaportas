@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -19,6 +19,8 @@ interface AutorizacaoDescontoModalProps {
   percentualDesconto: number;
   tipoAutorizacao: 'responsavel_setor' | 'master';
   limitePermitido: number;
+  titulo?: string;
+  descricao?: ReactNode;
 }
 
 export function AutorizacaoDescontoModal({
@@ -28,7 +30,9 @@ export function AutorizacaoDescontoModal({
   onSolicitarAprovacao,
   percentualDesconto,
   tipoAutorizacao,
-  limitePermitido
+  limitePermitido,
+  titulo,
+  descricao,
 }: AutorizacaoDescontoModalProps) {
   const [senha, setSenha] = useState('');
   const [autorizadorId, setAutorizadorId] = useState('');
@@ -159,18 +163,22 @@ export function AutorizacaoDescontoModal({
           <div className="flex items-center gap-2 mb-2">
             <ShieldCheck className="h-6 w-6 text-amber-500" />
             <DialogTitle>
-              {tipoAutorizacao === 'master'
+              {titulo ?? (tipoAutorizacao === 'master'
                 ? 'Autorização do Diretor Necessária'
-                : 'Autorização do Gerente Necessária'}
+                : 'Autorização do Gerente Necessária')}
             </DialogTitle>
           </div>
           <DialogDescription>
-            O desconto de <span className="font-bold text-foreground">{percentualDesconto.toFixed(1)}%</span> excede 
-            o limite permitido de <span className="font-bold text-foreground">{limitePermitido.toFixed(0)}%</span> em{' '}
-            <span className="font-bold text-foreground">{(percentualDesconto - limitePermitido).toFixed(1)}%</span>.
-            {tipoAutorizacao === 'master'
-              ? ` É necessária a senha do Diretor (desconto acima de ${limites.totalComResponsavel}%).`
-              : ` É necessária a senha do Gerente (até ${limites.totalComResponsavel}%).`}
+            {descricao ?? (
+              <>
+                O desconto de <span className="font-bold text-foreground">{percentualDesconto.toFixed(1)}%</span> excede
+                o limite permitido de <span className="font-bold text-foreground">{limitePermitido.toFixed(0)}%</span> em{' '}
+                <span className="font-bold text-foreground">{(percentualDesconto - limitePermitido).toFixed(1)}%</span>.
+                {tipoAutorizacao === 'master'
+                  ? ` É necessária a senha do Diretor (desconto acima de ${limites.totalComResponsavel}%).`
+                  : ` É necessária a senha do Gerente (até ${limites.totalComResponsavel}%).`}
+              </>
+            )}
           </DialogDescription>
         </DialogHeader>
 
