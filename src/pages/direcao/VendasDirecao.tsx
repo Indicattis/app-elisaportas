@@ -775,12 +775,28 @@ export default function VendasDirecao() {
                 {formatCurrency(tiers.valorFrio)} ({tiers.pctFrio.toFixed(2)}%)
               </span>
             </p>
-            <p className="text-white/70">
-              <span className="text-white/50">Diretor:</span>{' '}
-              <span className={tiers.valorGerente > 0 ? 'text-amber-400' : 'text-white/40'}>
-                {formatCurrency(tiers.valorGerente)} ({tiers.pctGerente.toFixed(2)}%)
-              </span>
-            </p>
+            {(() => {
+              const pctGerenteOnly = Math.min(tiers.pctGerente, limResponsavel);
+              const pctDiretor = Math.max(0, tiers.pctGerente - limResponsavel);
+              const valorGerenteOnly = _totalBaseTiers * (pctGerenteOnly / 100);
+              const valorDiretor = _totalBaseTiers * (pctDiretor / 100);
+              return (
+                <>
+                  <p className="text-white/70">
+                    <span className="text-white/50">Gerente ({limResponsavel}%):</span>{' '}
+                    <span className={valorGerenteOnly > 0 ? 'text-amber-400' : 'text-white/40'}>
+                      {formatCurrency(valorGerenteOnly)} ({pctGerenteOnly.toFixed(2)}%)
+                    </span>
+                  </p>
+                  <p className="text-white/70">
+                    <span className="text-white/50">Diretor (excesso):</span>{' '}
+                    <span className={valorDiretor > 0 ? 'text-red-400' : 'text-white/40'}>
+                      {formatCurrency(valorDiretor)} ({pctDiretor.toFixed(2)}%)
+                    </span>
+                  </p>
+                </>
+              );
+            })()}
           </div>
         ) : null;
 
