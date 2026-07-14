@@ -76,7 +76,6 @@ const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
   { id: 'valor_tabela', label: 'Valor Tabela', defaultVisible: true },
   { id: 'frete', label: 'Frete', defaultVisible: true },
   { id: 'desconto_acrescimo', label: 'Desconto/Acréscimo', defaultVisible: true },
-  { id: 'percentual_desconto_acrescimo', label: '% Desc/Acrésc', defaultVisible: true },
   { id: 'valor', label: 'Valor Final', defaultVisible: true },
   { id: 'excedido_desconto', label: 'Excedido', defaultVisible: true },
   { id: 'lucro', label: 'Lucro', defaultVisible: true },
@@ -87,15 +86,6 @@ const COLUNAS_DISPONIVEIS: ColumnConfig[] = [
 const calcularDescontoTotal = (venda: any) => {
   if (!venda?.produtos) return 0;
   return venda.produtos.reduce((acc: number, p: any) => acc + (p.desconto_valor || 0), 0);
-};
-
-// Calcula o percentual líquido de desconto (negativo) ou acréscimo (positivo) sobre o valor tabela
-const calcularPercentualDescontoAcrescimo = (venda: any): number => {
-  const desconto = calcularDescontoTotal(venda);
-  const credito = venda?.valor_credito || 0;
-  const valorTabela = (venda?.valor_venda || 0) - (venda?.valor_frete || 0) + desconto;
-  if (valorTabela === 0) return 0;
-  return ((credito - desconto) / valorTabela) * 100;
 };
 
 // Calcula o valor do desconto que excedeu o limite permitido (igual ao "Excedido" do balanço de descontos)
@@ -488,7 +478,6 @@ export default function VendasDirecao() {
           case 'telefone': return venda.cliente_telefone || '';
           case 'expedicao': return venda.tipo_entrega || '';
           case 'frete': return venda.valor_frete || 0;
-          case 'percentual_desconto_acrescimo': return calcularPercentualDescontoAcrescimo(venda);
           case 'valor_tabela': {
             const desconto = calcularDescontoTotal(venda);
             return (venda.valor_venda || 0) - (venda.valor_frete || 0) + desconto;
@@ -745,18 +734,6 @@ export default function VendasDirecao() {
             {venda.valor_frete ? formatCurrency(venda.valor_frete) : '-'}
           </span>
         );
-      case 'percentual_desconto_acrescimo': {
-        const percentual = calcularPercentualDescontoAcrescimo(venda);
-        if (percentual === 0) {
-          return <span className="text-[10px] md:text-sm text-white/60">-</span>;
-        }
-        const isAcrescimo = percentual > 0;
-        return (
-          <span className={`text-[10px] md:text-sm ${isAcrescimo ? 'text-green-400' : 'text-red-400'}`}>
-            {isAcrescimo ? '+' : '-'}{Math.abs(percentual).toFixed(2)}%
-          </span>
-        );
-      }
       case 'desconto_acrescimo': {
         const desconto = calcularDescontoTotal(venda);
         const credito = venda.valor_credito || 0;
@@ -1098,7 +1075,6 @@ export default function VendasDirecao() {
       case 'frete':
       case 'valor_tabela':
       case 'desconto_acrescimo':
-      case 'percentual_desconto_acrescimo':
       case 'excedido_desconto':
       case 'faturada':
       case 'temperatura':
@@ -1115,7 +1091,6 @@ export default function VendasDirecao() {
       case 'valor_tabela':
       case 'frete':
       case 'desconto_acrescimo':
-      case 'percentual_desconto_acrescimo':
       case 'excedido_desconto':
       case 'lucro':
         return 'text-right';
@@ -1342,7 +1317,7 @@ export default function VendasDirecao() {
                       className={`text-[10px] md:text-xs text-white/60 cursor-pointer hover:bg-white/5 transition-colors select-none py-2 px-1.5 md:px-2 ${getColumnAlignment(column.id)} ${getColumnResponsiveClass(column.id)}`}
                       onClick={() => handleSort(column.id)}
                     >
-                      <div className={`flex items-center gap-0.5 md:gap-1 ${column.id === 'valor' || column.id === 'valor_tabela' || column.id === 'frete' || column.id === 'desconto_acrescimo' || column.id === 'percentual_desconto_acrescimo' || column.id === 'excedido_desconto' || column.id === 'lucro' ? 'justify-end' : column.id === 'faturada' || column.id === 'temperatura' ? 'justify-center' : ''}`}>
+                      <div className={`flex items-center gap-0.5 md:gap-1 ${column.id === 'valor' || column.id === 'valor_tabela' || column.id === 'frete' || column.id === 'desconto_acrescimo' || column.id === 'excedido_desconto' || column.id === 'lucro' ? 'justify-end' : column.id === 'faturada' || column.id === 'temperatura' ? 'justify-center' : ''}`}>
                         <span className="truncate">{column.label}</span>
                         {sortConfig.column === column.id ? (
                           sortConfig.direction === 'asc' 
