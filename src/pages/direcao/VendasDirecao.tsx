@@ -478,7 +478,6 @@ export default function VendasDirecao() {
           case 'telefone': return venda.cliente_telefone || '';
           case 'expedicao': return venda.tipo_entrega || '';
           case 'frete': return venda.valor_frete || 0;
-          case 'percentual_desconto_acrescimo': return calcularPercentualDescontoAcrescimo(venda);
           case 'valor_tabela': {
             const desconto = calcularDescontoTotal(venda);
             return (venda.valor_venda || 0) - (venda.valor_frete || 0) + desconto;
