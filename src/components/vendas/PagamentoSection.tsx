@@ -555,5 +555,23 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
         )}
       </CardContent>
     </Card>
+
+    <AutorizacaoDescontoModal
+      open={autorizacaoModalOpen}
+      onOpenChange={setAutorizacaoModalOpen}
+      onAutorizado={handleAutorizadoRegras}
+      percentualDesconto={0}
+      tipoAutorizacao="responsavel_setor"
+      limitePermitido={0}
+      titulo="Liberar regras de pagamento"
+      descricao={
+        <>
+          Digite a senha do <span className="font-bold text-foreground">Gerente</span> para liberar
+          entrada de boleto abaixo de {entradaPct}%, datas de pagamento fora da janela de ±{janelaDias} dias
+          e intervalos de boleto fora das opções padrão.
+        </>
+      }
+    />
+    </>
   );
 }
