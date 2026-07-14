@@ -195,7 +195,6 @@ export function MetodoPagamentoCard({
                     onSelect={(date) => onChange({ ...metodo, data_pagamento: date })}
                     initialFocus
                     locale={ptBR}
-                    disabled={dataPagamentoLiberada ? undefined : (date) => date < dataMin || date > dataMax}
                     className="p-3 pointer-events-auto"
                   />
                 </PopoverContent>
@@ -302,13 +301,13 @@ export function MetodoPagamentoCard({
                 <Select
                   value={metodo.intervalo_boletos.toString()}
                   onValueChange={(value) => onChange({ ...metodo, intervalo_boletos: parseInt(value) })}
-                  disabled={!!intervaloBoletoTravado || (intervalosBoletoPermitidos?.length === 1)}
+                  disabled={!!intervaloBoletoTravado}
                 >
                   <SelectTrigger className={cn("h-9", inputClass)}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {(intervalosBoletoPermitidos ?? [7, 14, 15, 21, 28, 30]).map((dias) => (
+                    {[7, 14, 15, 21, 28, 30].map((dias) => (
                       <SelectItem key={dias} value={dias.toString()}>
                         {dias} dias
                       </SelectItem>
