@@ -4,9 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { useVendas } from '@/hooks/useVendas';
 import { useAuth } from '@/hooks/useAuth';
 import { useSessionFilters } from '@/hooks/useSessionFilters';
-import { useColumnConfig, ColumnConfig } from '@/hooks/useColumnConfig';
+import { ColumnConfig } from '@/hooks/useColumnConfig';
 import { ProductIconsSummary } from '@/components/vendas/ProductIconsSummary';
-import { ColumnManager } from '@/components/ColumnManager';
 import { FaturamentoMensalGrid } from '@/components/vendas/FaturamentoMensalGrid';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -285,15 +284,8 @@ export default function VendasDirecao() {
     }
   }, [selectedMonth]);
 
-  // Hook de configuração de colunas
-  const {
-    columns,
-    visibleColumns,
-    visibleIds,
-    toggleColumn,
-    setColumnOrder,
-    resetColumns
-  } = useColumnConfig('direcao_vendas_columns_v4', COLUNAS_DISPONIVEIS);
+  // Colunas fixas (funcionalidade de personalização removida)
+  const visibleColumns = COLUNAS_DISPONIVEIS.filter(c => c.defaultVisible);
 
   useEffect(() => {
     const fetchAtendentes = async () => {
@@ -1294,14 +1286,6 @@ export default function VendasDirecao() {
           </PopoverContent>
         </Popover>
 
-        {/* Botão de configuração de colunas */}
-        <ColumnManager
-          columns={columns}
-          visibleIds={visibleIds}
-          onToggle={toggleColumn}
-          onReorder={setColumnOrder}
-          onReset={resetColumns}
-        />
       </div>
 
       {/* Tabela */}
