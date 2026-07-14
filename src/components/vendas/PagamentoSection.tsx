@@ -7,8 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { MetodoPagamentoCard, MetodoPagamento, createEmptyMetodo } from "./MetodoPagamentoCard";
-import { useEffect, useRef, useState } from "react";
-import { Info, ShieldCheck, Unlock } from "lucide-react";
+import { useEffect, useRef, useState, useMemo } from "react";
+import { Info, ShieldCheck, Unlock, CheckCircle2, AlertTriangle, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
@@ -52,9 +52,14 @@ interface PagamentoSectionProps {
    * deve persistir esse registro ao criar a venda.
    */
   onOverrideChange?: (payload: { autorizadorId: string; senha: string } | null) => void;
+  /**
+   * Callback disparado sempre que o estado de "pagamento confirmado" mudar.
+   * O consumidor deve bloquear o envio do formulário enquanto for `false`.
+   */
+  onConfirmadoChange?: (confirmed: boolean) => void;
 }
 
-export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPresencial, onVendaPresencialChange, descontoInfo, hideEmpresaReceptora = false, onOverrideChange }: PagamentoSectionProps) {
+export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPresencial, onVendaPresencialChange, descontoInfo, hideEmpresaReceptora = false, onOverrideChange, onConfirmadoChange }: PagamentoSectionProps) {
   const { limites: regrasLimites } = useRegrasVendas();
   const boletoConfig = regrasLimites.boleto;
   const janelaDias = regrasLimites.pagamentoDataJanelaDias;
@@ -64,9 +69,10 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
   // Autorização do Gerente para relaxar as regras de pagamento
   // (entrada mínima, intervalo de boleto e janela de data).
   const [autorizadoRegras, setAutorizadoRegras] = useState(false);
-  const [pendingMotivo, setPendingMotivo] = useState<null | 'entrada' | 'intervalo' | 'data'>(null);
-  const pendingRevertRef = useRef<null | (() => void)>(null);
-  const autorizadoConfirmadoRef = useRef(false);
+  // Estado de confirmação do bloco de pagamento. Quando `false`, o formulário
+  // pai deve bloquear o envio.
+  const [pagamentoConfirmado, setPagamentoConfirmado] = useState(false);
+  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
 
   const entradaMinima = valorTotal * (entradaPct / 100);
 
@@ -89,36 +95,95 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
     return d < min || d > max;
   };
 
-  const detectMotivoViolacao = (
-    next: PagamentoData,
-    prev: PagamentoData,
-  ): 'entrada' | 'intervalo' | 'data' | null => {
-    const [nm1, nm2] = next.metodos;
-    const [pm1, pm2] = prev.metodos;
-    // Só ativa modal para violações introduzidas nesta mudança.
-    if (isEntradaViolada(next) && !isEntradaViolada(prev)) return 'entrada';
-    if (
-      (isIntervaloViolado(nm1) && !isIntervaloViolado(pm1)) ||
-      (isIntervaloViolado(nm2) && !isIntervaloViolado(pm2))
-    ) return 'intervalo';
-    if (
-      (isDataViolada(nm1) && !isDataViolada(pm1)) ||
-      (isDataViolada(nm2) && !isDataViolada(pm2))
-    ) return 'data';
-    return null;
+  // Formata em BRL curto
+  const fmtBRL = (v: number) =>
+    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
+
+  // Lista todas as violações do estado atual de pagamento.
+  const calcularViolacoes = (): string[] => {
+    const violacoes: string[] = [];
+    const [m1, m2] = paymentData.metodos;
+    if (isEntradaViolada(paymentData)) {
+      const atual = m1.valor ?? 0;
+      violacoes.push(
+        `Entrada de ${fmtBRL(atual)} abaixo do mínimo de ${fmtBRL(entradaMinima)} (${entradaPct}% do total).`,
+      );
+    }
+    const permitidos = getIntervalosBoletoPermitidos(valorTotal, boletoConfig);
+    if (isIntervaloViolado(m1)) {
+      violacoes.push(
+        `Método 1: intervalo de ${m1.intervalo_boletos} dias fora do permitido (${permitidos.join(', ')} dias).`,
+      );
+    }
+    if (isIntervaloViolado(m2)) {
+      violacoes.push(
+        `Método 2: intervalo de ${m2.intervalo_boletos} dias fora do permitido (${permitidos.join(', ')} dias).`,
+      );
+    }
+    const { min, max } = getJanelaDataPagamento(janelaDias);
+    const fmtDate = (d: Date) => format(d, "dd/MM/yyyy", { locale: ptBR });
+    if (isDataViolada(m1)) {
+      violacoes.push(
+        `Método 1: data ${fmtDate(m1.data_pagamento!)} fora da janela permitida (${fmtDate(min)} a ${fmtDate(max)}).`,
+      );
+    }
+    if (isDataViolada(m2)) {
+      violacoes.push(
+        `Método 2: data ${fmtDate(m2.data_pagamento!)} fora da janela permitida (${fmtDate(min)} a ${fmtDate(max)}).`,
+      );
+    }
+    return violacoes;
   };
 
-  const applyChangeWithGuard = (next: PagamentoData) => {
-    const prev = paymentData;
-    onChange(next);
-    if (autorizadoRegras) return;
-    const motivo = detectMotivoViolacao(next, prev);
-    if (motivo) {
-      pendingRevertRef.current = () => onChange(prev);
-      autorizadoConfirmadoRef.current = false;
-      setPendingMotivo(motivo);
+  const [violacoesModal, setViolacoesModal] = useState<string[]>([]);
+
+  const handleConfirmar = () => {
+    const violacoes = calcularViolacoes();
+    if (violacoes.length === 0) {
+      setPagamentoConfirmado(true);
+      // Sem violações: nenhuma autorização necessária.
+      if (autorizadoRegras) {
+        setAutorizadoRegras(false);
+        onOverrideChange?.(null);
+      }
+      return;
     }
+    setViolacoesModal(violacoes);
+    setConfirmModalOpen(true);
   };
+
+  const handleEditarPagamento = () => {
+    setPagamentoConfirmado(false);
+  };
+
+  // Notifica o pai sobre mudanças de confirmação.
+  useEffect(() => {
+    onConfirmadoChange?.(pagamentoConfirmado);
+  }, [pagamentoConfirmado, onConfirmadoChange]);
+
+  // Sempre que o pagamento for editado após confirmar, invalida a confirmação.
+  const pagamentoHash = useMemo(() => JSON.stringify({
+    u: paymentData.usar_dois_metodos,
+    e: paymentData.pagamento_na_entrega,
+    m: paymentData.metodos.map((m) => ({
+      t: m.tipo,
+      v: m.valor,
+      d: m.data_pagamento?.toISOString?.() ?? null,
+      i: m.intervalo_boletos,
+      p: m.parcelas_boleto,
+      pc: m.parcelas_cartao,
+      e: m.empresa_receptora_id,
+      jp: m.ja_pago,
+    })),
+  }), [paymentData]);
+  const firstRender = useRef(true);
+  useEffect(() => {
+    if (firstRender.current) {
+      firstRender.current = false;
+      return;
+    }
+    setPagamentoConfirmado(false);
+  }, [pagamentoHash]);
 
   const { data: empresas = [], isLoading: isLoadingEmpresas } = useQuery({
     queryKey: ['empresas-emissoras-ativas'],
@@ -159,6 +224,14 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
   // sempre que houver boleto em qualquer método.
   useEffect(() => {
     if (autorizadoRegras) return; // regras liberadas pelo Gerente
+    // Split estrutural M1 À Vista + M2 Boleto quando houver boleto em qualquer método.
+    // Só normaliza quando a estrutura ainda não está no formato esperado — evita
+    // sobrescrever valores/intervalos/datas que o usuário editou manualmente.
+    if (!pagamentoTemBoleto(paymentData) || valorTotal <= 0) return;
+    const [m1, m2] = paymentData.metodos;
+    const estruturaOk =
+      paymentData.usar_dois_metodos && m1?.tipo === 'a_vista' && m2?.tipo === 'boleto';
+    if (estruturaOk) return;
     const normalizado = aplicarRegraBoleto(paymentData, valorTotal, boletoConfig);
     if (normalizado !== paymentData) {
       onChange(normalizado);
@@ -176,31 +249,25 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
   ]);
 
   const regraBoletoAtiva = pagamentoTemBoleto(paymentData) && !autorizadoRegras;
-  const intervalosBoletoPermitidos = autorizadoRegras
-    ? undefined
-    : getIntervalosBoletoPermitidos(valorTotal, boletoConfig);
+  // Sempre exibe a lista completa; o card mostra a permissão como dica sem bloquear.
+  const intervalosBoletoPermitidos = getIntervalosBoletoPermitidos(valorTotal, boletoConfig);
 
   const handleAutorizadoRegras = (autorizadorId: string, senha: string) => {
-    autorizadoConfirmadoRef.current = true;
     setAutorizadoRegras(true);
+    setPagamentoConfirmado(true);
     onOverrideChange?.({ autorizadorId, senha });
-    pendingRevertRef.current = null;
-    setPendingMotivo(null);
+    setConfirmModalOpen(false);
   };
 
-  const handleModalOpenChange = (open: boolean) => {
-    if (open) return;
-    if (!autorizadoConfirmadoRef.current && pendingRevertRef.current) {
-      pendingRevertRef.current();
-    }
-    autorizadoConfirmadoRef.current = false;
-    pendingRevertRef.current = null;
-    setPendingMotivo(null);
+  const handleConfirmModalOpenChange = (open: boolean) => {
+    setConfirmModalOpen(open);
+    // Se fechou sem autorizar, mantém pagamentoConfirmado=false.
   };
 
   const handleReverterAutorizacao = () => {
     setAutorizadoRegras(false);
     onOverrideChange?.(null);
+    setPagamentoConfirmado(false);
   };
 
   const handleMetodo1Change = (metodo: MetodoPagamento) => {
@@ -213,12 +280,12 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
       // Se for método único, o valor é o total
       newMetodos[0] = { ...metodo, valor: valorTotal };
     }
-    applyChangeWithGuard({ ...paymentData, metodos: newMetodos });
+    onChange({ ...paymentData, metodos: newMetodos });
   };
 
   const handleMetodo2Change = (metodo: MetodoPagamento) => {
     const newMetodos: [MetodoPagamento, MetodoPagamento] = [paymentData.metodos[0], metodo];
-    applyChangeWithGuard({ ...paymentData, metodos: newMetodos });
+    onChange({ ...paymentData, metodos: newMetodos });
   };
 
   const handleToggleDoisMetodos = (checked: boolean) => {
