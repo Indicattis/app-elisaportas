@@ -1,18 +1,31 @@
-## Mudança
-Trocar autorização de "liberação de regras de pagamento" (entrada de boleto, intervalo, janela de data) de **Gerente** para **Diretor** (senha master).
+## Diagnóstico
 
-## Arquivos
+Na venda `27582af7…`, o banco tem `temperatura = true`, que em toda a aplicação significa **Quente** (`VendaEditarMinimalista.tsx:374`: `venda.temperatura ? 'Quente' : 'Fria'`). O cálculo dos tiers de desconto em `FaturamentoVendaMinimalista.tsx:1129` está correto — usa `vendaPresencial: venda?.temperatura === false`, ou seja, só libera a faixa "Frio" quando a venda é fria. Como esta venda é Quente, o desconto não entra no tier "Frio", que é o comportamento esperado.
 
-**1. `src/components/vendas/PagamentoSection.tsx`**
-- No `<AutorizacaoDescontoModal>`: mudar `tipoAutorizacao="responsavel_setor"` → `"master"`.
-- Textos: "Regras liberadas pelo Gerente" → "Regras liberadas pelo Diretor" (badge, banner amber, resumo do pagamento, título "Regras infringidas").
-- Texto do modal: "Digite a senha do Gerente" → "Digite a senha do Diretor".
-- Tooltip do badge "Regras liberadas": trocar Gerente por Diretor.
+O problema está apenas no **badge visual** em `FaturamentoVendaMinimalista.tsx:1887-1890`, que está invertido em relação ao restante do sistema:
 
-**2. `src/hooks/useVendas.ts` (linhas 575-591)**
-- `verificar_senha_vendas`: `p_tipo: 'responsavel'` → `'master'`.
-- `tipo_autorizacao: 'responsavel_setor'` → `'master'`.
-- Observação padrão: "liberada pelo Gerente" → "liberada pelo Diretor".
+```tsx
+{venda.temperatura ? (
+  <Badge …>❄️ Fria</Badge>      // ❌ true está sendo rotulado como Fria
+) : (
+  <Badge …>🔥 Quente</Badge>    // ❌ false como Quente
+)}
+```
 
-## Não alterar
-- Fluxo de desconto (que já usa Gerente/Diretor conforme o percentual) permanece intacto — só a liberação de regras de pagamento muda para exigir sempre senha do Diretor.
+Isso faz o usuário ver "Fria" numa venda Quente e concluir que o tier de desconto não foi aplicado.
+
+## Alteração
+
+Arquivo: `src/pages/administrativo/FaturamentoVendaMinimalista.tsx` (linhas 1887-1890)
+
+Inverter o badge para casar com o padrão do sistema:
+
+```tsx
+{venda.temperatura ? (
+  <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30">🔥 Quente</Badge>
+) : (
+  <Badge className="bg-cyan-500/20 text-cyan-400 border-cyan-500/30">❄️ Fria</Badge>
+)}
+```
+
+Nenhuma outra mudança — a lógica de tiers já está correta.
