@@ -1054,7 +1054,7 @@ export default function VendasDirecao() {
       default:
         return null;
     }
-  }, [metodosExtraPorVenda, toggleTemperatura, togglingTempId, limAvista, limPresencial, downloadingPdfId, handleDownloadFormalizacao]);
+  }, [metodosExtraPorVenda, parcelasPorVenda, toggleTemperatura, togglingTempId, limAvista, limPresencial, downloadingPdfId, handleDownloadFormalizacao]);
 
   // Classes responsivas por coluna
   const getColumnResponsiveClass = (columnId: string) => {
