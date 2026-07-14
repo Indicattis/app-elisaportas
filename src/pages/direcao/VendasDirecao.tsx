@@ -672,7 +672,41 @@ export default function VendasDirecao() {
         const credito = venda.valor_credito || 0;
         const net = credito - desconto;
         const autorizacao = venda.autorizacao_desconto?.[0];
-        
+        const _totalBaseTiers = calcularTotalVenda(venda.produtos || []);
+        const tiers = desconto > 0
+          ? calcDescontoTiersAplicados({
+              totalVenda: _totalBaseTiers,
+              descontoTotal: desconto,
+              formaPagamento: venda.forma_pagamento,
+              vendaPresencial: venda.temperatura === false,
+              limAvista,
+              limPresencial,
+            })
+          : null;
+        const tiersBlock = tiers ? (
+          <div className="pt-1 mt-1 border-t border-white/10 space-y-0.5">
+            <p className="text-white/50 text-[10px] uppercase tracking-wider">Distribuição</p>
+            <p className="text-white/70">
+              <span className="text-white/50">À Vista ({limAvista}%):</span>{' '}
+              <span className={tiers.valorAvista > 0 ? 'text-emerald-400' : 'text-white/40'}>
+                {formatCurrency(tiers.valorAvista)} ({tiers.pctAvista.toFixed(2)}%)
+              </span>
+            </p>
+            <p className="text-white/70">
+              <span className="text-white/50">Frio ({limPresencial}%):</span>{' '}
+              <span className={tiers.valorFrio > 0 ? 'text-cyan-400' : 'text-white/40'}>
+                {formatCurrency(tiers.valorFrio)} ({tiers.pctFrio.toFixed(2)}%)
+              </span>
+            </p>
+            <p className="text-white/70">
+              <span className="text-white/50">Diretor:</span>{' '}
+              <span className={tiers.valorGerente > 0 ? 'text-amber-400' : 'text-white/40'}>
+                {formatCurrency(tiers.valorGerente)} ({tiers.pctGerente.toFixed(2)}%)
+              </span>
+            </p>
+          </div>
+        ) : null;
+
         if (desconto <= 0 && credito <= 0) {
           return <span className="text-[10px] md:text-sm text-white/60">-</span>;
         }
@@ -707,6 +741,7 @@ export default function VendasDirecao() {
                         {net >= 0 ? '+' : '-'}{formatCurrency(Math.abs(net))}
                       </span>
                     </p>
+                    {tiersBlock}
                     {autorizacao && (
                       <>
                         <p className="text-white/70">
@@ -755,6 +790,7 @@ export default function VendasDirecao() {
                     <p className="text-white/70">
                       <span className="text-white/50">Valor:</span> {formatCurrency(desconto)}
                     </p>
+                    {tiersBlock}
                     {autorizacao && (
                       <>
                         <p className="text-white/70">
