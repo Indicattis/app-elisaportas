@@ -643,15 +643,77 @@ export default function VendasDirecao() {
           const todos = metodosExtraPorVenda.get(venda.id) || [];
           const principal = venda.metodo_pagamento;
           const secundario = todos.find((m) => m !== principal) || null;
+          const parcelas = parcelasPorVenda.get(venda.id) || [];
+          const grupos = new Map<string, any[]>();
+          parcelas.forEach((p) => {
+            const key = p.metodo_pagamento || 'outros';
+            const arr = grupos.get(key) || [];
+            arr.push(p);
+            grupos.set(key, arr);
+          });
           return (
-            <div className={`${textClass} flex flex-col leading-tight`}>
-              <span>{getFormaPagamentoLabel(principal)}</span>
-              {secundario && (
-                <span className="text-white/50 text-[9px] md:text-xs">
-                  + {getFormaPagamentoLabel(secundario)}
-                </span>
-              )}
-            </div>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className={`${textClass} flex flex-col leading-tight cursor-help`}>
+                  <span>{getFormaPagamentoLabel(principal)}</span>
+                  {secundario && (
+                    <span className="text-white/50 text-[9px] md:text-xs">
+                      + {getFormaPagamentoLabel(secundario)}
+                    </span>
+                  )}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent className="bg-zinc-900 border-zinc-700 p-3 max-w-sm">
+                <div className="space-y-2">
+                  <div className="text-sm font-medium text-white">Pagamentos da venda</div>
+                  {grupos.size === 0 ? (
+                    <div className="text-xs text-white/60 space-y-1">
+                      <p>Sem parcelas registradas.</p>
+                      <p className="text-white/50">
+                        Método: <span className="text-white/80">{getFormaPagamentoLabel(principal)}</span>
+                        {secundario && (
+                          <> + <span className="text-white/80">{getFormaPagamentoLabel(secundario)}</span></>
+                        )}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2 text-xs">
+                      {Array.from(grupos.entries()).map(([metodo, arr]) => {
+                        const total = arr.reduce((s, p) => s + Number(p.valor_parcela || 0), 0);
+                        return (
+                          <div key={metodo} className="space-y-1">
+                            <div className="flex items-center justify-between text-white/90 font-medium">
+                              <span>{getFormaPagamentoLabel(metodo)}</span>
+                              <span className="text-white/60">{formatCurrency(total)}</span>
+                            </div>
+                            <div className="space-y-0.5 pl-2 border-l border-white/10">
+                              {arr.map((p) => {
+                                const pago = p.status === 'pago';
+                                return (
+                                  <div key={p.id} className="flex items-center justify-between gap-2">
+                                    <span className="text-white/70">
+                                      Nº {p.numero_parcela ?? '-'} • {formatCurrency(Number(p.valor_parcela || 0))}
+                                      {p.data_vencimento && (
+                                        <span className="text-white/40"> • venc. {format(new Date(p.data_vencimento), 'dd/MM/yyyy', { locale: ptBR })}</span>
+                                      )}
+                                    </span>
+                                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${pago ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'}`}>
+                                      {pago
+                                        ? (p.data_pagamento ? `Pago ${format(new Date(p.data_pagamento), 'dd/MM', { locale: ptBR })}` : 'Pago')
+                                        : 'Pendente'}
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </TooltipContent>
+            </Tooltip>
           );
         }
       case 'previsao':
