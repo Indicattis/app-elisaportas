@@ -289,7 +289,7 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-semibold text-white">Forma de Pagamento</CardTitle>
           <div className="flex items-center gap-2">
-            {autorizadoRegras ? (
+            {autorizadoRegras && (
               <div className="flex items-center gap-1.5">
                 <Badge
                   variant="outline"
@@ -309,18 +309,6 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
                   Reverter
                 </Button>
               </div>
-            ) : (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setAutorizacaoModalOpen(true)}
-                className="h-7 gap-1.5 bg-amber-500/10 border-amber-400/40 text-amber-100 hover:bg-amber-500/20 hover:text-amber-50"
-                title="Liberar entrada de boleto, data de pagamento e intervalo com senha do Gerente"
-              >
-                <Unlock className="h-3.5 w-3.5" />
-                Liberar regras (senha)
-              </Button>
             )}
             {descontoInfo && (() => {
               const { percentualAplicado, limitePermitido } = descontoInfo;
