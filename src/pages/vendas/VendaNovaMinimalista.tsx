@@ -1211,7 +1211,7 @@ export default function VendaNovaMinimalista() {
         {portas.length > 0 && (
           <>
             <VendaResumo 
-              produtos={portas} 
+              produtos={portasComAjusteGlobal}
               valorFrete={formData.valor_frete} 
               valorCredito={valorCredito}
               percentualCredito={percentualCredito}

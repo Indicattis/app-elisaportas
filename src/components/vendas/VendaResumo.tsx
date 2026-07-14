@@ -31,12 +31,23 @@ export function VendaResumo({
       : valorBase * (produto.desconto_percentual / 100);
     
     const valorFinal = valorBase - descontoAplicado;
-    
+
+    // Instalação e pintura agora são linhas separadas (tipo_produto === 'instalacao'
+    // ou 'pintura_epoxi'), com o valor armazenado em `valor_produto`. Roteamos
+    // esses valores para as suas respectivas somas para exibição correta.
+    const qtd = produto.quantidade || 1;
+    const isInstalacaoRow = produto.tipo_produto === 'instalacao';
+    const isPinturaRow = produto.tipo_produto === 'pintura_epoxi';
+    const valorProdutoLinha = produto.valor_produto * qtd;
+
     return {
-      produto: acc.produto + (produto.valor_produto * produto.quantidade),
-      pintura: acc.pintura + (produto.valor_pintura * produto.quantidade),
-      instalacao: acc.instalacao + (produto.valor_instalacao * produto.quantidade),
-      total: acc.total + valorFinal
+      produto:
+        acc.produto + (isInstalacaoRow || isPinturaRow ? 0 : valorProdutoLinha),
+      pintura:
+        acc.pintura + (produto.valor_pintura * qtd) + (isPinturaRow ? valorProdutoLinha : 0),
+      instalacao:
+        acc.instalacao + (produto.valor_instalacao * qtd) + (isInstalacaoRow ? valorProdutoLinha : 0),
+      total: acc.total + valorFinal,
     };
   }, {
     produto: 0,
