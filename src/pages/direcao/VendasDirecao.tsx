@@ -217,7 +217,7 @@ export default function VendasDirecao() {
         .eq('id', vendaId);
       if (error) throw error;
       await queryClient.invalidateQueries({ queryKey: ['vendas'] });
-      toast({ title: novo ? 'Marcada como Fria' : 'Marcada como Quente' });
+      toast({ title: novo ? 'Marcada como Quente' : 'Marcada como Fria' });
     } catch (e: any) {
       toast({ title: 'Erro ao alterar temperatura', description: e?.message, variant: 'destructive' });
     } finally {
@@ -977,8 +977,8 @@ export default function VendasDirecao() {
         );
       }
       case 'temperatura': {
-        const isFrio = venda.temperatura === true;
-        const isQuente = venda.temperatura === false;
+        const isQuente = venda.temperatura === true;
+        const isFrio = venda.temperatura === false;
         const label = isQuente ? 'Quente' : isFrio ? 'Frio' : '-';
         const color = isQuente ? 'text-orange-400' : isFrio ? 'text-blue-400' : 'text-white/30';
         return (
