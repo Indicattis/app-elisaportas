@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Upload, X, CreditCard, Banknote, QrCode, Wallet, CalendarIcon, CheckCircle2 } from "lucide-react";
+import { Upload, X, CreditCard, Banknote, QrCode, Wallet, CalendarIcon, CheckCircle2, AlertTriangle } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -63,6 +63,10 @@ interface MetodoPagamentoCardProps {
   dataPagamentoJanelaDias?: number;
   /** Quando true, libera qualquer data e oculta a mensagem de janela. */
   dataPagamentoLiberada?: boolean;
+  /** Sinaliza que a entrada informada está abaixo do mínimo (requer autorização do Diretor). */
+  entradaViolada?: boolean;
+  /** Sinaliza que a data de pagamento está fora da janela permitida (requer autorização do Diretor). */
+  dataForaJanela?: boolean;
 }
 
 export function MetodoPagamentoCard({
@@ -80,6 +84,8 @@ export function MetodoPagamentoCard({
   parcelasBoletoMax = 12,
   dataPagamentoJanelaDias = 5,
   dataPagamentoLiberada = false,
+  entradaViolada = false,
+  dataForaJanela = false,
 }: MetodoPagamentoCardProps) {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
