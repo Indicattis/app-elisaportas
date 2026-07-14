@@ -285,15 +285,8 @@ export default function VendasDirecao() {
     }
   }, [selectedMonth]);
 
-  // Hook de configuração de colunas
-  const {
-    columns,
-    visibleColumns,
-    visibleIds,
-    toggleColumn,
-    setColumnOrder,
-    resetColumns
-  } = useColumnConfig('direcao_vendas_columns_v4', COLUNAS_DISPONIVEIS);
+  // Colunas fixas (funcionalidade de personalização removida)
+  const visibleColumns = COLUNAS_DISPONIVEIS.filter(c => c.defaultVisible);
 
   useEffect(() => {
     const fetchAtendentes = async () => {
