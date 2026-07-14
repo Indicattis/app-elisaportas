@@ -255,6 +255,7 @@ export default function VendasDirecao() {
 
   const [atendentes, setAtendentes] = useState<any[]>([]);
   const [metodosExtraPorVenda, setMetodosExtraPorVenda] = useState<Map<string, string[]>>(new Map());
+  const [parcelasPorVenda, setParcelasPorVenda] = useState<Map<string, any[]>>(new Map());
   const [sortConfig, setSortConfig] = useState<{
     column: string | null;
     direction: 'asc' | 'desc' | null;
