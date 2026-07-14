@@ -378,6 +378,15 @@ export default function VendaNovaMinimalista() {
 
   // Aplica um rascunho de ajuste global. Se exigir autorização, abre o modal.
   const aplicarAjusteGlobal = (rascunho: AjusteGlobal) => {
+    try {
+      console.log('[VendaNova] aplicarAjusteGlobal ->', {
+        rascunho,
+        portasLen: portas.length,
+        subtotalProdutosMemo,
+        formaPagamentoAtual,
+        temperatura: formData.temperatura,
+        configLimitesObj,
+      });
     // Acréscimo, ou valor zero — sem validação.
     if (rascunho.tipo === 'acrescimo' || !rascunho.valor || rascunho.valor <= 0) {
       setAjusteGlobal(rascunho);
@@ -433,6 +442,10 @@ export default function VendaNovaMinimalista() {
       tipo: tipoAuth,
     });
     setAplicarAjusteAutorizacaoOpen(true);
+    } catch (e) {
+      console.error('[VendaNova] aplicarAjusteGlobal falhou:', e);
+      throw e;
+    }
   };
 
   const limparAjusteGlobal = () => {
