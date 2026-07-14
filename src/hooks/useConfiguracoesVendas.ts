@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -161,15 +162,26 @@ export function useConfiguracoesVendas() {
   // Limites calculados — vêm da tabela canônica `regras_vendas`
   const limites = limitesRegras;
 
-  // Sobrescreve os campos de limite no objeto `configuracoes` para refletir a fonte canônica
-  const configuracoesMescladas = configuracoes
-    ? {
-        ...configuracoes,
-        limite_desconto_avista: limitesRegras.avista,
-        limite_desconto_presencial: limitesRegras.presencial,
-        limite_adicional_responsavel: limitesRegras.adicionalResponsavel,
-      }
-    : configuracoes;
+  // Sobrescreve os campos de limite no objeto `configuracoes` para refletir a fonte canônica.
+  // Memoizado para evitar nova referência a cada render (que causaria useEffects consumidores
+  // a resetarem estado local — ex.: inputs de senha em RegrasVendasDirecao).
+  const configuracoesMescladas = useMemo(
+    () =>
+      configuracoes
+        ? {
+            ...configuracoes,
+            limite_desconto_avista: limitesRegras.avista,
+            limite_desconto_presencial: limitesRegras.presencial,
+            limite_adicional_responsavel: limitesRegras.adicionalResponsavel,
+          }
+        : configuracoes,
+    [
+      configuracoes,
+      limitesRegras.avista,
+      limitesRegras.presencial,
+      limitesRegras.adicionalResponsavel,
+    ]
+  );
 
   return {
     configuracoes: configuracoesMescladas,
