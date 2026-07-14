@@ -1,23 +1,29 @@
 ## Objetivo
 
-Adicionar um tooltip na célula "Pagamento" de `/direcao/vendas/todas` que, ao passar o mouse, liste todos os pagamentos da venda com suas parcelas, valor, vencimento e status (pago/pendente).
+No tooltip da célula "Desconto/Acréscimo" em `/direcao/vendas/todas`, separar a faixa que hoje aparece como "Diretor" em **duas faixas distintas**:
+
+- **Gerente** — até `limite_adicional_responsavel` (hoje 7%) além de À Vista + Frio
+- **Diretor** — o que exceder tudo isso (senha master)
+
+O util `calcDescontoTiersAplicados` hoje agrupa esses dois em `pctGerente`, então a separação será feita inline na página, sem mexer no util.
 
 ## Alterações
 
 Arquivo único: `src/pages/direcao/VendasDirecao.tsx`
 
-1. **Expandir a busca de contas_receber** (useEffect ~linha 311). Hoje o `SELECT` traz só `venda_id, metodo_pagamento` para saber métodos extras. Passar a trazer também: `numero_parcela, valor_parcela, valor_pago, data_vencimento, data_pagamento, status`.
+1. Puxar o limite adicional do responsável do hook já usado:
+   ```ts
+   const limResponsavel = limitesVendas?.adicionalResponsavel ?? 7;
+   ```
 
-2. **Novo state paralelo** `parcelasPorVenda: Map<string, ParcelaInfo[]>` armazenando as linhas completas por venda (ordenadas por método → nº parcela). O `metodosExtraPorVenda` existente continua sendo derivado do mesmo fetch (para não duplicar consultas).
+2. No `case 'desconto_acrescimo'`, após o `calcDescontoTiersAplicados(...)`, dividir `pctGerente`:
+   ```ts
+   const pctGerenteOnly = Math.min(tiers.pctGerente, limResponsavel);
+   const pctDiretor = Math.max(0, tiers.pctGerente - limResponsavel);
+   const valorGerenteOnly = _totalBaseTiers * (pctGerenteOnly / 100);
+   const valorDiretor = _totalBaseTiers * (pctDiretor / 100);
+   ```
 
-3. **Renderizar o tooltip** no `case 'pagamento'` (linhas 627-642). Envolver o conteúdo atual em `<Tooltip>/<TooltipTrigger asChild>` com a mesma classe atual + `cursor-help`. No `<TooltipContent>` (mesmo estilo do tooltip de desconto — `bg-zinc-900 border-zinc-700 p-3 max-w-sm`):
-   - Título: "Pagamentos da venda"
-   - Para cada método presente nas parcelas, agrupar e mostrar:
-     - Cabeçalho do método (label via `getFormaPagamentoLabel`) + total das parcelas
-     - Uma linha por parcela: `Nº X • R$ valor • venc. dd/MM • [badge status]`
-     - Badge verde "Pago" quando `status === 'pago'`, amarelo "Pendente" caso contrário; se pago, mostrar também a data em pequeno.
-   - Fallback: se não houver parcelas em `contas_receber` para a venda, exibir "Sem parcelas registradas" e apenas os métodos (principal + secundário) já mostrados na célula.
+3. Atualizar o bloco `tiersBlock` para 4 linhas na ordem: À Vista → Frio → **Gerente (`limResponsavel`%)** → **Diretor (excesso)**. Manter o mesmo padrão de cores (avista emerald, frio cyan, gerente amber) e destacar Diretor em vermelho quando `valorDiretor > 0`; senão cinza.
 
-4. **Formatação** reutilizar `formatCurrency`, `format(..., 'dd/MM/yyyy', { locale: ptBR })` e `getFormaPagamentoLabel` já importados. Nenhum novo pacote.
-
-Nenhuma outra célula, filtro, ordenação ou lógica de negócio é alterada.
+Nenhuma outra alteração de lógica, filtros ou cálculo de excedido.

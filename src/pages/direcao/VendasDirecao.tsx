@@ -229,6 +229,7 @@ export default function VendasDirecao() {
   const { limites: limitesVendas } = useConfiguracoesVendas();
   const limAvista = limitesVendas?.avista ?? 3;
   const limPresencial = limitesVendas?.presencial ?? 5;
+  const limResponsavel = limitesVendas?.adicionalResponsavel ?? 7;
   // Filtros persistentes na sessão
   const [searchTerm, setSearchTerm] = useSessionFilters<string>({
     key: 'direcao_vendas_search',
@@ -774,12 +775,28 @@ export default function VendasDirecao() {
                 {formatCurrency(tiers.valorFrio)} ({tiers.pctFrio.toFixed(2)}%)
               </span>
             </p>
-            <p className="text-white/70">
-              <span className="text-white/50">Diretor:</span>{' '}
-              <span className={tiers.valorGerente > 0 ? 'text-amber-400' : 'text-white/40'}>
-                {formatCurrency(tiers.valorGerente)} ({tiers.pctGerente.toFixed(2)}%)
-              </span>
-            </p>
+            {(() => {
+              const pctGerenteOnly = Math.min(tiers.pctGerente, limResponsavel);
+              const pctDiretor = Math.max(0, tiers.pctGerente - limResponsavel);
+              const valorGerenteOnly = _totalBaseTiers * (pctGerenteOnly / 100);
+              const valorDiretor = _totalBaseTiers * (pctDiretor / 100);
+              return (
+                <>
+                  <p className="text-white/70">
+                    <span className="text-white/50">Gerente ({limResponsavel}%):</span>{' '}
+                    <span className={valorGerenteOnly > 0 ? 'text-amber-400' : 'text-white/40'}>
+                      {formatCurrency(valorGerenteOnly)} ({pctGerenteOnly.toFixed(2)}%)
+                    </span>
+                  </p>
+                  <p className="text-white/70">
+                    <span className="text-white/50">Diretor (excesso):</span>{' '}
+                    <span className={valorDiretor > 0 ? 'text-red-400' : 'text-white/40'}>
+                      {formatCurrency(valorDiretor)} ({pctDiretor.toFixed(2)}%)
+                    </span>
+                  </p>
+                </>
+              );
+            })()}
           </div>
         ) : null;
 
@@ -1054,7 +1071,7 @@ export default function VendasDirecao() {
       default:
         return null;
     }
-  }, [metodosExtraPorVenda, parcelasPorVenda, toggleTemperatura, togglingTempId, limAvista, limPresencial, downloadingPdfId, handleDownloadFormalizacao]);
+  }, [metodosExtraPorVenda, parcelasPorVenda, toggleTemperatura, togglingTempId, limAvista, limPresencial, limResponsavel, downloadingPdfId, handleDownloadFormalizacao]);
 
   // Classes responsivas por coluna
   const getColumnResponsiveClass = (columnId: string) => {
