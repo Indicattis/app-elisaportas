@@ -1,53 +1,23 @@
 ## Objetivo
 
-Na tabela de `/direcao/vendas/todas`, ao passar o mouse sobre a célula "Desconto/Acréscimo", exibir no tooltip a **quebra do desconto por faixa**: À Vista (cartão / forma de pagamento), Frio (temperatura) e Gerente/Diretor (adicional com senha) — usando a mesma distribuição já usada na tela de faturamento.
+Adicionar um tooltip na célula "Pagamento" de `/direcao/vendas/todas` que, ao passar o mouse, liste todos os pagamentos da venda com suas parcelas, valor, vencimento e status (pago/pendente).
 
 ## Alterações
 
 Arquivo único: `src/pages/direcao/VendasDirecao.tsx`
 
-1. Importar o utilitário existente:
-   ```ts
-   import { calcDescontoTiersAplicados } from '@/utils/descontoTiers';
-   ```
+1. **Expandir a busca de contas_receber** (useEffect ~linha 311). Hoje o `SELECT` traz só `venda_id, metodo_pagamento` para saber métodos extras. Passar a trazer também: `numero_parcela, valor_parcela, valor_pago, data_vencimento, data_pagamento, status`.
 
-2. Dentro do `case 'desconto_acrescimo'` (linhas ~669-790), quando `desconto > 0`, calcular:
-   ```ts
-   const totalBase = calcularTotalVenda(venda.produtos || []);
-   const tiers = calcDescontoTiersAplicados({
-     totalVenda: totalBase,
-     descontoTotal: desconto,
-     formaPagamento: venda.forma_pagamento,
-     vendaPresencial: venda.temperatura === false, // fria => apto frio
-     limAvista,
-     limPresencial,
-   });
-   ```
+2. **Novo state paralelo** `parcelasPorVenda: Map<string, ParcelaInfo[]>` armazenando as linhas completas por venda (ordenadas por método → nº parcela). O `metodosExtraPorVenda` existente continua sendo derivado do mesmo fetch (para não duplicar consultas).
 
-3. Nos dois `TooltipContent` já existentes (o de desconto+crédito e o de só desconto), adicionar uma seção "Distribuição do desconto" logo após a linha "Valor/Desconto" e antes do bloco de autorização:
+3. **Renderizar o tooltip** no `case 'pagamento'` (linhas 627-642). Envolver o conteúdo atual em `<Tooltip>/<TooltipTrigger asChild>` com a mesma classe atual + `cursor-help`. No `<TooltipContent>` (mesmo estilo do tooltip de desconto — `bg-zinc-900 border-zinc-700 p-3 max-w-sm`):
+   - Título: "Pagamentos da venda"
+   - Para cada método presente nas parcelas, agrupar e mostrar:
+     - Cabeçalho do método (label via `getFormaPagamentoLabel`) + total das parcelas
+     - Uma linha por parcela: `Nº X • R$ valor • venc. dd/MM • [badge status]`
+     - Badge verde "Pago" quando `status === 'pago'`, amarelo "Pendente" caso contrário; se pago, mostrar também a data em pequeno.
+   - Fallback: se não houver parcelas em `contas_receber` para a venda, exibir "Sem parcelas registradas" e apenas os métodos (principal + secundário) já mostrados na célula.
 
-   ```tsx
-   <div className="pt-1 mt-1 border-t border-white/10 space-y-0.5">
-     <p className="text-white/50 text-[10px] uppercase tracking-wider">Distribuição</p>
-     <p className="text-white/70">
-       <span className="text-white/50">À Vista ({limAvista}%):</span>{' '}
-       <span className={tiers.valorAvista > 0 ? 'text-emerald-400' : 'text-white/40'}>
-         {formatCurrency(tiers.valorAvista)} ({tiers.pctAvista.toFixed(2)}%)
-       </span>
-     </p>
-     <p className="text-white/70">
-       <span className="text-white/50">Frio ({limPresencial}%):</span>{' '}
-       <span className={tiers.valorFrio > 0 ? 'text-cyan-400' : 'text-white/40'}>
-         {formatCurrency(tiers.valorFrio)} ({tiers.pctFrio.toFixed(2)}%)
-       </span>
-     </p>
-     <p className="text-white/70">
-       <span className="text-white/50">Diretor:</span>{' '}
-       <span className={tiers.valorGerente > 0 ? 'text-amber-400' : 'text-white/40'}>
-         {formatCurrency(tiers.valorGerente)} ({tiers.pctGerente.toFixed(2)}%)
-       </span>
-     </p>
-   </div>
-   ```
+4. **Formatação** reutilizar `formatCurrency`, `format(..., 'dd/MM/yyyy', { locale: ptBR })` e `getFormaPagamentoLabel` já importados. Nenhum novo pacote.
 
-Nenhuma outra mudança — colunas, ordenação e lógica de excedido permanecem iguais.
+Nenhuma outra célula, filtro, ordenação ou lógica de negócio é alterada.
