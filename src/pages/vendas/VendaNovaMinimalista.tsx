@@ -932,6 +932,7 @@ export default function VendaNovaMinimalista() {
             limiteMaximo: validacaoDescontoMemo.limiteMaximoResponsavel ?? validacaoDescontoMemo.limitePermitido,
           }}
           hideEmpresaReceptora
+          onOverrideChange={setPagamentoOverride}
         />
 
         {/* Desconto / Acréscimo Global */}
