@@ -1307,7 +1307,8 @@ export default function VendaNovaMinimalista() {
           <GradientButton
             type="submit" 
             variant="blue"
-            disabled={isCreating || portas.length === 0}
+            disabled={isCreating || portas.length === 0 || !pagamentoConfirmado}
+            title={!pagamentoConfirmado ? 'Confirme a forma de pagamento antes de finalizar.' : undefined}
           >
             {isCreating ? 'Criando...' : 'Criar Venda'}
           </GradientButton>
