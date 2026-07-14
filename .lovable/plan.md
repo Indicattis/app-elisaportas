@@ -1,47 +1,44 @@
 ## Objetivo
 
-Tornar o card "Autorizados Cadastrados" (em `IndicadoresAutorizados`) clicável em `/autorizados`. Ao clicar, abrir um modal com a listagem completa de autorizados ativos, agrupados/ordenados por estado, exibindo colunas de **Vendedor Responsável** e **Atendente**.
+Fazer a coluna "Total" de cada colaborador na Folha Salarial refletir o mesmo cálculo usado no "Total da folha" agregado, de modo que a soma das linhas bata exatamente com o total exibido no rodapé.
 
-## Escopo
+## Diagnóstico
 
-- Apenas frontend, editando **`src/components/autorizados/IndicadoresAutorizados.tsx`**.
-- Sem alterações em schema, RLS ou edge functions.
-- Página `/autorizados` e `/direcao/autorizados` compartilham `AutorizadosPrecosDirecao`, que consome o mesmo componente — a mudança aparece nos dois lugares (aceitável e coerente com o padrão atual).
+Em `src/pages/direcao/estrategia/EstrategiaDespesasConfiguracoes.tsx`:
 
-## Mudanças
+- **Linha 476–487 (agregado `totalFolha`)** passa para `calcTotalFolha`: `bonificacao`, `previsao_13_valor` e `ferias_valor` (armazenado no item).
+- **Linha 720 (coluna Total por linha `FolhaRowCells`)** chama `calcTotalFolha` **sem** `bonificacao` e força `ferias_valor: null`, ignorando o valor manual salvo.
 
-### `src/components/autorizados/IndicadoresAutorizados.tsx`
+Consequência: quando um colaborador tem `bonificacao > 0` ou `ferias_valor` ajustado manualmente, o total mostrado na linha é menor que a parcela real que entra no somatório da folha.
 
-1. Transformar o primeiro card (`Autorizados Cadastrados`) em botão clicável (cursor pointer + hover), abrindo um novo `Dialog` (`listagemOpen`).
-2. Ao abrir o modal, buscar em paralelo:
-   - `autorizados` ativos com `id, nome, cidade, estado, vendedor_id, vendedor_responsavel_id`.
-   - `admin_users` com `id, nome` (filtrando pelos ids retornados, via `.in('id', [...])`).
-3. Montar um `Map<id, nome>` de admin_users e construir a lista final ordenada por `estado ASC, nome ASC`.
-4. Renderizar tabela dentro do Dialog com colunas:
-   - **Estado** (sigla)
-   - **Cidade**
-   - **Autorizado** (nome)
-   - **Vendedor Responsável** (nome do admin_users referenciado por `vendedor_responsavel_id` ou `—`)
-   - **Atendente** (nome do admin_users referenciado por `vendedor_id` ou `—`)
-5. Adicionar cabeçalho fixo de agrupamento visual: uma linha divisória com o UF cada vez que o estado mudar (visual leve, mantendo o padrão glass do projeto).
-6. Manter loading state (`Carregando...`) enquanto busca. Mostrar contagem total no cabeçalho do modal: `{n} autorizados`.
-7. Fechar via botão "Fechar" e/ou clicar fora do Dialog.
+## Alteração
 
-## Comportamento resultante
+Arquivo único: `src/pages/direcao/estrategia/EstrategiaDespesasConfiguracoes.tsx`
 
-- Em `/autorizados`, clicar no card "Autorizados Cadastrados" abre modal com todos os autorizados ativos.
-- Lista ordenada por estado (sigla) e nome, com colunas: Estado · Cidade · Autorizado · Vendedor Responsável · Atendente.
-- Nomes resolvidos a partir de `admin_users` (via join client-side pelos ids). Se um vendedor não existir mais em `admin_users`, mostra "—".
+1. Em `FolhaRowCells` (por volta da linha 710–720), ler também `bonificacao`, `previsao_13_valor` e `ferias_valor` do `item`.
+2. Ajustar a chamada de `calcTotalFolha` na linha 720 para passar esses três campos, exatamente como o agregado faz:
 
-## Detalhes técnicos
+```ts
+const bonificacao   = Number(item.bonificacao) || 0;
+const previsao_13_valor = Number(item.previsao_13_valor) || 0;
+const ferias_valor  = item.ferias_valor; // pode ser null
 
-```text
-Card "Autorizados Cadastrados" (button)
-  └─ Dialog
-     ├─ Header: "Autorizados cadastrados ({n})"
-     └─ Table (sticky header):
-        Estado | Cidade | Autorizado | Vendedor Responsável | Atendente
-        SP     | ...    | ...        | ...                  | ...
+const total = calcTotalFolha({
+  salario, salario_minimo, aux_combustivel,
+  bonificacao,
+  hora_extra,
+  insalubridade_pct, fgts_pct,
+  previsao_13_valor,
+  em_folha: item.em_folha,
+  ferias_valor,
+});
 ```
 
-Sem migração. Sem novas dependências.
+3. Nenhuma alteração no agregado, em `calcTotalFolha`, no banco, em RLS ou em edge functions.
+
+## Verificação
+
+- Abrir `/direcao/estrategia/despesas/2026-06`.
+- Conferir um colaborador com `bonificacao > 0`: o valor da coluna Total deve subir na mesma proporção.
+- Conferir um colaborador com férias manual: a coluna Total deve refletir o valor manual, não mais o default `base/3/12`.
+- Somar mentalmente as linhas visíveis (excluindo simulados) e comparar com "Total da folha" no rodapé — devem ser iguais.
