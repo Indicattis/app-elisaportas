@@ -216,26 +216,38 @@ export function useVendas() {
             `Desconto de ${validacaoServer.percentualDesconto.toFixed(2)}% excede o limite permitido (${validacaoServer.limitePermitido.toFixed(0)}%). É necessária autorização por senha.`
           );
         }
-        if (tipoAutorizacaoRequerido === 'master' && autorizacaoDesconto.tipo_autorizacao !== 'master') {
-          throw new Error(
-            `Desconto de ${validacaoServer.percentualDesconto.toFixed(2)}% excede o limite máximo do responsável. Apenas a senha master pode autorizar.`
-          );
-        }
-        const tipoSenha = autorizacaoDesconto.tipo_autorizacao === 'master' ? 'master' : 'responsavel';
-        const { data: senhaValida, error: rpcErr } = await supabase.rpc('verificar_senha_vendas', {
+        // Verificação centrada na senha: tentar master primeiro (autoriza qualquer %),
+        // depois responsavel se o tier requerido for responsavel_setor.
+        let tierValidado: 'master' | 'responsavel_setor' | null = null;
+        const { data: masterOk, error: rpcMasterErr } = await supabase.rpc('verificar_senha_vendas', {
           p_senha: autorizacaoDesconto.senha_usada,
-          p_tipo: tipoSenha,
+          p_tipo: 'master',
         });
-        if (rpcErr) {
+        if (rpcMasterErr) {
           throw new Error('Erro ao validar senha de autorização. Tente novamente.');
         }
-        if (senhaValida !== true) {
+        if (masterOk === true) {
+          tierValidado = 'master';
+        } else if (tipoAutorizacaoRequerido === 'responsavel_setor') {
+          const { data: respOk, error: rpcRespErr } = await supabase.rpc('verificar_senha_vendas', {
+            p_senha: autorizacaoDesconto.senha_usada,
+            p_tipo: 'responsavel',
+          });
+          if (rpcRespErr) {
+            throw new Error('Erro ao validar senha de autorização. Tente novamente.');
+          }
+          if (respOk === true) {
+            tierValidado = 'responsavel_setor';
+          }
+        }
+        if (!tierValidado) {
           throw new Error('Senha de autorização inválida. A venda não pode ser salva.');
         }
-        // Re-sincronizar o percentual auditado com o cálculo do servidor
+        // Re-sincronizar o percentual auditado e o tier efetivamente validado
         autorizacaoDesconto = {
           ...autorizacaoDesconto,
           percentual_desconto: validacaoServer.percentualDesconto,
+          tipo_autorizacao: tierValidado,
         };
       } else {
         // Dentro do limite — descartar qualquer autorização enviada indevidamente
