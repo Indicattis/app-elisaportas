@@ -217,6 +217,7 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
   const cardClass = "bg-white/5 border-white/10 backdrop-blur-xl";
 
   return (
+    <>
     <Card className={cardClass}>
       <CardHeader className="pb-3 pt-4">
         <div className="flex items-center justify-between">
