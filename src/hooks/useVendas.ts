@@ -219,24 +219,34 @@ export function useVendas() {
         // Verificação centrada na senha: tentar master primeiro (autoriza qualquer %),
         // depois responsavel se o tier requerido for responsavel_setor.
         let tierValidado: 'master' | 'responsavel_setor' | null = null;
+        console.log('[useVendas] validando senha de autorização', {
+          tipoAutorizacaoRequerido,
+          senhaLen: autorizacaoDesconto.senha_usada?.length,
+          senhaTipoOriginal: autorizacaoDesconto.tipo_autorizacao,
+          percentual: validacaoServer.percentualDesconto,
+        });
         const { data: masterOk, error: rpcMasterErr } = await supabase.rpc('verificar_senha_vendas', {
           p_senha: autorizacaoDesconto.senha_usada,
           p_tipo: 'master',
         });
+        console.log('[useVendas] RPC master ->', { masterOk, rpcMasterErr });
         if (rpcMasterErr) {
           throw new Error('Erro ao validar senha de autorização. Tente novamente.');
         }
         if (masterOk === true) {
           tierValidado = 'master';
-        } else if (tipoAutorizacaoRequerido === 'responsavel_setor') {
+        } else {
+          // Sempre tentar responsavel também — se o usuário digitou a senha do
+          // responsável e o tier requerido é responsavel_setor, autoriza.
           const { data: respOk, error: rpcRespErr } = await supabase.rpc('verificar_senha_vendas', {
             p_senha: autorizacaoDesconto.senha_usada,
             p_tipo: 'responsavel',
           });
+          console.log('[useVendas] RPC responsavel ->', { respOk, rpcRespErr });
           if (rpcRespErr) {
             throw new Error('Erro ao validar senha de autorização. Tente novamente.');
           }
-          if (respOk === true) {
+          if (respOk === true && tipoAutorizacaoRequerido === 'responsavel_setor') {
             tierValidado = 'responsavel_setor';
           }
         }
