@@ -201,7 +201,9 @@ export function useVendas() {
       const validacaoServer = validarDesconto(
         portas,
         vendaData.forma_pagamento,
-        vendaData.temperatura,
+        // `validarDesconto` recebe "venda fria" como boolean.
+        // No formulário, `temperatura === false` significa venda fria.
+        vendaData.temperatura === false,
         {
           avista: cfgVendas?.limite_desconto_avista,
           presencial: cfgVendas?.limite_desconto_presencial,
