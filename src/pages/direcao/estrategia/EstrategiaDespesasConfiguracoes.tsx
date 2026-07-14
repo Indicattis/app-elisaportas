@@ -713,11 +713,25 @@ function FolhaRowCells({
   const hora_extra = Number(item.hora_extra) || 0;
   const insalubridade_pct = Number(item.insalubridade_pct) || 0;
   const fgts_pct = Number(item.fgts_pct) || 0;
+  const bonificacao = Number(item.bonificacao) || 0;
+  const previsao_13_valor = Number(item.previsao_13_valor) || 0;
+  const ferias_valor = item.ferias_valor;
   const base = salario + hora_extra;
   const insalubVal = salario_minimo * insalubridade_pct / 100;
   const fgtsVal = base * fgts_pct / 100;
   const feriasDefault = calcFeriasDefault(base, fgts_pct);
-  const total = calcTotalFolha({ salario, salario_minimo, aux_combustivel, hora_extra, insalubridade_pct, fgts_pct, previsao_13_valor: 0, em_folha: item.em_folha, ferias_valor: null });
+  const total = calcTotalFolha({
+    salario,
+    salario_minimo,
+    aux_combustivel,
+    bonificacao,
+    hora_extra,
+    insalubridade_pct,
+    fgts_pct,
+    previsao_13_valor,
+    em_folha: item.em_folha,
+    ferias_valor,
+  });
   const desativado = item.em_folha === false || simulado;
   const zeroCurr = <span className="text-white/30">{formatCurrency(0)}</span>;
   const zeroPct = <span className="text-white/30">0%</span>;
