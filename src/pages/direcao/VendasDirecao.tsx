@@ -229,6 +229,7 @@ export default function VendasDirecao() {
   const { limites: limitesVendas } = useConfiguracoesVendas();
   const limAvista = limitesVendas?.avista ?? 3;
   const limPresencial = limitesVendas?.presencial ?? 5;
+  const limResponsavel = limitesVendas?.adicionalResponsavel ?? 7;
   // Filtros persistentes na sessão
   const [searchTerm, setSearchTerm] = useSessionFilters<string>({
     key: 'direcao_vendas_search',
