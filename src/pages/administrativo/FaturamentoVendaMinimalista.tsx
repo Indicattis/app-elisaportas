@@ -1885,9 +1885,9 @@ export default function FaturamentoVendaMinimalista() {
                   <p className="text-xs text-white/50">Tipo de Venda</p>
                   <p className="text-sm font-medium">
                     {venda.temperatura ? (
-                      <Badge className="bg-cyan-500/20 text-cyan-400 border-cyan-500/30">❄️ Fria</Badge>
-                    ) : (
                       <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30">🔥 Quente</Badge>
+                    ) : (
+                      <Badge className="bg-cyan-500/20 text-cyan-400 border-cyan-500/30">❄️ Fria</Badge>
                     )}
                   </p>
                 </div>
