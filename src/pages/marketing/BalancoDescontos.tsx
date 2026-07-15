@@ -131,10 +131,10 @@ export default function BalancoDescontos() {
     <MinimalistLayout
       title="Balanço de Descontos"
       subtitle="Positivo: desconto permitido não dado. Negativo: desconto acima do limite."
-      backPath="/marketing"
+      backPath="/financeiro"
       breadcrumbItems={[
         { label: "Home", path: "/home" },
-        { label: "Marketing", path: "/marketing" },
+        { label: "Financeiro", path: "/financeiro" },
         { label: "Balanço de Descontos" },
       ]}
       fullWidth
