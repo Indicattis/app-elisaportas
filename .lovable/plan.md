@@ -1,50 +1,23 @@
 ## Diagnóstico
 
-Em `src/hooks/useConfiguracoesVendas.ts` (linhas 165-172) o hook expõe um objeto `configuracoesMescladas` reconstruído a cada render:
+Confirmado na venda `771dcd7b-…`: os dois itens têm `tamanho = "3x3"`, mas `largura` e `altura` estão `NULL` no banco.
 
-```ts
-const configuracoesMescladas = configuracoes
-  ? { ...configuracoes, limite_desconto_avista: ..., ... }
-  : configuracoes;
-```
+A causa está em `src/hooks/useVendas.ts`. Nos dois blocos que fazem `insert` em `produtos_vendas` (criação da venda ~L433 e salvamento como rascunho ~L790), o objeto `baseSplit` grava apenas `tamanho`, ignorando `produto.largura` e `produto.altura`. O mesmo vale para os itens de `tipo_produto = 'instalacao'` gerados em seguida (~L469 e ~L826). Como o tipo `ProdutoVenda` e o formulário já carregam `largura`/`altura`, o dado chega ao hook mas é descartado antes do insert.
 
-Isso é retornado como `configuracoes` para o consumidor. Como `{...}` cria uma referência nova a cada render, o `useEffect` em `RegrasVendasDirecao.tsx` (linhas 86-96) que depende de `[configuracoes]` dispara **em todo render** e reseta os estados locais `senhaResponsavel`, `senhaMaster`, `responsavelSenhaResponsavel`, `responsavelSenhaMaster`, `limiteAvista`, etc. para os valores do servidor.
-
-Resultado: quando o usuário digita na senha ou seleciona um responsável, o próximo render (disparado pelo próprio `setState`) reconstrói `configuracoesMescladas` → o `useEffect` dispara → sobrescreve o input com o valor antigo. Visualmente, "não é possível fazer nenhuma alteração".
-
-O botão "Salvar Alterações" fica permanentemente desabilitado pelo mesmo motivo: `hasChanges` sempre compara valores iguais, porque o estado local foi reescrito antes de comparar.
+Efeito colateral: 934 linhas de `produtos_vendas` já foram salvas sem medidas (das quais 512 têm `tamanho` no formato numérico e podem ser recuperadas por parse).
 
 ## Correção
 
-Memoizar `configuracoesMescladas` em `useConfiguracoesVendas` para que a referência só mude quando os dados subjacentes mudam.
+1. `src/hooks/useVendas.ts` — em ambos os blocos de insert:
+   - Adicionar `largura: produto.largura ?? null` e `altura: produto.altura ?? null` ao `baseSplit`.
+   - Adicionar os mesmos campos aos itens sintetizados de `tipo_produto: 'instalacao'` (para acompanhar a porta correspondente).
 
-### Alteração
+2. Backfill histórico via migração:
+   - Preencher `largura`/`altura` em `produtos_vendas` onde estão `NULL` e `tamanho` casa com o padrão `^\s*\d+([.,]\d+)?\s*[xX]\s*\d+([.,]\d+)?\s*$`, extraindo os dois números (trocando `,` por `.`).
+   - Restringir a `tipo_produto IN ('porta_enrolar','porta_social','pintura_epoxi','instalacao')`.
+   - Não tocar em linhas onde já existe medida.
 
-**`src/hooks/useConfiguracoesVendas.ts`**
+## Fora do escopo
 
-1. Importar `useMemo` do React.
-2. Envolver a construção de `configuracoesMescladas` em `useMemo`, com deps: `[configuracoes, limitesRegras.avista, limitesRegras.presencial, limitesRegras.adicionalResponsavel]`.
-
-```ts
-const configuracoesMescladas = useMemo(() => (
-  configuracoes
-    ? {
-        ...configuracoes,
-        limite_desconto_avista: limitesRegras.avista,
-        limite_desconto_presencial: limitesRegras.presencial,
-        limite_adicional_responsavel: limitesRegras.adicionalResponsavel,
-      }
-    : configuracoes
-), [configuracoes, limitesRegras.avista, limitesRegras.presencial, limitesRegras.adicionalResponsavel]);
-```
-
-### Efeito
-
-- A referência de `configuracoes` só muda quando o servidor retorna dados diferentes.
-- O `useEffect` de inicialização em `RegrasVendasDirecao.tsx` só executa no mount e após um update real, não a cada tecla digitada.
-- Inputs de senha, selects de responsável e limites de desconto ficam editáveis. `hasChanges` passa a detectar diferenças e habilita o botão "Salvar Alterações".
-
-### Fora de escopo
-
-- Não mexer no schema, RLS, ou nas mutations. As policies já permitem update para o usuário (has_route_access retorna true).
-- Não mexer no layout do `RegrasVendasDirecao.tsx`.
+- Não altero o fluxo de UI, exibição na tela de detalhes da venda, nem o cálculo de preços — apenas a persistência das medidas.
+- Não modifico `pedidos_producao` / `pedido_linhas`; o pedido é gerado a partir de `produtos_vendas` e passará a receber as medidas corretas naturalmente após o fix.
