@@ -38,6 +38,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import * as XLSX from 'xlsx';
+import { getLabelTipoProduto } from '@/utils/tipoProdutoLabels';
 import { format, startOfMonth, endOfMonth, setMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { DateRange } from 'react-day-picker';
