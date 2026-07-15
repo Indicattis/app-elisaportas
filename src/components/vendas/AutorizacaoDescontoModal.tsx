@@ -60,13 +60,12 @@ export function AutorizacaoDescontoModal({
     queryKey: ['autorizador-desconto', tipoAutorizacao, autorizadorUserId],
     enabled: !!autorizadorUserId,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('admin_users')
-        .select('user_id, nome, role, ativo')
-        .eq('user_id', autorizadorUserId!)
-        .maybeSingle();
+      const { data, error } = await supabase.rpc('get_autorizador_vendas', {
+        p_tipo: tipoAutorizacao === 'master' ? 'master' : 'responsavel',
+      });
       if (error) throw error;
-      return data;
+      const row = Array.isArray(data) ? data[0] : data;
+      return row ?? null;
     },
   });
 
