@@ -745,6 +745,7 @@ export default function VendaNovaMinimalista() {
                 }
               : undefined,
             creditoVenda: { valorCredito: 0, percentualCredito: 0 },
+            comprovantes,
           });
           navigate('/vendas/minhas-vendas');
         } catch (error) {
@@ -777,6 +778,8 @@ export default function VendaNovaMinimalista() {
             }
           : undefined,
         creditoVenda: { valorCredito, percentualCredito }
+        ,
+        comprovantes
       });
       navigate('/vendas/minhas-vendas');
     } catch (error) {
@@ -823,6 +826,8 @@ export default function VendaNovaMinimalista() {
             }
           : undefined,
         creditoVenda: { valorCredito: 0, percentualCredito: 0 }
+        ,
+        comprovantes
       });
       navigate('/vendas/minhas-vendas');
     } catch (error) {
