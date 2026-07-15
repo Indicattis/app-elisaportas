@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
-import { Search, Plus, Pencil, Trash2, Upload, Boxes, GripVertical } from "lucide-react";
+import { Search, Plus, Pencil, Trash2, Upload, Boxes, GripVertical, FileText, FileSpreadsheet, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -9,12 +9,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { toast } from "sonner";
 import { useTabelaPrecos, ItemTabelaPreco, ItemTabelaPrecoInput } from "@/hooks/useTabelaPrecos";
 import { ItemModal } from "@/components/tabela-precos/ItemModal";
 import { BulkUploadTabelaPrecos } from "@/components/tabela-precos/BulkUploadTabelaPrecos";
 import { useKitsMontagemResumo } from "@/hooks/useKitMontagem";
-import { useCustosItensPadroes } from "@/hooks/useCustosItens";
+import { useCustosItensPadroes, useCustosItens } from "@/hooks/useCustosItens";
 import { useConfigLucro } from "@/hooks/useConfigLucro";
+import { exportEstrategiaPrecosPDF, exportEstrategiaPrecosExcel } from "@/utils/estrategiaPrecosExport";
 import { useQueryClient } from "@tanstack/react-query";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import {
