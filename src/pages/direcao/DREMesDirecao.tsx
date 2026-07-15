@@ -617,7 +617,7 @@ function PrintReport({
       <div className="pdf-page-break" />
 
       <div style={{ marginTop: 0 }}>
-        <div style={H2}>3. Folha Salarial</div>
+        <div style={H2}>3. Folha Salarial {badgeDebita(debitaCat('salario'))}</div>
         <PrintDespesaTable
           items={despesasFolha}
           total={totalDespFolha}
@@ -628,7 +628,7 @@ function PrintReport({
 
       <div className="pdf-page-break" />
       <div style={{ marginTop: 0 }}>
-        <div style={H2}>4. Despesas Fixas</div>
+        <div style={H2}>4. Despesas Fixas {badgeDebita(debitaCat('fixa'))}</div>
         <PrintDespesaTable
           items={despesasFixas}
           total={totalDespFixas}
@@ -639,7 +639,7 @@ function PrintReport({
 
       <div className="pdf-page-break" />
       <div style={{ marginTop: 0 }}>
-        <div style={H2}>5. Despesas Variáveis</div>
+        <div style={H2}>5. Despesas Variáveis {badgeDebita(debitaCat('variavel'))}</div>
         <PrintDespesaTable
           items={despesasVariaveis}
           total={totalDespVariaveis}
@@ -650,7 +650,7 @@ function PrintReport({
 
       <div className="pdf-page-break" />
       <div style={{ marginTop: 0 }}>
-        <div style={H2}>6. Despesas de Imposto</div>
+        <div style={H2}>6. Despesas de Imposto {badgeDebita(debitaCat('imposto'))}</div>
         <PrintDespesaTable
           items={despesasImpostos}
           total={totalDespImpostos}
@@ -661,7 +661,7 @@ function PrintReport({
 
       <div className="pdf-page-break" />
       <div style={{ marginTop: 0 }}>
-        <div style={H2}>7. Investimentos</div>
+        <div style={H2}>7. Investimentos {badgeDebita(debitaCat('investimento'))}</div>
         <PrintDespesaTable
           items={despesasInvestimentos}
           total={totalDespInvestimentos}
@@ -672,7 +672,7 @@ function PrintReport({
 
       <div className="pdf-page-break" />
       <div style={{ marginTop: 0 }}>
-        <div style={H2}>8. Fornecedores</div>
+        <div style={H2}>8. Fornecedores {badgeDebita(debitaCat('fornecedor'))}</div>
         <PrintDespesaTable
           items={despesasFornecedores}
           total={totalDespFornecedores}
@@ -683,7 +683,7 @@ function PrintReport({
 
       <div className="pdf-page-break" />
       <div style={{ marginTop: 0 }}>
-        <div style={H2}>9. Financiamentos</div>
+        <div style={H2}>9. Financiamentos {badgeDebita(debitaCat('financiamento'))}</div>
         <PrintDespesaTable
           items={despesasFinanciamentos}
           total={totalDespFinanciamentos}
@@ -694,7 +694,7 @@ function PrintReport({
 
       <div className="pdf-page-break" />
       <div style={{ marginTop: 0 }}>
-        <div style={H2}>10. Fretes e Logística</div>
+        <div style={H2}>10. Fretes e Logística {badgeDebita(debitaCat('frete'))}</div>
         <PrintDespesaTable
           items={despesasFretes}
           total={totalDespFretes}
@@ -705,7 +705,7 @@ function PrintReport({
 
       <div className="pdf-page-break" />
       <div style={{ marginTop: 0 }}>
-        <div style={H2}>11. Autorizados</div>
+        <div style={H2}>11. Autorizados {badgeDebita(debitaCat('autorizado'))}</div>
         <PrintDespesaTable
           items={despesasAutorizados}
           total={totalDespAutorizados}
@@ -716,7 +716,7 @@ function PrintReport({
 
       <div className="pdf-page-break" />
       <div style={{ marginTop: 0 }}>
-        <div style={H2}>12. Salários</div>
+        <div style={H2}>12. Salários {badgeDebita(debitaCat('salario'))}</div>
         <PrintDespesaTable
           items={despesasSalarios}
           total={totalDespSalarios}
