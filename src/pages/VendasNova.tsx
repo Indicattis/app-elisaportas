@@ -34,6 +34,7 @@ import { useConfiguracoesVendas } from '@/hooks/useConfiguracoesVendas';
 import { useAuth } from '@/hooks/useAuth';
 import { Checkbox } from '@/components/ui/checkbox';
 import { PagamentoSection, PagamentoData, createEmptyPagamentoData } from '@/components/vendas/PagamentoSection';
+import { ComprovantesUploadBlock } from '@/components/vendas/ComprovantesUploadBlock';
 import { ClienteVendaSection } from '@/components/vendas/ClienteVendaSection';
 
 export default function VendasNova() {
@@ -99,6 +100,7 @@ export default function VendasNova() {
 
   // Estado para pagamento
   const [pagamentoData, setPagamentoData] = useState<PagamentoData>(createEmptyPagamentoData());
+  const [comprovantes, setComprovantes] = useState<File[]>([]);
 
   const { data: cores } = useQuery({
     queryKey: ['cores-catalogo'],
@@ -433,7 +435,8 @@ export default function VendasNova() {
         }, 
         portas,
         pagamentoData,
-        creditoVenda: { valorCredito, percentualCredito }
+        creditoVenda: { valorCredito, percentualCredito },
+        comprovantes,
       });
       navigate('/dashboard/vendas');
     } catch (error) {
@@ -472,7 +475,8 @@ export default function VendasNova() {
           senha_usada: senhaDigitada,
           tipo_autorizacao: tipoAutorizacaoNecessaria
         },
-        creditoVenda: { valorCredito: 0, percentualCredito: 0 } // Desconto não pode ter crédito
+        creditoVenda: { valorCredito: 0, percentualCredito: 0 }, // Desconto não pode ter crédito
+        comprovantes,
       });
       navigate('/dashboard/vendas');
     } catch (error) {
@@ -621,6 +625,20 @@ export default function VendasNova() {
             return acc + valorBase - desconto + credito;
           }, 0) + (formData.valor_frete || 0)}
         />
+
+        {(() => {
+          const metodosAtivos = pagamentoData.usar_dois_metodos
+            ? pagamentoData.metodos.filter(m => m.tipo)
+            : [pagamentoData.metodos[0]].filter(m => m.tipo);
+          const exige = metodosAtivos.some(m => m.tipo === 'a_vista' || m.ja_pago);
+          return (
+            <ComprovantesUploadBlock
+              files={comprovantes}
+              onChange={setComprovantes}
+              obrigatorio={exige}
+            />
+          );
+        })()}
 
         {/* Dados Adicionais */}
         <Card>
