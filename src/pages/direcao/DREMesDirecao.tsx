@@ -402,6 +402,27 @@ function PrintReport({
   });
   const positive = (v: number) => (v >= 0 ? '#047857' : '#b91c1c');
 
+  const badgeDebita = (deb: boolean): React.ReactNode => (
+    <span
+      style={{
+        display: 'inline-block',
+        marginLeft: 6,
+        padding: '1px 6px',
+        borderRadius: 3,
+        fontSize: '7pt',
+        fontWeight: 700,
+        letterSpacing: '0.04em',
+        textTransform: 'uppercase',
+        color: deb ? '#065f46' : '#78350f',
+        background: deb ? '#d1fae5' : '#fef3c7',
+        border: `1px solid ${deb ? '#10b981' : '#f59e0b'}`,
+        verticalAlign: 'middle',
+      }}
+    >
+      {deb ? '● Debita DRE' : '○ Não debita'}
+    </span>
+  );
+
   const kpiBox = (label: string, value: string, color = '#0f172a', accent = '#1e3a8a'): React.CSSProperties => ({});
 
   return (
