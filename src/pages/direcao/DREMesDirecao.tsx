@@ -323,6 +323,7 @@ function PrintReport({
   percLiquidFinal,
   formatCurrency,
   vendasListagem,
+  debitaCat,
 }: {
   mesNome: string;
   faturamento: FaturamentoProduto;
@@ -364,6 +365,7 @@ function PrintReport({
   percLiquidFinal: number;
   formatCurrency: (v: number) => string;
   vendasListagem: { id: string; data: string; cliente: string; valorTabela: number; valorVenda: number; desconto: number; lucro: number }[];
+  debitaCat: (categoria: CategoriaDespesa) => boolean;
 }) {
   const SECTION: React.CSSProperties = { marginTop: 18, pageBreakInside: 'avoid' };
   const H2: React.CSSProperties = {
@@ -399,6 +401,27 @@ function PrintReport({
     background: i % 2 === 0 ? '#ffffff' : '#fafbfc',
   });
   const positive = (v: number) => (v >= 0 ? '#047857' : '#b91c1c');
+
+  const badgeDebita = (deb: boolean): React.ReactNode => (
+    <span
+      style={{
+        display: 'inline-block',
+        marginLeft: 6,
+        padding: '1px 6px',
+        borderRadius: 3,
+        fontSize: '7pt',
+        fontWeight: 700,
+        letterSpacing: '0.04em',
+        textTransform: 'uppercase',
+        color: deb ? '#065f46' : '#78350f',
+        background: deb ? '#d1fae5' : '#fef3c7',
+        border: `1px solid ${deb ? '#10b981' : '#f59e0b'}`,
+        verticalAlign: 'middle',
+      }}
+    >
+      {deb ? '● Debita DRE' : '○ Não debita'}
+    </span>
+  );
 
   const kpiBox = (label: string, value: string, color = '#0f172a', accent = '#1e3a8a'): React.CSSProperties => ({});
 
@@ -520,25 +543,35 @@ function PrintReport({
       {/* RESUMO FINAL (movido para após Faturamento por Categoria) */}
       <div style={SECTION}>
         <div style={H2}>2. Resumo Final</div>
+        <div style={{ fontSize: '8pt', color: '#475569', marginBottom: 6 }}>
+          Legenda:
+          <span style={{ display: 'inline-block', marginLeft: 8, padding: '1px 6px', borderRadius: 3, fontSize: '7pt', fontWeight: 700, color: '#065f46', background: '#d1fae5', border: '1px solid #10b981' }}>● Debita DRE</span>
+          <span style={{ marginLeft: 4, color: '#64748b' }}>= reduz o lucro líquido</span>
+          <span style={{ display: 'inline-block', marginLeft: 10, padding: '1px 6px', borderRadius: 3, fontSize: '7pt', fontWeight: 700, color: '#78350f', background: '#fef3c7', border: '1px solid #f59e0b' }}>○ Não debita</span>
+          <span style={{ marginLeft: 4, color: '#64748b' }}>= informativo, não reduz o lucro</span>
+        </div>
         <table>
           <tbody>
             {[
-              { l: 'Faturamento Bruto', v: formatCurrency(faturamento.total), c: '#0f172a', b: false },
-              { l: 'Margem Bruta', v: `${percBrutoFinal.toFixed(1)}%`, c: positive(percBrutoFinal), b: false },
-              { l: 'Lucro Bruto', v: formatCurrency(lucro.total), c: positive(lucro.total), b: true },
-              { l: '(–) Folha Salarial', v: formatCurrency(totalDespFolha), c: '#b91c1c', b: false },
-              { l: '(–) Despesas Fixas', v: formatCurrency(totalDespFixas), c: '#b91c1c', b: false },
-              { l: '(–) Despesas Variáveis', v: formatCurrency(totalDespVariaveis), c: '#b91c1c', b: false },
-              { l: '(–) Despesas de Imposto', v: formatCurrency(totalDespImpostos), c: '#b91c1c', b: false },
-              { l: '(–) Investimentos', v: formatCurrency(totalDespInvestimentos), c: '#b91c1c', b: false },
-              { l: '(–) Fornecedores', v: formatCurrency(totalDespFornecedores), c: '#b91c1c', b: false },
-              { l: '(–) Financiamentos', v: formatCurrency(totalDespFinanciamentos), c: '#b91c1c', b: false },
-              { l: '(–) Fretes e Logística', v: formatCurrency(totalDespFretes), c: '#b91c1c', b: false },
-              { l: '(–) Autorizados', v: formatCurrency(totalDespAutorizados), c: '#b91c1c', b: false },
-              { l: '(–) Salários', v: formatCurrency(totalDespSalarios), c: '#b91c1c', b: false },
+              { l: 'Faturamento Bruto', v: formatCurrency(faturamento.total), c: '#0f172a', b: false, cat: null as CategoriaDespesa | null },
+              { l: 'Margem Bruta', v: `${percBrutoFinal.toFixed(1)}%`, c: positive(percBrutoFinal), b: false, cat: null },
+              { l: 'Lucro Bruto', v: formatCurrency(lucro.total), c: positive(lucro.total), b: true, cat: null },
+              { l: '(–) Folha Salarial', v: formatCurrency(totalDespFolha), c: '#b91c1c', b: false, cat: 'salario' as CategoriaDespesa },
+              { l: '(–) Despesas Fixas', v: formatCurrency(totalDespFixas), c: '#b91c1c', b: false, cat: 'fixa' as CategoriaDespesa },
+              { l: '(–) Despesas Variáveis', v: formatCurrency(totalDespVariaveis), c: '#b91c1c', b: false, cat: 'variavel' as CategoriaDespesa },
+              { l: '(–) Despesas de Imposto', v: formatCurrency(totalDespImpostos), c: '#b91c1c', b: false, cat: 'imposto' as CategoriaDespesa },
+              { l: '(–) Investimentos', v: formatCurrency(totalDespInvestimentos), c: '#b91c1c', b: false, cat: 'investimento' as CategoriaDespesa },
+              { l: '(–) Fornecedores', v: formatCurrency(totalDespFornecedores), c: '#b91c1c', b: false, cat: 'fornecedor' as CategoriaDespesa },
+              { l: '(–) Financiamentos', v: formatCurrency(totalDespFinanciamentos), c: '#b91c1c', b: false, cat: 'financiamento' as CategoriaDespesa },
+              { l: '(–) Fretes e Logística', v: formatCurrency(totalDespFretes), c: '#b91c1c', b: false, cat: 'frete' as CategoriaDespesa },
+              { l: '(–) Autorizados', v: formatCurrency(totalDespAutorizados), c: '#b91c1c', b: false, cat: 'autorizado' as CategoriaDespesa },
+              { l: '(–) Salários', v: formatCurrency(totalDespSalarios), c: '#b91c1c', b: false, cat: 'salario' as CategoriaDespesa },
             ].map((r, i) => (
               <tr key={i} style={trZebra(i)}>
-                <td style={{ ...TD, fontWeight: r.b ? 700 : 500 }}>{r.l}</td>
+                <td style={{ ...TD, fontWeight: r.b ? 700 : 500 }}>
+                  {r.l}
+                  {r.cat ? badgeDebita(debitaCat(r.cat)) : null}
+                </td>
                 <td style={{ ...tdRight, color: r.c, fontWeight: r.b ? 800 : 600 }}>{r.v}</td>
               </tr>
             ))}
@@ -584,7 +617,7 @@ function PrintReport({
       <div className="pdf-page-break" />
 
       <div style={{ marginTop: 0 }}>
-        <div style={H2}>3. Folha Salarial</div>
+        <div style={H2}>3. Folha Salarial {badgeDebita(debitaCat('salario'))}</div>
         <PrintDespesaTable
           items={despesasFolha}
           total={totalDespFolha}
@@ -595,7 +628,7 @@ function PrintReport({
 
       <div className="pdf-page-break" />
       <div style={{ marginTop: 0 }}>
-        <div style={H2}>4. Despesas Fixas</div>
+        <div style={H2}>4. Despesas Fixas {badgeDebita(debitaCat('fixa'))}</div>
         <PrintDespesaTable
           items={despesasFixas}
           total={totalDespFixas}
@@ -606,7 +639,7 @@ function PrintReport({
 
       <div className="pdf-page-break" />
       <div style={{ marginTop: 0 }}>
-        <div style={H2}>5. Despesas Variáveis</div>
+        <div style={H2}>5. Despesas Variáveis {badgeDebita(debitaCat('variavel'))}</div>
         <PrintDespesaTable
           items={despesasVariaveis}
           total={totalDespVariaveis}
@@ -617,7 +650,7 @@ function PrintReport({
 
       <div className="pdf-page-break" />
       <div style={{ marginTop: 0 }}>
-        <div style={H2}>6. Despesas de Imposto</div>
+        <div style={H2}>6. Despesas de Imposto {badgeDebita(debitaCat('imposto'))}</div>
         <PrintDespesaTable
           items={despesasImpostos}
           total={totalDespImpostos}
@@ -628,7 +661,7 @@ function PrintReport({
 
       <div className="pdf-page-break" />
       <div style={{ marginTop: 0 }}>
-        <div style={H2}>7. Investimentos</div>
+        <div style={H2}>7. Investimentos {badgeDebita(debitaCat('investimento'))}</div>
         <PrintDespesaTable
           items={despesasInvestimentos}
           total={totalDespInvestimentos}
@@ -639,7 +672,7 @@ function PrintReport({
 
       <div className="pdf-page-break" />
       <div style={{ marginTop: 0 }}>
-        <div style={H2}>8. Fornecedores</div>
+        <div style={H2}>8. Fornecedores {badgeDebita(debitaCat('fornecedor'))}</div>
         <PrintDespesaTable
           items={despesasFornecedores}
           total={totalDespFornecedores}
@@ -650,7 +683,7 @@ function PrintReport({
 
       <div className="pdf-page-break" />
       <div style={{ marginTop: 0 }}>
-        <div style={H2}>9. Financiamentos</div>
+        <div style={H2}>9. Financiamentos {badgeDebita(debitaCat('financiamento'))}</div>
         <PrintDespesaTable
           items={despesasFinanciamentos}
           total={totalDespFinanciamentos}
@@ -661,7 +694,7 @@ function PrintReport({
 
       <div className="pdf-page-break" />
       <div style={{ marginTop: 0 }}>
-        <div style={H2}>10. Fretes e Logística</div>
+        <div style={H2}>10. Fretes e Logística {badgeDebita(debitaCat('frete'))}</div>
         <PrintDespesaTable
           items={despesasFretes}
           total={totalDespFretes}
@@ -672,7 +705,7 @@ function PrintReport({
 
       <div className="pdf-page-break" />
       <div style={{ marginTop: 0 }}>
-        <div style={H2}>11. Autorizados</div>
+        <div style={H2}>11. Autorizados {badgeDebita(debitaCat('autorizado'))}</div>
         <PrintDespesaTable
           items={despesasAutorizados}
           total={totalDespAutorizados}
@@ -683,7 +716,7 @@ function PrintReport({
 
       <div className="pdf-page-break" />
       <div style={{ marginTop: 0 }}>
-        <div style={H2}>12. Salários</div>
+        <div style={H2}>12. Salários {badgeDebita(debitaCat('salario'))}</div>
         <PrintDespesaTable
           items={despesasSalarios}
           total={totalDespSalarios}
@@ -2138,6 +2171,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         percLiquidFinal={percLiquidFinal}
         formatCurrency={formatCurrency}
         vendasListagem={vendasListagem}
+        debitaCat={debitaCat}
       />
     </div>
 
