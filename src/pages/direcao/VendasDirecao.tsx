@@ -38,6 +38,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import * as XLSX from 'xlsx';
+import { getLabelTipoProduto } from '@/utils/tipoProdutoLabels';
 import { format, startOfMonth, endOfMonth, setMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { DateRange } from 'react-day-picker';
@@ -555,9 +556,36 @@ export default function VendasDirecao() {
         );
       case 'cliente':
         return (
-          <span className={`${textClass} text-white font-medium truncate block max-w-[100px] md:max-w-none`}>
-            {venda.cliente_nome}
-          </span>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className={`${textClass} text-white font-medium truncate block max-w-[100px] md:max-w-none cursor-help`}>
+                {venda.cliente_nome}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="right" className="max-w-xs">
+              {venda.produtos && venda.produtos.length > 0 ? (
+                <div className="space-y-1">
+                  <div className="font-semibold text-xs mb-1">Produtos da venda</div>
+                  <ul className="text-xs space-y-0.5">
+                    {venda.produtos.map((p: any, i: number) => {
+                      const label = getLabelTipoProduto(p.tipo_produto);
+                      const qtd = p.quantidade && p.quantidade > 1 ? `${p.quantidade}x ` : '';
+                      const dim = p.largura && p.altura ? ` — ${Number(p.largura).toFixed(2)}m × ${Number(p.altura).toFixed(2)}m` : '';
+                      const cor = p.cor ? ` (${p.cor})` : '';
+                      const desc = p.descricao && !['Porta de Enrolar','Instalação'].includes(p.descricao) ? ` — ${p.descricao}` : '';
+                      return (
+                        <li key={p.id || i}>
+                          {qtd}{label}{dim}{cor}{desc}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              ) : (
+                <span className="text-xs">Sem produtos</span>
+              )}
+            </TooltipContent>
+          </Tooltip>
         );
       case 'telefone':
         return <span className={textMutedClass}>{venda.cliente_telefone || '-'}</span>;
