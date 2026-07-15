@@ -187,6 +187,7 @@ export default function VendaNovaMinimalista() {
   const [pinturaItemModalOpen, setPinturaItemModalOpen] = useState(false);
 
   const [pagamentoData, setPagamentoData] = useState<PagamentoData>(createEmptyPagamentoData());
+  const [comprovantes, setComprovantes] = useState<File[]>([]);
 
   // Autorização do Gerente para liberar regras de pagamento
   // (entrada de boleto, data de pagamento, intervalo de boletos).
