@@ -227,6 +227,34 @@ export default function TabelaPrecos({
   const headerActions = (
     <div className="flex items-center gap-2">
       {extraHeaderActions}
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 border-white/20 text-white hover:bg-white/10"
+          >
+            <Menu className="h-4 w-4" />
+            Exportar
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent align="end" className="w-48 p-1">
+          <button
+            onClick={() => handleExport('pdf')}
+            className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md hover:bg-red-500/10 hover:text-red-300 transition-colors"
+          >
+            <FileText className="h-4 w-4" />
+            Exportar PDF
+          </button>
+          <button
+            onClick={() => handleExport('excel')}
+            className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md hover:bg-emerald-500/10 hover:text-emerald-300 transition-colors"
+          >
+            <FileSpreadsheet className="h-4 w-4" />
+            Exportar Excel
+          </button>
+        </PopoverContent>
+      </Popover>
       {internalHeaderActions}
     </div>
   );
