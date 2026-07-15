@@ -10802,6 +10802,15 @@ export type Database = {
           numero: number
         }[]
       }
+      get_autorizador_vendas: {
+        Args: { p_tipo: string }
+        Returns: {
+          ativo: boolean
+          nome: string
+          role: string
+          user_id: string
+        }[]
+      }
       get_colaboradores_folha: {
         Args: never
         Returns: {
