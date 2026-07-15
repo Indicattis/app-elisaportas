@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Upload, X, CreditCard, Banknote, QrCode, Wallet, CalendarIcon, CheckCircle2, AlertTriangle } from "lucide-react";
+import { CreditCard, Banknote, QrCode, Wallet, CalendarIcon, CheckCircle2, AlertTriangle } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -25,7 +25,8 @@ export interface MetodoPagamento {
   parcelas_cartao: number;
   parcelas_boleto: number;
   intervalo_boletos: number;
-  comprovante_file: File | null;
+  /** @deprecated Comprovantes agora são anexados uma única vez na venda em `ComprovantesUploadBlock`. */
+  comprovante_file?: File | null;
   ja_pago: boolean;
 }
 
@@ -37,7 +38,6 @@ export const createEmptyMetodo = (): MetodoPagamento => ({
   parcelas_cartao: 1,
   parcelas_boleto: 1,
   intervalo_boletos: 21,
-  comprovante_file: null,
   ja_pago: false
 });
 
@@ -87,26 +87,6 @@ export function MetodoPagamentoCard({
   entradaViolada = false,
   dataForaJanela = false,
 }: MetodoPagamentoCardProps) {
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'application/pdf'];
-    if (!allowedTypes.includes(file.type)) {
-      return;
-    }
-
-    if (file.size > 10 * 1024 * 1024) {
-      return;
-    }
-
-    onChange({ ...metodo, comprovante_file: file });
-  };
-
-  const handleRemoveFile = () => {
-    onChange({ ...metodo, comprovante_file: null });
-  };
-
   const metodos = [
     { value: 'boleto', label: 'Boleto', icon: QrCode },
     { value: 'a_vista', label: 'À Vista', icon: Banknote },
@@ -373,47 +353,6 @@ export function MetodoPagamentoCard({
             </div>
           )}
 
-          {/* Upload de comprovante: sempre para a_vista, ou quando ja_pago em outros tipos */}
-          {(metodo.tipo === 'a_vista' || metodo.ja_pago) && (
-            <div className="space-y-1">
-              <Label className={labelClass}>
-                {metodo.ja_pago ? 'Comprovante de Pagamento *' : 'Comprovante de Pagamento'}
-              </Label>
-              {!metodo.comprovante_file ? (
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="file"
-                    accept="image/png,image/jpeg,image/jpg,application/pdf"
-                    onChange={handleFileChange}
-                    className="hidden"
-                    id={`comprovante-${titulo}`}
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => document.getElementById(`comprovante-${titulo}`)?.click()}
-                    className="w-full border-white/20 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
-                  >
-                    <Upload className="h-4 w-4 mr-2" />
-                    Anexar Comprovante (PNG, JPG ou PDF)
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2 p-2 border rounded-md border-white/10 bg-white/5">
-                  <span className="text-sm flex-1 truncate text-white/70">{metodo.comprovante_file.name}</span>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleRemoveFile}
-                    className="text-white/50 hover:text-white hover:bg-white/10"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
         </div>
       )}
     </div>

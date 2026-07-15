@@ -128,7 +128,8 @@ export function useVendas() {
       pagamentoData,
       autorizacaoDesconto,
       autorizacaoRegraPagamento,
-      creditoVenda
+      creditoVenda,
+      comprovantes,
     }: { 
       vendaData: VendaFormData; 
       portas: ProdutoVenda[];
@@ -136,6 +137,7 @@ export function useVendas() {
       autorizacaoDesconto?: AutorizacaoDesconto;
       autorizacaoRegraPagamento?: AutorizacaoRegraPagamento;
       creditoVenda?: CreditoVenda;
+      comprovantes?: File[];
     }) => {
       if (portas.length === 0) {
         throw new Error('É necessário adicionar pelo menos um produto');
@@ -146,16 +148,20 @@ export function useVendas() {
         throw new Error('Todos os campos de localização são obrigatórios (Estado, Cidade, CEP, Bairro e Endereço)');
       }
 
-      // Validar comprovante obrigatório quando marcado como "já pago"
+      // Validar comprovante obrigatório quando há método à vista OU marcado como "já pago"
       if (pagamentoData) {
-        const metodosAtivos = pagamentoData.usar_dois_metodos 
+        const metodosAtivos = pagamentoData.usar_dois_metodos
           ? pagamentoData.metodos.filter(m => m.tipo)
           : [pagamentoData.metodos[0]].filter(m => m.tipo);
-        
-        for (const metodo of metodosAtivos) {
-          if (metodo.ja_pago && !metodo.comprovante_file) {
-            throw new Error('É obrigatório anexar o comprovante de pagamento quando o método está marcado como "Já pago".');
-          }
+
+        const exigeComprovante = metodosAtivos.some(
+          (m) => m.ja_pago || m.tipo === 'a_vista'
+        );
+
+        if (exigeComprovante && (!comprovantes || comprovantes.length === 0)) {
+          throw new Error(
+            'É obrigatório anexar ao menos um comprovante de pagamento (venda à vista ou marcada como já pago).'
+          );
         }
       }
 
@@ -521,30 +527,56 @@ export function useVendas() {
           offsetParcela += qtdGerada;
         }
         
-        // Upload de comprovantes (para à vista ou qualquer método marcado como já pago)
-        for (const metodo of metodosParaProcessar) {
-          if ((metodo.tipo === 'a_vista' || metodo.ja_pago) && metodo.comprovante_file) {
-            const fileName = `${venda.id}/${Date.now()}_${metodo.comprovante_file.name}`;
-            
+        // Upload dos comprovantes anexados no bloco único da venda
+        if (comprovantes && comprovantes.length > 0) {
+          const uploaded: Array<{ url: string; nome: string; content_type: string | null; tamanho_bytes: number }> = [];
+          const { data: userData } = await supabase.auth.getUser();
+          const uploaderId = userData?.user?.id ?? null;
+
+          for (const file of comprovantes) {
+            const safeName = file.name.replace(/[^\w.\-]+/g, '_');
+            const path = `${venda.id}/${Date.now()}_${safeName}`;
             const { error: uploadError } = await supabase.storage
               .from('comprovantes-pagamento')
-              .upload(fileName, metodo.comprovante_file);
-            
-            if (!uploadError) {
-              const { data: urlData } = supabase.storage
-                .from('comprovantes-pagamento')
-                .getPublicUrl(fileName);
-              
-              await supabase
-                .from('vendas')
-                .update({ 
-                  comprovante_url: urlData.publicUrl,
-                  comprovante_nome: metodo.comprovante_file.name 
-                })
-                .eq('id', venda.id);
-            } else {
+              .upload(path, file, { contentType: file.type });
+
+            if (uploadError) {
               console.error('Erro ao fazer upload do comprovante:', uploadError);
+              continue;
             }
+
+            const { data: urlData } = supabase.storage
+              .from('comprovantes-pagamento')
+              .getPublicUrl(path);
+
+            uploaded.push({
+              url: urlData.publicUrl,
+              nome: file.name,
+              content_type: file.type || null,
+              tamanho_bytes: file.size,
+            });
+          }
+
+          if (uploaded.length > 0) {
+            await supabase.from('venda_comprovantes').insert(
+              uploaded.map((u) => ({
+                venda_id: venda.id,
+                url: u.url,
+                nome: u.nome,
+                content_type: u.content_type,
+                tamanho_bytes: u.tamanho_bytes,
+                uploaded_by: uploaderId,
+              }))
+            );
+
+            // Retrocompatibilidade: preserva primeiro comprovante em vendas.comprovante_url/nome
+            await supabase
+              .from('vendas')
+              .update({
+                comprovante_url: uploaded[0].url,
+                comprovante_nome: uploaded[0].nome,
+              })
+              .eq('id', venda.id);
           }
         }
       }

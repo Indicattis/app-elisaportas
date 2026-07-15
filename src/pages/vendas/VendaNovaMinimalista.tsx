@@ -35,6 +35,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useFretesCidades } from '@/hooks/useFretesCidades';
 import { Checkbox } from '@/components/ui/checkbox';
 import { PagamentoSection, PagamentoData, createEmptyPagamentoData } from '@/components/vendas/PagamentoSection';
+import { ComprovantesUploadBlock } from '@/components/vendas/ComprovantesUploadBlock';
 import { validarRegraBoleto } from '@/utils/boletoRegra';
 import { validarDatasPagamento } from '@/utils/dataPagamentoRegra';
 import { ClienteVendaSection } from '@/components/vendas/ClienteVendaSection';
@@ -186,6 +187,7 @@ export default function VendaNovaMinimalista() {
   const [pinturaItemModalOpen, setPinturaItemModalOpen] = useState(false);
 
   const [pagamentoData, setPagamentoData] = useState<PagamentoData>(createEmptyPagamentoData());
+  const [comprovantes, setComprovantes] = useState<File[]>([]);
 
   // Autorização do Gerente para liberar regras de pagamento
   // (entrada de boleto, data de pagamento, intervalo de boletos).
@@ -743,6 +745,7 @@ export default function VendaNovaMinimalista() {
                 }
               : undefined,
             creditoVenda: { valorCredito: 0, percentualCredito: 0 },
+            comprovantes,
           });
           navigate('/vendas/minhas-vendas');
         } catch (error) {
@@ -775,6 +778,8 @@ export default function VendaNovaMinimalista() {
             }
           : undefined,
         creditoVenda: { valorCredito, percentualCredito }
+        ,
+        comprovantes
       });
       navigate('/vendas/minhas-vendas');
     } catch (error) {
@@ -821,6 +826,8 @@ export default function VendaNovaMinimalista() {
             }
           : undefined,
         creditoVenda: { valorCredito: 0, percentualCredito: 0 }
+        ,
+        comprovantes
       });
       navigate('/vendas/minhas-vendas');
     } catch (error) {
@@ -970,6 +977,21 @@ export default function VendaNovaMinimalista() {
           onOverrideChange={setPagamentoOverride}
           onConfirmadoChange={setPagamentoConfirmado}
         />
+
+        {/* Comprovantes de pagamento */}
+        {(() => {
+          const metodosAtivos = pagamentoData.usar_dois_metodos
+            ? pagamentoData.metodos.filter(m => m.tipo)
+            : [pagamentoData.metodos[0]].filter(m => m.tipo);
+          const exige = metodosAtivos.some(m => m.tipo === 'a_vista' || m.ja_pago);
+          return (
+            <ComprovantesUploadBlock
+              files={comprovantes}
+              onChange={setComprovantes}
+              obrigatorio={exige}
+            />
+          );
+        })()}
 
         {/* Desconto / Acréscimo Global */}
         <DescontoAcrescimoSection
