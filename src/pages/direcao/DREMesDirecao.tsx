@@ -543,25 +543,35 @@ function PrintReport({
       {/* RESUMO FINAL (movido para após Faturamento por Categoria) */}
       <div style={SECTION}>
         <div style={H2}>2. Resumo Final</div>
+        <div style={{ fontSize: '8pt', color: '#475569', marginBottom: 6 }}>
+          Legenda:
+          <span style={{ display: 'inline-block', marginLeft: 8, padding: '1px 6px', borderRadius: 3, fontSize: '7pt', fontWeight: 700, color: '#065f46', background: '#d1fae5', border: '1px solid #10b981' }}>● Debita DRE</span>
+          <span style={{ marginLeft: 4, color: '#64748b' }}>= reduz o lucro líquido</span>
+          <span style={{ display: 'inline-block', marginLeft: 10, padding: '1px 6px', borderRadius: 3, fontSize: '7pt', fontWeight: 700, color: '#78350f', background: '#fef3c7', border: '1px solid #f59e0b' }}>○ Não debita</span>
+          <span style={{ marginLeft: 4, color: '#64748b' }}>= informativo, não reduz o lucro</span>
+        </div>
         <table>
           <tbody>
             {[
-              { l: 'Faturamento Bruto', v: formatCurrency(faturamento.total), c: '#0f172a', b: false },
-              { l: 'Margem Bruta', v: `${percBrutoFinal.toFixed(1)}%`, c: positive(percBrutoFinal), b: false },
-              { l: 'Lucro Bruto', v: formatCurrency(lucro.total), c: positive(lucro.total), b: true },
-              { l: '(–) Folha Salarial', v: formatCurrency(totalDespFolha), c: '#b91c1c', b: false },
-              { l: '(–) Despesas Fixas', v: formatCurrency(totalDespFixas), c: '#b91c1c', b: false },
-              { l: '(–) Despesas Variáveis', v: formatCurrency(totalDespVariaveis), c: '#b91c1c', b: false },
-              { l: '(–) Despesas de Imposto', v: formatCurrency(totalDespImpostos), c: '#b91c1c', b: false },
-              { l: '(–) Investimentos', v: formatCurrency(totalDespInvestimentos), c: '#b91c1c', b: false },
-              { l: '(–) Fornecedores', v: formatCurrency(totalDespFornecedores), c: '#b91c1c', b: false },
-              { l: '(–) Financiamentos', v: formatCurrency(totalDespFinanciamentos), c: '#b91c1c', b: false },
-              { l: '(–) Fretes e Logística', v: formatCurrency(totalDespFretes), c: '#b91c1c', b: false },
-              { l: '(–) Autorizados', v: formatCurrency(totalDespAutorizados), c: '#b91c1c', b: false },
-              { l: '(–) Salários', v: formatCurrency(totalDespSalarios), c: '#b91c1c', b: false },
+              { l: 'Faturamento Bruto', v: formatCurrency(faturamento.total), c: '#0f172a', b: false, cat: null as CategoriaDespesa | null },
+              { l: 'Margem Bruta', v: `${percBrutoFinal.toFixed(1)}%`, c: positive(percBrutoFinal), b: false, cat: null },
+              { l: 'Lucro Bruto', v: formatCurrency(lucro.total), c: positive(lucro.total), b: true, cat: null },
+              { l: '(–) Folha Salarial', v: formatCurrency(totalDespFolha), c: '#b91c1c', b: false, cat: 'salario' as CategoriaDespesa },
+              { l: '(–) Despesas Fixas', v: formatCurrency(totalDespFixas), c: '#b91c1c', b: false, cat: 'fixa' as CategoriaDespesa },
+              { l: '(–) Despesas Variáveis', v: formatCurrency(totalDespVariaveis), c: '#b91c1c', b: false, cat: 'variavel' as CategoriaDespesa },
+              { l: '(–) Despesas de Imposto', v: formatCurrency(totalDespImpostos), c: '#b91c1c', b: false, cat: 'imposto' as CategoriaDespesa },
+              { l: '(–) Investimentos', v: formatCurrency(totalDespInvestimentos), c: '#b91c1c', b: false, cat: 'investimento' as CategoriaDespesa },
+              { l: '(–) Fornecedores', v: formatCurrency(totalDespFornecedores), c: '#b91c1c', b: false, cat: 'fornecedor' as CategoriaDespesa },
+              { l: '(–) Financiamentos', v: formatCurrency(totalDespFinanciamentos), c: '#b91c1c', b: false, cat: 'financiamento' as CategoriaDespesa },
+              { l: '(–) Fretes e Logística', v: formatCurrency(totalDespFretes), c: '#b91c1c', b: false, cat: 'frete' as CategoriaDespesa },
+              { l: '(–) Autorizados', v: formatCurrency(totalDespAutorizados), c: '#b91c1c', b: false, cat: 'autorizado' as CategoriaDespesa },
+              { l: '(–) Salários', v: formatCurrency(totalDespSalarios), c: '#b91c1c', b: false, cat: 'salario' as CategoriaDespesa },
             ].map((r, i) => (
               <tr key={i} style={trZebra(i)}>
-                <td style={{ ...TD, fontWeight: r.b ? 700 : 500 }}>{r.l}</td>
+                <td style={{ ...TD, fontWeight: r.b ? 700 : 500 }}>
+                  {r.l}
+                  {r.cat ? badgeDebita(debitaCat(r.cat)) : null}
+                </td>
                 <td style={{ ...tdRight, color: r.c, fontWeight: r.b ? 800 : 600 }}>{r.v}</td>
               </tr>
             ))}
