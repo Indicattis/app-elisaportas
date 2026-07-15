@@ -2171,6 +2171,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         percLiquidFinal={percLiquidFinal}
         formatCurrency={formatCurrency}
         vendasListagem={vendasListagem}
+        debitaCat={debitaCat}
       />
     </div>
 
