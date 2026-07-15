@@ -35,6 +35,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useFretesCidades } from '@/hooks/useFretesCidades';
 import { Checkbox } from '@/components/ui/checkbox';
 import { PagamentoSection, PagamentoData, createEmptyPagamentoData } from '@/components/vendas/PagamentoSection';
+import { ComprovantesUploadBlock } from '@/components/vendas/ComprovantesUploadBlock';
 import { validarRegraBoleto } from '@/utils/boletoRegra';
 import { validarDatasPagamento } from '@/utils/dataPagamentoRegra';
 import { ClienteVendaSection } from '@/components/vendas/ClienteVendaSection';
