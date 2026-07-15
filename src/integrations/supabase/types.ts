@@ -9794,6 +9794,50 @@ export type Database = {
           },
         ]
       }
+      venda_comprovantes: {
+        Row: {
+          content_type: string | null
+          created_at: string
+          id: string
+          nome: string
+          tamanho_bytes: number | null
+          updated_at: string
+          uploaded_by: string | null
+          url: string
+          venda_id: string
+        }
+        Insert: {
+          content_type?: string | null
+          created_at?: string
+          id?: string
+          nome: string
+          tamanho_bytes?: number | null
+          updated_at?: string
+          uploaded_by?: string | null
+          url: string
+          venda_id: string
+        }
+        Update: {
+          content_type?: string | null
+          created_at?: string
+          id?: string
+          nome?: string
+          tamanho_bytes?: number | null
+          updated_at?: string
+          uploaded_by?: string | null
+          url?: string
+          venda_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "venda_comprovantes_venda_id_fkey"
+            columns: ["venda_id"]
+            isOneToOne: false
+            referencedRelation: "vendas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendas: {
         Row: {
           atendente_id: string
