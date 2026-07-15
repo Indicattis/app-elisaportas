@@ -570,7 +570,13 @@ export default function VendasDirecao() {
                     {venda.produtos.map((p: any, i: number) => {
                       const label = getLabelTipoProduto(p.tipo_produto);
                       const qtd = p.quantidade && p.quantidade > 1 ? `${p.quantidade}x ` : '';
-                      const dim = p.largura && p.altura ? ` — ${Number(p.largura).toFixed(2)}m × ${Number(p.altura).toFixed(2)}m` : '';
+                      let dim = '';
+                      if (p.largura && p.altura) {
+                        dim = ` — ${Number(p.largura).toFixed(2)}m × ${Number(p.altura).toFixed(2)}m`;
+                      } else if (typeof p.tamanho === 'string' && /^\s*\d+([.,]\d+)?\s*x\s*\d+([.,]\d+)?\s*$/i.test(p.tamanho)) {
+                        const [l, a] = p.tamanho.toLowerCase().replace(/,/g, '.').split('x').map((s: string) => Number(s.trim()));
+                        if (l && a) dim = ` — ${l.toFixed(2)}m × ${a.toFixed(2)}m`;
+                      }
                       const cor = p.cor ? ` (${p.cor})` : '';
                       const desc = p.descricao && !['Porta de Enrolar','Instalação'].includes(p.descricao) ? ` — ${p.descricao}` : '';
                       return (
