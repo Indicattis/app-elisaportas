@@ -1,23 +1,37 @@
 ## Diagnóstico
 
-Confirmado na venda `771dcd7b-…`: os dois itens têm `tamanho = "3x3"`, mas `largura` e `altura` estão `NULL` no banco.
+O modal `AutorizacaoDescontoModal` consulta diretamente `admin_users` para exibir o nome do Diretor/Gerente autorizador:
 
-A causa está em `src/hooks/useVendas.ts`. Nos dois blocos que fazem `insert` em `produtos_vendas` (criação da venda ~L433 e salvamento como rascunho ~L790), o objeto `baseSplit` grava apenas `tamanho`, ignorando `produto.largura` e `produto.altura`. O mesmo vale para os itens de `tipo_produto = 'instalacao'` gerados em seguida (~L469 e ~L826). Como o tipo `ProdutoVenda` e o formulário já carregam `largura`/`altura`, o dado chega ao hook mas é descartado antes do insert.
+```ts
+supabase.from('admin_users')
+  .select('user_id, nome, role, ativo')
+  .eq('user_id', autorizadorUserId)
+  .maybeSingle();
+```
 
-Efeito colateral: 934 linhas de `produtos_vendas` já foram salvas sem medidas (das quais 512 têm `tamanho` no formato numérico e podem ser recuperadas por parse).
+As policies de SELECT em `admin_users` só liberam a leitura para:
+- o próprio usuário (`user_id = auth.uid()`),
+- admins (`is_admin()`),
+- lideranças (`can_view_all_admin_users()`),
+- quem tem acesso às rotas `admin_financeiro` / `administrativo_hub`,
+- atendentes ativos (registros públicos com `role = 'atendente'`).
+
+Você é admin, então enxerga a linha do Diretor e o modal funciona. A maioria dos vendedores/atendentes **não** enxerga o registro do Diretor/Gerente — o retorno é `null`, e o modal mostra "Nenhum Diretor configurado em Regras de Vendas". As senhas e IDs no banco estão corretos (`configuracoes_vendas` preenchida).
 
 ## Correção
 
-1. `src/hooks/useVendas.ts` — em ambos os blocos de insert:
-   - Adicionar `largura: produto.largura ?? null` e `altura: produto.altura ?? null` ao `baseSplit`.
-   - Adicionar os mesmos campos aos itens sintetizados de `tipo_produto: 'instalacao'` (para acompanhar a porta correspondente).
+1. Nova RPC `public.get_autorizador_vendas(p_tipo text)` — `SECURITY DEFINER`, `STABLE`, `SET search_path = public`:
+   - `p_tipo IN ('responsavel','master')`
+   - Retorna `user_id`, `nome`, `role`, `ativo` do usuário referenciado em `configuracoes_vendas.responsavel_senha_responsavel_id` (para `responsavel`) ou `responsavel_senha_master_id` (para `master`), fazendo JOIN interno com `admin_users`.
+   - Guarda `auth.uid() IS NOT NULL` no início e retorna vazio caso contrário.
+   - `GRANT EXECUTE ... TO authenticated`.
 
-2. Backfill histórico via migração:
-   - Preencher `largura`/`altura` em `produtos_vendas` onde estão `NULL` e `tamanho` casa com o padrão `^\s*\d+([.,]\d+)?\s*[xX]\s*\d+([.,]\d+)?\s*$`, extraindo os dois números (trocando `,` por `.`).
-   - Restringir a `tipo_produto IN ('porta_enrolar','porta_social','pintura_epoxi','instalacao')`.
-   - Não tocar em linhas onde já existe medida.
+2. `src/components/vendas/AutorizacaoDescontoModal.tsx`:
+   - Substituir o `useQuery` que lê `admin_users` diretamente por uma chamada `supabase.rpc('get_autorizador_vendas', { p_tipo: tipoAutorizacao === 'master' ? 'master' : 'responsavel' })`.
+   - Manter o mesmo shape (`user_id`, `nome`, `role`, `ativo`) para não mexer no restante do componente.
+   - `enabled` continua condicionado a modal aberto.
 
 ## Fora do escopo
 
-- Não altero o fluxo de UI, exibição na tela de detalhes da venda, nem o cálculo de preços — apenas a persistência das medidas.
-- Não modifico `pedidos_producao` / `pedido_linhas`; o pedido é gerado a partir de `produtos_vendas` e passará a receber as medidas corretas naturalmente após o fix.
+- Não altero as policies de `admin_users` (evita ampliar exposição de dados sensíveis do quadro administrativo).
+- Não mudo a RPC `verificar_senha_vendas` nem o fluxo de auditoria.
