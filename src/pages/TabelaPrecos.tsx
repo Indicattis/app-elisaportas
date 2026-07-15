@@ -82,6 +82,37 @@ export default function TabelaPrecos({
   const { itens, isLoading, adicionarItem, editarItem, inativarItem, reordenarItens } = useTabelaPrecos(searchTerm);
   const { data: resumoMontagem = {} } = useKitsMontagemResumo();
   const { padroes } = useCustosItensPadroes();
+  const { items: custosItens } = useCustosItens();
+
+  const itensAvulso = useMemo(
+    () =>
+      (custosItens ?? [])
+        .filter((i: any) => i.vendavel_avulso)
+        .sort((a: any, b: any) => {
+          const ca = (a.categoria || 'Sem categoria').localeCompare(b.categoria || 'Sem categoria');
+          if (ca !== 0) return ca;
+          return (a.descricao || '').localeCompare(b.descricao || '');
+        }),
+    [custosItens],
+  );
+
+  const handleExport = (kind: 'pdf' | 'excel') => {
+    try {
+      if (!itens || itens.length === 0) {
+        toast.error('Nada para exportar');
+        return;
+      }
+      if (kind === 'pdf') {
+        exportEstrategiaPrecosPDF(itens || [], itensAvulso);
+        toast.success('PDF gerado');
+      } else {
+        exportEstrategiaPrecosExcel(itens || [], itensAvulso);
+        toast.success('Excel gerado');
+      }
+    } catch (e: any) {
+      toast.error(`Falha ao gerar ${kind === 'pdf' ? 'PDF' : 'Excel'}: ${e?.message ?? e}`);
+    }
+  };
 
   // Percentuais de lucro vindos da config ativa (mesma fonte usada pelo faturamento)
   const { data: cfgInstal } = useConfigLucro('instalacao');
