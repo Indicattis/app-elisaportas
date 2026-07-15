@@ -128,7 +128,8 @@ export function useVendas() {
       pagamentoData,
       autorizacaoDesconto,
       autorizacaoRegraPagamento,
-      creditoVenda
+      creditoVenda,
+      comprovantes,
     }: { 
       vendaData: VendaFormData; 
       portas: ProdutoVenda[];
@@ -136,6 +137,7 @@ export function useVendas() {
       autorizacaoDesconto?: AutorizacaoDesconto;
       autorizacaoRegraPagamento?: AutorizacaoRegraPagamento;
       creditoVenda?: CreditoVenda;
+      comprovantes?: File[];
     }) => {
       if (portas.length === 0) {
         throw new Error('É necessário adicionar pelo menos um produto');
@@ -146,16 +148,20 @@ export function useVendas() {
         throw new Error('Todos os campos de localização são obrigatórios (Estado, Cidade, CEP, Bairro e Endereço)');
       }
 
-      // Validar comprovante obrigatório quando marcado como "já pago"
+      // Validar comprovante obrigatório quando há método à vista OU marcado como "já pago"
       if (pagamentoData) {
-        const metodosAtivos = pagamentoData.usar_dois_metodos 
+        const metodosAtivos = pagamentoData.usar_dois_metodos
           ? pagamentoData.metodos.filter(m => m.tipo)
           : [pagamentoData.metodos[0]].filter(m => m.tipo);
-        
-        for (const metodo of metodosAtivos) {
-          if (metodo.ja_pago && !metodo.comprovante_file) {
-            throw new Error('É obrigatório anexar o comprovante de pagamento quando o método está marcado como "Já pago".');
-          }
+
+        const exigeComprovante = metodosAtivos.some(
+          (m) => m.ja_pago || m.tipo === 'a_vista'
+        );
+
+        if (exigeComprovante && (!comprovantes || comprovantes.length === 0)) {
+          throw new Error(
+            'É obrigatório anexar ao menos um comprovante de pagamento (venda à vista ou marcada como já pago).'
+          );
         }
       }
 
