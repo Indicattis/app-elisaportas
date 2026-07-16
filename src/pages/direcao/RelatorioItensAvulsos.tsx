@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft, ChevronRight, ChevronDown, Package } from 'lucide-react';
@@ -253,9 +253,8 @@ export default function RelatorioItensAvulsos() {
                 {linhas.map((l) => {
                   const aberto = expandedIds.has(l.vendedor_id);
                   return (
-                    <>
+                    <Fragment key={l.vendedor_id}>
                       <TableRow
-                        key={l.vendedor_id}
                         onClick={() => toggleExpanded(l.vendedor_id)}
                         className="border-white/10 hover:bg-white/5 cursor-pointer"
                       >
@@ -272,7 +271,6 @@ export default function RelatorioItensAvulsos() {
                       </TableRow>
                       {aberto && (
                         <TableRow
-                          key={`${l.vendedor_id}-items`}
                           className="border-white/10 bg-white/[0.02] hover:bg-white/[0.02]"
                         >
                           <TableCell colSpan={4} className="p-0">
@@ -314,7 +312,7 @@ export default function RelatorioItensAvulsos() {
                           </TableCell>
                         </TableRow>
                       )}
-                    </>
+                    </Fragment>
                   );
                 })}
                 <TableRow className="border-white/10 bg-white/5 hover:bg-white/5">
