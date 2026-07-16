@@ -1,37 +1,85 @@
+# Relatório de Itens Avulsos por Vendedor
 
-## Problema
+Nova página acessada por um botão em `/direcao/vendas/todas`, mostrando quanto cada vendedor vendeu de **adicionais e acessórios** no mês selecionado.
 
-As 3 vendas que foram "Liberadas para Faturamento" sem anexar/dispensar contrato (`contrato_liberado_faturamento=true`, `contrato_url` nulo, `contrato_dispensado=false`) ficaram presas: aparecem em Faturamento com o badge "Liberado", mas não há botão para desfazer a liberação, e sumiram de `/direcao/vendas/contratos` e da aba Assinatura Contrato em `/direcao/gestao-fabrica`.
+## 1. Botão em `/direcao/vendas/todas`
 
-## Alteração
+Em `src/pages/direcao/VendasTodas.tsx` (ou arquivo equivalente da rota), adicionar um botão discreto no header, ao lado dos filtros existentes:
 
-Tratar `contrato_liberado_faturamento=true` (sem contrato e sem dispensa) como um sub-estado visível do fluxo de contrato, com ação de reversão em todas as telas.
+- Label: **"Relatório de itens avulsos"**
+- Ícone: `Package` (lucide-react)
+- Ação: `navigate('/direcao/vendas/relatorio-itens-avulsos')`
+- Mantém o estilo glassmorphism (bg-white/5, border-white/10) já usado na página.
 
-### 1. `src/pages/administrativo/FaturamentoVendasMinimalista.tsx`
+## 2. Nova rota
 
-- Na seção "Ações" do sidebar (bloco após a linha 1487), adicionar um botão "Desliberar contrato" visível somente quando `contrato_liberado_faturamento && !contrato_url && !contrato_dispensado`.
-- Handler usa `toggleVendaFlag` (ou update direto) para setar `contrato_liberado_faturamento=false`, `contrato_liberado_em=null`, `contrato_liberado_por=null`, com toast "Liberação revertida".
+- Path: `/direcao/vendas/relatorio-itens-avulsos`
+- Registrar em `src/App.tsx` (ou onde ficam as rotas da direção) reutilizando o mesmo guard/layout de `/direcao/vendas/todas`.
 
-### 2. `src/pages/vendas/ContratosVendas.tsx` (`/direcao/vendas/contratos` e `/vendas/contratos`)
+## 3. Nova página `RelatorioItensAvulsos.tsx`
 
-- Remover o filtro `.eq('contrato_liberado_faturamento', false)` da query em `fetchVendas`.
-- Ampliar o `select` para incluir `contrato_dispensado, contrato_liberado_faturamento`.
-- Ajustar `useMemo` de buckets: nova categoria `liberadas` = `contrato_liberado_faturamento && !contrato_url && !contrato_dispensado`. Excluir essas linhas de `pendentes`.
-- Adicionar 4ª aba "Liberadas sem contrato" (ícone `FileX`, contador). Renderiza `TableView` das liberadas com ação "Desliberar" que faz o update inverso e retorna a venda para "Pendentes".
-- Vendas com contrato anexado/dispensado + liberadas continuam saindo da tela (a query já as excluía por outro caminho — mantido).
+Local: `src/pages/direcao/RelatorioItensAvulsos.tsx`
 
-### 3. `src/hooks/useVendasAssinaturaContrato.ts` + `src/pages/direcao/GestaoFabricaDirecao.tsx`
+### Header
+- Título "Relatório de itens avulsos por vendedor"
+- Botão "Voltar" para `/direcao/vendas/todas`
+- **Seletor de mês/ano** (mês corrente por padrão), no mesmo estilo minimalista das outras telas de direção.
 
-- Remover `.eq("contrato_liberado_faturamento", false)` do hook, mantendo apenas `contrato_dispensado=false` e ausência de contrato/legado.
-- Adicionar no retorno um novo `contrato_status: 'liberado'` quando `contrato_liberado_faturamento && !contrato_url && !contratosGerados`.
-- Em `VendasPendenteDraggableList` (modo `contrato`), quando `contrato_status === 'liberado'`, exibir badge cinza "Liberado sem contrato" + botão "Desliberar" (mesmo update do item 1). Isso mantém a aba Assinatura Contrato coerente com Contratos.
+### Fonte de dados
+Query única no Supabase:
 
-### 4. Helper compartilhado
+```
+produtos_vendas
+  .select('id, tipo_produto, quantidade, valor_total, valor_unitario,
+           venda:vendas!inner(id, vendedor_id, data_venda, status)')
+  .in('tipo_produto', ['adicional', 'acessorio'])
+  .gte('venda.data_venda', inicioMes)
+  .lte('venda.data_venda', fimMes)
+```
 
-Criar `src/lib/desliberarContrato.ts` com a função `desliberarContrato(vendaId, userId?)` que executa o update em `vendas` (`contrato_liberado_faturamento=false`, `contrato_liberado_em=null`, `contrato_liberado_por=null`) e invalida os query keys `['vendas-assinatura-contrato']`, `['vendas-pendente-faturamento']`. Reutilizado nas 3 telas.
+- Filtrar `venda.status` para excluir vendas canceladas (seguir o mesmo critério usado em `/direcao/vendas/todas`).
+- Datas normalizadas com `T12:00:00.000Z` (regra de projeto).
+- Buscar nomes dos vendedores em `admin_users` (id → nome) num segundo select paralelo, ou via join se já disponível.
 
-## Fora do escopo
+### Agregação (client-side, via `useMemo`)
+Por `vendedor_id`:
+- `quantidade_itens`: soma de `quantidade`
+- `valor_total`: soma de `valor_total`
+- Ordenar por `valor_total` desc.
+- Linha "Total geral" ao final.
 
-- Sem mudança no fluxo de "Liberar para Faturamento" (o botão continua funcionando).
-- Sem mudança em `useVendasPendenteFaturamento`, schema, ou permissões.
-- Sem tocar em vendas cujo `contrato_dispensado=true` (fluxo já reversível via "Reverter dispensa").
+### Layout
+Tabela minimalista (mesmo padrão glass das outras telas de direção):
+
+```text
+| Vendedor        | Qtde itens | Valor total (R$) |
+|-----------------|-----------:|-----------------:|
+| Fulano          |         42 |         3.450,00 |
+| Ciclano         |         18 |         1.120,00 |
+| ...             |            |                  |
+| Total           |         60 |         4.570,00 |
+```
+
+- Formatar valor em `pt-BR` (`toLocaleString`).
+- Estado vazio: "Nenhum item avulso vendido no período".
+- Loading skeleton nas linhas.
+
+## 4. Fora do escopo
+- Sem exportação (CSV/PDF).
+- Sem detalhamento por item, sem ticket médio (métricas não pedidas).
+- Sem alterações em vendas, produtos ou permissões.
+- Sem intervalo customizado — apenas seletor de mês.
+
+## Detalhes técnicos
+- Reutilizar helper de formatação de moeda já existente no projeto se houver (`formatBRL` / `toLocaleString('pt-BR')`).
+- React Query `queryKey: ['relatorio-itens-avulsos', mesRef]` com `staleTime` curto.
+- Tipos:
+  ```ts
+  type LinhaRelatorio = {
+    vendedor_id: string;
+    vendedor_nome: string;
+    quantidade_itens: number;
+    valor_total: number;
+  };
+  ```
+- Sem migração de banco: `produtos_vendas.tipo_produto` já suporta `'adicional'` e `'acessorio'`.
