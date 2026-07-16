@@ -19,7 +19,7 @@ import {
   Calculator, AlertCircle, Plus, Minus, Pencil, MessageSquare,
   ArrowUpDown, ArrowUp, ArrowDown, Check, X, Hammer,
   Package, PlusCircle, Filter, PanelRight, Info, FileSignature, FileCheck, FileX,
-  MoreVertical, Eye, EyeOff, Trash2
+  MoreVertical, Eye, EyeOff, Trash2, Undo2
 } from "lucide-react";
 import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
