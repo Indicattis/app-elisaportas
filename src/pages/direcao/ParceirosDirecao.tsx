@@ -10,6 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Percent } from 'lucide-react';
+import { EditarAutorizadoModal } from '@/components/parceiros/EditarAutorizadoModal';
 
 function ComissaoEditor({ id, current }: { id: string; current: number | null }) {
   const queryClient = useQueryClient();
