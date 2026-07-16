@@ -101,6 +101,7 @@ import VendasNova from "./pages/VendasNova";
 import ContratoVendas from "./pages/ContratoVendas";
 import ContratoTemplates from "./pages/ContratoTemplates";
 import ContratosVendasHub from "./pages/vendas/ContratosVendas";
+import HistoricoContratos from "./pages/vendas/HistoricoContratos";
 import MeusContratos from "./pages/vendas/MeusContratos";
 import Suporte from "./pages/Suporte";
 import Clientes from "./pages/Clientes";
@@ -524,6 +525,7 @@ const App = () => (
                 <Route path="/direcao/vendas/parceiros" element={<ProtectedRoute routeKey="direcao_vendas"><ParceirosDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/vendas/requisicoes-representantes" element={<ProtectedRoute routeKey="direcao_vendas"><RequisicoesRepresentantesDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/vendas/contratos" element={<ProtectedRoute routeKey="direcao_vendas"><ContratosVendasHub /></ProtectedRoute>} />
+                <Route path="/direcao/vendas/contratos/historico" element={<ProtectedRoute routeKey="direcao_vendas"><HistoricoContratos /></ProtectedRoute>} />
                 <Route path="/direcao/estrategia/precos/regras-vendas" element={<ProtectedRoute routeKey="direcao_regras_vendas"><RegrasVendasDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/vendas/clientes" element={<ProtectedRoute routeKey="direcao_vendas"><ClientesDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/vendas/tabela-precos" element={<ProtectedRoute routeKey="direcao_tabela_precos"><TabelaPrecos readOnly /></ProtectedRoute>} />
