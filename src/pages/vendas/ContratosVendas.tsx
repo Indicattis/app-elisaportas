@@ -40,6 +40,7 @@ interface VendaRow {
   contrato_assinado_em: string | null;
   atendente_id: string | null;
   contrato_liberado_faturamento: boolean | null;
+  contrato_dispensado?: boolean | null;
 }
 
 interface VendedorInfo {
@@ -98,7 +99,7 @@ export default function ContratosVendas({ scope = 'all' }: ContratosVendasProps 
 
   const { contratos, deleteContrato, isDeleting } = useContratosVendas({});
 
-  type TabKey = 'pendentes' | 'gerados' | 'assinados';
+  type TabKey = 'pendentes' | 'gerados' | 'assinados' | 'liberadas';
   const [activeTab, setActiveTab] = useState<TabKey>('pendentes');
 
   useEffect(() => {
@@ -111,12 +112,13 @@ export default function ContratosVendas({ scope = 'all' }: ContratosVendasProps 
       setLoadingVendas(true);
       let query = supabase
         .from('vendas')
-        .select('id, cliente_nome, cpf_cliente, cidade, data_venda, valor_venda, atendente_id, contrato_url, contrato_assinado_em, contrato_liberado_faturamento, frete_aprovado, produtos_vendas(faturamento), pedidos_producao(id)')
+        .select('id, cliente_nome, cpf_cliente, cidade, data_venda, valor_venda, atendente_id, contrato_url, contrato_assinado_em, contrato_liberado_faturamento, contrato_dispensado, frete_aprovado, produtos_vendas(faturamento), pedidos_producao(id)')
         .eq('is_rascunho', false)
         .eq('contrato_dispensado', false)
         .eq('dispensada_sistema', false)
         .neq('status_aprovacao', 'reprovado')
-        .eq('contrato_liberado_faturamento', false)
+        // Mostra liberadas somente se ainda estiverem "presas" (sem contrato/dispensa)
+        .or('contrato_liberado_faturamento.eq.false,contrato_url.is.null')
         .order('data_venda', { ascending: false })
         .limit(5000);
 
@@ -194,18 +196,21 @@ export default function ContratosVendas({ scope = 'all' }: ContratosVendasProps 
     );
   };
 
-  const { pendentes, gerados, assinados } = useMemo(() => {
+  const { pendentes, gerados, assinados, liberadas } = useMemo(() => {
     const pendentes: VendaRow[] = [];
     const gerados: VendaRow[] = [];
     const assinados: VendaRow[] = [];
+    const liberadas: VendaRow[] = [];
     vendas.filter(matchesSearch).forEach(v => {
       const hasContratoUrl = !!v.contrato_url && v.contrato_url !== 'legado';
       const hasGerado = ((contratosByVenda as any)[v.id] || []).length > 0;
-      if (hasContratoUrl) assinados.push(v);
+      const isLiberada = !!v.contrato_liberado_faturamento && !hasContratoUrl && !v.contrato_dispensado;
+      if (isLiberada) liberadas.push(v);
+      else if (hasContratoUrl) assinados.push(v);
       else if (hasGerado) gerados.push(v);
       else pendentes.push(v);
     });
-    return { pendentes, gerados, assinados };
+    return { pendentes, gerados, assinados, liberadas };
   }, [vendas, contratosByVenda, search]);
 
   const renderContratoFiles = (vendaId: string, allowDelete: boolean) => {
