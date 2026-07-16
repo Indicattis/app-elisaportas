@@ -687,7 +687,18 @@ export default function VendasDirecao() {
         {
           const todos = metodosExtraPorVenda.get(venda.id) || [];
           const principal = venda.metodo_pagamento;
-          const secundario = todos.find((m) => m !== principal) || null;
+          let secundario: string | null = todos.find((m) => m !== principal) || null;
+          // Fallback: se ainda não carregou ou não veio segundo método, tenta inferir
+          // dos campos da venda (venda com pagamento na entrega tem 2º método garantido).
+          if (!secundario && venda.pagamento_na_entrega) {
+            if (Number(venda.parcelas_dinheiro) > 0) {
+              secundario = 'dinheiro';
+            } else if (!metodosCarregados) {
+              secundario = '__loading__';
+            } else {
+              secundario = 'na_entrega';
+            }
+          }
           const parcelas = parcelasPorVenda.get(venda.id) || [];
           const grupos = new Map<string, any[]>();
           parcelas.forEach((p) => {
@@ -703,7 +714,11 @@ export default function VendasDirecao() {
                   <span>{getFormaPagamentoLabel(principal)}</span>
                   {secundario && (
                     <span className="text-white/50 text-[9px] md:text-xs">
-                      + {getFormaPagamentoLabel(secundario)}
+                      {secundario === '__loading__'
+                        ? '+ …'
+                        : secundario === 'na_entrega'
+                          ? '+ Na entrega'
+                          : `+ ${getFormaPagamentoLabel(secundario)}`}
                     </span>
                   )}
                 </div>
