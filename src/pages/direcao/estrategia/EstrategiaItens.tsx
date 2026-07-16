@@ -973,16 +973,6 @@ export default function EstrategiaItens() {
   };
 
   const headerActions = (
-    <>
-    <Button
-      size="sm"
-      variant="outline"
-      className="gap-2"
-      onClick={() => setCoresDialogOpen(true)}
-    >
-      <Palette className="h-4 w-4" />
-      Gerenciar Cores
-    </Button>
     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
       <DialogTrigger asChild>
         <Button size="sm" className="gap-2">
@@ -1093,7 +1083,6 @@ export default function EstrategiaItens() {
         </DialogFooter>
       </DialogContent>
     </Dialog>
-    </>
   );
 
   return (
