@@ -72,7 +72,6 @@ export const useVendasAssinaturaContrato = () => {
           )
         `)
         .eq("is_rascunho", false)
-        .eq("contrato_liberado_faturamento", false)
         .eq("contrato_dispensado", false)
         .eq("dispensada_sistema", false)
         .order("data_venda", { ascending: false });
@@ -245,7 +244,9 @@ export const useVendasAssinaturaContrato = () => {
               ? 'assinado' as const
               : contratosGeradosPorVenda.has(v.id)
                 ? 'gerado' as const
-                : 'pendente' as const,
+                : v.contrato_liberado_faturamento
+                  ? 'liberado' as const
+                  : 'pendente' as const,
           };
         });
     },
