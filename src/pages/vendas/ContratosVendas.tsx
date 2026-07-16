@@ -765,6 +765,27 @@ export default function ContratosVendas({ scope = 'all' }: ContratosVendasProps 
               </Column>
             )}
 
+            {activeTab === 'liberadas' && (
+              <Column
+                title="Liberadas sem Contrato"
+                icon={<FileX className="w-4 h-4" strokeWidth={1.8} />}
+                accent="bg-gradient-to-br from-white/20 to-white/5 shadow-lg shadow-black/20"
+                count={liberadas.length}
+              >
+                {liberadas.length === 0 ? (
+                  <div className="text-center text-white/40 text-xs py-6">Nenhuma venda</div>
+                ) : (
+                  <TableView
+                    rows={liberadas}
+                    actionLabel="Desliberar"
+                    actionIcon={Undo2}
+                    actionClass="bg-white/10 hover:bg-white/15 text-white border border-white/20"
+                    onAction={(v) => handleDesliberarFaturamento(v)}
+                  />
+                )}
+              </Column>
+            )}
+
           </div>
         )}
       </div>
