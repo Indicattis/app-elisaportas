@@ -19,6 +19,7 @@ import {
 import { restrictToVerticalAxis, restrictToParentElement } from "@dnd-kit/modifiers";
 import { CSS } from "@dnd-kit/utilities";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
+import { GerenciarCoresDialog } from "@/components/direcao/estrategia/GerenciarCoresDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -783,6 +784,7 @@ export default function EstrategiaItens() {
   const { limites: limitesDesconto } = useConfiguracoesVendas();
   const [searchTerm, setSearchTerm] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [coresDialogOpen, setCoresDialogOpen] = useState(false);
   const [padroesOpen, setPadroesOpen] = useState(false);
   const [padroesForm, setPadroesForm] = useState({ taxa_impostos: "0", taxa_descontos: "0", taxa_cartao: "0" });
   const [ordemOpen, setOrdemOpen] = useState(false);
@@ -971,6 +973,16 @@ export default function EstrategiaItens() {
   };
 
   const headerActions = (
+    <>
+    <Button
+      size="sm"
+      variant="outline"
+      className="gap-2"
+      onClick={() => setCoresDialogOpen(true)}
+    >
+      <Palette className="h-4 w-4" />
+      Gerenciar Cores
+    </Button>
     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
       <DialogTrigger asChild>
         <Button size="sm" className="gap-2">
@@ -1081,6 +1093,7 @@ export default function EstrategiaItens() {
         </DialogFooter>
       </DialogContent>
     </Dialog>
+    </>
   );
 
   return (
@@ -1507,6 +1520,7 @@ export default function EstrategiaItens() {
         </div>
 
       </div>
+      <GerenciarCoresDialog open={coresDialogOpen} onOpenChange={setCoresDialogOpen} />
     </MinimalistLayout>
   );
 }
