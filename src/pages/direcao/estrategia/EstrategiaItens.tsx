@@ -19,6 +19,7 @@ import {
 import { restrictToVerticalAxis, restrictToParentElement } from "@dnd-kit/modifiers";
 import { CSS } from "@dnd-kit/utilities";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
+import { GerenciarCoresDialog } from "@/components/direcao/estrategia/GerenciarCoresDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
