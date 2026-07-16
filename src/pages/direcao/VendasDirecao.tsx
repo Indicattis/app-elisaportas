@@ -731,8 +731,10 @@ export default function VendasDirecao() {
                       <p>Sem parcelas registradas.</p>
                       <p className="text-white/50">
                         Método: <span className="text-white/80">{getFormaPagamentoLabel(principal)}</span>
-                        {secundario && (
-                          <> + <span className="text-white/80">{getFormaPagamentoLabel(secundario)}</span></>
+                        {secundario && secundario !== '__loading__' && (
+                          <> + <span className="text-white/80">
+                            {secundario === 'na_entrega' ? 'Na entrega' : getFormaPagamentoLabel(secundario)}
+                          </span></>
                         )}
                       </p>
                     </div>
