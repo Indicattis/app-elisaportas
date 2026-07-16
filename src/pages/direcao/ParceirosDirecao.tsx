@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Phone, MapPin, Mail, Power, Pencil, Users, CheckCircle, XCircle } from 'lucide-react';
+import { ArrowLeft, Phone, MapPin, Mail, Power, Pencil, Users, CheckCircle, XCircle, Search } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { supabase } from '@/integrations/supabase/client';
