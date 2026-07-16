@@ -332,6 +332,7 @@ import EstadoAutorizadosDirecao from "./pages/direcao/EstadoAutorizadosDirecao";
 import AcordosMesAutorizados from "./pages/direcao/AcordosMesAutorizados";
 import NovoAutorizadoDirecao from "./pages/direcao/NovoAutorizadoDirecao";
 import EditarAutorizadoDirecao from "./pages/direcao/EditarAutorizadoDirecao";
+import EditarRepresentanteDirecao from "./pages/direcao/EditarRepresentanteDirecao";
 import InstalacoesHubDirecao from "./pages/direcao/InstalacoesHubDirecao";
 import EquipesMinimalista from "./pages/logistica/EquipesMinimalista";
 import EquipesDirecao from "./pages/direcao/EquipesDirecao";
@@ -558,6 +559,7 @@ const App = () => (
                 <Route path="/direcao/autorizados/estado/:estadoId/novo" element={<ProtectedRoute routeKey="direcao_autorizados"><NovoAutorizadoDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/autorizados/novo" element={<ProtectedRoute routeKey="direcao_autorizados"><NovoAutorizadoDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/autorizados/:id/editar" element={<ProtectedRoute routeKey="direcao_autorizados"><EditarAutorizadoDirecao /></ProtectedRoute>} />
+                <Route path="/direcao/representantes/:id/editar" element={<ProtectedRoute routeKey="direcao_vendas"><EditarRepresentanteDirecao /></ProtectedRoute>} />
                 
 {/* Hub de Frotas da Direção */}
                 <Route path="/direcao/frota" element={<ProtectedRoute routeKey="direcao_hub"><FrotaDirecao /></ProtectedRoute>} />
