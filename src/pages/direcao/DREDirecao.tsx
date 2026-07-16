@@ -14,9 +14,10 @@ interface FaturamentoMes {
 interface RealizadoMes {
   mes: number;
   lucro_liquido_final: number;
+  status: 'pendente' | 'realizado' | 'aprovado';
 }
 
-type StatusMes = 'futuro' | 'a_realizar' | 'nao_realizado' | 'realizado';
+type StatusMes = 'futuro' | 'a_realizar' | 'nao_realizado' | 'pendente' | 'realizado' | 'aprovado';
 
 export default function DREDirecao() {
   const navigate = useNavigate();
@@ -42,7 +43,7 @@ export default function DREDirecao() {
             .lte('data_venda', fimAno.toISOString()),
           supabase
             .from('dre_realizados')
-            .select('mes, lucro_liquido_final')
+            .select('mes, lucro_liquido_final, status')
             .gte('mes', format(inicioAno, 'yyyy-MM-dd'))
             .lte('mes', format(fimAno, 'yyyy-MM-dd')),
         ]);
@@ -73,6 +74,7 @@ export default function DREDirecao() {
           mapaReal[mesIdx] = {
             mes: mesIdx,
             lucro_liquido_final: Number(r.lucro_liquido_final) || 0,
+            status: (r.status as 'pendente' | 'realizado' | 'aprovado') || 'pendente',
           };
         });
         setRealizados(mapaReal);
@@ -90,7 +92,8 @@ export default function DREDirecao() {
     value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
   const getStatus = (mes: number): StatusMes => {
-    if (realizados[mes]) return 'realizado';
+    const r = realizados[mes];
+    if (r) return r.status;
     if (mes > mesAtual) return 'futuro';
     if (mes === mesAtual) return 'a_realizar';
     return 'nao_realizado';
@@ -115,11 +118,23 @@ export default function DREDirecao() {
       icon: <AlertCircle className="w-3.5 h-3.5" strokeWidth={1.8} />,
       label: 'Não realizado',
     },
+    pendente: {
+      border: 'border-red-500/50 hover:bg-red-500/10',
+      badge: 'text-red-300',
+      icon: <AlertCircle className="w-3.5 h-3.5" strokeWidth={1.8} />,
+      label: 'Pendente',
+    },
     realizado: {
+      border: 'border-yellow-400/60 hover:bg-yellow-400/10',
+      badge: 'text-yellow-300',
+      icon: <Clock className="w-3.5 h-3.5" strokeWidth={1.8} />,
+      label: 'Realizado',
+    },
+    aprovado: {
       border: 'border-emerald-500/50 hover:bg-emerald-500/10',
       badge: 'text-emerald-300',
       icon: <CheckCircle2 className="w-3.5 h-3.5" strokeWidth={1.8} />,
-      label: 'Realizado',
+      label: 'Aprovado',
     },
   };
 
@@ -176,9 +191,9 @@ export default function DREDirecao() {
           </div>
 
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2 mt-5 text-[11px] text-white/40">
-            <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-yellow-400/70" /> A realizar</span>
-            <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500/70" /> Realizado</span>
-            <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-red-500/70" /> Não realizado</span>
+            <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-red-500/70" /> Pendente</span>
+            <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-yellow-400/70" /> Realizado</span>
+            <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500/70" /> Aprovado</span>
             <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-white/30" /> Futuro</span>
           </div>
         </>
