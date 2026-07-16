@@ -161,7 +161,7 @@ function EditButton({ onClick }: { onClick: () => void }) {
 
 function IndicadoresParceiros({ tab }: { tab: TabKey }) {
   const { data: autorizados = [], isLoading: loadingAutorizados } = useQuery({
-    queryKey: ['parceiros-autorizados', 'autorizado'],
+    queryKey: ['parceiros-indicadores', 'autorizado'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('autorizados')
@@ -175,7 +175,7 @@ function IndicadoresParceiros({ tab }: { tab: TabKey }) {
   });
 
   const { data: franqueados = [], isLoading: loadingFranqueados } = useQuery({
-    queryKey: ['parceiros-autorizados', 'franqueado'],
+    queryKey: ['parceiros-indicadores', 'franqueado'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('autorizados')
@@ -189,7 +189,7 @@ function IndicadoresParceiros({ tab }: { tab: TabKey }) {
   });
 
   const { data: representantes = [], isLoading: loadingRepresentantes } = useQuery({
-    queryKey: ['parceiros-representantes'],
+    queryKey: ['parceiros-indicadores', 'representantes'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('representantes')
