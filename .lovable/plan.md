@@ -1,29 +1,28 @@
 
-## Problema
+## Objetivo
 
-Em `/administrativo/financeiro/faturamento/vendas` aparecem 6 vendas com o indicador "aguardando assinatura do contrato". Já em `/direcao/vendas/contratos` e na aba "Assinatura Contrato" de `/direcao/gestao-fabrica` só aparecem 3 dessas vendas. A divergência acontece porque 3 vendas foram liberadas manualmente para faturamento sem contrato (`contrato_liberado_faturamento = true`), mas o Faturamento não consulta esse campo ao pintar o badge.
+Adicionar uma seção "Contrato" no sidebar de detalhes da venda em `/administrativo/financeiro/faturamento/vendas` para pré-visualizar o contrato anexado sem precisar abrir em outra aba.
 
 ## Alteração
 
-Alinhar o Faturamento com as outras telas: uma venda com `contrato_liberado_faturamento = true` deixa de ser tratada como "aguardando contrato".
-
 ### Arquivo único: `src/pages/administrativo/FaturamentoVendasMinimalista.tsx`
 
-1. Adicionar `contrato_liberado_faturamento` ao `select` de `fetchVendas` (por volta da linha 443) para que o campo chegue no objeto `venda`.
-2. Adicionar `contrato_liberado_faturamento?: boolean | null` na interface `Venda` (por volta da linha 104).
-3. Atualizar a função `aguardandoContrato` (linha 572-573) para:
-   ```ts
-   const aguardandoContrato = (venda: Venda) =>
-     !isFaturada(venda)
-     && !(venda as any).contrato_url
-     && !(venda as any).contrato_dispensado
-     && !(venda as any).contrato_liberado_faturamento;
-   ```
-4. Ajustar as ramificações da coluna "Contrato" (linha ~958) e do sidebar de detalhes (linhas ~1326-1381) para tratar `contrato_liberado_faturamento` como "liberado sem contrato" — mesmo grupo visual do `contrato_dispensado` (badge "Contrato dispensado / liberado") e liberando o botão "Faturar".
-
-Após isso, as 3 vendas já liberadas continuam podendo ser faturadas normalmente, mas somem da contagem de "aguardando contrato", alinhando com Contratos e Gestão de Fábrica (3 vendas em todas as telas).
+1. Novo estado `contratoPreviewUrl: string | null` e `contratoPreviewLoading: boolean`.
+2. `useEffect` disparado quando `selectedVenda?.id` muda: se `selectedVenda.contrato_url` existir e for diferente de `'legado'`, chamar `supabase.storage.from('contratos-vendas').createSignedUrl(path, 3600)` e guardar em `contratoPreviewUrl`. Se não houver contrato, zerar.
+3. Dentro de `selectedVendaContent`, logo antes do bloco atual do botão "Abrir Faturamento" (linha ~1333), inserir uma nova seção:
+   - Título: "Contrato" (mesmo estilo dos outros títulos: `text-xs font-semibold text-white/50 uppercase tracking-wider mb-3`).
+   - Se `contrato_url` presente:
+     - Container arredondado com borda (`bg-white/5 border border-white/10 rounded-lg overflow-hidden`).
+     - Se a extensão do arquivo for `.pdf` (ou o content-type inferido pela URL): renderizar `<iframe src={contratoPreviewUrl} className="w-full h-64" />`.
+     - Se for imagem (`.jpg`, `.jpeg`, `.png`): renderizar `<img src={contratoPreviewUrl} className="w-full h-64 object-contain bg-black/20" />`.
+     - Se ainda carregando: skeleton com altura fixa.
+     - Se erro/URL indisponível: fallback com texto e ícone.
+   - Se `contrato_liberado_faturamento` (sem url e sem dispensa): badge cinza "Liberado sem contrato".
+   - Se `contrato_dispensado`: badge cinza "Contrato dispensado".
+   - Se nada: badge âmbar "Aguardando contrato".
+4. O botão "Ver Contrato" existente permanece após a preview (abre em nova aba para tela cheia). Sem alterações nos botões "Anexar/Dispensar".
 
 ## Fora do escopo
 
-- Nenhuma mudança em `useVendasAssinaturaContrato`, `ContratosVendas`, `GestaoFabricaDirecao`, no schema ou nos dados existentes.
-- Sem alteração de regras de negócio de liberação / dispensa.
+- Sem mudança em `AnexarContratoModal`, hooks de contratos, schema, ou permissões do bucket.
+- Sem preview em outras telas (Contratos / Gestão de Fábrica).

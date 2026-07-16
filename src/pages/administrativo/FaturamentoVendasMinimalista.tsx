@@ -198,6 +198,35 @@ export default function FaturamentoMinimalista() {
   const [excluindoVenda, setExcluindoVenda] = useState(false);
   const [faturarTudoOpen, setFaturarTudoOpen] = useState(false);
   const [faturandoTudo, setFaturandoTudo] = useState(false);
+  const [contratoPreviewUrl, setContratoPreviewUrl] = useState<string | null>(null);
+  const [contratoPreviewLoading, setContratoPreviewLoading] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    const path = (selectedVenda as any)?.contrato_url as string | undefined;
+    if (!path || path === 'legado') {
+      setContratoPreviewUrl(null);
+      setContratoPreviewLoading(false);
+      return;
+    }
+    setContratoPreviewLoading(true);
+    setContratoPreviewUrl(null);
+    (async () => {
+      const { data, error } = await supabase.storage
+        .from('contratos-vendas')
+        .createSignedUrl(path, 3600);
+      if (cancelled) return;
+      setContratoPreviewLoading(false);
+      if (error || !data?.signedUrl) {
+        setContratoPreviewUrl(null);
+        return;
+      }
+      setContratoPreviewUrl(data.signedUrl);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedVenda?.id, (selectedVenda as any)?.contrato_url]);
 
   useEffect(() => {
     try {
@@ -1338,6 +1367,68 @@ export default function FaturamentoMinimalista() {
         >
           Abrir Faturamento
         </Button>
+        <div>
+          <p className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-3">Contrato</p>
+          {(selectedVenda as any).contrato_url && (selectedVenda as any).contrato_url !== 'legado' ? (
+            (() => {
+              const path = (selectedVenda as any).contrato_url as string;
+              const ext = path.split('?')[0].split('.').pop()?.toLowerCase() || '';
+              const isPdf = ext === 'pdf';
+              const isImage = ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext);
+              return (
+                <div className="rounded-lg bg-white/5 border border-white/10 overflow-hidden">
+                  {contratoPreviewLoading ? (
+                    <div className="h-64 flex items-center justify-center text-xs text-white/50">
+                      Carregando contrato…
+                    </div>
+                  ) : !contratoPreviewUrl ? (
+                    <div className="h-64 flex flex-col items-center justify-center gap-2 text-white/50 text-xs">
+                      <FileX className="h-6 w-6" />
+                      Não foi possível carregar o contrato
+                    </div>
+                  ) : isPdf ? (
+                    <iframe
+                      src={contratoPreviewUrl}
+                      title="Contrato"
+                      className="w-full h-64 bg-black/20"
+                    />
+                  ) : isImage ? (
+                    <img
+                      src={contratoPreviewUrl}
+                      alt="Contrato"
+                      className="w-full h-64 object-contain bg-black/20"
+                    />
+                  ) : (
+                    <div className="h-64 flex flex-col items-center justify-center gap-2 text-white/60 text-xs">
+                      <FileCheck className="h-6 w-6 text-blue-400" />
+                      Pré-visualização não suportada. Use "Ver Contrato" abaixo.
+                    </div>
+                  )}
+                </div>
+              );
+            })()
+          ) : (selectedVenda as any).contrato_liberado_faturamento ? (
+            <div className="w-full px-3 py-3 rounded-lg bg-white/5 border border-white/10 text-white/60 text-xs flex items-center justify-center gap-2">
+              <FileX className="h-4 w-4" />
+              Liberado sem contrato
+            </div>
+          ) : (selectedVenda as any).contrato_dispensado ? (
+            <div className="w-full px-3 py-3 rounded-lg bg-white/5 border border-white/10 text-white/60 text-xs flex items-center justify-center gap-2">
+              <FileX className="h-4 w-4" />
+              Contrato dispensado
+            </div>
+          ) : (selectedVenda as any).contrato_url === 'legado' ? (
+            <div className="w-full px-3 py-3 rounded-lg bg-white/5 border border-white/10 text-white/50 text-xs flex items-center justify-center gap-2">
+              <FileCheck className="h-4 w-4" />
+              Contrato legado (sem arquivo)
+            </div>
+          ) : (
+            <div className="w-full px-3 py-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs flex items-center justify-center gap-2">
+              <FileSignature className="h-4 w-4" />
+              Aguardando contrato
+            </div>
+          )}
+        </div>
         {(selectedVenda as any).contrato_url ? (
           <Button
             variant="outline"
