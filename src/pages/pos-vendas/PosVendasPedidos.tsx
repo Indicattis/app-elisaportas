@@ -51,10 +51,8 @@ export default function PosVendasPedidos() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('pedidos_producao')
-        .select('id, numero_pedido, cliente_nome, cliente_telefone, created_at, updated_at, vendas!inner(data_venda, atendente:admin_users!fk_vendas_atendente(nome, foto_perfil_url))')
+        .select('id, numero_pedido, cliente_nome, cliente_telefone, arquivado, created_at, updated_at, vendas!inner(data_venda, atendente:admin_users!fk_vendas_atendente(nome, foto_perfil_url))')
         .eq('etapa_atual', 'pos_vendas')
-
-        .eq('arquivado', false)
         .order('updated_at', { ascending: false });
       if (error) throw error;
       return data || [];
@@ -104,7 +102,7 @@ export default function PosVendasPedidos() {
     const termo = busca.trim().toLowerCase();
     const filtrada = pedidos.filter((p: any) => {
       const respondeu = respondidosSet.has(p.id);
-      if (filtro === 'pendentes' && respondeu) return false;
+      if (filtro === 'pendentes' && (respondeu || p.arquivado)) return false;
       if (filtro === 'respondidos' && !respondeu) return false;
       if (!termo) return true;
       return (
@@ -121,7 +119,7 @@ export default function PosVendasPedidos() {
   }, [pedidos, respondidosSet, filtro, busca, ordenacao]);
 
   const pendentesCount = useMemo(() => {
-    return pedidos.filter((p: any) => !respondidosSet.has(p.id)).length;
+    return pedidos.filter((p: any) => !p.arquivado && !respondidosSet.has(p.id)).length;
   }, [pedidos, respondidosSet]);
 
 

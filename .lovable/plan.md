@@ -1,19 +1,21 @@
 ## Causa
 
-Em `HistoricoContratos.tsx`, o botão "Ver" abre `window.open(e.contrato_url)` diretamente. O `contrato_url` guardado em `vendas` é apenas o **path relativo** dentro do bucket privado `contratos-vendas` (ex.: `111ad4b2-.../1784211176756-contrato.pdf`). O navegador resolve isso contra a origem atual e cai como rota SPA → React Router responde "Page not found".
+`PosVendasPedidos` filtra `arquivado=false` na query principal (`pedidos_producao`). Quando a pesquisa é enviada, `PesquisaSatisfacaoForm` **arquiva o pedido** (`arquivado=true`). Como a query descarta arquivados, o pedido some das duas abas — inclusive de "Respondidos".
 
-O padrão correto já existe em `ContratosVendas.tsx`: gerar uma URL assinada com `supabase.storage.from('contratos-vendas').createSignedUrl(path, 300)` antes de abrir.
+## Correção
 
-## Mudança
+### `src/pages/pos-vendas/PosVendasPedidos.tsx`
+1. **Remover** o filtro `.eq('arquivado', false)` da query `pos-vendas-pedidos` para trazer também os arquivados que estão em `etapa_atual='pos_vendas'`.
+2. Ajustar a filtragem client-side em `listaFiltrada`:
+   - `pendentes` → `!p.arquivado && !respondeu` (mantém pendentes visíveis apenas para não-arquivados).
+   - `respondidos` → `respondeu` (independente de arquivado).
+   - `todos` → tudo (inclui arquivados respondidos).
+3. `pendentesCount` passa a considerar `!p.arquivado && !respondidosSet.has(p.id)` (evita contagem inflada por arquivados sem pesquisa).
+4. Incluir `arquivado` no `select` da query.
 
-### `src/pages/vendas/HistoricoContratos.tsx`
-- Trocar o `onClick` do botão "Ver" por um handler assíncrono que:
-  1. Chama `supabase.storage.from('contratos-vendas').createSignedUrl(e.contrato_url, 300)`
-  2. Se der erro ou vier vazio, mostra `toast.error('Não foi possível abrir o contrato')`
-  3. Se ok, `window.open(signedUrl, '_blank')`
-- Suportar o caso legado (`contrato_url === 'legado'`): não mostrar o botão "Ver" nesse caso (só string sentinela, sem arquivo real).
+Isso preserva o comportamento atual (pedido some da lista de pendentes ao arquivar) e volta a mostrar os respondidos na aba correspondente.
 
 ## Fora de escopo
 
-- Não altera armazenamento nem RLS do bucket.
-- Não mexe em outras telas.
+- Não altera o fluxo de submissão da pesquisa nem a decisão de arquivar.
+- Não mexe em RLS.
