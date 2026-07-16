@@ -103,6 +103,7 @@ interface Venda {
   lucro_instalacao?: number;
   contrato_url?: string | null;
   contrato_dispensado?: boolean;
+  contrato_liberado_faturamento?: boolean | null;
   pedido_dispensado?: boolean;
   forcar_exibicao_pedidos?: boolean;
   dispensada_sistema?: boolean;
@@ -442,6 +443,7 @@ export default function FaturamentoMinimalista() {
           lucro_instalacao,
           contrato_url,
           contrato_dispensado,
+          contrato_liberado_faturamento,
           pedido_dispensado,
           forcar_exibicao_pedidos,
           dispensada_sistema,
@@ -570,7 +572,10 @@ export default function FaturamentoMinimalista() {
 
   const isFaturada = (venda: Venda) => isVendaFaturada(venda);
   const aguardandoContrato = (venda: Venda) =>
-    !isFaturada(venda) && !(venda as any).contrato_url && !(venda as any).contrato_dispensado;
+    !isFaturada(venda)
+    && !(venda as any).contrato_url
+    && !(venda as any).contrato_dispensado
+    && !(venda as any).contrato_liberado_faturamento;
 
   const calcularLucroVenda = (venda: Venda) => {
     const portas = venda.portas || [];
@@ -966,16 +971,20 @@ export default function FaturamentoMinimalista() {
             </Tooltip>
           );
         }
-        if ((venda as any).contrato_dispensado || isFaturada(venda)) {
+        if ((venda as any).contrato_dispensado || (venda as any).contrato_liberado_faturamento || isFaturada(venda)) {
           return (
             <Tooltip>
               <TooltipTrigger asChild>
                 <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-white/5 border border-white/15 text-white/60 text-[10px] font-medium">
                   <FileX className="h-3 w-3" />
-                  Dispensado
+                  {(venda as any).contrato_liberado_faturamento && !(venda as any).contrato_dispensado ? 'Liberado' : 'Dispensado'}
                 </span>
               </TooltipTrigger>
-              <TooltipContent>Contrato dispensado — venda pode ser faturada</TooltipContent>
+              <TooltipContent>
+                {(venda as any).contrato_liberado_faturamento && !(venda as any).contrato_dispensado
+                  ? 'Contrato liberado para faturamento — venda pode ser faturada'
+                  : 'Contrato dispensado — venda pode ser faturada'}
+              </TooltipContent>
             </Tooltip>
           );
         }
@@ -1348,11 +1357,13 @@ export default function FaturamentoMinimalista() {
             <FileCheck className="h-4 w-4 mr-2 text-blue-400" />
             Ver Contrato
           </Button>
-        ) : ((selectedVenda as any).contrato_dispensado || isFaturada(selectedVenda)) ? (
+        ) : ((selectedVenda as any).contrato_dispensado || (selectedVenda as any).contrato_liberado_faturamento || isFaturada(selectedVenda)) ? (
           <>
             <div className="w-full px-3 py-2 rounded-md bg-white/5 border border-white/15 text-white/70 text-xs flex items-center justify-center gap-2">
               <FileX className="h-4 w-4" />
-              Contrato dispensado
+              {(selectedVenda as any).contrato_liberado_faturamento && !(selectedVenda as any).contrato_dispensado
+                ? 'Contrato liberado'
+                : 'Contrato dispensado'}
             </div>
             <Button
               variant="outline"
