@@ -350,7 +350,7 @@ export default function EditarAutorizadoDirecao() {
       if (isVendedorMode) queryClient.invalidateQueries({ queryKey: ['meus-parceiros'] });
 
       toast({ title: 'Sucesso', description: 'Autorizado atualizado com sucesso.' });
-      navigate(basePath);
+      navigate(backPath);
     } catch (error) {
       console.error('Erro ao atualizar autorizado:', error);
       toast({ variant: 'destructive', title: 'Erro', description: 'Erro ao atualizar autorizado.' });
