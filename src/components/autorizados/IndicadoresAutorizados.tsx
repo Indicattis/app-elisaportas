@@ -55,11 +55,10 @@ export function IndicadoresAutorizados() {
       );
       let mapaNomes = new Map<string, string>();
       if (userIds.length > 0) {
-        const { data: users } = await supabase
-          .from('admin_users')
-          .select('id, nome')
-          .in('id', userIds);
-        (users ?? []).forEach((u: any) => mapaNomes.set(u.id, u.nome));
+        const { data: users } = await supabase.rpc('get_active_users_basic');
+        (users ?? []).forEach((u: any) => {
+          if (userIds.includes(u.id)) mapaNomes.set(u.id, u.nome);
+        });
       }
       setNomesUsuarios(mapaNomes);
       setListaAutorizados(lista);
