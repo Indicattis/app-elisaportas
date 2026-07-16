@@ -1503,6 +1503,34 @@ export default function FaturamentoMinimalista() {
               Reverter dispensa de contrato
             </Button>
           )}
+          {!(selectedVenda as any).contrato_url
+            && !(selectedVenda as any).contrato_dispensado
+            && (selectedVenda as any).contrato_liberado_faturamento && (
+            <Button
+              variant="outline"
+              className="w-full bg-white/5 border-white/15 text-white/80 hover:bg-white/10 hover:text-white"
+              onClick={async () => {
+                try {
+                  await desliberarContrato(selectedVenda.id);
+                  setVendas(prev => prev.map(v => v.id === selectedVenda.id
+                    ? { ...v, contrato_liberado_faturamento: false } as any
+                    : v));
+                  setSelectedVenda(prev => prev && prev.id === selectedVenda.id
+                    ? { ...prev, contrato_liberado_faturamento: false } as any
+                    : prev);
+                  queryClient.invalidateQueries({ queryKey: ['vendas-assinatura-contrato'] });
+                  queryClient.invalidateQueries({ queryKey: ['vendas-pendente-faturamento'] });
+                  toast({ title: 'Liberação revertida', description: 'A venda voltou para o fluxo de contrato.' });
+                } catch (e) {
+                  console.error(e);
+                  toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível desliberar a venda.' });
+                }
+              }}
+            >
+              <Undo2 className="h-4 w-4 mr-2" />
+              Desliberar contrato
+            </Button>
+          )}
           <Button
             variant="outline"
             className="w-full bg-white/5 border-white/15 text-white/80 hover:bg-white/10 hover:text-white"
