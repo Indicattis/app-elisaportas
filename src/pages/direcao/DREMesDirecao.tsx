@@ -1610,16 +1610,19 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
     (async () => {
       const { data } = await supabase
         .from('dre_realizados' as any)
-        .select('realizado_em, observacoes')
+        .select('realizado_em, observacoes, status')
         .eq('mes', `${mes}-01`)
         .maybeSingle();
       if (cancelled) return;
       if (data) {
-        setRealizadoRow({ realizado_em: (data as any).realizado_em, observacoes: (data as any).observacoes });
+        const st = ((data as any).status as 'pendente' | 'realizado' | 'aprovado') || 'pendente';
+        setRealizadoRow({ realizado_em: (data as any).realizado_em, observacoes: (data as any).observacoes, status: st });
         setRealizadoObs((data as any).observacoes || '');
+        setStatusSelecionado(st);
       } else {
         setRealizadoRow(null);
         setRealizadoObs('');
+        setStatusSelecionado('pendente');
       }
     })();
     return () => { cancelled = true; };
