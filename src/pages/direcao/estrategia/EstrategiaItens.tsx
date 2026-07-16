@@ -784,6 +784,7 @@ export default function EstrategiaItens() {
   const { limites: limitesDesconto } = useConfiguracoesVendas();
   const [searchTerm, setSearchTerm] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [coresDialogOpen, setCoresDialogOpen] = useState(false);
   const [padroesOpen, setPadroesOpen] = useState(false);
   const [padroesForm, setPadroesForm] = useState({ taxa_impostos: "0", taxa_descontos: "0", taxa_cartao: "0" });
   const [ordemOpen, setOrdemOpen] = useState(false);
