@@ -1131,6 +1131,15 @@ export default function VendasDirecao() {
 
   const headerActions = (
     <div className="flex items-center gap-2">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => navigate('/direcao/vendas/relatorio-itens-avulsos')}
+        className="bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white"
+      >
+        <Package className="h-4 w-4 mr-2" />
+        Itens avulsos
+      </Button>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="sm" className="bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white">
