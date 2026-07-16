@@ -425,13 +425,21 @@ export default function EditarAutorizadoDirecao() {
         { label: "Meus Parceiros", path: "/vendas/meus-parceiros" },
         { label: "Editar" },
       ]
-    : [
-        { label: "Home", path: "/home" },
-        ...(contexto !== 'home' ? [{ label: contexto === 'logistica' ? "Logística" : "Direção", path: contexto === 'logistica' ? '/logistica' : '/direcao' }] : []),
-        { label: "Autorizados", path: basePath },
-        ...(estadoInfo ? [{ label: estadoInfo.nome, path: `${basePath}/estado/${estadoInfo.id}` }] : []),
-        { label: "Editar" },
-      ];
+    : fromPath === '/direcao/vendas/parceiros'
+      ? [
+          { label: "Home", path: "/home" },
+          { label: "Direção", path: "/direcao" },
+          { label: "Vendas", path: "/direcao/vendas" },
+          { label: "Parceiros", path: "/direcao/vendas/parceiros" },
+          { label: "Editar" },
+        ]
+      : [
+          { label: "Home", path: "/home" },
+          ...(contexto !== 'home' ? [{ label: contexto === 'logistica' ? "Logística" : "Direção", path: contexto === 'logistica' ? '/logistica' : '/direcao' }] : []),
+          { label: "Autorizados", path: basePath },
+          ...(estadoInfo ? [{ label: estadoInfo.nome, path: `${basePath}/estado/${estadoInfo.id}` }] : []),
+          { label: "Editar" },
+        ];
 
   const backPath = isVendedorMode
     ? '/vendas/meus-parceiros'
