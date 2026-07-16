@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronLeft, ChevronRight, Package } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronDown, Package } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { Button } from '@/components/ui/button';
@@ -14,11 +14,19 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
+type ItemAgg = {
+  nome: string;
+  tipo_produto: string;
+  quantidade: number;
+  valor_total: number;
+};
+
 type LinhaRelatorio = {
   vendedor_id: string;
   vendedor_nome: string;
   quantidade_itens: number;
   valor_total: number;
+  itens: ItemAgg[];
 };
 
 const formatBRL = (v: number) =>
@@ -36,6 +44,16 @@ export default function RelatorioItensAvulsos() {
     year: hoje.getFullYear(),
     month: hoje.getMonth(), // 0-11
   });
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+
+  const toggleExpanded = (id: string) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   const { inicioISO, fimISO } = useMemo(() => {
     const inicio = new Date(mesRef.year, mesRef.month, 1);
@@ -55,6 +73,7 @@ export default function RelatorioItensAvulsos() {
         .select(`
           id,
           tipo_produto,
+          descricao,
           quantidade,
           valor_total,
           venda:vendas!inner(
@@ -92,7 +111,7 @@ export default function RelatorioItensAvulsos() {
         });
       }
 
-      const agrup = new Map<string, LinhaRelatorio>();
+      const agrup = new Map<string, LinhaRelatorio & { _itens: Map<string, ItemAgg> }>();
       (rows || []).forEach((r: any) => {
         const vid = r.venda?.atendente_id;
         if (!vid) return;
@@ -101,15 +120,38 @@ export default function RelatorioItensAvulsos() {
           vendedor_nome: nomeMap.get(vid) || 'Sem vendedor',
           quantidade_itens: 0,
           valor_total: 0,
+          itens: [],
+          _itens: new Map<string, ItemAgg>(),
         };
-        atual.quantidade_itens += Number(r.quantidade) || 0;
-        atual.valor_total += Number(r.valor_total) || 0;
+        const qtd = Number(r.quantidade) || 0;
+        const valor = Number(r.valor_total) || 0;
+        atual.quantidade_itens += qtd;
+        atual.valor_total += valor;
+        const nome = (r.descricao && String(r.descricao).trim()) || 'Sem descrição';
+        const key = `${r.tipo_produto}::${nome}`;
+        const item = atual._itens.get(key) || {
+          nome,
+          tipo_produto: r.tipo_produto,
+          quantidade: 0,
+          valor_total: 0,
+        };
+        item.quantidade += qtd;
+        item.valor_total += valor;
+        atual._itens.set(key, item);
         agrup.set(vid, atual);
       });
 
-      return Array.from(agrup.values()).sort(
-        (a, b) => b.valor_total - a.valor_total,
-      );
+      return Array.from(agrup.values())
+        .map((v) => ({
+          vendedor_id: v.vendedor_id,
+          vendedor_nome: v.vendedor_nome,
+          quantidade_itens: v.quantidade_itens,
+          valor_total: v.valor_total,
+          itens: Array.from(v._itens.values()).sort(
+            (a, b) => b.valor_total - a.valor_total,
+          ),
+        }))
+        .sort((a, b) => b.valor_total - a.valor_total);
     },
     staleTime: 30_000,
   });
@@ -117,6 +159,12 @@ export default function RelatorioItensAvulsos() {
   const linhas = data || [];
   const totalQtd = linhas.reduce((s, l) => s + l.quantidade_itens, 0);
   const totalValor = linhas.reduce((s, l) => s + l.valor_total, 0);
+  const todosExpandidos = linhas.length > 0 && linhas.every((l) => expandedIds.has(l.vendedor_id));
+
+  const toggleAll = () => {
+    if (todosExpandidos) setExpandedIds(new Set());
+    else setExpandedIds(new Set(linhas.map((l) => l.vendedor_id)));
+  };
 
   const mudarMes = (delta: number) => {
     setMesRef((prev) => {
@@ -127,6 +175,16 @@ export default function RelatorioItensAvulsos() {
 
   const headerActions = (
     <div className="flex items-center gap-2">
+      {linhas.length > 0 && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={toggleAll}
+          className="bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white"
+        >
+          {todosExpandidos ? 'Recolher todos' : 'Expandir todos'}
+        </Button>
+      )}
       <Button
         variant="outline"
         size="sm"
@@ -168,6 +226,7 @@ export default function RelatorioItensAvulsos() {
         <Table>
           <TableHeader>
             <TableRow className="border-white/10 hover:bg-transparent">
+              <TableHead className="text-white/70 w-[50px]"></TableHead>
               <TableHead className="text-white/70">Vendedor</TableHead>
               <TableHead className="text-white/70 text-right">Qtde. itens</TableHead>
               <TableHead className="text-white/70 text-right">Valor total</TableHead>
@@ -177,28 +236,89 @@ export default function RelatorioItensAvulsos() {
             {isLoading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <TableRow key={i} className="border-white/10">
-                  <TableCell colSpan={3}>
+                  <TableCell colSpan={4}>
                     <div className="h-6 bg-white/5 rounded animate-pulse" />
                   </TableCell>
                 </TableRow>
               ))
             ) : linhas.length === 0 ? (
               <TableRow className="border-white/10 hover:bg-transparent">
-                <TableCell colSpan={3} className="text-center py-10 text-white/50">
+                <TableCell colSpan={4} className="text-center py-10 text-white/50">
                   <Package className="h-8 w-8 mx-auto mb-2 opacity-40" />
                   Nenhum item avulso vendido no período
                 </TableCell>
               </TableRow>
             ) : (
               <>
-                {linhas.map((l) => (
-                  <TableRow key={l.vendedor_id} className="border-white/10 hover:bg-white/5">
-                    <TableCell className="text-white">{l.vendedor_nome}</TableCell>
-                    <TableCell className="text-white/80 text-right">{l.quantidade_itens}</TableCell>
-                    <TableCell className="text-white text-right">{formatBRL(l.valor_total)}</TableCell>
-                  </TableRow>
-                ))}
+                {linhas.map((l) => {
+                  const aberto = expandedIds.has(l.vendedor_id);
+                  return (
+                    <>
+                      <TableRow
+                        key={l.vendedor_id}
+                        onClick={() => toggleExpanded(l.vendedor_id)}
+                        className="border-white/10 hover:bg-white/5 cursor-pointer"
+                      >
+                        <TableCell className="text-white/70">
+                          {aberto ? (
+                            <ChevronDown className="h-4 w-4" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4" />
+                          )}
+                        </TableCell>
+                        <TableCell className="text-white">{l.vendedor_nome}</TableCell>
+                        <TableCell className="text-white/80 text-right">{l.quantidade_itens}</TableCell>
+                        <TableCell className="text-white text-right">{formatBRL(l.valor_total)}</TableCell>
+                      </TableRow>
+                      {aberto && (
+                        <TableRow
+                          key={`${l.vendedor_id}-items`}
+                          className="border-white/10 bg-white/[0.02] hover:bg-white/[0.02]"
+                        >
+                          <TableCell colSpan={4} className="p-0">
+                            <div className="pl-12 pr-4 py-2">
+                              {l.itens.length === 0 ? (
+                                <p className="text-xs text-white/40 py-2">Sem itens</p>
+                              ) : (
+                                <Table>
+                                  <TableHeader>
+                                    <TableRow className="border-white/5 hover:bg-transparent">
+                                      <TableHead className="text-white/50 text-xs h-8">Item</TableHead>
+                                      <TableHead className="text-white/50 text-xs h-8 w-[120px]">Tipo</TableHead>
+                                      <TableHead className="text-white/50 text-xs h-8 text-right w-[100px]">Qtde</TableHead>
+                                      <TableHead className="text-white/50 text-xs h-8 text-right w-[160px]">Valor total</TableHead>
+                                    </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
+                                    {l.itens.map((it, idx) => (
+                                      <TableRow
+                                        key={`${it.tipo_produto}-${it.nome}-${idx}`}
+                                        className="border-white/5 hover:bg-white/5"
+                                      >
+                                        <TableCell className="text-white/80 text-xs py-1.5">{it.nome}</TableCell>
+                                        <TableCell className="text-white/50 text-xs py-1.5 capitalize">
+                                          {it.tipo_produto}
+                                        </TableCell>
+                                        <TableCell className="text-white/80 text-xs text-right py-1.5">
+                                          {it.quantidade}
+                                        </TableCell>
+                                        <TableCell className="text-white text-xs text-right py-1.5">
+                                          {formatBRL(it.valor_total)}
+                                        </TableCell>
+                                      </TableRow>
+                                    ))}
+                                  </TableBody>
+                                </Table>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </>
+                  );
+                })}
                 <TableRow className="border-white/10 bg-white/5 hover:bg-white/5">
+                  <TableCell />
                   <TableCell className="text-white font-semibold">Total geral</TableCell>
                   <TableCell className="text-white font-semibold text-right">{totalQtd}</TableCell>
                   <TableCell className="text-white font-semibold text-right">{formatBRL(totalValor)}</TableCell>
