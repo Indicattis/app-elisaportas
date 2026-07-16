@@ -247,6 +247,8 @@ function IndicadoresParceiros({ tab }: { tab: TabKey }) {
 function AutorizadosList({ tipo, searchTerm }: { tipo: 'autorizado' | 'franqueado'; searchTerm: string }) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const [editandoId, setEditandoId] = useState<string | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
   const { data, isLoading } = useQuery({
     queryKey: ['parceiros-autorizados', tipo],
     queryFn: async () => {
@@ -310,10 +312,19 @@ function AutorizadosList({ tipo, searchTerm }: { tipo: 'autorizado' | 'franquead
               loading={toggleMutation.isPending}
               onToggle={() => toggleMutation.mutate({ id: p.id, ativo: !p.ativo })}
             />
-            <EditButton onClick={() => navigate(`/direcao/autorizados/${p.id}/editar`, { state: { from: '/direcao/vendas/parceiros' } })} />
+            <EditButton onClick={() => { setEditandoId(p.id); setModalOpen(true); }} />
           </div>
         </Row>
       ))}
+      <EditarAutorizadoModal
+        autorizadoId={editandoId}
+        open={modalOpen}
+        onOpenChange={(open) => {
+          setModalOpen(open);
+          if (!open) setEditandoId(null);
+        }}
+        onSaved={() => queryClient.invalidateQueries({ queryKey: ['parceiros-autorizados', tipo] })}
+      />
     </div>
   );
 }
