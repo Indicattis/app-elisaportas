@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Phone, MapPin, Mail, Power } from 'lucide-react';
+import { ArrowLeft, Phone, MapPin, Mail, Power, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { supabase } from '@/integrations/supabase/client';
@@ -147,8 +147,21 @@ function ToggleAtivoButton({
   );
 }
 
+function EditButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      title="Editar cadastro"
+      className="w-8 h-8 rounded-full border border-white/10 bg-white/5 text-white/60 hover:bg-white/10 hover:text-white flex items-center justify-center transition-all"
+    >
+      <Pencil className="w-3.5 h-3.5" strokeWidth={1.8} />
+    </button>
+  );
+}
+
 function AutorizadosList({ tipo }: { tipo: 'autorizado' | 'franqueado' }) {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const { data, isLoading } = useQuery({
     queryKey: ['parceiros-autorizados', tipo],
     queryFn: async () => {
@@ -202,6 +215,7 @@ function AutorizadosList({ tipo }: { tipo: 'autorizado' | 'franqueado' }) {
               loading={toggleMutation.isPending}
               onToggle={() => toggleMutation.mutate({ id: p.id, ativo: !p.ativo })}
             />
+            <EditButton onClick={() => navigate(`/direcao/autorizados/${p.id}/editar`)} />
           </div>
         </Row>
       ))}
@@ -211,6 +225,7 @@ function AutorizadosList({ tipo }: { tipo: 'autorizado' | 'franqueado' }) {
 
 function RepresentantesList() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const { data, isLoading } = useQuery({
     queryKey: ['parceiros-representantes'],
     queryFn: async () => {
@@ -262,6 +277,7 @@ function RepresentantesList() {
               loading={toggleMutation.isPending}
               onToggle={() => toggleMutation.mutate({ id: r.id, ativo: !r.ativo })}
             />
+            <EditButton onClick={() => navigate(`/direcao/representantes/${r.id}/editar`)} />
           </div>
         </Row>
       ))}
