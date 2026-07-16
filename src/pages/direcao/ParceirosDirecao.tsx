@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Percent } from 'lucide-react';
 import { EditarAutorizadoModal } from '@/components/parceiros/EditarAutorizadoModal';
+import { EditarRepresentanteModal } from '@/components/parceiros/EditarRepresentanteModal';
 
 function ComissaoEditor({ id, current }: { id: string; current: number | null }) {
   const queryClient = useQueryClient();
@@ -332,6 +333,8 @@ function AutorizadosList({ tipo, searchTerm }: { tipo: 'autorizado' | 'franquead
 function RepresentantesList({ searchTerm }: { searchTerm: string }) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const [editandoId, setEditandoId] = useState<string | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
   const { data, isLoading } = useQuery({
     queryKey: ['parceiros-representantes'],
     queryFn: async () => {
@@ -393,10 +396,19 @@ function RepresentantesList({ searchTerm }: { searchTerm: string }) {
               loading={toggleMutation.isPending}
               onToggle={() => toggleMutation.mutate({ id: r.id, ativo: !r.ativo })}
             />
-            <EditButton onClick={() => navigate(`/direcao/representantes/${r.id}/editar`)} />
+            <EditButton onClick={() => { setEditandoId(r.id); setModalOpen(true); }} />
           </div>
         </Row>
       ))}
+      <EditarRepresentanteModal
+        representanteId={editandoId}
+        open={modalOpen}
+        onOpenChange={(open) => {
+          setModalOpen(open);
+          if (!open) setEditandoId(null);
+        }}
+        onSaved={() => queryClient.invalidateQueries({ queryKey: ['parceiros-representantes'] })}
+      />
     </div>
   );
 }
