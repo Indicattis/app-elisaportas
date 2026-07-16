@@ -1985,13 +1985,27 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
       <Dialog open={realizadoDialogOpen} onOpenChange={setRealizadoDialogOpen}>
         <DialogContent className="max-w-lg bg-slate-900 border-white/10 text-white">
           <DialogHeader>
-            <DialogTitle className="text-white">
-              {realizadoRow ? 'Atualizar valores realizados' : 'Marcar DRE como realizado'}
-            </DialogTitle>
+            <DialogTitle className="text-white">Alterar Status</DialogTitle>
             <DialogDescription className="text-white/60">
-              Snapshot dos valores atuais do mês {mesNome}.
+              Defina o status do D.R.E de {mesNome}.
             </DialogDescription>
           </DialogHeader>
+          <div className="grid grid-cols-3 gap-2">
+            {([
+              { key: 'pendente', label: 'Pendente', cls: 'bg-red-500/15 border-red-500/40 text-red-200', active: 'bg-red-500/30 border-red-500 text-red-100' },
+              { key: 'realizado', label: 'Realizado', cls: 'bg-yellow-500/15 border-yellow-500/40 text-yellow-200', active: 'bg-yellow-500/30 border-yellow-500 text-yellow-100' },
+              { key: 'aprovado', label: 'Aprovado', cls: 'bg-emerald-500/15 border-emerald-500/40 text-emerald-200', active: 'bg-emerald-500/30 border-emerald-500 text-emerald-100' },
+            ] as const).map(opt => (
+              <button
+                key={opt.key}
+                type="button"
+                onClick={() => setStatusSelecionado(opt.key)}
+                className={`px-3 py-2 rounded-lg border text-sm transition-colors ${statusSelecionado === opt.key ? opt.active : opt.cls + ' opacity-70 hover:opacity-100'}`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
           <div className="space-y-2 text-sm">
             {[
               ['Faturamento total', faturamento.total],
