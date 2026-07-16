@@ -393,6 +393,11 @@ export default function ParceirosDirecao() {
   const navigate = useNavigate();
   const [tab, setTab] = useState<TabKey>('autorizados');
   const [direction, setDirection] = useState<'left' | 'right'>('right');
+  const [searchState, setSearchState] = useState<Record<TabKey, string>>({
+    autorizados: '',
+    representantes: '',
+    franqueados: '',
+  });
   const tabOrder: Record<TabKey, number> = { autorizados: 0, representantes: 1, franqueados: 2 };
 
   const handleTabChange = (newTab: TabKey) => {
@@ -451,13 +456,23 @@ export default function ParceirosDirecao() {
       <div className="px-6 py-6">
         <div className="mx-auto max-w-6xl">
           <IndicadoresParceiros tab={tab} />
+          <div className="mt-4 mb-4 relative max-w-md">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-white/40" strokeWidth={1.5} />
+            <input
+              type="text"
+              value={searchState[tab]}
+              onChange={(e) => setSearchState((prev) => ({ ...prev, [tab]: e.target.value }))}
+              placeholder="Buscar..."
+              className="w-full h-10 pl-10 pr-4 rounded-full bg-white/5 backdrop-blur-xl border border-white/10 text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-white/20"
+            />
+          </div>
           <div
             key={tab}
             className={direction === 'right' ? 'animate-slide-in-right' : 'animate-slide-in-left'}
           >
-            {tab === 'autorizados' && <AutorizadosList tipo="autorizado" />}
-            {tab === 'representantes' && <RepresentantesList />}
-            {tab === 'franqueados' && <AutorizadosList tipo="franqueado" />}
+            {tab === 'autorizados' && <AutorizadosList tipo="autorizado" searchTerm={searchState.autorizados} />}
+            {tab === 'representantes' && <RepresentantesList searchTerm={searchState.representantes} />}
+            {tab === 'franqueados' && <AutorizadosList tipo="franqueado" searchTerm={searchState.franqueados} />}
           </div>
         </div>
       </div>
