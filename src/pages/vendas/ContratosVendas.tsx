@@ -337,6 +337,21 @@ export default function ContratosVendas({ scope = 'all' }: ContratosVendasProps 
     toast.success('Venda liberada para Pend. Faturamento');
   };
 
+  const handleDesliberarFaturamento = async (v: VendaRow) => {
+    setRevertingVendaId(v.id);
+    try {
+      await desliberarContrato(v.id);
+      setVendas(prev => prev.filter(x => x.id !== v.id));
+      setRefreshKey(k => k + 1);
+      toast.success('Liberação revertida. Venda voltou para Pendente de Contrato.');
+    } catch (e) {
+      console.error(e);
+      toast.error('Erro ao desliberar venda');
+    } finally {
+      setRevertingVendaId(null);
+    }
+  };
+
   const renderDescontoAcrescimo = (vendaId: string) => {
     const b = balancos[vendaId];
     if (!b || !b.desconto_dado || b.tipo === 'neutro') {
