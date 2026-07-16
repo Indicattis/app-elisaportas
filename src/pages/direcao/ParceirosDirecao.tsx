@@ -159,6 +159,90 @@ function EditButton({ onClick }: { onClick: () => void }) {
   );
 }
 
+function IndicadoresParceiros({ tab }: { tab: TabKey }) {
+  const { data: autorizados = [], isLoading: loadingAutorizados } = useQuery({
+    queryKey: ['parceiros-autorizados', 'autorizado'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('autorizados')
+        .select('ativo')
+        .eq('tipo_parceiro', 'autorizado');
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: tab === 'autorizados',
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const { data: franqueados = [], isLoading: loadingFranqueados } = useQuery({
+    queryKey: ['parceiros-autorizados', 'franqueado'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('autorizados')
+        .select('ativo')
+        .eq('tipo_parceiro', 'franqueado');
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: tab === 'franqueados',
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const { data: representantes = [], isLoading: loadingRepresentantes } = useQuery({
+    queryKey: ['parceiros-representantes'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('representantes')
+        .select('ativo, reprovado');
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: tab === 'representantes',
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const itens = tab === 'autorizados' ? autorizados : tab === 'franqueados' ? franqueados : representantes;
+  const isLoading = loadingAutorizados || loadingFranqueados || loadingRepresentantes;
+
+  const total = itens.length;
+  const ativos = itens.filter((p: any) => !!p.ativo && !p.reprovado).length;
+  const inativos = itens.filter((p: any) => !p.ativo || p.reprovado).length;
+
+  const label = tab === 'autorizados' ? 'Autorizados' : tab === 'franqueados' ? 'Franqueados' : 'Representantes';
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+      <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-4 flex items-center gap-3">
+        <div className="w-10 h-10 rounded-full bg-blue-500/15 border border-blue-400/20 flex items-center justify-center">
+          <Users className="w-5 h-5 text-blue-300" />
+        </div>
+        <div>
+          <div className="text-white/50 text-xs">Total de {label}</div>
+          <div className="text-xl font-bold text-white">{isLoading ? '...' : total}</div>
+        </div>
+      </div>
+      <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-4 flex items-center gap-3">
+        <div className="w-10 h-10 rounded-full bg-emerald-500/15 border border-emerald-400/20 flex items-center justify-center">
+          <CheckCircle className="w-5 h-5 text-emerald-300" />
+        </div>
+        <div>
+          <div className="text-white/50 text-xs">{label} Ativos</div>
+          <div className="text-xl font-bold text-white">{isLoading ? '...' : ativos}</div>
+        </div>
+      </div>
+      <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-4 flex items-center gap-3">
+        <div className="w-10 h-10 rounded-full bg-red-500/15 border border-red-400/20 flex items-center justify-center">
+          <XCircle className="w-5 h-5 text-red-300" />
+        </div>
+        <div>
+          <div className="text-white/50 text-xs">{label} Inativos</div>
+          <div className="text-xl font-bold text-white">{isLoading ? '...' : inativos}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AutorizadosList({ tipo }: { tipo: 'autorizado' | 'franqueado' }) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
