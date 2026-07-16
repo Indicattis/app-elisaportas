@@ -1014,10 +1014,11 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
   const [avulsosModalOpen, setAvulsosModalOpen] = useState(false);
   const [avulsosDetalhe, setAvulsosDetalhe] = useState<VendaComItensSimplesRow[]>([]);
 
-  const [realizadoRow, setRealizadoRow] = useState<{ realizado_em: string; observacoes: string | null } | null>(null);
+  const [realizadoRow, setRealizadoRow] = useState<{ realizado_em: string; observacoes: string | null; status: 'pendente' | 'realizado' | 'aprovado' } | null>(null);
   const [realizadoDialogOpen, setRealizadoDialogOpen] = useState(false);
   const [realizadoObs, setRealizadoObs] = useState('');
   const [realizadoSaving, setRealizadoSaving] = useState(false);
+  const [statusSelecionado, setStatusSelecionado] = useState<'pendente' | 'realizado' | 'aprovado'>('pendente');
 
   const isValidMes = !!mes && /^\d{4}-\d{2}$/.test(mes);
   const mesDate = isValidMes ? new Date(mes + '-15') : new Date();
