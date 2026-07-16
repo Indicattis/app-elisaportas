@@ -309,7 +309,7 @@ function AutorizadosList({ tipo, searchTerm }: { tipo: 'autorizado' | 'franquead
               loading={toggleMutation.isPending}
               onToggle={() => toggleMutation.mutate({ id: p.id, ativo: !p.ativo })}
             />
-            <EditButton onClick={() => navigate(`/direcao/autorizados/${p.id}/editar`)} />
+            <EditButton onClick={() => navigate(`/direcao/autorizados/${p.id}/editar`, { state: { from: '/direcao/vendas/parceiros' } })} />
           </div>
         </Row>
       ))}
