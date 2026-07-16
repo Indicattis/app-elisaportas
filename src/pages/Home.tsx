@@ -317,7 +317,7 @@ export default function Home() {
             </div>
             <div className="flex flex-col items-center">
               <h2 className="text-3xl md:text-4xl font-bold text-white tracking-tight text-center">
-                {indicesLoading ? '—' : formatCurrency(indices?.faturamentoMes || 0)}
+                {indicesLoading ? '' : formatCurrency(indices?.faturamentoMes || 0)}
               </h2>
             </div>
             <div className="mt-2 w-10 h-0.5 bg-blue-500/40 rounded-full" />
