@@ -228,6 +228,7 @@ import CalendarioExpedicaoReadOnly from "./pages/home/CalendarioExpedicaoReadOnl
 // Hub da Direção Minimalista
 import DirecaoHub from "./pages/direcao/DirecaoHub";
 import VendasDirecao from "./pages/direcao/VendasDirecao";
+import RelatorioItensAvulsos from "./pages/direcao/RelatorioItensAvulsos";
 import VendasHubDirecao from "./pages/direcao/VendasHubDirecao";
 import ParceirosDirecao from "./pages/direcao/ParceirosDirecao";
 import RequisicoesRepresentantesDirecao from "./pages/direcao/RequisicoesRepresentantesDirecao";
@@ -519,6 +520,7 @@ const App = () => (
                 <Route path="/direcao" element={<ProtectedRoute routeKeyPrefix="direcao_"><DirecaoHub /></ProtectedRoute>} />
                 <Route path="/direcao/vendas" element={<ProtectedRoute routeKey="direcao_hub"><VendasHubDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/vendas/todas" element={<ProtectedRoute routeKey="direcao_hub"><VendasDirecao /></ProtectedRoute>} />
+                <Route path="/direcao/vendas/relatorio-itens-avulsos" element={<ProtectedRoute routeKey="direcao_hub"><RelatorioItensAvulsos /></ProtectedRoute>} />
                 <Route path="/direcao/vendas/parceiros" element={<ProtectedRoute routeKey="direcao_vendas"><ParceirosDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/vendas/requisicoes-representantes" element={<ProtectedRoute routeKey="direcao_vendas"><RequisicoesRepresentantesDirecao /></ProtectedRoute>} />
                 <Route path="/direcao/vendas/contratos" element={<ProtectedRoute routeKey="direcao_vendas"><ContratosVendasHub /></ProtectedRoute>} />
