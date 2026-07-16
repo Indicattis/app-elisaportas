@@ -229,6 +229,8 @@ export const useVendasPendenteFaturamento = () => {
             temperatura: v.temperatura ?? null,
             cores: Array.from(coresUnicas.values()),
             portas_info: portasInfo,
+            contrato_url: v.contrato_url || null,
+            contrato_dispensado: !!v.contrato_dispensado,
           };
         });
     },
