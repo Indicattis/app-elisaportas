@@ -47,7 +47,7 @@ export default function PosVendasPedidos() {
   }, []);
 
   const { data: pedidos = [], isLoading } = useQuery({
-    queryKey: ['pos-vendas-pedidos'],
+    queryKey: ['pos-vendas-pedidos', 'v2'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('pedidos_producao')
@@ -125,7 +125,7 @@ export default function PosVendasPedidos() {
 
   const handleFinalizado = () => {
     setPedidoSelecionado(null);
-    queryClient.invalidateQueries({ queryKey: ['pos-vendas-pedidos'] });
+    queryClient.invalidateQueries({ queryKey: ['pos-vendas-pedidos', 'v2'] });
     queryClient.invalidateQueries({ queryKey: ['pos-vendas-pesquisas'] });
     queryClient.invalidateQueries({ queryKey: ['pos-vendas-finalizado'] });
   };
