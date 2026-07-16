@@ -430,6 +430,7 @@ export default function ParceirosDirecao() {
       {/* Content */}
       <div className="px-6 py-6">
         <div className="mx-auto max-w-6xl">
+          <IndicadoresParceiros tab={tab} />
           <div
             key={tab}
             className={direction === 'right' ? 'animate-slide-in-right' : 'animate-slide-in-left'}
