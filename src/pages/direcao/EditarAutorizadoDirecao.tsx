@@ -81,7 +81,8 @@ export default function EditarAutorizadoDirecao() {
   const [estadoInfo, setEstadoInfo] = useState<{ id: string; nome: string } | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { pathname } = useLocation();
+  const { pathname, state: locationState } = useLocation();
+  const fromPath = (locationState as { from?: string } | null)?.from;
   const isVendedorMode = pathname.startsWith('/vendas/meus-parceiros');
   const contexto = isVendedorMode
     ? 'vendas'
@@ -434,9 +435,11 @@ export default function EditarAutorizadoDirecao() {
 
   const backPath = isVendedorMode
     ? '/vendas/meus-parceiros'
-    : estadoInfo
-      ? `${basePath}/estado/${estadoInfo.id}`
-      : basePath;
+    : fromPath
+      ? fromPath
+      : estadoInfo
+        ? `${basePath}/estado/${estadoInfo.id}`
+        : basePath;
 
   if (loading) {
     return (
