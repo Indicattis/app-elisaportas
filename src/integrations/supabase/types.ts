@@ -2956,6 +2956,7 @@ export type Database = {
           perc_liquido: number
           realizado_em: string
           realizado_por: string | null
+          status: string
           total_despesas_fixas: number
           total_despesas_folha: number
           total_despesas_imposto: number
@@ -2974,6 +2975,7 @@ export type Database = {
           perc_liquido?: number
           realizado_em?: string
           realizado_por?: string | null
+          status?: string
           total_despesas_fixas?: number
           total_despesas_folha?: number
           total_despesas_imposto?: number
@@ -2992,6 +2994,7 @@ export type Database = {
           perc_liquido?: number
           realizado_em?: string
           realizado_por?: string | null
+          status?: string
           total_despesas_fixas?: number
           total_despesas_folha?: number
           total_despesas_imposto?: number

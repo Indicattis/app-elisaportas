@@ -1014,10 +1014,11 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
   const [avulsosModalOpen, setAvulsosModalOpen] = useState(false);
   const [avulsosDetalhe, setAvulsosDetalhe] = useState<VendaComItensSimplesRow[]>([]);
 
-  const [realizadoRow, setRealizadoRow] = useState<{ realizado_em: string; observacoes: string | null } | null>(null);
+  const [realizadoRow, setRealizadoRow] = useState<{ realizado_em: string; observacoes: string | null; status: 'pendente' | 'realizado' | 'aprovado' } | null>(null);
   const [realizadoDialogOpen, setRealizadoDialogOpen] = useState(false);
   const [realizadoObs, setRealizadoObs] = useState('');
   const [realizadoSaving, setRealizadoSaving] = useState(false);
+  const [statusSelecionado, setStatusSelecionado] = useState<'pendente' | 'realizado' | 'aprovado'>('pendente');
 
   const isValidMes = !!mes && /^\d{4}-\d{2}$/.test(mes);
   const mesDate = isValidMes ? new Date(mes + '-15') : new Date();
@@ -1609,16 +1610,19 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
     (async () => {
       const { data } = await supabase
         .from('dre_realizados' as any)
-        .select('realizado_em, observacoes')
+        .select('realizado_em, observacoes, status')
         .eq('mes', `${mes}-01`)
         .maybeSingle();
       if (cancelled) return;
       if (data) {
-        setRealizadoRow({ realizado_em: (data as any).realizado_em, observacoes: (data as any).observacoes });
+        const st = ((data as any).status as 'pendente' | 'realizado' | 'aprovado') || 'pendente';
+        setRealizadoRow({ realizado_em: (data as any).realizado_em, observacoes: (data as any).observacoes, status: st });
         setRealizadoObs((data as any).observacoes || '');
+        setStatusSelecionado(st);
       } else {
         setRealizadoRow(null);
         setRealizadoObs('');
+        setStatusSelecionado('pendente');
       }
     })();
     return () => { cancelled = true; };
@@ -1981,13 +1985,27 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
       <Dialog open={realizadoDialogOpen} onOpenChange={setRealizadoDialogOpen}>
         <DialogContent className="max-w-lg bg-slate-900 border-white/10 text-white">
           <DialogHeader>
-            <DialogTitle className="text-white">
-              {realizadoRow ? 'Atualizar valores realizados' : 'Marcar DRE como realizado'}
-            </DialogTitle>
+            <DialogTitle className="text-white">Alterar Status</DialogTitle>
             <DialogDescription className="text-white/60">
-              Snapshot dos valores atuais do mês {mesNome}.
+              Defina o status do D.R.E de {mesNome}.
             </DialogDescription>
           </DialogHeader>
+          <div className="grid grid-cols-3 gap-2">
+            {([
+              { key: 'pendente', label: 'Pendente', cls: 'bg-red-500/15 border-red-500/40 text-red-200', active: 'bg-red-500/30 border-red-500 text-red-100' },
+              { key: 'realizado', label: 'Realizado', cls: 'bg-yellow-500/15 border-yellow-500/40 text-yellow-200', active: 'bg-yellow-500/30 border-yellow-500 text-yellow-100' },
+              { key: 'aprovado', label: 'Aprovado', cls: 'bg-emerald-500/15 border-emerald-500/40 text-emerald-200', active: 'bg-emerald-500/30 border-emerald-500 text-emerald-100' },
+            ] as const).map(opt => (
+              <button
+                key={opt.key}
+                type="button"
+                onClick={() => setStatusSelecionado(opt.key)}
+                className={`px-3 py-2 rounded-lg border text-sm transition-colors ${statusSelecionado === opt.key ? opt.active : opt.cls + ' opacity-70 hover:opacity-100'}`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
           <div className="space-y-2 text-sm">
             {[
               ['Faturamento total', faturamento.total],
@@ -2041,14 +2059,15 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
                     observacoes: realizadoObs || null,
                     realizado_por: userData.user?.id || null,
                     realizado_em: new Date().toISOString(),
+                    status: statusSelecionado,
                   };
                   const { error } = await supabase
                     .from('dre_realizados' as any)
                     .upsert(payload, { onConflict: 'mes' });
                   if (error) throw error;
-                  setRealizadoRow({ realizado_em: payload.realizado_em, observacoes: payload.observacoes });
+                  setRealizadoRow({ realizado_em: payload.realizado_em, observacoes: payload.observacoes, status: statusSelecionado });
                   setRealizadoDialogOpen(false);
-                  toast.success(realizadoRow ? 'Valores realizados atualizados' : 'DRE marcado como realizado');
+                  toast.success('Status atualizado');
                 } catch (err: any) {
                   console.error('Erro ao salvar dre_realizados:', err);
                   toast.error('Erro ao salvar: ' + (err?.message || 'desconhecido'));
@@ -2205,18 +2224,25 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
       headerActions={
         !loading ? (
           <div className="flex items-center gap-2 print:hidden">
-            <button
-              onClick={() => setRealizadoDialogOpen(true)}
-              title={realizadoRow ? `Realizado em ${new Date(realizadoRow.realizado_em).toLocaleString('pt-BR')}` : 'Marcar como realizado'}
-              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm transition-colors ${
-                realizadoRow
-                  ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/25'
-                  : 'bg-white/10 border-white/10 text-white hover:bg-white/20'
-              }`}
-            >
-              {realizadoRow ? <CheckCircle2 className="w-4 h-4" strokeWidth={1.8} /> : <CircleDashed className="w-4 h-4" strokeWidth={1.8} />}
-              {realizadoRow ? 'Atualizar realizado' : 'Marcar como realizado'}
-            </button>
+            {(() => {
+              const st = realizadoRow?.status ?? 'pendente';
+              const map = {
+                pendente: { label: 'Pendente', cls: 'bg-red-500/15 border-red-500/40 text-red-200 hover:bg-red-500/25' },
+                realizado: { label: 'Realizado', cls: 'bg-yellow-500/15 border-yellow-500/40 text-yellow-200 hover:bg-yellow-500/25' },
+                aprovado: { label: 'Aprovado', cls: 'bg-emerald-500/15 border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/25' },
+              } as const;
+              const cur = map[st];
+              return (
+                <button
+                  onClick={() => setRealizadoDialogOpen(true)}
+                  title={`Status atual: ${cur.label}`}
+                  className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm transition-colors ${cur.cls}`}
+                >
+                  <span className={`inline-block w-2 h-2 rounded-full ${st === 'pendente' ? 'bg-red-400' : st === 'realizado' ? 'bg-yellow-400' : 'bg-emerald-400'}`} />
+                  Alterar Status
+                </button>
+              );
+            })()}
             <button
             onClick={async () => {
               // Pré-carrega o logo antes de imprimir, pois #dre-print-document
