@@ -1,55 +1,94 @@
-# Detalhamento por item no relatório de itens avulsos
+# Histórico de contratos
 
-Adicionar detalhamento item a item por vendedor em `/direcao/vendas/relatorio-itens-avulsos`, mantendo o resumo já existente.
+Nova página acessada por um botão em `/direcao/vendas/contratos`, listando todas as vendas cujo contrato teve algum desfecho (assinado, dispensado ou liberado sem contrato), com data e responsável de cada evento.
 
-## Mudanças em `src/pages/direcao/RelatorioItensAvulsos.tsx`
+## 1. Botão em `/direcao/vendas/contratos`
 
-### 1. Buscar o nome do item na query
+Em `src/pages/vendas/ContratosVendas.tsx`, adicionar um botão discreto no header (ao lado dos filtros/actions existentes) com label **"Histórico"** + ícone `History` (lucide). Ação: `navigate('/direcao/vendas/contratos/historico')`.
 
-Hoje a query em `produtos_vendas` traz só `tipo_produto`, `quantidade` e `valor_total`. Ampliar o `select` para incluir também:
-- `nome_produto` (usar o campo que já identifica o adicional/acessório — provavelmente `nome_produto` ou similar em `produtos_vendas`; confirmar na hora e cair para `descricao`/`tamanho` como fallback se necessário).
+## 2. Nova rota
 
-Sem migração de banco.
+- Path: `/direcao/vendas/contratos/historico`
+- Registrar em `src/App.tsx` reutilizando o guard `routeKey="direcao_vendas"`.
 
-### 2. Nova agregação
+## 3. Nova página `src/pages/vendas/HistoricoContratos.tsx`
 
-Além da agregação por vendedor existente, criar um segundo agrupamento aninhado por `(vendedor_id, nome_item)`:
+### Header
+- Título "Histórico de contratos"
+- Subtítulo "Vendas assinadas, dispensadas ou liberadas sem contrato"
+- Seletor de mês/ano no header (mês corrente por padrão), no mesmo estilo do relatório de itens avulsos (ChevronLeft / label / ChevronRight).
+- Filtrar pelo evento (assinado_em, dispensado_em ou liberado_em) dentro do mês selecionado.
+
+### Fonte de dados
+Query única em `vendas`, filtrando `is_rascunho=false` e `dispensada_sistema=false`, trazendo:
+
+```
+id, cliente_nome, cpf_cliente, cidade, data_venda, valor_venda, atendente_id,
+contrato_url,
+contrato_assinado_em, contrato_anexado_por,
+contrato_dispensado, contrato_dispensado_em, contrato_dispensado_por,
+contrato_liberado_faturamento, contrato_liberado_em, contrato_liberado_por
+```
+
+Uso de `.or(...)` para filtrar por período em qualquer um dos três `*_em`:
+`contrato_assinado_em.gte...contrato_assinado_em.lte...,contrato_dispensado_em...,contrato_liberado_em...`
+(implementado como `.or()` no cliente ou pós-filtro em JS após um fetch amplo do mês).
+
+Segunda query em `admin_users` para mapear `user_id → nome` dos responsáveis e do atendente.
+
+### Regras de classificação (client-side)
+Cada venda pode gerar mais de uma linha caso tenha mais de um evento no mês. Para simplicidade e fidelidade ao histórico:
+
+- **Assinado** — quando `contrato_assinado_em` cai no período.
+- **Dispensado** — quando `contrato_dispensado=true` e `contrato_dispensado_em` cai no período.
+- **Liberado sem contrato** — quando `contrato_liberado_faturamento=true`, sem `contrato_url`, sem `contrato_dispensado`, e `contrato_liberado_em` cai no período.
+
+Cada evento vira uma linha própria (uma venda pode aparecer em até 2 linhas: dispensada e depois liberada, por ex.). Ordenação por data do evento desc.
+
+### Layout
+Tabela minimalista glass (bg-white/5, backdrop-blur-xl, border-white/10):
+
+```text
+| Data      | Cliente        | Vendedor   | Desfecho              | Responsável   | Valor       |
+|-----------|----------------|------------|-----------------------|---------------|------------:|
+| 15/07/26  | João Silva     | Fulano     | Assinado              | Ciclano       | R$ 4.500,00 |
+| 12/07/26  | Maria Souza    | Beltrano   | Dispensado            | Ciclano       | R$ 3.200,00 |
+| ...                                                                                          |
+```
+
+Badges por desfecho (mesmas cores já usadas em `ContratosVendas`/`VendaPendentePedidoCard`):
+- Assinado → emerald
+- Dispensado → âmbar
+- Liberado sem contrato → cinza/branco
+
+Estado vazio: "Nenhum contrato movimentado no período".
+Loading: skeleton nas linhas.
+
+### Tipos
 
 ```ts
-type ItemAgg = {
-  nome: string;
-  tipo_produto: 'adicional' | 'acessorio';
-  quantidade: number;
-  valor_total: number;
-};
-
-type LinhaRelatorio = {
-  vendedor_id: string;
-  vendedor_nome: string;
-  quantidade_itens: number;
-  valor_total: number;
-  itens: ItemAgg[]; // ordenado por valor_total desc
+type EventoContrato = {
+  venda_id: string;
+  data_evento: string; // ISO
+  cliente_nome: string;
+  cpf_cliente: string | null;
+  cidade: string | null;
+  atendente_nome: string | null;
+  desfecho: 'assinado' | 'dispensado' | 'liberado';
+  responsavel_nome: string | null;
+  valor_venda: number;
 };
 ```
 
-Itens sem nome (nulos) caem em "Sem descrição".
-
-### 3. Linha do vendedor vira expansível
-
-- Cada linha da tabela ganha um botão de chevron (ChevronRight/ChevronDown) na primeira coluna.
-- Ao clicar, expande uma linha filha (`<TableRow>` com `colSpan={3}`) contendo uma sub-tabela com colunas: **Item** | **Qtde** | **Valor total**.
-- Estado local `expandedIds: Set<string>` controla quais vendedores estão abertos.
-- Também um botão "Expandir todos / Recolher todos" no canto da tabela.
-
-### 4. Estilo
-
-- Manter o padrão glass já usado (bg-white/5, border-white/10).
-- Sub-tabela indentada (`pl-8`), fundo levemente mais claro (`bg-white/[0.02]`), sem cabeçalho de página nem breadcrumbs adicionais.
-- Linhas de item com fonte um pouco menor (`text-xs`) para hierarquia visual.
+React Query key: `['historico-contratos', inicioISO, fimISO]`, `staleTime: 30_000`.
 
 ## Fora do escopo
+- Sem filtro por desfecho, sem busca, sem exportação (não pedidos).
+- Sem alteração da tela `/direcao/vendas/contratos` além do botão de acesso.
+- Sem migração de banco — todos os campos já existem em `vendas`.
+- Sem permissões novas.
 
-- Sem exportação.
-- Sem filtro por item ou por vendedor específico.
-- Sem alteração no botão de acesso nem na rota.
-- Sem mudanças em outras telas.
+## Detalhes técnicos
+- Datas normalizadas com `T12:00:00.000Z` para comparações (regra do projeto).
+- `formatBRL` e helper de data compartilhados com padrão já usado.
+- Componente padrão `MinimalistLayout` com breadcrumbs Home → Direção → Vendas → Contratos → Histórico.
