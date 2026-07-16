@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 import {
   Table,
   TableBody,
@@ -167,6 +168,21 @@ export default function HistoricoContratos() {
   });
 
   const linhas = data || [];
+  const abrirContrato = async (path: string) => {
+    if (!path || path === 'legado') {
+      toast.error('Contrato legado sem arquivo disponível');
+      return;
+    }
+    const { data, error } = await supabase.storage
+      .from('contratos-vendas')
+      .createSignedUrl(path, 300);
+    if (error || !data?.signedUrl) {
+      toast.error('Não foi possível abrir o contrato');
+      return;
+    }
+    window.open(data.signedUrl, '_blank');
+  };
+
   const mudarMes = (delta: number) => {
     setMesRef((prev) => {
       const d = new Date(prev.year, prev.month + delta, 1);
@@ -274,11 +290,11 @@ export default function HistoricoContratos() {
                     <TableCell className="text-white/80 text-sm">{e.responsavel_nome || '—'}</TableCell>
                     <TableCell className="text-white text-right text-sm">{formatBRL(e.valor_venda)}</TableCell>
                     <TableCell className="text-right">
-                      {e.contrato_url ? (
+                      {e.contrato_url && e.contrato_url !== 'legado' ? (
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => window.open(e.contrato_url!, '_blank')}
+                          onClick={() => abrirContrato(e.contrato_url!)}
                           className="h-7 px-2 bg-white/5 border-white/10 text-white/80 hover:bg-white/10 hover:text-white"
                         >
                           <FileText className="h-3.5 w-3.5 mr-1" strokeWidth={1.5} />
