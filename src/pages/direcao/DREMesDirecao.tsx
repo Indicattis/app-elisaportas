@@ -2224,18 +2224,25 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
       headerActions={
         !loading ? (
           <div className="flex items-center gap-2 print:hidden">
-            <button
-              onClick={() => setRealizadoDialogOpen(true)}
-              title={realizadoRow ? `Realizado em ${new Date(realizadoRow.realizado_em).toLocaleString('pt-BR')}` : 'Marcar como realizado'}
-              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm transition-colors ${
-                realizadoRow
-                  ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/25'
-                  : 'bg-white/10 border-white/10 text-white hover:bg-white/20'
-              }`}
-            >
-              {realizadoRow ? <CheckCircle2 className="w-4 h-4" strokeWidth={1.8} /> : <CircleDashed className="w-4 h-4" strokeWidth={1.8} />}
-              {realizadoRow ? 'Atualizar realizado' : 'Marcar como realizado'}
-            </button>
+            {(() => {
+              const st = realizadoRow?.status ?? 'pendente';
+              const map = {
+                pendente: { label: 'Pendente', cls: 'bg-red-500/15 border-red-500/40 text-red-200 hover:bg-red-500/25' },
+                realizado: { label: 'Realizado', cls: 'bg-yellow-500/15 border-yellow-500/40 text-yellow-200 hover:bg-yellow-500/25' },
+                aprovado: { label: 'Aprovado', cls: 'bg-emerald-500/15 border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/25' },
+              } as const;
+              const cur = map[st];
+              return (
+                <button
+                  onClick={() => setRealizadoDialogOpen(true)}
+                  title={`Status atual: ${cur.label}`}
+                  className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm transition-colors ${cur.cls}`}
+                >
+                  <span className={`inline-block w-2 h-2 rounded-full ${st === 'pendente' ? 'bg-red-400' : st === 'realizado' ? 'bg-yellow-400' : 'bg-emerald-400'}`} />
+                  Alterar Status
+                </button>
+              );
+            })()}
             <button
             onClick={async () => {
               // Pré-carrega o logo antes de imprimir, pois #dre-print-document
