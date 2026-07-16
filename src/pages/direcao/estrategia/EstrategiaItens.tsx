@@ -1520,6 +1520,7 @@ export default function EstrategiaItens() {
         </div>
 
       </div>
+      <GerenciarCoresDialog open={coresDialogOpen} onOpenChange={setCoresDialogOpen} />
     </MinimalistLayout>
   );
 }
