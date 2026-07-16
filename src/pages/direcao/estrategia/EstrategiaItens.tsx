@@ -973,16 +973,6 @@ export default function EstrategiaItens() {
   };
 
   const headerActions = (
-    <>
-    <Button
-      size="sm"
-      variant="outline"
-      className="gap-2"
-      onClick={() => setCoresDialogOpen(true)}
-    >
-      <Palette className="h-4 w-4" />
-      Gerenciar Cores
-    </Button>
     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
       <DialogTrigger asChild>
         <Button size="sm" className="gap-2">
@@ -1093,7 +1083,6 @@ export default function EstrategiaItens() {
         </DialogFooter>
       </DialogContent>
     </Dialog>
-    </>
   );
 
   return (
@@ -1336,6 +1325,14 @@ export default function EstrategiaItens() {
             >
               <Boxes className="h-4 w-4" />
               Matéria Prima
+            </Button>
+            <Button
+              variant="outline"
+              className="!h-[50px] gap-2 bg-card/60 border-border text-foreground hover:bg-fuchsia-500/10 hover:text-fuchsia-300 hover:border-fuchsia-500/40"
+              onClick={() => setCoresDialogOpen(true)}
+            >
+              <Palette className="h-4 w-4" />
+              Cores Pintura
             </Button>
             <Popover>
               <PopoverTrigger asChild>
