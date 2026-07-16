@@ -397,10 +397,12 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
                       venda.contrato_status === 'assinado' && "border-emerald-500/40 bg-emerald-500/10 text-emerald-300",
                       venda.contrato_status === 'gerado' && "border-blue-500/40 bg-blue-500/10 text-blue-300",
                       venda.contrato_status === 'pendente' && "border-amber-500/40 bg-amber-500/10 text-amber-300",
+                      venda.contrato_status === 'liberado' && "border-white/25 bg-white/10 text-white/70",
                     )}
                   >
                     {venda.contrato_status === 'assinado' ? 'Contrato Assinado' :
                      venda.contrato_status === 'gerado' ? 'Contrato Gerado' :
+                     venda.contrato_status === 'liberado' ? 'Liberado sem Contrato' :
                      'Pendente de Contrato'}
                   </Badge>
                 )}

@@ -31,7 +31,7 @@ export interface VendaPendentePedido {
   contrato_dispensado?: boolean;
   cores: Array<{ nome: string; codigo_hex: string }>;
   portas_info: Array<{ tamanho: 'P' | 'G'; largura: number; altura: number; area: number }>;
-  contrato_status?: 'pendente' | 'gerado' | 'assinado';
+  contrato_status?: 'pendente' | 'gerado' | 'assinado' | 'liberado';
 }
 
 export const useVendasPendentePedido = () => {

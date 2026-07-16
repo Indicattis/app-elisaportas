@@ -19,7 +19,7 @@ import {
   Calculator, AlertCircle, Plus, Minus, Pencil, MessageSquare,
   ArrowUpDown, ArrowUp, ArrowDown, Check, X, Hammer,
   Package, PlusCircle, Filter, PanelRight, Info, FileSignature, FileCheck, FileX,
-  MoreVertical, Eye, EyeOff, Trash2
+  MoreVertical, Eye, EyeOff, Trash2, Undo2
 } from "lucide-react";
 import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
@@ -37,6 +37,7 @@ import { ColumnManager } from "@/components/ColumnManager";
 import { useColumnConfig, ColumnConfig } from "@/hooks/useColumnConfig";
 import { generateFaturamentoPDF } from "@/utils/faturamentoPDFGenerator";
 import { AnexarContratoModal } from "@/components/vendas/AnexarContratoModal";
+import { desliberarContrato } from "@/lib/desliberarContrato";
 import { usePedidoCreation } from "@/hooks/usePedidoCreation";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -1500,6 +1501,34 @@ export default function FaturamentoMinimalista() {
             >
               <FileCheck className="h-4 w-4 mr-2" />
               Reverter dispensa de contrato
+            </Button>
+          )}
+          {!(selectedVenda as any).contrato_url
+            && !(selectedVenda as any).contrato_dispensado
+            && (selectedVenda as any).contrato_liberado_faturamento && (
+            <Button
+              variant="outline"
+              className="w-full bg-white/5 border-white/15 text-white/80 hover:bg-white/10 hover:text-white"
+              onClick={async () => {
+                try {
+                  await desliberarContrato(selectedVenda.id);
+                  setVendas(prev => prev.map(v => v.id === selectedVenda.id
+                    ? { ...v, contrato_liberado_faturamento: false } as any
+                    : v));
+                  setSelectedVenda(prev => prev && prev.id === selectedVenda.id
+                    ? { ...prev, contrato_liberado_faturamento: false } as any
+                    : prev);
+                  queryClient.invalidateQueries({ queryKey: ['vendas-assinatura-contrato'] });
+                  queryClient.invalidateQueries({ queryKey: ['vendas-pendente-faturamento'] });
+                  toast({ title: 'Liberação revertida', description: 'A venda voltou para o fluxo de contrato.' });
+                } catch (e) {
+                  console.error(e);
+                  toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível desliberar a venda.' });
+                }
+              }}
+            >
+              <Undo2 className="h-4 w-4 mr-2" />
+              Desliberar contrato
             </Button>
           )}
           <Button

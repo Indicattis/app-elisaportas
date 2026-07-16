@@ -72,9 +72,11 @@ export const useVendasAssinaturaContrato = () => {
           )
         `)
         .eq("is_rascunho", false)
-        .eq("contrato_liberado_faturamento", false)
         .eq("contrato_dispensado", false)
         .eq("dispensada_sistema", false)
+        // Vendas já liberadas para faturamento só aparecem aqui se estiverem "presas"
+        // (sem contrato anexado). Caso contrário já estão em Pend. Faturamento.
+        .or("contrato_liberado_faturamento.eq.false,contrato_url.is.null")
         .order("data_venda", { ascending: false });
 
       if (error) throw error;
@@ -245,7 +247,9 @@ export const useVendasAssinaturaContrato = () => {
               ? 'assinado' as const
               : contratosGeradosPorVenda.has(v.id)
                 ? 'gerado' as const
-                : 'pendente' as const,
+                : v.contrato_liberado_faturamento
+                  ? 'liberado' as const
+                  : 'pendente' as const,
           };
         });
     },
