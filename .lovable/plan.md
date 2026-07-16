@@ -1,85 +1,55 @@
-# Relatório de Itens Avulsos por Vendedor
+# Detalhamento por item no relatório de itens avulsos
 
-Nova página acessada por um botão em `/direcao/vendas/todas`, mostrando quanto cada vendedor vendeu de **adicionais e acessórios** no mês selecionado.
+Adicionar detalhamento item a item por vendedor em `/direcao/vendas/relatorio-itens-avulsos`, mantendo o resumo já existente.
 
-## 1. Botão em `/direcao/vendas/todas`
+## Mudanças em `src/pages/direcao/RelatorioItensAvulsos.tsx`
 
-Em `src/pages/direcao/VendasTodas.tsx` (ou arquivo equivalente da rota), adicionar um botão discreto no header, ao lado dos filtros existentes:
+### 1. Buscar o nome do item na query
 
-- Label: **"Relatório de itens avulsos"**
-- Ícone: `Package` (lucide-react)
-- Ação: `navigate('/direcao/vendas/relatorio-itens-avulsos')`
-- Mantém o estilo glassmorphism (bg-white/5, border-white/10) já usado na página.
+Hoje a query em `produtos_vendas` traz só `tipo_produto`, `quantidade` e `valor_total`. Ampliar o `select` para incluir também:
+- `nome_produto` (usar o campo que já identifica o adicional/acessório — provavelmente `nome_produto` ou similar em `produtos_vendas`; confirmar na hora e cair para `descricao`/`tamanho` como fallback se necessário).
 
-## 2. Nova rota
+Sem migração de banco.
 
-- Path: `/direcao/vendas/relatorio-itens-avulsos`
-- Registrar em `src/App.tsx` (ou onde ficam as rotas da direção) reutilizando o mesmo guard/layout de `/direcao/vendas/todas`.
+### 2. Nova agregação
 
-## 3. Nova página `RelatorioItensAvulsos.tsx`
+Além da agregação por vendedor existente, criar um segundo agrupamento aninhado por `(vendedor_id, nome_item)`:
 
-Local: `src/pages/direcao/RelatorioItensAvulsos.tsx`
+```ts
+type ItemAgg = {
+  nome: string;
+  tipo_produto: 'adicional' | 'acessorio';
+  quantidade: number;
+  valor_total: number;
+};
 
-### Header
-- Título "Relatório de itens avulsos por vendedor"
-- Botão "Voltar" para `/direcao/vendas/todas`
-- **Seletor de mês/ano** (mês corrente por padrão), no mesmo estilo minimalista das outras telas de direção.
-
-### Fonte de dados
-Query única no Supabase:
-
-```
-produtos_vendas
-  .select('id, tipo_produto, quantidade, valor_total, valor_unitario,
-           venda:vendas!inner(id, vendedor_id, data_venda, status)')
-  .in('tipo_produto', ['adicional', 'acessorio'])
-  .gte('venda.data_venda', inicioMes)
-  .lte('venda.data_venda', fimMes)
+type LinhaRelatorio = {
+  vendedor_id: string;
+  vendedor_nome: string;
+  quantidade_itens: number;
+  valor_total: number;
+  itens: ItemAgg[]; // ordenado por valor_total desc
+};
 ```
 
-- Filtrar `venda.status` para excluir vendas canceladas (seguir o mesmo critério usado em `/direcao/vendas/todas`).
-- Datas normalizadas com `T12:00:00.000Z` (regra de projeto).
-- Buscar nomes dos vendedores em `admin_users` (id → nome) num segundo select paralelo, ou via join se já disponível.
+Itens sem nome (nulos) caem em "Sem descrição".
 
-### Agregação (client-side, via `useMemo`)
-Por `vendedor_id`:
-- `quantidade_itens`: soma de `quantidade`
-- `valor_total`: soma de `valor_total`
-- Ordenar por `valor_total` desc.
-- Linha "Total geral" ao final.
+### 3. Linha do vendedor vira expansível
 
-### Layout
-Tabela minimalista (mesmo padrão glass das outras telas de direção):
+- Cada linha da tabela ganha um botão de chevron (ChevronRight/ChevronDown) na primeira coluna.
+- Ao clicar, expande uma linha filha (`<TableRow>` com `colSpan={3}`) contendo uma sub-tabela com colunas: **Item** | **Qtde** | **Valor total**.
+- Estado local `expandedIds: Set<string>` controla quais vendedores estão abertos.
+- Também um botão "Expandir todos / Recolher todos" no canto da tabela.
 
-```text
-| Vendedor        | Qtde itens | Valor total (R$) |
-|-----------------|-----------:|-----------------:|
-| Fulano          |         42 |         3.450,00 |
-| Ciclano         |         18 |         1.120,00 |
-| ...             |            |                  |
-| Total           |         60 |         4.570,00 |
-```
+### 4. Estilo
 
-- Formatar valor em `pt-BR` (`toLocaleString`).
-- Estado vazio: "Nenhum item avulso vendido no período".
-- Loading skeleton nas linhas.
+- Manter o padrão glass já usado (bg-white/5, border-white/10).
+- Sub-tabela indentada (`pl-8`), fundo levemente mais claro (`bg-white/[0.02]`), sem cabeçalho de página nem breadcrumbs adicionais.
+- Linhas de item com fonte um pouco menor (`text-xs`) para hierarquia visual.
 
-## 4. Fora do escopo
-- Sem exportação (CSV/PDF).
-- Sem detalhamento por item, sem ticket médio (métricas não pedidas).
-- Sem alterações em vendas, produtos ou permissões.
-- Sem intervalo customizado — apenas seletor de mês.
+## Fora do escopo
 
-## Detalhes técnicos
-- Reutilizar helper de formatação de moeda já existente no projeto se houver (`formatBRL` / `toLocaleString('pt-BR')`).
-- React Query `queryKey: ['relatorio-itens-avulsos', mesRef]` com `staleTime` curto.
-- Tipos:
-  ```ts
-  type LinhaRelatorio = {
-    vendedor_id: string;
-    vendedor_nome: string;
-    quantidade_itens: number;
-    valor_total: number;
-  };
-  ```
-- Sem migração de banco: `produtos_vendas.tipo_produto` já suporta `'adicional'` e `'acessorio'`.
+- Sem exportação.
+- Sem filtro por item ou por vendedor específico.
+- Sem alteração no botão de acesso nem na rota.
+- Sem mudanças em outras telas.
