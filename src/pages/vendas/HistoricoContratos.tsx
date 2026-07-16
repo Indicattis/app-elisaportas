@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, ChevronLeft, ChevronRight, FileClock, History } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, FileClock, History, FileText } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -28,6 +28,7 @@ type EventoContrato = {
   desfecho: Desfecho;
   responsavel_nome: string | null;
   valor_venda: number;
+  contrato_url: string | null;
 };
 
 const formatBRL = (v: number) =>
@@ -130,6 +131,7 @@ export default function HistoricoContratos() {
             desfecho: 'assinado',
             data_evento: v.contrato_assinado_em,
             responsavel_nome: v.contrato_anexado_por ? nomeMap.get(v.contrato_anexado_por) || null : null,
+            contrato_url: v.contrato_url || null,
           });
         }
         if (v.contrato_dispensado && inMonth(v.contrato_dispensado_em)) {
@@ -139,6 +141,7 @@ export default function HistoricoContratos() {
             desfecho: 'dispensado',
             data_evento: v.contrato_dispensado_em,
             responsavel_nome: v.contrato_dispensado_por ? nomeMap.get(v.contrato_dispensado_por) || null : null,
+            contrato_url: null,
           });
         }
         if (
@@ -153,6 +156,7 @@ export default function HistoricoContratos() {
             desfecho: 'liberado',
             data_evento: v.contrato_liberado_em,
             responsavel_nome: v.contrato_liberado_por ? nomeMap.get(v.contrato_liberado_por) || null : null,
+            contrato_url: null,
           });
         }
       });
@@ -234,20 +238,21 @@ export default function HistoricoContratos() {
                 <TableHead className="text-white/70">Desfecho</TableHead>
                 <TableHead className="text-white/70">Responsável</TableHead>
                 <TableHead className="text-white/70 text-right">Valor</TableHead>
+                <TableHead className="text-white/70 text-right">Contrato</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 Array.from({ length: 6 }).map((_, i) => (
                   <TableRow key={i} className="border-white/10">
-                    <TableCell colSpan={6}>
+                    <TableCell colSpan={7}>
                       <div className="h-6 bg-white/5 rounded animate-pulse" />
                     </TableCell>
                   </TableRow>
                 ))
               ) : linhas.length === 0 ? (
                 <TableRow className="border-white/10 hover:bg-transparent">
-                  <TableCell colSpan={6} className="text-center py-10 text-white/50">
+                  <TableCell colSpan={7} className="text-center py-10 text-white/50">
                     <FileClock className="h-8 w-8 mx-auto mb-2 opacity-40" />
                     Nenhum contrato movimentado no período
                   </TableCell>
@@ -268,6 +273,21 @@ export default function HistoricoContratos() {
                     </TableCell>
                     <TableCell className="text-white/80 text-sm">{e.responsavel_nome || '—'}</TableCell>
                     <TableCell className="text-white text-right text-sm">{formatBRL(e.valor_venda)}</TableCell>
+                    <TableCell className="text-right">
+                      {e.contrato_url ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => window.open(e.contrato_url!, '_blank')}
+                          className="h-7 px-2 bg-white/5 border-white/10 text-white/80 hover:bg-white/10 hover:text-white"
+                        >
+                          <FileText className="h-3.5 w-3.5 mr-1" strokeWidth={1.5} />
+                          Ver
+                        </Button>
+                      ) : (
+                        <span className="text-white/30 text-xs">—</span>
+                      )}
+                    </TableCell>
                   </TableRow>
                 ))
               )}
