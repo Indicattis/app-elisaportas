@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Phone, MapPin, Mail, Power, Pencil, Users, CheckCircle, XCircle } from 'lucide-react';
+import { ArrowLeft, Phone, MapPin, Mail, Power, Pencil, Users, CheckCircle, XCircle, Search } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { supabase } from '@/integrations/supabase/client';
@@ -243,7 +243,7 @@ function IndicadoresParceiros({ tab }: { tab: TabKey }) {
   );
 }
 
-function AutorizadosList({ tipo }: { tipo: 'autorizado' | 'franqueado' }) {
+function AutorizadosList({ tipo, searchTerm }: { tipo: 'autorizado' | 'franqueado'; searchTerm: string }) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { data, isLoading } = useQuery({
@@ -271,12 +271,22 @@ function AutorizadosList({ tipo }: { tipo: 'autorizado' | 'franqueado' }) {
     onError: (e: any) => toast.error(e.message || 'Erro ao atualizar'),
   });
 
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+  const filtered = normalizedSearch
+    ? (data ?? []).filter((p: any) =>
+        [p.nome, p.responsavel, p.cidade, p.estado, p.telefone, p.whatsapp, p.email]
+          .filter(Boolean)
+          .some((value) => String(value).toLowerCase().includes(normalizedSearch))
+      )
+    : (data ?? []);
+
   if (isLoading) return <div className="text-center text-white/50 py-10">Carregando...</div>;
   if (!data?.length) return <div className="text-center text-white/40 py-10">Nenhum {tipo} cadastrado.</div>;
+  if (!filtered.length) return <div className="text-center text-white/40 py-10">Nenhum resultado para &quot;{searchTerm}&quot;.</div>;
 
   return (
     <div className="flex flex-col gap-2">
-      {data.map((p: any) => (
+      {filtered.map((p: any) => (
         <Row key={p.id}>
           <div className="flex items-center gap-4">
             <Avatar src={p.logo_url} name={p.nome} />
@@ -307,7 +317,7 @@ function AutorizadosList({ tipo }: { tipo: 'autorizado' | 'franqueado' }) {
   );
 }
 
-function RepresentantesList() {
+function RepresentantesList({ searchTerm }: { searchTerm: string }) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { data, isLoading } = useQuery({
@@ -334,12 +344,22 @@ function RepresentantesList() {
     onError: (e: any) => toast.error(e.message || 'Erro ao atualizar'),
   });
 
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+  const filtered = normalizedSearch
+    ? (data ?? []).filter((r: any) =>
+        [r.nome, r.email, r.telefone]
+          .filter(Boolean)
+          .some((value) => String(value).toLowerCase().includes(normalizedSearch))
+      )
+    : (data ?? []);
+
   if (isLoading) return <div className="text-center text-white/50 py-10">Carregando...</div>;
   if (!data?.length) return <div className="text-center text-white/40 py-10">Nenhum representante cadastrado.</div>;
+  if (!filtered.length) return <div className="text-center text-white/40 py-10">Nenhum resultado para &quot;{searchTerm}&quot;.</div>;
 
   return (
     <div className="flex flex-col gap-2">
-      {data.map((r: any) => (
+      {filtered.map((r: any) => (
         <Row key={r.id}>
           <div className="flex items-center gap-4">
             <Avatar src={r.foto_perfil_url} name={r.nome} />
