@@ -1,27 +1,21 @@
 ## Objetivo
-Quando um pedido entra em `finalizado` ou `pos_vendas`, marcar automaticamente todas as parcelas pendentes da venda como pagas.
+Adicionar um botão "Gerenciar Cores" no header da página `/direcao/estrategia/itens` que abre a gestão de cores da pintura epóxi (usadas nas vendas).
 
-## Implementação (migration única)
+## Abordagem
+Já existe a página `src/pages/vendas/CatalogoCores.tsx` (rota `/marketing/catalogo/cores`) usando o hook `useCatalogoCores`, com CRUD completo (adicionar, editar, ativar/desativar cor). Vou reaproveitar essa UI em um Dialog dentro da página `EstrategiaItens`, evitando duplicação.
 
-1. **Função `public.marcar_parcelas_pagas_pedido_finalizado()`** (trigger function, SECURITY DEFINER, `search_path=public`):
-   - Dispara em `AFTER UPDATE OF etapa_atual ON pedidos_producao`.
-   - Condição: `NEW.etapa_atual IN ('finalizado','pos_vendas')` e `NEW.etapa_atual IS DISTINCT FROM OLD.etapa_atual` e `NEW.venda_id IS NOT NULL`.
-   - Executa:
-     ```sql
-     UPDATE public.contas_receber
-        SET status = 'pago',
-            valor_pago = valor_parcela,
-            data_pagamento = CURRENT_DATE,
-            updated_at = now()
-      WHERE venda_id = NEW.venda_id
-        AND status = 'pendente';
-     ```
+## Alterações
+1. **`src/components/direcao/estrategia/GerenciarCoresDialog.tsx` (novo)**
+   - Componente que encapsula o mesmo grid + modal de nova/editar cor que existe em `CatalogoCores.tsx`.
+   - Recebe `open`/`onOpenChange` e renderiza dentro de `<Dialog>` largo.
+   - Usa `useCatalogoCores` para dados e mutations.
 
-2. **Trigger** `trg_marcar_parcelas_pagas_pedido_finalizado` em `pedidos_producao`.
-
-3. **Backfill** (uma vez, dentro da mesma migration): rodar o mesmo UPDATE para todas as vendas cujo pedido já está em `finalizado`/`pos_vendas` e ainda tem parcelas pendentes, para regularizar o histórico.
+2. **`src/pages/direcao/estrategia/EstrategiaItens.tsx`**
+   - Importar o novo dialog e adicionar estado `coresDialogOpen`.
+   - No bloco `headerActions` (linha 973), adicionar um `Button` com ícone `Palette` "Gerenciar Cores" antes/junto dos demais botões.
+   - Renderizar `<GerenciarCoresDialog />` no final do JSX.
 
 ## Fora de escopo
-- Nenhuma mudança de UI.
-- Não altera parcelas já `pago`.
-- Não cria nova conta a receber; apenas atualiza pendentes existentes.
+- Não altero a rota `/marketing/catalogo/cores` existente.
+- Não altero o hook `useCatalogoCores` nem o schema `catalogo_cores`.
+- Nenhuma mudança de business logic.
