@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, FileSignature, Search, Download, Trash2, FileText, FileClock, FileCheck2, Upload, Loader2, Undo2, Eye, ArrowRight, FileX } from 'lucide-react';
+import { ArrowLeft, FileSignature, Search, Download, Trash2, FileText, FileClock, FileCheck2, Upload, Loader2, Undo2, Eye, ArrowRight, FileX, History } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -534,7 +534,15 @@ export default function ContratosVendas({ scope = 'all' }: ContratosVendasProps 
             <p className="text-sm text-white/60">{pageSubtitle}</p>
           </div>
           {!isMeus && (
-            <div className="ml-auto">
+            <div className="ml-auto flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={() => navigate('/direcao/vendas/contratos/historico')}
+                className="bg-white/5 border-white/10 text-white/80 hover:bg-white/10 hover:text-white"
+              >
+                <History className="w-4 h-4 mr-2" />
+                Histórico
+              </Button>
               <Button
                 onClick={() => setAvulsoOpen(true)}
                 className="bg-blue-600 hover:bg-blue-700 text-white"
