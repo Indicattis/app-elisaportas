@@ -1,33 +1,41 @@
 ## Objetivo
 
-Nos itens da aba "Respondidos" em `/pos-vendas/pedidos`, exibir um botão **"Ver resposta"** que abre uma nova página com o resumo da pesquisa de satisfação daquele pedido.
+Substituir a navegação para `/direcao/autorizados/:id/editar` por um modal de edição inline dentro da aba Autorizados em `/direcao/vendas/parceiros`. Isso elimina o problema de "voltar" cair na rota do estado do autorizado.
 
-## Mudanças
+## Escopo
 
-### 1. Nova página `src/pages/pos-vendas/PosVendasRespostaPesquisa.tsx`
-Rota: `/pos-vendas/pedidos/:pedidoId/resposta`
+- Apenas a aba **Autorizados** de `/direcao/vendas/parceiros`.
+- Representantes e Franqueados permanecem inalterados.
+- A página `EditarAutorizadoDirecao` continua existindo para os outros contextos (`/direcao/autorizados/...`, `/logistica/...`, `/autorizados/...`, `/vendas/meus-parceiros`).
 
-Layout minimalista glassmorphism (mesmo padrão do módulo). Ao carregar:
-- Busca a pesquisa em `pesquisas_satisfacao` pelo `pedido_id` (`.maybeSingle()`).
-- Busca dados básicos do pedido (número, cliente, telefone) via `pedidos_producao` + venda (atendente).
-- Mostra:
-  - Header com botão voltar (→ `/pos-vendas/pedidos`) e breadcrumb, incluindo nome do cliente e número do pedido.
-  - Cartão "Avaliações" com 3 notas (Atendimento, Produto, Instalação) exibidas com estrelas 1–5.
-  - Cartão "Perguntas": Recomendaria? / Quis comprar avulsos? / Avaliou no Google? (cada um com Sim/Não colorido).
-  - Cartão "Comentário" (só se houver texto).
-  - Cartão "Itens avulsos" listando o array `itens_avulsos` (só se `quis_comprar_avulsos` e array não vazio).
-  - Cartão "Anexos" com miniaturas/thumbnails e link para abrir cada anexo (`anexos` é jsonb com URLs).
-  - Data da resposta (`created_at`) e nome do respondente (join com `admin_users` por `respondido_por`).
-- Se não houver pesquisa para o pedido, mostra estado vazio ("Nenhuma resposta encontrada").
+## Como vai funcionar
 
-### 2. `src/pages/pos-vendas/PosVendasPedidos.tsx`
-- Nos cards dos pedidos respondidos (quando `respondeu === true`), trocar o botão desabilitado "Já respondido" por um botão **"Ver resposta"** com ícone `FileText` que navega para `/pos-vendas/pedidos/{id}/resposta`.
-- Pendentes continuam com "Responder pesquisa" como está.
+1. Clicar no ícone de editar do autorizado abre um `Dialog` sobreposto — a URL continua `/direcao/vendas/parceiros`.
+2. O modal carrega os dados do autorizado e permite editar os mesmos campos essenciais já disponíveis na página completa.
+3. Salvar atualiza o registro, fecha o modal e revalida a lista (`parceiros-autorizados`).
+4. Cancelar/fechar apenas descarta as alterações.
 
-### 3. `src/App.tsx`
-- Registrar a rota `/pos-vendas/pedidos/:pedidoId/resposta` protegida pela mesma `routeKey` usada pelo `/pos-vendas/pedidos` atual, apontando para `PosVendasRespostaPesquisa`.
+## Campos do modal
 
-## Fora de escopo
+Manter paridade com o formulário atual, agrupados em seções compactas:
 
-- Não altera o formulário de envio da pesquisa nem regras de arquivamento.
-- Não permite editar ou excluir a resposta na nova página (somente leitura).
+- **Identificação**: nome, responsável, email, telefone, whatsapp, logo.
+- **Localização**: CEP, estado, cidade, endereço, bairro, número, complemento.
+- **Equipe**: atendente (select com todos os usuários ativos via `get_active_users_basic`) e vendedor responsável.
+- **Status**: ativo/inativo.
+
+Campos avançados (cidades secundárias, geocodificação, negociação, preços, contratos) ficam fora do modal — para esses, adicionar um link "Abrir edição completa" que leva à página existente (mantendo `state.from` para voltar corretamente).
+
+## Arquivos afetados
+
+- **Novo**: `src/components/parceiros/EditarAutorizadoModal.tsx` — dialog com o formulário, mutations e validação.
+- **Editado**: `src/pages/direcao/ParceirosDirecao.tsx`
+  - `AutorizadosList` passa a controlar estado `editandoId` e renderizar o modal.
+  - Botão "Editar" abre o modal em vez de navegar.
+  - Após salvar, `invalidateQueries(['parceiros-autorizados', tipo])`.
+
+## Fora do escopo
+
+- Não mexer no fluxo de edição das outras rotas.
+- Não remover a página `EditarAutorizadoDirecao`.
+- Não alterar breadcrumb/back nos demais lugares.
