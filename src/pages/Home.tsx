@@ -320,7 +320,6 @@ export default function Home() {
                 {indicesLoading ? '' : formatCurrency(indices?.faturamentoMes || 0)}
               </h2>
             </div>
-            <div className="mt-2 w-10 h-0.5 bg-blue-500/40 rounded-full" />
           </div>
         </div>
 
