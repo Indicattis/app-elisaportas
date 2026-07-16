@@ -317,7 +317,7 @@ function AutorizadosList({ tipo, searchTerm }: { tipo: 'autorizado' | 'franquead
   );
 }
 
-function RepresentantesList() {
+function RepresentantesList({ searchTerm }: { searchTerm: string }) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { data, isLoading } = useQuery({
@@ -344,12 +344,22 @@ function RepresentantesList() {
     onError: (e: any) => toast.error(e.message || 'Erro ao atualizar'),
   });
 
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+  const filtered = normalizedSearch
+    ? (data ?? []).filter((r: any) =>
+        [r.nome, r.email, r.telefone]
+          .filter(Boolean)
+          .some((value) => String(value).toLowerCase().includes(normalizedSearch))
+      )
+    : (data ?? []);
+
   if (isLoading) return <div className="text-center text-white/50 py-10">Carregando...</div>;
   if (!data?.length) return <div className="text-center text-white/40 py-10">Nenhum representante cadastrado.</div>;
+  if (!filtered.length) return <div className="text-center text-white/40 py-10">Nenhum resultado para &quot;{searchTerm}&quot;.</div>;
 
   return (
     <div className="flex flex-col gap-2">
-      {data.map((r: any) => (
+      {filtered.map((r: any) => (
         <Row key={r.id}>
           <div className="flex items-center gap-4">
             <Avatar src={r.foto_perfil_url} name={r.nome} />
