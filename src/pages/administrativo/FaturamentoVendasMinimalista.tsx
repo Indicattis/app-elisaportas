@@ -37,6 +37,7 @@ import { ColumnManager } from "@/components/ColumnManager";
 import { useColumnConfig, ColumnConfig } from "@/hooks/useColumnConfig";
 import { generateFaturamentoPDF } from "@/utils/faturamentoPDFGenerator";
 import { AnexarContratoModal } from "@/components/vendas/AnexarContratoModal";
+import { desliberarContrato } from "@/lib/desliberarContrato";
 import { usePedidoCreation } from "@/hooks/usePedidoCreation";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
