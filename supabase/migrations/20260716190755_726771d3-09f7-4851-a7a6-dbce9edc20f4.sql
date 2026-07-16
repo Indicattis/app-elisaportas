@@ -1,0 +1,1 @@
+ALTER TABLE public.dre_realizados ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'pendente' CHECK (status IN ('pendente','realizado','aprovado'));
