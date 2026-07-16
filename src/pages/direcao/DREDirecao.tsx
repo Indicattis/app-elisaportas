@@ -17,7 +17,7 @@ interface RealizadoMes {
   status: 'pendente' | 'realizado' | 'aprovado';
 }
 
-type StatusMes = 'futuro' | 'a_realizar' | 'nao_realizado' | 'pendente' | 'realizado' | 'aprovado';
+type StatusMes = 'futuro' | 'pendente' | 'realizado' | 'aprovado';
 
 export default function DREDirecao() {
   const navigate = useNavigate();
@@ -95,8 +95,7 @@ export default function DREDirecao() {
     const r = realizados[mes];
     if (r) return r.status;
     if (mes > mesAtual) return 'futuro';
-    if (mes === mesAtual) return 'a_realizar';
-    return 'nao_realizado';
+    return 'pendente';
   };
 
   const statusStyles: Record<StatusMes, { border: string; badge: string; icon: JSX.Element | null; label: string }> = {
@@ -105,18 +104,6 @@ export default function DREDirecao() {
       badge: 'text-white/40',
       icon: null,
       label: 'Futuro',
-    },
-    a_realizar: {
-      border: 'border-yellow-400/50 hover:bg-yellow-400/10',
-      badge: 'text-yellow-300',
-      icon: <Clock className="w-3.5 h-3.5" strokeWidth={1.8} />,
-      label: 'A realizar',
-    },
-    nao_realizado: {
-      border: 'border-red-500/40 hover:bg-red-500/10',
-      badge: 'text-red-300',
-      icon: <AlertCircle className="w-3.5 h-3.5" strokeWidth={1.8} />,
-      label: 'Não realizado',
     },
     pendente: {
       border: 'border-red-500/50 hover:bg-red-500/10',
