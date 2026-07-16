@@ -260,6 +260,7 @@ export default function VendasDirecao() {
   const [atendentes, setAtendentes] = useState<any[]>([]);
   const [metodosExtraPorVenda, setMetodosExtraPorVenda] = useState<Map<string, string[]>>(new Map());
   const [parcelasPorVenda, setParcelasPorVenda] = useState<Map<string, any[]>>(new Map());
+  const [metodosCarregados, setMetodosCarregados] = useState(false);
   const [sortConfig, setSortConfig] = useState<{
     column: string | null;
     direction: 'asc' | 'desc' | null;
@@ -313,25 +314,39 @@ export default function VendasDirecao() {
       if (vendaIds.length === 0) return;
       const map = new Map<string, string[]>();
       const parcelasMap = new Map<string, any[]>();
-      // Supabase tem limite de 1000; fazer chunks de 500 por segurança
+      // Chunks de venda_id (evita URL grande) + paginação por range (evita
+      // teto default de 1000 linhas do PostgREST à medida que a base cresce).
       const chunkSize = 500;
+      const pageSize = 1000;
       for (let i = 0; i < vendaIds.length; i += chunkSize) {
         const slice = vendaIds.slice(i, i + chunkSize);
-        const { data } = await supabase
-          .from('contas_receber')
-          .select('venda_id, metodo_pagamento, numero_parcela, valor_parcela, valor_pago, data_vencimento, data_pagamento, status')
-          .in('venda_id', slice);
-        (data || []).forEach((conta: any) => {
-          if (!conta?.venda_id || !conta?.metodo_pagamento) return;
-          const atuais = map.get(conta.venda_id) || [];
-          if (!atuais.includes(conta.metodo_pagamento)) {
-            atuais.push(conta.metodo_pagamento);
-            map.set(conta.venda_id, atuais);
+        let from = 0;
+        // paginar até acabar
+        while (true) {
+          const { data, error } = await supabase
+            .from('contas_receber')
+            .select('id, venda_id, metodo_pagamento, numero_parcela, valor_parcela, valor_pago, data_vencimento, data_pagamento, status')
+            .in('venda_id', slice)
+            .range(from, from + pageSize - 1);
+          if (error) {
+            console.error('[VendasDirecao] contas_receber erro:', error, { chunkStart: i, from });
+            break;
           }
-          const arr = parcelasMap.get(conta.venda_id) || [];
-          arr.push(conta);
-          parcelasMap.set(conta.venda_id, arr);
-        });
+          const rows = data || [];
+          rows.forEach((conta: any) => {
+            if (!conta?.venda_id || !conta?.metodo_pagamento) return;
+            const atuais = map.get(conta.venda_id) || [];
+            if (!atuais.includes(conta.metodo_pagamento)) {
+              atuais.push(conta.metodo_pagamento);
+              map.set(conta.venda_id, atuais);
+            }
+            const arr = parcelasMap.get(conta.venda_id) || [];
+            arr.push(conta);
+            parcelasMap.set(conta.venda_id, arr);
+          });
+          if (rows.length < pageSize) break;
+          from += pageSize;
+        }
       }
       // Ordenar parcelas por método e número
       parcelasMap.forEach((arr) => {
@@ -343,6 +358,7 @@ export default function VendasDirecao() {
       });
       setMetodosExtraPorVenda(map);
       setParcelasPorVenda(parcelasMap);
+      setMetodosCarregados(true);
     };
     fetchMetodos();
   }, [vendas]);
@@ -671,7 +687,18 @@ export default function VendasDirecao() {
         {
           const todos = metodosExtraPorVenda.get(venda.id) || [];
           const principal = venda.metodo_pagamento;
-          const secundario = todos.find((m) => m !== principal) || null;
+          let secundario: string | null = todos.find((m) => m !== principal) || null;
+          // Fallback: se ainda não carregou ou não veio segundo método, tenta inferir
+          // dos campos da venda (venda com pagamento na entrega tem 2º método garantido).
+          if (!secundario && venda.pagamento_na_entrega) {
+            if (Number(venda.parcelas_dinheiro) > 0) {
+              secundario = 'dinheiro';
+            } else if (!metodosCarregados) {
+              secundario = '__loading__';
+            } else {
+              secundario = 'na_entrega';
+            }
+          }
           const parcelas = parcelasPorVenda.get(venda.id) || [];
           const grupos = new Map<string, any[]>();
           parcelas.forEach((p) => {
@@ -687,7 +714,11 @@ export default function VendasDirecao() {
                   <span>{getFormaPagamentoLabel(principal)}</span>
                   {secundario && (
                     <span className="text-white/50 text-[9px] md:text-xs">
-                      + {getFormaPagamentoLabel(secundario)}
+                      {secundario === '__loading__'
+                        ? '+ …'
+                        : secundario === 'na_entrega'
+                          ? '+ Na entrega'
+                          : `+ ${getFormaPagamentoLabel(secundario)}`}
                     </span>
                   )}
                 </div>
@@ -700,8 +731,10 @@ export default function VendasDirecao() {
                       <p>Sem parcelas registradas.</p>
                       <p className="text-white/50">
                         Método: <span className="text-white/80">{getFormaPagamentoLabel(principal)}</span>
-                        {secundario && (
-                          <> + <span className="text-white/80">{getFormaPagamentoLabel(secundario)}</span></>
+                        {secundario && secundario !== '__loading__' && (
+                          <> + <span className="text-white/80">
+                            {secundario === 'na_entrega' ? 'Na entrega' : getFormaPagamentoLabel(secundario)}
+                          </span></>
                         )}
                       </p>
                     </div>
