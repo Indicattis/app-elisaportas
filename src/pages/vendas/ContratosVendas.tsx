@@ -16,6 +16,7 @@ import { formatCurrency } from '@/lib/utils';
 import { GerarContratoElisaModal } from '@/components/contratos/GerarContratoElisaModal';
 import { GerarContratoAvulsoModal } from '@/components/contratos/GerarContratoAvulsoModal';
 import { AnexarContratoModal } from '@/components/vendas/AnexarContratoModal';
+import { desliberarContrato } from '@/lib/desliberarContrato';
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { DelayedParticles } from '@/components/DelayedParticles';
 import {
@@ -485,6 +486,7 @@ export default function ContratosVendas({ scope = 'all' }: ContratosVendasProps 
     { key: 'pendentes', label: 'Pendente de Contrato', icon: FileClock, count: pendentes.length },
     { key: 'gerados', label: 'Contrato Gerado', icon: FileText, count: gerados.length },
     { key: 'assinados', label: 'Contrato Assinado', icon: FileCheck2, count: assinados.length },
+    { key: 'liberadas', label: 'Liberadas sem Contrato', icon: FileX, count: liberadas.length },
   ];
   const activeIndex = Math.max(0, TABS.findIndex(t => t.key === activeTab));
   const cols = TABS.length;
