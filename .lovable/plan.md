@@ -1,94 +1,63 @@
-# Histórico de contratos
+# Segundo método de pagamento sumindo para atendentes/vendedores
 
-Nova página acessada por um botão em `/direcao/vendas/contratos`, listando todas as vendas cujo contrato teve algum desfecho (assinado, dispensado ou liberado sem contrato), com data e responsável de cada evento.
+## Diagnóstico
 
-## 1. Botão em `/direcao/vendas/contratos`
-
-Em `src/pages/vendas/ContratosVendas.tsx`, adicionar um botão discreto no header (ao lado dos filtros/actions existentes) com label **"Histórico"** + ícone `History` (lucide). Ação: `navigate('/direcao/vendas/contratos/historico')`.
-
-## 2. Nova rota
-
-- Path: `/direcao/vendas/contratos/historico`
-- Registrar em `src/App.tsx` reutilizando o guard `routeKey="direcao_vendas"`.
-
-## 3. Nova página `src/pages/vendas/HistoricoContratos.tsx`
-
-### Header
-- Título "Histórico de contratos"
-- Subtítulo "Vendas assinadas, dispensadas ou liberadas sem contrato"
-- Seletor de mês/ano no header (mês corrente por padrão), no mesmo estilo do relatório de itens avulsos (ChevronLeft / label / ChevronRight).
-- Filtrar pelo evento (assinado_em, dispensado_em ou liberado_em) dentro do mês selecionado.
-
-### Fonte de dados
-Query única em `vendas`, filtrando `is_rascunho=false` e `dispensada_sistema=false`, trazendo:
-
-```
-id, cliente_nome, cpf_cliente, cidade, data_venda, valor_venda, atendente_id,
-contrato_url,
-contrato_assinado_em, contrato_anexado_por,
-contrato_dispensado, contrato_dispensado_em, contrato_dispensado_por,
-contrato_liberado_faturamento, contrato_liberado_em, contrato_liberado_por
-```
-
-Uso de `.or(...)` para filtrar por período em qualquer um dos três `*_em`:
-`contrato_assinado_em.gte...contrato_assinado_em.lte...,contrato_dispensado_em...,contrato_liberado_em...`
-(implementado como `.or()` no cliente ou pós-filtro em JS após um fetch amplo do mês).
-
-Segunda query em `admin_users` para mapear `user_id → nome` dos responsáveis e do atendente.
-
-### Regras de classificação (client-side)
-Cada venda pode gerar mais de uma linha caso tenha mais de um evento no mês. Para simplicidade e fidelidade ao histórico:
-
-- **Assinado** — quando `contrato_assinado_em` cai no período.
-- **Dispensado** — quando `contrato_dispensado=true` e `contrato_dispensado_em` cai no período.
-- **Liberado sem contrato** — quando `contrato_liberado_faturamento=true`, sem `contrato_url`, sem `contrato_dispensado`, e `contrato_liberado_em` cai no período.
-
-Cada evento vira uma linha própria (uma venda pode aparecer em até 2 linhas: dispensada e depois liberada, por ex.). Ordenação por data do evento desc.
-
-### Layout
-Tabela minimalista glass (bg-white/5, backdrop-blur-xl, border-white/10):
-
-```text
-| Data      | Cliente        | Vendedor   | Desfecho              | Responsável   | Valor       |
-|-----------|----------------|------------|-----------------------|---------------|------------:|
-| 15/07/26  | João Silva     | Fulano     | Assinado              | Ciclano       | R$ 4.500,00 |
-| 12/07/26  | Maria Souza    | Beltrano   | Dispensado            | Ciclano       | R$ 3.200,00 |
-| ...                                                                                          |
-```
-
-Badges por desfecho (mesmas cores já usadas em `ContratosVendas`/`VendaPendentePedidoCard`):
-- Assinado → emerald
-- Dispensado → âmbar
-- Liberado sem contrato → cinza/branco
-
-Estado vazio: "Nenhum contrato movimentado no período".
-Loading: skeleton nas linhas.
-
-### Tipos
+A célula "Pagamento" em `/direcao/vendas/todas` monta a linha `+ <segundo método>` a partir de uma consulta client-side a `contas_receber`:
 
 ```ts
-type EventoContrato = {
-  venda_id: string;
-  data_evento: string; // ISO
-  cliente_nome: string;
-  cpf_cliente: string | null;
-  cidade: string | null;
-  atendente_nome: string | null;
-  desfecho: 'assinado' | 'dispensado' | 'liberado';
-  responsavel_nome: string | null;
-  valor_venda: number;
-};
+// src/pages/direcao/VendasDirecao.tsx (linhas 308-348)
+const { data } = await supabase
+  .from('contas_receber')
+  .select('venda_id, metodo_pagamento, ...')
+  .in('venda_id', slice);   // sem .limit, sem tratamento de error
 ```
 
-React Query key: `['historico-contratos', inicioISO, fimISO]`, `staleTime: 30_000`.
+Depois:
+
+```ts
+const todos = metodosExtraPorVenda.get(venda.id) || [];
+const secundario = todos.find(m => m !== principal) || null;
+```
+
+RLS de `contas_receber` hoje: `auth.uid() IS NOT NULL` (permissiva, aplica a todas as roles). Grants OK para `authenticated`. Ou seja, atendentes deveriam receber o mesmo resultado que admins. Como não veem, sobraram três hipóteses plausíveis:
+
+1. **Erro silencioso no fetch** — o código ignora `error` e devolve `data=null` sem logar; qualquer falha (token expirado, network) faz o cache do segundo método ficar vazio até a próxima montagem.
+2. **Truncamento em 1000 linhas** — hoje são 659 registros em `contas_receber`, então não estoura. Mas para atendentes/vendedores que usam a página com muito tempo aberto e o total cresce, o `.in()` grande pode truncar sem aviso.
+3. **Race entre `useVendas` e o `useEffect` de contas_receber** — o `useEffect` só dispara depois do fetch de vendas; se `vendas` é reatribuído (novo objeto) sem que `contas_receber` termine, o render fica no estado antigo (vazio) por alguns segundos. Atendentes com conexão mais lenta ficam mais expostos.
+
+## Correções
+
+Escopo restrito a `src/pages/direcao/VendasDirecao.tsx` (client-side, não mexe em RLS/schema):
+
+### 1. Instrumentar o fetch de `contas_receber`
+
+- Capturar `error` no `await supabase.from('contas_receber')...` e `console.error('[VendasDirecao] contas_receber erro:', error, { slice })`.
+- Isso permite confirmar rapidamente na sessão do atendente afetado se é RLS/auth (mensagem "permission denied") ou algo de rede.
+
+### 2. Paginar com `range` em vez de confiar no default
+
+- Trocar o `.in('venda_id', slice)` por um loop com `.range(start, start+PAGE-1)` até a página vir com menos de `PAGE` linhas. Assim eliminamos o teto de 1000 do PostgREST como possível causa e prevenimos o problema à medida que a base cresce.
+- Chunk de `venda_id` mantido em 500; página de leitura de 1000 linhas por request.
+
+### 3. Estado inicial e revalidação
+
+- Guardar um flag `metodosCarregados` para diferenciar "ainda carregando" de "carregou vazio". Enquanto `!metodosCarregados`, se `venda.pagamento_na_entrega === true`, exibir um placeholder `+ ...` (skeleton) em vez de suprimir a linha — isso já dá o sinal visual de "existe segundo método" antes do fetch terminar.
+- Adicionar `venda.updated_at`/`vendas.length` no dep-array do `useEffect` para revalidar quando qualquer venda muda (hoje o array depende só do array `vendas`, que é substituído em cada refetch — ok, mas confirmar).
+
+### 4. Fallback quando `contas_receber` volta só com o método principal
+
+- Se `todos.length <= 1` e `venda.pagamento_na_entrega === true`, tentar inferir o segundo método a partir de campos que já vêm em `vendas`:
+  - `parcelas_dinheiro > 0` → `"dinheiro"`
+  - Caso contrário, exibir o rótulo genérico "Na entrega".
+- Isso garante que atendentes vejam o segundo método mesmo se, por qualquer motivo, `contas_receber` não devolver a linha esperada (venda antiga sem registro completo, por exemplo).
 
 ## Fora do escopo
-- Sem filtro por desfecho, sem busca, sem exportação (não pedidos).
-- Sem alteração da tela `/direcao/vendas/contratos` além do botão de acesso.
-- Sem migração de banco — todos os campos já existem em `vendas`.
-- Sem permissões novas.
 
-## Detalhes técnicos
-- Datas normalizadas com `T12:00:00.000Z` para comparações (regra do projeto).
-- `formatBRL` e helper de data compartilhados com padrão já usado.
-- Componente padrão `MinimalistLayout` com breadcrumbs Home → Direção → Vendas → Contratos → Histórico.
+- Sem alterações em RLS ou grants de `contas_receber` (já permissivo para authenticated).
+- Sem mudanças no hook `useVendas`.
+- Sem alteração no tooltip (que continua exibindo os detalhes de parcelas quando disponíveis).
+
+## Como validar
+
+1. Após deploy, pedir para o(s) atendente(s) afetado(s) abrir `/direcao/vendas/todas` e conferir o DevTools > Console — se aparecer erro de `contas_receber`, mostrar a mensagem para direcionar a correção real (RLS, sessão, etc.).
+2. Comparar a mesma venda entre admin e atendente e verificar se a linha `+ <método>` aparece nas duas.
