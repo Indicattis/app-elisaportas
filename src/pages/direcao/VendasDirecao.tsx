@@ -260,6 +260,7 @@ export default function VendasDirecao() {
   const [atendentes, setAtendentes] = useState<any[]>([]);
   const [metodosExtraPorVenda, setMetodosExtraPorVenda] = useState<Map<string, string[]>>(new Map());
   const [parcelasPorVenda, setParcelasPorVenda] = useState<Map<string, any[]>>(new Map());
+  const [metodosCarregados, setMetodosCarregados] = useState(false);
   const [sortConfig, setSortConfig] = useState<{
     column: string | null;
     direction: 'asc' | 'desc' | null;
@@ -313,25 +314,39 @@ export default function VendasDirecao() {
       if (vendaIds.length === 0) return;
       const map = new Map<string, string[]>();
       const parcelasMap = new Map<string, any[]>();
-      // Supabase tem limite de 1000; fazer chunks de 500 por segurança
+      // Chunks de venda_id (evita URL grande) + paginação por range (evita
+      // teto default de 1000 linhas do PostgREST à medida que a base cresce).
       const chunkSize = 500;
+      const pageSize = 1000;
       for (let i = 0; i < vendaIds.length; i += chunkSize) {
         const slice = vendaIds.slice(i, i + chunkSize);
-        const { data } = await supabase
-          .from('contas_receber')
-          .select('venda_id, metodo_pagamento, numero_parcela, valor_parcela, valor_pago, data_vencimento, data_pagamento, status')
-          .in('venda_id', slice);
-        (data || []).forEach((conta: any) => {
-          if (!conta?.venda_id || !conta?.metodo_pagamento) return;
-          const atuais = map.get(conta.venda_id) || [];
-          if (!atuais.includes(conta.metodo_pagamento)) {
-            atuais.push(conta.metodo_pagamento);
-            map.set(conta.venda_id, atuais);
+        let from = 0;
+        // paginar até acabar
+        while (true) {
+          const { data, error } = await supabase
+            .from('contas_receber')
+            .select('id, venda_id, metodo_pagamento, numero_parcela, valor_parcela, valor_pago, data_vencimento, data_pagamento, status')
+            .in('venda_id', slice)
+            .range(from, from + pageSize - 1);
+          if (error) {
+            console.error('[VendasDirecao] contas_receber erro:', error, { chunkStart: i, from });
+            break;
           }
-          const arr = parcelasMap.get(conta.venda_id) || [];
-          arr.push(conta);
-          parcelasMap.set(conta.venda_id, arr);
-        });
+          const rows = data || [];
+          rows.forEach((conta: any) => {
+            if (!conta?.venda_id || !conta?.metodo_pagamento) return;
+            const atuais = map.get(conta.venda_id) || [];
+            if (!atuais.includes(conta.metodo_pagamento)) {
+              atuais.push(conta.metodo_pagamento);
+              map.set(conta.venda_id, atuais);
+            }
+            const arr = parcelasMap.get(conta.venda_id) || [];
+            arr.push(conta);
+            parcelasMap.set(conta.venda_id, arr);
+          });
+          if (rows.length < pageSize) break;
+          from += pageSize;
+        }
       }
       // Ordenar parcelas por método e número
       parcelasMap.forEach((arr) => {
@@ -343,6 +358,7 @@ export default function VendasDirecao() {
       });
       setMetodosExtraPorVenda(map);
       setParcelasPorVenda(parcelasMap);
+      setMetodosCarregados(true);
     };
     fetchMetodos();
   }, [vendas]);
