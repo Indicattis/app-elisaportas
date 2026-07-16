@@ -2045,14 +2045,15 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
                     observacoes: realizadoObs || null,
                     realizado_por: userData.user?.id || null,
                     realizado_em: new Date().toISOString(),
+                    status: statusSelecionado,
                   };
                   const { error } = await supabase
                     .from('dre_realizados' as any)
                     .upsert(payload, { onConflict: 'mes' });
                   if (error) throw error;
-                  setRealizadoRow({ realizado_em: payload.realizado_em, observacoes: payload.observacoes });
+                  setRealizadoRow({ realizado_em: payload.realizado_em, observacoes: payload.observacoes, status: statusSelecionado });
                   setRealizadoDialogOpen(false);
-                  toast.success(realizadoRow ? 'Valores realizados atualizados' : 'DRE marcado como realizado');
+                  toast.success('Status atualizado');
                 } catch (err: any) {
                   console.error('Erro ao salvar dre_realizados:', err);
                   toast.error('Erro ao salvar: ' + (err?.message || 'desconhecido'));
