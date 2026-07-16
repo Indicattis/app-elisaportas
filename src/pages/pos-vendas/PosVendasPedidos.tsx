@@ -47,7 +47,7 @@ export default function PosVendasPedidos() {
   }, []);
 
   const { data: pedidos = [], isLoading } = useQuery({
-    queryKey: ['pos-vendas-pedidos'],
+    queryKey: ['pos-vendas-pedidos', 'v2'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('pedidos_producao')
