@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ClipboardList, CheckCircle2, Clock, Search, ArrowRight, Eye, ArrowUpNarrowWide, ArrowDownWideNarrow, Calendar } from 'lucide-react';
+import { ClipboardList, CheckCircle2, Clock, Search, ArrowRight, Eye, ArrowUpNarrowWide, ArrowDownWideNarrow, Calendar, FileText } from 'lucide-react';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
@@ -11,6 +11,7 @@ import { PedidoDetalhesSheet } from '@/components/pedidos/PedidoDetalhesSheet';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { useSessionFilters } from '@/hooks/useSessionFilters';
+import { useNavigate } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -33,6 +34,7 @@ function getInicial(nome: string) {
 export default function PosVendasPedidos() {
 
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const [filtro, setFiltro] = useSessionFilters<FiltroStatus>({ key: 'pos-vendas-pedidos-filtro', defaultValue: 'pendentes' });
   const [busca, setBusca] = useSessionFilters<string>({ key: 'pos-vendas-pedidos-busca', defaultValue: '' });
@@ -306,14 +308,24 @@ export default function PosVendasPedidos() {
                       <Eye className="w-4 h-4" />
                       Ver pedido
                     </Button>
-                    <Button
-                      size="sm"
-                      disabled={respondeu}
-                      onClick={() => setPedidoSelecionado(p)}
-                      className="rounded-full"
-                    >
-                      {respondeu ? 'Já respondido' : 'Responder pesquisa'}
-                    </Button>
+                    {respondeu ? (
+                      <Button
+                        size="sm"
+                        onClick={() => navigate(`/pos-vendas/pedidos/${p.id}/resposta`)}
+                        className="rounded-full gap-1.5"
+                      >
+                        <FileText className="w-4 h-4" />
+                        Ver resposta
+                      </Button>
+                    ) : (
+                      <Button
+                        size="sm"
+                        onClick={() => setPedidoSelecionado(p)}
+                        className="rounded-full"
+                      >
+                        Responder pesquisa
+                      </Button>
+                    )}
                   </div>
 
                   <ArrowRight className="w-4 h-4 text-white/20 group-hover:text-white/60 transition-colors flex-shrink-0" />

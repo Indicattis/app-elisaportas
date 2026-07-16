@@ -1,21 +1,33 @@
-## Causa
+## Objetivo
 
-`PosVendasPedidos` filtra `arquivado=false` na query principal (`pedidos_producao`). Quando a pesquisa é enviada, `PesquisaSatisfacaoForm` **arquiva o pedido** (`arquivado=true`). Como a query descarta arquivados, o pedido some das duas abas — inclusive de "Respondidos".
+Nos itens da aba "Respondidos" em `/pos-vendas/pedidos`, exibir um botão **"Ver resposta"** que abre uma nova página com o resumo da pesquisa de satisfação daquele pedido.
 
-## Correção
+## Mudanças
 
-### `src/pages/pos-vendas/PosVendasPedidos.tsx`
-1. **Remover** o filtro `.eq('arquivado', false)` da query `pos-vendas-pedidos` para trazer também os arquivados que estão em `etapa_atual='pos_vendas'`.
-2. Ajustar a filtragem client-side em `listaFiltrada`:
-   - `pendentes` → `!p.arquivado && !respondeu` (mantém pendentes visíveis apenas para não-arquivados).
-   - `respondidos` → `respondeu` (independente de arquivado).
-   - `todos` → tudo (inclui arquivados respondidos).
-3. `pendentesCount` passa a considerar `!p.arquivado && !respondidosSet.has(p.id)` (evita contagem inflada por arquivados sem pesquisa).
-4. Incluir `arquivado` no `select` da query.
+### 1. Nova página `src/pages/pos-vendas/PosVendasRespostaPesquisa.tsx`
+Rota: `/pos-vendas/pedidos/:pedidoId/resposta`
 
-Isso preserva o comportamento atual (pedido some da lista de pendentes ao arquivar) e volta a mostrar os respondidos na aba correspondente.
+Layout minimalista glassmorphism (mesmo padrão do módulo). Ao carregar:
+- Busca a pesquisa em `pesquisas_satisfacao` pelo `pedido_id` (`.maybeSingle()`).
+- Busca dados básicos do pedido (número, cliente, telefone) via `pedidos_producao` + venda (atendente).
+- Mostra:
+  - Header com botão voltar (→ `/pos-vendas/pedidos`) e breadcrumb, incluindo nome do cliente e número do pedido.
+  - Cartão "Avaliações" com 3 notas (Atendimento, Produto, Instalação) exibidas com estrelas 1–5.
+  - Cartão "Perguntas": Recomendaria? / Quis comprar avulsos? / Avaliou no Google? (cada um com Sim/Não colorido).
+  - Cartão "Comentário" (só se houver texto).
+  - Cartão "Itens avulsos" listando o array `itens_avulsos` (só se `quis_comprar_avulsos` e array não vazio).
+  - Cartão "Anexos" com miniaturas/thumbnails e link para abrir cada anexo (`anexos` é jsonb com URLs).
+  - Data da resposta (`created_at`) e nome do respondente (join com `admin_users` por `respondido_por`).
+- Se não houver pesquisa para o pedido, mostra estado vazio ("Nenhuma resposta encontrada").
+
+### 2. `src/pages/pos-vendas/PosVendasPedidos.tsx`
+- Nos cards dos pedidos respondidos (quando `respondeu === true`), trocar o botão desabilitado "Já respondido" por um botão **"Ver resposta"** com ícone `FileText` que navega para `/pos-vendas/pedidos/{id}/resposta`.
+- Pendentes continuam com "Responder pesquisa" como está.
+
+### 3. `src/App.tsx`
+- Registrar a rota `/pos-vendas/pedidos/:pedidoId/resposta` protegida pela mesma `routeKey` usada pelo `/pos-vendas/pedidos` atual, apontando para `PosVendasRespostaPesquisa`.
 
 ## Fora de escopo
 
-- Não altera o fluxo de submissão da pesquisa nem a decisão de arquivar.
-- Não mexe em RLS.
+- Não altera o formulário de envio da pesquisa nem regras de arquivamento.
+- Não permite editar ou excluir a resposta na nova página (somente leitura).
