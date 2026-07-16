@@ -203,11 +203,7 @@ export default function EditarAutorizadoDirecao() {
 
   const fetchVendedores = async () => {
     try {
-      const { data, error } = await supabase
-        .from('admin_users')
-        .select('id, nome, foto_perfil_url')
-        .eq('ativo', true)
-        .order('nome');
+      const { data, error } = await supabase.rpc('get_active_users_basic');
       if (error) throw error;
       setVendedores(data || []);
     } catch (error) {

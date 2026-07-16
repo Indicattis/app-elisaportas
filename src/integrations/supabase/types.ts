@@ -10849,6 +10849,14 @@ export type Database = {
           numero: number
         }[]
       }
+      get_active_users_basic: {
+        Args: never
+        Returns: {
+          foto_perfil_url: string
+          id: string
+          nome: string
+        }[]
+      }
       get_autorizador_vendas: {
         Args: { p_tipo: string }
         Returns: {
