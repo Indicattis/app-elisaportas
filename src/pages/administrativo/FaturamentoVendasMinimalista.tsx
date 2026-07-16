@@ -198,6 +198,35 @@ export default function FaturamentoMinimalista() {
   const [excluindoVenda, setExcluindoVenda] = useState(false);
   const [faturarTudoOpen, setFaturarTudoOpen] = useState(false);
   const [faturandoTudo, setFaturandoTudo] = useState(false);
+  const [contratoPreviewUrl, setContratoPreviewUrl] = useState<string | null>(null);
+  const [contratoPreviewLoading, setContratoPreviewLoading] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    const path = (selectedVenda as any)?.contrato_url as string | undefined;
+    if (!path || path === 'legado') {
+      setContratoPreviewUrl(null);
+      setContratoPreviewLoading(false);
+      return;
+    }
+    setContratoPreviewLoading(true);
+    setContratoPreviewUrl(null);
+    (async () => {
+      const { data, error } = await supabase.storage
+        .from('contratos-vendas')
+        .createSignedUrl(path, 3600);
+      if (cancelled) return;
+      setContratoPreviewLoading(false);
+      if (error || !data?.signedUrl) {
+        setContratoPreviewUrl(null);
+        return;
+      }
+      setContratoPreviewUrl(data.signedUrl);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedVenda?.id, (selectedVenda as any)?.contrato_url]);
 
   useEffect(() => {
     try {
