@@ -748,6 +748,7 @@ export default function VendaNovaMinimalista() {
         portas,
         pagamentoData,
         creditoVenda: { valorCredito, percentualCredito },
+        ajusteGlobal,
       } as any);
       const novoId = (rascunho as any)?.id;
       if (novoId) navigate(`/vendas/minhas-vendas/rascunho/${novoId}`);
