@@ -19,6 +19,7 @@ interface FaturamentoProduto {
   portas: number;
   pintura: number;
   instalacoes: number;
+  acessorios: number;
   avulsos: number;
   fretes: number;
   total: number;
