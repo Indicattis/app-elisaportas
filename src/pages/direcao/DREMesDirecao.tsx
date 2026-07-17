@@ -19,6 +19,7 @@ interface FaturamentoProduto {
   portas: number;
   pintura: number;
   instalacoes: number;
+  acessorios: number;
   avulsos: number;
   fretes: number;
   total: number;
@@ -520,6 +521,7 @@ function PrintReport({
               { key: 'pintura', label: 'Pintura' },
               { key: 'instalacoes', label: 'Instalações' },
               { key: 'fretes', label: 'Fretes' },
+              { key: 'acessorios', label: 'Acessórios' },
               { key: 'avulsos', label: 'Itens Avulsos' },
             ].map((c, i) => {
               const f = faturamento[c.key as keyof FaturamentoProduto];
@@ -1009,9 +1011,9 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
   const showDespesas = viewMode === 'full' || viewMode === 'despesas';
   const showResumoFinal = viewMode === 'full' || viewMode === 'resultados';
   const [loading, setLoading] = useState(true);
-  const [faturamento, setFaturamento] = useState<FaturamentoProduto>({ portas: 0, pintura: 0, instalacoes: 0, avulsos: 0, fretes: 0, total: 0 });
-  const [lucro, setLucro] = useState<FaturamentoProduto>({ portas: 0, pintura: 0, instalacoes: 0, avulsos: 0, fretes: 0, total: 0 });
-  const [descontoExcedido, setDescontoExcedido] = useState<FaturamentoProduto>({ portas: 0, pintura: 0, instalacoes: 0, avulsos: 0, fretes: 0, total: 0 });
+  const [faturamento, setFaturamento] = useState<FaturamentoProduto>({ portas: 0, pintura: 0, instalacoes: 0, acessorios: 0, avulsos: 0, fretes: 0, total: 0 });
+  const [lucro, setLucro] = useState<FaturamentoProduto>({ portas: 0, pintura: 0, instalacoes: 0, acessorios: 0, avulsos: 0, fretes: 0, total: 0 });
+  const [descontoExcedido, setDescontoExcedido] = useState<FaturamentoProduto>({ portas: 0, pintura: 0, instalacoes: 0, acessorios: 0, avulsos: 0, fretes: 0, total: 0 });
   const [despesasFixas, setDespesasFixas] = useState<DespesaAgrupada[]>([]);
   const [despesasFolha, setDespesasFolha] = useState<DespesaAgrupada[]>([]);
   const [despesasVariaveis, setDespesasVariaveis] = useState<DespesaAgrupada[]>([]);
@@ -1043,6 +1045,9 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
   const [instalacaoDetalhe, setInstalacaoDetalhe] = useState<VendaComPortasRow[]>([]);
   const [avulsosModalOpen, setAvulsosModalOpen] = useState(false);
   const [avulsosDetalhe, setAvulsosDetalhe] = useState<VendaComPortasRow[]>([]);
+  const [acessoriosModalOpen, setAcessoriosModalOpen] = useState(false);
+  const [acessoriosDetalhe, setAcessoriosDetalhe] = useState<VendaComPortasRow[]>([]);
+  const [topAcessorios, setTopAcessorios] = useState<{nome: string, qtd: number}[]>([]);
 
   const [realizadoRow, setRealizadoRow] = useState<{ realizado_em: string; observacoes: string | null; status: 'pendente' | 'realizado' | 'aprovado' } | null>(null);
   const [realizadoDialogOpen, setRealizadoDialogOpen] = useState(false);
@@ -1282,12 +1287,30 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
             largura,
             tamanho,
             venda_id,
+            custos_itens_id,
             vendas!inner(id, data_venda, forma_pagamento, temperatura)
           `)
           .gte('vendas.data_venda', start + ' 00:00:00')
           .lte('vendas.data_venda', end + ' 23:59:59');
 
         if (prodError) throw prodError;
+
+        // Map de tipo_item do catálogo (custos_itens) para classificar acessórios vs avulsos
+        const { data: catalogoItens } = await supabase
+          .from('custos_itens')
+          .select('id, tipo_item');
+        const tipoItemMap = new Map<string, 'avulso' | 'acessorio'>();
+        ((catalogoItens || []) as any[]).forEach((c) => {
+          tipoItemMap.set(String(c.id), c.tipo_item === 'acessorio' ? 'acessorio' : 'avulso');
+        });
+        const classificarAvulso = (p: any): 'acessorios' | 'avulsos' => {
+          const cid = p.custos_itens_id ? String(p.custos_itens_id) : null;
+          if (cid && tipoItemMap.has(cid)) {
+            return tipoItemMap.get(cid) === 'acessorio' ? 'acessorios' : 'avulsos';
+          }
+          // Fallback legacy: tipo_produto='acessorio' vira acessórios; 'adicional' vira avulsos
+          return p.tipo_produto === 'acessorio' ? 'acessorios' : 'avulsos';
+        };
 
         // Configs ao vivo de lucro (definidas em /direcao/estrategia/kits)
         const [cfgPintura, cfgInstal] = await Promise.all([
@@ -1317,8 +1340,8 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
           return { altura, largura };
         };
 
-        const fat: FaturamentoProduto = { portas: 0, pintura: 0, instalacoes: 0, avulsos: 0, fretes: 0, total: 0 };
-        const luc: FaturamentoProduto = { portas: 0, pintura: 0, instalacoes: 0, avulsos: 0, fretes: 0, total: 0 };
+        const fat: FaturamentoProduto = { portas: 0, pintura: 0, instalacoes: 0, acessorios: 0, avulsos: 0, fretes: 0, total: 0 };
+        const luc: FaturamentoProduto = { portas: 0, pintura: 0, instalacoes: 0, acessorios: 0, avulsos: 0, fretes: 0, total: 0 };
 
         produtos?.forEach((p: any) => {
           const tipo = p.tipo_produto;
@@ -1366,8 +1389,9 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
             const { altura, largura } = parseDims(p);
             luc.pintura += calcLucroPintura(valorTotal, altura, largura);
           } else if (['acessorio', 'adicional'].includes(tipo)) {
-            fat.avulsos += valorTotal;
-            luc.avulsos += p.lucro_item || 0;
+            const bucket = classificarAvulso(p);
+            fat[bucket] += valorTotal;
+            luc[bucket] += p.lucro_item || 0;
           } else if (['instalacao', 'manutencao'].includes(tipo)) {
             fat.instalacoes += valorTotal;
             luc.instalacoes += calcLucroInstal(valorTotal);
@@ -1384,8 +1408,8 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         const totalFretesVendas = vendas?.reduce((sum, v) => sum + ((v as any).valor_frete || 0), 0) || 0;
         fat.fretes = totalFretesVendas;
 
-        fat.total = fat.portas + fat.pintura + fat.instalacoes + fat.avulsos + totalCredito;
-        luc.total = luc.portas + luc.pintura + luc.instalacoes + luc.avulsos;
+        fat.total = fat.portas + fat.pintura + fat.instalacoes + fat.acessorios + fat.avulsos + totalCredito;
+        luc.total = luc.portas + luc.pintura + luc.instalacoes + luc.acessorios + luc.avulsos;
 
         // ============ Desconto Excedido por coluna ============
         // Reusa a mesma fórmula do modal Portas: para cada venda calcula-se
@@ -1433,7 +1457,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
           excVenda.set(vid, (excPct / 100) * t.base);
         });
 
-        const exc: FaturamentoProduto = { portas: 0, pintura: 0, instalacoes: 0, avulsos: 0, fretes: 0, total: 0 };
+        const exc: FaturamentoProduto = { portas: 0, pintura: 0, instalacoes: 0, acessorios: 0, avulsos: 0, fretes: 0, total: 0 };
         (produtos || []).forEach((p: any) => {
           const vid = p.venda_id || p.vendas?.id;
           if (!vid) return;
@@ -1459,30 +1483,34 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
           } else if (['instalacao', 'manutencao'].includes(tipo)) {
             exc.instalacoes += share;
           } else {
-            exc.avulsos += share;
+            exc[classificarAvulso(p)] += share;
           }
         });
-        exc.total = exc.portas + exc.pintura + exc.instalacoes + exc.avulsos;
+        exc.total = exc.portas + exc.pintura + exc.instalacoes + exc.acessorios + exc.avulsos;
 
         setFaturamento(fat);
         setLucro(luc);
         setDescontoExcedido(exc);
 
-        // Top 5 itens avulsos (acessórios + adicionais)
+        // Top 5 itens (separado: acessórios vs avulsos, conforme catálogo tipo_item)
         const avulsosMap: Record<string, number> = {};
+        const acessoriosMap: Record<string, number> = {};
         produtos?.forEach((p: any) => {
           const nome = p.descricao || 'Sem descrição';
           const qtd = p.quantidade || 1;
           if (['acessorio', 'adicional'].includes(p.tipo_produto)) {
-            avulsosMap[nome] = (avulsosMap[nome] || 0) + qtd;
+            const bucket = classificarAvulso(p);
+            const alvo = bucket === 'acessorios' ? acessoriosMap : avulsosMap;
+            alvo[nome] = (alvo[nome] || 0) + qtd;
           }
         });
-        setTopAvulsos(
-          Object.entries(avulsosMap)
+        const topFrom = (m: Record<string, number>) =>
+          Object.entries(m)
             .map(([nome, qtd]) => ({ nome, qtd }))
             .sort((a, b) => b.qtd - a.qtd)
-            .slice(0, 5)
-        );
+            .slice(0, 5);
+        setTopAvulsos(topFrom(avulsosMap));
+        setTopAcessorios(topFrom(acessoriosMap));
 
         // Buscar resumo do estoque
         const fetchEstoque = async () => {
@@ -1534,7 +1562,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
             id, descricao, quantidade, tipo_produto, valor_total,
             valor_produto, valor_pintura, valor_instalacao,
             valor_total_sem_frete,
-            altura, largura, tabela_precos_porta_id,
+            altura, largura, tabela_precos_porta_id, custos_itens_id,
             tipo_desconto, desconto_percentual, desconto_valor,
             lucro_item, lucro_pintura,
             tabela_precos_portas:tabela_precos_porta_id(descricao, altura, largura),
@@ -1836,19 +1864,21 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         );
 
         // ---- Itens Avulsos (acessorio + adicional) ----
-        setAvulsosDetalhe(
+        const detalheAvulsoBuilder = (targetBucket: 'acessorios' | 'avulsos') =>
           buildCategoriaDetalhe(todosRows, (p) => {
             if (!['acessorio', 'adicional'].includes(p.tipo_produto)) return null;
+            if (classificarAvulso(p) !== targetBucket) return null;
             const qty = p.quantidade || 1;
             const bruto = (p.valor_produto || 0) * qty;
             if (bruto <= 0) return null;
             return {
               valorTabela: bruto,
               lucro: p.lucro_item || 0,
-              descricao: p.descricao || 'Item avulso',
+              descricao: p.descricao || (targetBucket === 'acessorios' ? 'Acessório' : 'Item avulso'),
             };
-          }),
-        );
+          });
+        setAvulsosDetalhe(detalheAvulsoBuilder('avulsos'));
+        setAcessoriosDetalhe(detalheAvulsoBuilder('acessorios'));
       } catch (err) {
         console.error('Erro ao buscar dados DRE:', err);
       } finally {
@@ -1892,6 +1922,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
     { key: 'pintura', label: 'Pintura' },
     { key: 'instalacoes', label: 'Instalações' },
     { key: 'fretes', label: 'Fretes' },
+    { key: 'acessorios', label: 'Acessórios' },
     { key: 'avulsos', label: 'Itens Avulsos' },
     { key: 'total', label: 'Total' },
   ] as const;
@@ -1940,11 +1971,12 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
                 <tr className="border-b border-white/10">
                   <th className="text-left p-3 text-white/40 font-medium text-xs uppercase"></th>
                   {columns.map(col => {
-                    const topList = col.key === 'avulsos' ? topAvulsos : null;
+                    const topList = col.key === 'avulsos' ? topAvulsos : col.key === 'acessorios' ? topAcessorios : null;
                     const isPortas = col.key === 'portas';
                     const isPintura = col.key === 'pintura';
                     const isInstalacoes = col.key === 'instalacoes';
                     const isAvulsos = col.key === 'avulsos';
+                    const isAcessorios = col.key === 'acessorios';
                     const onClickHeader = isPortas
                       ? () => setPortasModalOpen(true)
                       : isPintura
@@ -1953,7 +1985,9 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
                           ? () => setInstalacoesModalOpen(true)
                           : isAvulsos
                             ? () => setAvulsosModalOpen(true)
-                            : null;
+                            : isAcessorios
+                              ? () => setAcessoriosModalOpen(true)
+                              : null;
                     return (
                       <th
                         key={col.key}
@@ -2269,6 +2303,15 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         formatCurrency={formatCurrency}
         titulo="Vendas com Itens Avulsos"
         categoriaLabel="Itens Avulsos"
+      />
+      <PortasDetalheDialog
+        open={acessoriosModalOpen}
+        onOpenChange={setAcessoriosModalOpen}
+        mesNome={mesNome}
+        vendas={acessoriosDetalhe}
+        formatCurrency={formatCurrency}
+        titulo="Vendas com Acessórios"
+        categoriaLabel="Acessórios"
       />
       <Dialog open={realizadoDialogOpen} onOpenChange={setRealizadoDialogOpen}>
         <DialogContent className="max-w-lg bg-slate-900 border-white/10 text-white">

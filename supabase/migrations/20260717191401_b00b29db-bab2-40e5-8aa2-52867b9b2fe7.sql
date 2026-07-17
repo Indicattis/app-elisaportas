@@ -1,0 +1,1 @@
+ALTER TABLE public.custos_itens ADD COLUMN IF NOT EXISTS tipo_item text NOT NULL DEFAULT 'avulso' CHECK (tipo_item IN ('avulso','acessorio'));
