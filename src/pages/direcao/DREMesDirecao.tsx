@@ -1044,6 +1044,9 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
   const [instalacaoDetalhe, setInstalacaoDetalhe] = useState<VendaComPortasRow[]>([]);
   const [avulsosModalOpen, setAvulsosModalOpen] = useState(false);
   const [avulsosDetalhe, setAvulsosDetalhe] = useState<VendaComPortasRow[]>([]);
+  const [acessoriosModalOpen, setAcessoriosModalOpen] = useState(false);
+  const [acessoriosDetalhe, setAcessoriosDetalhe] = useState<VendaComPortasRow[]>([]);
+  const [topAcessorios, setTopAcessorios] = useState<{nome: string, qtd: number}[]>([]);
 
   const [realizadoRow, setRealizadoRow] = useState<{ realizado_em: string; observacoes: string | null; status: 'pendente' | 'realizado' | 'aprovado' } | null>(null);
   const [realizadoDialogOpen, setRealizadoDialogOpen] = useState(false);
