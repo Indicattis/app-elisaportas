@@ -1,44 +1,47 @@
-## Nova linha "Desconto Excedido" na tabela do DRE
+## Refazer modal de Portas no DRE
 
-Adicionar uma linha entre "Faturamento" e "Lucro" na tabela principal do DRE (`/direcao/estrategia/dre/:mes`) mostrando o desconto que ultrapassou os limites configurados de cada venda. O valor é debitado do Lucro.
+Refatoro o `PortasDetalheDialog` em `src/pages/direcao/DREMesDirecao.tsx` para adotar o mesmo estilo visual da página (fundo `slate-950/gradient`, cards `bg-white/5 backdrop-blur-xl`, tipografia e paleta idênticas às tabelas do DRE) e segrego a coluna **Desconto** em 4 colunas de faixa de autorização.
 
-### Cálculo (reusa lógica já existente do modal Portas)
+### Segregação da coluna Desconto (4 níveis)
 
-Para cada venda do mês:
-1. Soma base (`valor_produto + valor_pintura + valor_instalacao`) × quantidade de todos os itens.
-2. Soma desconto de todos os itens.
-3. `pctDado = totalDesconto / totalBase * 100`.
-4. Limite permitido = `limite_desconto_avista` (se À Vista/não-cartão) + `limite_desconto_presencial` (se `temperatura=false`) + `limite_adicional_responsavel` (se ultrapassou limite base).
-5. Excedido da venda = `max(0, pctDado − limite) / 100 × totalBase`.
+Para cada venda, o desconto total é distribuído em faixas cumulativas sobre o valor tabela, usando os limites já configurados em `configuracoes_vendas`:
 
-O excedido de cada venda é rateado entre seus itens proporcionalmente ao valor bruto do item, e cada item contribui para a coluna correspondente ao seu `tipo_produto`:
-- `porta_enrolar`, `porta_social` → coluna **Portas**
-- `pintura` → coluna **Pintura**
-- `instalacao` → coluna **Instalações**
-- demais → coluna **Itens Avulsos**
-- Fretes: coluna não recebe excedido (frete é rateado à parte).
-- Total: soma das colunas.
+| Faixa | Rótulo | Faixa % | Regra |
+|---|---|---|---|
+| 1 | Automático | 0 → `limite_desconto_avista` (3%) | Só aplicável se método de pagamento **não for cartão** |
+| 2 | Temp. Fria | `avista` → `limite_desconto_presencial` (5%) | Só se `temperatura = 'fria'` |
+| 3 | Gerente | `presencial` → `limite_adicional_responsavel` (7%) | Autorização de gerente |
+| 4 | Diretor | acima de `responsavel` (7%) | Autorização de diretor |
 
-### Alterações
+Se a venda não cumpre o pré-requisito da faixa (ex: pagamento é cartão), essa faixa é pulada e o desconto "cai" para a próxima faixa que aceita — mantendo consistência com o cálculo de "Excedido" já existente.
 
-**`src/pages/direcao/DREMesDirecao.tsx`** (única mudança):
+### Alterações na tabela do modal
 
-1. Ampliar a query já feita para o modal Portas para trazer TODOS os produtos das vendas do mês (não só portas), com `tipo_produto` e vinculado a `vendas.data_venda` no período. Reaproveitar `configuracoes_vendas` e a mesma fórmula de excedido por venda.
-2. Calcular um objeto `descontoExcedido = { portas, pintura, instalacoes, fretes: 0, avulsos, total }` no mesmo bloco onde `faturamento` e `lucro` são montados.
-3. Renderizar nova linha `<tr>` na tabela (linha ~1845, antes da linha "Lucro"):
-   - Label: "Desconto Excedido" (mesmo estilo das outras labels).
-   - Cada coluna mostra `formatCurrency(descontoExcedido[col.key])` em vermelho (`text-red-400`); mostra "—" se zero.
-4. Subtrair `descontoExcedido[col.key]` do cálculo do Lucro em cada coluna (linhas 1847–1861) e da Margem % (linhas 1863–1882).
-5. Ajustar também `lucroLiquidoFinal` para descontar `descontoExcedido.total` (linhas 1750–1761), mantendo consistência no resumo final e no PDF.
-6. Refletir a nova linha no `PrintReport` (PDF do DRE) espelhando a mesma linha/coluna e valores.
+Colunas por item passam a ser:
 
-### Fora do escopo
+```
+Descrição | Qtd | Valor Tabela | Frete | Desc. Auto | Desc. Fria | Desc. Gerente | Desc. Diretor | Valor Final | Lucro
+```
 
-- Sem alterações no modal de Portas (já mostra "Excedido" por item).
-- Sem alterações em `dre_realizados` (o valor é calculado, não persistido).
-- Sem mudanças em outras páginas (`/direcao/vendas/…`).
+- A coluna "Excedido" é removida (equivale à soma Gerente + Diretor, ficando redundante).
+- Cada faixa de desconto tem cor própria: Auto (`white/70`), Fria (`sky-400`), Gerente (`amber-400`), Diretor (`red-400`).
+- Cabeçalho sticky, linhas com hover, mesma densidade das tabelas do DRE.
 
-### Verificação
+### Alterações no bloco de totais consolidados
 
-- Somatório de "Desconto Excedido" na coluna Total deve bater com a soma de `excedido` do modal de Portas + equivalentes dos outros tipos.
-- Lucro de cada coluna após a mudança = Lucro antigo − Desconto Excedido dessa coluna.
+Grid passa a mostrar: Valor Tabela · Frete · Desc. Auto · Desc. Fria · Desc. Gerente · Desc. Diretor · Valor Final · Lucro, com legenda curta explicando as faixas.
+
+### Estilo (para bater com a página)
+
+- `DialogContent`: `max-w-7xl`, fundo `bg-gradient-to-b from-slate-950 to-slate-900`, borda `border-white/10`.
+- Header com título grande + descrição em `text-white/50`, alinhado ao restante da página.
+- Cada venda em card `rounded-2xl bg-white/[0.03] backdrop-blur-xl border-white/10`, ao invés do `bg-white/5` atual.
+- Bloco de totais com destaque em `bg-blue-500/10 border-blue-400/20` (azul Elisa).
+
+### Escopo técnico
+
+- Alterações restritas a `src/pages/direcao/DREMesDirecao.tsx`:
+  - Estender o tipo `VendaComPortasRow`/item para carregar `pagamento_metodo` e `temperatura` (já disponíveis no fetch).
+  - No agregador que hoje calcula `excedido`, calcular também `descAuto`, `descFria`, `descGerente`, `descDiretor` por item (mesmo rateio proporcional ao valor tabela do item dentro da venda).
+  - Refatorar JSX do `PortasDetalheDialog` (linhas ~2491–2604).
+- Nenhuma mudança em regras de negócio, cálculo de lucro/excedido da tabela principal do DRE, ou em outras telas.
