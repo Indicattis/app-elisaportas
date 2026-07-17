@@ -114,6 +114,7 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, dis
       numero,
       bairro: cliente.bairro || '',
       canal_aquisicao_id: cliente.canal_aquisicao_id || '',
+      publico_alvo: (clienteAny.publico_alvo as string) || '',
     });
     
     onClienteSelecionado?.(cliente);
