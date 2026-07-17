@@ -328,6 +328,7 @@ function PrintReport({
   mesNome: string;
   faturamento: FaturamentoProduto;
   lucro: FaturamentoProduto;
+  descontoExcedido: FaturamentoProduto;
   despesasFixas: DespesaAgrupada[];
   despesasFolha: DespesaAgrupada[];
   despesasVariaveis: DespesaAgrupada[];
