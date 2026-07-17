@@ -326,6 +326,7 @@ export function useVendas() {
               endereco: vendaData.endereco || null,
               numero: vendaData.numero || null,
               bairro: vendaData.bairro || null,
+              publico_alvo: vendaData.publico_alvo || null,
             })
             .eq('id', clienteId);
         } catch (e) {
