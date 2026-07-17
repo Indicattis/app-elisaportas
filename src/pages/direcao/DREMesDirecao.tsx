@@ -1970,11 +1970,12 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
                 <tr className="border-b border-white/10">
                   <th className="text-left p-3 text-white/40 font-medium text-xs uppercase"></th>
                   {columns.map(col => {
-                    const topList = col.key === 'avulsos' ? topAvulsos : null;
+                    const topList = col.key === 'avulsos' ? topAvulsos : col.key === 'acessorios' ? topAcessorios : null;
                     const isPortas = col.key === 'portas';
                     const isPintura = col.key === 'pintura';
                     const isInstalacoes = col.key === 'instalacoes';
                     const isAvulsos = col.key === 'avulsos';
+                    const isAcessorios = col.key === 'acessorios';
                     const onClickHeader = isPortas
                       ? () => setPortasModalOpen(true)
                       : isPintura
@@ -1983,7 +1984,9 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
                           ? () => setInstalacoesModalOpen(true)
                           : isAvulsos
                             ? () => setAvulsosModalOpen(true)
-                            : null;
+                            : isAcessorios
+                              ? () => setAcessoriosModalOpen(true)
+                              : null;
                     return (
                       <th
                         key={col.key}
