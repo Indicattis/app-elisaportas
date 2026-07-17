@@ -137,6 +137,7 @@ export default function VendaNovaMinimalista() {
     cep: '',
     bairro: '',
     endereco: '',
+    numero: '',
     publico_alvo: '',
     forma_pagamento: '',
     observacoes_venda: '',
