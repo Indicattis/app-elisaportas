@@ -1,32 +1,21 @@
-## Diagnóstico
+## Problema
 
-Na nova venda, "Instalação" é uma **linha própria de produto** (`tipo_produto='instalacao'`) — o formulário adiciona a instalação como item separado ao lado da porta (`ProdutoVendaForm.tsx:288-306`) e a própria porta sempre é salva com `valor_instalacao = 0` (`ProdutoVendaForm.tsx:275`).
+Ao abrir um rascunho em `/vendas/minhas-vendas/nova?rascunhoId=...`, os campos do cliente aparecem vazios mesmo quando o rascunho tem `cliente_id`, `cliente_nome`, `cliente_telefone`, endereço, etc.
 
-Ao salvar o rascunho (`useVendas.ts`), essas linhas de instalação são persistidas normalmente em `produtos_vendas` como itens independentes com `tipo_produto='instalacao'` e o valor da instalação em `valor_produto`.
+## Causa
 
-O bug está na hidratação em `src/pages/vendas/VendaNovaMinimalista.tsx:291-325`:
+O `useEffect` de hidratação em `VendaNovaMinimalista.tsx` já preenche o `formData` com os dados do cliente do rascunho, mas o componente `ClienteVendaSection` inicia sempre em `modo='buscar'` com `clienteSelecionado=null`. Nesse modo ele renderiza apenas o campo de busca — como o `clienteSelecionado` interno nunca é setado, o card de "cliente selecionado" (que mostra nome, telefone, endereço) não aparece, dando a impressão de que o cliente não foi puxado.
 
-```ts
-const portasHidratadas = raw
-  .filter((p) => p.tipo_produto !== 'instalacao')   // <-- descarta TODAS as instalações
-  .map((p) => { ...tenta reanexar via .find()... });
-```
+## Solução
 
-Como o novo fluxo nunca deixa `valor_instalacao > 0` na porta, o `.find()` legado não serve para nada e as linhas de instalação simplesmente somem ao transformar o rascunho em venda.
+1. **`src/components/vendas/ClienteVendaSection.tsx`**
+   - Adicionar nova prop opcional `initialClienteId?: string`.
+   - Adicionar `useEffect` que, quando `initialClienteId` é fornecido e `clienteSelecionado` ainda é `null`, busca o cliente em `clientes` (via `supabase.from('clientes').select('*').eq('id', initialClienteId).maybeSingle()`) e chama `setClienteSelecionado(cliente)` — sem chamar `onChange`, para não sobrescrever os dados já hidratados pelo pai (que podem ter sido editados no rascunho, como endereço).
+   - Se a busca não retornar cliente (foi cadastrado inline sem `cliente_id`), cair no fallback: quando `dados.cliente_nome` existir mas não houver `initialClienteId`, alternar `modo` para `'cadastrar'` para exibir os campos pré-preenchidos.
 
-## Correção
-
-Editar apenas o `useEffect` de hidratação em `src/pages/vendas/VendaNovaMinimalista.tsx` (linhas 290-325):
-
-1. Remover o `filter` que descarta `tipo_produto === 'instalacao'`.
-2. Remover o bloco `instalacaoParceira`/`.find()` (legado inútil no fluxo atual).
-3. Mapear cada linha de `produtos_vendas` preservando o `tipo_produto` original — incluindo `instalacao`, `pintura_epoxi`, `acessorio`, `adicional`, `manutencao` e portas — com todos os campos como estão no banco (`valor_produto`, `valor_pintura`, `descricao`, `quantidade`, dimensões, cor, etc.).
-4. Para linhas `instalacao`: manter `valor_produto` como o valor da instalação (o `VendaResumo` e demais componentes já esperam essa estrutura — ver `VendaResumo.tsx:39` que trata `isInstalacaoRow`).
-
-Isso garante que qualquer tipo de produto salvo no rascunho apareça de volta ao transformar em venda — resolvendo o caso reportado da instalação e prevenindo o mesmo problema para outros tipos.
+2. **`src/pages/vendas/VendaNovaMinimalista.tsx`**
+   - Passar `initialClienteId={formData.cliente_id}` para `<ClienteVendaSection />` quando `isFromRascunho` for verdadeiro.
 
 ## Escopo
 
-- **1 arquivo alterado**: `src/pages/vendas/VendaNovaMinimalista.tsx` (apenas o `useEffect` de hidratação).
-- Sem mudanças em banco, hooks ou fluxo de save (o save já persiste corretamente).
-- Sem impacto em vendas legadas (rascunho é feature nova).
+Frontend apenas. Sem alterações no banco ou nas regras de venda. Não afeta o fluxo de nova venda do zero nem a conversão de orçamento (que já usa `disabled`).

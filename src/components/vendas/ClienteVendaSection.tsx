@@ -13,6 +13,7 @@ import { useSearchClientes, useCheckClienteDuplicado, Cliente } from '@/hooks/us
 import { useCanaisAquisicao } from '@/hooks/useCanaisAquisicao';
 import { ESTADOS_BRASIL, getCidadesPorEstado } from '@/utils/estadosCidades';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
 
 interface DadosCliente {
   cliente_nome: string;
@@ -33,20 +34,49 @@ interface ClienteVendaSectionProps {
   onChange: (dados: Partial<DadosCliente>) => void;
   onClienteSelecionado?: (cliente: Cliente | null) => void;
   disabled?: boolean;
+  initialClienteId?: string;
 }
 
-export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, disabled = false }: ClienteVendaSectionProps) {
+export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, disabled = false, initialClienteId }: ClienteVendaSectionProps) {
   const [modo, setModo] = useState<'buscar' | 'cadastrar'>('buscar');
   const [searchTerm, setSearchTerm] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
   const [clienteSelecionado, setClienteSelecionado] = useState<Cliente | null>(null);
   const [cpfParaVerificar, setCpfParaVerificar] = useState('');
+  const [hydratedInitial, setHydratedInitial] = useState(false);
 
   const { data: clientesBusca = [], isLoading: buscando } = useSearchClientes(searchTerm);
   const { data: clienteDuplicado } = useCheckClienteDuplicado(cpfParaVerificar);
   const { canais } = useCanaisAquisicao();
 
   const cidades = dados.estado ? getCidadesPorEstado(dados.estado) : [];
+
+  // Hidratação inicial: quando o pai fornece um cliente_id (ex: conversão de rascunho),
+  // busca o cliente e marca como selecionado, sem sobrescrever os dados já preenchidos.
+  useEffect(() => {
+    if (hydratedInitial) return;
+    if (clienteSelecionado) return;
+    if (initialClienteId) {
+      (async () => {
+        const { data } = await supabase
+          .from('clientes')
+          .select('*')
+          .eq('id', initialClienteId)
+          .maybeSingle();
+        if (data) {
+          setClienteSelecionado(data as Cliente);
+          setModo('buscar');
+        } else if (dados.cliente_nome) {
+          setModo('cadastrar');
+        }
+        setHydratedInitial(true);
+      })();
+    } else if (dados.cliente_nome) {
+      // Cliente foi cadastrado inline no rascunho (sem cliente_id): abrir em modo cadastrar
+      setModo('cadastrar');
+      setHydratedInitial(true);
+    }
+  }, [initialClienteId, dados.cliente_nome, hydratedInitial, clienteSelecionado]);
 
   // Classes minimalistas
   const cardClass = "bg-white/5 border-white/10 backdrop-blur-xl";
