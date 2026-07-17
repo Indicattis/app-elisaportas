@@ -739,6 +739,38 @@ export default function VendaNovaMinimalista() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+  const handleSalvarRascunho = async () => {
+    if (isFromRascunho) {
+      toast({
+        title: 'Rascunho já existe',
+        description: 'Você está convertendo este rascunho em venda. Para salvar novamente como rascunho, cancele e crie um novo.',
+      });
+      return;
+    }
+    try {
+      const rascunho = await createRascunho({
+        vendaData: {
+          ...formData,
+          forma_pagamento: pagamentoData.metodos[0]?.tipo || formData.forma_pagamento || '',
+          data_venda: `${format(dataVenda, 'yyyy-MM-dd')}T12:00:00.000Z`,
+          data_prevista_entrega: dataEntrega ? `${format(dataEntrega, 'yyyy-MM-dd')}T12:00:00.000Z` : undefined,
+        },
+        portas,
+        pagamentoData,
+        creditoVenda: { valorCredito, percentualCredito },
+      } as any);
+      const novoId = (rascunho as any)?.id;
+      if (novoId) navigate(`/vendas/minhas-vendas/rascunho/${novoId}`);
+      else navigate('/vendas/minhas-vendas');
+    } catch (error) {
+      console.error('Erro ao salvar rascunho:', error);
+    }
+  };
+
+  // Envolve handleSubmit — permite invocar sem preventDefault do form.
+  const _submitInner = async (e: React.FormEvent) => {
+    e.preventDefault();
+
     // Coleta granular de campos obrigatórios faltantes / inválidos
     const faltantes: string[] = [];
 
