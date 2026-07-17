@@ -500,6 +500,7 @@ function PrintReport({
             <tr>
               <th style={TH}>Categoria</th>
               <th style={{ ...TH, textAlign: 'right' }}>Faturamento</th>
+              <th style={{ ...TH, textAlign: 'right' }}>Desc. Excedido</th>
               <th style={{ ...TH, textAlign: 'right' }}>Lucro</th>
               <th style={{ ...TH, textAlign: 'right' }}>Margem %</th>
             </tr>
@@ -513,14 +514,18 @@ function PrintReport({
               { key: 'avulsos', label: 'Itens Avulsos' },
             ].map((c, i) => {
               const f = faturamento[c.key as keyof FaturamentoProduto];
+              const excCol = descontoExcedido[c.key as keyof FaturamentoProduto] || 0;
               const l = c.key === 'fretes'
                 ? (faturamento.fretes - totalDespFretes)
-                : lucro[c.key as keyof FaturamentoProduto];
+                : (lucro[c.key as keyof FaturamentoProduto] - excCol);
               const m = f > 0 ? (l / f) * 100 : 0;
               return (
                 <tr key={c.key} style={trZebra(i)}>
                   <td style={{ ...TD, fontWeight: 600 }}>{c.label}</td>
                   <td style={tdRight}>{formatCurrency(f)}</td>
+                  <td style={{ ...tdRight, color: excCol > 0 ? '#b91c1c' : '#94a3b8' }}>
+                    {excCol > 0 ? `- ${formatCurrency(excCol)}` : '—'}
+                  </td>
                   <td style={{ ...tdRight, color: positive(l), fontWeight: 600 }}>{formatCurrency(l)}</td>
                   <td style={{ ...tdRight, color: positive(m), fontWeight: 600 }}>{m.toFixed(1)}%</td>
                 </tr>
@@ -532,7 +537,10 @@ function PrintReport({
                 {formatCurrency(faturamento.total)}
               </td>
               <td style={{ ...tdRight, fontWeight: 800, color: '#fff', borderBottom: 'none' }}>
-                {formatCurrency(lucro.total)}
+                {descontoExcedido.total > 0 ? `- ${formatCurrency(descontoExcedido.total)}` : '—'}
+              </td>
+              <td style={{ ...tdRight, fontWeight: 800, color: '#fff', borderBottom: 'none' }}>
+                {formatCurrency(lucro.total - descontoExcedido.total)}
               </td>
               <td style={{ ...tdRight, fontWeight: 800, color: '#fff', borderBottom: 'none' }}>
                 {percBrutoFinal.toFixed(1)}%
