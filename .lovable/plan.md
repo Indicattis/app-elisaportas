@@ -1,25 +1,50 @@
-## Contexto
+## Objetivo
 
-A regra em cascata (D. Auto → D. Fria → D. Gerente → D. Diretor) permanece como está. O que muda é apenas o **feedback visual** no modal "Portas" para que o usuário identifique rapidamente por que uma venda caiu ou não em cada faixa.
+Distinguir, no catálogo de itens (`/direcao/estrategia/itens`) e no DRE mensal, quais itens são **acessórios** e quais são **itens avulsos**. Hoje o DRE agrupa tudo em "Itens Avulsos".
 
-Diagnóstico validado no banco: em Junho/2026 só há 1 venda fria com desconto em portas (IRMAOS KUNST, 1,98% → cabe em D. Auto), por isso a coluna D. Fria fica legitimamente zerada. Sem sinalização visual, isso confunde.
+## 1. Banco de dados
 
-## Alteração
+Migration em `custos_itens`:
+- Adicionar coluna `tipo_item text NOT NULL DEFAULT 'avulso'` com CHECK em (`'avulso'`, `'acessorio'`).
+- Backfill: manter todos os registros existentes como `'avulso'` (default cobre).
 
-Arquivo único: `src/pages/direcao/DREMesDirecao.tsx`, dentro do `PortasDetalheDialog`.
+Nada muda em `produtos_vendas`. O link continua sendo via `produtos_vendas.custos_itens_id`.
 
-1. **Propagar flags por linha da tabela**
-   - No mapeamento `porVenda`, adicionar dois campos ao objeto `VendaComPortasRow`: `isFria: boolean` (`v.temperatura === false`) e `isCartao: boolean` (`v.forma_pagamento === 'cartao_credito'`).
+## 2. `/direcao/estrategia/itens`
 
-2. **Renderizar badges ao lado do nome do cliente**
-   - Se `isFria`: badge azul claro "Fria" (`bg-sky-500/15 text-sky-300 border-sky-500/30`).
-   - Se `isCartao`: badge âmbar "Cartão" (`bg-amber-500/15 text-amber-300 border-amber-500/30`).
-   - Badges pequenos (`text-[10px] px-1.5 py-0.5 rounded border`) na mesma célula do nome, após o texto, sem quebrar layout.
+- Em `useCustosItens.ts` incluir `tipo_item` no tipo `CustoItem` e no `CustoItemInput`.
+- No modal de criação/edição de item, adicionar um seletor "Tipo do item" com as opções **Item Avulso** (padrão) e **Acessório**.
+- Na listagem, exibir um badge discreto "Acessório" ao lado do nome quando `tipo_item = 'acessorio'` para o usuário identificar rapidamente.
+- Adicionar filtro rápido no header (chips "Todos / Avulsos / Acessórios") para facilitar a curadoria em massa.
 
-3. **Legenda no header do modal**
-   - Substituir/atualizar o tooltip existente para incluir uma linha explicando as tags: "Fria = temperatura fria (habilita D. Fria até +5%); Cartão = pagamento em cartão (bloqueia D. Auto)".
+## 3. `/direcao/estrategia/dre/:mes`
 
-4. **Limpeza**
-   - Remover os `console.debug('[DRE Portas Buckets]', ...)` de investigação (já cumpriram seu papel).
+Arquivo: `src/pages/direcao/DREMesDirecao.tsx`.
 
-Nenhuma mudança na lógica de cálculo, na tabela principal do DRE, no PDF ou em qualquer outro arquivo.
+- Estender `FaturamentoProduto` com um campo novo `acessorios: number` (mantendo `avulsos`).
+- Alterar o carregamento dos produtos da venda para trazer também `custos_itens_id` e fazer um `select` paralelo em `custos_itens` do mês, montando um `Map<id, tipo_item>`.
+- Regra de classificação por linha de produto (aplicada em faturamento, lucro, desconto excedido e top itens):
+  - Se `custos_itens_id` presente no mapa → usa `tipo_item` do catálogo.
+  - Caso contrário (fallback para vendas antigas sem link):
+    - `tipo_produto = 'acessorio'` → coluna **Acessórios**.
+    - `tipo_produto = 'adicional'` → coluna **Itens Avulsos**.
+- Adicionar a coluna **Acessórios** na tabela principal do DRE (colunas passam a ser: Portas, Pintura, Instalações, Acessórios, Itens Avulsos, Fretes, Total). Somar `acessorios` no `fat.total`, `luc.total` e `exc.total`.
+- Modal detalhado: reutilizar o mesmo `PortasDetalheDialog` genérico, adicionando um estado/handler para `acessoriosModalOpen` com `titulo="Acessórios"` e `categoriaLabel="acessorios"`. O helper `buildCategoriaDetalhe` recebe um predicado — hoje filtra por `tipo_produto` em `['acessorio','adicional']`; passa a receber a mesma regra de classificação acima para filtrar apenas linhas classificadas como "acessorios" (ou "avulsos" no modal existente).
+- Top 5 itens: dividir em `topAcessorios` e `topAvulsos` usando o mesmo mapa.
+
+## 4. PDF do DRE
+
+- Em `PrintReport` incluir a nova coluna "Acessórios" no resumo e nos totais, mantendo cor Elisa e paisagem já configurada.
+- Se a coluna extra deixar o layout apertado, reduzir levemente `fontSize` das colunas numéricas ou usar duas linhas de cabeçalho — decisão feita no momento da implementação após conferir visualmente.
+
+## Detalhes técnicos
+
+- `custos_itens.tipo_item`: `text NOT NULL DEFAULT 'avulso' CHECK (tipo_item IN ('avulso','acessorio'))`.
+- Não é necessário mexer em fluxo de vendas, orçamentos, produção ou faturamento — a flag é puramente para relatório estratégico/DRE.
+- Vendas antigas sem `custos_itens_id` continuam funcionando pelo fallback baseado em `tipo_produto`.
+- Nenhuma alteração em RLS/GRANT necessária (coluna adicionada a tabela existente).
+
+## Fora de escopo
+
+- Não vamos migrar historicamente `tipo_produto='acessorio'` das vendas para o novo campo; a segregação acontece só na leitura do DRE.
+- Não vamos criar tela nova — tudo é ajuste na página de itens existente e no DRE.
