@@ -463,11 +463,11 @@ export default function MinhasVendas() {
                       </p>
                       <div className="flex gap-2">
                         <button
-                          onClick={() => navigate(`/vendas/minhas-vendas/editar/${rascunho.id}`)}
+                          onClick={() => navigate(`/vendas/minhas-vendas/rascunho/${rascunho.id}`)}
                           className="flex-1 h-8 rounded-lg text-xs font-medium border border-white/10 bg-white/5 text-white/80 hover:bg-white/10 hover:border-white/20 transition-all flex items-center justify-center gap-1.5"
                         >
                           <Edit className="w-3 h-3" />
-                          Continuar
+                          Visualizar
                         </button>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>

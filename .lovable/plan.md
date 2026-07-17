@@ -1,41 +1,76 @@
 ## Objetivo
 
-Substituir a navegação para `/direcao/autorizados/:id/editar` por um modal de edição inline dentro da aba Autorizados em `/direcao/vendas/parceiros`. Isso elimina o problema de "voltar" cair na rota do estado do autorizado.
+Recriar o fluxo de rascunho em `/vendas/minhas-vendas/nova`:
+- Vendedor pode salvar como rascunho **sem** validação de desconto/pagamento.
+- Rascunho fica **somente visualização** (não é editável direto).
+- Ao "Transformar em Venda", o sistema aplica **todas** as regras vigentes (descontos, senhas de responsável/master, boleto 70/30/21d, comprovantes obrigatórios, campos obrigatórios etc.) reutilizando o mesmo pipeline do cadastro novo.
 
-## Escopo
+## Escopo de arquivos
 
-- Apenas a aba **Autorizados** de `/direcao/vendas/parceiros`.
-- Representantes e Franqueados permanecem inalterados.
-- A página `EditarAutorizadoDirecao` continua existindo para os outros contextos (`/direcao/autorizados/...`, `/logistica/...`, `/autorizados/...`, `/vendas/meus-parceiros`).
+1. **`src/hooks/useVendas.ts` — `createRascunhoMutation`**
+   - Continua sem validar regras.
+   - Passa a persistir também o snapshot completo do pagamento em uma coluna JSON `rascunho_pagamento` em `vendas` (metodos, valor_entrada, data_pagamento, credito, comprovantes anexados). Assim o rascunho re-hidrata 1:1 no formulário.
+   - Não gera `contas_receber` (só na conversão).
 
-## Como vai funcionar
+2. **Migração DB (nova coluna)**
+   - `ALTER TABLE public.vendas ADD COLUMN rascunho_pagamento jsonb;`
+   - Sem policy nova (herda RLS existente de `vendas`).
 
-1. Clicar no ícone de editar do autorizado abre um `Dialog` sobreposto — a URL continua `/direcao/vendas/parceiros`.
-2. O modal carrega os dados do autorizado e permite editar os mesmos campos essenciais já disponíveis na página completa.
-3. Salvar atualiza o registro, fecha o modal e revalida a lista (`parceiros-autorizados`).
-4. Cancelar/fechar apenas descarta as alterações.
+3. **`src/pages/vendas/VendaNovaMinimalista.tsx`**
+   - Botão "Salvar como Rascunho" no header/rodapé, ao lado de "Cadastrar Venda".
+   - Chama `createRascunho` com o estado atual (sem `validarDesconto`, sem verificação de senha, sem checar comprovante).
+   - Ao concluir, redireciona para `/vendas/minhas-vendas/rascunho/:id` (nova página).
+   - **Hidratação de rascunho**: se a URL trouxer `?rascunhoId=...`, carrega venda + produtos + `rascunho_pagamento` no estado do formulário. Ao submeter como "Cadastrar Venda" com sucesso, converte o mesmo registro (`is_rascunho=false`) em vez de criar novo — deleta o `rascunho_pagamento` e roda o fluxo padrão de `contas_receber`/comprovantes.
 
-## Campos do modal
+4. **Nova página `src/pages/vendas/RascunhoView.tsx`** (rota `/vendas/minhas-vendas/rascunho/:id`)
+   - Read-only: mostra cliente, produtos (com medidas/desconto), pagamento, valores, comprovantes anexados.
+   - Botões: **"Transformar em Venda"** → navega para `/vendas/minhas-vendas/nova?rascunhoId=:id` (form re-hidrata e aplica todas as regras no submit).
+   - **"Excluir rascunho"** (reuso do delete atual).
+   - **"Voltar"** para `/vendas/minhas-vendas`.
 
-Manter paridade com o formulário atual, agrupados em seções compactas:
+5. **`src/pages/vendas/MinhasVendas.tsx`**
+   - Card de rascunho: troca botão "Editar" por **"Visualizar"** → `/vendas/minhas-vendas/rascunho/:id`.
 
-- **Identificação**: nome, responsável, email, telefone, whatsapp, logo.
-- **Localização**: CEP, estado, cidade, endereço, bairro, número, complemento.
-- **Equipe**: atendente (select com todos os usuários ativos via `get_active_users_basic`) e vendedor responsável.
-- **Status**: ativo/inativo.
+6. **`src/pages/vendas/MinhasVendasEditar.tsx`**
+   - Rota mantida por compatibilidade, mas quando `venda.is_rascunho === true` passa a redirecionar para a nova view read-only (evita bypass das regras pelo caminho antigo).
 
-Campos avançados (cidades secundárias, geocodificação, negociação, preços, contratos) ficam fora do modal — para esses, adicionar um link "Abrir edição completa" que leva à página existente (mantendo `state.from` para voltar corretamente).
+7. **`src/App.tsx`**
+   - Registra a nova rota `/vendas/minhas-vendas/rascunho/:id`.
 
-## Arquivos afetados
+## Detalhe do fluxo de conversão (rascunho → venda)
 
-- **Novo**: `src/components/parceiros/EditarAutorizadoModal.tsx` — dialog com o formulário, mutations e validação.
-- **Editado**: `src/pages/direcao/ParceirosDirecao.tsx`
-  - `AutorizadosList` passa a controlar estado `editandoId` e renderizar o modal.
-  - Botão "Editar" abre o modal em vez de navegar.
-  - Após salvar, `invalidateQueries(['parceiros-autorizados', tipo])`.
+No `VendaNovaMinimalista` em modo re-hidratado (`?rascunhoId`), o botão "Cadastrar Venda" segue exatamente o pipeline atual — nada é pulado:
 
-## Fora do escopo
+1. Valida campos obrigatórios via `regras_vendas`.
+2. Roda `validarDesconto` → se exigir, abre `AutorizacaoDescontoModal` (responsável e/ou master).
+3. Valida boleto 70/30/21d, entrada mínima, data de pagamento, comprovantes.
+4. Ao confirmar, chama uma variante `converterRascunhoEmVenda(rascunhoId, ...)` no hook (novo método) que:
+   - Faz `UPDATE vendas SET is_rascunho=false, numero_pedido=..., valor_venda=..., rascunho_pagamento=null`.
+   - Substitui `produtos_vendas` do rascunho pelos do formulário (delete + insert).
+   - Cria `contas_receber` + comprovantes normalmente.
+   - Registra `vendas_autorizacoes_desconto` se houver.
 
-- Não mexer no fluxo de edição das outras rotas.
-- Não remover a página `EditarAutorizadoDirecao`.
-- Não alterar breadcrumb/back nos demais lugares.
+## Fora de escopo
+
+- Não altera `useVendas.createVenda` para vendas normais.
+- Não altera outras telas que consomem `is_rascunho` (`useHomeIndices`, dashboards) — elas continuam ignorando rascunhos.
+
+## Diagrama
+
+```text
+[/vendas/minhas-vendas/nova]
+    │
+    ├── "Salvar como Rascunho" ──► createRascunho ──► /vendas/minhas-vendas/rascunho/:id (view-only)
+    │                                                       │
+    │                                                       ├── "Excluir"
+    │                                                       └── "Transformar em Venda"
+    │                                                              │
+    │                                                              ▼
+    │            /vendas/minhas-vendas/nova?rascunhoId=:id  (form hidratado)
+    │                                                              │
+    │                                                              ▼
+    │                                    valida regras + senhas + comprovantes
+    │                                                              │
+    ▼                                                              ▼
+"Cadastrar Venda" ─────────────────────► converterRascunhoEmVenda / createVenda
+```

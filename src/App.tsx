@@ -193,6 +193,7 @@ import VendasHub from "./pages/vendas/VendasHub";
 import MinhasVendas from "./pages/vendas/MinhasVendas";
 import MinhasVendasEditar from "./pages/vendas/MinhasVendasEditar";
 import VendaNovaMinimalista from "./pages/vendas/VendaNovaMinimalista";
+import RascunhoView from "./pages/vendas/RascunhoView";
 import MetasHistoricoVendas from "./pages/vendas/MetasHistoricoVendas";
 import RegrasVendasVisualizacao from "./pages/vendas/RegrasVendasVisualizacao";
 import RegrasHub from "./pages/regras/RegrasHub";
@@ -493,6 +494,7 @@ const App = () => (
                 <Route path="/vendas/regras" element={<ProtectedRoute routeKey="vendas_hub"><RegrasVendasVisualizacao /></ProtectedRoute>} />
                 <Route path="/vendas/minhas-vendas/correcao" element={<ProtectedRoute routeKey="vendas_hub"><PedidoCorrecaoNovo /></ProtectedRoute>} />
                 <Route path="/vendas/minhas-vendas/editar/:id" element={<ProtectedRoute routeKey="vendas_hub"><MinhasVendasEditar /></ProtectedRoute>} />
+                <Route path="/vendas/minhas-vendas/rascunho/:id" element={<ProtectedRoute routeKey="vendas_hub"><RascunhoView /></ProtectedRoute>} />
                 <Route path="/vendas/minhas-vendas/:id" element={<ProtectedRoute routeKey="vendas_hub"><VendaDetalhesMinimalista /></ProtectedRoute>} />
                 <Route path="/vendas/meus-clientes" element={<ProtectedRoute routeKey="vendas_hub"><MeusClientes /></ProtectedRoute>} />
                 <Route path="/vendas/meus-clientes/:id" element={<ProtectedRoute routeKey="vendas_hub"><MeuClienteDetalhe /></ProtectedRoute>} />

@@ -115,8 +115,9 @@ export default function VendaNovaMinimalista() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const orcamentoId = searchParams.get('orcamento_id');
+  const rascunhoId = searchParams.get('rascunhoId');
   const { toast } = useToast();
-  const { createVenda, isCreating } = useVendas();
+  const { createVenda, isCreating, createRascunho, isCreatingRascunho, deleteVenda } = useVendas();
   const { user } = useAuth();
   const { limites: configLimites } = useConfiguracoesVendas();
   const { limites: regrasLimites } = useRegrasVendas();
@@ -235,6 +236,122 @@ export default function VendaNovaMinimalista() {
   });
 
   const isFromOrcamento = !!orcamentoId && !!orcamentoData;
+
+  // Hidratação de rascunho para conversão em venda
+  const { data: rascunhoData, isLoading: isLoadingRascunho } = useQuery({
+    queryKey: ['rascunho-para-conversao', rascunhoId],
+    enabled: !!rascunhoId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('vendas')
+        .select('*, produtos_vendas(*)')
+        .eq('id', rascunhoId!)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+  const isFromRascunho = !!rascunhoId && !!rascunhoData;
+
+  useEffect(() => {
+    if (!rascunhoData) return;
+    const r: any = rascunhoData;
+    setFormData((prev) => ({
+      ...prev,
+      cliente_nome: r.cliente_nome || '',
+      cliente_telefone: r.cliente_telefone || '',
+      cliente_email: r.cliente_email || '',
+      cpf_cliente: r.cpf_cliente || '',
+      estado: r.estado || '',
+      cidade: r.cidade || '',
+      cep: r.cep || '',
+      bairro: r.bairro || '',
+      endereco: r.endereco || '',
+      publico_alvo: r.publico_alvo || '',
+      canal_aquisicao_id: r.canal_aquisicao_id || '',
+      observacoes_venda: r.observacoes_venda || '',
+      forma_pagamento: r.metodo_pagamento || '',
+      valor_frete: Number(r.valor_frete) || 0,
+      valor_entrada: Number(r.valor_entrada) || 0,
+      valor_a_receber: Number(r.valor_a_receber) || 0,
+      data_prevista_entrega: r.data_prevista_entrega || '',
+      tipo_entrega: r.tipo_entrega || 'instalacao',
+      tipo_frete: r.tipo_frete || 'interno',
+      temperatura: typeof r.temperatura === 'boolean' ? r.temperatura : null,
+      cliente_id: r.cliente_id || undefined,
+    }));
+    if (r.data_venda) {
+      try { setDataVenda(new Date(r.data_venda)); } catch {}
+    }
+    if (r.data_prevista_entrega) {
+      try { setDataEntrega(new Date(r.data_prevista_entrega)); } catch {}
+    }
+
+    // Produtos: reagrupa itens de instalação de volta em suas portas.
+    const raw = (r.produtos_vendas || []) as any[];
+    const portasHidratadas: ProdutoVenda[] = raw
+      .filter((p) => p.tipo_produto !== 'instalacao')
+      .map((p) => {
+        const instalacaoParceira = raw.find(
+          (i) =>
+            i.tipo_produto === 'instalacao' &&
+            i.tamanho === p.tamanho &&
+            i.tabela_precos_porta_id === p.tabela_precos_porta_id
+        );
+        return {
+          id: p.id,
+          tipo_produto: p.tipo_produto,
+          tamanho: p.tamanho || '',
+          largura: p.largura ?? undefined,
+          altura: p.altura ?? undefined,
+          cor_id: p.cor_id || '',
+          acessorio_id: p.acessorio_id || '',
+          adicional_id: p.adicional_id || '',
+          tabela_precos_porta_id: p.tabela_precos_porta_id || null,
+          valor_produto: Number(p.valor_produto) || 0,
+          valor_pintura: Number(p.valor_pintura) || 0,
+          valor_instalacao: Number(instalacaoParceira?.valor_produto) || Number(p.valor_instalacao) || 0,
+          valor_frete: Number(p.valor_frete) || 0,
+          tipo_desconto: (p.tipo_desconto as any) || 'percentual',
+          desconto_percentual: Number(p.desconto_percentual) || 0,
+          desconto_valor: Number(p.desconto_valor) || 0,
+          quantidade: Number(p.quantidade) || 1,
+          descricao: p.descricao || '',
+          valor_credito: Number(p.valor_credito) || 0,
+          percentual_credito: Number(p.percentual_credito) || 0,
+          observacao_item: p.observacao_item || null,
+        } as ProdutoVenda;
+      });
+    setPortas(portasHidratadas);
+
+    // Snapshot de pagamento
+    const snap = r.rascunho_pagamento;
+    if (snap && typeof snap === 'object') {
+      const metodosNorm = (snap.metodos || []).map((m: any) => ({
+        tipo: m.tipo || '',
+        valor: Number(m.valor) || 0,
+        data_pagamento: m.data_pagamento ? new Date(m.data_pagamento) : undefined,
+        empresa_receptora_id: m.empresa_receptora_id || '',
+        parcelas_cartao: Number(m.parcelas_cartao) || 1,
+        parcelas_boleto: Number(m.parcelas_boleto) || 1,
+        intervalo_boletos: Number(m.intervalo_boletos) || 21,
+        ja_pago: !!m.ja_pago,
+      }));
+      while (metodosNorm.length < 2) metodosNorm.push({
+        tipo: '', valor: 0, data_pagamento: undefined, empresa_receptora_id: '',
+        parcelas_cartao: 1, parcelas_boleto: 1, intervalo_boletos: 21, ja_pago: false,
+      });
+      setPagamentoData({
+        usar_dois_metodos: !!snap.usar_dois_metodos,
+        pagamento_na_entrega: !!snap.pagamento_na_entrega,
+        metodos: [metodosNorm[0], metodosNorm[1]] as any,
+      });
+      if (snap.credito) {
+        setValorCredito(Number(snap.credito.valor) || 0);
+        setPercentualCredito(Number(snap.credito.percentual) || 0);
+      }
+    }
+  }, [rascunhoData]);
 
   useEffect(() => {
     if (orcamentoData) {
@@ -619,6 +736,34 @@ export default function VendaNovaMinimalista() {
     toast({ title: "Desconto removido com sucesso" });
   };
 
+  const handleSalvarRascunho = async () => {
+    if (isFromRascunho) {
+      toast({
+        title: 'Rascunho já existe',
+        description: 'Você está convertendo este rascunho em venda. Para salvar novamente como rascunho, cancele e crie um novo.',
+      });
+      return;
+    }
+    try {
+      const rascunho = await createRascunho({
+        vendaData: {
+          ...formData,
+          forma_pagamento: pagamentoData.metodos[0]?.tipo || formData.forma_pagamento || '',
+          data_venda: `${format(dataVenda, 'yyyy-MM-dd')}T12:00:00.000Z`,
+          data_prevista_entrega: dataEntrega ? `${format(dataEntrega, 'yyyy-MM-dd')}T12:00:00.000Z` : undefined,
+        },
+        portas,
+        pagamentoData,
+        creditoVenda: { valorCredito, percentualCredito },
+      } as any);
+      const novoId = (rascunho as any)?.id;
+      if (novoId) navigate(`/vendas/minhas-vendas/rascunho/${novoId}`);
+      else navigate('/vendas/minhas-vendas');
+    } catch (error) {
+      console.error('Erro ao salvar rascunho:', error);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -747,6 +892,7 @@ export default function VendaNovaMinimalista() {
             creditoVenda: { valorCredito: 0, percentualCredito: 0 },
             comprovantes,
           });
+          if (rascunhoId) { try { await deleteVenda(rascunhoId); } catch (e) { console.error('Falha ao excluir rascunho:', e); } }
           navigate('/vendas/minhas-vendas');
         } catch (error) {
           console.error('Erro ao criar venda:', error);
@@ -781,6 +927,7 @@ export default function VendaNovaMinimalista() {
         ,
         comprovantes
       });
+      if (rascunhoId) { try { await deleteVenda(rascunhoId); } catch (e) { console.error('Falha ao excluir rascunho:', e); } }
       navigate('/vendas/minhas-vendas');
     } catch (error) {
       console.error('Erro ao criar venda:', error);
@@ -829,6 +976,7 @@ export default function VendaNovaMinimalista() {
         ,
         comprovantes
       });
+      if (rascunhoId) { try { await deleteVenda(rascunhoId); } catch (e) { console.error('Falha ao excluir rascunho:', e); } }
       navigate('/vendas/minhas-vendas');
     } catch (error) {
       console.error('Erro ao criar venda:', error);
@@ -1339,12 +1487,23 @@ export default function VendaNovaMinimalista() {
             </GradientButton>
           )}
 
+          {!isFromRascunho && (
+            <GradientButton
+              variant="outline"
+              onClick={handleSalvarRascunho}
+              disabled={isCreatingRascunho || portas.length === 0}
+            >
+              <FileText className="w-4 h-4 mr-2" />
+              {isCreatingRascunho ? 'Salvando...' : 'Salvar como Rascunho'}
+            </GradientButton>
+          )}
+
           <GradientButton
             type="submit" 
             variant="blue"
             disabled={isCreating || portas.length === 0 || !pagamentoConfirmado}
           >
-            {isCreating ? 'Criando...' : 'Criar Venda'}
+            {isCreating ? 'Criando...' : (isFromRascunho ? 'Transformar em Venda' : 'Criar Venda')}
           </GradientButton>
         </div>
       </form>
