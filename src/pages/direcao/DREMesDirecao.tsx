@@ -1491,21 +1491,25 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         setLucro(luc);
         setDescontoExcedido(exc);
 
-        // Top 5 itens avulsos (acessórios + adicionais)
+        // Top 5 itens (separado: acessórios vs avulsos, conforme catálogo tipo_item)
         const avulsosMap: Record<string, number> = {};
+        const acessoriosMap: Record<string, number> = {};
         produtos?.forEach((p: any) => {
           const nome = p.descricao || 'Sem descrição';
           const qtd = p.quantidade || 1;
           if (['acessorio', 'adicional'].includes(p.tipo_produto)) {
-            avulsosMap[nome] = (avulsosMap[nome] || 0) + qtd;
+            const bucket = classificarAvulso(p);
+            const alvo = bucket === 'acessorios' ? acessoriosMap : avulsosMap;
+            alvo[nome] = (alvo[nome] || 0) + qtd;
           }
         });
-        setTopAvulsos(
-          Object.entries(avulsosMap)
+        const topFrom = (m: Record<string, number>) =>
+          Object.entries(m)
             .map(([nome, qtd]) => ({ nome, qtd }))
             .sort((a, b) => b.qtd - a.qtd)
-            .slice(0, 5)
-        );
+            .slice(0, 5);
+        setTopAvulsos(topFrom(avulsosMap));
+        setTopAcessorios(topFrom(acessoriosMap));
 
         // Buscar resumo do estoque
         const fetchEstoque = async () => {
