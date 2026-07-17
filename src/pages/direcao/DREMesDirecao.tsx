@@ -1527,30 +1527,35 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
           })
         );
 
-        // Detalhe das vendas com porta_enrolar (modal "Portas")
-        const { data: portasRaw } = await supabase
+        // Detalhe das vendas — busca unificada para os 3 modais (portas / pintura / instalação)
+        const { data: detalhesRaw } = await supabase
           .from('produtos_vendas')
           .select(`
-            id, descricao, quantidade, valor_total,
+            id, descricao, quantidade, tipo_produto, valor_total,
             valor_produto, valor_pintura, valor_instalacao,
+            valor_total_sem_frete,
+            altura, largura, tabela_precos_porta_id,
             tipo_desconto, desconto_percentual, desconto_valor,
-            lucro_item,
+            lucro_item, lucro_pintura,
+            tabela_precos_portas:tabela_precos_porta_id(descricao, altura, largura),
             vendas!inner(id, data_venda, cliente_nome, valor_venda, valor_frete, forma_pagamento, temperatura)
           `)
-          .eq('tipo_produto', 'porta_enrolar')
+          .in('tipo_produto', ['pintura_epoxi', 'acessorio', 'adicional', 'manutencao', 'instalacao', 'porta_enrolar', 'porta_social'])
           .gte('vendas.data_venda', start + ' 00:00:00')
           .lte('vendas.data_venda', end + ' 23:59:59');
 
-        const vendaIdsPortas = Array.from(
-          new Set(((portasRaw || []) as any[]).map((p) => p.vendas?.id).filter(Boolean))
+        const portasRaw = ((detalhesRaw || []) as any[]).filter((p) => p.tipo_produto === 'porta_enrolar');
+
+        const vendaIdsAll = Array.from(
+          new Set(((detalhesRaw || []) as any[]).map((p) => (Array.isArray(p.vendas) ? p.vendas[0]?.id : p.vendas?.id)).filter(Boolean))
         );
-        const { data: todosProdutosVendas } = vendaIdsPortas.length
+        const { data: todosProdutosVendas } = vendaIdsAll.length
           ? await supabase
               .from('produtos_vendas')
               .select(
                 'venda_id, quantidade, valor_produto, valor_pintura, valor_instalacao, tipo_desconto, desconto_percentual, desconto_valor'
               )
-              .in('venda_id', vendaIdsPortas)
+              .in('venda_id', vendaIdsAll)
           : { data: [] as any[] };
 
         const { data: cfgVendasDre } = await supabase
