@@ -1,50 +1,31 @@
-## Objetivo
+## Problema
+Em `/vendas/minhas-vendas/nova`, o campo **Público Alvo** não persiste no cadastro do cliente — a cada nova venda o vendedor precisa selecioná-lo novamente, mesmo escolhendo um cliente já existente. Mesmo comportamento que havia com o "Número" do endereço.
 
-Refatorar a exportação de PDF em `/direcao/caixa-elisa/capital-giro` e `/direcao/caixa-elisa/planejamento` para que o resultado seja visualmente fiel às telas, porém com fundo branco (versão "modo claro" das mesmas telas).
+## Causa
+A tabela `clientes` **não possui** a coluna `publico_alvo` (verificado no schema). O valor existe apenas no formulário da venda e não é lido/gravado no cadastro do cliente.
 
-## Abordagem
+## Plano
 
-Substituir a geração baseada em `jspdf-autotable` (tabelas genéricas) por captura de HTML renderizado usando `html2canvas` + `jsPDF`. Renderizo, fora do fluxo visível, um container clone das telas com a mesma estrutura (cards, indicadores, lista de obrigações/itens) porém com paleta invertida para impressão (fundo branco, textos escuros, bordas cinza claro, mantendo o verde esmeralda como cor de destaque nos ícones/badges).
+### 1. Migration (banco)
+Adicionar coluna em `public.clientes`:
+- `publico_alvo text` (nullable, sem default).
 
-`html2canvas` já é usada em outras exportações do projeto — reutilizo o mesmo padrão.
+Sem alterações de RLS/GRANTs (a tabela já é acessível).
 
-## Capital de Giro (PDF)
+### 2. `src/hooks/useVendas.ts`
+Ao criar/atualizar cliente durante a venda, incluir `publico_alvo: vendaData.publico_alvo || null`:
+- No `update` do cliente existente (bloco `if (vendaData.cliente_id)`).
+- Nos dois `insert` de novo cliente (com CPF e sem CPF).
 
-Conteúdo replicado, na ordem:
-1. Header com ícone Wallet, título "2 Milhões Capital de Giro" e subtítulo, mais data/hora de geração à direita.
-2. Grid 2 colunas com os cards "Capital de Giro" e "Saldo Disponível" (com "X pendentes" abaixo), exatamente como na tela.
-3. Card contendo a lista de obrigações — cada linha com checkbox visual (quadrado marcado/desmarcado), nome (line-through se pago), data pequena abaixo do nome, valor à direita.
-4. Rodapé com totais (Total, Pago, Pendente) e paginação.
+### 3. `src/components/vendas/ClienteVendaSection.tsx`
+- No `handleSelectCliente`, hidratar `publico_alvo` a partir de `cliente.publico_alvo` (fallback para `''`) junto com os demais campos.
+- Ampliar a interface local `Cliente` para incluir `publico_alvo?: string | null`.
 
-## Planejamento (PDF)
+Nenhuma alteração de UI: os selects existentes (linhas 552/779) já leem/gravam `dados.publico_alvo`.
 
-Conteúdo replicado:
-1. Header com ícone CalendarRange, título "Planejamento 2 Milhões de Giro", data/hora.
-2. Barra de indicadores: Total Acumulado, Total Pago, Total Pendente.
-3. Para cada mês:
-   - Cabeçalho do card com label do mês (capitalizado, pt-BR) e subtotal à direita.
-   - Lista de itens no mesmo layout visual da tela (checkbox, nome, data, valor).
-4. Paginação no rodapé.
+### 4. Verificação
+- Selecionar cliente existente que já tenha `publico_alvo` gravado → campo deve vir preenchido.
+- Alterar público alvo em uma venda → próxima venda do mesmo cliente já traz o valor atualizado.
+- Cliente novo criado pela venda → registro em `clientes` deve conter `publico_alvo`.
 
-## Paleta de impressão (modo claro fiel)
-
-- Fundo: `#ffffff`
-- Card surface: `#ffffff` com borda `#e5e7eb`
-- Texto primário: `#111827`
-- Texto secundário: `#6b7280`
-- Destaque emerald (ícones, header do card, subtotal, saldo positivo): `#059669`
-- Saldo negativo: `#e11d48`
-- Line-through (pago): texto `#9ca3af`
-
-## Detalhes técnicos
-
-- Adicionar `html2canvas` como dependência (verificar se já existe; caso sim, apenas importar).
-- Criar helper `src/pages/direcao/caixa-elisa/pdfExport.tsx` exportando dois componentes React puros: `<CapitalGiroPDFDoc />` e `<PlanejamentoPDFDoc />` que recebem os dados via props e renderizam o layout no formato A4 (largura fixa ~794px = 210mm @ 96dpi).
-- Função `exportarPDF` cria um `div` off-screen (`position: fixed; left: -10000px; top: 0`), monta o React node com `createRoot`, chama `html2canvas` com `backgroundColor: '#ffffff'` e `scale: 2`, adiciona a imagem no `jsPDF` (A4) fatiando em múltiplas páginas se necessário, e por fim desmonta e salva.
-- Substituir `exportarPDF` atual em `CapitalGiroPage.tsx` e `PlanejamentoPage.tsx` pela nova versão. Remover imports de `jspdf-autotable` nesses arquivos (jsPDF continua).
-- Nome do arquivo mantido: `capital-giro-YYYY-MM-DD.pdf` e `planejamento-caixa-elisa-YYYY-MM-DD.pdf`.
-
-## Fora de escopo
-
-- Não altero a UI das telas em si (permanecem escuras/glassmorphism).
-- Não altero dados nem regras de negócio.
+Sem impacto em rascunhos (o campo continua no snapshot da venda) nem em telas de faturamento/edição (elas já leem de `vendas.publico_alvo`).

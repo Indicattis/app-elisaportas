@@ -1238,6 +1238,7 @@ export type Database = {
           numero: string | null
           observacoes: string | null
           parceiro: boolean | null
+          publico_alvo: string | null
           telefone: string | null
           tipo_cliente: string | null
           updated_at: string
@@ -1260,6 +1261,7 @@ export type Database = {
           numero?: string | null
           observacoes?: string | null
           parceiro?: boolean | null
+          publico_alvo?: string | null
           telefone?: string | null
           tipo_cliente?: string | null
           updated_at?: string
@@ -1282,6 +1284,7 @@ export type Database = {
           numero?: string | null
           observacoes?: string | null
           parceiro?: boolean | null
+          publico_alvo?: string | null
           telefone?: string | null
           tipo_cliente?: string | null
           updated_at?: string
