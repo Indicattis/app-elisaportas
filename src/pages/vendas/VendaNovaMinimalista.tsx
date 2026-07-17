@@ -864,6 +864,7 @@ export default function VendaNovaMinimalista() {
             creditoVenda: { valorCredito: 0, percentualCredito: 0 },
             comprovantes,
           });
+          if (rascunhoId) { try { await deleteVenda(rascunhoId); } catch (e) { console.error('Falha ao excluir rascunho:', e); } }
           navigate('/vendas/minhas-vendas');
         } catch (error) {
           console.error('Erro ao criar venda:', error);
@@ -898,6 +899,7 @@ export default function VendaNovaMinimalista() {
         ,
         comprovantes
       });
+      if (rascunhoId) { try { await deleteVenda(rascunhoId); } catch (e) { console.error('Falha ao excluir rascunho:', e); } }
       navigate('/vendas/minhas-vendas');
     } catch (error) {
       console.error('Erro ao criar venda:', error);
@@ -946,6 +948,7 @@ export default function VendaNovaMinimalista() {
         ,
         comprovantes
       });
+      if (rascunhoId) { try { await deleteVenda(rascunhoId); } catch (e) { console.error('Falha ao excluir rascunho:', e); } }
       navigate('/vendas/minhas-vendas');
     } catch (error) {
       console.error('Erro ao criar venda:', error);
