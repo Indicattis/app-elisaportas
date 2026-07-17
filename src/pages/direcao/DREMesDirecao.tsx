@@ -2152,28 +2152,14 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
           page-break-before: always;
           break-before: page;
         }
+        @page landscape { size: A4 landscape; margin: 12mm 14mm; }
         #dre-print-document .pdf-landscape-page {
+          page: landscape;
           page-break-before: always;
           break-before: page;
-          page-break-after: always;
-          break-after: page;
-          position: relative;
-          width: 210mm;
-          height: 297mm;
-          overflow: hidden;
-          padding: 0 !important;
-          margin: 0 !important;
         }
         #dre-print-document .pdf-landscape-content {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 297mm;
-          height: 210mm;
-          box-sizing: border-box;
-          padding: 12mm 14mm;
-          transform-origin: top left;
-          transform: translateY(297mm) rotate(-90deg);
+          width: 100%;
         }
         #dre-print-document .pdf-avoid-break {
           page-break-inside: avoid;
@@ -2181,9 +2167,11 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
           -webkit-column-break-inside: avoid;
         }
         #dre-print-document table { border-collapse: collapse; width: 100%; }
-        #dre-print-document table, #dre-print-document tr, #dre-print-document td, #dre-print-document th {
-          page-break-inside: auto;
-          break-inside: auto;
+        #dre-print-document thead { display: table-header-group; }
+        #dre-print-document tfoot { display: table-footer-group; }
+        #dre-print-document tr, #dre-print-document td, #dre-print-document th {
+          page-break-inside: avoid;
+          break-inside: avoid;
         }
       }
       #dre-print-document { display: none; }
