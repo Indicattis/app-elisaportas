@@ -1007,6 +1007,7 @@ export default function VendaNovaMinimalista() {
             cidade: formData.cidade,
             cep: formData.cep,
             endereco: formData.endereco,
+            numero: (formData as any).numero || '',
             bairro: formData.bairro,
             canal_aquisicao_id: formData.canal_aquisicao_id || '',
             publico_alvo: formData.publico_alvo,
