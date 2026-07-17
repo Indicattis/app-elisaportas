@@ -1259,7 +1259,12 @@ export default function VendasDirecao() {
             </div>
           </div>
         </div>
-        <div className="h-[50px] md:h-auto p-1 md:p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
+        <button
+          type="button"
+          onClick={() => setPortasModalOpen(true)}
+          className="h-[50px] md:h-auto p-1 md:p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 text-left transition hover:border-blue-400/40 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+          title="Ver detalhamento das portas"
+        >
           <div className="h-full px-3 py-1 md:p-3 rounded-lg bg-gradient-to-br from-blue-500/20 to-blue-700/10 flex items-center justify-between">
             <div className="flex items-center gap-3 md:block">
               <p className="text-xs text-white/60">Portas</p>
@@ -1269,8 +1274,18 @@ export default function VendasDirecao() {
               <Package className="h-4 w-4 md:h-5 md:w-5 text-blue-400" />
             </div>
           </div>
-        </div>
+        </button>
       </div>
+
+      <PortasDetalhesModal
+        open={portasModalOpen}
+        onOpenChange={setPortasModalOpen}
+        vendas={filteredVendas || []}
+        limAvista={limAvista}
+        limPresencial={limPresencial}
+        limResponsavel={limResponsavel}
+        calcularExcedidoDesconto={calcularExcedidoDesconto}
+      />
 
       {/* Seção de Filtro de Vendedores Destacada */}
       <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-blue-600/20 to-blue-800/10 border border-blue-500/30">
