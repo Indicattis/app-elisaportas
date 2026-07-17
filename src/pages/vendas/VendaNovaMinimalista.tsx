@@ -268,6 +268,7 @@ export default function VendaNovaMinimalista() {
       cep: r.cep || '',
       bairro: r.bairro || '',
       endereco: r.endereco || '',
+      numero: r.numero || '',
       publico_alvo: r.publico_alvo || '',
       canal_aquisicao_id: r.canal_aquisicao_id || '',
       observacoes_venda: r.observacoes_venda || '',
