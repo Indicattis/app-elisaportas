@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import logoElisa from '@/assets/logo-elisa-dre.png';
 import { useCategoriaDreConfig, type CategoriaDespesa } from '@/hooks/useCategoriaDreConfig';
 import { fetchConfigLucro } from '@/hooks/useConfigLucro';
+import { formatarMetodoPagamento } from '@/utils/pagamentoResumo';
 
 interface FaturamentoProduto {
   portas: number;
