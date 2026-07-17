@@ -1048,7 +1048,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
     ] = await Promise.all([
       supabase
         .from('gastos' as any)
-        .select('valor, tipo_custo_id')
+        .select('id, valor, tipo_custo_id, descricao, data')
         .gte('data', start)
         .lte('data', end),
       supabase
@@ -1083,12 +1083,23 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
       setTiposCustosAutorizados([]);
       setTiposCustosSalarios([]);
     } else {
-      // soma de gastos por tipo_custo
+      // soma de gastos por tipo_custo + lista detalhada
       const somaGastos: Record<string, number> = {};
+      const listaGastos: Record<string, { id: string; descricao: string | null; data: string; valor: number }[]> = {};
       ((gastos || []) as any[]).forEach((g: any) => {
         if (!g.tipo_custo_id) return;
-        somaGastos[g.tipo_custo_id] = (somaGastos[g.tipo_custo_id] || 0) + (Number(g.valor) || 0);
+        const v = Number(g.valor) || 0;
+        somaGastos[g.tipo_custo_id] = (somaGastos[g.tipo_custo_id] || 0) + v;
+        (listaGastos[g.tipo_custo_id] ||= []).push({
+          id: String(g.id),
+          descricao: g.descricao ?? null,
+          data: g.data,
+          valor: v,
+        });
       });
+      Object.values(listaGastos).forEach(arr =>
+        arr.sort((a, b) => (a.data < b.data ? -1 : a.data > b.data ? 1 : 0)),
+      );
 
       // override mensal do projetado
       const ovMap: Record<string, number> = {};
@@ -1107,6 +1118,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
             id: t.id,
             nome: t.nome,
             valor_real: somaGastos[t.id] || 0,
+            gastos: listaGastos[t.id] || [],
           } as DespesaAgrupada))
           .sort((a, b) => a.nome.localeCompare(b.nome));
 
