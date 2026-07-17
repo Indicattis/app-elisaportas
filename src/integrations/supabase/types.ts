@@ -9894,6 +9894,7 @@ export type Database = {
           percentual_credito: number | null
           publico_alvo: string | null
           quantidade_parcelas: number | null
+          rascunho_pagamento: Json | null
           restante_na_instalacao: boolean | null
           status_aprovacao: string
           temperatura: boolean
@@ -9962,6 +9963,7 @@ export type Database = {
           percentual_credito?: number | null
           publico_alvo?: string | null
           quantidade_parcelas?: number | null
+          rascunho_pagamento?: Json | null
           restante_na_instalacao?: boolean | null
           status_aprovacao?: string
           temperatura?: boolean
@@ -10030,6 +10032,7 @@ export type Database = {
           percentual_credito?: number | null
           publico_alvo?: string | null
           quantidade_parcelas?: number | null
+          rascunho_pagamento?: Json | null
           restante_na_instalacao?: boolean | null
           status_aprovacao?: string
           temperatura?: boolean
