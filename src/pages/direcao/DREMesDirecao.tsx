@@ -1619,15 +1619,6 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
           const gerentePct = clamp(pctDado - friaCeil, 0, gerenteCeil - friaCeil);
           const diretorPct = Math.max(0, pctDado - gerenteCeil);
           bucketsPorVenda.set(v.id, { autoPct, friaPct, gerentePct, diretorPct });
-          if (import.meta.env.DEV) {
-            // eslint-disable-next-line no-console
-            console.debug('[DRE Portas Buckets]', {
-              vendaId: v.id, cliente: v.cliente_nome, formaPg, temperatura: v.temperatura,
-              base: tot.totalBase, desc: tot.totalDesconto, pctDado,
-              autoCeil, friaCeil, gerenteCeil,
-              autoPct, friaPct, gerentePct, diretorPct,
-            });
-          }
         });
 
         const porVenda = new Map<string, VendaComPortasRow>();
