@@ -892,7 +892,7 @@ function PrintDespesaTable({
         </tr>
       </thead>
       {items.map((d, i) => (
-        <tbody key={d.id} style={{ pageBreakInside: 'avoid' }}>
+        <tbody key={d.id}>
           <tr style={{ background: i % 2 === 0 ? '#ffffff' : '#fafbfc' }}>
             <td style={TD}>{d.nome}</td>
             {(() => {
@@ -1048,7 +1048,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
     ] = await Promise.all([
       supabase
         .from('gastos' as any)
-        .select('valor, tipo_custo_id')
+        .select('id, valor, tipo_custo_id, descricao, data')
         .gte('data', start)
         .lte('data', end),
       supabase
@@ -1083,12 +1083,23 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
       setTiposCustosAutorizados([]);
       setTiposCustosSalarios([]);
     } else {
-      // soma de gastos por tipo_custo
+      // soma de gastos por tipo_custo + lista detalhada
       const somaGastos: Record<string, number> = {};
+      const listaGastos: Record<string, { id: string; descricao: string | null; data: string; valor: number }[]> = {};
       ((gastos || []) as any[]).forEach((g: any) => {
         if (!g.tipo_custo_id) return;
-        somaGastos[g.tipo_custo_id] = (somaGastos[g.tipo_custo_id] || 0) + (Number(g.valor) || 0);
+        const v = Number(g.valor) || 0;
+        somaGastos[g.tipo_custo_id] = (somaGastos[g.tipo_custo_id] || 0) + v;
+        (listaGastos[g.tipo_custo_id] ||= []).push({
+          id: String(g.id),
+          descricao: g.descricao ?? null,
+          data: g.data,
+          valor: v,
+        });
       });
+      Object.values(listaGastos).forEach(arr =>
+        arr.sort((a, b) => (a.data < b.data ? -1 : a.data > b.data ? 1 : 0)),
+      );
 
       // override mensal do projetado
       const ovMap: Record<string, number> = {};
@@ -1107,6 +1118,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
             id: t.id,
             nome: t.nome,
             valor_real: somaGastos[t.id] || 0,
+            gastos: listaGastos[t.id] || [],
           } as DespesaAgrupada))
           .sort((a, b) => a.nome.localeCompare(b.nome));
 
@@ -2140,28 +2152,14 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
           page-break-before: always;
           break-before: page;
         }
+        @page landscape { size: A4 landscape; margin: 12mm 14mm; }
         #dre-print-document .pdf-landscape-page {
+          page: landscape;
           page-break-before: always;
           break-before: page;
-          page-break-after: always;
-          break-after: page;
-          position: relative;
-          width: 210mm;
-          height: 297mm;
-          overflow: hidden;
-          padding: 0 !important;
-          margin: 0 !important;
         }
         #dre-print-document .pdf-landscape-content {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 297mm;
-          height: 210mm;
-          box-sizing: border-box;
-          padding: 12mm 14mm;
-          transform-origin: top left;
-          transform: translateY(297mm) rotate(-90deg);
+          width: 100%;
         }
         #dre-print-document .pdf-avoid-break {
           page-break-inside: avoid;
@@ -2169,9 +2167,11 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
           -webkit-column-break-inside: avoid;
         }
         #dre-print-document table { border-collapse: collapse; width: 100%; }
-        #dre-print-document table, #dre-print-document tr, #dre-print-document td, #dre-print-document th {
-          page-break-inside: auto;
-          break-inside: auto;
+        #dre-print-document thead { display: table-header-group; }
+        #dre-print-document tfoot { display: table-footer-group; }
+        #dre-print-document tr, #dre-print-document td, #dre-print-document th {
+          page-break-inside: avoid;
+          break-inside: avoid;
         }
       }
       #dre-print-document { display: none; }
