@@ -1924,12 +1924,26 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
                     </td>
                   ))}
                 </tr>
+                <tr className="border-b border-white/5">
+                  <td className="p-3 text-white/60 font-medium text-xs uppercase">Desconto Excedido</td>
+                  {columns.map(col => {
+                    const val = descontoExcedido[col.key] || 0;
+                    return (
+                      <td
+                        key={col.key}
+                        className={`text-right p-3 font-semibold ${val > 0 ? 'text-red-400' : 'text-white/30'} ${col.key === 'total' ? 'bg-white/5' : ''}`}
+                      >
+                        {val > 0 ? `- ${formatCurrency(val)}` : '—'}
+                      </td>
+                    );
+                  })}
+                </tr>
                 <tr>
                   <td className="p-3 text-white/60 font-medium text-xs uppercase">Lucro</td>
                   {columns.map(col => {
                     const val = col.key === 'fretes'
                       ? (faturamento.fretes - totalDespFretes)
-                      : lucro[col.key];
+                      : (lucro[col.key] - (descontoExcedido[col.key] || 0));
                     const isInstalacoes = col.key === 'instalacoes';
                     const isFretes = col.key === 'fretes';
                     return (
@@ -1947,7 +1961,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
                   {columns.map(col => {
                     const lucroCol = col.key === 'fretes'
                       ? (faturamento.fretes - totalDespFretes)
-                      : lucro[col.key];
+                      : (lucro[col.key] - (descontoExcedido[col.key] || 0));
                     const perc = faturamento[col.key] > 0
                       ? (lucroCol / faturamento[col.key]) * 100
                       : 0;
