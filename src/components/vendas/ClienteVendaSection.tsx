@@ -24,6 +24,7 @@ interface DadosCliente {
   cidade: string;
   cep: string;
   endereco: string;
+  numero?: string;
   bairro: string;
   canal_aquisicao_id: string;
   publico_alvo: string;
@@ -88,6 +89,18 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, dis
     setClienteSelecionado(cliente);
     setSearchOpen(false);
     setSearchTerm('');
+
+    // Extrai número: usa a coluna dedicada se existir; senão parseia "Rua X, 123"
+    const clienteAny = cliente as any;
+    let numero = clienteAny.numero || '';
+    let enderecoRua = cliente.endereco || '';
+    if (!numero && enderecoRua) {
+      const match = enderecoRua.match(/^(.*?),\s*(\d+[a-zA-Z]?)\s*$/);
+      if (match) {
+        enderecoRua = match[1].trim();
+        numero = match[2].trim();
+      }
+    }
     
     onChange({
       cliente_nome: cliente.nome,
@@ -97,7 +110,8 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, dis
       estado: cliente.estado || '',
       cidade: cliente.cidade || '',
       cep: cliente.cep || '',
-      endereco: cliente.endereco || '',
+      endereco: enderecoRua,
+      numero,
       bairro: cliente.bairro || '',
       canal_aquisicao_id: cliente.canal_aquisicao_id || '',
     });
@@ -117,6 +131,7 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, dis
       cidade: '',
       cep: '',
       endereco: '',
+      numero: '',
       bairro: '',
       canal_aquisicao_id: '',
     });
@@ -477,14 +492,25 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, dis
                   />
                 </div>
 
-                <div className="space-y-1 md:col-span-2">
+                <div className="space-y-1">
                   <Label htmlFor="endereco_buscar" className={labelClass}>Endereço *</Label>
                   <Input
                     id="endereco_buscar"
                     value={dados.endereco}
                     onChange={(e) => onChange({ endereco: e.target.value })}
-                    placeholder="Ex: Rua das Flores, 123"
+                    placeholder="Ex: Rua das Flores"
                     className={cn(inputClass, !dados.endereco && "border-amber-500/50")}
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <Label htmlFor="numero_buscar" className={labelClass}>Número *</Label>
+                  <Input
+                    id="numero_buscar"
+                    value={dados.numero || ''}
+                    onChange={(e) => onChange({ numero: e.target.value })}
+                    placeholder="Ex: 123"
+                    className={cn(inputClass, !dados.numero && "border-amber-500/50")}
                   />
                 </div>
 
@@ -687,13 +713,26 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, dis
                   />
                 </div>
 
-                <div className="space-y-1 md:col-span-2">
+                <div className="space-y-1">
                   <Label htmlFor="endereco" className={labelClass}>Endereço *</Label>
                   <Input
                     id="endereco"
                     value={dados.endereco}
                     onChange={(e) => onChange({ endereco: e.target.value })}
-                    placeholder="Ex: Rua das Flores, 123"
+                    placeholder="Ex: Rua das Flores"
+                    className={inputClass}
+                    required
+                    disabled={!!clienteDuplicado}
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <Label htmlFor="numero" className={labelClass}>Número *</Label>
+                  <Input
+                    id="numero"
+                    value={dados.numero || ''}
+                    onChange={(e) => onChange({ numero: e.target.value })}
+                    placeholder="Ex: 123"
                     className={inputClass}
                     required
                     disabled={!!clienteDuplicado}
