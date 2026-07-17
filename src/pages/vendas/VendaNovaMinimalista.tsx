@@ -115,8 +115,9 @@ export default function VendaNovaMinimalista() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const orcamentoId = searchParams.get('orcamento_id');
+  const rascunhoId = searchParams.get('rascunhoId');
   const { toast } = useToast();
-  const { createVenda, isCreating } = useVendas();
+  const { createVenda, isCreating, createRascunho, isCreatingRascunho, deleteVenda } = useVendas();
   const { user } = useAuth();
   const { limites: configLimites } = useConfiguracoesVendas();
   const { limites: regrasLimites } = useRegrasVendas();
