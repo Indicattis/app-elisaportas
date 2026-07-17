@@ -613,162 +613,13 @@ function PrintReport({
         </div>
       </div>
 
-      {/* DESPESAS — nova página */}
-      <div className="pdf-page-break" />
+      {/* ========= PÁGINAS EM PAISAGEM (conteúdo rotacionado 90°) ========= */}
 
-      <div style={{ marginTop: 0 }}>
-        <div style={H2}>3. Folha Salarial {badgeDebita(debitaCat('salario'))}</div>
-        <PrintDespesaTable
-          items={despesasFolha}
-          total={totalDespFolha}
-          formatCurrency={formatCurrency}
-          tiposDisponiveis={tiposCustosFixos.filter(t => isFolha(t.nome))}
-        />
-      </div>
-
-      <div className="pdf-page-break" />
-      <div style={{ marginTop: 0 }}>
-        <div style={H2}>4. Despesas Fixas {badgeDebita(debitaCat('fixa'))}</div>
-        <PrintDespesaTable
-          items={despesasFixas}
-          total={totalDespFixas}
-          formatCurrency={formatCurrency}
-          tiposDisponiveis={tiposCustosFixos.filter(t => !isFolha(t.nome))}
-        />
-      </div>
-
-      <div className="pdf-page-break" />
-      <div style={{ marginTop: 0 }}>
-        <div style={H2}>5. Despesas Variáveis {badgeDebita(debitaCat('variavel'))}</div>
-        <PrintDespesaTable
-          items={despesasVariaveis}
-          total={totalDespVariaveis}
-          formatCurrency={formatCurrency}
-          tiposDisponiveis={tiposCustosVariaveis}
-        />
-      </div>
-
-      <div className="pdf-page-break" />
-      <div style={{ marginTop: 0 }}>
-        <div style={H2}>6. Despesas de Imposto {badgeDebita(debitaCat('imposto'))}</div>
-        <PrintDespesaTable
-          items={despesasImpostos}
-          total={totalDespImpostos}
-          formatCurrency={formatCurrency}
-          tiposDisponiveis={tiposCustosImpostos}
-        />
-      </div>
-
-      <div className="pdf-page-break" />
-      <div style={{ marginTop: 0 }}>
-        <div style={H2}>7. Investimentos {badgeDebita(debitaCat('investimento'))}</div>
-        <PrintDespesaTable
-          items={despesasInvestimentos}
-          total={totalDespInvestimentos}
-          formatCurrency={formatCurrency}
-          tiposDisponiveis={tiposCustosInvestimentos}
-        />
-      </div>
-
-      <div className="pdf-page-break" />
-      <div style={{ marginTop: 0 }}>
-        <div style={H2}>8. Fornecedores {badgeDebita(debitaCat('fornecedor'))}</div>
-        <PrintDespesaTable
-          items={despesasFornecedores}
-          total={totalDespFornecedores}
-          formatCurrency={formatCurrency}
-          tiposDisponiveis={tiposCustosFornecedores}
-        />
-      </div>
-
-      <div className="pdf-page-break" />
-      <div style={{ marginTop: 0 }}>
-        <div style={H2}>9. Financiamentos {badgeDebita(debitaCat('financiamento'))}</div>
-        <PrintDespesaTable
-          items={despesasFinanciamentos}
-          total={totalDespFinanciamentos}
-          formatCurrency={formatCurrency}
-          tiposDisponiveis={tiposCustosFinanciamentos}
-        />
-      </div>
-
-      <div className="pdf-page-break" />
-      <div style={{ marginTop: 0 }}>
-        <div style={H2}>10. Fretes e Logística {badgeDebita(debitaCat('frete'))}</div>
-        <PrintDespesaTable
-          items={despesasFretes}
-          total={totalDespFretes}
-          formatCurrency={formatCurrency}
-          tiposDisponiveis={tiposCustosFretes}
-        />
-      </div>
-
-      <div className="pdf-page-break" />
-      <div style={{ marginTop: 0 }}>
-        <div style={H2}>11. Autorizados {badgeDebita(debitaCat('autorizado'))}</div>
-        <PrintDespesaTable
-          items={despesasAutorizados}
-          total={totalDespAutorizados}
-          formatCurrency={formatCurrency}
-          tiposDisponiveis={tiposCustosAutorizados}
-        />
-      </div>
-
-      <div className="pdf-page-break" />
-      <div style={{ marginTop: 0 }}>
-        <div style={H2}>12. Salários {badgeDebita(debitaCat('salario'))}</div>
-        <PrintDespesaTable
-          items={despesasSalarios}
-          total={totalDespSalarios}
-          formatCurrency={formatCurrency}
-          tiposDisponiveis={tiposCustosSalarios}
-        />
-      </div>
-
-      {/* ESTOQUE */}
-      <div className="pdf-page-break" />
-      <div style={{ marginTop: 0 }}>
-        <div style={H2}>8. Estoque</div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <div style={{ flex: 1, border: '1px solid #e2e8f0', padding: '10px 12px', background: '#fafbfc' }}>
-            <div style={{ fontSize: '7pt', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>
-              Total de Itens
-            </div>
-            <div style={{ fontSize: '13pt', fontWeight: 800, marginTop: 3, fontVariantNumeric: 'tabular-nums' }}>
-              {estoqueResumo.totalItens.toLocaleString('pt-BR')}
-            </div>
-          </div>
-          <div style={{ flex: 1, border: '1px solid #e2e8f0', padding: '10px 12px', background: '#fafbfc' }}>
-            <div style={{ fontSize: '7pt', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>
-              Valor Total
-            </div>
-            <div style={{ fontSize: '13pt', fontWeight: 800, marginTop: 3, fontVariantNumeric: 'tabular-nums' }}>
-              {formatCurrency(estoqueResumo.valorTotal)}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* RODAPÉ */}
-      <div
-        style={{
-          marginTop: 24,
-          paddingTop: 8,
-          borderTop: '1px solid #cbd5e1',
-          fontSize: '7pt',
-          color: '#94a3b8',
-          textAlign: 'center',
-        }}
-      >
-        Documento gerado automaticamente • {format(new Date(), "dd/MM/yyyy HH:mm")} • D.R.E {mesNome}
-      </div>
-
-      {/* VENDAS DO MÊS — nova página */}
+      {/* Página 2: Vendas do Mês */}
       {vendasListagem.length > 0 && (
-        <>
-          <div className="pdf-page-break" />
-          <div style={{ marginTop: 0 }}>
-            <div style={H2}>9. Vendas do Mês</div>
+        <div className="pdf-landscape-page">
+          <div className="pdf-landscape-content">
+            <div style={H2}>3. Vendas do Mês</div>
             <table>
               <thead style={{ display: 'table-header-group' }}>
                 <tr>
@@ -822,8 +673,164 @@ function PrintReport({
               </tbody>
             </table>
           </div>
-        </>
+        </div>
       )}
+
+      <div className="pdf-landscape-page">
+        <div className="pdf-landscape-content">
+          <div style={H2}>4. Folha Salarial {badgeDebita(debitaCat('salario'))}</div>
+          <PrintDespesaTable
+            items={despesasFolha}
+            total={totalDespFolha}
+            formatCurrency={formatCurrency}
+            tiposDisponiveis={tiposCustosFixos.filter(t => isFolha(t.nome))}
+          />
+        </div>
+      </div>
+
+      <div className="pdf-landscape-page">
+        <div className="pdf-landscape-content">
+          <div style={H2}>5. Despesas Fixas {badgeDebita(debitaCat('fixa'))}</div>
+          <PrintDespesaTable
+            items={despesasFixas}
+            total={totalDespFixas}
+            formatCurrency={formatCurrency}
+            tiposDisponiveis={tiposCustosFixos.filter(t => !isFolha(t.nome))}
+          />
+        </div>
+      </div>
+
+      <div className="pdf-landscape-page">
+        <div className="pdf-landscape-content">
+          <div style={H2}>6. Despesas Variáveis {badgeDebita(debitaCat('variavel'))}</div>
+          <PrintDespesaTable
+            items={despesasVariaveis}
+            total={totalDespVariaveis}
+            formatCurrency={formatCurrency}
+            tiposDisponiveis={tiposCustosVariaveis}
+          />
+        </div>
+      </div>
+
+      <div className="pdf-landscape-page">
+        <div className="pdf-landscape-content">
+          <div style={H2}>7. Despesas de Imposto {badgeDebita(debitaCat('imposto'))}</div>
+          <PrintDespesaTable
+            items={despesasImpostos}
+            total={totalDespImpostos}
+            formatCurrency={formatCurrency}
+            tiposDisponiveis={tiposCustosImpostos}
+          />
+        </div>
+      </div>
+
+      <div className="pdf-landscape-page">
+        <div className="pdf-landscape-content">
+          <div style={H2}>8. Investimentos {badgeDebita(debitaCat('investimento'))}</div>
+          <PrintDespesaTable
+            items={despesasInvestimentos}
+            total={totalDespInvestimentos}
+            formatCurrency={formatCurrency}
+            tiposDisponiveis={tiposCustosInvestimentos}
+          />
+        </div>
+      </div>
+
+      <div className="pdf-landscape-page">
+        <div className="pdf-landscape-content">
+          <div style={H2}>9. Fornecedores {badgeDebita(debitaCat('fornecedor'))}</div>
+          <PrintDespesaTable
+            items={despesasFornecedores}
+            total={totalDespFornecedores}
+            formatCurrency={formatCurrency}
+            tiposDisponiveis={tiposCustosFornecedores}
+          />
+        </div>
+      </div>
+
+      <div className="pdf-landscape-page">
+        <div className="pdf-landscape-content">
+          <div style={H2}>10. Financiamentos {badgeDebita(debitaCat('financiamento'))}</div>
+          <PrintDespesaTable
+            items={despesasFinanciamentos}
+            total={totalDespFinanciamentos}
+            formatCurrency={formatCurrency}
+            tiposDisponiveis={tiposCustosFinanciamentos}
+          />
+        </div>
+      </div>
+
+      <div className="pdf-landscape-page">
+        <div className="pdf-landscape-content">
+          <div style={H2}>11. Fretes e Logística {badgeDebita(debitaCat('frete'))}</div>
+          <PrintDespesaTable
+            items={despesasFretes}
+            total={totalDespFretes}
+            formatCurrency={formatCurrency}
+            tiposDisponiveis={tiposCustosFretes}
+          />
+        </div>
+      </div>
+
+      <div className="pdf-landscape-page">
+        <div className="pdf-landscape-content">
+          <div style={H2}>12. Autorizados {badgeDebita(debitaCat('autorizado'))}</div>
+          <PrintDespesaTable
+            items={despesasAutorizados}
+            total={totalDespAutorizados}
+            formatCurrency={formatCurrency}
+            tiposDisponiveis={tiposCustosAutorizados}
+          />
+        </div>
+      </div>
+
+      <div className="pdf-landscape-page">
+        <div className="pdf-landscape-content">
+          <div style={H2}>13. Salários {badgeDebita(debitaCat('salario'))}</div>
+          <PrintDespesaTable
+            items={despesasSalarios}
+            total={totalDespSalarios}
+            formatCurrency={formatCurrency}
+            tiposDisponiveis={tiposCustosSalarios}
+          />
+        </div>
+      </div>
+
+      <div className="pdf-landscape-page">
+        <div className="pdf-landscape-content">
+          <div style={H2}>14. Estoque</div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <div style={{ flex: 1, border: '1px solid #e2e8f0', padding: '10px 12px', background: '#fafbfc' }}>
+              <div style={{ fontSize: '7pt', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>
+                Total de Itens
+              </div>
+              <div style={{ fontSize: '13pt', fontWeight: 800, marginTop: 3, fontVariantNumeric: 'tabular-nums' }}>
+                {estoqueResumo.totalItens.toLocaleString('pt-BR')}
+              </div>
+            </div>
+            <div style={{ flex: 1, border: '1px solid #e2e8f0', padding: '10px 12px', background: '#fafbfc' }}>
+              <div style={{ fontSize: '7pt', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>
+                Valor Total
+              </div>
+              <div style={{ fontSize: '13pt', fontWeight: 800, marginTop: 3, fontVariantNumeric: 'tabular-nums' }}>
+                {formatCurrency(estoqueResumo.valorTotal)}
+              </div>
+            </div>
+          </div>
+          <div
+            style={{
+              marginTop: 24,
+              paddingTop: 8,
+              borderTop: '1px solid #cbd5e1',
+              fontSize: '7pt',
+              color: '#94a3b8',
+              textAlign: 'center',
+            }}
+          >
+            Documento gerado automaticamente • {format(new Date(), "dd/MM/yyyy HH:mm")} • D.R.E {mesNome}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
