@@ -22,6 +22,7 @@ export type CustoItem = {
   taxa_cartao: number;
   ordem: number;
   vendavel_avulso: boolean;
+  tipo_item: 'avulso' | 'acessorio';
   created_at: string;
   updated_at: string;
 };
@@ -44,6 +45,7 @@ export type NewCustoItem = {
   taxa_descontos?: number;
   taxa_cartao?: number;
   vendavel_avulso?: boolean;
+  tipo_item?: 'avulso' | 'acessorio';
 };
 
 const QUERY_KEY = ["custos_itens"] as const;
@@ -326,6 +328,7 @@ export function useCustosItens() {
           quantidade_maxima: payload.quantidade_maxima ?? 0,
           ordem: payload.ordem ?? 0,
           vendavel_avulso: payload.vendavel_avulso ?? false,
+          tipo_item: payload.tipo_item ?? 'avulso',
           ...(payload.taxa_impostos !== undefined ? { taxa_impostos: payload.taxa_impostos } : {}),
           ...(payload.taxa_descontos !== undefined ? { taxa_descontos: payload.taxa_descontos } : {}),
           ...(payload.taxa_cartao !== undefined ? { taxa_cartao: payload.taxa_cartao } : {}),
