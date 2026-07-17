@@ -1863,19 +1863,21 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         );
 
         // ---- Itens Avulsos (acessorio + adicional) ----
-        setAvulsosDetalhe(
+        const detalheAvulsoBuilder = (targetBucket: 'acessorios' | 'avulsos') =>
           buildCategoriaDetalhe(todosRows, (p) => {
             if (!['acessorio', 'adicional'].includes(p.tipo_produto)) return null;
+            if (classificarAvulso(p) !== targetBucket) return null;
             const qty = p.quantidade || 1;
             const bruto = (p.valor_produto || 0) * qty;
             if (bruto <= 0) return null;
             return {
               valorTabela: bruto,
               lucro: p.lucro_item || 0,
-              descricao: p.descricao || 'Item avulso',
+              descricao: p.descricao || (targetBucket === 'acessorios' ? 'Acessório' : 'Item avulso'),
             };
-          }),
-        );
+          });
+        setAvulsosDetalhe(detalheAvulsoBuilder('avulsos'));
+        setAcessoriosDetalhe(detalheAvulsoBuilder('acessorios'));
       } catch (err) {
         console.error('Erro ao buscar dados DRE:', err);
       } finally {
