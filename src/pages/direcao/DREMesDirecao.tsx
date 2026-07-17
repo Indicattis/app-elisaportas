@@ -1429,32 +1429,107 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         const { data: portasRaw } = await supabase
           .from('produtos_vendas')
           .select(`
-            id, descricao, quantidade,
+            id, descricao, quantidade, valor_total,
             valor_produto, valor_pintura, valor_instalacao,
             tipo_desconto, desconto_percentual, desconto_valor,
             lucro_item,
-            vendas!inner(id, data_venda, cliente_nome, valor_venda, valor_frete)
+            vendas!inner(id, data_venda, cliente_nome, valor_venda, valor_frete, forma_pagamento, temperatura)
           `)
           .eq('tipo_produto', 'porta_enrolar')
           .gte('vendas.data_venda', start + ' 00:00:00')
           .lte('vendas.data_venda', end + ' 23:59:59');
+
+        const vendaIdsPortas = Array.from(
+          new Set(((portasRaw || []) as any[]).map((p) => p.vendas?.id).filter(Boolean))
+        );
+        const { data: todosProdutosVendas } = vendaIdsPortas.length
+          ? await supabase
+              .from('produtos_vendas')
+              .select(
+                'venda_id, quantidade, valor_produto, valor_pintura, valor_instalacao, tipo_desconto, desconto_percentual, desconto_valor'
+              )
+              .in('venda_id', vendaIdsPortas)
+          : { data: [] as any[] };
+
+        const { data: cfgVendasDre } = await supabase
+          .from('configuracoes_vendas')
+          .select('limite_desconto_avista, limite_desconto_presencial, limite_adicional_responsavel')
+          .maybeSingle();
+        const limAvista = cfgVendasDre?.limite_desconto_avista ?? 3;
+        const limPresencial = cfgVendasDre?.limite_desconto_presencial ?? 5;
+        const limResponsavel = cfgVendasDre?.limite_adicional_responsavel ?? 7;
+
+        // Agrega todos os produtos por venda para totalBase / totalDesconto / rateio de frete
+        const totaisPorVenda = new Map<string, { totalBase: number; totalDesconto: number }>();
+        ((todosProdutosVendas || []) as any[]).forEach((p) => {
+          const qty = p.quantidade || 1;
+          const base =
+            ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
+          let desc = 0;
+          if (p.tipo_desconto === 'percentual' && p.desconto_percentual > 0) {
+            desc = base * (p.desconto_percentual / 100);
+          } else if (p.tipo_desconto === 'valor' && p.desconto_valor > 0) {
+            desc = p.desconto_valor;
+          }
+          const cur = totaisPorVenda.get(p.venda_id) || { totalBase: 0, totalDesconto: 0 };
+          cur.totalBase += base;
+          cur.totalDesconto += desc;
+          totaisPorVenda.set(p.venda_id, cur);
+        });
+
+        // Soma bruta dos itens de porta por venda (para ratear excedido só entre as portas)
+        const brutoPortasPorVenda = new Map<string, number>();
+        ((portasRaw || []) as any[]).forEach((p) => {
+          const v = p.vendas;
+          if (!v) return;
+          const qty = p.quantidade || 1;
+          const bruto =
+            ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
+          brutoPortasPorVenda.set(v.id, (brutoPortasPorVenda.get(v.id) || 0) + bruto);
+        });
+
+        const excedidoPorVenda = new Map<string, number>();
+        ((portasRaw || []) as any[]).forEach((p) => {
+          const v = p.vendas;
+          if (!v || excedidoPorVenda.has(v.id)) return;
+          const tot = totaisPorVenda.get(v.id) || { totalBase: 0, totalDesconto: 0 };
+          if (tot.totalBase <= 0) {
+            excedidoPorVenda.set(v.id, 0);
+            return;
+          }
+          const pctDado = (tot.totalDesconto / tot.totalBase) * 100;
+          const formaPg = (v.forma_pagamento || '').trim();
+          const aptoAvista = formaPg !== '' && formaPg !== 'cartao_credito';
+          const aptoFrio = v.temperatura === false;
+          const limiteBase = (aptoAvista ? limAvista : 0) + (aptoFrio ? limPresencial : 0);
+          const aptoGerente = pctDado > limiteBase;
+          const limite = limiteBase + (aptoGerente ? limResponsavel : 0);
+          const excedidoPct = Math.max(0, pctDado - limite);
+          excedidoPorVenda.set(v.id, (excedidoPct / 100) * tot.totalBase);
+        });
 
         const porVenda = new Map<string, VendaComPortasRow>();
         ((portasRaw || []) as any[]).forEach((p) => {
           const v = p.vendas;
           if (!v) return;
           const qty = p.quantidade || 1;
-          const valorPortaBruto = (p.valor_produto || 0) * qty;
-          const valorPinturaBruto = (p.valor_pintura || 0) * qty;
-          const valorInstBruto = (p.valor_instalacao || 0) * qty;
-          const bruto = valorPortaBruto + valorPinturaBruto + valorInstBruto;
+          const valorTabela =
+            ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
           let desc = 0;
           if (p.tipo_desconto === 'percentual' && p.desconto_percentual > 0) {
-            desc = bruto * (p.desconto_percentual / 100);
+            desc = valorTabela * (p.desconto_percentual / 100);
           } else if (p.tipo_desconto === 'valor' && p.desconto_valor > 0) {
             desc = p.desconto_valor;
           }
-          const valorLiquido = bruto - desc;
+          const tot = totaisPorVenda.get(v.id) || { totalBase: 0, totalDesconto: 0 };
+          const freteVenda = v.valor_frete || 0;
+          const freteRateado =
+            tot.totalBase > 0 ? freteVenda * (valorTabela / tot.totalBase) : 0;
+          const somaPortas = brutoPortasPorVenda.get(v.id) || 0;
+          const excedidoTot = excedidoPorVenda.get(v.id) || 0;
+          const excedidoItem =
+            somaPortas > 0 ? excedidoTot * (valorTabela / somaPortas) : 0;
+          const valorFinal = p.valor_total ?? valorTabela - desc;
           const existing = porVenda.get(v.id) || {
             vendaId: v.id,
             dataVenda: v.data_venda,
@@ -1466,11 +1541,11 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
             id: p.id,
             descricao: p.descricao || 'Sem descrição',
             quantidade: qty,
-            valorPortaBruto,
-            valorPinturaBruto,
-            valorInstalacaoBruto: valorInstBruto,
+            valorTabela,
+            freteRateado,
             descontoLinha: desc,
-            valorLiquido,
+            valorFinal,
+            excedido: excedidoItem,
             lucro: p.lucro_item || 0,
           });
           porVenda.set(v.id, existing);
