@@ -1837,25 +1837,15 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
 
         // ---- Itens Avulsos (acessorio + adicional) ----
         setAvulsosDetalhe(
-          buildMap(todosRows, (p) => {
+          buildCategoriaDetalhe(todosRows, (p) => {
             if (!['acessorio', 'adicional'].includes(p.tipo_produto)) return null;
             const qty = p.quantidade || 1;
             const bruto = (p.valor_produto || 0) * qty;
-            let desc = 0;
-            if (p.tipo_desconto === 'percentual' && p.desconto_percentual > 0) {
-              desc = bruto * (p.desconto_percentual / 100);
-            } else if (p.tipo_desconto === 'valor' && p.desconto_valor > 0) {
-              desc = p.desconto_valor;
-            }
+            if (bruto <= 0) return null;
             return {
-              id: p.id,
-              descricao: p.descricao || 'Item avulso',
-              quantidade: qty,
-              valorUnitario: p.valor_produto || 0,
-              valorBruto: bruto,
-              descontoLinha: desc,
-              valorLiquido: bruto - desc,
+              valorTabela: bruto,
               lucro: p.lucro_item || 0,
+              descricao: p.descricao || 'Item avulso',
             };
           }),
         );
