@@ -1600,7 +1600,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
           string,
           { autoPct: number; friaPct: number; gerentePct: number; diretorPct: number }
         >();
-        ((portasRaw || []) as any[]).forEach((p) => {
+        ((detalhesRaw || []) as any[]).forEach((p) => {
           const v = Array.isArray(p.vendas) ? p.vendas[0] : p.vendas;
           if (!v || excedidoPorVenda.has(v.id)) return;
           const tot = totaisPorVenda.get(v.id) || { totalBase: 0, totalDesconto: 0 };
