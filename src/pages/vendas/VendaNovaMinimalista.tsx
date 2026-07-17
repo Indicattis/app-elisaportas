@@ -344,6 +344,15 @@ export default function VendaNovaMinimalista() {
         setPercentualCredito(Number(snap.credito.percentual) || 0);
       }
     }
+    // Ajuste global (desconto/acréscimo)
+    const ag = (snap && typeof snap === 'object') ? snap.ajuste_global : null;
+    if (ag && typeof ag === 'object') {
+      setAjusteGlobal({
+        tipo: ag.tipo === 'acrescimo' ? 'acrescimo' : 'desconto',
+        unidade: ag.unidade === 'R$' ? 'R$' : '%',
+        valor: Number(ag.valor) || 0,
+      });
+    }
   }, [rascunhoData]);
 
   useEffect(() => {
@@ -748,6 +757,7 @@ export default function VendaNovaMinimalista() {
         portas,
         pagamentoData,
         creditoVenda: { valorCredito, percentualCredito },
+        ajusteGlobal,
       } as any);
       const novoId = (rascunho as any)?.id;
       if (novoId) navigate(`/vendas/minhas-vendas/rascunho/${novoId}`);

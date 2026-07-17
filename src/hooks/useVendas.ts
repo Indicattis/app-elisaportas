@@ -746,12 +746,14 @@ export function useVendas() {
       vendaData, 
       portas, 
       pagamentoData,
-      creditoVenda
+      creditoVenda,
+      ajusteGlobal
     }: { 
       vendaData: VendaFormData; 
       portas: ProdutoVenda[];
       pagamentoData?: PagamentoData;
       creditoVenda?: CreditoVenda;
+      ajusteGlobal?: { tipo: 'desconto' | 'acrescimo'; unidade: '%' | 'R$'; valor: number };
     }) => {
       // 1. Obter usuário atual
       const { data: { user } } = await supabase.auth.getUser();
@@ -794,6 +796,8 @@ export function useVendas() {
       const vendaPayload = {
         ...vendaDataLimpo,
         is_rascunho: true,
+        endereco: endereco || null,
+        numero: numero || null,
         cpf_cliente: vendaData.cpf_cliente || null,
         atendente_id: adminUser.user_id,
         data_venda: vendaData.data_venda || new Date().toISOString(),
@@ -814,11 +818,11 @@ export function useVendas() {
         temperatura: temperatura ?? true,
         // Snapshot completo do formulário de pagamento — usado para re-hidratar
         // o rascunho no formulário de nova venda. Serializado como JSON.
-        rascunho_pagamento: pagamentoData
+        rascunho_pagamento: (pagamentoData || ajusteGlobal)
           ? ({
               usar_dois_metodos: pagamentoData.usar_dois_metodos,
               pagamento_na_entrega: pagamentoData.pagamento_na_entrega,
-              metodos: pagamentoData.metodos.map((m) => {
+              metodos: (pagamentoData?.metodos || []).map((m) => {
                 const { comprovante_file: _f, ...rest } = m as any;
                 return {
                   ...rest,
@@ -831,6 +835,13 @@ export function useVendas() {
                 valor: creditoVenda?.valorCredito || 0,
                 percentual: creditoVenda?.percentualCredito || 0,
               },
+              ajuste_global: ajusteGlobal
+                ? {
+                    tipo: ajusteGlobal.tipo,
+                    unidade: ajusteGlobal.unidade,
+                    valor: Number(ajusteGlobal.valor) || 0,
+                  }
+                : null,
             } as any)
           : null,
       };

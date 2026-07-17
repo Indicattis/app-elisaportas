@@ -345,7 +345,8 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
   const metodo2 = paymentData.metodos[1];
   const valorMetodo1 = paymentData.usar_dois_metodos ? metodo1.valor : valorTotal;
   const valorMetodo2 = paymentData.usar_dois_metodos ? Math.max(0, valorTotal - metodo1.valor) : 0;
-  const valoresConferem = !paymentData.usar_dois_metodos || (metodo1.valor + valorMetodo2 === valorTotal);
+  const valoresConferem = !paymentData.usar_dois_metodos
+    || Math.abs((metodo1.valor + valorMetodo2) - valorTotal) < 0.01;
 
   const cardClass = "bg-white/5 border-white/10 backdrop-blur-xl";
 

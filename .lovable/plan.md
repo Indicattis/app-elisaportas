@@ -1,50 +1,54 @@
-## Objetivo
 
-Distinguir, no catálogo de itens (`/direcao/estrategia/itens`) e no DRE mensal, quais itens são **acessórios** e quais são **itens avulsos**. Hoje o DRE agrupa tudo em "Itens Avulsos".
+## Problemas confirmados no código
 
-## 1. Banco de dados
+### 1. Acréscimo global não é salvo nem re-hidratado no rascunho
+- `src/hooks/useVendas.ts` → `createRascunhoMutation` **não recebe** o `ajusteGlobal` do formulário. Só chegam `portas` (sem o ajuste aplicado) e `pagamentoData`.
+- `src/pages/vendas/VendaNovaMinimalista.tsx` → `handleSalvarRascunho` envia `portas` (não `portasComAjusteGlobal`) e nunca passa o objeto `ajusteGlobal`.
+- O `useEffect` de hidratação (linhas 257–347) restaura cliente, produtos, pagamento e crédito, mas **não restaura `ajusteGlobal`** — por isso o rascunho reabre sempre com "Desconto/Acréscimo Global = 0".
 
-Migration em `custos_itens`:
-- Adicionar coluna `tipo_item text NOT NULL DEFAULT 'avulso'` com CHECK em (`'avulso'`, `'acessorio'`).
-- Backfill: manter todos os registros existentes como `'avulso'` (default cobre).
+### 2. Endereço/Número são descartados no INSERT do rascunho
+Em `useVendas.ts:791`:
+```ts
+const { endereco, numero, temperatura, cliente_id: _, ...vendaDataLimpo } = vendaData;
+```
+`temperatura` é reinserido depois em `vendaPayload`, mas `endereco` e `numero` são extraídos e **nunca recolocados** — as colunas ficam `NULL` no banco, então no reload do rascunho aparecem vazias.
 
-Nada muda em `produtos_vendas`. O link continua sendo via `produtos_vendas.custos_itens_id`.
+### 3. Aviso "⚠ Valores não conferem com o total" com valores corretos
+`src/components/vendas/PagamentoSection.tsx:348`:
+```ts
+const valoresConferem = !paymentData.usar_dois_metodos || (metodo1.valor + valorMetodo2 === valorTotal);
+```
+Comparação exata de floats — arredondamentos de centavo (ex.: 1234.5600000001 vs 1234.56) disparam o alerta mesmo quando visualmente idênticos.
 
-## 2. `/direcao/estrategia/itens`
+## Correções
 
-- Em `useCustosItens.ts` incluir `tipo_item` no tipo `CustoItem` e no `CustoItemInput`.
-- No modal de criação/edição de item, adicionar um seletor "Tipo do item" com as opções **Item Avulso** (padrão) e **Acessório**.
-- Na listagem, exibir um badge discreto "Acessório" ao lado do nome quando `tipo_item = 'acessorio'` para o usuário identificar rapidamente.
-- Adicionar filtro rápido no header (chips "Todos / Avulsos / Acessórios") para facilitar a curadoria em massa.
+### A. Persistir e re-hidratar o acréscimo global no rascunho
+1. `useVendas.ts` `createRascunhoMutation`:
+   - Aceitar `ajusteGlobal?: AjusteGlobal` nos parâmetros.
+   - Adicionar `ajuste_global` dentro do JSON `rascunho_pagamento` já existente (evita nova coluna): `{ tipo, unidade, valor }`.
+2. `VendaNovaMinimalista.tsx` `handleSalvarRascunho`:
+   - Passar `ajusteGlobal` para `createRascunho`.
+3. `VendaNovaMinimalista.tsx` `useEffect` de hidratação:
+   - Ler `snap.ajuste_global` e chamar `setAjusteGlobal(...)` com fallback para `{ tipo:'desconto', unidade:'%', valor:0 }`.
 
-## 3. `/direcao/estrategia/dre/:mes`
+### B. Preservar `endereco` e `numero` no rascunho
+Em `useVendas.ts` `createRascunhoMutation`, ao montar `vendaPayload` reincluir explicitamente `endereco` e `numero` (mesmo padrão feito com `temperatura`).
 
-Arquivo: `src/pages/direcao/DREMesDirecao.tsx`.
-
-- Estender `FaturamentoProduto` com um campo novo `acessorios: number` (mantendo `avulsos`).
-- Alterar o carregamento dos produtos da venda para trazer também `custos_itens_id` e fazer um `select` paralelo em `custos_itens` do mês, montando um `Map<id, tipo_item>`.
-- Regra de classificação por linha de produto (aplicada em faturamento, lucro, desconto excedido e top itens):
-  - Se `custos_itens_id` presente no mapa → usa `tipo_item` do catálogo.
-  - Caso contrário (fallback para vendas antigas sem link):
-    - `tipo_produto = 'acessorio'` → coluna **Acessórios**.
-    - `tipo_produto = 'adicional'` → coluna **Itens Avulsos**.
-- Adicionar a coluna **Acessórios** na tabela principal do DRE (colunas passam a ser: Portas, Pintura, Instalações, Acessórios, Itens Avulsos, Fretes, Total). Somar `acessorios` no `fat.total`, `luc.total` e `exc.total`.
-- Modal detalhado: reutilizar o mesmo `PortasDetalheDialog` genérico, adicionando um estado/handler para `acessoriosModalOpen` com `titulo="Acessórios"` e `categoriaLabel="acessorios"`. O helper `buildCategoriaDetalhe` recebe um predicado — hoje filtra por `tipo_produto` em `['acessorio','adicional']`; passa a receber a mesma regra de classificação acima para filtrar apenas linhas classificadas como "acessorios" (ou "avulsos" no modal existente).
-- Top 5 itens: dividir em `topAcessorios` e `topAvulsos` usando o mesmo mapa.
-
-## 4. PDF do DRE
-
-- Em `PrintReport` incluir a nova coluna "Acessórios" no resumo e nos totais, mantendo cor Elisa e paisagem já configurada.
-- Se a coluna extra deixar o layout apertado, reduzir levemente `fontSize` das colunas numéricas ou usar duas linhas de cabeçalho — decisão feita no momento da implementação após conferir visualmente.
+### C. Corrigir alerta de divergência de pagamento
+Em `PagamentoSection.tsx`, trocar a comparação estrita por uma com tolerância de 1 centavo:
+```ts
+const valoresConferem = !paymentData.usar_dois_metodos
+  || Math.abs((metodo1.valor + valorMetodo2) - valorTotal) < 0.01;
+```
 
 ## Detalhes técnicos
 
-- `custos_itens.tipo_item`: `text NOT NULL DEFAULT 'avulso' CHECK (tipo_item IN ('avulso','acessorio'))`.
-- Não é necessário mexer em fluxo de vendas, orçamentos, produção ou faturamento — a flag é puramente para relatório estratégico/DRE.
-- Vendas antigas sem `custos_itens_id` continuam funcionando pelo fallback baseado em `tipo_produto`.
-- Nenhuma alteração em RLS/GRANT necessária (coluna adicionada a tabela existente).
+- Nenhuma migração de banco necessária — o snapshot do ajuste é serializado dentro do JSON já existente em `vendas.rascunho_pagamento`.
+- Rascunhos antigos sem `ajuste_global` continuam válidos (fallback para valor zero).
+- A tolerância de R$ 0,01 na conferência é o padrão financeiro do próprio sistema (usado em outras validações de boleto).
 
-## Fora de escopo
+## Arquivos afetados
 
-- Não vamos migrar historicamente `tipo_produto='acessorio'` das vendas para o novo campo; a segregação acontece só na leitura do DRE.
-- Não vamos criar tela nova — tudo é ajuste na página de itens existente e no DRE.
+- `src/hooks/useVendas.ts`
+- `src/pages/vendas/VendaNovaMinimalista.tsx`
+- `src/components/vendas/PagamentoSection.tsx`
