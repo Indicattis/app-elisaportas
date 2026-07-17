@@ -892,7 +892,7 @@ function PrintDespesaTable({
         </tr>
       </thead>
       {items.map((d, i) => (
-        <tbody key={d.id} style={{ pageBreakInside: 'avoid' }}>
+        <tbody key={d.id}>
           <tr style={{ background: i % 2 === 0 ? '#ffffff' : '#fafbfc' }}>
             <td style={TD}>{d.nome}</td>
             {(() => {
