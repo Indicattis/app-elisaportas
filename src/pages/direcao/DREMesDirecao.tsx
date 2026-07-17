@@ -39,11 +39,11 @@ interface VendaComPortasRow {
     id: string;
     descricao: string;
     quantidade: number;
-    valorPortaBruto: number;
-    valorPinturaBruto: number;
-    valorInstalacaoBruto: number;
+    valorTabela: number;
+    freteRateado: number;
     descontoLinha: number;
-    valorLiquido: number;
+    valorFinal: number;
+    excedido: number;
     lucro: number;
   }[];
 }
