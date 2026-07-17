@@ -24,6 +24,7 @@ interface DadosCliente {
   cidade: string;
   cep: string;
   endereco: string;
+  numero: string;
   bairro: string;
   canal_aquisicao_id: string;
   publico_alvo: string;
@@ -88,6 +89,18 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, dis
     setClienteSelecionado(cliente);
     setSearchOpen(false);
     setSearchTerm('');
+
+    // Extrai número: usa a coluna dedicada se existir; senão parseia "Rua X, 123"
+    const clienteAny = cliente as any;
+    let numero = clienteAny.numero || '';
+    let enderecoRua = cliente.endereco || '';
+    if (!numero && enderecoRua) {
+      const match = enderecoRua.match(/^(.*?),\s*(\d+[a-zA-Z]?)\s*$/);
+      if (match) {
+        enderecoRua = match[1].trim();
+        numero = match[2].trim();
+      }
+    }
     
     onChange({
       cliente_nome: cliente.nome,
@@ -97,7 +110,8 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, dis
       estado: cliente.estado || '',
       cidade: cliente.cidade || '',
       cep: cliente.cep || '',
-      endereco: cliente.endereco || '',
+      endereco: enderecoRua,
+      numero,
       bairro: cliente.bairro || '',
       canal_aquisicao_id: cliente.canal_aquisicao_id || '',
     });
@@ -117,6 +131,7 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, dis
       cidade: '',
       cep: '',
       endereco: '',
+      numero: '',
       bairro: '',
       canal_aquisicao_id: '',
     });
