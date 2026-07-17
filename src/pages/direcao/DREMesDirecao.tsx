@@ -2585,12 +2585,16 @@ function PortasDetalheDialog({
   mesNome,
   vendas,
   formatCurrency,
+  titulo = 'Vendas com Portas de Enrolar',
+  categoriaLabel = 'Porta de Enrolar',
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   mesNome: string;
   vendas: VendaComPortasRow[];
   formatCurrency: (v: number) => string;
+  titulo?: string;
+  categoriaLabel?: string;
 }) {
   const totals = vendas.reduce(
     (acc, v) => {
@@ -2614,11 +2618,11 @@ function PortasDetalheDialog({
       <DialogContent className="max-w-7xl max-h-[92vh] overflow-y-auto bg-gradient-to-b from-slate-950 to-slate-900 border-white/10 text-white">
         <DialogHeader className="pb-2 border-b border-white/5">
           <DialogTitle className="text-white text-xl font-semibold tracking-tight">
-            Vendas com Portas de Enrolar
+            {titulo}
             <span className="text-white/40 font-normal ml-2">— {mesNome}</span>
           </DialogTitle>
           <DialogDescription className="text-white/50">
-            {vendas.length} venda{vendas.length === 1 ? '' : 's'} com itens do tipo Porta de Enrolar.
+            {vendas.length} venda{vendas.length === 1 ? '' : 's'} com itens de {categoriaLabel}.
           </DialogDescription>
           <div className="flex flex-wrap gap-3 pt-3 text-[11px] text-white/60">
             <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-white/60" /> Auto (até {3}% se não-cartão)</span>
@@ -2629,7 +2633,7 @@ function PortasDetalheDialog({
         </DialogHeader>
 
         {vendas.length === 0 ? (
-          <p className="text-white/40 text-sm py-8 text-center">Nenhuma venda com portas de enrolar neste mês.</p>
+          <p className="text-white/40 text-sm py-8 text-center">Nenhuma venda com {categoriaLabel.toLowerCase()} neste mês.</p>
         ) : (
           <div className="space-y-4 pt-4">
             {vendas.map((v) => {
@@ -2695,7 +2699,7 @@ function PortasDetalheDialog({
             })}
 
             <div className="rounded-2xl bg-blue-500/10 border border-blue-400/20 backdrop-blur-xl p-4 sticky bottom-0">
-              <div className="text-xs text-white/60 uppercase mb-2 font-semibold">Totais consolidados (Portas de Enrolar)</div>
+              <div className="text-xs text-white/60 uppercase mb-2 font-semibold">Totais consolidados ({categoriaLabel})</div>
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 text-sm">
                 <div><div className="text-[10px] text-white/40 uppercase">Valor Tabela</div><div className="font-semibold text-white">{formatCurrency(totals.tabela)}</div></div>
                 <div><div className="text-[10px] text-white/40 uppercase">Frete</div><div className="font-semibold text-white">{formatCurrency(totals.frete)}</div></div>
