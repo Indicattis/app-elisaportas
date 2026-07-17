@@ -1038,7 +1038,9 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
   const [portasModalOpen, setPortasModalOpen] = useState(false);
   const [portasDetalhe, setPortasDetalhe] = useState<VendaComPortasRow[]>([]);
   const [pinturaModalOpen, setPinturaModalOpen] = useState(false);
-  const [pinturaDetalhe, setPinturaDetalhe] = useState<VendaComItensSimplesRow[]>([]);
+  const [pinturaDetalhe, setPinturaDetalhe] = useState<VendaComPortasRow[]>([]);
+  const [instalacoesModalOpen, setInstalacoesModalOpen] = useState(false);
+  const [instalacaoDetalhe, setInstalacaoDetalhe] = useState<VendaComPortasRow[]>([]);
   const [avulsosModalOpen, setAvulsosModalOpen] = useState(false);
   const [avulsosDetalhe, setAvulsosDetalhe] = useState<VendaComItensSimplesRow[]>([]);
 
