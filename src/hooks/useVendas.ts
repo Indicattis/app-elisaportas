@@ -361,6 +361,7 @@ export function useVendas() {
                 numero: vendaData.numero || null,
                 bairro: vendaData.bairro || null,
                 canal_aquisicao_id: vendaData.canal_aquisicao_id || null,
+                publico_alvo: vendaData.publico_alvo || null,
                 created_by: user.id
               })
               .select()
@@ -389,6 +390,7 @@ export function useVendas() {
             numero: vendaData.numero || null,
             bairro: vendaData.bairro || null,
             canal_aquisicao_id: vendaData.canal_aquisicao_id || null,
+            publico_alvo: vendaData.publico_alvo || null,
             created_by: user.id
           })
           .select()
