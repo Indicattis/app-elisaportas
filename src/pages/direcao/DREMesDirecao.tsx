@@ -1318,8 +1318,8 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
           return { altura, largura };
         };
 
-        const fat: FaturamentoProduto = { portas: 0, pintura: 0, instalacoes: 0, avulsos: 0, fretes: 0, total: 0 };
-        const luc: FaturamentoProduto = { portas: 0, pintura: 0, instalacoes: 0, avulsos: 0, fretes: 0, total: 0 };
+        const fat: FaturamentoProduto = { portas: 0, pintura: 0, instalacoes: 0, acessorios: 0, avulsos: 0, fretes: 0, total: 0 };
+        const luc: FaturamentoProduto = { portas: 0, pintura: 0, instalacoes: 0, acessorios: 0, avulsos: 0, fretes: 0, total: 0 };
 
         produtos?.forEach((p: any) => {
           const tipo = p.tipo_produto;
@@ -1434,7 +1434,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
           excVenda.set(vid, (excPct / 100) * t.base);
         });
 
-        const exc: FaturamentoProduto = { portas: 0, pintura: 0, instalacoes: 0, avulsos: 0, fretes: 0, total: 0 };
+        const exc: FaturamentoProduto = { portas: 0, pintura: 0, instalacoes: 0, acessorios: 0, avulsos: 0, fretes: 0, total: 0 };
         (produtos || []).forEach((p: any) => {
           const vid = p.venda_id || p.vendas?.id;
           if (!vid) return;
