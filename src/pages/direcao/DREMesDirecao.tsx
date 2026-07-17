@@ -35,6 +35,8 @@ interface VendaComPortasRow {
   dataVenda: string;
   clienteNome: string;
   valorVenda: number;
+  isFria: boolean;
+  isCartao: boolean;
   itens: {
     id: string;
     descricao: string;
