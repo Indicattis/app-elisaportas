@@ -1259,7 +1259,8 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
             altura,
             largura,
             tamanho,
-            vendas!inner(data_venda)
+            venda_id,
+            vendas!inner(id, data_venda, forma_pagamento, temperatura)
           `)
           .gte('vendas.data_venda', start + ' 00:00:00')
           .lte('vendas.data_venda', end + ' 23:59:59');
