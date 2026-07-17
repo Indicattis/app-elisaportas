@@ -805,6 +805,24 @@ export function useVendas() {
         pagamento_na_entrega: pagamentoData?.pagamento_na_entrega || false,
         // Temperatura da venda (Quente/Fria). Preserva false quando o vendedor escolheu "Fria".
         temperatura: temperatura ?? true,
+        // Snapshot completo do formulário de pagamento — usado para re-hidratar
+        // o rascunho no formulário de nova venda. Serializado como JSON.
+        rascunho_pagamento: pagamentoData
+          ? {
+              usar_dois_metodos: pagamentoData.usar_dois_metodos,
+              pagamento_na_entrega: pagamentoData.pagamento_na_entrega,
+              metodos: pagamentoData.metodos.map((m) => ({
+                ...m,
+                data_pagamento: m.data_pagamento
+                  ? new Date(m.data_pagamento).toISOString()
+                  : null,
+              })),
+              credito: {
+                valor: creditoVenda?.valorCredito || 0,
+                percentual: creditoVenda?.percentualCredito || 0,
+              },
+            }
+          : null,
       };
 
       const { data: venda, error: vendaError } = await supabase
