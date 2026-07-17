@@ -1557,7 +1557,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
             id, descricao, quantidade, tipo_produto, valor_total,
             valor_produto, valor_pintura, valor_instalacao,
             valor_total_sem_frete,
-            altura, largura, tabela_precos_porta_id,
+            altura, largura, tabela_precos_porta_id, custos_itens_id,
             tipo_desconto, desconto_percentual, desconto_valor,
             lucro_item, lucro_pintura,
             tabela_precos_portas:tabela_precos_porta_id(descricao, altura, largura),
