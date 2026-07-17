@@ -1575,7 +1575,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         // Soma bruta dos itens de porta por venda (para ratear excedido só entre as portas)
         const brutoPortasPorVenda = new Map<string, number>();
         ((portasRaw || []) as any[]).forEach((p) => {
-          const v = p.vendas;
+          const v = Array.isArray(p.vendas) ? p.vendas[0] : p.vendas;
           if (!v) return;
           const qty = p.quantidade || 1;
           const bruto =
@@ -1589,7 +1589,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
           { autoPct: number; friaPct: number; gerentePct: number; diretorPct: number }
         >();
         ((portasRaw || []) as any[]).forEach((p) => {
-          const v = p.vendas;
+          const v = Array.isArray(p.vendas) ? p.vendas[0] : p.vendas;
           if (!v || excedidoPorVenda.has(v.id)) return;
           const tot = totaisPorVenda.get(v.id) || { totalBase: 0, totalDesconto: 0 };
           if (tot.totalBase <= 0) {
@@ -1607,21 +1607,30 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
           const excedidoPct = Math.max(0, pctDado - limite);
           excedidoPorVenda.set(v.id, (excedidoPct / 100) * tot.totalBase);
 
-          // Distribuição em 4 faixas de autorização (cumulativas)
-          const autoCap = aptoAvista ? limAvista : 0;
-          const friaCap = aptoFrio ? limPresencial : 0;
-          const gerCap = limResponsavel;
-          let restante = pctDado;
-          const autoPct = Math.min(restante, autoCap); restante -= autoPct;
-          const friaPct = Math.min(restante, friaCap); restante -= friaPct;
-          const gerentePct = Math.min(restante, gerCap); restante -= gerentePct;
-          const diretorPct = Math.max(0, restante);
+          // Distribuição em 4 faixas absolutas (cada faixa é a "camada" de autorização que cobriu o desconto)
+          const autoCeil = aptoAvista ? limAvista : 0;                                  // até 3%
+          const friaCeil = autoCeil + (aptoFrio ? limPresencial : 0);                   // + 5% se fria
+          const gerenteCeil = friaCeil + limResponsavel;                                // + 7% gerente
+          const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(v, hi));
+          const autoPct = clamp(pctDado, 0, autoCeil);
+          const friaPct = clamp(pctDado - autoCeil, 0, friaCeil - autoCeil);
+          const gerentePct = clamp(pctDado - friaCeil, 0, gerenteCeil - friaCeil);
+          const diretorPct = Math.max(0, pctDado - gerenteCeil);
           bucketsPorVenda.set(v.id, { autoPct, friaPct, gerentePct, diretorPct });
+          if (import.meta.env.DEV) {
+            // eslint-disable-next-line no-console
+            console.debug('[DRE Portas Buckets]', {
+              vendaId: v.id, cliente: v.cliente_nome, formaPg, temperatura: v.temperatura,
+              base: tot.totalBase, desc: tot.totalDesconto, pctDado,
+              autoCeil, friaCeil, gerenteCeil,
+              autoPct, friaPct, gerentePct, diretorPct,
+            });
+          }
         });
 
         const porVenda = new Map<string, VendaComPortasRow>();
         ((portasRaw || []) as any[]).forEach((p) => {
-          const v = p.vendas;
+          const v = Array.isArray(p.vendas) ? p.vendas[0] : p.vendas;
           if (!v) return;
           const qty = p.quantidade || 1;
           const valorTabela =
