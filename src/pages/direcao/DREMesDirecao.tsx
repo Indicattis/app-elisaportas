@@ -39,11 +39,11 @@ interface VendaComPortasRow {
     id: string;
     descricao: string;
     quantidade: number;
-    valorPortaBruto: number;
-    valorPinturaBruto: number;
-    valorInstalacaoBruto: number;
+    valorTabela: number;
+    freteRateado: number;
     descontoLinha: number;
-    valorLiquido: number;
+    valorFinal: number;
+    excedido: number;
     lucro: number;
   }[];
 }
@@ -1429,32 +1429,107 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         const { data: portasRaw } = await supabase
           .from('produtos_vendas')
           .select(`
-            id, descricao, quantidade,
+            id, descricao, quantidade, valor_total,
             valor_produto, valor_pintura, valor_instalacao,
             tipo_desconto, desconto_percentual, desconto_valor,
             lucro_item,
-            vendas!inner(id, data_venda, cliente_nome, valor_venda, valor_frete)
+            vendas!inner(id, data_venda, cliente_nome, valor_venda, valor_frete, forma_pagamento, temperatura)
           `)
           .eq('tipo_produto', 'porta_enrolar')
           .gte('vendas.data_venda', start + ' 00:00:00')
           .lte('vendas.data_venda', end + ' 23:59:59');
+
+        const vendaIdsPortas = Array.from(
+          new Set(((portasRaw || []) as any[]).map((p) => p.vendas?.id).filter(Boolean))
+        );
+        const { data: todosProdutosVendas } = vendaIdsPortas.length
+          ? await supabase
+              .from('produtos_vendas')
+              .select(
+                'venda_id, quantidade, valor_produto, valor_pintura, valor_instalacao, tipo_desconto, desconto_percentual, desconto_valor'
+              )
+              .in('venda_id', vendaIdsPortas)
+          : { data: [] as any[] };
+
+        const { data: cfgVendasDre } = await supabase
+          .from('configuracoes_vendas')
+          .select('limite_desconto_avista, limite_desconto_presencial, limite_adicional_responsavel')
+          .maybeSingle();
+        const limAvista = cfgVendasDre?.limite_desconto_avista ?? 3;
+        const limPresencial = cfgVendasDre?.limite_desconto_presencial ?? 5;
+        const limResponsavel = cfgVendasDre?.limite_adicional_responsavel ?? 7;
+
+        // Agrega todos os produtos por venda para totalBase / totalDesconto / rateio de frete
+        const totaisPorVenda = new Map<string, { totalBase: number; totalDesconto: number }>();
+        ((todosProdutosVendas || []) as any[]).forEach((p) => {
+          const qty = p.quantidade || 1;
+          const base =
+            ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
+          let desc = 0;
+          if (p.tipo_desconto === 'percentual' && p.desconto_percentual > 0) {
+            desc = base * (p.desconto_percentual / 100);
+          } else if (p.tipo_desconto === 'valor' && p.desconto_valor > 0) {
+            desc = p.desconto_valor;
+          }
+          const cur = totaisPorVenda.get(p.venda_id) || { totalBase: 0, totalDesconto: 0 };
+          cur.totalBase += base;
+          cur.totalDesconto += desc;
+          totaisPorVenda.set(p.venda_id, cur);
+        });
+
+        // Soma bruta dos itens de porta por venda (para ratear excedido só entre as portas)
+        const brutoPortasPorVenda = new Map<string, number>();
+        ((portasRaw || []) as any[]).forEach((p) => {
+          const v = p.vendas;
+          if (!v) return;
+          const qty = p.quantidade || 1;
+          const bruto =
+            ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
+          brutoPortasPorVenda.set(v.id, (brutoPortasPorVenda.get(v.id) || 0) + bruto);
+        });
+
+        const excedidoPorVenda = new Map<string, number>();
+        ((portasRaw || []) as any[]).forEach((p) => {
+          const v = p.vendas;
+          if (!v || excedidoPorVenda.has(v.id)) return;
+          const tot = totaisPorVenda.get(v.id) || { totalBase: 0, totalDesconto: 0 };
+          if (tot.totalBase <= 0) {
+            excedidoPorVenda.set(v.id, 0);
+            return;
+          }
+          const pctDado = (tot.totalDesconto / tot.totalBase) * 100;
+          const formaPg = (v.forma_pagamento || '').trim();
+          const aptoAvista = formaPg !== '' && formaPg !== 'cartao_credito';
+          const aptoFrio = v.temperatura === false;
+          const limiteBase = (aptoAvista ? limAvista : 0) + (aptoFrio ? limPresencial : 0);
+          const aptoGerente = pctDado > limiteBase;
+          const limite = limiteBase + (aptoGerente ? limResponsavel : 0);
+          const excedidoPct = Math.max(0, pctDado - limite);
+          excedidoPorVenda.set(v.id, (excedidoPct / 100) * tot.totalBase);
+        });
 
         const porVenda = new Map<string, VendaComPortasRow>();
         ((portasRaw || []) as any[]).forEach((p) => {
           const v = p.vendas;
           if (!v) return;
           const qty = p.quantidade || 1;
-          const valorPortaBruto = (p.valor_produto || 0) * qty;
-          const valorPinturaBruto = (p.valor_pintura || 0) * qty;
-          const valorInstBruto = (p.valor_instalacao || 0) * qty;
-          const bruto = valorPortaBruto + valorPinturaBruto + valorInstBruto;
+          const valorTabela =
+            ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
           let desc = 0;
           if (p.tipo_desconto === 'percentual' && p.desconto_percentual > 0) {
-            desc = bruto * (p.desconto_percentual / 100);
+            desc = valorTabela * (p.desconto_percentual / 100);
           } else if (p.tipo_desconto === 'valor' && p.desconto_valor > 0) {
             desc = p.desconto_valor;
           }
-          const valorLiquido = bruto - desc;
+          const tot = totaisPorVenda.get(v.id) || { totalBase: 0, totalDesconto: 0 };
+          const freteVenda = v.valor_frete || 0;
+          const freteRateado =
+            tot.totalBase > 0 ? freteVenda * (valorTabela / tot.totalBase) : 0;
+          const somaPortas = brutoPortasPorVenda.get(v.id) || 0;
+          const excedidoTot = excedidoPorVenda.get(v.id) || 0;
+          const excedidoItem =
+            somaPortas > 0 ? excedidoTot * (valorTabela / somaPortas) : 0;
+          const valorFinal = p.valor_total ?? valorTabela - desc;
           const existing = porVenda.get(v.id) || {
             vendaId: v.id,
             dataVenda: v.data_venda,
@@ -1466,11 +1541,11 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
             id: p.id,
             descricao: p.descricao || 'Sem descrição',
             quantidade: qty,
-            valorPortaBruto,
-            valorPinturaBruto,
-            valorInstalacaoBruto: valorInstBruto,
+            valorTabela,
+            freteRateado,
             descontoLinha: desc,
-            valorLiquido,
+            valorFinal,
+            excedido: excedidoItem,
             lucro: p.lucro_item || 0,
           });
           porVenda.set(v.id, existing);
@@ -2319,16 +2394,16 @@ function PortasDetalheDialog({
   const totals = vendas.reduce(
     (acc, v) => {
       v.itens.forEach((i) => {
-        acc.porta += i.valorPortaBruto;
-        acc.pintura += i.valorPinturaBruto;
-        acc.instalacao += i.valorInstalacaoBruto;
+        acc.tabela += i.valorTabela;
+        acc.frete += i.freteRateado;
         acc.desconto += i.descontoLinha;
-        acc.liquido += i.valorLiquido;
+        acc.final += i.valorFinal;
+        acc.excedido += i.excedido;
         acc.lucro += i.lucro;
       });
       return acc;
     },
-    { porta: 0, pintura: 0, instalacao: 0, desconto: 0, liquido: 0, lucro: 0 }
+    { tabela: 0, frete: 0, desconto: 0, final: 0, excedido: 0, lucro: 0 }
   );
 
   return (
@@ -2346,7 +2421,7 @@ function PortasDetalheDialog({
         ) : (
           <div className="space-y-4">
             {vendas.map((v) => {
-              const subLiquido = v.itens.reduce((s, i) => s + i.valorLiquido, 0);
+              const subFinal = v.itens.reduce((s, i) => s + i.valorFinal, 0);
               const subLucro = v.itens.reduce((s, i) => s + i.lucro, 0);
               return (
                 <div key={v.vendaId} className="rounded-xl bg-white/5 border border-white/10 p-4">
@@ -2366,11 +2441,11 @@ function PortasDetalheDialog({
                         <tr className="border-b border-white/10 text-white/40 uppercase">
                           <th className="text-left py-2 font-medium">Descrição</th>
                           <th className="text-right py-2 font-medium w-12">Qtd</th>
-                          <th className="text-right py-2 font-medium w-24">Porta</th>
-                          <th className="text-right py-2 font-medium w-24">Pintura</th>
-                          <th className="text-right py-2 font-medium w-24">Instalação</th>
+                          <th className="text-right py-2 font-medium w-28">Valor Tabela</th>
+                          <th className="text-right py-2 font-medium w-24">Frete</th>
                           <th className="text-right py-2 font-medium w-24">Desconto</th>
-                          <th className="text-right py-2 font-medium w-28">Líquido</th>
+                          <th className="text-right py-2 font-medium w-28">Valor Final</th>
+                          <th className="text-right py-2 font-medium w-24">Excedido</th>
                           <th className="text-right py-2 font-medium w-24">Lucro</th>
                         </tr>
                       </thead>
@@ -2379,17 +2454,18 @@ function PortasDetalheDialog({
                           <tr key={i.id} className="border-b border-white/5 last:border-0">
                             <td className="py-2 text-white/80">{i.descricao}</td>
                             <td className="py-2 text-right text-white/70">{i.quantidade}</td>
-                            <td className="py-2 text-right text-white/70">{formatCurrency(i.valorPortaBruto)}</td>
-                            <td className="py-2 text-right text-white/70">{formatCurrency(i.valorPinturaBruto)}</td>
-                            <td className="py-2 text-right text-white/70">{formatCurrency(i.valorInstalacaoBruto)}</td>
+                            <td className="py-2 text-right text-white/80">{formatCurrency(i.valorTabela)}</td>
+                            <td className="py-2 text-right text-white/70">{i.freteRateado > 0 ? formatCurrency(i.freteRateado) : '—'}</td>
                             <td className="py-2 text-right text-red-400">{i.descontoLinha > 0 ? formatCurrency(i.descontoLinha) : '—'}</td>
-                            <td className="py-2 text-right text-white font-medium">{formatCurrency(i.valorLiquido)}</td>
+                            <td className="py-2 text-right text-white font-medium">{formatCurrency(i.valorFinal)}</td>
+                            <td className={`py-2 text-right ${i.excedido > 0 ? 'text-amber-400' : 'text-white/30'}`}>{i.excedido > 0 ? formatCurrency(i.excedido) : '—'}</td>
                             <td className={`py-2 text-right font-medium ${i.lucro >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{formatCurrency(i.lucro)}</td>
                           </tr>
                         ))}
                         <tr className="border-t border-white/10">
-                          <td colSpan={6} className="py-2 text-right text-white/60 uppercase text-[10px]">Subtotal desta venda</td>
-                          <td className="py-2 text-right text-white font-semibold">{formatCurrency(subLiquido)}</td>
+                          <td colSpan={5} className="py-2 text-right text-white/60 uppercase text-[10px]">Subtotal desta venda</td>
+                          <td className="py-2 text-right text-white font-semibold">{formatCurrency(subFinal)}</td>
+                          <td></td>
                           <td className={`py-2 text-right font-semibold ${subLucro >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{formatCurrency(subLucro)}</td>
                         </tr>
                       </tbody>
@@ -2402,11 +2478,11 @@ function PortasDetalheDialog({
             <div className="rounded-xl bg-blue-900/40 border border-blue-500/30 p-4">
               <div className="text-xs text-white/60 uppercase mb-2 font-semibold">Totais consolidados (Portas de Enrolar)</div>
               <div className="grid grid-cols-2 md:grid-cols-6 gap-3 text-sm">
-                <div><div className="text-[10px] text-white/40 uppercase">Porta</div><div className="font-semibold text-white">{formatCurrency(totals.porta)}</div></div>
-                <div><div className="text-[10px] text-white/40 uppercase">Pintura</div><div className="font-semibold text-white">{formatCurrency(totals.pintura)}</div></div>
-                <div><div className="text-[10px] text-white/40 uppercase">Instalação</div><div className="font-semibold text-white">{formatCurrency(totals.instalacao)}</div></div>
+                <div><div className="text-[10px] text-white/40 uppercase">Valor Tabela</div><div className="font-semibold text-white">{formatCurrency(totals.tabela)}</div></div>
+                <div><div className="text-[10px] text-white/40 uppercase">Frete</div><div className="font-semibold text-white">{formatCurrency(totals.frete)}</div></div>
                 <div><div className="text-[10px] text-white/40 uppercase">Desconto</div><div className="font-semibold text-red-400">{formatCurrency(totals.desconto)}</div></div>
-                <div><div className="text-[10px] text-white/40 uppercase">Líquido</div><div className="font-semibold text-white">{formatCurrency(totals.liquido)}</div></div>
+                <div><div className="text-[10px] text-white/40 uppercase">Valor Final</div><div className="font-semibold text-white">{formatCurrency(totals.final)}</div></div>
+                <div><div className="text-[10px] text-white/40 uppercase">Excedido</div><div className={`font-semibold ${totals.excedido > 0 ? 'text-amber-400' : 'text-white/40'}`}>{totals.excedido > 0 ? formatCurrency(totals.excedido) : '—'}</div></div>
                 <div><div className="text-[10px] text-white/40 uppercase">Lucro</div><div className={`font-semibold ${totals.lucro >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{formatCurrency(totals.lucro)}</div></div>
               </div>
             </div>
