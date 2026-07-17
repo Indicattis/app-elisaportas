@@ -1,47 +1,47 @@
-## Refazer modal de Portas no DRE
+## Diagnóstico
 
-Refatoro o `PortasDetalheDialog` em `src/pages/direcao/DREMesDirecao.tsx` para adotar o mesmo estilo visual da página (fundo `slate-950/gradient`, cards `bg-white/5 backdrop-blur-xl`, tipografia e paleta idênticas às tabelas do DRE) e segrego a coluna **Desconto** em 4 colunas de faixa de autorização.
+Consultando o banco para junho/2026, os dados **contradizem** o que o modal está mostrando:
 
-### Segregação da coluna Desconto (4 níveis)
+- **20 vendas fria** (`temperatura=false`) — não é "impossível", existem sim, mas quase todas com 0% de desconto (por isso `D. Fria` fica genuinamente zerada — não é bug, é dado).
+- **25 vendas a_vista + quente com portas** têm em média 17,97% de desconto → deveriam popular `D. Auto` em ~R$ 227 por porta (LENTZ é caso concreto: base 11.612, desconto 1.932 → pctDado 16,64%, autoPct=3% → D. Auto = R$ 227,16 na porta).
 
-Para cada venda, o desconto total é distribuído em faixas cumulativas sobre o valor tabela, usando os limites já configurados em `configuracoes_vendas`:
+Ou seja: `D. Auto` está errado (deveria ter valores em ~27 vendas) e `D. Fria` está tecnicamente correto para junho, mas confuso porque o usuário espera ver a coluna sendo usada.
 
-| Faixa | Rótulo | Faixa % | Regra |
-|---|---|---|---|
-| 1 | Automático | 0 → `limite_desconto_avista` (3%) | Só aplicável se método de pagamento **não for cartão** |
-| 2 | Temp. Fria | `avista` → `limite_desconto_presencial` (5%) | Só se `temperatura = 'fria'` |
-| 3 | Gerente | `presencial` → `limite_adicional_responsavel` (7%) | Autorização de gerente |
-| 4 | Diretor | acima de `responsavel` (7%) | Autorização de diretor |
+A lógica no código parece correta em papel. Preciso confirmar em runtime o que está zerando os buckets. Hipóteses restantes:
 
-Se a venda não cumpre o pré-requisito da faixa (ex: pagamento é cartão), essa faixa é pulada e o desconto "cai" para a próxima faixa que aceita — mantendo consistência com o cálculo de "Excedido" já existente.
+1. `todosProdutosVendas` (segunda query, sem filtro de mês) traz linhas extras/estranhas alterando `totalBase`/`totalDesconto` — inflando denominador e derrubando `pctDado` para perto de zero.
+2. `p.vendas` chegando como array em algumas linhas quando esperamos objeto (Supabase às vezes retorna array em `!inner`), o que faria `v.forma_pagamento`/`v.temperatura` virarem `undefined` → `aptoAvista=false`, autoCap=0.
+3. Bundle stale no browser do usuário (menos provável, ele vê as colunas novas).
 
-### Alterações na tabela do modal
+## Plano de correção
 
-Colunas por item passam a ser:
+Alterações restritas ao arquivo `src/pages/direcao/DREMesDirecao.tsx`, dentro do bloco que hoje calcula `bucketsPorVenda` (linhas ~1586–1620) e da estrutura de dados que ele consome:
 
+### 1. Blindar `p.vendas` contra array vs objeto
+
+Extrair `v` já normalizado:
 ```
-Descrição | Qtd | Valor Tabela | Frete | Desc. Auto | Desc. Fria | Desc. Gerente | Desc. Diretor | Valor Final | Lucro
+const v = Array.isArray(p.vendas) ? p.vendas[0] : p.vendas;
 ```
+Aplicar nos dois `forEach` sobre `portasRaw` (o do cálculo de bucket e o de montagem de itens).
 
-- A coluna "Excedido" é removida (equivale à soma Gerente + Diretor, ficando redundante).
-- Cada faixa de desconto tem cor própria: Auto (`white/70`), Fria (`sky-400`), Gerente (`amber-400`), Diretor (`red-400`).
-- Cabeçalho sticky, linhas com hover, mesma densidade das tabelas do DRE.
+### 2. Repensar a semântica dos buckets
 
-### Alterações no bloco de totais consolidados
+O usuário quer que cada faixa mostre **o que aquele nível de autorização cobriu**, não uma cascata rígida onde Fria só recebe algo se Auto já saturou. A regra fica:
 
-Grid passa a mostrar: Valor Tabela · Frete · Desc. Auto · Desc. Fria · Desc. Gerente · Desc. Diretor · Valor Final · Lucro, com legenda curta explicando as faixas.
+- `D. Auto`: até `limite_desconto_avista` (3%) — sempre que a venda for elegível (não-cartão). Se pctDado ≥ 3, autoPct=3; senão autoPct=pctDado.
+- `D. Fria`: entre `limite_desconto_avista` e `limite_desconto_presencial`+`limite_desconto_avista` (ou seja, faixa extra de +5%) — só se `temperatura=false`. Independente de a venda ser cartão ou não.
+- `D. Gerente`: próximos +`limite_adicional_responsavel` (7%) acima do teto automático da venda.
+- `D. Diretor`: o que restar.
 
-### Estilo (para bater com a página)
+Assim, uma venda fria com 8% de desconto mostrará: Auto=3, Fria=5, Gerente=0, Diretor=0 — o que é o esperado. Se cartão, Auto=0 e o mesmo 8% cai como Gerente=7, Diretor=1.
 
-- `DialogContent`: `max-w-7xl`, fundo `bg-gradient-to-b from-slate-950 to-slate-900`, borda `border-white/10`.
-- Header com título grande + descrição em `text-white/50`, alinhado ao restante da página.
-- Cada venda em card `rounded-2xl bg-white/[0.03] backdrop-blur-xl border-white/10`, ao invés do `bg-white/5` atual.
-- Bloco de totais com destaque em `bg-blue-500/10 border-blue-400/20` (azul Elisa).
+### 3. Logs temporários para validar
 
-### Escopo técnico
+Adicionar `console.debug('[DRE Portas Buckets]', { vendaId, cliente, formaPg, temperatura, pctDado, autoCap, friaCap, autoPct, friaPct, gerentePct, diretorPct })` em cada iteração do loop, atrás de um flag `if (import.meta.env.DEV)`, para o usuário conseguir reportar valores exatos e confirmarmos a correção. Removo depois que ele confirmar que voltou ao esperado.
 
-- Alterações restritas a `src/pages/direcao/DREMesDirecao.tsx`:
-  - Estender o tipo `VendaComPortasRow`/item para carregar `pagamento_metodo` e `temperatura` (já disponíveis no fetch).
-  - No agregador que hoje calcula `excedido`, calcular também `descAuto`, `descFria`, `descGerente`, `descDiretor` por item (mesmo rateio proporcional ao valor tabela do item dentro da venda).
-  - Refatorar JSX do `PortasDetalheDialog` (linhas ~2491–2604).
-- Nenhuma mudança em regras de negócio, cálculo de lucro/excedido da tabela principal do DRE, ou em outras telas.
+### 4. Tooltip explicativo
+
+Adicionar um pequeno tooltip (ícone `?` no header do modal) explicando a regra usada, para evitar confusão futura quando o mês tiver poucas fria com desconto.
+
+Nenhuma alteração em regras de negócio, no cálculo principal do DRE, ou fora do modal.
