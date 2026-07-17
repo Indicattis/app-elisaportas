@@ -286,6 +286,7 @@ function PrintReport({
   mesNome,
   faturamento,
   lucro,
+  descontoExcedido,
   despesasFixas,
   despesasFolha,
   despesasVariaveis,
