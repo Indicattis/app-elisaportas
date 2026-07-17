@@ -35,6 +35,8 @@ interface VendaComPortasRow {
   dataVenda: string;
   clienteNome: string;
   valorVenda: number;
+  isFria: boolean;
+  isCartao: boolean;
   itens: {
     id: string;
     descricao: string;
@@ -1617,15 +1619,6 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
           const gerentePct = clamp(pctDado - friaCeil, 0, gerenteCeil - friaCeil);
           const diretorPct = Math.max(0, pctDado - gerenteCeil);
           bucketsPorVenda.set(v.id, { autoPct, friaPct, gerentePct, diretorPct });
-          if (import.meta.env.DEV) {
-            // eslint-disable-next-line no-console
-            console.debug('[DRE Portas Buckets]', {
-              vendaId: v.id, cliente: v.cliente_nome, formaPg, temperatura: v.temperatura,
-              base: tot.totalBase, desc: tot.totalDesconto, pctDado,
-              autoCeil, friaCeil, gerenteCeil,
-              autoPct, friaPct, gerentePct, diretorPct,
-            });
-          }
         });
 
         const porVenda = new Map<string, VendaComPortasRow>();
@@ -1660,6 +1653,8 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
             dataVenda: v.data_venda,
             clienteNome: v.cliente_nome || '',
             valorVenda: (v.valor_venda || 0) - (v.valor_frete || 0),
+            isFria: v.temperatura === false,
+            isCartao: (v.forma_pagamento || '') === 'cartao_credito',
             itens: [],
           };
           existing.itens.push({
@@ -2587,7 +2582,15 @@ function PortasDetalheDialog({
                   <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
                     <div>
                       <div className="text-xs text-white/40 uppercase">{format(new Date(v.dataVenda.slice(0, 10) + 'T12:00:00'), 'dd/MM/yyyy')}</div>
-                      <div className="text-sm font-semibold text-white">{v.clienteNome || '—'}</div>
+                      <div className="text-sm font-semibold text-white flex items-center gap-1.5 flex-wrap">
+                        <span>{v.clienteNome || '—'}</span>
+                        {v.isFria && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded border bg-sky-500/15 text-sky-300 border-sky-500/30 font-medium uppercase tracking-wide">Fria</span>
+                        )}
+                        {v.isCartao && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded border bg-amber-500/15 text-amber-300 border-amber-500/30 font-medium uppercase tracking-wide">Cartão</span>
+                        )}
+                      </div>
                     </div>
                     <div className="text-right">
                       <div className="text-xs text-white/40 uppercase">Valor da venda</div>
