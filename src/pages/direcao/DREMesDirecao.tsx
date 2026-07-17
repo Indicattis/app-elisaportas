@@ -1365,8 +1365,86 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         fat.total = fat.portas + fat.pintura + fat.instalacoes + fat.avulsos + totalCredito;
         luc.total = luc.portas + luc.pintura + luc.instalacoes + luc.avulsos;
 
+        // ============ Desconto Excedido por coluna ============
+        // Reusa a mesma fórmula do modal Portas: para cada venda calcula-se
+        // o % de desconto acima do limite permitido e converte-se em valor,
+        // rateando entre os itens pelo valor bruto e agregando por tipo_produto.
+        const cfgVendasExc = await supabase
+          .from('configuracoes_vendas')
+          .select('limite_desconto_avista, limite_desconto_presencial, limite_adicional_responsavel')
+          .maybeSingle();
+        const limAvistaExc = cfgVendasExc.data?.limite_desconto_avista ?? 3;
+        const limPresencialExc = cfgVendasExc.data?.limite_desconto_presencial ?? 5;
+        const limResponsavelExc = cfgVendasExc.data?.limite_adicional_responsavel ?? 7;
+
+        // Totais por venda (base e desconto)
+        const totVenda = new Map<string, { base: number; desc: number; formaPg: string; temperatura: any }>();
+        (produtos || []).forEach((p: any) => {
+          const vid = p.venda_id || p.vendas?.id;
+          if (!vid) return;
+          const qty = p.quantidade || 1;
+          const base = ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
+          let d = 0;
+          if (p.tipo_desconto === 'percentual' && p.desconto_percentual > 0) d = base * (p.desconto_percentual / 100);
+          else if (p.tipo_desconto === 'valor' && p.desconto_valor > 0) d = p.desconto_valor;
+          const cur = totVenda.get(vid) || {
+            base: 0,
+            desc: 0,
+            formaPg: (p.vendas?.forma_pagamento || '').trim(),
+            temperatura: p.vendas?.temperatura,
+          };
+          cur.base += base;
+          cur.desc += d;
+          totVenda.set(vid, cur);
+        });
+
+        const excVenda = new Map<string, number>();
+        totVenda.forEach((t, vid) => {
+          if (t.base <= 0) { excVenda.set(vid, 0); return; }
+          const pctDado = (t.desc / t.base) * 100;
+          const aptoAvista = t.formaPg !== '' && t.formaPg !== 'cartao_credito';
+          const aptoFrio = t.temperatura === false;
+          const limBase = (aptoAvista ? limAvistaExc : 0) + (aptoFrio ? limPresencialExc : 0);
+          const aptoGerente = pctDado > limBase;
+          const limite = limBase + (aptoGerente ? limResponsavelExc : 0);
+          const excPct = Math.max(0, pctDado - limite);
+          excVenda.set(vid, (excPct / 100) * t.base);
+        });
+
+        const exc: FaturamentoProduto = { portas: 0, pintura: 0, instalacoes: 0, avulsos: 0, fretes: 0, total: 0 };
+        (produtos || []).forEach((p: any) => {
+          const vid = p.venda_id || p.vendas?.id;
+          if (!vid) return;
+          const excTotal = excVenda.get(vid) || 0;
+          if (excTotal <= 0) return;
+          const t = totVenda.get(vid);
+          if (!t || t.base <= 0) return;
+          const qty = p.quantidade || 1;
+          const valorProdutoBase = (p.valor_produto || 0) * qty;
+          const valorPinturaBase = (p.valor_pintura || 0) * qty;
+          const valorInstalacaoBase = (p.valor_instalacao || 0) * qty;
+          const bruto = valorProdutoBase + valorPinturaBase + valorInstalacaoBase;
+          if (bruto <= 0) return;
+          const share = excTotal * (bruto / t.base);
+          const tipo = p.tipo_produto;
+          if (['porta_enrolar', 'porta_social'].includes(tipo)) {
+            // Rateia entre porta / pintura / instalação embutida
+            exc.portas += share * (valorProdutoBase / bruto);
+            exc.pintura += share * (valorPinturaBase / bruto);
+            exc.instalacoes += share * (valorInstalacaoBase / bruto);
+          } else if (tipo === 'pintura_epoxi') {
+            exc.pintura += share;
+          } else if (['instalacao', 'manutencao'].includes(tipo)) {
+            exc.instalacoes += share;
+          } else {
+            exc.avulsos += share;
+          }
+        });
+        exc.total = exc.portas + exc.pintura + exc.instalacoes + exc.avulsos;
+
         setFaturamento(fat);
         setLucro(luc);
+        setDescontoExcedido(exc);
 
         // Top 5 itens avulsos (acessórios + adicionais)
         const avulsosMap: Record<string, number> = {};
