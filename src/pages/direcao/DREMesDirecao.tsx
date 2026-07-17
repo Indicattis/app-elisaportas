@@ -2250,13 +2250,23 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         vendas={portasDetalhe}
         formatCurrency={formatCurrency}
       />
-      <ItensSimplesDetalheDialog
+      <PortasDetalheDialog
         open={pinturaModalOpen}
         onOpenChange={setPinturaModalOpen}
-        titulo={`Vendas com Pintura — ${mesNome}`}
-        categoriaLabel="Pintura"
+        mesNome={mesNome}
         vendas={pinturaDetalhe}
         formatCurrency={formatCurrency}
+        titulo="Vendas com Pintura"
+        categoriaLabel="Pintura"
+      />
+      <PortasDetalheDialog
+        open={instalacoesModalOpen}
+        onOpenChange={setInstalacoesModalOpen}
+        mesNome={mesNome}
+        vendas={instalacaoDetalhe}
+        formatCurrency={formatCurrency}
+        titulo="Vendas com Instalação"
+        categoriaLabel="Instalação"
       />
       <ItensSimplesDetalheDialog
         open={avulsosModalOpen}
