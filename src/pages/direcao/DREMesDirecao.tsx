@@ -564,8 +564,9 @@ function PrintReport({
           <tbody>
             {[
               { l: 'Faturamento Bruto', v: formatCurrency(faturamento.total), c: '#0f172a', b: false, cat: null as CategoriaDespesa | null },
+              { l: '(–) Desconto Excedido', v: formatCurrency(descontoExcedido.total), c: '#b91c1c', b: false, cat: null as CategoriaDespesa | null },
               { l: 'Margem Bruta', v: `${percBrutoFinal.toFixed(1)}%`, c: positive(percBrutoFinal), b: false, cat: null },
-              { l: 'Lucro Bruto', v: formatCurrency(lucro.total), c: positive(lucro.total), b: true, cat: null },
+              { l: 'Lucro Bruto', v: formatCurrency(lucro.total - descontoExcedido.total), c: positive(lucro.total - descontoExcedido.total), b: true, cat: null },
               { l: '(–) Folha Salarial', v: formatCurrency(totalDespFolha), c: '#b91c1c', b: false, cat: 'salario' as CategoriaDespesa },
               { l: '(–) Despesas Fixas', v: formatCurrency(totalDespFixas), c: '#b91c1c', b: false, cat: 'fixa' as CategoriaDespesa },
               { l: '(–) Despesas Variáveis', v: formatCurrency(totalDespVariaveis), c: '#b91c1c', b: false, cat: 'variavel' as CategoriaDespesa },
