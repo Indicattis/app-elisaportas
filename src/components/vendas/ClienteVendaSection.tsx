@@ -24,7 +24,7 @@ interface DadosCliente {
   cidade: string;
   cep: string;
   endereco: string;
-  numero: string;
+  numero?: string;
   bairro: string;
   canal_aquisicao_id: string;
   publico_alvo: string;
