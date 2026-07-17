@@ -1487,12 +1487,23 @@ export default function VendaNovaMinimalista() {
             </GradientButton>
           )}
 
+          {!isFromRascunho && (
+            <GradientButton
+              variant="outline"
+              onClick={handleSalvarRascunho}
+              disabled={isCreatingRascunho || portas.length === 0}
+            >
+              <FileText className="w-4 h-4 mr-2" />
+              {isCreatingRascunho ? 'Salvando...' : 'Salvar como Rascunho'}
+            </GradientButton>
+          )}
+
           <GradientButton
             type="submit" 
             variant="blue"
             disabled={isCreating || portas.length === 0 || !pagamentoConfirmado}
           >
-            {isCreating ? 'Criando...' : 'Criar Venda'}
+            {isCreating ? 'Criando...' : (isFromRascunho ? 'Transformar em Venda' : 'Criar Venda')}
           </GradientButton>
         </div>
       </form>
