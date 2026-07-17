@@ -2535,35 +2535,46 @@ function PortasDetalheDialog({
       v.itens.forEach((i) => {
         acc.tabela += i.valorTabela;
         acc.frete += i.freteRateado;
-        acc.desconto += i.descontoLinha;
         acc.final += i.valorFinal;
-        acc.excedido += i.excedido;
         acc.lucro += i.lucro;
+        acc.descAuto += i.descAuto;
+        acc.descFria += i.descFria;
+        acc.descGerente += i.descGerente;
+        acc.descDiretor += i.descDiretor;
       });
       return acc;
     },
-    { tabela: 0, frete: 0, desconto: 0, final: 0, excedido: 0, lucro: 0 }
+    { tabela: 0, frete: 0, final: 0, lucro: 0, descAuto: 0, descFria: 0, descGerente: 0, descDiretor: 0 }
   );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto bg-slate-900 border-white/10 text-white">
-        <DialogHeader>
-          <DialogTitle className="text-white">Vendas com Portas de Enrolar — {mesNome}</DialogTitle>
-          <DialogDescription className="text-white/60">
+      <DialogContent className="max-w-7xl max-h-[92vh] overflow-y-auto bg-gradient-to-b from-slate-950 to-slate-900 border-white/10 text-white">
+        <DialogHeader className="pb-2 border-b border-white/5">
+          <DialogTitle className="text-white text-xl font-semibold tracking-tight">
+            Vendas com Portas de Enrolar
+            <span className="text-white/40 font-normal ml-2">— {mesNome}</span>
+          </DialogTitle>
+          <DialogDescription className="text-white/50">
             {vendas.length} venda{vendas.length === 1 ? '' : 's'} com itens do tipo Porta de Enrolar.
           </DialogDescription>
+          <div className="flex flex-wrap gap-3 pt-3 text-[11px] text-white/60">
+            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-white/60" /> Auto (até {3}% se não-cartão)</span>
+            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-sky-400" /> Fria (+ 5% se temp. fria)</span>
+            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-400" /> Gerente (+ 7% com senha)</span>
+            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-red-400" /> Diretor (restante)</span>
+          </div>
         </DialogHeader>
 
         {vendas.length === 0 ? (
           <p className="text-white/40 text-sm py-8 text-center">Nenhuma venda com portas de enrolar neste mês.</p>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-4 pt-4">
             {vendas.map((v) => {
               const subFinal = v.itens.reduce((s, i) => s + i.valorFinal, 0);
               const subLucro = v.itens.reduce((s, i) => s + i.lucro, 0);
               return (
-                <div key={v.vendaId} className="rounded-xl bg-white/5 border border-white/10 p-4">
+                <div key={v.vendaId} className="rounded-2xl bg-white/[0.03] backdrop-blur-xl border border-white/10 p-4">
                   <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
                     <div>
                       <div className="text-xs text-white/40 uppercase">{format(new Date(v.dataVenda.slice(0, 10) + 'T12:00:00'), 'dd/MM/yyyy')}</div>
@@ -2577,34 +2588,37 @@ function PortasDetalheDialog({
                   <div className="overflow-x-auto">
                     <table className="w-full text-xs">
                       <thead>
-                        <tr className="border-b border-white/10 text-white/40 uppercase">
+                        <tr className="border-b border-white/10 text-white/40 uppercase text-[10px]">
                           <th className="text-left py-2 font-medium">Descrição</th>
                           <th className="text-right py-2 font-medium w-12">Qtd</th>
-                          <th className="text-right py-2 font-medium w-28">Valor Tabela</th>
-                          <th className="text-right py-2 font-medium w-24">Frete</th>
-                          <th className="text-right py-2 font-medium w-24">Desconto</th>
-                          <th className="text-right py-2 font-medium w-28">Valor Final</th>
-                          <th className="text-right py-2 font-medium w-24">Excedido</th>
-                          <th className="text-right py-2 font-medium w-24">Lucro</th>
+                          <th className="text-right py-2 font-medium w-24">Vlr Tabela</th>
+                          <th className="text-right py-2 font-medium w-20">Frete</th>
+                          <th className="text-right py-2 font-medium w-20">D. Auto</th>
+                          <th className="text-right py-2 font-medium w-20">D. Fria</th>
+                          <th className="text-right py-2 font-medium w-20">D. Gerente</th>
+                          <th className="text-right py-2 font-medium w-20">D. Diretor</th>
+                          <th className="text-right py-2 font-medium w-24">Vlr Final</th>
+                          <th className="text-right py-2 font-medium w-20">Lucro</th>
                         </tr>
                       </thead>
                       <tbody>
                         {v.itens.map((i) => (
-                          <tr key={i.id} className="border-b border-white/5 last:border-0">
+                          <tr key={i.id} className="border-b border-white/5 last:border-0 hover:bg-white/[0.02] transition-colors">
                             <td className="py-2 text-white/80">{i.descricao}</td>
                             <td className="py-2 text-right text-white/70">{i.quantidade}</td>
                             <td className="py-2 text-right text-white/80">{formatCurrency(i.valorTabela)}</td>
                             <td className="py-2 text-right text-white/70">{i.freteRateado > 0 ? formatCurrency(i.freteRateado) : '—'}</td>
-                            <td className="py-2 text-right text-red-400">{i.descontoLinha > 0 ? formatCurrency(i.descontoLinha) : '—'}</td>
+                            <td className={`py-2 text-right ${i.descAuto > 0 ? 'text-white/70' : 'text-white/25'}`}>{i.descAuto > 0 ? formatCurrency(i.descAuto) : '—'}</td>
+                            <td className={`py-2 text-right ${i.descFria > 0 ? 'text-sky-400' : 'text-white/25'}`}>{i.descFria > 0 ? formatCurrency(i.descFria) : '—'}</td>
+                            <td className={`py-2 text-right ${i.descGerente > 0 ? 'text-amber-400' : 'text-white/25'}`}>{i.descGerente > 0 ? formatCurrency(i.descGerente) : '—'}</td>
+                            <td className={`py-2 text-right ${i.descDiretor > 0 ? 'text-red-400' : 'text-white/25'}`}>{i.descDiretor > 0 ? formatCurrency(i.descDiretor) : '—'}</td>
                             <td className="py-2 text-right text-white font-medium">{formatCurrency(i.valorFinal)}</td>
-                            <td className={`py-2 text-right ${i.excedido > 0 ? 'text-amber-400' : 'text-white/30'}`}>{i.excedido > 0 ? formatCurrency(i.excedido) : '—'}</td>
                             <td className={`py-2 text-right font-medium ${i.lucro >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{formatCurrency(i.lucro)}</td>
                           </tr>
                         ))}
                         <tr className="border-t border-white/10">
-                          <td colSpan={5} className="py-2 text-right text-white/60 uppercase text-[10px]">Subtotal desta venda</td>
+                          <td colSpan={8} className="py-2 text-right text-white/60 uppercase text-[10px]">Subtotal desta venda</td>
                           <td className="py-2 text-right text-white font-semibold">{formatCurrency(subFinal)}</td>
-                          <td></td>
                           <td className={`py-2 text-right font-semibold ${subLucro >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{formatCurrency(subLucro)}</td>
                         </tr>
                       </tbody>
@@ -2614,14 +2628,16 @@ function PortasDetalheDialog({
               );
             })}
 
-            <div className="rounded-xl bg-blue-900/40 border border-blue-500/30 p-4">
+            <div className="rounded-2xl bg-blue-500/10 border border-blue-400/20 backdrop-blur-xl p-4 sticky bottom-0">
               <div className="text-xs text-white/60 uppercase mb-2 font-semibold">Totais consolidados (Portas de Enrolar)</div>
-              <div className="grid grid-cols-2 md:grid-cols-6 gap-3 text-sm">
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 text-sm">
                 <div><div className="text-[10px] text-white/40 uppercase">Valor Tabela</div><div className="font-semibold text-white">{formatCurrency(totals.tabela)}</div></div>
                 <div><div className="text-[10px] text-white/40 uppercase">Frete</div><div className="font-semibold text-white">{formatCurrency(totals.frete)}</div></div>
-                <div><div className="text-[10px] text-white/40 uppercase">Desconto</div><div className="font-semibold text-red-400">{formatCurrency(totals.desconto)}</div></div>
+                <div><div className="text-[10px] text-white/40 uppercase">D. Auto</div><div className={`font-semibold ${totals.descAuto > 0 ? 'text-white' : 'text-white/40'}`}>{totals.descAuto > 0 ? formatCurrency(totals.descAuto) : '—'}</div></div>
+                <div><div className="text-[10px] text-white/40 uppercase">D. Fria</div><div className={`font-semibold ${totals.descFria > 0 ? 'text-sky-400' : 'text-white/40'}`}>{totals.descFria > 0 ? formatCurrency(totals.descFria) : '—'}</div></div>
+                <div><div className="text-[10px] text-white/40 uppercase">D. Gerente</div><div className={`font-semibold ${totals.descGerente > 0 ? 'text-amber-400' : 'text-white/40'}`}>{totals.descGerente > 0 ? formatCurrency(totals.descGerente) : '—'}</div></div>
+                <div><div className="text-[10px] text-white/40 uppercase">D. Diretor</div><div className={`font-semibold ${totals.descDiretor > 0 ? 'text-red-400' : 'text-white/40'}`}>{totals.descDiretor > 0 ? formatCurrency(totals.descDiretor) : '—'}</div></div>
                 <div><div className="text-[10px] text-white/40 uppercase">Valor Final</div><div className="font-semibold text-white">{formatCurrency(totals.final)}</div></div>
-                <div><div className="text-[10px] text-white/40 uppercase">Excedido</div><div className={`font-semibold ${totals.excedido > 0 ? 'text-amber-400' : 'text-white/40'}`}>{totals.excedido > 0 ? formatCurrency(totals.excedido) : '—'}</div></div>
                 <div><div className="text-[10px] text-white/40 uppercase">Lucro</div><div className={`font-semibold ${totals.lucro >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{formatCurrency(totals.lucro)}</div></div>
               </div>
             </div>
