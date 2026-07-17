@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import logoElisa from '@/assets/logo-elisa-dre.png';
 import { useCategoriaDreConfig, type CategoriaDespesa } from '@/hooks/useCategoriaDreConfig';
 import { fetchConfigLucro } from '@/hooks/useConfigLucro';
+import { formatarMetodoPagamento } from '@/utils/pagamentoResumo';
 
 interface FaturamentoProduto {
   portas: number;
@@ -35,6 +36,8 @@ interface VendaComPortasRow {
   dataVenda: string;
   clienteNome: string;
   valorVenda: number;
+  metodoPagamento: string;
+  temperaturaLabel: string;
   isFria: boolean;
   isCartao: boolean;
   itens: {
@@ -1653,6 +1656,8 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
             dataVenda: v.data_venda,
             clienteNome: v.cliente_nome || '',
             valorVenda: (v.valor_venda || 0) - (v.valor_frete || 0),
+            metodoPagamento: formatarMetodoPagamento(v.forma_pagamento),
+            temperaturaLabel: v.temperatura === false ? 'Fria' : v.temperatura === true ? 'Quente' : '—',
             isFria: v.temperatura === false,
             isCartao: (v.forma_pagamento || '') === 'cartao_credito',
             itens: [],
@@ -2584,12 +2589,8 @@ function PortasDetalheDialog({
                       <div className="text-xs text-white/40 uppercase">{format(new Date(v.dataVenda.slice(0, 10) + 'T12:00:00'), 'dd/MM/yyyy')}</div>
                       <div className="text-sm font-semibold text-white flex items-center gap-1.5 flex-wrap">
                         <span>{v.clienteNome || '—'}</span>
-                        {v.isFria && (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded border bg-sky-500/15 text-sky-300 border-sky-500/30 font-medium uppercase tracking-wide">Fria</span>
-                        )}
-                        {v.isCartao && (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded border bg-amber-500/15 text-amber-300 border-amber-500/30 font-medium uppercase tracking-wide">Cartão</span>
-                        )}
+                        <span className="text-[10px] px-1.5 py-0.5 rounded border bg-white/10 text-white/70 border-white/20 font-medium uppercase tracking-wide">{v.metodoPagamento}</span>
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded border font-medium uppercase tracking-wide ${v.isFria ? 'bg-sky-500/15 text-sky-300 border-sky-500/30' : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'}`}>{v.temperaturaLabel}</span>
                       </div>
                     </div>
                     <div className="text-right">
