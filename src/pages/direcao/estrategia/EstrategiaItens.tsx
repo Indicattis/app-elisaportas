@@ -759,6 +759,21 @@ function SortableItemRow({ item, disabled, categorias, colors, order, padroes, o
               className="scale-75 data-[state=checked]:bg-emerald-500"
             />
           </div>
+          <button
+            type="button"
+            onClick={() =>
+              onUpdate({ tipo_item: item.tipo_item === 'acessorio' ? 'avulso' : 'acessorio' } as any)
+            }
+            title="Clique para alternar entre Item Avulso e Acessório"
+            className={cn(
+              "ml-1 text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded border transition-colors",
+              item.tipo_item === 'acessorio'
+                ? "bg-sky-500/15 text-sky-300 border-sky-500/40 hover:bg-sky-500/25"
+                : "bg-white/5 text-muted-foreground border-white/10 hover:bg-white/10"
+            )}
+          >
+            {item.tipo_item === 'acessorio' ? 'Acessório' : 'Avulso'}
+          </button>
         </div>
       </TableCell>
       {order.map((col) => (
