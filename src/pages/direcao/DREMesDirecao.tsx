@@ -1584,12 +1584,17 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         });
 
         const excedidoPorVenda = new Map<string, number>();
+        const bucketsPorVenda = new Map<
+          string,
+          { autoPct: number; friaPct: number; gerentePct: number; diretorPct: number }
+        >();
         ((portasRaw || []) as any[]).forEach((p) => {
           const v = p.vendas;
           if (!v || excedidoPorVenda.has(v.id)) return;
           const tot = totaisPorVenda.get(v.id) || { totalBase: 0, totalDesconto: 0 };
           if (tot.totalBase <= 0) {
             excedidoPorVenda.set(v.id, 0);
+            bucketsPorVenda.set(v.id, { autoPct: 0, friaPct: 0, gerentePct: 0, diretorPct: 0 });
             return;
           }
           const pctDado = (tot.totalDesconto / tot.totalBase) * 100;
@@ -1601,6 +1606,17 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
           const limite = limiteBase + (aptoGerente ? limResponsavel : 0);
           const excedidoPct = Math.max(0, pctDado - limite);
           excedidoPorVenda.set(v.id, (excedidoPct / 100) * tot.totalBase);
+
+          // Distribuição em 4 faixas de autorização (cumulativas)
+          const autoCap = aptoAvista ? limAvista : 0;
+          const friaCap = aptoFrio ? limPresencial : 0;
+          const gerCap = limResponsavel;
+          let restante = pctDado;
+          const autoPct = Math.min(restante, autoCap); restante -= autoPct;
+          const friaPct = Math.min(restante, friaCap); restante -= friaPct;
+          const gerentePct = Math.min(restante, gerCap); restante -= gerentePct;
+          const diretorPct = Math.max(0, restante);
+          bucketsPorVenda.set(v.id, { autoPct, friaPct, gerentePct, diretorPct });
         });
 
         const porVenda = new Map<string, VendaComPortasRow>();
@@ -1625,6 +1641,11 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
           const excedidoItem =
             somaPortas > 0 ? excedidoTot * (valorTabela / somaPortas) : 0;
           const valorFinal = p.valor_total ?? valorTabela - desc;
+          const bk = bucketsPorVenda.get(v.id) || { autoPct: 0, friaPct: 0, gerentePct: 0, diretorPct: 0 };
+          const descAuto = (bk.autoPct / 100) * valorTabela;
+          const descFria = (bk.friaPct / 100) * valorTabela;
+          const descGerente = (bk.gerentePct / 100) * valorTabela;
+          const descDiretor = (bk.diretorPct / 100) * valorTabela;
           const existing = porVenda.get(v.id) || {
             vendaId: v.id,
             dataVenda: v.data_venda,
@@ -1642,6 +1663,10 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
             valorFinal,
             excedido: excedidoItem,
             lucro: p.lucro_item || 0,
+            descAuto,
+            descFria,
+            descGerente,
+            descDiretor,
           });
           porVenda.set(v.id, existing);
         });
