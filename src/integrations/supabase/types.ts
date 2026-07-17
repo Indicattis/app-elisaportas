@@ -2151,6 +2151,7 @@ export type Database = {
           taxa_cartao: number
           taxa_descontos: number
           taxa_impostos: number
+          tipo_item: string
           unidade: string | null
           updated_at: string
           vendavel_avulso: boolean
@@ -2173,6 +2174,7 @@ export type Database = {
           taxa_cartao?: number
           taxa_descontos?: number
           taxa_impostos?: number
+          tipo_item?: string
           unidade?: string | null
           updated_at?: string
           vendavel_avulso?: boolean
@@ -2195,6 +2197,7 @@ export type Database = {
           taxa_cartao?: number
           taxa_descontos?: number
           taxa_impostos?: number
+          tipo_item?: string
           unidade?: string | null
           updated_at?: string
           vendavel_avulso?: boolean
