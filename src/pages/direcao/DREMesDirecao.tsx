@@ -2356,6 +2356,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         mesNome={mesNome}
         faturamento={faturamento}
         lucro={lucro}
+        descontoExcedido={descontoExcedido}
         despesasFixas={despesasFixas}
         despesasFolha={despesasFolha}
         despesasVariaveis={despesasVariaveis}
