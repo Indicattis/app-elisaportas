@@ -2582,7 +2582,15 @@ function PortasDetalheDialog({
                   <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
                     <div>
                       <div className="text-xs text-white/40 uppercase">{format(new Date(v.dataVenda.slice(0, 10) + 'T12:00:00'), 'dd/MM/yyyy')}</div>
-                      <div className="text-sm font-semibold text-white">{v.clienteNome || '—'}</div>
+                      <div className="text-sm font-semibold text-white flex items-center gap-1.5 flex-wrap">
+                        <span>{v.clienteNome || '—'}</span>
+                        {v.isFria && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded border bg-sky-500/15 text-sky-300 border-sky-500/30 font-medium uppercase tracking-wide">Fria</span>
+                        )}
+                        {v.isCartao && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded border bg-amber-500/15 text-amber-300 border-amber-500/30 font-medium uppercase tracking-wide">Cartão</span>
+                        )}
+                      </div>
                     </div>
                     <div className="text-right">
                       <div className="text-xs text-white/40 uppercase">Valor da venda</div>
