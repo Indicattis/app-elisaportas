@@ -1385,8 +1385,9 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
             const { altura, largura } = parseDims(p);
             luc.pintura += calcLucroPintura(valorTotal, altura, largura);
           } else if (['acessorio', 'adicional'].includes(tipo)) {
-            fat.avulsos += valorTotal;
-            luc.avulsos += p.lucro_item || 0;
+            const bucket = classificarAvulso(p);
+            fat[bucket] += valorTotal;
+            luc[bucket] += p.lucro_item || 0;
           } else if (['instalacao', 'manutencao'].includes(tipo)) {
             fat.instalacoes += valorTotal;
             luc.instalacoes += calcLucroInstal(valorTotal);
@@ -1403,8 +1404,8 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         const totalFretesVendas = vendas?.reduce((sum, v) => sum + ((v as any).valor_frete || 0), 0) || 0;
         fat.fretes = totalFretesVendas;
 
-        fat.total = fat.portas + fat.pintura + fat.instalacoes + fat.avulsos + totalCredito;
-        luc.total = luc.portas + luc.pintura + luc.instalacoes + luc.avulsos;
+        fat.total = fat.portas + fat.pintura + fat.instalacoes + fat.acessorios + fat.avulsos + totalCredito;
+        luc.total = luc.portas + luc.pintura + luc.instalacoes + luc.acessorios + luc.avulsos;
 
         // ============ Desconto Excedido por coluna ============
         // Reusa a mesma fórmula do modal Portas: para cada venda calcula-se
@@ -1478,10 +1479,10 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
           } else if (['instalacao', 'manutencao'].includes(tipo)) {
             exc.instalacoes += share;
           } else {
-            exc.avulsos += share;
+            exc[classificarAvulso(p)] += share;
           }
         });
-        exc.total = exc.portas + exc.pintura + exc.instalacoes + exc.avulsos;
+        exc.total = exc.portas + exc.pintura + exc.instalacoes + exc.acessorios + exc.avulsos;
 
         setFaturamento(fat);
         setLucro(luc);
