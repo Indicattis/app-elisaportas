@@ -193,6 +193,7 @@ import VendasHub from "./pages/vendas/VendasHub";
 import MinhasVendas from "./pages/vendas/MinhasVendas";
 import MinhasVendasEditar from "./pages/vendas/MinhasVendasEditar";
 import VendaNovaMinimalista from "./pages/vendas/VendaNovaMinimalista";
+import RascunhoView from "./pages/vendas/RascunhoView";
 import MetasHistoricoVendas from "./pages/vendas/MetasHistoricoVendas";
 import RegrasVendasVisualizacao from "./pages/vendas/RegrasVendasVisualizacao";
 import RegrasHub from "./pages/regras/RegrasHub";
