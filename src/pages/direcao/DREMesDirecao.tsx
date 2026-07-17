@@ -45,6 +45,10 @@ interface VendaComPortasRow {
     valorFinal: number;
     excedido: number;
     lucro: number;
+    descAuto: number;
+    descFria: number;
+    descGerente: number;
+    descDiretor: number;
   }[];
 }
 
