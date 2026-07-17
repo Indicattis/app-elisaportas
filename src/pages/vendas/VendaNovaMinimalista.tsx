@@ -287,41 +287,32 @@ export default function VendaNovaMinimalista() {
       try { setDataEntrega(new Date(r.data_prevista_entrega)); } catch {}
     }
 
-    // Produtos: reagrupa itens de instalação de volta em suas portas.
+    // Produtos: preserva todas as linhas como estão no banco, incluindo
+    // linhas independentes de instalação (tipo_produto='instalacao') e pintura.
     const raw = (r.produtos_vendas || []) as any[];
-    const portasHidratadas: ProdutoVenda[] = raw
-      .filter((p) => p.tipo_produto !== 'instalacao')
-      .map((p) => {
-        const instalacaoParceira = raw.find(
-          (i) =>
-            i.tipo_produto === 'instalacao' &&
-            i.tamanho === p.tamanho &&
-            i.tabela_precos_porta_id === p.tabela_precos_porta_id
-        );
-        return {
-          id: p.id,
-          tipo_produto: p.tipo_produto,
-          tamanho: p.tamanho || '',
-          largura: p.largura ?? undefined,
-          altura: p.altura ?? undefined,
-          cor_id: p.cor_id || '',
-          acessorio_id: p.acessorio_id || '',
-          adicional_id: p.adicional_id || '',
-          tabela_precos_porta_id: p.tabela_precos_porta_id || null,
-          valor_produto: Number(p.valor_produto) || 0,
-          valor_pintura: Number(p.valor_pintura) || 0,
-          valor_instalacao: Number(instalacaoParceira?.valor_produto) || Number(p.valor_instalacao) || 0,
-          valor_frete: Number(p.valor_frete) || 0,
-          tipo_desconto: (p.tipo_desconto as any) || 'percentual',
-          desconto_percentual: Number(p.desconto_percentual) || 0,
-          desconto_valor: Number(p.desconto_valor) || 0,
-          quantidade: Number(p.quantidade) || 1,
-          descricao: p.descricao || '',
-          valor_credito: Number(p.valor_credito) || 0,
-          percentual_credito: Number(p.percentual_credito) || 0,
-          observacao_item: p.observacao_item || null,
-        } as ProdutoVenda;
-      });
+    const portasHidratadas: ProdutoVenda[] = raw.map((p) => ({
+      id: p.id,
+      tipo_produto: p.tipo_produto,
+      tamanho: p.tamanho || '',
+      largura: p.largura ?? undefined,
+      altura: p.altura ?? undefined,
+      cor_id: p.cor_id || '',
+      acessorio_id: p.acessorio_id || '',
+      adicional_id: p.adicional_id || '',
+      tabela_precos_porta_id: p.tabela_precos_porta_id || null,
+      valor_produto: Number(p.valor_produto) || 0,
+      valor_pintura: Number(p.valor_pintura) || 0,
+      valor_instalacao: Number(p.valor_instalacao) || 0,
+      valor_frete: Number(p.valor_frete) || 0,
+      tipo_desconto: (p.tipo_desconto as any) || 'percentual',
+      desconto_percentual: Number(p.desconto_percentual) || 0,
+      desconto_valor: Number(p.desconto_valor) || 0,
+      quantidade: Number(p.quantidade) || 1,
+      descricao: p.descricao || '',
+      valor_credito: Number(p.valor_credito) || 0,
+      percentual_credito: Number(p.percentual_credito) || 0,
+      observacao_item: p.observacao_item || null,
+    }) as ProdutoVenda);
     setPortas(portasHidratadas);
 
     // Snapshot de pagamento
