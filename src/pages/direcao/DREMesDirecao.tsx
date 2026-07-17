@@ -1690,30 +1690,14 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
           Array.from(porVenda.values()).sort((a, b) => a.dataVenda.localeCompare(b.dataVenda))
         );
 
-        // ============ Detalhes Pintura / Acessórios / Itens Avulso ============
-        const { data: detalhesRaw } = await supabase
-          .from('produtos_vendas')
-          .select(`
-            id, descricao, quantidade, tipo_produto,
-            valor_produto, valor_pintura, valor_instalacao,
-            valor_total_sem_frete,
-            altura, largura, tabela_precos_porta_id,
-            tipo_desconto, desconto_percentual, desconto_valor,
-            lucro_item, lucro_pintura,
-            tabela_precos_portas:tabela_precos_porta_id(descricao, altura, largura),
-            vendas!inner(id, data_venda, cliente_nome, valor_venda, valor_frete)
-          `)
-          .in('tipo_produto', ['pintura_epoxi', 'acessorio', 'adicional', 'manutencao', 'porta_enrolar', 'porta_social'])
-          .gte('vendas.data_venda', start + ' 00:00:00')
-          .lte('vendas.data_venda', end + ' 23:59:59');
-
+        // ============ Detalhes Pintura / Instalação / Itens Avulso ============
         const buildMap = (
           rows: any[],
           mapper: (p: any, v: any) => VendaComItensSimplesRow['itens'][number] | null,
         ) => {
           const map = new Map<string, VendaComItensSimplesRow>();
           rows.forEach((p) => {
-            const v = p.vendas;
+            const v = Array.isArray(p.vendas) ? p.vendas[0] : p.vendas;
             if (!v) return;
             const item = mapper(p, v);
             if (!item) return;
@@ -1732,21 +1716,69 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
 
         const todosRows = (detalhesRaw || []) as any[];
 
+        // Helper genérico: gera VendaComPortasRow[] com as 4 faixas de desconto reaproveitando buckets do venda-wide.
+        const buildCategoriaDetalhe = (
+          rows: any[],
+          computeItem: (p: any) => { valorTabela: number; lucro: number; descricao: string; idSuffix?: string } | null,
+        ): VendaComPortasRow[] => {
+          const map = new Map<string, VendaComPortasRow>();
+          rows.forEach((p) => {
+            const v = Array.isArray(p.vendas) ? p.vendas[0] : p.vendas;
+            if (!v) return;
+            const info = computeItem(p);
+            if (!info || info.valorTabela <= 0) return;
+            const qty = p.quantidade || 1;
+            const tot = totaisPorVenda.get(v.id) || { totalBase: 0, totalDesconto: 0 };
+            const freteVenda = v.valor_frete || 0;
+            const freteRateado = tot.totalBase > 0 ? freteVenda * (info.valorTabela / tot.totalBase) : 0;
+            const bk = bucketsPorVenda.get(v.id) || { autoPct: 0, friaPct: 0, gerentePct: 0, diretorPct: 0 };
+            const descAuto = (bk.autoPct / 100) * info.valorTabela;
+            const descFria = (bk.friaPct / 100) * info.valorTabela;
+            const descGerente = (bk.gerentePct / 100) * info.valorTabela;
+            const descDiretor = (bk.diretorPct / 100) * info.valorTabela;
+            const descontoLinha = descAuto + descFria + descGerente + descDiretor;
+            const valorFinal = info.valorTabela - descontoLinha;
+            const existing = map.get(v.id) || {
+              vendaId: v.id,
+              dataVenda: v.data_venda,
+              clienteNome: v.cliente_nome || '',
+              valorVenda: (v.valor_venda || 0) - (v.valor_frete || 0),
+              metodoPagamento: formatarMetodoPagamento(v.forma_pagamento),
+              temperaturaLabel: v.temperatura === false ? 'Fria' : v.temperatura === true ? 'Quente' : '—',
+              isFria: v.temperatura === false,
+              isCartao: (v.forma_pagamento || '') === 'cartao_credito',
+              itens: [],
+            };
+            existing.itens.push({
+              id: p.id + (info.idSuffix || ''),
+              descricao: info.descricao,
+              quantidade: qty,
+              valorTabela: info.valorTabela,
+              freteRateado,
+              descontoLinha,
+              valorFinal,
+              excedido: 0,
+              lucro: info.lucro,
+              descAuto,
+              descFria,
+              descGerente,
+              descDiretor,
+            });
+            map.set(v.id, existing);
+          });
+          return Array.from(map.values()).sort((a, b) => a.dataVenda.localeCompare(b.dataVenda));
+        };
+
         // ---- Pintura: pintura_epoxi + componente pintura de portas ----
         setPinturaDetalhe(
-          buildMap(todosRows, (p) => {
+          buildCategoriaDetalhe(todosRows, (p) => {
             const qty = p.quantidade || 1;
             if (p.tipo_produto === 'pintura_epoxi') {
               const valorUnit = (p.valor_pintura ?? 0) > 0
                 ? Number(p.valor_pintura)
                 : Number(p.valor_produto || 0);
               const bruto = valorUnit * qty;
-              let desc = 0;
-              if (p.tipo_desconto === 'percentual' && p.desconto_percentual > 0) {
-                desc = bruto * (p.desconto_percentual / 100);
-              } else if (p.tipo_desconto === 'valor' && p.desconto_valor > 0) {
-                desc = p.desconto_valor;
-              }
+              if (bruto <= 0) return null;
               const fmtNum = (n: number) =>
                 Number(n).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
               const kitDesc = p.tabela_precos_portas?.descricao;
@@ -1754,45 +1786,49 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
               const dim = p.altura && p.largura
                 ? `${fmtNum(p.altura)} × ${fmtNum(p.largura)} m`
                 : null;
-              const descricaoMontada =
-                [kitDesc && `Kit ${kitDesc}`, cor || null, dim]
-                  .filter(Boolean)
-                  .join(' — ') || 'Pintura Epóxi';
+              const descricao =
+                [kitDesc && `Kit ${kitDesc}`, cor || null, dim].filter(Boolean).join(' — ') || 'Pintura Epóxi';
+              return { valorTabela: bruto, lucro: p.lucro_item || 0, descricao };
+            }
+            if (['porta_enrolar', 'porta_social'].includes(p.tipo_produto) && (p.valor_pintura || 0) > 0) {
+              const valorPinturaBase = (p.valor_pintura || 0) * qty;
+              const brutoAll = ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
+              const propPintura = brutoAll > 0 ? valorPinturaBase / brutoAll : 0;
               return {
-                id: p.id,
-                descricao: descricaoMontada,
-                quantidade: qty,
-                valorUnitario: valorUnit,
-                valorBruto: bruto,
-                descontoLinha: desc,
-                valorLiquido: bruto - desc,
-                lucro: p.lucro_item || 0,
+                valorTabela: valorPinturaBase,
+                lucro: (p.lucro_item || 0) * propPintura,
+                descricao: `${p.descricao || 'Porta'} — pintura`,
+                idSuffix: '-pintura',
               };
             }
-            // Pintura embutida em porta_enrolar / porta_social
-            if (['porta_enrolar', 'porta_social'].includes(p.tipo_produto) && (p.valor_pintura || 0) > 0) {
-              const valorProdutoBase = (p.valor_produto || 0) * qty;
-              const valorPinturaBase = (p.valor_pintura || 0) * qty;
-              const valorInstBase = (p.valor_instalacao || 0) * qty;
-              const bruto = valorProdutoBase + valorPinturaBase + valorInstBase;
-              let descTotal = 0;
-              if (p.tipo_desconto === 'percentual' && p.desconto_percentual > 0) {
-                descTotal = bruto * (p.desconto_percentual / 100);
-              } else if (p.tipo_desconto === 'valor' && p.desconto_valor > 0) {
-                descTotal = p.desconto_valor;
-              }
-              const propPintura = bruto > 0 ? valorPinturaBase / bruto : 0;
-              const descPintura = descTotal * propPintura;
-              const lucroLinha = p.lucro_item || 0;
+            return null;
+          }),
+        );
+
+        // ---- Instalação: tipo_produto=instalacao/manutencao + componente instalação de portas ----
+        setInstalacaoDetalhe(
+          buildCategoriaDetalhe(todosRows, (p) => {
+            const qty = p.quantidade || 1;
+            if (['instalacao', 'manutencao'].includes(p.tipo_produto)) {
+              const base = ((Number(p.valor_produto) || 0) > 0
+                ? Number(p.valor_produto)
+                : Number(p.valor_instalacao || 0)) * qty;
+              if (base <= 0) return null;
               return {
-                id: p.id + '-pintura',
-                descricao: `${p.descricao || 'Porta'} — pintura`,
-                quantidade: qty,
-                valorUnitario: p.valor_pintura || 0,
-                valorBruto: valorPinturaBase,
-                descontoLinha: descPintura,
-                valorLiquido: valorPinturaBase - descPintura,
-                lucro: lucroLinha * propPintura,
+                valorTabela: base,
+                lucro: p.lucro_item || 0,
+                descricao: p.descricao || (p.tipo_produto === 'manutencao' ? 'Manutenção' : 'Instalação'),
+              };
+            }
+            if (['porta_enrolar', 'porta_social'].includes(p.tipo_produto) && (p.valor_instalacao || 0) > 0) {
+              const valorInstBase = (p.valor_instalacao || 0) * qty;
+              const brutoAll = ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
+              const propInst = brutoAll > 0 ? valorInstBase / brutoAll : 0;
+              return {
+                valorTabela: valorInstBase,
+                lucro: (p.lucro_item || 0) * propInst,
+                descricao: `${p.descricao || 'Porta'} — instalação`,
+                idSuffix: '-inst',
               };
             }
             return null;
