@@ -2096,7 +2096,8 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
       )}
       {showResumoFinal && (() => {
         const lucroLiquido = lucroLiquidoFinal;
-        const percBruto = faturamento.total > 0 ? (lucro.total / faturamento.total) * 100 : 0;
+        const lucroBrutoAdj = lucro.total - descontoExcedido.total;
+        const percBruto = faturamento.total > 0 ? (lucroBrutoAdj / faturamento.total) * 100 : 0;
         const percLiquid = faturamento.total > 0 ? (lucroLiquido / faturamento.total) * 100 : 0;
         const colorClass = (v: number) => v >= 0 ? 'text-emerald-400' : 'text-red-400';
         const despesaCols: Array<{ label: string; categoria: CategoriaDespesa; total: number }> = [
@@ -2112,8 +2113,9 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         ];
         const items = [
           { label: 'Faturamento Bruto', value: formatCurrency(faturamento.total), color: 'text-white' },
+          ...(descontoExcedido.total > 0 ? [{ label: 'Desconto Excedido', value: `- ${formatCurrency(descontoExcedido.total)}`, color: 'text-red-400' }] : []),
           { label: '% Bruto', value: `${percBruto.toFixed(1)}%`, color: colorClass(percBruto) },
-          { label: 'Fat. Líquido (Lucro Bruto)', value: formatCurrency(lucro.total), color: colorClass(lucro.total) },
+          { label: 'Fat. Líquido (Lucro Bruto)', value: formatCurrency(lucroBrutoAdj), color: colorClass(lucroBrutoAdj) },
           ...despesaCols
             .filter(c => debitaCat(c.categoria))
             .map(c => ({ label: c.label, value: formatCurrency(c.total), color: 'text-red-400' })),
