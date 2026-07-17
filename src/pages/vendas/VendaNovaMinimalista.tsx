@@ -736,9 +736,6 @@ export default function VendaNovaMinimalista() {
     toast({ title: "Desconto removido com sucesso" });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
   const handleSalvarRascunho = async () => {
     if (isFromRascunho) {
       toast({
@@ -767,8 +764,7 @@ export default function VendaNovaMinimalista() {
     }
   };
 
-  // Envolve handleSubmit — permite invocar sem preventDefault do form.
-  const _submitInner = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Coleta granular de campos obrigatórios faltantes / inválidos
