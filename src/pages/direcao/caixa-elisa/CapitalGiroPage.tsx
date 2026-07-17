@@ -1,8 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Wallet, Plus, Pencil, Trash2, ArrowLeft } from 'lucide-react';
+import { Wallet, Plus, Pencil, Trash2, ArrowLeft, FileDown } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { DelayedParticles } from '@/components/DelayedParticles';
@@ -76,6 +78,88 @@ export default function CapitalGiroPage() {
     [obrigacoes],
   );
   const saldoDisponivel = capitalGiro - totalPendente;
+
+  const exportarPDF = () => {
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const marginX = 14;
+    const geradoEm = format(new Date(), 'dd/MM/yyyy HH:mm');
+
+    // Header
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.setTextColor(20, 20, 20);
+    doc.text('2 Milhoes Capital de Giro', marginX, 18);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(120, 120, 120);
+    doc.text(`Gerado em ${geradoEm}`, marginX, 24);
+
+    // Indicadores
+    autoTable(doc, {
+      startY: 30,
+      head: [['Capital de Giro', 'Total Pendente', 'Saldo Disponivel']],
+      body: [[formatBRL(capitalGiro), formatBRL(totalPendente), formatBRL(saldoDisponivel)]],
+      theme: 'grid',
+      styles: { halign: 'center', fontSize: 11, cellPadding: 4 },
+      headStyles: { fillColor: [16, 185, 129], textColor: 255, fontStyle: 'bold' },
+      bodyStyles: { fontStyle: 'bold' },
+      margin: { left: marginX, right: marginX },
+    });
+
+    const totalPago = obrigacoes
+      .filter(o => o.pago)
+      .reduce((s, o) => s + Number(o.valor || 0), 0);
+    const totalGeral = obrigacoes.reduce((s, o) => s + Number(o.valor || 0), 0);
+
+    // Tabela de obrigacoes
+    const startY = (doc as any).lastAutoTable.finalY + 8;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(20, 20, 20);
+    doc.text('Obrigacoes', marginX, startY);
+
+    autoTable(doc, {
+      startY: startY + 3,
+      head: [['Nome', 'Data', 'Valor', 'Status']],
+      body: obrigacoes.map(o => [
+        o.nome,
+        format(new Date(o.data + 'T12:00:00'), 'dd/MM/yyyy'),
+        formatBRL(Number(o.valor)),
+        o.pago ? 'Pago' : 'Pendente',
+      ]),
+      foot: [[
+        { content: 'Totais', styles: { halign: 'right', fontStyle: 'bold' } },
+        { content: '', styles: {} },
+        { content: formatBRL(totalGeral), styles: { fontStyle: 'bold' } },
+        { content: `Pago ${formatBRL(totalPago)} | Pend. ${formatBRL(totalPendente)}`, styles: { fontStyle: 'bold' } },
+      ]],
+      theme: 'striped',
+      styles: { fontSize: 9, cellPadding: 3 },
+      headStyles: { fillColor: [39, 39, 42], textColor: 255 },
+      footStyles: { fillColor: [244, 244, 245], textColor: 20 },
+      columnStyles: {
+        0: { cellWidth: 'auto' },
+        1: { cellWidth: 28, halign: 'center' },
+        2: { cellWidth: 32, halign: 'right' },
+        3: { cellWidth: 28, halign: 'center' },
+      },
+      margin: { left: marginX, right: marginX },
+    });
+
+    // Rodape com paginacao
+    const totalPages = (doc as any).internal.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.setTextColor(140, 140, 140);
+      const pageHeight = doc.internal.pageSize.getHeight();
+      doc.text(`Pagina ${i} de ${totalPages}`, pageWidth - marginX, pageHeight - 8, { align: 'right' });
+    }
+
+    doc.save(`capital-giro-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+  };
 
   const openCreate = () => {
     setEditing(null);
@@ -194,13 +278,23 @@ export default function CapitalGiroPage() {
               <p className="text-sm text-white/50">Acompanhe o saldo disponível conforme as obrigações</p>
             </div>
           </div>
-          <Button
-            onClick={openCreate}
-            className="bg-gradient-to-r from-emerald-500 to-emerald-700 hover:from-emerald-400 hover:to-emerald-600 text-white border border-emerald-400/30 shadow-lg shadow-emerald-500/20"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Nova obrigação
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={exportarPDF}
+              variant="outline"
+              className="bg-white/5 border-white/10 text-white hover:bg-white/10 hover:text-white"
+            >
+              <FileDown className="w-4 h-4 mr-2" />
+              Exportar PDF
+            </Button>
+            <Button
+              onClick={openCreate}
+              className="bg-gradient-to-r from-emerald-500 to-emerald-700 hover:from-emerald-400 hover:to-emerald-600 text-white border border-emerald-400/30 shadow-lg shadow-emerald-500/20"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Nova obrigação
+            </Button>
+          </div>
         </div>
 
         {/* Indicadores */}
