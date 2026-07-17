@@ -1283,12 +1283,30 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
             largura,
             tamanho,
             venda_id,
+            custos_itens_id,
             vendas!inner(id, data_venda, forma_pagamento, temperatura)
           `)
           .gte('vendas.data_venda', start + ' 00:00:00')
           .lte('vendas.data_venda', end + ' 23:59:59');
 
         if (prodError) throw prodError;
+
+        // Map de tipo_item do catálogo (custos_itens) para classificar acessórios vs avulsos
+        const { data: catalogoItens } = await supabase
+          .from('custos_itens')
+          .select('id, tipo_item');
+        const tipoItemMap = new Map<string, 'avulso' | 'acessorio'>();
+        ((catalogoItens || []) as any[]).forEach((c) => {
+          tipoItemMap.set(String(c.id), c.tipo_item === 'acessorio' ? 'acessorio' : 'avulso');
+        });
+        const classificarAvulso = (p: any): 'acessorios' | 'avulsos' => {
+          const cid = p.custos_itens_id ? String(p.custos_itens_id) : null;
+          if (cid && tipoItemMap.has(cid)) {
+            return tipoItemMap.get(cid) === 'acessorio' ? 'acessorios' : 'avulsos';
+          }
+          // Fallback legacy: tipo_produto='acessorio' vira acessórios; 'adicional' vira avulsos
+          return p.tipo_produto === 'acessorio' ? 'acessorios' : 'avulsos';
+        };
 
         // Configs ao vivo de lucro (definidas em /direcao/estrategia/kits)
         const [cfgPintura, cfgInstal] = await Promise.all([
