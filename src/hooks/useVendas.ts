@@ -315,6 +315,22 @@ export function useVendas() {
       if (vendaData.cliente_id) {
         // Cliente existente selecionado
         clienteId = vendaData.cliente_id;
+        // Atualiza dados de endereço no cadastro do cliente (persiste alterações feitas na venda)
+        try {
+          await supabase
+            .from('clientes')
+            .update({
+              estado: vendaData.estado || null,
+              cidade: vendaData.cidade || null,
+              cep: vendaData.cep || null,
+              endereco: vendaData.endereco || null,
+              numero: vendaData.numero || null,
+              bairro: vendaData.bairro || null,
+            })
+            .eq('id', clienteId);
+        } catch (e) {
+          console.warn('Falha ao atualizar endereço do cliente existente:', e);
+        }
       } else if (vendaData.cpf_cliente) {
         // Verificar se cliente já existe por CPF/CNPJ
         const cpfNormalizado = vendaData.cpf_cliente.replace(/\D/g, '');
@@ -341,6 +357,7 @@ export function useVendas() {
                 cidade: vendaData.cidade || null,
                 cep: vendaData.cep || null,
                 endereco: vendaData.endereco || null,
+                numero: vendaData.numero || null,
                 bairro: vendaData.bairro || null,
                 canal_aquisicao_id: vendaData.canal_aquisicao_id || null,
                 created_by: user.id
@@ -368,6 +385,7 @@ export function useVendas() {
             cidade: vendaData.cidade || null,
             cep: vendaData.cep || null,
             endereco: vendaData.endereco || null,
+            numero: vendaData.numero || null,
             bairro: vendaData.bairro || null,
             canal_aquisicao_id: vendaData.canal_aquisicao_id || null,
             created_by: user.id
