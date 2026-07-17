@@ -1575,7 +1575,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         // Soma bruta dos itens de porta por venda (para ratear excedido só entre as portas)
         const brutoPortasPorVenda = new Map<string, number>();
         ((portasRaw || []) as any[]).forEach((p) => {
-          const v = p.vendas;
+          const v = Array.isArray(p.vendas) ? p.vendas[0] : p.vendas;
           if (!v) return;
           const qty = p.quantidade || 1;
           const bruto =
