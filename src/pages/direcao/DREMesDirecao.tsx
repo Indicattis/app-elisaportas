@@ -1953,14 +1953,17 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
                     const topList = col.key === 'avulsos' ? topAvulsos : null;
                     const isPortas = col.key === 'portas';
                     const isPintura = col.key === 'pintura';
+                    const isInstalacoes = col.key === 'instalacoes';
                     const isAvulsos = col.key === 'avulsos';
                     const onClickHeader = isPortas
                       ? () => setPortasModalOpen(true)
                       : isPintura
                         ? () => setPinturaModalOpen(true)
-                        : isAvulsos
-                          ? () => setAvulsosModalOpen(true)
-                          : null;
+                        : isInstalacoes
+                          ? () => setInstalacoesModalOpen(true)
+                          : isAvulsos
+                            ? () => setAvulsosModalOpen(true)
+                            : null;
                     return (
                       <th
                         key={col.key}
