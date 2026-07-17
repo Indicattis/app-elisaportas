@@ -49,6 +49,7 @@ export interface VendaFormData {
   cep?: string;
   bairro?: string;
   endereco?: string;
+  numero?: string;
   publico_alvo: string;
   forma_pagamento: string;
   observacoes_venda?: string;
