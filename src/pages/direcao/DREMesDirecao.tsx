@@ -286,6 +286,7 @@ function PrintReport({
   mesNome,
   faturamento,
   lucro,
+  descontoExcedido,
   despesasFixas,
   despesasFolha,
   despesasVariaveis,
@@ -328,6 +329,7 @@ function PrintReport({
   mesNome: string;
   faturamento: FaturamentoProduto;
   lucro: FaturamentoProduto;
+  descontoExcedido: FaturamentoProduto;
   despesasFixas: DespesaAgrupada[];
   despesasFolha: DespesaAgrupada[];
   despesasVariaveis: DespesaAgrupada[];
@@ -465,7 +467,7 @@ function PrintReport({
       <div style={{ display: 'flex', gap: 8, marginTop: 14, ...{ pageBreakInside: 'avoid' } as any }}>
         {[
           { label: 'Faturamento Bruto', value: formatCurrency(faturamento.total), color: '#0f172a', accent: '#1d76cf' },
-          { label: 'Lucro Bruto', value: formatCurrency(lucro.total), color: positive(lucro.total), accent: '#1d76cf' },
+          { label: 'Lucro Bruto', value: formatCurrency(lucro.total - descontoExcedido.total), color: positive(lucro.total - descontoExcedido.total), accent: '#1d76cf' },
           { label: 'Margem Bruta', value: `${percBrutoFinal.toFixed(1)}%`, color: positive(percBrutoFinal), accent: '#1d76cf' },
           { label: 'Lucro Líquido', value: formatCurrency(lucroLiquidoFinal), color: positive(lucroLiquidoFinal), accent: '#047857' },
           { label: 'Margem Líquida', value: `${percLiquidFinal.toFixed(1)}%`, color: positive(percLiquidFinal), accent: '#047857' },
@@ -498,6 +500,7 @@ function PrintReport({
             <tr>
               <th style={TH}>Categoria</th>
               <th style={{ ...TH, textAlign: 'right' }}>Faturamento</th>
+              <th style={{ ...TH, textAlign: 'right' }}>Desc. Excedido</th>
               <th style={{ ...TH, textAlign: 'right' }}>Lucro</th>
               <th style={{ ...TH, textAlign: 'right' }}>Margem %</th>
             </tr>
@@ -511,14 +514,18 @@ function PrintReport({
               { key: 'avulsos', label: 'Itens Avulsos' },
             ].map((c, i) => {
               const f = faturamento[c.key as keyof FaturamentoProduto];
+              const excCol = descontoExcedido[c.key as keyof FaturamentoProduto] || 0;
               const l = c.key === 'fretes'
                 ? (faturamento.fretes - totalDespFretes)
-                : lucro[c.key as keyof FaturamentoProduto];
+                : (lucro[c.key as keyof FaturamentoProduto] - excCol);
               const m = f > 0 ? (l / f) * 100 : 0;
               return (
                 <tr key={c.key} style={trZebra(i)}>
                   <td style={{ ...TD, fontWeight: 600 }}>{c.label}</td>
                   <td style={tdRight}>{formatCurrency(f)}</td>
+                  <td style={{ ...tdRight, color: excCol > 0 ? '#b91c1c' : '#94a3b8' }}>
+                    {excCol > 0 ? `- ${formatCurrency(excCol)}` : '—'}
+                  </td>
                   <td style={{ ...tdRight, color: positive(l), fontWeight: 600 }}>{formatCurrency(l)}</td>
                   <td style={{ ...tdRight, color: positive(m), fontWeight: 600 }}>{m.toFixed(1)}%</td>
                 </tr>
@@ -530,7 +537,10 @@ function PrintReport({
                 {formatCurrency(faturamento.total)}
               </td>
               <td style={{ ...tdRight, fontWeight: 800, color: '#fff', borderBottom: 'none' }}>
-                {formatCurrency(lucro.total)}
+                {descontoExcedido.total > 0 ? `- ${formatCurrency(descontoExcedido.total)}` : '—'}
+              </td>
+              <td style={{ ...tdRight, fontWeight: 800, color: '#fff', borderBottom: 'none' }}>
+                {formatCurrency(lucro.total - descontoExcedido.total)}
               </td>
               <td style={{ ...tdRight, fontWeight: 800, color: '#fff', borderBottom: 'none' }}>
                 {percBrutoFinal.toFixed(1)}%
@@ -554,8 +564,9 @@ function PrintReport({
           <tbody>
             {[
               { l: 'Faturamento Bruto', v: formatCurrency(faturamento.total), c: '#0f172a', b: false, cat: null as CategoriaDespesa | null },
+              { l: '(–) Desconto Excedido', v: formatCurrency(descontoExcedido.total), c: '#b91c1c', b: false, cat: null as CategoriaDespesa | null },
               { l: 'Margem Bruta', v: `${percBrutoFinal.toFixed(1)}%`, c: positive(percBrutoFinal), b: false, cat: null },
-              { l: 'Lucro Bruto', v: formatCurrency(lucro.total), c: positive(lucro.total), b: true, cat: null },
+              { l: 'Lucro Bruto', v: formatCurrency(lucro.total - descontoExcedido.total), c: positive(lucro.total - descontoExcedido.total), b: true, cat: null },
               { l: '(–) Folha Salarial', v: formatCurrency(totalDespFolha), c: '#b91c1c', b: false, cat: 'salario' as CategoriaDespesa },
               { l: '(–) Despesas Fixas', v: formatCurrency(totalDespFixas), c: '#b91c1c', b: false, cat: 'fixa' as CategoriaDespesa },
               { l: '(–) Despesas Variáveis', v: formatCurrency(totalDespVariaveis), c: '#b91c1c', b: false, cat: 'variavel' as CategoriaDespesa },
@@ -991,6 +1002,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
   const [loading, setLoading] = useState(true);
   const [faturamento, setFaturamento] = useState<FaturamentoProduto>({ portas: 0, pintura: 0, instalacoes: 0, avulsos: 0, fretes: 0, total: 0 });
   const [lucro, setLucro] = useState<FaturamentoProduto>({ portas: 0, pintura: 0, instalacoes: 0, avulsos: 0, fretes: 0, total: 0 });
+  const [descontoExcedido, setDescontoExcedido] = useState<FaturamentoProduto>({ portas: 0, pintura: 0, instalacoes: 0, avulsos: 0, fretes: 0, total: 0 });
   const [despesasFixas, setDespesasFixas] = useState<DespesaAgrupada[]>([]);
   const [despesasFolha, setDespesasFolha] = useState<DespesaAgrupada[]>([]);
   const [despesasVariaveis, setDespesasVariaveis] = useState<DespesaAgrupada[]>([]);
@@ -1258,7 +1270,8 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
             altura,
             largura,
             tamanho,
-            vendas!inner(data_venda)
+            venda_id,
+            vendas!inner(id, data_venda, forma_pagamento, temperatura)
           `)
           .gte('vendas.data_venda', start + ' 00:00:00')
           .lte('vendas.data_venda', end + ' 23:59:59');
@@ -1363,8 +1376,86 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         fat.total = fat.portas + fat.pintura + fat.instalacoes + fat.avulsos + totalCredito;
         luc.total = luc.portas + luc.pintura + luc.instalacoes + luc.avulsos;
 
+        // ============ Desconto Excedido por coluna ============
+        // Reusa a mesma fórmula do modal Portas: para cada venda calcula-se
+        // o % de desconto acima do limite permitido e converte-se em valor,
+        // rateando entre os itens pelo valor bruto e agregando por tipo_produto.
+        const cfgVendasExc = await supabase
+          .from('configuracoes_vendas')
+          .select('limite_desconto_avista, limite_desconto_presencial, limite_adicional_responsavel')
+          .maybeSingle();
+        const limAvistaExc = cfgVendasExc.data?.limite_desconto_avista ?? 3;
+        const limPresencialExc = cfgVendasExc.data?.limite_desconto_presencial ?? 5;
+        const limResponsavelExc = cfgVendasExc.data?.limite_adicional_responsavel ?? 7;
+
+        // Totais por venda (base e desconto)
+        const totVenda = new Map<string, { base: number; desc: number; formaPg: string; temperatura: any }>();
+        (produtos || []).forEach((p: any) => {
+          const vid = p.venda_id || p.vendas?.id;
+          if (!vid) return;
+          const qty = p.quantidade || 1;
+          const base = ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * qty;
+          let d = 0;
+          if (p.tipo_desconto === 'percentual' && p.desconto_percentual > 0) d = base * (p.desconto_percentual / 100);
+          else if (p.tipo_desconto === 'valor' && p.desconto_valor > 0) d = p.desconto_valor;
+          const cur = totVenda.get(vid) || {
+            base: 0,
+            desc: 0,
+            formaPg: (p.vendas?.forma_pagamento || '').trim(),
+            temperatura: p.vendas?.temperatura,
+          };
+          cur.base += base;
+          cur.desc += d;
+          totVenda.set(vid, cur);
+        });
+
+        const excVenda = new Map<string, number>();
+        totVenda.forEach((t, vid) => {
+          if (t.base <= 0) { excVenda.set(vid, 0); return; }
+          const pctDado = (t.desc / t.base) * 100;
+          const aptoAvista = t.formaPg !== '' && t.formaPg !== 'cartao_credito';
+          const aptoFrio = t.temperatura === false;
+          const limBase = (aptoAvista ? limAvistaExc : 0) + (aptoFrio ? limPresencialExc : 0);
+          const aptoGerente = pctDado > limBase;
+          const limite = limBase + (aptoGerente ? limResponsavelExc : 0);
+          const excPct = Math.max(0, pctDado - limite);
+          excVenda.set(vid, (excPct / 100) * t.base);
+        });
+
+        const exc: FaturamentoProduto = { portas: 0, pintura: 0, instalacoes: 0, avulsos: 0, fretes: 0, total: 0 };
+        (produtos || []).forEach((p: any) => {
+          const vid = p.venda_id || p.vendas?.id;
+          if (!vid) return;
+          const excTotal = excVenda.get(vid) || 0;
+          if (excTotal <= 0) return;
+          const t = totVenda.get(vid);
+          if (!t || t.base <= 0) return;
+          const qty = p.quantidade || 1;
+          const valorProdutoBase = (p.valor_produto || 0) * qty;
+          const valorPinturaBase = (p.valor_pintura || 0) * qty;
+          const valorInstalacaoBase = (p.valor_instalacao || 0) * qty;
+          const bruto = valorProdutoBase + valorPinturaBase + valorInstalacaoBase;
+          if (bruto <= 0) return;
+          const share = excTotal * (bruto / t.base);
+          const tipo = p.tipo_produto;
+          if (['porta_enrolar', 'porta_social'].includes(tipo)) {
+            // Rateia entre porta / pintura / instalação embutida
+            exc.portas += share * (valorProdutoBase / bruto);
+            exc.pintura += share * (valorPinturaBase / bruto);
+            exc.instalacoes += share * (valorInstalacaoBase / bruto);
+          } else if (tipo === 'pintura_epoxi') {
+            exc.pintura += share;
+          } else if (['instalacao', 'manutencao'].includes(tipo)) {
+            exc.instalacoes += share;
+          } else {
+            exc.avulsos += share;
+          }
+        });
+        exc.total = exc.portas + exc.pintura + exc.instalacoes + exc.avulsos;
+
         setFaturamento(fat);
         setLucro(luc);
+        setDescontoExcedido(exc);
 
         // Top 5 itens avulsos (acessórios + adicionais)
         const avulsosMap: Record<string, number> = {};
@@ -1749,6 +1840,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
   const { debita: debitaCat } = useCategoriaDreConfig();
   const lucroLiquidoFinal =
     lucro.total
+    - descontoExcedido.total
     - (debitaCat('fixa') ? totalDespFixas : 0)
     - totalDespFolha
     - (debitaCat('variavel') ? totalDespVariaveis : 0)
@@ -1759,7 +1851,8 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
     - (debitaCat('frete') ? totalDespFretes : 0)
     - (debitaCat('autorizado') ? totalDespAutorizados : 0)
     - (debitaCat('salario') ? totalDespSalarios : 0);
-  const percBrutoFinal = faturamento.total > 0 ? (lucro.total / faturamento.total) * 100 : 0;
+  const lucroBrutoAjustado = lucro.total - descontoExcedido.total;
+  const percBrutoFinal = faturamento.total > 0 ? (lucroBrutoAjustado / faturamento.total) * 100 : 0;
   const percLiquidFinal = faturamento.total > 0 ? (lucroLiquidoFinal / faturamento.total) * 100 : 0;
 
   const screenContent = loading ? (
@@ -1842,12 +1935,26 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
                     </td>
                   ))}
                 </tr>
+                <tr className="border-b border-white/5">
+                  <td className="p-3 text-white/60 font-medium text-xs uppercase">Desconto Excedido</td>
+                  {columns.map(col => {
+                    const val = descontoExcedido[col.key] || 0;
+                    return (
+                      <td
+                        key={col.key}
+                        className={`text-right p-3 font-semibold ${val > 0 ? 'text-red-400' : 'text-white/30'} ${col.key === 'total' ? 'bg-white/5' : ''}`}
+                      >
+                        {val > 0 ? `- ${formatCurrency(val)}` : '—'}
+                      </td>
+                    );
+                  })}
+                </tr>
                 <tr>
                   <td className="p-3 text-white/60 font-medium text-xs uppercase">Lucro</td>
                   {columns.map(col => {
                     const val = col.key === 'fretes'
                       ? (faturamento.fretes - totalDespFretes)
-                      : lucro[col.key];
+                      : (lucro[col.key] - (descontoExcedido[col.key] || 0));
                     const isInstalacoes = col.key === 'instalacoes';
                     const isFretes = col.key === 'fretes';
                     return (
@@ -1865,7 +1972,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
                   {columns.map(col => {
                     const lucroCol = col.key === 'fretes'
                       ? (faturamento.fretes - totalDespFretes)
-                      : lucro[col.key];
+                      : (lucro[col.key] - (descontoExcedido[col.key] || 0));
                     const perc = faturamento[col.key] > 0
                       ? (lucroCol / faturamento[col.key]) * 100
                       : 0;
@@ -1989,7 +2096,8 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
       )}
       {showResumoFinal && (() => {
         const lucroLiquido = lucroLiquidoFinal;
-        const percBruto = faturamento.total > 0 ? (lucro.total / faturamento.total) * 100 : 0;
+        const lucroBrutoAdj = lucro.total - descontoExcedido.total;
+        const percBruto = faturamento.total > 0 ? (lucroBrutoAdj / faturamento.total) * 100 : 0;
         const percLiquid = faturamento.total > 0 ? (lucroLiquido / faturamento.total) * 100 : 0;
         const colorClass = (v: number) => v >= 0 ? 'text-emerald-400' : 'text-red-400';
         const despesaCols: Array<{ label: string; categoria: CategoriaDespesa; total: number }> = [
@@ -2005,8 +2113,9 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         ];
         const items = [
           { label: 'Faturamento Bruto', value: formatCurrency(faturamento.total), color: 'text-white' },
+          ...(descontoExcedido.total > 0 ? [{ label: 'Desconto Excedido', value: `- ${formatCurrency(descontoExcedido.total)}`, color: 'text-red-400' }] : []),
           { label: '% Bruto', value: `${percBruto.toFixed(1)}%`, color: colorClass(percBruto) },
-          { label: 'Fat. Líquido (Lucro Bruto)', value: formatCurrency(lucro.total), color: colorClass(lucro.total) },
+          { label: 'Fat. Líquido (Lucro Bruto)', value: formatCurrency(lucroBrutoAdj), color: colorClass(lucroBrutoAdj) },
           ...despesaCols
             .filter(c => debitaCat(c.categoria))
             .map(c => ({ label: c.label, value: formatCurrency(c.total), color: 'text-red-400' })),
@@ -2258,6 +2367,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         mesNome={mesNome}
         faturamento={faturamento}
         lucro={lucro}
+        descontoExcedido={descontoExcedido}
         despesasFixas={despesasFixas}
         despesasFolha={despesasFolha}
         despesasVariaveis={despesasVariaveis}

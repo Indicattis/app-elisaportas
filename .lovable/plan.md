@@ -1,43 +1,44 @@
-# Detalhamento de Portas em /direcao/vendas/todas
+## Nova linha "Desconto Excedido" na tabela do DRE
 
-Ao clicar no card KPI **"Portas"**, abrir um modal com a listagem de cada porta vendida no período/filtro atualmente aplicado, exibindo as mesmas colunas financeiras da tabela principal.
+Adicionar uma linha entre "Faturamento" e "Lucro" na tabela principal do DRE (`/direcao/estrategia/dre/:mes`) mostrando o desconto que ultrapassou os limites configurados de cada venda. O valor é debitado do Lucro.
 
-## Escopo
+### Cálculo (reusa lógica já existente do modal Portas)
 
-- Apenas o card **"Portas"** vira clicável (cursor pointer + hover). Nenhum outro comportamento da página muda.
-- O modal respeita os filtros já ativos: mês selecionado (`selectedMonth`), vendedor (`selectedAtendente`), busca, etc. — reaproveita `filteredVendas`.
-- Cada linha do modal = **um item de porta** (`produtos_vendas.tipo_produto = 'porta_enrolar'` ou `'porta_social'`) das vendas filtradas, agrupado por venda no cabeçalho.
+Para cada venda do mês:
+1. Soma base (`valor_produto + valor_pintura + valor_instalacao`) × quantidade de todos os itens.
+2. Soma desconto de todos os itens.
+3. `pctDado = totalDesconto / totalBase * 100`.
+4. Limite permitido = `limite_desconto_avista` (se À Vista/não-cartão) + `limite_desconto_presencial` (se `temperatura=false`) + `limite_adicional_responsavel` (se ultrapassou limite base).
+5. Excedido da venda = `max(0, pctDado − limite) / 100 × totalBase`.
 
-## Colunas do modal
+O excedido de cada venda é rateado entre seus itens proporcionalmente ao valor bruto do item, e cada item contribui para a coluna correspondente ao seu `tipo_produto`:
+- `porta_enrolar`, `porta_social` → coluna **Portas**
+- `pintura` → coluna **Pintura**
+- `instalacao` → coluna **Instalações**
+- demais → coluna **Itens Avulsos**
+- Fretes: coluna não recebe excedido (frete é rateado à parte).
+- Total: soma das colunas.
 
-Idênticas às da tabela /direcao/vendas/todas para consistência visual:
+### Alterações
 
-1. **Cliente** — nome do cliente da venda (linha de grupo)
-2. **Porta** — descrição + dimensões (largura × altura) + cor + quantidade
-3. **Valor Tabela** — preço de tabela da porta (via `tabelaPrecosHelper` já usado em `useVendasPendentePedido`)
-4. **Frete** — `vendas.valor_frete` rateado proporcionalmente entre as portas da venda (mesma lógica usada no faturamento)
-5. **Desconto** — `desconto_valor`/`desconto_percentual` do item de porta
-6. **Valor Final** — `valor_total` do item (já com desconto aplicado)
-7. **Excedido** — reuso de `calcularExcedidoDesconto` (venda-level, mostrado na linha da venda)
-8. **Lucro** — `lucro_item` da porta (fallback: `valor_final − custo_producao`)
+**`src/pages/direcao/DREMesDirecao.tsx`** (única mudança):
 
-Rodapé do modal com totais das colunas numéricas.
+1. Ampliar a query já feita para o modal Portas para trazer TODOS os produtos das vendas do mês (não só portas), com `tipo_produto` e vinculado a `vendas.data_venda` no período. Reaproveitar `configuracoes_vendas` e a mesma fórmula de excedido por venda.
+2. Calcular um objeto `descontoExcedido = { portas, pintura, instalacoes, fretes: 0, avulsos, total }` no mesmo bloco onde `faturamento` e `lucro` são montados.
+3. Renderizar nova linha `<tr>` na tabela (linha ~1845, antes da linha "Lucro"):
+   - Label: "Desconto Excedido" (mesmo estilo das outras labels).
+   - Cada coluna mostra `formatCurrency(descontoExcedido[col.key])` em vermelho (`text-red-400`); mostra "—" se zero.
+4. Subtrair `descontoExcedido[col.key]` do cálculo do Lucro em cada coluna (linhas 1847–1861) e da Margem % (linhas 1863–1882).
+5. Ajustar também `lucroLiquidoFinal` para descontar `descontoExcedido.total` (linhas 1750–1761), mantendo consistência no resumo final e no PDF.
+6. Refletir a nova linha no `PrintReport` (PDF do DRE) espelhando a mesma linha/coluna e valores.
 
-## Detalhes técnicos
+### Fora do escopo
 
-- Novo componente: `src/components/direcao/PortasDetalhesModal.tsx` (Dialog shadcn, glassmorphism igual ao restante).
-- Em `VendasDirecao.tsx`:
-  - Adicionar `useState` `portasModalOpen`.
-  - Envolver o card "Portas" (linhas ~1260–1270) com `<button onClick={() => setPortasModalOpen(true)}>` mantendo estilos atuais.
-  - Renderizar `<PortasDetalhesModal open=... vendas={filteredVendas} />`.
-- O modal reaproveita helpers já existentes:
-  - `calcularExcedidoDesconto` (mesmo arquivo)
-  - `tabelaPrecosHelper` (para `valor_tabela` por porta)
-  - `formatCurrency`
-- Sem novas queries: os dados já vêm em `filteredVendas.produtos`. Se `valor_tabela` não estiver pré-computado, calcular no modal via helper existente.
+- Sem alterações no modal de Portas (já mostra "Excedido" por item).
+- Sem alterações em `dre_realizados` (o valor é calculado, não persistido).
+- Sem mudanças em outras páginas (`/direcao/vendas/…`).
 
-## Fora do escopo
+### Verificação
 
-- Não altera exportação PDF/Excel.
-- Não altera hooks de dados.
-- Cards "Vendas" e "Valor" continuam não-clicáveis.
+- Somatório de "Desconto Excedido" na coluna Total deve bater com a soma de `excedido` do modal de Portas + equivalentes dos outros tipos.
+- Lucro de cada coluna após a mudança = Lucro antigo − Desconto Excedido dessa coluna.
