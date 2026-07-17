@@ -149,22 +149,7 @@ export function useVendas() {
         throw new Error('Todos os campos de localização são obrigatórios (Estado, Cidade, CEP, Bairro e Endereço)');
       }
 
-      // Validar comprovante obrigatório quando há método à vista OU marcado como "já pago"
-      if (pagamentoData) {
-        const metodosAtivos = pagamentoData.usar_dois_metodos
-          ? pagamentoData.metodos.filter(m => m.tipo)
-          : [pagamentoData.metodos[0]].filter(m => m.tipo);
-
-        const exigeComprovante = metodosAtivos.some(
-          (m) => m.ja_pago || m.tipo === 'a_vista'
-        );
-
-        if (exigeComprovante && (!comprovantes || comprovantes.length === 0)) {
-          throw new Error(
-            'É obrigatório anexar ao menos um comprovante de pagamento (venda à vista ou marcada como já pago).'
-          );
-        }
-      }
+      // Comprovantes agora são opcionais em qualquer método de pagamento.
 
       // Validar tamanho mínimo de endereço e bairro (requisito SEFAZ)
       if (vendaData.endereco && vendaData.endereco.length < 2) {

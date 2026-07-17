@@ -1121,20 +1121,12 @@ export default function VendaNovaMinimalista() {
           onConfirmadoChange={setPagamentoConfirmado}
         />
 
-        {/* Comprovantes de pagamento */}
-        {(() => {
-          const metodosAtivos = pagamentoData.usar_dois_metodos
-            ? pagamentoData.metodos.filter(m => m.tipo)
-            : [pagamentoData.metodos[0]].filter(m => m.tipo);
-          const exige = metodosAtivos.some(m => m.tipo === 'a_vista' || m.ja_pago);
-          return (
-            <ComprovantesUploadBlock
-              files={comprovantes}
-              onChange={setComprovantes}
-              obrigatorio={exige}
-            />
-          );
-        })()}
+        {/* Comprovantes de pagamento (opcionais) */}
+        <ComprovantesUploadBlock
+          files={comprovantes}
+          onChange={setComprovantes}
+          obrigatorio={false}
+        />
 
         {/* Desconto / Acréscimo Global */}
         <DescontoAcrescimoSection
