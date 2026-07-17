@@ -51,6 +51,7 @@ import { useConfiguracoesVendas } from '@/hooks/useConfiguracoesVendas';
 import { calcularDescontoTotal as calcularDescontoTotalRegras, calcularTotalVenda } from '@/utils/descontoVendasRules';
 import { calcDescontoTiersAplicados } from '@/utils/descontoTiers';
 import { generateFormalizacaoVendaPDF } from '@/utils/formalizacaoVendaPDFGenerator';
+import { PortasDetalhesModal } from '@/components/direcao/PortasDetalhesModal';
 
 
 import {
@@ -145,6 +146,7 @@ export default function VendasDirecao() {
   const [dispensarVenda, setDispensarVenda] = useState<any | null>(null);
   const [dispensandoId, setDispensandoId] = useState<string | null>(null);
   const [downloadingPdfId, setDownloadingPdfId] = useState<string | null>(null);
+  const [portasModalOpen, setPortasModalOpen] = useState(false);
 
   const handleDownloadFormalizacao = useCallback(async (venda: any) => {
     if (downloadingPdfId) return;
