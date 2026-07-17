@@ -2261,13 +2261,14 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         titulo="Vendas com Instalação"
         categoriaLabel="Instalação"
       />
-      <ItensSimplesDetalheDialog
+      <PortasDetalheDialog
         open={avulsosModalOpen}
         onOpenChange={setAvulsosModalOpen}
-        titulo={`Vendas com Itens Avulsos — ${mesNome}`}
-        categoriaLabel="Itens Avulsos"
+        mesNome={mesNome}
         vendas={avulsosDetalhe}
         formatCurrency={formatCurrency}
+        titulo="Vendas com Itens Avulsos"
+        categoriaLabel="Itens Avulsos"
       />
       <Dialog open={realizadoDialogOpen} onOpenChange={setRealizadoDialogOpen}>
         <DialogContent className="max-w-lg bg-slate-900 border-white/10 text-white">
