@@ -1829,6 +1829,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
   const { debita: debitaCat } = useCategoriaDreConfig();
   const lucroLiquidoFinal =
     lucro.total
+    - descontoExcedido.total
     - (debitaCat('fixa') ? totalDespFixas : 0)
     - totalDespFolha
     - (debitaCat('variavel') ? totalDespVariaveis : 0)
@@ -1839,7 +1840,8 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
     - (debitaCat('frete') ? totalDespFretes : 0)
     - (debitaCat('autorizado') ? totalDespAutorizados : 0)
     - (debitaCat('salario') ? totalDespSalarios : 0);
-  const percBrutoFinal = faturamento.total > 0 ? (lucro.total / faturamento.total) * 100 : 0;
+  const lucroBrutoAjustado = lucro.total - descontoExcedido.total;
+  const percBrutoFinal = faturamento.total > 0 ? (lucroBrutoAjustado / faturamento.total) * 100 : 0;
   const percLiquidFinal = faturamento.total > 0 ? (lucroLiquidoFinal / faturamento.total) * 100 : 0;
 
   const screenContent = loading ? (
