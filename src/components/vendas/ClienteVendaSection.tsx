@@ -492,14 +492,25 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, dis
                   />
                 </div>
 
-                <div className="space-y-1 md:col-span-2">
+                <div className="space-y-1">
                   <Label htmlFor="endereco_buscar" className={labelClass}>Endereço *</Label>
                   <Input
                     id="endereco_buscar"
                     value={dados.endereco}
                     onChange={(e) => onChange({ endereco: e.target.value })}
-                    placeholder="Ex: Rua das Flores, 123"
+                    placeholder="Ex: Rua das Flores"
                     className={cn(inputClass, !dados.endereco && "border-amber-500/50")}
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <Label htmlFor="numero_buscar" className={labelClass}>Número *</Label>
+                  <Input
+                    id="numero_buscar"
+                    value={dados.numero || ''}
+                    onChange={(e) => onChange({ numero: e.target.value })}
+                    placeholder="Ex: 123"
+                    className={cn(inputClass, !dados.numero && "border-amber-500/50")}
                   />
                 </div>
 
@@ -702,13 +713,26 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, dis
                   />
                 </div>
 
-                <div className="space-y-1 md:col-span-2">
+                <div className="space-y-1">
                   <Label htmlFor="endereco" className={labelClass}>Endereço *</Label>
                   <Input
                     id="endereco"
                     value={dados.endereco}
                     onChange={(e) => onChange({ endereco: e.target.value })}
-                    placeholder="Ex: Rua das Flores, 123"
+                    placeholder="Ex: Rua das Flores"
+                    className={inputClass}
+                    required
+                    disabled={!!clienteDuplicado}
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <Label htmlFor="numero" className={labelClass}>Número *</Label>
+                  <Input
+                    id="numero"
+                    value={dados.numero || ''}
+                    onChange={(e) => onChange({ numero: e.target.value })}
+                    placeholder="Ex: 123"
                     className={inputClass}
                     required
                     disabled={!!clienteDuplicado}
