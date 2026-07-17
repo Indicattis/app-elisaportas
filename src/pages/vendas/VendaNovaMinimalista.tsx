@@ -1015,6 +1015,7 @@ export default function VendaNovaMinimalista() {
             setFormData(prev => ({ ...prev, cliente_id: cliente?.id }));
           }}
           disabled={isFromOrcamento}
+          initialClienteId={isFromRascunho ? formData.cliente_id : undefined}
         />
 
         {/* Produtos */}
