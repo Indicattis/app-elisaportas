@@ -1042,7 +1042,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
   const [instalacoesModalOpen, setInstalacoesModalOpen] = useState(false);
   const [instalacaoDetalhe, setInstalacaoDetalhe] = useState<VendaComPortasRow[]>([]);
   const [avulsosModalOpen, setAvulsosModalOpen] = useState(false);
-  const [avulsosDetalhe, setAvulsosDetalhe] = useState<VendaComItensSimplesRow[]>([]);
+  const [avulsosDetalhe, setAvulsosDetalhe] = useState<VendaComPortasRow[]>([]);
 
   const [realizadoRow, setRealizadoRow] = useState<{ realizado_em: string; observacoes: string | null; status: 'pendente' | 'realizado' | 'aprovado' } | null>(null);
   const [realizadoDialogOpen, setRealizadoDialogOpen] = useState(false);
@@ -1837,25 +1837,15 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
 
         // ---- Itens Avulsos (acessorio + adicional) ----
         setAvulsosDetalhe(
-          buildMap(todosRows, (p) => {
+          buildCategoriaDetalhe(todosRows, (p) => {
             if (!['acessorio', 'adicional'].includes(p.tipo_produto)) return null;
             const qty = p.quantidade || 1;
             const bruto = (p.valor_produto || 0) * qty;
-            let desc = 0;
-            if (p.tipo_desconto === 'percentual' && p.desconto_percentual > 0) {
-              desc = bruto * (p.desconto_percentual / 100);
-            } else if (p.tipo_desconto === 'valor' && p.desconto_valor > 0) {
-              desc = p.desconto_valor;
-            }
+            if (bruto <= 0) return null;
             return {
-              id: p.id,
-              descricao: p.descricao || 'Item avulso',
-              quantidade: qty,
-              valorUnitario: p.valor_produto || 0,
-              valorBruto: bruto,
-              descontoLinha: desc,
-              valorLiquido: bruto - desc,
+              valorTabela: bruto,
               lucro: p.lucro_item || 0,
+              descricao: p.descricao || 'Item avulso',
             };
           }),
         );
@@ -2271,13 +2261,14 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         titulo="Vendas com Instalação"
         categoriaLabel="Instalação"
       />
-      <ItensSimplesDetalheDialog
+      <PortasDetalheDialog
         open={avulsosModalOpen}
         onOpenChange={setAvulsosModalOpen}
-        titulo={`Vendas com Itens Avulsos — ${mesNome}`}
-        categoriaLabel="Itens Avulsos"
+        mesNome={mesNome}
         vendas={avulsosDetalhe}
         formatCurrency={formatCurrency}
+        titulo="Vendas com Itens Avulsos"
+        categoriaLabel="Itens Avulsos"
       />
       <Dialog open={realizadoDialogOpen} onOpenChange={setRealizadoDialogOpen}>
         <DialogContent className="max-w-lg bg-slate-900 border-white/10 text-white">
