@@ -1662,6 +1662,8 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
             dataVenda: v.data_venda,
             clienteNome: v.cliente_nome || '',
             valorVenda: (v.valor_venda || 0) - (v.valor_frete || 0),
+            isFria: v.temperatura === false,
+            isCartao: (v.forma_pagamento || '') === 'cartao_credito',
             itens: [],
           };
           existing.itens.push({
