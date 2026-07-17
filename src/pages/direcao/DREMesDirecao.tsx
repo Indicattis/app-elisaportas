@@ -374,7 +374,7 @@ function PrintReport({
     textTransform: 'uppercase',
     letterSpacing: '0.06em',
     color: '#ffffff',
-    background: '#1e3a8a',
+    background: '#1d76cf',
     padding: '6px 10px',
     borderRadius: 3,
     marginBottom: 8,
@@ -423,7 +423,7 @@ function PrintReport({
     </span>
   );
 
-  const kpiBox = (label: string, value: string, color = '#0f172a', accent = '#1e3a8a'): React.CSSProperties => ({});
+  const kpiBox = (label: string, value: string, color = '#0f172a', accent = '#1d76cf'): React.CSSProperties => ({});
 
   return (
     <div style={{ padding: 0, color: '#0f172a' }}>
@@ -449,7 +449,7 @@ function PrintReport({
           <h1 style={{ fontSize: '20pt', fontWeight: 800, margin: '2px 0 0 0', color: '#0f172a', letterSpacing: '-0.02em' }}>
             Demonstrativo de Resultados
           </h1>
-          <div style={{ fontSize: '11pt', color: '#1e3a8a', fontWeight: 600, marginTop: 2, textTransform: 'capitalize' }}>
+          <div style={{ fontSize: '11pt', color: '#1d76cf', fontWeight: 600, marginTop: 2, textTransform: 'capitalize' }}>
             {mesNome}
           </div>
           </div>
@@ -464,9 +464,9 @@ function PrintReport({
       {/* KPIs PRINCIPAIS */}
       <div style={{ display: 'flex', gap: 8, marginTop: 14, ...{ pageBreakInside: 'avoid' } as any }}>
         {[
-          { label: 'Faturamento Bruto', value: formatCurrency(faturamento.total), color: '#0f172a', accent: '#1e3a8a' },
-          { label: 'Lucro Bruto', value: formatCurrency(lucro.total), color: positive(lucro.total), accent: '#1e3a8a' },
-          { label: 'Margem Bruta', value: `${percBrutoFinal.toFixed(1)}%`, color: positive(percBrutoFinal), accent: '#1e3a8a' },
+          { label: 'Faturamento Bruto', value: formatCurrency(faturamento.total), color: '#0f172a', accent: '#1d76cf' },
+          { label: 'Lucro Bruto', value: formatCurrency(lucro.total), color: positive(lucro.total), accent: '#1d76cf' },
+          { label: 'Margem Bruta', value: `${percBrutoFinal.toFixed(1)}%`, color: positive(percBrutoFinal), accent: '#1d76cf' },
           { label: 'Lucro Líquido', value: formatCurrency(lucroLiquidoFinal), color: positive(lucroLiquidoFinal), accent: '#047857' },
           { label: 'Margem Líquida', value: `${percLiquidFinal.toFixed(1)}%`, color: positive(percLiquidFinal), accent: '#047857' },
         ].map((k, i) => (
@@ -524,7 +524,7 @@ function PrintReport({
                 </tr>
               );
             })}
-            <tr style={{ background: '#1e3a8a', color: '#fff' }}>
+            <tr style={{ background: '#1d76cf', color: '#fff' }}>
               <td style={{ ...TD, fontWeight: 800, color: '#fff', borderBottom: 'none' }}>TOTAL</td>
               <td style={{ ...tdRight, fontWeight: 800, color: '#fff', borderBottom: 'none' }}>
                 {formatCurrency(faturamento.total)}
@@ -810,7 +810,7 @@ function PrintReport({
                   const tD = vendasListagem.reduce((s, v) => s + v.desconto, 0);
                   const tL = vendasListagem.reduce((s, v) => s + v.lucro, 0);
                   return (
-                    <tr style={{ background: '#1e3a8a', color: '#fff' }}>
+                    <tr style={{ background: '#1d76cf', color: '#fff' }}>
                       <td style={{ ...TD, fontWeight: 800, color: '#fff', borderBottom: 'none' }} colSpan={2}>TOTAL</td>
                       <td style={{ ...tdRight, fontWeight: 800, color: '#fff', borderBottom: 'none' }}>{formatCurrency(tT)}</td>
                       <td style={{ ...tdRight, fontWeight: 800, color: '#fff', borderBottom: 'none' }}>{formatCurrency(tV)}</td>
@@ -946,7 +946,7 @@ function PrintDespesaTable({
         </tbody>
       ))}
       <tbody>
-        <tr style={{ background: '#1e3a8a', color: '#fff' }}>
+        <tr style={{ background: '#1d76cf', color: '#fff' }}>
           <td style={{ ...TD, fontWeight: 800, color: '#fff', borderBottom: 'none' }}>TOTAL</td>
           <td style={{ ...TD, textAlign: 'right', fontWeight: 800, color: '#fff', borderBottom: 'none', fontVariantNumeric: 'tabular-nums' }}>
             {formatCurrency(total)}
