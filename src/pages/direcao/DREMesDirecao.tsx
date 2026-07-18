@@ -741,11 +741,9 @@ function PrintReport({
       <div className="pdf-landscape-page">
         <div className="pdf-landscape-content">
           <div style={H2}>4. Folha Salarial {badgeDebita(debitaCat('salario'))}</div>
-          <PrintDespesaTable
-            items={despesasFolha}
-            total={totalDespFolha}
+          <PrintFolhaSalarialDetalhada
+            items={folhaDetalhada}
             formatCurrency={formatCurrency}
-            tiposDisponiveis={tiposCustosFixos.filter(t => isFolha(t.nome))}
           />
         </div>
       </div>
