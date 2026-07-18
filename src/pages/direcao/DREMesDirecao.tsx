@@ -1034,6 +1034,170 @@ function PrintDespesaTable({
   );
 }
 
+const FOLHA_SETORES_ORDEM: { value: string; label: string }[] = [
+  { value: 'vendas',         label: 'Vendas' },
+  { value: 'marketing',      label: 'Marketing' },
+  { value: 'instalacoes',    label: 'Instalações' },
+  { value: 'fabrica',        label: 'Fábrica' },
+  { value: 'administrativo', label: 'Administrativo' },
+  { value: '',               label: 'Sem setor' },
+];
+
+function PrintFolhaSalarialDetalhada({
+  items,
+  formatCurrency,
+}: {
+  items: FolhaColaboradorDetalhe[];
+  formatCurrency: (v: number) => string;
+}) {
+  if (items.length === 0) {
+    return (
+      <div style={{ fontSize: '9pt', color: '#94a3b8', fontStyle: 'italic', padding: '6px 0' }}>
+        Nenhum colaborador registrado.
+      </div>
+    );
+  }
+  const TH: React.CSSProperties = {
+    background: '#f1f5f9',
+    color: '#475569',
+    fontSize: '7.5pt',
+    fontWeight: 700,
+    textTransform: 'uppercase',
+    letterSpacing: '0.03em',
+    padding: '5px 6px',
+    textAlign: 'left',
+    borderBottom: '1px solid #cbd5e1',
+    whiteSpace: 'nowrap',
+  };
+  const THr = { ...TH, textAlign: 'right' as const };
+  const THc = { ...TH, textAlign: 'center' as const };
+  const TD: React.CSSProperties = {
+    fontSize: '8pt',
+    padding: '4px 6px',
+    borderBottom: '1px solid #e2e8f0',
+  };
+  const tdR = { ...TD, textAlign: 'right' as const, fontVariantNumeric: 'tabular-nums' };
+  const tdC = { ...TD, textAlign: 'center' as const };
+
+  // Map setor -> ordem
+  const ordemMap = new Map<string, number>();
+  FOLHA_SETORES_ORDEM.forEach((s, idx) => ordemMap.set(s.value, idx));
+  const setorLabel = (v: string) => FOLHA_SETORES_ORDEM.find((s) => s.value === v)?.label ?? (v || 'Sem setor');
+  const setoresPresentes = Array.from(new Set(items.map((i) => i.setor ?? '')))
+    .sort((a, b) => (ordemMap.get(a) ?? 999) - (ordemMap.get(b) ?? 999));
+
+  let totalSalariosGeral = 0;
+  let totalFolhaGeral = 0;
+
+  return (
+    <div>
+      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <thead>
+          <tr>
+            <th style={{ ...TH, minWidth: 130 }}>Colaborador</th>
+            <th style={THc}>Em folha</th>
+            <th style={THr}>Salário</th>
+            <th style={THr}>Comb.</th>
+            <th style={THr}>Bonif.</th>
+            <th style={THr}>H. Extra</th>
+            <th style={THr}>Insalub.</th>
+            <th style={THr}>FGTS</th>
+            <th style={THr}>Prev. 13°</th>
+            <th style={THr}>FGTS 13°</th>
+            <th style={THr}>Férias</th>
+            <th style={THr}>Multa FGTS</th>
+            <th style={{ ...THr, background: '#e0edfb', color: '#0f172a' }}>Total</th>
+          </tr>
+        </thead>
+        {setoresPresentes.map((setorValue) => {
+          const rows = items.filter((i) => (i.setor ?? '') === setorValue);
+          if (rows.length === 0) return null;
+          const subtotalSalarios = rows.reduce((s, r) => s + r.salario, 0);
+          const subtotalTotal = rows.reduce((s, r) => s + r.total, 0);
+          totalSalariosGeral += subtotalSalarios;
+          totalFolhaGeral += subtotalTotal;
+          return (
+            <tbody key={setorValue || 'sem-setor'}>
+              <tr>
+                <td
+                  colSpan={13}
+                  style={{
+                    background: '#1d76cf',
+                    color: '#fff',
+                    fontSize: '8.5pt',
+                    fontWeight: 700,
+                    letterSpacing: '0.04em',
+                    textTransform: 'uppercase',
+                    padding: '4px 8px',
+                  }}
+                >
+                  {setorLabel(setorValue)} ({rows.length})
+                </td>
+              </tr>
+              {rows.map((r, i) => (
+                <tr key={r.id} style={{ background: i % 2 === 0 ? '#ffffff' : '#fafbfc' }}>
+                  <td style={TD}>{r.nome}</td>
+                  <td style={{ ...tdC, fontWeight: 700, color: r.em_folha ? '#16a34a' : '#dc2626' }}>
+                    {r.em_folha ? 'Sim' : 'Não'}
+                  </td>
+                  <td style={tdR}>{formatCurrency(r.salario)}</td>
+                  <td style={tdR}>{formatCurrency(r.aux_combustivel)}</td>
+                  <td style={tdR}>{formatCurrency(r.bonificacao)}</td>
+                  <td style={tdR}>{formatCurrency(r.hora_extra)}</td>
+                  <td style={tdR}>{formatCurrency(r.insalubridade_val)}</td>
+                  <td style={tdR}>{formatCurrency(r.fgts_val)}</td>
+                  <td style={tdR}>{formatCurrency(r.prev_13)}</td>
+                  <td style={tdR}>{formatCurrency(r.fgts_13)}</td>
+                  <td style={tdR}>{formatCurrency(r.ferias)}</td>
+                  <td style={tdR}>{formatCurrency(r.multa_fgts)}</td>
+                  <td style={{ ...tdR, background: '#f1f7fd', fontWeight: 700 }}>
+                    {formatCurrency(r.total)}
+                  </td>
+                </tr>
+              ))}
+              <tr>
+                <td
+                  colSpan={12}
+                  style={{
+                    ...tdR,
+                    background: '#f1f5f9',
+                    fontWeight: 700,
+                    color: '#475569',
+                  }}
+                >
+                  Subtotal {setorLabel(setorValue)}
+                </td>
+                <td style={{ ...tdR, background: '#f1f5f9', fontWeight: 800, color: '#0f172a' }}>
+                  {formatCurrency(subtotalTotal)}
+                </td>
+              </tr>
+            </tbody>
+          );
+        })}
+        <tbody>
+          <tr style={{ background: '#1d76cf', color: '#fff' }}>
+            <td style={{ ...TD, fontWeight: 800, color: '#fff', borderBottom: 'none' }} colSpan={2}>
+              TOTAL GERAL
+            </td>
+            <td style={{ ...tdR, fontWeight: 800, color: '#fff', borderBottom: 'none' }}>
+              {formatCurrency(totalSalariosGeral)}
+            </td>
+            <td style={{ ...TD, borderBottom: 'none' }} colSpan={9}></td>
+            <td style={{ ...tdR, fontWeight: 800, color: '#fff', borderBottom: 'none' }}>
+              {formatCurrency(totalFolhaGeral)}
+            </td>
+          </tr>
+          <tr>
+            <td colSpan={13} style={{ fontSize: '7.5pt', color: '#64748b', padding: '4px 6px' }}>
+              Total de salários (base): {formatCurrency(totalSalariosGeral)} · Total da folha (com encargos): {formatCurrency(totalFolhaGeral)}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export type DREMesViewMode = 'full' | 'despesas' | 'resultados';
 
 interface DREMesDirecaoProps {
