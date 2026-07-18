@@ -1304,17 +1304,27 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         // Map de tipo_item do catálogo (custos_itens) para classificar acessórios vs avulsos
         const { data: catalogoItens } = await supabase
           .from('custos_itens')
-          .select('id, tipo_item');
+          .select('id, descricao, tipo_item');
         const tipoItemMap = new Map<string, 'avulso' | 'acessorio'>();
+        const tipoItemPorDescricao = new Map<string, 'avulso' | 'acessorio'>();
+        const normDesc = (s: any) => String(s || '').trim().toLowerCase();
         ((catalogoItens || []) as any[]).forEach((c) => {
-          tipoItemMap.set(String(c.id), c.tipo_item === 'acessorio' ? 'acessorio' : 'avulso');
+          const tipo: 'avulso' | 'acessorio' = c.tipo_item === 'acessorio' ? 'acessorio' : 'avulso';
+          tipoItemMap.set(String(c.id), tipo);
+          const key = normDesc(c.descricao);
+          if (key) tipoItemPorDescricao.set(key, tipo);
         });
         const classificarAvulso = (p: any): 'acessorios' | 'avulsos' => {
           const cid = p.custos_itens_id ? String(p.custos_itens_id) : null;
           if (cid && tipoItemMap.has(cid)) {
             return tipoItemMap.get(cid) === 'acessorio' ? 'acessorios' : 'avulsos';
           }
-          // Fallback legacy: tipo_produto='acessorio' vira acessórios; 'adicional' vira avulsos
+          // Fallback por descrição: usa a classificação do catálogo mesmo sem vínculo direto (dados legados)
+          const descKey = normDesc(p.descricao);
+          if (descKey && tipoItemPorDescricao.has(descKey)) {
+            return tipoItemPorDescricao.get(descKey) === 'acessorio' ? 'acessorios' : 'avulsos';
+          }
+          // Fallback final: tipo_produto='acessorio' vira acessórios; 'adicional' vira avulsos
           return p.tipo_produto === 'acessorio' ? 'acessorios' : 'avulsos';
         };
 
