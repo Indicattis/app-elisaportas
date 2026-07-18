@@ -91,6 +91,7 @@ function DespesaSectionReadOnly({
   formatCurrency,
   tiposDisponiveis,
   onClickTipo,
+  debita,
 }: {
   title: string;
   despesas: DespesaAgrupada[];
@@ -98,11 +99,24 @@ function DespesaSectionReadOnly({
   formatCurrency: (v: number) => string;
   tiposDisponiveis?: TipoCustoVariavel[];
   onClickTipo?: (tipoCustoId: string, nome: string) => void;
+  debita?: boolean;
 }) {
   return (
     <div className="rounded-xl bg-white/5 border border-white/10 p-4">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-white/70 uppercase">{title}</h3>
+        {debita !== undefined && (
+          <span
+            className={
+              debita
+                ? 'text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
+                : 'text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30'
+            }
+            title={debita ? 'Esta categoria debita do lucro no DRE' : 'Esta categoria não debita do lucro no DRE'}
+          >
+            {debita ? '● Debita DRE' : '○ Não debita'}
+          </span>
+        )}
       </div>
 
       {despesas.length === 0 ? (
