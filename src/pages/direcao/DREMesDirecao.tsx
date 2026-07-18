@@ -1530,10 +1530,24 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         // Listagem de vendas do mês para o PDF
         const { data: vendasList } = await supabase
           .from('vendas')
-          .select('id, data_venda, cliente_nome, valor_venda, valor_frete, lucro_total, lucro_instalacao, produtos_vendas(valor_produto, valor_pintura, valor_instalacao, quantidade)')
+          .select('id, data_venda, cliente_nome, valor_venda, valor_frete, lucro_total, lucro_instalacao, forma_pagamento, temperatura, produtos_vendas(valor_produto, valor_pintura, valor_instalacao, quantidade)')
           .gte('data_venda', start + ' 00:00:00')
           .lte('data_venda', end + ' 23:59:59')
           .order('data_venda', { ascending: true });
+
+        const vendaIdsList = ((vendasList || []) as any[]).map((v) => v.id);
+        const { data: parcelasList } = vendaIdsList.length
+          ? await supabase
+              .from('contas_receber')
+              .select('venda_id, metodo_pagamento')
+              .in('venda_id', vendaIdsList)
+          : { data: [] as any[] };
+        const parcelasPorVenda = new Map<string, { metodo_pagamento: string | null }[]>();
+        ((parcelasList || []) as any[]).forEach((p) => {
+          const arr = parcelasPorVenda.get(p.venda_id) || [];
+          arr.push({ metodo_pagamento: p.metodo_pagamento });
+          parcelasPorVenda.set(p.venda_id, arr);
+        });
 
         setVendasListagem(
           ((vendasList || []) as any[]).map((v) => {
@@ -1543,6 +1557,8 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
               0
             );
             const valorVenda = (v.valor_venda || 0) - (v.valor_frete || 0);
+            const temperatura = v.temperatura === true ? 'Quente' : v.temperatura === false ? 'Fria' : '—';
+            const pagamento = resumoPagamentoCompacto(v.forma_pagamento, parcelasPorVenda.get(v.id));
             return {
               id: v.id,
               data: v.data_venda,
@@ -1551,6 +1567,8 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
               valorVenda,
               desconto: valorTabela - valorVenda,
               lucro: (v.lucro_total || 0) + (v.lucro_instalacao || 0),
+              temperatura,
+              pagamento,
             };
           })
         );
