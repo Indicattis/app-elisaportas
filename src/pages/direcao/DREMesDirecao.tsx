@@ -331,6 +331,7 @@ function PrintReport({
   descontoExcedido,
   despesasFixas,
   despesasFolha,
+  folhaDetalhada,
   despesasVariaveis,
   despesasImpostos,
   despesasInvestimentos,
@@ -374,6 +375,7 @@ function PrintReport({
   descontoExcedido: FaturamentoProduto;
   despesasFixas: DespesaAgrupada[];
   despesasFolha: DespesaAgrupada[];
+  folhaDetalhada: FolhaColaboradorDetalhe[];
   despesasVariaveis: DespesaAgrupada[];
   despesasImpostos: DespesaAgrupada[];
   despesasInvestimentos: DespesaAgrupada[];
