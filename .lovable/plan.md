@@ -1,40 +1,43 @@
-## Problema encontrado
+## Objetivo
 
-Na primeira seção do DRE de `/direcao/estrategia/dre/2026-06`, a separação entre **Acessórios** e **Itens Avulsos** está incorreta porque a maioria dos produtos vendidos não tem `custos_itens_id` preenchido (dados legados). Quando isso ocorre, o classificador usa o fallback:
+Enriquecer a seção **"4. Folha Salarial"** do PDF exportado em `/direcao/estrategia/dre/:mes` (`DREMesDirecao.tsx`) para trazer o mesmo nível de detalhamento por colaborador que já existe na exportação da folha em `/direcao/estrategia/despesas` (função `exportFolhaSalarialPDF` em `src/utils/folhaSalarialPDFGenerator.ts`).
 
-```ts
-return p.tipo_produto === 'acessorio' ? 'acessorios' : 'avulsos';
-```
+Hoje essa seção do PDF do DRE lista apenas `Nome | Valor real | (Projetado)` via `PrintDespesaTable`, enquanto a folha padrão exporta um breakdown completo (Salário, Combustível, Bonificação, Hora Extra, Insalubridade, FGTS, Previsão 13°, FGTS 13°, Férias, Multa FGTS, Total), agrupado por setor.
 
-Como praticamente todos os itens vendidos são cadastrados como `tipo_produto = 'acessorio'`, eles caem sempre em **Acessórios**, mesmo que no catálogo (`custos_itens.tipo_item`) estejam marcados como `avulso`.
+## Alterações
 
-Diagnóstico em junho/2026:
-- 49 produtos com `tipo_produto = 'acessorio'`
-- Apenas 4 têm `custos_itens_id` vinculado
-- Ex.: "Meia cana lisa - 0,70mm" (8 vendas) está como `avulso` no catálogo, mas o DRE conta como acessório
-- "Controle Avulso", "Nobreak", "Central WI-FI", "Meia cana", etc. seriam avulsos por catálogo, mas hoje entram em acessórios
+### 1. Buscar campos detalhados da folha no DRE
+Em `DREMesDirecao.tsx`, dentro de `fetchTiposCustos`/carregamento da folha (linhas ~1231-1273):
 
-Ou seja: a coluna Acessórios está inflada e a coluna Itens Avulsos está subestimada.
+- Incluir `setor` no `select` de `despesas_padrao` (tipo `folha`).
+- Deixar de reduzir cada colaborador a `{id, nome, valor_real}`. Manter o `despesasFolha` atual (compatível com a UI/`DespesaSectionReadOnly`) e adicionar um novo estado `folhaDetalhada: FolhaColaboradorDetalhe[]` contendo:
+  - `id`, `nome`, `setor`, `em_folha`
+  - Valores calculados por colaborador: `salario`, `aux_combustivel`, `bonificacao`, `hora_extra`, `insalubridade_val`, `fgts_val`, `prev_13`, `fgts_13`, `ferias`, `multa_fgts`, `total`
+  - Mesmas fórmulas já usadas em `calcTotalFolha` daquele arquivo.
 
-## Correção proposta
+### 2. Novo componente de tabela detalhada para o PDF
+Adicionar em `DREMesDirecao.tsx` um `PrintFolhaSalarialDetalhada` (React, HTML, mesmo estilo `TD`/`tdRight`/`H2`/paisagem já usado nas demais seções do PDF) que:
 
-1. **Fallback por descrição** em `src/pages/direcao/DREMesDirecao.tsx`
-   - Carregar do catálogo `custos_itens` também o campo `descricao` (além de `id, tipo_item`).
-   - Montar um segundo Map `Map<descricaoNormalizada, 'avulso' | 'acessorio'>`.
-   - Em `classificarAvulso(p)`:
-     1. Se `custos_itens_id` presente e mapeado → usar tipo do catálogo.
-     2. Senão, normalizar `p.descricao` (trim + lowercase) e buscar no map por descrição.
-     3. Só se ambos falharem, cair no fallback atual por `tipo_produto`.
-   - Aplicar a mesma classificação também no bloco do Top 5 (linhas ~1501-1519) e no `detalheAvulsoBuilder` (linhas ~1890-1905), que hoje usam apenas `tipo_produto`.
+- Agrupa colaboradores por setor (ordem: Vendas, Marketing, Instalações, Fábrica, Administrativo, Sem setor — mesma ordem de `folhaSalarialPDFGenerator.ts`).
+- Para cada setor, renderiza cabeçalho com nome do setor e contagem, seguido de tabela com colunas:  
+  `Colaborador | Em folha | Salário | Comb. | Bonif. | H. Extra | Insalub. | FGTS | Prev. 13° | FGTS 13° | Férias | Multa FGTS | Total`.
+- Subtotal do setor no final de cada grupo.
+- Após todos os setores, uma linha de totais gerais (`Total de salários` e `Total da folha`) coerente com o `totalDespFolha` já usado no resumo.
+- Colaboradores com `em_folha = false` seguem a mesma regra de exibição (zerar encargos), como já ocorre em `exportFolhaSalarialPDF`.
 
-2. **Sem alterações de schema nem migrações** — apenas ajuste de classificação em tela e nos modais/PDF, que já derivam da mesma lógica.
+### 3. Trocar a tabela na seção 4 do PDF
+Na página landscape "4. Folha Salarial" do `PrintReport` (linhas ~721-731):
 
-### Detalhes técnicos
+- Substituir `<PrintDespesaTable items={despesasFolha} ... />` por `<PrintFolhaSalarialDetalhada items={folhaDetalhada} formatCurrency={formatCurrency} />`.
+- Manter o badge "Debita DRE" e o título com "4. Folha Salarial".
+- Manter as demais seções (5–13) inalteradas.
+- Se a tabela ficar longa em meses com muitos colaboradores, permitir quebra natural em novas páginas paisagem (o layout já é `pdf-landscape-page`; ajustar CSS para permitir `page-break-inside: auto` na tabela detalhada).
 
-- Normalização simples: `(s || '').trim().toLowerCase()`.
-- Se duas entradas do catálogo tiverem a mesma descrição com tipos diferentes, a última prevalece (aceitável; catálogo é pequeno).
-- Nada muda para vendas novas: quem tiver `custos_itens_id` continua sendo classificado pelo vínculo direto (mais confiável).
+### 4. UI da página (não muda)
+A visualização em tela de `/direcao/estrategia/dre/:mes` continua usando `DespesaSectionReadOnly` com o resumo simples atual — o pedido é apenas sobre o PDF.
 
-### Resultado esperado
+## Observações técnicas
 
-Após o fix, itens vendidos como "Meia cana lisa", "Controle Avulso", "Nobreak", etc. passarão a aparecer em **Itens Avulsos**, e apenas os itens marcados como `acessorio` no catálogo (ex.: "Antiesmagamento de 4 metros") permanecerão em **Acessórios**. Os modais de detalhe, o Top 5 e o PDF refletirão a mesma separação automaticamente.
+- `despesas_padrao.setor` já é usado em `EstrategiaDespesasConfiguracoes.tsx`, então o campo existe.
+- As fórmulas de cálculo por rubrica (insalubridade, FGTS, 13°, férias, multa FGTS) já estão implementadas no próprio `DREMesDirecao.tsx` (linhas ~1209-1229) e em `folhaSalarialPDFGenerator.ts`. Vou reutilizar a mesma fórmula, exposta em cada colaborador, para garantir que a soma bata com `totalDespFolha`.
+- Sem mudanças no banco, sem RLS, sem novas rotas. Apenas fetch e render.
