@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 import logoElisa from '@/assets/logo-elisa-dre.png';
 import { useCategoriaDreConfig, type CategoriaDespesa } from '@/hooks/useCategoriaDreConfig';
 import { fetchConfigLucro } from '@/hooks/useConfigLucro';
-import { formatarMetodoPagamento } from '@/utils/pagamentoResumo';
+import { formatarMetodoPagamento, resumoPagamentoCompacto } from '@/utils/pagamentoResumo';
 
 interface FaturamentoProduto {
   portas: number;
@@ -376,7 +376,7 @@ function PrintReport({
   percBrutoFinal: number;
   percLiquidFinal: number;
   formatCurrency: (v: number) => string;
-  vendasListagem: { id: string; data: string; cliente: string; valorTabela: number; valorVenda: number; desconto: number; lucro: number }[];
+  vendasListagem: { id: string; data: string; cliente: string; valorTabela: number; valorVenda: number; desconto: number; lucro: number; temperatura: string; pagamento: string }[];
   debitaCat: (categoria: CategoriaDespesa) => boolean;
 }) {
   const SECTION: React.CSSProperties = { marginTop: 18, pageBreakInside: 'avoid' };
@@ -647,6 +647,8 @@ function PrintReport({
                 <tr>
                   <th style={{ ...TH, width: 55 }}>Data</th>
                   <th style={TH}>Cliente</th>
+                  <th style={{ ...TH, width: 60 }}>Temp.</th>
+                  <th style={{ ...TH, width: 120 }}>Pagamento</th>
                   <th style={{ ...TH, textAlign: 'right', width: 110 }}>Valor Tabela</th>
                   <th style={{ ...TH, textAlign: 'right', width: 110 }}>Valor Venda</th>
                   <th style={{ ...TH, textAlign: 'right', width: 110 }}>Desc./Acrésc.</th>
@@ -666,6 +668,10 @@ function PrintReport({
                     <tr key={v.id} style={trZebra(i)}>
                       <td style={{ ...TD, fontVariantNumeric: 'tabular-nums' }}>{dataFmt}</td>
                       <td style={TD}>{v.cliente || '—'}</td>
+                      <td style={{ ...TD, color: v.temperatura === 'Fria' ? '#1d4ed8' : v.temperatura === 'Quente' ? '#b91c1c' : '#64748b', fontWeight: 600 }}>
+                        {v.temperatura}
+                      </td>
+                      <td style={TD}>{v.pagamento}</td>
                       <td style={tdRight}>{formatCurrency(v.valorTabela)}</td>
                       <td style={tdRight}>{formatCurrency(v.valorVenda)}</td>
                       <td style={{ ...tdRight, color: v.desconto > 0 ? '#b91c1c' : v.desconto < 0 ? '#047857' : undefined, fontWeight: 600 }}>
@@ -684,7 +690,7 @@ function PrintReport({
                   const tL = vendasListagem.reduce((s, v) => s + v.lucro, 0);
                   return (
                     <tr style={{ background: '#1d76cf', color: '#fff' }}>
-                      <td style={{ ...TD, fontWeight: 800, color: '#fff', borderBottom: 'none' }} colSpan={2}>TOTAL</td>
+                      <td style={{ ...TD, fontWeight: 800, color: '#fff', borderBottom: 'none' }} colSpan={4}>TOTAL</td>
                       <td style={{ ...tdRight, fontWeight: 800, color: '#fff', borderBottom: 'none' }}>{formatCurrency(tT)}</td>
                       <td style={{ ...tdRight, fontWeight: 800, color: '#fff', borderBottom: 'none' }}>{formatCurrency(tV)}</td>
                       <td style={{ ...tdRight, fontWeight: 800, color: '#fff', borderBottom: 'none' }}>{formatCurrency(tD)}</td>
@@ -1036,7 +1042,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
   const [tiposCustosSalarios, setTiposCustosSalarios] = useState<TipoCustoVariavel[]>([]);
   const [topAvulsos, setTopAvulsos] = useState<{nome: string, qtd: number}[]>([]);
   const [estoqueResumo, setEstoqueResumo] = useState({ valorTotal: 0, totalItens: 0 });
-  const [vendasListagem, setVendasListagem] = useState<{ id: string; data: string; cliente: string; valorTabela: number; valorVenda: number; desconto: number; lucro: number }[]>([]);
+  const [vendasListagem, setVendasListagem] = useState<{ id: string; data: string; cliente: string; valorTabela: number; valorVenda: number; desconto: number; lucro: number; temperatura: string; pagamento: string }[]>([]);
   const [portasModalOpen, setPortasModalOpen] = useState(false);
   const [portasDetalhe, setPortasDetalhe] = useState<VendaComPortasRow[]>([]);
   const [pinturaModalOpen, setPinturaModalOpen] = useState(false);
@@ -1530,10 +1536,24 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         // Listagem de vendas do mês para o PDF
         const { data: vendasList } = await supabase
           .from('vendas')
-          .select('id, data_venda, cliente_nome, valor_venda, valor_frete, lucro_total, lucro_instalacao, produtos_vendas(valor_produto, valor_pintura, valor_instalacao, quantidade)')
+          .select('id, data_venda, cliente_nome, valor_venda, valor_frete, lucro_total, lucro_instalacao, forma_pagamento, temperatura, produtos_vendas(valor_produto, valor_pintura, valor_instalacao, quantidade)')
           .gte('data_venda', start + ' 00:00:00')
           .lte('data_venda', end + ' 23:59:59')
           .order('data_venda', { ascending: true });
+
+        const vendaIdsList = ((vendasList || []) as any[]).map((v) => v.id);
+        const { data: parcelasList } = vendaIdsList.length
+          ? await supabase
+              .from('contas_receber')
+              .select('venda_id, metodo_pagamento')
+              .in('venda_id', vendaIdsList)
+          : { data: [] as any[] };
+        const parcelasPorVenda = new Map<string, { metodo_pagamento: string | null }[]>();
+        ((parcelasList || []) as any[]).forEach((p) => {
+          const arr = parcelasPorVenda.get(p.venda_id) || [];
+          arr.push({ metodo_pagamento: p.metodo_pagamento });
+          parcelasPorVenda.set(p.venda_id, arr);
+        });
 
         setVendasListagem(
           ((vendasList || []) as any[]).map((v) => {
@@ -1543,6 +1563,8 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
               0
             );
             const valorVenda = (v.valor_venda || 0) - (v.valor_frete || 0);
+            const temperatura = v.temperatura === true ? 'Quente' : v.temperatura === false ? 'Fria' : '—';
+            const pagamento = resumoPagamentoCompacto(v.forma_pagamento, parcelasPorVenda.get(v.id));
             return {
               id: v.id,
               data: v.data_venda,
@@ -1551,6 +1573,8 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
               valorVenda,
               desconto: valorTabela - valorVenda,
               lucro: (v.lucro_total || 0) + (v.lucro_instalacao || 0),
+              temperatura,
+              pagamento,
             };
           })
         );
