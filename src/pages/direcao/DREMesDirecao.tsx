@@ -1036,7 +1036,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
   const [tiposCustosSalarios, setTiposCustosSalarios] = useState<TipoCustoVariavel[]>([]);
   const [topAvulsos, setTopAvulsos] = useState<{nome: string, qtd: number}[]>([]);
   const [estoqueResumo, setEstoqueResumo] = useState({ valorTotal: 0, totalItens: 0 });
-  const [vendasListagem, setVendasListagem] = useState<{ id: string; data: string; cliente: string; valorTabela: number; valorVenda: number; desconto: number; lucro: number }[]>([]);
+  const [vendasListagem, setVendasListagem] = useState<{ id: string; data: string; cliente: string; valorTabela: number; valorVenda: number; desconto: number; lucro: number; temperatura: string; pagamento: string }[]>([]);
   const [portasModalOpen, setPortasModalOpen] = useState(false);
   const [portasDetalhe, setPortasDetalhe] = useState<VendaComPortasRow[]>([]);
   const [pinturaModalOpen, setPinturaModalOpen] = useState(false);
