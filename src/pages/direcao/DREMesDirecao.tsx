@@ -376,7 +376,7 @@ function PrintReport({
   percBrutoFinal: number;
   percLiquidFinal: number;
   formatCurrency: (v: number) => string;
-  vendasListagem: { id: string; data: string; cliente: string; valorTabela: number; valorVenda: number; desconto: number; lucro: number }[];
+  vendasListagem: { id: string; data: string; cliente: string; valorTabela: number; valorVenda: number; desconto: number; lucro: number; temperatura: string; pagamento: string }[];
   debitaCat: (categoria: CategoriaDespesa) => boolean;
 }) {
   const SECTION: React.CSSProperties = { marginTop: 18, pageBreakInside: 'avoid' };
