@@ -1250,7 +1250,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
     const [{ data: padroes, error: padErr }, { data: overrides, error: ovErr }] = await Promise.all([
       supabase
         .from('despesas_padrao' as any)
-        .select('id, nome, salario, salario_minimo, aux_combustivel, bonificacao, hora_extra, insalubridade_pct, fgts_pct, ferias_valor, em_folha, tipo')
+        .select('id, nome, setor, salario, salario_minimo, aux_combustivel, bonificacao, hora_extra, insalubridade_pct, fgts_pct, ferias_valor, em_folha, tipo')
         .eq('tipo', 'folha'),
       supabase
         .from('despesas_mes_folha_override' as any)
@@ -1261,6 +1261,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
     if (padErr || ovErr) {
       console.error('Erro ao buscar folha:', padErr || ovErr);
       setDespesasFolha([]);
+      setFolhaDetalhada([]);
     } else {
       const ovMap = new Map<string, any>();
       ((overrides || []) as any[]).forEach(o => ovMap.set(o.despesa_padrao_id, o));
@@ -1268,27 +1269,57 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
       const pick = <T,>(ov: any, p: any, key: string): T =>
         (ov && ov[key] != null ? ov[key] : p[key]) as T;
 
-      const items: DespesaAgrupada[] = ((padroes || []) as any[]).map(p => {
+      const detalhes: FolhaColaboradorDetalhe[] = ((padroes || []) as any[]).map((p) => {
         const ov = ovMap.get(p.id);
-        const merged = {
-          salario: pick<number>(ov, p, 'salario'),
-          salario_minimo: pick<number | null>(ov, p, 'salario_minimo'),
-          aux_combustivel: pick<number>(ov, p, 'aux_combustivel'),
-          bonificacao: pick<number | null>(ov, p, 'bonificacao'),
-          hora_extra: pick<number | null>(ov, p, 'hora_extra'),
-          insalubridade_pct: pick<number>(ov, p, 'insalubridade_pct'),
-          fgts_pct: pick<number>(ov, p, 'fgts_pct'),
-          ferias_valor: pick<number | null>(ov, p, 'ferias_valor'),
-          em_folha: pick<boolean | null>(ov, p, 'em_folha'),
-        };
+        const salario = Number(pick<number>(ov, p, 'salario')) || 0;
+        const salarioMinRaw = pick<number | null>(ov, p, 'salario_minimo');
+        const salarioMin = salarioMinRaw == null ? salario : Number(salarioMinRaw) || 0;
+        const aux = Number(pick<number>(ov, p, 'aux_combustivel')) || 0;
+        const bonif = Number(pick<number | null>(ov, p, 'bonificacao')) || 0;
+        const horaExtra = Number(pick<number | null>(ov, p, 'hora_extra')) || 0;
+        const insalubPct = Number(pick<number>(ov, p, 'insalubridade_pct')) || 0;
+        const fgtsPct = Number(pick<number>(ov, p, 'fgts_pct')) || 0;
+        const feriasRaw = pick<number | null>(ov, p, 'ferias_valor');
+        const emFolha = pick<boolean | null>(ov, p, 'em_folha') !== false;
+        const base = salario + horaExtra;
+        const insalubVal = emFolha ? salarioMin * insalubPct / 100 : 0;
+        const fgtsVal = emFolha ? base * fgtsPct / 100 : 0;
+        const prev13 = emFolha ? base / 12 : 0;
+        const fgts13 = emFolha ? fgtsVal / 12 : 0;
+        const ferias = emFolha ? (feriasRaw == null ? base / 3 / 12 : Number(feriasRaw) || 0) : 0;
+        const multaFgts = emFolha ? fgtsVal * 0.4 : 0;
+        const auxUsed = emFolha ? aux : 0;
+        const bonifUsed = bonif; // bonificação entra mesmo fora da folha (mesma lógica do calcTotalFolha)
+        const total = emFolha
+          ? base + auxUsed + bonifUsed + insalubVal + fgtsVal + prev13 + fgts13 + ferias + multaFgts
+          : salario + horaExtra + bonifUsed;
         return {
           id: `p:${p.id}`,
           nome: p.nome,
-          valor_real: calcTotalFolha(merged),
+          setor: (p.setor ?? '') as string,
+          em_folha: emFolha,
+          salario,
+          aux_combustivel: auxUsed,
+          bonificacao: bonifUsed,
+          hora_extra: horaExtra,
+          insalubridade_val: insalubVal,
+          fgts_val: fgtsVal,
+          prev_13: prev13,
+          fgts_13: fgts13,
+          ferias,
+          multa_fgts: multaFgts,
+          total,
         };
       });
 
+      const items: DespesaAgrupada[] = detalhes.map((d) => ({
+        id: d.id,
+        nome: d.nome,
+        valor_real: d.total,
+      }));
+
       setDespesasFolha(items.sort((a, b) => a.nome.localeCompare(b.nome)));
+      setFolhaDetalhada(detalhes.sort((a, b) => a.nome.localeCompare(b.nome)));
     }
   };
 
