@@ -2157,6 +2157,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
               total={totalDespFolha}
               formatCurrency={formatCurrency}
               tiposDisponiveis={tiposCustosFixos.filter(t => isFolha(t.nome))}
+              debita={true}
             />
             <DespesaSectionReadOnly
               title="Despesas Fixas"
@@ -2165,6 +2166,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
               formatCurrency={formatCurrency}
               tiposDisponiveis={tiposCustosFixos.filter(t => !isFolha(t.nome))}
               onClickTipo={(id, nome) => setTipoModal({ id, nome })}
+              debita={debitaCat('fixa')}
             />
             <DespesaSectionReadOnly
               title="Despesas Variáveis"
@@ -2173,6 +2175,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
               formatCurrency={formatCurrency}
               tiposDisponiveis={tiposCustosVariaveis}
               onClickTipo={(id, nome) => setTipoModal({ id, nome })}
+              debita={debitaCat('variavel')}
             />
             <DespesaSectionReadOnly
               title="Despesas de Imposto"
@@ -2181,6 +2184,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
               formatCurrency={formatCurrency}
               tiposDisponiveis={tiposCustosImpostos}
               onClickTipo={(id, nome) => setTipoModal({ id, nome })}
+              debita={debitaCat('imposto')}
             />
             <DespesaSectionReadOnly
               title="Investimentos"
@@ -2189,6 +2193,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
               formatCurrency={formatCurrency}
               tiposDisponiveis={tiposCustosInvestimentos}
               onClickTipo={(id, nome) => setTipoModal({ id, nome })}
+              debita={debitaCat('investimento')}
             />
             <DespesaSectionReadOnly
               title="Fornecedores"
@@ -2197,6 +2202,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
               formatCurrency={formatCurrency}
               tiposDisponiveis={tiposCustosFornecedores}
               onClickTipo={(id, nome) => setTipoModal({ id, nome })}
+              debita={debitaCat('fornecedor')}
             />
             <DespesaSectionReadOnly
               title="Financiamentos"
@@ -2205,6 +2211,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
               formatCurrency={formatCurrency}
               tiposDisponiveis={tiposCustosFinanciamentos}
               onClickTipo={(id, nome) => setTipoModal({ id, nome })}
+              debita={debitaCat('financiamento')}
             />
             <DespesaSectionReadOnly
               title="Fretes e Logística"
@@ -2213,6 +2220,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
               formatCurrency={formatCurrency}
               tiposDisponiveis={tiposCustosFretes}
               onClickTipo={(id, nome) => setTipoModal({ id, nome })}
+              debita={debitaCat('frete')}
             />
             <DespesaSectionReadOnly
               title="Autorizados"
@@ -2221,6 +2229,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
               formatCurrency={formatCurrency}
               tiposDisponiveis={tiposCustosAutorizados}
               onClickTipo={(id, nome) => setTipoModal({ id, nome })}
+              debita={debitaCat('autorizado')}
             />
             <DespesaSectionReadOnly
               title="Salários"
@@ -2229,6 +2238,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
               formatCurrency={formatCurrency}
               tiposDisponiveis={tiposCustosSalarios}
               onClickTipo={(id, nome) => setTipoModal({ id, nome })}
+              debita={debitaCat('salario')}
             />
           </div>
           {viewMode === 'full' && (
