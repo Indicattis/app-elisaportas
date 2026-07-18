@@ -81,6 +81,24 @@ interface TipoCustoVariavel {
   valor_maximo_mensal: number;
 }
 
+interface FolhaColaboradorDetalhe {
+  id: string;
+  nome: string;
+  setor: string;
+  em_folha: boolean;
+  salario: number;
+  aux_combustivel: number;
+  bonificacao: number;
+  hora_extra: number;
+  insalubridade_val: number;
+  fgts_val: number;
+  prev_13: number;
+  fgts_13: number;
+  ferias: number;
+  multa_fgts: number;
+  total: number;
+}
+
 // "Salário" ou "Folha" vai para folha salarial
 const isFolha = (nome: string) => /sal[áa]rio|folha/i.test(nome);
 
