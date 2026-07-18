@@ -647,6 +647,8 @@ function PrintReport({
                 <tr>
                   <th style={{ ...TH, width: 55 }}>Data</th>
                   <th style={TH}>Cliente</th>
+                  <th style={{ ...TH, width: 60 }}>Temp.</th>
+                  <th style={{ ...TH, width: 120 }}>Pagamento</th>
                   <th style={{ ...TH, textAlign: 'right', width: 110 }}>Valor Tabela</th>
                   <th style={{ ...TH, textAlign: 'right', width: 110 }}>Valor Venda</th>
                   <th style={{ ...TH, textAlign: 'right', width: 110 }}>Desc./Acrésc.</th>
@@ -666,6 +668,10 @@ function PrintReport({
                     <tr key={v.id} style={trZebra(i)}>
                       <td style={{ ...TD, fontVariantNumeric: 'tabular-nums' }}>{dataFmt}</td>
                       <td style={TD}>{v.cliente || '—'}</td>
+                      <td style={{ ...TD, color: v.temperatura === 'Fria' ? '#1d4ed8' : v.temperatura === 'Quente' ? '#b91c1c' : '#64748b', fontWeight: 600 }}>
+                        {v.temperatura}
+                      </td>
+                      <td style={TD}>{v.pagamento}</td>
                       <td style={tdRight}>{formatCurrency(v.valorTabela)}</td>
                       <td style={tdRight}>{formatCurrency(v.valorVenda)}</td>
                       <td style={{ ...tdRight, color: v.desconto > 0 ? '#b91c1c' : v.desconto < 0 ? '#047857' : undefined, fontWeight: 600 }}>
@@ -684,7 +690,7 @@ function PrintReport({
                   const tL = vendasListagem.reduce((s, v) => s + v.lucro, 0);
                   return (
                     <tr style={{ background: '#1d76cf', color: '#fff' }}>
-                      <td style={{ ...TD, fontWeight: 800, color: '#fff', borderBottom: 'none' }} colSpan={2}>TOTAL</td>
+                      <td style={{ ...TD, fontWeight: 800, color: '#fff', borderBottom: 'none' }} colSpan={4}>TOTAL</td>
                       <td style={{ ...tdRight, fontWeight: 800, color: '#fff', borderBottom: 'none' }}>{formatCurrency(tT)}</td>
                       <td style={{ ...tdRight, fontWeight: 800, color: '#fff', borderBottom: 'none' }}>{formatCurrency(tV)}</td>
                       <td style={{ ...tdRight, fontWeight: 800, color: '#fff', borderBottom: 'none' }}>{formatCurrency(tD)}</td>
