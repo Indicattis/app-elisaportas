@@ -655,6 +655,7 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
                   <div className="flex justify-between">
                     <span className="text-white/50">
                       Método 2 ({
+                        paymentData.pagamento_na_entrega ? 'À Vista na Entrega/Instalação' :
                         metodo2.tipo === 'boleto' ? `Boleto ${metodo2.parcelas_boleto}x` :
                         metodo2.tipo === 'cartao_credito' ? `Cartão ${metodo2.parcelas_cartao}x` :
                         'À Vista'
@@ -662,7 +663,7 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
                     </span>
                     <span className="text-white">
                       {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valorMetodo2)}
-                      {(() => {
+                      {!paymentData.pagamento_na_entrega && (() => {
                         const dataResumo = metodo2.tipo === 'boleto'
                           ? calcularPreviewParcelas({ ...metodo2, valor: valorMetodo2 })[0]?.data
                           : metodo2.data_pagamento;
