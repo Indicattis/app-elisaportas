@@ -639,6 +639,62 @@ export default function RegrasVendasDirecao() {
               </AccordionItem>
               
               <AccordionItem value="avista" className="border-white/10">
+              </AccordionItem>
+
+              <AccordionItem value="na_entrega" className="border-white/10">
+                <AccordionTrigger className="text-white hover:no-underline py-3">
+                  <div className="flex items-center gap-2">
+                    <Truck className="h-4 w-4 text-amber-400" />
+                    <span>Na Entrega</span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="text-white/70 pb-4">
+                  <div className="space-y-4 pl-6">
+                    <p className="text-sm">
+                      Quando o Método 1 for "Na Entrega", a venda é dividida automaticamente
+                      em duas formas: Método 1 = À Vista (entrada) e Método 2 = À Vista no
+                      ato da entrega/instalação.
+                    </p>
+                    <div className="p-3 rounded-lg bg-white/5 border border-white/10 space-y-2 max-w-xs">
+                      <Label className="text-xs text-white/70">Entrada mínima à vista (%)</Label>
+                      <div className="flex items-center gap-1">
+                        <Input
+                          type="number"
+                          min={0}
+                          max={100}
+                          step={5}
+                          value={(getRegra('entrega_entrada_percentual_min') as number) ?? 50}
+                          onChange={(e) => setRegra('entrega_entrada_percentual_min', Number(e.target.value) || 0)}
+                          className="h-9 bg-white/5 border-white/20 text-white text-right"
+                        />
+                        <span className="text-white/60 text-sm">%</span>
+                      </div>
+                    </div>
+                    <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30">
+                      <p className="text-xs text-amber-100/90 flex items-start gap-2">
+                        <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-amber-300" />
+                        <span>
+                          Boleto e "Na Entrega" não podem ser combinados na mesma venda.
+                        </span>
+                      </p>
+                    </div>
+                    <div className="flex justify-end">
+                      <Button
+                        onClick={salvarRegrasGerais}
+                        disabled={!hasDraftChanges || isUpdatingRegras}
+                        className="bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/30"
+                      >
+                        {isUpdatingRegras ? (
+                          <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Salvando...</>
+                        ) : (
+                          <><Save className="mr-2 h-4 w-4" />Salvar Regras "Na Entrega"</>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </AccordionContent>
+
+              <AccordionItem value="avista_dupe" className="border-white/10 hidden">
                 <AccordionTrigger className="text-white hover:no-underline py-3">
                   <div className="flex items-center gap-2">
                     <Banknote className="h-4 w-4 text-green-400" />
