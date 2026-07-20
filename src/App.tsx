@@ -316,6 +316,7 @@ import RequisicoesMinimalista from "./pages/administrativo/RequisicoesMinimalist
 import NovaRequisicaoCompra from "./pages/administrativo/NovaRequisicaoCompra";
 import ItensAdministrativo from "./pages/administrativo/ItensAdministrativo";
 import FornecedoresMinimalista from "./pages/administrativo/FornecedoresMinimalista";
+import TmpModalPreview from "./pages/_tmp_modal_preview";
 import FrotaMinimalista from "./pages/logistica/FrotaMinimalista";
 import FrotaNovoMinimalista from "./pages/logistica/FrotaNovoMinimalista";
 import FrotaEditMinimalista from "./pages/logistica/FrotaEditMinimalista";
