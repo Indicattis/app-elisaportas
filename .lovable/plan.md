@@ -1,23 +1,43 @@
 ## Objetivo
-Remover o checkbox manual "Usar 2 formas de pagamento" em `PagamentoSection.tsx`. O segundo método só deve aparecer automaticamente quando houver **boleto** (aplicando a regra existente 70/30 + intervalo 21d).
+Adicionar "Na Entrega" como opção nativa no seletor de tipo do Método 1 (ao lado de Boleto/À Vista/Cartão). Ao selecionar, aplica split automático M1 À Vista X% + M2 Na Entrega (100-X)%, análogo ao boleto, com percentual configurável.
 
-## Mudanças em `src/components/vendas/PagamentoSection.tsx`
-1. Remover o bloco JSX do checkbox `usar-dois-metodos` (linhas ~511–525) e a função `handleToggleDoisMetodos`.
-2. Derivar `usar_dois_metodos` automaticamente: sempre que `pagamentoTemBoleto(paymentData)` for `true`, forçar `usar_dois_metodos = true`; caso contrário, forçar `false` e limpar o Método 2.
-   - Fazer isso dentro do `useEffect` já existente que aplica `aplicarRegraBoleto` (linhas 226–253) e complementar com um efeito que, quando o boleto sair da seleção, reseta o método 2 e devolve o valor total ao método 1.
-3. Ajustar `handleMetodo1Change` para continuar recalculando o valor restante do M2 apenas quando a flag derivada estiver ativa (mesma lógica atual, mas sem depender de escolha manual).
-4. Manter o campo `usar_dois_metodos` na interface `PagamentoData` para não quebrar consumidores (`useVendas`, faturamento, etc.), apenas passando a ser controlado internamente.
+## Banco (migration)
+Adicionar em `regras_vendas`:
+- `entrega_entrada_percentual_min INTEGER NOT NULL DEFAULT 50`
 
-## Impacto no modo "Na Entrega"
-O botão "Na Entrega" hoje vive dentro do card do Método 2, que só aparece quando há boleto/split. Com a remoção do checkbox, a opção "Na Entrega" continuará acessível **apenas** quando o Método 1 for boleto (que é o único cenário que abre o M2). Para vendas sem boleto, "Na Entrega" deixa de ser oferecida — comportamento consistente com o pedido de limitar 2 métodos ao boleto.
+## `src/hooks/useRegrasVendas.ts`
+- Adicionar `entrega_entrada_percentual_min` ao tipo.
+- Expor em `limites.entrega = { entradaMinPct }` (fallback 50).
 
-## O que NÃO muda
-- Estrutura da tabela `vendas` e coluna `pagamento_na_entrega`.
-- Regra de boleto (70/30 + 21d) e autorização por senha do Diretor.
-- Cálculo de parcelas, resumo e validações de violação.
-- `useVendas.ts` — continua lendo `usar_dois_metodos` normalmente.
+## Novo utilitário `src/utils/entregaRegra.ts`
+Espelha `boletoRegra.ts`:
+- `pagamentoTemEntregaPrincipal(data)` — true quando M1.tipo === 'na_entrega'.
+- `aplicarRegraEntrega(data, valorTotal, cfg)` — força M1 À Vista (X%) + M2 Na Entrega ((100-X)%) com `pagamento_na_entrega = true`.
+
+## `MetodoPagamentoCard.tsx`
+- Adicionar `'na_entrega'` na lista de tipos (label "Na Entrega", ícone `Truck`).
+- Ocultar essa opção quando `hideEntregaOption` for true (usado no Método 2, que já tem o botão dedicado "Na Entrega" após boleto).
+- Quando `metodo.tipo === 'na_entrega'`, ocultar campos de data/parcelas/já-pago (mesmo tratamento do modoEntrega atual).
+- Manter o botão desabilitado quando `entregaDesabilitada` (já implementado).
+
+## `PagamentoSection.tsx`
+- Novo estado: exibir M1 com nova opção "Na Entrega".
+- `useEffect` de normalização passa a tratar 3 cenários mutuamente exclusivos:
+  1. **Boleto** em qualquer método → split 70/30 (regra existente).
+  2. **M1 = Na Entrega** → split M1 À Vista (entrega_entrada_percentual_min)% + M2 Na Entrega restante, seta `pagamento_na_entrega = true`.
+  3. Nenhum dos dois → método único (M2 zerado).
+- **Bloqueio de combinação**: se o usuário selecionar Boleto e tentar mudar M1 para "Na Entrega" (ou vice-versa), exibir toast "Substitua a forma atual usando 'Recomeçar' para trocar entre Boleto e Na Entrega" e ignorar a mudança. Implementado via wrapper em `handleMetodo1Change`.
+- Novo aviso azul (`Info`) quando regra de entrega ativa: "Regra da entrega: 50% de entrada à vista no Método 1 e 50% cobrado no ato da entrega."
+- Card do M2 quando M1=Na Entrega: `tipoTravado="na_entrega"`, `valorFixo`, sem botão "Na Entrega" duplicado (`hideEntregaOption`).
+- `regraEntregaAtiva = pagamentoTemEntregaPrincipal(paymentData) && !autorizadoRegras` para travar M1 como À Vista após a normalização inicial (assim como boleto trava M2).
+
+## Consumidores (`useVendas.ts` e faturamento)
+- Já lidam com `pagamento_na_entrega` na coluna do M2. Como o tipo `'na_entrega'` só aparece transitoriamente no M1 antes de ser normalizado para 'a_vista' + M2 na entrega, **nenhuma mudança de persistência** é necessária. O tipo canônico salvo continua sendo 'a_vista'/'na_entrega' (M2) — mantém compatibilidade com contas_receber, DRE e relatórios.
+
+## Regras de Vendas (UI)
+Adicionar campo "Entrada mínima para Na Entrega (%)" na tela de configuração de regras (`RegrasVendas.tsx` / equivalente), lado a lado com o campo do boleto.
 
 ## Verificação
-- Selecionar À Vista/Cartão no Método 1 → apenas 1 card visível, sem checkbox.
-- Selecionar Boleto no Método 1 → split automático em M1 À Vista 70% + M2 Boleto 30% (comportamento atual preservado).
-- Alternar de Boleto para À Vista no M1 → M2 é limpo e valor total volta para M1.
+1. Selecionar "Na Entrega" no M1 sem venda prévia → M1 vira À Vista 50% travado, M2 aparece como Na Entrega 50% travado.
+2. Alternar M1 de Boleto → Na Entrega sem "Recomeçar" → toast de bloqueio, estado inalterado.
+3. Salvar venda e conferir em `/direcao/vendas/todas` → método persistido como À Vista + Entrega (mesma estrutura atual).
