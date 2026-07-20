@@ -12,7 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ProdutoVenda } from '@/hooks/useVendas';
 import { buscarPrecosPorMedidas } from '@/utils/tabelaPrecosHelper';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Package, Ruler, Wallet, Paintbrush, Wrench, Sparkles, DoorOpen } from 'lucide-react';
 import { getUnidade } from '@/utils/unidadesMedida';
 
 interface ProdutoVendaFormProps {
