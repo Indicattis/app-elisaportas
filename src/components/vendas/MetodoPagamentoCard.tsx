@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
 import { getJanelaDataPagamento } from "@/utils/dataPagamentoRegra";
 
 export interface MetodoPagamento {
-  tipo: 'boleto' | 'a_vista' | 'cartao_credito' | '';
+  tipo: 'boleto' | 'a_vista' | 'cartao_credito' | 'na_entrega' | '';
   valor: number;
   data_pagamento: Date | undefined;
   empresa_receptora_id: string;
@@ -87,6 +87,11 @@ interface MetodoPagamentoCardProps {
    * Quando true, exibe a opção "Na Entrega" desabilitada (visível mas não clicável).
    */
   entregaDesabilitada?: boolean;
+  /**
+   * Quando true, exibe também a opção "Na Entrega" dentro do seletor de tipos
+   * (usado no Método 1 para acionar a regra de entrada + entrega).
+   */
+  incluirNaEntregaTipo?: boolean;
 }
 
 export function MetodoPagamentoCard({
@@ -110,12 +115,16 @@ export function MetodoPagamentoCard({
   onEntregaSelect,
   modoEntrega = false,
   entregaDesabilitada = false,
+  incluirNaEntregaTipo = false,
 }: MetodoPagamentoCardProps) {
-  const metodos = [
+  const metodos: Array<{ value: MetodoPagamento['tipo']; label: string; icon: typeof QrCode }> = [
     { value: 'boleto', label: 'Boleto', icon: QrCode },
     { value: 'a_vista', label: 'À Vista', icon: Banknote },
     { value: 'cartao_credito', label: 'Cartão', icon: CreditCard },
   ];
+  if (incluirNaEntregaTipo) {
+    metodos.push({ value: 'na_entrega', label: 'Na Entrega', icon: Truck });
+  }
 
   const inputClass = "bg-white/5 border-white/10 text-white placeholder:text-white/40";
   const labelClass = "text-xs font-medium text-white/70";
@@ -143,7 +152,10 @@ export function MetodoPagamentoCard({
       <h4 className="font-medium text-xs text-white/50">{titulo}</h4>
       
       {/* Seleção do tipo de pagamento */}
-      <div className={cn("grid gap-2", permitirEntrega ? "grid-cols-2 md:grid-cols-4" : "grid-cols-3")}>
+      <div className={cn(
+        "grid gap-2",
+        (permitirEntrega || incluirNaEntregaTipo) ? "grid-cols-2 md:grid-cols-4" : "grid-cols-3"
+      )}>
         {metodos.map((m) => {
           const Icon = m.icon;
           const travado = !!tipoTravado;

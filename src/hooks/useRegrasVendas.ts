@@ -42,6 +42,8 @@ export interface RegrasVendas {
   boleto_intervalo_padrao: number;
   boleto_parcelas_max: number;
 
+  entrega_entrada_percentual_min: number;
+
   pagamento_data_janela_dias: number;
 
   created_at: string;
@@ -133,6 +135,9 @@ export function useRegrasVendas() {
       intervalosFlex: regras?.boleto_intervalos_flex ?? [21, 36, 42],
       intervaloPadrao: regras?.boleto_intervalo_padrao ?? 21,
       parcelasMax: regras?.boleto_parcelas_max ?? 3,
+    },
+    entrega: {
+      entradaMinPct: regras?.entrega_entrada_percentual_min ?? 50,
     },
     pagamentoDataJanelaDias: regras?.pagamento_data_janela_dias ?? 5,
   };

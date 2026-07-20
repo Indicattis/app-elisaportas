@@ -8410,6 +8410,7 @@ export type Database = {
           cnpj_digitos: number
           cpf_digitos: number
           created_at: string
+          entrega_entrada_percentual_min: number
           id: string
           limite_adicional_responsavel: number
           limite_desconto_avista: number
@@ -8445,6 +8446,7 @@ export type Database = {
           cnpj_digitos?: number
           cpf_digitos?: number
           created_at?: string
+          entrega_entrada_percentual_min?: number
           id?: string
           limite_adicional_responsavel?: number
           limite_desconto_avista?: number
@@ -8480,6 +8482,7 @@ export type Database = {
           cnpj_digitos?: number
           cpf_digitos?: number
           created_at?: string
+          entrega_entrada_percentual_min?: number
           id?: string
           limite_adicional_responsavel?: number
           limite_desconto_avista?: number

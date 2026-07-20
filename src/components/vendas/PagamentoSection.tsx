@@ -17,9 +17,11 @@ import {
   pagamentoTemBoleto,
   getIntervalosBoletoPermitidos,
 } from "@/utils/boletoRegra";
+import { aplicarRegraEntrega } from "@/utils/entregaRegra";
 import { getJanelaDataPagamento } from "@/utils/dataPagamentoRegra";
 import { useRegrasVendas } from "@/hooks/useRegrasVendas";
 import { AutorizacaoDescontoModal } from "./AutorizacaoDescontoModal";
+import { toast } from "sonner";
 
 export interface PagamentoData {
   usar_dois_metodos: boolean;
@@ -61,8 +63,10 @@ interface PagamentoSectionProps {
 export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPresencial, onVendaPresencialChange, descontoInfo, hideEmpresaReceptora = false, onOverrideChange, onConfirmadoChange }: PagamentoSectionProps) {
   const { limites: regrasLimites } = useRegrasVendas();
   const boletoConfig = regrasLimites.boleto;
+  const entregaConfig = regrasLimites.entrega;
   const janelaDias = regrasLimites.pagamentoDataJanelaDias;
   const entradaPct = boletoConfig.entradaMinPct;
+  const entradaEntregaPct = entregaConfig.entradaMinPct;
   const restantePct = Math.max(0, 100 - entradaPct);
 
   // Autorização do Gerente para relaxar as regras de pagamento
@@ -226,8 +230,18 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
     if (autorizadoRegras) return; // regras liberadas pelo Gerente
     if (valorTotal <= 0) return;
     const temBoleto = pagamentoTemBoleto(paymentData);
+    const wantsEntrega =
+      paymentData.metodos[0]?.tipo === 'na_entrega' ||
+      (paymentData.pagamento_na_entrega && !temBoleto);
 
-    // Sem boleto: garante 1 único método com valor total e limpa Método 2.
+    // Modo "Na Entrega" no Método 1: split M1 À Vista (entrada) + M2 Na Entrega (restante).
+    if (wantsEntrega && !temBoleto) {
+      const normalizado = aplicarRegraEntrega(paymentData, valorTotal, entregaConfig);
+      if (normalizado !== paymentData) onChange(normalizado);
+      return;
+    }
+
+    // Sem boleto e sem entrega: garante 1 único método com valor total e limpa Método 2.
     if (!temBoleto) {
       if (paymentData.usar_dois_metodos || paymentData.metodos[1].tipo) {
         onChange({
@@ -271,15 +285,22 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
     paymentData.metodos[0].tipo,
     paymentData.metodos[1].tipo,
     paymentData.usar_dois_metodos,
+    paymentData.pagamento_na_entrega,
     valorTotal,
     boletoConfig.entradaMinPct,
     boletoConfig.valorLimiteFlex,
     boletoConfig.intervaloPadrao,
     boletoConfig.parcelasMax,
+    entregaConfig.entradaMinPct,
     autorizadoRegras,
   ]);
 
   const regraBoletoAtiva = pagamentoTemBoleto(paymentData) && !autorizadoRegras;
+  const regraEntregaAtiva =
+    !pagamentoTemBoleto(paymentData) &&
+    paymentData.pagamento_na_entrega &&
+    paymentData.usar_dois_metodos &&
+    !autorizadoRegras;
   // Sempre exibe a lista completa; o card mostra a permissão como dica sem bloquear.
   const intervalosBoletoPermitidos = getIntervalosBoletoPermitidos(valorTotal, boletoConfig);
 
@@ -302,6 +323,20 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
   };
 
   const handleMetodo1Change = (metodo: MetodoPagamento) => {
+    const incoming = metodo.tipo;
+    const currentTemBoleto = pagamentoTemBoleto(paymentData);
+    const currentEntrega =
+      !currentTemBoleto && paymentData.pagamento_na_entrega && paymentData.usar_dois_metodos;
+
+    if (incoming === 'na_entrega' && currentTemBoleto) {
+      toast.error("Clique em 'Recomeçar' antes de alternar entre Boleto e Na Entrega.");
+      return;
+    }
+    if (incoming === 'boleto' && currentEntrega) {
+      toast.error("Clique em 'Recomeçar' antes de alternar entre Na Entrega e Boleto.");
+      return;
+    }
+
     const newMetodos: [MetodoPagamento, MetodoPagamento] = [metodo, paymentData.metodos[1]];
     // Se estiver usando 2 métodos, recalcular o valor restante
     if (paymentData.usar_dois_metodos) {
@@ -500,6 +535,19 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
           </div>
         )}
 
+        {/* Aviso da regra de "Na Entrega" */}
+        {regraEntregaAtiva && (
+          <div className="flex items-start gap-2 p-3 rounded-lg border border-amber-500/30 bg-amber-500/10">
+            <Info className="h-4 w-4 text-amber-300 mt-0.5 shrink-0" />
+            <div className="text-xs text-amber-100/90">
+              <strong className="text-amber-200">Regra "Na Entrega":</strong> a venda foi
+              ajustada automaticamente para {entradaEntregaPct}% de entrada à vista
+              no Método 1 e {Math.max(0, 100 - entradaEntregaPct)}% cobrado no ato da
+              entrega/instalação (Método 2).
+            </div>
+          </div>
+        )}
+
         {autorizadoRegras && (
           <div className="flex items-start gap-2 p-3 rounded-lg border border-amber-500/30 bg-amber-500/10">
             <ShieldCheck className="h-4 w-4 text-amber-300 mt-0.5 shrink-0" />
@@ -526,15 +574,20 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
               titulo={
                 regraBoletoAtiva
                   ? `Método 1 (Entrada ≥ ${entradaPct}% — À Vista)`
+                  : regraEntregaAtiva
+                    ? `Método 1 (Entrada ${entradaEntregaPct}% — À Vista)`
                   : paymentData.usar_dois_metodos ? "Método 1 (Entrada)" : "Método de Pagamento"
               }
               valorFixo={!paymentData.usar_dois_metodos}
               valorLabel={
                 regraBoletoAtiva
                   ? `Entrada (mín ${entradaPct}%)`
+                  : regraEntregaAtiva
+                    ? `Entrada (${entradaEntregaPct}%)`
                   : paymentData.usar_dois_metodos ? "Valor da Entrada *" : "Valor Total"
               }
-              tipoTravado={regraBoletoAtiva ? "a_vista" : undefined}
+              tipoTravado={regraBoletoAtiva || regraEntregaAtiva ? "a_vista" : undefined}
+              incluirNaEntregaTipo
               intervalosBoletoPermitidos={intervalosBoletoPermitidos}
               parcelasBoletoMax={boletoConfig.parcelasMax}
               dataPagamentoJanelaDias={janelaDias}
@@ -569,16 +622,24 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
                 empresas={empresas}
                 isLoadingEmpresas={isLoadingEmpresas}
                 hideEmpresaReceptora={hideEmpresaReceptora}
-                titulo={regraBoletoAtiva ? `Método 2 (Boleto — restante)` : "Método 2 (Restante)"}
+                titulo={
+                  regraBoletoAtiva
+                    ? `Método 2 (Boleto — restante)`
+                    : regraEntregaAtiva
+                      ? `Método 2 (Na Entrega — ${Math.max(0, 100 - entradaEntregaPct)}%)`
+                      : "Método 2 (Restante)"
+                }
                 valorFixo={true}
                 valorLabel="Valor Restante"
-                tipoTravado={regraBoletoAtiva ? "boleto" : undefined}
+                tipoTravado={
+                  regraBoletoAtiva ? "boleto" : regraEntregaAtiva ? "a_vista" : undefined
+                }
                 intervalosBoletoPermitidos={intervalosBoletoPermitidos}
                 parcelasBoletoMax={boletoConfig.parcelasMax}
                 dataPagamentoJanelaDias={janelaDias}
               dataPagamentoLiberada={autorizadoRegras}
               dataForaJanela={!autorizadoRegras && isDataViolada(metodo2)}
-              permitirEntrega
+              permitirEntrega={!regraEntregaAtiva}
               onEntregaSelect={handleEntregaSelect}
               modoEntrega={paymentData.pagamento_na_entrega}
               entregaDesabilitada={regraBoletoAtiva}
