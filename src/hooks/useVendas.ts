@@ -978,8 +978,10 @@ async function gerarContasReceberPorMetodo(
   switch (metodo.tipo) {
     case 'boleto': {
       const valorParcela = metodo.valor / metodo.parcelas_boleto;
+      const baseBoleto = new Date();
+      baseBoleto.setHours(12, 0, 0, 0);
       for (let i = 0; i < metodo.parcelas_boleto; i++) {
-        const dataVencimento = addDays(dataBase, metodo.intervalo_boletos * i);
+        const dataVencimento = addDays(baseBoleto, metodo.intervalo_boletos * (i + 1));
         const dataVenc = dataVencimento.toISOString().split('T')[0];
         parcelas.push({
           venda_id: vendaId,

@@ -176,47 +176,49 @@ export function MetodoPagamentoCard({
               )}
             </div>
 
-            <div className="space-y-1">
-              <Label className={cn(labelClass, "flex items-center gap-2 flex-wrap")}>
-                <span>Data do Pagamento *</span>
-                {dataForaJanela && !dataPagamentoLiberada && <AuthWarning />}
-              </Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full h-9 justify-start text-left font-normal border-white/10 bg-white/5",
-                      !metodo.data_pagamento ? "text-white/40" : "text-white"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {metodo.data_pagamento 
-                      ? format(metodo.data_pagamento, "dd/MM/yyyy", { locale: ptBR }) 
-                      : "Selecione"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={metodo.data_pagamento}
-                    onSelect={(date) => onChange({ ...metodo, data_pagamento: date })}
-                    initialFocus
-                    locale={ptBR}
-                    className="p-3 pointer-events-auto"
-                  />
-                </PopoverContent>
-              </Popover>
-              {dataPagamentoLiberada ? (
-                <p className="text-[10px] text-amber-300/80">
-                  Janela de datas liberada por autorização do Diretor.
-                </p>
-              ) : (
-                <p className="text-[10px] text-white/40">
-                  Permitido entre {formatBR(dataMin)} e {formatBR(dataMax)} (±{dataPagamentoJanelaDias} dias).
-                </p>
-              )}
-            </div>
+            {metodo.tipo !== "boleto" && (
+              <div className="space-y-1">
+                <Label className={cn(labelClass, "flex items-center gap-2 flex-wrap")}>
+                  <span>Data do Pagamento *</span>
+                  {dataForaJanela && !dataPagamentoLiberada && <AuthWarning />}
+                </Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full h-9 justify-start text-left font-normal border-white/10 bg-white/5",
+                        !metodo.data_pagamento ? "text-white/40" : "text-white"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {metodo.data_pagamento
+                        ? format(metodo.data_pagamento, "dd/MM/yyyy", { locale: ptBR })
+                        : "Selecione"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={metodo.data_pagamento}
+                      onSelect={(date) => onChange({ ...metodo, data_pagamento: date })}
+                      initialFocus
+                      locale={ptBR}
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+                {dataPagamentoLiberada ? (
+                  <p className="text-[10px] text-amber-300/80">
+                    Janela de datas liberada por autorização do Diretor.
+                  </p>
+                ) : (
+                  <p className="text-[10px] text-white/40">
+                    Permitido entre {formatBR(dataMin)} e {formatBR(dataMax)} (±{dataPagamentoJanelaDias} dias).
+                  </p>
+                )}
+              </div>
+            )}
 
             {!hideEmpresaReceptora && (
             <div className="space-y-1">
