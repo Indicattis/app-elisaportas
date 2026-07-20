@@ -64,6 +64,8 @@ export interface VendaFormData {
   temperatura?: boolean;
   cliente_id?: string; // ID do cliente existente selecionado
   orcamento_id?: string; // ID do orçamento se for conversão
+  /** Se true (default), edições feitas na venda propagam para o cadastro do cliente */
+  atualizar_cadastro_cliente?: boolean;
 }
 
 export interface AutorizacaoDesconto {
