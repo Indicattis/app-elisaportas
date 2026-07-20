@@ -435,6 +435,22 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, dis
 
             {/* Editable location fields for selected client */}
             <div className="pt-2 border-t border-white/10">
+              {/* Toggle: atualizar cadastro do cliente com alterações desta venda */}
+              <div className="flex items-start justify-between gap-3 mb-3 p-3 rounded-md border border-white/10 bg-white/5">
+                <div className="space-y-0.5">
+                  <Label htmlFor="toggle-atualizar-cadastro" className="text-xs font-medium text-white cursor-pointer">
+                    Atualizar cadastro do cliente
+                  </Label>
+                  <p className="text-[11px] text-white/50 leading-tight">
+                    Se desativado, as edições valem apenas para esta venda e o cadastro central não será alterado.
+                  </p>
+                </div>
+                <Switch
+                  id="toggle-atualizar-cadastro"
+                  checked={atualizarCadastroCliente}
+                  onCheckedChange={(v) => onToggleAtualizarCadastro?.(v)}
+                />
+              </div>
               <Label className={cn(
                 "text-xs font-medium mb-2 block",
                 (!dados.estado || !dados.cidade || !dados.cep || !dados.bairro || !dados.endereco) 
