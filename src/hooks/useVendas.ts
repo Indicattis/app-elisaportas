@@ -258,6 +258,39 @@ export function useVendas() {
         autorizacaoDesconto = undefined;
       }
 
+      // 2.6. Validação autoritativa: pagamento "Na Entrega" SEMPRE exige senha do Diretor
+      const temPagamentoNaEntrega =
+        pagamentoData?.metodos?.[0]?.tipo === 'na_entrega' ||
+        pagamentoData?.pagamento_na_entrega === true;
+      if (temPagamentoNaEntrega) {
+        if (!autorizacaoRegraPagamento || !autorizacaoRegraPagamento.senha_usada) {
+          throw new Error(
+            'Pagamento "Na Entrega" exige autorização por senha do Diretor. Confirme a forma de pagamento e informe a senha.'
+          );
+        }
+        const { data: entregaSenhaOk, error: entregaSenhaErr } = await supabase.rpc(
+          'verificar_senha_vendas',
+          {
+            p_senha: autorizacaoRegraPagamento.senha_usada,
+            p_tipo: 'master',
+          }
+        );
+        if (entregaSenhaErr) {
+          console.error('Erro ao validar senha do Diretor (Na Entrega):', entregaSenhaErr);
+          throw new Error('Erro ao validar senha do Diretor. Tente novamente.');
+        }
+        if (entregaSenhaOk !== true) {
+          throw new Error('Senha do Diretor inválida. Pagamento "Na Entrega" não autorizado.');
+        }
+        // Marca a observação para deixar clara a razão da autorização.
+        autorizacaoRegraPagamento = {
+          ...autorizacaoRegraPagamento,
+          observacoes:
+            autorizacaoRegraPagamento.observacoes ||
+            'Pagamento "Na Entrega" liberado pelo Diretor.',
+        };
+      }
+
       // 3. Calcular totais dos produtos (sem crédito por produto - agora é a nível de venda)
       const totais = portas.reduce((acc, produto) => {
         const valorBase = (
