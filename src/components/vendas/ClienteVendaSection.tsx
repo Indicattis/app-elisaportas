@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Switch } from '@/components/ui/switch';
 import { Search, X, AlertTriangle, Check, User } from 'lucide-react';
 import { useSearchClientes, useCheckClienteDuplicado, Cliente } from '@/hooks/useClientes';
 import { useCanaisAquisicao } from '@/hooks/useCanaisAquisicao';
@@ -36,9 +37,12 @@ interface ClienteVendaSectionProps {
   onClienteSelecionado?: (cliente: Cliente | null) => void;
   disabled?: boolean;
   initialClienteId?: string;
+  /** Toggle: propagar alterações desta venda para o cadastro do cliente. Default: true. */
+  atualizarCadastroCliente?: boolean;
+  onToggleAtualizarCadastro?: (value: boolean) => void;
 }
 
-export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, disabled = false, initialClienteId }: ClienteVendaSectionProps) {
+export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, disabled = false, initialClienteId, atualizarCadastroCliente = true, onToggleAtualizarCadastro }: ClienteVendaSectionProps) {
   const [modo, setModo] = useState<'buscar' | 'cadastrar'>('buscar');
   const [searchTerm, setSearchTerm] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
