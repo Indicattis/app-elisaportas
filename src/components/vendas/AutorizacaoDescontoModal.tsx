@@ -169,14 +169,25 @@ export function AutorizacaoDescontoModal({
           </div>
           <DialogDescription>
             {descricao ?? (
-              <>
-                O desconto de <span className="font-bold text-foreground">{percentualDesconto.toFixed(1)}%</span> excede
-                o limite permitido de <span className="font-bold text-foreground">{limitePermitido.toFixed(0)}%</span> em{' '}
-                <span className="font-bold text-foreground">{(percentualDesconto - limitePermitido).toFixed(1)}%</span>.
-                {tipoAutorizacao === 'master'
-                  ? ` É necessária a senha do Diretor (desconto acima de ${limites.totalComResponsavel}%).`
-                  : ` É necessária a senha do Gerente (até ${limites.totalComResponsavel}%).`}
-              </>
+              <div className="space-y-2">
+                <p>
+                  O desconto atual é de{' '}
+                  <span className="font-bold text-foreground">{percentualDesconto.toFixed(1)}%</span>.
+                </p>
+                <p>
+                  O limite sem autorização é{' '}
+                  <span className="font-bold text-foreground">{limitePermitido.toFixed(0)}%</span>, portanto este
+                  desconto excede o limite em{' '}
+                  <span className="font-bold text-foreground">
+                    {(percentualDesconto - limitePermitido).toFixed(1)}%
+                  </span>.
+                </p>
+                <p className="font-medium">
+                  {tipoAutorizacao === 'master'
+                    ? `Para prosseguir, é necessária a senha do Diretor, que autoriza descontos acima de ${limites.totalComResponsavel}%.`
+                    : `Para prosseguir, é necessária a senha do Gerente, que autoriza descontos de até ${limites.totalComResponsavel}%.`}
+                </p>
+              </div>
             )}
           </DialogDescription>
         </DialogHeader>
