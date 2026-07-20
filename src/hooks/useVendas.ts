@@ -827,7 +827,7 @@ export function useVendas() {
       const valor_a_receber = valor_total_venda - valor_entrada;
 
       // 4. Criar venda como rascunho (sem validações obrigatórias)
-      const { endereco, numero, temperatura, cliente_id: _, ...vendaDataLimpo } = vendaData;
+      const { endereco, numero, temperatura, cliente_id: _, atualizar_cadastro_cliente: __, ...vendaDataLimpo } = vendaData;
       const metodoPrincipal = pagamentoData?.metodos?.[0]?.tipo || vendaData.forma_pagamento;
 
       const vendaPayload = {
