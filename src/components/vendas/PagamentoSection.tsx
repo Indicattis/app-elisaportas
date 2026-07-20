@@ -265,19 +265,19 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
       return;
     }
 
-    // Se o usuário escolheu "Na Entrega" no Método 2, não força a regra do boleto —
-    // preserva a intenção de cobrar o restante à vista no momento da entrega.
-    if (paymentData.pagamento_na_entrega) {
-      if (!paymentData.usar_dois_metodos) {
-        onChange({ ...paymentData, usar_dois_metodos: true });
-      }
-      return;
-    }
+    // Com boleto em qualquer método, força split M1 À Vista (entrada mínima) + M2 Boleto
+    // e limpa qualquer flag residual de "Na Entrega".
     const [m1, m2] = paymentData.metodos;
     const estruturaOk =
-      paymentData.usar_dois_metodos && m1?.tipo === 'a_vista' && m2?.tipo === 'boleto';
+      paymentData.usar_dois_metodos &&
+      m1?.tipo === 'a_vista' &&
+      m2?.tipo === 'boleto' &&
+      !paymentData.pagamento_na_entrega;
     if (estruturaOk) return;
-    const normalizado = aplicarRegraBoleto(paymentData, valorTotal, boletoConfig);
+    const base = paymentData.pagamento_na_entrega
+      ? { ...paymentData, pagamento_na_entrega: false }
+      : paymentData;
+    const normalizado = aplicarRegraBoleto(base, valorTotal, boletoConfig);
     if (normalizado !== paymentData) {
       onChange(normalizado);
     }
