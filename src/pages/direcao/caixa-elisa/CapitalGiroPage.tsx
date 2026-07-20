@@ -288,7 +288,11 @@ export default function CapitalGiroPage() {
                     <span className={`font-semibold truncate ${o.pago ? 'text-white/40 line-through' : 'text-white'}`}>
                       {o.nome}
                     </span>
-                    <span className="text-xs text-white/40">
+                    <span
+                      className={`text-xs ${
+                        isVencida(o.data, o.pago) ? 'text-rose-400 font-medium' : 'text-white/40'
+                      }`}
+                    >
                       {format(new Date(o.data + 'T12:00:00'), 'dd/MM/yyyy')}
                     </span>
                   </div>
