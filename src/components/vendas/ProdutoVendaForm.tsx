@@ -12,7 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ProdutoVenda } from '@/hooks/useVendas';
 import { buscarPrecosPorMedidas } from '@/utils/tabelaPrecosHelper';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Package, Ruler, Wallet, Paintbrush, Wrench, Sparkles, DoorOpen } from 'lucide-react';
 import { getUnidade } from '@/utils/unidadesMedida';
 
 interface ProdutoVendaFormProps {
@@ -341,22 +341,52 @@ export function ProdutoVendaForm({
     }
   };
 
+  const tipoLabel = (() => {
+    switch (formData.tipo_produto) {
+      case 'porta_enrolar': return 'Porta de Enrolar';
+      case 'porta_social': return 'Porta Social';
+      case 'pintura_epoxi': return 'Pintura Epóxi';
+      case 'acessorio': return 'Acessório';
+      case 'adicional': return 'Item Avulso';
+      case 'manutencao': return 'Serviço';
+      default: return 'Produto';
+    }
+  })();
+  const TipoIcon = formData.tipo_produto === 'pintura_epoxi' ? Paintbrush
+    : formData.tipo_produto === 'manutencao' ? Wrench
+    : (formData.tipo_produto === 'porta_enrolar' || formData.tipo_produto === 'porta_social') ? DoorOpen
+    : Package;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{produtoEditando ? 'Editar Produto' : 'Adicionar Produto'}</DialogTitle>
+      <DialogContent className="max-w-2xl max-h-[92vh] p-0 gap-0 overflow-hidden bg-background/95 backdrop-blur-xl border-border/60">
+        <DialogHeader className="px-6 pt-6 pb-5 border-b border-border/50 bg-gradient-to-br from-primary/5 via-background to-background">
+          <div className="flex items-start gap-4">
+            <div className="h-11 w-11 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0">
+              <TipoIcon className="h-5 w-5" />
+            </div>
+            <div className="min-w-0">
+              <DialogTitle className="text-xl font-semibold tracking-tight">
+                {produtoEditando ? 'Editar Produto' : 'Adicionar Produto'}
+              </DialogTitle>
+              <p className="text-sm text-muted-foreground mt-0.5">{tipoLabel}</p>
+            </div>
+          </div>
         </DialogHeader>
-        
-        <form onSubmit={handleSubmit} className="space-y-6">
+
+        <form onSubmit={handleSubmit} className="flex flex-col max-h-[calc(92vh-92px)]">
+          <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
           {/* Campos específicos por tipo */}
           {(formData.tipo_produto === 'porta_enrolar' || formData.tipo_produto === 'porta_social') && (
             <>
               {/* Seção: Medidas */}
-              <div className="space-y-4">
-                <div className="space-y-1">
-                  <h3 className="text-lg font-semibold">Medidas do Produto</h3>
-                  <p className="text-sm text-muted-foreground">Informe as dimensões da porta</p>
+              <div className="rounded-xl border border-border/60 bg-card/50 p-5 space-y-4">
+                <div className="flex items-center gap-2.5">
+                  <Ruler className="h-4 w-4 text-primary" />
+                  <div>
+                    <h3 className="text-sm font-semibold uppercase tracking-wide">Medidas</h3>
+                    <p className="text-xs text-muted-foreground">Informe as dimensões da porta</p>
+                  </div>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-6">
@@ -414,41 +444,49 @@ export function ProdutoVendaForm({
                 )}
 
                 {itemTabelaEncontrado && (
-                  <div className="bg-primary/5 border border-primary/20 rounded-md p-3">
+                  <div className="flex items-center gap-2 bg-primary/5 border border-primary/20 rounded-md p-3">
+                    <Sparkles className="h-4 w-4 text-primary shrink-0" />
                     <p className="text-sm font-medium text-primary">{itemTabelaEncontrado}</p>
                   </div>
                 )}
               </div>
 
-              <div className="border-t pt-6">
-                <div className="space-y-1 mb-4">
-                  <h3 className="text-lg font-semibold">Valores</h3>
-                  <p className="text-sm text-muted-foreground">Valores obtidos da tabela de preços</p>
+              <div className="rounded-xl border border-border/60 bg-card/50 p-5 space-y-4">
+                <div className="flex items-center gap-2.5">
+                  <Wallet className="h-4 w-4 text-primary" />
+                  <div>
+                    <h3 className="text-sm font-semibold uppercase tracking-wide">Valores</h3>
+                    <p className="text-xs text-muted-foreground">Valores obtidos da tabela de preços</p>
+                  </div>
                 </div>
 
-                <div className="space-y-4 bg-muted/30 p-4 rounded-lg">
-                  <div className="flex justify-between items-center">
-                    <Label className="text-base">Valor do Produto</Label>
-                    <span className="text-lg font-semibold">
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center rounded-lg bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 px-4 py-3">
+                    <Label className="text-sm text-muted-foreground">Valor do Produto</Label>
+                    <span className="text-xl font-bold tabular-nums text-primary">
                       R$ {formData.valor_produto.toFixed(2)}
                     </span>
                   </div>
 
-                  <div className="flex items-center space-x-2 py-2">
+                  <label
+                    htmlFor="incluir_instalacao"
+                    className={`flex items-center gap-3 rounded-lg border px-4 py-3 cursor-pointer transition-colors ${incluirInstalacao ? 'border-primary/40 bg-primary/5' : 'border-border/60 hover:bg-muted/40'}`}
+                  >
                     <Checkbox
                       id="incluir_instalacao"
                       checked={incluirInstalacao}
                       onCheckedChange={(checked) => setIncluirInstalacao(checked as boolean)}
                     />
-                    <Label htmlFor="incluir_instalacao" className="cursor-pointer text-base">
-                      Incluir Instalação
-                    </Label>
-                  </div>
+                    <div className="flex-1">
+                      <span className="text-sm font-medium">Incluir Instalação</span>
+                      <p className="text-xs text-muted-foreground">Adiciona a instalação como item separado</p>
+                    </div>
+                  </label>
 
                   {incluirInstalacao && (
-                    <div className="flex justify-between items-center border-t pt-3">
-                      <Label className="text-base">Valor da Instalação</Label>
-                      <span className="text-lg font-semibold text-primary">
+                    <div className="flex justify-between items-center rounded-lg bg-muted/40 px-4 py-3">
+                      <Label className="text-sm text-muted-foreground">Valor da Instalação</Label>
+                      <span className="text-lg font-semibold tabular-nums">
                         R$ {formData.valor_instalacao.toFixed(2)}
                       </span>
                     </div>
@@ -462,10 +500,13 @@ export function ProdutoVendaForm({
           {formData.tipo_produto === 'pintura_epoxi' && (
             <>
               {/* Seção: Tipo de Porta */}
-              <div className="space-y-4">
-                <div className="space-y-1">
-                  <h3 className="text-lg font-semibold">Tipo de Porta</h3>
-                  <p className="text-sm text-muted-foreground">Selecione o tipo de porta que será pintada</p>
+              <div className="rounded-xl border border-border/60 bg-card/50 p-5 space-y-4">
+                <div className="flex items-center gap-2.5">
+                  <DoorOpen className="h-4 w-4 text-primary" />
+                  <div>
+                    <h3 className="text-sm font-semibold uppercase tracking-wide">Tipo de Porta</h3>
+                    <p className="text-xs text-muted-foreground">Selecione o tipo que será pintado</p>
+                  </div>
                 </div>
                 
                 <RadioGroup
@@ -502,10 +543,13 @@ export function ProdutoVendaForm({
               </div>
 
               {/* Seção: Medidas */}
-              <div className="space-y-4">
-                <div className="space-y-1">
-                  <h3 className="text-lg font-semibold">Medidas da Pintura</h3>
-                  <p className="text-sm text-muted-foreground">Informe as dimensões da área a ser pintada</p>
+              <div className="rounded-xl border border-border/60 bg-card/50 p-5 space-y-4">
+                <div className="flex items-center gap-2.5">
+                  <Ruler className="h-4 w-4 text-primary" />
+                  <div>
+                    <h3 className="text-sm font-semibold uppercase tracking-wide">Medidas</h3>
+                    <p className="text-xs text-muted-foreground">Área a ser pintada</p>
+                  </div>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-6">
@@ -557,38 +601,40 @@ export function ProdutoVendaForm({
                 )}
 
                 {itemTabelaEncontrado && (
-                  <div className="bg-primary/5 border border-primary/20 rounded-md p-3">
+                  <div className="flex items-center gap-2 bg-primary/5 border border-primary/20 rounded-md p-3">
+                    <Sparkles className="h-4 w-4 text-primary shrink-0" />
                     <p className="text-sm font-medium text-primary">{itemTabelaEncontrado}</p>
                   </div>
                 )}
               </div>
 
-              <div className="border-t pt-6">
-                <div className="space-y-1 mb-4">
-                  <h3 className="text-lg font-semibold">Valores</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {tipoPortaPintura === 'porta_social' 
-                      ? 'Valor fixo para porta social' 
-                      : 'Valores obtidos da tabela de preços'}
-                  </p>
+              <div className="rounded-xl border border-border/60 bg-card/50 p-5 space-y-4">
+                <div className="flex items-center gap-2.5">
+                  <Wallet className="h-4 w-4 text-primary" />
+                  <div>
+                    <h3 className="text-sm font-semibold uppercase tracking-wide">Valores</h3>
+                    <p className="text-xs text-muted-foreground">
+                      {tipoPortaPintura === 'porta_social' 
+                        ? 'Valor fixo para porta social' 
+                        : 'Valores obtidos da tabela de preços'}
+                    </p>
+                  </div>
                 </div>
 
-                <div className="space-y-4 bg-muted/30 p-4 rounded-lg">
-                  <div className="flex justify-between items-center">
-                    <Label className="text-base">Valor da Pintura</Label>
-                    <span className="text-lg font-semibold">
-                      R$ {formData.valor_pintura.toFixed(2)}
-                    </span>
-                  </div>
+                <div className="flex justify-between items-center rounded-lg bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 px-4 py-3">
+                  <Label className="text-sm text-muted-foreground">Valor da Pintura</Label>
+                  <span className="text-xl font-bold tabular-nums text-primary">
+                    R$ {formData.valor_pintura.toFixed(2)}
+                  </span>
+                </div>
                   {tipoPortaPintura === 'porta_social' && formData.valor_pintura > 0 && (
                     <p className="text-xs text-muted-foreground">
                       Valor fixo não alterável para pintura de porta social
                     </p>
                   )}
-                </div>
               </div>
 
-              <div className="border-t pt-6">
+              <div className="rounded-xl border border-border/60 bg-card/50 p-5">
                 <div className="space-y-2">
                   <Label htmlFor="cor" className="text-base">Cor da Pintura *</Label>
                   <Select
@@ -756,8 +802,13 @@ export function ProdutoVendaForm({
 
 
 
-          <div className="border-t pt-6">
-            <Button type="submit" className="w-full h-12 text-base">
+          </div>
+
+          <div className="px-6 py-4 border-t border-border/50 bg-muted/20 backdrop-blur flex items-center gap-3">
+            <Button type="button" variant="outline" className="flex-1 h-11" onClick={() => onOpenChange(false)}>
+              Cancelar
+            </Button>
+            <Button type="submit" className="flex-1 h-11 text-base shadow-lg shadow-primary/20">
               {produtoEditando ? 'Salvar Alterações' : 'Adicionar Produto'}
             </Button>
           </div>
