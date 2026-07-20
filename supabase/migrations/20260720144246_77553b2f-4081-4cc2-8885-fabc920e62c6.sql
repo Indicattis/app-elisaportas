@@ -1,0 +1,1 @@
+ALTER TABLE public.regras_vendas ADD COLUMN IF NOT EXISTS entrega_entrada_percentual_min INTEGER NOT NULL DEFAULT 50;
