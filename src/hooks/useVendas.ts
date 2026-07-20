@@ -427,7 +427,7 @@ export function useVendas() {
       }
 
       // 5. Criar venda com valores calculados
-      const { endereco, numero, temperatura, cliente_id: _, ...vendaDataLimpo } = vendaData;
+      const { endereco, numero, temperatura, cliente_id: _, atualizar_cadastro_cliente: __, ...vendaDataLimpo } = vendaData;
       
       // Extrair o método de pagamento principal (primeiro método válido)
       const metodoPrincipal = pagamentoData?.metodos?.[0]?.tipo || vendaData.forma_pagamento;
