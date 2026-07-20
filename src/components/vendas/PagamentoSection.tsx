@@ -574,7 +574,9 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
               <strong className="text-amber-200">Regra "Na Entrega":</strong> a venda foi
               ajustada automaticamente para {entradaEntregaPct}% de entrada à vista
               no Método 1 e {Math.max(0, 100 - entradaEntregaPct)}% cobrado no ato da
-              entrega/instalação (Método 2).
+              entrega/instalação (Método 2). <strong className="text-amber-200">Requer
+              autorização por senha do Diretor</strong> ao confirmar a forma de
+              pagamento.
             </div>
           </div>
         )}
