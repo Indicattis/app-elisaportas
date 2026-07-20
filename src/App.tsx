@@ -316,7 +316,6 @@ import RequisicoesMinimalista from "./pages/administrativo/RequisicoesMinimalist
 import NovaRequisicaoCompra from "./pages/administrativo/NovaRequisicaoCompra";
 import ItensAdministrativo from "./pages/administrativo/ItensAdministrativo";
 import FornecedoresMinimalista from "./pages/administrativo/FornecedoresMinimalista";
-import TmpModalPreview from "./pages/_tmp_modal_preview";
 import FrotaMinimalista from "./pages/logistica/FrotaMinimalista";
 import FrotaNovoMinimalista from "./pages/logistica/FrotaNovoMinimalista";
 import FrotaEditMinimalista from "./pages/logistica/FrotaEditMinimalista";
@@ -467,7 +466,6 @@ const App = () => (
                 <Route path="/home/pedidos-producao" element={<ProtectedRoute><GestaoFabricaDirecao /></ProtectedRoute>} />
                 <Route path="/home/calendario-expedicao" element={<ProtectedRoute><CalendarioExpedicaoReadOnly /></ProtectedRoute>} />
                 <Route path="/auth" element={<Auth />} />
-                <Route path="/__modal_preview" element={<TmpModalPreview />} />
                 <Route path="/forbidden" element={<Forbidden />} />
 
                 {/* Hub de Marketing Minimalista */}
