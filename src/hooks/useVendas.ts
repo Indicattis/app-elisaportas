@@ -336,7 +336,9 @@ export function useVendas() {
         // Cliente existente selecionado
         clienteId = vendaData.cliente_id;
         // Atualiza dados de endereço no cadastro do cliente (persiste alterações feitas na venda)
-        try {
+        // Respeita toggle: se `atualizar_cadastro_cliente` for false, mantém cadastro central intacto.
+        const deveAtualizarCliente = vendaData.atualizar_cadastro_cliente !== false;
+        if (deveAtualizarCliente) try {
           await supabase
             .from('clientes')
             .update({
