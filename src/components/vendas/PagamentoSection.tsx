@@ -315,16 +315,19 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
 
   // Calcular preview de parcelas para boleto e cartão
   const calcularPreviewParcelas = (metodo: MetodoPagamento) => {
-    if (!metodo.data_pagamento || metodo.valor <= 0) return [];
-    
+    if (metodo.valor <= 0) return [];
+    if (metodo.tipo !== 'boleto' && !metodo.data_pagamento) return [];
+
     const parcelas: { numero: number; data: Date; valor: number }[] = [];
-    
+
     if (metodo.tipo === 'boleto') {
+      const base = new Date();
+      base.setHours(12, 0, 0, 0);
       const valorParcela = metodo.valor / metodo.parcelas_boleto;
       for (let i = 0; i < metodo.parcelas_boleto; i++) {
         parcelas.push({
           numero: i + 1,
-          data: addDays(metodo.data_pagamento, metodo.intervalo_boletos * i),
+          data: addDays(base, metodo.intervalo_boletos * (i + 1)),
           valor: valorParcela
         });
       }
@@ -333,7 +336,7 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
       for (let i = 0; i < metodo.parcelas_cartao; i++) {
         parcelas.push({
           numero: i + 1,
-          data: addDays(metodo.data_pagamento, 30 * i),
+          data: addDays(metodo.data_pagamento!, 30 * i),
           valor: valorParcela
         });
       }
@@ -534,7 +537,7 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
               dataForaJanela={!autorizadoRegras && isDataViolada(metodo1)}
             />
 
-            {(metodo1.tipo === 'boleto' || metodo1.tipo === 'cartao_credito') && metodo1.data_pagamento && valorMetodo1 > 0 && (
+            {((metodo1.tipo === 'boleto' && valorMetodo1 > 0) || (metodo1.tipo === 'cartao_credito' && metodo1.data_pagamento && valorMetodo1 > 0)) && (
               <div className="border rounded-lg p-3 border-white/10 bg-white/5">
                 <p className="text-xs font-medium mb-2 text-white/70">
                   Parcelas {metodo1.tipo === 'boleto' ? 'do Boleto' : 'do Cartão'} (Método 1):
@@ -571,7 +574,7 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
               dataForaJanela={!autorizadoRegras && isDataViolada(metodo2)}
               />
 
-              {(metodo2.tipo === 'boleto' || metodo2.tipo === 'cartao_credito') && metodo2.data_pagamento && valorMetodo2 > 0 && (
+              {((metodo2.tipo === 'boleto' && valorMetodo2 > 0) || (metodo2.tipo === 'cartao_credito' && metodo2.data_pagamento && valorMetodo2 > 0)) && (
                 <div className="border rounded-lg p-3 border-white/10 bg-white/5">
                   <p className="text-xs font-medium mb-2 text-white/70">
                     Parcelas {metodo2.tipo === 'boleto' ? 'do Boleto' : 'do Cartão'} (Método 2):
