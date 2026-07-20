@@ -1,30 +1,23 @@
-
 ## Objetivo
+Remover o checkbox manual "Usar 2 formas de pagamento" em `PagamentoSection.tsx`. O segundo método só deve aparecer automaticamente quando houver **boleto** (aplicando a regra existente 70/30 + intervalo 21d).
 
-Remover o checkbox independente "Pagamento será feito na entrega/instalação" e transformá-lo em uma nova opção do seletor de tipo do **Método 2**. Ao selecionar essa opção, o Método 2 deve ser automaticamente configurado como **À Vista** cobrindo 100% do valor restante, com a flag `pagamento_na_entrega = true`.
+## Mudanças em `src/components/vendas/PagamentoSection.tsx`
+1. Remover o bloco JSX do checkbox `usar-dois-metodos` (linhas ~511–525) e a função `handleToggleDoisMetodos`.
+2. Derivar `usar_dois_metodos` automaticamente: sempre que `pagamentoTemBoleto(paymentData)` for `true`, forçar `usar_dois_metodos = true`; caso contrário, forçar `false` e limpar o Método 2.
+   - Fazer isso dentro do `useEffect` já existente que aplica `aplicarRegraBoleto` (linhas 226–253) e complementar com um efeito que, quando o boleto sair da seleção, reseta o método 2 e devolve o valor total ao método 1.
+3. Ajustar `handleMetodo1Change` para continuar recalculando o valor restante do M2 apenas quando a flag derivada estiver ativa (mesma lógica atual, mas sem depender de escolha manual).
+4. Manter o campo `usar_dois_metodos` na interface `PagamentoData` para não quebrar consumidores (`useVendas`, faturamento, etc.), apenas passando a ser controlado internamente.
 
-## Mudanças
+## Impacto no modo "Na Entrega"
+O botão "Na Entrega" hoje vive dentro do card do Método 2, que só aparece quando há boleto/split. Com a remoção do checkbox, a opção "Na Entrega" continuará acessível **apenas** quando o Método 1 for boleto (que é o único cenário que abre o M2). Para vendas sem boleto, "Na Entrega" deixa de ser oferecida — comportamento consistente com o pedido de limitar 2 métodos ao boleto.
 
-### 1. `src/components/vendas/MetodoPagamentoCard.tsx`
-- Adicionar nova opção no `Select` de tipo: **"Pagamento na Entrega/Instalação"** (valor interno: `entrega`).
-- Essa opção só aparece quando uma nova prop `permitirEntrega?: boolean` for `true` (usada apenas no Método 2).
-- Quando selecionada, emitir via `onChange` o método com `tipo: 'a_vista'`, `data_pagamento: undefined`, `parcelas_*` default, e uma flag interna (via callback separado ou estendendo `MetodoPagamento` com `pagamento_na_entrega?: boolean`).
-- Enquanto essa flag estiver ativa, ocultar campos de data de pagamento e empresa receptora (não há cobrança antecipada) e exibir bloco informativo explicando que o valor será cobrado na entrega/instalação.
+## O que NÃO muda
+- Estrutura da tabela `vendas` e coluna `pagamento_na_entrega`.
+- Regra de boleto (70/30 + 21d) e autorização por senha do Diretor.
+- Cálculo de parcelas, resumo e validações de violação.
+- `useVendas.ts` — continua lendo `usar_dois_metodos` normalmente.
 
-### 2. `src/components/vendas/PagamentoSection.tsx`
-- Remover o bloco do checkbox `pagamento-na-entrega` (linhas 597–619).
-- Ao renderizar o `MetodoPagamentoCard` do Método 2, passar `permitirEntrega`.
-- No `handleMetodo2Change`, detectar quando o tipo mudou para `entrega`:
-  - Setar `paymentData.pagamento_na_entrega = true`
-  - Forçar Método 2: `tipo='a_vista'`, `valor = valorTotal - valorMetodo1` (já é auto pelo `valorFixo`).
-  - Ao sair dessa opção (trocar para outro tipo), setar `pagamento_na_entrega = false`.
-- No **Resumo do Pagamento**, quando `pagamento_na_entrega` estiver ativo no Método 2, exibir rótulo "À Vista (na entrega/instalação)" em vez da data.
-- Ajustar validações existentes que dependem do checkbox para continuarem funcionando via `paymentData.pagamento_na_entrega`.
-
-### 3. Interação com regra do boleto e comprovantes
-- Se Método 1 for boleto (regra 70/30/21d ativa), a opção "Entrega" fica indisponível no Método 2 (mantém o boleto travado).
-- Comprovante continua opcional; nenhum ajuste extra.
-
-## Observações
-- Nenhuma alteração no banco ou em `useVendas.ts` — a flag `paymentData.pagamento_na_entrega` já é persistida hoje.
-- Comportamento equivalente ao anterior, apenas reposicionado na UI para melhor descoberta.
+## Verificação
+- Selecionar À Vista/Cartão no Método 1 → apenas 1 card visível, sem checkbox.
+- Selecionar Boleto no Método 1 → split automático em M1 À Vista 70% + M2 Boleto 30% (comportamento atual preservado).
+- Alternar de Boleto para À Vista no M1 → M2 é limpo e valor total volta para M1.

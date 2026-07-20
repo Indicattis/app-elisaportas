@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format, addDays } from "date-fns";
@@ -225,13 +224,41 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
   // sempre que houver boleto em qualquer método.
   useEffect(() => {
     if (autorizadoRegras) return; // regras liberadas pelo Gerente
-    // Split estrutural M1 À Vista + M2 Boleto quando houver boleto em qualquer método.
-    // Só normaliza quando a estrutura ainda não está no formato esperado — evita
-    // sobrescrever valores/intervalos/datas que o usuário editou manualmente.
-    if (!pagamentoTemBoleto(paymentData) || valorTotal <= 0) return;
+    if (valorTotal <= 0) return;
+    const temBoleto = pagamentoTemBoleto(paymentData);
+
+    // Sem boleto: garante 1 único método com valor total e limpa Método 2.
+    if (!temBoleto) {
+      if (paymentData.usar_dois_metodos || paymentData.metodos[1].tipo) {
+        onChange({
+          ...paymentData,
+          usar_dois_metodos: false,
+          metodos: [
+            { ...paymentData.metodos[0], valor: valorTotal },
+            createEmptyMetodo(),
+          ],
+          pagamento_na_entrega: false,
+        });
+      } else if (paymentData.metodos[0].tipo && paymentData.metodos[0].valor !== valorTotal) {
+        onChange({
+          ...paymentData,
+          metodos: [
+            { ...paymentData.metodos[0], valor: valorTotal },
+            paymentData.metodos[1],
+          ],
+        });
+      }
+      return;
+    }
+
     // Se o usuário escolheu "Na Entrega" no Método 2, não força a regra do boleto —
     // preserva a intenção de cobrar o restante à vista no momento da entrega.
-    if (paymentData.pagamento_na_entrega) return;
+    if (paymentData.pagamento_na_entrega) {
+      if (!paymentData.usar_dois_metodos) {
+        onChange({ ...paymentData, usar_dois_metodos: true });
+      }
+      return;
+    }
     const [m1, m2] = paymentData.metodos;
     const estruturaOk =
       paymentData.usar_dois_metodos && m1?.tipo === 'a_vista' && m2?.tipo === 'boleto';
@@ -306,30 +333,6 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
       metodos: [paymentData.metodos[0], metodo2Entrega],
       pagamento_na_entrega: true,
     });
-  };
-
-  const handleToggleDoisMetodos = (checked: boolean) => {
-    if (checked) {
-      // Ativando 2 métodos - zerar valores para usuário definir
-      onChange({
-        usar_dois_metodos: true,
-        metodos: [
-          { ...paymentData.metodos[0], valor: 0 },
-          createEmptyMetodo()
-        ],
-        pagamento_na_entrega: paymentData.pagamento_na_entrega
-      });
-    } else {
-      // Desativando 2 métodos - método 1 recebe valor total
-      onChange({
-        usar_dois_metodos: false,
-        metodos: [
-          { ...paymentData.metodos[0], valor: valorTotal },
-          createEmptyMetodo()
-        ],
-        pagamento_na_entrega: false,
-      });
-    }
   };
 
   // Calcular preview de parcelas para boleto e cartão
@@ -507,22 +510,6 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
             </div>
           </div>
         )}
-
-        {/* Toggle para 2 métodos */}
-        <div className={cn(
-          "flex items-center space-x-2 p-2.5 border rounded-md border-white/10 bg-white/5",
-          regraBoletoAtiva && "opacity-60"
-        )}>
-          <Checkbox
-            id="usar-dois-metodos"
-            checked={paymentData.usar_dois_metodos}
-            onCheckedChange={handleToggleDoisMetodos}
-            disabled={regraBoletoAtiva}
-          />
-          <Label htmlFor="usar-dois-metodos" className="cursor-pointer text-xs text-white/70">
-            Usar 2 formas de pagamento (ex: entrada + restante)
-          </Label>
-        </div>
 
         {/* Métodos de Pagamento */}
         <div className={cn(
