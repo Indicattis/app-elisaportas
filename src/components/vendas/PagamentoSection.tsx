@@ -588,6 +588,9 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
                 dataPagamentoJanelaDias={janelaDias}
               dataPagamentoLiberada={autorizadoRegras}
               dataForaJanela={!autorizadoRegras && isDataViolada(metodo2)}
+              permitirEntrega={!regraBoletoAtiva}
+              onEntregaSelect={handleEntregaSelect}
+              modoEntrega={paymentData.pagamento_na_entrega}
               />
 
               {((metodo2.tipo === 'boleto' && valorMetodo2 > 0) || (metodo2.tipo === 'cartao_credito' && metodo2.data_pagamento && valorMetodo2 > 0)) && (
@@ -609,31 +612,6 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
             </div>
           )}
         </div>
-
-        {/* Checkbox Pagamento na Entrega */}
-        <div 
-          className={`flex items-start space-x-3 p-3 border rounded-lg transition-all ${
-            paymentData.pagamento_na_entrega 
-              ? 'border-amber-500/50 bg-amber-500/10' 
-              : 'border-white/10 bg-white/5'
-          }`}
-        >
-          <Checkbox
-            id="pagamento-na-entrega"
-            checked={paymentData.pagamento_na_entrega}
-            onCheckedChange={(checked) => onChange({ ...paymentData, pagamento_na_entrega: !!checked })}
-            className="mt-0.5"
-          />
-          <div className="flex-1">
-            <Label htmlFor="pagamento-na-entrega" className="cursor-pointer text-sm font-medium text-white">
-              Pagamento será feito na entrega/instalação
-            </Label>
-            <p className="text-xs text-white/50 mt-1">
-              O valor total será cobrado no momento da entrega ou instalação
-            </p>
-          </div>
-        </div>
-
 
         {/* Resumo do pagamento */}
         {(metodo1.tipo || (paymentData.usar_dois_metodos && metodo2.tipo)) && (
