@@ -796,8 +796,6 @@ export function useVendas() {
       const vendaPayload = {
         ...vendaDataLimpo,
         is_rascunho: true,
-        endereco: endereco || null,
-        numero: numero || null,
         cpf_cliente: vendaData.cpf_cliente || null,
         atendente_id: adminUser.user_id,
         data_venda: vendaData.data_venda || new Date().toISOString(),
