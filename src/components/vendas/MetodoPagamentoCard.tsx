@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CreditCard, Banknote, QrCode, Wallet, CalendarIcon, CheckCircle2, AlertTriangle } from "lucide-react";
+import { CreditCard, Banknote, QrCode, Wallet, CalendarIcon, CheckCircle2, AlertTriangle, Truck } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -67,6 +67,22 @@ interface MetodoPagamentoCardProps {
   entradaViolada?: boolean;
   /** Sinaliza que a data de pagamento está fora da janela permitida (requer autorização do Diretor). */
   dataForaJanela?: boolean;
+  /**
+   * Quando true, adiciona uma 4ª opção "Entrega/Instalação" ao seletor de tipo.
+   * Deve ser usada apenas no Método 2.
+   */
+  permitirEntrega?: boolean;
+  /**
+   * Callback disparado quando o usuário clica na opção "Entrega/Instalação".
+   * O pai deve configurar automaticamente o método como À Vista pelo valor restante
+   * e marcar `pagamento_na_entrega = true` no `PagamentoData`.
+   */
+  onEntregaSelect?: () => void;
+  /**
+   * Quando true, exibe o card no "modo entrega": oculta a data de pagamento,
+   * a opção "Já foi pago?" e destaca visualmente que o valor será cobrado na entrega.
+   */
+  modoEntrega?: boolean;
 }
 
 export function MetodoPagamentoCard({
@@ -86,6 +102,9 @@ export function MetodoPagamentoCard({
   dataPagamentoLiberada = false,
   entradaViolada = false,
   dataForaJanela = false,
+  permitirEntrega = false,
+  onEntregaSelect,
+  modoEntrega = false,
 }: MetodoPagamentoCardProps) {
   const metodos = [
     { value: 'boleto', label: 'Boleto', icon: QrCode },
@@ -119,11 +138,11 @@ export function MetodoPagamentoCard({
       <h4 className="font-medium text-xs text-white/50">{titulo}</h4>
       
       {/* Seleção do tipo de pagamento */}
-      <div className="grid grid-cols-3 gap-2">
+      <div className={cn("grid gap-2", permitirEntrega ? "grid-cols-2 md:grid-cols-4" : "grid-cols-3")}>
         {metodos.map((m) => {
           const Icon = m.icon;
           const travado = !!tipoTravado;
-          const isAtivo = metodo.tipo === m.value;
+          const isAtivo = !modoEntrega && metodo.tipo === m.value;
           const desabilitado = travado && !isAtivo;
           return (
             <Button
@@ -133,7 +152,7 @@ export function MetodoPagamentoCard({
               disabled={desabilitado}
               className={cn(
                 "flex flex-col h-auto py-3 gap-1 border-white/20",
-                metodo.tipo === m.value 
+                isAtivo
                   ? "bg-white/20 border-white/40 text-white" 
                   : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white",
                 desabilitado && "opacity-40 cursor-not-allowed"
@@ -148,9 +167,41 @@ export function MetodoPagamentoCard({
             </Button>
           );
         })}
+        {permitirEntrega && (
+          <Button
+            type="button"
+            variant="outline"
+            className={cn(
+              "flex flex-col h-auto py-3 gap-1 border-white/20",
+              modoEntrega
+                ? "bg-amber-500/20 border-amber-400/60 text-amber-100"
+                : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
+            )}
+            onClick={() => onEntregaSelect?.()}
+            title="Pagamento na Entrega/Instalação — cobra 100% do valor restante à vista no momento da entrega."
+          >
+            <Truck className="h-5 w-5" />
+            <span className="text-xs leading-tight text-center">Na Entrega</span>
+          </Button>
+        )}
       </div>
 
-      {metodo.tipo && (
+      {modoEntrega && (
+        <div className="flex items-start gap-2 p-3 rounded-md border border-amber-500/30 bg-amber-500/10">
+          <Truck className="h-4 w-4 text-amber-300 mt-0.5 shrink-0" />
+          <div className="text-xs text-amber-100/90">
+            <strong className="text-amber-200">Pagamento na Entrega/Instalação.</strong>{' '}
+            O valor de{' '}
+            <span className="font-semibold">
+              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(metodo.valor)}
+            </span>{' '}
+            será cobrado à vista no momento da entrega ou instalação. Não é necessário
+            informar data de pagamento nem comprovante antecipado.
+          </div>
+        </div>
+      )}
+
+      {metodo.tipo && !modoEntrega && (
         <div className="space-y-4">
           {/* Linha com Valor, Data e Empresa */}
           <div className={cn("grid grid-cols-1 gap-3", hideEmpresaReceptora ? "md:grid-cols-2" : "md:grid-cols-3")}>
