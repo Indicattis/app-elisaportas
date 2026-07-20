@@ -757,6 +757,7 @@ export default function VendaNovaMinimalista() {
           forma_pagamento: pagamentoData.metodos[0]?.tipo || formData.forma_pagamento || '',
           data_venda: `${format(dataVenda, 'yyyy-MM-dd')}T12:00:00.000Z`,
           data_prevista_entrega: dataEntrega ? `${format(dataEntrega, 'yyyy-MM-dd')}T12:00:00.000Z` : undefined,
+          atualizar_cadastro_cliente: atualizarCadastroCliente,
         },
         portas,
         pagamentoData,
