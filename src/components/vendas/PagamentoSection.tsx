@@ -18,6 +18,7 @@ import {
   getIntervalosBoletoPermitidos,
 } from "@/utils/boletoRegra";
 import { aplicarRegraEntrega } from "@/utils/entregaRegra";
+import { pagamentoTemEntregaPrincipal } from "@/utils/entregaRegra";
 import { getJanelaDataPagamento } from "@/utils/dataPagamentoRegra";
 import { useRegrasVendas } from "@/hooks/useRegrasVendas";
 import { AutorizacaoDescontoModal } from "./AutorizacaoDescontoModal";
@@ -107,6 +108,11 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
   const calcularViolacoes = (): string[] => {
     const violacoes: string[] = [];
     const [m1, m2] = paymentData.metodos;
+    if (pagamentoTemEntregaPrincipal(paymentData)) {
+      violacoes.push(
+        'Pagamento "Na Entrega" exige autorização do Diretor.',
+      );
+    }
     if (isEntradaViolada(paymentData)) {
       const atual = m1.valor ?? 0;
       violacoes.push(
