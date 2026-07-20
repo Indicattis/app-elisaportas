@@ -38,7 +38,8 @@ import {
   Loader2,
   Shield,
   Infinity,
-  Settings
+  Settings,
+  Truck,
 } from 'lucide-react';
 import { useConfiguracoesVendas } from '@/hooks/useConfiguracoesVendas';
 import { useRegrasVendas, type RegrasVendasUpdate } from '@/hooks/useRegrasVendas';
