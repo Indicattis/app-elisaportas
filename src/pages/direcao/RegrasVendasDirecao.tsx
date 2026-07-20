@@ -639,7 +639,6 @@ export default function RegrasVendasDirecao() {
               </AccordionItem>
               
               <AccordionItem value="avista" className="border-white/10">
-              </AccordionItem>
                 <AccordionTrigger className="text-white hover:no-underline py-3">
                   <div className="flex items-center gap-2">
                     <Banknote className="h-4 w-4 text-green-400" />
