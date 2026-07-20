@@ -26,7 +26,7 @@ export function aplicarRegraEntrega(
   valorTotal: number,
   config: EntregaConfig = DEFAULT_ENTREGA_CONFIG,
 ): PagamentoData {
-  if (valorTotal <= 0) return p;
+  if (valorTotal < 0) return p;
   const m1 = p.metodos[0];
   const m2 = p.metodos[1];
 
