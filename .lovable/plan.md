@@ -1,33 +1,28 @@
 ## Objetivo
-Exigir autorização por senha do **Diretor** sempre que a venda usar o pagamento "Na Entrega" (seja como tipo do Método 1, seja via flag `pagamento_na_entrega` no Método 2).
+Permitir que o vendedor decida se as alterações feitas nos dados do cliente durante o cadastro/edição da venda devem ou não ser propagadas para o cadastro central do cliente. O toggle fica ativado por padrão (comportamento atual preservado).
 
 ## Mudanças
 
-### 1. `src/hooks/useVendas.ts` (validação central)
-No fluxo de validação de regras/senhas que já existe para descontos e boleto:
-- Detectar se a venda tem pagamento na entrega:
-  - `paymentData.metodos[0]?.tipo === 'na_entrega'`, ou
-  - `paymentData.pagamento_na_entrega === true`
-- Se sim e o usuário logado não for Diretor, exigir senha via mesmo mecanismo já usado (`verificar_senha_vendas` + `get_autorizador_vendas`), forçando cargo mínimo **Diretor**.
-- Registrar autorização em `vendas_autorizacoes_desconto` com `motivo = 'pagamento_na_entrega'` e `senha_usada` (padrão do projeto — ver memory `autorizacao-senha-vendas`).
-- Aplicar tanto no cadastro de venda quanto na conversão de rascunho → venda.
+**1. `src/components/vendas/ClienteVendaSection.tsx`**
+- Adicionar toggle (Switch do shadcn) no topo da seção do cliente com o label "Atualizar cadastro do cliente com estas alterações" e um hint curto ("Se desativado, as edições valem apenas para esta venda").
+- Só exibir o toggle quando houver um `cliente_id` selecionado (só faz sentido para clientes existentes).
+- Nova prop `atualizarCadastroCliente: boolean` + `onToggleAtualizarCadastro: (v: boolean) => void`.
 
-### 2. `src/components/vendas/PagamentoSection.tsx` (UX)
-- Ao selecionar "Na Entrega" no Método 1 (ou quando a flag ficar ativa), exibir aviso inline: *"Requer autorização do Diretor no envio da venda."*
-- Não bloquear o clique — a senha é solicitada no submit, igual ao fluxo de desconto excedente.
+**2. `src/pages/vendas/VendaNovaMinimalista.tsx`**
+- Adicionar no `formData` o campo `atualizar_cadastro_cliente: boolean` com default `true`.
+- Passar valor e handler para `ClienteVendaSection`.
+- Incluir o valor no payload enviado ao `criarVenda` / `salvarRascunho`.
+- Ao hidratar rascunho, respeitar valor salvo (fallback `true`).
 
-### 3. `src/components/vendas/AutorizacaoDescontoModal.tsx` (reuso)
-- Aceitar um `motivo` opcional (`'desconto' | 'pagamento_na_entrega'`) para adaptar o texto do header/descrição, mantendo o mesmo visual glassmorphism.
-- Quando `motivo = 'pagamento_na_entrega'`, o texto explica que a forma de pagamento escolhida exige autorização do Diretor.
+**3. `src/hooks/useVendas.ts`**
+- Adicionar `atualizar_cadastro_cliente?: boolean` (default `true`) na interface do payload.
+- No bloco "4. Criar ou vincular cliente" (linhas ~330-351), condicionar o `update` da tabela `clientes` (endereço, número, telefone, email, público-alvo, etc.) ao flag ser `true`. Se `false`, apenas vincula o `cliente_id` existente sem alterar o cadastro.
+- Mesma regra aplicada no fluxo de rascunho (se houver update de cliente equivalente).
 
-### 4. Rascunhos
-- Rascunho **não** exige senha (mantém regra atual). A validação só dispara na conversão para venda, como já ocorre para descontos.
+**4. Persistência do rascunho**
+- Salvar o flag no JSON do rascunho para que a preferência seja retomada ao converter em venda.
 
-## Detalhes técnicos
-- Reaproveitar RPC `get_autorizador_vendas` e `verificar_senha_vendas` já existentes.
-- Não alterar schema; apenas gravar novo valor em `motivo` de `vendas_autorizacoes_desconto` (coluna text).
-- Boleto continua com sua regra própria (não exige senha) — só "Na Entrega" passa a exigir.
-
-## Fora de escopo
-- Não altera regras de desconto, boleto ou split automático.
-- Não altera configurações em `/direcao/vendas/regras`.
+## Comportamento
+- Toggle **ligado** (padrão): mantém o comportamento atual — alterações no formulário atualizam o cadastro do cliente.
+- Toggle **desligado**: alterações ficam somente na venda; cadastro central do cliente permanece intacto.
+- Cliente novo (sem `cliente_id`): toggle oculto, cliente é criado normalmente.
