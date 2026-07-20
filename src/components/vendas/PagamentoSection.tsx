@@ -232,7 +232,13 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
     const temBoleto = pagamentoTemBoleto(paymentData);
     const wantsEntrega =
       paymentData.metodos[0]?.tipo === 'na_entrega' ||
-      (paymentData.pagamento_na_entrega && !temBoleto);
+      (
+        paymentData.pagamento_na_entrega &&
+        paymentData.usar_dois_metodos &&
+        paymentData.metodos[0]?.tipo === 'a_vista' &&
+        paymentData.metodos[1]?.tipo === 'a_vista' &&
+        !temBoleto
+      );
 
     // Modo "Na Entrega" no Método 1: split M1 À Vista (entrada) + M2 Na Entrega (restante).
     if (wantsEntrega && !temBoleto) {
@@ -267,13 +273,6 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
 
     // Com boleto em qualquer método, força split M1 À Vista (entrada mínima) + M2 Boleto
     // e limpa qualquer flag residual de "Na Entrega".
-    const [m1, m2] = paymentData.metodos;
-    const estruturaOk =
-      paymentData.usar_dois_metodos &&
-      m1?.tipo === 'a_vista' &&
-      m2?.tipo === 'boleto' &&
-      !paymentData.pagamento_na_entrega;
-    if (estruturaOk) return;
     const base = paymentData.pagamento_na_entrega
       ? { ...paymentData, pagamento_na_entrega: false }
       : paymentData;
@@ -332,8 +331,34 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
       toast.error("Clique em 'Recomeçar' antes de alternar entre Boleto e Na Entrega.");
       return;
     }
-    if (incoming === 'boleto' && currentEntrega) {
+    if (incoming === 'boleto' && currentEntrega && paymentData.metodos[0]?.tipo === 'a_vista') {
       toast.error("Clique em 'Recomeçar' antes de alternar entre Na Entrega e Boleto.");
+      return;
+    }
+
+    const metodoComValorTotal: MetodoPagamento = { ...metodo, valor: valorTotal };
+
+    // Aplica imediatamente as regras que exigem duas formas de pagamento.
+    // Assim a abertura do Método 2 não depende do useEffect posterior ao clique.
+    if (!autorizadoRegras && incoming === 'boleto') {
+      const draft: PagamentoData = {
+        ...paymentData,
+        usar_dois_metodos: true,
+        pagamento_na_entrega: false,
+        metodos: [metodoComValorTotal, paymentData.metodos[1]],
+      };
+      onChange(aplicarRegraBoleto(draft, valorTotal, boletoConfig));
+      return;
+    }
+
+    if (!autorizadoRegras && incoming === 'na_entrega') {
+      const draft: PagamentoData = {
+        ...paymentData,
+        usar_dois_metodos: true,
+        pagamento_na_entrega: true,
+        metodos: [metodoComValorTotal, paymentData.metodos[1]],
+      };
+      onChange(aplicarRegraEntrega(draft, valorTotal, entregaConfig));
       return;
     }
 

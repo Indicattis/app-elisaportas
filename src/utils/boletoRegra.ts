@@ -70,7 +70,7 @@ export function aplicarRegraBoleto(
   valorTotal: number,
   config: BoletoConfig = DEFAULT_BOLETO_CONFIG,
 ): PagamentoData {
-  if (!pagamentoTemBoleto(p) || valorTotal <= 0) return p;
+  if (!pagamentoTemBoleto(p) || valorTotal < 0) return p;
 
   const m1 = p.metodos[0];
   const m2 = p.metodos[1];
@@ -117,12 +117,13 @@ export function aplicarRegraBoleto(
   const next: PagamentoData = {
     usar_dois_metodos: true,
     metodos: [novoM1, novoM2],
-    pagamento_na_entrega: p.pagamento_na_entrega,
+    pagamento_na_entrega: false,
   };
 
   // Evita loops: só retorna novo objeto se algo realmente mudou
   if (
     p.usar_dois_metodos === next.usar_dois_metodos &&
+    p.pagamento_na_entrega === next.pagamento_na_entrega &&
     m1?.tipo === novoM1.tipo &&
     Math.abs((m1?.valor || 0) - novoM1.valor) < 0.01 &&
     m2?.tipo === novoM2.tipo &&
