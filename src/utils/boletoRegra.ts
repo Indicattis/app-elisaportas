@@ -106,7 +106,7 @@ export function aplicarRegraBoleto(
     ...createEmptyMetodo(),
     tipo: "boleto",
     valor: restante,
-    data_pagamento: sourceBoleto?.data_pagamento,
+    data_pagamento: undefined,
     empresa_receptora_id: sourceBoleto?.empresa_receptora_id || novoM1.empresa_receptora_id || "",
     parcelas_boleto: parcelasFinal,
     intervalo_boletos: intervaloFinal,
