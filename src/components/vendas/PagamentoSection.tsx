@@ -324,7 +324,7 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
           { ...paymentData.metodos[0], valor: valorTotal },
           createEmptyMetodo()
         ],
-        pagamento_na_entrega: paymentData.pagamento_na_entrega
+        pagamento_na_entrega: false,
       });
     }
   };
