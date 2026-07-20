@@ -150,6 +150,10 @@ export default function VendaNovaMinimalista() {
     temperatura: null as boolean | null
   });
 
+  // Toggle: propagar alterações desta venda para o cadastro central do cliente.
+  // Ativado por padrão para preservar o comportamento anterior.
+  const [atualizarCadastroCliente, setAtualizarCadastroCliente] = useState(true);
+
   const [portas, setPortas] = useState<ProdutoVenda[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [acessoriosModalOpen, setAcessoriosModalOpen] = useState(false);
@@ -753,6 +757,7 @@ export default function VendaNovaMinimalista() {
           forma_pagamento: pagamentoData.metodos[0]?.tipo || formData.forma_pagamento || '',
           data_venda: `${format(dataVenda, 'yyyy-MM-dd')}T12:00:00.000Z`,
           data_prevista_entrega: dataEntrega ? `${format(dataEntrega, 'yyyy-MM-dd')}T12:00:00.000Z` : undefined,
+          atualizar_cadastro_cliente: atualizarCadastroCliente,
         },
         portas,
         pagamentoData,
@@ -875,6 +880,7 @@ export default function VendaNovaMinimalista() {
               ...formData,
               forma_pagamento: pagamentoData.metodos[0]?.tipo || '',
               data_venda: `${format(dataVenda, 'yyyy-MM-dd')}T12:00:00.000Z`,
+              atualizar_cadastro_cliente: atualizarCadastroCliente,
             },
             portas: portasComAjusteGlobal,
             pagamentoData,
@@ -916,6 +922,7 @@ export default function VendaNovaMinimalista() {
           ...formData,
           forma_pagamento: pagamentoData.metodos[0]?.tipo || '',
           data_venda: `${format(dataVenda, 'yyyy-MM-dd')}T12:00:00.000Z`,
+          atualizar_cadastro_cliente: atualizarCadastroCliente,
         },
         portas: portasComAjusteGlobal,
         pagamentoData,
@@ -958,6 +965,7 @@ export default function VendaNovaMinimalista() {
           ...formData,
           forma_pagamento: pagamentoData.metodos[0]?.tipo || '',
           data_venda: `${format(dataVenda, 'yyyy-MM-dd')}T12:00:00.000Z`,
+          atualizar_cadastro_cliente: atualizarCadastroCliente,
         },
         portas: produtosComDesconto,
         pagamentoData,
@@ -1029,6 +1037,8 @@ export default function VendaNovaMinimalista() {
           }}
           disabled={isFromOrcamento}
           initialClienteId={isFromRascunho ? formData.cliente_id : undefined}
+          atualizarCadastroCliente={atualizarCadastroCliente}
+          onToggleAtualizarCadastro={setAtualizarCadastroCliente}
         />
 
         {/* Produtos */}

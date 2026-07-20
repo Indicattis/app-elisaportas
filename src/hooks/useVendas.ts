@@ -64,6 +64,8 @@ export interface VendaFormData {
   temperatura?: boolean;
   cliente_id?: string; // ID do cliente existente selecionado
   orcamento_id?: string; // ID do orçamento se for conversão
+  /** Se true (default), edições feitas na venda propagam para o cadastro do cliente */
+  atualizar_cadastro_cliente?: boolean;
 }
 
 export interface AutorizacaoDesconto {
@@ -334,7 +336,9 @@ export function useVendas() {
         // Cliente existente selecionado
         clienteId = vendaData.cliente_id;
         // Atualiza dados de endereço no cadastro do cliente (persiste alterações feitas na venda)
-        try {
+        // Respeita toggle: se `atualizar_cadastro_cliente` for false, mantém cadastro central intacto.
+        const deveAtualizarCliente = vendaData.atualizar_cadastro_cliente !== false;
+        if (deveAtualizarCliente) try {
           await supabase
             .from('clientes')
             .update({
@@ -423,7 +427,7 @@ export function useVendas() {
       }
 
       // 5. Criar venda com valores calculados
-      const { endereco, numero, temperatura, cliente_id: _, ...vendaDataLimpo } = vendaData;
+      const { endereco, numero, temperatura, cliente_id: _, atualizar_cadastro_cliente: __, ...vendaDataLimpo } = vendaData;
       
       // Extrair o método de pagamento principal (primeiro método válido)
       const metodoPrincipal = pagamentoData?.metodos?.[0]?.tipo || vendaData.forma_pagamento;
@@ -823,7 +827,7 @@ export function useVendas() {
       const valor_a_receber = valor_total_venda - valor_entrada;
 
       // 4. Criar venda como rascunho (sem validações obrigatórias)
-      const { endereco, numero, temperatura, cliente_id: _, ...vendaDataLimpo } = vendaData;
+      const { endereco, numero, temperatura, cliente_id: _, atualizar_cadastro_cliente: __, ...vendaDataLimpo } = vendaData;
       const metodoPrincipal = pagamentoData?.metodos?.[0]?.tipo || vendaData.forma_pagamento;
 
       const vendaPayload = {
