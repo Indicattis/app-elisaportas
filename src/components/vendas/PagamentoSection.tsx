@@ -643,11 +643,16 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
                     </span>
                     <span className="text-white">
                       {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valorMetodo1)}
-                      {metodo1.data_pagamento && (
-                        <span className="text-white/40 ml-2">
-                          em {format(metodo1.data_pagamento, "dd/MM/yyyy", { locale: ptBR })}
-                        </span>
-                      )}
+                      {(() => {
+                        const dataResumo = metodo1.tipo === 'boleto'
+                          ? calcularPreviewParcelas({ ...metodo1, valor: valorMetodo1 })[0]?.data
+                          : metodo1.data_pagamento;
+                        return dataResumo ? (
+                          <span className="text-white/40 ml-2">
+                            em {format(dataResumo, "dd/MM/yyyy", { locale: ptBR })}
+                          </span>
+                        ) : null;
+                      })()}
                     </span>
                   </div>
                 )}
@@ -663,11 +668,16 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
                     </span>
                     <span className="text-white">
                       {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valorMetodo2)}
-                      {metodo2.data_pagamento && (
-                        <span className="text-white/40 ml-2">
-                          em {format(metodo2.data_pagamento, "dd/MM/yyyy", { locale: ptBR })}
-                        </span>
-                      )}
+                      {(() => {
+                        const dataResumo = metodo2.tipo === 'boleto'
+                          ? calcularPreviewParcelas({ ...metodo2, valor: valorMetodo2 })[0]?.data
+                          : metodo2.data_pagamento;
+                        return dataResumo ? (
+                          <span className="text-white/40 ml-2">
+                            em {format(dataResumo, "dd/MM/yyyy", { locale: ptBR })}
+                          </span>
+                        ) : null;
+                      })()}
                     </span>
                   </div>
                 )}
