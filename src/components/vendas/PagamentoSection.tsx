@@ -229,6 +229,9 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
     // Só normaliza quando a estrutura ainda não está no formato esperado — evita
     // sobrescrever valores/intervalos/datas que o usuário editou manualmente.
     if (!pagamentoTemBoleto(paymentData) || valorTotal <= 0) return;
+    // Se o usuário escolheu "Na Entrega" no Método 2, não força a regra do boleto —
+    // preserva a intenção de cobrar o restante à vista no momento da entrega.
+    if (paymentData.pagamento_na_entrega) return;
     const [m1, m2] = paymentData.metodos;
     const estruturaOk =
       paymentData.usar_dois_metodos && m1?.tipo === 'a_vista' && m2?.tipo === 'boleto';
@@ -588,7 +591,7 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
                 dataPagamentoJanelaDias={janelaDias}
               dataPagamentoLiberada={autorizadoRegras}
               dataForaJanela={!autorizadoRegras && isDataViolada(metodo2)}
-              permitirEntrega={!regraBoletoAtiva}
+              permitirEntrega
               onEntregaSelect={handleEntregaSelect}
               modoEntrega={paymentData.pagamento_na_entrega}
               />
