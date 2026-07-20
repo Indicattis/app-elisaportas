@@ -18,6 +18,7 @@ import {
   getIntervalosBoletoPermitidos,
 } from "@/utils/boletoRegra";
 import { aplicarRegraEntrega } from "@/utils/entregaRegra";
+import { pagamentoTemEntregaPrincipal } from "@/utils/entregaRegra";
 import { getJanelaDataPagamento } from "@/utils/dataPagamentoRegra";
 import { useRegrasVendas } from "@/hooks/useRegrasVendas";
 import { AutorizacaoDescontoModal } from "./AutorizacaoDescontoModal";
@@ -107,6 +108,11 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
   const calcularViolacoes = (): string[] => {
     const violacoes: string[] = [];
     const [m1, m2] = paymentData.metodos;
+    if (pagamentoTemEntregaPrincipal(paymentData)) {
+      violacoes.push(
+        'Pagamento "Na Entrega" exige autorização do Diretor.',
+      );
+    }
     if (isEntradaViolada(paymentData)) {
       const atual = m1.valor ?? 0;
       violacoes.push(
@@ -568,7 +574,9 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
               <strong className="text-amber-200">Regra "Na Entrega":</strong> a venda foi
               ajustada automaticamente para {entradaEntregaPct}% de entrada à vista
               no Método 1 e {Math.max(0, 100 - entradaEntregaPct)}% cobrado no ato da
-              entrega/instalação (Método 2).
+              entrega/instalação (Método 2). <strong className="text-amber-200">Requer
+              autorização por senha do Diretor</strong> ao confirmar a forma de
+              pagamento.
             </div>
           </div>
         )}
