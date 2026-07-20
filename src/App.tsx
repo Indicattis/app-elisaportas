@@ -467,6 +467,7 @@ const App = () => (
                 <Route path="/home/pedidos-producao" element={<ProtectedRoute><GestaoFabricaDirecao /></ProtectedRoute>} />
                 <Route path="/home/calendario-expedicao" element={<ProtectedRoute><CalendarioExpedicaoReadOnly /></ProtectedRoute>} />
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/__modal_preview" element={<TmpModalPreview />} />
                 <Route path="/forbidden" element={<Forbidden />} />
 
                 {/* Hub de Marketing Minimalista */}
