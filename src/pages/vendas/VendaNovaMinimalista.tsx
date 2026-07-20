@@ -1033,6 +1033,8 @@ export default function VendaNovaMinimalista() {
           }}
           disabled={isFromOrcamento}
           initialClienteId={isFromRascunho ? formData.cliente_id : undefined}
+          atualizarCadastroCliente={atualizarCadastroCliente}
+          onToggleAtualizarCadastro={setAtualizarCadastroCliente}
         />
 
         {/* Produtos */}
