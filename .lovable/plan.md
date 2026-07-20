@@ -1,33 +1,30 @@
+
 ## Objetivo
 
-Em `/vendas/minhas-vendas/nova`, quando o método for **Boleto**:
-1. Não exigir/exibir o campo "Data de pagamento" — o intervalo já define automaticamente.
-2. A **primeira parcela** deve vencer em `hoje + intervalo` (ex.: 21 dias), e não hoje. As parcelas seguintes seguem o mesmo intervalo entre si.
+Remover o checkbox independente "Pagamento será feito na entrega/instalação" e transformá-lo em uma nova opção do seletor de tipo do **Método 2**. Ao selecionar essa opção, o Método 2 deve ser automaticamente configurado como **À Vista** cobrindo 100% do valor restante, com a flag `pagamento_na_entrega = true`.
 
-Comportamento de outros métodos (À Vista, Cartão de Crédito) permanece inalterado.
-
-## Alterações
+## Mudanças
 
 ### 1. `src/components/vendas/MetodoPagamentoCard.tsx`
-- Quando `metodo.tipo === "boleto"`, ocultar o seletor de "Data de pagamento" (Popover/Calendar).
-- Manter o campo visível para `a_vista` e `cartao_credito`.
+- Adicionar nova opção no `Select` de tipo: **"Pagamento na Entrega/Instalação"** (valor interno: `entrega`).
+- Essa opção só aparece quando uma nova prop `permitirEntrega?: boolean` for `true` (usada apenas no Método 2).
+- Quando selecionada, emitir via `onChange` o método com `tipo: 'a_vista'`, `data_pagamento: undefined`, `parcelas_*` default, e uma flag interna (via callback separado ou estendendo `MetodoPagamento` com `pagamento_na_entrega?: boolean`).
+- Enquanto essa flag estiver ativa, ocultar campos de data de pagamento e empresa receptora (não há cobrança antecipada) e exibir bloco informativo explicando que o valor será cobrado na entrega/instalação.
 
 ### 2. `src/components/vendas/PagamentoSection.tsx`
-- Em `calcularPreviewParcelas`, para boleto:
-  - Ignorar `metodo.data_pagamento` como base; usar `hoje` (ou a data da venda, se disponível) como base.
-  - Vencimento da parcela `i` (0-indexed) = `base + intervalo * (i + 1)`.
-- Remover a exigência de `data_pagamento` para o preview aparecer no bloco de boleto (permitir preview mesmo sem data).
-- Ajustar validações que hoje reprovam boleto sem `data_pagamento` (janela de datas) para pular a checagem quando o tipo for boleto.
+- Remover o bloco do checkbox `pagamento-na-entrega` (linhas 597–619).
+- Ao renderizar o `MetodoPagamentoCard` do Método 2, passar `permitirEntrega`.
+- No `handleMetodo2Change`, detectar quando o tipo mudou para `entrega`:
+  - Setar `paymentData.pagamento_na_entrega = true`
+  - Forçar Método 2: `tipo='a_vista'`, `valor = valorTotal - valorMetodo1` (já é auto pelo `valorFixo`).
+  - Ao sair dessa opção (trocar para outro tipo), setar `pagamento_na_entrega = false`.
+- No **Resumo do Pagamento**, quando `pagamento_na_entrega` estiver ativo no Método 2, exibir rótulo "À Vista (na entrega/instalação)" em vez da data.
+- Ajustar validações existentes que dependem do checkbox para continuarem funcionando via `paymentData.pagamento_na_entrega`.
 
-### 3. `src/hooks/useVendas.ts` (função `gerarContasReceberPorMetodo`, case `'boleto'`)
-- `dataBase` para boleto = `hoje` (ou `vendaData.data_venda`), ignorando `metodo.data_pagamento`.
-- Vencimento de cada parcela = `addDays(dataBase, intervalo_boletos * (i + 1))` — deslocar em +1 intervalo para que a primeira já caia após o período.
-- Não gravar `data_pagamento` do método no banco para boleto (permanece `pendente`, exceto se `ja_pago`).
+### 3. Interação com regra do boleto e comprovantes
+- Se Método 1 for boleto (regra 70/30/21d ativa), a opção "Entrega" fica indisponível no Método 2 (mantém o boleto travado).
+- Comprovante continua opcional; nenhum ajuste extra.
 
-### 4. Regra de boleto (`src/utils/boletoRegra.ts`)
-- Em `aplicarRegraBoleto`, ao construir o `novoM2` (boleto), não copiar `data_pagamento` do source — deixar `undefined`.
-- Sem outras mudanças de regra (entrada 70%, máx. 3 parcelas, intervalos permitidos permanecem).
-
-## Fora de escopo
-- Rascunhos já persistidos continuam com o valor gravado; a nova regra vale para novas vendas/rascunhos e para o recálculo ao editar.
-- Nenhuma migração de banco — apenas front-end e geração de `contas_receber` no fluxo de criação.
+## Observações
+- Nenhuma alteração no banco ou em `useVendas.ts` — a flag `paymentData.pagamento_na_entrega` já é persistida hoje.
+- Comportamento equivalente ao anterior, apenas reposicionado na UI para melhor descoberta.
