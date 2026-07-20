@@ -1,43 +1,33 @@
 ## Objetivo
-Adicionar "Na Entrega" como opção nativa no seletor de tipo do Método 1 (ao lado de Boleto/À Vista/Cartão). Ao selecionar, aplica split automático M1 À Vista X% + M2 Na Entrega (100-X)%, análogo ao boleto, com percentual configurável.
+Exigir autorização por senha do **Diretor** sempre que a venda usar o pagamento "Na Entrega" (seja como tipo do Método 1, seja via flag `pagamento_na_entrega` no Método 2).
 
-## Banco (migration)
-Adicionar em `regras_vendas`:
-- `entrega_entrada_percentual_min INTEGER NOT NULL DEFAULT 50`
+## Mudanças
 
-## `src/hooks/useRegrasVendas.ts`
-- Adicionar `entrega_entrada_percentual_min` ao tipo.
-- Expor em `limites.entrega = { entradaMinPct }` (fallback 50).
+### 1. `src/hooks/useVendas.ts` (validação central)
+No fluxo de validação de regras/senhas que já existe para descontos e boleto:
+- Detectar se a venda tem pagamento na entrega:
+  - `paymentData.metodos[0]?.tipo === 'na_entrega'`, ou
+  - `paymentData.pagamento_na_entrega === true`
+- Se sim e o usuário logado não for Diretor, exigir senha via mesmo mecanismo já usado (`verificar_senha_vendas` + `get_autorizador_vendas`), forçando cargo mínimo **Diretor**.
+- Registrar autorização em `vendas_autorizacoes_desconto` com `motivo = 'pagamento_na_entrega'` e `senha_usada` (padrão do projeto — ver memory `autorizacao-senha-vendas`).
+- Aplicar tanto no cadastro de venda quanto na conversão de rascunho → venda.
 
-## Novo utilitário `src/utils/entregaRegra.ts`
-Espelha `boletoRegra.ts`:
-- `pagamentoTemEntregaPrincipal(data)` — true quando M1.tipo === 'na_entrega'.
-- `aplicarRegraEntrega(data, valorTotal, cfg)` — força M1 À Vista (X%) + M2 Na Entrega ((100-X)%) com `pagamento_na_entrega = true`.
+### 2. `src/components/vendas/PagamentoSection.tsx` (UX)
+- Ao selecionar "Na Entrega" no Método 1 (ou quando a flag ficar ativa), exibir aviso inline: *"Requer autorização do Diretor no envio da venda."*
+- Não bloquear o clique — a senha é solicitada no submit, igual ao fluxo de desconto excedente.
 
-## `MetodoPagamentoCard.tsx`
-- Adicionar `'na_entrega'` na lista de tipos (label "Na Entrega", ícone `Truck`).
-- Ocultar essa opção quando `hideEntregaOption` for true (usado no Método 2, que já tem o botão dedicado "Na Entrega" após boleto).
-- Quando `metodo.tipo === 'na_entrega'`, ocultar campos de data/parcelas/já-pago (mesmo tratamento do modoEntrega atual).
-- Manter o botão desabilitado quando `entregaDesabilitada` (já implementado).
+### 3. `src/components/vendas/AutorizacaoDescontoModal.tsx` (reuso)
+- Aceitar um `motivo` opcional (`'desconto' | 'pagamento_na_entrega'`) para adaptar o texto do header/descrição, mantendo o mesmo visual glassmorphism.
+- Quando `motivo = 'pagamento_na_entrega'`, o texto explica que a forma de pagamento escolhida exige autorização do Diretor.
 
-## `PagamentoSection.tsx`
-- Novo estado: exibir M1 com nova opção "Na Entrega".
-- `useEffect` de normalização passa a tratar 3 cenários mutuamente exclusivos:
-  1. **Boleto** em qualquer método → split 70/30 (regra existente).
-  2. **M1 = Na Entrega** → split M1 À Vista (entrega_entrada_percentual_min)% + M2 Na Entrega restante, seta `pagamento_na_entrega = true`.
-  3. Nenhum dos dois → método único (M2 zerado).
-- **Bloqueio de combinação**: se o usuário selecionar Boleto e tentar mudar M1 para "Na Entrega" (ou vice-versa), exibir toast "Substitua a forma atual usando 'Recomeçar' para trocar entre Boleto e Na Entrega" e ignorar a mudança. Implementado via wrapper em `handleMetodo1Change`.
-- Novo aviso azul (`Info`) quando regra de entrega ativa: "Regra da entrega: 50% de entrada à vista no Método 1 e 50% cobrado no ato da entrega."
-- Card do M2 quando M1=Na Entrega: `tipoTravado="na_entrega"`, `valorFixo`, sem botão "Na Entrega" duplicado (`hideEntregaOption`).
-- `regraEntregaAtiva = pagamentoTemEntregaPrincipal(paymentData) && !autorizadoRegras` para travar M1 como À Vista após a normalização inicial (assim como boleto trava M2).
+### 4. Rascunhos
+- Rascunho **não** exige senha (mantém regra atual). A validação só dispara na conversão para venda, como já ocorre para descontos.
 
-## Consumidores (`useVendas.ts` e faturamento)
-- Já lidam com `pagamento_na_entrega` na coluna do M2. Como o tipo `'na_entrega'` só aparece transitoriamente no M1 antes de ser normalizado para 'a_vista' + M2 na entrega, **nenhuma mudança de persistência** é necessária. O tipo canônico salvo continua sendo 'a_vista'/'na_entrega' (M2) — mantém compatibilidade com contas_receber, DRE e relatórios.
+## Detalhes técnicos
+- Reaproveitar RPC `get_autorizador_vendas` e `verificar_senha_vendas` já existentes.
+- Não alterar schema; apenas gravar novo valor em `motivo` de `vendas_autorizacoes_desconto` (coluna text).
+- Boleto continua com sua regra própria (não exige senha) — só "Na Entrega" passa a exigir.
 
-## Regras de Vendas (UI)
-Adicionar campo "Entrada mínima para Na Entrega (%)" na tela de configuração de regras (`RegrasVendas.tsx` / equivalente), lado a lado com o campo do boleto.
-
-## Verificação
-1. Selecionar "Na Entrega" no M1 sem venda prévia → M1 vira À Vista 50% travado, M2 aparece como Na Entrega 50% travado.
-2. Alternar M1 de Boleto → Na Entrega sem "Recomeçar" → toast de bloqueio, estado inalterado.
-3. Salvar venda e conferir em `/direcao/vendas/todas` → método persistido como À Vista + Entrega (mesma estrutura atual).
+## Fora de escopo
+- Não altera regras de desconto, boleto ou split automático.
+- Não altera configurações em `/direcao/vendas/regras`.
