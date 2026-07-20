@@ -20,6 +20,19 @@ import { Checkbox } from '@/components/ui/checkbox';
 const formatBRL = (n: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n || 0);
 
+const startOfDayBR = (d: Date) => {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  return x;
+};
+
+const isVencida = (dataStr: string, pago: boolean) => {
+  if (pago) return false;
+  const hoje = startOfDayBR(new Date());
+  const data = startOfDayBR(new Date(dataStr + 'T12:00:00'));
+  return data < hoje;
+};
+
 interface Obrigacao {
   id: string;
   nome: string;
