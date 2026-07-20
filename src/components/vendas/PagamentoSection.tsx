@@ -286,7 +286,23 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
 
   const handleMetodo2Change = (metodo: MetodoPagamento) => {
     const newMetodos: [MetodoPagamento, MetodoPagamento] = [paymentData.metodos[0], metodo];
-    onChange({ ...paymentData, metodos: newMetodos });
+    // Se o usuário trocou o tipo do Método 2, sai do modo "Pagamento na Entrega".
+    onChange({ ...paymentData, metodos: newMetodos, pagamento_na_entrega: false });
+  };
+
+  const handleEntregaSelect = () => {
+    const valorRestante = Math.max(0, valorTotal - (paymentData.metodos[0].valor ?? 0));
+    const metodo2Entrega: MetodoPagamento = {
+      ...createEmptyMetodo(),
+      tipo: 'a_vista',
+      valor: valorRestante,
+      empresa_receptora_id: paymentData.metodos[1].empresa_receptora_id || '',
+    };
+    onChange({
+      ...paymentData,
+      metodos: [paymentData.metodos[0], metodo2Entrega],
+      pagamento_na_entrega: true,
+    });
   };
 
   const handleToggleDoisMetodos = (checked: boolean) => {
