@@ -20,6 +20,19 @@ import { Checkbox } from '@/components/ui/checkbox';
 const formatBRL = (n: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n || 0);
 
+const startOfDayBR = (d: Date) => {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  return x;
+};
+
+const isVencida = (dataStr: string, pago: boolean) => {
+  if (pago) return false;
+  const hoje = startOfDayBR(new Date());
+  const data = startOfDayBR(new Date(dataStr + 'T12:00:00'));
+  return data < hoje;
+};
+
 interface Obrigacao {
   id: string;
   nome: string;
@@ -275,7 +288,11 @@ export default function CapitalGiroPage() {
                     <span className={`font-semibold truncate ${o.pago ? 'text-white/40 line-through' : 'text-white'}`}>
                       {o.nome}
                     </span>
-                    <span className="text-xs text-white/40">
+                    <span
+                      className={`text-xs ${
+                        isVencida(o.data, o.pago) ? 'text-rose-400 font-medium' : 'text-white/40'
+                      }`}
+                    >
                       {format(new Date(o.data + 'T12:00:00'), 'dd/MM/yyyy')}
                     </span>
                   </div>
