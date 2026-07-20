@@ -286,7 +286,23 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
 
   const handleMetodo2Change = (metodo: MetodoPagamento) => {
     const newMetodos: [MetodoPagamento, MetodoPagamento] = [paymentData.metodos[0], metodo];
-    onChange({ ...paymentData, metodos: newMetodos });
+    // Se o usuário trocou o tipo do Método 2, sai do modo "Pagamento na Entrega".
+    onChange({ ...paymentData, metodos: newMetodos, pagamento_na_entrega: false });
+  };
+
+  const handleEntregaSelect = () => {
+    const valorRestante = Math.max(0, valorTotal - (paymentData.metodos[0].valor ?? 0));
+    const metodo2Entrega: MetodoPagamento = {
+      ...createEmptyMetodo(),
+      tipo: 'a_vista',
+      valor: valorRestante,
+      empresa_receptora_id: paymentData.metodos[1].empresa_receptora_id || '',
+    };
+    onChange({
+      ...paymentData,
+      metodos: [paymentData.metodos[0], metodo2Entrega],
+      pagamento_na_entrega: true,
+    });
   };
 
   const handleToggleDoisMetodos = (checked: boolean) => {
@@ -308,7 +324,7 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
           { ...paymentData.metodos[0], valor: valorTotal },
           createEmptyMetodo()
         ],
-        pagamento_na_entrega: paymentData.pagamento_na_entrega
+        pagamento_na_entrega: false,
       });
     }
   };
@@ -572,6 +588,9 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
                 dataPagamentoJanelaDias={janelaDias}
               dataPagamentoLiberada={autorizadoRegras}
               dataForaJanela={!autorizadoRegras && isDataViolada(metodo2)}
+              permitirEntrega={!regraBoletoAtiva}
+              onEntregaSelect={handleEntregaSelect}
+              modoEntrega={paymentData.pagamento_na_entrega}
               />
 
               {((metodo2.tipo === 'boleto' && valorMetodo2 > 0) || (metodo2.tipo === 'cartao_credito' && metodo2.data_pagamento && valorMetodo2 > 0)) && (
@@ -593,31 +612,6 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
             </div>
           )}
         </div>
-
-        {/* Checkbox Pagamento na Entrega */}
-        <div 
-          className={`flex items-start space-x-3 p-3 border rounded-lg transition-all ${
-            paymentData.pagamento_na_entrega 
-              ? 'border-amber-500/50 bg-amber-500/10' 
-              : 'border-white/10 bg-white/5'
-          }`}
-        >
-          <Checkbox
-            id="pagamento-na-entrega"
-            checked={paymentData.pagamento_na_entrega}
-            onCheckedChange={(checked) => onChange({ ...paymentData, pagamento_na_entrega: !!checked })}
-            className="mt-0.5"
-          />
-          <div className="flex-1">
-            <Label htmlFor="pagamento-na-entrega" className="cursor-pointer text-sm font-medium text-white">
-              Pagamento será feito na entrega/instalação
-            </Label>
-            <p className="text-xs text-white/50 mt-1">
-              O valor total será cobrado no momento da entrega ou instalação
-            </p>
-          </div>
-        </div>
-
 
         {/* Resumo do pagamento */}
         {(metodo1.tipo || (paymentData.usar_dois_metodos && metodo2.tipo)) && (
@@ -661,6 +655,7 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
                   <div className="flex justify-between">
                     <span className="text-white/50">
                       Método 2 ({
+                        paymentData.pagamento_na_entrega ? 'À Vista na Entrega/Instalação' :
                         metodo2.tipo === 'boleto' ? `Boleto ${metodo2.parcelas_boleto}x` :
                         metodo2.tipo === 'cartao_credito' ? `Cartão ${metodo2.parcelas_cartao}x` :
                         'À Vista'
@@ -668,7 +663,7 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
                     </span>
                     <span className="text-white">
                       {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valorMetodo2)}
-                      {(() => {
+                      {!paymentData.pagamento_na_entrega && (() => {
                         const dataResumo = metodo2.tipo === 'boleto'
                           ? calcularPreviewParcelas({ ...metodo2, valor: valorMetodo2 })[0]?.data
                           : metodo2.data_pagamento;
