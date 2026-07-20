@@ -581,6 +581,7 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
               permitirEntrega
               onEntregaSelect={handleEntregaSelect}
               modoEntrega={paymentData.pagamento_na_entrega}
+              entregaDesabilitada={regraBoletoAtiva}
               />
 
               {((metodo2.tipo === 'boleto' && valorMetodo2 > 0) || (metodo2.tipo === 'cartao_credito' && metodo2.data_pagamento && valorMetodo2 > 0)) && (

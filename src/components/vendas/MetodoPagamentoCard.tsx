@@ -83,6 +83,10 @@ interface MetodoPagamentoCardProps {
    * a opção "Já foi pago?" e destaca visualmente que o valor será cobrado na entrega.
    */
   modoEntrega?: boolean;
+  /**
+   * Quando true, exibe a opção "Na Entrega" desabilitada (visível mas não clicável).
+   */
+  entregaDesabilitada?: boolean;
 }
 
 export function MetodoPagamentoCard({
@@ -105,6 +109,7 @@ export function MetodoPagamentoCard({
   permitirEntrega = false,
   onEntregaSelect,
   modoEntrega = false,
+  entregaDesabilitada = false,
 }: MetodoPagamentoCardProps) {
   const metodos = [
     { value: 'boleto', label: 'Boleto', icon: QrCode },
@@ -171,14 +176,23 @@ export function MetodoPagamentoCard({
           <Button
             type="button"
             variant="outline"
+            disabled={entregaDesabilitada}
             className={cn(
               "flex flex-col h-auto py-3 gap-1 border-white/20",
               modoEntrega
                 ? "bg-amber-500/20 border-amber-400/60 text-amber-100"
-                : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
+                : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white",
+              entregaDesabilitada && "opacity-40 cursor-not-allowed"
             )}
-            onClick={() => onEntregaSelect?.()}
-            title="Pagamento na Entrega/Instalação — cobra 100% do valor restante à vista no momento da entrega."
+            onClick={() => {
+              if (entregaDesabilitada) return;
+              onEntregaSelect?.();
+            }}
+            title={
+              entregaDesabilitada
+                ? "Indisponível quando o Método 1 é Boleto."
+                : "Pagamento na Entrega/Instalação — cobra 100% do valor restante à vista no momento da entrega."
+            }
           >
             <Truck className="h-5 w-5" />
             <span className="text-xs leading-tight text-center">Na Entrega</span>
