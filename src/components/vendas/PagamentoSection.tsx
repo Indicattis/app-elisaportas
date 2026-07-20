@@ -535,6 +535,19 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
           </div>
         )}
 
+        {/* Aviso da regra de "Na Entrega" */}
+        {regraEntregaAtiva && (
+          <div className="flex items-start gap-2 p-3 rounded-lg border border-amber-500/30 bg-amber-500/10">
+            <Info className="h-4 w-4 text-amber-300 mt-0.5 shrink-0" />
+            <div className="text-xs text-amber-100/90">
+              <strong className="text-amber-200">Regra "Na Entrega":</strong> a venda foi
+              ajustada automaticamente para {entradaEntregaPct}% de entrada à vista
+              no Método 1 e {Math.max(0, 100 - entradaEntregaPct)}% cobrado no ato da
+              entrega/instalação (Método 2).
+            </div>
+          </div>
+        )}
+
         {autorizadoRegras && (
           <div className="flex items-start gap-2 p-3 rounded-lg border border-amber-500/30 bg-amber-500/10">
             <ShieldCheck className="h-4 w-4 text-amber-300 mt-0.5 shrink-0" />
@@ -561,15 +574,20 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
               titulo={
                 regraBoletoAtiva
                   ? `Método 1 (Entrada ≥ ${entradaPct}% — À Vista)`
+                  : regraEntregaAtiva
+                    ? `Método 1 (Entrada ${entradaEntregaPct}% — À Vista)`
                   : paymentData.usar_dois_metodos ? "Método 1 (Entrada)" : "Método de Pagamento"
               }
               valorFixo={!paymentData.usar_dois_metodos}
               valorLabel={
                 regraBoletoAtiva
                   ? `Entrada (mín ${entradaPct}%)`
+                  : regraEntregaAtiva
+                    ? `Entrada (${entradaEntregaPct}%)`
                   : paymentData.usar_dois_metodos ? "Valor da Entrada *" : "Valor Total"
               }
-              tipoTravado={regraBoletoAtiva ? "a_vista" : undefined}
+              tipoTravado={regraBoletoAtiva || regraEntregaAtiva ? "a_vista" : undefined}
+              incluirNaEntregaTipo
               intervalosBoletoPermitidos={intervalosBoletoPermitidos}
               parcelasBoletoMax={boletoConfig.parcelasMax}
               dataPagamentoJanelaDias={janelaDias}
@@ -604,16 +622,24 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
                 empresas={empresas}
                 isLoadingEmpresas={isLoadingEmpresas}
                 hideEmpresaReceptora={hideEmpresaReceptora}
-                titulo={regraBoletoAtiva ? `Método 2 (Boleto — restante)` : "Método 2 (Restante)"}
+                titulo={
+                  regraBoletoAtiva
+                    ? `Método 2 (Boleto — restante)`
+                    : regraEntregaAtiva
+                      ? `Método 2 (Na Entrega — ${Math.max(0, 100 - entradaEntregaPct)}%)`
+                      : "Método 2 (Restante)"
+                }
                 valorFixo={true}
                 valorLabel="Valor Restante"
-                tipoTravado={regraBoletoAtiva ? "boleto" : undefined}
+                tipoTravado={
+                  regraBoletoAtiva ? "boleto" : regraEntregaAtiva ? "a_vista" : undefined
+                }
                 intervalosBoletoPermitidos={intervalosBoletoPermitidos}
                 parcelasBoletoMax={boletoConfig.parcelasMax}
                 dataPagamentoJanelaDias={janelaDias}
               dataPagamentoLiberada={autorizadoRegras}
               dataForaJanela={!autorizadoRegras && isDataViolada(metodo2)}
-              permitirEntrega
+              permitirEntrega={!regraEntregaAtiva}
               onEntregaSelect={handleEntregaSelect}
               modoEntrega={paymentData.pagamento_na_entrega}
               entregaDesabilitada={regraBoletoAtiva}
