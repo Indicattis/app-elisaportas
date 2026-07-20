@@ -150,6 +150,10 @@ export default function VendaNovaMinimalista() {
     temperatura: null as boolean | null
   });
 
+  // Toggle: propagar alterações desta venda para o cadastro central do cliente.
+  // Ativado por padrão para preservar o comportamento anterior.
+  const [atualizarCadastroCliente, setAtualizarCadastroCliente] = useState(true);
+
   const [portas, setPortas] = useState<ProdutoVenda[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [acessoriosModalOpen, setAcessoriosModalOpen] = useState(false);
