@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import logoPortasEnrolar from "@/assets/logo-portas-enrolar.ico";
 import { useHomeIndices } from "@/hooks/useHomeIndices";
+import { useRankingAnual } from "@/hooks/useRankingAnual";
 import { ShoppingCart, Factory, Shield, Truck, Building2, LogOut, LayoutDashboard, PanelLeft, Settings, Lock, BarChart3, Calendar, User, ClipboardList, Sun, Moon, Monitor, DollarSign, Users, BookOpen, Target, Headset } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -64,6 +65,7 @@ export default function Home() {
   const navigate = useNavigate();
   const { user, userRole, signOut, hasBypassPermissions } = useAuth();
   const { data: indices, isLoading: indicesLoading } = useHomeIndices();
+  const { data: ranking } = useRankingAnual(new Date().getFullYear());
   const [mounted, setMounted] = useState(false);
   
   
@@ -323,8 +325,55 @@ export default function Home() {
           </div>
         </div>
 
-
-
+        {/* Ranking de Vendedores */}
+        <div
+          className="w-full mb-3"
+          style={{
+            opacity: mounted ? 1 : 0,
+            transform: mounted ? 'translateY(0)' : 'translateY(20px)',
+            transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 500ms'
+          }}
+        >
+          <div className="relative overflow-hidden rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xl py-3 px-4 shadow-2xl">
+            <div className="absolute -top-12 -left-12 w-24 h-24 bg-blue-500/10 blur-3xl rounded-full" />
+            <span className="block text-white/50 text-[10px] font-semibold tracking-widest uppercase text-center mb-2">
+              Ranking Vendedores
+            </span>
+            <div className="grid grid-cols-4 gap-2">
+              {(ranking || []).slice(0, 4).map((v, i) => {
+                const initials = v.atendente_nome?.split(' ').slice(0, 2).map(p => p[0]).join('').toUpperCase() || '?';
+                const medal = ['🥇', '🥈', '🥉', '4º'][i];
+                return (
+                  <div
+                    key={v.atendente_id}
+                    className="flex flex-col items-center gap-1 rounded-lg bg-white/5 border border-white/10 p-2"
+                  >
+                    <div className="relative">
+                      <Avatar className="w-10 h-10 border border-white/20">
+                        <AvatarImage src={v.foto_perfil_url || undefined} alt={v.atendente_nome} />
+                        <AvatarFallback className="bg-blue-500/30 text-white text-xs">
+                          {initials}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="absolute -top-1 -right-1 text-[10px]">{medal}</span>
+                    </div>
+                    <span className="text-white/80 text-[10px] font-medium truncate max-w-full" title={v.atendente_nome}>
+                      {v.atendente_nome?.split(' ')[0]}
+                    </span>
+                    <span className="text-white text-[10px] font-bold tabular-nums">
+                      {formatCurrency(v.valor_total).replace('R$', '').trim()}
+                    </span>
+                  </div>
+                );
+              })}
+              {(!ranking || ranking.length === 0) && (
+                <div className="col-span-4 text-center text-white/40 text-xs py-2">
+                  Sem dados
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
 
         <div className="w-full flex flex-col gap-3">
         {menuItems.map((item, index) => {
