@@ -89,6 +89,7 @@ export function PagamentoSection({ paymentData, onChange, valorTotal, vendaPrese
   };
   const isDataViolada = (m: MetodoPagamento) => {
     if (!m?.data_pagamento) return false;
+    if (m?.tipo === 'boleto') return false;
     const { min, max } = getJanelaDataPagamento(janelaDias);
     const d = new Date(m.data_pagamento);
     d.setHours(0, 0, 0, 0);
