@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import logoPortasEnrolar from "@/assets/logo-portas-enrolar.ico";
 import { useHomeIndices } from "@/hooks/useHomeIndices";
-import { useRankingAnual } from "@/hooks/useRankingAnual";
+import { useRankingMes } from "@/hooks/useRankingMes";
 import { ShoppingCart, Factory, Shield, Truck, Building2, LogOut, LayoutDashboard, PanelLeft, Settings, Lock, BarChart3, Calendar, User, ClipboardList, Sun, Moon, Monitor, DollarSign, Users, BookOpen, Target, Headset } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -65,7 +65,7 @@ export default function Home() {
   const navigate = useNavigate();
   const { user, userRole, signOut, hasBypassPermissions } = useAuth();
   const { data: indices, isLoading: indicesLoading } = useHomeIndices();
-  const { data: ranking } = useRankingAnual(new Date().getFullYear());
+  const { data: ranking } = useRankingMes();
   const [mounted, setMounted] = useState(false);
   
   
