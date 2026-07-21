@@ -42,18 +42,41 @@ export function useProgressoMetasVendas() {
 
       if (ativas.length === 0) return [];
 
-      // Buscar nomes de atendentes
-      const { data: usuarios } = await supabase
-        .from('admin_users')
-        .select('user_id, nome, foto_perfil_url, role')
-        .eq('ativo', true)
-        .in('role', ['atendente', 'vendedor']);
+      // Buscar nomes de atendentes/vendedores + qualquer usuário que já vendeu
+      const [{ data: usuariosBase }, { data: comVendas }] = await Promise.all([
+        supabase
+          .from('admin_users')
+          .select('user_id, nome, foto_perfil_url, role')
+          .eq('ativo', true)
+          .in('role', ['atendente', 'vendedor']),
+        supabase
+          .from('vendas')
+          .select('atendente_id')
+          .eq('is_rascunho', false)
+          .not('atendente_id', 'is', null),
+      ]);
+
+      const baseIds = new Set<string>((usuariosBase || []).map((u: any) => u.user_id));
+      const extraIds = Array.from(
+        new Set<string>((comVendas || []).map((v: any) => v.atendente_id).filter(Boolean)),
+      ).filter((id) => !baseIds.has(id));
+
+      let extras: any[] = [];
+      if (extraIds.length > 0) {
+        const { data: extraUsers } = await supabase
+          .from('admin_users')
+          .select('user_id, nome, foto_perfil_url, role')
+          .in('user_id', extraIds)
+          .eq('ativo', true);
+        extras = extraUsers || [];
+      }
+
+      const usuarios = [...(usuariosBase || []), ...extras];
       const userMap = new Map<string, { nome: string; foto_perfil_url: string | null; role: string }>();
-      (usuarios || []).forEach((u: any) =>
+      usuarios.forEach((u: any) =>
         userMap.set(u.user_id, { nome: u.nome, foto_perfil_url: u.foto_perfil_url ?? null, role: u.role }),
       );
-      // Vendedores elegíveis = todos os ativos (mesma fonte de useVendedoresElegiveis)
-      const elegiveis = (usuarios || []) as any[];
+      const elegiveis = usuarios as any[];
 
       // Total vendido no mês corrente (independente do período de cada meta)
       const periodoMes = getInicioFimMes(hoje);
@@ -184,13 +207,36 @@ export function useVendedoresElegiveis() {
   return useQuery({
     queryKey: ['vendedores_elegiveis_metas'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('admin_users')
-        .select('user_id, nome, role')
-        .eq('ativo', true)
-        .order('nome');
+      const [{ data, error }, { data: comVendas }] = await Promise.all([
+        supabase
+          .from('admin_users')
+          .select('user_id, nome, role')
+          .eq('ativo', true)
+          .order('nome'),
+        supabase
+          .from('vendas')
+          .select('atendente_id')
+          .eq('is_rascunho', false)
+          .not('atendente_id', 'is', null),
+      ]);
       if (error) throw error;
-      return (data || []) as { user_id: string; nome: string; role: string }[];
+      // `data` já traz todos os ativos; nada mais a fazer, mas garantimos que
+      // atendentes com vendas mas eventualmente inativos não sumam do agregado.
+      const jaTem = new Set<string>((data || []).map((u: any) => u.user_id));
+      const faltantes = Array.from(
+        new Set<string>((comVendas || []).map((v: any) => v.atendente_id).filter(Boolean)),
+      ).filter((id) => !jaTem.has(id));
+      let extras: any[] = [];
+      if (faltantes.length > 0) {
+        const { data: extraUsers } = await supabase
+          .from('admin_users')
+          .select('user_id, nome, role')
+          .in('user_id', faltantes);
+        extras = extraUsers || [];
+      }
+      return ([...(data || []), ...extras] as { user_id: string; nome: string; role: string }[]).sort(
+        (a, b) => (a.nome || '').localeCompare(b.nome || ''),
+      );
     },
   });
 }

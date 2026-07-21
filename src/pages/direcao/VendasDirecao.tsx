@@ -291,17 +291,37 @@ export default function VendasDirecao() {
 
   useEffect(() => {
     const fetchAtendentes = async () => {
-      // Buscar usuários com role "atendente" diretamente da tabela admin_users
-      const { data } = await supabase
-        .from('admin_users')
-        .select('id, user_id, nome, foto_perfil_url')
-        .eq('role', 'atendente')
-        .eq('ativo', true)
-        .order('nome');
-      
-      if (data) {
-        setAtendentes(data);
+      // Usuários com role atendente/vendedor + qualquer um que já tenha vendas
+      const [{ data: base }, { data: comVendas }] = await Promise.all([
+        supabase
+          .from('admin_users')
+          .select('id, user_id, nome, foto_perfil_url')
+          .in('role', ['atendente', 'vendedor'])
+          .eq('ativo', true),
+        supabase
+          .from('vendas')
+          .select('atendente_id')
+          .eq('is_rascunho', false)
+          .not('atendente_id', 'is', null),
+      ]);
+
+      const ids = new Set<string>((comVendas || []).map((v: any) => v.atendente_id).filter(Boolean));
+      (base || []).forEach((u: any) => ids.delete(u.user_id));
+
+      let extras: any[] = [];
+      if (ids.size > 0) {
+        const { data: extraUsers } = await supabase
+          .from('admin_users')
+          .select('id, user_id, nome, foto_perfil_url')
+          .in('user_id', Array.from(ids))
+          .eq('ativo', true);
+        extras = extraUsers || [];
       }
+
+      const todos = [...(base || []), ...extras].sort((a, b) =>
+        (a.nome || '').localeCompare(b.nome || ''),
+      );
+      setAtendentes(todos);
     };
     fetchAtendentes();
   }, []);
