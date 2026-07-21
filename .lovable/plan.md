@@ -1,28 +1,27 @@
-## Objetivo
-Permitir que o vendedor decida se as alterações feitas nos dados do cliente durante o cadastro/edição da venda devem ou não ser propagadas para o cadastro central do cliente. O toggle fica ativado por padrão (comportamento atual preservado).
+## Problema
 
-## Mudanças
+Os filtros de "vendedor/atendente" em `/paineis/metas-vendas` e `/direcao/vendas/todas` filtram `admin_users` por `role IN ('atendente','vendedor')`. Como William Rodrigues é `gerente_instalacoes` (e há outros: Magno = `gerentedevendas`, Paulo/Alana = `gerente_comercial`, Luan = `diretor`), ele — mesmo tendo 5 vendas fechadas — não aparece nas listas.
 
-**1. `src/components/vendas/ClienteVendaSection.tsx`**
-- Adicionar toggle (Switch do shadcn) no topo da seção do cliente com o label "Atualizar cadastro do cliente com estas alterações" e um hint curto ("Se desativado, as edições valem apenas para esta venda").
-- Só exibir o toggle quando houver um `cliente_id` selecionado (só faz sentido para clientes existentes).
-- Nova prop `atualizarCadastroCliente: boolean` + `onToggleAtualizarCadastro: (v: boolean) => void`.
+Confirmado via query: 5 pessoas fora dos dois roles têm vendas reais.
 
-**2. `src/pages/vendas/VendaNovaMinimalista.tsx`**
-- Adicionar no `formData` o campo `atualizar_cadastro_cliente: boolean` com default `true`.
-- Passar valor e handler para `ClienteVendaSection`.
-- Incluir o valor no payload enviado ao `criarVenda` / `salvarRascunho`.
-- Ao hidratar rascunho, respeitar valor salvo (fallback `true`).
+## Solução
 
-**3. `src/hooks/useVendas.ts`**
-- Adicionar `atualizar_cadastro_cliente?: boolean` (default `true`) na interface do payload.
-- No bloco "4. Criar ou vincular cliente" (linhas ~330-351), condicionar o `update` da tabela `clientes` (endereço, número, telefone, email, público-alvo, etc.) ao flag ser `true`. Se `false`, apenas vincula o `cliente_id` existente sem alterar o cadastro.
-- Mesma regra aplicada no fluxo de rascunho (se houver update de cliente equivalente).
+Trocar o critério "role fixo" por "usuários que efetivamente têm vendas", unindo com a lista atual de atendentes/vendedores (para manter vendedores novos sem venda ainda visíveis).
 
-**4. Persistência do rascunho**
-- Salvar o flag no JSON do rascunho para que a preferência seja retomada ao converter em venda.
+### 1. `src/pages/direcao/VendasDirecao.tsx` (linhas ~294–298)
+Substituir a query única de `admin_users WHERE role='atendente'` por:
+- Buscar todos os `atendente_id` distintos da tabela `vendas` (is_rascunho=false).
+- Buscar `admin_users` ativos com role em `('atendente','vendedor')`.
+- Unir os `user_id` dos dois conjuntos e carregar `nome/foto_perfil_url` de todos.
 
-## Comportamento
-- Toggle **ligado** (padrão): mantém o comportamento atual — alterações no formulário atualizam o cadastro do cliente.
-- Toggle **desligado**: alterações ficam somente na venda; cadastro central do cliente permanece intacto.
-- Cliente novo (sem `cliente_id`): toggle oculto, cliente é criado normalmente.
+### 2. `src/hooks/useProgressoMetasVendas.ts` (função `useProgressoMetasVendas`, linhas ~46–56 e `useVendedoresElegiveis`)
+Aplicar a mesma união: elegíveis = ativos com role vendedor/atendente ∪ quem já tem venda registrada. Assim William e demais gerentes com vendas aparecem no painel de metas.
+
+### 3. Manter compatibilidade
+- Não alterar schema, nem roles no banco.
+- Preservar ordenação por nome.
+- Continuar usando `foto_perfil_url` e `nome` como antes.
+
+### Fora do escopo
+- Não mexer em regras de bonificação/tiers.
+- Não alterar RLS.
