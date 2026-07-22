@@ -1,12 +1,29 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, ChevronLeft, ChevronRight, FileClock, History, FileText } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { ArrowLeft, ChevronLeft, ChevronRight, FileClock, History, FileText, Undo2, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { reverterContratoAssinado } from '@/lib/reverterContratoAssinado';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import {
   Table,
   TableBody,
@@ -53,6 +70,8 @@ const nomesMeses = [
 
 export default function HistoricoContratos() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [reverterAlvo, setReverterAlvo] = useState<EventoContrato | null>(null);
   const hoje = new Date();
   const [mesRef, setMesRef] = useState<{ year: number; month: number }>({
     year: hoje.getFullYear(),
@@ -168,6 +187,45 @@ export default function HistoricoContratos() {
   });
 
   const linhas = data || [];
+
+  // Verifica quais vendas assinadas já foram faturadas (têm pedido)
+  const vendaIdsAssinadas = useMemo(
+    () => Array.from(new Set(linhas.filter(l => l.desfecho === 'assinado').map(l => l.venda_id))),
+    [linhas],
+  );
+
+  const { data: faturadasSet } = useQuery({
+    queryKey: ['historico-contratos-faturadas', vendaIdsAssinadas],
+    enabled: vendaIdsAssinadas.length > 0,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('pedidos_producao')
+        .select('venda_id')
+        .in('venda_id', vendaIdsAssinadas);
+      return new Set((data || []).map((p: any) => p.venda_id as string));
+    },
+  });
+
+  const reverterMutation = useMutation({
+    mutationFn: async (evento: EventoContrato) => {
+      await reverterContratoAssinado(evento.venda_id, evento.contrato_url);
+    },
+    onSuccess: () => {
+      toast.success('Venda retornada para "Assinatura Contrato"');
+      queryClient.invalidateQueries({ queryKey: ['historico-contratos'] });
+      queryClient.invalidateQueries({ queryKey: ['historico-contratos-faturadas'] });
+      queryClient.invalidateQueries({ queryKey: ['contratos-venda'] });
+      queryClient.invalidateQueries({ queryKey: ['contratos-vendas'] });
+      queryClient.invalidateQueries({ queryKey: ['vendas-assinatura-contrato'] });
+      queryClient.invalidateQueries({ queryKey: ['vendas-pendente-faturamento'] });
+      setReverterAlvo(null);
+    },
+    onError: (err: any) => {
+      console.error(err);
+      toast.error('Erro ao retornar venda para Assinatura Contrato');
+    },
+  });
+
   const abrirContrato = async (path: string) => {
     if (!path || path === 'legado') {
       toast.error('Contrato legado sem arquivo disponível');
@@ -255,20 +313,21 @@ export default function HistoricoContratos() {
                 <TableHead className="text-white/70">Responsável</TableHead>
                 <TableHead className="text-white/70 text-right">Valor</TableHead>
                 <TableHead className="text-white/70 text-right">Contrato</TableHead>
+                <TableHead className="text-white/70 text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 Array.from({ length: 6 }).map((_, i) => (
                   <TableRow key={i} className="border-white/10">
-                    <TableCell colSpan={7}>
+                    <TableCell colSpan={8}>
                       <div className="h-6 bg-white/5 rounded animate-pulse" />
                     </TableCell>
                   </TableRow>
                 ))
               ) : linhas.length === 0 ? (
                 <TableRow className="border-white/10 hover:bg-transparent">
-                  <TableCell colSpan={7} className="text-center py-10 text-white/50">
+                  <TableCell colSpan={8} className="text-center py-10 text-white/50">
                     <FileClock className="h-8 w-8 mx-auto mb-2 opacity-40" />
                     Nenhum contrato movimentado no período
                   </TableCell>
@@ -304,6 +363,36 @@ export default function HistoricoContratos() {
                         <span className="text-white/30 text-xs">—</span>
                       )}
                     </TableCell>
+                    <TableCell className="text-right">
+                      {e.desfecho === 'assinado' && e.contrato_url && e.contrato_url !== 'legado' ? (
+                        (() => {
+                          const jaFaturada = faturadasSet?.has(e.venda_id) ?? false;
+                          const btn = (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              disabled={jaFaturada}
+                              onClick={() => setReverterAlvo(e)}
+                              className="h-7 px-2 bg-white/5 border-amber-500/30 text-amber-200 hover:bg-amber-500/10 hover:text-amber-100 disabled:opacity-40"
+                            >
+                              <Undo2 className="h-3.5 w-3.5 mr-1" strokeWidth={1.5} />
+                              Retornar
+                            </Button>
+                          );
+                          if (!jaFaturada) return btn;
+                          return (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild><span>{btn}</span></TooltipTrigger>
+                                <TooltipContent>Venda já faturada — não é possível reverter</TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          );
+                        })()
+                      ) : (
+                        <span className="text-white/30 text-xs">—</span>
+                      )}
+                    </TableCell>
                   </TableRow>
                 ))
               )}
@@ -311,6 +400,34 @@ export default function HistoricoContratos() {
           </Table>
         </div>
       </div>
+
+      <AlertDialog open={!!reverterAlvo} onOpenChange={(o) => !o && setReverterAlvo(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Retornar venda para "Assinatura Contrato"?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O contrato atual assinado de <strong>{reverterAlvo?.cliente_nome}</strong> será
+              descartado (arquivo e registros vinculados removidos). A venda voltará para as
+              etapas "Pendente de Contrato" em /vendas/contratos e "Assinatura Contrato" na
+              gestão de fábrica, exigindo geração e anexo de um novo contrato.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={reverterMutation.isPending}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={reverterMutation.isPending}
+              onClick={(ev) => {
+                ev.preventDefault();
+                if (reverterAlvo) reverterMutation.mutate(reverterAlvo);
+              }}
+              className="bg-amber-600 hover:bg-amber-700"
+            >
+              {reverterMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Confirmar reversão
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
