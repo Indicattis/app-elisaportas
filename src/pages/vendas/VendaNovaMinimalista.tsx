@@ -35,6 +35,7 @@ import { useRegrasVendas } from '@/hooks/useRegrasVendas';
 import { useAuth } from '@/hooks/useAuth';
 import { useFretesCidades } from '@/hooks/useFretesCidades';
 import { calcularFretePorPorta, FRETE_POR_PORTA_REGIAO } from '@/utils/fretePorPorta';
+import { useFretePorPortaRegiao } from '@/hooks/useFretePorPortaRegiao';
 import { getRegiao } from '@/utils/regioesBrasil';
 import { Checkbox } from '@/components/ui/checkbox';
 import { PagamentoSection, PagamentoData, createEmptyPagamentoData } from '@/components/vendas/PagamentoSection';
@@ -638,9 +639,10 @@ export default function VendaNovaMinimalista() {
     [portas]
   );
 
+  const { tabela: fretePorPortaTabela } = useFretePorPortaRegiao();
   const fretePorPortaCalc = useMemo(
-    () => calcularFretePorPorta(formData.estado, qtdPortasFrete),
-    [formData.estado, qtdPortasFrete]
+    () => calcularFretePorPorta(formData.estado, qtdPortasFrete, fretePorPortaTabela),
+    [formData.estado, qtdPortasFrete, fretePorPortaTabela]
   );
 
   // Auto-calcula valor do frete quando 'por_porta' está selecionado.

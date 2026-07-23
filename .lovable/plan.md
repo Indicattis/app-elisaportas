@@ -1,22 +1,34 @@
-## Mudanças
+## Objetivo
+Transformar a tabela estática de "Frete por Porta (Região)" (hoje hardcoded em `src/utils/fretePorPorta.ts`) em uma tabela editável no banco de dados, com nova página acessível via botão no hub `/logistica/frete`.
 
-### 1. Renomear rótulo do frete
-Em `src/pages/vendas/VendaNovaMinimalista.tsx` (linha ~1300), trocar o texto do radio `transportadora`:
-- De: **"Frete por Transportadora"**
-- Para: **"Frete por conta do cliente"**
+## Escopo
 
-O valor interno (`'transportadora'`) permanece igual para não quebrar dados existentes — apenas o label muda.
+### 1. Banco de dados
+Nova tabela `frete_por_porta_regiao`:
+- `regiao` (texto, único) — Sul, Sudeste, Centro-Oeste, Nordeste, Norte
+- `valor_unitario` (numeric) — valor cobrado por porta
+- padrão + updated_at/created_at
+- RLS: leitura para authenticated; escrita para admins/gerentes (mesmo padrão das outras tabelas de frete).
+- Seed com os 5 valores atuais (Sul 750, Sudeste 1200, Centro-Oeste 950, Nordeste 1500, Norte 1800).
 
-### 2. Garantir persistência do `tipo_frete` na venda
-As colunas `tipo_frete` e `valor_frete` já existem em `public.vendas`. O `valor_frete` já é salvo, mas o `tipo_frete` está declarado na interface de `useVendas.ts` e nunca incluído no payload de insert/update.
+### 2. Nova página `/logistica/frete/por-porta`
+- Rota adicionada em `App.tsx` (ou onde estão as rotas de logística).
+- Página `FretePorPortaPage.tsx` no padrão glassmorphism das outras páginas de frete:
+  - Breadcrumb Home > Logística > Frete > Frete por Porta
+  - Tabela com 5 regiões e input editável de "Valor por porta (R$)"
+  - Botão Salvar (upsert em lote)
+  - Preview do cálculo (ex.: "3 portas × R$ 750 = R$ 2.250")
 
-Ajustes em `src/hooks/useVendas.ts`:
-- No `createVenda` (payload principal de `vendas`, ~linha 451) adicionar `tipo_frete: vendaData.tipo_frete || 'interno'`.
-- No `updateVenda` equivalente (~linha 843) adicionar o mesmo campo.
-- Aplicar também nos fluxos de rascunho, se compartilharem o mesmo payload.
+### 3. Hub `/logistica/frete`
+- Adicionar novo card/botão "Frete por Porta" apontando para a nova rota, ao lado dos existentes (Valores Internos, Valores Transportadoras, Transportadoras).
 
-Garantir que `VendaNovaMinimalista.tsx` está passando `tipo_frete` no objeto enviado ao hook (já está no `formData`), sem outras alterações de UI/lógica.
+### 4. Consumo dinâmico
+- Novo hook `useFretePorPortaRegiao()` que faz cache da tabela.
+- Refatorar `src/utils/fretePorPorta.ts`:
+  - Manter função pura `calcularFretePorPorta(uf, qtdPortas, tabela)` recebendo o mapa de valores.
+  - Manter os valores estáticos apenas como fallback caso a tabela esteja vazia/carregando.
+- Atualizar `VendaNovaMinimalista.tsx` para usar o hook e passar a tabela ao cálculo, sem alterar UX.
 
-### Fora do escopo
-- Nenhuma mudança em relatórios, DRE, PDFs ou telas de visualização (o campo já pode ser lido do banco quando necessário).
-- Sem migração de dados legados (vendas antigas mantêm `tipo_frete` nulo/atual).
+## Fora do escopo
+- Nenhuma mudança em outras modalidades de frete (interno, por conta do cliente).
+- Sem alteração de valores já salvos em vendas existentes.
