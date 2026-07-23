@@ -1429,7 +1429,15 @@ export default function VendaNovaMinimalista() {
               precoFinal={precoFinalProdutosMemo}
               justificativa={justificativaDesconto}
               onChangeJustificativa={setJustificativaDesconto}
-              metodos={pagamentoData.metodos.map(m => ({ tipo: m.tipo, valor: m.valor }))}
+              metodos={pagamentoData.metodos.map(m => ({
+                tipo: m.tipo,
+                valor: m.valor,
+                parcelas: m.tipo === 'boleto'
+                  ? Number(m.parcelas_boleto) || 1
+                  : m.tipo === 'cartao_credito'
+                  ? Number(m.parcelas_cartao) || 1
+                  : undefined,
+              }))}
               temperatura={formData.temperatura}
             />
 
