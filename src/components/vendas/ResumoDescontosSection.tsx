@@ -34,11 +34,7 @@ export function ResumoDescontosSection({
   }, [precoFinal]);
   const valorSimulado = Number(String(simulado).replace(',', '.')) || 0;
 
-  const descontoAplicadoPct = precoTabelado > 0
-    ? Math.max(0, (precoTabelado - valorSimulado) / precoTabelado) * 100
-    : 0;
   const abaixoDoLimite = valorSimulado + 0.01 < precoLimite;
-  const diferenca = valorSimulado - precoFinal;
 
   const labelClass = 'text-white/60 text-xs font-medium uppercase tracking-wider';
 
