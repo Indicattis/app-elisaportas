@@ -12,7 +12,7 @@ interface Props {
   precoFinal: number;
   justificativa: string;
   onChangeJustificativa: (v: string) => void;
-  metodos?: Array<{ tipo: string; valor: number }>;
+  metodos?: Array<{ tipo: string; valor: number; parcelas?: number }>;
   temperatura?: boolean | null;
 }
 
@@ -65,18 +65,26 @@ export function ResumoDescontosSection({
               {temperatura ? 'Quente (presencial)' : 'Fria (online)'}
             </span>
           )}
-          {metodos.filter(m => m?.tipo).map((m, i) => (
-            <span
-              key={i}
-              className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-medium text-white/80"
-            >
-              <span className="text-[10px] uppercase tracking-wider text-white/50">Método {i + 1}</span>
-              {m.tipo}
-              {m.valor > 0 && (
-                <span className="text-white/50">· {formatCurrency(m.valor)}</span>
-              )}
-            </span>
-          ))}
+          {metodos.filter(m => m?.tipo).map((m, i) => {
+            const mostrarParcelas =
+              (m.tipo === 'boleto' || m.tipo === 'cartao_credito') &&
+              Number(m.parcelas) > 1;
+            return (
+              <span
+                key={i}
+                className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-medium text-white/80"
+              >
+                <span className="text-[10px] uppercase tracking-wider text-white/50">Método {i + 1}</span>
+                {m.tipo === 'boleto' ? 'boleto' : m.tipo === 'cartao_credito' ? 'cartão' : m.tipo}
+                {mostrarParcelas && (
+                  <span className="text-white/50">· {m.parcelas}x</span>
+                )}
+                {m.valor > 0 && (
+                  <span className="text-white/50">· {formatCurrency(m.valor)}</span>
+                )}
+              </span>
+            );
+          })}
         </div>
       )}
 
