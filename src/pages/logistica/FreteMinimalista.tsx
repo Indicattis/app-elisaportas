@@ -531,6 +531,40 @@ export default function FreteMinimalista() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={!!progresso}>
+        <DialogContent
+          className="bg-black/90 border-white/10 backdrop-blur-xl max-w-md"
+          onInteractOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => e.preventDefault()}
+        >
+          <DialogHeader>
+            <DialogTitle className="text-white flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin text-blue-400" />
+              Recalculando quilometragens
+            </DialogTitle>
+            <DialogDescription className="text-white/60">
+              Aguarde enquanto consultamos a rota da capital até cada cidade.
+            </DialogDescription>
+          </DialogHeader>
+          {progresso && (
+            <div className="space-y-3">
+              <Progress value={(progresso.done / Math.max(1, progresso.total)) * 100} className="h-2" />
+              <div className="flex items-center justify-between text-xs text-white/70">
+                <span>{progresso.done} de {progresso.total}</span>
+                <span>{Math.round((progresso.done / Math.max(1, progresso.total)) * 100)}%</span>
+              </div>
+              <div className="text-xs text-white/60 truncate">
+                Processando: <span className="text-blue-300">{progresso.current || "…"}</span>
+              </div>
+              <div className="flex gap-4 text-xs">
+                <span className="text-green-400">✓ {progresso.ok} sucesso</span>
+                <span className="text-red-400">✕ {progresso.fail} falhas</span>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </MinimalistLayout>
   );
 }
