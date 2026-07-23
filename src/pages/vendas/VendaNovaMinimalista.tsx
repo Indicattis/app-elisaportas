@@ -643,14 +643,6 @@ export default function VendaNovaMinimalista() {
     [formData.estado, qtdPortasFrete]
   );
 
-  // Se o usuário mudar Tipo de Entrega para algo diferente de 'entrega', o frete por porta
-  // deixa de ser válido — volta para 'interno'.
-  useEffect(() => {
-    if (formData.tipo_frete === 'por_porta' && formData.tipo_entrega !== 'entrega') {
-      setFormData(prev => ({ ...prev, tipo_frete: 'interno', valor_frete: 0 }));
-    }
-  }, [formData.tipo_entrega, formData.tipo_frete]);
-
   // Auto-calcula valor do frete quando 'por_porta' está selecionado.
   useEffect(() => {
     if (formData.tipo_frete !== 'por_porta') return;
