@@ -1418,7 +1418,15 @@ export default function VendaNovaMinimalista() {
                 recalcularValorTotal(portas, 0);
               }}
             />
-            
+
+            <ResumoDescontosSection
+              precoTabelado={precoTabeladoMemo}
+              limitePermitidoPct={validacaoDescontoMemo.limitePermitido}
+              precoFinal={precoFinalProdutosMemo}
+              justificativa={justificativaDesconto}
+              onChangeJustificativa={setJustificativaDesconto}
+            />
+
             {/* Indicador de Autorização Necessária */}
             {validacaoDescontoMemo.dentroDoLimite && (
               <div className={cn(sectionWrapperClass, "border-green-500/30")}>
