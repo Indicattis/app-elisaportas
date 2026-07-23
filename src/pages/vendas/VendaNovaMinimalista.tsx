@@ -639,9 +639,10 @@ export default function VendaNovaMinimalista() {
     [portas]
   );
 
+  const { tabela: fretePorPortaTabela } = useFretePorPortaRegiao();
   const fretePorPortaCalc = useMemo(
-    () => calcularFretePorPorta(formData.estado, qtdPortasFrete),
-    [formData.estado, qtdPortasFrete]
+    () => calcularFretePorPorta(formData.estado, qtdPortasFrete, fretePorPortaTabela),
+    [formData.estado, qtdPortasFrete, fretePorPortaTabela]
   );
 
   // Auto-calcula valor do frete quando 'por_porta' está selecionado.
