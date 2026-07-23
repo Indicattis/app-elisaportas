@@ -13,7 +13,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Badge } from '@/components/ui/badge';
-import { Plus, CalendarIcon, CheckCircle2, ShieldCheck, Lock, Package, CreditCard, FileText, Truck, Wrench, Settings, Building2 } from 'lucide-react';
+import { Plus, CalendarIcon, CheckCircle2, ShieldCheck, Lock, Package, CreditCard, FileText, Truck, Wrench, Settings, Building2, MapPin } from 'lucide-react';
 import { ProdutoVendaForm } from '@/components/vendas/ProdutoVendaForm';
 import { ProdutosVendaTable } from '@/components/vendas/ProdutosVendaTable';
 import { VendaResumo } from '@/components/vendas/VendaResumo';
@@ -34,6 +34,8 @@ import { useConfiguracoesVendas } from '@/hooks/useConfiguracoesVendas';
 import { useRegrasVendas } from '@/hooks/useRegrasVendas';
 import { useAuth } from '@/hooks/useAuth';
 import { useFretesCidades } from '@/hooks/useFretesCidades';
+import { calcularFretePorPorta, FRETE_POR_PORTA_REGIAO } from '@/utils/fretePorPorta';
+import { getRegiao } from '@/utils/regioesBrasil';
 import { Checkbox } from '@/components/ui/checkbox';
 import { PagamentoSection, PagamentoData, createEmptyPagamentoData } from '@/components/vendas/PagamentoSection';
 import { ComprovantesUploadBlock } from '@/components/vendas/ComprovantesUploadBlock';
@@ -628,6 +630,36 @@ export default function VendaNovaMinimalista() {
     }
   }, [freteSugerido?.valor_frete, formData.tipo_frete]);
 
+  // Quantidade total de PORTAS (ignora pintura, instalação, acessórios e itens avulsos).
+  const qtdPortasFrete = useMemo(
+    () => portas
+      .filter(p => p.tipo_produto === 'porta_enrolar' || p.tipo_produto === 'porta_social')
+      .reduce((s, p) => s + (p.quantidade || 1), 0),
+    [portas]
+  );
+
+  const fretePorPortaCalc = useMemo(
+    () => calcularFretePorPorta(formData.estado, qtdPortasFrete),
+    [formData.estado, qtdPortasFrete]
+  );
+
+  // Se o usuário mudar Tipo de Entrega para algo diferente de 'entrega', o frete por porta
+  // deixa de ser válido — volta para 'interno'.
+  useEffect(() => {
+    if (formData.tipo_frete === 'por_porta' && formData.tipo_entrega !== 'entrega') {
+      setFormData(prev => ({ ...prev, tipo_frete: 'interno', valor_frete: 0 }));
+    }
+  }, [formData.tipo_entrega, formData.tipo_frete]);
+
+  // Auto-calcula valor do frete quando 'por_porta' está selecionado.
+  useEffect(() => {
+    if (formData.tipo_frete !== 'por_porta') return;
+    const total = fretePorPortaCalc?.total ?? 0;
+    if (formData.valor_frete !== total) {
+      setFormData(prev => ({ ...prev, valor_frete: total }));
+    }
+  }, [formData.tipo_frete, fretePorPortaCalc?.total]);
+
   const handleAddPorta = (produto: ProdutoVenda) => {
     setPortas(prev => {
       let newPortas;
@@ -1191,11 +1223,15 @@ export default function VendaNovaMinimalista() {
                 value={formData.tipo_frete || 'interno'}
                 onValueChange={(value) => setFormData(prev => ({
                   ...prev,
-                  tipo_frete: value as 'interno' | 'transportadora',
-                  // Ao trocar para transportadora, zera para preenchimento manual
+                  tipo_frete: value as 'interno' | 'transportadora' | 'por_porta',
+                  // Ao trocar para transportadora, zera para preenchimento manual.
+                  // Para 'por_porta', o valor é recalculado pelo useEffect.
                   valor_frete: value === 'transportadora' ? 0 : prev.valor_frete,
                 }))}
-                className="grid grid-cols-1 md:grid-cols-2 gap-3"
+                className={cn(
+                  "grid grid-cols-1 gap-3",
+                  formData.tipo_entrega === 'entrega' ? "md:grid-cols-3" : "md:grid-cols-2"
+                )}
                 required
               >
                 <label
@@ -1224,6 +1260,21 @@ export default function VendaNovaMinimalista() {
                   <Building2 className={cn("w-5 h-5", formData.tipo_frete === 'transportadora' ? "text-blue-400" : "text-white/40")} />
                   <span className={cn("text-sm font-medium", formData.tipo_frete === 'transportadora' ? "text-white" : "text-white/70")}>Frete por Transportadora</span>
                 </label>
+                {formData.tipo_entrega === 'entrega' && (
+                  <label
+                    htmlFor="frete-por-porta"
+                    className={cn(
+                      "flex items-center justify-center gap-3 p-4 rounded-lg cursor-pointer transition-all duration-200 border-2",
+                      formData.tipo_frete === 'por_porta'
+                        ? "bg-blue-500/15 border-blue-400/40 shadow-lg shadow-blue-500/10"
+                        : "bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10"
+                    )}
+                  >
+                    <RadioGroupItem value="por_porta" id="frete-por-porta" className="sr-only" />
+                    <MapPin className={cn("w-5 h-5", formData.tipo_frete === 'por_porta' ? "text-blue-400" : "text-white/40")} />
+                    <span className={cn("text-sm font-medium", formData.tipo_frete === 'por_porta' ? "text-white" : "text-white/70")}>Frete por Porta (Região)</span>
+                  </label>
+                )}
               </RadioGroup>
             </div>
 
@@ -1239,19 +1290,36 @@ export default function VendaNovaMinimalista() {
                   value={formData.valor_frete}
                   onChange={(e) => setFormData(prev => ({ ...prev, valor_frete: parseFloat(e.target.value) || 0 }))}
                   placeholder="0,00"
-                  disabled={formData.tipo_frete === 'interno' && !!freteSugerido}
-                  readOnly={formData.tipo_frete === 'interno' && !!freteSugerido}
+                  disabled={(formData.tipo_frete === 'interno' && !!freteSugerido) || formData.tipo_frete === 'por_porta'}
+                  readOnly={(formData.tipo_frete === 'interno' && !!freteSugerido) || formData.tipo_frete === 'por_porta'}
                   className={cn(
                     inputClass,
                     "pl-10",
-                    formData.tipo_frete === 'interno' && freteSugerido && "cursor-not-allowed opacity-80"
+                    ((formData.tipo_frete === 'interno' && freteSugerido) || formData.tipo_frete === 'por_porta') && "cursor-not-allowed opacity-80"
                   )}
                 />
-                {formData.tipo_frete === 'interno' && freteSugerido && (
+                {((formData.tipo_frete === 'interno' && freteSugerido) || formData.tipo_frete === 'por_porta') && (
                   <Lock className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/50" />
                 )}
               </div>
-              {formData.tipo_frete === 'interno' ? (
+              {formData.tipo_frete === 'por_porta' ? (
+                fretePorPortaCalc ? (
+                  <div className="space-y-1">
+                    <Badge variant="outline" className="bg-blue-500/10 border-white/15 text-blue-300 text-xs">
+                      🔒 Região {fretePorPortaCalc.regiao} · {fretePorPortaCalc.quantidade} porta(s) × R$ {fretePorPortaCalc.valorUnitario.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </Badge>
+                    {fretePorPortaCalc.quantidade === 0 && (
+                      <p className="text-xs text-amber-300/80">Adicione ao menos uma porta para calcular o frete.</p>
+                    )}
+                  </div>
+                ) : formData.estado ? (
+                  <p className="text-xs text-amber-300/80">
+                    Estado {formData.estado} sem tabela de frete por porta — selecione outro tipo de frete.
+                  </p>
+                ) : (
+                  <p className="text-xs text-white/60">Selecione o estado do cliente para calcular o frete por porta.</p>
+                )
+              ) : formData.tipo_frete === 'interno' ? (
                 freteSugerido ? (
                   <Badge variant="outline" className="bg-blue-500/10 border-white/15 text-blue-300 text-xs">
                     🔒 Frete automático para {formData.cidade}/{formData.estado}

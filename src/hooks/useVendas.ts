@@ -60,7 +60,7 @@ export interface VendaFormData {
   canal_aquisicao_id?: string;
   data_prevista_entrega?: string;
   tipo_entrega?: string;
-  tipo_frete?: 'interno' | 'transportadora';
+  tipo_frete?: 'interno' | 'transportadora' | 'por_porta';
   temperatura?: boolean;
   cliente_id?: string; // ID do cliente existente selecionado
   orcamento_id?: string; // ID do orçamento se for conversão
