@@ -630,6 +630,36 @@ export default function VendaNovaMinimalista() {
     }
   }, [freteSugerido?.valor_frete, formData.tipo_frete]);
 
+  // Quantidade total de PORTAS (ignora pintura, instalação, acessórios e itens avulsos).
+  const qtdPortasFrete = useMemo(
+    () => portas
+      .filter(p => p.tipo_produto === 'porta_enrolar' || p.tipo_produto === 'porta_social')
+      .reduce((s, p) => s + (p.quantidade || 1), 0),
+    [portas]
+  );
+
+  const fretePorPortaCalc = useMemo(
+    () => calcularFretePorPorta(formData.estado, qtdPortasFrete),
+    [formData.estado, qtdPortasFrete]
+  );
+
+  // Se o usuário mudar Tipo de Entrega para algo diferente de 'entrega', o frete por porta
+  // deixa de ser válido — volta para 'interno'.
+  useEffect(() => {
+    if (formData.tipo_frete === 'por_porta' && formData.tipo_entrega !== 'entrega') {
+      setFormData(prev => ({ ...prev, tipo_frete: 'interno', valor_frete: 0 }));
+    }
+  }, [formData.tipo_entrega, formData.tipo_frete]);
+
+  // Auto-calcula valor do frete quando 'por_porta' está selecionado.
+  useEffect(() => {
+    if (formData.tipo_frete !== 'por_porta') return;
+    const total = fretePorPortaCalc?.total ?? 0;
+    if (formData.valor_frete !== total) {
+      setFormData(prev => ({ ...prev, valor_frete: total }));
+    }
+  }, [formData.tipo_frete, fretePorPortaCalc?.total]);
+
   const handleAddPorta = (produto: ProdutoVenda) => {
     setPortas(prev => {
       let newPortas;
