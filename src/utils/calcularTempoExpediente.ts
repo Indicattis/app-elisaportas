@@ -1,4 +1,5 @@
 import { toZonedTime } from 'date-fns-tz';
+import { isFeriadoBR } from './feriadosBR';
 
 const TIMEZONE = 'America/Sao_Paulo';
 
@@ -53,7 +54,7 @@ export function calcularTempoExpediente(
     const ehDomingo = diaSemana === 0;
     const ehSabado = diaSemana === 6;
     
-    if ((ehDomingo && !incluirDomingo) || (ehSabado && !incluirSabado)) {
+    if ((ehDomingo && !incluirDomingo) || (ehSabado && !incluirSabado) || isFeriadoBR(diaAtual)) {
       diaAtual.setDate(diaAtual.getDate() + 1);
       continue;
     }
@@ -106,7 +107,7 @@ export function estaNoExpediente(
   const ehDomingo = diaSemana === 0;
   const ehSabado = diaSemana === 6;
   
-  if ((ehDomingo && !incluirDomingo) || (ehSabado && !incluirSabado)) {
+  if ((ehDomingo && !incluirDomingo) || (ehSabado && !incluirSabado) || isFeriadoBR(dataBrasil)) {
     return false;
   }
   
