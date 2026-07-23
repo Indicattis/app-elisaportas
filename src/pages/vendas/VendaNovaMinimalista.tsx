@@ -1270,10 +1270,7 @@ export default function VendaNovaMinimalista() {
                   // Para 'por_porta', o valor é recalculado pelo useEffect.
                   valor_frete: value === 'transportadora' ? 0 : prev.valor_frete,
                 }))}
-                className={cn(
-                  "grid grid-cols-1 gap-3",
-                  formData.tipo_entrega === 'entrega' ? "md:grid-cols-3" : "md:grid-cols-2"
-                )}
+                className="grid grid-cols-3 gap-3"
                 required
               >
                 <label
