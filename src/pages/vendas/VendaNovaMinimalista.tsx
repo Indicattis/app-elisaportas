@@ -290,6 +290,9 @@ export default function VendaNovaMinimalista() {
       temperatura: typeof r.temperatura === 'boolean' ? r.temperatura : null,
       cliente_id: r.cliente_id || undefined,
     }));
+    if (typeof r.justificativa_desconto === 'string') {
+      setJustificativaDesconto(r.justificativa_desconto);
+    }
     if (r.data_venda) {
       try { setDataVenda(new Date(r.data_venda)); } catch {}
     }
