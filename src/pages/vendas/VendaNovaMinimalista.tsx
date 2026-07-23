@@ -778,6 +778,7 @@ export default function VendaNovaMinimalista() {
           data_venda: `${format(dataVenda, 'yyyy-MM-dd')}T12:00:00.000Z`,
           data_prevista_entrega: dataEntrega ? `${format(dataEntrega, 'yyyy-MM-dd')}T12:00:00.000Z` : undefined,
           atualizar_cadastro_cliente: atualizarCadastroCliente,
+          justificativa_desconto: justificativaDesconto || null,
         },
         portas,
         pagamentoData,
