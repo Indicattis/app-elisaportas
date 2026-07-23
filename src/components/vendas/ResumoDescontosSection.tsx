@@ -1,8 +1,10 @@
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { formatCurrency } from '@/lib/utils';
 import { CheckCircle2, AlertTriangle, Percent } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useEffect, useState } from 'react';
 
 interface Props {
   precoTabelado: number;
@@ -20,10 +22,19 @@ export function ResumoDescontosSection({
   onChangeJustificativa,
 }: Props) {
   const precoLimite = precoTabelado * (1 - (limitePermitidoPct || 0) / 100);
+
+  // Valor manual de simulação — não altera o valor real da venda.
+  const [simulado, setSimulado] = useState<string>(precoFinal.toFixed(2));
+  useEffect(() => {
+    setSimulado(precoFinal.toFixed(2));
+  }, [precoFinal]);
+  const valorSimulado = Number(String(simulado).replace(',', '.')) || 0;
+
   const descontoAplicadoPct = precoTabelado > 0
-    ? Math.max(0, (precoTabelado - precoFinal) / precoTabelado) * 100
+    ? Math.max(0, (precoTabelado - valorSimulado) / precoTabelado) * 100
     : 0;
-  const abaixoDoLimite = precoFinal + 0.01 < precoLimite;
+  const abaixoDoLimite = valorSimulado + 0.01 < precoLimite;
+  const diferenca = valorSimulado - precoFinal;
 
   const labelClass = 'text-white/60 text-xs font-medium uppercase tracking-wider';
 
@@ -35,7 +46,7 @@ export function ResumoDescontosSection({
         </div>
         <div>
           <h3 className="text-lg font-semibold text-white">Resumo dos descontos</h3>
-          <p className="text-xs text-white/50">Comparativo entre o preço de tabela, o limite autorizado e o preço final praticado.</p>
+          <p className="text-xs text-white/50">Simule um preço final para comparar com o preço de tabela e o limite autorizado.</p>
         </div>
       </div>
 
@@ -52,12 +63,39 @@ export function ResumoDescontosSection({
           hint={`Limite permitido: ${limitePermitidoPct.toFixed(1)}% de desconto`}
           tone="warning"
         />
-        <ValorCard
-          label="Preço final"
-          value={precoFinal}
-          hint={`Desconto aplicado: ${descontoAplicadoPct.toFixed(1)}%`}
-          tone={abaixoDoLimite ? 'danger' : 'success'}
-        />
+        <div className={cn(
+          'rounded-lg bg-white/[0.03] border p-4 space-y-2',
+          abaixoDoLimite ? 'border-rose-400/30' : 'border-emerald-400/30'
+        )}>
+          <p className="text-[11px] uppercase tracking-wider text-white/50 font-medium">
+            Preço final (simulação)
+          </p>
+          <div className="flex items-center gap-1">
+            <span className={cn(
+              'text-sm font-semibold',
+              abaixoDoLimite ? 'text-rose-300' : 'text-emerald-300'
+            )}>R$</span>
+            <Input
+              type="number"
+              inputMode="decimal"
+              step="0.01"
+              value={simulado}
+              onChange={(e) => setSimulado(e.target.value)}
+              className={cn(
+                'h-9 bg-white/5 border-white/10 text-lg font-bold px-2',
+                abaixoDoLimite ? 'text-rose-300' : 'text-emerald-300'
+              )}
+            />
+          </div>
+          <p className="text-[11px] text-white/40">
+            Desconto simulado: {descontoAplicadoPct.toFixed(1)}%
+            {Math.abs(diferenca) > 0.01 && (
+              <span className={cn('ml-2', diferenca < 0 ? 'text-rose-300' : 'text-emerald-300')}>
+                ({diferenca > 0 ? '+' : ''}{formatCurrency(diferenca)} vs. atual)
+              </span>
+            )}
+          </p>
+        </div>
       </div>
 
       <div
