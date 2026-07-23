@@ -323,6 +323,7 @@ import FrotaConferenciasHistoricoMinimalista from "./pages/logistica/FrotaConfer
 import FrotaConferenciaMinimalista from "./pages/logistica/FrotaConferenciaMinimalista";
 import FreteMinimalista from "./pages/logistica/FreteMinimalista";
 import FreteHub from "./pages/logistica/FreteHub";
+import FretePorPortaPage from "./pages/logistica/FretePorPortaPage";
 import FreteTransportadoras from "./pages/logistica/FreteTransportadoras";
 import FreteValoresTransportadoras from "./pages/logistica/FreteValoresTransportadoras";
 
