@@ -1289,29 +1289,29 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
                       <div className="grid grid-cols-4 gap-2">
                         <div className="bg-white/5 rounded-lg border border-white/10 p-2.5 text-center">
                           <p className="text-[9px] text-white/40 uppercase font-medium mb-1">Cartão</p>
-                          <p className={cn("text-sm font-bold", descontoTiers.cartao.pct > 0 ? "text-red-400" : "text-white/20")}>
+                          <p className={cn("text-sm font-bold", descontoTiers.cartao.pct > 0 ? "text-blue-400" : "text-white/20")}>
                             {descontoTiers.cartao.pct > 0 ? `${descontoTiers.cartao.pct.toFixed(1)}%` : '—'}
                           </p>
                           {descontoTiers.cartao.pct > 0 && (
-                            <p className="text-[10px] text-red-400/70 mt-0.5">-{formatCurrency(descontoTiers.cartao.valor)}</p>
+                            <p className="text-[10px] text-blue-400/70 mt-0.5">-{formatCurrency(descontoTiers.cartao.valor)}</p>
                           )}
                         </div>
                         <div className="bg-white/5 rounded-lg border border-white/10 p-2.5 text-center">
                           <p className="text-[9px] text-white/40 uppercase font-medium mb-1">Frio</p>
-                          <p className={cn("text-sm font-bold", descontoTiers.gelo.pct > 0 ? "text-red-400" : "text-white/20")}>
+                          <p className={cn("text-sm font-bold", descontoTiers.gelo.pct > 0 ? "text-blue-400" : "text-white/20")}>
                             {descontoTiers.gelo.pct > 0 ? `${descontoTiers.gelo.pct.toFixed(1)}%` : '—'}
                           </p>
                           {descontoTiers.gelo.pct > 0 && (
-                            <p className="text-[10px] text-red-400/70 mt-0.5">-{formatCurrency(descontoTiers.gelo.valor)}</p>
+                            <p className="text-[10px] text-blue-400/70 mt-0.5">-{formatCurrency(descontoTiers.gelo.valor)}</p>
                           )}
                         </div>
                         <div className="bg-white/5 rounded-lg border border-white/10 p-2.5 text-center">
                           <p className="text-[9px] text-white/40 uppercase font-medium mb-1">Gerente</p>
-                          <p className={cn("text-sm font-bold", descontoTiers.gerente.pct > 0 ? "text-amber-400" : "text-white/20")}>
+                          <p className={cn("text-sm font-bold", descontoTiers.gerente.pct > 0 ? "text-blue-400" : "text-white/20")}>
                             {descontoTiers.gerente.pct > 0 ? `${descontoTiers.gerente.pct.toFixed(1)}%` : '—'}
                           </p>
                           {descontoTiers.gerente.pct > 0 && (
-                            <p className="text-[10px] text-amber-400/70 mt-0.5">-{formatCurrency(descontoTiers.gerente.valor)}</p>
+                            <p className="text-[10px] text-blue-400/70 mt-0.5">-{formatCurrency(descontoTiers.gerente.valor)}</p>
                           )}
                         </div>
                         <div className="bg-white/5 rounded-lg border border-white/10 p-2.5 text-center">
