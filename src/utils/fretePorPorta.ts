@@ -1,5 +1,6 @@
 import { getRegiao, type RegiaoBrasil } from './regioesBrasil';
 
+/** Valores padrão (fallback caso a tabela do banco esteja indisponível). */
 export const FRETE_POR_PORTA_REGIAO: Record<RegiaoBrasil, number> = {
   Sul: 750,
   Sudeste: 1200,
@@ -18,10 +19,11 @@ export interface FretePorPortaCalculo {
 export function calcularFretePorPorta(
   uf: string | null | undefined,
   qtdPortas: number,
+  tabela?: Partial<Record<RegiaoBrasil, number>> | null,
 ): FretePorPortaCalculo | null {
   const regiao = getRegiao(uf);
   if (regiao === 'Outros') return null;
-  const valorUnitario = FRETE_POR_PORTA_REGIAO[regiao];
+  const valorUnitario = tabela?.[regiao] ?? FRETE_POR_PORTA_REGIAO[regiao];
   const quantidade = Math.max(0, Math.floor(qtdPortas || 0));
   return {
     regiao,
