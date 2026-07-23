@@ -1260,8 +1260,7 @@ export default function VendaNovaMinimalista() {
                   <Building2 className={cn("w-5 h-5", formData.tipo_frete === 'transportadora' ? "text-blue-400" : "text-white/40")} />
                   <span className={cn("text-sm font-medium", formData.tipo_frete === 'transportadora' ? "text-white" : "text-white/70")}>Frete por Transportadora</span>
                 </label>
-                {formData.tipo_entrega === 'entrega' && (
-                  <label
+                <label
                     htmlFor="frete-por-porta"
                     className={cn(
                       "flex items-center justify-center gap-3 p-4 rounded-lg cursor-pointer transition-all duration-200 border-2",
@@ -1273,8 +1272,7 @@ export default function VendaNovaMinimalista() {
                     <RadioGroupItem value="por_porta" id="frete-por-porta" className="sr-only" />
                     <MapPin className={cn("w-5 h-5", formData.tipo_frete === 'por_porta' ? "text-blue-400" : "text-white/40")} />
                     <span className={cn("text-sm font-medium", formData.tipo_frete === 'por_porta' ? "text-white" : "text-white/70")}>Frete por Porta (Região)</span>
-                  </label>
-                )}
+                </label>
               </RadioGroup>
             </div>
 
