@@ -177,7 +177,7 @@ export const useAutorizadosPorAtendente = () => {
         .from('autorizados')
         .select(`
           vendedor_id,
-          admin_users!inner(nome)
+          admin_users!autorizados_vendedor_id_fkey!inner(nome)
         `)
         .eq('ativo', true);
 
