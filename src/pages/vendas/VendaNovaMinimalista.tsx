@@ -449,6 +449,19 @@ export default function VendaNovaMinimalista() {
     return subtotalProdutosMemo + valorAjusteGlobalSigned + (formData.valor_frete || 0) + valorCredito;
   }, [subtotalProdutosMemo, valorAjusteGlobalSigned, formData.valor_frete, valorCredito]);
 
+  // Preço tabelado (soma dos produtos SEM qualquer desconto/ajuste global).
+  const precoTabeladoMemo = useMemo(() => {
+    return portas.reduce((acc, p) => {
+      const base = (p.valor_produto + p.valor_pintura + p.valor_instalacao) * (p.quantidade || 1);
+      return acc + base;
+    }, 0);
+  }, [portas]);
+
+  // Preço final dos produtos (após descontos linha a linha e ajuste global), sem frete/crédito.
+  const precoFinalProdutosMemo = useMemo(() => {
+    return Math.max(0, subtotalProdutosMemo + valorAjusteGlobalSigned);
+  }, [subtotalProdutosMemo, valorAjusteGlobalSigned]);
+
   // Distribui o ajuste global proporcionalmente entre as portas (usado em validação e submit)
   const portasComAjusteGlobal = useMemo<ProdutoVenda[]>(() => {
     if (!ajusteGlobal.valor || ajusteGlobal.valor <= 0 || portas.length === 0) return portas;
