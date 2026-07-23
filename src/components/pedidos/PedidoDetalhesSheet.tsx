@@ -249,15 +249,19 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
     const isFrio = vendaCompleta.temperatura === false;
     const limAvista = configLimites?.avista ?? 3;
     const limPresencial = configLimites?.presencial ?? 5;
-    let pctCartao = 0, pctGelo = 0, pctResp = 0;
+    const limGerente = (configLimites as any)?.adicionalResponsavel ?? (configLimites as any)?.responsavel ?? 7;
+    let pctCartao = 0, pctGelo = 0, pctGerente = 0, pctDiretor = 0;
     let remaining = totalPct;
     if (!isCartao) { pctCartao = Math.min(remaining, limAvista); remaining -= pctCartao; }
     if (isFrio && remaining > 0) { pctGelo = Math.min(remaining, limPresencial); remaining -= pctGelo; }
-    if (remaining > 0) pctResp = remaining;
+    if (remaining > 0) { pctGerente = Math.min(remaining, limGerente); remaining -= pctGerente; }
+    if (remaining > 0) pctDiretor = remaining;
     return {
       cartao: { pct: pctCartao, valor: valorTabela * (pctCartao / 100) },
       gelo: { pct: pctGelo, valor: valorTabela * (pctGelo / 100) },
-      responsavel: { pct: pctResp, valor: valorTabela * (pctResp / 100) },
+      gerente: { pct: pctGerente, valor: valorTabela * (pctGerente / 100) },
+      diretor: { pct: pctDiretor, valor: valorTabela * (pctDiretor / 100) },
+      responsavel: { pct: pctGerente + pctDiretor, valor: valorTabela * ((pctGerente + pctDiretor) / 100) },
       totalPct,
       totalValor: descontoTotal,
     };
@@ -1282,7 +1286,7 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
                         <Percent className="h-3.5 w-3.5 text-red-400" />
                         Descontos por Faixa ({descontoTiers.totalPct.toFixed(1)}% total)
                       </h3>
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="grid grid-cols-4 gap-2">
                         <div className="bg-white/5 rounded-lg border border-white/10 p-2.5 text-center">
                           <p className="text-[9px] text-white/40 uppercase font-medium mb-1">Cartão</p>
                           <p className={cn("text-sm font-bold", descontoTiers.cartao.pct > 0 ? "text-red-400" : "text-white/20")}>
@@ -1302,12 +1306,21 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
                           )}
                         </div>
                         <div className="bg-white/5 rounded-lg border border-white/10 p-2.5 text-center">
-                          <p className="text-[9px] text-white/40 uppercase font-medium mb-1">Diretor</p>
-                          <p className={cn("text-sm font-bold", descontoTiers.responsavel.pct > 0 ? "text-orange-400" : "text-white/20")}>
-                            {descontoTiers.responsavel.pct > 0 ? `${descontoTiers.responsavel.pct.toFixed(1)}%` : '—'}
+                          <p className="text-[9px] text-white/40 uppercase font-medium mb-1">Gerente</p>
+                          <p className={cn("text-sm font-bold", descontoTiers.gerente.pct > 0 ? "text-amber-400" : "text-white/20")}>
+                            {descontoTiers.gerente.pct > 0 ? `${descontoTiers.gerente.pct.toFixed(1)}%` : '—'}
                           </p>
-                          {descontoTiers.responsavel.pct > 0 && (
-                            <p className="text-[10px] text-orange-400/70 mt-0.5">-{formatCurrency(descontoTiers.responsavel.valor)}</p>
+                          {descontoTiers.gerente.pct > 0 && (
+                            <p className="text-[10px] text-amber-400/70 mt-0.5">-{formatCurrency(descontoTiers.gerente.valor)}</p>
+                          )}
+                        </div>
+                        <div className="bg-white/5 rounded-lg border border-white/10 p-2.5 text-center">
+                          <p className="text-[9px] text-white/40 uppercase font-medium mb-1">Diretor</p>
+                          <p className={cn("text-sm font-bold", descontoTiers.diretor.pct > 0 ? "text-red-500" : "text-white/20")}>
+                            {descontoTiers.diretor.pct > 0 ? `${descontoTiers.diretor.pct.toFixed(1)}%` : '—'}
+                          </p>
+                          {descontoTiers.diretor.pct > 0 && (
+                            <p className="text-[10px] text-red-500/70 mt-0.5">-{formatCurrency(descontoTiers.diretor.valor)}</p>
                           )}
                         </div>
                       </div>
