@@ -81,7 +81,7 @@ function buildClausulas(d: ContratoElisaData): Array<{ titulo?: string; texto: s
     {
       titulo: 'CLÁUSULA SEXTA – DO PRAZO DE INSTALAÇÃO',
       texto:
-        '1. O VENDEDOR terá até 30 dias úteis para concluir a instalação do objeto deste contrato a partir da data de confirmação do pagamento inicial, desde que o local de instalação esteja pronto e disponível em condições adequadas para a instalação.\n\n' +
+        '1. O VENDEDOR terá até 30 - 45 dias úteis para concluir a instalação do objeto deste contrato a partir da data de confirmação do pagamento inicial, desde que o local de instalação esteja pronto e disponível em condições adequadas para a instalação.\n\n' +
         '2. Caso o COMPRADOR não disponibilize o local nas condições adequadas e dentro do prazo estipulado para a instalação, o prazo contratual para execução dos serviços ficará automaticamente prorrogado por mais 30 (trinta) dias, contados a partir da efetiva regularização e disponibilização do local em condições apropriadas para a realização da instalação.',
     },
     {
