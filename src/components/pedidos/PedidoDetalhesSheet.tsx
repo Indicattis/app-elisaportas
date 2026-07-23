@@ -249,15 +249,19 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
     const isFrio = vendaCompleta.temperatura === false;
     const limAvista = configLimites?.avista ?? 3;
     const limPresencial = configLimites?.presencial ?? 5;
-    let pctCartao = 0, pctGelo = 0, pctResp = 0;
+    const limGerente = configLimites?.responsavel ?? 7;
+    let pctCartao = 0, pctGelo = 0, pctGerente = 0, pctDiretor = 0;
     let remaining = totalPct;
     if (!isCartao) { pctCartao = Math.min(remaining, limAvista); remaining -= pctCartao; }
     if (isFrio && remaining > 0) { pctGelo = Math.min(remaining, limPresencial); remaining -= pctGelo; }
-    if (remaining > 0) pctResp = remaining;
+    if (remaining > 0) { pctGerente = Math.min(remaining, limGerente); remaining -= pctGerente; }
+    if (remaining > 0) pctDiretor = remaining;
     return {
       cartao: { pct: pctCartao, valor: valorTabela * (pctCartao / 100) },
       gelo: { pct: pctGelo, valor: valorTabela * (pctGelo / 100) },
-      responsavel: { pct: pctResp, valor: valorTabela * (pctResp / 100) },
+      gerente: { pct: pctGerente, valor: valorTabela * (pctGerente / 100) },
+      diretor: { pct: pctDiretor, valor: valorTabela * (pctDiretor / 100) },
+      responsavel: { pct: pctGerente + pctDiretor, valor: valorTabela * ((pctGerente + pctDiretor) / 100) },
       totalPct,
       totalValor: descontoTotal,
     };
