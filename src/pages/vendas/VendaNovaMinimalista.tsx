@@ -207,6 +207,9 @@ export default function VendaNovaMinimalista() {
     valor: 0,
   });
 
+  // Justificativa livre do desconto aplicado (Resumo dos descontos).
+  const [justificativaDesconto, setJustificativaDesconto] = useState('');
+
   const { data: cores } = useQuery({
     queryKey: ['cores-catalogo'],
     queryFn: async () => {
