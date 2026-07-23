@@ -21,7 +21,7 @@ export function useFretePorPortaRegiao() {
         .from('frete_por_porta_regiao' as any)
         .select('id, regiao, valor_unitario');
       if (error) throw error;
-      return (data ?? []) as FretePorPortaRegiao[];
+      return ((data ?? []) as unknown) as FretePorPortaRegiao[];
     },
     staleTime: 5 * 60 * 1000,
   });
