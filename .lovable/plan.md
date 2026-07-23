@@ -1,54 +1,27 @@
+## Causa raiz
 
-## Objetivo
+Em `src/hooks/useDashboardData.ts` (`useAutorizadosPorAtendente`), a query faz:
 
-Permitir que o vendedor cadastre um novo Representante direto na página `/vendas/meus-parceiros`, já vinculado a ele como atendente responsável.
+```ts
+supabase.from('autorizados').select('vendedor_id, admin_users!inner(nome)')
+```
 
-## Contexto atual
+A tabela `autorizados` tem **três** foreign keys para `admin_users` (`created_by`, `vendedor_id`, `vendedor_responsavel_id`). Sem hint explícito, o PostgREST não sabe qual relação usar — o embed resolve de forma ambígua (na prática, pela primeira FK, `created_by`, que na maior parte dos registros é nula), então `admin_users!inner` filtra fora quase todo autorizado e o `reduce` devolve um mapa vazio. Resultado: cada linha do ranking mostra `0 autorizados`.
 
-- Representantes no sistema são armazenados na tabela `autorizados` com `tipo_parceiro='representante'` (a tabela `representantes` existe mas é usada por outro fluxo de acesso, não pela lista de parceiros do vendedor).
-- Hoje só existe cadastro de parceiro em `/direcao/autorizados/novo` (`NovoAutorizadoDirecao.tsx`), fixado em `tipo_parceiro='autorizado'` e restrito à Direção/Logística.
-- A RLS de `autorizados` permite qualquer usuário autenticado inserir, então o vendedor já tem permissão no banco.
-- `MeusParceiros.tsx` filtra por `vendedor_id = admin_user.id` do usuário logado, então basta o novo registro nascer com esse `vendedor_id` para aparecer imediatamente na lista.
+Confirmado no banco: as 41 linhas ativas de `autorizados` têm `vendedor_id` preenchido e resolvem corretamente para nomes (William 11, Daiane 10, Magno 10, Suelen 5, Vitoria 4, Victor 1), que batem com os nomes retornados pelo ranking (`admin_users.nome`).
 
-## O que será feito
+## Correção
 
-### 1. Novo botão em `src/pages/vendas/MeusParceiros.tsx`
-- Botão "Cadastrar Representante" no cabeçalho (ao lado do filtro por tipo), com ícone `Plus` e estilo consistente com o restante da página (glassmorphism roxo, coerente com a cor do tipo Representante).
-- Ao clicar, abre um dialog modal (`RepresentanteFormDialog`) — sem sair da rota — mantendo a UX rápida esperada pelo vendedor.
+Editar `src/hooks/useDashboardData.ts`, hook `useAutorizadosPorAtendente`:
 
-### 2. Novo componente `src/components/parceiros/RepresentanteFormDialog.tsx`
-Formulário enxuto (só o essencial que faz sentido para representante):
-- Nome * 
-- Responsável * 
-- Telefone * 
-- WhatsApp * 
-- E-mail (opcional)
-- CPF/CNPJ (opcional)
-- Chave Pix (opcional)
-- Estado * (select com `ESTADOS_BRASIL`)
-- Cidade * (select dependente via `getCidadesPorEstado`)
-- CEP *
+- Trocar o embed para usar a FK explícita:
+  ```ts
+  .select('vendedor_id, admin_users!autorizados_vendedor_id_fkey(nome)')
+  ```
+- Manter o `.eq('ativo', true)` e o agrupamento por `admin_users.nome`.
 
-Regras:
-- `tipo_parceiro = 'representante'` fixo.
-- `vendedor_id` = `admin_users.id` do usuário logado (resolvido via `user.id`).
-- `representante_etapa` = primeira etapa do fluxo de representante (`getEtapasByTipo('representante').order[0]`).
-- `ativo = true`.
-- `created_by` = `admin_users.id` do usuário logado.
-- Após insert bem-sucedido: dispara `geocode-nominatim` (best-effort, igual `NovoAutorizadoDirecao`), invalida a query `['meus-parceiros', user?.id]`, fecha o dialog e mostra toast.
+Nenhuma outra mudança necessária — as chaves do mapa continuam batendo com `vendedor.nome` do slide 2.
 
-### 3. Sem mudanças no banco
-- Schema, GRANTs e RLS já cobrem o cenário (`Authenticated users can manage autorizados`).
-- Sem migração.
+## Verificação
 
-## Fora de escopo
-- Cadastro de Autorizados/Franqueados pelo vendedor (o pedido é específico para Representantes).
-- Cidades secundárias, logo, vendedor responsável adicional — mantidos apenas no fluxo da Direção para não poluir o form do vendedor.
-- Fluxo de aprovação: o representante já nasce ativo e vinculado ao vendedor (mesmo comportamento do cadastro atual de autorizado).
-
-## Detalhes técnicos
-
-- Arquivos alterados: `src/pages/vendas/MeusParceiros.tsx` (adiciona botão + estado do dialog).
-- Arquivos novos: `src/components/parceiros/RepresentanteFormDialog.tsx`.
-- Reaproveita: `ESTADOS_BRASIL`, `getCidadesPorEstado` (`@/utils/estadosCidades`), `getEtapasByTipo` (`@/utils/parceiros`), `useAuth`, componentes shadcn (`Dialog`, `Input`, `Label`, `Select`, `Button`).
-- Invalidação: `queryClient.invalidateQueries({ queryKey: ['meus-parceiros'] })` após insert.
+Após o build, abrir `/paineis/tv-dashboard`, ir ao slide 2 e confirmar que a pill "N autorizados" mostra o número certo para cada vendedor (William 11, Daiane 10, Magno 10, Suelen 5, Vitoria 4).
