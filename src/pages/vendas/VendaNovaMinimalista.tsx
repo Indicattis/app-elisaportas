@@ -17,6 +17,7 @@ import { Plus, CalendarIcon, CheckCircle2, ShieldCheck, Lock, Package, CreditCar
 import { ProdutoVendaForm } from '@/components/vendas/ProdutoVendaForm';
 import { ProdutosVendaTable } from '@/components/vendas/ProdutosVendaTable';
 import { VendaResumo } from '@/components/vendas/VendaResumo';
+import { ResumoDescontosSection } from '@/components/vendas/ResumoDescontosSection';
 import { useToast } from '@/hooks/use-toast';
 import { toast as sonnerToast } from 'sonner';
 import { format } from 'date-fns';
@@ -206,6 +207,9 @@ export default function VendaNovaMinimalista() {
     valor: 0,
   });
 
+  // Justificativa livre do desconto aplicado (Resumo dos descontos).
+  const [justificativaDesconto, setJustificativaDesconto] = useState('');
+
   const { data: cores } = useQuery({
     queryKey: ['cores-catalogo'],
     queryFn: async () => {
@@ -286,6 +290,9 @@ export default function VendaNovaMinimalista() {
       temperatura: typeof r.temperatura === 'boolean' ? r.temperatura : null,
       cliente_id: r.cliente_id || undefined,
     }));
+    if (typeof r.justificativa_desconto === 'string') {
+      setJustificativaDesconto(r.justificativa_desconto);
+    }
     if (r.data_venda) {
       try { setDataVenda(new Date(r.data_venda)); } catch {}
     }
@@ -441,6 +448,19 @@ export default function VendaNovaMinimalista() {
   const valorTotalMemo = useMemo(() => {
     return subtotalProdutosMemo + valorAjusteGlobalSigned + (formData.valor_frete || 0) + valorCredito;
   }, [subtotalProdutosMemo, valorAjusteGlobalSigned, formData.valor_frete, valorCredito]);
+
+  // Preço tabelado (soma dos produtos SEM qualquer desconto/ajuste global).
+  const precoTabeladoMemo = useMemo(() => {
+    return portas.reduce((acc, p) => {
+      const base = (p.valor_produto + p.valor_pintura + p.valor_instalacao) * (p.quantidade || 1);
+      return acc + base;
+    }, 0);
+  }, [portas]);
+
+  // Preço final dos produtos (após descontos linha a linha e ajuste global), sem frete/crédito.
+  const precoFinalProdutosMemo = useMemo(() => {
+    return Math.max(0, subtotalProdutosMemo + valorAjusteGlobalSigned);
+  }, [subtotalProdutosMemo, valorAjusteGlobalSigned]);
 
   // Distribui o ajuste global proporcionalmente entre as portas (usado em validação e submit)
   const portasComAjusteGlobal = useMemo<ProdutoVenda[]>(() => {
@@ -758,6 +778,7 @@ export default function VendaNovaMinimalista() {
           data_venda: `${format(dataVenda, 'yyyy-MM-dd')}T12:00:00.000Z`,
           data_prevista_entrega: dataEntrega ? `${format(dataEntrega, 'yyyy-MM-dd')}T12:00:00.000Z` : undefined,
           atualizar_cadastro_cliente: atualizarCadastroCliente,
+          justificativa_desconto: justificativaDesconto || null,
         },
         portas,
         pagamentoData,
@@ -881,6 +902,7 @@ export default function VendaNovaMinimalista() {
               forma_pagamento: pagamentoData.metodos[0]?.tipo || '',
               data_venda: `${format(dataVenda, 'yyyy-MM-dd')}T12:00:00.000Z`,
               atualizar_cadastro_cliente: atualizarCadastroCliente,
+              justificativa_desconto: justificativaDesconto || null,
             },
             portas: portasComAjusteGlobal,
             pagamentoData,
@@ -923,6 +945,7 @@ export default function VendaNovaMinimalista() {
           forma_pagamento: pagamentoData.metodos[0]?.tipo || '',
           data_venda: `${format(dataVenda, 'yyyy-MM-dd')}T12:00:00.000Z`,
           atualizar_cadastro_cliente: atualizarCadastroCliente,
+          justificativa_desconto: justificativaDesconto || null,
         },
         portas: portasComAjusteGlobal,
         pagamentoData,
@@ -966,6 +989,7 @@ export default function VendaNovaMinimalista() {
           forma_pagamento: pagamentoData.metodos[0]?.tipo || '',
           data_venda: `${format(dataVenda, 'yyyy-MM-dd')}T12:00:00.000Z`,
           atualizar_cadastro_cliente: atualizarCadastroCliente,
+          justificativa_desconto: justificativaDesconto || null,
         },
         portas: produtosComDesconto,
         pagamentoData,
@@ -1398,7 +1422,15 @@ export default function VendaNovaMinimalista() {
                 recalcularValorTotal(portas, 0);
               }}
             />
-            
+
+            <ResumoDescontosSection
+              precoTabelado={precoTabeladoMemo}
+              limitePermitidoPct={validacaoDescontoMemo.limitePermitido}
+              precoFinal={precoFinalProdutosMemo}
+              justificativa={justificativaDesconto}
+              onChangeJustificativa={setJustificativaDesconto}
+            />
+
             {/* Indicador de Autorização Necessária */}
             {validacaoDescontoMemo.dentroDoLimite && (
               <div className={cn(sectionWrapperClass, "border-green-500/30")}>
