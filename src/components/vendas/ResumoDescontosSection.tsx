@@ -12,6 +12,8 @@ interface Props {
   precoFinal: number;
   justificativa: string;
   onChangeJustificativa: (v: string) => void;
+  metodos?: Array<{ tipo: string; valor: number }>;
+  temperatura?: boolean | null;
 }
 
 export function ResumoDescontosSection({
@@ -20,6 +22,8 @@ export function ResumoDescontosSection({
   precoFinal,
   justificativa,
   onChangeJustificativa,
+  metodos = [],
+  temperatura = null,
 }: Props) {
   const precoLimite = precoTabelado * (1 - (limitePermitidoPct || 0) / 100);
 
@@ -49,6 +53,36 @@ export function ResumoDescontosSection({
           <p className="text-xs text-white/50">Simule um preço final para comparar com o preço de tabela e o limite autorizado.</p>
         </div>
       </div>
+
+      {(metodos.length > 0 || temperatura !== null) && (
+        <div className="flex flex-wrap items-center gap-2">
+          {temperatura !== null && (
+            <span
+              className={cn(
+                'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium',
+                temperatura
+                  ? 'bg-orange-500/10 border-orange-400/30 text-orange-200'
+                  : 'bg-sky-500/10 border-sky-400/30 text-sky-200'
+              )}
+            >
+              <span className="text-[10px] uppercase tracking-wider opacity-70">Temperatura</span>
+              {temperatura ? 'Quente (presencial)' : 'Fria (online)'}
+            </span>
+          )}
+          {metodos.filter(m => m?.tipo).map((m, i) => (
+            <span
+              key={i}
+              className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-medium text-white/80"
+            >
+              <span className="text-[10px] uppercase tracking-wider text-white/50">Método {i + 1}</span>
+              {m.tipo}
+              {m.valor > 0 && (
+                <span className="text-white/50">· {formatCurrency(m.valor)}</span>
+              )}
+            </span>
+          ))}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <ValorCard

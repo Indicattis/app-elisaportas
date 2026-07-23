@@ -1429,6 +1429,8 @@ export default function VendaNovaMinimalista() {
               precoFinal={precoFinalProdutosMemo}
               justificativa={justificativaDesconto}
               onChangeJustificativa={setJustificativaDesconto}
+              metodos={pagamentoData.metodos.map(m => ({ tipo: m.tipo, valor: m.valor }))}
+              temperatura={formData.temperatura}
             />
 
             {/* Indicador de Autorização Necessária */}
