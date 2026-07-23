@@ -1327,15 +1327,15 @@ export default function VendaNovaMinimalista() {
                   value={formData.valor_frete}
                   onChange={(e) => setFormData(prev => ({ ...prev, valor_frete: parseFloat(e.target.value) || 0 }))}
                   placeholder="0,00"
-                  disabled={(formData.tipo_frete === 'interno' && !!freteSugerido) || formData.tipo_frete === 'por_porta'}
-                  readOnly={(formData.tipo_frete === 'interno' && !!freteSugerido) || formData.tipo_frete === 'por_porta'}
+                  disabled={(formData.tipo_frete === 'interno' && !!freteSugerido) || formData.tipo_frete === 'por_porta' || formData.tipo_frete === 'transportadora'}
+                  readOnly={(formData.tipo_frete === 'interno' && !!freteSugerido) || formData.tipo_frete === 'por_porta' || formData.tipo_frete === 'transportadora'}
                   className={cn(
                     inputClass,
                     "pl-10",
-                    ((formData.tipo_frete === 'interno' && freteSugerido) || formData.tipo_frete === 'por_porta') && "cursor-not-allowed opacity-80"
+                    ((formData.tipo_frete === 'interno' && freteSugerido) || formData.tipo_frete === 'por_porta' || formData.tipo_frete === 'transportadora') && "cursor-not-allowed opacity-80"
                   )}
                 />
-                {((formData.tipo_frete === 'interno' && freteSugerido) || formData.tipo_frete === 'por_porta') && (
+                {((formData.tipo_frete === 'interno' && freteSugerido) || formData.tipo_frete === 'por_porta' || formData.tipo_frete === 'transportadora') && (
                   <Lock className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/50" />
                 )}
               </div>
@@ -1368,7 +1368,7 @@ export default function VendaNovaMinimalista() {
                 ) : null
               ) : (
                 <p className="text-xs text-white/60">
-                  Informe manualmente o valor cobrado pela transportadora.
+                  🔒 O frete é pago diretamente pelo cliente — valor travado em R$ 0,00.
                 </p>
               )}
             </div>
