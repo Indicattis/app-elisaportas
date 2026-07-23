@@ -249,7 +249,7 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
     const isFrio = vendaCompleta.temperatura === false;
     const limAvista = configLimites?.avista ?? 3;
     const limPresencial = configLimites?.presencial ?? 5;
-    const limGerente = configLimites?.responsavel ?? 7;
+    const limGerente = (configLimites as any)?.adicionalResponsavel ?? (configLimites as any)?.responsavel ?? 7;
     let pctCartao = 0, pctGelo = 0, pctGerente = 0, pctDiretor = 0;
     let remaining = totalPct;
     if (!isCartao) { pctCartao = Math.min(remaining, limAvista); remaining -= pctCartao; }
