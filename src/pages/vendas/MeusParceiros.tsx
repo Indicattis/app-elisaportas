@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Handshake, Building2, Users, Store, MapPin, Phone, ArrowRight, UserCheck } from 'lucide-react';
+import { Handshake, Building2, Users, Store, MapPin, Phone, ArrowRight, UserCheck, UserPlus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TIPO_PARCEIRO_LABELS, getEtapasByTipo, getCurrentEtapa } from '@/utils/parceiros';
 import { TransferirParceiroModal } from '@/components/parceiros/TransferirParceiroModal';
+import { RepresentanteFormDialog } from '@/components/parceiros/RepresentanteFormDialog';
 
 type TipoParceiro = 'autorizado' | 'representante' | 'franqueado';
 
@@ -16,6 +17,7 @@ export default function MeusParceiros() {
   const { user } = useAuth();
   const [tipoFiltro, setTipoFiltro] = useState<TipoParceiro | ''>('');
   const [transferirParceiro, setTransferirParceiro] = useState<{ id: string; nome: string } | null>(null);
+  const [cadastrarRepOpen, setCadastrarRepOpen] = useState(false);
 
   const { data: parceiros, isLoading } = useQuery({
     queryKey: ['meus-parceiros', user?.id],
@@ -170,7 +172,7 @@ export default function MeusParceiros() {
       </div>
 
       {/* Filtro por tipo */}
-      <div className="flex flex-wrap gap-2 mb-6">
+      <div className="flex flex-wrap items-center gap-2 mb-6">
         {([
           { value: '', label: 'Todos' },
           { value: 'autorizado', label: 'Autorizados' },
@@ -189,6 +191,15 @@ export default function MeusParceiros() {
             {opt.label}
           </button>
         ))}
+
+        <button
+          type="button"
+          onClick={() => setCadastrarRepOpen(true)}
+          className="ml-auto inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium text-white bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-400 hover:to-purple-600 border border-purple-400/40 shadow-lg shadow-purple-900/30 transition-all"
+        >
+          <UserPlus className="w-4 h-4" />
+          Cadastrar Representante
+        </button>
       </div>
 
       {/* Lista de parceiros */}
@@ -300,6 +311,11 @@ export default function MeusParceiros() {
           parceiroNome={transferirParceiro.nome}
         />
       )}
+
+      <RepresentanteFormDialog
+        open={cadastrarRepOpen}
+        onOpenChange={setCadastrarRepOpen}
+      />
     </MinimalistLayout>
   );
 }
