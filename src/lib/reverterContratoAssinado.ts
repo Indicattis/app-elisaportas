@@ -43,6 +43,8 @@ export async function reverterContratoAssinado(
       contrato_url: null,
       contrato_assinado_em: null,
       contrato_anexado_por: null,
+      contrato_liberado_faturamento: false,
+      contrato_dispensado: false,
     })
     .eq("id", vendaId);
   if (error) throw error;
