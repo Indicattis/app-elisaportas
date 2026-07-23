@@ -35,6 +35,7 @@ import { useRegrasVendas } from '@/hooks/useRegrasVendas';
 import { useAuth } from '@/hooks/useAuth';
 import { useFretesCidades } from '@/hooks/useFretesCidades';
 import { calcularFretePorPorta, FRETE_POR_PORTA_REGIAO } from '@/utils/fretePorPorta';
+import { useFretePorPortaRegiao } from '@/hooks/useFretePorPortaRegiao';
 import { getRegiao } from '@/utils/regioesBrasil';
 import { Checkbox } from '@/components/ui/checkbox';
 import { PagamentoSection, PagamentoData, createEmptyPagamentoData } from '@/components/vendas/PagamentoSection';
