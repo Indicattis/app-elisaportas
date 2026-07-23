@@ -122,11 +122,17 @@ export function ResumoDescontosSection({
             />
           </div>
           <p className="text-[11px] text-white/40">
-            Desconto simulado: {descontoAplicadoPct.toFixed(1)}%
-            {Math.abs(diferenca) > 0.01 && (
-              <span className={cn('ml-2', diferenca < 0 ? 'text-rose-300' : 'text-emerald-300')}>
-                ({diferenca > 0 ? '+' : ''}{formatCurrency(diferenca)} vs. atual)
+            {abaixoDoLimite ? (
+              <span className="text-rose-300">
+                Excedente ao limite: {formatCurrency(Math.max(0, precoLimite - valorSimulado))}
+                {precoTabelado > 0 && (
+                  <span className="ml-1 text-white/40">
+                    ({((Math.max(0, precoLimite - valorSimulado) / precoTabelado) * 100).toFixed(1)}%)
+                  </span>
+                )}
               </span>
+            ) : (
+              <span className="text-emerald-300/80">Dentro do limite permitido</span>
             )}
           </p>
         </div>
