@@ -66,9 +66,9 @@ export function ResumoDescontosSection({
             </span>
           )}
           {metodos.filter(m => m?.tipo).map((m, i) => {
-            const mostrarParcelas =
-              (m.tipo === 'boleto' || m.tipo === 'cartao_credito') &&
-              Number(m.parcelas) > 1;
+            const isParcelado = m.tipo === 'boleto' || m.tipo === 'cartao_credito';
+            const qtdParcelas = Math.max(1, Number(m.parcelas) || 1);
+            const mostrarParcelas = isParcelado;
             return (
               <span
                 key={i}
@@ -77,7 +77,7 @@ export function ResumoDescontosSection({
                 <span className="text-[10px] uppercase tracking-wider text-white/50">Método {i + 1}</span>
                 {m.tipo === 'boleto' ? 'boleto' : m.tipo === 'cartao_credito' ? 'cartão' : m.tipo}
                 {mostrarParcelas && (
-                  <span className="text-white/50">· {m.parcelas}x</span>
+                  <span className="text-blue-200">· {qtdParcelas}x</span>
                 )}
                 {m.valor > 0 && (
                   <span className="text-white/50">· {formatCurrency(m.valor)}</span>
