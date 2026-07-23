@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from "react";
-import { Plus, Edit, Trash2, Search, Package, Upload, Wand2, FileText, FileSpreadsheet, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Edit, Trash2, Search, Package, Upload, Wand2, FileText, FileSpreadsheet, ChevronLeft, ChevronRight, RefreshCw, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -62,6 +62,8 @@ export default function FreteMinimalista() {
   const [kmEditValue, setKmEditValue] = useState("");
   const kmInputRef = useRef<HTMLInputElement>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [recalculandoId, setRecalculandoId] = useState<string | null>(null);
+  const [recalculandoTodos, setRecalculandoTodos] = useState(false);
 
   const hasBrokenNames = useMemo(
     () => (fretes ?? []).some((f) => f.cidade.includes("\uFFFD")),
@@ -184,6 +186,63 @@ export default function FreteMinimalista() {
     }
   };
 
+  const recalcularKm = async (frete: FreteCidade): Promise<{ ok: boolean; km?: number; aproximado?: boolean }> => {
+    const { data, error } = await supabase.functions.invoke("recalcular-km-frete", {
+      body: { cidade: frete.cidade, estado: frete.estado },
+    });
+    if (error || !data || (data as any).error) {
+      return { ok: false };
+    }
+    const km = Number((data as any).km);
+    if (!Number.isFinite(km)) return { ok: false };
+    await updateFrete.mutateAsync({
+      id: frete.id,
+      estado: frete.estado,
+      cidade: frete.cidade,
+      valor_frete: km * 6,
+      observacoes: frete.observacoes,
+      ativo: frete.ativo,
+      quilometragem: km,
+    });
+    return { ok: true, km, aproximado: !!(data as any).aproximado };
+  };
+
+  const handleRecalcularKm = async (frete: FreteCidade) => {
+    setRecalculandoId(frete.id);
+    try {
+      const r = await recalcularKm(frete);
+      if (!r.ok) {
+        toast.error(`Não foi possível recalcular ${frete.cidade}/${frete.estado}`);
+      } else {
+        toast.success(
+          `${frete.cidade}/${frete.estado}: ${r.km} km${r.aproximado ? " (aproximado)" : ""}`,
+        );
+      }
+    } finally {
+      setRecalculandoId(null);
+    }
+  };
+
+  const handleRecalcularTodos = async () => {
+    if (recalculandoTodos) return;
+    const lista = fretesFiltrados;
+    if (lista.length === 0) return;
+    if (!window.confirm(`Recalcular Km de ${lista.length} cidades? Pode levar alguns minutos.`)) return;
+    setRecalculandoTodos(true);
+    let ok = 0;
+    let fail = 0;
+    for (let i = 0; i < lista.length; i++) {
+      const f = lista[i];
+      try {
+        const r = await recalcularKm(f);
+        if (r.ok) ok++; else fail++;
+      } catch { fail++; }
+      if (i < lista.length - 1) await new Promise((res) => setTimeout(res, 1100));
+    }
+    setRecalculandoTodos(false);
+    toast.success(`Recalculado: ${ok} ok, ${fail} falhas`);
+  };
+
   const headerActions = (
     <>
       <div className="relative">
@@ -214,6 +273,16 @@ export default function FreteMinimalista() {
       >
         <Upload className="h-4 w-4" />
         <span className="hidden sm:inline">Importar</span>
+      </Button>
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={handleRecalcularTodos}
+        disabled={recalculandoTodos || fretesFiltrados.length === 0}
+        className="h-10 px-4 rounded-lg bg-white/5 border-white/10 text-white hover:bg-white/10 text-xs gap-1.5"
+      >
+        {recalculandoTodos ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+        <span className="hidden sm:inline">{recalculandoTodos ? "Recalculando..." : "Recalcular Km"}</span>
       </Button>
       <Button
         size="sm"
@@ -345,6 +414,20 @@ export default function FreteMinimalista() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0 text-white/70 hover:text-blue-300 hover:bg-blue-500/10"
+                            onClick={() => handleRecalcularKm(frete)}
+                            disabled={recalculandoId === frete.id || recalculandoTodos}
+                            title="Recalcular Km (capital → cidade)"
+                          >
+                            {recalculandoId === frete.id ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <RefreshCw className="h-3.5 w-3.5" />
+                            )}
+                          </Button>
                           <Button
                             variant="ghost"
                             size="sm"
