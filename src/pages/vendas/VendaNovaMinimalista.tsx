@@ -1297,7 +1297,7 @@ export default function VendaNovaMinimalista() {
                 >
                   <RadioGroupItem value="transportadora" id="frete-transportadora" className="sr-only" />
                   <Building2 className={cn("w-5 h-5", formData.tipo_frete === 'transportadora' ? "text-blue-400" : "text-white/40")} />
-                  <span className={cn("text-sm font-medium", formData.tipo_frete === 'transportadora' ? "text-white" : "text-white/70")}>Frete por Transportadora</span>
+                  <span className={cn("text-sm font-medium", formData.tipo_frete === 'transportadora' ? "text-white" : "text-white/70")}>Frete por conta do cliente</span>
                 </label>
                 <label
                     htmlFor="frete-por-porta"
