@@ -17,6 +17,7 @@ import { Plus, CalendarIcon, CheckCircle2, ShieldCheck, Lock, Package, CreditCar
 import { ProdutoVendaForm } from '@/components/vendas/ProdutoVendaForm';
 import { ProdutosVendaTable } from '@/components/vendas/ProdutosVendaTable';
 import { VendaResumo } from '@/components/vendas/VendaResumo';
+import { ResumoDescontosSection } from '@/components/vendas/ResumoDescontosSection';
 import { useToast } from '@/hooks/use-toast';
 import { toast as sonnerToast } from 'sonner';
 import { format } from 'date-fns';
