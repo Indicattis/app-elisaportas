@@ -66,6 +66,8 @@ export interface VendaFormData {
   orcamento_id?: string; // ID do orçamento se for conversão
   /** Se true (default), edições feitas na venda propagam para o cadastro do cliente */
   atualizar_cadastro_cliente?: boolean;
+  /** Justificativa livre para o desconto aplicado (Resumo dos descontos). */
+  justificativa_desconto?: string | null;
 }
 
 export interface AutorizacaoDesconto {
