@@ -455,6 +455,7 @@ export function useVendas() {
         // Crédito a nível de venda
         valor_credito: valorCreditoVenda,
         percentual_credito: percentualCreditoVenda,
+        tipo_frete: vendaData.tipo_frete || 'interno',
         // Campos de pagamento
         metodo_pagamento: metodoPrincipal,
         empresa_receptora_id: empresaReceptoraPrincipal,
@@ -846,6 +847,7 @@ export function useVendas() {
         valor_a_receber: valor_a_receber,
         valor_credito: valorCreditoVenda,
         percentual_credito: creditoVenda?.percentualCredito || 0,
+        tipo_frete: vendaData.tipo_frete || 'interno',
         metodo_pagamento: metodoPrincipal,
         empresa_receptora_id: pagamentoData?.metodos?.[0]?.empresa_receptora_id || null,
         quantidade_parcelas: pagamentoData?.metodos?.[0]?.parcelas_boleto || pagamentoData?.metodos?.[0]?.parcelas_cartao || 1,
