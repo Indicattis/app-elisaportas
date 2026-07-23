@@ -4123,6 +4123,30 @@ export type Database = {
         }
         Relationships: []
       }
+      frete_por_porta_regiao: {
+        Row: {
+          created_at: string
+          id: string
+          regiao: string
+          updated_at: string
+          valor_unitario: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          regiao: string
+          updated_at?: string
+          valor_unitario?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          regiao?: string
+          updated_at?: string
+          valor_unitario?: number
+        }
+        Relationships: []
+      }
       frete_regiao_cidades: {
         Row: {
           cidade_id: string
