@@ -10,6 +10,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Switch } from "@/components/ui/switch";
+import { Progress } from "@/components/ui/progress";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useFretesCidades, FreteCidade } from "@/hooks/useFretesCidades";
 import { FreteDialog } from "@/components/frete/FreteDialog";
 import { BulkUploadFretesCidades } from "@/components/frete/BulkUploadFretesCidades";
@@ -64,6 +66,13 @@ export default function FreteMinimalista() {
   const [currentPage, setCurrentPage] = useState(1);
   const [recalculandoId, setRecalculandoId] = useState<string | null>(null);
   const [recalculandoTodos, setRecalculandoTodos] = useState(false);
+  const [progresso, setProgresso] = useState<{
+    total: number;
+    done: number;
+    ok: number;
+    fail: number;
+    current: string;
+  } | null>(null);
 
   const hasBrokenNames = useMemo(
     () => (fretes ?? []).some((f) => f.cidade.includes("\uFFFD")),
@@ -229,17 +238,21 @@ export default function FreteMinimalista() {
     if (lista.length === 0) return;
     if (!window.confirm(`Recalcular Km de ${lista.length} cidades? Pode levar alguns minutos.`)) return;
     setRecalculandoTodos(true);
+    setProgresso({ total: lista.length, done: 0, ok: 0, fail: 0, current: "" });
     let ok = 0;
     let fail = 0;
     for (let i = 0; i < lista.length; i++) {
       const f = lista[i];
+      setProgresso({ total: lista.length, done: i, ok, fail, current: `${f.cidade}/${f.estado}` });
       try {
         const r = await recalcularKm(f);
         if (r.ok) ok++; else fail++;
       } catch { fail++; }
+      setProgresso({ total: lista.length, done: i + 1, ok, fail, current: `${f.cidade}/${f.estado}` });
       if (i < lista.length - 1) await new Promise((res) => setTimeout(res, 1100));
     }
     setRecalculandoTodos(false);
+    setProgresso(null);
     toast.success(`Recalculado: ${ok} ok, ${fail} falhas`);
   };
 
