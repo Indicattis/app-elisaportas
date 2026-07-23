@@ -233,6 +233,14 @@ export default function RascunhoView() {
           </Section>
         )}
 
+        {venda.justificativa_desconto && (
+          <Section title="Justificativa do desconto" icon={FileText}>
+            <p className="text-sm text-white/80 whitespace-pre-wrap">
+              {venda.justificativa_desconto}
+            </p>
+          </Section>
+        )}
+
         <div className="flex flex-wrap justify-end gap-3 pt-2">
           <Button
             variant="ghost"
