@@ -1301,44 +1301,51 @@ export default function VendaNovaMinimalista() {
                 <label
                   htmlFor="frete-interno"
                   className={cn(
-                    "flex items-center justify-center gap-3 p-4 rounded-lg cursor-pointer transition-all duration-200 border-2",
-                    (formData.tipo_frete || 'interno') === 'interno'
-                      ? "bg-blue-500/15 border-blue-400/40 shadow-lg shadow-blue-500/10"
-                      : "bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10"
+                    "flex items-center justify-center gap-3 p-4 rounded-lg border-2 transition-all duration-200",
+                    entregaSemInstalacao
+                      ? "bg-white/[0.02] border-white/5 opacity-50 cursor-not-allowed"
+                      : (formData.tipo_frete || 'interno') === 'interno'
+                        ? "bg-blue-500/15 border-blue-400/40 shadow-lg shadow-blue-500/10 cursor-pointer"
+                        : "bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10 cursor-pointer"
                   )}
                 >
-                  <RadioGroupItem value="interno" id="frete-interno" className="sr-only" />
-                  <Truck className={cn("w-5 h-5", (formData.tipo_frete || 'interno') === 'interno' ? "text-blue-400" : "text-white/40")} />
-                  <span className={cn("text-sm font-medium", (formData.tipo_frete || 'interno') === 'interno' ? "text-white" : "text-white/70")}>Frete Interno</span>
+                  <RadioGroupItem value="interno" id="frete-interno" className="sr-only" disabled={entregaSemInstalacao} />
+                  <Truck className={cn("w-5 h-5", entregaSemInstalacao ? "text-white/20" : (formData.tipo_frete || 'interno') === 'interno' ? "text-blue-400" : "text-white/40")} />
+                  <span className={cn("text-sm font-medium", entregaSemInstalacao ? "text-white/30" : (formData.tipo_frete || 'interno') === 'interno' ? "text-white" : "text-white/70")}>Frete Interno</span>
                 </label>
                 <label
                   htmlFor="frete-transportadora"
                   className={cn(
-                    "flex items-center justify-center gap-3 p-4 rounded-lg cursor-pointer transition-all duration-200 border-2",
-                    formData.tipo_frete === 'transportadora'
-                      ? "bg-blue-500/15 border-blue-400/40 shadow-lg shadow-blue-500/10"
-                      : "bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10"
+                    "flex items-center justify-center gap-3 p-4 rounded-lg border-2 transition-all duration-200",
+                    entregaComInstalacao
+                      ? "bg-white/[0.02] border-white/5 opacity-50 cursor-not-allowed"
+                      : formData.tipo_frete === 'transportadora'
+                        ? "bg-blue-500/15 border-blue-400/40 shadow-lg shadow-blue-500/10 cursor-pointer"
+                        : "bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10 cursor-pointer"
                   )}
                 >
-                  <RadioGroupItem value="transportadora" id="frete-transportadora" className="sr-only" />
-                  <Building2 className={cn("w-5 h-5", formData.tipo_frete === 'transportadora' ? "text-blue-400" : "text-white/40")} />
-                  <span className={cn("text-sm font-medium", formData.tipo_frete === 'transportadora' ? "text-white" : "text-white/70")}>Frete por conta do cliente</span>
+                  <RadioGroupItem value="transportadora" id="frete-transportadora" className="sr-only" disabled={entregaComInstalacao} />
+                  <Building2 className={cn("w-5 h-5", entregaComInstalacao ? "text-white/20" : formData.tipo_frete === 'transportadora' ? "text-blue-400" : "text-white/40")} />
+                  <span className={cn("text-sm font-medium", entregaComInstalacao ? "text-white/30" : formData.tipo_frete === 'transportadora' ? "text-white" : "text-white/70")}>Frete por conta do cliente</span>
                 </label>
                 <label
                     htmlFor="frete-por-porta"
                     className={cn(
-                      "flex items-center justify-center gap-3 p-4 rounded-lg cursor-pointer transition-all duration-200 border-2",
-                      formData.tipo_frete === 'por_porta'
-                        ? "bg-blue-500/15 border-blue-400/40 shadow-lg shadow-blue-500/10"
-                        : "bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10"
+                      "flex items-center justify-center gap-3 p-4 rounded-lg border-2 transition-all duration-200",
+                      entregaComInstalacao
+                        ? "bg-white/[0.02] border-white/5 opacity-50 cursor-not-allowed"
+                        : formData.tipo_frete === 'por_porta'
+                          ? "bg-blue-500/15 border-blue-400/40 shadow-lg shadow-blue-500/10 cursor-pointer"
+                          : "bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10 cursor-pointer"
                     )}
                   >
-                    <RadioGroupItem value="por_porta" id="frete-por-porta" className="sr-only" />
-                    <MapPin className={cn("w-5 h-5", formData.tipo_frete === 'por_porta' ? "text-blue-400" : "text-white/40")} />
-                    <span className={cn("text-sm font-medium", formData.tipo_frete === 'por_porta' ? "text-white" : "text-white/70")}>Frete por Porta (Região)</span>
+                    <RadioGroupItem value="por_porta" id="frete-por-porta" className="sr-only" disabled={entregaComInstalacao} />
+                    <MapPin className={cn("w-5 h-5", entregaComInstalacao ? "text-white/20" : formData.tipo_frete === 'por_porta' ? "text-blue-400" : "text-white/40")} />
+                    <span className={cn("text-sm font-medium", entregaComInstalacao ? "text-white/30" : formData.tipo_frete === 'por_porta' ? "text-white" : "text-white/70")}>Frete por Porta (Região)</span>
                 </label>
               </RadioGroup>
             </div>
+
 
             <div className="space-y-2">
               <Label htmlFor="valor_frete" className={labelClass}>Valor do Frete (R$)</Label>
