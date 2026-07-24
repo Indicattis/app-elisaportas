@@ -656,7 +656,7 @@ export default function VendaNovaMinimalista() {
 
   // Frete "por conta do cliente" (transportadora): sempre 0, pois Elisa não cobra.
   useEffect(() => {
-    if (formData.tignal_frete === 'transportadora' && formData.valor_frete !== 0) {
+    if (formData.tipo_frete === 'transportadora' && formData.valor_frete !== 0) {
       setFormData(prev => ({ ...prev, valor_frete: 0 }));
     }
   }, [formData.tipo_frete, formData.valor_frete]);
