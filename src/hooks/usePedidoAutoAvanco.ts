@@ -159,16 +159,15 @@ export function usePedidoAutoAvanco() {
 
   const verificarOrdemEmbalagemConcluida = async (pedidoId: string): Promise<boolean> => {
     try {
-      const { data: ordemEmbalagem, error: ordemError } = await supabase
+      const { data: ordens, error: ordemError } = await supabase
         .from('ordens_embalagem')
         .select('id, status')
-        .eq('pedido_id', pedidoId)
-        .eq('historico', false)
-        .maybeSingle();
+        .eq('pedido_id', pedidoId);
 
       if (ordemError) throw ordemError;
-      if (!ordemEmbalagem) return true;
-      if (ordemEmbalagem.status === 'concluido') return true;
+      if (!ordens || ordens.length === 0) return true;
+      // Considerar concluída quando todas as ordens estão concluídas
+      if (ordens.every(o => o.status === 'concluido')) return true;
 
       const { data: linhas, error } = await supabase
         .from('linhas_ordens')
