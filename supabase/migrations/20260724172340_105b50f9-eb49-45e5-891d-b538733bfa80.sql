@@ -1,0 +1,2 @@
+ALTER TABLE public.vendas DROP CONSTRAINT IF EXISTS vendas_tipo_frete_check;
+ALTER TABLE public.vendas ADD CONSTRAINT vendas_tipo_frete_check CHECK (tipo_frete = ANY (ARRAY['interno'::text, 'transportadora'::text, 'por_porta'::text]));
