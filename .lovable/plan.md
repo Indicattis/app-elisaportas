@@ -1,24 +1,52 @@
-## Objetivo
-Unificar o cálculo de faturamento e ranking no `/paineis/tv-dashboard` com o helper canônico `calcularFaturamentoLiquido` (`valor_venda + valor_credito`), igual ao que já foi feito na `/home`.
+## Diagnóstico
 
-## Problema
-Hoje o TV Dashboard usa a fórmula antiga `valor_venda - valor_frete + valor_credito` em dois lugares:
-- `src/pages/TvDashboard.tsx` (card de faturamento do mês)
-- `src/hooks/useDashboardData.ts` (ranking de vendedores)
+O pedido **#0437** (`5f6f48df-0012-4226-b664-25791ced73d0`) está na etapa **embalagem** desde 24/07 12:14:34, mas suas ordens já foram concluídas:
 
-Isso gera divergência com `/home` e com o card de faturamento oficial quando `valor_venda` já não contém frete.
+- Duas linhas em `ordens_embalagem` para o mesmo pedido, ambas com `status = concluido` e `historico = true`:
+  - `084e918b…` — criada 17/07, concluída antes de a etapa embalagem começar
+  - `e44d2c79…` — criada 24/07 12:14:35, concluída 24/07 12:15:10
+- `pedidos_etapas.embalagem` está aberta (sem `data_saida`)
+- Próxima etapa esperada segundo `ORDEM_ETAPAS`: **`aguardando_coleta`**
 
-## Mudanças
+### Causa raiz
 
-1. **`src/hooks/useDashboardData.ts` — ranking**
-   - Trocar o cálculo por `calcularFaturamentoLiquido(venda)`.
-   - Alinhar filtros com `useRankingMes`: manter `.eq('is_rascunho', false)` e adicionar `.not('custo_total', 'is', null)` para excluir vendas ainda não faturadas.
-   - Remover `valor_frete` do `select`.
+Em `src/hooks/usePedidoAutoAvanco.ts`, `verificarOrdemEmbalagemConcluida` faz:
 
-2. **`src/pages/TvDashboard.tsx` — card de faturamento**
-   - Usar `calcularFaturamentoLiquido` na agregação diária.
-   - Remover `valor_frete` do `select`.
+```ts
+.from('ordens_embalagem')
+.select('id, status')
+.eq('pedido_id', pedidoId)
+.eq('historico', false)
+.maybeSingle();
+```
 
-## Fora de escopo
-- Nenhuma alteração de UI/layout.
-- Nenhuma alteração no banco.
+Ao concluir a ordem, o fluxo de `finalizarEmbalagem` marca a ordem como `historico = true` **antes** (ou junto) do callback de auto-avanço. Quando `verificarOrdemEmbalagemConcluida` roda, o filtro `historico = false` **não encontra nenhuma linha** e a função retorna `true` (linha 170). Isso deveria disparar `executarAvanco`, mas se qualquer erro silencioso ocorrer em `moverParaProximaEtapa` (ou se o usuário sair da tela antes do callback completar) o pedido fica preso — não há reprocessamento automático posterior. Foi o que aconteceu aqui: nenhum registro de `data_saida` foi gravado na etapa embalagem.
+
+Além disso, o filtro por `historico = false` é frágil por natureza: se houver múltiplas ordens ativas de embalagem, o `maybeSingle()` estoura e a função cai no `catch` retornando `false`, bloqueando o avanço.
+
+## Correções propostas
+
+### 1. Destravar o pedido #0437 (dado)
+Migration única que:
+- Insere/atualiza `pedidos_etapas` fechando `embalagem` (`data_saida = now()`) e abrindo `aguardando_coleta` via UPSERT (padrão já usado no projeto).
+- Atualiza `pedidos_producao.etapa_atual = 'aguardando_coleta'` para o pedido.
+
+### 2. Corrigir a lógica de verificação em `usePedidoAutoAvanco.ts`
+Substituir `verificarOrdemEmbalagemConcluida` (e alinhar `verificarOrdemPinturaConcluida` / `verificarOrdemQualidadeConcluida`, que têm o mesmo padrão) para não depender de `historico = false`:
+
+- Buscar **todas** as `ordens_embalagem` do pedido sem filtro de histórico.
+- Considerar a etapa concluída quando **existe pelo menos uma ordem** e **todas** estão com `status = 'concluido'` (ou não há linhas pendentes).
+- Se não houver nenhuma ordem, manter o comportamento atual (retornar `true`, para não bloquear pedidos sem ordem de embalagem).
+
+Isso torna o auto-avanço idempotente e imune ao momento em que o flag `historico` é gravado.
+
+### 3. Rede de segurança: verificação manual já existente
+A função `verificarEAvancarManual` já cobre `etapa_atual = 'embalagem'`. Confirmar que o botão "Avançar Pedido" na tela de gestão de pedidos chama esse hook para permitir destravar casos futuros sem migration. Nenhuma UI nova — só validação.
+
+## Detalhes técnicos
+
+- Arquivos:
+  - `src/hooks/usePedidoAutoAvanco.ts` — ajustar as três funções de verificação.
+  - Nova migration em `supabase/migrations/` para destravar o pedido #0437.
+- Sem mudanças de schema, sem mudanças de UI.
+- Preservar a assinatura pública do hook.

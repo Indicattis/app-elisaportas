@@ -123,20 +123,14 @@ export function usePedidoAutoAvanco() {
 
   const verificarOrdemPinturaConcluida = async (pedidoId: string): Promise<boolean> => {
     try {
-      // Verificar se a ordem de pintura existe e está com status 'pronta'
-      const { data: ordemPintura, error: ordemError } = await supabase
+      const { data: ordens, error: ordemError } = await supabase
         .from('ordens_pintura')
         .select('id, status')
-        .eq('pedido_id', pedidoId)
-        .maybeSingle();
+        .eq('pedido_id', pedidoId);
 
       if (ordemError) throw ordemError;
-      
-      // Se não existe ordem de pintura, considerar como concluída (não precisa de pintura)
-      if (!ordemPintura) return true;
-      
-      // Verificar se o status da ordem é 'pronta'
-      if (ordemPintura.status === 'pronta' || ordemPintura.status === 'concluido') return true;
+      if (!ordens || ordens.length === 0) return true;
+      if (ordens.every(o => o.status === 'pronta' || o.status === 'concluido')) return true;
       
       // Verificar linhas
       const { data: linhas, error } = await supabase
@@ -159,16 +153,15 @@ export function usePedidoAutoAvanco() {
 
   const verificarOrdemEmbalagemConcluida = async (pedidoId: string): Promise<boolean> => {
     try {
-      const { data: ordemEmbalagem, error: ordemError } = await supabase
+      const { data: ordens, error: ordemError } = await supabase
         .from('ordens_embalagem')
         .select('id, status')
-        .eq('pedido_id', pedidoId)
-        .eq('historico', false)
-        .maybeSingle();
+        .eq('pedido_id', pedidoId);
 
       if (ordemError) throw ordemError;
-      if (!ordemEmbalagem) return true;
-      if (ordemEmbalagem.status === 'concluido') return true;
+      if (!ordens || ordens.length === 0) return true;
+      // Considerar concluída quando todas as ordens estão concluídas
+      if (ordens.every(o => o.status === 'concluido')) return true;
 
       const { data: linhas, error } = await supabase
         .from('linhas_ordens')
