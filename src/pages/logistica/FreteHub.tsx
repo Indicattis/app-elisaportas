@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
-import { Package, Truck, Building2, MapPin, ArrowLeft } from "lucide-react";
+import { Package, Building2, MapPin, ArrowLeft } from "lucide-react";
 
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { DelayedParticles } from '@/components/DelayedParticles';
