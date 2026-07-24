@@ -1,7 +1,8 @@
 /**
  * Utilitário canônico para cálculo de faturamento.
  *
- * Fórmula: faturamento_liquido = valor_venda + valor_credito - valor_frete
+ * Fórmula: faturamento_liquido = valor_venda + valor_credito
+ * (o frete NÃO entra no faturamento em nenhum caso)
  *
  * Use em TODOS os hooks/componentes que mostram "faturamento" para garantir
  * que cards diferentes do mesmo período mostrem o mesmo número.
@@ -18,8 +19,7 @@ export interface VendaParaCalculo {
 export function calcularFaturamentoLiquido(venda: VendaParaCalculo): number {
   const valorVenda = Number(venda.valor_venda || 0);
   const valorCredito = Number(venda.valor_credito || 0);
-  const valorFrete = Number(venda.valor_frete || 0);
-  return valorVenda + valorCredito - valorFrete;
+  return valorVenda + valorCredito;
 }
 
 /**
