@@ -30,7 +30,9 @@ export const useRankingMes = () => {
           admin_users!fk_vendas_atendente(nome, foto_perfil_url)
         `)
         .gte('data_venda', inicio.toISOString())
-        .lte('data_venda', fim.toISOString());
+        .lte('data_venda', fim.toISOString())
+        .eq('is_rascunho', false)
+        .not('custo_total', 'is', null);
 
       if (error) throw error;
 
