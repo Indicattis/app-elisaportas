@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from "react";
-import { Plus, Edit, Trash2, Search, Package, Upload, Wand2, FileText, FileSpreadsheet, ChevronLeft, ChevronRight, RefreshCw, Loader2 } from "lucide-react";
+import { Plus, Edit, Trash2, Search, Package, Upload, Wand2, FileText, FileSpreadsheet, ChevronLeft, ChevronRight, RefreshCw, Loader2, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { useFretesCidades, FreteCidade } from "@/hooks/useFretesCidades";
 import { FreteDialog } from "@/components/frete/FreteDialog";
 import { BulkUploadFretesCidades } from "@/components/frete/BulkUploadFretesCidades";
@@ -66,6 +67,10 @@ export default function FreteMinimalista() {
   const [currentPage, setCurrentPage] = useState(1);
   const [recalculandoId, setRecalculandoId] = useState<string | null>(null);
   const [recalculandoTodos, setRecalculandoTodos] = useState(false);
+  const [gerarOpen, setGerarOpen] = useState(false);
+  const [gerarEstado, setGerarEstado] = useState<string>("");
+  const [gerarSobrescrever, setGerarSobrescrever] = useState(false);
+  const [gerandoEstado, setGerandoEstado] = useState(false);
   const [progresso, setProgresso] = useState<{
     total: number;
     done: number;
@@ -256,6 +261,105 @@ export default function FreteMinimalista() {
     toast.success(`Recalculado: ${ok} ok, ${fail} falhas`);
   };
 
+  const handleGerarPorEstado = async () => {
+    if (!gerarEstado) {
+      toast.error("Selecione um estado");
+      return;
+    }
+    setGerandoEstado(true);
+    setGerarOpen(false);
+    try {
+      const { data, error } = await supabase.functions.invoke("gerar-fretes-estado", {
+        body: { estado: gerarEstado },
+      });
+      if (error || !data || (data as any).error) {
+        throw new Error((data as any)?.error || error?.message || "Falha ao listar municípios");
+      }
+      const cidades: string[] = (data as any).cidades ?? [];
+      if (cidades.length === 0) {
+        toast.error("Nenhum município retornado");
+        return;
+      }
+
+      const { data: userData } = await supabase.auth.getUser();
+      const uid = userData.user?.id ?? null;
+
+      const existentesMap = new Map<string, FreteCidade>();
+      (fretes ?? []).forEach((f) => {
+        if (f.estado === gerarEstado) {
+          existentesMap.set(normalize(f.cidade), f);
+        }
+      });
+
+      setProgresso({ total: cidades.length, done: 0, ok: 0, fail: 0, current: "" });
+      let ok = 0;
+      let fail = 0;
+
+      for (let i = 0; i < cidades.length; i++) {
+        const cidade = cidades[i];
+        setProgresso({ total: cidades.length, done: i, ok, fail, current: `${cidade}/${gerarEstado}` });
+
+        const existente = existentesMap.get(normalize(cidade));
+        if (existente && !gerarSobrescrever) {
+          setProgresso({ total: cidades.length, done: i + 1, ok, fail, current: `${cidade}/${gerarEstado}` });
+          continue;
+        }
+
+        try {
+          const { data: kmData, error: kmError } = await supabase.functions.invoke(
+            "recalcular-km-frete",
+            { body: { cidade, estado: gerarEstado } },
+          );
+          if (kmError || !kmData || (kmData as any).error) {
+            fail++;
+          } else {
+            const km = Number((kmData as any).km);
+            if (!Number.isFinite(km)) {
+              fail++;
+            } else {
+              const valor = km * 6;
+              if (existente) {
+                const { error: upErr } = await supabase
+                  .from("frete_cidades")
+                  .update({
+                    valor_frete: valor,
+                    quilometragem: km,
+                  })
+                  .eq("id", existente.id);
+                if (upErr) fail++; else ok++;
+              } else {
+                const { error: insErr } = await supabase.from("frete_cidades").insert({
+                  estado: gerarEstado,
+                  cidade,
+                  valor_frete: valor,
+                  quilometragem: km,
+                  ativo: true,
+                  created_by: uid,
+                });
+                if (insErr) fail++; else ok++;
+              }
+            }
+          }
+        } catch {
+          fail++;
+        }
+
+        setProgresso({ total: cidades.length, done: i + 1, ok, fail, current: `${cidade}/${gerarEstado}` });
+        if (i < cidades.length - 1) await new Promise((res) => setTimeout(res, 1100));
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["frete_cidades"] });
+      toast.success(`Concluído: ${ok} processadas, ${fail} falhas de ${cidades.length}`);
+    } catch (e: any) {
+      toast.error(e?.message || "Erro ao gerar fretes");
+    } finally {
+      setProgresso(null);
+      setGerandoEstado(false);
+      setGerarEstado("");
+      setGerarSobrescrever(false);
+    }
+  };
+
   const headerActions = (
     <>
       <div className="relative">
@@ -296,6 +400,16 @@ export default function FreteMinimalista() {
       >
         {recalculandoTodos ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
         <span className="hidden sm:inline">{recalculandoTodos ? "Recalculando..." : "Recalcular Km"}</span>
+      </Button>
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={() => setGerarOpen(true)}
+        disabled={gerandoEstado || recalculandoTodos}
+        className="h-10 px-4 rounded-lg bg-white/5 border-white/10 text-white hover:bg-white/10 text-xs gap-1.5"
+      >
+        {gerandoEstado ? <Loader2 className="h-4 w-4 animate-spin" /> : <MapPin className="h-4 w-4" />}
+        <span className="hidden sm:inline">{gerandoEstado ? "Gerando..." : "Gerar por Estado"}</span>
       </Button>
       <Button
         size="sm"
@@ -517,6 +631,58 @@ export default function FreteMinimalista() {
 
       <BulkUploadFretesCidades open={bulkOpen} onOpenChange={setBulkOpen} />
 
+      <Dialog open={gerarOpen} onOpenChange={setGerarOpen}>
+        <DialogContent className="bg-black/90 border-white/10 backdrop-blur-xl max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-white flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-blue-400" />
+              Gerar fretes por estado
+            </DialogTitle>
+            <DialogDescription className="text-white/60">
+              Lista todos os municípios da UF (IBGE) e calcula automaticamente o Km da capital até cada cidade. O valor é preenchido como Km × 6.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label className="text-xs text-white/70">Estado</Label>
+              <Select value={gerarEstado} onValueChange={setGerarEstado}>
+                <SelectTrigger className="bg-white/5 border-white/10 text-white h-10">
+                  <SelectValue placeholder="Selecione a UF" />
+                </SelectTrigger>
+                <SelectContent>
+                  {ESTADOS_BR.map((estado) => (
+                    <SelectItem key={estado} value={estado}>{estado}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+              <div>
+                <div className="text-xs text-white">Sobrescrever existentes</div>
+                <div className="text-[11px] text-white/50">Atualiza Km e valor de cidades já cadastradas.</div>
+              </div>
+              <Switch checked={gerarSobrescrever} onCheckedChange={setGerarSobrescrever} />
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button
+                variant="outline"
+                onClick={() => setGerarOpen(false)}
+                className="bg-white/5 border-white/10 text-white hover:bg-white/10"
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleGerarPorEstado}
+                disabled={!gerarEstado}
+                className="bg-gradient-to-r from-blue-500 to-blue-700 text-white"
+              >
+                Gerar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent className="bg-black/90 border-white/10 backdrop-blur-xl">
           <AlertDialogHeader>
@@ -541,7 +707,7 @@ export default function FreteMinimalista() {
           <DialogHeader>
             <DialogTitle className="text-white flex items-center gap-2">
               <Loader2 className="h-4 w-4 animate-spin text-blue-400" />
-              Recalculando quilometragens
+              {gerandoEstado ? "Gerando fretes do estado" : "Recalculando quilometragens"}
             </DialogTitle>
             <DialogDescription className="text-white/60">
               Aguarde enquanto consultamos a rota da capital até cada cidade.
