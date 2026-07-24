@@ -656,10 +656,26 @@ export default function VendaNovaMinimalista() {
 
   // Frete "por conta do cliente" (transportadora): sempre 0, pois Elisa não cobra.
   useEffect(() => {
-    if (formData.tipo_frete === 'transportadora' && formData.valor_frete !== 0) {
+    if (formData.tignal_frete === 'transportadora' && formData.valor_frete !== 0) {
       setFormData(prev => ({ ...prev, valor_frete: 0 }));
     }
   }, [formData.tipo_frete, formData.valor_frete]);
+
+  // Padronização do bloqueio de frete conforme o tipo de entrega:
+  // - Instalação/Manutenção: somente frete interno.
+  // - Entrega: somente frete por conta do cliente ou frete por porta.
+  const entregaComInstalacao = formData.tipo_entrega === 'instalacao' || formData.tipo_entrega === 'manutencao';
+  const entregaSemInstalacao = formData.tipo_entrega === 'entrega';
+
+  useEffect(() => {
+    if (entregaComInstalacao && formData.tipo_frete !== 'interno') {
+      setFormData(prev => ({ ...prev, tipo_frete: 'interno', valor_frete: 0 }));
+    }
+    if (entregaSemInstalacao && formData.tipo_frete === 'interno') {
+      setFormData(prev => ({ ...prev, tipo_frete: 'transportadora', valor_frete: 0 }));
+    }
+  }, [formData.tipo_entrega, formData.tipo_frete, entregaComInstalacao, entregaSemInstalacao]);
+
 
   const handleAddPorta = (produto: ProdutoVenda) => {
     setPortas(prev => {
