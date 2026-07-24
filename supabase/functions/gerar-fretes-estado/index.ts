@@ -19,7 +19,7 @@ Deno.serve(async (req) => {
       )
     }
 
-    const url = `https://servicodosdados.ibge.gov.br/api/v1/localidades/estados/${estado}/municipios`
+    const url = `https://servicodados.ibge.gov.br/api/v1/localidades/estados/${estado}/municipios`
     const res = await fetch(url)
     if (!res.ok) {
       return new Response(
