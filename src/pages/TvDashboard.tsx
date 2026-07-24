@@ -64,7 +64,7 @@ export default function TvDashboard() {
         error
       } = await supabase.
       from('vendas').
-      select('data_venda, valor_venda, valor_frete, valor_credito').
+      select('data_venda, valor_venda, valor_credito').
       eq('is_rascunho', false).
       gte('data_venda', format(inicioJulho, 'yyyy-MM-dd')).
       lte('data_venda', format(fimSetembro, 'yyyy-MM-dd'));

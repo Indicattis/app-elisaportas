@@ -1,20 +1,24 @@
-## Causa confirmada
+## Objetivo
+Unificar o cálculo de faturamento e ranking no `/paineis/tv-dashboard` com o helper canônico `calcularFaturamentoLiquido` (`valor_venda + valor_credito`), igual ao que já foi feito na `/home`.
 
-Chamei a edge function `gerar-fretes-estado` com `{"estado":"ES"}` e ela retorna 500 com a mensagem:
+## Problema
+Hoje o TV Dashboard usa a fórmula antiga `valor_venda - valor_frete + valor_credito` em dois lugares:
+- `src/pages/TvDashboard.tsx` (card de faturamento do mês)
+- `src/hooks/useDashboardData.ts` (ranking de vendedores)
 
-> dns error: failed to lookup address information … `servicodosdados.ibge.gov.br`
+Isso gera divergência com `/home` e com o card de faturamento oficial quando `valor_venda` já não contém frete.
 
-O host usado hoje em `supabase/functions/gerar-fretes-estado/index.ts` (linha 22) está com uma letra a mais. O domínio real da API do IBGE é **`servicodados.ibge.gov.br`** (sem o "dos"). Por isso a resolução DNS falha para qualquer UF, não só ES.
+## Mudanças
 
-## Correção
+1. **`src/hooks/useDashboardData.ts` — ranking**
+   - Trocar o cálculo por `calcularFaturamentoLiquido(venda)`.
+   - Alinhar filtros com `useRankingMes`: manter `.eq('is_rascunho', false)` e adicionar `.not('custo_total', 'is', null)` para excluir vendas ainda não faturadas.
+   - Remover `valor_frete` do `select`.
 
-Em `supabase/functions/gerar-fretes-estado/index.ts`, trocar a URL:
+2. **`src/pages/TvDashboard.tsx` — card de faturamento**
+   - Usar `calcularFaturamentoLiquido` na agregação diária.
+   - Remover `valor_frete` do `select`.
 
-- de `https://servicodosdados.ibge.gov.br/api/v1/localidades/estados/${estado}/municipios`
-- para `https://servicodados.ibge.gov.br/api/v1/localidades/estados/${estado}/municipios`
-
-Nenhuma outra mudança é necessária — o restante do fluxo (validação de UF, parse do JSON, ordenação) já está correto.
-
-## Verificação
-
-Após o deploy automático, reexecutar a função com `{"estado":"ES"}` e confirmar retorno 200 com a lista de 78 municípios do Espírito Santo. Depois, na UI em `/logistica/frete/internos`, usar "Gerar por Estado" com ES e acompanhar o modal de progresso.
+## Fora de escopo
+- Nenhuma alteração de UI/layout.
+- Nenhuma alteração no banco.
