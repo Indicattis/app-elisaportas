@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
+import { calcularFaturamentoLiquido } from '@/utils/faturamentoCalc';
 
 interface DiaVenda {
   data: string;
@@ -27,8 +28,9 @@ export const useSalesData = () => {
 
       const { data, error } = await supabase
         .from('vendas')
-        .select('data_venda, valor_venda, valor_frete, valor_credito')
+        .select('data_venda, valor_venda, valor_credito')
         .eq('is_rascunho', false)
+        .not('custo_total', 'is', null)
         .gte('data_venda', primeiroDiaDoMes.toISOString())
         .lte('data_venda', ultimoDiaDoMes.toISOString());
 
@@ -37,15 +39,13 @@ export const useSalesData = () => {
         throw error;
       }
 
-      // Agrupar por data e somar valores (valor_venda - frete + crédito/acréscimo)
+      // Agrupar por data (faturamento canônico: valor_venda + valor_credito, sem frete)
       const vendasPorDia = (data || []).reduce((acc: { [key: string]: { valor: number; numero_vendas: number } }, venda: any) => {
         const dataKey = venda.data_venda.split('T')[0];
         if (!acc[dataKey]) {
           acc[dataKey] = { valor: 0, numero_vendas: 0 };
         }
-        // Valor = valor_venda - frete + crédito/acréscimo
-        const valorCalculado = Number(venda.valor_venda || 0) - Number(venda.valor_frete || 0) + Number(venda.valor_credito || 0);
-        acc[dataKey].valor += valorCalculado;
+        acc[dataKey].valor += calcularFaturamentoLiquido(venda);
         acc[dataKey].numero_vendas += 1;
         return acc;
       }, {});
@@ -74,12 +74,12 @@ export const useSellersRanking = () => {
         .from('vendas')
         .select(`
           valor_venda,
-          valor_frete,
           valor_credito,
           atendente_id,
           admin_users!inner(nome, foto_perfil_url)
         `)
         .eq('is_rascunho', false)
+        .not('custo_total', 'is', null)
         .gte('data_venda', primeiroDiaDoMes.toISOString())
         .lte('data_venda', ultimoDiaDoMes.toISOString());
 
@@ -88,7 +88,7 @@ export const useSellersRanking = () => {
         throw error;
       }
 
-      // Agrupar por atendente e somar valores (valor_venda - frete + crédito/acréscimo)
+      // Agrupar por atendente (faturamento canônico: valor_venda + valor_credito, sem frete)
       const vendasPorAtendente = (data || []).reduce((acc: { [key: string]: any }, venda: any) => {
         const atendenteId = venda.atendente_id;
         if (!acc[atendenteId]) {
@@ -99,9 +99,7 @@ export const useSellersRanking = () => {
             numero_vendas: 0
           };
         }
-        // Valor = valor_venda - frete + crédito/acréscimo
-        const valorCalculado = Number(venda.valor_venda || 0) - Number(venda.valor_frete || 0) + Number(venda.valor_credito || 0);
-        acc[atendenteId].total_vendas += valorCalculado;
+        acc[atendenteId].total_vendas += calcularFaturamentoLiquido(venda);
         acc[atendenteId].numero_vendas += 1;
         return acc;
       }, {});
