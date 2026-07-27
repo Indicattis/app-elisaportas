@@ -390,6 +390,7 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
                     <p className="text-xs">{venda.cliente_nome || "Cliente não informado"}</p>
                   </TooltipContent>
                 </Tooltip>
+                <SemMedicaoBadge vendaId={venda.id} variant="compact" />
                 {mode === 'contrato' && venda.contrato_status && (
                   <Badge
                     variant="outline"
