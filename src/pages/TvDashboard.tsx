@@ -96,17 +96,7 @@ export default function TvDashboard() {
   const loading = loadingVendas || loadingVendedores || loadingWhatsapp || loadingAutorizados || loadingVendasTrimestre || loadingInstalacoes || loadingFaturamentoProduto;
   const today = new Date();
 
-  // Setup autoplay effect
-  useEffect(() => {
-    if (!api) return;
-    const interval = setInterval(() => {
-      if (!isHovering) {
-        api.scrollNext();
-      }
-    }, 5000); // 5 seconds
-
-    return () => clearInterval(interval);
-  }, [api, isHovering]);
+  // Autoplay desabilitado temporariamente (apenas Slide 1 visível)
 
   // Setup progress bar effect
   useEffect(() => {
@@ -308,7 +298,7 @@ export default function TvDashboard() {
           </CarouselItem>
 
           {/* Slide 2: Ranking */}
-          <CarouselItem className="h-full w-full flex items-center justify-center">
+          {false && <CarouselItem className="h-full w-full flex items-center justify-center">
             <div className="h-full flex flex-col items-center justify-center p-6 space-y-6 w-[100vw]">
               {/* Container principal com ranking */}
               <div className="w-full max-w-4xl">
@@ -362,13 +352,10 @@ export default function TvDashboard() {
                 </div>
               </div>
             </div>
-          </CarouselItem>
+          </CarouselItem>}
 
         </CarouselContent>
         
-        {/* Navigation arrows with responsive positioning */}
-        <CarouselPrevious className="left-2 sm:-left-12" />
-        <CarouselNext className="right-2 sm:-right-12" />
       </Carousel>
       
       {/* Progress Bar - Footer */}
@@ -376,7 +363,7 @@ export default function TvDashboard() {
         <div className="h-1 w-full bg-white/10">
           <div
             className="h-full bg-gradient-to-r from-primary to-primary/80 transition-all duration-100"
-            style={{ width: `${progress}%` }}
+            style={{ width: `0%` }}
           />
         </div>
       </div>
