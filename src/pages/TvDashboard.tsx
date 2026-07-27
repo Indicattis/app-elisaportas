@@ -149,7 +149,8 @@ export default function TvDashboard() {
     }
   }, [api]);
   const totalVendasMes = useMemo(() => {
-    return vendasData.reduce((sum, venda) => sum + venda.valor, 0);
+    // Faturamento fixo temporário
+    return 873294;
   }, [vendasData]);
   const totalVendasTrimestre = useMemo(() => {
     return vendasTrimestre.reduce((sum, venda) => sum + Number(venda.valor), 0);
