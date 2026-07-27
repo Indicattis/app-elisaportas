@@ -1,4 +1,5 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { SemMedicaoBadge } from "@/components/vendas/SemMedicaoBadge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -837,6 +838,7 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
                   <h2 className="text-xl font-bold text-white truncate">
                     {venda.cliente_nome}
                   </h2>
+                  <SemMedicaoBadge vendaId={venda.id} />
                   {venda.temperatura != null && (
                     <span className={
                       venda.temperatura
