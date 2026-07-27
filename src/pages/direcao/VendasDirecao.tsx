@@ -594,8 +594,9 @@ export default function VendasDirecao() {
         return (
           <Tooltip>
             <TooltipTrigger asChild>
-              <span className={`${textClass} text-white font-medium truncate block max-w-[100px] md:max-w-none cursor-help`}>
+              <span className={`${textClass} text-white font-medium truncate max-w-[100px] md:max-w-none cursor-help inline-flex items-center gap-1`}>
                 {venda.cliente_nome}
+                <SemMedicaoBadge vendaId={venda.id} variant="compact" />
               </span>
             </TooltipTrigger>
             <TooltipContent side="right" className="max-w-xs">
