@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { SemMedicaoBadge } from "@/components/vendas/SemMedicaoBadge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
@@ -389,6 +390,7 @@ export function VendaPendentePedidoCard({ venda, dragHandleProps, isDragging, mo
                     <p className="text-xs">{venda.cliente_nome || "Cliente não informado"}</p>
                   </TooltipContent>
                 </Tooltip>
+                <SemMedicaoBadge vendaId={venda.id} variant="compact" />
                 {mode === 'contrato' && venda.contrato_status && (
                   <Badge
                     variant="outline"

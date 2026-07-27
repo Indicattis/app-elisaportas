@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { SemMedicaoBadge } from '@/components/vendas/SemMedicaoBadge';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -343,7 +344,10 @@ export default function MinhasVendas() {
       case 'cliente':
         return (
           <div className="max-w-[180px]">
-            <p className="truncate font-medium">{venda.cliente_nome || 'N/I'}</p>
+            <p className="truncate font-medium inline-flex items-center gap-1">
+              {venda.cliente_nome || 'N/I'}
+              <SemMedicaoBadge vendaId={venda.id} variant="compact" />
+            </p>
             {venda.cliente_telefone && (
               <p className="text-xs text-muted-foreground truncate">{venda.cliente_telefone}</p>
             )}
