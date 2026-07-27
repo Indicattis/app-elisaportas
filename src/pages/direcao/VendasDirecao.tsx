@@ -51,6 +51,7 @@ import { useConfiguracoesVendas } from '@/hooks/useConfiguracoesVendas';
 import { calcularDescontoTotal as calcularDescontoTotalRegras, calcularTotalVenda } from '@/utils/descontoVendasRules';
 import { calcDescontoTiersAplicados } from '@/utils/descontoTiers';
 import { generateFormalizacaoVendaPDF } from '@/utils/formalizacaoVendaPDFGenerator';
+import { SemMedicaoBadge } from '@/components/vendas/SemMedicaoBadge';
 
 
 import {
