@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { SemMedicaoBadge } from "@/components/vendas/SemMedicaoBadge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -325,6 +326,7 @@ export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaP
                   <h2 className="text-xl font-bold text-white truncate">
                     {venda.cliente_nome || "Cliente não informado"}
                   </h2>
+                  <SemMedicaoBadge vendaId={venda.id} />
                   {vendaCompleta?.temperatura != null && (
                     <span className={
                       vendaCompleta.temperatura
