@@ -343,7 +343,10 @@ export default function MinhasVendas() {
       case 'cliente':
         return (
           <div className="max-w-[180px]">
-            <p className="truncate font-medium">{venda.cliente_nome || 'N/I'}</p>
+            <p className="truncate font-medium inline-flex items-center gap-1">
+              {venda.cliente_nome || 'N/I'}
+              <SemMedicaoBadge vendaId={venda.id} variant="compact" />
+            </p>
             {venda.cliente_telefone && (
               <p className="text-xs text-muted-foreground truncate">{venda.cliente_telefone}</p>
             )}
