@@ -7,6 +7,9 @@ import { useOrdensPorPedido, OrdemStatus, PedidoComOrdens } from "@/hooks/useOrd
 import { PedidoOrdemCard } from "@/components/fabrica/PedidoOrdemCard";
 import { OrdemLinhasSheet } from "@/components/fabrica/OrdemLinhasSheet";
 import { ORDEM_ETAPAS, ETAPAS_CONFIG, type EtapaPedido } from "@/types/pedidoEtapa";
+import { usePedidoAutoAvanco } from "@/hooks/usePedidoAutoAvanco";
+import { ProcessoAvancoAutomaticoModal } from "@/components/pedidos/ProcessoAvancoAutomaticoModal";
+import { toast } from "sonner";
 
 // Todas as etapas exceto 'finalizado'
 const ETAPAS_VISIVEIS = ORDEM_ETAPAS.filter(e => e !== 'finalizado');
@@ -17,6 +20,8 @@ export default function OrdensPorPedido() {
   const [ordemSelecionada, setOrdemSelecionada] = useState<OrdemStatus | null>(null);
   const [pedidoInfo, setPedidoInfo] = useState<{ numeroPedido: string; clienteNome: string } | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [avancandoPedidoId, setAvancandoPedidoId] = useState<string | null>(null);
+  const { verificarEAvancarManual, processos, modalOpen } = usePedidoAutoAvanco();
 
   const { data: pedidos = [], isLoading } = useOrdensPorPedido(etapaAtiva);
 
@@ -71,6 +76,22 @@ export default function OrdensPorPedido() {
     setOrdemSelecionada(ordem);
     setPedidoInfo({ numeroPedido: pedido.numero_pedido, clienteNome: pedido.cliente_nome });
     setSheetOpen(true);
+  };
+
+  const handleAvancarEtapa = async (pedidoId: string) => {
+    setAvancandoPedidoId(pedidoId);
+    try {
+      const resultado = await verificarEAvancarManual(pedidoId);
+      if (resultado.avancou) {
+        toast.success("Pedido avançado para a próxima etapa");
+      } else {
+        toast.error(resultado.motivo || "Não foi possível avançar o pedido");
+      }
+    } catch (err: any) {
+      toast.error(err?.message || "Erro ao avançar pedido");
+    } finally {
+      setAvancandoPedidoId(null);
+    }
   };
 
   return (
@@ -166,6 +187,9 @@ export default function OrdensPorPedido() {
                       key={pedido.id}
                       pedido={pedido}
                       onOrdemClick={handleOrdemClick}
+                      etapaAtual={etapa}
+                      onAvancarEtapa={handleAvancarEtapa}
+                      avancandoPedidoId={avancandoPedidoId}
                     />
                   ))}
                 </div>
@@ -183,6 +207,8 @@ export default function OrdensPorPedido() {
         open={sheetOpen}
         onOpenChange={setSheetOpen}
       />
+
+      <ProcessoAvancoAutomaticoModal open={modalOpen} processos={processos} />
     </MinimalistLayout>
   );
 }

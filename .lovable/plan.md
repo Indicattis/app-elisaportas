@@ -1,50 +1,30 @@
-# Alerta visual: vendas sem folha de medição
-
 ## Objetivo
-Sinalizar, na interface, toda venda que contenha `porta_enrolar` mas **não tenha folha de medição** (visita técnica concluída) registrada no sistema.
 
-## Como identificar "sem folha de medição"
-Como não existe FK direta entre `vendas` e visitas, usar heurística de correspondência por dados do cliente:
+Em `/fabrica/ordens-pedidos`, permitir que o usuário avance manualmente o pedido de etapa quando todas as ordens necessárias da etapa atual já estiverem concluídas — reutilizando o fluxo existente de auto-avanço.
 
-Uma venda é considerada **com folha de medição** se existir pelo menos um dos dois:
-1. `visitas_tecnicas_agendadas` com `status = 'concluida'` **E** (`titulo` ILIKE cliente_nome OU `telefone_contato` = cliente_telefone) — e opcionalmente `duracao_medicao_segundos IS NOT NULL`.
-2. `visitas_tecnicas` → `visitas_tecnicas_conclusoes` cujo `lead` (via `elisaportas_leads`) bata em `nome` ILIKE cliente_nome OU `telefone` = cliente_telefone.
+## Escopo
 
-Caso contrário → **sem folha de medição**.
+Um botão "Avançar Etapa" no card do pedido (`PedidoOrdemCard`) que:
+- Só aparece quando a etapa atual do pedido é uma das que possuem verificação (`em_producao`, `inspecao_qualidade`, `aguardando_pintura`, `embalagem`) E todas as ordens existentes exibidas no card estão com `status === 'concluido'`.
+- Ao clicar, dispara `verificarEAvancarManual(pedidoId)` do hook `usePedidoAutoAvanco`, reaproveitando o mesmo `ProcessoAvancoAutomaticoModal` já usado em produção.
+- Mostra toast de sucesso/erro com o motivo retornado pelo hook (ex.: "Ordem X não está concluída").
 
-Regra é aplicada só quando a venda tem ao menos um item `tipo_produto = 'porta_enrolar'` (acessórios/pintura/instalação sozinhos não exigem medição).
+## Alterações
 
-## Implementação
+1. **`src/pages/fabrica/OrdensPorPedido.tsx`**
+   - Instanciar `usePedidoAutoAvanco()` → obter `verificarEAvancarManual`, `processos`, `modalOpen`.
+   - Renderizar `<ProcessoAvancoAutomaticoModal open={modalOpen} processos={processos} />`.
+   - Passar handler `onAvancarEtapa(pedidoId)` para `PedidoOrdemCard` que chama `verificarEAvancarManual` e exibe toast conforme resultado.
 
-### 1. Hook `useVendaTemMedicao(vendaId)` (novo)
-`src/hooks/useVendaTemMedicao.ts`
-- Recebe `vendaId`.
-- Busca `cliente_nome`, `cliente_telefone` e checa se há produtos `porta_enrolar`.
-- Se não há portas → retorna `{ exigeMedicao: false, temMedicao: true }` (não alerta).
-- Se há portas → roda as 2 queries acima em paralelo e retorna `{ exigeMedicao: true, temMedicao: boolean, visitaId?: string }`.
-- `useQuery` com `staleTime` de 60s.
+2. **`src/components/fabrica/PedidoOrdemCard.tsx`**
+   - Aceitar nova prop opcional `onAvancarEtapa?: (pedidoId: string) => Promise<void>` e `etapaAtual: EtapaPedido` (já disponível pelo tab ativo — passar do pai).
+   - Calcular `podeAvancar = etapaAtual ∈ {em_producao, inspecao_qualidade, aguardando_pintura, embalagem}` e todas as `ordensExistentes` (filtradas pela etapa relevante) com `status === 'concluido'`.
+   - Renderizar botão discreto "Avançar Etapa" (ícone `ArrowRight`) no header do card (ao lado do contador `x/y`) apenas quando `podeAvancar`; com estado `disabled` durante o processamento.
 
-### 2. Componente `SemMedicaoBadge` (novo)
-`src/components/vendas/SemMedicaoBadge.tsx`
-- Badge âmbar/vermelho glassmorphism: ícone `Ruler` + texto **"Sem folha de medição"**.
-- `Tooltip` explicando: "Nenhuma visita técnica concluída foi encontrada para este cliente. As medidas foram digitadas manualmente no cadastro da venda."
-- Variante compacta (só ícone) para tabelas densas.
+3. Não são necessárias mudanças de banco nem de RLS.
 
-### 3. Locais onde exibir o badge
-- **`/direcao/vendas/todas`** (`VendasDirecao.tsx`) — coluna cliente, ao lado do nome (variante compacta).
-- **`/direcao/gestao-fabrica`** (aba Pend. Faturamento) — no card da venda.
-- **Sheet de detalhes da venda** (`VendaPendenteDetalhesSheet.tsx` e `PedidoDetalhesSheet.tsx`) — no cabeçalho, versão completa com tooltip.
-- **`/vendas/minhas-vendas`** — na lista de vendas do vendedor.
+### Detalhes técnicos
 
-Nenhuma alteração em fluxo de negócio: apenas visual. Vendas continuam salvando/faturando normalmente.
-
-## Fora do escopo
-- Bloqueio de cadastro sem medição.
-- FK direta entre venda e visita técnica (pode virar melhoria futura, mas exige repensar cadastro).
-- Backfill/vinculação retroativa das 4 vendas relatadas.
-
-## Detalhes técnicos
-- Normalizar telefone (só dígitos) antes de comparar.
-- `cliente_nome` comparado via ILIKE com trim, tolerando variações de acento/case.
-- Query única com `Promise.all` para evitar cascata.
-- Badge não deve piscar durante loading: retornar `null` enquanto `isLoading`.
+- Reutilização total do hook `usePedidoAutoAvanco`, que já implementa `verificarEAvancarManual` para as etapas alvo (linhas 300–321 do hook), executa `executarAvanco` (mesmo pipeline usado pelas telas de produção) e retorna `{ avancou, motivo }`.
+- O botão fica visível apenas quando a heurística local do card indica que faz sentido tentar — mas a decisão real permanece no hook (que consulta o DB), garantindo consistência.
+- Etapas fora do conjunto suportado não exibem o botão (evita clique inválido em `aberto`, `aprovacao_ceo`, `aguardando_coleta`, `instalacoes`, `correcoes`, `pos_vendas`).

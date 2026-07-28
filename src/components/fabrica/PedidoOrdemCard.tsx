@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, ChevronRight, Truck, Wrench, Ruler, PaintBucket, Pause, Calendar, Clock } from "lucide-react";
+import { ChevronDown, ChevronRight, Truck, Wrench, Ruler, PaintBucket, Pause, Calendar, Clock, ArrowRight, Loader2 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -7,10 +7,14 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { cn } from "@/lib/utils";
 import type { PedidoComOrdens, OrdemStatus, TipoOrdem } from "@/hooks/useOrdensPorPedido";
 import { OrdemCronometro } from "./OrdemCronometro";
+import type { EtapaPedido } from "@/types/pedidoEtapa";
 
 interface PedidoOrdemCardProps {
   pedido: PedidoComOrdens;
   onOrdemClick: (ordem: OrdemStatus, pedido: PedidoComOrdens) => void;
+  etapaAtual?: EtapaPedido;
+  onAvancarEtapa?: (pedidoId: string) => Promise<void> | void;
+  avancandoPedidoId?: string | null;
 }
 
 const ORDEM_LABELS: Record<TipoOrdem, string> = {
@@ -57,7 +61,9 @@ const getStatusLabel = (status: string | null) => {
   }
 };
 
-export function PedidoOrdemCard({ pedido, onOrdemClick }: PedidoOrdemCardProps) {
+const ETAPAS_AVANCAVEIS: EtapaPedido[] = ['em_producao', 'inspecao_qualidade', 'aguardando_pintura', 'embalagem'];
+
+export function PedidoOrdemCard({ pedido, onOrdemClick, etapaAtual, onAvancarEtapa, avancandoPedidoId }: PedidoOrdemCardProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   const ordensBase: OrdemStatus[] = [
@@ -85,11 +91,33 @@ export function PedidoOrdemCard({ pedido, onOrdemClick }: PedidoOrdemCardProps) 
   const ordensExistentes = ordens.filter(o => o.existe);
   const ordensConcluidas = ordensExistentes.filter(o => o.status === 'concluido');
 
+  // Determinar ordens relevantes para a etapa atual (subset das existentes)
+  const ordensRelevantesEtapa = (() => {
+    if (!etapaAtual) return [] as OrdemStatus[];
+    if (etapaAtual === 'em_producao') {
+      return [pedido.ordens.soldagem, pedido.ordens.perfiladeira, pedido.ordens.separacao].filter(o => o.existe);
+    }
+    if (etapaAtual === 'inspecao_qualidade') return [pedido.ordens.qualidade].filter(o => o.existe);
+    if (etapaAtual === 'aguardando_pintura') return [pedido.ordens.pintura].filter(o => o.existe);
+    if (etapaAtual === 'embalagem') return [pedido.ordens.embalagem].filter(o => o.existe);
+    return [];
+  })();
+
+  const podeAvancar =
+    !!onAvancarEtapa &&
+    !!etapaAtual &&
+    ETAPAS_AVANCAVEIS.includes(etapaAtual) &&
+    ordensRelevantesEtapa.length > 0 &&
+    ordensRelevantesEtapa.every(o => o.status === 'concluido');
+
+  const estaAvancando = avancandoPedidoId === pedido.id;
+
   const corPrincipal = pedido.cores[0];
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <div className="rounded-lg bg-zinc-900/50 border border-zinc-800/50 overflow-hidden">
+        <div className="relative">
         <CollapsibleTrigger asChild>
           <button
             className="w-full h-[30px] px-2 grid items-center gap-2 
@@ -216,6 +244,31 @@ export function PedidoOrdemCard({ pedido, onOrdemClick }: PedidoOrdemCardProps) 
             </div>
           </button>
         </CollapsibleTrigger>
+        {podeAvancar && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (!estaAvancando) onAvancarEtapa!(pedido.id);
+            }}
+            disabled={estaAvancando}
+            title="Avançar etapa (todas as ordens concluídas)"
+            className={cn(
+              "absolute right-1 top-1/2 -translate-y-1/2 h-[22px] px-2 rounded-md text-[10px] font-medium",
+              "flex items-center gap-1 border transition-all",
+              "bg-green-500/20 text-green-300 border-green-500/40 hover:bg-green-500/30",
+              estaAvancando && "opacity-60 cursor-not-allowed"
+            )}
+          >
+            {estaAvancando ? (
+              <Loader2 className="w-3 h-3 animate-spin" />
+            ) : (
+              <ArrowRight className="w-3 h-3" />
+            )}
+            Avançar
+          </button>
+        )}
+        </div>
 
         <CollapsibleContent>
           <div className="p-3 pt-2 border-t border-zinc-800/50">
