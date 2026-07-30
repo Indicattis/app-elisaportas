@@ -78,19 +78,20 @@ export function usePedidoAutoAvanco() {
         }
       }
 
-      // 4. Verificar se há linhas com problema
+      // 4. Verificar se há linhas com problema EM ABERTO (não concluídas)
       const { data: linhasComProblema, error: linhasProblemaError } = await supabase
         .from('linhas_ordens')
         .select('id')
         .eq('pedido_id', pedidoId)
         .eq('com_problema', true)
+        .eq('concluida', false)
         .in('tipo_ordem', ['soldagem', 'perfiladeira', 'separacao'])
         .limit(1);
 
       if (linhasProblemaError) throw linhasProblemaError;
 
       if (linhasComProblema && linhasComProblema.length > 0) {
-        console.log('[Auto-Avanço] Há linhas com problema - bloqueando avanço');
+        console.log('[Auto-Avanço] Há linhas com problema em aberto - bloqueando avanço');
         return false;
       }
 
