@@ -1,30 +1,36 @@
-## Objetivo
+## Diagnóstico (confirmado no banco)
 
-Em `/fabrica/ordens-pedidos`, permitir que o usuário avance manualmente o pedido de etapa quando todas as ordens necessárias da etapa atual já estiverem concluídas — reutilizando o fluxo existente de auto-avanço.
+O pedido #0167 (`da343468…`, etapa `em_producao`) está com **todas** as ordens concluídas:
 
-## Escopo
+- 36 linhas de soldagem, 16 de perfiladeira e 83 de separação — todas `concluida = true`
+- As 3 ordens (soldagem, perfiladeira, separação) estão com `status = concluido`, nenhuma pausada
 
-Um botão "Avançar Etapa" no card do pedido (`PedidoOrdemCard`) que:
-- Só aparece quando a etapa atual do pedido é uma das que possuem verificação (`em_producao`, `inspecao_qualidade`, `aguardando_pintura`, `embalagem`) E todas as ordens existentes exibidas no card estão com `status === 'concluido'`.
-- Ao clicar, dispara `verificarEAvancarManual(pedidoId)` do hook `usePedidoAutoAvanco`, reaproveitando o mesmo `ProcessoAvancoAutomaticoModal` já usado em produção.
-- Mostra toast de sucesso/erro com o motivo retornado pelo hook (ex.: "Ordem X não está concluída").
+O bloqueio vem do passo 4 da verificação em `usePedidoAutoAvanco.ts`, que barra o avanço se existir qualquer linha com `com_problema = true`. Existe exatamente **1 linha** nessa condição:
 
-## Alterações
+- Item: `Central c/ 2 Controles` (separação)
+- Problema reportado em 27/07
+- Porém **concluída em 30/07** — a flag `com_problema` nunca foi limpa quando o operador concluiu a linha
 
-1. **`src/pages/fabrica/OrdensPorPedido.tsx`**
-   - Instanciar `usePedidoAutoAvanco()` → obter `verificarEAvancarManual`, `processos`, `modalOpen`.
-   - Renderizar `<ProcessoAvancoAutomaticoModal open={modalOpen} processos={processos} />`.
-   - Passar handler `onAvancarEtapa(pedidoId)` para `PedidoOrdemCard` que chama `verificarEAvancarManual` e exibe toast conforme resultado.
+Ou seja: o problema já foi resolvido na prática, mas o registro continua marcado, travando o pedido.
 
-2. **`src/components/fabrica/PedidoOrdemCard.tsx`**
-   - Aceitar nova prop opcional `onAvancarEtapa?: (pedidoId: string) => Promise<void>` e `etapaAtual: EtapaPedido` (já disponível pelo tab ativo — passar do pai).
-   - Calcular `podeAvancar = etapaAtual ∈ {em_producao, inspecao_qualidade, aguardando_pintura, embalagem}` e todas as `ordensExistentes` (filtradas pela etapa relevante) com `status === 'concluido'`.
-   - Renderizar botão discreto "Avançar Etapa" (ícone `ArrowRight`) no header do card (ao lado do contador `x/y`) apenas quando `podeAvancar`; com estado `disabled` durante o processamento.
+## O que fazer
 
-3. Não são necessárias mudanças de banco nem de RLS.
+### 1. Corrigir a causa raiz (frontend)
+No fluxo de conclusão de linha de produção (solda/perfiladeira/separação), ao marcar `concluida = true` também limpar os campos de problema:
+`com_problema = false`, `problema_descricao = null`, `problema_reportado_em = null`, `problema_reportado_por = null`.
 
-### Detalhes técnicos
+Assim, concluir uma linha que teve problema reportado deixa de travar o pedido para sempre.
 
-- Reutilização total do hook `usePedidoAutoAvanco`, que já implementa `verificarEAvancarManual` para as etapas alvo (linhas 300–321 do hook), executa `executarAvanco` (mesmo pipeline usado pelas telas de produção) e retorna `{ avancou, motivo }`.
-- O botão fica visível apenas quando a heurística local do card indica que faz sentido tentar — mas a decisão real permanece no hook (que consulta o DB), garantindo consistência.
-- Etapas fora do conjunto suportado não exibem o botão (evita clique inválido em `aberto`, `aprovacao_ceo`, `aguardando_coleta`, `instalacoes`, `correcoes`, `pos_vendas`).
+### 2. Ajustar a verificação de avanço
+Em `usePedidoAutoAvanco.ts`, o passo 4 deve considerar apenas linhas **não concluídas** com problema (`com_problema = true AND concluida = false`). Uma linha já concluída não deve bloquear o avanço.
+
+### 3. Destravar o pedido #0167
+Migration pontual limpando a flag de problema da linha `e1b3e01a-8ec0-4d9a-b5be-c66372f45ba3` (já concluída), para que o botão "Avançar" funcione imediatamente.
+
+### 4. Mensagem de erro mais útil (opcional, incluído)
+Quando o avanço for bloqueado, detalhar o motivo real ("Linha X com problema em aberto", "Ordem pausada", "N linhas pendentes") em vez do genérico "Nem todas as ordens de produção estão concluídas".
+
+## Detalhes técnicos
+- Arquivos: `src/hooks/usePedidoAutoAvanco.ts` e a tela/hook que conclui linhas (`linhas_ordens`) na produção.
+- Migration: `UPDATE public.linhas_ordens SET com_problema = false, problema_descricao = null, problema_reportado_em = null, problema_reportado_por = null WHERE id = 'e1b3e01a-8ec0-4d9a-b5be-c66372f45ba3';`
+- Nenhuma alteração de schema é necessária.

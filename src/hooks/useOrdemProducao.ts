@@ -396,6 +396,14 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
           concluida,
           concluida_em: concluida ? new Date().toISOString() : null,
           concluida_por: concluida ? currentUserId || null : null,
+          ...(concluida
+            ? {
+                com_problema: false,
+                problema_descricao: null,
+                problema_reportado_em: null,
+                problema_reportado_por: null,
+              }
+            : {}),
         })
         .eq('id', linhaId);
 
@@ -506,6 +514,10 @@ export function useOrdemProducao(tipoOrdem: TipoOrdem, onOrdemConcluida?: (pedid
           concluida: true, 
           concluida_em: new Date().toISOString(),
           concluida_por: currentUser?.id || null,
+          com_problema: false,
+          problema_descricao: null,
+          problema_reportado_em: null,
+          problema_reportado_por: null,
           updated_at: new Date().toISOString() 
         })
         .eq('ordem_id', ordemId)

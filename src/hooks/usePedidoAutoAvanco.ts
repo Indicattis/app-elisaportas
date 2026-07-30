@@ -12,7 +12,10 @@ export function usePedidoAutoAvanco() {
   const { toast } = useToast();
   const { moverParaProximaEtapa } = usePedidosEtapas();
 
+  const motivoRef = { current: '' as string };
+
   const verificarOrdensProducaoConcluidas = async (pedidoId: string): Promise<boolean> => {
+    motivoRef.current = '';
     try {
       // 1. Buscar todas as linhas de ordens de produção (solda, perfiladeira, separação)
       const { data: linhas, error: linhasError } = await supabase
@@ -27,9 +30,11 @@ export function usePedidoAutoAvanco() {
       if (!linhas || linhas.length === 0) return true;
 
       // Verificar se todas as linhas estão concluídas
-      const todasLinhasConcluidas = linhas.every(linha => linha.concluida === true);
+      const pendentes = linhas.filter(linha => linha.concluida !== true).length;
+      const todasLinhasConcluidas = pendentes === 0;
       if (!todasLinhasConcluidas) {
         console.log('[Auto-Avanço] Nem todas as linhas estão concluídas');
+        motivoRef.current = `${pendentes} linha(s) de produção ainda não concluída(s)`;
         return false;
       }
 
@@ -49,6 +54,7 @@ export function usePedidoAutoAvanco() {
           // Verificar ordens pausadas (independente de histórico)
           if (ordens.some(o => o.pausada === true)) {
             console.log(`[Auto-Avanço] Ordem em ${tabela} está pausada - bloqueando avanço`);
+            motivoRef.current = `Ordem de ${tabela.replace('ordens_', '')} está pausada`;
             return false;
           }
           
@@ -56,6 +62,7 @@ export function usePedidoAutoAvanco() {
           const ordensAtivas = ordens.filter(o => !o.historico);
           if (ordensAtivas.some(o => o.status !== 'concluido')) {
             console.log(`[Auto-Avanço] Ordem ativa em ${tabela} ainda não concluída formalmente`);
+            motivoRef.current = `Ordem de ${tabela.replace('ordens_', '')} ainda não foi concluída`;
             return false;
           }
         }
@@ -74,29 +81,33 @@ export function usePedidoAutoAvanco() {
         const todasPortaSocialConcluidas = ordensPortaSocial.every(o => o.status === 'concluido');
         if (!todasPortaSocialConcluidas) {
           console.log('[Auto-Avanço] Ordem de porta social ainda não concluída');
+          motivoRef.current = 'Ordem de porta social ainda não concluída';
           return false;
         }
       }
 
-      // 4. Verificar se há linhas com problema
+      // 4. Verificar se há linhas com problema EM ABERTO (não concluídas)
       const { data: linhasComProblema, error: linhasProblemaError } = await supabase
         .from('linhas_ordens')
         .select('id')
         .eq('pedido_id', pedidoId)
         .eq('com_problema', true)
+        .eq('concluida', false)
         .in('tipo_ordem', ['soldagem', 'perfiladeira', 'separacao'])
         .limit(1);
 
       if (linhasProblemaError) throw linhasProblemaError;
 
       if (linhasComProblema && linhasComProblema.length > 0) {
-        console.log('[Auto-Avanço] Há linhas com problema - bloqueando avanço');
+        console.log('[Auto-Avanço] Há linhas com problema em aberto - bloqueando avanço');
+        motivoRef.current = 'Há linha(s) com problema em aberto';
         return false;
       }
 
       return true;
     } catch (error) {
       console.error('Erro ao verificar ordens de produção:', error);
+      motivoRef.current = 'Erro ao verificar ordens de produção';
       return false;
     }
   };
@@ -287,7 +298,7 @@ export function usePedidoAutoAvanco() {
       if (etapaAtual === 'em_producao') {
         deveAvancar = await verificarOrdensProducaoConcluidas(pedidoId);
         if (!deveAvancar) {
-          motivo = 'Nem todas as ordens de produção estão concluídas';
+          motivo = motivoRef.current || 'Nem todas as ordens de produção estão concluídas';
         }
       } else if (etapaAtual === 'inspecao_qualidade') {
         deveAvancar = await verificarOrdemQualidadeConcluida(pedidoId);
