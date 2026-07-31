@@ -610,6 +610,22 @@ export default function VisitasTecnicasCalendario() {
     },
   });
 
+  const { data: autorizados = [] } = useQuery({
+    queryKey: ['autorizados-ativos-visitas'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('autorizados').select('id, nome, cidade, estado').eq('ativo', true).order('nome');
+      if (error) throw error;
+      return (data || []) as AutorizadoResp[];
+    },
+  });
+
+  const nomeResponsavel = (id?: string | null, tipo?: string | null) => {
+    if (!id) return null;
+    if (tipo === 'autorizado') return autorizados.find(a => a.id === id)?.nome || null;
+    return responsaveis.find(r => r.id === id || r.user_id === id)?.nome || null;
+  };
+
   const { data: visitasAConcluir = [] } = useQuery({
     queryKey: ['visitas-a-concluir'],
     queryFn: async () => {
@@ -734,6 +750,7 @@ export default function VisitasTecnicasCalendario() {
         data_visita: `${form.data_visita}T12:00:00.000Z`,
         hora_inicio: form.hora_inicio,
         responsavel_id: form.responsavel_id || null,
+        responsavel_tipo: form.responsavel_tipo,
         telefone_contato: form.telefone_contato || null,
         cep: form.cep || null,
         endereco: form.endereco || null,
@@ -744,7 +761,7 @@ export default function VisitasTecnicasCalendario() {
         estado: form.estado || null,
         observacoes: form.observacoes || null,
       };
-      const respNome = responsaveis.find(r => r.id === form.responsavel_id)?.nome || null;
+      const respNome = nomeResponsavel(form.responsavel_id, form.responsavel_tipo);
       if (editing) {
         const { error } = await supabase.from('visitas_tecnicas_agendadas').update(payload).eq('id', editing.id);
         if (error) throw error;
@@ -879,7 +896,7 @@ export default function VisitasTecnicasCalendario() {
         .update({ data_visita: `${novaData}T12:00:00.000Z` })
         .eq('id', visita.id);
       if (error) throw error;
-      const respNome = responsaveis.find(r => r.id === visita.responsavel_id)?.nome || null;
+      const respNome = nomeResponsavel(visita.responsavel_id, visita.responsavel_tipo);
       await logVisitaHistorico({
         visita_id: visita.id,
         acao: 'reagendada',
