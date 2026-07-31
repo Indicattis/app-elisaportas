@@ -1183,7 +1183,7 @@ export default function VisitasTecnicasCalendario() {
                   <div className={`text-[10px] sm:text-xs ${isToday(cell) ? 'text-blue-300 font-semibold' : 'text-white/60'}`}>
                     {cell.getDate()}
                   </div>
-                  {list.slice(0, 2).map(v => (
+                  {list.slice(0, 5).map(v => (
                     <DraggableVisitaChip
                       key={v.id}
                       visita={v}
@@ -1191,7 +1191,7 @@ export default function VisitasTecnicasCalendario() {
                       onDelete={() => { if (confirm('Excluir esta visita?')) delMut.mutate(v.id); }}
                     />
                   ))}
-                  {list.length > 2 && (
+                  {list.length > 5 && (
                     <Popover>
                       <PopoverTrigger asChild>
                         <button
