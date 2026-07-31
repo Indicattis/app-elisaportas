@@ -1345,9 +1345,11 @@ export default function VisitasTecnicasCalendario() {
                 </SelectContent>
               </Select>
               {form.responsavel_tipo === 'colaborador' ? (
-                <div className="mt-1 flex h-10 items-center rounded-md border border-white/10 bg-white/[0.03] px-3 text-sm text-white/70 cursor-not-allowed select-none">
-                  {responsaveis.find(r => r.id === form.responsavel_id)?.nome || usuario_nome || 'Usuário logado'}
-                </div>
+                <ResponsavelCombobox
+                  value={form.responsavel_id}
+                  onChange={(id) => setForm(f => ({ ...f, responsavel_id: id }))}
+                  responsaveis={responsaveis}
+                />
               ) : (
                 <ResponsavelCombobox
                   value={form.responsavel_id}
