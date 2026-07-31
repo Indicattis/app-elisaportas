@@ -1251,6 +1251,7 @@ export default function VisitasTecnicasCalendario() {
         <VisitasListaPanel
           visitas={visitasLista}
           responsaveis={responsaveis}
+          autorizados={autorizados}
           filtro={listaFiltro}
           setFiltro={setListaFiltro}
           busca={listaBusca}
