@@ -1313,9 +1313,38 @@ export default function VisitasTecnicasCalendario() {
             </div>
             <div>
               <label className="text-[11px] uppercase tracking-wider text-white/50 font-medium">Responsável</label>
-              <div className="mt-1 flex h-10 items-center rounded-md border border-white/10 bg-white/[0.03] px-3 text-sm text-white/70 cursor-not-allowed select-none">
-                {responsaveis.find(r => r.id === form.responsavel_id)?.nome || usuario_nome || 'Usuário logado'}
-              </div>
+              <Select
+                value={form.responsavel_tipo}
+                onValueChange={(v: 'colaborador' | 'autorizado') =>
+                  setForm(f => ({
+                    ...f,
+                    responsavel_tipo: v,
+                    responsavel_id: v === 'colaborador' ? (admin_user_id || '') : '',
+                  }))
+                }
+              >
+                <SelectTrigger className="mt-1 bg-white/5 border-white/10 text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-900 border-white/10 text-white">
+                  <SelectItem value="colaborador">Colaborador</SelectItem>
+                  <SelectItem value="autorizado">Autorizado</SelectItem>
+                </SelectContent>
+              </Select>
+              {form.responsavel_tipo === 'colaborador' ? (
+                <div className="mt-1 flex h-10 items-center rounded-md border border-white/10 bg-white/[0.03] px-3 text-sm text-white/70 cursor-not-allowed select-none">
+                  {responsaveis.find(r => r.id === form.responsavel_id)?.nome || usuario_nome || 'Usuário logado'}
+                </div>
+              ) : (
+                <ResponsavelCombobox
+                  value={form.responsavel_id}
+                  onChange={(id) => setForm(f => ({ ...f, responsavel_id: id }))}
+                  responsaveis={autorizados.map(a => ({
+                    id: a.id,
+                    nome: [a.nome, [a.cidade, a.estado].filter(Boolean).join('/')].filter(Boolean).join(' — '),
+                  }))}
+                />
+              )}
             </div>
             <div>
               <label className="text-[11px] uppercase tracking-wider text-white/50 font-medium">Telefone de contato</label>
