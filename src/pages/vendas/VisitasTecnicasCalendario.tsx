@@ -33,6 +33,7 @@ interface VisitaAgendada {
   data_visita: string;
   hora_inicio: string;
   responsavel_id: string | null;
+  responsavel_tipo?: string | null;
   created_by?: string | null;
   telefone_contato: string | null;
   cep: string | null;
@@ -49,6 +50,7 @@ interface VisitaAgendada {
 }
 
 interface Responsavel { id: string; user_id?: string | null; nome: string; foto_perfil_url?: string | null }
+interface AutorizadoResp { id: string; nome: string; cidade?: string | null; estado?: string | null }
 
 const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS_SEM = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
@@ -225,6 +227,7 @@ const emptyForm = {
   data_visita: '',
   hora_inicio: '09:00',
   responsavel_id: '',
+  responsavel_tipo: 'colaborador' as 'colaborador' | 'autorizado',
   telefone_contato: '',
   cep: '',
   endereco: '',
