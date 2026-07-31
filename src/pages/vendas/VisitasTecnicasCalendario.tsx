@@ -1209,7 +1209,7 @@ export default function VisitasTecnicasCalendario() {
                         <div className="text-[10px] uppercase tracking-wider text-white/40 px-1 pb-1">
                           {formatYmdBR(dateStr)} · {list.length} visitas
                         </div>
-                        {list.slice(2).map(v => (
+                        {list.slice(5).map(v => (
                           <DraggableVisitaChip
                             key={v.id}
                             visita={v}
