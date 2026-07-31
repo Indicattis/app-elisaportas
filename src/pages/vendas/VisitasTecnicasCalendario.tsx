@@ -1183,7 +1183,7 @@ export default function VisitasTecnicasCalendario() {
                   <div className={`text-[10px] sm:text-xs ${isToday(cell) ? 'text-blue-300 font-semibold' : 'text-white/60'}`}>
                     {cell.getDate()}
                   </div>
-                  {list.slice(0, 2).map(v => (
+                  {list.slice(0, 5).map(v => (
                     <DraggableVisitaChip
                       key={v.id}
                       visita={v}
@@ -1191,14 +1191,14 @@ export default function VisitasTecnicasCalendario() {
                       onDelete={() => { if (confirm('Excluir esta visita?')) delMut.mutate(v.id); }}
                     />
                   ))}
-                  {list.length > 2 && (
+                  {list.length > 5 && (
                     <Popover>
                       <PopoverTrigger asChild>
                         <button
                           onClick={(e) => e.stopPropagation()}
                           className="text-[9px] sm:text-[10px] text-blue-300 hover:text-blue-200 hover:bg-white/10 rounded px-1 py-0.5 transition-colors self-start"
                         >
-                          +{list.length - 2} mais
+                          +{list.length - 5} mais
                         </button>
                       </PopoverTrigger>
                       <PopoverContent
@@ -1209,7 +1209,7 @@ export default function VisitasTecnicasCalendario() {
                         <div className="text-[10px] uppercase tracking-wider text-white/40 px-1 pb-1">
                           {formatYmdBR(dateStr)} · {list.length} visitas
                         </div>
-                        {list.slice(2).map(v => (
+                        {list.slice(5).map(v => (
                           <DraggableVisitaChip
                             key={v.id}
                             visita={v}
