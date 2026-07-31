@@ -1455,7 +1455,15 @@ export default function VisitasTecnicasCalendario() {
                   <div className="flex items-center gap-2 text-sm text-white/80">
                     <User className="w-4 h-4 text-blue-300 shrink-0" />
                     <span>
-                      {responsaveis.find(r => r.id === selectedVisita.responsavel_id)?.nome || 'Responsável'}
+                      {nomeResponsavel(selectedVisita.responsavel_id, selectedVisita.responsavel_tipo) || 'Responsável'}
+                    </span>
+                    <span className={cn(
+                      "px-2 py-0.5 rounded-full text-[10px] border",
+                      selectedVisita.responsavel_tipo === 'autorizado'
+                        ? "bg-amber-500/15 text-amber-200 border-amber-400/30"
+                        : "bg-blue-500/15 text-blue-200 border-blue-400/30"
+                    )}>
+                      {selectedVisita.responsavel_tipo === 'autorizado' ? 'Autorizado' : 'Colaborador'}
                     </span>
                   </div>
                 )}
