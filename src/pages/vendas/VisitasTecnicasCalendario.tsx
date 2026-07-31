@@ -1198,7 +1198,7 @@ export default function VisitasTecnicasCalendario() {
                           onClick={(e) => e.stopPropagation()}
                           className="text-[9px] sm:text-[10px] text-blue-300 hover:text-blue-200 hover:bg-white/10 rounded px-1 py-0.5 transition-colors self-start"
                         >
-                          +{list.length - 2} mais
+                          +{list.length - 5} mais
                         </button>
                       </PopoverTrigger>
                       <PopoverContent
