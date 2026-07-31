@@ -275,10 +275,11 @@ function getInicial(nome: string) {
 }
 
 function VisitasListaPanel({
-  visitas, responsaveis, filtro, setFiltro, busca, setBusca, onOpen, onDelete, today,
+  visitas, responsaveis, autorizados = [], filtro, setFiltro, busca, setBusca, onOpen, onDelete, today,
 }: {
   visitas: VisitaAgendada[];
   responsaveis: Responsavel[];
+  autorizados?: AutorizadoResp[];
   filtro: ListaFiltro;
   setFiltro: (f: ListaFiltro) => void;
   busca: string;
@@ -296,6 +297,17 @@ function VisitasListaPanel({
     });
     return m;
   }, [responsaveis]);
+
+  const autMap = useMemo(() => {
+    const m = new Map<string, { nome: string; foto?: string | null }>();
+    autorizados.forEach(a => m.set(a.id, { nome: a.nome, foto: null }));
+    return m;
+  }, [autorizados]);
+
+  const respDe = (v: VisitaAgendada) =>
+    (v.responsavel_tipo === 'autorizado'
+      ? autMap.get(v.responsavel_id || '')
+      : respMap.get(v.responsavel_id || '')) || undefined;
 
   const counts = useMemo(() => {
     const c: Record<ListaFiltro, number> = { pendente: 0, em_andamento: 0, concluida: 0, cancelada: 0, todos: visitas.length };
@@ -319,7 +331,7 @@ function VisitasListaPanel({
         (v.titulo || '').toLowerCase().includes(termo) ||
         (v.cidade || '').toLowerCase().includes(termo) ||
         (v.telefone_contato || '').toLowerCase().includes(termo) ||
-        (respMap.get(v.responsavel_id || '')?.nome || '').toLowerCase().includes(termo) ||
+        (respDe(v)?.nome || '').toLowerCase().includes(termo) ||
         concluidoNome.includes(termo)
       );
     });
@@ -385,7 +397,7 @@ function VisitasListaPanel({
             const hora = (v.hora_inicio || '').slice(0, 5);
             const atrasada = meta.key === 'pendente' && ymd < todayYmd;
             const local = [v.cidade, v.estado].filter(Boolean).join('/');
-            const resp = respMap.get(v.responsavel_id || '');
+            const resp = respDe(v);
             const respNome = resp?.nome || '—';
             const criador = respMap.get(v.created_by || '');
             const criadorNome = criador?.nome || respNome;
