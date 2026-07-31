@@ -667,6 +667,7 @@ export default function VisitasTecnicasCalendario() {
       data_visita: toDateOnly(v.data_visita),
       hora_inicio: (v.hora_inicio || '').slice(0, 5),
       responsavel_id: v.responsavel_id || '',
+      responsavel_tipo: (v.responsavel_tipo === 'autorizado' ? 'autorizado' : 'colaborador') as 'colaborador' | 'autorizado',
       telefone_contato: v.telefone_contato || '',
       cep: v.cep || '',
       endereco: v.endereco || '',
