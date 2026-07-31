@@ -10318,6 +10318,7 @@ export type Database = {
           numero: string | null
           observacoes: string | null
           responsavel_id: string | null
+          responsavel_tipo: string
           status: string
           telefone_contato: string | null
           tipo: string
@@ -10340,6 +10341,7 @@ export type Database = {
           numero?: string | null
           observacoes?: string | null
           responsavel_id?: string | null
+          responsavel_tipo?: string
           status?: string
           telefone_contato?: string | null
           tipo?: string
@@ -10362,6 +10364,7 @@ export type Database = {
           numero?: string | null
           observacoes?: string | null
           responsavel_id?: string | null
+          responsavel_tipo?: string
           status?: string
           telefone_contato?: string | null
           tipo?: string

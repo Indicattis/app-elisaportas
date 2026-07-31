@@ -33,6 +33,7 @@ interface VisitaAgendada {
   data_visita: string;
   hora_inicio: string;
   responsavel_id: string | null;
+  responsavel_tipo?: string | null;
   created_by?: string | null;
   telefone_contato: string | null;
   cep: string | null;
@@ -49,6 +50,7 @@ interface VisitaAgendada {
 }
 
 interface Responsavel { id: string; user_id?: string | null; nome: string; foto_perfil_url?: string | null }
+interface AutorizadoResp { id: string; nome: string; cidade?: string | null; estado?: string | null }
 
 const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS_SEM = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
@@ -225,6 +227,7 @@ const emptyForm = {
   data_visita: '',
   hora_inicio: '09:00',
   responsavel_id: '',
+  responsavel_tipo: 'colaborador' as 'colaborador' | 'autorizado',
   telefone_contato: '',
   cep: '',
   endereco: '',
@@ -272,10 +275,11 @@ function getInicial(nome: string) {
 }
 
 function VisitasListaPanel({
-  visitas, responsaveis, filtro, setFiltro, busca, setBusca, onOpen, onDelete, today,
+  visitas, responsaveis, autorizados = [], filtro, setFiltro, busca, setBusca, onOpen, onDelete, today,
 }: {
   visitas: VisitaAgendada[];
   responsaveis: Responsavel[];
+  autorizados?: AutorizadoResp[];
   filtro: ListaFiltro;
   setFiltro: (f: ListaFiltro) => void;
   busca: string;
@@ -293,6 +297,17 @@ function VisitasListaPanel({
     });
     return m;
   }, [responsaveis]);
+
+  const autMap = useMemo(() => {
+    const m = new Map<string, { nome: string; foto?: string | null }>();
+    autorizados.forEach(a => m.set(a.id, { nome: a.nome, foto: null }));
+    return m;
+  }, [autorizados]);
+
+  const respDe = (v: VisitaAgendada) =>
+    (v.responsavel_tipo === 'autorizado'
+      ? autMap.get(v.responsavel_id || '')
+      : respMap.get(v.responsavel_id || '')) || undefined;
 
   const counts = useMemo(() => {
     const c: Record<ListaFiltro, number> = { pendente: 0, em_andamento: 0, concluida: 0, cancelada: 0, todos: visitas.length };
@@ -316,7 +331,7 @@ function VisitasListaPanel({
         (v.titulo || '').toLowerCase().includes(termo) ||
         (v.cidade || '').toLowerCase().includes(termo) ||
         (v.telefone_contato || '').toLowerCase().includes(termo) ||
-        (respMap.get(v.responsavel_id || '')?.nome || '').toLowerCase().includes(termo) ||
+        (respDe(v)?.nome || '').toLowerCase().includes(termo) ||
         concluidoNome.includes(termo)
       );
     });
@@ -382,7 +397,7 @@ function VisitasListaPanel({
             const hora = (v.hora_inicio || '').slice(0, 5);
             const atrasada = meta.key === 'pendente' && ymd < todayYmd;
             const local = [v.cidade, v.estado].filter(Boolean).join('/');
-            const resp = respMap.get(v.responsavel_id || '');
+            const resp = respDe(v);
             const respNome = resp?.nome || '—';
             const criador = respMap.get(v.created_by || '');
             const criadorNome = criador?.nome || respNome;
@@ -607,6 +622,22 @@ export default function VisitasTecnicasCalendario() {
     },
   });
 
+  const { data: autorizados = [] } = useQuery({
+    queryKey: ['autorizados-ativos-visitas'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('autorizados').select('id, nome, cidade, estado').eq('ativo', true).order('nome');
+      if (error) throw error;
+      return (data || []) as AutorizadoResp[];
+    },
+  });
+
+  const nomeResponsavel = (id?: string | null, tipo?: string | null) => {
+    if (!id) return null;
+    if (tipo === 'autorizado') return autorizados.find(a => a.id === id)?.nome || null;
+    return responsaveis.find(r => r.id === id || r.user_id === id)?.nome || null;
+  };
+
   const { data: visitasAConcluir = [] } = useQuery({
     queryKey: ['visitas-a-concluir'],
     queryFn: async () => {
@@ -664,6 +695,7 @@ export default function VisitasTecnicasCalendario() {
       data_visita: toDateOnly(v.data_visita),
       hora_inicio: (v.hora_inicio || '').slice(0, 5),
       responsavel_id: v.responsavel_id || '',
+      responsavel_tipo: (v.responsavel_tipo === 'autorizado' ? 'autorizado' : 'colaborador') as 'colaborador' | 'autorizado',
       telefone_contato: v.telefone_contato || '',
       cep: v.cep || '',
       endereco: v.endereco || '',
@@ -730,6 +762,7 @@ export default function VisitasTecnicasCalendario() {
         data_visita: `${form.data_visita}T12:00:00.000Z`,
         hora_inicio: form.hora_inicio,
         responsavel_id: form.responsavel_id || null,
+        responsavel_tipo: form.responsavel_tipo,
         telefone_contato: form.telefone_contato || null,
         cep: form.cep || null,
         endereco: form.endereco || null,
@@ -740,7 +773,7 @@ export default function VisitasTecnicasCalendario() {
         estado: form.estado || null,
         observacoes: form.observacoes || null,
       };
-      const respNome = responsaveis.find(r => r.id === form.responsavel_id)?.nome || null;
+      const respNome = nomeResponsavel(form.responsavel_id, form.responsavel_tipo);
       if (editing) {
         const { error } = await supabase.from('visitas_tecnicas_agendadas').update(payload).eq('id', editing.id);
         if (error) throw error;
@@ -875,7 +908,7 @@ export default function VisitasTecnicasCalendario() {
         .update({ data_visita: `${novaData}T12:00:00.000Z` })
         .eq('id', visita.id);
       if (error) throw error;
-      const respNome = responsaveis.find(r => r.id === visita.responsavel_id)?.nome || null;
+      const respNome = nomeResponsavel(visita.responsavel_id, visita.responsavel_tipo);
       await logVisitaHistorico({
         visita_id: visita.id,
         acao: 'reagendada',
@@ -1218,6 +1251,7 @@ export default function VisitasTecnicasCalendario() {
         <VisitasListaPanel
           visitas={visitasLista}
           responsaveis={responsaveis}
+          autorizados={autorizados}
           filtro={listaFiltro}
           setFiltro={setListaFiltro}
           busca={listaBusca}
@@ -1292,9 +1326,38 @@ export default function VisitasTecnicasCalendario() {
             </div>
             <div>
               <label className="text-[11px] uppercase tracking-wider text-white/50 font-medium">Responsável</label>
-              <div className="mt-1 flex h-10 items-center rounded-md border border-white/10 bg-white/[0.03] px-3 text-sm text-white/70 cursor-not-allowed select-none">
-                {responsaveis.find(r => r.id === form.responsavel_id)?.nome || usuario_nome || 'Usuário logado'}
-              </div>
+              <Select
+                value={form.responsavel_tipo}
+                onValueChange={(v: 'colaborador' | 'autorizado') =>
+                  setForm(f => ({
+                    ...f,
+                    responsavel_tipo: v,
+                    responsavel_id: v === 'colaborador' ? (admin_user_id || '') : '',
+                  }))
+                }
+              >
+                <SelectTrigger className="mt-1 bg-white/5 border-white/10 text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-900 border-white/10 text-white">
+                  <SelectItem value="colaborador">Colaborador</SelectItem>
+                  <SelectItem value="autorizado">Autorizado</SelectItem>
+                </SelectContent>
+              </Select>
+              {form.responsavel_tipo === 'colaborador' ? (
+                <div className="mt-1 flex h-10 items-center rounded-md border border-white/10 bg-white/[0.03] px-3 text-sm text-white/70 cursor-not-allowed select-none">
+                  {responsaveis.find(r => r.id === form.responsavel_id)?.nome || usuario_nome || 'Usuário logado'}
+                </div>
+              ) : (
+                <ResponsavelCombobox
+                  value={form.responsavel_id}
+                  onChange={(id) => setForm(f => ({ ...f, responsavel_id: id }))}
+                  responsaveis={autorizados.map(a => ({
+                    id: a.id,
+                    nome: [a.nome, [a.cidade, a.estado].filter(Boolean).join('/')].filter(Boolean).join(' — '),
+                  }))}
+                />
+              )}
             </div>
             <div>
               <label className="text-[11px] uppercase tracking-wider text-white/50 font-medium">Telefone de contato</label>
@@ -1405,7 +1468,15 @@ export default function VisitasTecnicasCalendario() {
                   <div className="flex items-center gap-2 text-sm text-white/80">
                     <User className="w-4 h-4 text-blue-300 shrink-0" />
                     <span>
-                      {responsaveis.find(r => r.id === selectedVisita.responsavel_id)?.nome || 'Responsável'}
+                      {nomeResponsavel(selectedVisita.responsavel_id, selectedVisita.responsavel_tipo) || 'Responsável'}
+                    </span>
+                    <span className={cn(
+                      "px-2 py-0.5 rounded-full text-[10px] border",
+                      selectedVisita.responsavel_tipo === 'autorizado'
+                        ? "bg-amber-500/15 text-amber-200 border-amber-400/30"
+                        : "bg-blue-500/15 text-blue-200 border-blue-400/30"
+                    )}>
+                      {selectedVisita.responsavel_tipo === 'autorizado' ? 'Autorizado' : 'Colaborador'}
                     </span>
                   </div>
                 )}
