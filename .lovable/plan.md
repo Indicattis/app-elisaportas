@@ -1,36 +1,33 @@
-## Diagnóstico (confirmado no banco)
+## Objetivo
 
-O pedido #0167 (`da343468…`, etapa `em_producao`) está com **todas** as ordens concluídas:
+Em `/vendas/visitas-tecnicas`, permitir definir se o responsável pela visita é um **colaborador** (equipe interna) ou um **autorizado**.
 
-- 36 linhas de soldagem, 16 de perfiladeira e 83 de separação — todas `concluida = true`
-- As 3 ordens (soldagem, perfiladeira, separação) estão com `status = concluido`, nenhuma pausada
+## Situação atual (verificada)
 
-O bloqueio vem do passo 4 da verificação em `usePedidoAutoAvanco.ts`, que barra o avanço se existir qualquer linha com `com_problema = true`. Existe exatamente **1 linha** nessa condição:
+- A tabela `visitas_tecnicas_agendadas` tem apenas `responsavel_id` (uuid), sem coluna que indique a origem — hoje ele sempre aponta para um registro de `admin_users`.
+- No formulário de agendamento, o campo "Responsável" é **somente leitura**: mostra sempre o usuário logado (há um combobox de responsáveis no arquivo, mas não está em uso no formulário).
+- O nome do responsável é resolvido buscando na lista de `admin_users` ativos — em vários pontos: card da lista, modal de detalhes e histórico de visitas.
 
-- Item: `Central c/ 2 Controles` (separação)
-- Problema reportado em 27/07
-- Porém **concluída em 30/07** — a flag `com_problema` nunca foi limpa quando o operador concluiu a linha
+## Mudanças propostas
 
-Ou seja: o problema já foi resolvido na prática, mas o registro continua marcado, travando o pedido.
+### 1. Banco de dados
+- Nova coluna `responsavel_tipo` (texto) em `visitas_tecnicas_agendadas`, com valores `colaborador` ou `autorizado` e padrão `colaborador`.
+- Registros existentes são preenchidos como `colaborador` (comportamento atual preservado).
 
-## O que fazer
+### 2. Formulário de agendamento (criar/editar)
+- Novo seletor **"Tipo de responsável"** com duas opções: Colaborador / Autorizado.
+- Quando **Colaborador**: mantém o comportamento atual (campo travado no usuário logado).
+- Quando **Autorizado**: exibe um combobox com busca listando os autorizados ativos (nome + cidade/UF) para escolha.
+- Trocar o tipo limpa a seleção anterior para evitar id de origem errada.
 
-### 1. Corrigir a causa raiz (frontend)
-No fluxo de conclusão de linha de produção (solda/perfiladeira/separação), ao marcar `concluida = true` também limpar os campos de problema:
-`com_problema = false`, `problema_descricao = null`, `problema_reportado_em = null`, `problema_reportado_por = null`.
-
-Assim, concluir uma linha que teve problema reportado deixa de travar o pedido para sempre.
-
-### 2. Ajustar a verificação de avanço
-Em `usePedidoAutoAvanco.ts`, o passo 4 deve considerar apenas linhas **não concluídas** com problema (`com_problema = true AND concluida = false`). Uma linha já concluída não deve bloquear o avanço.
-
-### 3. Destravar o pedido #0167
-Migration pontual limpando a flag de problema da linha `e1b3e01a-8ec0-4d9a-b5be-c66372f45ba3` (já concluída), para que o botão "Avançar" funcione imediatamente.
-
-### 4. Mensagem de erro mais útil (opcional, incluído)
-Quando o avanço for bloqueado, detalhar o motivo real ("Linha X com problema em aberto", "Ordem pausada", "N linhas pendentes") em vez do genérico "Nem todas as ordens de produção estão concluídas".
+### 3. Exibição
+- Modal de detalhes da visita: mostra o nome correto conforme o tipo, com uma etiqueta discreta "Colaborador" ou "Autorizado".
+- Cards/lista de visitas: o nome do responsável passa a ser resolvido também na lista de autorizados, para não aparecer vazio.
+- O histórico de visitas continua registrando o nome do responsável (agora resolvido pela origem certa).
 
 ## Detalhes técnicos
-- Arquivos: `src/hooks/usePedidoAutoAvanco.ts` e a tela/hook que conclui linhas (`linhas_ordens`) na produção.
-- Migration: `UPDATE public.linhas_ordens SET com_problema = false, problema_descricao = null, problema_reportado_em = null, problema_reportado_por = null WHERE id = 'e1b3e01a-8ec0-4d9a-b5be-c66372f45ba3';`
-- Nenhuma alteração de schema é necessária.
+
+- Migração: `ALTER TABLE public.visitas_tecnicas_agendadas ADD COLUMN responsavel_tipo text NOT NULL DEFAULT 'colaborador'` + CHECK nos dois valores.
+- `src/pages/vendas/VisitasTecnicasCalendario.tsx`: adicionar `responsavel_tipo` à interface `VisitaAgendada` e ao `emptyForm`; nova query para `autorizados` (id, nome, cidade, estado, `ativo = true`); mapa unificado de nomes (`admin_users` + `autorizados`) usado por lista, detalhes e log de histórico; incluir o campo nos `insert`/`update` e em `openEdit`.
+- Reutilizar o `ResponsavelCombobox` já existente no arquivo para a seleção de autorizados.
+- Sem alterações no fluxo de conclusão da visita (`VisitaTecnicaConclusao.tsx`).
