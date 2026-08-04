@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { EtapaPedido, PedidoEtapa, PedidoCheckbox } from "@/types/pedidoEtapa";
 import { ETAPAS_CONFIG, getProximaEtapa } from "@/types/pedidoEtapa";
-import { calcularTempoExpediente } from "@/utils/calcularTempoExpediente";
+
 
 // Função auxiliar para criar ordens de produção usando SECURITY DEFINER
 async function criarOrdensProducao(pedidoId: string) {
