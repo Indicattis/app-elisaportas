@@ -227,6 +227,12 @@ export function OrdemDetalhesSheet({
       
       // Montar portaLabel a partir dos dados da linha
       let portaLabel: string | undefined;
+      // Dimensões da porta: linha primeiro, com fallback no produto da venda
+      const produtoLinha = linha.produto_venda_id
+        ? (ordem?.pedido?.produtos || []).find((p: any) => p.id === linha.produto_venda_id)
+        : null;
+      const larguraFinal = Number(linha.largura) || Number(produtoLinha?.largura) || undefined;
+      const alturaFinal = Number(linha.altura) || Number(produtoLinha?.altura) || undefined;
       if (linha.produto_venda_id && ordem?.pedido?.produtos) {
         const portaKey = `${linha.produto_venda_id}_${linha.indice_porta ?? 0}`;
         const todosProdutos = ordem.pedido.produtos || [];
@@ -247,8 +253,8 @@ export function OrdemDetalhesSheet({
           const prod = baseProdutoId ? todosProdutos.find((p: any) => p.id === baseProdutoId) : null;
           const tipoLabel = getLabelTipoProduto(prod?.tipo_produto);
           const num = String(portaNum + 1).padStart(2, '0');
-          const larguraPorta = linha.largura || prod?.largura;
-          const alturaPorta = linha.altura || prod?.altura;
+          const larguraPorta = larguraFinal;
+          const alturaPorta = alturaFinal;
           const dimTexto = larguraPorta && alturaPorta ? ` — ${formatarDimensoes(larguraPorta, alturaPorta)}` : '';
           portaLabel = `${tipoLabel} #${num}${dimTexto}`;
         }
@@ -279,10 +285,10 @@ export function OrdemDetalhesSheet({
             quantidadeParcial,
             quantidadeTotal,
             divisor,
-            largura: calculo.largura,
-            altura: calculo.altura,
+            largura: larguraFinal ?? calculo.largura,
+            altura: alturaFinal ?? calculo.altura,
             clienteNome: ordem?.pedido?.cliente_nome,
-            tamanho: linha.tamanho,
+            tamanho: linha.tamanho || (larguraFinal && alturaFinal ? `${larguraFinal.toFixed(2)}x${alturaFinal.toFixed(2)}` : undefined),
             corNome: linha.cor_nome,
             tipoPintura: linha.tipo_pintura,
             origemOrdem: origemOrdemLabel,
@@ -298,10 +304,10 @@ export function OrdemDetalhesSheet({
           nomeProduto: calculo.nomeProduto,
           numeroPedido: ordem?.pedido?.numero_pedido || ordem?.numero_ordem || '',
           quantidade: quantidadeTotal,
-          largura: calculo.largura,
-          altura: calculo.altura,
+          largura: larguraFinal ?? calculo.largura,
+          altura: alturaFinal ?? calculo.altura,
           clienteNome: ordem?.pedido?.cliente_nome,
-          tamanho: linha.tamanho,
+          tamanho: linha.tamanho || (larguraFinal && alturaFinal ? `${larguraFinal.toFixed(2)}x${alturaFinal.toFixed(2)}` : undefined),
           corNome: linha.cor_nome,
           tipoPintura: linha.tipo_pintura,
           origemOrdem: origemOrdemLabel,
