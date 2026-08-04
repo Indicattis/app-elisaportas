@@ -1,33 +1,40 @@
+# Reverter cronômetro dos pedidos para dias corridos
+
 ## Objetivo
 
-Em `/vendas/visitas-tecnicas`, permitir definir se o responsável pela visita é um **colaborador** (equipe interna) ou um **autorizado**.
+Em `/direcao/gestao-fabrica`, o cronômetro das etapas dos pedidos atualmente conta apenas **horas comerciais** (07h-17h, seg-sex, sem feriados) mas exibe como dias de 24h — causando confusão (ex: 1 semana real aparece como "~2d"). Reverter para **tempo corrido** (tempo real decorrido), como era antes de jan/2026.
 
-## Situação atual (verificada)
+## Arquivos a alterar
 
-- A tabela `visitas_tecnicas_agendadas` tem apenas `responsavel_id` (uuid), sem coluna que indique a origem — hoje ele sempre aponta para um registro de `admin_users`.
-- No formulário de agendamento, o campo "Responsável" é **somente leitura**: mostra sempre o usuário logado (há um combobox de responsáveis no arquivo, mas não está em uso no formulário).
-- O nome do responsável é resolvido buscando na lista de `admin_users` ativos — em vários pontos: card da lista, modal de detalhes e histórico de visitas.
+### 1. `src/hooks/useCronometroEtapa.ts`
+- Substituir `calcularTempoExpediente(inicio, agora)` por cálculo simples de tempo decorrido: `(agora.getTime() - inicio.getTime()) / 1000`
+- Remover import de `calcularTempoExpediente` e `estaNoExpediente`
+- `deveAnimar`: voltar para `!!dataEntrada` (sempre anima quando há data de entrada), em vez de checar horário comercial
+- `LIMITE_DEFAULT`: converter de `5 * 10 * 3600` (5 dias comerciais) para `5 * 24 * 3600` (5 dias corridos)
 
-## Mudanças propostas
+### 2. `src/types/pedidoEtapa.ts` — `LIMITES_ETAPA_SEGUNDOS`
+Converter limites baseados em dias comerciais (10h/dia) para dias corridos (24h/dia):
 
-### 1. Banco de dados
-- Nova coluna `responsavel_tipo` (texto) em `visitas_tecnicas_agendadas`, com valores `colaborador` ou `autorizado` e padrão `colaborador`.
-- Registros existentes são preenchidos como `colaborador` (comportamento atual preservado).
+| Etapa | Antes (comercial) | Depois (corrido) |
+|---|---|---|
+| `em_producao` | 4 × 10 × 3600 = 40h | 4 × 24 × 3600 = 96h |
+| `aguardando_pintura` | 4 × 10 × 3600 = 40h | 4 × 24 × 3600 = 96h |
+| `aguardando_coleta` | 48 × 10 × 3600 = 480h | 48 × 24 × 3600 = 1152h |
+| `instalacoes` | 3 × 10 × 3600 = 30h | 3 × 24 × 3600 = 72h |
+| `correcoes` | 3 × 10 × 3600 = 30h | 3 × 24 × 3600 = 72h |
 
-### 2. Formulário de agendamento (criar/editar)
-- Novo seletor **"Tipo de responsável"** com duas opções: Colaborador / Autorizado.
-- Quando **Colaborador**: mantém o comportamento atual (campo travado no usuário logado).
-- Quando **Autorizado**: exibe um combobox com busca listando os autorizados ativos (nome + cidade/UF) para escolha.
-- Trocar o tipo limpa a seleção anterior para evitar id de origem errada.
+Limites em horas (`aprovacao_diretor`, `aberto`, `aprovacao_ceo`, `inspecao_qualidade`, `embalagem`) permanecem iguais — já são horas reais.
 
-### 3. Exibição
-- Modal de detalhes da visita: mostra o nome correto conforme o tipo, com uma etiqueta discreta "Colaborador" ou "Autorizado".
-- Cards/lista de visitas: o nome do responsável passa a ser resolvido também na lista de autorizados, para não aparecer vazio.
-- O histórico de visitas continua registrando o nome do responsável (agora resolvido pela origem certa).
+Atualizar comentário do objeto de "dia comercial = 10h" para "dia = 24h".
 
-## Detalhes técnicos
+### 3. `src/hooks/usePedidosEtapas.ts` (linha ~815)
+- Substituir `calcularTempoExpediente(new Date(etapaAtual.data_entrada), new Date())` por cálculo simples de tempo decorrido, garantindo que `tempo_permanencia_segundos` salvo no banco fique em tempo corrido (consistente com o cronômetro ao vivo)
 
-- Migração: `ALTER TABLE public.visitas_tecnicas_agendadas ADD COLUMN responsavel_tipo text NOT NULL DEFAULT 'colaborador'` + CHECK nos dois valores.
-- `src/pages/vendas/VisitasTecnicasCalendario.tsx`: adicionar `responsavel_tipo` à interface `VisitaAgendada` e ao `emptyForm`; nova query para `autorizados` (id, nome, cidade, estado, `ativo = true`); mapa unificado de nomes (`admin_users` + `autorizados`) usado por lista, detalhes e log de histórico; incluir o campo nos `insert`/`update` e em `openEdit`.
-- Reutilizar o `ResponsavelCombobox` já existente no arquivo para a seleção de autorizados.
-- Sem alterações no fluxo de conclusão da visita (`VisitaTecnicaConclusao.tsx`).
+### 4. `src/pages/direcao/GestaoFabricaDirecao.tsx` (linha ~2008)
+- Atualizar nota da legenda: remover menção a "Horário comercial: 07:00 às 17:00, seg-sex." e manter apenas "Tempo total usa dias corridos."
+
+## Impacto
+- `CronometroEtapaBadge` (usado em `PedidoCard`, `GestaoFabricaMobile`, `NeoInstalacaoCardGestao`, `NeoCorrecaoCardGestao`, `PedidoDetalhesSheet`, `AprovacoesProducao`) passa a mostrar tempo real
+- `formatCronometroExtended` já divide por 86400 (24h) — funcionará corretamente com tempo corrido
+- Etapas históricas salvas com `tempo_permanencia_segundos` em horas comerciais continuam exibindo com `formatDuration` (formato "Xh Ymin") — sem quebra, apenas valores antigos ficam menores
+- Cronômetros de ordens de produção (`useCronometroOrdem`) e suporte (`useCronometroChamado`) **não** são alterados
