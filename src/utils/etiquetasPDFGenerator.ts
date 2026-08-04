@@ -287,10 +287,17 @@ function desenharEtiquetaProducao(doc: jsPDF, tag: TagProducao, pageWidth: numbe
   drawTableRow('CLIENTE', tag.clienteNome || '—', true);
   drawTableRow('PRODUTO', tag.nomeProduto, true);
   
-  // Tamanho: usar tamanho formatado, ou largura x altura como fallback
-  const tamanhoTexto = tag.tamanho 
-    ? `${parseFloat(String(tag.tamanho).replace(',', '.')).toFixed(2)}m`
-    : (tag.largura && tag.altura ? `${tag.largura.toFixed(2)}m x ${tag.altura.toFixed(2)}m` : '—');
+  // Tamanho: usar tamanho formatado (aceita "LxA"), ou largura x altura como fallback
+  const formatarTamanho = (valor: string) => {
+    const partes = String(valor).replace(/,/g, '.').split(/\s*[xX]\s*/);
+    const nums = partes.map((p) => parseFloat(p)).filter((n) => !isNaN(n));
+    if (nums.length >= 2) return `${nums[0].toFixed(2)}m x ${nums[1].toFixed(2)}m`;
+    if (nums.length === 1) return `${nums[0].toFixed(2)}m`;
+    return '';
+  };
+  const tamanhoTexto =
+    (tag.tamanho ? formatarTamanho(tag.tamanho) : '') ||
+    (tag.largura && tag.altura ? `${tag.largura.toFixed(2)}m x ${tag.altura.toFixed(2)}m` : '—');
   drawTableRow('TAMANHO', tamanhoTexto);
   
   // Quantidade
