@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
 import { formatCronometroExtended } from '@/utils/timeFormat';
-import { calcularTempoExpediente, estaNoExpediente } from '@/utils/calcularTempoExpediente';
 
 interface UseCronometroEtapaParams {
   dataEntrada?: string | null;
@@ -14,8 +13,8 @@ interface CronometroEtapaResult {
   cor: 'green' | 'yellow' | 'red';
 }
 
-// Default: 5 dias úteis (retrocompatibilidade)
-const LIMITE_DEFAULT = 5 * 10 * 60 * 60;
+// Default: 5 dias corridos (24h/dia)
+const LIMITE_DEFAULT = 5 * 24 * 60 * 60;
 
 export function useCronometroEtapa(params: UseCronometroEtapaParams | string | null | undefined): CronometroEtapaResult {
   const [segundos, setSegundos] = useState<number>(0);
@@ -38,8 +37,8 @@ export function useCronometroEtapa(params: UseCronometroEtapaParams | string | n
     const calcularTempo = () => {
       const agora = new Date();
       const inicio = new Date(dataEntrada as string);
-      const segundosExpediente = calcularTempoExpediente(inicio, agora);
-      setSegundos(segundosExpediente);
+      const diffMs = agora.getTime() - inicio.getTime();
+      setSegundos(Math.max(0, Math.floor(diffMs / 1000)));
     };
 
     calcularTempo();
@@ -58,8 +57,7 @@ export function useCronometroEtapa(params: UseCronometroEtapaParams | string | n
   }, [dataEntrada, segundos]);
 
   const deveAnimar = useMemo(() => {
-    if (!dataEntrada) return false;
-    return estaNoExpediente();
+    return !!dataEntrada;
   }, [dataEntrada]);
 
   return { tempoDecorrido, segundos, deveAnimar, cor };
