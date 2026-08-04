@@ -182,18 +182,18 @@ export interface PrioridadeUpdate {
 
 export type DirecaoPrioridade = 'frente' | 'tras';
 
-// Limites de tempo por etapa em segundos comerciais (1 dia comercial = 10h = 36000s)
+// Limites de tempo por etapa em segundos corridos (1 dia = 24h = 86400s)
 export const LIMITES_ETAPA_SEGUNDOS: Record<EtapaPedido, number> = {
-  aprovacao_diretor: 6 * 3600,     // 6h comerciais
-  aberto: 6 * 3600,                // 6h comerciais
-  aprovacao_ceo: 6 * 3600,         // 6h comerciais
-  em_producao: 4 * 10 * 3600,      // 4 dias comerciais (40h)
-  inspecao_qualidade: 3 * 3600,    // 3h comerciais
-  aguardando_pintura: 4 * 10 * 3600, // 4 dias comerciais (40h)
-  embalagem: 3 * 3600,             // 3h comerciais
-  aguardando_coleta: 48 * 10 * 3600, // 48 dias comerciais (480h)
-  instalacoes: 3 * 10 * 3600,      // 3 dias comerciais (30h)
-  correcoes: 3 * 10 * 3600,        // 3 dias comerciais (30h)
+  aprovacao_diretor: 6 * 3600,     // 6h
+  aberto: 6 * 3600,                // 6h
+  aprovacao_ceo: 6 * 3600,         // 6h
+  em_producao: 4 * 24 * 3600,      // 4 dias corridos (96h)
+  inspecao_qualidade: 3 * 3600,    // 3h
+  aguardando_pintura: 4 * 24 * 3600, // 4 dias corridos (96h)
+  embalagem: 3 * 3600,             // 3h
+  aguardando_coleta: 48 * 24 * 3600, // 48 dias corridos (1152h)
+  instalacoes: 3 * 24 * 3600,      // 3 dias corridos (72h)
+  correcoes: 3 * 24 * 3600,        // 3 dias corridos (72h)
   finalizado: Infinity,
   pos_vendas: Infinity,
   aguardando_cliente: Infinity,

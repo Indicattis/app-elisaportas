@@ -811,11 +811,10 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
       // Fechar etapa atual
         if (onProgress) onProgress('fechar_etapa_atual', 'in_progress');
         await executarComDelay(async () => {
-          // Calcular tempo de permanência em horas úteis
-          const tempoPermanencia = calcularTempoExpediente(
-            new Date(etapaAtual.data_entrada),
-            new Date()
-          );
+          // Calcular tempo de permanência em tempo corrido (dias de 24h)
+          const tempoPermanencia = Math.max(0, Math.floor(
+            (Date.now() - new Date(etapaAtual.data_entrada).getTime()) / 1000
+          ));
           await supabase
             .from('pedidos_etapas')
             .update({ 

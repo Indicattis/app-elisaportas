@@ -2005,7 +2005,7 @@ export default function GestaoFabricaDirecao() {
               </div>
             </div>
           </div>
-          <p className="mt-2 text-[10px] text-muted-foreground/60">* Horário comercial: 07:00 às 17:00, seg-sex. Tempo total usa dias corridos.</p>
+          <p className="mt-2 text-[10px] text-muted-foreground/60">* Tempo corrido (24h/dia, incluindo finais de semana e feriados).</p>
         </CollapsibleContent>
       </Collapsible>
 
