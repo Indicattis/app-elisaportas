@@ -197,7 +197,7 @@ export default function DREDirecao() {
                 >
                   <div className="flex items-center justify-between mb-1">
                     <p className="text-sm text-white/50 capitalize">{mesNome}</p>
-                    <span className={`inline-flex items-center gap-1 text-[10px] uppercase tracking-wider ${style.badge}`}>
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wider font-medium backdrop-blur-sm ${style.badge}`}>
                       {style.icon}
                       {style.label}
                     </span>
