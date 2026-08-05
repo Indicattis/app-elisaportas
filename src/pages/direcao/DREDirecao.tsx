@@ -106,19 +106,19 @@ export default function DREDirecao() {
       label: 'Futuro',
     },
     pendente: {
-      border: 'border-red-500/50 hover:bg-red-500/10',
+      border: 'border-white/10 hover:bg-red-500/10',
       badge: 'text-red-300',
       icon: <AlertCircle className="w-3.5 h-3.5" strokeWidth={1.8} />,
       label: 'Pendente',
     },
     realizado: {
-      border: 'border-yellow-400/60 hover:bg-yellow-400/10',
+      border: 'border-white/10 hover:bg-yellow-400/10',
       badge: 'text-yellow-300',
       icon: <Clock className="w-3.5 h-3.5" strokeWidth={1.8} />,
       label: 'Realizado',
     },
     aprovado: {
-      border: 'border-emerald-500/50 hover:bg-emerald-500/10',
+      border: 'border-white/10 hover:bg-emerald-500/10',
       badge: 'text-emerald-300',
       icon: <CheckCircle2 className="w-3.5 h-3.5" strokeWidth={1.8} />,
       label: 'Aprovado',
