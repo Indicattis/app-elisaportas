@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format, startOfYear, endOfYear } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Loader2, CheckCircle2, AlertCircle, Clock } from 'lucide-react';
+import { Loader2, CheckCircle2, AlertCircle, Clock, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 
@@ -24,6 +24,7 @@ export default function DREDirecao() {
   const [loading, setLoading] = useState(true);
   const [faturamentos, setFaturamentos] = useState<FaturamentoMes[]>([]);
   const [realizados, setRealizados] = useState<Record<number, RealizadoMes>>({});
+  const [mostrarLucro, setMostrarLucro] = useState(true);
 
   const anoAtual = new Date().getFullYear();
   const mesAtual = new Date().getMonth();
@@ -145,15 +146,25 @@ export default function DREDirecao() {
       ]}
       headerActions={
         !loading ? (
-          <div
-            className={`px-4 py-2 rounded-xl border bg-white/5 ${
-              mediaAcimaMeta ? 'border-emerald-500/50' : 'border-red-500/50'
-            }`}
-          >
-            <p className="text-[10px] uppercase tracking-wider text-white/40">Média de faturamento</p>
-            <p className={`text-lg font-semibold ${mediaAcimaMeta ? 'text-emerald-300' : 'text-red-300'}`}>
-              {formatCurrency(mediaFaturamento)}
-            </p>
+          <div className="flex items-center gap-2">
+            <div
+              className={`px-4 py-2 rounded-xl border bg-white/5 ${
+                mediaAcimaMeta ? 'border-emerald-500/50' : 'border-red-500/50'
+              }`}
+            >
+              <p className="text-[10px] uppercase tracking-wider text-white/40">Média de faturamento</p>
+              <p className={`text-lg font-semibold ${mediaAcimaMeta ? 'text-emerald-300' : 'text-red-300'}`}>
+                {formatCurrency(mediaFaturamento)}
+              </p>
+            </div>
+            <button
+              onClick={() => setMostrarLucro((v) => !v)}
+              title={mostrarLucro ? 'Ocultar lucro líquido' : 'Mostrar lucro líquido'}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-white/10 bg-white/5 text-white/60 hover:text-white hover:bg-white/10 transition-all"
+            >
+              {mostrarLucro ? <Eye className="w-4 h-4" strokeWidth={1.8} /> : <EyeOff className="w-4 h-4" strokeWidth={1.8} />}
+              <span className="text-xs">Líquido</span>
+            </button>
           </div>
         ) : undefined
       }
@@ -194,7 +205,7 @@ export default function DREDirecao() {
                   <p className={`text-lg font-semibold ${item.valor > 0 ? 'text-white' : 'text-white/30'}`}>
                     {formatCurrency(item.valor)}
                   </p>
-                  {real && (
+                  {real && mostrarLucro && (
                     <p className="text-xs text-emerald-300/80 mt-1">
                       Líquido: {formatCurrency(real.lucro_liquido_final)}
                     </p>
