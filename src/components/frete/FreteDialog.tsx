@@ -68,7 +68,9 @@ export function FreteDialog({ open, onOpenChange, frete }: FreteDialogProps) {
     observacoes: "",
     ativo: true,
     quilometragem: "",
+    valor_frete: "",
   });
+  const [valorManual, setValorManual] = useState(false);
 
   const cidadesOptions = useMemo(() => {
     const lista = getCidadesPorEstado(formData.estado);
@@ -80,13 +82,19 @@ export function FreteDialog({ open, onOpenChange, frete }: FreteDialogProps) {
 
   useEffect(() => {
     if (frete) {
+      const km = frete.quilometragem ?? 0;
+      const calculado = calcularValorFreteInterno(km);
       setFormData({
         estado: frete.estado,
         cidade: frete.cidade,
         observacoes: frete.observacoes || "",
         ativo: frete.ativo,
         quilometragem: frete.quilometragem != null ? frete.quilometragem.toString() : "",
+        valor_frete: frete.valor_frete != null ? frete.valor_frete.toString() : "",
       });
+      setValorManual(
+        frete.valor_frete != null && Math.abs(Number(frete.valor_frete) - calculado) > 0.009,
+      );
     } else {
       setFormData({
         estado: "",
@@ -94,7 +102,9 @@ export function FreteDialog({ open, onOpenChange, frete }: FreteDialogProps) {
         observacoes: "",
         ativo: true,
         quilometragem: "",
+        valor_frete: "",
       });
+      setValorManual(false);
     }
   }, [frete, open]);
 
@@ -106,10 +116,14 @@ export function FreteDialog({ open, onOpenChange, frete }: FreteDialogProps) {
     }
 
     const km = parseFloat(formData.quilometragem);
+    const valorDigitado = parseFloat(formData.valor_frete);
     const data = {
       estado: formData.estado,
       cidade: formData.cidade.trim(),
-      valor_frete: calcularValorFreteInterno(isNaN(km) ? 0 : km),
+      valor_frete:
+        valorManual && !isNaN(valorDigitado)
+          ? valorDigitado
+          : calcularValorFreteInterno(isNaN(km) ? 0 : km),
       observacoes: formData.observacoes.trim() || null,
       ativo: formData.ativo,
       quilometragem: isNaN(km) ? null : km,
@@ -201,6 +215,42 @@ export function FreteDialog({ open, onOpenChange, frete }: FreteDialogProps) {
             />
             <p className="text-xs text-white/50">
               Ida e volta = km × 2 · Valor = km × 6, mínimo R$ 750,00 (R$ {calcularValorFreteInterno(parseFloat(formData.quilometragem)).toFixed(2)})
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="valor_frete" className="text-white/80">Valor manual (R$)</Label>
+              <Switch
+                id="valor_manual"
+                checked={valorManual}
+                onCheckedChange={(checked) => {
+                  setValorManual(checked);
+                  if (checked && !formData.valor_frete) {
+                    setFormData(prev => ({
+                      ...prev,
+                      valor_frete: calcularValorFreteInterno(parseFloat(prev.quilometragem)).toFixed(2),
+                    }));
+                  }
+                }}
+              />
+            </div>
+            <Input
+              id="valor_frete"
+              type="number"
+              step="0.01"
+              min="0"
+              disabled={!valorManual}
+              value={
+                valorManual
+                  ? formData.valor_frete
+                  : calcularValorFreteInterno(parseFloat(formData.quilometragem)).toFixed(2)
+              }
+              onChange={(e) => setFormData(prev => ({ ...prev, valor_frete: e.target.value }))}
+              className="bg-white/5 border-white/10 text-white placeholder:text-white/40 disabled:opacity-60"
+            />
+            <p className="text-xs text-white/50">
+              Ative para definir um valor livre, ignorando o cálculo e o mínimo de R$ 750,00.
             </p>
           </div>
 
