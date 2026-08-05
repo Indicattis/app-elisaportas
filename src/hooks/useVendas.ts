@@ -188,11 +188,44 @@ export function useVendas() {
       }
 
       // 2.5. Validação autoritativa de desconto (anti-bypass do frontend)
-      const { data: cfgVendas } = await supabase
-        .from('configuracoes_vendas')
-        .select('limite_desconto_avista, limite_desconto_presencial, limite_adicional_responsavel')
+      // Fonte canônica: `regras_vendas` (legível por qualquer autenticado) — a mesma
+      // usada pela tela. `configuracoes_vendas` fica só como fallback, pois seu
+      // SELECT é restrito à direção e voltaria vazio para vendedores, gerando
+      // limites divergentes do que foi exibido no formulário.
+      const { data: regrasVendas } = await supabase
+        .from('regras_vendas')
+        .select('limite_desconto_avista, limite_desconto_fria, limite_adicional_responsavel')
         .limit(1)
         .maybeSingle();
+
+      let limitesDesconto = regrasVendas
+        ? {
+            avista: regrasVendas.limite_desconto_avista,
+            presencial: regrasVendas.limite_desconto_fria,
+            adicionalResponsavel: regrasVendas.limite_adicional_responsavel,
+          }
+        : null;
+
+      if (!limitesDesconto) {
+        const { data: cfgVendas } = await supabase
+          .from('configuracoes_vendas')
+          .select('limite_desconto_avista, limite_desconto_presencial, limite_adicional_responsavel')
+          .limit(1)
+          .maybeSingle();
+        if (cfgVendas) {
+          limitesDesconto = {
+            avista: cfgVendas.limite_desconto_avista,
+            presencial: cfgVendas.limite_desconto_presencial,
+            adicionalResponsavel: cfgVendas.limite_adicional_responsavel,
+          };
+        }
+      }
+
+      if (!limitesDesconto) {
+        throw new Error(
+          'Não foi possível carregar os limites de desconto configurados. Recarregue a página e tente novamente.'
+        );
+      }
 
       const validacaoServer = validarDesconto(
         portas,
@@ -200,11 +233,7 @@ export function useVendas() {
         // `validarDesconto` recebe "venda fria" como boolean.
         // No formulário, `temperatura === false` significa venda fria.
         vendaData.temperatura === false,
-        {
-          avista: cfgVendas?.limite_desconto_avista,
-          presencial: cfgVendas?.limite_desconto_presencial,
-          adicionalResponsavel: cfgVendas?.limite_adicional_responsavel,
-        }
+        limitesDesconto
       );
       const tipoAutorizacaoRequerido = getTipoAutorizacaoNecessaria(validacaoServer);
 
