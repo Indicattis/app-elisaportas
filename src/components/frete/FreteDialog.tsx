@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { getCidadesPorEstado } from "@/utils/estadosCidades";
+import { calcularValorFreteInterno } from "@/utils/freteInterno";
 
 const ESTADOS_BR = [
   { sigla: "AC", nome: "Acre" },
@@ -108,7 +109,7 @@ export function FreteDialog({ open, onOpenChange, frete }: FreteDialogProps) {
     const data = {
       estado: formData.estado,
       cidade: formData.cidade.trim(),
-      valor_frete: isNaN(km) ? 0 : km * 6,
+      valor_frete: calcularValorFreteInterno(isNaN(km) ? 0 : km),
       observacoes: formData.observacoes.trim() || null,
       ativo: formData.ativo,
       quilometragem: isNaN(km) ? null : km,
@@ -199,7 +200,7 @@ export function FreteDialog({ open, onOpenChange, frete }: FreteDialogProps) {
               className="bg-white/5 border-white/10 text-white placeholder:text-white/40"
             />
             <p className="text-xs text-white/50">
-              Ida e volta = km × 2 · Valor = km × 6 (R$ {formData.quilometragem ? (parseFloat(formData.quilometragem) * 6).toFixed(2) : "0.00"})
+              Ida e volta = km × 2 · Valor = km × 6, mínimo R$ 750,00 (R$ {calcularValorFreteInterno(parseFloat(formData.quilometragem)).toFixed(2)})
             </p>
           </div>
 
