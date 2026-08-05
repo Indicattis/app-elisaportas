@@ -34,6 +34,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { calcularValorFreteInterno } from "@/utils/freteInterno";
 
 const ESTADOS_BR = [
   "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA",
@@ -183,7 +184,7 @@ export default function FreteMinimalista() {
       id: frete.id,
       estado: frete.estado,
       cidade: frete.cidade,
-      valor_frete: parsed != null ? parsed * 6 : 0,
+      valor_frete: calcularValorFreteInterno(parsed),
       observacoes: frete.observacoes,
       ativo: frete.ativo,
       quilometragem: parsed,
@@ -213,7 +214,7 @@ export default function FreteMinimalista() {
       id: frete.id,
       estado: frete.estado,
       cidade: frete.cidade,
-      valor_frete: km * 6,
+      valor_frete: calcularValorFreteInterno(km),
       observacoes: frete.observacoes,
       ativo: frete.ativo,
       quilometragem: km,
@@ -317,7 +318,7 @@ export default function FreteMinimalista() {
             if (!Number.isFinite(km)) {
               fail++;
             } else {
-              const valor = km * 6;
+              const valor = calcularValorFreteInterno(km);
               if (existente) {
                 const { error: upErr } = await supabase
                   .from("frete_cidades")
@@ -502,7 +503,7 @@ export default function FreteMinimalista() {
                   {fretesPaginados.map((frete, idx) => {
                     const km = frete.quilometragem ?? 0;
                     const idaVolta = km * 2;
-                    const valor = km * 6;
+                    const valor = calcularValorFreteInterno(km);
                     return (
                     <TableRow 
                       key={frete.id}
