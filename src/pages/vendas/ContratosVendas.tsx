@@ -533,8 +533,8 @@ export default function ContratosVendas({ scope = 'all' }: ContratosVendasProps 
             <h1 className="text-2xl font-semibold text-white">{pageTitle}</h1>
             <p className="text-sm text-white/60">{pageSubtitle}</p>
           </div>
-          {!isMeus && (
-            <div className="ml-auto flex items-center gap-2">
+          <div className="ml-auto flex items-center gap-2">
+            {!isMeus && (
               <Button
                 variant="outline"
                 onClick={() => navigate('/direcao/vendas/contratos/historico')}
@@ -543,15 +543,15 @@ export default function ContratosVendas({ scope = 'all' }: ContratosVendasProps 
                 <History className="w-4 h-4 mr-2" />
                 Histórico
               </Button>
-              <Button
-                onClick={() => setAvulsoOpen(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                <FileText className="w-4 h-4 mr-2" />
-                Gerar Contrato Avulso
-              </Button>
-            </div>
-          )}
+            )}
+            <Button
+              onClick={() => setAvulsoOpen(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              <FileText className="w-4 h-4 mr-2" />
+              Gerar Contrato Avulso
+            </Button>
+          </div>
         </div>
 
         <div className="mb-4 p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
