@@ -109,26 +109,26 @@ export default function DREDirecao() {
   const statusStyles: Record<StatusMes, { border: string; badge: string; icon: JSX.Element | null; label: string }> = {
     futuro: {
       border: 'border-white/10 hover:bg-white/10',
-      badge: 'text-white/40',
+      badge: 'text-white/40 bg-white/5 border border-white/10',
       icon: null,
       label: 'Futuro',
     },
     pendente: {
       border: 'border-white/10 hover:bg-red-500/10',
-      badge: 'text-red-300',
-      icon: <AlertCircle className="w-3.5 h-3.5" strokeWidth={1.8} />,
+      badge: 'text-red-300 bg-red-500/15 border border-red-500/20',
+      icon: <AlertCircle className="w-3 h-3" strokeWidth={2} />,
       label: 'Pendente',
     },
     realizado: {
       border: 'border-white/10 hover:bg-yellow-400/10',
-      badge: 'text-yellow-300',
-      icon: <Clock className="w-3.5 h-3.5" strokeWidth={1.8} />,
+      badge: 'text-yellow-300 bg-yellow-400/15 border border-yellow-400/20',
+      icon: <Clock className="w-3 h-3" strokeWidth={2} />,
       label: 'Realizado',
     },
     aprovado: {
       border: 'border-white/10 hover:bg-emerald-500/10',
-      badge: 'text-emerald-300',
-      icon: <CheckCircle2 className="w-3.5 h-3.5" strokeWidth={1.8} />,
+      badge: 'text-emerald-300 bg-emerald-500/15 border border-emerald-500/20',
+      icon: <CheckCircle2 className="w-3 h-3" strokeWidth={2} />,
       label: 'Aprovado',
     },
   };
