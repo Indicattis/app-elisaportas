@@ -24,6 +24,7 @@ export default function DREDirecao() {
   const [loading, setLoading] = useState(true);
   const [faturamentos, setFaturamentos] = useState<FaturamentoMes[]>([]);
   const [realizados, setRealizados] = useState<Record<number, RealizadoMes>>({});
+  const [mostrarLucro, setMostrarLucro] = useState(true);
 
   const anoAtual = new Date().getFullYear();
   const mesAtual = new Date().getMonth();
