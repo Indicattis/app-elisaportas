@@ -146,15 +146,25 @@ export default function DREDirecao() {
       ]}
       headerActions={
         !loading ? (
-          <div
-            className={`px-4 py-2 rounded-xl border bg-white/5 ${
-              mediaAcimaMeta ? 'border-emerald-500/50' : 'border-red-500/50'
-            }`}
-          >
-            <p className="text-[10px] uppercase tracking-wider text-white/40">Média de faturamento</p>
-            <p className={`text-lg font-semibold ${mediaAcimaMeta ? 'text-emerald-300' : 'text-red-300'}`}>
-              {formatCurrency(mediaFaturamento)}
-            </p>
+          <div className="flex items-center gap-2">
+            <div
+              className={`px-4 py-2 rounded-xl border bg-white/5 ${
+                mediaAcimaMeta ? 'border-emerald-500/50' : 'border-red-500/50'
+              }`}
+            >
+              <p className="text-[10px] uppercase tracking-wider text-white/40">Média de faturamento</p>
+              <p className={`text-lg font-semibold ${mediaAcimaMeta ? 'text-emerald-300' : 'text-red-300'}`}>
+                {formatCurrency(mediaFaturamento)}
+              </p>
+            </div>
+            <button
+              onClick={() => setMostrarLucro((v) => !v)}
+              title={mostrarLucro ? 'Ocultar lucro líquido' : 'Mostrar lucro líquido'}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-white/10 bg-white/5 text-white/60 hover:text-white hover:bg-white/10 transition-all"
+            >
+              {mostrarLucro ? <Eye className="w-4 h-4" strokeWidth={1.8} /> : <EyeOff className="w-4 h-4" strokeWidth={1.8} />}
+              <span className="text-xs">Líquido</span>
+            </button>
           </div>
         ) : undefined
       }
