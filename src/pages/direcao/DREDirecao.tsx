@@ -91,6 +91,13 @@ export default function DREDirecao() {
   const formatCurrency = (value: number) =>
     value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
+  const META_FATURAMENTO = 600000;
+  const mesesComFaturamento = faturamentos.filter((f) => f.valor > 0);
+  const mediaFaturamento = mesesComFaturamento.length
+    ? mesesComFaturamento.reduce((s, f) => s + f.valor, 0) / mesesComFaturamento.length
+    : 0;
+  const mediaAcimaMeta = mediaFaturamento >= META_FATURAMENTO;
+
   const getStatus = (mes: number): StatusMes => {
     const r = realizados[mes];
     if (r) return r.status;
@@ -136,6 +143,20 @@ export default function DREDirecao() {
         { label: 'Estratégia', path: '/direcao/estrategia' },
         { label: 'DRE' },
       ]}
+      headerActions={
+        !loading ? (
+          <div
+            className={`px-4 py-2 rounded-xl border bg-white/5 ${
+              mediaAcimaMeta ? 'border-emerald-500/50' : 'border-red-500/50'
+            }`}
+          >
+            <p className="text-[10px] uppercase tracking-wider text-white/40">Média de faturamento</p>
+            <p className={`text-lg font-semibold ${mediaAcimaMeta ? 'text-emerald-300' : 'text-red-300'}`}>
+              {formatCurrency(mediaFaturamento)}
+            </p>
+          </div>
+        ) : undefined
+      }
     >
       {loading ? (
         <div className="flex items-center justify-center py-20">
@@ -151,11 +172,17 @@ export default function DREDirecao() {
               const status = getStatus(item.mes);
               const style = statusStyles[status];
               const real = realizados[item.mes];
+              const metaBorder =
+                item.valor > 0
+                  ? item.valor >= META_FATURAMENTO
+                    ? 'border-emerald-500/50'
+                    : 'border-red-500/50'
+                  : 'border-white/10';
               return (
                 <button
                   key={item.mes}
                   onClick={() => navigate(`/direcao/estrategia/dre/${mesKey}`)}
-                  className={`p-5 rounded-xl bg-white/5 border text-left transition-all duration-200 group ${style.border}`}
+                  className={`p-5 rounded-xl bg-white/5 border text-left transition-all duration-200 group ${metaBorder} ${style.border.replace('border-white/10', '')}`}
                 >
                   <div className="flex items-center justify-between mb-1">
                     <p className="text-sm text-white/50 capitalize">{mesNome}</p>
@@ -182,6 +209,8 @@ export default function DREDirecao() {
             <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-yellow-400/70" /> Realizado</span>
             <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500/70" /> Aprovado</span>
             <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-white/30" /> Futuro</span>
+            <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full border border-emerald-500/70" /> Faturamento ≥ R$ 600 mil</span>
+            <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full border border-red-500/70" /> Faturamento &lt; R$ 600 mil</span>
           </div>
         </>
       )}
