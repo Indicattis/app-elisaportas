@@ -263,6 +263,7 @@ export function useVendas() {
         if (masterOk === true) {
           tierValidado = 'master';
         } else {
+          let senhaRespCorreta = false;
           // Sempre tentar responsavel também — se o usuário digitou a senha do
           // responsável e o tier requerido é responsavel_setor, autoriza.
           const { data: respOk, error: rpcRespErr } = await supabase.rpc('verificar_senha_vendas', {
@@ -273,8 +274,13 @@ export function useVendas() {
           if (rpcRespErr) {
             throw new Error('Erro ao validar senha de autorização. Tente novamente.');
           }
-          if (respOk === true && tipoAutorizacaoRequerido === 'responsavel_setor') {
+          senhaRespCorreta = respOk === true;
+          if (senhaRespCorreta && tipoAutorizacaoRequerido === 'responsavel_setor') {
             tierValidado = 'responsavel_setor';
+          } else if (senhaRespCorreta) {
+            throw new Error(
+              `Esta senha não tem nível suficiente. O desconto de ${validacaoServer.percentualDesconto.toFixed(2)}% ultrapassa o máximo do responsável (${(validacaoServer.limiteMaximoResponsavel ?? 0).toFixed(0)}%) — é necessária a senha do Diretor (master).`
+            );
           }
         }
         if (!tierValidado) {
