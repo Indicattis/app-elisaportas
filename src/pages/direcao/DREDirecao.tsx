@@ -205,7 +205,7 @@ export default function DREDirecao() {
                   <p className={`text-lg font-semibold ${item.valor > 0 ? 'text-white' : 'text-white/30'}`}>
                     {formatCurrency(item.valor)}
                   </p>
-                  {real && (
+                  {real && mostrarLucro && (
                     <p className="text-xs text-emerald-300/80 mt-1">
                       Líquido: {formatCurrency(real.lucro_liquido_final)}
                     </p>
