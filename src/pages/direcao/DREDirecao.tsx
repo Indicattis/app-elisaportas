@@ -154,14 +154,19 @@ export default function DREDirecao() {
       headerActions={
         !loading ? (
           <div className="flex items-center gap-2">
-            <div
-              className={`px-4 py-2 rounded-xl border bg-white/5 ${
-                mediaAcimaMeta ? 'border-emerald-500/50' : 'border-red-500/50'
-              }`}
-            >
-              <p className="text-[10px] uppercase tracking-wider text-white/40">Média de faturamento</p>
-              <p className={`text-lg font-semibold ${mediaAcimaMeta ? 'text-emerald-300' : 'text-red-300'}`}>
-                {formatCurrency(mediaFaturamento)}
+            <div className="px-4 py-2 rounded-xl border border-white/10 bg-white/5">
+              <p className="text-[10px] uppercase tracking-wider text-white/40">Meta de faturamento</p>
+              <div className="flex items-baseline gap-2">
+                <span className="text-white/60 text-sm">R$</span>
+                <input
+                  type="number"
+                  value={metaFaturamento}
+                  onChange={(e) => setMetaFaturamento(Number(e.target.value))}
+                  className="bg-transparent text-lg font-semibold text-white w-36 focus:outline-none"
+                />
+              </div>
+              <p className={`text-[10px] mt-1 ${mediaAcimaMeta ? 'text-emerald-300/70' : 'text-red-300/70'}`}>
+                Média: {formatCurrency(mediaFaturamento)}
               </p>
             </div>
             <button
