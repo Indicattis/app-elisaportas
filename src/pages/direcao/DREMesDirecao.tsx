@@ -612,7 +612,7 @@ function PrintReport({
               { l: '(–) Desconto Excedido', v: formatCurrency(descontoExcedido.total), c: '#b91c1c', b: false, cat: null as CategoriaDespesa | null },
               { l: 'Margem Bruta', v: `${percBrutoFinal.toFixed(1)}%`, c: positive(percBrutoFinal), b: false, cat: null },
               { l: 'Lucro Bruto', v: formatCurrency(lucro.total - descontoExcedido.total), c: positive(lucro.total - descontoExcedido.total), b: true, cat: null },
-              { l: '(–) Folha Salarial', v: formatCurrency(totalDespFolha), c: '#b91c1c', b: false, cat: 'salario' as CategoriaDespesa },
+              { l: '(–) Folha Salarial', v: formatCurrency(totalDespFolha), c: '#b91c1c', b: false, cat: 'folha' as CategoriaDespesa },
               { l: '(–) Despesas Fixas', v: formatCurrency(totalDespFixas), c: '#b91c1c', b: false, cat: 'fixa' as CategoriaDespesa },
               { l: '(–) Despesas Variáveis', v: formatCurrency(totalDespVariaveis), c: '#b91c1c', b: false, cat: 'variavel' as CategoriaDespesa },
               { l: '(–) Despesas de Imposto', v: formatCurrency(totalDespImpostos), c: '#b91c1c', b: false, cat: 'imposto' as CategoriaDespesa },
@@ -740,7 +740,7 @@ function PrintReport({
 
       <div className="pdf-landscape-page">
         <div className="pdf-landscape-content">
-          <div style={H2}>4. Folha Salarial {badgeDebita(debitaCat('salario'))}</div>
+          <div style={H2}>4. Folha Salarial {badgeDebita(debitaCat('folha'))}</div>
           <PrintFolhaSalarialDetalhada
             items={folhaDetalhada}
             formatCurrency={formatCurrency}
@@ -2206,7 +2206,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
     lucro.total
     - descontoExcedido.total
     - (debitaCat('fixa') ? totalDespFixas : 0)
-    - totalDespFolha
+    - (debitaCat('folha') ? totalDespFolha : 0)
     - (debitaCat('variavel') ? totalDespVariaveis : 0)
     - (debitaCat('imposto') ? totalDespImpostos : 0)
     - (debitaCat('investimento') ? totalDespInvestimentos : 0)
@@ -2371,7 +2371,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
               total={totalDespFolha}
               formatCurrency={formatCurrency}
               tiposDisponiveis={tiposCustosFixos.filter(t => isFolha(t.nome))}
-              debita={true}
+              debita={debitaCat('folha')}
             />
             <DespesaSectionReadOnly
               title="Despesas Fixas"
@@ -2481,7 +2481,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         const percLiquid = faturamento.total > 0 ? (lucroLiquido / faturamento.total) * 100 : 0;
         const colorClass = (v: number) => v >= 0 ? 'text-emerald-400' : 'text-red-400';
         const despesaCols: Array<{ label: string; categoria: CategoriaDespesa; total: number }> = [
-          { label: 'Folha Salarial', categoria: 'salario', total: totalDespFolha },
+          { label: 'Folha Salarial', categoria: 'folha', total: totalDespFolha },
           { label: 'Despesas Fixas', categoria: 'fixa', total: totalDespFixas },
           { label: 'Desp. Variáveis', categoria: 'variavel', total: totalDespVariaveis },
           { label: 'Despesas de Imposto', categoria: 'imposto', total: totalDespImpostos },
