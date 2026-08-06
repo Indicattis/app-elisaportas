@@ -628,8 +628,9 @@ function PrintReport({
               .map((r, idx) => ({ r, idx }))
               .sort((a, b) => {
                 if (!a.r.cat || !b.r.cat) return a.idx - b.idx;
-                const da = debitaCat(a.r.cat) ? 0 : 1;
-                const db = debitaCat(b.r.cat) ? 0 : 1;
+                const dbt = (c: CategoriaDespesa) => (c === 'frete' ? true : debitaCat(c));
+                const da = dbt(a.r.cat) ? 0 : 1;
+                const db = dbt(b.r.cat) ? 0 : 1;
                 return da !== db ? da - db : a.idx - b.idx;
               })
               .map(({ r }) => r)
@@ -637,7 +638,7 @@ function PrintReport({
               <tr key={i} style={trZebra(i)}>
                 <td style={{ ...TD, fontWeight: r.b ? 700 : 500 }}>
                   {r.l}
-                  {r.cat ? badgeDebita(debitaCat(r.cat)) : null}
+                  {r.cat ? badgeDebita(r.cat === 'frete' ? true : debitaCat(r.cat)) : null}
                 </td>
                 <td style={{ ...tdRight, color: r.c, fontWeight: r.b ? 800 : 600 }}>{r.v}</td>
               </tr>
