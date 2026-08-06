@@ -2371,7 +2371,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
               total={totalDespFolha}
               formatCurrency={formatCurrency}
               tiposDisponiveis={tiposCustosFixos.filter(t => isFolha(t.nome))}
-              debita={true}
+              debita={debitaCat('folha')}
             />
             <DespesaSectionReadOnly
               title="Despesas Fixas"
@@ -2481,7 +2481,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         const percLiquid = faturamento.total > 0 ? (lucroLiquido / faturamento.total) * 100 : 0;
         const colorClass = (v: number) => v >= 0 ? 'text-emerald-400' : 'text-red-400';
         const despesaCols: Array<{ label: string; categoria: CategoriaDespesa; total: number }> = [
-          { label: 'Folha Salarial', categoria: 'salario', total: totalDespFolha },
+          { label: 'Folha Salarial', categoria: 'folha', total: totalDespFolha },
           { label: 'Despesas Fixas', categoria: 'fixa', total: totalDespFixas },
           { label: 'Desp. Variáveis', categoria: 'variavel', total: totalDespVariaveis },
           { label: 'Despesas de Imposto', categoria: 'imposto', total: totalDespImpostos },
