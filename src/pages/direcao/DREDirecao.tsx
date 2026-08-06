@@ -100,12 +100,11 @@ export default function DREDirecao() {
   const formatCurrency = (value: number) =>
     value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-  const META_FATURAMENTO = 600000;
   const mesesComFaturamento = faturamentos.filter((f) => f.valor > 0);
   const mediaFaturamento = mesesComFaturamento.length
     ? mesesComFaturamento.reduce((s, f) => s + f.valor, 0) / mesesComFaturamento.length
     : 0;
-  const mediaAcimaMeta = mediaFaturamento >= META_FATURAMENTO;
+  const mediaAcimaMeta = mediaFaturamento >= metaFaturamento;
 
   const getStatus = (mes: number): StatusMes => {
     const r = realizados[mes];
