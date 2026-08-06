@@ -232,10 +232,8 @@ export default function DREDirecao() {
             <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-yellow-400/70" /> Realizado</span>
             <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500/70" /> Aprovado</span>
             <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-white/30" /> Futuro</span>
-            <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full border border-emerald-500/70" /> {mediaAcimaMeta ? 'Média do ano ≥ R$ 600 mil' : 'Faturamento ≥ R$ 600 mil'}</span>
-            {!mediaAcimaMeta && (
-              <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full border border-red-500/70" /> Faturamento &lt; R$ 600 mil</span>
-            )}
+            <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full border border-emerald-500/70" /> Faturamento ≥ meta</span>
+            <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full border border-red-500/70" /> Faturamento &lt; meta</span>
           </div>
         </>
       )}
