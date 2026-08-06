@@ -559,7 +559,9 @@ function PrintReport({
               { key: 'avulsos', label: 'Itens Avulsos' },
             ].map((c, i) => {
               const f = faturamento[c.key as keyof FaturamentoProduto];
-              const excCol = descontoExcedido[c.key as keyof FaturamentoProduto] || 0;
+              const excCol = c.key === 'fretes'
+                ? totalDespFretes
+                : (descontoExcedido[c.key as keyof FaturamentoProduto] || 0);
               const l = c.key === 'fretes'
                 ? (faturamento.fretes - totalDespFretes)
                 : (lucro[c.key as keyof FaturamentoProduto] - excCol);
