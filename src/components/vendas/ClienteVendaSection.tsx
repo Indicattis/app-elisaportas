@@ -9,7 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Switch } from '@/components/ui/switch';
-import { Search, X, AlertTriangle, Check, User } from 'lucide-react';
+import { Search, X, AlertTriangle, Check, User, UserX } from 'lucide-react';
 import { useSearchClientes, useCheckClienteDuplicado, Cliente } from '@/hooks/useClientes';
 import { useCanaisAquisicao } from '@/hooks/useCanaisAquisicao';
 import { ESTADOS_BRASIL, getCidadesPorEstado } from '@/utils/estadosCidades';
@@ -379,7 +379,19 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, dis
                       </div>
                     )}
                     {!buscando && searchTerm.length >= 2 && clientesBusca.length === 0 && (
-                      <CommandEmpty>Nenhum cliente encontrado.</CommandEmpty>
+                      <CommandEmpty className="py-8 px-4">
+                        <div className="flex flex-col items-center justify-center gap-3 text-center">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/5 border border-white/10">
+                            <UserX className="h-5 w-5 text-white/50" />
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-sm font-medium text-white/90">Nenhum cliente encontrado</p>
+                            <p className="text-xs text-white/40 leading-relaxed">
+                              Tente ajustar o termo de busca ou cadastre um novo cliente.
+                            </p>
+                          </div>
+                        </div>
+                      </CommandEmpty>
                     )}
                     {!buscando && clientesBusca.length > 0 && (
                       <CommandGroup heading="Clientes encontrados">
