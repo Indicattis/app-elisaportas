@@ -1809,9 +1809,11 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
 
         setVendasListagem(
           ((vendasList || []) as any[]).map((v) => {
+            // valor_produto / valor_pintura / valor_instalacao já são os totais da linha
+            // (não multiplicar por quantidade — isso inflava o Desc./Acrésc.)
             const valorTabela = (v.produtos_vendas || []).reduce(
               (s: number, p: any) =>
-                s + ((p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0)) * (p.quantidade || 1),
+                s + (p.valor_produto || 0) + (p.valor_pintura || 0) + (p.valor_instalacao || 0),
               0
             );
             const valorVenda = (v.valor_venda || 0) - (v.valor_frete || 0);
