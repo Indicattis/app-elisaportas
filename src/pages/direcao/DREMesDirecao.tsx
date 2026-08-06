@@ -646,6 +646,43 @@ function PrintReport({
           </tbody>
         </table>
         <div style={{ display: 'flex', gap: 8, marginTop: 10, pageBreakInside: 'avoid' }}>
+          {(() => {
+            const naoDebitadas = [
+              { cat: 'folha' as CategoriaDespesa, v: totalDespFolha },
+              { cat: 'fixa' as CategoriaDespesa, v: totalDespFixas },
+              { cat: 'variavel' as CategoriaDespesa, v: totalDespVariaveis },
+              { cat: 'imposto' as CategoriaDespesa, v: totalDespImpostos },
+              { cat: 'investimento' as CategoriaDespesa, v: totalDespInvestimentos },
+              { cat: 'fornecedor' as CategoriaDespesa, v: totalDespFornecedores },
+              { cat: 'financiamento' as CategoriaDespesa, v: totalDespFinanciamentos },
+              { cat: 'autorizado' as CategoriaDespesa, v: totalDespAutorizados },
+              { cat: 'salario' as CategoriaDespesa, v: totalDespSalarios },
+            ].filter((d) => !debitaCat(d.cat));
+            const totalNaoDebitado = naoDebitadas.reduce((s, d) => s + d.v, 0);
+            return (
+              <div
+                style={{
+                  flex: 1,
+                  border: '1.5px solid #f59e0b',
+                  borderRadius: 4,
+                  padding: '10px 12px',
+                  background: '#fffbeb',
+                }}
+              >
+                <div style={{ fontSize: '7pt', color: '#78350f', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>
+                  ○ Despesas não debitadas
+                </div>
+                <div style={{ fontSize: '14pt', fontWeight: 800, color: '#b45309', marginTop: 3, fontVariantNumeric: 'tabular-nums' }}>
+                  {formatCurrency(totalNaoDebitado)}
+                </div>
+                <div style={{ fontSize: '6.5pt', color: '#92400e', marginTop: 2 }}>
+                  {naoDebitadas.length > 0
+                    ? `${naoDebitadas.length} categoria(s) fora do lucro líquido`
+                    : 'Todas as despesas debitam do lucro'}
+                </div>
+              </div>
+            );
+          })()}
           <div
             style={{
               flex: 1,
