@@ -197,7 +197,7 @@ export default function DREDirecao() {
               const real = realizados[item.mes];
               const metaBorder =
                 item.valor > 0
-                  ? mediaAcimaMeta || item.valor >= META_FATURAMENTO
+                  ? item.valor >= metaFaturamento
                     ? 'border-emerald-500/50'
                     : 'border-red-500/50'
                   : 'border-white/10';
