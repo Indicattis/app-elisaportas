@@ -25,6 +25,10 @@ export default function DREDirecao() {
   const [faturamentos, setFaturamentos] = useState<FaturamentoMes[]>([]);
   const [realizados, setRealizados] = useState<Record<number, RealizadoMes>>({});
   const [mostrarLucro, setMostrarLucro] = useState(true);
+  const [metaFaturamento, setMetaFaturamento] = useState<number>(() => {
+    const saved = typeof window !== 'undefined' ? localStorage.getItem('dre_meta_faturamento') : null;
+    return saved ? Number(saved) : 600000;
+  });
 
   const anoAtual = new Date().getFullYear();
   const mesAtual = new Date().getMonth();
@@ -89,15 +93,18 @@ export default function DREDirecao() {
     fetchData();
   }, [anoAtual]);
 
+  useEffect(() => {
+    localStorage.setItem('dre_meta_faturamento', String(metaFaturamento));
+  }, [metaFaturamento]);
+
   const formatCurrency = (value: number) =>
     value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-  const META_FATURAMENTO = 600000;
   const mesesComFaturamento = faturamentos.filter((f) => f.valor > 0);
   const mediaFaturamento = mesesComFaturamento.length
     ? mesesComFaturamento.reduce((s, f) => s + f.valor, 0) / mesesComFaturamento.length
     : 0;
-  const mediaAcimaMeta = mediaFaturamento >= META_FATURAMENTO;
+  const mediaAcimaMeta = mediaFaturamento >= metaFaturamento;
 
   const getStatus = (mes: number): StatusMes => {
     const r = realizados[mes];
@@ -147,14 +154,19 @@ export default function DREDirecao() {
       headerActions={
         !loading ? (
           <div className="flex items-center gap-2">
-            <div
-              className={`px-4 py-2 rounded-xl border bg-white/5 ${
-                mediaAcimaMeta ? 'border-emerald-500/50' : 'border-red-500/50'
-              }`}
-            >
-              <p className="text-[10px] uppercase tracking-wider text-white/40">Média de faturamento</p>
-              <p className={`text-lg font-semibold ${mediaAcimaMeta ? 'text-emerald-300' : 'text-red-300'}`}>
-                {formatCurrency(mediaFaturamento)}
+            <div className="px-4 py-2 rounded-xl border border-white/10 bg-white/5">
+              <p className="text-[10px] uppercase tracking-wider text-white/40">Meta de faturamento</p>
+              <div className="flex items-baseline gap-2">
+                <span className="text-white/60 text-sm">R$</span>
+                <input
+                  type="number"
+                  value={metaFaturamento}
+                  onChange={(e) => setMetaFaturamento(Number(e.target.value))}
+                  className="bg-transparent text-lg font-semibold text-white w-36 focus:outline-none"
+                />
+              </div>
+              <p className={`text-[10px] mt-1 ${mediaAcimaMeta ? 'text-emerald-300/70' : 'text-red-300/70'}`}>
+                Média: {formatCurrency(mediaFaturamento)}
               </p>
             </div>
             <button
@@ -185,7 +197,7 @@ export default function DREDirecao() {
               const real = realizados[item.mes];
               const metaBorder =
                 item.valor > 0
-                  ? mediaAcimaMeta || item.valor >= META_FATURAMENTO
+                  ? item.valor >= metaFaturamento
                     ? 'border-emerald-500/50'
                     : 'border-red-500/50'
                   : 'border-white/10';
@@ -220,10 +232,8 @@ export default function DREDirecao() {
             <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-yellow-400/70" /> Realizado</span>
             <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500/70" /> Aprovado</span>
             <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-white/30" /> Futuro</span>
-            <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full border border-emerald-500/70" /> {mediaAcimaMeta ? 'Média do ano ≥ R$ 600 mil' : 'Faturamento ≥ R$ 600 mil'}</span>
-            {!mediaAcimaMeta && (
-              <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full border border-red-500/70" /> Faturamento &lt; R$ 600 mil</span>
-            )}
+            <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full border border-emerald-500/70" /> Faturamento ≥ meta</span>
+            <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full border border-red-500/70" /> Faturamento &lt; meta</span>
           </div>
         </>
       )}
