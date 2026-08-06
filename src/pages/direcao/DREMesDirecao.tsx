@@ -628,8 +628,9 @@ function PrintReport({
               .map((r, idx) => ({ r, idx }))
               .sort((a, b) => {
                 if (!a.r.cat || !b.r.cat) return a.idx - b.idx;
-                const da = debitaCat(a.r.cat) ? 0 : 1;
-                const db = debitaCat(b.r.cat) ? 0 : 1;
+                const dbt = (c: CategoriaDespesa) => (c === 'frete' ? true : debitaCat(c));
+                const da = dbt(a.r.cat) ? 0 : 1;
+                const db = dbt(b.r.cat) ? 0 : 1;
                 return da !== db ? da - db : a.idx - b.idx;
               })
               .map(({ r }) => r)
@@ -637,7 +638,7 @@ function PrintReport({
               <tr key={i} style={trZebra(i)}>
                 <td style={{ ...TD, fontWeight: r.b ? 700 : 500 }}>
                   {r.l}
-                  {r.cat ? badgeDebita(debitaCat(r.cat)) : null}
+                  {r.cat ? badgeDebita(r.cat === 'frete' ? true : debitaCat(r.cat)) : null}
                 </td>
                 <td style={{ ...tdRight, color: r.c, fontWeight: r.b ? 800 : 600 }}>{r.v}</td>
               </tr>
@@ -833,7 +834,9 @@ function PrintReport({
 
       <div className="pdf-landscape-page">
         <div className="pdf-landscape-content">
-          <div style={H2}>11. Fretes e Logística {badgeDebita(debitaCat('frete'))}</div>
+          {/* Fretes já são debitados do faturamento de fretes (Seção 1); por isso a tag indica que debita,
+              mas o valor não é subtraído novamente do lucro líquido. */}
+          <div style={H2}>11. Fretes e Logística {badgeDebita(true)}</div>
           <PrintDespesaTable
             items={despesasFretes}
             total={totalDespFretes}
@@ -2223,7 +2226,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
     - (debitaCat('investimento') ? totalDespInvestimentos : 0)
     - (debitaCat('fornecedor') ? totalDespFornecedores : 0)
     - (debitaCat('financiamento') ? totalDespFinanciamentos : 0)
-    - (debitaCat('frete') ? totalDespFretes : 0)
+    - 0 /* Fretes: já debitados no faturamento de fretes (Seção 1) */
     - (debitaCat('autorizado') ? totalDespAutorizados : 0)
     - (debitaCat('salario') ? totalDespSalarios : 0);
   const lucroBrutoAjustado = lucro.total - descontoExcedido.total;
@@ -2445,7 +2448,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
               formatCurrency={formatCurrency}
               tiposDisponiveis={tiposCustosFretes}
               onClickTipo={(id, nome) => setTipoModal({ id, nome })}
-              debita={debitaCat('frete')}
+              debita={true}
             />
             <DespesaSectionReadOnly
               title="Autorizados"
