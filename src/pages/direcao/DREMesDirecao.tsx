@@ -833,7 +833,9 @@ function PrintReport({
 
       <div className="pdf-landscape-page">
         <div className="pdf-landscape-content">
-          <div style={H2}>11. Fretes e Logística {badgeDebita(debitaCat('frete'))}</div>
+          {/* Fretes já são debitados do faturamento de fretes (Seção 1); por isso a tag indica que debita,
+              mas o valor não é subtraído novamente do lucro líquido. */}
+          <div style={H2}>11. Fretes e Logística {badgeDebita(true)}</div>
           <PrintDespesaTable
             items={despesasFretes}
             total={totalDespFretes}
@@ -2223,7 +2225,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
     - (debitaCat('investimento') ? totalDespInvestimentos : 0)
     - (debitaCat('fornecedor') ? totalDespFornecedores : 0)
     - (debitaCat('financiamento') ? totalDespFinanciamentos : 0)
-    - (debitaCat('frete') ? totalDespFretes : 0)
+    - 0 /* Fretes: já debitados no faturamento de fretes (Seção 1) */
     - (debitaCat('autorizado') ? totalDespAutorizados : 0)
     - (debitaCat('salario') ? totalDespSalarios : 0);
   const lucroBrutoAjustado = lucro.total - descontoExcedido.total;
