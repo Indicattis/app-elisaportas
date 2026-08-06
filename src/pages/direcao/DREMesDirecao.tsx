@@ -2448,7 +2448,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
               formatCurrency={formatCurrency}
               tiposDisponiveis={tiposCustosFretes}
               onClickTipo={(id, nome) => setTipoModal({ id, nome })}
-              debita={debitaCat('frete')}
+              debita={true}
             />
             <DespesaSectionReadOnly
               title="Autorizados"
