@@ -9,7 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Switch } from '@/components/ui/switch';
-import { Search, X, AlertTriangle, Check, User } from 'lucide-react';
+import { Search, X, AlertTriangle, Check, User, UserX } from 'lucide-react';
 import { useSearchClientes, useCheckClienteDuplicado, Cliente } from '@/hooks/useClientes';
 import { useCanaisAquisicao } from '@/hooks/useCanaisAquisicao';
 import { ESTADOS_BRASIL, getCidadesPorEstado } from '@/utils/estadosCidades';
