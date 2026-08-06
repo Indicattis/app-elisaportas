@@ -93,6 +93,10 @@ export default function DREDirecao() {
     fetchData();
   }, [anoAtual]);
 
+  useEffect(() => {
+    localStorage.setItem('dre_meta_faturamento', String(metaFaturamento));
+  }, [metaFaturamento]);
+
   const formatCurrency = (value: number) =>
     value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
