@@ -618,6 +618,7 @@ export default function ClientesDirecao() {
               </SelectTrigger>
               <SelectContent className="bg-zinc-900 border-white/10">
                 <SelectItem value="todos" className="text-white">Todos Vendedores</SelectItem>
+                <SelectItem value="sem_vendedor" className="text-white">Sem vendedor ({totalSemVendedor})</SelectItem>
                 {clientesCRPorVendedor.map(v => (
                   <SelectItem key={v.id} value={v.id} className="text-white">{v.nome}</SelectItem>
                 ))}
