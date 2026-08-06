@@ -45,7 +45,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Search, User, Pencil, Trash2, X, Phone, Mail, ArrowUpDown, ArrowUp, ArrowDown, Star, Triangle, ArrowRightLeft } from 'lucide-react';
+import { Search, User, UserX, Pencil, Trash2, X, Phone, Mail, ArrowUpDown, ArrowUp, ArrowDown, Star, Triangle, ArrowRightLeft } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
