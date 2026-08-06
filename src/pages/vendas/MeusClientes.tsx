@@ -402,6 +402,14 @@ export default function MeusClientes() {
                   </div>
                 )}
 
+                {/* Vendedor responsável */}
+                <div className="hidden md:flex flex-col flex-shrink-0 w-32">
+                  <span className="text-[10px] text-white/40 uppercase tracking-wider">Vendedor</span>
+                  <span className="text-white/90 font-semibold text-sm truncate">
+                    {(cliente as any).vendedor_nome || '—'}
+                  </span>
+                </div>
+
                 {/* Compras e valor total */}
                 <div className="flex-1 min-w-0 flex items-center justify-end gap-4">
                   <div className="flex items-center gap-1.5">
