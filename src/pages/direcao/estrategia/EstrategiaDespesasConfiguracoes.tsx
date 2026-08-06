@@ -441,6 +441,8 @@ function FolhaBlock({
 
   const reset = () => { setNome(''); setEmFolha(true); setSetor(''); setSalario(0); setSalarioMin(1518); setAuxComb(0); setBonificacao(0); setHoraExtra(0); setInsalub(0); setFgts(8); setPrev13(0); };
   const [gerenciarSetoresOpen, setGerenciarSetoresOpen] = useState(false);
+  const { debita: debitaDreFolha, toggle: toggleDebitaDreFolha } = useCategoriaDreConfig();
+  const folhaDebitaDre = debitaDreFolha('folha');
 
   // Simulação local de demissão (não persiste, só visual)
   const [simulados, setSimulados] = useState<Set<string>>(new Set());
@@ -525,6 +527,21 @@ function FolhaBlock({
           </button>
         )}
         <div className="ml-auto flex items-center gap-1.5">
+          <div
+            className={`hidden sm:inline-flex items-center gap-2 h-8 px-3 rounded-full border text-xs transition-colors ${
+              folhaDebitaDre
+                ? 'bg-emerald-500/10 border-emerald-400/30 text-emerald-200'
+                : 'bg-white/5 border-white/15 text-white/60'
+            }`}
+            title="Quando desligado, a folha salarial não é subtraída do lucro líquido no DRE."
+          >
+            <span>Debita do lucro no DRE</span>
+            <Switch
+              checked={folhaDebitaDre}
+              onCheckedChange={() => toggleDebitaDreFolha('folha')}
+              className="data-[state=checked]:bg-emerald-500"
+            />
+          </div>
           {!readOnly && (<button
             onClick={() => setGerenciarSetoresOpen(true)}
             className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-white/80 hover:text-white transition-colors"
