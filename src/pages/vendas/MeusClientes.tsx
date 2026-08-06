@@ -64,12 +64,27 @@ export default function MeusClientes() {
           cpf_cnpj,
           tipo_cliente,
           fidelizado,
-          parceiro
+          parceiro,
+          created_by
         `)
         .in('id', ids)
         .order('nome', { ascending: true });
 
       if (clientesError) throw clientesError;
+
+      // Buscar nomes dos vendedores responsáveis
+      const vendedorIds = [...new Set((clientesData || []).map(c => c.created_by).filter(Boolean))];
+      let vendedoresMap: Record<string, string> = {};
+      if (vendedorIds.length > 0) {
+        const { data: vendedoresData, error: vendedoresError } = await supabase
+          .from('admin_users')
+          .select('user_id, nome')
+          .in('user_id', vendedorIds);
+        if (vendedoresError) throw vendedoresError;
+        vendedoresMap = Object.fromEntries(
+          (vendedoresData || []).map(v => [v.user_id, v.nome])
+        );
+      }
 
       // Buscar vendas desses clientes
       const { data: vendasData, error: vendasError } = await supabase
@@ -93,6 +108,7 @@ export default function MeusClientes() {
         ...c,
         qtd_compras: agg[c.id]?.qtd || 0,
         valor_total: agg[c.id]?.total || 0,
+        vendedor_nome: c.created_by ? vendedoresMap[c.created_by] || '—' : '—',
       }));
     },
     enabled: !!user?.id
