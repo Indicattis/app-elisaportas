@@ -218,7 +218,7 @@ export default function DREDirecao() {
                     {formatCurrency(item.valor)}
                   </p>
                   {real && mostrarLucro && (
-                    <p className="text-xs text-emerald-300/80 mt-1">
+                    <p className={`text-xs mt-1 ${real.lucro_liquido_final < 0 ? 'text-red-300/90' : 'text-emerald-300/80'}`}>
                       Líquido: {formatCurrency(real.lucro_liquido_final)}
                     </p>
                   )}
