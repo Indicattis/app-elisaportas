@@ -624,7 +624,16 @@ function PrintReport({
               { l: '(–) Fretes e Logística', v: formatCurrency(totalDespFretes), c: '#b91c1c', b: false, cat: 'frete' as CategoriaDespesa },
               { l: '(–) Autorizados', v: formatCurrency(totalDespAutorizados), c: '#b91c1c', b: false, cat: 'autorizado' as CategoriaDespesa },
               { l: '(–) Salários', v: formatCurrency(totalDespSalarios), c: '#b91c1c', b: false, cat: 'salario' as CategoriaDespesa },
-            ].map((r, i) => (
+            ]
+              .map((r, idx) => ({ r, idx }))
+              .sort((a, b) => {
+                if (!a.r.cat || !b.r.cat) return a.idx - b.idx;
+                const da = debitaCat(a.r.cat) ? 0 : 1;
+                const db = debitaCat(b.r.cat) ? 0 : 1;
+                return da !== db ? da - db : a.idx - b.idx;
+              })
+              .map(({ r }) => r)
+              .map((r, i) => (
               <tr key={i} style={trZebra(i)}>
                 <td style={{ ...TD, fontWeight: r.b ? 700 : 500 }}>
                   {r.l}
