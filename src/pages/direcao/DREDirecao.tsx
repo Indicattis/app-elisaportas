@@ -25,6 +25,10 @@ export default function DREDirecao() {
   const [faturamentos, setFaturamentos] = useState<FaturamentoMes[]>([]);
   const [realizados, setRealizados] = useState<Record<number, RealizadoMes>>({});
   const [mostrarLucro, setMostrarLucro] = useState(true);
+  const [metaFaturamento, setMetaFaturamento] = useState<number>(() => {
+    const saved = typeof window !== 'undefined' ? localStorage.getItem('dre_meta_faturamento') : null;
+    return saved ? Number(saved) : 600000;
+  });
 
   const anoAtual = new Date().getFullYear();
   const mesAtual = new Date().getMonth();
