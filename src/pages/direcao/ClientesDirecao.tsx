@@ -168,6 +168,11 @@ export default function ClientesDirecao() {
     })).sort((a, b) => b.totalCR - a.totalCR);
   }, [clientes]);
 
+  const totalSemVendedor = useMemo(
+    () => (clientes || []).filter(c => !c.created_by || !c.vendedor).length,
+    [clientes]
+  );
+
   const clientesFiltrados = useMemo(() => {
     if (!clientes) return [];
     
@@ -180,7 +185,11 @@ export default function ClientesDirecao() {
       const matchEstado = filtroEstado === 'todos' || cliente.estado === filtroEstado;
       const matchCanal = filtroCanal === 'todos' || cliente.canal_aquisicao_id === filtroCanal;
       const matchTipo = filtroTipo === 'todos' || cliente.tipo_cliente === filtroTipo;
-      const matchVendedor = filtroVendedor === 'todos' || cliente.created_by === filtroVendedor;
+      const matchVendedor =
+        filtroVendedor === 'todos' ||
+        (filtroVendedor === 'sem_vendedor'
+          ? !cliente.created_by || !cliente.vendedor
+          : cliente.created_by === filtroVendedor);
       
       return matchBusca && matchEstado && matchCanal && matchTipo && matchVendedor;
     });
