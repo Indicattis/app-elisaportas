@@ -145,7 +145,7 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, dis
 
   // Usa cliente duplicado encontrado
   const handleUsarClienteExistente = () => {
-    if (clienteDuplicado) {
+    if (clienteDuplicado && (clienteDuplicado as any).mesmaCartela) {
       handleSelectCliente(clienteDuplicado as Cliente);
       setModo('buscar');
     }
@@ -594,7 +594,7 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, dis
         {!disabled && modo === 'cadastrar' && (
           <>
             {/* Alerta de CPF/CNPJ duplicado - BLOQUEIA CADASTRO */}
-            {clienteDuplicado && (
+            {clienteDuplicado && (clienteDuplicado as any).mesmaCartela && (
               <Alert variant="destructive" className="border-red-500/30 bg-red-500/10">
                 <AlertTriangle className="h-4 w-4" />
                 <AlertTitle className="text-red-400">CPF/CNPJ já cadastrado!</AlertTitle>
@@ -616,6 +616,20 @@ export function ClienteVendaSection({ dados, onChange, onClienteSelecionado, dis
                     <Check className="h-3 w-3 mr-1" />
                     Usar cliente existente
                   </Button>
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* CPF/CNPJ pertence à cartela de outro vendedor - BLOQUEIA CADASTRO */}
+            {clienteDuplicado && !(clienteDuplicado as any).mesmaCartela && (
+              <Alert variant="destructive" className="border-red-500/30 bg-red-500/10">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle className="text-red-400">Cliente de outra cartela</AlertTitle>
+                <AlertDescription className="text-red-300/80">
+                  <p className="text-sm">
+                    Este CPF/CNPJ já está cadastrado na cartela de outro vendedor. Solicite a
+                    transferência do cliente ao seu gestor para prosseguir com a venda.
+                  </p>
                 </AlertDescription>
               </Alert>
             )}
