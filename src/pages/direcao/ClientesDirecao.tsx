@@ -45,7 +45,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Search, User, Pencil, Trash2, X, Phone, Mail, ArrowUpDown, ArrowUp, ArrowDown, Star, Triangle, ArrowRightLeft } from 'lucide-react';
+import { Search, User, UserX, Pencil, Trash2, X, Phone, Mail, ArrowUpDown, ArrowUp, ArrowDown, Star, Triangle, ArrowRightLeft } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -168,6 +168,11 @@ export default function ClientesDirecao() {
     })).sort((a, b) => b.totalCR - a.totalCR);
   }, [clientes]);
 
+  const totalSemVendedor = useMemo(
+    () => (clientes || []).filter(c => !c.created_by || !c.vendedor).length,
+    [clientes]
+  );
+
   const clientesFiltrados = useMemo(() => {
     if (!clientes) return [];
     
@@ -180,7 +185,11 @@ export default function ClientesDirecao() {
       const matchEstado = filtroEstado === 'todos' || cliente.estado === filtroEstado;
       const matchCanal = filtroCanal === 'todos' || cliente.canal_aquisicao_id === filtroCanal;
       const matchTipo = filtroTipo === 'todos' || cliente.tipo_cliente === filtroTipo;
-      const matchVendedor = filtroVendedor === 'todos' || cliente.created_by === filtroVendedor;
+      const matchVendedor =
+        filtroVendedor === 'todos' ||
+        (filtroVendedor === 'sem_vendedor'
+          ? !cliente.created_by || !cliente.vendedor
+          : cliente.created_by === filtroVendedor);
       
       return matchBusca && matchEstado && matchCanal && matchTipo && matchVendedor;
     });
@@ -488,8 +497,36 @@ export default function ClientesDirecao() {
       headerActions={headerActions}
     >
       {/* Cards de Meta por Vendedor - 500 CR cada */}
-      {clientesCRPorVendedor.length > 0 && (
+      {(clientesCRPorVendedor.length > 0 || totalSemVendedor > 0) && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6">
+          <div
+            className={`p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border transition-colors cursor-pointer ${
+              filtroVendedor === 'sem_vendedor' ? 'border-amber-500/50' : 'border-white/10 hover:border-white/20'
+            }`}
+            onClick={() => setFiltroVendedor(filtroVendedor === 'sem_vendedor' ? 'todos' : 'sem_vendedor')}
+          >
+            <div className="p-4 rounded-lg">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0">
+                    <UserX className="h-4 w-4 text-amber-400" />
+                  </div>
+                  <span className="text-sm text-white/70 truncate">Sem vendedor</span>
+                </div>
+                <span className="text-xl font-bold text-white shrink-0 ml-2">{totalSemVendedor}</span>
+              </div>
+              <Progress
+                value={totalClientes ? (totalSemVendedor / totalClientes) * 100 : 0}
+                className="h-2"
+              />
+              <div className="flex items-center justify-between mt-2">
+                <p className="text-xs text-white/50">
+                  {totalClientes ? ((totalSemVendedor / totalClientes) * 100).toFixed(1) : '0.0'}% da base
+                </p>
+                <p className="text-xs text-white/40">{totalClientes} clientes</p>
+              </div>
+            </div>
+          </div>
           {clientesCRPorVendedor.map(vendedor => (
             <div 
               key={vendedor.id} 
@@ -581,6 +618,7 @@ export default function ClientesDirecao() {
               </SelectTrigger>
               <SelectContent className="bg-zinc-900 border-white/10">
                 <SelectItem value="todos" className="text-white">Todos Vendedores</SelectItem>
+                <SelectItem value="sem_vendedor" className="text-white">Sem vendedor ({totalSemVendedor})</SelectItem>
                 {clientesCRPorVendedor.map(v => (
                   <SelectItem key={v.id} value={v.id} className="text-white">{v.nome}</SelectItem>
                 ))}
