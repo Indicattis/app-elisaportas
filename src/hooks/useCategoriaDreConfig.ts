@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 
 export type CategoriaDespesa =
   | 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento'
-  | 'fornecedor' | 'financiamento' | 'frete' | 'autorizado' | 'salario';
+  | 'fornecedor' | 'financiamento' | 'frete' | 'autorizado' | 'salario' | 'folha';
 
 /**
  * Carrega o mapa { categoria -> debita_dre } a partir de
