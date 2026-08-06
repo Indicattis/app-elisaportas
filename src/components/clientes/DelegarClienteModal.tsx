@@ -33,10 +33,9 @@ export const DelegarClienteModal = ({ open, onOpenChange, clienteId, clienteNome
     const ativos = data?.ativos ?? [];
     const inativosComClientes = data?.inativosComClientes ?? [];
     return [...ativos, ...inativosComClientes]
-      .filter(v => v.user_id !== user?.id)
       .filter(v => v.nome.toLowerCase().includes(busca.toLowerCase()))
       .sort((a, b) => (b.totalClientes - a.totalClientes) || a.nome.localeCompare(b.nome));
-  }, [data, busca, user?.id]);
+  }, [data, busca]);
 
   const handleConfirmar = () => {
     if (!selecionado) return;
@@ -112,6 +111,11 @@ export const DelegarClienteModal = ({ open, onOpenChange, clienteId, clienteNome
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate flex items-center gap-2">
                           {v.nome}
+                          {v.user_id === user?.id && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/20">
+                              você
+                            </span>
+                          )}
                           {!v.ativo && (
                             <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/20">
                               inativo
@@ -133,7 +137,7 @@ export const DelegarClienteModal = ({ open, onOpenChange, clienteId, clienteNome
           </ScrollArea>
 
           <p className="text-[11px] text-muted-foreground">
-            Sua própria conta não é listada, pois o cliente já está sob sua responsabilidade.
+            Lista todos os colaboradores ativos e inativos que possuem clientes na cartela.
           </p>
         </div>
 
