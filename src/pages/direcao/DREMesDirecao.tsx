@@ -987,7 +987,6 @@ function PrintDespesaTable({
         return s + (t?.valor_maximo_mensal || 0);
       }, 0)
     : 0;
-  const totalProjAno = totalProj * 12;
   return (
     <table>
       <thead>
@@ -996,9 +995,6 @@ function PrintDespesaTable({
           <th style={{ ...TH, textAlign: 'right', width: 140 }}>Valor</th>
           {showProj && (
             <th style={{ ...TH, textAlign: 'right', width: 140 }}>Projetado</th>
-          )}
-          {showProj && (
-            <th style={{ ...TH, textAlign: 'right', width: 140 }}>Projetado (Ano)</th>
           )}
         </tr>
       </thead>
@@ -1027,11 +1023,6 @@ function PrintDespesaTable({
                       {tipoRef ? formatCurrency(tipoRef.valor_maximo_mensal) : '—'}
                     </td>
                   )}
-                  {showProj && (
-                    <td style={{ ...TD, textAlign: 'right', fontVariantNumeric: 'tabular-nums', color: '#64748b' }}>
-                      {tipoRef ? formatCurrency(tipoRef.valor_maximo_mensal * 12) : '—'}
-                    </td>
-                  )}
                 </>
               );
             })()}
@@ -1055,9 +1046,6 @@ function PrintDespesaTable({
                 {showProj && (
                   <td style={{ ...TD, borderBottom: '1px solid #f1f5f9' }}></td>
                 )}
-                {showProj && (
-                  <td style={{ ...TD, borderBottom: '1px solid #f1f5f9' }}></td>
-                )}
               </tr>
             );
           })}
@@ -1072,11 +1060,6 @@ function PrintDespesaTable({
           {showProj && (
             <td style={{ ...TD, textAlign: 'right', fontWeight: 800, color: '#fff', borderBottom: 'none', fontVariantNumeric: 'tabular-nums' }}>
               {formatCurrency(totalProj)}
-            </td>
-          )}
-          {showProj && (
-            <td style={{ ...TD, textAlign: 'right', fontWeight: 800, color: '#fff', borderBottom: 'none', fontVariantNumeric: 'tabular-nums' }}>
-              {formatCurrency(totalProjAno)}
             </td>
           )}
         </tr>
