@@ -115,11 +115,16 @@ export function useClientes() {
 }
 
 // Hook para buscar clientes por nome ou CPF/CNPJ
+// Restrito à cartela do usuário logado (clientes que ele cadastrou)
 export function useSearchClientes(searchTerm: string) {
   return useQuery({
     queryKey: ["clientes-search", searchTerm],
     queryFn: async () => {
       if (!searchTerm || searchTerm.length < 2) return [];
+      
+      const { data: authData } = await supabase.auth.getUser();
+      const userId = authData.user?.id;
+      if (!userId) return [];
       
       // Normalizar busca removendo caracteres especiais para CPF/CNPJ
       const termNormalizado = searchTerm.replace(/\D/g, '');
@@ -128,7 +133,8 @@ export function useSearchClientes(searchTerm: string) {
       let query = supabase
         .from("clientes" as any)
         .select("*")
-        .eq("ativo", true);
+        .eq("ativo", true)
+        .eq("created_by", userId);
       
       if (isNumeric) {
         // Buscar por CPF/CNPJ (contém os números)
@@ -147,7 +153,8 @@ export function useSearchClientes(searchTerm: string) {
   });
 }
 
-// Hook para verificar duplicação de CPF/CNPJ
+// Hook para verificar duplicação de CPF/CNPJ (busca global)
+// Retorna também se o cliente encontrado pertence à cartela do usuário atual
 export function useCheckClienteDuplicado(cpfCnpj: string) {
   return useQuery({
     queryKey: ["cliente-duplicado", cpfCnpj],
@@ -159,14 +166,22 @@ export function useCheckClienteDuplicado(cpfCnpj: string) {
       
       const { data, error } = await supabase
         .from("clientes" as any)
-        .select("id, nome, cpf_cnpj, telefone, email, estado, cidade, cep, endereco, bairro, canal_aquisicao_id")
+        .select("id, nome, cpf_cnpj, telefone, email, estado, cidade, cep, endereco, bairro, canal_aquisicao_id, created_by")
         .eq("ativo", true)
         .ilike("cpf_cnpj", `%${cpfNormalizado}%`)
         .limit(1)
         .maybeSingle();
       
       if (error) throw error;
-      return data as unknown as Cliente | null;
+      if (!data) return null;
+      
+      const { data: authData } = await supabase.auth.getUser();
+      const userId = authData.user?.id;
+      const cliente = data as unknown as Cliente;
+      return {
+        ...cliente,
+        mesmaCartela: !!userId && cliente.created_by === userId,
+      } as Cliente & { mesmaCartela: boolean };
     },
     enabled: cpfCnpj.replace(/\D/g, '').length >= 11,
   });
