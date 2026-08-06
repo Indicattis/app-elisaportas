@@ -154,21 +154,25 @@ export default function DREDirecao() {
       headerActions={
         !loading ? (
           <div className="flex items-center gap-2">
-            <div className="px-4 py-2 rounded-xl border border-white/10 bg-white/5">
-              <p className="text-[10px] uppercase tracking-wider text-white/40">Meta de faturamento</p>
-              <div className="flex items-baseline gap-2">
-                <span className="text-white/60 text-sm">R$</span>
-                <input
-                  type="number"
-                  value={metaFaturamento}
-                  onChange={(e) => setMetaFaturamento(Number(e.target.value))}
-                  className="bg-transparent text-lg font-semibold text-white w-36 focus:outline-none"
-                />
-              </div>
-              <p className={`text-[10px] mt-1 ${mediaAcimaMeta ? 'text-emerald-300/70' : 'text-red-300/70'}`}>
-                Média: {formatCurrency(mediaFaturamento)}
-              </p>
-            </div>
+            <button
+              type="button"
+              onClick={() => {
+                const input = document.getElementById('meta-faturamento-input') as HTMLInputElement | null;
+                input?.focus();
+              }}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-white/10 bg-white/5 text-white/60 hover:text-white hover:bg-white/10 transition-all"
+            >
+              <span className="text-[10px] uppercase tracking-wider text-white/40">Meta:</span>
+              <span className="text-white/60 text-sm">R$</span>
+              <input
+                id="meta-faturamento-input"
+                type="number"
+                value={metaFaturamento}
+                onChange={(e) => setMetaFaturamento(Number(e.target.value))}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-transparent text-sm font-semibold text-white w-24 focus:outline-none"
+              />
+            </button>
             <button
               onClick={() => setMostrarLucro((v) => !v)}
               title={mostrarLucro ? 'Ocultar lucro líquido' : 'Mostrar lucro líquido'}
