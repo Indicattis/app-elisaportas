@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Loader2, Search, UserCheck } from "lucide-react";
+import { Check, Loader2, Search, UserCheck } from "lucide-react";
 import {
   Dialog,
   DialogContent,
