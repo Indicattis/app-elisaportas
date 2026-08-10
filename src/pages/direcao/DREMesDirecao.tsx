@@ -552,11 +552,11 @@ function PrintReport({
           <tbody>
             {[
               { key: 'portas', label: 'Portas' },
+              { key: 'avulsos', label: 'Itens Avulsos' },
+              { key: 'acessorios', label: 'Acessórios' },
               { key: 'pintura', label: 'Pintura' },
               { key: 'instalacoes', label: 'Instalações' },
               { key: 'fretes', label: 'Fretes' },
-              { key: 'acessorios', label: 'Acessórios' },
-              { key: 'avulsos', label: 'Itens Avulsos' },
             ].map((c, i) => {
               const f = faturamento[c.key as keyof FaturamentoProduto];
               const excCol = c.key === 'fretes'
@@ -2217,11 +2217,11 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
 
   const columns = [
     { key: 'portas', label: 'Portas' },
+    { key: 'avulsos', label: 'Itens Avulsos' },
+    { key: 'acessorios', label: 'Acessórios' },
     { key: 'pintura', label: 'Pintura' },
     { key: 'instalacoes', label: 'Instalações' },
     { key: 'fretes', label: 'Fretes' },
-    { key: 'acessorios', label: 'Acessórios' },
-    { key: 'avulsos', label: 'Itens Avulsos' },
     { key: 'total', label: 'Total' },
   ] as const;
 
