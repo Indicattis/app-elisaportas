@@ -654,6 +654,29 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
         });
       }
 
+      // Buscar ordem de embalagem
+      const { data: embalagem } = await supabase
+        .from("ordens_embalagem")
+        .select("id, numero_ordem, status, responsavel_id, pausada, justificativa_pausa, pausada_em")
+        .eq("pedido_id", pedido.id)
+        .maybeSingle();
+      if (embalagem) {
+        const resp = await fetchResponsavel(embalagem.responsavel_id);
+        ordensData.push({
+          id: embalagem.id,
+          numero_ordem: embalagem.numero_ordem,
+          status: embalagem.status,
+          tipo: "embalagem",
+          tipoLabel: "Embalagem",
+          responsavel_id: embalagem.responsavel_id,
+          responsavel: resp,
+          pausada: embalagem.pausada || false,
+          justificativa_pausa: embalagem.justificativa_pausa,
+          pausada_em: embalagem.pausada_em,
+          linha_problema: null,
+        });
+      }
+
       setOrdens(ordensData);
     } catch (error) {
       console.error("Erro ao buscar ordens:", error);
@@ -737,6 +760,8 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
         return <CheckCircle2 className="w-4 h-4 text-emerald-400" />;
       case "pintura":
         return <div className="w-4 h-4 rounded-full bg-gradient-to-br from-pink-400 to-purple-400" />;
+      case "embalagem":
+        return <Package className="w-4 h-4 text-amber-400" />;
       default:
         return <Package className="w-4 h-4 text-white/60" />;
     }
