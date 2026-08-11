@@ -129,206 +129,29 @@ export function DespesasGridContent({
             hasOverride={folhaHasOverride}
             mesReferencia={mesReferencia ?? null}
           />
-          <TiposCustoBlock
-            titulo="Despesa projetada"
-            icon={<TrendingUp className="w-4 h-4" />}
-            tipo="projetada"
-            items={tiposProjetadas}
-            save={saveTipoCusto}
-            update={updateTipoCusto}
-            remove={deleteTipoCusto}
-            allTipos={tiposCustos}
-            contarGastosVinculados={contarGastosVinculados}
-            realocarEExcluir={realocarEExcluirTipoCusto}
-            forcarExclusao={forcarExclusaoTipoCusto}
-            reorderTipos={reorderTiposCustos}
-            readOnly={readOnly}
-            clearOverride={tipoClearOverride}
-            hasOverride={tipoHasOverride}
-            mesReferencia={mesReferencia ?? null}
-            contagemGastos={contagemGastos}
-            totaisGastos={totaisGastos}
-          />
-          <TiposCustoBlock
-            titulo="Tipos de Custos — Fixas"
-            icon={<Receipt className="w-4 h-4" />}
-            tipo="fixa"
-            items={tiposFixas}
-            save={saveTipoCusto}
-            update={updateTipoCusto}
-            remove={deleteTipoCusto}
-            allTipos={tiposCustos}
-            contarGastosVinculados={contarGastosVinculados}
-            realocarEExcluir={realocarEExcluirTipoCusto}
-            forcarExclusao={forcarExclusaoTipoCusto}
-            reorderTipos={reorderTiposCustos}
-            readOnly={readOnly}
-            clearOverride={tipoClearOverride}
-            hasOverride={tipoHasOverride}
-            mesReferencia={mesReferencia ?? null}
-            contagemGastos={contagemGastos}
-            totaisGastos={totaisGastos}
-          />
-          <TiposCustoBlock
-            titulo="Tipos de Custos — Variáveis"
-            icon={<TrendingDown className="w-4 h-4" />}
-            tipo="variavel"
-            items={tiposVariaveis}
-            save={saveTipoCusto}
-            update={updateTipoCusto}
-            remove={deleteTipoCusto}
-            allTipos={tiposCustos}
-            contarGastosVinculados={contarGastosVinculados}
-            realocarEExcluir={realocarEExcluirTipoCusto}
-            forcarExclusao={forcarExclusaoTipoCusto}
-            reorderTipos={reorderTiposCustos}
-            readOnly={readOnly}
-            clearOverride={tipoClearOverride}
-            hasOverride={tipoHasOverride}
-            mesReferencia={mesReferencia ?? null}
-            contagemGastos={contagemGastos}
-            totaisGastos={totaisGastos}
-          />
-          <TiposCustoBlock
-            titulo="Tipos de Custos — Autorizados"
-            icon={<Handshake className="w-4 h-4" />}
-            tipo="autorizado"
-            items={tiposAutorizados}
-            save={saveTipoCusto}
-            update={updateTipoCusto}
-            remove={deleteTipoCusto}
-            allTipos={tiposCustos}
-            contarGastosVinculados={contarGastosVinculados}
-            realocarEExcluir={realocarEExcluirTipoCusto}
-            forcarExclusao={forcarExclusaoTipoCusto}
-            reorderTipos={reorderTiposCustos}
-            readOnly={readOnly}
-            clearOverride={tipoClearOverride}
-            hasOverride={tipoHasOverride}
-            mesReferencia={mesReferencia ?? null}
-            contagemGastos={contagemGastos}
-            totaisGastos={totaisGastos}
-          />
-          <TiposCustoBlock
-            titulo="Tipos de Custos — Impostos"
-            icon={<Landmark className="w-4 h-4" />}
-            tipo="imposto"
-            items={tiposImpostos}
-            save={saveTipoCusto}
-            update={updateTipoCusto}
-            remove={deleteTipoCusto}
-            allTipos={tiposCustos}
-            contarGastosVinculados={contarGastosVinculados}
-            realocarEExcluir={realocarEExcluirTipoCusto}
-            forcarExclusao={forcarExclusaoTipoCusto}
-            reorderTipos={reorderTiposCustos}
-            readOnly={readOnly}
-            clearOverride={tipoClearOverride}
-            hasOverride={tipoHasOverride}
-            mesReferencia={mesReferencia ?? null}
-            contagemGastos={contagemGastos}
-            totaisGastos={totaisGastos}
-          />
-          <TiposCustoBlock
-            titulo="Tipos de Custos — Investimentos"
-            icon={<Briefcase className="w-4 h-4" />}
-            tipo="investimento"
-            items={tiposInvestimentos}
-            save={saveTipoCusto}
-            update={updateTipoCusto}
-            remove={deleteTipoCusto}
-            allTipos={tiposCustos}
-            contarGastosVinculados={contarGastosVinculados}
-            realocarEExcluir={realocarEExcluirTipoCusto}
-            forcarExclusao={forcarExclusaoTipoCusto}
-            reorderTipos={reorderTiposCustos}
-            readOnly={readOnly}
-            clearOverride={tipoClearOverride}
-            hasOverride={tipoHasOverride}
-            mesReferencia={mesReferencia ?? null}
-            contagemGastos={contagemGastos}
-            totaisGastos={totaisGastos}
-          />
-          <TiposCustoBlock
-            titulo="Tipos de Custos — Fornecedores"
-            icon={<Truck className="w-4 h-4" />}
-            tipo="fornecedor"
-            items={tiposFornecedores}
-            save={saveTipoCusto}
-            update={updateTipoCusto}
-            remove={deleteTipoCusto}
-            allTipos={tiposCustos}
-            contarGastosVinculados={contarGastosVinculados}
-            realocarEExcluir={realocarEExcluirTipoCusto}
-            forcarExclusao={forcarExclusaoTipoCusto}
-            reorderTipos={reorderTiposCustos}
-            readOnly={readOnly}
-            clearOverride={tipoClearOverride}
-            hasOverride={tipoHasOverride}
-            mesReferencia={mesReferencia ?? null}
-            contagemGastos={contagemGastos}
-            totaisGastos={totaisGastos}
-          />
-          <TiposCustoBlock
-            titulo="Tipos de Custos — Financiamentos"
-            icon={<Banknote className="w-4 h-4" />}
-            tipo="financiamento"
-            items={tiposFinanciamentos}
-            save={saveTipoCusto}
-            update={updateTipoCusto}
-            remove={deleteTipoCusto}
-            allTipos={tiposCustos}
-            contarGastosVinculados={contarGastosVinculados}
-            realocarEExcluir={realocarEExcluirTipoCusto}
-            forcarExclusao={forcarExclusaoTipoCusto}
-            reorderTipos={reorderTiposCustos}
-            readOnly={readOnly}
-            clearOverride={tipoClearOverride}
-            hasOverride={tipoHasOverride}
-            mesReferencia={mesReferencia ?? null}
-            contagemGastos={contagemGastos}
-            totaisGastos={totaisGastos}
-          />
-          <TiposCustoBlock
-            titulo="Tipos de Custos — Fretes e Logística"
-            icon={<Package className="w-4 h-4" />}
-            tipo="frete"
-            items={tiposFretes}
-            save={saveTipoCusto}
-            update={updateTipoCusto}
-            remove={deleteTipoCusto}
-            allTipos={tiposCustos}
-            contarGastosVinculados={contarGastosVinculados}
-            realocarEExcluir={realocarEExcluirTipoCusto}
-            forcarExclusao={forcarExclusaoTipoCusto}
-            reorderTipos={reorderTiposCustos}
-            readOnly={readOnly}
-            clearOverride={tipoClearOverride}
-            hasOverride={tipoHasOverride}
-            mesReferencia={mesReferencia ?? null}
-            contagemGastos={contagemGastos}
-            totaisGastos={totaisGastos}
-          />
-          <TiposCustoBlock
-            titulo="Tipos de Custos — Salários"
-            icon={<Wallet className="w-4 h-4" />}
-            tipo="salario"
-            items={tiposSalarios}
-            save={saveTipoCusto}
-            update={updateTipoCusto}
-            remove={deleteTipoCusto}
-            allTipos={tiposCustos}
-            contarGastosVinculados={contarGastosVinculados}
-            realocarEExcluir={realocarEExcluirTipoCusto}
-            forcarExclusao={forcarExclusaoTipoCusto}
-            reorderTipos={reorderTiposCustos}
-            readOnly={readOnly}
-            clearOverride={tipoClearOverride}
-            hasOverride={tipoHasOverride}
-            mesReferencia={mesReferencia ?? null}
-            contagemGastos={contagemGastos}
-            totaisGastos={totaisGastos}
-          />
+          {secoes.map((sec) => (
+            <TiposCustoBlock
+              key={sec.chave}
+              titulo={sec.chave === 'projetada' ? sec.nome : `Tipos de Custos — ${sec.nome}`}
+              icon={iconeSecao(sec.chave)}
+              tipo={sec.chave}
+              items={tiposCustos.filter(t => t.tipo === sec.chave)}
+              save={saveTipoCusto}
+              update={updateTipoCusto}
+              remove={deleteTipoCusto}
+              allTipos={tiposCustos}
+              contarGastosVinculados={contarGastosVinculados}
+              realocarEExcluir={realocarEExcluirTipoCusto}
+              forcarExclusao={forcarExclusaoTipoCusto}
+              reorderTipos={reorderTiposCustos}
+              readOnly={readOnly}
+              clearOverride={tipoClearOverride}
+              hasOverride={tipoHasOverride}
+              mesReferencia={mesReferencia ?? null}
+              contagemGastos={contagemGastos}
+              totaisGastos={totaisGastos}
+            />
+          ))}
         </div>
       );
 }
