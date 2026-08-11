@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Plus, Trash2, Pencil, Check, X, Lock } from 'lucide-react';
 import { useCategoriaDreConfig, type TipoDespesa } from '@/hooks/useCategoriaDreConfig';
 import { useTiposCustos } from '@/hooks/useTiposCustos';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export function TiposDreDialog({
   open,
@@ -26,7 +28,7 @@ export function TiposDreDialog({
   const [editNome, setEditNome] = useState('');
 
   const [excluir, setExcluir] = useState<TipoDespesa | null>(null);
-  const [destino, setDestino] = useState('');
+  const [destinos, setDestinos] = useState<Record<string, string>>({});
   const [excluindo, setExcluindo] = useState(false);
 
   const contagem = useMemo(() => {
@@ -50,15 +52,36 @@ export function TiposDreDialog({
     if (ok) { setNovoNome(''); setNovoDebita(true); setNovoOpen(false); }
   };
 
+  const custosDoTipo = useMemo(
+    () => (excluir ? (tiposCustos || []).filter((t: any) => t.tipo === excluir.chave) : []),
+    [tiposCustos, excluir],
+  );
+  const qtdExcluir = custosDoTipo.length;
+  const todosDefinidos = custosDoTipo.every((c: any) => !!destinos[c.id]);
+
   const handleExcluir = async () => {
     if (!excluir) return;
     setExcluindo(true);
-    const ok = await excluirTipo(excluir.chave, destino || null);
-    setExcluindo(false);
-    if (ok) { setExcluir(null); setDestino(''); void fetchTiposCustos(); }
+    try {
+      // Move cada custo para o destino escolhido individualmente
+      const porDestino = new Map<string, string[]>();
+      custosDoTipo.forEach((c: any) => {
+        const d = destinos[c.id];
+        if (!d) return;
+        porDestino.set(d, [...(porDestino.get(d) || []), c.id]);
+      });
+      for (const [d, ids] of porDestino) {
+        const { error } = await supabase.from('tipos_custos' as any).update({ tipo: d }).in('id', ids);
+        if (error) throw error;
+      }
+      const ok = await excluirTipo(excluir.chave, null);
+      if (ok) { setExcluir(null); setDestinos({}); void fetchTiposCustos(); }
+    } catch (e: any) {
+      toast.error('Erro ao mover custos: ' + (e?.message || e));
+    } finally {
+      setExcluindo(false);
+    }
   };
-
-  const qtdExcluir = excluir ? (contagem[excluir.chave] || 0) : 0;
 
   return (
     <>
@@ -149,7 +172,7 @@ export function TiposDreDialog({
                             <Pencil className="w-3.5 h-3.5" />
                           </button>
                           <button
-                            onClick={() => { setExcluir(s); setDestino(''); }}
+                            onClick={() => { setExcluir(s); setDestinos({}); }}
                             className="text-red-400/70 hover:text-red-300"
                             title="Excluir tipo"
                           >
@@ -203,26 +226,52 @@ export function TiposDreDialog({
             <DialogTitle className="text-white">Excluir "{excluir?.nome}"</DialogTitle>
             <DialogDescription className="text-white/50">
               {qtdExcluir > 0
-                ? `Existem ${qtdExcluir} tipo(s) de custo cadastrados nesta seção. Escolha para onde eles devem ir.`
+                ? `Existem ${qtdExcluir} tipo(s) de custo nesta seção. Escolha o destino de cada um.`
                 : 'Nenhum custo está cadastrado nesta seção. A exclusão é definitiva.'}
             </DialogDescription>
           </DialogHeader>
 
           {qtdExcluir > 0 && (
-            <div className="space-y-2">
-              <label className="text-xs text-white/50 uppercase tracking-wider">Mover os {qtdExcluir} custos para</label>
-              <select
-                value={destino}
-                onChange={(e) => setDestino(e.target.value)}
-                className="w-full h-10 rounded-lg bg-white/5 border border-white/10 px-3 text-sm text-white outline-none"
-              >
-                <option value="" className="bg-slate-900">— Selecione o tipo de destino</option>
-                {tipos
-                  .filter((t) => t.chave !== excluir?.chave && !t.sistema)
-                  .map((t) => (
-                    <option key={t.chave} value={t.chave} className="bg-slate-900">{t.nome}</option>
-                  ))}
-              </select>
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-white/50 uppercase tracking-wider flex-1">Destino de cada custo</label>
+                <select
+                  value=""
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    if (!v) return;
+                    setDestinos(Object.fromEntries(custosDoTipo.map((c: any) => [c.id, v])));
+                  }}
+                  className="h-8 rounded-lg bg-white/5 border border-white/10 px-2 text-xs text-white outline-none"
+                >
+                  <option value="" className="bg-slate-900">Aplicar a todos…</option>
+                  {tipos
+                    .filter((t) => t.chave !== excluir?.chave && t.chave !== 'folha')
+                    .map((t) => (
+                      <option key={t.chave} value={t.chave} className="bg-slate-900">{t.nome}</option>
+                    ))}
+                </select>
+              </div>
+
+              <div className="max-h-[45vh] overflow-y-auto space-y-2 pr-1">
+                {custosDoTipo.map((c: any) => (
+                  <div key={c.id} className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 border border-white/10">
+                    <span className="text-sm text-white flex-1 truncate" title={c.nome}>{c.nome}</span>
+                    <select
+                      value={destinos[c.id] || ''}
+                      onChange={(e) => setDestinos((prev) => ({ ...prev, [c.id]: e.target.value }))}
+                      className="h-8 w-44 rounded-lg bg-white/5 border border-white/10 px-2 text-xs text-white outline-none"
+                    >
+                      <option value="" className="bg-slate-900">— Selecione</option>
+                      {tipos
+                        .filter((t) => t.chave !== excluir?.chave && t.chave !== 'folha')
+                        .map((t) => (
+                          <option key={t.chave} value={t.chave} className="bg-slate-900">{t.nome}</option>
+                        ))}
+                    </select>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
@@ -230,7 +279,7 @@ export function TiposDreDialog({
             <Button variant="ghost" onClick={() => setExcluir(null)} className="text-white/60 hover:text-white">Cancelar</Button>
             <Button
               onClick={handleExcluir}
-              disabled={excluindo || (qtdExcluir > 0 && !destino)}
+              disabled={excluindo || (qtdExcluir > 0 && !todosDefinidos)}
               className="bg-red-600 hover:bg-red-500"
             >
               {excluindo ? 'Excluindo...' : 'Excluir tipo'}
