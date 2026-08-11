@@ -15,7 +15,7 @@ export function TiposDreDialog({
   onOpenChange: (v: boolean) => void;
 }) {
   const { tipos, debita, toggle, criarTipo, renomearTipo, excluirTipo, refetch } = useCategoriaDreConfig();
-  const { tiposCustos, fetchTiposCustos } = useTiposCustos();
+  const { tiposCustos, refetch: fetchTiposCustos } = useTiposCustos();
 
   const [novoOpen, setNovoOpen] = useState(false);
   const [novoNome, setNovoNome] = useState('');

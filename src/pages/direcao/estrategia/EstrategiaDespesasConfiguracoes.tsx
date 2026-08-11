@@ -77,6 +77,23 @@ export default function EstrategiaDespesasConfiguracoes() {
   );
 }
 
+const ICONES_SECAO: Record<string, React.ReactNode> = {
+  projetada: <TrendingUp className="w-4 h-4" />,
+  fixa: <Receipt className="w-4 h-4" />,
+  variavel: <TrendingDown className="w-4 h-4" />,
+  autorizado: <Handshake className="w-4 h-4" />,
+  imposto: <Landmark className="w-4 h-4" />,
+  investimento: <Briefcase className="w-4 h-4" />,
+  fornecedor: <Truck className="w-4 h-4" />,
+  financiamento: <Banknote className="w-4 h-4" />,
+  frete: <Package className="w-4 h-4" />,
+  salario: <Wallet className="w-4 h-4" />,
+};
+
+function iconeSecao(chave: string): React.ReactNode {
+  return ICONES_SECAO[chave] ?? <Receipt className="w-4 h-4" />;
+}
+
 export function DespesasGridContent({
   mode = 'config',
   mesReferencia,
@@ -1060,7 +1077,7 @@ function TiposCustoBlock({
 }: {
   titulo: string;
   icon: React.ReactNode;
-  tipo: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete' | 'autorizado' | 'salario';
+  tipo: string;
   items: TipoCusto[];
   save: ReturnType<typeof useTiposCustos>['saveTipoCusto'];
   update: ReturnType<typeof useTiposCustos>['updateTipoCusto'];
@@ -1813,7 +1830,7 @@ function GastosDoTipoExpand({
 }: {
   tipoCustoId: string;
   tipoNome: string;
-  categoria: 'fixa' | 'variavel' | 'imposto' | 'projetada' | 'investimento' |'fornecedor' | 'financiamento' | 'frete' | 'autorizado' | 'salario';
+  categoria: string;
   mes: string | null;
   hideCategoria?: boolean;
 }) {
