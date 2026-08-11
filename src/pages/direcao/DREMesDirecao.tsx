@@ -340,6 +340,7 @@ function PrintReport({
   despesasFretes,
   despesasAutorizados,
   despesasSalarios,
+  secoesExtras,
   tiposCustosFixos,
   tiposCustosVariaveis,
   tiposCustosImpostos,
@@ -384,6 +385,7 @@ function PrintReport({
   despesasFretes: DespesaAgrupada[];
   despesasAutorizados: DespesaAgrupada[];
   despesasSalarios: DespesaAgrupada[];
+  secoesExtras: Array<{ chave: string; nome: string; items: DespesaAgrupada[]; tipos: TipoCustoVariavel[] }>;
   tiposCustosFixos: TipoCustoVariavel[];
   tiposCustosVariaveis: TipoCustoVariavel[];
   tiposCustosImpostos: TipoCustoVariavel[];
@@ -624,6 +626,7 @@ function PrintReport({
               { l: '(–) Fretes e Logística', v: formatCurrency(totalDespFretes), c: '#b91c1c', b: false, cat: 'frete' as CategoriaDespesa },
               { l: '(–) Autorizados', v: formatCurrency(totalDespAutorizados), c: '#b91c1c', b: false, cat: 'autorizado' as CategoriaDespesa },
               { l: '(–) Salários', v: formatCurrency(totalDespSalarios), c: '#b91c1c', b: false, cat: 'salario' as CategoriaDespesa },
+              ...secoesExtras.map(sec => ({ l: `(–) ${sec.nome}`, v: formatCurrency(sec.items.reduce((a, d) => a + (d.valor_real || 0), 0)), c: '#b91c1c', b: false, cat: sec.chave as CategoriaDespesa })),
             ]
               .map((r, idx) => ({ r, idx }))
               .sort((a, b) => {
@@ -657,6 +660,7 @@ function PrintReport({
               { cat: 'financiamento' as CategoriaDespesa, v: totalDespFinanciamentos },
               { cat: 'autorizado' as CategoriaDespesa, v: totalDespAutorizados },
               { cat: 'salario' as CategoriaDespesa, v: totalDespSalarios },
+              ...secoesExtras.map(sec => ({ cat: sec.chave as CategoriaDespesa, v: sec.items.reduce((a, d) => a + (d.valor_real || 0), 0) })),
             ].filter((d) => !debitaCat(d.cat));
             const totalNaoDebitado = naoDebitadas.reduce((s, d) => s + d.v, 0);
             return (
@@ -906,6 +910,20 @@ function PrintReport({
           />
         </div>
       </div>
+
+      {secoesExtras.map((sec, i) => (
+        <div className="pdf-landscape-page" key={sec.chave}>
+          <div className="pdf-landscape-content">
+            <div style={H2}>{13 + i + 1}. {sec.nome} {badgeDebita(debitaCat(sec.chave as CategoriaDespesa))}</div>
+            <PrintDespesaTable
+              items={sec.items}
+              total={sec.items.reduce((a, d) => a + (d.valor_real || 0), 0)}
+              formatCurrency={formatCurrency}
+              tiposDisponiveis={sec.tipos}
+            />
+          </div>
+        </div>
+      ))}
 
       <div className="pdf-landscape-page">
         <div className="pdf-landscape-content">
@@ -1261,6 +1279,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
   const [despesasFretes, setDespesasFretes] = useState<DespesaAgrupada[]>([]);
   const [despesasAutorizados, setDespesasAutorizados] = useState<DespesaAgrupada[]>([]);
   const [despesasSalarios, setDespesasSalarios] = useState<DespesaAgrupada[]>([]);
+  const [secoesExtras, setSecoesExtras] = useState<Array<{ chave: string; nome: string; items: DespesaAgrupada[]; tipos: TipoCustoVariavel[] }>>([]);
   const [tipoModal, setTipoModal] = useState<{ id: string; nome: string } | null>(null);
   const [tiposCustosFixos, setTiposCustosFixos] = useState<TipoCustoVariavel[]>([]);
   const [tiposCustosVariaveis, setTiposCustosVariaveis] = useState<TipoCustoVariavel[]>([]);
@@ -1417,6 +1436,15 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
       setTiposCustosFretes(tiposBy('frete'));
       setTiposCustosAutorizados(tiposBy('autorizado'));
       setTiposCustosSalarios(tiposBy('salario'));
+
+      const BASE_CATS = new Set(['fixa','variavel','imposto','projetada','investimento','fornecedor','financiamento','frete','autorizado','salario','folha']);
+      const { data: tiposDespesaRows } = await supabase
+        .from('despesas_tipos' as any)
+        .select('chave, nome, ordem')
+        .order('ordem');
+      setSecoesExtras(((tiposDespesaRows || []) as any[])
+        .filter(t => !BASE_CATS.has(t.chave))
+        .map(t => ({ chave: t.chave as string, nome: t.nome as string, items: itemsBy(t.chave), tipos: tiposBy(t.chave) })));
     }
 
     // Folha salarial — mesma fonte de /direcao/estrategia/despesas/:mes
@@ -2250,7 +2278,8 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
     - (debitaCat('financiamento') ? totalDespFinanciamentos : 0)
     - 0 /* Fretes: já debitados no faturamento de fretes (Seção 1) */
     - (debitaCat('autorizado') ? totalDespAutorizados : 0)
-    - (debitaCat('salario') ? totalDespSalarios : 0);
+    - (debitaCat('salario') ? totalDespSalarios : 0)
+    - secoesExtras.reduce((acc, sec) => acc + (debitaCat(sec.chave as CategoriaDespesa) ? sec.items.reduce((a, d) => a + (d.valor_real || 0), 0) : 0), 0);
   const lucroBrutoAjustado = lucro.total - descontoExcedido.total;
   const percBrutoFinal = faturamento.total > 0 ? (lucroBrutoAjustado / faturamento.total) * 100 : 0;
   const percLiquidFinal = faturamento.total > 0 ? (lucroLiquidoFinal / faturamento.total) * 100 : 0;
@@ -2815,6 +2844,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         despesasFretes={despesasFretes}
         despesasAutorizados={despesasAutorizados}
         despesasSalarios={despesasSalarios}
+        secoesExtras={secoesExtras}
         tiposCustosVariaveis={tiposCustosVariaveis}
         tiposCustosFixos={tiposCustosFixos}
         tiposCustosImpostos={tiposCustosImpostos}
