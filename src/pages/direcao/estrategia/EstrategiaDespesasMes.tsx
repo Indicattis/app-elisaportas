@@ -2,9 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { format, parse } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { CheckCircle2, Clock } from 'lucide-react';
+import { CheckCircle2, Clock, SlidersHorizontal } from 'lucide-react';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { logStatusChange } from '@/components/direcao/estrategia/DespesasResumoTopo';
+import { TiposDreDialog } from '@/components/direcao/estrategia/TiposDreDialog';
 import { DespesasGridContent } from './EstrategiaDespesasConfiguracoes';
 import { formatCurrency } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,6 +17,7 @@ export default function EstrategiaDespesasMes() {
   const [totalMes, setTotalMes] = useState(0);
   const [status, setStatus] = useState<'pendente' | 'alana' | 'luan'>('pendente');
   const [savingStatus, setSavingStatus] = useState(false);
+  const [tiposDreOpen, setTiposDreOpen] = useState(false);
 
   const mesValido = useMemo(() => {
     if (!mes || !/^\d{4}-\d{2}$/.test(mes)) return null;
@@ -113,6 +115,15 @@ export default function EstrategiaDespesasMes() {
       <div className="flex justify-end mb-4">
         <div className="flex items-center gap-2">
           <button
+            type="button"
+            onClick={() => setTiposDreOpen(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 backdrop-blur-xl text-sm font-medium text-white transition-all"
+            title="Gerenciar quais tipos de despesa debitam do lucro no DRE"
+          >
+            <SlidersHorizontal className="w-4 h-4" />
+            Tipos no DRE
+          </button>
+          <button
           type="button"
           onClick={toggleStatus}
           disabled={savingStatus}
@@ -124,6 +135,8 @@ export default function EstrategiaDespesasMes() {
           </button>
         </div>
       </div>
+
+      <TiposDreDialog open={tiposDreOpen} onOpenChange={setTiposDreOpen} />
 
       <DespesasGridContent mode="mes" mesReferencia={mesValido} />
     </MinimalistLayout>
