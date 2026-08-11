@@ -1,5 +1,6 @@
 import { useState, useRef, useMemo } from 'react';
-import { Plus, Trash2, Users, Receipt, TrendingDown, TrendingUp, Landmark, Briefcase, Truck, Banknote, Package, FileDown, GripVertical, X, Check, FolderPlus, ChevronRight, AlertTriangle, FileText, RotateCcw, Handshake, Wallet, UserMinus, UserCheck } from 'lucide-react';
+import { Plus, Trash2, Users, Receipt, TrendingDown, TrendingUp, Landmark, Briefcase, Truck, Banknote, Package, FileDown, GripVertical, X, Check, FolderPlus, ChevronRight, AlertTriangle, FileText, RotateCcw, Handshake, Wallet, UserMinus, UserCheck, SlidersHorizontal } from 'lucide-react';
+import { TiposDreDialog } from '@/components/direcao/estrategia/TiposDreDialog';
 import GastoFormDialog from '@/components/financeiro/GastoFormDialog';
 import { useGastosPorTipoMes } from '@/hooks/useGastosPorTipoMes';
 import { useContagemGastosPorTipoMes } from '@/hooks/useContagemGastosPorTipoMes';
@@ -44,12 +45,24 @@ import { CSS } from '@dnd-kit/utilities';
 import { restrictToVerticalAxis, restrictToParentElement } from '@dnd-kit/modifiers';
 
 export default function EstrategiaDespesasConfiguracoes() {
+  const [tiposDreOpen, setTiposDreOpen] = useState(false);
   return (
     <MinimalistLayout
       title="Configurações padrão"
       subtitle="Valores que pré-preenchem as despesas de cada mês"
       backPath="/direcao/estrategia/despesas"
       fullWidth
+      headerActions={
+        <button
+          type="button"
+          onClick={() => setTiposDreOpen(true)}
+          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm hover:bg-white/10 transition-colors backdrop-blur-xl"
+          title="Gerenciar quais tipos de despesa debitam do lucro no DRE"
+        >
+          <SlidersHorizontal className="w-4 h-4" />
+          Tipos no DRE
+        </button>
+      }
       breadcrumbItems={[
         { label: 'Home', path: '/home' },
         { label: 'Direção', path: '/direcao' },
@@ -58,6 +71,7 @@ export default function EstrategiaDespesasConfiguracoes() {
         { label: 'Configurações padrão' },
       ]}
     >
+      <TiposDreDialog open={tiposDreOpen} onOpenChange={setTiposDreOpen} />
       <DespesasGridContent mode="config" />
     </MinimalistLayout>
   );
