@@ -60,7 +60,7 @@ export default function EstrategiaDespesasConfiguracoes() {
           title="Gerenciar quais tipos de despesa debitam do lucro no DRE"
         >
           <SlidersHorizontal className="w-4 h-4" />
-          Tipos no DRE
+          Tipos de Despesas
         </button>
       }
       breadcrumbItems={[
@@ -150,7 +150,7 @@ export function DespesasGridContent({
           {secoes.map((sec) => (
             <TiposCustoBlock
               key={sec.chave}
-              titulo={sec.chave === 'projetada' ? sec.nome : `Tipos de Custos — ${sec.nome}`}
+              titulo={sec.chave === 'projetada' ? sec.nome : `${sec.nome}`}
               icon={iconeSecao(sec.chave)}
               tipo={sec.chave}
               items={tiposCustos.filter(t => t.tipo === sec.chave)}

@@ -88,7 +88,7 @@ export function TiposDreDialog({
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogContent className="max-w-2xl bg-slate-950/90 backdrop-blur-xl border border-white/10 text-white">
           <DialogHeader>
-            <DialogTitle className="text-white">Tipos de despesa no DRE</DialogTitle>
+            <DialogTitle className="text-white">Tipos de Despesas</DialogTitle>
             <DialogDescription className="text-white/50">
               Gerencie as seções de despesa e defina quais são subtraídas do lucro líquido no DRE. A configuração é global e vale para todos os meses.
             </DialogDescription>
@@ -107,7 +107,7 @@ export function TiposDreDialog({
               onClick={() => setNovoOpen(true)}
               className="ml-auto h-7 bg-white/5 border-white/10 text-white hover:bg-white/10"
             >
-              <Plus className="w-3.5 h-3.5 mr-1" /> Novo tipo
+              <Plus className="w-3.5 h-3.5 mr-1" /> Novo tipo de despesa
             </Button>
           </div>
 
