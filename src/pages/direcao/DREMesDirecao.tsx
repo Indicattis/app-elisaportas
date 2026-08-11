@@ -2844,6 +2844,7 @@ export default function DREMesDirecao({ mesProp, viewMode = 'full', embedded = f
         despesasFretes={despesasFretes}
         despesasAutorizados={despesasAutorizados}
         despesasSalarios={despesasSalarios}
+        secoesExtras={secoesExtras}
         tiposCustosVariaveis={tiposCustosVariaveis}
         tiposCustosFixos={tiposCustosFixos}
         tiposCustosImpostos={tiposCustosImpostos}
