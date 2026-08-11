@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Settings2, Building2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Settings2, Building2, SlidersHorizontal } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
+import { TiposDreDialog } from '@/components/direcao/estrategia/TiposDreDialog';
 import { formatCurrency } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -13,6 +14,7 @@ export default function EstrategiaDespesas() {
   const [totaisMes, setTotaisMes] = useState<Record<string, number>>({});
   const [statusMes, setStatusMes] = useState<Record<string, 'pendente' | 'alana' | 'luan'>>({});
   const [ultimaAlteracaoMes, setUltimaAlteracaoMes] = useState<Record<string, string>>({});
+  const [tiposDreOpen, setTiposDreOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -92,6 +94,15 @@ export default function EstrategiaDespesas() {
       headerActions={
         <div className="flex items-center gap-2">
           <button
+            type="button"
+            onClick={() => setTiposDreOpen(true)}
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm hover:bg-white/10 transition-colors backdrop-blur-xl"
+            title="Gerenciar quais tipos de despesa debitam do lucro no DRE"
+          >
+            <SlidersHorizontal className="w-4 h-4" />
+            Tipos no DRE
+          </button>
+          <button
             onClick={() => navigate('/direcao/estrategia/despesas/configuracoes')}
             className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm hover:bg-white/10 transition-colors backdrop-blur-xl"
           >
@@ -108,6 +119,7 @@ export default function EstrategiaDespesas() {
         </div>
       }
     >
+      <TiposDreDialog open={tiposDreOpen} onOpenChange={setTiposDreOpen} />
       <div className="text-center mb-2">
         <h2 className="text-3xl font-bold text-white tracking-wide">{ano}</h2>
         <div className="w-16 h-0.5 bg-blue-400/60 mx-auto mt-2 rounded-full" />
