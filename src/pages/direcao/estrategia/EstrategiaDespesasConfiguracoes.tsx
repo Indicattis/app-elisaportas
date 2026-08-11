@@ -150,7 +150,7 @@ export function DespesasGridContent({
           {secoes.map((sec) => (
             <TiposCustoBlock
               key={sec.chave}
-              titulo={sec.chave === 'projetada' ? sec.nome : `Tipos de Custos — ${sec.nome}`}
+              titulo={sec.chave === 'projetada' ? sec.nome : `${sec.nome}`}
               icon={iconeSecao(sec.chave)}
               tipo={sec.chave}
               items={tiposCustos.filter(t => t.tipo === sec.chave)}
