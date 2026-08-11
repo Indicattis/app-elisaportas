@@ -2797,6 +2797,42 @@ export type Database = {
         }
         Relationships: []
       }
+      despesas_tipos: {
+        Row: {
+          ativo: boolean
+          chave: string
+          created_at: string
+          debita_dre: boolean
+          id: string
+          nome: string
+          ordem: number
+          sistema: boolean
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          chave: string
+          created_at?: string
+          debita_dre?: boolean
+          id?: string
+          nome: string
+          ordem?: number
+          sistema?: boolean
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          chave?: string
+          created_at?: string
+          debita_dre?: boolean
+          id?: string
+          nome?: string
+          ordem?: number
+          sistema?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       despesas_valor_pago_mensal: {
         Row: {
           created_at: string
@@ -10868,6 +10904,10 @@ export type Database = {
       excluir_pedido_em_aberto: {
         Args: { pedido_uuid: string }
         Returns: boolean
+      }
+      excluir_tipo_despesa: {
+        Args: { _destino?: string; _origem: string }
+        Returns: undefined
       }
       gerar_instalacao_finalizada: {
         Args: { p_finalizado_em?: string; p_pedido_id: string }
