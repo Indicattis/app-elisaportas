@@ -107,7 +107,7 @@ export function TiposDreDialog({
               onClick={() => setNovoOpen(true)}
               className="ml-auto h-7 bg-white/5 border-white/10 text-white hover:bg-white/10"
             >
-              <Plus className="w-3.5 h-3.5 mr-1" /> Novo tipo
+              <Plus className="w-3.5 h-3.5 mr-1" /> Novo tipo de despesa
             </Button>
           </div>
 
