@@ -110,16 +110,7 @@ export function DespesasGridContent({
   const showSpinner = !firstLoadedRef.current && (loading || loadingTipos);
 
   const folha = items.filter(i => i.tipo === 'folha');
-  const tiposFixas = tiposCustos.filter(t => t.tipo === 'fixa');
-  const tiposVariaveis = tiposCustos.filter(t => t.tipo === 'variavel');
-  const tiposImpostos = tiposCustos.filter(t => t.tipo === 'imposto');
-  const tiposProjetadas = tiposCustos.filter(t => t.tipo === 'projetada');
-  const tiposInvestimentos = tiposCustos.filter(t => t.tipo === 'investimento');
-  const tiposFornecedores = tiposCustos.filter(t => t.tipo ==='fornecedor');
-  const tiposFinanciamentos = tiposCustos.filter(t => t.tipo === 'financiamento');
-  const tiposFretes = tiposCustos.filter(t => t.tipo === 'frete');
-  const tiposAutorizados = tiposCustos.filter(t => t.tipo === 'autorizado');
-  const tiposSalarios = tiposCustos.filter(t => t.tipo === 'salario');
+  const secoes = tiposDespesa.filter(t => t.chave !== 'folha');
 
   return showSpinner ? (
         <div className="flex items-center justify-center py-20">
