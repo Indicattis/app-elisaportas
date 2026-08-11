@@ -658,6 +658,9 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
     } catch (error) {
       console.error("Erro ao buscar ordens:", error);
     } finally {
+    } catch (error) {
+      console.error("Erro ao buscar ordens:", error);
+    } finally {
       setLoadingOrdens(false);
     }
   };
