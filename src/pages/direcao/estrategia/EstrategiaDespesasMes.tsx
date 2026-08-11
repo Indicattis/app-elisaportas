@@ -121,7 +121,7 @@ export default function EstrategiaDespesasMes() {
             title="Gerenciar quais tipos de despesa debitam do lucro no DRE"
           >
             <SlidersHorizontal className="w-4 h-4" />
-            Tipos no DRE
+            Tipos de Despesas
           </button>
           <button
           type="button"
