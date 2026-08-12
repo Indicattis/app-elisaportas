@@ -33,7 +33,7 @@ export function useMultas() {
 
       return (data || []).map((m: any) => ({
         ...m,
-        usuario_nome: m.admin_users?.nome || m.terceiro_nome || "Usuário desconhecido",
+        usuario_nome: m.admin_users?.nome || m.terceiro_nome || "Aguardando transferência",
         usuario_foto: m.admin_users?.foto_perfil_url || null,
       })) as Multa[];
     },
