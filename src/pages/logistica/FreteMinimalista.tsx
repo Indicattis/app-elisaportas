@@ -503,7 +503,9 @@ export default function FreteMinimalista() {
                   {fretesPaginados.map((frete, idx) => {
                     const km = frete.quilometragem ?? 0;
                     const idaVolta = km * 2;
-                    const valor = calcularValorFreteInterno(km);
+                    const valorCalculado = calcularValorFreteInterno(km);
+                    const valor = frete.valor_frete != null ? Number(frete.valor_frete) : valorCalculado;
+                    const manual = Math.abs(valor - valorCalculado) > 0.009;
                     return (
                     <TableRow 
                       key={frete.id}
@@ -538,7 +540,16 @@ export default function FreteMinimalista() {
                         {frete.quilometragem != null ? `${idaVolta} km` : '-'}
                       </TableCell>
                       <TableCell className="font-medium text-green-400">
-                        {frete.quilometragem != null ? formatCurrency(valor) : '-'}
+                        {frete.valor_frete != null || frete.quilometragem != null ? (
+                          <span className="inline-flex items-center gap-1.5">
+                            {formatCurrency(valor)}
+                            {manual && (
+                              <span className="text-[10px] uppercase tracking-wide text-amber-300/80 border border-amber-400/30 rounded px-1 py-0.5">
+                                manual
+                              </span>
+                            )}
+                          </span>
+                        ) : '-'}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
