@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Search, Plus, RefreshCw, Trash2, Calendar, AlertOctagon, User, ArrowUpDown, Pencil, Check } from 'lucide-react';
+import { Search, Plus, RefreshCw, Trash2, Calendar, AlertOctagon, User, ArrowUpDown, Pencil, Check, Clock, ChevronsUpDown } from 'lucide-react';
 import { format, parseISO, differenceInCalendarDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import {
   AlertDialog,
   AlertDialogAction,
