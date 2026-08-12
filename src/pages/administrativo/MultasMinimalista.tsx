@@ -1,19 +1,15 @@
-import { useState } from 'react';
-import { Search, Plus, AlertCircle, RefreshCw, Trash2, Calendar, DollarSign, AlertTriangle, AlertOctagon, CheckCircle2, ArrowRight, User, Clock } from 'lucide-react';
-import { format, parseISO, isBefore, isToday } from 'date-fns';
-import { motion } from 'framer-motion';
+import { useMemo, useState } from 'react';
+import { Search, Plus, RefreshCw, Trash2, Calendar, AlertOctagon, User, ArrowUpDown, Pencil, Check } from 'lucide-react';
+import { format, parseISO, differenceInCalendarDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,282 +24,145 @@ import { cn } from '@/lib/utils';
 
 import { useMultas, Multa } from '@/hooks/useMultas';
 import { useAllUsers } from '@/hooks/useAllUsers';
-import { useMultasEtapaResponsaveis, MultaStatus } from '@/hooks/useMultasEtapaResponsaveis';
-import { useAuth } from '@/hooks/useAuth';
-import { SelecionarResponsavelMultaModal } from '@/components/multas/SelecionarResponsavelMultaModal';
 
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 }
 
-const ETAPAS: {
-  value: MultaStatus;
-  label: string;
-  icon: any;
-  pill: string;
-  ring: string;
-  avatarBorder: string;
-  iconWrap: string;
-  iconColor: string;
-}[] = [
-  {
-    value: 'aberta',
-    label: 'Aberta',
-    icon: AlertCircle,
-    pill: 'bg-blue-500/20 text-blue-400',
-    ring: 'data-[state=active]:bg-blue-500/15 data-[state=active]:border-blue-400/50 data-[state=active]:shadow-[0_0_0_1px_rgba(96,165,250,0.3)] hover:border-blue-400/30',
-    avatarBorder: 'border-blue-500/30',
-    iconWrap: 'bg-blue-500/10 border-blue-500/30',
-    iconColor: 'text-blue-400',
-  },
-  {
-    value: 'advertida',
-    label: 'Aguardando advertência',
-    icon: AlertTriangle,
-    pill: 'bg-amber-500/20 text-amber-400',
-    ring: 'data-[state=active]:bg-amber-500/15 data-[state=active]:border-amber-400/50 data-[state=active]:shadow-[0_0_0_1px_rgba(251,191,36,0.3)] hover:border-amber-400/30',
-    avatarBorder: 'border-amber-500/30',
-    iconWrap: 'bg-amber-500/10 border-amber-500/30',
-    iconColor: 'text-amber-400',
-  },
-  {
-    value: 'paga',
-    label: 'Aguardando pagamento',
-    icon: DollarSign,
-    pill: 'bg-green-500/20 text-green-400',
-    ring: 'data-[state=active]:bg-green-500/15 data-[state=active]:border-green-400/50 data-[state=active]:shadow-[0_0_0_1px_rgba(74,222,128,0.3)] hover:border-green-400/30',
-    avatarBorder: 'border-green-500/30',
-    iconWrap: 'bg-green-500/10 border-green-500/30',
-    iconColor: 'text-green-400',
-  },
-  {
-    value: 'concluida',
-    label: 'Concluída',
-    icon: CheckCircle2,
-    pill: 'bg-emerald-500/20 text-emerald-400',
-    ring: 'data-[state=active]:bg-emerald-500/15 data-[state=active]:border-emerald-400/50 data-[state=active]:shadow-[0_0_0_1px_rgba(52,211,153,0.3)] hover:border-emerald-400/30',
-    avatarBorder: 'border-emerald-500/30',
-    iconWrap: 'bg-emerald-500/10 border-emerald-500/30',
-    iconColor: 'text-emerald-400',
-  },
+type SortKey = 'data_ocorrido' | 'descricao' | 'status' | 'condutor' | 'dias' | 'valor';
+type SortDir = 'asc' | 'desc';
+
+const COLUNAS: { key: SortKey; label: string; className: string }[] = [
+  { key: 'data_ocorrido', label: 'Data do ocorrido', className: 'w-[140px]' },
+  { key: 'descricao', label: 'Descrição', className: '' },
+  { key: 'status', label: 'Status de pagamento', className: 'w-[170px]' },
+  { key: 'condutor', label: 'Condutor', className: 'w-[220px]' },
+  { key: 'dias', label: 'Dias desde a criação', className: 'w-[160px] text-right' },
+  { key: 'valor', label: 'Valor da multa', className: 'w-[140px] text-right' },
 ];
 
-function getNextEtapa(status: MultaStatus): MultaStatus | null {
-  const idx = ETAPAS.findIndex((e) => e.value === status);
-  if (idx < 0 || idx >= ETAPAS.length - 1) return null;
-  return ETAPAS[idx + 1].value;
-}
-
-function MultaCard({
-  multa,
-  index,
-  podeAvancar,
-  proximaLabel,
-  responsavelNome,
-  onAvancar,
-  onExcluir,
-}: {
-  multa: Multa;
-  index: number;
-  podeAvancar: boolean;
-  proximaLabel: string | null;
-  responsavelNome: string | null;
-  onAvancar: () => void;
-  onExcluir: () => void;
-}) {
-  const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0);
-  const venc = parseISO(multa.data_vencimento + 'T12:00:00');
-  const vencido = isBefore(venc, hoje);
-  const venceHoje = isToday(venc);
-  const isTerceiro = !multa.usuario_id;
-  const inicial = (multa.usuario_nome?.trim()?.charAt(0) || '?').toUpperCase();
-  const etapa = ETAPAS.find((e) => e.value === (multa.status as MultaStatus));
-  const statusLabel = etapa?.label ?? multa.status;
-  const statusPill = etapa?.pill ?? 'bg-white/10 text-white/70';
-  const StatusIcon = etapa?.icon ?? AlertCircle;
-  const alerta =
-    multa.status !== 'paga' && multa.status !== 'concluida'
-      ? vencido
-        ? { label: 'Vencida', cls: 'bg-red-500/20 text-red-300 border-red-500/30' }
-        : venceHoje
-          ? { label: 'Vence hoje', cls: 'bg-amber-500/20 text-amber-300 border-amber-500/30' }
-          : null
-      : null;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: index * 0.04, duration: 0.35 }}
-      className="group relative flex items-center gap-4 pl-3 pr-3 py-2.5 rounded-full border border-white/10 bg-white/5 backdrop-blur-xl transition-all duration-300 hover:bg-white/10 hover:border-white/20"
-    >
-      {/* Avatar */}
-      <div className="relative flex-shrink-0">
-        {multa.usuario_foto ? (
-          <img
-            src={multa.usuario_foto}
-            alt={multa.usuario_nome}
-            title={multa.usuario_nome}
-            className="w-10 h-10 rounded-full object-cover border-2 border-white/20 shadow-lg"
-          />
-        ) : (
-          <div
-            title={multa.usuario_nome}
-            className={cn(
-              'w-10 h-10 rounded-full flex items-center justify-center font-bold text-white text-sm border-2 border-white/20 shadow-lg',
-              isTerceiro
-                ? 'bg-gradient-to-br from-purple-500 to-purple-700'
-                : 'bg-gradient-to-br from-blue-500 to-blue-700'
-            )}
-          >
-            {isTerceiro ? <User className="w-4 h-4" /> : inicial}
-          </div>
-        )}
-      </div>
-
-      {/* Nome + dados */}
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2 flex-wrap">
-          <h4 className="text-white font-semibold truncate text-sm">{multa.usuario_nome}</h4>
-          <Badge variant="outline" className="border-white/10 text-white/60 text-[10px]">
-            {formatCurrency(multa.valor)}
-          </Badge>
-          <Badge className={cn('border border-white/10 text-[10px]', statusPill)}>
-            <StatusIcon className="w-3 h-3 mr-1" /> {statusLabel}
-          </Badge>
-          {isTerceiro && (
-            <Badge variant="outline" className="border-purple-500/30 text-purple-300 text-[10px]">
-              Terceiro
-            </Badge>
-          )}
-          {alerta && (
-            <Badge className={cn('border text-[10px]', alerta.cls)}>
-              <Clock className="w-3 h-3 mr-1" /> {alerta.label}
-            </Badge>
-          )}
-        </div>
-        <p className="text-xs text-white/40 mt-0.5 truncate">
-          Vence em {format(venc, 'dd/MM/yyyy', { locale: ptBR })}
-          {multa.descricao ? ` • ${multa.descricao}` : ''}
-        </p>
-      </div>
-
-      {/* Ações */}
-      <div className="flex items-center gap-2 flex-shrink-0">
-        {proximaLabel && (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span>
-                  <Button
-                    size="sm"
-                    onClick={onAvancar}
-                    disabled={!podeAvancar}
-                    className="rounded-full disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    {proximaLabel}
-                  </Button>
-                </span>
-              </TooltipTrigger>
-              <TooltipContent>
-                {podeAvancar
-                  ? `Avançar para ${proximaLabel}`
-                  : responsavelNome
-                    ? `Somente ${responsavelNome} (ou administrador) pode avançar`
-                    : 'Atribua um responsável para avançar'}
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        )}
-        <Button
-          size="icon"
-          variant="outline"
-          onClick={onExcluir}
-          className="rounded-full bg-white/5 border-white/10 text-red-400 hover:text-red-300 hover:bg-red-500/10"
-          title="Excluir"
-        >
-          <Trash2 className="w-4 h-4" />
-        </Button>
-      </div>
-
-      <ArrowRight className="w-4 h-4 text-white/20 group-hover:text-white/60 transition-colors flex-shrink-0" />
-    </motion.div>
-  );
-}
+const parseData = (d: string) => parseISO(d + 'T12:00:00');
 
 export default function MultasMinimalista() {
   const [searchTerm, setSearchTerm] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editando, setEditando] = useState<Multa | null>(null);
+  const [confirmExcluir, setConfirmExcluir] = useState<Multa | null>(null);
+  const [sortKey, setSortKey] = useState<SortKey>('data_ocorrido');
+  const [sortDir, setSortDir] = useState<SortDir>('desc');
+
+  // Form
+  const [tipoResponsavel, setTipoResponsavel] = useState<'colaborador' | 'terceiro'>('colaborador');
   const [usuarioId, setUsuarioId] = useState('');
   const [terceiroNome, setTerceiroNome] = useState('');
-  const [tipoResponsavel, setTipoResponsavel] = useState<'colaborador' | 'terceiro'>('colaborador');
   const [valor, setValor] = useState('');
   const [descricao, setDescricao] = useState('');
-  const [dataVencimento, setDataVencimento] = useState<Date>();
-  const [statusAtivo, setStatusAtivo] = useState<MultaStatus>('aberta');
-  const [respModalEtapa, setRespModalEtapa] = useState<MultaStatus | null>(null);
-  const [confirmAvanco, setConfirmAvanco] = useState<{ multaId: string; proxima: MultaStatus; proximaLabel: string } | null>(null);
+  const [dataOcorrido, setDataOcorrido] = useState<Date>();
+  const [statusForm, setStatusForm] = useState<'pendente' | 'pago'>('pendente');
 
-  const { data: multas, isLoading, refetch, isRefetching, createMulta, updateStatus, deleteMulta } = useMultas();
+  const { data: multas, isLoading, refetch, isRefetching, createMulta, updateMulta, deleteMulta } = useMultas();
   const { data: users } = useAllUsers();
-  const { getResponsavel, atribuirResponsavel, removerResponsavel, isAtribuindo } = useMultasEtapaResponsaveis();
-  const { user, isAdmin } = useAuth();
 
-  const respAtual = getResponsavel(statusAtivo);
-  const podeAvancar = !!user && (isAdmin || (!!respAtual && respAtual.user_id === user.id));
-
-  const filtered = multas?.filter(m => {
-    if (!searchTerm) return true;
-    const s = searchTerm.toLowerCase();
-    return m.usuario_nome?.toLowerCase().includes(s) || m.descricao?.toLowerCase().includes(s);
-  }) || [];
-
-  const contadores: Record<MultaStatus, number> = {
-    aberta: filtered.filter(m => m.status === 'aberta').length,
-    advertida: filtered.filter(m => m.status === 'advertida').length,
-    paga: filtered.filter(m => m.status === 'paga').length,
-    concluida: filtered.filter(m => m.status === 'concluida').length,
+  const resetForm = () => {
+    setEditando(null);
+    setTipoResponsavel('colaborador');
+    setUsuarioId('');
+    setTerceiroNome('');
+    setValor('');
+    setDescricao('');
+    setDataOcorrido(undefined);
+    setStatusForm('pendente');
   };
-  const totalPendente = filtered
-    .filter(m => m.status === 'aberta' || m.status === 'advertida')
-    .reduce((sum, m) => sum + Number(m.valor), 0);
 
-  const multasEtapa = filtered.filter(m => m.status === statusAtivo);
+  const abrirNova = () => {
+    resetForm();
+    setDialogOpen(true);
+  };
+
+  const abrirEdicao = (m: Multa) => {
+    setEditando(m);
+    setTipoResponsavel(m.usuario_id ? 'colaborador' : 'terceiro');
+    setUsuarioId(m.usuario_id || '');
+    setTerceiroNome(m.terceiro_nome || '');
+    setValor(String(m.valor));
+    setDescricao(m.descricao || '');
+    setDataOcorrido(m.data_ocorrido ? parseData(m.data_ocorrido) : undefined);
+    setStatusForm(m.status === 'pago' ? 'pago' : 'pendente');
+    setDialogOpen(true);
+  };
+
+  const linhas = useMemo(() => {
+    const s = searchTerm.toLowerCase().trim();
+    const base = (multas || []).filter(m =>
+      !s || m.usuario_nome?.toLowerCase().includes(s) || m.descricao?.toLowerCase().includes(s)
+    );
+
+    const valorOrdenacao = (m: Multa) => {
+      switch (sortKey) {
+        case 'data_ocorrido': return m.data_ocorrido || '';
+        case 'descricao': return (m.descricao || '').toLowerCase();
+        case 'status': return m.status;
+        case 'condutor': return (m.usuario_nome || '').toLowerCase();
+        case 'dias': return differenceInCalendarDays(new Date(), new Date(m.created_at));
+        case 'valor': return Number(m.valor);
+      }
+    };
+
+    return [...base].sort((a, b) => {
+      const va = valorOrdenacao(a);
+      const vb = valorOrdenacao(b);
+      const cmp = typeof va === 'number' && typeof vb === 'number'
+        ? va - vb
+        : String(va).localeCompare(String(vb), 'pt-BR');
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+  }, [multas, searchTerm, sortKey, sortDir]);
+
+  const totalPendente = linhas.filter(m => m.status !== 'pago').reduce((s, m) => s + Number(m.valor), 0);
+  const totalPago = linhas.filter(m => m.status === 'pago').reduce((s, m) => s + Number(m.valor), 0);
+
+  const toggleSort = (key: SortKey) => {
+    if (key === sortKey) setSortDir(d => (d === 'asc' ? 'desc' : 'asc'));
+    else {
+      setSortKey(key);
+      setSortDir('asc');
+    }
+  };
 
   const handleSubmit = () => {
     const isColab = tipoResponsavel === 'colaborador';
-    if (!valor || !dataVencimento) return;
+    if (!valor || !dataOcorrido) return;
     if (isColab && !usuarioId) return;
     if (!isColab && !terceiroNome.trim()) return;
-    const dataStr = format(dataVencimento, 'yyyy-MM-dd');
-    createMulta.mutate(
-      {
-        usuario_id: isColab ? usuarioId : null,
-        terceiro_nome: isColab ? null : terceiroNome.trim(),
-        valor: Number(valor),
-        data_vencimento: dataStr,
-        descricao: descricao || undefined,
-      },
-      {
-        onSuccess: () => {
-          setDialogOpen(false);
-          setUsuarioId('');
-          setTerceiroNome('');
-          setTipoResponsavel('colaborador');
-          setValor('');
-          setDescricao('');
-          setDataVencimento(undefined);
-        },
-      }
-    );
+
+    const payload = {
+      usuario_id: isColab ? usuarioId : null,
+      terceiro_nome: isColab ? null : terceiroNome.trim(),
+      valor: Number(valor),
+      data_ocorrido: format(dataOcorrido, 'yyyy-MM-dd'),
+      descricao: descricao || null,
+      status: statusForm,
+    };
+
+    if (editando) {
+      updateMulta.mutate({ id: editando.id, ...payload }, {
+        onSuccess: () => { setDialogOpen(false); resetForm(); },
+      });
+    } else {
+      createMulta.mutate({ ...payload, descricao: descricao || undefined }, {
+        onSuccess: () => { setDialogOpen(false); resetForm(); },
+      });
+    }
   };
+
+  const isSalvando = createMulta.isPending || updateMulta.isPending;
 
   return (
     <MinimalistLayout
       title="Multas"
-      subtitle="Cadastro e controle de multas por colaborador"
+      subtitle="Controle de multas em formato de planilha"
       backPath="/administrativo"
+      fullWidth
       breadcrumbItems={[
         { label: 'Home', path: '/home' },
         { label: 'Administrativo', path: '/administrativo' },
@@ -315,145 +174,27 @@ export default function MultasMinimalista() {
             <RefreshCw className={`w-4 h-4 mr-2 ${isRefetching ? 'animate-spin' : ''}`} />
             Atualizar
           </Button>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
-                <Plus className="w-4 h-4 mr-2" />
-                Nova Multa
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="bg-zinc-900 border-white/10 text-white">
-              <DialogHeader>
-                <DialogTitle>Cadastrar Multa</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 mt-2">
-                <div>
-                  <label className="text-sm text-white/70 mb-1 block">Tipo de responsável</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setTipoResponsavel('colaborador')}
-                      className={cn(
-                        'h-10 rounded-md border text-sm transition',
-                        tipoResponsavel === 'colaborador'
-                          ? 'bg-blue-500/20 border-blue-400/50 text-white'
-                          : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
-                      )}
-                    >
-                      Colaborador
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setTipoResponsavel('terceiro')}
-                      className={cn(
-                        'h-10 rounded-md border text-sm transition',
-                        tipoResponsavel === 'terceiro'
-                          ? 'bg-blue-500/20 border-blue-400/50 text-white'
-                          : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
-                      )}
-                    >
-                      Terceiro
-                    </button>
-                  </div>
-                </div>
-                {tipoResponsavel === 'colaborador' ? (
-                  <div>
-                    <label className="text-sm text-white/70 mb-1 block">Colaborador</label>
-                    <select
-                      value={usuarioId}
-                      onChange={e => setUsuarioId(e.target.value)}
-                      className="w-full h-10 rounded-md border border-white/10 bg-white/5 px-3 text-white text-sm"
-                    >
-                      <option value="" className="bg-zinc-900">Selecione...</option>
-                      {users?.map(u => (
-                        <option key={u.id} value={u.id} className="bg-zinc-900">{u.nome}</option>
-                      ))}
-                    </select>
-                  </div>
-                ) : (
-                  <div>
-                    <label className="text-sm text-white/70 mb-1 block">Nome do terceiro</label>
-                    <Input
-                      value={terceiroNome}
-                      onChange={e => setTerceiroNome(e.target.value)}
-                      placeholder="Ex.: Transportadora X, Fornecedor Y..."
-                      className="bg-white/5 border-white/10 text-white"
-                    />
-                  </div>
-                )}
-                <div>
-                  <label className="text-sm text-white/70 mb-1 block">Valor (R$)</label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={valor}
-                    onChange={e => setValor(e.target.value)}
-                    placeholder="0,00"
-                    className="bg-white/5 border-white/10 text-white"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm text-white/70 mb-1 block">Data de Vencimento</label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className={cn("w-full justify-start text-left font-normal bg-white/5 border-white/10 text-white hover:bg-white/10", !dataVencimento && "text-white/40")}>
-                        <Calendar className="w-4 h-4 mr-2" />
-                        {dataVencimento ? format(dataVencimento, 'dd/MM/yyyy', { locale: ptBR }) : 'Selecione a data'}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 bg-zinc-900 border-white/10" align="start">
-                      <CalendarComponent
-                        mode="single"
-                        selected={dataVencimento}
-                        onSelect={setDataVencimento}
-                        initialFocus
-                        className={cn("p-3 pointer-events-auto")}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-                <div>
-                  <label className="text-sm text-white/70 mb-1 block">Descrição (opcional)</label>
-                  <Input
-                    value={descricao}
-                    onChange={e => setDescricao(e.target.value)}
-                    placeholder="Motivo da multa..."
-                    className="bg-white/5 border-white/10 text-white"
-                  />
-                </div>
-                <Button
-                  onClick={handleSubmit}
-                  disabled={
-                    !valor ||
-                    !dataVencimento ||
-                    (tipoResponsavel === 'colaborador' ? !usuarioId : !terceiroNome.trim()) ||
-                    createMulta.isPending
-                  }
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                >
-                  {createMulta.isPending ? 'Salvando...' : 'Cadastrar Multa'}
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+          <Button size="sm" onClick={abrirNova} className="bg-blue-600 hover:bg-blue-700 text-white">
+            <Plus className="w-4 h-4 mr-2" />
+            Nova Multa
+          </Button>
         </div>
       }
     >
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* Resumo */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+          <div className="p-4 rounded-xl bg-white/5 border border-white/10 backdrop-blur-xl">
             <div className="text-xs text-white/50 mb-1">Total Pendente</div>
             <div className="text-xl font-bold text-amber-400">{formatCurrency(totalPendente)}</div>
           </div>
-          <div className="p-4 rounded-xl bg-white/5 border border-white/10">
-            <div className="text-xs text-white/50 mb-1">Total de Multas</div>
-            <div className="text-xl font-bold text-white">{filtered.length}</div>
+          <div className="p-4 rounded-xl bg-white/5 border border-white/10 backdrop-blur-xl">
+            <div className="text-xs text-white/50 mb-1">Total Pago</div>
+            <div className="text-xl font-bold text-emerald-400">{formatCurrency(totalPago)}</div>
           </div>
-          <div className="p-4 rounded-xl bg-white/5 border border-white/10">
-            <div className="text-xs text-white/50 mb-1">Concluídas</div>
-            <div className="text-xl font-bold text-emerald-400">{contadores.concluida}</div>
+          <div className="p-4 rounded-xl bg-white/5 border border-white/10 backdrop-blur-xl">
+            <div className="text-xs text-white/50 mb-1">Total de Multas</div>
+            <div className="text-xl font-bold text-white">{linhas.length}</div>
           </div>
         </div>
 
@@ -461,141 +202,300 @@ export default function MultasMinimalista() {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
           <Input
-            placeholder="Buscar por colaborador ou descrição..."
+            placeholder="Buscar por condutor ou descrição..."
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
             className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-white/40"
           />
         </div>
 
-        {/* Tabs de etapas */}
-        <Tabs value={statusAtivo} onValueChange={(v) => setStatusAtivo(v as MultaStatus)}>
-          <TabsList className="w-full justify-start overflow-x-auto flex-nowrap h-[85px] p-1.5 gap-2 bg-white/5 border border-white/10 backdrop-blur-xl rounded-xl">
-            <div className="flex w-full gap-1 border-2 border-blue-500/50 rounded-lg p-1 h-full">
-              {ETAPAS.map((etapa) => {
-                const resp = getResponsavel(etapa.value);
-                const Icon = etapa.icon;
-                return (
-                  <TabsTrigger
-                    key={etapa.value}
-                    value={etapa.value}
+        {/* Planilha */}
+        <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm border-collapse">
+              <thead className="sticky top-0 z-10">
+                <tr className="bg-white/10">
+                  {COLUNAS.map(col => (
+                    <th
+                      key={col.key}
+                      onClick={() => toggleSort(col.key)}
+                      className={cn(
+                        'px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-white/70 border-r border-white/10 cursor-pointer select-none hover:bg-white/10 whitespace-nowrap',
+                        col.className
+                      )}
+                    >
+                      <span className="inline-flex items-center gap-1">
+                        {col.label}
+                        <ArrowUpDown className={cn('w-3 h-3', sortKey === col.key ? 'text-blue-400' : 'text-white/25')} />
+                      </span>
+                    </th>
+                  ))}
+                  <th className="px-3 py-2 w-[90px] text-[11px] font-semibold uppercase tracking-wide text-white/70">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={7} className="py-12 text-center">
+                      <RefreshCw className="w-6 h-6 text-white/40 animate-spin mx-auto" />
+                    </td>
+                  </tr>
+                ) : linhas.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="py-12 text-center text-white/50">
+                      <AlertOctagon className="w-10 h-10 mb-3 mx-auto opacity-50" />
+                      Nenhuma multa encontrada
+                    </td>
+                  </tr>
+                ) : (
+                  linhas.map((m, idx) => {
+                    const pago = m.status === 'pago';
+                    const dias = differenceInCalendarDays(new Date(), new Date(m.created_at));
+                    const isTerceiro = !m.usuario_id;
+                    return (
+                      <tr
+                        key={m.id}
+                        className={cn(
+                          'border-t border-white/5 transition-colors hover:bg-blue-500/10',
+                          idx % 2 === 1 && 'bg-white/[0.02]'
+                        )}
+                      >
+                        <td className="px-3 py-2 text-white/80 border-r border-white/5 whitespace-nowrap tabular-nums">
+                          {m.data_ocorrido ? format(parseData(m.data_ocorrido), 'dd/MM/yyyy', { locale: ptBR }) : '—'}
+                        </td>
+                        <td className="px-3 py-2 text-white/70 border-r border-white/5 max-w-[420px] truncate" title={m.descricao || ''}>
+                          {m.descricao || '—'}
+                        </td>
+                        <td className="px-3 py-2 border-r border-white/5">
+                          <button
+                            onClick={() => updateMulta.mutate({ id: m.id, status: pago ? 'pendente' : 'pago' })}
+                            className={cn(
+                              'inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[11px] font-medium border transition-colors',
+                              pago
+                                ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/25'
+                                : 'bg-amber-500/15 text-amber-300 border-amber-500/30 hover:bg-amber-500/25'
+                            )}
+                            title="Clique para alternar o status"
+                          >
+                            {pago ? <Check className="w-3 h-3" /> : <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />}
+                            {pago ? 'Pago' : 'Pendente'}
+                          </button>
+                        </td>
+                        <td className="px-3 py-2 border-r border-white/5">
+                          <div className="flex items-center gap-2 min-w-0">
+                            {m.usuario_foto ? (
+                              <img src={m.usuario_foto} alt={m.usuario_nome} className="w-6 h-6 rounded-full object-cover border border-white/20" />
+                            ) : (
+                              <div className={cn(
+                                'w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white border border-white/20',
+                                isTerceiro ? 'bg-gradient-to-br from-purple-500 to-purple-700' : 'bg-gradient-to-br from-blue-500 to-blue-700'
+                              )}>
+                                {isTerceiro ? <User className="w-3 h-3" /> : (m.usuario_nome?.charAt(0) || '?').toUpperCase()}
+                              </div>
+                            )}
+                            <span className="text-white/85 truncate">{m.usuario_nome}</span>
+                            {isTerceiro && (
+                              <Badge variant="outline" className="border-purple-500/30 text-purple-300 text-[9px] px-1 py-0">Terceiro</Badge>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-3 py-2 text-right text-white/70 border-r border-white/5 tabular-nums">
+                          {dias} {dias === 1 ? 'dia' : 'dias'}
+                        </td>
+                        <td className={cn('px-3 py-2 text-right font-semibold border-r border-white/5 tabular-nums', pago ? 'text-emerald-300' : 'text-white')}>
+                          {formatCurrency(Number(m.valor))}
+                        </td>
+                        <td className="px-3 py-2">
+                          <div className="flex items-center justify-end gap-1">
+                            <Button size="icon" variant="ghost" onClick={() => abrirEdicao(m)} className="h-7 w-7 text-white/50 hover:text-white hover:bg-white/10" title="Editar">
+                              <Pencil className="w-3.5 h-3.5" />
+                            </Button>
+                            <Button size="icon" variant="ghost" onClick={() => setConfirmExcluir(m)} className="h-7 w-7 text-red-400 hover:text-red-300 hover:bg-red-500/10" title="Excluir">
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+              {linhas.length > 0 && (
+                <tfoot>
+                  <tr className="bg-white/10 border-t border-white/10 font-semibold text-white/80">
+                    <td className="px-3 py-2" colSpan={4}>{linhas.length} multa(s)</td>
+                    <td className="px-3 py-2 text-right text-amber-300 tabular-nums">{formatCurrency(totalPendente)}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">{formatCurrency(totalPendente + totalPago)}</td>
+                    <td />
+                  </tr>
+                </tfoot>
+              )}
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* Dialog cadastro/edição */}
+      <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) resetForm(); }}>
+        <DialogContent className="bg-zinc-900 border-white/10 text-white">
+          <DialogHeader>
+            <DialogTitle>{editando ? 'Editar Multa' : 'Cadastrar Multa'}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            <div>
+              <label className="text-sm text-white/70 mb-1 block">Tipo de condutor</label>
+              <div className="grid grid-cols-2 gap-2">
+                {(['colaborador', 'terceiro'] as const).map(tipo => (
+                  <button
+                    key={tipo}
+                    type="button"
+                    onClick={() => setTipoResponsavel(tipo)}
                     className={cn(
-                      'flex-1 flex-row items-center justify-start h-full px-3 py-2 gap-2.5 rounded-lg bg-white/5 border border-white/10 backdrop-blur-xl text-white/70 transition-all data-[state=active]:text-white',
-                      etapa.ring,
+                      'h-10 rounded-md border text-sm capitalize transition',
+                      tipoResponsavel === tipo
+                        ? 'bg-blue-500/20 border-blue-400/50 text-white'
+                        : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
                     )}
                   >
-                    <span
-                      role="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setRespModalEtapa(etapa.value);
-                      }}
-                      className="flex-shrink-0 cursor-pointer"
-                      title={resp ? `Responsável: ${resp.nome}` : 'Atribuir responsável'}
-                    >
-                      {resp ? (
-                        <Avatar className={cn('h-9 w-9 border', etapa.avatarBorder)}>
-                          <AvatarImage src={resp.foto_perfil_url || undefined} />
-                          <AvatarFallback className={`text-xs ${etapa.pill}`}>
-                            {resp.nome.charAt(0).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                      ) : (
-                        <div className={cn('h-9 w-9 rounded-full border flex items-center justify-center', etapa.iconWrap)}>
-                          <Icon className={cn('h-4 w-4', etapa.iconColor)} />
-                        </div>
-                      )}
-                    </span>
-                    <div className="flex flex-col items-start gap-1 min-w-0">
-                      <span className="text-xs font-medium leading-tight truncate">{etapa.label}</span>
-                      <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-semibold leading-none ${etapa.pill}`}>
-                        {contadores[etapa.value]}
-                      </span>
-                    </div>
-                  </TabsTrigger>
-                );
-              })}
+                    {tipo}
+                  </button>
+                ))}
+              </div>
             </div>
-          </TabsList>
 
-          {ETAPAS.map((etapa) => (
-            <TabsContent key={etapa.value} value={etapa.value} className="mt-6">
-              {isLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <RefreshCw className="w-6 h-6 text-white/40 animate-spin" />
-                </div>
-              ) : multasEtapa.length === 0 && statusAtivo === etapa.value ? (
-                <div className="flex flex-col items-center justify-center py-12 text-white/50">
-                  <AlertOctagon className="w-12 h-12 mb-4 opacity-50" />
-                  <p className="text-lg font-medium">Nenhuma multa em "{etapa.label}"</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {multasEtapa.map((multa, idx) => {
-                    const proxima = getNextEtapa(multa.status as MultaStatus);
-                    const proximaLabel = proxima ? ETAPAS.find((e) => e.value === proxima)!.label : null;
-                    return (
-                      <MultaCard
-                        key={multa.id}
-                        multa={multa}
-                        index={idx}
-                        podeAvancar={podeAvancar && !!proxima}
-                        proximaLabel={proximaLabel}
-                        responsavelNome={respAtual?.nome || null}
-                        onAvancar={() => {
-                          if (!proxima || !proximaLabel) return;
-                          setConfirmAvanco({ multaId: multa.id, proxima, proximaLabel });
-                        }}
-                        onExcluir={() => deleteMulta.mutate(multa.id)}
-                      />
-                    );
-                  })}
-                </div>
-              )}
-            </TabsContent>
-          ))}
-        </Tabs>
+            {tipoResponsavel === 'colaborador' ? (
+              <div>
+                <label className="text-sm text-white/70 mb-1 block">Condutor</label>
+                <select
+                  value={usuarioId}
+                  onChange={e => setUsuarioId(e.target.value)}
+                  className="w-full h-10 rounded-md border border-white/10 bg-white/5 px-3 text-white text-sm"
+                >
+                  <option value="" className="bg-zinc-900">Selecione...</option>
+                  {users?.map(u => (
+                    <option key={u.id} value={u.id} className="bg-zinc-900">{u.nome}</option>
+                  ))}
+                </select>
+              </div>
+            ) : (
+              <div>
+                <label className="text-sm text-white/70 mb-1 block">Nome do terceiro</label>
+                <Input
+                  value={terceiroNome}
+                  onChange={e => setTerceiroNome(e.target.value)}
+                  placeholder="Ex.: Transportadora X, Fornecedor Y..."
+                  className="bg-white/5 border-white/10 text-white"
+                />
+              </div>
+            )}
 
-        <AlertDialog open={!!confirmAvanco} onOpenChange={(o) => { if (!o) setConfirmAvanco(null); }}>
-          <AlertDialogContent className="bg-zinc-900 border-white/10 text-white">
-            <AlertDialogHeader>
-              <AlertDialogTitle>Confirmar avanço de etapa</AlertDialogTitle>
-              <AlertDialogDescription className="text-white/70">
-                Deseja avançar esta multa para <strong className="text-white">{confirmAvanco?.proximaLabel}</strong>?
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setConfirmAvanco(null)} className="bg-white/5 border-white/10 text-white hover:bg-white/10 hover:text-white">
-                Cancelar
-              </AlertDialogCancel>
-              <AlertDialogAction
-                onClick={() => {
-                  if (confirmAvanco) {
-                    updateStatus.mutate({ id: confirmAvanco.multaId, status: confirmAvanco.proxima }, {
-                      onSuccess: () => setConfirmAvanco(null),
-                    });
-                  }
-                }}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                Confirmar
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+            <div>
+              <label className="text-sm text-white/70 mb-1 block">Data do ocorrido</label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className={cn('w-full justify-start text-left font-normal bg-white/5 border-white/10 text-white hover:bg-white/10', !dataOcorrido && 'text-white/40')}>
+                    <Calendar className="w-4 h-4 mr-2" />
+                    {dataOcorrido ? format(dataOcorrido, 'dd/MM/yyyy', { locale: ptBR }) : 'Selecione a data'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 bg-zinc-900 border-white/10" align="start">
+                  <CalendarComponent
+                    mode="single"
+                    selected={dataOcorrido}
+                    onSelect={setDataOcorrido}
+                    initialFocus
+                    className={cn('p-3 pointer-events-auto')}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
 
-        {respModalEtapa && (
-          <SelecionarResponsavelMultaModal
-            open={!!respModalEtapa}
-            onOpenChange={(o) => { if (!o) setRespModalEtapa(null); }}
-            etapaLabel={ETAPAS.find((e) => e.value === respModalEtapa)!.label}
-            responsavelAtualId={getResponsavel(respModalEtapa)?.user_id || null}
-            onConfirm={(userId) => atribuirResponsavel({ status: respModalEtapa, responsavelId: userId })}
-            onRemover={() => removerResponsavel(respModalEtapa)}
-            isLoading={isAtribuindo}
-          />
-        )}
-      </div>
+            <div>
+              <label className="text-sm text-white/70 mb-1 block">Descrição</label>
+              <Input
+                value={descricao}
+                onChange={e => setDescricao(e.target.value)}
+                placeholder="Motivo da multa..."
+                className="bg-white/5 border-white/10 text-white"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-sm text-white/70 mb-1 block">Valor (R$)</label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={valor}
+                  onChange={e => setValor(e.target.value)}
+                  placeholder="0,00"
+                  className="bg-white/5 border-white/10 text-white"
+                />
+              </div>
+              <div>
+                <label className="text-sm text-white/70 mb-1 block">Status de pagamento</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {(['pendente', 'pago'] as const).map(st => (
+                    <button
+                      key={st}
+                      type="button"
+                      onClick={() => setStatusForm(st)}
+                      className={cn(
+                        'h-10 rounded-md border text-sm capitalize transition',
+                        statusForm === st
+                          ? st === 'pago'
+                            ? 'bg-emerald-500/20 border-emerald-400/50 text-white'
+                            : 'bg-amber-500/20 border-amber-400/50 text-white'
+                          : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
+                      )}
+                    >
+                      {st}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <Button
+              onClick={handleSubmit}
+              disabled={
+                !valor ||
+                !dataOcorrido ||
+                (tipoResponsavel === 'colaborador' ? !usuarioId : !terceiroNome.trim()) ||
+                isSalvando
+              }
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              {isSalvando ? 'Salvando...' : editando ? 'Salvar alterações' : 'Cadastrar Multa'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={!!confirmExcluir} onOpenChange={(o) => { if (!o) setConfirmExcluir(null); }}>
+        <AlertDialogContent className="bg-zinc-900 border-white/10 text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir multa</AlertDialogTitle>
+            <AlertDialogDescription className="text-white/70">
+              Deseja excluir a multa de <strong className="text-white">{confirmExcluir?.usuario_nome}</strong> no valor de{' '}
+              <strong className="text-white">{confirmExcluir ? formatCurrency(Number(confirmExcluir.valor)) : ''}</strong>?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-white/5 border-white/10 text-white hover:bg-white/10 hover:text-white">Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (confirmExcluir) deleteMulta.mutate(confirmExcluir.id);
+                setConfirmExcluir(null);
+              }}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </MinimalistLayout>
   );
 }
