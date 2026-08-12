@@ -1471,6 +1471,26 @@ export default function FaturamentoVendaMinimalista() {
                                 </span>
                               );
                             })()}
+                            {(() => {
+                              const kitId = (produto as any).tabela_precos_porta_id;
+                              const kit = kitId ? kitsRef.get(kitId) : null;
+                              const ehPorta = produto.tipo_produto === 'porta_enrolar' || produto.tipo_produto === 'porta_social';
+                              if (!ehPorta || !kit) return null;
+                              if (Number(kit.lucro || 0) > 0) return null;
+                              if (Number(produto.lucro_item || 0) > 0) return null;
+                              return (
+                                <a
+                                  href="/direcao/vendas/tabela-precos"
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="mt-1 inline-flex items-center gap-1 text-[10px] text-amber-400 underline underline-offset-2 hover:text-amber-300"
+                                  title="O lucro deste item ficou R$ 0,00 porque o kit vinculado está sem lucro cadastrado na tabela de preços."
+                                >
+                                  <AlertTriangle className="h-3 w-3" />
+                                  Lucro R$ 0,00: kit sem lucro cadastrado — corrigir tabela de preços
+                                </a>
+                              );
+                            })()}
                           </div>
                         </TableCell>
                         <TableCell className="text-white/60">
