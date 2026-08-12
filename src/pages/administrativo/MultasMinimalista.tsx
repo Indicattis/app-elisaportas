@@ -30,7 +30,12 @@ function formatCurrency(value: number): string {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 }
 
-type SortKey = 'data_ocorrido' | 'descricao' | 'status' | 'condutor' | 'dias' | 'valor';
+type SortKey = 'data_ocorrido' | 'descricao' | 'status' | 'condutor' | 'dias' | 'valor' | 'acrescimo' | 'total';
+
+const MULTIPLICADOR_ACRESCIMO = 3;
+const semCondutor = (m: Multa) => !m.usuario_id && !m.terceiro_nome;
+const acrescimoMulta = (m: Multa) => (semCondutor(m) ? Number(m.valor) * MULTIPLICADOR_ACRESCIMO : 0);
+const totalMulta = (m: Multa) => Number(m.valor) + acrescimoMulta(m);
 type SortDir = 'asc' | 'desc';
 
 const COLUNAS: { key: SortKey; label: string; className: string }[] = [
@@ -40,6 +45,8 @@ const COLUNAS: { key: SortKey; label: string; className: string }[] = [
   { key: 'condutor', label: 'Condutor', className: 'w-[220px]' },
   { key: 'dias', label: 'Dias desde a criação', className: 'w-[160px] text-right' },
   { key: 'valor', label: 'Valor da multa', className: 'w-[140px] text-right' },
+  { key: 'acrescimo', label: 'Acréscimo (3x)', className: 'w-[140px] text-right' },
+  { key: 'total', label: 'Valor com acréscimo', className: 'w-[160px] text-right' },
 ];
 
 const parseData = (d: string) => parseISO(d + 'T12:00:00');
@@ -184,6 +191,8 @@ export default function MultasMinimalista() {
         case 'condutor': return (m.usuario_nome || '').toLowerCase();
         case 'dias': return differenceInCalendarDays(new Date(), new Date(m.created_at));
         case 'valor': return Number(m.valor);
+        case 'acrescimo': return acrescimoMulta(m);
+        case 'total': return totalMulta(m);
       }
     };
 
@@ -197,8 +206,9 @@ export default function MultasMinimalista() {
     });
   }, [multas, searchTerm, sortKey, sortDir]);
 
-  const totalPendente = linhas.filter(m => m.status !== 'pago').reduce((s, m) => s + Number(m.valor), 0);
-  const totalPago = linhas.filter(m => m.status === 'pago').reduce((s, m) => s + Number(m.valor), 0);
+  const totalPendente = linhas.filter(m => m.status !== 'pago').reduce((s, m) => s + totalMulta(m), 0);
+  const totalPago = linhas.filter(m => m.status === 'pago').reduce((s, m) => s + totalMulta(m), 0);
+  const totalAcrescimos = linhas.reduce((s, m) => s + acrescimoMulta(m), 0);
 
   const toggleSort = (key: SortKey) => {
     if (key === sortKey) setSortDir(d => (d === 'asc' ? 'desc' : 'asc'));
@@ -315,13 +325,13 @@ export default function MultasMinimalista() {
               <tbody>
                 {isLoading ? (
                   <tr>
-                    <td colSpan={7} className="py-12 text-center">
+                    <td colSpan={COLUNAS.length + 1} className="py-12 text-center">
                       <RefreshCw className="w-6 h-6 text-white/40 animate-spin mx-auto" />
                     </td>
                   </tr>
                 ) : linhas.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="py-12 text-center text-white/50">
+                    <td colSpan={COLUNAS.length + 1} className="py-12 text-center text-white/50">
                       <AlertOctagon className="w-10 h-10 mb-3 mx-auto opacity-50" />
                       Nenhuma multa encontrada
                     </td>
@@ -330,7 +340,8 @@ export default function MultasMinimalista() {
                   linhas.map((m, idx) => {
                     const pago = m.status === 'pago';
                     const dias = differenceInCalendarDays(new Date(), new Date(m.created_at));
-                    const isTerceiro = !m.usuario_id;
+                    const semResponsavel = semCondutor(m);
+                    const acrescimo = acrescimoMulta(m);
                     return (
                       <tr
                         key={m.id}
@@ -373,6 +384,16 @@ export default function MultasMinimalista() {
                         <td className={cn('px-3 py-2 text-right font-semibold border-r border-white/5 tabular-nums', pago ? 'text-emerald-300' : 'text-white')}>
                           {formatCurrency(Number(m.valor))}
                         </td>
+                        <td className="px-3 py-2 text-right border-r border-white/5 tabular-nums">
+                          {semResponsavel ? (
+                            <span className="text-red-300 font-medium">+ {formatCurrency(acrescimo)}</span>
+                          ) : (
+                            <span className="text-white/25">—</span>
+                          )}
+                        </td>
+                        <td className={cn('px-3 py-2 text-right font-semibold border-r border-white/5 tabular-nums', semResponsavel ? 'text-red-300' : 'text-white/60')}>
+                          {formatCurrency(totalMulta(m))}
+                        </td>
                         <td className="px-3 py-2">
                           <div className="flex items-center justify-end gap-1">
                             <Button size="icon" variant="ghost" onClick={() => abrirEdicao(m)} className="h-7 w-7 text-white/50 hover:text-white hover:bg-white/10" title="Editar">
@@ -391,8 +412,11 @@ export default function MultasMinimalista() {
               {linhas.length > 0 && (
                 <tfoot>
                   <tr className="bg-white/10 border-t border-white/10 font-semibold text-white/80">
-                    <td className="px-3 py-2" colSpan={4}>{linhas.length} multa(s)</td>
-                    <td className="px-3 py-2 text-right text-amber-300 tabular-nums">{formatCurrency(totalPendente)}</td>
+                    <td className="px-3 py-2" colSpan={5}>{linhas.length} multa(s)</td>
+                    <td className="px-3 py-2 text-right tabular-nums">
+                      {formatCurrency(linhas.reduce((s, m) => s + Number(m.valor), 0))}
+                    </td>
+                    <td className="px-3 py-2 text-right text-red-300 tabular-nums">{formatCurrency(totalAcrescimos)}</td>
                     <td className="px-3 py-2 text-right tabular-nums">{formatCurrency(totalPendente + totalPago)}</td>
                     <td />
                   </tr>
