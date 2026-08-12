@@ -43,6 +43,84 @@ const COLUNAS: { key: SortKey; label: string; className: string }[] = [
 
 const parseData = (d: string) => parseISO(d + 'T12:00:00');
 
+interface CondutorCellProps {
+  multa: Multa;
+  users: { id: string; nome: string }[];
+  onSelect: (patch: { usuario_id: string | null; terceiro_nome: string | null }) => void;
+}
+
+function CondutorCell({ multa, users, onSelect }: CondutorCellProps) {
+  const [open, setOpen] = useState(false);
+  const aguardando = !multa.usuario_id && !multa.terceiro_nome;
+  const isTerceiro = !multa.usuario_id && !!multa.terceiro_nome;
+
+  const escolher = (patch: { usuario_id: string | null; terceiro_nome: string | null }) => {
+    onSelect(patch);
+    setOpen(false);
+  };
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button className="flex items-center gap-2 min-w-0 w-full text-left rounded-md px-1 py-0.5 -mx-1 hover:bg-white/10 transition-colors">
+          {multa.usuario_foto ? (
+            <img src={multa.usuario_foto} alt={multa.usuario_nome} className="w-6 h-6 rounded-full object-cover border border-white/20" />
+          ) : (
+            <div className={cn(
+              'w-6 h-6 shrink-0 rounded-full flex items-center justify-center text-[10px] font-bold text-white border border-white/20',
+              aguardando
+                ? 'bg-gradient-to-br from-zinc-600 to-zinc-800'
+                : isTerceiro
+                  ? 'bg-gradient-to-br from-purple-500 to-purple-700'
+                  : 'bg-gradient-to-br from-blue-500 to-blue-700'
+            )}>
+              {aguardando ? <Clock className="w-3 h-3" /> : isTerceiro ? <User className="w-3 h-3" /> : (multa.usuario_nome?.charAt(0) || '?').toUpperCase()}
+            </div>
+          )}
+          <span className={cn('truncate', aguardando ? 'text-amber-300 italic' : 'text-white/85')}>{multa.usuario_nome}</span>
+          {isTerceiro && (
+            <Badge variant="outline" className="border-purple-500/30 text-purple-300 text-[9px] px-1 py-0">Terceiro</Badge>
+          )}
+          <ChevronsUpDown className="w-3 h-3 ml-auto shrink-0 text-white/30" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[260px] p-0 bg-zinc-900 border-white/10" align="start">
+        <Command className="bg-transparent">
+          <CommandInput placeholder="Buscar condutor..." className="text-white" />
+          <CommandList>
+            <CommandEmpty className="py-4 text-center text-sm text-white/50">Nenhum colaborador encontrado</CommandEmpty>
+            <CommandGroup>
+              <CommandItem
+                value="Aguardando transferência"
+                onSelect={() => escolher({ usuario_id: null, terceiro_nome: null })}
+                className="text-amber-300 aria-selected:bg-amber-500/15"
+              >
+                <Clock className="w-4 h-4 mr-2" />
+                Aguardando transferência
+                {aguardando && <Check className="w-4 h-4 ml-auto" />}
+              </CommandItem>
+            </CommandGroup>
+            <CommandGroup heading="Colaboradores">
+              {users.map(u => (
+                <CommandItem
+                  key={u.id}
+                  value={u.nome}
+                  onSelect={() => escolher({ usuario_id: u.id, terceiro_nome: null })}
+                  className="text-white/85 aria-selected:bg-blue-500/15"
+                >
+                  <User className="w-4 h-4 mr-2 text-white/40" />
+                  {u.nome}
+                  {multa.usuario_id === u.id && <Check className="w-4 h-4 ml-auto text-blue-400" />}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 export default function MultasMinimalista() {
   const [searchTerm, setSearchTerm] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
