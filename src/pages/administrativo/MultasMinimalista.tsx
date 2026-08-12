@@ -412,8 +412,11 @@ export default function MultasMinimalista() {
               {linhas.length > 0 && (
                 <tfoot>
                   <tr className="bg-white/10 border-t border-white/10 font-semibold text-white/80">
-                    <td className="px-3 py-2" colSpan={4}>{linhas.length} multa(s)</td>
-                    <td className="px-3 py-2 text-right text-amber-300 tabular-nums">{formatCurrency(totalPendente)}</td>
+                    <td className="px-3 py-2" colSpan={5}>{linhas.length} multa(s)</td>
+                    <td className="px-3 py-2 text-right tabular-nums">
+                      {formatCurrency(linhas.reduce((s, m) => s + Number(m.valor), 0))}
+                    </td>
+                    <td className="px-3 py-2 text-right text-red-300 tabular-nums">{formatCurrency(totalAcrescimos)}</td>
                     <td className="px-3 py-2 text-right tabular-nums">{formatCurrency(totalPendente + totalPago)}</td>
                     <td />
                   </tr>
