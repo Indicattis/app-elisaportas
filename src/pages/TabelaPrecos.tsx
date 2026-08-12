@@ -416,7 +416,19 @@ export default function TabelaPrecos({
                       return (
                         <SortableKitRow key={item.id} id={item.id} enabled={canReorder} showHandle={enableReorder} index={index}>
                           <TableCell className="text-center text-white/60">{index + 1}</TableCell>
-                          <TableCell className="font-medium text-white">{item.descricao}</TableCell>
+                          <TableCell className="font-medium text-white">
+                            <div className="flex flex-col">
+                              <span>{item.descricao}</span>
+                              {Number(item.lucro || 0) === 0 && (
+                                <span
+                                  className="mt-0.5 inline-flex items-center gap-1 text-[10px] text-amber-400"
+                                  title="Este kit está sem lucro cadastrado. Vendas com portas deste kit serão faturadas com lucro R$ 0,00."
+                                >
+                                  ⚠ Sem lucro cadastrado
+                                </span>
+                              )}
+                            </div>
+                          </TableCell>
                           <TableCell className="text-center text-blue-400">{item.largura}m</TableCell>
                           <TableCell className="text-center text-blue-400">{item.altura}m</TableCell>
                           <TableCell className="text-right text-white/70">

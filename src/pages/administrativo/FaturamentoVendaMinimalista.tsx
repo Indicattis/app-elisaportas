@@ -154,7 +154,7 @@ export default function FaturamentoVendaMinimalista() {
 
   // Mapa dos kits (tabela_precos_portas) referenciados pelos produtos da venda,
   // usado para mostrar divergências de valor no faturamento.
-  const [kitsRef, setKitsRef] = useState<Map<string, { id: string; descricao: string | null; largura: number; altura: number; valor_porta: number; valor_pintura: number; valor_instalacao: number }>>(new Map());
+  const [kitsRef, setKitsRef] = useState<Map<string, { id: string; descricao: string | null; largura: number; altura: number; valor_porta: number; valor_pintura: number; valor_instalacao: number; lucro: number | null }>>(new Map());
   useEffect(() => {
     const ids = Array.from(new Set(
       (produtos || [])
@@ -165,7 +165,7 @@ export default function FaturamentoVendaMinimalista() {
     (async () => {
       const { data, error } = await supabase
         .from('tabela_precos_portas')
-        .select('id, descricao, largura, altura, valor_porta, valor_pintura, valor_instalacao')
+        .select('id, descricao, largura, altura, valor_porta, valor_pintura, valor_instalacao, lucro')
         .in('id', ids);
       if (error || !data) return;
       setKitsRef(new Map(data.map((k: any) => [k.id, k])));
@@ -1471,6 +1471,26 @@ export default function FaturamentoVendaMinimalista() {
                                 </span>
                               );
                             })()}
+                            {(() => {
+                              const kitId = (produto as any).tabela_precos_porta_id;
+                              const kit = kitId ? kitsRef.get(kitId) : null;
+                              const ehPorta = produto.tipo_produto === 'porta_enrolar' || produto.tipo_produto === 'porta_social';
+                              if (!ehPorta || !kit) return null;
+                              if (Number(kit.lucro || 0) > 0) return null;
+                              if (Number(produto.lucro_item || 0) > 0) return null;
+                              return (
+                                <a
+                                  href="/direcao/vendas/tabela-precos"
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="mt-1 inline-flex items-center gap-1 text-[10px] text-amber-400 underline underline-offset-2 hover:text-amber-300"
+                                  title="O lucro deste item ficou R$ 0,00 porque o kit vinculado está sem lucro cadastrado na tabela de preços."
+                                >
+                                  <AlertTriangle className="h-3 w-3" />
+                                  Lucro R$ 0,00: kit sem lucro cadastrado — corrigir tabela de preços
+                                </a>
+                              );
+                            })()}
                           </div>
                         </TableCell>
                         <TableCell className="text-white/60">
@@ -1507,7 +1527,7 @@ export default function FaturamentoVendaMinimalista() {
                           )}
                         </TableCell>
                         <TableCell className="text-center">
-                          {(produto.tipo_produto === 'porta_enrolar' || produto.tipo_produto === 'pintura_epoxi') ? (
+                          {((produto.tipo_produto === 'porta_enrolar' || produto.tipo_produto === 'pintura_epoxi') && Number(produto.lucro_item || 0) > 0) ? (
                             <CheckCircle2 className="h-4 w-4 text-emerald-400 mx-auto" />
                           ) : (
                             <Button variant="ghost" size="sm" onClick={() => setSelectedProduto(produto)} className="text-white/70 hover:text-white hover:bg-white/10"><Edit className="h-4 w-4" /></Button>
