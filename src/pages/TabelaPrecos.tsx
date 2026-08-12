@@ -419,10 +419,10 @@ export default function TabelaPrecos({
                           <TableCell className="font-medium text-white">
                             <div className="flex flex-col">
                               <span>{item.descricao}</span>
-                              {Number(item.lucro || 0) === 0 && (
+                              {Number(item.lucro || 0) === 0 && lucroInfo.value === null && (
                                 <span
                                   className="mt-0.5 inline-flex items-center gap-1 text-[10px] text-amber-400"
-                                  title="Este kit está sem lucro cadastrado. Vendas com portas deste kit serão faturadas com lucro R$ 0,00."
+                                  title="Kit sem lucro cadastrado e sem montagem definida: vendas com portas deste kit são faturadas com lucro R$ 0,00."
                                 >
                                   ⚠ Sem lucro cadastrado
                                 </span>
