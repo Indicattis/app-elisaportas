@@ -154,7 +154,7 @@ export default function FaturamentoVendaMinimalista() {
 
   // Mapa dos kits (tabela_precos_portas) referenciados pelos produtos da venda,
   // usado para mostrar divergências de valor no faturamento.
-  const [kitsRef, setKitsRef] = useState<Map<string, { id: string; descricao: string | null; largura: number; altura: number; valor_porta: number; valor_pintura: number; valor_instalacao: number }>>(new Map());
+  const [kitsRef, setKitsRef] = useState<Map<string, { id: string; descricao: string | null; largura: number; altura: number; valor_porta: number; valor_pintura: number; valor_instalacao: number; lucro: number | null }>>(new Map());
   useEffect(() => {
     const ids = Array.from(new Set(
       (produtos || [])
@@ -165,7 +165,7 @@ export default function FaturamentoVendaMinimalista() {
     (async () => {
       const { data, error } = await supabase
         .from('tabela_precos_portas')
-        .select('id, descricao, largura, altura, valor_porta, valor_pintura, valor_instalacao')
+        .select('id, descricao, largura, altura, valor_porta, valor_pintura, valor_instalacao, lucro')
         .in('id', ids);
       if (error || !data) return;
       setKitsRef(new Map(data.map((k: any) => [k.id, k])));
