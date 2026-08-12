@@ -10407,15 +10407,7 @@ export type Database = {
           titulo?: string
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "visitas_tecnicas_agendadas_responsavel_id_fkey"
-            columns: ["responsavel_id"]
-            isOneToOne: false
-            referencedRelation: "admin_users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       visitas_tecnicas_conclusoes: {
         Row: {
