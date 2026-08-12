@@ -7,7 +7,8 @@ export interface Multa {
   usuario_id: string | null;
   terceiro_nome?: string | null;
   valor: number;
-  data_vencimento: string;
+  data_vencimento: string | null;
+  data_ocorrido: string;
   descricao: string | null;
   status: string;
   created_at: string;
@@ -39,13 +40,14 @@ export function useMultas() {
   });
 
   const createMulta = useMutation({
-    mutationFn: async (multa: { usuario_id?: string | null; terceiro_nome?: string | null; valor: number; data_vencimento: string; descricao?: string }) => {
+    mutationFn: async (multa: { usuario_id?: string | null; terceiro_nome?: string | null; valor: number; data_ocorrido: string; descricao?: string; status?: string }) => {
       const { error } = await supabase.from("multas").insert({
         usuario_id: multa.usuario_id || null,
         terceiro_nome: multa.terceiro_nome || null,
         valor: multa.valor,
-        data_vencimento: multa.data_vencimento,
+        data_ocorrido: multa.data_ocorrido,
         descricao: multa.descricao || null,
+        status: multa.status || "pendente",
       });
       if (error) throw error;
     },
@@ -86,5 +88,19 @@ export function useMultas() {
     },
   });
 
-  return { ...query, createMulta, updateStatus, deleteMulta };
+  const updateMulta = useMutation({
+    mutationFn: async ({ id, ...campos }: { id: string } & Partial<Pick<Multa, "usuario_id" | "terceiro_nome" | "valor" | "data_ocorrido" | "descricao" | "status">>) => {
+      const { error } = await supabase.from("multas").update(campos as any).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["multas"] });
+      toast({ title: "Multa atualizada" });
+    },
+    onError: () => {
+      toast({ title: "Erro ao atualizar multa", variant: "destructive" });
+    },
+  });
+
+  return { ...query, createMulta, updateStatus, updateMulta, deleteMulta };
 }
