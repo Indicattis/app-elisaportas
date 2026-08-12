@@ -5305,7 +5305,8 @@ export type Database = {
       multas: {
         Row: {
           created_at: string
-          data_vencimento: string
+          data_ocorrido: string
+          data_vencimento: string | null
           descricao: string | null
           id: string
           status: string
@@ -5316,7 +5317,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          data_vencimento: string
+          data_ocorrido?: string
+          data_vencimento?: string | null
           descricao?: string | null
           id?: string
           status?: string
@@ -5327,7 +5329,8 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          data_vencimento?: string
+          data_ocorrido?: string
+          data_vencimento?: string | null
           descricao?: string | null
           id?: string
           status?: string
