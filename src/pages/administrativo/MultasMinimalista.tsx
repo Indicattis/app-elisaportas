@@ -282,22 +282,11 @@ export default function MultasMinimalista() {
                           </button>
                         </td>
                         <td className="px-3 py-2 border-r border-white/5">
-                          <div className="flex items-center gap-2 min-w-0">
-                            {m.usuario_foto ? (
-                              <img src={m.usuario_foto} alt={m.usuario_nome} className="w-6 h-6 rounded-full object-cover border border-white/20" />
-                            ) : (
-                              <div className={cn(
-                                'w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white border border-white/20',
-                                isTerceiro ? 'bg-gradient-to-br from-purple-500 to-purple-700' : 'bg-gradient-to-br from-blue-500 to-blue-700'
-                              )}>
-                                {isTerceiro ? <User className="w-3 h-3" /> : (m.usuario_nome?.charAt(0) || '?').toUpperCase()}
-                              </div>
-                            )}
-                            <span className="text-white/85 truncate">{m.usuario_nome}</span>
-                            {isTerceiro && (
-                              <Badge variant="outline" className="border-purple-500/30 text-purple-300 text-[9px] px-1 py-0">Terceiro</Badge>
-                            )}
-                          </div>
+                          <CondutorCell
+                            multa={m}
+                            users={users || []}
+                            onSelect={(patch) => updateMulta.mutate({ id: m.id, ...patch })}
+                          />
                         </td>
                         <td className="px-3 py-2 text-right text-white/70 border-r border-white/5 tabular-nums">
                           {dias} {dias === 1 ? 'dia' : 'dias'}
