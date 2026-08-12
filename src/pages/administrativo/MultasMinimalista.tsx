@@ -191,6 +191,8 @@ export default function MultasMinimalista() {
         case 'condutor': return (m.usuario_nome || '').toLowerCase();
         case 'dias': return differenceInCalendarDays(new Date(), new Date(m.created_at));
         case 'valor': return Number(m.valor);
+        case 'acrescimo': return acrescimoMulta(m);
+        case 'total': return totalMulta(m);
       }
     };
 
@@ -204,8 +206,9 @@ export default function MultasMinimalista() {
     });
   }, [multas, searchTerm, sortKey, sortDir]);
 
-  const totalPendente = linhas.filter(m => m.status !== 'pago').reduce((s, m) => s + Number(m.valor), 0);
-  const totalPago = linhas.filter(m => m.status === 'pago').reduce((s, m) => s + Number(m.valor), 0);
+  const totalPendente = linhas.filter(m => m.status !== 'pago').reduce((s, m) => s + totalMulta(m), 0);
+  const totalPago = linhas.filter(m => m.status === 'pago').reduce((s, m) => s + totalMulta(m), 0);
+  const totalAcrescimos = linhas.reduce((s, m) => s + acrescimoMulta(m), 0);
 
   const toggleSort = (key: SortKey) => {
     if (key === sortKey) setSortDir(d => (d === 'asc' ? 'desc' : 'asc'));
@@ -322,13 +325,13 @@ export default function MultasMinimalista() {
               <tbody>
                 {isLoading ? (
                   <tr>
-                    <td colSpan={7} className="py-12 text-center">
+                    <td colSpan={COLUNAS.length + 1} className="py-12 text-center">
                       <RefreshCw className="w-6 h-6 text-white/40 animate-spin mx-auto" />
                     </td>
                   </tr>
                 ) : linhas.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="py-12 text-center text-white/50">
+                    <td colSpan={COLUNAS.length + 1} className="py-12 text-center text-white/50">
                       <AlertOctagon className="w-10 h-10 mb-3 mx-auto opacity-50" />
                       Nenhuma multa encontrada
                     </td>
@@ -337,7 +340,8 @@ export default function MultasMinimalista() {
                   linhas.map((m, idx) => {
                     const pago = m.status === 'pago';
                     const dias = differenceInCalendarDays(new Date(), new Date(m.created_at));
-                    const isTerceiro = !m.usuario_id;
+                    const semResponsavel = semCondutor(m);
+                    const acrescimo = acrescimoMulta(m);
                     return (
                       <tr
                         key={m.id}
@@ -379,6 +383,16 @@ export default function MultasMinimalista() {
                         </td>
                         <td className={cn('px-3 py-2 text-right font-semibold border-r border-white/5 tabular-nums', pago ? 'text-emerald-300' : 'text-white')}>
                           {formatCurrency(Number(m.valor))}
+                        </td>
+                        <td className="px-3 py-2 text-right border-r border-white/5 tabular-nums">
+                          {semResponsavel ? (
+                            <span className="text-red-300 font-medium">+ {formatCurrency(acrescimo)}</span>
+                          ) : (
+                            <span className="text-white/25">—</span>
+                          )}
+                        </td>
+                        <td className={cn('px-3 py-2 text-right font-semibold border-r border-white/5 tabular-nums', semResponsavel ? 'text-red-300' : 'text-white/60')}>
+                          {formatCurrency(totalMulta(m))}
                         </td>
                         <td className="px-3 py-2">
                           <div className="flex items-center justify-end gap-1">
