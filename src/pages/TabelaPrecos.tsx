@@ -419,12 +419,37 @@ export default function TabelaPrecos({
                           <TableCell className="font-medium text-white">
                             <div className="flex flex-col">
                               <span>{item.descricao}</span>
-                              {Number(item.lucro || 0) === 0 && lucroInfo.value === null && (
-                                <span
-                                  className="mt-0.5 inline-flex items-center gap-1 text-[10px] text-amber-400"
-                                  title="Kit sem lucro cadastrado e sem montagem definida: vendas com portas deste kit são faturadas com lucro R$ 0,00."
-                                >
-                                  ⚠ Sem lucro cadastrado
+                              {Number(item.lucro || 0) === 0 && (
+                                <span className="mt-0.5 inline-flex flex-wrap items-center gap-2">
+                                  <span
+                                    className="inline-flex items-center gap-1 text-[10px] text-amber-400"
+                                    title="O lucro salvo neste kit é R$ 0,00 — é esse valor que o faturamento usa. O valor exibido na coluna Lucro é apenas o cálculo da montagem e ainda não foi salvo."
+                                  >
+                                    ⚠ Lucro salvo R$ 0,00
+                                  </span>
+                                  {!readOnly && lucroInfo.value !== null && lucroInfo.value > 0 && (
+                                    <button
+                                      type="button"
+                                      onClick={async () => {
+                                        await editarItem({
+                                          id: item.id,
+                                          dados: {
+                                            descricao: item.descricao,
+                                            largura: item.largura,
+                                            altura: item.altura,
+                                            valor_porta: item.valor_porta,
+                                            valor_instalacao: item.valor_instalacao,
+                                            valor_pintura: item.valor_pintura,
+                                            lucro: Number(lucroInfo.value!.toFixed(2)),
+                                          },
+                                        });
+                                        toast.success('Lucro do kit salvo a partir da montagem');
+                                      }}
+                                      className="text-[10px] text-blue-400 underline underline-offset-2 hover:text-blue-300"
+                                    >
+                                      Salvar lucro da montagem
+                                    </button>
+                                  )}
                                 </span>
                               )}
                             </div>
