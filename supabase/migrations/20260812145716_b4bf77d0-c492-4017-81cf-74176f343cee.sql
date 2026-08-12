@@ -1,0 +1,1 @@
+ALTER TABLE public.visitas_tecnicas_agendadas DROP CONSTRAINT IF EXISTS visitas_tecnicas_agendadas_responsavel_id_fkey;
