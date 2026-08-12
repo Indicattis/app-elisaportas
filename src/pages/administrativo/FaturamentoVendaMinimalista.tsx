@@ -1527,7 +1527,7 @@ export default function FaturamentoVendaMinimalista() {
                           )}
                         </TableCell>
                         <TableCell className="text-center">
-                          {(produto.tipo_produto === 'porta_enrolar' || produto.tipo_produto === 'pintura_epoxi') ? (
+                          {((produto.tipo_produto === 'porta_enrolar' || produto.tipo_produto === 'pintura_epoxi') && Number(produto.lucro_item || 0) > 0) ? (
                             <CheckCircle2 className="h-4 w-4 text-emerald-400 mx-auto" />
                           ) : (
                             <Button variant="ghost" size="sm" onClick={() => setSelectedProduto(produto)} className="text-white/70 hover:text-white hover:bg-white/10"><Edit className="h-4 w-4" /></Button>
