@@ -1,0 +1,1 @@
+ALTER TABLE public.multas ADD COLUMN IF NOT EXISTS aceite_condutor boolean NOT NULL DEFAULT false;

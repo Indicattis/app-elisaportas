@@ -30,7 +30,7 @@ function formatCurrency(value: number): string {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 }
 
-type SortKey = 'data_ocorrido' | 'descricao' | 'status' | 'condutor' | 'dias' | 'valor' | 'acrescimo' | 'total';
+type SortKey = 'data_ocorrido' | 'descricao' | 'status' | 'aceite' | 'condutor' | 'dias' | 'valor' | 'acrescimo' | 'total';
 
 const MULTIPLICADOR_ACRESCIMO = 3;
 const semCondutor = (m: Multa) => !m.usuario_id && !m.terceiro_nome;
@@ -42,6 +42,7 @@ const COLUNAS: { key: SortKey; label: string; className: string }[] = [
   { key: 'data_ocorrido', label: 'Data do ocorrido', className: 'w-[140px]' },
   { key: 'descricao', label: 'Descrição', className: '' },
   { key: 'status', label: 'Status de pagamento', className: 'w-[170px]' },
+  { key: 'aceite', label: 'Aceite do condutor', className: 'w-[150px]' },
   { key: 'condutor', label: 'Condutor', className: 'w-[220px]' },
   { key: 'dias', label: 'Dias desde a criação', className: 'w-[160px] text-right' },
   { key: 'valor', label: 'Valor da multa', className: 'w-[140px] text-right' },
@@ -188,6 +189,7 @@ export default function MultasMinimalista() {
         case 'data_ocorrido': return m.data_ocorrido || '';
         case 'descricao': return (m.descricao || '').toLowerCase();
         case 'status': return m.status;
+        case 'aceite': return m.aceite_condutor ? 1 : 0;
         case 'condutor': return (m.usuario_nome || '').toLowerCase();
         case 'dias': return differenceInCalendarDays(new Date(), new Date(m.created_at));
         case 'valor': return Number(m.valor);
@@ -369,6 +371,20 @@ export default function MultasMinimalista() {
                           >
                             {pago ? <Check className="w-3 h-3" /> : <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />}
                             {pago ? 'Pago' : 'Pendente'}
+                          </button>
+                        </td>
+                        <td className="px-3 py-2 border-r border-white/5">
+                          <button
+                            onClick={() => updateMulta.mutate({ id: m.id, aceite_condutor: !m.aceite_condutor })}
+                            className={cn(
+                              'inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[11px] font-medium border transition-colors',
+                              m.aceite_condutor
+                                ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/25'
+                                : 'bg-white/5 text-white/50 border-white/10 hover:bg-white/10'
+                            )}
+                            title="Clique para alternar o aceite do condutor"
+                          >
+                            {m.aceite_condutor ? 'Sim' : 'Não'}
                           </button>
                         </td>
                         <td className="px-3 py-2 border-r border-white/5">

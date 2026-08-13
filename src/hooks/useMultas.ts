@@ -11,6 +11,7 @@ export interface Multa {
   data_ocorrido: string;
   descricao: string | null;
   status: string;
+  aceite_condutor: boolean;
   created_at: string;
   updated_at: string;
   usuario_nome?: string;
@@ -89,7 +90,7 @@ export function useMultas() {
   });
 
   const updateMulta = useMutation({
-    mutationFn: async ({ id, ...campos }: { id: string } & Partial<Pick<Multa, "usuario_id" | "terceiro_nome" | "valor" | "data_ocorrido" | "descricao" | "status">>) => {
+    mutationFn: async ({ id, ...campos }: { id: string } & Partial<Pick<Multa, "usuario_id" | "terceiro_nome" | "valor" | "data_ocorrido" | "descricao" | "status" | "aceite_condutor">>) => {
       const { error } = await supabase.from("multas").update(campos as any).eq("id", id);
       if (error) throw error;
     },
