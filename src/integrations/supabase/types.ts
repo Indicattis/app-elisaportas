@@ -5304,6 +5304,7 @@ export type Database = {
       }
       multas: {
         Row: {
+          aceite_condutor: boolean
           created_at: string
           data_ocorrido: string
           data_vencimento: string | null
@@ -5316,6 +5317,7 @@ export type Database = {
           valor: number
         }
         Insert: {
+          aceite_condutor?: boolean
           created_at?: string
           data_ocorrido?: string
           data_vencimento?: string | null
@@ -5328,6 +5330,7 @@ export type Database = {
           valor: number
         }
         Update: {
+          aceite_condutor?: boolean
           created_at?: string
           data_ocorrido?: string
           data_vencimento?: string | null
