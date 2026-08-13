@@ -190,23 +190,73 @@ export function FreteDialog({ open, onOpenChange, frete }: FreteDialogProps) {
 
             <div className="space-y-2">
               <Label htmlFor="cidade" className="text-white/80">Cidade *</Label>
-              <Select
-                key={`${frete?.id ?? "novo"}-${formData.estado}`}
-                value={formData.cidade}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, cidade: value }))}
-                disabled={!formData.estado}
-              >
-                <SelectTrigger id="cidade" className="bg-white/5 border-white/10 text-white disabled:opacity-50">
-                  <SelectValue placeholder={formData.estado ? "Selecione a cidade" : "Selecione o estado primeiro"} />
-                </SelectTrigger>
-                <SelectContent className="bg-black/90 border-white/10 backdrop-blur-xl text-white">
-                  {cidadesOptions.map(cidade => (
-                    <SelectItem key={cidade} value={cidade} className="text-white focus:bg-white/10 focus:text-white">
-                      {cidade}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover open={cidadeOpen} onOpenChange={(o) => { setCidadeOpen(o); if (!o) setCidadeBusca(""); }}>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    id="cidade"
+                    variant="outline"
+                    disabled={!formData.estado}
+                    className="w-full justify-between bg-white/5 border-white/10 text-white hover:bg-white/10 hover:text-white disabled:opacity-50 font-normal"
+                  >
+                    <span className={cn("truncate", !formData.cidade && "text-white/40")}>
+                      {formData.cidade || (formData.estado ? "Selecione ou digite" : "Selecione o estado primeiro")}
+                    </span>
+                    <ChevronsUpDown className="h-4 w-4 opacity-50 shrink-0" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="p-0 w-[--radix-popover-trigger-width] bg-black/90 border-white/10 backdrop-blur-xl text-white z-50">
+                  <Command className="bg-transparent">
+                    <CommandInput
+                      placeholder="Buscar ou digitar cidade..."
+                      value={cidadeBusca}
+                      onValueChange={setCidadeBusca}
+                      className="text-white"
+                    />
+                    <CommandList className="max-h-60">
+                      {podeAdicionar && (
+                        <CommandGroup>
+                          <CommandItem
+                            value={`__add__${buscaLimpa}`}
+                            onSelect={() => {
+                              setFormData(prev => ({ ...prev, cidade: buscaLimpa }));
+                              setCidadeOpen(false);
+                              setCidadeBusca("");
+                            }}
+                            className="text-white aria-selected:bg-white/10"
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Usar "{buscaLimpa}"
+                          </CommandItem>
+                        </CommandGroup>
+                      )}
+                      <CommandEmpty className="py-4 text-center text-sm text-white/50">
+                        Digite o nome para adicionar manualmente.
+                      </CommandEmpty>
+                      <CommandGroup>
+                        {cidadesOptions.map(cidade => (
+                          <CommandItem
+                            key={cidade}
+                            value={cidade}
+                            onSelect={() => {
+                              setFormData(prev => ({ ...prev, cidade }));
+                              setCidadeOpen(false);
+                              setCidadeBusca("");
+                            }}
+                            className="text-white aria-selected:bg-white/10"
+                          >
+                            <Check className={cn("h-4 w-4 mr-2", formData.cidade === cidade ? "opacity-100" : "opacity-0")} />
+                            {cidade}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+              <p className="text-xs text-white/50">
+                Distritos/localidades fora da lista do IBGE (ex.: Cassino) podem ser digitados manualmente.
+              </p>
             </div>
           </div>
 
