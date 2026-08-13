@@ -21,6 +21,10 @@ import {
 } from "@/components/ui/select";
 import { getCidadesPorEstado } from "@/utils/estadosCidades";
 import { calcularValorFreteInterno } from "@/utils/freteInterno";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Check, ChevronsUpDown, Plus } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const ESTADOS_BR = [
   { sigla: "AC", nome: "Acre" },
@@ -71,6 +75,8 @@ export function FreteDialog({ open, onOpenChange, frete }: FreteDialogProps) {
     valor_frete: "",
   });
   const [valorManual, setValorManual] = useState(false);
+  const [cidadeOpen, setCidadeOpen] = useState(false);
+  const [cidadeBusca, setCidadeBusca] = useState("");
 
   const cidadesOptions = useMemo(() => {
     const lista = getCidadesPorEstado(formData.estado);
@@ -79,6 +85,11 @@ export function FreteDialog({ open, onOpenChange, frete }: FreteDialogProps) {
     }
     return lista;
   }, [formData.estado, formData.cidade]);
+
+  const buscaLimpa = cidadeBusca.trim();
+  const podeAdicionar =
+    buscaLimpa.length > 1 &&
+    !cidadesOptions.some(c => c.toLowerCase() === buscaLimpa.toLowerCase());
 
   useEffect(() => {
     if (frete) {
