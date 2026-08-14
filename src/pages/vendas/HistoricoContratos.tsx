@@ -259,6 +259,15 @@ export default function HistoricoContratos() {
     window.open(data.signedUrl, '_blank');
   };
 
+  const abrirGerado = async (url: string) => {
+    if (!url) return;
+    if (/^https?:\/\//i.test(url)) {
+      window.open(url, '_blank');
+      return;
+    }
+    await abrirContrato(url);
+  };
+
   const mudarMes = (delta: number) => {
     setMesRef((prev) => {
       const d = new Date(prev.year, prev.month + delta, 1);
