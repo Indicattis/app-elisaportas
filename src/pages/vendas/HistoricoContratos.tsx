@@ -47,6 +47,7 @@ type EventoContrato = {
   responsavel_nome: string | null;
   valor_venda: number;
   contrato_url: string | null;
+  contrato_gerado_url: string | null;
 };
 
 const formatBRL = (v: number) =>
