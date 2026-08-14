@@ -139,7 +139,7 @@ export default function MultasMinimalista() {
   const [sortDir, setSortDir] = useState<SortDir>('desc');
 
   // Form
-  const [tipoResponsavel, setTipoResponsavel] = useState<'colaborador' | 'terceiro'>('colaborador');
+  const [tipoResponsavel, setTipoResponsavel] = useState<'colaborador' | 'terceiro' | 'aguardando'>('colaborador');
   const [usuarioId, setUsuarioId] = useState('');
   const [terceiroNome, setTerceiroNome] = useState('');
   const [valor, setValor] = useState('');
@@ -168,7 +168,7 @@ export default function MultasMinimalista() {
 
   const abrirEdicao = (m: Multa) => {
     setEditando(m);
-    setTipoResponsavel(m.usuario_id ? 'colaborador' : 'terceiro');
+    setTipoResponsavel(m.usuario_id ? 'colaborador' : (m.terceiro_nome ? 'terceiro' : 'aguardando'));
     setUsuarioId(m.usuario_id || '');
     setTerceiroNome(m.terceiro_nome || '');
     setValor(String(m.valor));
@@ -222,13 +222,14 @@ export default function MultasMinimalista() {
 
   const handleSubmit = () => {
     const isColab = tipoResponsavel === 'colaborador';
+    const isAguardando = tipoResponsavel === 'aguardando';
     if (!valor || !dataOcorrido) return;
     if (isColab && !usuarioId) return;
-    if (!isColab && !terceiroNome.trim()) return;
+    if (!isColab && !isAguardando && !terceiroNome.trim()) return;
 
     const payload = {
       usuario_id: isColab ? usuarioId : null,
-      terceiro_nome: isColab ? null : terceiroNome.trim(),
+      terceiro_nome: isColab || isAguardando ? null : terceiroNome.trim(),
       valor: Number(valor),
       data_ocorrido: format(dataOcorrido, 'yyyy-MM-dd'),
       descricao: descricao || null,
@@ -452,26 +453,30 @@ export default function MultasMinimalista() {
           <div className="space-y-4 mt-2">
             <div>
               <label className="text-sm text-white/70 mb-1 block">Tipo de condutor</label>
-              <div className="grid grid-cols-2 gap-2">
-                {(['colaborador', 'terceiro'] as const).map(tipo => (
+              <div className="grid grid-cols-3 gap-2">
+                {(['colaborador', 'terceiro', 'aguardando'] as const).map(tipo => (
                   <button
                     key={tipo}
                     type="button"
                     onClick={() => setTipoResponsavel(tipo)}
                     className={cn(
-                      'h-10 rounded-md border text-sm capitalize transition',
+                      'h-10 rounded-md border text-xs sm:text-sm capitalize transition px-1',
                       tipoResponsavel === tipo
                         ? 'bg-blue-500/20 border-blue-400/50 text-white'
                         : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
                     )}
                   >
-                    {tipo}
+                    {tipo === 'aguardando' ? 'Aguardando transferência' : tipo}
                   </button>
                 ))}
               </div>
             </div>
 
-            {tipoResponsavel === 'colaborador' ? (
+            {tipoResponsavel === 'aguardando' ? (
+              <div className="rounded-md border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
+                Multa sem condutor definido — aguardando transferência de pontuação.
+              </div>
+            ) : tipoResponsavel === 'colaborador' ? (
               <div>
                 <label className="text-sm text-white/70 mb-1 block">Condutor</label>
                 <select
@@ -570,7 +575,11 @@ export default function MultasMinimalista() {
               disabled={
                 !valor ||
                 !dataOcorrido ||
-                (tipoResponsavel === 'colaborador' ? !usuarioId : !terceiroNome.trim()) ||
+                (tipoResponsavel === 'colaborador'
+                  ? !usuarioId
+                  : tipoResponsavel === 'terceiro'
+                    ? !terceiroNome.trim()
+                    : false) ||
                 isSalvando
               }
               className="w-full bg-blue-600 hover:bg-blue-700 text-white"
