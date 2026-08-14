@@ -113,6 +113,22 @@ export default function HistoricoContratos() {
       if (error) throw error;
       if (!vendas) return [];
 
+      // Contratos gerados/anexados na tabela contratos_vendas
+      const vendaIds = vendas.map((v: any) => v.id);
+      const geradoMap = new Map<string, string>();
+      if (vendaIds.length > 0) {
+        const { data: contratosGerados } = await supabase
+          .from('contratos_vendas')
+          .select('venda_id, arquivo_url, created_at')
+          .in('venda_id', vendaIds)
+          .order('created_at', { ascending: false });
+        (contratosGerados || []).forEach((c: any) => {
+          if (c.venda_id && c.arquivo_url && !geradoMap.has(c.venda_id)) {
+            geradoMap.set(c.venda_id, c.arquivo_url);
+          }
+        });
+      }
+
       const userIds = new Set<string>();
       vendas.forEach((v: any) => {
         [v.atendente_id, v.contrato_anexado_por, v.contrato_dispensado_por, v.contrato_liberado_por]
@@ -143,9 +159,10 @@ export default function HistoricoContratos() {
           cidade: v.cidade || null,
           atendente_nome: v.atendente_id ? nomeMap.get(v.atendente_id) || null : null,
           valor_venda: Number(v.valor_venda) || 0,
+          contrato_gerado_url: geradoMap.get(v.id) || null,
         };
 
-        if (inMonth(v.contrato_assinado_em) && v.contrato_url) {
+        if (inMonth(v.contrato_assinado_em) && (v.contrato_url || geradoMap.has(v.id))) {
           eventos.push({
             ...base,
             key: `${v.id}-assinado`,
