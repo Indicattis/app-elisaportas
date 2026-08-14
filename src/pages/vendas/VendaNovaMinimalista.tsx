@@ -1557,7 +1557,7 @@ export default function VendaNovaMinimalista() {
                     <div className="flex-1">
                       <p className="text-sm font-semibold text-amber-300">Autorização do Líder Necessária</p>
                       <p className="text-xs text-amber-400/70">
-                        Desconto: {validacaoDescontoMemo.percentualDesconto.toFixed(1)}% (excede {validacaoDescontoMemo.excedente.toFixed(1)}%, limite: {validacaoDescontoMemo.limitePermitido.toFixed(0)}%)
+                        Excedente: {validacaoDescontoMemo.excedente.toFixed(1)}% (desconto total: {validacaoDescontoMemo.percentualDesconto.toFixed(1)}%, limite: {validacaoDescontoMemo.limitePermitido.toFixed(0)}%)
                       </p>
                     </div>
                     <Badge className="bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs">Responsável</Badge>
@@ -1576,7 +1576,7 @@ export default function VendaNovaMinimalista() {
                     <div className="flex-1">
                       <p className="text-sm font-semibold text-orange-300">Autorização Master Necessária</p>
                       <p className="text-xs text-orange-400/70">
-                        Desconto: {validacaoDescontoMemo.percentualDesconto.toFixed(1)}% (excede {validacaoDescontoMemo.excedente.toFixed(1)}%, limite: {validacaoDescontoMemo.limitePermitido.toFixed(0)}%)
+                        Excedente: {validacaoDescontoMemo.excedente.toFixed(1)}% (desconto total: {validacaoDescontoMemo.percentualDesconto.toFixed(1)}%, limite: {validacaoDescontoMemo.limitePermitido.toFixed(0)}%)
                       </p>
                     </div>
                     <Badge className="bg-orange-500/20 text-orange-400 border border-orange-500/30 text-xs">Master</Badge>
