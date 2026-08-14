@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Search, Plus, RefreshCw, Trash2, Calendar, AlertOctagon, User, ArrowUpDown, Pencil, Check, Clock, ChevronsUpDown } from 'lucide-react';
+import { Search, Plus, RefreshCw, Trash2, Calendar, AlertOctagon, User, ArrowUpDown, Pencil, Check, Clock, ChevronsUpDown, FileDown } from 'lucide-react';
 import { format, parseISO, differenceInCalendarDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -25,6 +25,7 @@ import { cn } from '@/lib/utils';
 
 import { useMultas, Multa } from '@/hooks/useMultas';
 import { useAllUsers } from '@/hooks/useAllUsers';
+import { exportMultasPDF } from '@/utils/multasPDFGenerator';
 
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
@@ -262,6 +263,16 @@ export default function MultasMinimalista() {
       ]}
       headerActions={
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => exportMultasPDF(linhas)}
+            disabled={linhas.length === 0}
+            className="bg-white/5 border-white/10 text-white hover:bg-white/10"
+          >
+            <FileDown className="w-4 h-4 mr-2" />
+            Exportar PDF
+          </Button>
           <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isRefetching} className="bg-white/5 border-white/10 text-white hover:bg-white/10">
             <RefreshCw className={`w-4 h-4 mr-2 ${isRefetching ? 'animate-spin' : ''}`} />
             Atualizar
