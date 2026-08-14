@@ -376,16 +376,31 @@ export default function HistoricoContratos() {
                     <TableCell className="text-white/80 text-sm">{e.responsavel_nome || '—'}</TableCell>
                     <TableCell className="text-white text-right text-sm">{formatBRL(e.valor_venda)}</TableCell>
                     <TableCell className="text-right">
-                      {e.contrato_url && e.contrato_url !== 'legado' ? (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => abrirContrato(e.contrato_url!)}
-                          className="h-7 px-2 bg-white/5 border-white/10 text-white/80 hover:bg-white/10 hover:text-white"
-                        >
-                          <FileText className="h-3.5 w-3.5 mr-1" strokeWidth={1.5} />
-                          Ver
-                        </Button>
+                      {(e.contrato_url && e.contrato_url !== 'legado') || e.contrato_gerado_url ? (
+                        <div className="flex items-center justify-end gap-1.5">
+                          {e.contrato_gerado_url && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => abrirGerado(e.contrato_gerado_url!)}
+                              className="h-7 px-2 bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white"
+                            >
+                              <FileText className="h-3.5 w-3.5 mr-1" strokeWidth={1.5} />
+                              Gerado
+                            </Button>
+                          )}
+                          {e.contrato_url && e.contrato_url !== 'legado' && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => abrirContrato(e.contrato_url!)}
+                              className="h-7 px-2 bg-emerald-500/10 border-emerald-500/30 text-emerald-200 hover:bg-emerald-500/20 hover:text-emerald-100"
+                            >
+                              <FileText className="h-3.5 w-3.5 mr-1" strokeWidth={1.5} />
+                              Anexado
+                            </Button>
+                          )}
+                        </div>
                       ) : (
                         <span className="text-white/30 text-xs">—</span>
                       )}
