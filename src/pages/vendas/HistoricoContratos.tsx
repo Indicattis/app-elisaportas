@@ -47,6 +47,7 @@ type EventoContrato = {
   responsavel_nome: string | null;
   valor_venda: number;
   contrato_url: string | null;
+  contrato_gerado_url: string | null;
 };
 
 const formatBRL = (v: number) =>
@@ -112,6 +113,22 @@ export default function HistoricoContratos() {
       if (error) throw error;
       if (!vendas) return [];
 
+      // Contratos gerados/anexados na tabela contratos_vendas
+      const vendaIds = vendas.map((v: any) => v.id);
+      const geradoMap = new Map<string, string>();
+      if (vendaIds.length > 0) {
+        const { data: contratosGerados } = await supabase
+          .from('contratos_vendas')
+          .select('venda_id, arquivo_url, created_at')
+          .in('venda_id', vendaIds)
+          .order('created_at', { ascending: false });
+        (contratosGerados || []).forEach((c: any) => {
+          if (c.venda_id && c.arquivo_url && !geradoMap.has(c.venda_id)) {
+            geradoMap.set(c.venda_id, c.arquivo_url);
+          }
+        });
+      }
+
       const userIds = new Set<string>();
       vendas.forEach((v: any) => {
         [v.atendente_id, v.contrato_anexado_por, v.contrato_dispensado_por, v.contrato_liberado_por]
@@ -142,9 +159,10 @@ export default function HistoricoContratos() {
           cidade: v.cidade || null,
           atendente_nome: v.atendente_id ? nomeMap.get(v.atendente_id) || null : null,
           valor_venda: Number(v.valor_venda) || 0,
+          contrato_gerado_url: geradoMap.get(v.id) || null,
         };
 
-        if (inMonth(v.contrato_assinado_em) && v.contrato_url) {
+        if (inMonth(v.contrato_assinado_em) && (v.contrato_url || geradoMap.has(v.id))) {
           eventos.push({
             ...base,
             key: `${v.id}-assinado`,
@@ -239,6 +257,15 @@ export default function HistoricoContratos() {
       return;
     }
     window.open(data.signedUrl, '_blank');
+  };
+
+  const abrirGerado = async (url: string) => {
+    if (!url) return;
+    if (/^https?:\/\//i.test(url)) {
+      window.open(url, '_blank');
+      return;
+    }
+    await abrirContrato(url);
   };
 
   const mudarMes = (delta: number) => {
@@ -349,16 +376,31 @@ export default function HistoricoContratos() {
                     <TableCell className="text-white/80 text-sm">{e.responsavel_nome || '—'}</TableCell>
                     <TableCell className="text-white text-right text-sm">{formatBRL(e.valor_venda)}</TableCell>
                     <TableCell className="text-right">
-                      {e.contrato_url && e.contrato_url !== 'legado' ? (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => abrirContrato(e.contrato_url!)}
-                          className="h-7 px-2 bg-white/5 border-white/10 text-white/80 hover:bg-white/10 hover:text-white"
-                        >
-                          <FileText className="h-3.5 w-3.5 mr-1" strokeWidth={1.5} />
-                          Ver
-                        </Button>
+                      {(e.contrato_url && e.contrato_url !== 'legado') || e.contrato_gerado_url ? (
+                        <div className="flex items-center justify-end gap-1.5">
+                          {e.contrato_gerado_url && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => abrirGerado(e.contrato_gerado_url!)}
+                              className="h-7 px-2 bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white"
+                            >
+                              <FileText className="h-3.5 w-3.5 mr-1" strokeWidth={1.5} />
+                              Gerado
+                            </Button>
+                          )}
+                          {e.contrato_url && e.contrato_url !== 'legado' && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => abrirContrato(e.contrato_url!)}
+                              className="h-7 px-2 bg-emerald-500/10 border-emerald-500/30 text-emerald-200 hover:bg-emerald-500/20 hover:text-emerald-100"
+                            >
+                              <FileText className="h-3.5 w-3.5 mr-1" strokeWidth={1.5} />
+                              Anexado
+                            </Button>
+                          )}
+                        </div>
                       ) : (
                         <span className="text-white/30 text-xs">—</span>
                       )}
