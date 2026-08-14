@@ -1,0 +1,1 @@
+ALTER TABLE public.multas DROP CONSTRAINT IF EXISTS multas_usuario_ou_terceiro_chk;
