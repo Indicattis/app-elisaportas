@@ -6,9 +6,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatCurrency, cn } from "@/lib/utils";
-import { format, formatDistanceToNow, parseISO } from "date-fns";
+import { format, formatDistanceToNow, parseISO, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ArrowRight, Package, ChevronUp, ChevronDown, GripVertical, AlertCircle, CheckCircle, ArrowLeft, FileText, Paintbrush, Truck, Hammer, AlertTriangle, Archive, User, PauseCircle, PlayCircle, Boxes, Sparkles, UserMinus, Trash2, Clock, Wrench, CalendarPlus, CalendarX } from "lucide-react";
+import { ArrowRight, Package, ChevronUp, ChevronDown, GripVertical, AlertCircle, CheckCircle, ArrowLeft, FileText, Paintbrush, Truck, Hammer, AlertTriangle, Archive, User, PauseCircle, PlayCircle, Boxes, Sparkles, UserMinus, Trash2, Clock, Wrench, CalendarPlus, CalendarX, Calendar } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -608,6 +608,10 @@ export function PedidoCard({
   // Tratar venda como array ou objeto único
   const vendaData = Array.isArray(pedido.vendas) ? pedido.vendas[0] : pedido.vendas;
   const venda = vendaData;
+
+  // Dias pendentes desde a data da venda (usado na downbar e na coluna Tempo)
+  const dataVendaStr = venda?.data_venda;
+  const diasPendente = dataVendaStr ? differenceInDays(new Date(), new Date(dataVendaStr)) : 0;
 
   // Contar parcelas reais e somar valor em contas_receber
   const { data: parcelasInfo = { count: 0, total: 0 } } = useQuery({
@@ -1955,7 +1959,7 @@ export function PedidoCard({
                 </>
               )}
               
-              {/* Col 13: Tempo na Etapa + Total */}
+              {/* Col 13: Tempo na Etapa + Total + Dias Pendente */}
               <div className="text-center flex items-center justify-center gap-1">
                 <CronometroEtapaBadge dataEntrada={dataEntradaEtapaAtual} compact etapa={etapaAtual} />
                 {pedido.created_at && (
@@ -1982,6 +1986,26 @@ export function PedidoCard({
                           <p>Etapa atual: {format(new Date(dataEntradaEtapaAtual), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
                         )}
                       </div>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+                {dataVendaStr && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Badge variant="outline" className={cn(
+                        "text-[10px] px-1.5 py-0.5 font-mono cursor-default",
+                        diasPendente > 14
+                          ? "bg-red-500/10 text-red-500 border-red-500/30"
+                          : diasPendente > 7
+                            ? "bg-yellow-500/10 text-yellow-500 border-yellow-500/30"
+                            : "bg-muted/50 text-muted-foreground border-muted-foreground/30"
+                      )}>
+                        <Calendar className="h-2.5 w-2.5 mr-0.5" />
+                        {diasPendente}p
+                      </Badge>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">
+                      <p className="text-xs">Dias pendentes desde a venda: {diasPendente} dias</p>
                     </TooltipContent>
                   </Tooltip>
                 )}
