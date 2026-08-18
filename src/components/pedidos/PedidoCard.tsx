@@ -1960,7 +1960,7 @@ export function PedidoCard({
               )}
               
               {/* Col 13: Tempo na Etapa + Total + Dias Pendente */}
-              <div className="text-center flex items-center justify-center gap-1">
+              <div className="text-center flex flex-wrap items-center justify-center gap-2">
                 <CronometroEtapaBadge dataEntrada={dataEntradaEtapaAtual} compact etapa={etapaAtual} />
                 {pedido.created_at && (
                   <Tooltip>
