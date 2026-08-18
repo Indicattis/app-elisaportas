@@ -1960,7 +1960,7 @@ export function PedidoCard({
               )}
               
               {/* Col 13: Tempo na Etapa + Total + Dias Pendente */}
-              <div className="text-center flex items-center justify-center gap-1">
+              <div className="text-center flex flex-wrap items-center justify-center gap-2">
                 <CronometroEtapaBadge dataEntrada={dataEntradaEtapaAtual} compact etapa={etapaAtual} />
                 {pedido.created_at && (
                   <Tooltip>
@@ -1993,15 +1993,15 @@ export function PedidoCard({
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Badge variant="outline" className={cn(
-                        "text-[10px] px-1.5 py-0.5 font-mono cursor-default",
+                        "text-[10px] px-1.5 py-0.5 font-mono cursor-default whitespace-nowrap",
                         diasPendente > 14
                           ? "bg-red-500/10 text-red-500 border-red-500/30"
                           : diasPendente > 7
                             ? "bg-yellow-500/10 text-yellow-500 border-yellow-500/30"
                             : "bg-muted/50 text-muted-foreground border-muted-foreground/30"
                       )}>
-                        <Calendar className="h-2.5 w-2.5 mr-0.5" />
-                        {diasPendente}p
+                        <Calendar className="h-2.5 w-2.5 mr-0.5 shrink-0" />
+                        {diasPendente} dias
                       </Badge>
                     </TooltipTrigger>
                     <TooltipContent side="top">
