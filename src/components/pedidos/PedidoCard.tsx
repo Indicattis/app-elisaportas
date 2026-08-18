@@ -609,6 +609,10 @@ export function PedidoCard({
   const vendaData = Array.isArray(pedido.vendas) ? pedido.vendas[0] : pedido.vendas;
   const venda = vendaData;
 
+  // Dias pendentes desde a data da venda (usado na downbar e na coluna Tempo)
+  const dataVendaStr = venda?.data_venda;
+  const diasPendente = dataVendaStr ? differenceInDays(new Date(), new Date(dataVendaStr)) : 0;
+
   // Contar parcelas reais e somar valor em contas_receber
   const { data: parcelasInfo = { count: 0, total: 0 } } = useQuery({
     queryKey: ['contas-receber-info', venda?.id],
