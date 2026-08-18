@@ -2001,7 +2001,7 @@ export function PedidoCard({
                             : "bg-muted/50 text-muted-foreground border-muted-foreground/30"
                       )}>
                         <Calendar className="h-2.5 w-2.5 mr-0.5 shrink-0" />
-                        {diasPendente} dias pendentes
+                        {diasPendente} dias
                       </Badge>
                     </TooltipTrigger>
                     <TooltipContent side="top">
