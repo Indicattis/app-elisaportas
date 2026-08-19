@@ -51,6 +51,7 @@ export function exportMultasPDF(multas: Multa[]) {
       m.status === "pago" ? "Pago" : "Pendente",
       m.aceite_condutor ? "Sim" : "Não",
       sem ? "Aguardando transferência" : m.usuario_nome || m.terceiro_nome || "—",
+      m.responsavel_pagamento === "empresa" ? "Empresa" : "Condutor",
       String(dias),
       fmtBRL(Number(m.valor)),
       acrescimo > 0 ? fmtBRL(acrescimo) : "—",
@@ -65,6 +66,7 @@ export function exportMultasPDF(multas: Multa[]) {
       "Status",
       "Aceite do condutor",
       "Condutor",
+      "Resp. pagamento",
       "Dias",
       "Valor",
       "Acréscimo (3x)",
@@ -81,19 +83,23 @@ export function exportMultasPDF(multas: Multa[]) {
       2: { cellWidth: 22, halign: "center" },
       3: { cellWidth: 28, halign: "center" },
       4: { cellWidth: 48 },
-      5: { cellWidth: 16, halign: "right" },
-      6: { cellWidth: 28, halign: "right" },
-      7: { cellWidth: 28, halign: "right" },
-      8: { cellWidth: 32, halign: "right" },
+      5: { cellWidth: 30, halign: "center" },
+      6: { cellWidth: 16, halign: "right" },
+      7: { cellWidth: 26, halign: "right" },
+      8: { cellWidth: 26, halign: "right" },
+      9: { cellWidth: 30, halign: "right" },
     },
     margin: { left: margin, right: margin },
     theme: "plain",
     didParseCell: (data) => {
       if (data.section !== "body") return;
       const m = multas[data.row.index];
-      if (semCondutor(m) && (data.column.index === 4 || data.column.index === 7)) {
+      if (semCondutor(m) && (data.column.index === 4 || data.column.index === 8)) {
         data.cell.styles.textColor = [180, 83, 9];
         data.cell.styles.fontStyle = "bold";
+      }
+      if (data.column.index === 5) {
+        data.cell.styles.textColor = m.responsavel_pagamento === "empresa" ? [29, 118, 207] : [107, 33, 168];
       }
       if (data.column.index === 2) {
         data.cell.styles.textColor = m.status === "pago" ? [16, 122, 87] : [180, 83, 9];

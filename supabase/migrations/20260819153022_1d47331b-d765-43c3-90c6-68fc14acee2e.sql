@@ -1,0 +1,1 @@
+ALTER TABLE public.multas ADD COLUMN IF NOT EXISTS responsavel_pagamento text NOT NULL DEFAULT 'condutor';
