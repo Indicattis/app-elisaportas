@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Search, Plus, RefreshCw, Trash2, Calendar, AlertOctagon, User, ArrowUpDown, Pencil, Check, Clock, ChevronsUpDown, FileDown } from 'lucide-react';
+import { Search, Plus, RefreshCw, Trash2, Calendar, AlertOctagon, User, ArrowUpDown, Pencil, Check, Clock, ChevronsUpDown, FileDown, Building2 } from 'lucide-react';
 import { format, parseISO, differenceInCalendarDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -461,7 +461,7 @@ export default function MultasMinimalista() {
               {linhas.length > 0 && (
                 <tfoot>
                   <tr className="bg-white/10 border-t border-white/10 font-semibold text-white/80">
-                    <td className="px-3 py-2" colSpan={5}>{linhas.length} multa(s)</td>
+                    <td className="px-3 py-2" colSpan={6}>{linhas.length} multa(s)</td>
                     <td className="px-3 py-2 text-right tabular-nums">
                       {formatCurrency(linhas.reduce((s, m) => s + Number(m.valor), 0))}
                     </td>
