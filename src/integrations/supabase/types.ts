@@ -5310,6 +5310,7 @@ export type Database = {
           data_vencimento: string | null
           descricao: string | null
           id: string
+          responsavel_pagamento: string
           status: string
           terceiro_nome: string | null
           updated_at: string
@@ -5323,6 +5324,7 @@ export type Database = {
           data_vencimento?: string | null
           descricao?: string | null
           id?: string
+          responsavel_pagamento?: string
           status?: string
           terceiro_nome?: string | null
           updated_at?: string
@@ -5336,6 +5338,7 @@ export type Database = {
           data_vencimento?: string | null
           descricao?: string | null
           id?: string
+          responsavel_pagamento?: string
           status?: string
           terceiro_nome?: string | null
           updated_at?: string
