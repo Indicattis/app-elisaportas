@@ -31,7 +31,7 @@ function formatCurrency(value: number): string {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 }
 
-type SortKey = 'data_ocorrido' | 'descricao' | 'status' | 'aceite' | 'condutor' | 'dias' | 'valor' | 'acrescimo' | 'total';
+type SortKey = 'data_ocorrido' | 'descricao' | 'status' | 'aceite' | 'condutor' | 'pagador' | 'dias' | 'valor' | 'acrescimo' | 'total';
 
 const MULTIPLICADOR_ACRESCIMO = 3;
 const semCondutor = (m: Multa) => !m.usuario_id && !m.terceiro_nome;
@@ -45,6 +45,7 @@ const COLUNAS: { key: SortKey; label: string; className: string }[] = [
   { key: 'status', label: 'Status de pagamento', className: 'w-[170px]' },
   { key: 'aceite', label: 'Aceite do condutor', className: 'w-[150px]' },
   { key: 'condutor', label: 'Condutor', className: 'w-[220px]' },
+  { key: 'pagador', label: 'Responsável pelo pagamento', className: 'w-[200px]' },
   { key: 'dias', label: 'Dias desde a criação', className: 'w-[160px] text-right' },
   { key: 'valor', label: 'Valor da multa', className: 'w-[140px] text-right' },
   { key: 'acrescimo', label: 'Acréscimo (3x)', className: 'w-[140px] text-right' },
@@ -147,6 +148,7 @@ export default function MultasMinimalista() {
   const [descricao, setDescricao] = useState('');
   const [dataOcorrido, setDataOcorrido] = useState<Date>();
   const [statusForm, setStatusForm] = useState<'pendente' | 'pago'>('pendente');
+  const [responsavelPagamento, setResponsavelPagamento] = useState<'condutor' | 'empresa'>('condutor');
 
   const { data: multas, isLoading, refetch, isRefetching, createMulta, updateMulta, deleteMulta } = useMultas();
   const { data: users } = useAllUsers();
@@ -160,6 +162,7 @@ export default function MultasMinimalista() {
     setDescricao('');
     setDataOcorrido(undefined);
     setStatusForm('pendente');
+    setResponsavelPagamento('condutor');
   };
 
   const abrirNova = () => {
@@ -176,6 +179,7 @@ export default function MultasMinimalista() {
     setDescricao(m.descricao || '');
     setDataOcorrido(m.data_ocorrido ? parseData(m.data_ocorrido) : undefined);
     setStatusForm(m.status === 'pago' ? 'pago' : 'pendente');
+    setResponsavelPagamento(m.responsavel_pagamento === 'empresa' ? 'empresa' : 'condutor');
     setDialogOpen(true);
   };
 
@@ -192,6 +196,7 @@ export default function MultasMinimalista() {
         case 'status': return m.status;
         case 'aceite': return m.aceite_condutor ? 1 : 0;
         case 'condutor': return (m.usuario_nome || '').toLowerCase();
+        case 'pagador': return m.responsavel_pagamento === 'empresa' ? 1 : 0;
         case 'dias': return differenceInCalendarDays(new Date(), new Date(m.created_at));
         case 'valor': return Number(m.valor);
         case 'acrescimo': return acrescimoMulta(m);
@@ -235,6 +240,7 @@ export default function MultasMinimalista() {
       data_ocorrido: format(dataOcorrido, 'yyyy-MM-dd'),
       descricao: descricao || null,
       status: statusForm,
+      responsavel_pagamento: responsavelPagamento,
     };
 
     if (editando) {
