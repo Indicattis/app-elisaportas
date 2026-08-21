@@ -219,7 +219,7 @@ export default function MultasMinimalista() {
         case 'status': return m.status;
         case 'aceite': return m.aceite_condutor ? 1 : 0;
         case 'condutor': return (m.usuario_nome || '').toLowerCase();
-        case 'pagador': return m.responsavel_pagamento === 'empresa' ? 1 : 0;
+        case 'condutor': return (m.responsavel_pagamento === 'empresa' ? 'empresa' : (m.usuario_nome || '')).toLowerCase();
         case 'dias': return differenceInCalendarDays(new Date(), new Date(m.created_at));
         case 'valor': return Number(m.valor);
         case 'acrescimo': return acrescimoMulta(m);
