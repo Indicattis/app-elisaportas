@@ -251,20 +251,21 @@ export default function MultasMinimalista() {
 
   const handleSubmit = () => {
     const isColab = tipoResponsavel === 'colaborador';
-    const isAguardando = tipoResponsavel === 'aguardando';
+    const isTerceiro = tipoResponsavel === 'terceiro';
     if (!valor || !dataOcorrido) return;
     if (isColab && !usuarioId) return;
-    if (!isColab && !isAguardando && !terceiroNome.trim()) return;
+    if (isTerceiro && !terceiroNome.trim()) return;
 
     const payload = {
       usuario_id: isColab ? usuarioId : null,
-      terceiro_nome: isColab || isAguardando ? null : terceiroNome.trim(),
+      terceiro_nome: isTerceiro ? terceiroNome.trim() : null,
       valor: Number(valor),
       data_ocorrido: format(dataOcorrido, 'yyyy-MM-dd'),
       descricao: descricao || null,
       status: statusForm,
-      responsavel_pagamento: responsavelPagamento,
+      responsavel_pagamento: tipoResponsavel === 'empresa' ? 'empresa' : 'condutor',
     };
+
 
     if (editando) {
       updateMulta.mutate({ id: editando.id, ...payload }, {
