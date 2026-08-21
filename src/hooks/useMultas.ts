@@ -11,6 +11,7 @@ export interface Multa {
   data_ocorrido: string;
   descricao: string | null;
   status: string;
+  status_detran: string;
   aceite_condutor: boolean;
   responsavel_pagamento: string;
   created_at: string;
@@ -42,7 +43,7 @@ export function useMultas() {
   });
 
   const createMulta = useMutation({
-    mutationFn: async (multa: { usuario_id?: string | null; terceiro_nome?: string | null; valor: number; data_ocorrido: string; descricao?: string; status?: string; responsavel_pagamento?: string }) => {
+    mutationFn: async (multa: { usuario_id?: string | null; terceiro_nome?: string | null; valor: number; data_ocorrido: string; descricao?: string; status?: string; status_detran?: string; responsavel_pagamento?: string }) => {
       const { error } = await supabase.from("multas").insert({
         usuario_id: multa.usuario_id || null,
         terceiro_nome: multa.terceiro_nome || null,
@@ -50,6 +51,7 @@ export function useMultas() {
         data_ocorrido: multa.data_ocorrido,
         descricao: multa.descricao || null,
         status: multa.status || "pendente",
+        status_detran: multa.status_detran || "pendente",
         responsavel_pagamento: multa.responsavel_pagamento || "condutor",
       } as any);
       if (error) throw error;
@@ -92,7 +94,7 @@ export function useMultas() {
   });
 
   const updateMulta = useMutation({
-    mutationFn: async ({ id, ...campos }: { id: string } & Partial<Pick<Multa, "usuario_id" | "terceiro_nome" | "valor" | "data_ocorrido" | "descricao" | "status" | "aceite_condutor" | "responsavel_pagamento">>) => {
+    mutationFn: async ({ id, ...campos }: { id: string } & Partial<Pick<Multa, "usuario_id" | "terceiro_nome" | "valor" | "data_ocorrido" | "descricao" | "status" | "status_detran" | "aceite_condutor" | "responsavel_pagamento">>) => {
       const { error } = await supabase.from("multas").update(campos as any).eq("id", id);
       if (error) throw error;
     },
