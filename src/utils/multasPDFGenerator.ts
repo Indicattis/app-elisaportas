@@ -50,6 +50,7 @@ export function exportMultasPDF(multas: Multa[]) {
       m.data_ocorrido ? format(parseISO(m.data_ocorrido + "T12:00:00"), "dd/MM/yyyy") : "—",
       m.descricao || "—",
       m.status === "pago" ? "Pago" : "Pendente",
+      m.status_detran === "pago" ? "Pago" : "Pendente",
       m.aceite_condutor ? "Sim" : "Não",
       isEmpresa(m) ? "Empresa" : sem ? "Aguardando transferência" : m.usuario_nome || m.terceiro_nome || "—",
       String(dias),
@@ -63,7 +64,8 @@ export function exportMultasPDF(multas: Multa[]) {
     head: [[
       "Data do ocorrido",
       "Descrição",
-      "Status",
+      "Pag. Condutor",
+      "Pag. DETRAN",
       "Aceite do condutor",
       "Condutor",
       "Dias",

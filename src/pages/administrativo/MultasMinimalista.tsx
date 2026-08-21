@@ -181,6 +181,7 @@ export default function MultasMinimalista() {
     setDataOcorrido(undefined);
     setStatusForm('pendente');
     setStatusDetranForm('pendente');
+    setStatusDetranForm('pendente');
   };
 
   const abrirNova = () => {
@@ -616,7 +617,7 @@ export default function MultasMinimalista() {
                 />
               </div>
               <div>
-                <label className="text-sm text-white/70 mb-1 block">Status de pagamento</label>
+                <label className="text-sm text-white/70 mb-1 block">Pagamento Condutor</label>
                 <div className="grid grid-cols-2 gap-2">
                   {(['pendente', 'pago'] as const).map(st => (
                     <button
