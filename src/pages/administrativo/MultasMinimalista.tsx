@@ -579,29 +579,6 @@ export default function MultasMinimalista() {
               />
             </div>
 
-            <div>
-              <label className="text-sm text-white/70 mb-1 block">Responsável pelo pagamento</label>
-              <div className="grid grid-cols-2 gap-2">
-                {(['condutor', 'empresa'] as const).map(rp => (
-                  <button
-                    key={rp}
-                    type="button"
-                    onClick={() => setResponsavelPagamento(rp)}
-                    className={cn(
-                      'h-10 rounded-md border text-sm capitalize transition inline-flex items-center justify-center gap-2',
-                      responsavelPagamento === rp
-                        ? rp === 'empresa'
-                          ? 'bg-blue-500/20 border-blue-400/50 text-white'
-                          : 'bg-purple-500/20 border-purple-400/50 text-white'
-                        : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
-                    )}
-                  >
-                    {rp === 'empresa' ? <Building2 className="w-4 h-4" /> : <User className="w-4 h-4" />}
-                    {rp}
-                  </button>
-                ))}
-              </div>
-            </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
