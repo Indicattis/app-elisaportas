@@ -31,7 +31,7 @@ function formatCurrency(value: number): string {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 }
 
-type SortKey = 'data_ocorrido' | 'descricao' | 'status' | 'aceite' | 'condutor' | 'dias' | 'valor' | 'acrescimo' | 'total';
+type SortKey = 'data_ocorrido' | 'descricao' | 'status' | 'status_detran' | 'aceite' | 'condutor' | 'dias' | 'valor' | 'acrescimo' | 'total';
 
 const MULTIPLICADOR_ACRESCIMO = 3;
 const isEmpresa = (m: Multa) => m.responsavel_pagamento === 'empresa';
@@ -43,7 +43,8 @@ type SortDir = 'asc' | 'desc';
 const COLUNAS: { key: SortKey; label: string; className: string }[] = [
   { key: 'data_ocorrido', label: 'Data do ocorrido', className: 'w-[140px]' },
   { key: 'descricao', label: 'Descrição', className: '' },
-  { key: 'status', label: 'Status de pagamento', className: 'w-[170px]' },
+  { key: 'status', label: 'Pagamento Condutor', className: 'w-[160px]' },
+  { key: 'status_detran', label: 'Pagamento DETRAN', className: 'w-[160px]' },
   { key: 'aceite', label: 'Aceite do condutor', className: 'w-[150px]' },
   { key: 'condutor', label: 'Condutor', className: 'w-[240px]' },
 
@@ -165,6 +166,7 @@ export default function MultasMinimalista() {
   const [descricao, setDescricao] = useState('');
   const [dataOcorrido, setDataOcorrido] = useState<Date>();
   const [statusForm, setStatusForm] = useState<'pendente' | 'pago'>('pendente');
+  const [statusDetranForm, setStatusDetranForm] = useState<'pendente' | 'pago'>('pendente');
 
   const { data: multas, isLoading, refetch, isRefetching, createMulta, updateMulta, deleteMulta } = useMultas();
   const { data: users } = useAllUsers();
@@ -178,6 +180,7 @@ export default function MultasMinimalista() {
     setDescricao('');
     setDataOcorrido(undefined);
     setStatusForm('pendente');
+    setStatusDetranForm('pendente');
   };
 
   const abrirNova = () => {
@@ -202,6 +205,7 @@ export default function MultasMinimalista() {
     setDescricao(m.descricao || '');
     setDataOcorrido(m.data_ocorrido ? parseData(m.data_ocorrido) : undefined);
     setStatusForm(m.status === 'pago' ? 'pago' : 'pendente');
+    setStatusDetranForm(m.status_detran === 'pago' ? 'pago' : 'pendente');
     setDialogOpen(true);
   };
 
@@ -217,6 +221,7 @@ export default function MultasMinimalista() {
         case 'data_ocorrido': return m.data_ocorrido || '';
         case 'descricao': return (m.descricao || '').toLowerCase();
         case 'status': return m.status;
+        case 'status_detran': return m.status_detran === 'pago' ? 1 : 0;
         case 'aceite': return m.aceite_condutor ? 1 : 0;
         
         case 'condutor': return (m.responsavel_pagamento === 'empresa' ? 'empresa' : (m.usuario_nome || '')).toLowerCase();
@@ -263,6 +268,7 @@ export default function MultasMinimalista() {
       data_ocorrido: format(dataOcorrido, 'yyyy-MM-dd'),
       descricao: descricao || null,
       status: statusForm,
+      status_detran: statusDetranForm,
       responsavel_pagamento: tipoResponsavel === 'empresa' ? 'empresa' : 'condutor',
     };
 
@@ -470,7 +476,7 @@ export default function MultasMinimalista() {
               {linhas.length > 0 && (
                 <tfoot>
                   <tr className="bg-white/10 border-t border-white/10 font-semibold text-white/80">
-                    <td className="px-3 py-2" colSpan={5}>{linhas.length} multa(s)</td>
+                    <td className="px-3 py-2" colSpan={6}>{linhas.length} multa(s)</td>
                     <td className="px-3 py-2 text-right tabular-nums">
                       {formatCurrency(linhas.reduce((s, m) => s + Number(m.valor), 0))}
                     </td>
