@@ -158,14 +158,13 @@ export default function MultasMinimalista() {
   const [sortDir, setSortDir] = useState<SortDir>('desc');
 
   // Form
-  const [tipoResponsavel, setTipoResponsavel] = useState<'colaborador' | 'terceiro' | 'aguardando'>('colaborador');
+  const [tipoResponsavel, setTipoResponsavel] = useState<'colaborador' | 'terceiro' | 'empresa' | 'aguardando'>('colaborador');
   const [usuarioId, setUsuarioId] = useState('');
   const [terceiroNome, setTerceiroNome] = useState('');
   const [valor, setValor] = useState('');
   const [descricao, setDescricao] = useState('');
   const [dataOcorrido, setDataOcorrido] = useState<Date>();
   const [statusForm, setStatusForm] = useState<'pendente' | 'pago'>('pendente');
-  const [responsavelPagamento, setResponsavelPagamento] = useState<'condutor' | 'empresa'>('condutor');
 
   const { data: multas, isLoading, refetch, isRefetching, createMulta, updateMulta, deleteMulta } = useMultas();
   const { data: users } = useAllUsers();
@@ -179,7 +178,6 @@ export default function MultasMinimalista() {
     setDescricao('');
     setDataOcorrido(undefined);
     setStatusForm('pendente');
-    setResponsavelPagamento('condutor');
   };
 
   const abrirNova = () => {
@@ -189,16 +187,24 @@ export default function MultasMinimalista() {
 
   const abrirEdicao = (m: Multa) => {
     setEditando(m);
-    setTipoResponsavel(m.usuario_id ? 'colaborador' : (m.terceiro_nome ? 'terceiro' : 'aguardando'));
+    setTipoResponsavel(
+      m.responsavel_pagamento === 'empresa'
+        ? 'empresa'
+        : m.usuario_id
+          ? 'colaborador'
+          : m.terceiro_nome
+            ? 'terceiro'
+            : 'aguardando'
+    );
     setUsuarioId(m.usuario_id || '');
     setTerceiroNome(m.terceiro_nome || '');
     setValor(String(m.valor));
     setDescricao(m.descricao || '');
     setDataOcorrido(m.data_ocorrido ? parseData(m.data_ocorrido) : undefined);
     setStatusForm(m.status === 'pago' ? 'pago' : 'pendente');
-    setResponsavelPagamento(m.responsavel_pagamento === 'empresa' ? 'empresa' : 'condutor');
     setDialogOpen(true);
   };
+
 
   const linhas = useMemo(() => {
     const s = searchTerm.toLowerCase().trim();
