@@ -493,9 +493,9 @@ export default function MultasMinimalista() {
           </DialogHeader>
           <div className="space-y-4 mt-2">
             <div>
-              <label className="text-sm text-white/70 mb-1 block">Tipo de condutor</label>
-              <div className="grid grid-cols-3 gap-2">
-                {(['colaborador', 'terceiro', 'aguardando'] as const).map(tipo => (
+              <label className="text-sm text-white/70 mb-1 block">Condutor</label>
+              <div className="grid grid-cols-2 gap-2">
+                {(['colaborador', 'terceiro', 'empresa', 'aguardando'] as const).map(tipo => (
                   <button
                     key={tipo}
                     type="button"
@@ -517,7 +517,12 @@ export default function MultasMinimalista() {
               <div className="rounded-md border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
                 Multa sem condutor definido — aguardando transferência de pontuação.
               </div>
+            ) : tipoResponsavel === 'empresa' ? (
+              <div className="rounded-md border border-blue-400/30 bg-blue-500/10 px-3 py-2 text-sm text-blue-200">
+                Multa assumida pela empresa — sem acréscimo por falta de transferência.
+              </div>
             ) : tipoResponsavel === 'colaborador' ? (
+
               <div>
                 <label className="text-sm text-white/70 mb-1 block">Condutor</label>
                 <select
