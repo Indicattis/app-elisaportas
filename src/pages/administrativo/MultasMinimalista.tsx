@@ -639,6 +639,30 @@ export default function MultasMinimalista() {
               </div>
             </div>
 
+            <div>
+              <label className="text-sm text-white/70 mb-1 block">Pagamento DETRAN</label>
+              <div className="grid grid-cols-2 gap-2">
+                {(['pendente', 'pago'] as const).map(st => (
+                  <button
+                    key={st}
+                    type="button"
+                    onClick={() => setStatusDetranForm(st)}
+                    className={cn(
+                      'h-10 rounded-md border text-sm capitalize transition',
+                      statusDetranForm === st
+                        ? st === 'pago'
+                          ? 'bg-emerald-500/20 border-emerald-400/50 text-white'
+                          : 'bg-amber-500/20 border-amber-400/50 text-white'
+                        : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
+                    )}
+                  >
+                    {st}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+
             <Button
               onClick={handleSubmit}
               disabled={
