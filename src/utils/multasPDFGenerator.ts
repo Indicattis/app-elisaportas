@@ -184,8 +184,9 @@ export function exportMultasPDF(multas: Multa[]) {
       9: { cellWidth: 30, halign: "right", fontStyle: "bold" },
     },
     margin: { left: margin, right: margin, top: 14, bottom: 16 },
-    willDrawPage: () => {
-      paintBackground();
+    showFoot: "lastPage",
+    willDrawPage: (data) => {
+      if (data.pageNumber > 1) paintBackground();
     },
     didParseCell: (data) => {
       if (data.section === "foot") {
