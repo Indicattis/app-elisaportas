@@ -31,10 +31,11 @@ function formatCurrency(value: number): string {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 }
 
-type SortKey = 'data_ocorrido' | 'descricao' | 'status' | 'aceite' | 'condutor' | 'pagador' | 'dias' | 'valor' | 'acrescimo' | 'total';
+type SortKey = 'data_ocorrido' | 'descricao' | 'status' | 'aceite' | 'condutor' | 'dias' | 'valor' | 'acrescimo' | 'total';
 
 const MULTIPLICADOR_ACRESCIMO = 3;
-const semCondutor = (m: Multa) => !m.usuario_id && !m.terceiro_nome;
+const isEmpresa = (m: Multa) => m.responsavel_pagamento === 'empresa';
+const semCondutor = (m: Multa) => !m.usuario_id && !m.terceiro_nome && !isEmpresa(m);
 const acrescimoMulta = (m: Multa) => (semCondutor(m) ? Number(m.valor) * MULTIPLICADOR_ACRESCIMO : 0);
 const totalMulta = (m: Multa) => Number(m.valor) + acrescimoMulta(m);
 type SortDir = 'asc' | 'desc';
@@ -44,8 +45,8 @@ const COLUNAS: { key: SortKey; label: string; className: string }[] = [
   { key: 'descricao', label: 'Descrição', className: '' },
   { key: 'status', label: 'Status de pagamento', className: 'w-[170px]' },
   { key: 'aceite', label: 'Aceite do condutor', className: 'w-[150px]' },
-  { key: 'condutor', label: 'Condutor', className: 'w-[220px]' },
-  { key: 'pagador', label: 'Responsável pelo pagamento', className: 'w-[200px]' },
+  { key: 'condutor', label: 'Condutor', className: 'w-[240px]' },
+
   { key: 'dias', label: 'Dias desde a criação', className: 'w-[160px] text-right' },
   { key: 'valor', label: 'Valor da multa', className: 'w-[140px] text-right' },
   { key: 'acrescimo', label: 'Acréscimo (3x)', className: 'w-[140px] text-right' },
@@ -54,18 +55,22 @@ const COLUNAS: { key: SortKey; label: string; className: string }[] = [
 
 const parseData = (d: string) => parseISO(d + 'T12:00:00');
 
+type CondutorPatch = { usuario_id: string | null; terceiro_nome: string | null; responsavel_pagamento: string };
+
 interface CondutorCellProps {
   multa: Multa;
   users: { id: string; nome: string }[];
-  onSelect: (patch: { usuario_id: string | null; terceiro_nome: string | null }) => void;
+  onSelect: (patch: CondutorPatch) => void;
 }
 
 function CondutorCell({ multa, users, onSelect }: CondutorCellProps) {
   const [open, setOpen] = useState(false);
-  const aguardando = !multa.usuario_id && !multa.terceiro_nome;
-  const isTerceiro = !multa.usuario_id && !!multa.terceiro_nome;
+  const empresa = isEmpresa(multa);
+  const aguardando = !empresa && !multa.usuario_id && !multa.terceiro_nome;
+  const isTerceiro = !empresa && !multa.usuario_id && !!multa.terceiro_nome;
+  const label = empresa ? 'Empresa' : multa.usuario_nome;
 
-  const escolher = (patch: { usuario_id: string | null; terceiro_nome: string | null }) => {
+  const escolher = (patch: CondutorPatch) => {
     onSelect(patch);
     setOpen(false);
   };
@@ -74,21 +79,23 @@ function CondutorCell({ multa, users, onSelect }: CondutorCellProps) {
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button className="flex items-center gap-2 min-w-0 w-full text-left rounded-md px-1 py-0.5 -mx-1 hover:bg-white/10 transition-colors">
-          {multa.usuario_foto ? (
+          {!empresa && multa.usuario_foto ? (
             <img src={multa.usuario_foto} alt={multa.usuario_nome} className="w-6 h-6 rounded-full object-cover border border-white/20" />
           ) : (
             <div className={cn(
               'w-6 h-6 shrink-0 rounded-full flex items-center justify-center text-[10px] font-bold text-white border border-white/20',
-              aguardando
-                ? 'bg-gradient-to-br from-zinc-600 to-zinc-800'
-                : isTerceiro
-                  ? 'bg-gradient-to-br from-purple-500 to-purple-700'
-                  : 'bg-gradient-to-br from-blue-500 to-blue-700'
+              empresa
+                ? 'bg-gradient-to-br from-blue-500 to-blue-700'
+                : aguardando
+                  ? 'bg-gradient-to-br from-zinc-600 to-zinc-800'
+                  : isTerceiro
+                    ? 'bg-gradient-to-br from-purple-500 to-purple-700'
+                    : 'bg-gradient-to-br from-blue-500 to-blue-700'
             )}>
-              {aguardando ? <Clock className="w-3 h-3" /> : isTerceiro ? <User className="w-3 h-3" /> : (multa.usuario_nome?.charAt(0) || '?').toUpperCase()}
+              {empresa ? <Building2 className="w-3 h-3" /> : aguardando ? <Clock className="w-3 h-3" /> : isTerceiro ? <User className="w-3 h-3" /> : (multa.usuario_nome?.charAt(0) || '?').toUpperCase()}
             </div>
           )}
-          <span className={cn('truncate', aguardando ? 'text-amber-300 italic' : 'text-white/85')}>{multa.usuario_nome}</span>
+          <span className={cn('truncate', empresa ? 'text-blue-300' : aguardando ? 'text-amber-300 italic' : 'text-white/85')}>{label}</span>
           {isTerceiro && (
             <Badge variant="outline" className="border-purple-500/30 text-purple-300 text-[9px] px-1 py-0">Terceiro</Badge>
           )}
@@ -102,8 +109,17 @@ function CondutorCell({ multa, users, onSelect }: CondutorCellProps) {
             <CommandEmpty className="py-4 text-center text-sm text-white/50">Nenhum colaborador encontrado</CommandEmpty>
             <CommandGroup>
               <CommandItem
+                value="Empresa"
+                onSelect={() => escolher({ usuario_id: null, terceiro_nome: null, responsavel_pagamento: 'empresa' })}
+                className="text-blue-300 aria-selected:bg-blue-500/15"
+              >
+                <Building2 className="w-4 h-4 mr-2" />
+                Empresa
+                {empresa && <Check className="w-4 h-4 ml-auto" />}
+              </CommandItem>
+              <CommandItem
                 value="Aguardando transferência"
-                onSelect={() => escolher({ usuario_id: null, terceiro_nome: null })}
+                onSelect={() => escolher({ usuario_id: null, terceiro_nome: null, responsavel_pagamento: 'condutor' })}
                 className="text-amber-300 aria-selected:bg-amber-500/15"
               >
                 <Clock className="w-4 h-4 mr-2" />
@@ -116,7 +132,7 @@ function CondutorCell({ multa, users, onSelect }: CondutorCellProps) {
                 <CommandItem
                   key={u.id}
                   value={u.nome}
-                  onSelect={() => escolher({ usuario_id: u.id, terceiro_nome: null })}
+                  onSelect={() => escolher({ usuario_id: u.id, terceiro_nome: null, responsavel_pagamento: 'condutor' })}
                   className="text-white/85 aria-selected:bg-blue-500/15"
                 >
                   <User className="w-4 h-4 mr-2 text-white/40" />
@@ -132,6 +148,7 @@ function CondutorCell({ multa, users, onSelect }: CondutorCellProps) {
   );
 }
 
+
 export default function MultasMinimalista() {
   const [searchTerm, setSearchTerm] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -141,14 +158,13 @@ export default function MultasMinimalista() {
   const [sortDir, setSortDir] = useState<SortDir>('desc');
 
   // Form
-  const [tipoResponsavel, setTipoResponsavel] = useState<'colaborador' | 'terceiro' | 'aguardando'>('colaborador');
+  const [tipoResponsavel, setTipoResponsavel] = useState<'colaborador' | 'terceiro' | 'empresa' | 'aguardando'>('colaborador');
   const [usuarioId, setUsuarioId] = useState('');
   const [terceiroNome, setTerceiroNome] = useState('');
   const [valor, setValor] = useState('');
   const [descricao, setDescricao] = useState('');
   const [dataOcorrido, setDataOcorrido] = useState<Date>();
   const [statusForm, setStatusForm] = useState<'pendente' | 'pago'>('pendente');
-  const [responsavelPagamento, setResponsavelPagamento] = useState<'condutor' | 'empresa'>('condutor');
 
   const { data: multas, isLoading, refetch, isRefetching, createMulta, updateMulta, deleteMulta } = useMultas();
   const { data: users } = useAllUsers();
@@ -162,7 +178,6 @@ export default function MultasMinimalista() {
     setDescricao('');
     setDataOcorrido(undefined);
     setStatusForm('pendente');
-    setResponsavelPagamento('condutor');
   };
 
   const abrirNova = () => {
@@ -172,16 +187,24 @@ export default function MultasMinimalista() {
 
   const abrirEdicao = (m: Multa) => {
     setEditando(m);
-    setTipoResponsavel(m.usuario_id ? 'colaborador' : (m.terceiro_nome ? 'terceiro' : 'aguardando'));
+    setTipoResponsavel(
+      m.responsavel_pagamento === 'empresa'
+        ? 'empresa'
+        : m.usuario_id
+          ? 'colaborador'
+          : m.terceiro_nome
+            ? 'terceiro'
+            : 'aguardando'
+    );
     setUsuarioId(m.usuario_id || '');
     setTerceiroNome(m.terceiro_nome || '');
     setValor(String(m.valor));
     setDescricao(m.descricao || '');
     setDataOcorrido(m.data_ocorrido ? parseData(m.data_ocorrido) : undefined);
     setStatusForm(m.status === 'pago' ? 'pago' : 'pendente');
-    setResponsavelPagamento(m.responsavel_pagamento === 'empresa' ? 'empresa' : 'condutor');
     setDialogOpen(true);
   };
+
 
   const linhas = useMemo(() => {
     const s = searchTerm.toLowerCase().trim();
@@ -195,8 +218,8 @@ export default function MultasMinimalista() {
         case 'descricao': return (m.descricao || '').toLowerCase();
         case 'status': return m.status;
         case 'aceite': return m.aceite_condutor ? 1 : 0;
-        case 'condutor': return (m.usuario_nome || '').toLowerCase();
-        case 'pagador': return m.responsavel_pagamento === 'empresa' ? 1 : 0;
+        
+        case 'condutor': return (m.responsavel_pagamento === 'empresa' ? 'empresa' : (m.usuario_nome || '')).toLowerCase();
         case 'dias': return differenceInCalendarDays(new Date(), new Date(m.created_at));
         case 'valor': return Number(m.valor);
         case 'acrescimo': return acrescimoMulta(m);
@@ -228,20 +251,21 @@ export default function MultasMinimalista() {
 
   const handleSubmit = () => {
     const isColab = tipoResponsavel === 'colaborador';
-    const isAguardando = tipoResponsavel === 'aguardando';
+    const isTerceiro = tipoResponsavel === 'terceiro';
     if (!valor || !dataOcorrido) return;
     if (isColab && !usuarioId) return;
-    if (!isColab && !isAguardando && !terceiroNome.trim()) return;
+    if (isTerceiro && !terceiroNome.trim()) return;
 
     const payload = {
       usuario_id: isColab ? usuarioId : null,
-      terceiro_nome: isColab || isAguardando ? null : terceiroNome.trim(),
+      terceiro_nome: isTerceiro ? terceiroNome.trim() : null,
       valor: Number(valor),
       data_ocorrido: format(dataOcorrido, 'yyyy-MM-dd'),
       descricao: descricao || null,
       status: statusForm,
-      responsavel_pagamento: responsavelPagamento,
+      responsavel_pagamento: tipoResponsavel === 'empresa' ? 'empresa' : 'condutor',
     };
+
 
     if (editando) {
       updateMulta.mutate({ id: editando.id, ...payload }, {
@@ -412,21 +436,6 @@ export default function MultasMinimalista() {
                             onSelect={(patch) => updateMulta.mutate({ id: m.id, ...patch })}
                           />
                         </td>
-                        <td className="px-3 py-2 border-r border-white/5">
-                          <button
-                            onClick={() => updateMulta.mutate({ id: m.id, responsavel_pagamento: m.responsavel_pagamento === 'empresa' ? 'condutor' : 'empresa' })}
-                            className={cn(
-                              'inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[11px] font-medium border transition-colors',
-                              m.responsavel_pagamento === 'empresa'
-                                ? 'bg-blue-500/15 text-blue-300 border-blue-500/30 hover:bg-blue-500/25'
-                                : 'bg-purple-500/15 text-purple-300 border-purple-500/30 hover:bg-purple-500/25'
-                            )}
-                            title="Clique para alternar o responsável pelo pagamento"
-                          >
-                            {m.responsavel_pagamento === 'empresa' ? <Building2 className="w-3 h-3" /> : <User className="w-3 h-3" />}
-                            {m.responsavel_pagamento === 'empresa' ? 'Empresa' : 'Condutor'}
-                          </button>
-                        </td>
                         <td className="px-3 py-2 text-right text-white/70 border-r border-white/5 tabular-nums">
                           {dias} {dias === 1 ? 'dia' : 'dias'}
                         </td>
@@ -461,7 +470,7 @@ export default function MultasMinimalista() {
               {linhas.length > 0 && (
                 <tfoot>
                   <tr className="bg-white/10 border-t border-white/10 font-semibold text-white/80">
-                    <td className="px-3 py-2" colSpan={6}>{linhas.length} multa(s)</td>
+                    <td className="px-3 py-2" colSpan={5}>{linhas.length} multa(s)</td>
                     <td className="px-3 py-2 text-right tabular-nums">
                       {formatCurrency(linhas.reduce((s, m) => s + Number(m.valor), 0))}
                     </td>
@@ -484,9 +493,9 @@ export default function MultasMinimalista() {
           </DialogHeader>
           <div className="space-y-4 mt-2">
             <div>
-              <label className="text-sm text-white/70 mb-1 block">Tipo de condutor</label>
-              <div className="grid grid-cols-3 gap-2">
-                {(['colaborador', 'terceiro', 'aguardando'] as const).map(tipo => (
+              <label className="text-sm text-white/70 mb-1 block">Condutor</label>
+              <div className="grid grid-cols-2 gap-2">
+                {(['colaborador', 'terceiro', 'empresa', 'aguardando'] as const).map(tipo => (
                   <button
                     key={tipo}
                     type="button"
@@ -508,7 +517,12 @@ export default function MultasMinimalista() {
               <div className="rounded-md border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
                 Multa sem condutor definido — aguardando transferência de pontuação.
               </div>
+            ) : tipoResponsavel === 'empresa' ? (
+              <div className="rounded-md border border-blue-400/30 bg-blue-500/10 px-3 py-2 text-sm text-blue-200">
+                Multa assumida pela empresa — sem acréscimo por falta de transferência.
+              </div>
             ) : tipoResponsavel === 'colaborador' ? (
+
               <div>
                 <label className="text-sm text-white/70 mb-1 block">Condutor</label>
                 <select
@@ -565,29 +579,6 @@ export default function MultasMinimalista() {
               />
             </div>
 
-            <div>
-              <label className="text-sm text-white/70 mb-1 block">Responsável pelo pagamento</label>
-              <div className="grid grid-cols-2 gap-2">
-                {(['condutor', 'empresa'] as const).map(rp => (
-                  <button
-                    key={rp}
-                    type="button"
-                    onClick={() => setResponsavelPagamento(rp)}
-                    className={cn(
-                      'h-10 rounded-md border text-sm capitalize transition inline-flex items-center justify-center gap-2',
-                      responsavelPagamento === rp
-                        ? rp === 'empresa'
-                          ? 'bg-blue-500/20 border-blue-400/50 text-white'
-                          : 'bg-purple-500/20 border-purple-400/50 text-white'
-                        : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
-                    )}
-                  >
-                    {rp === 'empresa' ? <Building2 className="w-4 h-4" /> : <User className="w-4 h-4" />}
-                    {rp}
-                  </button>
-                ))}
-              </div>
-            </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
