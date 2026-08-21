@@ -31,10 +31,11 @@ function formatCurrency(value: number): string {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 }
 
-type SortKey = 'data_ocorrido' | 'descricao' | 'status' | 'aceite' | 'condutor' | 'pagador' | 'dias' | 'valor' | 'acrescimo' | 'total';
+type SortKey = 'data_ocorrido' | 'descricao' | 'status' | 'aceite' | 'condutor' | 'dias' | 'valor' | 'acrescimo' | 'total';
 
 const MULTIPLICADOR_ACRESCIMO = 3;
-const semCondutor = (m: Multa) => !m.usuario_id && !m.terceiro_nome;
+const isEmpresa = (m: Multa) => m.responsavel_pagamento === 'empresa';
+const semCondutor = (m: Multa) => !m.usuario_id && !m.terceiro_nome && !isEmpresa(m);
 const acrescimoMulta = (m: Multa) => (semCondutor(m) ? Number(m.valor) * MULTIPLICADOR_ACRESCIMO : 0);
 const totalMulta = (m: Multa) => Number(m.valor) + acrescimoMulta(m);
 type SortDir = 'asc' | 'desc';
@@ -44,8 +45,8 @@ const COLUNAS: { key: SortKey; label: string; className: string }[] = [
   { key: 'descricao', label: 'Descrição', className: '' },
   { key: 'status', label: 'Status de pagamento', className: 'w-[170px]' },
   { key: 'aceite', label: 'Aceite do condutor', className: 'w-[150px]' },
-  { key: 'condutor', label: 'Condutor', className: 'w-[220px]' },
-  { key: 'pagador', label: 'Responsável pelo pagamento', className: 'w-[200px]' },
+  { key: 'condutor', label: 'Condutor', className: 'w-[240px]' },
+
   { key: 'dias', label: 'Dias desde a criação', className: 'w-[160px] text-right' },
   { key: 'valor', label: 'Valor da multa', className: 'w-[140px] text-right' },
   { key: 'acrescimo', label: 'Acréscimo (3x)', className: 'w-[140px] text-right' },
