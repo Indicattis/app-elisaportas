@@ -5312,6 +5312,7 @@ export type Database = {
           id: string
           responsavel_pagamento: string
           status: string
+          status_detran: string
           terceiro_nome: string | null
           updated_at: string
           usuario_id: string | null
@@ -5326,6 +5327,7 @@ export type Database = {
           id?: string
           responsavel_pagamento?: string
           status?: string
+          status_detran?: string
           terceiro_nome?: string | null
           updated_at?: string
           usuario_id?: string | null
@@ -5340,6 +5342,7 @@ export type Database = {
           id?: string
           responsavel_pagamento?: string
           status?: string
+          status_detran?: string
           terceiro_nome?: string | null
           updated_at?: string
           usuario_id?: string | null

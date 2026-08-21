@@ -1,0 +1,1 @@
+ALTER TABLE public.multas ADD COLUMN IF NOT EXISTS status_detran text NOT NULL DEFAULT 'pendente';
