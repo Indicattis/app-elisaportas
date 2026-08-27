@@ -241,6 +241,7 @@ import FaturamentoDirecao from "./pages/direcao/FaturamentoDirecao";
 import FaturamentoVendaDirecao from "./pages/direcao/FaturamentoVendaDirecao";
 import GestaoFabricaDirecao from "./pages/direcao/GestaoFabricaDirecao";
 import GestaoColaboradoresDirecao from "./pages/direcao/GestaoColaboradoresDirecao";
+import ProcessosJusticaDirecao from "./pages/direcao/ProcessosJusticaDirecao";
 import GestaoInstalacaoDirecao from "./pages/direcao/GestaoInstalacaoDirecao";
 import OrdensInstalacoesDirecao from "./pages/direcao/OrdensInstalacoesDirecao";
 import CalendarioExpedicaoDirecao from "./pages/direcao/CalendarioExpedicaoDirecao";
