@@ -291,6 +291,135 @@ export default function ProcessosJusticaDirecao() {
                     </td>
                   </tr>
                 ))}
+                {inlineOpen ? (
+                  <tr className="border-t border-blue-400/30 bg-blue-500/[0.06]">
+                    <td className="px-2 py-2">
+                      <Select
+                        value={inline.modelo}
+                        onValueChange={(v) =>
+                          setInline((f) => ({ ...f, modelo: v as ProcessoModelo }))
+                        }
+                      >
+                        <SelectTrigger className="h-8 text-xs bg-white/5 border-white/10">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="trabalhista">Trabalhista</SelectItem>
+                          <SelectItem value="judicial">Judicial</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </td>
+                    <td className="px-2 py-2">
+                      <Input
+                        autoFocus
+                        value={inline.nome}
+                        onChange={(e) => setInline((f) => ({ ...f, nome: e.target.value }))}
+                        onKeyDown={onInlineKeyDown}
+                        placeholder="Nome do processo / parte"
+                        className="h-8 text-xs bg-white/5 border-white/10"
+                      />
+                    </td>
+                    <td className="px-2 py-2">
+                      <Input
+                        inputMode="decimal"
+                        value={inline.acordo_sugerido_valor}
+                        onChange={(e) =>
+                          setInline((f) => ({ ...f, acordo_sugerido_valor: e.target.value }))
+                        }
+                        onKeyDown={onInlineKeyDown}
+                        placeholder="0,00"
+                        className="h-8 text-xs text-right bg-white/5 border-white/10"
+                      />
+                    </td>
+                    <td className="px-2 py-2">
+                      <div className="flex items-center gap-1">
+                        <Input
+                          inputMode="decimal"
+                          disabled={inline.sem_acordo}
+                          value={inline.sem_acordo ? '' : inline.acordo_proposto_valor}
+                          onChange={(e) =>
+                            setInline((f) => ({ ...f, acordo_proposto_valor: e.target.value }))
+                          }
+                          onKeyDown={onInlineKeyDown}
+                          placeholder={inline.sem_acordo ? 'Sem acordo' : '0,00'}
+                          className="h-8 text-xs text-right bg-white/5 border-white/10"
+                        />
+                        <button
+                          type="button"
+                          title="Sem acordo"
+                          onClick={() => setInline((f) => ({ ...f, sem_acordo: !f.sem_acordo }))}
+                          className={`shrink-0 px-2 h-8 rounded-md text-[10px] border transition-colors ${
+                            inline.sem_acordo
+                              ? 'bg-red-500/20 text-red-300 border-red-400/30'
+                              : 'bg-white/5 text-white/40 border-white/10'
+                          }`}
+                        >
+                          S/A
+                        </button>
+                      </div>
+                    </td>
+                    <td className="px-2 py-2">
+                      <Input
+                        inputMode="decimal"
+                        value={inline.valor_final}
+                        onChange={(e) => setInline((f) => ({ ...f, valor_final: e.target.value }))}
+                        onKeyDown={onInlineKeyDown}
+                        placeholder="0,00"
+                        className="h-8 text-xs text-right bg-white/5 border-white/10"
+                      />
+                    </td>
+                    <td className="px-2 py-2">
+                      <Select
+                        value={inline.status}
+                        onValueChange={(v) =>
+                          setInline((f) => ({ ...f, status: v as ProcessoStatus }))
+                        }
+                      >
+                        <SelectTrigger className="h-8 text-xs bg-white/5 border-white/10">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="em_andamento">Em andamento</SelectItem>
+                          <SelectItem value="encerrado">Encerrado</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </td>
+                    <td className="px-2 py-2 text-center text-white/30 text-xs">—</td>
+                    <td className="px-2 py-2 text-right whitespace-nowrap">
+                      <Button
+                        size="sm"
+                        className="h-8 px-2"
+                        onClick={salvarInline}
+                        disabled={!inline.nome.trim() || criar.isPending}
+                      >
+                        <Check className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-8 px-2"
+                        onClick={() => setInlineOpen(false)}
+                      >
+                        <X className="w-4 h-4 text-white/50" />
+                      </Button>
+                    </td>
+                  </tr>
+                ) : (
+                  <tr
+                    className="border-t border-white/5 cursor-pointer hover:bg-white/[0.06] transition-colors"
+                    onClick={() => {
+                      setInline(emptyForm);
+                      setInlineOpen(true);
+                    }}
+                  >
+                    <td colSpan={8} className="px-4 py-3 text-xs text-white/40">
+                      <span className="inline-flex items-center gap-2">
+                        <Plus className="w-3.5 h-3.5" />
+                        Adicionar linha rapidamente
+                      </span>
+                    </td>
+                  </tr>
+                )}
               </tbody>
               {processos.length > 0 && (
                 <tfoot>
