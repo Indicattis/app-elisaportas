@@ -206,7 +206,21 @@ function SortableProcessoRow({ p, zebra, onSelect, onEdit, onDelete }: SortableP
 
 export default function ProcessosJusticaDirecao() {
   const { userRole } = useAuth();
-  const { processos, isLoading, criar, atualizar, excluir } = useProcessosJustica();
+  const { processos, isLoading, criar, atualizar, excluir, reordenar } = useProcessosJustica();
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = processos.findIndex((p) => p.id === active.id);
+    const newIndex = processos.findIndex((p) => p.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+    reordenar.mutate(arrayMove(processos, oldIndex, newIndex));
+  };
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
