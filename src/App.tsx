@@ -611,6 +611,9 @@ const App = () => (
                 {/* Organograma RH */}
                 <Route path="/direcao/gestao-colaboradores" element={<ProtectedRoute routeKey="direcao_gestao_colaboradores"><GestaoColaboradoresDirecao /></ProtectedRoute>} />
 
+                {/* Processos Justiça */}
+                <Route path="/direcao/processos-justica" element={<ProtectedRoute routeKey="direcao_processos_justica"><ProcessosJusticaDirecao /></ProtectedRoute>} />
+
                 {/* Hub de Aprovações da Direção */}
                 <Route path="/direcao/aprovacoes" element={<ProtectedRoute routeKey="direcao_aprovacoes"><DirecaoAprovacoesHub /></ProtectedRoute>} />
                 <Route path="/direcao/aprovacoes/pedidos" element={<ProtectedRoute routeKey="direcao_aprovacoes_pedidos"><AprovacoesPedidos /></ProtectedRoute>} />
