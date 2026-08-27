@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Gavel, Plus, Trash2, MessageSquarePlus } from 'lucide-react';
+import { Gavel, Plus, Trash2, MessageSquarePlus, Check, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
