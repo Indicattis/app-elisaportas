@@ -1,0 +1,1 @@
+UPDATE public.app_routes SET interface = 'padrao', updated_at = now() WHERE key = 'direcao_processos_justica';
