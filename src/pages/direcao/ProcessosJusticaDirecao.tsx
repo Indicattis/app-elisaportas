@@ -103,6 +103,33 @@ export default function ProcessosJusticaDirecao() {
     );
   }, [processos]);
 
+  const [inlineOpen, setInlineOpen] = useState(false);
+  const [inline, setInline] = useState<FormState>(emptyForm);
+
+  const salvarInline = async () => {
+    if (!inline.nome.trim()) return;
+    await criar.mutateAsync({
+      modelo: inline.modelo,
+      nome: inline.nome.trim(),
+      acordo_sugerido_valor: parseNum(inline.acordo_sugerido_valor),
+      acordo_sugerido_texto: inline.acordo_sugerido_texto.trim() || null,
+      acordo_proposto_valor: inline.sem_acordo ? null : parseNum(inline.acordo_proposto_valor),
+      sem_acordo: inline.sem_acordo,
+      valor_final: parseNum(inline.valor_final),
+      status: inline.status,
+    });
+    setInline({ ...emptyForm, modelo: inline.modelo });
+  };
+
+  const onInlineKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      salvarInline();
+    } else if (e.key === 'Escape') {
+      setInlineOpen(false);
+    }
+  };
+
   const abrirNovo = () => {
     setEditingId(null);
     setForm(emptyForm);
