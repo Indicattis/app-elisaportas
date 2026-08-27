@@ -527,7 +527,7 @@ export default function ProcessosJusticaDirecao() {
                       setInlineOpen(true);
                     }}
                   >
-                    <td colSpan={8} className="px-4 py-3 text-xs text-white/40">
+                    <td colSpan={9} className="px-4 py-3 text-xs text-white/40">
                       <span className="inline-flex items-center gap-2">
                         <Plus className="w-3.5 h-3.5" />
                         Adicionar linha rapidamente
