@@ -33,7 +33,7 @@ export interface ProcessoAtualizacao {
 
 export type ProcessoInput = Omit<
   ProcessoJustica,
-  'id' | 'created_at' | 'updated_at' | 'created_by' | 'atualizacoes_count'
+  'id' | 'created_at' | 'updated_at' | 'created_by' | 'atualizacoes_count' | 'ordem'
 >;
 
 export function useProcessosJustica() {
@@ -45,6 +45,7 @@ export function useProcessosJustica() {
       const { data, error } = await supabase
         .from('processos_justica')
         .select('*')
+        .order('ordem', { ascending: true })
         .order('created_at', { ascending: false });
       if (error) throw error;
 
