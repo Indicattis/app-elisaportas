@@ -354,6 +354,7 @@ export default function ProcessosJusticaDirecao() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-blue-500/10 text-white/70 text-[11px] uppercase tracking-wide">
+                  <th className="px-2 py-3 w-8" />
                   <th className="text-left font-medium px-4 py-3">Modelo</th>
                   <th className="text-left font-medium px-4 py-3">Nome</th>
                   <th className="text-right font-medium px-4 py-3">Acordo Sugerido</th>
