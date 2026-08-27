@@ -122,12 +122,41 @@ export function useProcessosJustica() {
     onError: (e: any) => toast.error(e.message || 'Erro ao excluir processo'),
   });
 
+  const reordenar = useMutation({
+    mutationFn: async (ordenados: ProcessoJustica[]) => {
+      const results = await Promise.all(
+        ordenados.map((p, index) =>
+          supabase.from('processos_justica').update({ ordem: index }).eq('id', p.id),
+        ),
+      );
+      const failed = results.find((r) => r.error);
+      if (failed?.error) throw failed.error;
+    },
+    onMutate: async (ordenados) => {
+      await queryClient.cancelQueries({ queryKey: ['processos-justica'] });
+      const previous = queryClient.getQueryData<ProcessoJustica[]>(['processos-justica']);
+      queryClient.setQueryData<ProcessoJustica[]>(
+        ['processos-justica'],
+        ordenados.map((p, index) => ({ ...p, ordem: index })),
+      );
+      return { previous };
+    },
+    onError: (e: any, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['processos-justica'], context.previous);
+      }
+      toast.error(e.message || 'Erro ao reordenar processos');
+    },
+    onSettled: () => invalidate(),
+  });
+
   return {
     processos: query.data || [],
     isLoading: query.isLoading,
     criar,
     atualizar,
     excluir,
+    reordenar,
   };
 }
 
