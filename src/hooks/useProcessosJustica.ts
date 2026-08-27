@@ -15,6 +15,7 @@ export interface ProcessoJustica {
   sem_acordo: boolean;
   valor_final: number | null;
   status: ProcessoStatus;
+  ordem: number;
   created_by: string | null;
   created_at: string;
   updated_at: string;
