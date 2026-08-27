@@ -76,9 +76,16 @@ export function useProcessosJustica() {
   const criar = useMutation({
     mutationFn: async (input: ProcessoInput) => {
       const { data: userData } = await supabase.auth.getUser();
+      const { data: maxData } = await supabase
+        .from('processos_justica')
+        .select('ordem')
+        .order('ordem', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const proximaOrdem = ((maxData as any)?.ordem ?? -1) + 1;
       const { error } = await supabase
         .from('processos_justica')
-        .insert({ ...input, created_by: userData?.user?.id ?? null });
+        .insert({ ...input, ordem: proximaOrdem, created_by: userData?.user?.id ?? null });
       if (error) throw error;
     },
     onSuccess: () => {
