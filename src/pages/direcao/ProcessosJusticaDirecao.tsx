@@ -368,93 +368,43 @@ export default function ProcessosJusticaDirecao() {
               <tbody>
                 {isLoading && (
                   <tr>
-                    <td colSpan={8} className="px-4 py-8 text-center text-white/40">
+                    <td colSpan={9} className="px-4 py-8 text-center text-white/40">
                       Carregando...
                     </td>
                   </tr>
                 )}
                 {!isLoading && processos.length === 0 && (
                   <tr>
-                    <td colSpan={8} className="px-4 py-8 text-center text-white/40">
+                    <td colSpan={9} className="px-4 py-8 text-center text-white/40">
                       Nenhum processo cadastrado
                     </td>
                   </tr>
                 )}
-                {processos.map((p, i) => (
-                  <tr
-                    key={p.id}
-                    onClick={() => setSelecionado(p)}
-                    className={`cursor-pointer border-t border-white/5 hover:bg-white/10 transition-colors ${
-                      i % 2 === 1 ? 'bg-white/[0.02]' : ''
-                    }`}
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext
+                    items={processos.map((p) => p.id)}
+                    strategy={verticalListSortingStrategy}
                   >
-                    <td className="px-4 py-3">
-                      <span
-                        className={`px-2 py-0.5 rounded-full text-[11px] border ${
-                          p.modelo === 'trabalhista'
-                            ? 'bg-amber-500/15 text-amber-300 border-amber-400/30'
-                            : 'bg-blue-500/15 text-blue-300 border-blue-400/30'
-                        }`}
-                      >
-                        {modeloLabel[p.modelo]}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-white">{p.nome}</td>
-                    <td className="px-4 py-3 text-right text-white/80">
-                      {p.acordo_sugerido_valor !== null
-                        ? formatBRL(p.acordo_sugerido_valor)
-                        : p.acordo_sugerido_texto || '—'}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      {p.sem_acordo ? (
-                        <span className="text-red-300/80">Sem acordo</span>
-                      ) : (
-                        <span className="text-white/80">{formatBRL(p.acordo_proposto_valor)}</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-right text-white font-medium">
-                      {formatBRL(p.valor_final)}
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <span
-                        className={`px-2 py-0.5 rounded-full text-[11px] border ${
-                          p.status === 'encerrado'
-                            ? 'bg-emerald-500/15 text-emerald-300 border-emerald-400/30'
-                            : 'bg-orange-500/15 text-orange-300 border-orange-400/30'
-                        }`}
-                      >
-                        {statusLabel[p.status]}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-center text-white/60">
-                      {p.atualizacoes_count || 0}
-                    </td>
-                    <td className="px-4 py-3 text-right whitespace-nowrap">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          abrirEdicao(p);
-                        }}
-                      >
-                        Editar
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={(e) => {
-                          e.stopPropagation();
+                    {processos.map((p, i) => (
+                      <SortableProcessoRow
+                        key={p.id}
+                        p={p}
+                        zebra={i % 2 === 1}
+                        onSelect={setSelecionado}
+                        onEdit={abrirEdicao}
+                        onDelete={(proc) => {
                           if (confirm('Excluir este processo e suas atualizações?')) {
-                            excluir.mutate(p.id);
+                            excluir.mutate(proc.id);
                           }
                         }}
-                      >
-                        <Trash2 className="w-4 h-4 text-red-400" />
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
+                      />
+                    ))}
+                  </SortableContext>
+                </DndContext>
                 {inlineOpen ? (
                   <tr className="border-t border-blue-400/30 bg-blue-500/[0.06]">
                     <td className="px-2 py-2">
