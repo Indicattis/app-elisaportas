@@ -407,6 +407,7 @@ export default function ProcessosJusticaDirecao() {
                 </DndContext>
                 {inlineOpen ? (
                   <tr className="border-t border-blue-400/30 bg-blue-500/[0.06]">
+                    <td className="px-2 py-2 w-8" />
                     <td className="px-2 py-2">
                       <Select
                         value={inline.modelo}
