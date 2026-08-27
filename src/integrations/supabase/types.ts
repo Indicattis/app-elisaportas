@@ -8049,6 +8049,86 @@ export type Database = {
         }
         Relationships: []
       }
+      processos_justica: {
+        Row: {
+          acordo_proposto_valor: number | null
+          acordo_sugerido_texto: string | null
+          acordo_sugerido_valor: number | null
+          created_at: string
+          created_by: string | null
+          id: string
+          modelo: string
+          nome: string
+          sem_acordo: boolean
+          status: string
+          updated_at: string
+          valor_final: number | null
+        }
+        Insert: {
+          acordo_proposto_valor?: number | null
+          acordo_sugerido_texto?: string | null
+          acordo_sugerido_valor?: number | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          modelo?: string
+          nome: string
+          sem_acordo?: boolean
+          status?: string
+          updated_at?: string
+          valor_final?: number | null
+        }
+        Update: {
+          acordo_proposto_valor?: number | null
+          acordo_sugerido_texto?: string | null
+          acordo_sugerido_valor?: number | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          modelo?: string
+          nome?: string
+          sem_acordo?: boolean
+          status?: string
+          updated_at?: string
+          valor_final?: number | null
+        }
+        Relationships: []
+      }
+      processos_justica_atualizacoes: {
+        Row: {
+          autor_id: string | null
+          autor_nome: string | null
+          comentario: string
+          created_at: string
+          id: string
+          processo_id: string
+        }
+        Insert: {
+          autor_id?: string | null
+          autor_nome?: string | null
+          comentario: string
+          created_at?: string
+          id?: string
+          processo_id: string
+        }
+        Update: {
+          autor_id?: string | null
+          autor_nome?: string | null
+          comentario?: string
+          created_at?: string
+          id?: string
+          processo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "processos_justica_atualizacoes_processo_id_fkey"
+            columns: ["processo_id"]
+            isOneToOne: false
+            referencedRelation: "processos_justica"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       produtos_vendas: {
         Row: {
           acessorio_id: string | null
