@@ -15,6 +15,7 @@ export interface ProcessoJustica {
   sem_acordo: boolean;
   valor_final: number | null;
   status: ProcessoStatus;
+  ordem: number;
   created_by: string | null;
   created_at: string;
   updated_at: string;
@@ -32,7 +33,7 @@ export interface ProcessoAtualizacao {
 
 export type ProcessoInput = Omit<
   ProcessoJustica,
-  'id' | 'created_at' | 'updated_at' | 'created_by' | 'atualizacoes_count'
+  'id' | 'created_at' | 'updated_at' | 'created_by' | 'atualizacoes_count' | 'ordem'
 >;
 
 export function useProcessosJustica() {
@@ -44,6 +45,7 @@ export function useProcessosJustica() {
       const { data, error } = await supabase
         .from('processos_justica')
         .select('*')
+        .order('ordem', { ascending: true })
         .order('created_at', { ascending: false });
       if (error) throw error;
 
@@ -74,9 +76,16 @@ export function useProcessosJustica() {
   const criar = useMutation({
     mutationFn: async (input: ProcessoInput) => {
       const { data: userData } = await supabase.auth.getUser();
+      const { data: maxData } = await supabase
+        .from('processos_justica')
+        .select('ordem')
+        .order('ordem', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const proximaOrdem = ((maxData as any)?.ordem ?? -1) + 1;
       const { error } = await supabase
         .from('processos_justica')
-        .insert({ ...input, created_by: userData?.user?.id ?? null });
+        .insert({ ...input, ordem: proximaOrdem, created_by: userData?.user?.id ?? null });
       if (error) throw error;
     },
     onSuccess: () => {
@@ -113,12 +122,41 @@ export function useProcessosJustica() {
     onError: (e: any) => toast.error(e.message || 'Erro ao excluir processo'),
   });
 
+  const reordenar = useMutation({
+    mutationFn: async (ordenados: ProcessoJustica[]) => {
+      const results = await Promise.all(
+        ordenados.map((p, index) =>
+          supabase.from('processos_justica').update({ ordem: index }).eq('id', p.id),
+        ),
+      );
+      const failed = results.find((r) => r.error);
+      if (failed?.error) throw failed.error;
+    },
+    onMutate: async (ordenados) => {
+      await queryClient.cancelQueries({ queryKey: ['processos-justica'] });
+      const previous = queryClient.getQueryData<ProcessoJustica[]>(['processos-justica']);
+      queryClient.setQueryData<ProcessoJustica[]>(
+        ['processos-justica'],
+        ordenados.map((p, index) => ({ ...p, ordem: index })),
+      );
+      return { previous };
+    },
+    onError: (e: any, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['processos-justica'], context.previous);
+      }
+      toast.error(e.message || 'Erro ao reordenar processos');
+    },
+    onSettled: () => invalidate(),
+  });
+
   return {
     processos: query.data || [],
     isLoading: query.isLoading,
     criar,
     atualizar,
     excluir,
+    reordenar,
   };
 }
 

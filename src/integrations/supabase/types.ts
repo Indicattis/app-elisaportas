@@ -8059,6 +8059,7 @@ export type Database = {
           id: string
           modelo: string
           nome: string
+          ordem: number
           sem_acordo: boolean
           status: string
           updated_at: string
@@ -8073,6 +8074,7 @@ export type Database = {
           id?: string
           modelo?: string
           nome: string
+          ordem?: number
           sem_acordo?: boolean
           status?: string
           updated_at?: string
@@ -8087,6 +8089,7 @@ export type Database = {
           id?: string
           modelo?: string
           nome?: string
+          ordem?: number
           sem_acordo?: boolean
           status?: string
           updated_at?: string
