@@ -406,7 +406,7 @@ export default function HistoricoContratos() {
                       )}
                     </TableCell>
                     <TableCell className="text-right">
-                      {e.desfecho === 'assinado' && e.contrato_url && e.contrato_url !== 'legado' ? (
+                      {(e.desfecho === 'assinado' || e.desfecho === 'dispensado') ? (
                         (() => {
                           const jaFaturada = faturadasSet?.has(e.venda_id) ?? false;
                           const btn = (
@@ -435,6 +435,7 @@ export default function HistoricoContratos() {
                         <span className="text-white/30 text-xs">—</span>
                       )}
                     </TableCell>
+
                   </TableRow>
                 ))
               )}
@@ -448,10 +449,21 @@ export default function HistoricoContratos() {
           <AlertDialogHeader>
             <AlertDialogTitle>Retornar venda para "Assinatura Contrato"?</AlertDialogTitle>
             <AlertDialogDescription>
-              O contrato atual assinado de <strong>{reverterAlvo?.cliente_nome}</strong> será
-              descartado (arquivo e registros vinculados removidos). A venda voltará para as
-              etapas "Pendente de Contrato" em /vendas/contratos e "Assinatura Contrato" na
-              gestão de fábrica, exigindo geração e anexo de um novo contrato.
+              {reverterAlvo?.desfecho === 'dispensado' ? (
+                <>
+                  A dispensa de contrato de <strong>{reverterAlvo?.cliente_nome}</strong> será
+                  cancelada. A venda voltará para as etapas "Pendente de Contrato" em
+                  /vendas/contratos e "Assinatura Contrato" na gestão de fábrica, exigindo
+                  geração e anexo de um novo contrato.
+                </>
+              ) : (
+                <>
+                  O contrato atual assinado de <strong>{reverterAlvo?.cliente_nome}</strong> será
+                  descartado (arquivo e registros vinculados removidos). A venda voltará para as
+                  etapas "Pendente de Contrato" em /vendas/contratos e "Assinatura Contrato" na
+                  gestão de fábrica, exigindo geração e anexo de um novo contrato.
+                </>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -470,6 +482,7 @@ export default function HistoricoContratos() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
     </div>
   );
 }
