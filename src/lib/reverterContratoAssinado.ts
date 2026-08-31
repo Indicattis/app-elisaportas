@@ -36,7 +36,7 @@ export async function reverterContratoAssinado(
       .eq("venda_id", vendaId);
   }
 
-  // 3) Limpa campos de contrato na venda
+  // 3) Limpa campos de contrato e dispensa na venda
   const { error } = await supabase
     .from("vendas")
     .update({
@@ -44,8 +44,13 @@ export async function reverterContratoAssinado(
       contrato_assinado_em: null,
       contrato_anexado_por: null,
       contrato_liberado_faturamento: false,
+      contrato_liberado_em: null,
+      contrato_liberado_por: null,
       contrato_dispensado: false,
+      contrato_dispensado_em: null,
+      contrato_dispensado_por: null,
     })
     .eq("id", vendaId);
   if (error) throw error;
+
 }
