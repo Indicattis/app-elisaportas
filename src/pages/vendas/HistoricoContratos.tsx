@@ -406,7 +406,7 @@ export default function HistoricoContratos() {
                       )}
                     </TableCell>
                     <TableCell className="text-right">
-                      {e.desfecho === 'assinado' && e.contrato_url && e.contrato_url !== 'legado' ? (
+                      {(e.desfecho === 'assinado' || e.desfecho === 'dispensado') ? (
                         (() => {
                           const jaFaturada = faturadasSet?.has(e.venda_id) ?? false;
                           const btn = (
@@ -435,6 +435,7 @@ export default function HistoricoContratos() {
                         <span className="text-white/30 text-xs">—</span>
                       )}
                     </TableCell>
+
                   </TableRow>
                 ))
               )}
