@@ -168,11 +168,11 @@ export default function EstadoAutorizadosDirecao() {
     <MinimalistLayout
       title={estadoSelecionado.nome}
       subtitle={`${estadoSelecionado.sigla} · ${cidades.length} cidades cadastradas`}
-      backPath={basePath}
+      backPath={listPath}
       breadcrumbItems={[
         { label: "Home", path: "/home" },
-        ...(contexto !== 'home' ? [{ label: breadcrumbLabel, path: backPath }] : []),
-        { label: "Autorizados", path: basePath },
+        ...(contexto !== 'home' ? [{ label: breadcrumbLabel, path: backPath }] : [{ label: "Autorizados", path: "/autorizados" }]),
+        { label: contexto === 'home' ? "Gestão" : "Autorizados", path: listPath },
         { label: estadoSelecionado.nome }
       ]}
       headerActions={headerActions}
