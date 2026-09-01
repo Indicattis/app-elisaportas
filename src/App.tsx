@@ -313,6 +313,7 @@ import VagasPage from "./pages/administrativo/VagasPage";
 import PreencherVagaPage from "./pages/administrativo/rh-dp/PreencherVagaPage";
 import ResponsabilidadesPage from "./pages/administrativo/ResponsabilidadesPage";
 import FuncoesPage from "./pages/administrativo/FuncoesPage";
+import FichasColaboradores from "./pages/administrativo/rh-dp/FichasColaboradores";
 import RequisicoesMinimalista from "./pages/administrativo/RequisicoesMinimalista";
 import NovaRequisicaoCompra from "./pages/administrativo/NovaRequisicaoCompra";
 import ItensAdministrativo from "./pages/administrativo/ItensAdministrativo";
