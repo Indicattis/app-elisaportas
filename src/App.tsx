@@ -332,6 +332,8 @@ import FreteValoresTransportadoras from "./pages/logistica/FreteValoresTransport
 import PedidosPagosSemEntrega from "./pages/logistica/PedidosPagosSemEntrega";
 import AutorizadosLogistica from "./pages/logistica/AutorizadosLogistica";
 import AutorizadosHome from "./pages/AutorizadosHome";
+import AutorizadosGestaoHome from "./pages/autorizados/AutorizadosGestaoHome";
+import InstalacaoAutorizados from "./pages/autorizados/InstalacaoAutorizados";
 import AutorizadosPrecosDirecao from "./pages/direcao/AutorizadosPrecosDirecao";
 import EstadoAutorizadosDirecao from "./pages/direcao/EstadoAutorizadosDirecao";
 import AcordosMesAutorizados from "./pages/direcao/AcordosMesAutorizados";
