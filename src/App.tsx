@@ -313,6 +313,7 @@ import VagasPage from "./pages/administrativo/VagasPage";
 import PreencherVagaPage from "./pages/administrativo/rh-dp/PreencherVagaPage";
 import ResponsabilidadesPage from "./pages/administrativo/ResponsabilidadesPage";
 import FuncoesPage from "./pages/administrativo/FuncoesPage";
+import FichasColaboradores from "./pages/administrativo/rh-dp/FichasColaboradores";
 import RequisicoesMinimalista from "./pages/administrativo/RequisicoesMinimalista";
 import NovaRequisicaoCompra from "./pages/administrativo/NovaRequisicaoCompra";
 import ItensAdministrativo from "./pages/administrativo/ItensAdministrativo";
@@ -718,6 +719,7 @@ const App = () => (
                 <Route path="/administrativo/rh-dp/vagas/preencher/:vagaId" element={<ProtectedRoute routeKey="admin_rh_dp_vagas"><PreencherVagaPage /></ProtectedRoute>} />
                 <Route path="/administrativo/rh-dp/responsabilidades" element={<ProtectedRoute routeKey="admin_rh_dp_responsabilidades"><ResponsabilidadesPage /></ProtectedRoute>} />
                 <Route path="/administrativo/rh-dp/funcoes" element={<ProtectedRoute routeKey="admin_rh_dp_funcoes"><FuncoesPage /></ProtectedRoute>} />
+                <Route path="/administrativo/rh-dp/fichas" element={<ProtectedRoute routeKey="admin_rh_dp_fichas"><FichasColaboradores /></ProtectedRoute>} />
 
                 {/* Hub de Compras Minimalista */}
                 <Route path="/administrativo/compras" element={<ProtectedRoute routeKey="administrativo_hub"><ComprasHub /></ProtectedRoute>} />

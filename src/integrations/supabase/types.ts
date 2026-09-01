@@ -1299,6 +1299,65 @@ export type Database = {
           },
         ]
       }
+      colaborador_fichas: {
+        Row: {
+          admin_user_id: string
+          bebida_favorita: string | null
+          comida_favorita: string | null
+          cor_favorita: string | null
+          created_at: string
+          doce_favorito: string | null
+          doce_ou_salgado: string | null
+          estado_civil: string | null
+          id: string
+          nacionalidade: string | null
+          preferencia_bebida: string | null
+          preferencia_bebida_outra: string | null
+          sexo: string | null
+          updated_at: string
+        }
+        Insert: {
+          admin_user_id: string
+          bebida_favorita?: string | null
+          comida_favorita?: string | null
+          cor_favorita?: string | null
+          created_at?: string
+          doce_favorito?: string | null
+          doce_ou_salgado?: string | null
+          estado_civil?: string | null
+          id?: string
+          nacionalidade?: string | null
+          preferencia_bebida?: string | null
+          preferencia_bebida_outra?: string | null
+          sexo?: string | null
+          updated_at?: string
+        }
+        Update: {
+          admin_user_id?: string
+          bebida_favorita?: string | null
+          comida_favorita?: string | null
+          cor_favorita?: string | null
+          created_at?: string
+          doce_favorito?: string | null
+          doce_ou_salgado?: string | null
+          estado_civil?: string | null
+          id?: string
+          nacionalidade?: string | null
+          preferencia_bebida?: string | null
+          preferencia_bebida_outra?: string | null
+          sexo?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "colaborador_fichas_admin_user_id_fkey"
+            columns: ["admin_user_id"]
+            isOneToOne: true
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       colaborador_responsabilidades: {
         Row: {
           colaborador_id: string
