@@ -61,20 +61,30 @@ type CondutorPatch = { usuario_id: string | null; terceiro_nome: string | null; 
 interface CondutorCellProps {
   multa: Multa;
   users: { id: string; nome: string }[];
+  terceiros: string[];
   onSelect: (patch: CondutorPatch) => void;
 }
 
-function CondutorCell({ multa, users, onSelect }: CondutorCellProps) {
+function CondutorCell({ multa, users, terceiros, onSelect }: CondutorCellProps) {
   const [open, setOpen] = useState(false);
+  const [busca, setBusca] = useState('');
   const empresa = isEmpresa(multa);
   const aguardando = !empresa && !multa.usuario_id && !multa.terceiro_nome;
   const isTerceiro = !empresa && !multa.usuario_id && !!multa.terceiro_nome;
   const label = empresa ? 'Empresa' : multa.usuario_nome;
 
+  const buscaLimpa = busca.trim();
+  const podeAdicionar =
+    buscaLimpa.length >= 2 &&
+    !terceiros.some((t) => t.toLowerCase() === buscaLimpa.toLowerCase()) &&
+    !users.some((u) => u.nome?.toLowerCase() === buscaLimpa.toLowerCase());
+
   const escolher = (patch: CondutorPatch) => {
     onSelect(patch);
+    setBusca('');
     setOpen(false);
   };
+
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
