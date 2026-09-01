@@ -44,7 +44,6 @@ const COLUNAS: { key: SortKey; label: string; className: string }[] = [
   { key: 'data_ocorrido', label: 'Data do ocorrido', className: 'w-[140px]' },
   { key: 'descricao', label: 'Descrição', className: '' },
   { key: 'status', label: 'Pagamento Condutor', className: 'w-[160px]' },
-  { key: 'status_detran', label: 'Pagamento DETRAN', className: 'w-[160px]' },
   { key: 'aceite', label: 'Aceite do condutor', className: 'w-[150px]' },
   { key: 'condutor', label: 'Condutor', className: 'w-[240px]' },
 
@@ -52,6 +51,7 @@ const COLUNAS: { key: SortKey; label: string; className: string }[] = [
   { key: 'valor', label: 'Valor da multa', className: 'w-[140px] text-right' },
   { key: 'acrescimo', label: 'Acréscimo (3x)', className: 'w-[140px] text-right' },
   { key: 'total', label: 'Valor com acréscimo', className: 'w-[160px] text-right' },
+  { key: 'status_detran', label: 'Pagamento DETRAN', className: 'w-[160px]' },
 ];
 
 const parseData = (d: string) => parseISO(d + 'T12:00:00');
