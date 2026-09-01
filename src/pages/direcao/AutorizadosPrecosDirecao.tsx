@@ -42,6 +42,7 @@ import { SortableContext, rectSortingStrategy, arrayMove } from '@dnd-kit/sortab
 
 interface Props {
   contexto?: 'direcao' | 'logistica' | 'home';
+  mostrarAcordos?: boolean;
 }
 
 const STATUS_OPTIONS = [
