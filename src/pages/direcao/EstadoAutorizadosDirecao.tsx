@@ -182,7 +182,7 @@ export default function EstadoAutorizadosDirecao() {
             cidades={cidades}
             autorizadosOrfaos={autorizadosOrfaos}
             loading={loadingCidades}
-            onVoltar={() => navigate(basePath)}
+            onVoltar={() => navigate(listPath)}
             onNovaCidade={() => setNovaCidadeOpen(true)}
             onEditEstado={handleEditEstado}
             onDeleteEstado={handleDeleteEstado}
