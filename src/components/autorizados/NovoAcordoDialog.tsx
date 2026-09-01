@@ -87,6 +87,7 @@ export function NovoAcordoDialog({
         setObservacoes('');
         setDataAcordo(new Date().toISOString().split('T')[0]);
         setDataInstalacao('');
+        setDataInstalacao('');
         setVendaVinculada(null);
       }
     }
