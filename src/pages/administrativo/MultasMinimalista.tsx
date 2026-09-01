@@ -521,6 +521,8 @@ export default function MultasMinimalista() {
                           <CondutorCell
                             multa={m}
                             users={users || []}
+                            terceiros={terceirosCadastrados}
+
                             onSelect={(patch) => updateMulta.mutate({ id: m.id, ...patch })}
                           />
                         </td>
