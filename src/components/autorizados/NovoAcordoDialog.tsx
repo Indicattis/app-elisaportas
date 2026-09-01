@@ -287,6 +287,18 @@ export function NovoAcordoDialog({
             />
           </div>
 
+          {/* Data da Instalação */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium text-white/70">DATA DA INSTALAÇÃO (opcional)</Label>
+            <Input
+              type="date"
+              value={dataInstalacao}
+              onChange={(e) => setDataInstalacao(e.target.value)}
+              className="bg-zinc-800 border-zinc-700 text-white"
+            />
+          </div>
+
+
           {/* Observações */}
           <div className="space-y-2 md:col-span-2">
             <Label className="text-sm font-medium text-white/70">OBSERVAÇÕES (opcional)</Label>
