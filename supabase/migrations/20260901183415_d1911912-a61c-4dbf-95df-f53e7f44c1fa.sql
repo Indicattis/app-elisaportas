@@ -1,0 +1,1 @@
+ALTER TABLE public.acordos_instalacao_autorizados ADD COLUMN IF NOT EXISTS data_instalacao date;

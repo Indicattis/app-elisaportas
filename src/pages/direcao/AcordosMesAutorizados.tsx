@@ -410,6 +410,8 @@ export default function AcordosMesAutorizados() {
                       <TableHead className="text-xs text-white/70 w-40">Cidade</TableHead>
                       <TableHead className="text-xs text-white/70 text-center w-16">Km</TableHead>
                       <TableHead className="text-xs text-white/70 text-center w-20">Data</TableHead>
+                      <TableHead className="text-xs text-white/70 text-center w-20">Criado em</TableHead>
+                      <TableHead className="text-xs text-white/70 text-center w-24">Instalado em</TableHead>
                       <TableHead className="text-xs text-white/70 text-right w-28">Valor negociado</TableHead>
                       <TableHead className="text-xs text-white/70 text-right w-28">Instalação (Venda)</TableHead>
                       <TableHead className="text-xs text-white/70 text-right w-28">Valor excesso</TableHead>
@@ -431,7 +433,7 @@ export default function AcordosMesAutorizados() {
                     <TooltipProvider>
                       {(() => {
                         const colSpan =
-                          17 +
+                          19 +
                           ((contexto === 'direcao' || contexto === 'home') ? 1 : 0) +
                           ((contexto === 'logistica' || contexto === 'home') ? 1 : 0);
                         return acordosAgrupados.map((grupo, idx) => (
@@ -484,6 +486,16 @@ export default function AcordosMesAutorizados() {
                                 </TableCell>
                                 <TableCell className="text-center text-white/60">
                                   {format(new Date(acordo.data_acordo), 'dd/MM/yy', { locale: ptBR })}
+                                </TableCell>
+                                <TableCell className="text-center text-white/60">
+                                  {acordo.created_at
+                                    ? format(new Date(acordo.created_at), 'dd/MM/yy', { locale: ptBR })
+                                    : <span className="text-white/40">—</span>}
+                                </TableCell>
+                                <TableCell className="text-center text-white/60">
+                                  {acordo.data_instalacao
+                                    ? format(new Date(`${acordo.data_instalacao}T12:00:00`), 'dd/MM/yy', { locale: ptBR })
+                                    : <span className="text-white/40">—</span>}
                                 </TableCell>
                                 <TableCell className="text-right font-medium text-green-400">
                                   {formatCurrency(acordo.valor_acordado)}

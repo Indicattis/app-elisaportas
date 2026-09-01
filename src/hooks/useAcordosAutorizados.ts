@@ -23,6 +23,7 @@ export interface AcordoAutorizado {
   valor_acordado: number;
   status: 'pendente' | 'em_andamento' | 'concluido';
   data_acordo: string;
+  data_instalacao?: string | null;
   observacoes?: string;
   created_at: string;
   portas: PortaAcordo[];
@@ -47,6 +48,7 @@ export interface NovoAcordo {
   valor_acordado: number;
   status: 'pendente' | 'em_andamento' | 'concluido';
   data_acordo: string;
+  data_instalacao?: string | null;
   observacoes?: string;
   portas: Omit<PortaAcordo, 'id'>[];
   venda_id?: string | null;
@@ -123,6 +125,7 @@ export function useAcordosAutorizados() {
         valor_acordado: Number(acordo.valor_acordado),
         status: acordo.status as 'pendente' | 'em_andamento' | 'concluido',
         data_acordo: acordo.data_acordo,
+        data_instalacao: (acordo as any).data_instalacao ?? null,
         observacoes: acordo.observacoes || undefined,
         created_at: acordo.created_at,
         portas: portasData
@@ -171,6 +174,7 @@ export function useAcordosAutorizados() {
           valor_acordado: novoAcordo.valor_acordado,
           status: novoAcordo.status,
           data_acordo: novoAcordo.data_acordo,
+          data_instalacao: novoAcordo.data_instalacao ?? null,
           observacoes: novoAcordo.observacoes || null,
           venda_id: novoAcordo.venda_id || null,
           created_by: user?.id
@@ -229,6 +233,7 @@ export function useAcordosAutorizados() {
           valor_acordado: dadosAtualizados.valor_acordado,
           status: dadosAtualizados.status,
           data_acordo: dadosAtualizados.data_acordo,
+          data_instalacao: dadosAtualizados.data_instalacao ?? null,
           observacoes: dadosAtualizados.observacoes || null
         })
         .eq('id', id);

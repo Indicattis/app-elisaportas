@@ -56,6 +56,7 @@ export function NovoAcordoDialog({
   const [valorAcordado, setValorAcordado] = useState('');
   const [observacoes, setObservacoes] = useState('');
   const [dataAcordo, setDataAcordo] = useState(new Date().toISOString().split('T')[0]);
+  const [dataInstalacao, setDataInstalacao] = useState('');
   const [vendaVinculada, setVendaVinculada] = useState<VendaSelecionada | null>(null);
 
   // Reset form when dialog opens/closes
@@ -73,6 +74,7 @@ export function NovoAcordoDialog({
         setValorAcordado(String(acordoParaEditar.valor_acordado));
         setObservacoes(acordoParaEditar.observacoes || '');
         setDataAcordo(acordoParaEditar.data_acordo);
+        setDataInstalacao(acordoParaEditar.data_instalacao || '');
       } else {
         setClienteNome('');
         setClienteCidade('');
@@ -84,6 +86,8 @@ export function NovoAcordoDialog({
         setValorAcordado('');
         setObservacoes('');
         setDataAcordo(new Date().toISOString().split('T')[0]);
+        setDataInstalacao('');
+        setDataInstalacao('');
         setVendaVinculada(null);
       }
     }
@@ -111,6 +115,7 @@ export function NovoAcordoDialog({
         valor_acordado: parseFloat(valorAcordado) || valorSugerido,
         status: 'pendente',
         data_acordo: dataAcordo,
+        data_instalacao: dataInstalacao || null,
         observacoes: observacoes || undefined,
         portas: [{
           tamanho: portaTamanho,
@@ -286,6 +291,18 @@ export function NovoAcordoDialog({
               className="bg-zinc-800 border-zinc-700 text-white"
             />
           </div>
+
+          {/* Data da Instalação */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium text-white/70">DATA DA INSTALAÇÃO (opcional)</Label>
+            <Input
+              type="date"
+              value={dataInstalacao}
+              onChange={(e) => setDataInstalacao(e.target.value)}
+              className="bg-zinc-800 border-zinc-700 text-white"
+            />
+          </div>
+
 
           {/* Observações */}
           <div className="space-y-2 md:col-span-2">
