@@ -27,8 +27,9 @@ export default function EstadoAutorizadosDirecao() {
   const { pathname } = useLocation();
   const contexto = pathname.startsWith('/logistica') ? 'logistica' : pathname.startsWith('/autorizados') ? 'home' : 'direcao';
   const basePath = contexto === 'home' ? '/autorizados' : `/${contexto}/autorizados`;
-  const backPath = contexto === 'logistica' ? '/logistica' : contexto === 'home' ? '/home' : '/direcao';
-  const breadcrumbLabel = contexto === 'logistica' ? 'Logística' : contexto === 'home' ? 'Home' : 'Direção';
+  const listPath = contexto === 'home' ? '/autorizados/gestao' : basePath;
+  const backPath = contexto === 'logistica' ? '/logistica' : contexto === 'home' ? '/autorizados' : '/direcao';
+  const breadcrumbLabel = contexto === 'logistica' ? 'Logística' : contexto === 'home' ? 'Autorizados' : 'Direção';
   const { estadoId } = useParams<{ estadoId: string }>();
 
   const {
