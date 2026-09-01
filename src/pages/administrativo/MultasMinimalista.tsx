@@ -227,6 +227,15 @@ export default function MultasMinimalista() {
   const { data: multas, isLoading, refetch, isRefetching, createMulta, updateMulta, deleteMulta } = useMultas();
   const { data: users } = useAllUsers();
 
+  const terceirosCadastrados = useMemo(() => {
+    const set = new Set<string>();
+    (multas || []).forEach((m) => {
+      if (!m.usuario_id && m.terceiro_nome?.trim()) set.add(m.terceiro_nome.trim());
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [multas]);
+
+
   const resetForm = () => {
     setEditando(null);
     setTipoResponsavel('colaborador');
