@@ -374,8 +374,9 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao', mostrar
       backPath={backPath}
       breadcrumbItems={[
         { label: "Home", path: "/home" },
-        ...(contexto !== 'home' ? [{ label: breadcrumbLabel, path: backPath }] : []),
-        { label: "Autorizados" }
+        ...(contexto === 'home'
+          ? [{ label: "Autorizados", path: "/autorizados" }, { label: "Gestão" }]
+          : [{ label: breadcrumbLabel, path: backPath }, { label: "Autorizados" }])
       ]}
       headerActions={headerActions}
     >
