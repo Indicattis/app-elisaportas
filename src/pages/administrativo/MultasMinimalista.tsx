@@ -44,7 +44,6 @@ const COLUNAS: { key: SortKey; label: string; className: string }[] = [
   { key: 'data_ocorrido', label: 'Data do ocorrido', className: 'w-[140px]' },
   { key: 'descricao', label: 'Descrição', className: '' },
   { key: 'status', label: 'Pagamento Condutor', className: 'w-[160px]' },
-  { key: 'status_detran', label: 'Pagamento DETRAN', className: 'w-[160px]' },
   { key: 'aceite', label: 'Aceite do condutor', className: 'w-[150px]' },
   { key: 'condutor', label: 'Condutor', className: 'w-[240px]' },
 
@@ -52,6 +51,7 @@ const COLUNAS: { key: SortKey; label: string; className: string }[] = [
   { key: 'valor', label: 'Valor da multa', className: 'w-[140px] text-right' },
   { key: 'acrescimo', label: 'Acréscimo (3x)', className: 'w-[140px] text-right' },
   { key: 'total', label: 'Valor com acréscimo', className: 'w-[160px] text-right' },
+  { key: 'status_detran', label: 'Pagamento DETRAN', className: 'w-[160px]' },
 ];
 
 const parseData = (d: string) => parseISO(d + 'T12:00:00');
@@ -487,21 +487,6 @@ export default function MultasMinimalista() {
                             {pago ? 'Pago' : 'Pendente'}
                           </button>
                         </td>
-                        <td className="px-3 py-2 border-r border-white/5">
-                          <button
-                            onClick={() => updateMulta.mutate({ id: m.id, status_detran: m.status_detran === 'pago' ? 'pendente' : 'pago' })}
-                            className={cn(
-                              'inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[11px] font-medium border transition-colors',
-                              m.status_detran === 'pago'
-                                ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/25'
-                                : 'bg-amber-500/15 text-amber-300 border-amber-500/30 hover:bg-amber-500/25'
-                            )}
-                            title="Clique para alternar o pagamento ao DETRAN"
-                          >
-                            {m.status_detran === 'pago' ? <Check className="w-3 h-3" /> : <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />}
-                            {m.status_detran === 'pago' ? 'Pago' : 'Pendente'}
-                          </button>
-                        </td>
 
                         <td className="px-3 py-2 border-r border-white/5">
                           <button
@@ -542,6 +527,21 @@ export default function MultasMinimalista() {
                         <td className={cn('px-3 py-2 text-right font-semibold border-r border-white/5 tabular-nums', semResponsavel ? 'text-red-300' : 'text-white/60')}>
                           {formatCurrency(totalMulta(m))}
                         </td>
+                        <td className="px-3 py-2 border-r border-white/5">
+                          <button
+                            onClick={() => updateMulta.mutate({ id: m.id, status_detran: m.status_detran === 'pago' ? 'pendente' : 'pago' })}
+                            className={cn(
+                              'inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[11px] font-medium border transition-colors',
+                              m.status_detran === 'pago'
+                                ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/25'
+                                : 'bg-amber-500/15 text-amber-300 border-amber-500/30 hover:bg-amber-500/25'
+                            )}
+                            title="Clique para alternar o pagamento ao DETRAN"
+                          >
+                            {m.status_detran === 'pago' ? <Check className="w-3 h-3" /> : <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />}
+                            {m.status_detran === 'pago' ? 'Pago' : 'Pendente'}
+                          </button>
+                        </td>
                         <td className="px-3 py-2">
                           <div className="flex items-center justify-end gap-1">
                             <Button size="icon" variant="ghost" onClick={() => abrirEdicao(m)} className="h-7 w-7 text-white/50 hover:text-white hover:bg-white/10" title="Editar">
@@ -566,6 +566,7 @@ export default function MultasMinimalista() {
                     </td>
                     <td className="px-3 py-2 text-right text-red-300 tabular-nums">{formatCurrency(totalAcrescimos)}</td>
                     <td className="px-3 py-2 text-right tabular-nums">{formatCurrency(totalPendente + totalPago)}</td>
+                    <td />
                     <td />
                   </tr>
                 </tfoot>
