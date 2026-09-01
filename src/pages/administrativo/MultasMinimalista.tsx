@@ -61,20 +61,30 @@ type CondutorPatch = { usuario_id: string | null; terceiro_nome: string | null; 
 interface CondutorCellProps {
   multa: Multa;
   users: { id: string; nome: string }[];
+  terceiros: string[];
   onSelect: (patch: CondutorPatch) => void;
 }
 
-function CondutorCell({ multa, users, onSelect }: CondutorCellProps) {
+function CondutorCell({ multa, users, terceiros, onSelect }: CondutorCellProps) {
   const [open, setOpen] = useState(false);
+  const [busca, setBusca] = useState('');
   const empresa = isEmpresa(multa);
   const aguardando = !empresa && !multa.usuario_id && !multa.terceiro_nome;
   const isTerceiro = !empresa && !multa.usuario_id && !!multa.terceiro_nome;
   const label = empresa ? 'Empresa' : multa.usuario_nome;
 
+  const buscaLimpa = busca.trim();
+  const podeAdicionar =
+    buscaLimpa.length >= 2 &&
+    !terceiros.some((t) => t.toLowerCase() === buscaLimpa.toLowerCase()) &&
+    !users.some((u) => u.nome?.toLowerCase() === buscaLimpa.toLowerCase());
+
   const escolher = (patch: CondutorPatch) => {
     onSelect(patch);
+    setBusca('');
     setOpen(false);
   };
+
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -105,9 +115,26 @@ function CondutorCell({ multa, users, onSelect }: CondutorCellProps) {
       </PopoverTrigger>
       <PopoverContent className="w-[260px] p-0 bg-zinc-900 border-white/10" align="start">
         <Command className="bg-transparent">
-          <CommandInput placeholder="Buscar condutor..." className="text-white" />
+          <CommandInput
+            placeholder="Buscar ou digitar terceiro..."
+            className="text-white"
+            value={busca}
+            onValueChange={setBusca}
+          />
           <CommandList>
-            <CommandEmpty className="py-4 text-center text-sm text-white/50">Nenhum colaborador encontrado</CommandEmpty>
+            <CommandEmpty className="py-4 text-center text-sm text-white/50">
+              {podeAdicionar ? (
+                <button
+                  className="text-purple-300 hover:underline"
+                  onClick={() => escolher({ usuario_id: null, terceiro_nome: buscaLimpa, responsavel_pagamento: 'condutor' })}
+                >
+                  + Adicionar terceiro "{buscaLimpa}"
+                </button>
+              ) : (
+                'Nenhum condutor encontrado'
+              )}
+            </CommandEmpty>
+
             <CommandGroup>
               <CommandItem
                 value="Empresa"
@@ -142,6 +169,35 @@ function CondutorCell({ multa, users, onSelect }: CondutorCellProps) {
                 </CommandItem>
               ))}
             </CommandGroup>
+            {terceiros.length > 0 && (
+              <CommandGroup heading="Terceiros">
+                {terceiros.map((t) => (
+                  <CommandItem
+                    key={t}
+                    value={t}
+                    onSelect={() => escolher({ usuario_id: null, terceiro_nome: t, responsavel_pagamento: 'condutor' })}
+                    className="text-purple-200 aria-selected:bg-purple-500/15"
+                  >
+                    <User className="w-4 h-4 mr-2 text-purple-400/60" />
+                    {t}
+                    {multa.terceiro_nome === t && <Check className="w-4 h-4 ml-auto text-purple-400" />}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            )}
+            {podeAdicionar && (
+              <CommandGroup>
+                <CommandItem
+                  value={`__add__${buscaLimpa}`}
+                  onSelect={() => escolher({ usuario_id: null, terceiro_nome: buscaLimpa, responsavel_pagamento: 'condutor' })}
+                  className="text-purple-300 aria-selected:bg-purple-500/15"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Adicionar terceiro "{buscaLimpa}"
+                </CommandItem>
+              </CommandGroup>
+            )}
+
           </CommandList>
         </Command>
       </PopoverContent>
@@ -170,6 +226,15 @@ export default function MultasMinimalista() {
 
   const { data: multas, isLoading, refetch, isRefetching, createMulta, updateMulta, deleteMulta } = useMultas();
   const { data: users } = useAllUsers();
+
+  const terceirosCadastrados = useMemo(() => {
+    const set = new Set<string>();
+    (multas || []).forEach((m) => {
+      if (!m.usuario_id && m.terceiro_nome?.trim()) set.add(m.terceiro_nome.trim());
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [multas]);
+
 
   const resetForm = () => {
     setEditando(null);
@@ -456,6 +521,8 @@ export default function MultasMinimalista() {
                           <CondutorCell
                             multa={m}
                             users={users || []}
+                            terceiros={terceirosCadastrados}
+
                             onSelect={(patch) => updateMulta.mutate({ id: m.id, ...patch })}
                           />
                         </td>
