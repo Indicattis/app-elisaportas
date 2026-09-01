@@ -118,8 +118,8 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao', mostrar
     useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } })
   );
 
-  const backPath = contexto === 'logistica' ? '/logistica' : contexto === 'home' ? '/home' : '/direcao';
-  const breadcrumbLabel = contexto === 'logistica' ? 'Logística' : contexto === 'home' ? 'Home' : 'Direção';
+  const backPath = contexto === 'logistica' ? '/logistica' : contexto === 'home' ? '/autorizados' : '/direcao';
+  const breadcrumbLabel = contexto === 'logistica' ? 'Logística' : contexto === 'home' ? 'Autorizados' : 'Direção';
   const routePrefix = contexto === 'home' ? '/autorizados' : `/${contexto}/autorizados`;
 
   const handleDragEnd = (event: DragEndEvent) => {
