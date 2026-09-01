@@ -70,7 +70,7 @@ const PORTA_COLORS: Record<string, string> = {
   GG: 'bg-orange-500/20 text-orange-400 border-orange-500/40',
 };
 
-export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props) {
+export default function AutorizadosPrecosDirecao({ contexto = 'direcao', mostrarAcordos = true }: Props) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
