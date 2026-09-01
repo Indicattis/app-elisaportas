@@ -555,6 +555,9 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao', mostrar
                   )
                 )}
               </div>
+            </>
+          )}
+
 
         {/* Dialog do mês selecionado */}
         <Dialog open={mesSelecionado !== null} onOpenChange={(open) => { if (!open) setMesSelecionado(null); }}>
