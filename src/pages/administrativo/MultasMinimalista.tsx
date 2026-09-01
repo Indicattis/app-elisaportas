@@ -567,6 +567,7 @@ export default function MultasMinimalista() {
                     <td className="px-3 py-2 text-right text-red-300 tabular-nums">{formatCurrency(totalAcrescimos)}</td>
                     <td className="px-3 py-2 text-right tabular-nums">{formatCurrency(totalPendente + totalPago)}</td>
                     <td />
+                    <td />
                   </tr>
                 </tfoot>
               )}
