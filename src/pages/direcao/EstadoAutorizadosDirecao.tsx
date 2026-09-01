@@ -27,8 +27,9 @@ export default function EstadoAutorizadosDirecao() {
   const { pathname } = useLocation();
   const contexto = pathname.startsWith('/logistica') ? 'logistica' : pathname.startsWith('/autorizados') ? 'home' : 'direcao';
   const basePath = contexto === 'home' ? '/autorizados' : `/${contexto}/autorizados`;
-  const backPath = contexto === 'logistica' ? '/logistica' : contexto === 'home' ? '/home' : '/direcao';
-  const breadcrumbLabel = contexto === 'logistica' ? 'Logística' : contexto === 'home' ? 'Home' : 'Direção';
+  const listPath = contexto === 'home' ? '/autorizados/gestao' : basePath;
+  const backPath = contexto === 'logistica' ? '/logistica' : contexto === 'home' ? '/autorizados' : '/direcao';
+  const breadcrumbLabel = contexto === 'logistica' ? 'Logística' : contexto === 'home' ? 'Autorizados' : 'Direção';
   const { estadoId } = useParams<{ estadoId: string }>();
 
   const {
@@ -167,11 +168,11 @@ export default function EstadoAutorizadosDirecao() {
     <MinimalistLayout
       title={estadoSelecionado.nome}
       subtitle={`${estadoSelecionado.sigla} · ${cidades.length} cidades cadastradas`}
-      backPath={basePath}
+      backPath={listPath}
       breadcrumbItems={[
         { label: "Home", path: "/home" },
-        ...(contexto !== 'home' ? [{ label: breadcrumbLabel, path: backPath }] : []),
-        { label: "Autorizados", path: basePath },
+        ...(contexto !== 'home' ? [{ label: breadcrumbLabel, path: backPath }] : [{ label: "Autorizados", path: "/autorizados" }]),
+        { label: contexto === 'home' ? "Gestão" : "Autorizados", path: listPath },
         { label: estadoSelecionado.nome }
       ]}
       headerActions={headerActions}
@@ -181,7 +182,7 @@ export default function EstadoAutorizadosDirecao() {
             cidades={cidades}
             autorizadosOrfaos={autorizadosOrfaos}
             loading={loadingCidades}
-            onVoltar={() => navigate(basePath)}
+            onVoltar={() => navigate(listPath)}
             onNovaCidade={() => setNovaCidadeOpen(true)}
             onEditEstado={handleEditEstado}
             onDeleteEstado={handleDeleteEstado}

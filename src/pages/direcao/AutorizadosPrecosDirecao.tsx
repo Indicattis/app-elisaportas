@@ -42,6 +42,7 @@ import { SortableContext, rectSortingStrategy, arrayMove } from '@dnd-kit/sortab
 
 interface Props {
   contexto?: 'direcao' | 'logistica' | 'home';
+  mostrarAcordos?: boolean;
 }
 
 const STATUS_OPTIONS = [
@@ -69,7 +70,7 @@ const PORTA_COLORS: Record<string, string> = {
   GG: 'bg-orange-500/20 text-orange-400 border-orange-500/40',
 };
 
-export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props) {
+export default function AutorizadosPrecosDirecao({ contexto = 'direcao', mostrarAcordos = true }: Props) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -117,8 +118,8 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
     useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } })
   );
 
-  const backPath = contexto === 'logistica' ? '/logistica' : contexto === 'home' ? '/home' : '/direcao';
-  const breadcrumbLabel = contexto === 'logistica' ? 'Logística' : contexto === 'home' ? 'Home' : 'Direção';
+  const backPath = contexto === 'logistica' ? '/logistica' : contexto === 'home' ? '/autorizados' : '/direcao';
+  const breadcrumbLabel = contexto === 'logistica' ? 'Logística' : contexto === 'home' ? 'Autorizados' : 'Direção';
   const routePrefix = contexto === 'home' ? '/autorizados' : `/${contexto}/autorizados`;
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -373,8 +374,9 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
       backPath={backPath}
       breadcrumbItems={[
         { label: "Home", path: "/home" },
-        ...(contexto !== 'home' ? [{ label: breadcrumbLabel, path: backPath }] : []),
-        { label: "Autorizados" }
+        ...(contexto === 'home'
+          ? [{ label: "Autorizados", path: "/autorizados" }, { label: "Gestão" }]
+          : [{ label: breadcrumbLabel, path: backPath }, { label: "Autorizados" }])
       ]}
       headerActions={headerActions}
     >
@@ -455,6 +457,8 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
             </div>
           )}
 
+          {mostrarAcordos && (
+            <>
           {/* Separador */}
           <div className="border-t border-white/10" />
 
@@ -552,6 +556,9 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao' }: Props
                   )
                 )}
               </div>
+            </>
+          )}
+
 
         {/* Dialog do mês selecionado */}
         <Dialog open={mesSelecionado !== null} onOpenChange={(open) => { if (!open) setMesSelecionado(null); }}>

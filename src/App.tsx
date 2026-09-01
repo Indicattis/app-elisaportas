@@ -332,6 +332,8 @@ import FreteValoresTransportadoras from "./pages/logistica/FreteValoresTransport
 import PedidosPagosSemEntrega from "./pages/logistica/PedidosPagosSemEntrega";
 import AutorizadosLogistica from "./pages/logistica/AutorizadosLogistica";
 import AutorizadosHome from "./pages/AutorizadosHome";
+import AutorizadosGestaoHome from "./pages/autorizados/AutorizadosGestaoHome";
+import InstalacaoAutorizados from "./pages/autorizados/InstalacaoAutorizados";
 import AutorizadosPrecosDirecao from "./pages/direcao/AutorizadosPrecosDirecao";
 import EstadoAutorizadosDirecao from "./pages/direcao/EstadoAutorizadosDirecao";
 import AcordosMesAutorizados from "./pages/direcao/AcordosMesAutorizados";
@@ -648,6 +650,8 @@ const App = () => (
                 <Route path="/logistica/frete/valores" element={<ProtectedRoute routeKey="logistica_hub"><FreteValoresTransportadoras /></ProtectedRoute>} />
                 <Route path="/logistica/frete/por-porta" element={<ProtectedRoute routeKey="logistica_hub"><FretePorPortaPage /></ProtectedRoute>} />
                 <Route path="/autorizados" element={<ProtectedRoute routeKey="logistica_autorizados"><AutorizadosHome /></ProtectedRoute>} />
+                <Route path="/autorizados/gestao" element={<ProtectedRoute routeKey="logistica_autorizados"><AutorizadosGestaoHome /></ProtectedRoute>} />
+                <Route path="/autorizados/instalacao" element={<ProtectedRoute routeKey="logistica_autorizados"><InstalacaoAutorizados /></ProtectedRoute>} />
                 <Route path="/autorizados/acordos/:ano/:mes" element={<ProtectedRoute routeKey="logistica_autorizados"><AcordosMesAutorizados /></ProtectedRoute>} />
                 <Route path="/autorizados/estado/:estadoId" element={<ProtectedRoute routeKey="logistica_autorizados"><EstadoAutorizadosDirecao /></ProtectedRoute>} />
                 <Route path="/autorizados/estado/:estadoId/novo" element={<ProtectedRoute routeKey="logistica_autorizados"><NovoAutorizadoDirecao /></ProtectedRoute>} />
