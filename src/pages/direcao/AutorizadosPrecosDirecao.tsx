@@ -456,6 +456,8 @@ export default function AutorizadosPrecosDirecao({ contexto = 'direcao', mostrar
             </div>
           )}
 
+          {mostrarAcordos && (
+            <>
           {/* Separador */}
           <div className="border-t border-white/10" />
 
