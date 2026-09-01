@@ -169,6 +169,35 @@ function CondutorCell({ multa, users, terceiros, onSelect }: CondutorCellProps) 
                 </CommandItem>
               ))}
             </CommandGroup>
+            {terceiros.length > 0 && (
+              <CommandGroup heading="Terceiros">
+                {terceiros.map((t) => (
+                  <CommandItem
+                    key={t}
+                    value={t}
+                    onSelect={() => escolher({ usuario_id: null, terceiro_nome: t, responsavel_pagamento: 'condutor' })}
+                    className="text-purple-200 aria-selected:bg-purple-500/15"
+                  >
+                    <User className="w-4 h-4 mr-2 text-purple-400/60" />
+                    {t}
+                    {multa.terceiro_nome === t && <Check className="w-4 h-4 ml-auto text-purple-400" />}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            )}
+            {podeAdicionar && (
+              <CommandGroup>
+                <CommandItem
+                  value={`__add__${buscaLimpa}`}
+                  onSelect={() => escolher({ usuario_id: null, terceiro_nome: buscaLimpa, responsavel_pagamento: 'condutor' })}
+                  className="text-purple-300 aria-selected:bg-purple-500/15"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Adicionar terceiro "{buscaLimpa}"
+                </CommandItem>
+              </CommandGroup>
+            )}
+
           </CommandList>
         </Command>
       </PopoverContent>
