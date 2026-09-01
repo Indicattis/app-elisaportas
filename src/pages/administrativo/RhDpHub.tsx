@@ -106,7 +106,7 @@ export default function RhDpHub() {
 
       {/* ========== VERSÃO DESKTOP ========== */}
       <div className="hidden md:flex relative z-10 flex-col items-center gap-8">
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-5 gap-4">
           {menuItems.map((item, index) => {
             const Icon = item.icon;
             const delay = 200 + index * 100;

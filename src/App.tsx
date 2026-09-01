@@ -719,6 +719,7 @@ const App = () => (
                 <Route path="/administrativo/rh-dp/vagas/preencher/:vagaId" element={<ProtectedRoute routeKey="admin_rh_dp_vagas"><PreencherVagaPage /></ProtectedRoute>} />
                 <Route path="/administrativo/rh-dp/responsabilidades" element={<ProtectedRoute routeKey="admin_rh_dp_responsabilidades"><ResponsabilidadesPage /></ProtectedRoute>} />
                 <Route path="/administrativo/rh-dp/funcoes" element={<ProtectedRoute routeKey="admin_rh_dp_funcoes"><FuncoesPage /></ProtectedRoute>} />
+                <Route path="/administrativo/rh-dp/fichas" element={<ProtectedRoute routeKey="admin_rh_dp_fichas"><FichasColaboradores /></ProtectedRoute>} />
 
                 {/* Hub de Compras Minimalista */}
                 <Route path="/administrativo/compras" element={<ProtectedRoute routeKey="administrativo_hub"><ComprasHub /></ProtectedRoute>} />
