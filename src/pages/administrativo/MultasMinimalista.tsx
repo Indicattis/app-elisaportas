@@ -115,9 +115,26 @@ function CondutorCell({ multa, users, terceiros, onSelect }: CondutorCellProps) 
       </PopoverTrigger>
       <PopoverContent className="w-[260px] p-0 bg-zinc-900 border-white/10" align="start">
         <Command className="bg-transparent">
-          <CommandInput placeholder="Buscar condutor..." className="text-white" />
+          <CommandInput
+            placeholder="Buscar ou digitar terceiro..."
+            className="text-white"
+            value={busca}
+            onValueChange={setBusca}
+          />
           <CommandList>
-            <CommandEmpty className="py-4 text-center text-sm text-white/50">Nenhum colaborador encontrado</CommandEmpty>
+            <CommandEmpty className="py-4 text-center text-sm text-white/50">
+              {podeAdicionar ? (
+                <button
+                  className="text-purple-300 hover:underline"
+                  onClick={() => escolher({ usuario_id: null, terceiro_nome: buscaLimpa, responsavel_pagamento: 'condutor' })}
+                >
+                  + Adicionar terceiro "{buscaLimpa}"
+                </button>
+              ) : (
+                'Nenhum condutor encontrado'
+              )}
+            </CommandEmpty>
+
             <CommandGroup>
               <CommandItem
                 value="Empresa"
