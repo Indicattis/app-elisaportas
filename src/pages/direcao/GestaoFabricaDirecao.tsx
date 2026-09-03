@@ -330,6 +330,7 @@ export default function GestaoFabricaDirecao() {
     atualizarPrioridade,
     reorganizarPedidos,
     arquivarPedido,
+    arquivarPedidoDireto,
     deletarPedido,
   } = usePedidosEtapas(etapaParaQuery);
   const { updateOrdem } = useOrdensCarregamentoCalendario(new Date(), 'month');
@@ -616,6 +617,10 @@ export default function GestaoFabricaDirecao() {
 
   const handleArquivar = async (pedidoId: string) => {
     await arquivarPedido.mutateAsync(pedidoId);
+  };
+
+  const handleArquivarDireto = async (pedidoId: string) => {
+    await arquivarPedidoDireto.mutateAsync(pedidoId);
   };
 
   const handleCarregarOrdem = async (pedidoId: string) => {
@@ -1525,6 +1530,7 @@ export default function GestaoFabricaDirecao() {
                       onCarregarOrdem={['aguardando_coleta','instalacoes','correcoes'].includes(etapa) ? handleCarregarOrdem : undefined}
                       onResetarCarregamento={['aguardando_coleta','instalacoes','correcoes'].includes(etapa) ? handleResetarCarregamento : undefined}
                       onEnviarAguardandoCliente={etapa === 'finalizado' ? handleEnviarAguardandoCliente : undefined}
+                      onArquivarDireto={etapa === 'finalizado' ? handleArquivarDireto : undefined}
                       showPosicao={true}
                       onAvisoEspera={handleAvisoEspera}
                       enableDragAndDrop={true}

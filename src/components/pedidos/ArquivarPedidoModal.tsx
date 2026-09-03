@@ -14,22 +14,30 @@ interface ArquivarPedidoModalProps {
   onOpenChange: (open: boolean) => void;
   onConfirmar: () => void;
   pedido: any;
+  titulo?: string;
+  descricao?: string;
 }
 
 export function ArquivarPedidoModal({
   open,
   onOpenChange,
   onConfirmar,
-  pedido
+  pedido,
+  titulo,
+  descricao
 }: ArquivarPedidoModalProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Arquivar Pedido?</AlertDialogTitle>
+          <AlertDialogTitle>{titulo ?? 'Arquivar Pedido?'}</AlertDialogTitle>
           <AlertDialogDescription>
-            Tem certeza que deseja arquivar o pedido {pedido?.numero_pedido}?
-            Esta ação é irreversível e o pedido será movido para o histórico de produção.
+            {descricao ?? (
+              <>
+                Tem certeza que deseja arquivar o pedido {pedido?.numero_pedido}?
+                Esta ação é irreversível e o pedido será movido para o histórico de produção.
+              </>
+            )}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

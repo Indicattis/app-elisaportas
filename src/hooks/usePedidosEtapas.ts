@@ -1648,6 +1648,59 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
     }
   });
 
+  // Arquiva direto da etapa "finalizado", dispensando o Pós-Vendas
+  const arquivarPedidoDireto = useMutation({
+    mutationFn: async (pedidoId: string) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Usuário não autenticado');
+      const agora = new Date().toISOString();
+
+      const { error } = await supabase
+        .from('pedidos_producao')
+        .update({
+          arquivado: true,
+          data_arquivamento: agora,
+          arquivado_por: user.id
+        })
+        .eq('id', pedidoId)
+        .eq('etapa_atual', 'finalizado');
+      if (error) throw error;
+
+      await supabase
+        .from('pedidos_etapas')
+        .update({ data_saida: agora })
+        .eq('pedido_id', pedidoId)
+        .eq('etapa', 'finalizado')
+        .is('data_saida', null);
+
+      await supabase.from('pedidos_movimentacoes').insert({
+        pedido_id: pedidoId,
+        user_id: user.id,
+        etapa_origem: 'finalizado',
+        etapa_destino: 'finalizado',
+        teor: 'avanco',
+        descricao: 'Pedido arquivado diretamente (Pós-Vendas dispensado)'
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pedidos-etapas'] });
+      queryClient.invalidateQueries({ queryKey: ['pedidos-contadores'] });
+      toast({
+        title: "Pedido arquivado",
+        description: "O pedido foi arquivado sem passar pelo Pós-Vendas"
+      });
+    },
+    onError: (error) => {
+      console.error('[arquivarPedidoDireto] Erro:', error);
+      toast({
+        title: "Erro ao arquivar",
+        description: "Não foi possível arquivar o pedido",
+        variant: "destructive"
+      });
+    }
+  });
+
+
   // Deletar pedido e todas as suas ordens
   const deletarPedido = useMutation({
     mutationFn: async (pedidoId: string) => {
@@ -1796,6 +1849,7 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
     atualizarPrioridade,
     reorganizarPedidos,
     arquivarPedido,
+    arquivarPedidoDireto,
     deletarPedido,
     removerResponsavelOrdem,
     finalizarDireto,
