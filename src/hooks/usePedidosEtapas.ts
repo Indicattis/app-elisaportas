@@ -1849,6 +1849,7 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
     atualizarPrioridade,
     reorganizarPedidos,
     arquivarPedido,
+    arquivarPedidoDireto,
     deletarPedido,
     removerResponsavelOrdem,
     finalizarDireto,

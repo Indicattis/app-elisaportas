@@ -74,6 +74,7 @@ interface PedidoCardProps {
   total?: number;
   viewMode?: 'grid' | 'list';
   onArquivar?: (pedidoId: string) => Promise<void>;
+  onArquivarDireto?: (pedidoId: string) => Promise<void>;
   onDeletar?: (pedidoId: string) => Promise<void>;
   onCorrecaoDetalhesClick?: (pedidoId: string) => void;
   onFinalizarDireto?: (pedidoId: string) => Promise<void>;
@@ -103,6 +104,7 @@ export function PedidoCard({
   total,
   viewMode = 'grid',
   onArquivar,
+  onArquivarDireto,
   onDeletar,
   onCorrecaoDetalhesClick,
   onFinalizarDireto,
@@ -125,6 +127,7 @@ export function PedidoCard({
   const [showProgresso, setShowProgresso] = useState(false);
   const [showVisualizarBacklog, setShowVisualizarBacklog] = useState(false);
   const [showArquivar, setShowArquivar] = useState(false);
+  const [showArquivarDireto, setShowArquivarDireto] = useState(false);
   const [showArquivamentoLoading, setShowArquivamentoLoading] = useState(false);
   const [showConfirmarExpedicao, setShowConfirmarExpedicao] = useState(false);
   const [showConcluirManutencao, setShowConcluirManutencao] = useState(false);
@@ -1297,6 +1300,22 @@ export function PedidoCard({
     }
   };
 
+  const handleConfirmarArquivamentoDireto = async () => {
+    setShowArquivarDireto(false);
+    setShowArquivamentoLoading(true);
+    try {
+      if (onArquivarDireto) {
+        await onArquivarDireto(pedido.id);
+      }
+    } catch (error) {
+      console.error('Erro ao arquivar direto:', error);
+    } finally {
+      setTimeout(() => {
+        setShowArquivamentoLoading(false);
+      }, 1000);
+    }
+  };
+
   // Handler para confirmar avanço (após modal de confirmação)
   const handleConfirmarAvanco = async () => {
     setShowConfirmarAvanco(false);
@@ -2230,6 +2249,28 @@ className="flex h-[20px] w-full rounded-[3px]"
                       );
                     }
 
+                    // Botão de arquivar direto (apenas etapa finalizado, pula Pós-Vendas)
+                    if (etapaAtual === 'finalizado' && onArquivarDireto && !readOnly) {
+                      middleButtons.push(
+                        <Tooltip key="arquivar-direto">
+                          <TooltipTrigger asChild>
+                            <Button 
+                              size="icon" 
+                              variant="outline" 
+                              onClick={(e) => { e.stopPropagation(); setShowArquivarDireto(true); }} 
+                              title="Arquivar (pular Pós-Vendas)" 
+                              className="flex h-[22px] w-[22px] rounded-[3px] bg-orange-600 text-white hover:bg-orange-700 border-orange-600"
+                            >
+                              <Archive className="h-3 w-3" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">
+                            <span className="text-xs">Arquivar (pular Pós-Vendas)</span>
+                          </TooltipContent>
+                        </Tooltip>
+                      );
+                    }
+
                     // Botão de devolver para Finalizado (apenas etapa aguardando_cliente)
                     if (etapaAtual === 'aguardando_cliente' && onDevolverParaFinalizado && !readOnly) {
                       middleButtons.push(
@@ -2535,6 +2576,15 @@ className="flex h-[20px] w-full rounded-[3px]"
           onOpenChange={setShowArquivar}
           onConfirmar={handleConfirmarArquivamento}
           pedido={pedido}
+        />
+
+        <ArquivarPedidoModal
+          open={showArquivarDireto}
+          onOpenChange={setShowArquivarDireto}
+          onConfirmar={handleConfirmarArquivamentoDireto}
+          pedido={pedido}
+          titulo="Arquivar sem Pós-Vendas?"
+          descricao={`O pedido ${pedido?.numero_pedido} será enviado ao arquivo morto sem passar pela etapa de Pós-Vendas (sem pesquisa de satisfação). Esta ação é irreversível.`}
         />
 
         <ArquivamentoLoadingModal open={showArquivamentoLoading} />
@@ -3002,6 +3052,22 @@ className="flex h-[20px] w-full rounded-[3px]"
                 );
               }
 
+              // Botão arquivar direto (mobile, etapa finalizado)
+              if (etapaAtual === 'finalizado' && onArquivarDireto && !readOnly) {
+                actionButtons.push(
+                  <Button 
+                    key="arquivar-direto" 
+                    size="icon" 
+                    variant="outline"
+                    onClick={(e) => { e.stopPropagation(); setShowArquivarDireto(true); }} 
+                    title="Arquivar (pular Pós-Vendas)" 
+                    className="flex w-full h-[37px] bg-orange-600 text-white hover:bg-orange-700 border-orange-600"
+                  >
+                    <Archive className="h-3.5 w-3.5" />
+                  </Button>
+                );
+              }
+
               // Botão enviar para correção (mobile, etapa finalizado)
               if (etapaAtual === 'finalizado' && !readOnly && carregamentoConcluido) {
                 actionButtons.push(
@@ -3148,6 +3214,15 @@ className="flex h-[20px] w-full rounded-[3px]"
         onOpenChange={setShowArquivar}
         onConfirmar={handleConfirmarArquivamento}
         pedido={pedido}
+      />
+
+      <ArquivarPedidoModal
+        open={showArquivarDireto}
+        onOpenChange={setShowArquivarDireto}
+        onConfirmar={handleConfirmarArquivamentoDireto}
+        pedido={pedido}
+        titulo="Arquivar sem Pós-Vendas?"
+        descricao={`O pedido ${pedido?.numero_pedido} será enviado ao arquivo morto sem passar pela etapa de Pós-Vendas (sem pesquisa de satisfação). Esta ação é irreversível.`}
       />
       
       <ArquivamentoLoadingModal open={showArquivamentoLoading} />
