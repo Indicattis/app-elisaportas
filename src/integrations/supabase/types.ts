@@ -11168,6 +11168,12 @@ export type Database = {
           portas_soldadas: number
         }[]
       }
+      get_frete_estados: {
+        Args: never
+        Returns: {
+          estado: string
+        }[]
+      }
       get_materiais_ranking_completo: {
         Args: never
         Returns: {

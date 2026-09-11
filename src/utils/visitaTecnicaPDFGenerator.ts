@@ -24,6 +24,12 @@ function fmtNum(n: any) {
   return v.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 }
 
+function fmtMedidaMetros(n: any) {
+  const v = typeof n === 'number' ? n : parseFloat(n);
+  if (!isFinite(v)) return '—';
+  return v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 function fmtDataBR(ymd?: string | null) {
   if (!ymd) return '—';
   const s = ymd.slice(0, 10);
@@ -33,7 +39,7 @@ function fmtDataBR(ymd?: string | null) {
 
 /**
  * Desenha um vão com a porta dentro, com cotas externas (fora das linhas).
- * larguras/alturas em cm. Retorna a altura total ocupada.
+ * Larguras e alturas em metros. Retorna a altura total ocupada.
  */
 function desenharVaoPorta(
   doc: jsPDF,
@@ -101,14 +107,14 @@ function desenharVaoPorta(
   doc.line(cx, dimTopY - tick, cx, dimTopY + tick);
   doc.line(cx + vw, dimTopY - tick, cx + vw, dimTopY + tick);
   doc.setTextColor(90, 90, 90);
-  doc.text(`Vão ${fmtNum(vaoL)} cm`, cx + vw / 2, dimTopY - 1.5, { align: 'center' });
+  doc.text(`Vão ${fmtMedidaMetros(vaoL)} m`, cx + vw / 2, dimTopY - 1.5, { align: 'center' });
 
   // Vão — Altura (à direita do vão)
   const dimRightX = cx + vw + 5;
   doc.line(dimRightX, cy, dimRightX, cy + vh);
   doc.line(dimRightX - tick, cy, dimRightX + tick, cy);
   doc.line(dimRightX - tick, cy + vh, dimRightX + tick, cy + vh);
-  doc.text(`${fmtNum(vaoA)} cm`, dimRightX + 3, cy + vh / 2, { angle: 90, align: 'center' });
+  doc.text(`${fmtMedidaMetros(vaoA)} m`, dimRightX + 3, cy + vh / 2, { angle: 90, align: 'center' });
 
   // Porta — Largura (abaixo da porta)
   const dimBottomY = py + ph + 5;
@@ -117,14 +123,14 @@ function desenharVaoPorta(
   doc.line(px, dimBottomY - tick, px, dimBottomY + tick);
   doc.line(px + pw, dimBottomY - tick, px + pw, dimBottomY + tick);
   doc.setTextColor(41, 128, 185);
-  doc.text(`Porta ${fmtNum(portaL)} cm`, px + pw / 2, dimBottomY + 3, { align: 'center' });
+  doc.text(`Porta ${fmtMedidaMetros(portaL)} m`, px + pw / 2, dimBottomY + 3, { align: 'center' });
 
   // Porta — Altura (à esquerda da porta)
   const dimLeftX = px - 5;
   doc.line(dimLeftX, py, dimLeftX, py + ph);
   doc.line(dimLeftX - tick, py, dimLeftX + tick, py);
   doc.line(dimLeftX - tick, py + ph, dimLeftX + tick, py + ph);
-  doc.text(`${fmtNum(portaA)} cm`, dimLeftX - 3, py + ph / 2, { angle: 90, align: 'center' });
+  doc.text(`${fmtMedidaMetros(portaA)} m`, dimLeftX - 3, py + ph / 2, { angle: 90, align: 'center' });
 
   doc.setTextColor(0, 0, 0);
   doc.setFont('helvetica', 'normal');
@@ -290,10 +296,10 @@ export async function gerarPDFVisitaTecnica(visitaId: string) {
         theme: 'grid',
         styles: { fontSize: 8.5, cellPadding: 2, textColor: [40, 40, 40] },
         headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
-        head: [['Medida', 'Vão (cm)', 'Porta (cm)', 'Δ (cm)']],
+        head: [['Medida', 'Vão (m)', 'Porta (m)', 'Δ (m)']],
         body: [
-          ['Largura', fmtNum(p.largura_vao), fmtNum(p.largura_total), fmtNum(diffL)],
-          ['Altura', fmtNum(p.altura_vao), fmtNum(p.altura_total), fmtNum(diffA)],
+          ['Largura', fmtMedidaMetros(p.largura_vao), fmtMedidaMetros(p.largura_total), fmtMedidaMetros(diffL)],
+          ['Altura', fmtMedidaMetros(p.altura_vao), fmtMedidaMetros(p.altura_total), fmtMedidaMetros(diffA)],
         ],
       });
       const afterTableY = (doc as any).lastAutoTable?.finalY ?? y + 20;
