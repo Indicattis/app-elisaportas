@@ -124,12 +124,11 @@ export const useOrdensCarregamentoUnificadas = () => {
         throw ocError;
       }
 
-      // Excluir ordens cujo pedido já avançou para etapas posteriores ao carregamento
-      const etapasExcluidas = ['finalizado', 'instalacoes', 'correcoes'];
-      const todasOrdens = (ordensCarregamento || []).filter(o => {
-        const etapa = o.pedido?.etapa_atual;
-        return !etapa || !etapasExcluidas.includes(etapa);
-      });
+      // Ordens comuns só ficam pendentes enquanto o pedido aguarda coleta.
+      // Isso impede que registros antigos reapareçam após o pedido avançar.
+      const todasOrdens = (ordensCarregamento || []).filter(
+        (o) => o.pedido?.etapa_atual === 'aguardando_coleta'
+      );
 
       // Deduplicar por pedido_id dentro de ordens_carregamento
       // Manter o registro mais relevante (com data agendada, ou o mais recente)
@@ -138,18 +137,20 @@ export const useOrdensCarregamentoUnificadas = () => {
         const comPedido = todasOrdens.filter(o => o.pedido_id);
         const porPedido = new Map<string, typeof comPedido[0]>();
         for (const ordem of comPedido) {
-          const existing = porPedido.get(ordem.pedido_id!);
+          const pedidoId = ordem.pedido_id;
+          if (!pedidoId) continue;
+          const existing = porPedido.get(pedidoId);
           if (!existing) {
-            porPedido.set(ordem.pedido_id!, ordem);
+            porPedido.set(pedidoId, ordem);
           } else {
             const ordemTemData = !!ordem.data_carregamento;
             const existingTemData = !!existing.data_carregamento;
             if (ordemTemData && !existingTemData) {
-              porPedido.set(ordem.pedido_id!, ordem);
+              porPedido.set(pedidoId, ordem);
             } else if (!ordemTemData && existingTemData) {
               // manter existing
             } else if (new Date(ordem.created_at || 0) > new Date(existing.created_at || 0)) {
-              porPedido.set(ordem.pedido_id!, ordem);
+              porPedido.set(pedidoId, ordem);
             }
           }
         }
@@ -221,9 +222,37 @@ export const useOrdensCarregamentoUnificadas = () => {
       }
 
       // Filtrar instalações prontas para carregamento (incluindo aguardando_coleta)
-      const instalacoesParaCarregar = (instalacoes || []).filter(
+      const instalacoesFiltradas = (instalacoes || []).filter(
         (inst) => inst.pedido?.etapa_atual === 'instalacoes' || inst.pedido?.etapa_atual === 'aguardando_coleta' || inst.status === 'pronta_fabrica'
       );
+
+      // Manter apenas uma instalação pendente por pedido, priorizando a
+      // agendada e, em seguida, o registro mais recente.
+      const instalacoesParaCarregar = (() => {
+        const semPedido = instalacoesFiltradas.filter((inst) => !inst.pedido_id);
+        const porPedido = new Map<string, typeof instalacoesFiltradas[number]>();
+
+        for (const instalacao of instalacoesFiltradas) {
+          const pedidoId = instalacao.pedido_id;
+          if (!pedidoId) continue;
+
+          const existente = porPedido.get(pedidoId);
+          if (!existente) {
+            porPedido.set(pedidoId, instalacao);
+            continue;
+          }
+
+          const instalacaoTemData = Boolean(instalacao.data_carregamento);
+          const existenteTemData = Boolean(existente.data_carregamento);
+          if (instalacaoTemData && !existenteTemData) {
+            porPedido.set(pedidoId, instalacao);
+          } else if (instalacaoTemData === existenteTemData && new Date(instalacao.created_at || 0) > new Date(existente.created_at || 0)) {
+            porPedido.set(pedidoId, instalacao);
+          }
+        }
+
+        return [...semPedido, ...porPedido.values()];
+      })();
 
       // ===== 3. Buscar correções com carregamento pendente =====
       const { data: correcoes, error: corrError } = await supabase
@@ -286,12 +315,13 @@ export const useOrdensCarregamentoUnificadas = () => {
       // Set de pedido_ids em correções para deduplicação
       const todosIdsCorrecoes = new Set(correcoesUnicas.map(c => c.pedido_id).filter(Boolean));
 
-      // ===== 3b. Query leve: buscar TODOS os pedido_ids de instalacoes (sem filtros) para deduplicação =====
+      // ===== 3b. Buscar todo o histórico de instalações para deduplicação =====
+      // Registros concluídos também contam como existentes, evitando que o
+      // pedido seja recriado abaixo como uma instalação "órfã" pendente.
       const { data: todosInstalacoesPedidoIds } = await supabase
         .from("instalacoes")
         .select("pedido_id")
-        .not("pedido_id", "is", null)
-        .eq("carregamento_concluido", false);
+        .not("pedido_id", "is", null);
 
       const todosIdsInstalacoes = new Set(
         (todosInstalacoesPedidoIds || []).map(i => i.pedido_id)
