@@ -332,6 +332,7 @@ function AutorizadosList({ tipo, searchTerm }: { tipo: 'autorizado' | 'franquead
       ))}
       <EditarAutorizadoModal
         autorizadoId={editandoId}
+        tipoParceiro={tipo}
         open={modalOpen}
         onOpenChange={(open) => {
           setModalOpen(open);

@@ -56,12 +56,13 @@ const emptyForm: FormState = {
 
 interface EditarAutorizadoModalProps {
   autorizadoId: string | null;
+  tipoParceiro: "autorizado" | "franqueado";
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSaved: () => void;
 }
 
-export function EditarAutorizadoModal({ autorizadoId, open, onOpenChange, onSaved }: EditarAutorizadoModalProps) {
+export function EditarAutorizadoModal({ autorizadoId, tipoParceiro, open, onOpenChange, onSaved }: EditarAutorizadoModalProps) {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [form, setForm] = useState<FormState>(emptyForm);
@@ -347,7 +348,7 @@ export function EditarAutorizadoModal({ autorizadoId, open, onOpenChange, onSave
               <ContratoParceiroManager
                 parceiroId={autorizadoId}
                 table="autorizados"
-                tipo="autorizado"
+                tipo={tipoParceiro}
                 contratoUrl={form.contrato_url || null}
                 contratoNome={form.contrato_nome_arquivo || null}
                 contratoTamanho={form.contrato_tamanho_arquivo}
