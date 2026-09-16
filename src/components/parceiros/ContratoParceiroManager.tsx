@@ -135,7 +135,7 @@ export function ContratoParceiroManager({
       if (updateError) throw updateError;
       if (path) {
         const { error: removeError } = await supabase.storage.from(BUCKET).remove([path]);
-        if (removeError) throw removeError;
+        if (removeError) console.error("Contrato desvinculado, mas o arquivo anterior não foi excluído:", removeError);
       }
       onChanged({ url: null, nome: null, tamanho: null });
       toast.success("Contrato removido.");
