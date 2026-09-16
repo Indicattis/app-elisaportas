@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, Camera, User } from "lucide-react";
+import { ContratoParceiroManager } from "@/components/parceiros/ContratoParceiroManager";
 
 interface FormState {
   nome: string;
@@ -15,6 +16,9 @@ interface FormState {
   foto_perfil_url: string;
   comissao_pct: string;
   ativo: boolean;
+  contrato_url: string;
+  contrato_nome_arquivo: string;
+  contrato_tamanho_arquivo: number | null;
 }
 
 const emptyForm: FormState = {
@@ -24,6 +28,9 @@ const emptyForm: FormState = {
   foto_perfil_url: "",
   comissao_pct: "",
   ativo: true,
+  contrato_url: "",
+  contrato_nome_arquivo: "",
+  contrato_tamanho_arquivo: null,
 };
 
 interface EditarRepresentanteModalProps {
@@ -47,7 +54,7 @@ export function EditarRepresentanteModal({ representanteId, open, onOpenChange, 
       setLoading(true);
       const { data, error } = await supabase
         .from("representantes")
-        .select("nome, email, telefone, foto_perfil_url, comissao_pct, ativo")
+        .select("nome, email, telefone, foto_perfil_url, comissao_pct, ativo, contrato_url, contrato_nome_arquivo, contrato_tamanho_arquivo")
         .eq("id", representanteId)
         .maybeSingle();
       if (cancelled) return;
@@ -61,6 +68,9 @@ export function EditarRepresentanteModal({ representanteId, open, onOpenChange, 
           foto_perfil_url: data.foto_perfil_url || "",
           comissao_pct: data.comissao_pct != null ? String(data.comissao_pct) : "",
           ativo: !!data.ativo,
+          contrato_url: data.contrato_url || "",
+          contrato_nome_arquivo: data.contrato_nome_arquivo || "",
+          contrato_tamanho_arquivo: data.contrato_tamanho_arquivo,
         });
       }
       setLoading(false);
@@ -205,6 +215,26 @@ export function EditarRepresentanteModal({ representanteId, open, onOpenChange, 
                 />
               </div>
             </div>
+
+            {representanteId && (
+              <ContratoParceiroManager
+                parceiroId={representanteId}
+                table="representantes"
+                tipo="representante"
+                contratoUrl={form.contrato_url || null}
+                contratoNome={form.contrato_nome_arquivo || null}
+                contratoTamanho={form.contrato_tamanho_arquivo}
+                onChanged={(contrato) => {
+                  setForm((current) => ({
+                    ...current,
+                    contrato_url: contrato.url || "",
+                    contrato_nome_arquivo: contrato.nome || "",
+                    contrato_tamanho_arquivo: contrato.tamanho,
+                  }));
+                  onSaved();
+                }}
+              />
+            )}
 
             <div className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-4 py-3">
               <div>
