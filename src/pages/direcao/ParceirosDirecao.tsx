@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Phone, MapPin, Mail, Power, Pencil, Users, CheckCircle, XCircle, Search } from 'lucide-react';
+import { ArrowLeft, Phone, MapPin, Mail, Power, Pencil, Users, CheckCircle, XCircle, Search, FileCheck2, FileClock } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { supabase } from '@/integrations/supabase/client';
@@ -101,6 +101,18 @@ function StatusBadge({ ativo, reprovado }: { ativo: boolean; reprovado?: boolean
     <span className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-400/20">Ativo</span>
   ) : (
     <span className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full bg-white/5 text-white/40 border border-white/10">Inativo</span>
+  );
+}
+
+function ContratoBadge({ anexado }: { anexado: boolean }) {
+  return anexado ? (
+    <span className="hidden sm:inline-flex items-center gap-1 rounded-full border border-emerald-400/20 bg-emerald-500/15 px-2 py-0.5 text-[10px] text-emerald-300">
+      <FileCheck2 className="h-3 w-3" /> Contrato
+    </span>
+  ) : (
+    <span className="hidden sm:inline-flex items-center gap-1 rounded-full border border-amber-400/20 bg-amber-500/15 px-2 py-0.5 text-[10px] text-amber-300">
+      <FileClock className="h-3 w-3" /> Pendente
+    </span>
   );
 }
 
@@ -255,7 +267,7 @@ function AutorizadosList({ tipo, searchTerm }: { tipo: 'autorizado' | 'franquead
     queryFn: async () => {
       const { data, error } = await supabase
         .from('autorizados')
-        .select('id, nome, cidade, estado, telefone, whatsapp, logo_url, ativo, tipo_parceiro, responsavel, email')
+        .select('id, nome, cidade, estado, telefone, whatsapp, logo_url, ativo, tipo_parceiro, responsavel, email, contrato_url')
         .eq('tipo_parceiro', tipo)
         .order('nome', { ascending: true });
       if (error) throw error;
@@ -308,6 +320,7 @@ function AutorizadosList({ tipo, searchTerm }: { tipo: 'autorizado' | 'franquead
               {p.email && (<><Mail className="w-3 h-3 shrink-0" /><span className="truncate">{p.email}</span></>)}
             </div>
             <StatusBadge ativo={!!p.ativo} />
+            <ContratoBadge anexado={!!p.contrato_url} />
             <ToggleAtivoButton
               ativo={!!p.ativo}
               loading={toggleMutation.isPending}
@@ -319,6 +332,7 @@ function AutorizadosList({ tipo, searchTerm }: { tipo: 'autorizado' | 'franquead
       ))}
       <EditarAutorizadoModal
         autorizadoId={editandoId}
+        tipoParceiro={tipo}
         open={modalOpen}
         onOpenChange={(open) => {
           setModalOpen(open);
@@ -340,7 +354,7 @@ function RepresentantesList({ searchTerm }: { searchTerm: string }) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('representantes')
-        .select('id, nome, email, telefone, foto_perfil_url, ativo, reprovado, comissao_pct')
+        .select('id, nome, email, telefone, foto_perfil_url, ativo, reprovado, comissao_pct, contrato_url')
         .order('nome', { ascending: true });
       if (error) throw error;
       return data ?? [];
@@ -391,6 +405,7 @@ function RepresentantesList({ searchTerm }: { searchTerm: string }) {
               {r.telefone && (<><Phone className="w-3 h-3 shrink-0" /><span className="truncate">{r.telefone}</span></>)}
             </div>
             <StatusBadge ativo={!!r.ativo} reprovado={!!r.reprovado} />
+            <ContratoBadge anexado={!!r.contrato_url} />
             <ToggleAtivoButton
               ativo={!!r.ativo}
               loading={toggleMutation.isPending}

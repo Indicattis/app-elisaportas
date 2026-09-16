@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { Loader2, ExternalLink } from "lucide-react";
 import { ESTADOS_BRASIL, getCidadesPorEstado } from "@/utils/estadosCidades";
+import { ContratoParceiroManager } from "@/components/parceiros/ContratoParceiroManager";
 
 interface Vendedor {
   id: string;
@@ -30,6 +31,9 @@ interface FormState {
   logo_url: string;
   vendedor_id: string;
   vendedor_responsavel_id: string;
+  contrato_url: string;
+  contrato_nome_arquivo: string;
+  contrato_tamanho_arquivo: number | null;
 }
 
 const emptyForm: FormState = {
@@ -45,16 +49,20 @@ const emptyForm: FormState = {
   logo_url: "",
   vendedor_id: "",
   vendedor_responsavel_id: "",
+  contrato_url: "",
+  contrato_nome_arquivo: "",
+  contrato_tamanho_arquivo: null,
 };
 
 interface EditarAutorizadoModalProps {
   autorizadoId: string | null;
+  tipoParceiro: "autorizado" | "franqueado";
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSaved: () => void;
 }
 
-export function EditarAutorizadoModal({ autorizadoId, open, onOpenChange, onSaved }: EditarAutorizadoModalProps) {
+export function EditarAutorizadoModal({ autorizadoId, tipoParceiro, open, onOpenChange, onSaved }: EditarAutorizadoModalProps) {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [form, setForm] = useState<FormState>(emptyForm);
@@ -75,7 +83,7 @@ export function EditarAutorizadoModal({ autorizadoId, open, onOpenChange, onSave
         const [{ data: autorizado, error: autErr }, { data: usersData, error: usersErr }] = await Promise.all([
           supabase
             .from("autorizados")
-            .select("nome, email, telefone, whatsapp, responsavel, estado, cidade, cep, ativo, logo_url, vendedor_id, vendedor_responsavel_id")
+            .select("nome, email, telefone, whatsapp, responsavel, estado, cidade, cep, ativo, logo_url, vendedor_id, vendedor_responsavel_id, tipo_parceiro, contrato_url, contrato_nome_arquivo, contrato_tamanho_arquivo")
             .eq("id", autorizadoId)
             .maybeSingle(),
           supabase.rpc("get_active_users_basic"),
@@ -99,6 +107,9 @@ export function EditarAutorizadoModal({ autorizadoId, open, onOpenChange, onSave
             logo_url: autorizado.logo_url || "",
             vendedor_id: autorizado.vendedor_id || "",
             vendedor_responsavel_id: (autorizado as any).vendedor_responsavel_id || "",
+            contrato_url: autorizado.contrato_url || "",
+            contrato_nome_arquivo: autorizado.contrato_nome_arquivo || "",
+            contrato_tamanho_arquivo: autorizado.contrato_tamanho_arquivo,
           });
           setCidadesDisponiveis(autorizado.estado ? getCidadesPorEstado(autorizado.estado) : []);
         }
@@ -332,6 +343,26 @@ export function EditarAutorizadoModal({ autorizadoId, open, onOpenChange, onSave
                 </div>
               </div>
             </section>
+
+            {autorizadoId && (
+              <ContratoParceiroManager
+                parceiroId={autorizadoId}
+                table="autorizados"
+                tipo={tipoParceiro}
+                contratoUrl={form.contrato_url || null}
+                contratoNome={form.contrato_nome_arquivo || null}
+                contratoTamanho={form.contrato_tamanho_arquivo}
+                onChanged={(contrato) => {
+                  setForm((current) => ({
+                    ...current,
+                    contrato_url: contrato.url || "",
+                    contrato_nome_arquivo: contrato.nome || "",
+                    contrato_tamanho_arquivo: contrato.tamanho,
+                  }));
+                  onSaved();
+                }}
+              />
+            )}
 
             {/* Status */}
             <section className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-4 py-3">

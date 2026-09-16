@@ -8724,6 +8724,10 @@ export type Database = {
         Row: {
           ativo: boolean
           comissao_pct: number
+          contrato_nome_arquivo: string | null
+          contrato_tamanho_arquivo: number | null
+          contrato_uploaded_at: string | null
+          contrato_url: string | null
           created_at: string
           email: string
           foto_perfil_url: string | null
@@ -8737,6 +8741,10 @@ export type Database = {
         Insert: {
           ativo?: boolean
           comissao_pct?: number
+          contrato_nome_arquivo?: string | null
+          contrato_tamanho_arquivo?: number | null
+          contrato_uploaded_at?: string | null
+          contrato_url?: string | null
           created_at?: string
           email: string
           foto_perfil_url?: string | null
@@ -8750,6 +8758,10 @@ export type Database = {
         Update: {
           ativo?: boolean
           comissao_pct?: number
+          contrato_nome_arquivo?: string | null
+          contrato_tamanho_arquivo?: number | null
+          contrato_uploaded_at?: string | null
+          contrato_url?: string | null
           created_at?: string
           email?: string
           foto_perfil_url?: string | null
