@@ -130,12 +130,16 @@ export default function VisitaTecnicaConclusao() {
   });
 
   const { data: acessoriosLista = [] } = useQuery({
-    queryKey: ['custos-itens-acessorios'],
+    queryKey: ['catalogo-acessorios-visita-tecnica'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('custos_itens').select('id, descricao, categoria').eq('categoria', 'Acessórios').order('descricao');
+        .from('acessorios').select('id, nome').order('nome');
       if (error) throw error;
-      return (data || []) as CustoItem[];
+      return (data || []).map(item => ({
+        id: item.id,
+        descricao: item.nome,
+        categoria: 'Acessórios',
+      })) as CustoItem[];
     },
   });
 
