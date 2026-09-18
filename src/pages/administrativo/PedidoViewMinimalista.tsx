@@ -720,6 +720,7 @@ export default function PedidoViewMinimalista() {
                       <th className="text-right p-2 font-medium text-white/50">Peso (kg)</th>
                       <th className="text-right p-2 font-medium text-white/50">M. Canas</th>
                       <th className="text-center p-2 font-medium text-white/50">Qtd</th>
+                       <th className="text-left p-2 font-medium text-white/50">Observação</th>
                       <th className="text-center p-2 font-medium text-white/50">Ações</th>
                     </tr>
                   </thead>
@@ -764,6 +765,9 @@ export default function PedidoViewMinimalista() {
                           <td className="p-2 text-center">
                             <Badge variant="secondary" className="text-xs bg-white/10 text-white">{produto.quantidade}x</Badge>
                           </td>
+                           <td className="p-2 text-xs text-white/70 max-w-64 whitespace-pre-wrap break-words">
+                             {produto.observacao_item?.trim() || '—'}
+                           </td>
                           <td className="p-2 text-center">
                             {isPintura && !isEditing && (
                               <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleIniciarEdicaoProduto(produto)}>
@@ -845,6 +849,12 @@ export default function PedidoViewMinimalista() {
                           )}
                         </div>
                       </div>
+                       <div className="text-xs">
+                         <span className="text-white/50">Observação: </span>
+                         <span className="font-medium text-white/80 whitespace-pre-wrap break-words">
+                           {produto.observacao_item?.trim() || '—'}
+                         </span>
+                       </div>
                     </div>
                   );
                 })}
