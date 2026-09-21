@@ -7662,6 +7662,8 @@ export type Database = {
           mes_vigencia: string | null
           modalidade_instalacao: string | null
           motivo_backlog: string | null
+          negociacao_iniciada_em: string | null
+          negociacao_tempo_acumulado_segundos: number
           numero_mes: number | null
           numero_parcelas: number | null
           numero_pedido: string
@@ -7719,6 +7721,8 @@ export type Database = {
           mes_vigencia?: string | null
           modalidade_instalacao?: string | null
           motivo_backlog?: string | null
+          negociacao_iniciada_em?: string | null
+          negociacao_tempo_acumulado_segundos?: number
           numero_mes?: number | null
           numero_parcelas?: number | null
           numero_pedido: string
@@ -7776,6 +7780,8 @@ export type Database = {
           mes_vigencia?: string | null
           modalidade_instalacao?: string | null
           motivo_backlog?: string | null
+          negociacao_iniciada_em?: string | null
+          negociacao_tempo_acumulado_segundos?: number
           numero_mes?: number | null
           numero_parcelas?: number | null
           numero_pedido?: string
@@ -11112,6 +11118,74 @@ export type Database = {
         Args: { p_venda_id: string }
         Returns: undefined
       }
+      encerrar_negociacao_carregamento: {
+        Args: { p_pedido_id: string }
+        Returns: {
+          arquivado: boolean
+          arquivado_por: string | null
+          aviso_espera: string | null
+          aviso_espera_data: string | null
+          cliente_bairro: string | null
+          cliente_cpf: string | null
+          cliente_email: string | null
+          cliente_nome: string
+          cliente_telefone: string | null
+          created_at: string
+          created_by: string | null
+          data_arquivamento: string | null
+          data_carregamento: string | null
+          data_entrega: string | null
+          data_producao: string | null
+          em_backlog: boolean | null
+          endereco_bairro: string | null
+          endereco_cep: string | null
+          endereco_cidade: string | null
+          endereco_estado: string | null
+          endereco_numero: string | null
+          endereco_rua: string | null
+          etapa_atual: string | null
+          etapa_origem_backlog: string | null
+          ficha_visita_nome: string | null
+          ficha_visita_url: string | null
+          forma_pagamento: string | null
+          id: string
+          is_correcao: boolean | null
+          mes_vigencia: string | null
+          modalidade_instalacao: string | null
+          motivo_backlog: string | null
+          negociacao_iniciada_em: string | null
+          negociacao_tempo_acumulado_segundos: number
+          numero_mes: number | null
+          numero_parcelas: number | null
+          numero_pedido: string
+          observacoes: string | null
+          observacoes_venda: string | null
+          orcamento_id: string | null
+          ordens_perfiladeira: Json | null
+          ordens_pintura: Json | null
+          ordens_separacao: Json | null
+          ordens_soldagem: Json | null
+          pedido_origem_id: string | null
+          prioridade_etapa: number | null
+          produtos: Json | null
+          reprovado_ceo: boolean
+          status: string
+          status_ordens: Json | null
+          status_preenchimento: string | null
+          updated_at: string
+          valor_entrada: number | null
+          valor_frete: number | null
+          valor_instalacao: number | null
+          valor_venda: number | null
+          venda_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "pedidos_producao"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       excluir_pedido_em_aberto: {
         Args: { pedido_uuid: string }
         Returns: boolean
@@ -11409,6 +11483,74 @@ export type Database = {
         Returns: boolean
       }
       increment_whatsapp_clique: { Args: { _id: string }; Returns: undefined }
+      iniciar_negociacao_carregamento: {
+        Args: { p_pedido_id: string }
+        Returns: {
+          arquivado: boolean
+          arquivado_por: string | null
+          aviso_espera: string | null
+          aviso_espera_data: string | null
+          cliente_bairro: string | null
+          cliente_cpf: string | null
+          cliente_email: string | null
+          cliente_nome: string
+          cliente_telefone: string | null
+          created_at: string
+          created_by: string | null
+          data_arquivamento: string | null
+          data_carregamento: string | null
+          data_entrega: string | null
+          data_producao: string | null
+          em_backlog: boolean | null
+          endereco_bairro: string | null
+          endereco_cep: string | null
+          endereco_cidade: string | null
+          endereco_estado: string | null
+          endereco_numero: string | null
+          endereco_rua: string | null
+          etapa_atual: string | null
+          etapa_origem_backlog: string | null
+          ficha_visita_nome: string | null
+          ficha_visita_url: string | null
+          forma_pagamento: string | null
+          id: string
+          is_correcao: boolean | null
+          mes_vigencia: string | null
+          modalidade_instalacao: string | null
+          motivo_backlog: string | null
+          negociacao_iniciada_em: string | null
+          negociacao_tempo_acumulado_segundos: number
+          numero_mes: number | null
+          numero_parcelas: number | null
+          numero_pedido: string
+          observacoes: string | null
+          observacoes_venda: string | null
+          orcamento_id: string | null
+          ordens_perfiladeira: Json | null
+          ordens_pintura: Json | null
+          ordens_separacao: Json | null
+          ordens_soldagem: Json | null
+          pedido_origem_id: string | null
+          prioridade_etapa: number | null
+          produtos: Json | null
+          reprovado_ceo: boolean
+          status: string
+          status_ordens: Json | null
+          status_preenchimento: string | null
+          updated_at: string
+          valor_entrada: number | null
+          valor_frete: number | null
+          valor_instalacao: number | null
+          valor_venda: number | null
+          venda_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "pedidos_producao"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       is_admin:
         | { Args: never; Returns: boolean }
         | { Args: { _uid: string }; Returns: boolean }
