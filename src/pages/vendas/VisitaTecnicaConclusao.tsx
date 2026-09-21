@@ -597,18 +597,44 @@ export default function VisitaTecnicaConclusao() {
               size="lg"
               className="bg-gradient-to-br from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 text-white shadow-lg shadow-blue-500/30 h-12 px-8"
               onClick={async () => {
-                startCron();
-                setIniciado(true);
-                if (visitaId && visita?.status === 'agendada') {
-                  await supabase
+                try {
+                  if (visitaId && visita && ['agendada', 'realizada'].includes(visita.status) && !visita.capturada_por) {
+                  const { data: authData } = await supabase.auth.getUser();
+                  const capturadaPor = authData.user?.id;
+                  if (!capturadaPor) {
+                    throw new Error('Não foi possível identificar quem iniciou a visita');
+                  }
+                  const { data: capturada, error } = await supabase
                     .from('visitas_tecnicas_agendadas')
-                    .update({ status: 'realizada' } as any)
-                    .eq('id', visitaId);
+                    .update({ status: 'realizada', capturada_por: capturadaPor, capturada_em: new Date().toISOString() })
+                    .eq('id', visitaId)
+                    .is('capturada_por', null)
+                    .select('id')
+                    .maybeSingle();
+                  if (error) throw error;
+                  if (!capturada) throw new Error('Esta visita já foi capturada por outra pessoa');
+                  await logVisitaHistorico({
+                    visita_id: visitaId,
+                    acao: 'alterada',
+                    titulo: visita.titulo,
+                    data_visita: visita.data_visita,
+                    cidade: visita.cidade,
+                    estado: visita.estado,
+                    detalhes: { status: { de: 'agendada', para: 'realizada' }, capturada_por: userRole?.nome || null },
+                    usuario_id: capturadaPor,
+                    usuario_nome: userRole?.nome || null,
+                  });
                   qc.invalidateQueries({ queryKey: ['visita-tecnica', visitaId] });
                   qc.invalidateQueries({ queryKey: ['visitas-a-concluir'] });
                   qc.invalidateQueries({ queryKey: ['visitas-lista-todas'] });
                   qc.invalidateQueries({ queryKey: ['visitas-agendadas'] });
                   qc.invalidateQueries({ queryKey: ['visitas-semana'] });
+                  qc.invalidateQueries({ queryKey: ['visitas-historico'] });
+                  }
+                  startCron();
+                  setIniciado(true);
+                } catch (error: any) {
+                  toast.error(error?.message || 'Erro ao iniciar a visita');
                 }
               }}
             >
