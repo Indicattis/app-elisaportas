@@ -10509,6 +10509,8 @@ export type Database = {
       visitas_tecnicas_agendadas: {
         Row: {
           bairro: string | null
+          capturada_em: string | null
+          capturada_por: string | null
           cep: string | null
           cidade: string | null
           complemento: string | null
@@ -10532,6 +10534,8 @@ export type Database = {
         }
         Insert: {
           bairro?: string | null
+          capturada_em?: string | null
+          capturada_por?: string | null
           cep?: string | null
           cidade?: string | null
           complemento?: string | null
@@ -10555,6 +10559,8 @@ export type Database = {
         }
         Update: {
           bairro?: string | null
+          capturada_em?: string | null
+          capturada_por?: string | null
           cep?: string | null
           cidade?: string | null
           complemento?: string | null
