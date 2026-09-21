@@ -1669,7 +1669,7 @@ export function PedidoCard({
                     return (
                       <span className="inline-flex items-center gap-1 rounded border border-yellow-500/40 bg-yellow-500/10 px-1.5 py-0.5 text-[9px] font-semibold text-yellow-400">
                         <Handshake className="h-3 w-3 animate-pulse" />
-                        Em negociação
+                        Negociação
                       </span>
                     );
                   }
