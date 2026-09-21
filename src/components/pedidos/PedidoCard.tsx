@@ -31,6 +31,7 @@ import { CriarPedidoCorrecaoModal } from "./CriarPedidoCorrecaoModal";
 import { EnviarCorrecaoModal } from "./EnviarCorrecaoModal";
 import { useEnviarParaCorrecao } from "@/hooks/useEnviarParaCorrecao";
 import { CronometroEtapaBadge } from "./CronometroEtapaBadge";
+import { CronometroNegociacaoBadge } from "./CronometroNegociacaoBadge";
 import React, { useState, useMemo } from "react";
 import { AvisoFaltaModal } from "@/components/production/AvisoFaltaModal";
 import { useGestaoOrdensProducao } from "@/hooks/useGestaoOrdensProducao";
@@ -668,6 +669,28 @@ export function PedidoCard({
   const etapasData = pedido.pedidos_etapas || [];
   const etapaAtualData = etapasData.find((e: any) => e.data_saida === null);
   const dataEntradaEtapaAtual = etapaAtualData?.data_entrada || null;
+  const etapasNegociacao: EtapaPedido[] = ['aguardando_coleta', 'instalacoes', 'correcoes'];
+  const podeIniciarNegociacao = etapasNegociacao.includes(etapaAtual) && !carregamentoConcluido && !pedido.negociacao_iniciada_em;
+  const iniciarNegociacao = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.rpc('iniciar_negociacao_carregamento', {
+        p_pedido_id: pedido.id,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pedidos-etapas'] });
+      queryClient.invalidateQueries({ queryKey: ['pedidos-contadores'] });
+      toast({ title: 'Pedido em negociação' });
+    },
+    onError: (error) => {
+      console.error('Erro ao iniciar negociação:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Não foi possível iniciar a negociação',
+      });
+    },
+  });
   const produtos = venda?.produtos_vendas || [];
   const temLinhas = linhasCount > 0;
   const todasOrdensConcluidasEmProducao = ordensStatus === true;
@@ -1627,9 +1650,29 @@ export function PedidoCard({
               )}
               
               {/* Col 6: Data de Carregamento */}
-              <div className="text-center">
+              <div
+                className={cn(
+                  "text-center",
+                  podeIniciarNegociacao && "cursor-pointer rounded-sm transition-colors hover:bg-yellow-500/10"
+                )}
+                onClick={(event) => {
+                  if (!podeIniciarNegociacao || iniciarNegociacao.isPending) return;
+                  event.stopPropagation();
+                  iniciarNegociacao.mutate();
+                }}
+                title={podeIniciarNegociacao ? 'Marcar como Em negociação' : undefined}
+              >
                 {(() => {
                   const isExpedicao = etapaAtual === 'aguardando_coleta' || etapaAtual === 'instalacoes' || etapaAtual === 'correcoes';
+
+                  if (isExpedicao && pedido.negociacao_iniciada_em) {
+                    return (
+                      <span className="inline-flex items-center gap-1 rounded border border-yellow-500/40 bg-yellow-500/10 px-1.5 py-0.5 text-[9px] font-semibold text-yellow-400">
+                        <Handshake className="h-3 w-3 animate-pulse" />
+                        Em negociação
+                      </span>
+                    );
+                  }
                   
                   if (isExpedicao) {
                     // Se carregamento concluído, mostrar "Carregada"
@@ -1981,6 +2024,10 @@ export function PedidoCard({
               {/* Col 13: Tempo na Etapa + Total + Dias Pendente */}
               <div className="text-center flex flex-wrap items-center justify-center gap-2">
                 <CronometroEtapaBadge dataEntrada={dataEntradaEtapaAtual} compact etapa={etapaAtual} />
+                <CronometroNegociacaoBadge
+                  iniciadaEm={pedido.negociacao_iniciada_em}
+                  tempoAcumuladoSegundos={pedido.negociacao_tempo_acumulado_segundos}
+                />
                 {pedido.created_at && (
                   <Tooltip>
                     <TooltipTrigger asChild>
