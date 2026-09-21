@@ -30,7 +30,7 @@ export function CronometroNegociacaoBadge({
     return acumulado + Math.max(0, Math.floor((agora - inicio) / 1000));
   }, [agora, iniciadaEm, tempoAcumuladoSegundos]);
 
-  if (!iniciadaEm && segundosTotais === 0) return null;
+  if (!iniciadaEm) return null;
 
   return (
     <Tooltip>
@@ -45,7 +45,7 @@ export function CronometroNegociacaoBadge({
       </TooltipTrigger>
       <TooltipContent side="top">
         <p className="text-xs">
-          {iniciadaEm ? "Tempo acumulado em negociação" : "Negociação encerrada — tempo acumulado"}
+          Tempo acumulado em negociação
         </p>
       </TooltipContent>
     </Tooltip>

@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatCurrency, cn } from "@/lib/utils";
 import { format, formatDistanceToNow, parseISO, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ArrowRight, Package, ChevronUp, ChevronDown, GripVertical, AlertCircle, CheckCircle, ArrowLeft, FileText, Paintbrush, Truck, Hammer, AlertTriangle, Archive, User, PauseCircle, PlayCircle, Boxes, Sparkles, UserMinus, Trash2, Clock, Wrench, CalendarPlus, CalendarX, Calendar } from "lucide-react";
+import { ArrowRight, Package, ChevronUp, ChevronDown, GripVertical, AlertCircle, CheckCircle, ArrowLeft, FileText, Paintbrush, Truck, Hammer, AlertTriangle, Archive, User, PauseCircle, PlayCircle, Boxes, Sparkles, UserMinus, Trash2, Clock, Wrench, CalendarPlus, CalendarX, Calendar, Handshake } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -670,7 +670,7 @@ export function PedidoCard({
   const etapaAtualData = etapasData.find((e: any) => e.data_saida === null);
   const dataEntradaEtapaAtual = etapaAtualData?.data_entrada || null;
   const etapasNegociacao: EtapaPedido[] = ['aguardando_coleta', 'instalacoes', 'correcoes'];
-  const podeIniciarNegociacao = etapasNegociacao.includes(etapaAtual) && !carregamentoConcluido && !pedido.negociacao_iniciada_em;
+  const podeIniciarNegociacao = etapasNegociacao.includes(etapaAtual) && !carregamentoConcluido && !dataCarregamento && !pedido.negociacao_iniciada_em;
   const iniciarNegociacao = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.rpc('iniciar_negociacao_carregamento', {
