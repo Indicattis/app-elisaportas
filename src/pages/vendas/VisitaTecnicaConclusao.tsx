@@ -24,6 +24,7 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { useCronometro } from '@/hooks/useCronometro';
 import { formatCronometro } from '@/utils/timeFormat';
+import { VisitaMidiasFinais, type MidiaFinalExistente } from '@/components/vendas/VisitaMidiasFinais';
 
 interface Cor { id: string; nome: string; codigo_hex: string }
 interface CustoItem { id: string; descricao: string; categoria: string | null }
@@ -103,6 +104,9 @@ export default function VisitaTecnicaConclusao() {
   const [obsGerais, setObsGerais] = useState('');
   const [readOnly, setReadOnly] = useState(false);
   const [iniciado, setIniciado] = useState(false);
+  const [midiasExistentes, setMidiasExistentes] = useState<MidiaFinalExistente[]>([]);
+  const [novasMidias, setNovasMidias] = useState<File[]>([]);
+  const [midiasRemovidas, setMidiasRemovidas] = useState<MidiaFinalExistente[]>([]);
   const [lightbox, setLightbox] = useState<{ open: boolean; url: string; legenda: string }>({ open: false, url: '', legenda: '' });
   const { segundosDecorridos, isRunning, start: startCron } = useCronometro();
 
@@ -156,7 +160,14 @@ export default function VisitaTecnicaConclusao() {
       const { data: fotos } = portasIds.length
         ? await supabase.from('visitas_tecnicas_portas_fotos').select('*').in('porta_id', portasIds).order('ordem')
         : { data: [] as any[] };
-      return { conclusao: c, portas: ps || [], fotos: fotos || [] };
+      const { data: midias, error: midiasError } = await supabase
+        .from('visitas_tecnicas_midias').select('*').eq('conclusao_id', c.id).order('ordem');
+      if (midiasError) throw midiasError;
+      const midiasComUrl = await Promise.all((midias || []).map(async (midia) => {
+        const { data } = await supabase.storage.from('visitas-tecnicas-midias').createSignedUrl(midia.storage_path, 3600);
+        return { ...midia, url: data?.signedUrl || '' } as MidiaFinalExistente;
+      }));
+      return { conclusao: c, portas: ps || [], fotos: fotos || [], midias: midiasComUrl };
     },
     enabled: !!visitaId,
   });
@@ -166,6 +177,9 @@ export default function VisitaTecnicaConclusao() {
     setReadOnly(true);
     setIniciado(true);
     setObsGerais(dados.conclusao.observacoes_gerais || '');
+    setMidiasExistentes(dados.midias || []);
+    setNovasMidias([]);
+    setMidiasRemovidas([]);
     const fotosPorPorta = new Map<string, any[]>();
     for (const f of dados.fotos) {
       const arr = fotosPorPorta.get(f.porta_id) || [];
@@ -295,6 +309,30 @@ export default function VisitaTecnicaConclusao() {
     });
   };
 
+  const adicionarMidiasFinais = (files: FileList | null) => {
+    if (!files) return;
+    const limiteDisponivel = 10 - midiasExistentes.length - novasMidias.length;
+    const selecionados = Array.from(files);
+    const validos = selecionados.filter(file => {
+      if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+        toast.error(`${file.name}: formato não suportado`);
+        return false;
+      }
+      if (file.size > 50 * 1024 * 1024) {
+        toast.error(`${file.name}: tamanho máximo de 50 MB`);
+        return false;
+      }
+      return true;
+    });
+    if (validos.length > limiteDisponivel) toast.error('O limite é de 10 mídias por visita');
+    setNovasMidias(prev => [...prev, ...validos.slice(0, limiteDisponivel)]);
+  };
+
+  const removerMidiaExistente = (midia: MidiaFinalExistente) => {
+    setMidiasExistentes(prev => prev.filter(item => item.id !== midia.id));
+    setMidiasRemovidas(prev => [...prev, midia]);
+  };
+
   const validarPorta = (p: PortaForm): string | null => {
     if (!p.largura_vao || !p.altura_vao) return 'Largura e altura do vão são obrigatórias';
     if (!p.largura_total || !p.altura_total) return 'Largura e altura total são obrigatórias';
@@ -334,8 +372,9 @@ export default function VisitaTecnicaConclusao() {
       const erro = validarPorta(portas[i]);
       if (erro) return `Porta ${i + 1}: ${erro}`;
     }
+    if (midiasExistentes.length + novasMidias.length === 0) return 'Adicione pelo menos uma mídia final da visita';
     return null;
-  }, [portas, obsGerais]);
+  }, [portas, midiasExistentes.length, novasMidias.length]);
 
   const concluirMut = useMutation({
     mutationFn: async () => {
@@ -343,6 +382,9 @@ export default function VisitaTecnicaConclusao() {
       for (let i = 0; i < portas.length; i++) {
         const erro = validarPorta(portas[i]);
         if (erro) throw new Error(`Porta ${i + 1}: ${erro}`);
+      }
+      if (midiasExistentes.length + novasMidias.length === 0) {
+        throw new Error('Adicione pelo menos uma mídia final da visita');
       }
 
       const { data: u } = await supabase.auth.getUser();
@@ -357,6 +399,37 @@ export default function VisitaTecnicaConclusao() {
         .select()
         .single();
       if (cErr) throw cErr;
+
+      for (let i = 0; i < novasMidias.length; i++) {
+        const file = novasMidias[i];
+        const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+        const path = `${conclusao.id}/${crypto.randomUUID()}-${safeName}`;
+        const { error: uploadError } = await supabase.storage
+          .from('visitas-tecnicas-midias')
+          .upload(path, file, { contentType: file.type });
+        if (uploadError) throw uploadError;
+        const { error: midiaError } = await supabase.from('visitas_tecnicas_midias').insert({
+          conclusao_id: conclusao.id,
+          storage_path: path,
+          tipo: file.type.startsWith('video/') ? 'video' : 'imagem',
+          nome_arquivo: file.name,
+          tamanho_bytes: file.size,
+          ordem: midiasExistentes.length + i,
+        });
+        if (midiaError) {
+          await supabase.storage.from('visitas-tecnicas-midias').remove([path]);
+          throw midiaError;
+        }
+      }
+
+      if (midiasRemovidas.length > 0) {
+        const ids = midiasRemovidas.map(midia => midia.id);
+        const { error: deleteRowsError } = await supabase.from('visitas_tecnicas_midias').delete().in('id', ids);
+        if (deleteRowsError) throw deleteRowsError;
+        const { error: deleteFilesError } = await supabase.storage
+          .from('visitas-tecnicas-midias').remove(midiasRemovidas.map(midia => midia.storage_path));
+        if (deleteFilesError) throw deleteFilesError;
+      }
 
       // Remove portas existentes (re-conclusão) para evitar duplicidade
       await supabase.from('visitas_tecnicas_portas').delete().eq('conclusao_id', conclusao.id);
@@ -722,6 +795,15 @@ export default function VisitaTecnicaConclusao() {
               disabled={readOnly}
             />
           </div>
+
+          <VisitaMidiasFinais
+            existentes={midiasExistentes}
+            novas={novasMidias}
+            readOnly={readOnly}
+            onAdicionar={adicionarMidiasFinais}
+            onRemoverNova={(index) => setNovasMidias(prev => prev.filter((_, i) => i !== index))}
+            onRemoverExistente={removerMidiaExistente}
+          />
 
           {!readOnly && (
             <div className="flex justify-end gap-2 pt-2">
