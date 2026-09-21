@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Plus, ChevronLeft, ChevronRight, FileText, Trash2, Loader2, CalendarIcon, Check, ChevronsUpDown, ClipboardList, AlertCircle, Pencil, CheckCircle2, MapPin, Phone, User, Clock, Search, XCircle, PlayCircle, ArrowRight, FileDown } from 'lucide-react';
+import { ArrowLeft, Plus, ChevronLeft, ChevronRight, FileText, Trash2, Loader2, CalendarIcon, Check, ChevronsUpDown, ClipboardList, AlertCircle, Pencil, CheckCircle2, MapPin, Phone, User, Clock, Search, XCircle, PlayCircle, ArrowRight, FileDown, RotateCcw } from 'lucide-react';
 import { gerarPDFVisitaTecnica } from '@/utils/visitaTecnicaPDFGenerator';
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { DelayedParticles } from '@/components/DelayedParticles';
@@ -275,7 +275,7 @@ function getInicial(nome: string) {
 }
 
 function VisitasListaPanel({
-  visitas, responsaveis, autorizados = [], filtro, setFiltro, busca, setBusca, onOpen, onDelete, today,
+  visitas, responsaveis, autorizados = [], filtro, setFiltro, busca, setBusca, onOpen, onDelete, onRetroceder, retrocedendoId, today,
 }: {
   visitas: VisitaAgendada[];
   responsaveis: Responsavel[];
@@ -286,6 +286,8 @@ function VisitasListaPanel({
   setBusca: (s: string) => void;
   onOpen: (v: VisitaAgendada) => void;
   onDelete: (id: string) => void;
+  onRetroceder: (visita: VisitaAgendada) => void;
+  retrocedendoId?: string;
   today: Date;
 }) {
   const respMap = useMemo(() => {
@@ -483,6 +485,22 @@ function VisitasListaPanel({
                   </div>
                 )}
                 <div className="flex items-center gap-1.5 flex-shrink-0 justify-end sm:justify-start w-full sm:w-auto">
+                  {meta.key === 'em_andamento' && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => onRetroceder(v)}
+                      disabled={retrocedendoId === v.id}
+                      className="rounded-full h-8 bg-amber-500/10 border-amber-400/30 text-amber-100 hover:bg-amber-500/20 gap-1.5 flex-1 sm:flex-none"
+                    >
+                      {retrocedendoId === v.id ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <RotateCcw className="w-3.5 h-3.5" />
+                      )}
+                      Voltar para pendente
+                    </Button>
+                  )}
                   <Button
                     size="sm"
                     variant="outline"
@@ -879,6 +897,38 @@ export default function VisitasTecnicasCalendario() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const retrocederMut = useMutation({
+    mutationFn: async (visita: VisitaAgendada) => {
+      if (visita.status !== 'realizada') throw new Error('Somente visitas em andamento podem voltar para pendentes');
+      const { error } = await supabase
+        .from('visitas_tecnicas_agendadas')
+        .update({ status: 'agendada' })
+        .eq('id', visita.id)
+        .eq('status', 'realizada');
+      if (error) throw error;
+      await logVisitaHistorico({
+        visita_id: visita.id,
+        acao: 'alterada',
+        titulo: visita.titulo,
+        data_visita: visita.data_visita,
+        cidade: visita.cidade,
+        estado: visita.estado,
+        detalhes: { status: { de: 'realizada', para: 'agendada' } },
+        usuario_id,
+        usuario_nome,
+      });
+    },
+    onSuccess: () => {
+      toast.success('Visita retornada para pendente');
+      qc.invalidateQueries({ queryKey: ['visitas-agendadas'] });
+      qc.invalidateQueries({ queryKey: ['visitas-semana'] });
+      qc.invalidateQueries({ queryKey: ['visitas-a-concluir'] });
+      qc.invalidateQueries({ queryKey: ['visitas-lista-todas'] });
+      qc.invalidateQueries({ queryKey: ['visitas-historico'] });
+    },
+    onError: (e: any) => toast.error(e.message || 'Erro ao retornar visita para pendente'),
+  });
+
   const reagendarMut = useMutation({
     mutationFn: async ({ visita, novaData }: { visita: VisitaAgendada; novaData: string }) => {
       const dataAnterior = toDateOnly(visita.data_visita);
@@ -1258,6 +1308,12 @@ export default function VisitasTecnicasCalendario() {
           setBusca={setListaBusca}
           onOpen={openDetail}
           onDelete={(id) => { if (confirm('Excluir esta visita?')) delMut.mutate(id); }}
+          onRetroceder={(visita) => {
+            if (confirm(`Voltar a visita "${visita.titulo}" para pendente? Os dados preenchidos serão preservados.`)) {
+              retrocederMut.mutate(visita);
+            }
+          }}
+          retrocedendoId={retrocederMut.isPending ? retrocederMut.variables?.id : undefined}
           today={today}
         />
         )}
