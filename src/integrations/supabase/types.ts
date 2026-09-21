@@ -10670,6 +10670,50 @@ export type Database = {
         }
         Relationships: []
       }
+      visitas_tecnicas_midias: {
+        Row: {
+          conclusao_id: string
+          created_at: string
+          id: string
+          nome_arquivo: string
+          ordem: number
+          storage_path: string
+          tamanho_bytes: number
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          conclusao_id: string
+          created_at?: string
+          id?: string
+          nome_arquivo: string
+          ordem?: number
+          storage_path: string
+          tamanho_bytes: number
+          tipo: string
+          updated_at?: string
+        }
+        Update: {
+          conclusao_id?: string
+          created_at?: string
+          id?: string
+          nome_arquivo?: string
+          ordem?: number
+          storage_path?: string
+          tamanho_bytes?: number
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visitas_tecnicas_midias_conclusao_id_fkey"
+            columns: ["conclusao_id"]
+            isOneToOne: false
+            referencedRelation: "visitas_tecnicas_conclusoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       visitas_tecnicas_portas: {
         Row: {
           acessorios: Json
