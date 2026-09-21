@@ -45,6 +45,8 @@ interface VisitaAgendada {
   estado: string | null;
   observacoes: string | null;
   status: string;
+  capturada_por?: string | null;
+  capturada_em?: string | null;
   tem_conclusao?: boolean;
   concluido_por?: string | null;
 }
@@ -329,11 +331,13 @@ function VisitasListaPanel({
       if (filtro !== 'todos' && meta?.key !== filtro) return false;
       if (!termo) return true;
       const concluidoNome = (respMap.get(v.concluido_por || '')?.nome || '').toLowerCase();
+      const capturadaNome = (respMap.get(v.capturada_por || '')?.nome || '').toLowerCase();
       return (
         (v.titulo || '').toLowerCase().includes(termo) ||
         (v.cidade || '').toLowerCase().includes(termo) ||
         (v.telefone_contato || '').toLowerCase().includes(termo) ||
         (respDe(v)?.nome || '').toLowerCase().includes(termo) ||
+        capturadaNome.includes(termo) ||
         concluidoNome.includes(termo)
       );
     });
@@ -407,6 +411,9 @@ function VisitasListaPanel({
             const concluidoPor = respMap.get(v.concluido_por || '');
             const concluidoPorNome = concluidoPor?.nome;
             const concluidoPorFoto = concluidoPor?.foto;
+            const capturadaPor = respMap.get(v.capturada_por || '');
+            const capturadaPorNome = capturadaPor?.nome;
+            const capturadaPorFoto = capturadaPor?.foto;
             return (
               <div
                 key={v.id}
@@ -458,10 +465,38 @@ function VisitasListaPanel({
                         {concluidoPorNome}
                       </span>
                     )}
+                    {meta.key === 'em_andamento' && capturadaPorNome && (
+                      <span className="inline-flex sm:hidden items-center gap-1 text-[11px] px-2 py-0.5 rounded-full border bg-blue-500/15 text-blue-200 border-blue-500/30" title="Quem capturou a visita">
+                        <PlayCircle className="w-3 h-3" />
+                        Capturada por {capturadaPorNome}
+                      </span>
+                    )}
                   </div>
                 </div>
                 </div>
 
+                {meta.key === 'em_andamento' && capturadaPorNome && (
+                  <div
+                    className="hidden sm:flex flex-shrink-0 items-center gap-2 pl-3 pr-2 py-1 rounded-full border border-blue-500/30 bg-blue-500/10"
+                    title={`Capturada por ${capturadaPorNome}`}
+                  >
+                    {capturadaPorFoto ? (
+                      <img
+                        src={capturadaPorFoto}
+                        alt={capturadaPorNome}
+                        className="w-6 h-6 rounded-full object-cover border border-blue-400/40"
+                      />
+                    ) : (
+                      <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white bg-gradient-to-br from-blue-500 to-blue-700 border border-blue-400/40">
+                        {getInicial(capturadaPorNome)}
+                      </div>
+                    )}
+                    <div className="flex flex-col leading-tight">
+                      <span className="text-[9px] uppercase tracking-wide text-blue-300/70">Capturada por</span>
+                      <span className="text-[11px] text-blue-100 font-medium truncate max-w-[140px]">{capturadaPorNome}</span>
+                    </div>
+                  </div>
+                )}
                 {meta.key === 'concluida' && concluidoPorNome && (
                   <div
                     className="hidden sm:flex flex-shrink-0 items-center gap-2 pl-3 pr-2 py-1 rounded-full border border-emerald-500/30 bg-emerald-500/10"
@@ -902,7 +937,7 @@ export default function VisitasTecnicasCalendario() {
       if (visita.status !== 'realizada') throw new Error('Somente visitas em andamento podem voltar para pendentes');
       const { error } = await supabase
         .from('visitas_tecnicas_agendadas')
-        .update({ status: 'agendada' })
+        .update({ status: 'agendada', capturada_por: null, capturada_em: null })
         .eq('id', visita.id)
         .eq('status', 'realizada');
       if (error) throw error;

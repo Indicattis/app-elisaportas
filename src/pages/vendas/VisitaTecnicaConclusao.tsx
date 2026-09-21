@@ -600,15 +600,38 @@ export default function VisitaTecnicaConclusao() {
                 startCron();
                 setIniciado(true);
                 if (visitaId && visita?.status === 'agendada') {
-                  await supabase
+                  const { data: authData } = await supabase.auth.getUser();
+                  const capturadaPor = authData.user?.id;
+                  if (!capturadaPor) {
+                    setIniciado(false);
+                    throw new Error('Não foi possível identificar quem iniciou a visita');
+                  }
+                  const { error } = await supabase
                     .from('visitas_tecnicas_agendadas')
-                    .update({ status: 'realizada' } as any)
-                    .eq('id', visitaId);
+                    .update({ status: 'realizada', capturada_por: capturadaPor, capturada_em: new Date().toISOString() })
+                    .eq('id', visitaId)
+                    .eq('status', 'agendada');
+                  if (error) {
+                    setIniciado(false);
+                    throw error;
+                  }
+                  await logVisitaHistorico({
+                    visita_id: visitaId,
+                    acao: 'alterada',
+                    titulo: visita.titulo,
+                    data_visita: visita.data_visita,
+                    cidade: visita.cidade,
+                    estado: visita.estado,
+                    detalhes: { status: { de: 'agendada', para: 'realizada' }, capturada_por: userRole?.nome || null },
+                    usuario_id: capturadaPor,
+                    usuario_nome: userRole?.nome || null,
+                  });
                   qc.invalidateQueries({ queryKey: ['visita-tecnica', visitaId] });
                   qc.invalidateQueries({ queryKey: ['visitas-a-concluir'] });
                   qc.invalidateQueries({ queryKey: ['visitas-lista-todas'] });
                   qc.invalidateQueries({ queryKey: ['visitas-agendadas'] });
                   qc.invalidateQueries({ queryKey: ['visitas-semana'] });
+                  qc.invalidateQueries({ queryKey: ['visitas-historico'] });
                 }
               }}
             >
