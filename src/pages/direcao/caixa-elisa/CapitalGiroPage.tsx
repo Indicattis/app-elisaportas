@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Wallet, Plus, Pencil, Trash2, ArrowLeft, FileDown } from 'lucide-react';
+import { Wallet, Plus, Pencil, Trash2, ArrowLeft, FileDown, Search, X } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { exportCapitalGiroPDF } from './pdfExport';
@@ -50,6 +50,7 @@ export default function CapitalGiroPage() {
   const [editing, setEditing] = useState<Obrigacao | null>(null);
   const [form, setForm] = useState({ nome: '', data: '', valor: '' });
   const [confirmDelete, setConfirmDelete] = useState<Obrigacao | null>(null);
+  const [pesquisa, setPesquisa] = useState('');
 
   const [capitalDialogOpen, setCapitalDialogOpen] = useState(false);
   const [capitalInput, setCapitalInput] = useState('');
@@ -90,6 +91,13 @@ export default function CapitalGiroPage() {
     [obrigacoes],
   );
   const saldoDisponivel = capitalGiro - totalPendente;
+  const obrigacoesFiltradas = useMemo(() => {
+    const termo = pesquisa.trim().toLocaleLowerCase('pt-BR');
+    if (!termo) return obrigacoes;
+    return obrigacoes.filter((obrigacao) =>
+      obrigacao.nome.toLocaleLowerCase('pt-BR').includes(termo),
+    );
+  }, [obrigacoes, pesquisa]);
 
   const exportarPDF = async () => {
     try {
@@ -271,11 +279,40 @@ export default function CapitalGiroPage() {
 
         {/* Lista */}
         <div className="mt-6 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 p-3">
+          <div className="relative mb-3">
+            <Search
+              className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40"
+              aria-hidden="true"
+            />
+            <Input
+              value={pesquisa}
+              onChange={(event) => setPesquisa(event.target.value)}
+              placeholder="Pesquisar obrigação..."
+              aria-label="Pesquisar obrigações"
+              className="h-10 bg-white/5 border-white/10 pl-10 pr-10 text-white placeholder:text-white/35 focus-visible:ring-emerald-500/50"
+            />
+            {pesquisa && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => setPesquisa('')}
+                aria-label="Limpar pesquisa"
+                className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2 text-white/40 hover:bg-white/10 hover:text-white"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
           {obrigacoes.length === 0 ? (
             <div className="py-10 text-center text-sm text-white/40">Nenhuma obrigação cadastrada.</div>
+          ) : obrigacoesFiltradas.length === 0 ? (
+            <div className="py-10 text-center text-sm text-white/40">
+              Nenhuma obrigação encontrada para esta pesquisa.
+            </div>
           ) : (
             <ul className="flex flex-col gap-2">
-              {obrigacoes.map((o) => (
+              {obrigacoesFiltradas.map((o) => (
                 <li
                   key={o.id}
                   className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/[0.07] transition"
