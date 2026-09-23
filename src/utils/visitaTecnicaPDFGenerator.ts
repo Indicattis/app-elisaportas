@@ -18,6 +18,30 @@ async function loadImageDataUrl(url: string): Promise<string | null> {
   }
 }
 
+// Converte a imagem para JPEG em tamanho adequado ao PDF, inclusive fotos WEBP.
+async function prepararFoto(url: string): Promise<{ data: string; width: number; height: number }> {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Não foi possível carregar a foto (${res.status}).`);
+  const objectUrl = URL.createObjectURL(await res.blob());
+  try {
+    const img = new Image();
+    img.src = objectUrl;
+    await img.decode();
+    const scale = Math.min(1, 1600 / Math.max(img.naturalWidth, img.naturalHeight));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));
+    canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('Não foi possível preparar a foto para o PDF.');
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    return { data: canvas.toDataURL('image/jpeg', 0.82), width: canvas.width, height: canvas.height };
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
 function fmtNum(n: any) {
   const v = typeof n === 'number' ? n : parseFloat(n);
   if (!isFinite(v)) return '—';
@@ -164,13 +188,26 @@ export async function gerarPDFVisitaTecnica(visitaId: string) {
     .maybeSingle();
 
   let portas: any[] = [];
+  let fotosPortas: Array<{ porta_id: string; url: string; legenda: string | null }> = [];
+  let fotosGerais: Array<{ storage_path: string; nome_arquivo: string }> = [];
   if (conclusao?.id) {
-    const { data: p } = await supabase
+    const { data: p, error: portasError } = await supabase
       .from('visitas_tecnicas_portas')
       .select('*')
       .eq('conclusao_id', conclusao.id)
       .order('ordem', { ascending: true });
+    if (portasError) throw portasError;
     portas = p || [];
+    const [fotosResult, midiasResult] = await Promise.all([
+      portas.length
+        ? supabase.from('visitas_tecnicas_portas_fotos').select('porta_id, url, legenda').in('porta_id', portas.map(p => p.id)).order('ordem')
+        : Promise.resolve({ data: [], error: null }),
+      supabase.from('visitas_tecnicas_midias').select('storage_path, nome_arquivo').eq('conclusao_id', conclusao.id).eq('tipo', 'imagem').order('ordem'),
+    ]);
+    if (fotosResult.error) throw fotosResult.error;
+    if (midiasResult.error) throw midiasResult.error;
+    fotosPortas = fotosResult.data || [];
+    fotosGerais = midiasResult.data || [];
   }
 
   // 4) Montar PDF
@@ -178,6 +215,39 @@ export async function gerarPDFVisitaTecnica(visitaId: string) {
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
   const margin = 12;
+  const larguraFoto = (pageW - margin * 2 - 6) / 2;
+  const alturaFoto = 58;
+  const alturaLegenda = 12;
+  const alturaLinhaFotos = alturaFoto + alturaLegenda + 4;
+
+  const adicionarFotos = async (fotos: Array<{ url: string; legenda: string }>, yInicial: number) => {
+    let posY = yInicial;
+    for (let i = 0; i < fotos.length; i++) {
+      if (i % 2 === 0 && posY + alturaLinhaFotos > pageH - 16) {
+        doc.addPage();
+        posY = margin + 5;
+      }
+      const { url, legenda } = fotos[i];
+      let foto: Awaited<ReturnType<typeof prepararFoto>>;
+      try {
+        foto = await prepararFoto(url);
+      } catch {
+        throw new Error(`Não foi possível incluir a foto “${legenda}” no PDF. Tente novamente.`);
+      }
+      const x = margin + (i % 2) * (larguraFoto + 6);
+      const proporcao = Math.min(larguraFoto / foto.width, alturaFoto / foto.height);
+      const w = foto.width * proporcao;
+      const h = foto.height * proporcao;
+      doc.addImage(foto.data, 'JPEG', x + (larguraFoto - w) / 2, posY + (alturaFoto - h) / 2, w, h);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.setTextColor(75, 75, 75);
+      const linhas = doc.splitTextToSize(legenda, larguraFoto).slice(0, 2);
+      doc.text(linhas, x, posY + alturaFoto + 4);
+      if (i % 2 === 1 || i === fotos.length - 1) posY += alturaLinhaFotos;
+    }
+    return posY;
+  };
 
   // Header
   const logoData = await loadImageDataUrl(logoEmpresa);
@@ -390,11 +460,49 @@ export async function gerarPDFVisitaTecnica(visitaId: string) {
         y += wrapped.length * 3.8;
       }
 
+      const fotosDaPorta = fotosPortas.filter(foto => foto.porta_id === p.id);
+      if (fotosDaPorta.length) {
+        if (y + 7 + alturaLinhaFotos > pageH - 16) {
+          doc.addPage();
+          y = margin + 5;
+        }
+        y += 3;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.setTextColor(30, 30, 30);
+        doc.text(`Fotos do vão ${i + 1}`, margin, y);
+        y = await adicionarFotos(fotosDaPorta.map((foto, indice) => ({
+          url: foto.url,
+          legenda: foto.legenda || `Foto ${indice + 1}`,
+        })), y + 4);
+      }
+
       y += 4;
+      if (y > pageH - 16) {
+        doc.addPage();
+        y = margin + 5;
+      }
       doc.setDrawColor(230, 230, 230);
       doc.line(margin, y, pageW - margin, y);
       y += 4;
     }
+  }
+
+  if (fotosGerais.length) {
+    if (y + 5 + alturaLinhaFotos > pageH - 16) {
+      doc.addPage();
+      y = margin + 5;
+    }
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(30, 30, 30);
+    doc.text('Fotos gerais da visita', margin, y);
+    const fotosComUrl = await Promise.all(fotosGerais.map(async (foto, indice) => {
+      const { data, error } = await supabase.storage.from('visitas-tecnicas-midias').createSignedUrl(foto.storage_path, 300);
+      if (error || !data?.signedUrl) throw new Error(`Não foi possível acessar a foto geral ${indice + 1}. Tente novamente.`);
+      return { url: data.signedUrl, legenda: foto.nome_arquivo || `Foto geral ${indice + 1}` };
+    }));
+    y = await adicionarFotos(fotosComUrl, y + 5);
   }
 
   // Rodapé
