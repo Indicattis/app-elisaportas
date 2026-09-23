@@ -462,7 +462,7 @@ export async function gerarPDFVisitaTecnica(visitaId: string) {
 
       const fotosDaPorta = fotosPortas.filter(foto => foto.porta_id === p.id);
       if (fotosDaPorta.length) {
-        if (y + 10 > pageH - 16) {
+        if (y + 7 + alturaLinhaFotos > pageH - 16) {
           doc.addPage();
           y = margin + 5;
         }
@@ -489,7 +489,7 @@ export async function gerarPDFVisitaTecnica(visitaId: string) {
   }
 
   if (fotosGerais.length) {
-    if (y + 14 > pageH - 16) {
+    if (y + 5 + alturaLinhaFotos > pageH - 16) {
       doc.addPage();
       y = margin + 5;
     }
