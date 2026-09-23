@@ -98,6 +98,7 @@ interface Venda {
   data_pagamento?: string;
   contrato_url?: string;
   contrato_dispensado?: boolean;
+  observacoes_venda?: string | null;
 }
 
 const formatCurrency = (value: number) => {
@@ -857,7 +858,7 @@ export default function FaturamentoVendaMinimalista() {
       setLoading(true);
       const { data, error } = await supabase
         .from("vendas")
-        .select("id, numero_pedido, cliente_id, cliente_nome, cliente_telefone, cliente_email, cpf_cliente, cidade, estado, cep, bairro, valor_venda, valor_frete, valor_instalacao, valor_credito, lucro_total, frete_aprovado, comprovante_url, comprovante_nome, lucro_instalacao, custo_instalacao, instalacao_faturada, metodo_pagamento, numero_parcelas, intervalo_boletos, empresa_receptora_id, data_venda, forma_pagamento, temperatura, pagamento_na_entrega, valor_entrada, valor_a_receber, quantidade_parcelas, contrato_url, contrato_dispensado")
+        .select("id, numero_pedido, cliente_id, cliente_nome, cliente_telefone, cliente_email, cpf_cliente, cidade, estado, cep, bairro, valor_venda, valor_frete, valor_instalacao, valor_credito, lucro_total, frete_aprovado, comprovante_url, comprovante_nome, lucro_instalacao, custo_instalacao, instalacao_faturada, metodo_pagamento, numero_parcelas, intervalo_boletos, empresa_receptora_id, data_venda, forma_pagamento, temperatura, pagamento_na_entrega, valor_entrada, valor_a_receber, quantidade_parcelas, contrato_url, contrato_dispensado, observacoes_venda")
         .eq("id", id)
         .single();
 
@@ -1364,6 +1365,17 @@ export default function FaturamentoVendaMinimalista() {
                 </div>
               ))}
             </div>
+            {venda.observacoes_venda?.trim() && (
+              <div className="mt-4 border-t border-border pt-4">
+                <p className="flex items-center gap-2 text-sm font-medium text-foreground mb-2">
+                  <FileText className="h-4 w-4" />
+                  Observações da Venda
+                </p>
+                <p className="text-sm text-foreground bg-muted/40 border border-border rounded-md p-3 whitespace-pre-wrap break-words">
+                  {venda.observacoes_venda.trim()}
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
