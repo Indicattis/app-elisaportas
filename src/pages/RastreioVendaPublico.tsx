@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { Check, Circle, Clock3, Factory, Loader2, MapPin, Package, ShieldCheck, Truck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import portinhaAsset from "@/assets/portinha-rastreio.png.asset.json";
 
 interface ProdutoPublico {
   id: string;
@@ -40,6 +41,10 @@ const ETAPA_EQUIVALENTE: Record<string, string> = {
   aprovacao_diretor: "aberto",
   aberto: "aberto",
   aprovacao_ceo: "aberto",
+};
+
+const ETAPAS_AGRUPADAS: Record<string, string[]> = {
+  aberto: ["aprovacao_diretor", "aberto", "aprovacao_ceo"],
 };
 
 const TITULOS: Record<string, string> = {
@@ -89,16 +94,34 @@ export default function RastreioVendaPublico() {
   const etapaBruta = data.pedido?.etapa_atual || "compra_confirmada";
   const etapaAtual = ETAPA_EQUIVALENTE[etapaBruta] || etapaBruta;
   const indiceAtual = Math.max(0, ETAPAS.findIndex((item) => item.id === etapaAtual));
+  const obterDataEtapa = (etapaId: string) => {
+    if (etapaId === "compra_confirmada") return data.venda.data_venda;
+
+    const idsRelacionados = ETAPAS_AGRUPADAS[etapaId] || [etapaId];
+    const registros = data.etapas
+      .filter((registro) => idsRelacionados.includes(registro.etapa) && registro.data_entrada)
+      .sort((a, b) => new Date(a.data_entrada || 0).getTime() - new Date(b.data_entrada || 0).getTime());
+
+    return registros[0]?.data_entrada || (etapaId === "aberto" ? data.pedido?.created_at : null);
+  };
 
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-border bg-card/80 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-5">
+      <header className="relative overflow-hidden border-b border-border bg-card/80 backdrop-blur-xl">
+        <div className="mx-auto flex min-h-28 max-w-6xl items-center justify-between px-5 py-5 md:min-h-32">
           <div>
             <p className="text-xs font-semibold uppercase tracking-widest text-primary">Elisa Portas</p>
             <h1 className="mt-1 text-xl font-semibold">Acompanhe sua compra</h1>
+            <p className="mt-2 text-sm text-muted-foreground">Cada etapa, cada conquista, mais perto de você.</p>
           </div>
-          <Package className="h-8 w-8 text-primary" />
+          <div className="relative h-24 w-28 shrink-0 md:h-28 md:w-36" aria-hidden="true">
+            <div className="absolute bottom-1 left-1/2 h-3 w-20 -translate-x-1/2 rounded-full bg-primary/15 blur-md" />
+            <img
+              src={portinhaAsset.url}
+              alt=""
+              className="absolute bottom-0 right-0 h-28 w-auto max-w-none animate-[bounce_3s_ease-in-out_infinite] object-contain motion-reduce:animate-none md:h-32"
+            />
+          </div>
         </div>
       </header>
 
@@ -122,13 +145,19 @@ export default function RastreioVendaPublico() {
               const Icon = etapa.icon;
               const concluida = index < indiceAtual;
               const atual = index === indiceAtual;
+              const dataEtapa = obterDataEtapa(etapa.id);
               return (
                 <div key={etapa.id} className="relative flex gap-4 pb-6 md:block md:min-w-0 md:flex-1 md:pb-0 md:text-center">
                   <div className={cn("absolute left-4 top-8 h-full w-px md:left-1/2 md:top-4 md:h-px md:w-full", index === ETAPAS.length - 1 && "hidden", index < indiceAtual ? "bg-primary" : "bg-border")} />
                   <div className={cn("relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border", concluida && "border-primary bg-primary text-primary-foreground", atual && "border-primary bg-card text-primary ring-4 ring-primary/15", !concluida && !atual && "border-border bg-muted text-muted-foreground")}>
                     {concluida ? <Check className="h-4 w-4" /> : atual ? <Icon className="h-4 w-4" /> : <Circle className="h-3 w-3" />}
                   </div>
-                  <p className={cn("pt-1 text-sm md:mt-3 md:px-1 md:pt-0 md:text-xs", atual ? "font-semibold text-primary" : concluida ? "text-foreground" : "text-muted-foreground")}>{etapa.label}</p>
+                  <div className="min-w-0 pt-1 md:mt-3 md:px-1 md:pt-0">
+                    <p className={cn("text-sm md:text-xs", atual ? "font-semibold text-primary" : concluida ? "text-foreground" : "text-muted-foreground")}>{etapa.label}</p>
+                    {(concluida || atual) && dataEtapa && (
+                      <p className="mt-1 text-xs text-muted-foreground md:text-[10px]">{formatarData(dataEtapa)}</p>
+                    )}
+                  </div>
                 </div>
               );
             })}
