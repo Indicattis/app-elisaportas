@@ -117,13 +117,13 @@ export default function RastreioVendaPublico() {
 
         <section>
           <h3 className="mb-5 text-lg font-semibold">Andamento</h3>
-          <div className="grid gap-0 md:grid-cols-5 lg:grid-cols-10">
+          <div className="grid gap-0 md:flex md:w-full">
             {ETAPAS.map((etapa, index) => {
               const Icon = etapa.icon;
               const concluida = index < indiceAtual;
               const atual = index === indiceAtual;
               return (
-                <div key={etapa.id} className="relative flex gap-4 pb-6 md:block md:pb-0 md:text-center">
+                <div key={etapa.id} className="relative flex gap-4 pb-6 md:block md:min-w-0 md:flex-1 md:pb-0 md:text-center">
                   <div className={cn("absolute left-4 top-8 h-full w-px md:left-1/2 md:top-4 md:h-px md:w-full", index === ETAPAS.length - 1 && "hidden", index < indiceAtual ? "bg-primary" : "bg-border")} />
                   <div className={cn("relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border", concluida && "border-primary bg-primary text-primary-foreground", atual && "border-primary bg-card text-primary ring-4 ring-primary/15", !concluida && !atual && "border-border bg-muted text-muted-foreground")}>
                     {concluida ? <Check className="h-4 w-4" /> : atual ? <Icon className="h-4 w-4" /> : <Circle className="h-3 w-3" />}
