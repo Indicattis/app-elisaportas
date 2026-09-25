@@ -122,18 +122,18 @@ export default function AcompanharPedido() {
                         <span className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-card bg-success" title="Vendedor ativo" />
                       </div>
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-foreground">{venda.atendente?.nome || "Vendedor não informado"}</p>
+                        <p className="truncate font-heading text-sm font-semibold text-foreground">{venda.atendente?.nome || "Vendedor não informado"}</p>
                         <p className="mt-0.5 text-[11px] font-medium uppercase text-muted-foreground">Responsável pela venda</p>
                       </div>
                     </div>
 
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2 text-xs">
-                        <span className="font-bold text-primary">VENDA #{venda.numero_pedido || venda.id.slice(0, 8)}</span>
+                        <span className="font-heading font-bold text-primary">VENDA #{venda.numero_pedido || venda.id.slice(0, 8)}</span>
                         <span className="text-muted-foreground">•</span>
                         <span className="text-muted-foreground">{new Intl.DateTimeFormat("pt-BR", { timeZone: "UTC" }).format(new Date(venda.data_venda))}</span>
                       </div>
-                      <h3 className="mt-1 truncate text-[15px] font-bold text-foreground">{venda.cliente_nome || "Cliente não informado"}</h3>
+                      <h3 className="mt-1 truncate font-heading text-[15px] font-bold text-foreground">{venda.cliente_nome || "Cliente não informado"}</h3>
                       <p className="mt-1 text-xs text-muted-foreground">
                         {pedido?.numero_pedido ? `Pedido #${pedido.numero_pedido}` : "Sem pedido de produção"} · {venda.produtos_vendas.length} {venda.produtos_vendas.length === 1 ? "item" : "itens"}
                       </p>
@@ -147,7 +147,7 @@ export default function AcompanharPedido() {
 
                     <div className="lg:text-right">
                       <p className="text-[10px] font-bold uppercase text-muted-foreground">Valor total</p>
-                      <p className="mt-0.5 text-xl font-bold text-foreground">{formatarValor(venda.valor_venda)}</p>
+                      <p className="mt-0.5 font-heading text-xl font-bold text-foreground">{formatarValor(venda.valor_venda)}</p>
                     </div>
 
                     <div className="flex items-center gap-2 sm:col-span-2 lg:col-span-1 lg:justify-end">
