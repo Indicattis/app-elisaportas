@@ -1,11 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
-import { Check, Circle, Clock3, Factory, Loader2, MapPin, Package, ShieldCheck, Truck } from "lucide-react";
+import { Check, Circle, Clock3, Factory, Loader2, MapPin, MessageCircle, Package, Phone, ShieldCheck, Truck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import portinhaAsset from "@/assets/portinha-rastreio.png.asset.json";
+import williamAsset from "@/assets/william-entregas.png.asset.json";
+import magnoAsset from "@/assets/magno-vendas.png.asset.json";
 
 const PORTINHA_FALLBACK_URL = `https://id-preview--9eb1bc32-7d67-4330-b27a-36a057f315d7.lovable.app${portinhaAsset.url}`;
+const ASSET_FALLBACK_ORIGIN = "https://id-preview--9eb1bc32-7d67-4330-b27a-36a057f315d7.lovable.app";
 
 interface ProdutoPublico {
   id: string;
@@ -62,6 +66,33 @@ const TITULOS: Record<string, string> = {
   finalizado: "Pedido concluído",
   pos_vendas: "Acompanhamento pós-venda",
 };
+
+const CONTATOS = [
+  {
+    nome: "William",
+    area: "Entregas",
+    telefone: "+55 54 8422-9239",
+    whatsapp: "555484229239",
+    foto: williamAsset.url,
+    fotoFallback: `${ASSET_FALLBACK_ORIGIN}${williamAsset.url}`,
+  },
+  {
+    nome: "Magno",
+    area: "Vendas",
+    telefone: "+55 54 9272-7818",
+    whatsapp: "555492727818",
+    foto: magnoAsset.url,
+    fotoFallback: `${ASSET_FALLBACK_ORIGIN}${magnoAsset.url}`,
+  },
+  {
+    nome: "Jenifer",
+    area: "Ouvidoria e Pós-vendas",
+    telefone: "+55 54 9423-9930",
+    whatsapp: "555494239930",
+    foto: null,
+    fotoFallback: null,
+  },
+];
 
 const formatarData = (value?: string | null) => value
   ? new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(value))
@@ -190,6 +221,53 @@ export default function RastreioVendaPublico() {
                       {produto.cor ? ` · ${produto.cor}` : ""}
                     </p>
                   </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="border-t border-border pt-8">
+          <div className="mb-5">
+            <p className="text-xs font-semibold uppercase tracking-widest text-primary">Fale com a Elisa</p>
+            <h3 className="mt-1 text-xl font-semibold">Estamos aqui para ajudar</h3>
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            {CONTATOS.map((contato) => (
+              <article key={contato.nome} className="overflow-hidden rounded-lg border border-border bg-card">
+                <div className="flex items-center gap-4 p-5">
+                  {contato.foto ? (
+                    <img
+                      src={contato.foto}
+                      alt={`Foto de ${contato.nome}`}
+                      onError={(event) => {
+                        if (contato.fotoFallback && event.currentTarget.src !== contato.fotoFallback) {
+                          event.currentTarget.src = contato.fotoFallback;
+                        }
+                      }}
+                      className="h-16 w-16 shrink-0 rounded-full border-2 border-primary/30 object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border-2 border-primary/30 bg-primary/15 text-xl font-semibold text-primary" aria-label="Foto de Jenifer ainda não disponível">
+                      J
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <h4 className="text-lg font-semibold">{contato.nome}</h4>
+                    <p className="text-sm font-medium text-primary">{contato.area}</p>
+                    <a href={`tel:+${contato.whatsapp}`} className="mt-1 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+                      <Phone className="h-3.5 w-3.5" />
+                      {contato.telefone}
+                    </a>
+                  </div>
+                </div>
+                <div className="border-t border-border p-3">
+                  <Button asChild className="w-full">
+                    <a href={`https://wa.me/${contato.whatsapp}`} target="_blank" rel="noreferrer">
+                      <MessageCircle />
+                      Chamar no WhatsApp
+                    </a>
+                  </Button>
                 </div>
               </article>
             ))}
