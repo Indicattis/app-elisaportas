@@ -10140,6 +10140,7 @@ export type Database = {
           publico_alvo: string | null
           quantidade_parcelas: number | null
           rascunho_pagamento: Json | null
+          rastreio_token: string
           restante_na_instalacao: boolean | null
           status_aprovacao: string
           temperatura: boolean
@@ -10210,6 +10211,7 @@ export type Database = {
           publico_alvo?: string | null
           quantidade_parcelas?: number | null
           rascunho_pagamento?: Json | null
+          rastreio_token?: string
           restante_na_instalacao?: boolean | null
           status_aprovacao?: string
           temperatura?: boolean
@@ -10280,6 +10282,7 @@ export type Database = {
           publico_alvo?: string | null
           quantidade_parcelas?: number | null
           rascunho_pagamento?: Json | null
+          rastreio_token?: string
           restante_na_instalacao?: boolean | null
           status_aprovacao?: string
           temperatura?: boolean
@@ -11458,6 +11461,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_rastreio_venda: { Args: { p_token: string }; Returns: Json }
       get_responsaveis_internos: {
         Args: never
         Returns: {

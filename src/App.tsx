@@ -205,6 +205,7 @@ import MeusOrcamentos from "./pages/vendas/MeusOrcamentos";
 import MeuOrcamentoNovo from "./pages/vendas/MeuOrcamentoNovo";
 import MeuOrcamentoDetalhe from "./pages/vendas/MeuOrcamentoDetalhe";
 import AcompanharPedido from "./pages/vendas/AcompanharPedido";
+import RastreioVendaPublico from "./pages/RastreioVendaPublico";
 import MeusParceiros from "./pages/vendas/MeusParceiros";
 import VisitasTecnicasCalendario from "./pages/vendas/VisitasTecnicasCalendario";
 import VisitasTecnicasRealizadas from "./pages/vendas/VisitasTecnicasRealizadas";
@@ -466,6 +467,7 @@ const App = () => (
               <RouteAccessRealtimeSync />
               <Routes>
                 <Route path="/" element={<Index />} />
+                <Route path="/rastreio/:token" element={<RastreioVendaPublico />} />
                 <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
                 <Route path="/perfil" element={<ProtectedRoute><MeuPerfil /></ProtectedRoute>} />
                 <Route path="/home/pedidos-producao" element={<ProtectedRoute><GestaoFabricaDirecao /></ProtectedRoute>} />

@@ -1,185 +1,129 @@
-import { useState, useMemo, useEffect } from "react";
-import { Search, Loader2, Package } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Check, Copy, ExternalLink, Loader2, Package, Search, ShoppingBag } from "lucide-react";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
-import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { usePedidosBuscaGeral } from "@/hooks/usePedidosBuscaGeral";
-import { PedidoCard } from "@/components/pedidos/PedidoCard";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-  PaginationEllipsis,
-} from "@/components/ui/pagination";
+import { Input } from "@/components/ui/input";
+import { useVendasRastreio } from "@/hooks/useVendasRastreio";
+import { toast } from "sonner";
 
 const ITEMS_PER_PAGE = 15;
+const LABEL_ETAPA: Record<string, string> = {
+  aprovacao_diretor: "Pedido na fábrica!",
+  aberto: "Pedido na fábrica!",
+  aprovacao_ceo: "Pedido na fábrica!",
+  em_producao: "Pedido em produção",
+  inspecao_qualidade: "Inspeção de qualidade",
+  aguardando_pintura: "Em pintura",
+  embalagem: "Em embalagem",
+  aguardando_coleta: "Pronto para entrega",
+  instalacoes: "Em instalação",
+  correcoes: "Ajustes finais",
+  finalizado: "Pedido concluído",
+  pos_vendas: "Pós-venda",
+};
 
 export default function AcompanharPedido() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
+  const [pesquisa, setPesquisa] = useState("");
+  const [pagina, setPagina] = useState(1);
+  const [copiado, setCopiado] = useState<string | null>(null);
+  const { data: vendas = [], isLoading } = useVendasRastreio();
 
-  // Debounce da busca
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(searchTerm);
-      setCurrentPage(1);
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
+  const filtradas = useMemo(() => {
+    const termo = pesquisa.trim().toLocaleLowerCase("pt-BR");
+    if (!termo) return vendas;
+    const digitos = termo.replace(/\D/g, "");
+    return vendas.filter((venda) => {
+      const pedido = venda.pedidos_producao.find((item) => !item.arquivado) || venda.pedidos_producao[0];
+      return [venda.numero_pedido, pedido?.numero_pedido, venda.cliente_nome, venda.cpf_cliente, venda.cliente_telefone]
+        .some((valor) => valor?.toLocaleLowerCase("pt-BR").includes(termo) || (digitos && valor?.replace(/\D/g, "").includes(digitos)));
+    });
+  }, [pesquisa, vendas]);
 
-  const { pedidos, isLoading, totalEncontrados } = usePedidosBuscaGeral(debouncedSearch);
+  const totalPaginas = Math.max(1, Math.ceil(filtradas.length / ITEMS_PER_PAGE));
+  const paginaAtual = Math.min(pagina, totalPaginas);
+  const exibidas = filtradas.slice((paginaAtual - 1) * ITEMS_PER_PAGE, paginaAtual * ITEMS_PER_PAGE);
+  const criarLink = (token: string) => `${window.location.origin}/rastreio/${token}`;
 
-  // Paginação
-  const totalPages = Math.ceil(pedidos.length / ITEMS_PER_PAGE);
-  const pedidosPaginados = useMemo(() => {
-    const start = (currentPage - 1) * ITEMS_PER_PAGE;
-    return pedidos.slice(start, start + ITEMS_PER_PAGE);
-  }, [pedidos, currentPage]);
-
-  // Gerar números de página para exibição
-  const getPageNumbers = () => {
-    const pages: (number | 'ellipsis')[] = [];
-    if (totalPages <= 7) {
-      for (let i = 1; i <= totalPages; i++) pages.push(i);
-    } else {
-      pages.push(1);
-      if (currentPage > 3) pages.push('ellipsis');
-      for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) {
-        pages.push(i);
-      }
-      if (currentPage < totalPages - 2) pages.push('ellipsis');
-      pages.push(totalPages);
-    }
-    return pages;
+  const copiarLink = async (token: string) => {
+    await navigator.clipboard.writeText(criarLink(token));
+    setCopiado(token);
+    toast.success("Link de rastreio copiado");
+    window.setTimeout(() => setCopiado(null), 1800);
   };
 
   return (
     <MinimalistLayout
-      title="Acompanhar Pedido"
-      subtitle="Busque pedidos por número, CPF ou nome do cliente"
+      title="Acompanhar Vendas"
+      subtitle="Consulte vendas e compartilhe o acompanhamento com o cliente"
       backPath="/vendas"
-      breadcrumbItems={[
-        { label: "Home", path: "/home" },
-        { label: "Vendas", path: "/vendas" },
-        { label: "Acompanhar Pedido" }
-      ]}
+      breadcrumbItems={[{ label: "Home", path: "/home" }, { label: "Vendas", path: "/vendas" }, { label: "Acompanhar Vendas" }]}
     >
-      <div className="max-w-7xl mx-auto">
-        {/* Input de busca grande */}
-        <div className="mb-8">
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-6 w-6 text-white/40" />
-            <Input
-              placeholder="Digite o número do pedido, CPF/CNPJ ou nome do cliente..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full h-14 pl-14 pr-4 text-lg
-                         bg-white/5 border-white/10 text-white
-                         placeholder:text-white/40
-                         focus:border-blue-500/50 focus:ring-blue-500/20
-                         rounded-xl"
-            />
-            {isLoading && (
-              <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-blue-400 animate-spin" />
-            )}
-          </div>
-          <p className="text-center text-white/40 text-sm mt-2">
-            Filtre os pedidos usando a busca acima
-          </p>
+      <div className="mx-auto max-w-7xl space-y-5">
+        <div className="relative">
+          <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={pesquisa}
+            onChange={(event) => { setPesquisa(event.target.value); setPagina(1); }}
+            placeholder="Buscar por venda, pedido, cliente, CPF/CNPJ ou telefone..."
+            className="h-12 bg-card/50 pl-12 pr-12 text-base backdrop-blur-xl"
+          />
+          {isLoading && <Loader2 className="absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 animate-spin text-primary" />}
         </div>
 
-        {/* Resultados */}
-        <div className="space-y-4">
-          {/* Contador de resultados */}
-          <div className="flex items-center justify-between">
-            <h3 className="text-white/60 text-sm">
-              {isLoading ? (
-                'Carregando pedidos...'
-              ) : totalEncontrados === 0 ? (
-                'Nenhum pedido encontrado'
-              ) : (
-                `${totalEncontrados} pedido${totalEncontrados > 1 ? 's' : ''} encontrado${totalEncontrados > 1 ? 's' : ''}`
-              )}
-            </h3>
-          </div>
+        <p className="text-sm text-muted-foreground">{isLoading ? "Carregando vendas..." : `${filtradas.length} venda${filtradas.length === 1 ? "" : "s"} encontrada${filtradas.length === 1 ? "" : "s"}`}</p>
 
-          {/* Lista de pedidos */}
-          {!isLoading && pedidosPaginados.length > 0 && (
-            <div className="space-y-3">
-              {pedidosPaginados.map((pedido) => (
-                <PedidoCard
-                  key={pedido.id}
-                  pedido={pedido as any}
-                  viewMode="list"
-                  isAberto={false}
-                  readOnly={true}
-                  showEtapaBadge={true}
-                />
-              ))}
-            </div>
-          )}
+        {!isLoading && exibidas.length === 0 && (
+          <Card className="border-border bg-card/50"><CardContent className="py-12 text-center"><ShoppingBag className="mx-auto mb-3 h-10 w-10 text-muted-foreground" /><p className="text-muted-foreground">Nenhuma venda encontrada.</p></CardContent></Card>
+        )}
 
-          {/* Mensagem de nenhum resultado */}
-          {!isLoading && totalEncontrados === 0 && (
-            <Card className="bg-white/5 border-white/10">
-              <CardContent className="p-8 text-center">
-                <Package className="w-12 h-12 mx-auto mb-4 text-white/20" />
-                <p className="text-white/60">
-                  {debouncedSearch.length >= 2 
-                    ? `Nenhum pedido encontrado para "${debouncedSearch}"`
-                    : 'Nenhum pedido encontrado'
-                  }
-                </p>
-                <p className="text-white/40 text-sm mt-2">
-                  Tente buscar por número do pedido, CPF/CNPJ ou nome do cliente
-                </p>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Paginação */}
-          {totalPages > 1 && (
-            <div className="flex justify-center mt-6">
-              <Pagination>
-                <PaginationContent>
-                  <PaginationItem>
-                    <PaginationPrevious 
-                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                      className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-                    />
-                  </PaginationItem>
-                  
-                  {getPageNumbers().map((page, idx) => (
-                    <PaginationItem key={idx}>
-                      {page === 'ellipsis' ? (
-                        <PaginationEllipsis />
-                      ) : (
-                        <PaginationLink
-                          onClick={() => setCurrentPage(page)}
-                          isActive={currentPage === page}
-                          className="cursor-pointer"
-                        >
-                          {page}
-                        </PaginationLink>
-                      )}
-                    </PaginationItem>
-                  ))}
-                  
-                  <PaginationItem>
-                    <PaginationNext 
-                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                      className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
-            </div>
-          )}
+        <div className="space-y-3">
+          {exibidas.map((venda) => {
+            const pedido = venda.pedidos_producao.find((item) => !item.arquivado) || venda.pedidos_producao[0];
+            const status = pedido ? (LABEL_ETAPA[pedido.etapa_atual] || "Pedido em andamento") : "Compra confirmada";
+            return (
+              <Card key={venda.id} className="border-border bg-card/60 backdrop-blur-xl">
+                <CardContent className="flex flex-col gap-4 p-4 md:flex-row md:items-center md:justify-between">
+                  <div className="flex min-w-0 items-start gap-4">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary"><Package className="h-5 w-5" /></div>
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="truncate font-semibold">{venda.cliente_nome || "Cliente não informado"}</h3>
+                        <Badge variant="outline" className="border-primary/30 text-primary">{status}</Badge>
+                      </div>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Venda #{venda.numero_pedido || venda.id.slice(0, 8)}
+                        {pedido?.numero_pedido ? ` · Pedido #${pedido.numero_pedido}` : " · Sem pedido de produção"}
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {new Intl.DateTimeFormat("pt-BR", { timeZone: "UTC" }).format(new Date(venda.data_venda))} · {venda.produtos_vendas.length} item(ns)
+                        {venda.cidade ? ` · ${venda.cidade}${venda.estado ? `/${venda.estado}` : ""}` : ""}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex shrink-0 gap-2">
+                    <Button variant="outline" onClick={() => copiarLink(venda.rastreio_token)}>
+                      {copiado === venda.rastreio_token ? <Check /> : <Copy />}
+                      {copiado === venda.rastreio_token ? "Copiado" : "Copiar link"}
+                    </Button>
+                    <Button variant="secondary" size="icon" title="Abrir rastreio" asChild>
+                      <a href={criarLink(venda.rastreio_token)} target="_blank" rel="noreferrer"><ExternalLink /></a>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
+
+        {totalPaginas > 1 && (
+          <div className="flex items-center justify-center gap-3 pt-3">
+            <Button variant="outline" disabled={paginaAtual === 1} onClick={() => setPagina((valor) => Math.max(1, valor - 1))}>Anterior</Button>
+            <span className="text-sm text-muted-foreground">Página {paginaAtual} de {totalPaginas}</span>
+            <Button variant="outline" disabled={paginaAtual === totalPaginas} onClick={() => setPagina((valor) => Math.min(totalPaginas, valor + 1))}>Próxima</Button>
+          </div>
+        )}
       </div>
     </MinimalistLayout>
   );
