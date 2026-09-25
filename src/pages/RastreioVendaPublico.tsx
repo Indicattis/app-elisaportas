@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import portinhaAsset from "@/assets/portinha-rastreio.png.asset.json";
 
+const PORTINHA_FALLBACK_URL = `https://id-preview--9eb1bc32-7d67-4330-b27a-36a057f315d7.lovable.app${portinhaAsset.url}`;
+
 interface ProdutoPublico {
   id: string;
   descricao: string | null;
@@ -119,6 +121,11 @@ export default function RastreioVendaPublico() {
             <img
               src={portinhaAsset.url}
               alt=""
+              onError={(event) => {
+                if (event.currentTarget.src !== PORTINHA_FALLBACK_URL) {
+                  event.currentTarget.src = PORTINHA_FALLBACK_URL;
+                }
+              }}
               className="absolute bottom-0 right-0 h-28 w-auto max-w-none animate-[bounce_3s_ease-in-out_infinite] object-contain motion-reduce:animate-none md:h-32"
             />
           </div>
