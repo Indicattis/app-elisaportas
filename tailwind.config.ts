@@ -19,6 +19,8 @@ export default {
 		},
 		extend: {
 			fontFamily: {
+				'sans': ['Manrope', 'sans-serif'],
+				'heading': ['Sora', 'sans-serif'],
 				'impact': ['Impact', 'Arial Black', 'sans-serif'],
 				'bahnschrift': ['Bahnschrift', 'Arial', 'sans-serif'],
 				'anton': ['Anton', 'sans-serif'],

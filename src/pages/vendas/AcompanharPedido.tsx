@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
-import { Check, Copy, ExternalLink, Loader2, Package, Search, ShoppingBag } from "lucide-react";
+import { ArrowRight, Check, Copy, Loader2, MapPin, Search, ShoppingBag } from "lucide-react";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -23,6 +24,18 @@ const LABEL_ETAPA: Record<string, string> = {
   finalizado: "Pedido concluído",
   pos_vendas: "Pós-venda",
 };
+
+const STATUS_FINALIZADOS = new Set(["finalizado", "pos_vendas"]);
+const STATUS_PRODUCAO = new Set(["em_producao", "inspecao_qualidade", "aguardando_pintura", "embalagem"]);
+
+const obterIniciais = (nome: string | null | undefined) => {
+  const partes = nome?.trim().split(/\s+/).filter(Boolean) || [];
+  if (partes.length === 0) return "?";
+  return `${partes[0]?.[0] || ""}${partes.length > 1 ? partes[partes.length - 1]?.[0] || "" : ""}`.toUpperCase();
+};
+
+const formatarValor = (valor: number | null) =>
+  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(valor || 0);
 
 export default function AcompanharPedido() {
   const [pesquisa, setPesquisa] = useState("");
@@ -82,34 +95,69 @@ export default function AcompanharPedido() {
           {exibidas.map((venda) => {
             const pedido = venda.pedidos_producao.find((item) => !item.arquivado) || venda.pedidos_producao[0];
             const status = pedido ? (LABEL_ETAPA[pedido.etapa_atual] || "Pedido em andamento") : "Compra confirmada";
+            const statusFinalizado = pedido ? STATUS_FINALIZADOS.has(pedido.etapa_atual) : false;
+            const statusProducao = pedido ? STATUS_PRODUCAO.has(pedido.etapa_atual) : false;
+            const statusClasses = statusFinalizado
+              ? "border-success/25 bg-success/10 text-success"
+              : statusProducao
+                ? "border-primary/25 bg-primary/10 text-primary"
+                : "border-warning/25 bg-warning/10 text-warning";
+            const barraStatus = statusFinalizado ? "bg-success" : statusProducao ? "bg-primary" : "bg-warning";
+            const localizacao = venda.cidade
+              ? `${venda.cidade}${venda.estado ? `/${venda.estado}` : ""}`
+              : "Local não informado";
             return (
-              <Card key={venda.id} className="border-border bg-card/60 backdrop-blur-xl">
-                <CardContent className="flex flex-col gap-4 p-4 md:flex-row md:items-center md:justify-between">
-                  <div className="flex min-w-0 items-start gap-4">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary"><Package className="h-5 w-5" /></div>
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="truncate font-semibold">{venda.cliente_nome || "Cliente não informado"}</h3>
-                        <Badge variant="outline" className="border-primary/30 text-primary">{status}</Badge>
+              <Card key={venda.id} className="group overflow-hidden border-border bg-card/80 shadow-sm backdrop-blur-xl transition-all duration-200 hover:border-primary/30 hover:shadow-md">
+                <CardContent className="flex p-0">
+                  <div className={`w-1.5 shrink-0 ${barraStatus}`} aria-hidden="true" />
+                  <div className="grid min-w-0 flex-1 gap-5 p-4 sm:grid-cols-2 lg:grid-cols-[minmax(170px,0.85fr)_minmax(240px,1.35fr)_minmax(170px,0.9fr)_minmax(140px,0.7fr)_auto] lg:items-center lg:gap-6">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div className="relative shrink-0">
+                        <Avatar className="h-11 w-11 ring-2 ring-muted">
+                          <AvatarImage src={venda.atendente?.foto_perfil_url || undefined} alt={venda.atendente?.nome || "Vendedor"} />
+                          <AvatarFallback className="bg-primary/10 text-xs font-bold text-primary">
+                            {obterIniciais(venda.atendente?.nome)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-card bg-success" title="Vendedor ativo" />
                       </div>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        Venda #{venda.numero_pedido || venda.id.slice(0, 8)}
-                        {pedido?.numero_pedido ? ` · Pedido #${pedido.numero_pedido}` : " · Sem pedido de produção"}
-                      </p>
+                      <div className="min-w-0">
+                        <p className="truncate font-heading text-sm font-semibold text-foreground">{venda.atendente?.nome || "Vendedor não informado"}</p>
+                        <p className="mt-0.5 text-[11px] font-medium uppercase text-muted-foreground">Responsável pela venda</p>
+                      </div>
+                    </div>
+
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2 text-xs">
+                        <span className="font-heading font-bold text-primary">VENDA #{venda.numero_pedido || venda.id.slice(0, 8)}</span>
+                        <span className="text-muted-foreground">•</span>
+                        <span className="text-muted-foreground">{new Intl.DateTimeFormat("pt-BR", { timeZone: "UTC" }).format(new Date(venda.data_venda))}</span>
+                      </div>
+                      <h3 className="mt-1 truncate font-heading text-[15px] font-bold text-foreground">{venda.cliente_nome || "Cliente não informado"}</h3>
                       <p className="mt-1 text-xs text-muted-foreground">
-                        {new Intl.DateTimeFormat("pt-BR", { timeZone: "UTC" }).format(new Date(venda.data_venda))} · {venda.produtos_vendas.length} item(ns)
-                        {venda.cidade ? ` · ${venda.cidade}${venda.estado ? `/${venda.estado}` : ""}` : ""}
+                        {pedido?.numero_pedido ? `Pedido #${pedido.numero_pedido}` : "Sem pedido de produção"} · {venda.produtos_vendas.length} {venda.produtos_vendas.length === 1 ? "item" : "itens"}
                       </p>
                     </div>
-                  </div>
-                  <div className="flex shrink-0 gap-2">
-                    <Button variant="outline" onClick={() => copiarLink(venda.rastreio_token)}>
-                      {copiado === venda.rastreio_token ? <Check /> : <Copy />}
-                      {copiado === venda.rastreio_token ? "Copiado" : "Copiar link"}
-                    </Button>
-                    <Button variant="secondary" size="icon" title="Abrir rastreio" asChild>
-                      <a href={criarLink(venda.rastreio_token)} target="_blank" rel="noreferrer"><ExternalLink /></a>
-                    </Button>
+
+                    <div className="flex flex-col gap-2 border-border lg:border-x lg:px-5">
+                      <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground"><MapPin className="h-3.5 w-3.5" />{localizacao}</p>
+                      <div><Badge variant="outline" className={statusClasses}>{status}</Badge></div>
+                      <p className="text-[11px] text-muted-foreground">{venda.tipo_entrega ? `Entrega: ${venda.tipo_entrega.replace(/_/g, " ")}` : "Entrega não informada"}</p>
+                    </div>
+
+                    <div className="lg:text-right">
+                      <p className="text-[10px] font-bold uppercase text-muted-foreground">Valor total</p>
+                      <p className="mt-0.5 font-heading text-xl font-bold text-foreground">{formatarValor(venda.valor_venda)}</p>
+                    </div>
+
+                    <div className="flex items-center gap-2 sm:col-span-2 lg:col-span-1 lg:justify-end">
+                      <Button variant="outline" size="icon" title={copiado === venda.rastreio_token ? "Link copiado" : "Copiar link"} onClick={() => copiarLink(venda.rastreio_token)}>
+                        {copiado === venda.rastreio_token ? <Check /> : <Copy />}
+                      </Button>
+                      <Button className="flex-1 shadow-sm sm:flex-none" asChild>
+                        <a href={criarLink(venda.rastreio_token)} target="_blank" rel="noreferrer">Rastrear <ArrowRight /></a>
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

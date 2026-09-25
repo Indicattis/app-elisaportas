@@ -9,9 +9,14 @@ export interface VendaRastreioInterna {
   cliente_telefone: string | null;
   cpf_cliente: string | null;
   data_venda: string;
+  valor_venda: number | null;
   tipo_entrega: string | null;
   cidade: string | null;
   estado: string | null;
+  atendente: {
+    nome: string;
+    foto_perfil_url: string | null;
+  } | null;
   produtos_vendas: Array<{
     id: string;
     descricao: string | null;
@@ -40,7 +45,8 @@ export function useVendasRastreio() {
         .from("vendas")
         .select(`
           id, rastreio_token, numero_pedido, cliente_nome, cliente_telefone,
-          cpf_cliente, data_venda, tipo_entrega, cidade, estado,
+          cpf_cliente, data_venda, valor_venda, tipo_entrega, cidade, estado,
+          atendente:admin_users!fk_vendas_atendente(nome, foto_perfil_url),
           produtos_vendas(id, descricao, tipo_produto, quantidade, largura, altura, tamanho),
           pedidos_producao(id, numero_pedido, etapa_atual, status, data_entrega, created_at, arquivado)
         `)
