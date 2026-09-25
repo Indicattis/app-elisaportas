@@ -110,24 +110,11 @@ export default function RastreioVendaPublico() {
   return (
     <main className="min-h-screen bg-background text-foreground">
       <header className="relative overflow-hidden border-b border-border bg-card/80 backdrop-blur-xl">
-        <div className="mx-auto flex min-h-28 max-w-6xl items-center justify-between px-5 py-5 md:min-h-32">
+        <div className="mx-auto flex min-h-28 max-w-6xl items-center px-5 py-5 md:min-h-32">
           <div>
             <p className="text-xs font-semibold uppercase tracking-widest text-primary">Elisa Portas</p>
             <h1 className="mt-1 text-xl font-semibold">Acompanhe sua compra</h1>
             <p className="mt-2 text-sm text-muted-foreground">Cada etapa, cada conquista, mais perto de você.</p>
-          </div>
-          <div className="relative h-24 w-28 shrink-0 md:h-28 md:w-36" aria-hidden="true">
-            <div className="absolute bottom-1 left-1/2 h-3 w-20 -translate-x-1/2 rounded-full bg-primary/15 blur-md" />
-            <img
-              src={portinhaAsset.url}
-              alt=""
-              onError={(event) => {
-                if (event.currentTarget.src !== PORTINHA_FALLBACK_URL) {
-                  event.currentTarget.src = PORTINHA_FALLBACK_URL;
-                }
-              }}
-              className="absolute bottom-0 right-0 h-28 w-auto max-w-none animate-[bounce_3s_ease-in-out_infinite] object-contain motion-reduce:animate-none md:h-32"
-            />
           </div>
         </div>
       </header>
@@ -135,13 +122,30 @@ export default function RastreioVendaPublico() {
       <div className="mx-auto max-w-6xl space-y-8 px-5 py-8 md:py-12">
         <section className="relative overflow-hidden rounded-lg border border-primary/25 bg-card p-6 shadow-xl md:p-9">
           <div className="absolute inset-y-0 left-0 w-1 bg-primary" />
-          <p className="text-sm text-muted-foreground">Compra #{data.venda.numero}</p>
-          <h2 className="mt-2 text-3xl font-semibold md:text-4xl">{TITULOS[etapaAtual] || "Pedido em andamento"}</h2>
-          <p className="mt-3 max-w-2xl text-muted-foreground">Olá, {data.venda.cliente_nome || "cliente"}. Aqui você acompanha cada avanço da sua compra.</p>
-          <div className="mt-6 flex flex-wrap gap-x-8 gap-y-3 text-sm">
-            <span><strong>Compra:</strong> {formatarData(data.venda.data_venda)}</span>
-            <span><strong>Entrega:</strong> {data.venda.tipo_entrega === "instalacao" ? "Com instalação" : "Entrega ou retirada"}</span>
-            {data.pedido?.data_entrega && <span><strong>Previsão:</strong> {formatarData(data.pedido.data_entrega)}</span>}
+          <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0 flex-1">
+              <p className="text-sm text-muted-foreground">Compra #{data.venda.numero}</p>
+              <h2 className="mt-2 text-3xl font-semibold md:text-4xl">{TITULOS[etapaAtual] || "Pedido em andamento"}</h2>
+              <p className="mt-3 max-w-2xl text-muted-foreground">Olá, {data.venda.cliente_nome || "cliente"}. Aqui você acompanha cada avanço da sua compra.</p>
+              <div className="mt-6 flex flex-wrap gap-x-8 gap-y-3 text-sm">
+                <span><strong>Compra:</strong> {formatarData(data.venda.data_venda)}</span>
+                <span><strong>Entrega:</strong> {data.venda.tipo_entrega === "instalacao" ? "Com instalação" : "Entrega ou retirada"}</span>
+                {data.pedido?.data_entrega && <span><strong>Previsão:</strong> {formatarData(data.pedido.data_entrega)}</span>}
+              </div>
+            </div>
+            <div className="relative mx-auto h-44 w-44 shrink-0 sm:mx-0 md:h-56 md:w-56" aria-hidden="true">
+              <div className="absolute bottom-2 left-1/2 h-4 w-28 -translate-x-1/2 rounded-full bg-primary/15 blur-md" />
+              <img
+                src={portinhaAsset.url}
+                alt=""
+                onError={(event) => {
+                  if (event.currentTarget.src !== PORTINHA_FALLBACK_URL) {
+                    event.currentTarget.src = PORTINHA_FALLBACK_URL;
+                  }
+                }}
+                className="absolute inset-0 h-full w-full object-contain"
+              />
+            </div>
           </div>
         </section>
 
