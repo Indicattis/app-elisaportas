@@ -210,7 +210,9 @@ export function CarregamentoDownbar({
   const Icon = isInstalacao ? Wrench : ordem.tipo_carregamento === 'elisa' ? Truck : PackageCheck;
   const tipoLabel = isInstalacao
     ? (ordem.tipo_entrega === 'manutencao' ? 'Manutenção' : 'Instalação')
-    : (ordem.tipo_carregamento === 'elisa' ? 'Elisa' : 'Autorizado');
+    : ordem.tipo_entrega === 'autorizado'
+      ? `Autorizado${ordem.autorizado_nome ? ` — ${ordem.autorizado_nome}` : ''}`
+      : (ordem.tipo_carregamento === 'elisa' ? 'Elisa' : 'Autorizado');
 
   return (
     <Sheet open={open} onOpenChange={(o) => {
