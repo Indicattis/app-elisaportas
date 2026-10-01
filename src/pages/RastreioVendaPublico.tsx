@@ -24,6 +24,7 @@ interface ProdutoPublico {
 
 interface RastreioPublico {
   venda: { id: string; numero: string; cliente_nome: string | null; data_venda: string; tipo_entrega: string | null };
+  autorizado: { nome: string | null; telefone: string | null; cidade: string | null; estado: string | null } | null;
   produtos: ProdutoPublico[];
   pedido: { numero: string; etapa_atual: string; status: string; data_entrega: string | null; created_at: string; arquivado: boolean } | null;
   etapas: Array<{ etapa: string; data_entrada: string | null; data_saida: string | null }>;
