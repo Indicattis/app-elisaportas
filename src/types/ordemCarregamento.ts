@@ -53,7 +53,7 @@ export interface OrdemCarregamento {
     data_prevista_entrega?: string | null;
     cliente_email?: string | null;
     valor_instalacao?: number | null;
-    tipo_entrega?: 'instalacao' | 'entrega' | null;
+    tipo_entrega?: 'instalacao' | 'entrega' | 'autorizado' | null;
     metodo_pagamento?: string | null;
     produtos?: Array<{
       tipo_produto?: string | null;
