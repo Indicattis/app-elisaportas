@@ -90,6 +90,7 @@ export const useOrdensCarregamentoUnificadas = () => {
             cep,
             tipo_entrega,
             atendente_id,
+            autorizado:autorizados!vendas_autorizado_instalacao_id_fkey(nome),
             produtos:produtos_vendas(
               tipo_produto,
               tamanho,
