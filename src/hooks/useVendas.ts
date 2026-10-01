@@ -60,6 +60,10 @@ export interface VendaFormData {
   canal_aquisicao_id?: string;
   data_prevista_entrega?: string;
   tipo_entrega?: string;
+  /** Modalidade Autorizado: valor acordado NÃO entra em valor_venda/faturamento */
+  autorizado_instalacao_id?: string | null;
+  valor_acordado_autorizado?: number;
+  observacao_autorizado?: string | null;
   tipo_frete?: 'interno' | 'transportadora' | 'por_porta';
   temperatura?: boolean;
   cliente_id?: string; // ID do cliente existente selecionado
