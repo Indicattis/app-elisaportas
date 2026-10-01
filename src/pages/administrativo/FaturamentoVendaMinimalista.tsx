@@ -1,3 +1,4 @@
+import { InfoAutorizadoVenda } from '@/components/vendas/InfoAutorizadoVenda';
 import { useEffect, useState, useRef, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -1365,6 +1366,7 @@ export default function FaturamentoVendaMinimalista() {
                 </div>
               ))}
             </div>
+            <InfoAutorizadoVenda vendaId={venda.id} />
             {venda.observacoes_venda?.trim() && (
               <div className="mt-4 border-t border-border pt-4">
                 <p className="flex items-center gap-2 text-sm font-medium text-foreground mb-2">

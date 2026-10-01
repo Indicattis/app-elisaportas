@@ -13,7 +13,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Badge } from '@/components/ui/badge';
-import { Plus, CalendarIcon, CheckCircle2, ShieldCheck, Lock, Package, CreditCard, FileText, Truck, Wrench, Settings, Building2, MapPin } from 'lucide-react';
+import { Plus, CalendarIcon, CheckCircle2, ShieldCheck, Lock, Package, CreditCard, FileText, Truck, Wrench, Settings, Building2, MapPin, Handshake } from 'lucide-react';
 import { ProdutoVendaForm } from '@/components/vendas/ProdutoVendaForm';
 import { ProdutosVendaTable } from '@/components/vendas/ProdutosVendaTable';
 import { VendaResumo } from '@/components/vendas/VendaResumo';
@@ -150,6 +150,9 @@ export default function VendaNovaMinimalista() {
     valor_a_receber: 0,
     data_prevista_entrega: '',
     tipo_entrega: 'instalacao',
+    autorizado_instalacao_id: '' as string,
+    valor_acordado_autorizado: 0,
+    observacao_autorizado: '',
     tipo_frete: 'interno',
     temperatura: null as boolean | null
   });
@@ -664,7 +667,17 @@ export default function VendaNovaMinimalista() {
   // Padronização do bloqueio de frete conforme o tipo de entrega:
   // - Instalação/Manutenção: somente frete interno.
   // - Entrega: somente frete por conta do cliente ou frete por porta.
-  const entregaComInstalacao = formData.tipo_entrega === 'instalacao' || formData.tipo_entrega === 'manutencao';
+  const entregaComInstalacao = formData.tipo_entrega === 'instalacao' || formData.tipo_entrega === 'manutencao' || formData.tipo_entrega === 'autorizado';
+
+  const { data: autorizadosAtivos = [] } = useQuery({
+    queryKey: ['autorizados-ativos-venda'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('autorizados').select('id, nome, cidade, estado').eq('ativo', true).order('nome');
+      if (error) throw error;
+      return (data || []) as { id: string; nome: string; cidade: string | null; estado: string | null }[];
+    },
+  });
   const entregaSemInstalacao = formData.tipo_entrega === 'entrega';
 
   useEffect(() => {
@@ -879,6 +892,10 @@ export default function VendaNovaMinimalista() {
     // Datas e entrega
     if (!dataEntrega) faltantes.push('Previsão de entrega');
     if (!formData.tipo_entrega) faltantes.push('Tipo de entrega');
+    if (formData.tipo_entrega === 'autorizado') {
+      if (!formData.autorizado_instalacao_id) faltantes.push('Autorizado responsável pela instalação');
+      if (!(Number(formData.valor_acordado_autorizado) > 0)) faltantes.push('Valor acordado com o autorizado');
+    }
 
     // Forma de pagamento
     if (!pagamentoData?.metodos?.[0]?.tipo) {
@@ -1239,7 +1256,7 @@ export default function VendaNovaMinimalista() {
               <RadioGroup
                 value={formData.tipo_entrega}
                 onValueChange={(value) => setFormData(prev => ({ ...prev, tipo_entrega: value }))}
-                className="grid grid-cols-1 md:grid-cols-3 gap-3"
+                className="grid grid-cols-1 md:grid-cols-4 gap-3"
                 required
               >
                 <label
@@ -1281,8 +1298,59 @@ export default function VendaNovaMinimalista() {
                   <Settings className={cn("w-5 h-5", formData.tipo_entrega === "manutencao" ? "text-blue-400" : "text-white/40")} />
                   <span className={cn("text-sm font-medium", formData.tipo_entrega === "manutencao" ? "text-white" : "text-white/70")}>Manutenção</span>
                 </label>
+                <label
+                  htmlFor="tipo-autorizado"
+                  className={cn(
+                    "flex items-center justify-center gap-3 p-4 rounded-lg cursor-pointer transition-all duration-200 border-2",
+                    formData.tipo_entrega === "autorizado"
+                      ? "bg-blue-500/15 border-blue-400/40 shadow-lg shadow-blue-500/10"
+                      : "bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10"
+                  )}
+                >
+                  <RadioGroupItem value="autorizado" id="tipo-autorizado" className="sr-only" />
+                  <Handshake className={cn("w-5 h-5", formData.tipo_entrega === "autorizado" ? "text-blue-400" : "text-white/40")} />
+                  <span className={cn("text-sm font-medium", formData.tipo_entrega === "autorizado" ? "text-white" : "text-white/70")}>Autorizado</span>
+                </label>
               </RadioGroup>
             </div>
+
+            {formData.tipo_entrega === 'autorizado' && (
+              <div className="grid gap-3 md:grid-cols-2 p-4 rounded-lg border border-blue-400/30 bg-blue-500/5">
+                <div className="space-y-2">
+                  <Label className={labelClass}>Autorizado responsável *</Label>
+                  <Select
+                    value={formData.autorizado_instalacao_id || ''}
+                    onValueChange={(v) => setFormData(prev => ({ ...prev, autorizado_instalacao_id: v }))}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Selecione o autorizado" /></SelectTrigger>
+                    <SelectContent>
+                      {autorizadosAtivos.map(a => (
+                        <SelectItem key={a.id} value={a.id}>{a.nome}{a.cidade ? ` — ${a.cidade}/${a.estado ?? ''}` : ''}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label className={labelClass}>Valor acordado da instalação (R$) *</Label>
+                  <Input
+                    type="number" min={0} step="0.01"
+                    value={formData.valor_acordado_autorizado || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, valor_acordado_autorizado: Number(e.target.value) || 0 }))}
+                    placeholder="0,00"
+                  />
+                  <p className="text-[11px] text-white/50">Não entra no valor da venda nem no faturamento.</p>
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label className={labelClass}>Observação (opcional)</Label>
+                  <Textarea
+                    maxLength={500}
+                    value={formData.observacao_autorizado}
+                    onChange={(e) => setFormData(prev => ({ ...prev, observacao_autorizado: e.target.value }))}
+                    placeholder="Combinados com o autorizado..."
+                  />
+                </div>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label className={labelClass}>Tipo de Frete *</Label>

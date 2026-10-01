@@ -10088,6 +10088,7 @@ export type Database = {
       vendas: {
         Row: {
           atendente_id: string
+          autorizado_instalacao_id: string | null
           bairro: string | null
           canal_aquisicao_id: string | null
           cep: string | null
@@ -10130,6 +10131,7 @@ export type Database = {
           metodo_pagamento: string | null
           numero_parcelas: number | null
           numero_pedido: string | null
+          observacao_autorizado: string | null
           observacoes_venda: string | null
           pagamento_na_entrega: boolean | null
           pago_na_instalacao: boolean | null
@@ -10150,6 +10152,7 @@ export type Database = {
           valor_a_receber: number | null
           valor_a_receber_faturamento: boolean
           valor_a_receber_texto: string | null
+          valor_acordado_autorizado: number
           valor_credito: number | null
           valor_entrada: number | null
           valor_entrada_dinheiro: number | null
@@ -10159,6 +10162,7 @@ export type Database = {
         }
         Insert: {
           atendente_id: string
+          autorizado_instalacao_id?: string | null
           bairro?: string | null
           canal_aquisicao_id?: string | null
           cep?: string | null
@@ -10201,6 +10205,7 @@ export type Database = {
           metodo_pagamento?: string | null
           numero_parcelas?: number | null
           numero_pedido?: string | null
+          observacao_autorizado?: string | null
           observacoes_venda?: string | null
           pagamento_na_entrega?: boolean | null
           pago_na_instalacao?: boolean | null
@@ -10221,6 +10226,7 @@ export type Database = {
           valor_a_receber?: number | null
           valor_a_receber_faturamento?: boolean
           valor_a_receber_texto?: string | null
+          valor_acordado_autorizado?: number
           valor_credito?: number | null
           valor_entrada?: number | null
           valor_entrada_dinheiro?: number | null
@@ -10230,6 +10236,7 @@ export type Database = {
         }
         Update: {
           atendente_id?: string
+          autorizado_instalacao_id?: string | null
           bairro?: string | null
           canal_aquisicao_id?: string | null
           cep?: string | null
@@ -10272,6 +10279,7 @@ export type Database = {
           metodo_pagamento?: string | null
           numero_parcelas?: number | null
           numero_pedido?: string | null
+          observacao_autorizado?: string | null
           observacoes_venda?: string | null
           pagamento_na_entrega?: boolean | null
           pago_na_instalacao?: boolean | null
@@ -10292,6 +10300,7 @@ export type Database = {
           valor_a_receber?: number | null
           valor_a_receber_faturamento?: boolean
           valor_a_receber_texto?: string | null
+          valor_acordado_autorizado?: number
           valor_credito?: number | null
           valor_entrada?: number | null
           valor_entrada_dinheiro?: number | null
@@ -10306,6 +10315,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "admin_users"
             referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "vendas_autorizado_instalacao_id_fkey"
+            columns: ["autorizado_instalacao_id"]
+            isOneToOne: false
+            referencedRelation: "autorizados"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "vendas_canal_aquisicao_id_fkey"

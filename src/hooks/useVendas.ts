@@ -60,6 +60,10 @@ export interface VendaFormData {
   canal_aquisicao_id?: string;
   data_prevista_entrega?: string;
   tipo_entrega?: string;
+  /** Modalidade Autorizado: valor acordado NÃO entra em valor_venda/faturamento */
+  autorizado_instalacao_id?: string | null;
+  valor_acordado_autorizado?: number;
+  observacao_autorizado?: string | null;
   tipo_frete?: 'interno' | 'transportadora' | 'por_porta';
   temperatura?: boolean;
   cliente_id?: string; // ID do cliente existente selecionado
@@ -476,6 +480,9 @@ export function useVendas() {
 
       const vendaPayload = {
         ...vendaDataLimpo,
+        autorizado_instalacao_id: vendaData.tipo_entrega === 'autorizado' ? (vendaData.autorizado_instalacao_id || null) : null,
+        valor_acordado_autorizado: vendaData.tipo_entrega === 'autorizado' ? Number(vendaData.valor_acordado_autorizado || 0) : 0,
+        observacao_autorizado: vendaData.tipo_entrega === 'autorizado' ? (vendaData.observacao_autorizado?.trim() || null) : null,
         numero_pedido: numeroPedidoVenda,
         cliente_id: clienteId,
         cpf_cliente: vendaData.cpf_cliente || null,
@@ -870,6 +877,9 @@ export function useVendas() {
 
       const vendaPayload = {
         ...vendaDataLimpo,
+        autorizado_instalacao_id: vendaData.tipo_entrega === 'autorizado' ? (vendaData.autorizado_instalacao_id || null) : null,
+        valor_acordado_autorizado: vendaData.tipo_entrega === 'autorizado' ? Number(vendaData.valor_acordado_autorizado || 0) : 0,
+        observacao_autorizado: vendaData.tipo_entrega === 'autorizado' ? (vendaData.observacao_autorizado?.trim() || null) : null,
         is_rascunho: true,
         cpf_cliente: vendaData.cpf_cliente || null,
         atendente_id: adminUser.user_id,

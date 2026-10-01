@@ -12,7 +12,7 @@ export async function buscarDadosPedidoProducaoPDF(
     .from("pedidos_producao")
     .select(
       `id, numero_pedido, etapa_atual, created_at,
-       vendas:venda_id ( cliente_nome, cidade, estado, valor_venda, forma_pagamento, tipo_entrega, data_prevista_entrega )`
+       vendas:venda_id ( cliente_nome, cidade, estado, valor_venda, forma_pagamento, tipo_entrega, data_prevista_entrega, valor_acordado_autorizado, observacao_autorizado, autorizado:autorizados!vendas_autorizado_instalacao_id_fkey(nome) )`
     )
     .eq("id", pedidoId)
     .maybeSingle();
@@ -42,7 +42,7 @@ export async function buscarDadosPedidoProducaoPDF(
           estado: venda.estado,
           valor_venda: venda.valor_venda,
           forma_pagamento: venda.forma_pagamento,
-          tipo_entrega: venda.tipo_entrega,
+          tipo_entrega: venda.tipo_entrega === 'autorizado' ? `Autorizado — ${venda.autorizado?.nome ?? ''} — ${Number(venda.valor_acordado_autorizado||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}${venda.observacao_autorizado ? ` — ${venda.observacao_autorizado}` : ''}` : venda.tipo_entrega,
           data_prevista_entrega: venda.data_prevista_entrega,
         }
       : undefined,

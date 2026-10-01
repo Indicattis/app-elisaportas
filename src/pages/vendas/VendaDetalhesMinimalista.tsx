@@ -1,3 +1,4 @@
+import { InfoAutorizadoVenda } from '@/components/vendas/InfoAutorizadoVenda';
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -260,6 +261,7 @@ export default function VendaDetalhesMinimalista() {
                 </>
               )}
 
+              <InfoAutorizadoVenda vendaId={venda.id} />
               {venda.observacoes_venda && (
                 <>
                   <Separator className="bg-primary/10" />
