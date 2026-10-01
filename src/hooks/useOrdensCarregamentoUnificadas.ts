@@ -29,7 +29,8 @@ export interface OrdemCarregamentoUnificada {
   responsavel_carregamento_nome: string | null;
   carregamento_concluido: boolean;
   status: string | null;
-  tipo_entrega: 'entrega' | 'instalacao' | 'manutencao' | null;
+  tipo_entrega: 'entrega' | 'instalacao' | 'manutencao' | 'autorizado' | null;
+  autorizado_nome?: string | null;
   observacoes?: string | null;
   created_at?: string | null;
   pedido?: {
@@ -56,7 +57,8 @@ export interface OrdemCarregamentoUnificada {
     estado?: string | null;
     bairro?: string | null;
     cep?: string | null;
-    tipo_entrega?: 'entrega' | 'instalacao' | 'manutencao' | null;
+    tipo_entrega?: 'entrega' | 'instalacao' | 'manutencao' | 'autorizado' | null;
+    autorizado?: { nome: string } | null;
     produtos?: ProdutoUnificado[];
   } | null;
   vendedor?: {
