@@ -161,7 +161,7 @@ export default function RastreioVendaPublico() {
               <p className="mt-3 max-w-2xl text-muted-foreground">Olá, {data.venda.cliente_nome || "cliente"}. Aqui você acompanha cada avanço da sua compra.</p>
               <div className="mt-6 flex flex-wrap gap-x-8 gap-y-3 text-sm">
                 <span><strong>Compra:</strong> {formatarData(data.venda.data_venda)}</span>
-                <span><strong>Entrega:</strong> {data.venda.tipo_entrega === "instalacao" ? "Com instalação" : "Entrega ou retirada"}</span>
+                <span><strong>Entrega:</strong> {data.venda.tipo_entrega === "instalacao" ? "Com instalação" : data.venda.tipo_entrega === "autorizado" ? "Autorizado" : "Entrega ou retirada"}</span>
                 {data.pedido?.data_entrega && <span><strong>Previsão:</strong> {formatarData(data.pedido.data_entrega)}</span>}
               </div>
             </div>
