@@ -70,7 +70,7 @@ export default function ProducaoCarregamento() {
           </TabsTrigger>
           <TabsTrigger value="entrega">
             <Truck className="h-4 w-4 mr-2" />
-            Entrega ({ordensDisponiveis.filter(o => o.tipo_entrega === 'entrega' && o.fonte !== 'correcoes').length})
+            Entrega ({ordensDisponiveis.filter(o => (o.tipo_entrega === 'entrega' || o.tipo_entrega === 'autorizado') && o.fonte !== 'correcoes').length})
           </TabsTrigger>
           <TabsTrigger value="instalacao">
             <PackageCheck className="h-4 w-4 mr-2" />

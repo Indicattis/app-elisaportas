@@ -397,7 +397,7 @@ export function useOrdensPorPedido(etapa: EtapaPedido) {
         const tipoEntregaRaw = venda?.tipo_entrega;
         const tipo_entrega: 'instalacao' | 'entrega' | null = 
           tipoEntregaRaw === 'instalacao' ? 'instalacao' :
-          tipoEntregaRaw === 'entrega' || tipoEntregaRaw === 'coleta' ? 'entrega' : null;
+          tipoEntregaRaw === 'entrega' || tipoEntregaRaw === 'coleta' || tipoEntregaRaw === 'autorizado' ? 'entrega' : null;
 
         const criarOrdemStatus = (tipo: TipoOrdem): OrdemStatus => {
           const ordem = ordensDosPedido[tipo];

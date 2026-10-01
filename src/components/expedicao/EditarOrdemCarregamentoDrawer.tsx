@@ -42,7 +42,7 @@ export const EditarOrdemCarregamentoDrawer = ({
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const isEntrega = ordem?.venda?.tipo_entrega === 'entrega';
+  const isEntrega = ['entrega','autorizado'].includes(ordem?.venda?.tipo_entrega || '');
 
   // Reset form quando o drawer abre/fecha ou ordem muda
   useEffect(() => {

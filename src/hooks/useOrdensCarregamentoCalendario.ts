@@ -302,7 +302,7 @@ export const useOrdensCarregamentoCalendario = (
       const ordensEntrega = (ordensCarregamento || []).filter(
         (ordem: any) => {
           const tipoEntrega = ordem.venda?.tipo_entrega;
-          return tipoEntrega === 'entrega' || !tipoEntrega;
+          return tipoEntrega === 'entrega' || tipoEntrega === 'autorizado' || !tipoEntrega;
         }
       );
       const ordensComFonte = ordensEntrega.map((ordem: any) => ({

@@ -667,7 +667,7 @@ export default function VendaNovaMinimalista() {
   // Padronização do bloqueio de frete conforme o tipo de entrega:
   // - Instalação/Manutenção: somente frete interno.
   // - Entrega: somente frete por conta do cliente ou frete por porta.
-  const entregaComInstalacao = formData.tipo_entrega === 'instalacao' || formData.tipo_entrega === 'manutencao' || formData.tipo_entrega === 'autorizado';
+  const entregaComInstalacao = formData.tipo_entrega === 'instalacao' || formData.tipo_entrega === 'manutencao';
 
   const { data: autorizadosAtivos = [] } = useQuery({
     queryKey: ['autorizados-ativos-venda'],
@@ -678,7 +678,7 @@ export default function VendaNovaMinimalista() {
       return (data || []) as { id: string; nome: string; cidade: string | null; estado: string | null }[];
     },
   });
-  const entregaSemInstalacao = formData.tipo_entrega === 'entrega';
+  const entregaSemInstalacao = formData.tipo_entrega === 'entrega' || formData.tipo_entrega === 'autorizado';
 
   useEffect(() => {
     if (entregaComInstalacao && formData.tipo_frete !== 'interno') {

@@ -78,7 +78,7 @@ export default function OrdensEntregasLogistica() {
   }, []);
 
   const filtrados = useMemo(() => {
-    const apenasEntregas = registros.filter((r) => r.tipo_entrega === 'entrega');
+    const apenasEntregas = registros.filter((r) => (r.tipo_entrega === 'entrega' || r.tipo_entrega === 'autorizado'));
     const q = search.trim().toLowerCase();
     if (!q) return apenasEntregas;
     return apenasEntregas.filter((r) =>
