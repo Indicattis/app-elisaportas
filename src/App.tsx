@@ -1,3 +1,4 @@
+import MapaPedidosVendas from './pages/vendas/MapaPedidosVendas';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -512,6 +513,7 @@ const App = () => (
                 <Route path="/vendas/meus-orcamentos/:id" element={<ProtectedRoute routeKey="vendas_hub"><MeuOrcamentoDetalhe /></ProtectedRoute>} />
                 <Route path="/vendas/meus-parceiros" element={<ProtectedRoute routeKey="vendas_hub"><MeusParceiros /></ProtectedRoute>} />
                 <Route path="/vendas/meus-parceiros/:id/editar" element={<ProtectedRoute routeKey="vendas_hub"><EditarAutorizadoDirecao /></ProtectedRoute>} />
+                <Route path="/vendas/mapa" element={<ProtectedRoute routeKey="vendas_hub"><MapaPedidosVendas /></ProtectedRoute>} />
                 <Route path="/vendas/acompanhar-pedido" element={<ProtectedRoute routeKey="vendas_hub"><AcompanharPedido /></ProtectedRoute>} />
                 <Route path="/vendas/visitas-tecnicas" element={<ProtectedRoute routeKey="vendas_visitas_tecnicas"><VisitasTecnicasCalendario /></ProtectedRoute>} />
                 <Route path="/vendas/visitas-tecnicas/realizadas" element={<ProtectedRoute routeKey="vendas_visitas_tecnicas"><VisitasTecnicasRealizadas /></ProtectedRoute>} />

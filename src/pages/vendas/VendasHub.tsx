@@ -11,7 +11,8 @@ import {
   Target,
   FileSignature,
   Tag,
-  BookOpen
+  BookOpen,
+  Map as MapIcon
 } from 'lucide-react';
 
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
@@ -28,6 +29,7 @@ const menuItems = [
   { label: 'Meus Contratos', icon: FileSignature, path: '/vendas/contratos' },
   { label: 'Tabela de Preços', icon: Tag, path: '/vendas/precos' },
   { label: 'Regras de Vendas', icon: BookOpen, path: '/vendas/regras' },
+  { label: 'Mapa', icon: MapIcon, path: '/vendas/mapa' },
 ];
 
 export default function VendasHub() {
