@@ -1,3 +1,4 @@
+import { InfoAutorizadoVenda } from '@/components/vendas/InfoAutorizadoVenda';
 import { useState, useEffect, useMemo } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { SemMedicaoBadge } from "@/components/vendas/SemMedicaoBadge";
@@ -823,6 +824,7 @@ export function VendaPendenteDetalhesSheet({ venda, open, onOpenChange }: VendaP
           </Collapsible>
 
           {/* Observações */}
+          <InfoAutorizadoVenda vendaId={vendaCompleta?.id} />
           {vendaCompleta?.observacoes_venda && (
             <div className="bg-white/5 rounded-xl border border-white/10 p-4">
               <h3 className="text-[10px] font-semibold text-white/50 uppercase tracking-wider mb-2">Observações</h3>

@@ -1,3 +1,4 @@
+import { InfoAutorizadoVenda } from '@/components/vendas/InfoAutorizadoVenda';
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -567,7 +568,7 @@ export default function PedidoViewMinimalista() {
                   {pedido.venda.tipo_entrega && (
                     <div>
                       <p className="text-xs text-white/50">Tipo de Entrega</p>
-                      <p className="font-medium capitalize text-white">{pedido.venda.tipo_entrega}</p>
+                      <p className="font-medium capitalize text-white">{pedido.venda.tipo_entrega === 'autorizado' ? 'Autorizado' : pedido.venda.tipo_entrega}</p>
                     </div>
                   )}
                   {pedido.venda.data_prevista_entrega && (
@@ -577,6 +578,7 @@ export default function PedidoViewMinimalista() {
                     </div>
                   )}
                 </div>
+                <InfoAutorizadoVenda vendaId={pedido.venda_id} className="mt-4" />
               </CardContent>
             </Card>
           )}

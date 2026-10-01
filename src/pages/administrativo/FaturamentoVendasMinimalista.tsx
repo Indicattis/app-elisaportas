@@ -988,6 +988,7 @@ export default function FaturamentoMinimalista() {
       case 'cidade':
         return <span className="text-white/60">{venda.cidade}{venda.estado ? `/${venda.estado}` : ''}</span>;
       case 'expedicao':
+        if (venda.tipo_entrega === 'autorizado') return <span className="text-[10px] font-semibold text-blue-300" title="Autorizado">AUT</span>;
         if (venda.tipo_entrega === 'instalacao') return <Hammer className="h-4 w-4 text-cyan-400 mx-auto" />;
         return <Truck className="h-4 w-4 text-orange-400 mx-auto" />;
       case 'contrato': {

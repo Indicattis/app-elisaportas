@@ -1,3 +1,4 @@
+import { InfoAutorizadoVenda } from '@/components/vendas/InfoAutorizadoVenda';
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
@@ -744,6 +745,7 @@ export default function VendaDetalhesDirecao() {
         {/* Comprovante renderizado dentro do PagamentoResumo acima. */}
 
         {/* Observações */}
+        <InfoAutorizadoVenda vendaId={venda.id} />
         {venda.observacoes_venda && (
           <div className={cardClass}>
             <h3 className="text-white font-medium mb-3">Observações</h3>
