@@ -88,7 +88,7 @@ export default function MapaPedidosVendas() {
         </button>
         <div className="flex items-center gap-2">
           <MapPin className="h-5 w-5 text-blue-400" />
-          <h1 className="font-semibold">Mapa de pedidos finalizados</h1>
+          <h1 className="font-semibold">Mapa de pedidos concluídos</h1>
         </div>
         {isLoading ? (
           <div className="flex items-center gap-2 text-xs text-white/60">

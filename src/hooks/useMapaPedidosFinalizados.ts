@@ -38,10 +38,10 @@ export function useMapaPedidosFinalizados() {
       const { data, error } = await supabase
         .from("pedidos_producao")
         .select(
-          "id, numero_pedido, cliente_nome, updated_at, vendas:venda_id(cliente_nome, cidade, estado, valor_venda, atendente:admin_users!fk_vendas_atendente(nome))"
+          "id, numero_pedido, cliente_nome, updated_at, etapa_atual, arquivado, vendas:venda_id(cliente_nome, cidade, estado, valor_venda, atendente:admin_users!fk_vendas_atendente(nome))"
         )
-        .eq("etapa_atual", "finalizado")
-        .limit(1000);
+        .in("etapa_atual", ["finalizado", "pos_vendas"])
+        .limit(2000);
       if (error) throw error;
       const rows = (data ?? []) as any[];
 
