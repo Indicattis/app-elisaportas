@@ -416,7 +416,13 @@ export default function VisitaTecnicaConclusao() {
         const { error: uploadError } = await supabase.storage
           .from('visitas-tecnicas-midias')
           .upload(path, file, { contentType: file.type });
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+          const msg = String(uploadError.message || '');
+          if (/too large|exceeded|payload|413/i.test(msg)) {
+            throw new Error(`${file.name}: arquivo maior que 50 MB`);
+          }
+          throw uploadError;
+        }
         const { error: midiaError } = await supabase.from('visitas_tecnicas_midias').insert({
           conclusao_id: conclusao.id,
           storage_path: path,
