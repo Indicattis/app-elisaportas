@@ -29,7 +29,8 @@ export interface OrdemCarregamentoUnificada {
   responsavel_carregamento_nome: string | null;
   carregamento_concluido: boolean;
   status: string | null;
-  tipo_entrega: 'entrega' | 'instalacao' | 'manutencao' | null;
+  tipo_entrega: 'entrega' | 'instalacao' | 'manutencao' | 'autorizado' | null;
+  autorizado_nome?: string | null;
   observacoes?: string | null;
   created_at?: string | null;
   pedido?: {
@@ -56,7 +57,8 @@ export interface OrdemCarregamentoUnificada {
     estado?: string | null;
     bairro?: string | null;
     cep?: string | null;
-    tipo_entrega?: 'entrega' | 'instalacao' | 'manutencao' | null;
+    tipo_entrega?: 'entrega' | 'instalacao' | 'manutencao' | 'autorizado' | null;
+    autorizado?: { nome: string } | null;
     produtos?: ProdutoUnificado[];
   } | null;
   vendedor?: {
@@ -88,6 +90,7 @@ export const useOrdensCarregamentoUnificadas = () => {
             cep,
             tipo_entrega,
             atendente_id,
+            autorizado:autorizados!vendas_autorizado_instalacao_id_fkey(nome),
             produtos:produtos_vendas(
               tipo_produto,
               tamanho,
@@ -347,6 +350,7 @@ export const useOrdensCarregamentoUnificadas = () => {
           vendas:vendas!inner(
             id, cliente_nome, cliente_telefone, cliente_email,
             cidade, estado, bairro, cep, tipo_entrega, atendente_id,
+            autorizado:autorizados!vendas_autorizado_instalacao_id_fkey(nome),
             produtos:produtos_vendas(
               tipo_produto, tamanho, largura, altura, quantidade,
               cor:catalogo_cores(nome, codigo_hex)
@@ -401,13 +405,14 @@ export const useOrdensCarregamentoUnificadas = () => {
             responsavel_carregamento_nome: ordem.responsavel_carregamento_nome,
             carregamento_concluido: ordem.carregamento_concluido || false,
             status: ordem.status,
-            tipo_entrega: (ordem.venda?.tipo_entrega as 'entrega' | 'instalacao' | 'manutencao' | null) || 'entrega',
+            tipo_entrega: (ordem.venda?.tipo_entrega as 'entrega' | 'instalacao' | 'manutencao' | 'autorizado' | null) || 'entrega',
+            autorizado_nome: ordem.venda?.autorizado?.nome || null,
             observacoes: ordem.observacoes,
             created_at: ordem.created_at,
             pedido: ordem.pedido,
             venda: ordem.venda ? {
               ...ordem.venda,
-              tipo_entrega: ordem.venda.tipo_entrega as 'entrega' | 'instalacao' | 'manutencao' | null,
+              tipo_entrega: ordem.venda.tipo_entrega as 'entrega' | 'instalacao' | 'manutencao' | 'autorizado' | null,
             } : null,
             vendedor: vendedorData ? {
               id: vendedorData.user_id,
@@ -466,7 +471,8 @@ export const useOrdensCarregamentoUnificadas = () => {
             responsavel_carregamento_nome: null,
             carregamento_concluido: false,
             status: 'pendente_producao',
-            tipo_entrega: (venda?.tipo_entrega as 'entrega' | 'instalacao' | 'manutencao' | null) || 'instalacao',
+            tipo_entrega: (venda?.tipo_entrega as 'entrega' | 'instalacao' | 'manutencao' | 'autorizado' | null) || 'instalacao',
+            autorizado_nome: venda?.autorizado?.nome || null,
             observacoes: pedido.observacoes,
             created_at: pedido.updated_at,
             pedido: {
@@ -487,7 +493,8 @@ export const useOrdensCarregamentoUnificadas = () => {
               estado: venda.estado,
               bairro: venda.bairro,
               cep: venda.cep,
-              tipo_entrega: venda.tipo_entrega as 'entrega' | 'instalacao' | 'manutencao' | null,
+              tipo_entrega: venda.tipo_entrega as 'entrega' | 'instalacao' | 'manutencao' | 'autorizado' | null,
+              autorizado: venda.autorizado || null,
               produtos: venda.produtos,
             } : null,
             vendedor: vendedorData ? {
