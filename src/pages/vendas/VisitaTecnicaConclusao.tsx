@@ -368,7 +368,6 @@ export default function VisitaTecnicaConclusao() {
     if (p.tem_tiras_frontais && !p.qtd_tiras_frontais) return 'Informe a quantidade de tiras frontais';
     if (p.tem_controle_adicional && !p.qtd_controle_adicional) return 'Informe a quantidade de controles adicionais';
     if (p.tem_tubo_afastamento && !p.distancia_tubo_cm) return 'Informe a distância do tubo de afastamento';
-    if (p.fotos.length === 0 && p.novasFotos.length === 0) return 'Adicione pelo menos uma foto da porta';
     return null;
   };
   const erroFormulario = useMemo(() => {
@@ -479,17 +478,6 @@ export default function VisitaTecnicaConclusao() {
           .single();
         if (pErr) throw pErr;
 
-        // Upload novas fotos
-        for (let i = 0; i < p.novasFotos.length; i++) {
-          const file = p.novasFotos[i];
-          const fname = `${conclusao.id}/${portaRow.id}/${Date.now()}-${i}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-          const { error: upErr } = await supabase.storage.from('visitas-tecnicas-fotos').upload(fname, file);
-          if (upErr) throw upErr;
-          const { data: pub } = supabase.storage.from('visitas-tecnicas-fotos').getPublicUrl(fname);
-          await supabase.from('visitas_tecnicas_portas_fotos').insert([{
-            porta_id: portaRow.id, url: pub.publicUrl, legenda: p.legendasNovas[i] || null, ordem: i,
-          }] as any);
-        }
       }
 
       // marcar visita como concluída
@@ -1217,10 +1205,10 @@ function PortaCard({
             <Textarea className={inputCls} rows={2} value={p.observacoes} onChange={e => onUpdate({ observacoes: e.target.value })} disabled={readOnly} />
           </div>
 
-          {/* Fotos */}
+          {/* Fotos antigas (somente leitura) */}
+          {p.fotos.length > 0 && (
           <div className="md:col-span-2">
-            <label className={labelCls}>Fotos *</label>
-            {(p.fotos.length > 0 || p.novasFotos.length > 0) && (
+            <label className={labelCls}>Fotos da porta</label>
               <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {p.fotos.map(f => (
                   <button
@@ -1232,35 +1220,9 @@ function PortaCard({
                     {f.legenda && <div className="text-[10px] text-white/70 p-1 bg-black/40">{f.legenda}</div>}
                   </button>
                 ))}
-                {p.novasFotos.map((file, i) => (
-                  <div key={i} className="relative rounded-md overflow-hidden bg-white/5 border border-white/10">
-                    <img src={URL.createObjectURL(file)} alt="" className="w-full h-32 object-cover" />
-                    {!readOnly && (
-                      <button
-                        className="absolute top-1 right-1 p-1 rounded-full bg-red-500/80 hover:bg-red-500 text-white"
-                        onClick={() => onRemoverNovaFoto(i)}
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    )}
-                    <Input
-                      placeholder="Legenda"
-                      className="rounded-none h-7 text-xs bg-black/40 border-0 border-t border-white/10 text-white"
-                      value={p.legendasNovas[i] || ''}
-                      onChange={e => onLegendaNova(i, e.target.value)}
-                      disabled={readOnly}
-                    />
-                  </div>
-                ))}
               </div>
-            )}
-            {!readOnly && (p.fotos.length + p.novasFotos.length) < 10 && (
-              <label className="mt-2 inline-flex items-center gap-2 px-3 py-2 rounded-md bg-white/5 border border-white/10 text-white/70 cursor-pointer hover:bg-white/10 text-sm">
-                <Upload className="w-4 h-4" /> Adicionar fotos
-                <input type="file" multiple accept="image/*" className="hidden" onChange={e => onFilesAdded(e.target.files)} />
-              </label>
-            )}
           </div>
+          )}
         </div>
       )}
     </div>
