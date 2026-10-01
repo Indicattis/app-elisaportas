@@ -9,11 +9,18 @@ import { useMapaPedidosFinalizados } from "@/hooks/useMapaPedidosFinalizados";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const icon = L.divIcon({
-  className: "",
-  html: `<div style="width:18px;height:18px;border-radius:50%;background:#1d76cf;border:3px solid #fff;box-shadow:0 0 8px rgba(29,118,207,.8)"></div>`,
-  iconSize: [18, 18],
-  iconAnchor: [9, 9],
+  html: `<div class="custom-instalacao-marker" style="background-color:#22c55e;border-color:white;border-width:2px;width:12px;height:12px;"></div>`,
+  className: "custom-instalacao-marker-container",
+  iconSize: L.point(12, 12),
+  iconAnchor: L.point(6, 6),
 });
+
+const createClusterIcon = (cluster: any) =>
+  L.divIcon({
+    html: `<span class="instalacao-cluster-icon">${cluster.getChildCount()}</span>`,
+    className: "custom-instalacao-cluster",
+    iconSize: L.point(32, 32, true),
+  });
 
 // Espalha levemente pedidos da mesma cidade para não sobrepor
 const jitter = (id: string) => {
@@ -42,15 +49,15 @@ export default function MapaPedidosVendas() {
 
   return (
     <div className="relative h-screen w-full bg-black">
-      <MapContainer center={[-15.8, -50]} zoom={4} className="h-full w-full z-0">
+      <MapContainer center={[-14.235, -51.9253]} zoom={4} style={{ height: "100%", width: "100%" }} className="leaflet-container z-0">
         <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-          attribution="&copy; OpenStreetMap &copy; CARTO"
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         />
-        <MarkerClusterGroup chunkedLoading showCoverageOnHover={false} maxClusterRadius={45}>
+        <MarkerClusterGroup chunkedLoading iconCreateFunction={createClusterIcon} spiderfyOnMaxZoom showCoverageOnHover={false} zoomToBoundsOnClick maxClusterRadius={50}>
           {noMapa.map((p) => (
             <Marker key={p.id} position={[p.lat! + jitter(p.id), p.lng! + jitter(p.id + "x")]} icon={icon}>
-              <Popup>
+              <Popup className="custom-popup" minWidth={240}>
                 <div className="space-y-1 text-xs">
                   <div className="font-semibold text-sm">Pedido #{p.numero_pedido ?? "—"}</div>
                   <div>{p.cliente_nome ?? "—"}</div>
