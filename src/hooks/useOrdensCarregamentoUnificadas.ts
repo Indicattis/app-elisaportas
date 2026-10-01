@@ -405,13 +405,14 @@ export const useOrdensCarregamentoUnificadas = () => {
             responsavel_carregamento_nome: ordem.responsavel_carregamento_nome,
             carregamento_concluido: ordem.carregamento_concluido || false,
             status: ordem.status,
-            tipo_entrega: (ordem.venda?.tipo_entrega as 'entrega' | 'instalacao' | 'manutencao' | null) || 'entrega',
+            tipo_entrega: (ordem.venda?.tipo_entrega as 'entrega' | 'instalacao' | 'manutencao' | 'autorizado' | null) || 'entrega',
+            autorizado_nome: ordem.venda?.autorizado?.nome || null,
             observacoes: ordem.observacoes,
             created_at: ordem.created_at,
             pedido: ordem.pedido,
             venda: ordem.venda ? {
               ...ordem.venda,
-              tipo_entrega: ordem.venda.tipo_entrega as 'entrega' | 'instalacao' | 'manutencao' | null,
+              tipo_entrega: ordem.venda.tipo_entrega as 'entrega' | 'instalacao' | 'manutencao' | 'autorizado' | null,
             } : null,
             vendedor: vendedorData ? {
               id: vendedorData.user_id,
@@ -470,7 +471,8 @@ export const useOrdensCarregamentoUnificadas = () => {
             responsavel_carregamento_nome: null,
             carregamento_concluido: false,
             status: 'pendente_producao',
-            tipo_entrega: (venda?.tipo_entrega as 'entrega' | 'instalacao' | 'manutencao' | null) || 'instalacao',
+            tipo_entrega: (venda?.tipo_entrega as 'entrega' | 'instalacao' | 'manutencao' | 'autorizado' | null) || 'instalacao',
+            autorizado_nome: venda?.autorizado?.nome || null,
             observacoes: pedido.observacoes,
             created_at: pedido.updated_at,
             pedido: {
