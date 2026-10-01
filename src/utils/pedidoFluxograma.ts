@@ -134,7 +134,7 @@ export function determinarFluxograma(pedido: any): FluxogramaEtapa[] {
   }
   
   // Define etapa final baseada no tipo de entrega
-  if (tipoEntrega === 'entrega') {
+  if (tipoEntrega === 'entrega' || tipoEntrega === 'autorizado') {
     baseFlow.push(FLUXOGRAMA_ETAPAS.aguardando_coleta);
   } else if (tipoEntrega === 'instalacao') {
     baseFlow.push(FLUXOGRAMA_ETAPAS.instalacoes);

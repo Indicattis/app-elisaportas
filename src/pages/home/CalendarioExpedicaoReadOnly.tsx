@@ -77,9 +77,9 @@ export default function CalendarioExpedicaoReadOnly() {
   const handleLegendToggle = (legend: string) => setLegendaFiltro(prev => prev === legend ? null : legend);
 
   const ordensFiltradas = !legendaFiltro ? (ordens || [])
-    : legendaFiltro === 'elisa' ? (ordens || []).filter(o => o.tipo_carregamento === 'elisa' && o.venda?.tipo_entrega !== 'entrega')
+    : legendaFiltro === 'elisa' ? (ordens || []).filter(o => o.tipo_carregamento === 'elisa' && !['entrega','autorizado'].includes(o.venda?.tipo_entrega || ''))
     : legendaFiltro === 'autorizados' ? (ordens || []).filter(o => o.tipo_carregamento === 'autorizados')
-    : legendaFiltro === 'entrega' ? (ordens || []).filter(o => o.venda?.tipo_entrega === 'entrega')
+    : legendaFiltro === 'entrega' ? (ordens || []).filter(o => ['entrega','autorizado'].includes(o.venda?.tipo_entrega || ''))
     : [];
   const neoInstalacoesFiltradas = !legendaFiltro || legendaFiltro === 'neo_instalacao' ? (neoInstalacoes || []) : [];
   const neoCorrecoesFiltradas = !legendaFiltro || legendaFiltro === 'neo_correcao' ? todasNeoCorrecoes : [];

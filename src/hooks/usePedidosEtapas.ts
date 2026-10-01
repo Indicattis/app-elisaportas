@@ -873,7 +873,7 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
                 .eq('id', pedidoData.venda_id)
                 .single();
 
-              if (vendaEntrega?.tipo_entrega === 'entrega') {
+              if (['entrega','autorizado'].includes(vendaEntrega?.tipo_entrega || '')) {
                 etapaDestino = 'aguardando_coleta';
                 console.log('[moverParaProximaEtapa] → Destino: aguardando_coleta (só separação, entrega)');
               } else {
@@ -913,7 +913,7 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
               .eq('id', pedidoData.venda_id)
               .single();
             
-            if (vendaEntrega?.tipo_entrega === 'entrega') {
+            if (['entrega','autorizado'].includes(vendaEntrega?.tipo_entrega || '')) {
               etapaDestino = 'aguardando_coleta';
               console.log('[moverParaProximaEtapa] Sem pintura → aguardando_coleta');
             } else {
@@ -945,7 +945,7 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
             .eq('id', pedidoData.venda_id)
             .single();
           
-          if (venda?.tipo_entrega === 'entrega') {
+          if (['entrega','autorizado'].includes(venda?.tipo_entrega || '')) {
             etapaDestino = 'aguardando_coleta';
             console.log('[moverParaProximaEtapa] Saindo de embalagem → aguardando_coleta');
           } else {

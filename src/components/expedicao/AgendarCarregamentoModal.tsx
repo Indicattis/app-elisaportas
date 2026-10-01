@@ -35,7 +35,7 @@ export function AgendarCarregamentoModal({
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const isEntrega = ordem?.venda?.tipo_entrega === 'entrega';
+  const isEntrega = ['entrega','autorizado'].includes(ordem?.venda?.tipo_entrega || '');
 
   useEffect(() => {
     if (open) {
