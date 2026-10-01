@@ -24,6 +24,7 @@ interface ProdutoPublico {
 
 interface RastreioPublico {
   venda: { id: string; numero: string; cliente_nome: string | null; data_venda: string; tipo_entrega: string | null };
+  autorizado: { nome: string | null; telefone: string | null; cidade: string | null; estado: string | null } | null;
   produtos: ProdutoPublico[];
   pedido: { numero: string; etapa_atual: string; status: string; data_entrega: string | null; created_at: string; arquivado: boolean } | null;
   etapas: Array<{ etapa: string; data_entrada: string | null; data_saida: string | null }>;
@@ -160,7 +161,7 @@ export default function RastreioVendaPublico() {
               <p className="mt-3 max-w-2xl text-muted-foreground">Olá, {data.venda.cliente_nome || "cliente"}. Aqui você acompanha cada avanço da sua compra.</p>
               <div className="mt-6 flex flex-wrap gap-x-8 gap-y-3 text-sm">
                 <span><strong>Compra:</strong> {formatarData(data.venda.data_venda)}</span>
-                <span><strong>Entrega:</strong> {data.venda.tipo_entrega === "instalacao" ? "Com instalação" : "Entrega ou retirada"}</span>
+                <span><strong>Entrega:</strong> {data.venda.tipo_entrega === "instalacao" ? "Com instalação" : data.venda.tipo_entrega === "autorizado" ? "Autorizado" : "Entrega ou retirada"}</span>
                 {data.pedido?.data_entrega && <span><strong>Previsão:</strong> {formatarData(data.pedido.data_entrega)}</span>}
               </div>
             </div>
@@ -179,6 +180,38 @@ export default function RastreioVendaPublico() {
             </div>
           </div>
         </section>
+
+        {data.autorizado && (
+          <section className="rounded-lg border border-primary/25 bg-card p-6 shadow-xl">
+            <h3 className="text-lg font-semibold">Instalação com autorizado</h3>
+            <p className="mt-1 text-sm text-muted-foreground">Sua instalação será realizada por um parceiro autorizado Elisa Portas.</p>
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <p className="font-semibold">{data.autorizado.nome || "Autorizado"}</p>
+                {(data.autorizado.cidade || data.autorizado.estado) && (
+                  <p className="mt-0.5 flex items-center gap-1 text-sm text-muted-foreground">
+                    <MapPin className="h-3.5 w-3.5" />
+                    {[data.autorizado.cidade, data.autorizado.estado].filter(Boolean).join(" / ")}
+                  </p>
+                )}
+                {data.autorizado.telefone && (
+                  <a href={`tel:+55${data.autorizado.telefone.replace(/\D/g, "")}`} className="mt-1 flex items-center gap-1 text-sm text-primary hover:underline">
+                    <Phone className="h-3.5 w-3.5" />
+                    {data.autorizado.telefone}
+                  </a>
+                )}
+              </div>
+              {data.autorizado.telefone && (
+                <Button asChild className="shrink-0 gap-2">
+                  <a href={`https://wa.me/55${data.autorizado.telefone.replace(/\D/g, "")}`} target="_blank" rel="noreferrer">
+                    <MessageCircle className="h-4 w-4" />
+                    Chamar no WhatsApp
+                  </a>
+                </Button>
+              )}
+            </div>
+          </section>
+        )}
 
         <section>
           <h3 className="mb-5 text-lg font-semibold">Andamento</h3>
