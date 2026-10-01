@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Package, Clock, RefreshCw, Truck, PackageCheck, Calendar, MapPin, Phone, Wrench, FileText, ExternalLink, ClipboardList } from "lucide-react";
+import { Package, Clock, RefreshCw, Truck, PackageCheck, Calendar, MapPin, Phone, Wrench, FileText, ExternalLink, ClipboardList, Handshake } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { OrdemCarregamentoUnificada } from "@/hooks/useOrdensCarregamentoUnificadas";
@@ -80,6 +80,12 @@ function OrdemCard({ ordem, onIniciarColeta, podeIniciar }: OrdemCardProps) {
             {isInstalacao && !isCorrecao && (
               <Badge variant="outline" className="flex items-center gap-1 text-[10px] sm:text-xs h-4 sm:h-5 px-1.5 sm:px-2 bg-orange-500/10 text-orange-600 border-orange-300">
                 {ordem.tipo_entrega === 'manutencao' ? 'Manutenção' : 'Instalação'}
+              </Badge>
+            )}
+            {ordem.tipo_entrega === 'autorizado' && (
+              <Badge variant="outline" className="flex items-center gap-1 text-[10px] sm:text-xs h-4 sm:h-5 px-1.5 sm:px-2 bg-blue-500/10 text-blue-600 border-blue-300">
+                <Handshake className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                Autorizado{ordem.autorizado_nome ? `: ${ordem.autorizado_nome}` : ''}
               </Badge>
             )}
             <Badge 
