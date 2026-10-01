@@ -32,6 +32,15 @@ const jitter = (id: string) => {
 const brl = (v: number | null) =>
   v == null ? "—" : v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
+const MAPA_CSS = `
+.custom-instalacao-cluster{background-color:#22c55e;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(34,197,94,.3);border:2px solid white}
+.instalacao-cluster-icon{color:white;font-weight:600;font-size:12px}
+.custom-instalacao-marker-container{background:none;border:none}
+.custom-instalacao-marker{border-radius:50%;border-style:solid;box-shadow:0 1px 4px rgba(0,0,0,.25);transition:transform .2s ease}
+.custom-instalacao-marker-container:hover .custom-instalacao-marker{transform:scale(1.2)}
+.custom-popup .leaflet-popup-content-wrapper{border-radius:8px}
+`;
+
 export default function MapaPedidosVendas() {
   const navigate = useNavigate();
   const { data = [], isLoading } = useMapaPedidosFinalizados();
@@ -49,6 +58,7 @@ export default function MapaPedidosVendas() {
 
   return (
     <div className="relative h-screen w-full bg-black">
+      <style>{MAPA_CSS}</style>
       <MapContainer center={[-14.235, -51.9253]} zoom={4} style={{ height: "100%", width: "100%" }} className="leaflet-container z-0">
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
