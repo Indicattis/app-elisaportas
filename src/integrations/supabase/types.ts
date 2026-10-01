@@ -4418,6 +4418,33 @@ export type Database = {
           },
         ]
       }
+      geocode_cidades: {
+        Row: {
+          cidade_normalizada: string
+          estado: string
+          id: string
+          latitude: number | null
+          longitude: number | null
+          updated_at: string
+        }
+        Insert: {
+          cidade_normalizada: string
+          estado: string
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          updated_at?: string
+        }
+        Update: {
+          cidade_normalizada?: string
+          estado?: string
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       instalacoes: {
         Row: {
           carregamento_concluido: boolean | null
