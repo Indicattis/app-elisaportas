@@ -493,7 +493,8 @@ export const useOrdensCarregamentoUnificadas = () => {
               estado: venda.estado,
               bairro: venda.bairro,
               cep: venda.cep,
-              tipo_entrega: venda.tipo_entrega as 'entrega' | 'instalacao' | 'manutencao' | null,
+              tipo_entrega: venda.tipo_entrega as 'entrega' | 'instalacao' | 'manutencao' | 'autorizado' | null,
+              autorizado: venda.autorizado || null,
               produtos: venda.produtos,
             } : null,
             vendedor: vendedorData ? {
