@@ -480,6 +480,9 @@ export function useVendas() {
 
       const vendaPayload = {
         ...vendaDataLimpo,
+        autorizado_instalacao_id: vendaData.tipo_entrega === 'autorizado' ? (vendaData.autorizado_instalacao_id || null) : null,
+        valor_acordado_autorizado: vendaData.tipo_entrega === 'autorizado' ? Number(vendaData.valor_acordado_autorizado || 0) : 0,
+        observacao_autorizado: vendaData.tipo_entrega === 'autorizado' ? (vendaData.observacao_autorizado?.trim() || null) : null,
         numero_pedido: numeroPedidoVenda,
         cliente_id: clienteId,
         cpf_cliente: vendaData.cpf_cliente || null,
@@ -874,6 +877,9 @@ export function useVendas() {
 
       const vendaPayload = {
         ...vendaDataLimpo,
+        autorizado_instalacao_id: vendaData.tipo_entrega === 'autorizado' ? (vendaData.autorizado_instalacao_id || null) : null,
+        valor_acordado_autorizado: vendaData.tipo_entrega === 'autorizado' ? Number(vendaData.valor_acordado_autorizado || 0) : 0,
+        observacao_autorizado: vendaData.tipo_entrega === 'autorizado' ? (vendaData.observacao_autorizado?.trim() || null) : null,
         is_rascunho: true,
         cpf_cliente: vendaData.cpf_cliente || null,
         atendente_id: adminUser.user_id,
