@@ -350,6 +350,7 @@ export const useOrdensCarregamentoUnificadas = () => {
           vendas:vendas!inner(
             id, cliente_nome, cliente_telefone, cliente_email,
             cidade, estado, bairro, cep, tipo_entrega, atendente_id,
+            autorizado:autorizados!vendas_autorizado_instalacao_id_fkey(nome),
             produtos:produtos_vendas(
               tipo_produto, tamanho, largura, altura, quantidade,
               cor:catalogo_cores(nome, codigo_hex)
