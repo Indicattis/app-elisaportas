@@ -1220,7 +1220,7 @@ export function PedidoCard({
         const {
           data: venda
         } = await supabase.from('vendas').select('tipo_entrega').eq('id', pedido.venda_id).single();
-        if (venda?.tipo_entrega === 'entrega') {
+        if (['entrega','autorizado'].includes(venda?.tipo_entrega || '')) {
           lista.push({
             id: 'criar_ordem_carregamento',
             label: 'Criando ordem de carregamento',
@@ -1251,7 +1251,7 @@ export function PedidoCard({
       const {
         data: venda
       } = await supabase.from('vendas').select('tipo_entrega').eq('id', pedido.venda_id).single();
-      if (venda?.tipo_entrega === 'entrega') {
+      if (['entrega','autorizado'].includes(venda?.tipo_entrega || '')) {
         lista.push({
           id: 'criar_ordem_carregamento',
           label: 'Criando ordem de carregamento',

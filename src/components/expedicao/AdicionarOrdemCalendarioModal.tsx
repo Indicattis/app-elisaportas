@@ -62,7 +62,7 @@ export function AdicionarOrdemCalendarioModal({
   
   
   const ordens = todasOrdens.filter(o => !o.data_carregamento);
-  const isEntrega = ordemSelecionada?.tipo_entrega === 'entrega';
+  const isEntrega = ['entrega','autorizado'].includes((ordemSelecionada?.tipo_entrega as string) || '');
 
   useEffect(() => {
     if (open) {
