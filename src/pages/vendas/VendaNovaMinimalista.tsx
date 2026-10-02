@@ -659,7 +659,7 @@ export default function VendaNovaMinimalista() {
 
   // Frete "por conta do cliente" (transportadora): sempre 0, pois Elisa não cobra.
   useEffect(() => {
-    if (formData.tipo_frete === 'transportadora' && formData.valor_frete !== 0) {
+    if (formData.tipo_entrega !== 'autorizado' && formData.tipo_frete === 'transportadora' && formData.valor_frete !== 0) {
       setFormData(prev => ({ ...prev, valor_frete: 0 }));
     }
   }, [formData.tipo_frete, formData.valor_frete]);
@@ -684,8 +684,11 @@ export default function VendaNovaMinimalista() {
     if (entregaComInstalacao && formData.tipo_frete !== 'interno') {
       setFormData(prev => ({ ...prev, tipo_frete: 'interno', valor_frete: 0 }));
     }
-    if (entregaSemInstalacao && formData.tipo_frete === 'interno') {
+    if (formData.tipo_entrega === 'entrega' && formData.tipo_frete === 'interno') {
       setFormData(prev => ({ ...prev, tipo_frete: 'transportadora', valor_frete: 0 }));
+    }
+    if (formData.tipo_entrega === 'autorizado' && formData.tipo_frete !== 'interno') {
+      setFormData(prev => ({ ...prev, tipo_frete: 'interno', valor_frete: 0 }));
     }
   }, [formData.tipo_entrega, formData.tipo_frete, entregaComInstalacao, entregaSemInstalacao]);
 
@@ -1344,11 +1347,11 @@ export default function VendaNovaMinimalista() {
                   <Label className={labelClass}>Frete (R$)</Label>
                   <Input
                     type="number" min={0} step="0.01"
-                    value={(formData as any).frete_autorizado || ''}
-                    onChange={(e) => setFormData(prev => ({ ...prev, frete_autorizado: Number(e.target.value) || 0 } as any))}
+                    value={formData.valor_frete || ''}
+                    onChange={(e) => { const v = Number(e.target.value) || 0; setFormData(prev => ({ ...prev, valor_frete: v, frete_autorizado: v } as any)); }}
                     placeholder="0,00"
                   />
-                  <p className="text-[11px] text-white/50">Informativo — não entra no valor da venda.</p>
+                  <p className="text-[11px] text-white/50">Soma no total da venda.</p>
                 </div>
                 <div className="space-y-2 md:col-span-2">
                   <Label className={labelClass}>Observação (opcional)</Label>
