@@ -10147,6 +10147,7 @@ export type Database = {
           forcar_exibicao_pedidos: boolean
           forma_pagamento: string | null
           frete_aprovado: boolean
+          frete_autorizado: number
           id: string
           instalacao_faturada: boolean | null
           intervalo_boletos: number | null
@@ -10221,6 +10222,7 @@ export type Database = {
           forcar_exibicao_pedidos?: boolean
           forma_pagamento?: string | null
           frete_aprovado?: boolean
+          frete_autorizado?: number
           id?: string
           instalacao_faturada?: boolean | null
           intervalo_boletos?: number | null
@@ -10295,6 +10297,7 @@ export type Database = {
           forcar_exibicao_pedidos?: boolean
           forma_pagamento?: string | null
           frete_aprovado?: boolean
+          frete_autorizado?: number
           id?: string
           instalacao_faturada?: boolean | null
           intervalo_boletos?: number | null
