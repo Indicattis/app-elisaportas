@@ -1,0 +1,1 @@
+ALTER TABLE public.vendas ADD COLUMN IF NOT EXISTS frete_autorizado numeric NOT NULL DEFAULT 0;

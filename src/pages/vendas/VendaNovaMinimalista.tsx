@@ -1340,6 +1340,16 @@ export default function VendaNovaMinimalista() {
                   />
                   <p className="text-[11px] text-white/50">Não entra no valor da venda nem no faturamento.</p>
                 </div>
+                <div className="space-y-2">
+                  <Label className={labelClass}>Frete (R$)</Label>
+                  <Input
+                    type="number" min={0} step="0.01"
+                    value={(formData as any).frete_autorizado || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, frete_autorizado: Number(e.target.value) || 0 } as any))}
+                    placeholder="0,00"
+                  />
+                  <p className="text-[11px] text-white/50">Informativo — não entra no valor da venda.</p>
+                </div>
                 <div className="space-y-2 md:col-span-2">
                   <Label className={labelClass}>Observação (opcional)</Label>
                   <Textarea
