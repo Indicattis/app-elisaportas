@@ -40,7 +40,7 @@ export function InfoAutorizadoVenda({ vendaId, className = '' }: { vendaId?: str
           <p className="font-medium text-white">{brl(Number(data.valor_acordado_autorizado || 0))}</p>
         </div>
         <div>
-          <p className="text-xs text-white/50">Frete (informativo)</p>
+          <p className="text-xs text-white/50">Frete (soma na venda)</p>
           <p className="font-medium text-white">{brl(Number(data.frete_autorizado || 0))}</p>
         </div>
       </div>

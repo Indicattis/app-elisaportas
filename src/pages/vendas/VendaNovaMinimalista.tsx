@@ -629,10 +629,10 @@ export default function VendaNovaMinimalista() {
 
   // Auto-preenche o valor do frete quando há frete cadastrado para a cidade/estado
   useEffect(() => {
-    if (formData.tipo_frete === 'interno' && freteSugerido && formData.valor_frete !== freteSugerido.valor_frete) {
+    if (formData.tipo_entrega !== 'autorizado' && formData.tipo_frete === 'interno' && freteSugerido && formData.valor_frete !== freteSugerido.valor_frete) {
       setFormData(prev => ({ ...prev, valor_frete: freteSugerido.valor_frete }));
-    }
-  }, [freteSugerido?.valor_frete, formData.tipo_frete]);
+...
+  }, [freteSugerido?.valor_frete, formData.tipo_frete, formData.tipo_entrega]);
 
   // Quantidade total de PORTAS (ignora pintura, instalação, acessórios e itens avulsos).
   const qtdPortasFrete = useMemo(
