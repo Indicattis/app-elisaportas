@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ClipboardList, CheckCircle2, Clock, Search, ArrowRight, Eye, ArrowUpNarrowWide, ArrowDownWideNarrow, Calendar, FileText } from 'lucide-react';
+import { ClipboardList, CheckCircle2, Clock, Search, ArrowRight, Eye, ArrowUpNarrowWide, ArrowDownWideNarrow, Calendar, FileText, Archive } from 'lucide-react';
+import { ArquivarPedidoModal } from '@/components/pedidos/ArquivarPedidoModal';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
@@ -42,6 +43,8 @@ export default function PosVendasPedidos() {
   const [pedidoSelecionado, setPedidoSelecionado] = useState<any | null>(null);
   const [pedidoDetalhes, setPedidoDetalhes] = useState<any | null>(null);
   const [loadingDetalhes, setLoadingDetalhes] = useState<string | null>(null);
+  const [followupLoading, setFollowupLoading] = useState<string | null>(null);
+  const [pedidoArquivar, setPedidoArquivar] = useState<any | null>(null);
 
   // Inicializa bucket de anexos (idempotente)
   useEffect(() => {
@@ -89,6 +92,42 @@ export default function PosVendasPedidos() {
     },
   });
 
+  const { data: followups = [] } = useQuery({
+    queryKey: ['pos-vendas-followups', pedidos.map((p) => p.id)],
+    enabled: pedidos.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('pos_vendas_followups' as any)
+        .select('pedido_id, tentativa, realizado_por, realizado_em')
+        .in('pedido_id', pedidos.map((p: any) => p.id));
+      if (error) throw error;
+      return (data || []) as any[];
+    },
+  });
+
+  const { data: nomesFollowup = [] } = useQuery({
+    queryKey: ['pos-vendas-followups-nomes', [...new Set(followups.map((f: any) => f.realizado_por).filter(Boolean))].sort().join(',')],
+    enabled: followups.length > 0,
+    queryFn: async () => {
+      const ids = [...new Set(followups.map((f: any) => f.realizado_por).filter(Boolean))] as string[];
+      if (!ids.length) return [];
+      const { data } = await supabase.from('admin_users').select('user_id, nome').in('user_id', ids);
+      return data || [];
+    },
+  });
+
+  const nomesMap = useMemo(() => new Map<string, string>((nomesFollowup as any[]).map((u) => [u.user_id, u.nome])), [nomesFollowup]);
+
+  const followupMap = useMemo(() => {
+    const m = new Map<string, any[]>();
+    followups.forEach((f: any) => {
+      const arr = m.get(f.pedido_id) || [];
+      arr.push(f);
+      m.set(f.pedido_id, arr);
+    });
+    return m;
+  }, [followups]);
+
   const respondidosSet = useMemo(() => new Set(respondidos), [respondidos]);
 
   const finalizadoMap = useMemo(() => {
@@ -130,6 +169,53 @@ export default function PosVendasPedidos() {
     queryClient.invalidateQueries({ queryKey: ['pos-vendas-pedidos', 'v2'] });
     queryClient.invalidateQueries({ queryKey: ['pos-vendas-pesquisas'] });
     queryClient.invalidateQueries({ queryKey: ['pos-vendas-finalizado'] });
+  };
+
+  const toggleFollowup = async (pedidoId: string, tentativa: number, atual: number) => {
+    try {
+      setFollowupLoading(pedidoId);
+      if (tentativa === atual) {
+        const { error } = await supabase.from('pos_vendas_followups' as any).delete().eq('pedido_id', pedidoId).eq('tentativa', tentativa);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from('pos_vendas_followups' as any).insert({ pedido_id: pedidoId, tentativa } as any);
+        if (error) throw error;
+      }
+      await queryClient.invalidateQueries({ queryKey: ['pos-vendas-followups'] });
+    } catch (e: any) {
+      console.error(e);
+      toast.error('Erro ao atualizar follow-up');
+    } finally {
+      setFollowupLoading(null);
+    }
+  };
+
+  const handleArquivar = async () => {
+    const p = pedidoArquivar;
+    if (!p) return;
+    setPedidoArquivar(null);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const agora = new Date().toISOString();
+      const { error } = await supabase.from('pedidos_producao')
+        .update({ arquivado: true, data_arquivamento: agora, arquivado_por: user?.id } as any)
+        .eq('id', p.id);
+      if (error) throw error;
+      await supabase.from('pedidos_etapas').update({ data_saida: agora } as any)
+        .eq('pedido_id', p.id).eq('etapa', 'pos_vendas').is('data_saida', null);
+      await supabase.from('pedidos_movimentacoes').insert({
+        pedido_id: p.id,
+        etapa_origem: 'pos_vendas',
+        etapa_destino: 'pos_vendas',
+        user_id: user?.id,
+        descricao: 'Arquivado após 3 tentativas de follow-up sem sucesso',
+      } as any);
+      toast.success('Pedido arquivado');
+      handleFinalizado();
+    } catch (e: any) {
+      console.error(e);
+      toast.error('Erro ao arquivar pedido');
+    }
   };
 
 
@@ -298,6 +384,40 @@ export default function PosVendasPedidos() {
 
                   {/* Ações */}
                   <div className="flex items-center gap-2 flex-shrink-0">
+                    {!p.arquivado && (() => {
+                      const fus = followupMap.get(p.id) || [];
+                      const n = fus.length;
+                      return (
+                        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5 border border-white/10">
+                          <span className="text-[10px] text-white/50 mr-0.5">Follow-up</span>
+                          {[1, 2, 3].map((t) => {
+                            const f = fus.find((x: any) => x.tentativa === t);
+                            const clicavel = t === n + 1 || t === n;
+                            return (
+                              <button
+                                key={t}
+                                type="button"
+                                disabled={!clicavel || followupLoading === p.id}
+                                onClick={() => toggleFollowup(p.id, t, n)}
+                                title={f ? `Tentativa ${t} — ${nomesMap.get(f.realizado_por) || 'Usuário'} em ${format(parseISO(f.realizado_em), 'dd/MM/yyyy HH:mm')}` : `Marcar tentativa ${t}`}
+                                className={`w-3.5 h-3.5 rounded-full border transition-all ${f ? 'bg-blue-500 border-blue-400 shadow-[0_0_6px_rgba(59,130,246,0.7)]' : 'bg-transparent border-white/30'} ${clicavel ? 'cursor-pointer hover:scale-125' : 'cursor-not-allowed opacity-60'}`}
+                              />
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
+                    {!p.arquivado && (followupMap.get(p.id)?.length || 0) >= 3 && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setPedidoArquivar(p)}
+                        className="rounded-full bg-orange-500/15 border-orange-500/30 text-orange-300 hover:bg-orange-500/25 gap-1.5"
+                      >
+                        <Archive className="w-4 h-4" />
+                        Arquivar
+                      </Button>
+                    )}
                     <Button
                       size="sm"
                       variant="outline"
@@ -335,6 +455,14 @@ export default function PosVendasPedidos() {
           </div>
         )}
       </div>
+
+      <ArquivarPedidoModal
+        open={!!pedidoArquivar}
+        onOpenChange={(o) => !o && setPedidoArquivar(null)}
+        onConfirmar={handleArquivar}
+        pedido={pedidoArquivar}
+        descricao={`Foram feitas 3 tentativas de contato sem sucesso. Arquivar o pedido #${pedidoArquivar?.numero_pedido || ''} sem resposta da pesquisa?`}
+      />
 
       {pedidoSelecionado && (
         <PesquisaSatisfacaoForm

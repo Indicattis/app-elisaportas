@@ -8087,6 +8087,48 @@ export type Database = {
           },
         ]
       }
+      pos_vendas_followups: {
+        Row: {
+          created_at: string
+          id: string
+          pedido_id: string
+          realizado_em: string
+          realizado_por: string | null
+          tentativa: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          pedido_id: string
+          realizado_em?: string
+          realizado_por?: string | null
+          tentativa: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          pedido_id?: string
+          realizado_em?: string
+          realizado_por?: string | null
+          tentativa?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pos_vendas_followups_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_backlog_ativo"
+            referencedColumns: ["pedido_id"]
+          },
+          {
+            foreignKeyName: "pos_vendas_followups_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_producao"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       postagens: {
         Row: {
           agendada: boolean | null
