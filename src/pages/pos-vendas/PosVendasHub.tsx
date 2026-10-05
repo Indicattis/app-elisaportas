@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Headset, ArrowLeft, ClipboardList } from 'lucide-react';
+import { Headset, ArrowLeft, ClipboardList, BarChart3 } from 'lucide-react';
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { DelayedParticles } from '@/components/DelayedParticles';
 
 const menuItems = [
   { label: 'Pedidos em Pós-Vendas', icon: ClipboardList, path: '/pos-vendas/pedidos' },
+  { label: 'Relatório', icon: BarChart3, path: '/pos-vendas/relatorio' },
 ];
 
 export default function PosVendasHub() {
