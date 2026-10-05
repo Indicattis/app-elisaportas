@@ -93,6 +93,14 @@ export function MinimalistLayout({
       ];
     }
 
+    if (backPath === '/pos-vendas') {
+      return [
+        { label: 'Home', path: '/home' },
+        { label: 'Pós-Vendas', path: '/pos-vendas' },
+        { label: title }
+      ];
+    }
+
     // Default: just show Home > title
     return [
       { label: 'Home', path: '/home' },

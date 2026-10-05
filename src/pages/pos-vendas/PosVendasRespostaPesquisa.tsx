@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 
 import { supabase } from '@/integrations/supabase/client';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
+import type { BreadcrumbItem } from '@/components/AnimatedBreadcrumb';
 
 interface AnexoRef { path: string; nome: string; tipo: string; }
 interface ItemAvulso { descricao: string; quantidade: number; preco_venda: number; }
@@ -155,6 +156,12 @@ export default function PosVendasRespostaPesquisa() {
       title="Resposta da pesquisa"
       subtitle={subtitulo}
       backPath="/pos-vendas/pedidos"
+      breadcrumbItems={[
+        { label: 'Home', path: '/home' },
+        { label: 'Pós-Vendas', path: '/pos-vendas' },
+        { label: 'Pedidos em Pós-Vendas', path: '/pos-vendas/pedidos' },
+        { label: 'Resposta da pesquisa' }
+      ] as BreadcrumbItem[]}
       fullWidth={false}
     >
       {isLoading ? (
