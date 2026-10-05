@@ -1,11 +1,13 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Search, Star, ThumbsUp, Globe, ShoppingBag, ClipboardCheck, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Search, Star, ThumbsUp, Globe, ShoppingBag, ClipboardCheck, MessageSquare, FileDown } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid, Legend } from 'recharts';
 import { supabase } from '@/integrations/supabase/client';
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { gerarRelatorioPosVendasPDF } from '@/utils/posVendasRelatorioPDF';
 
 type Pesquisa = {
   id: string; pedido_id: string; created_at: string; comentario: string | null;
@@ -125,6 +127,10 @@ export default function PosVendasRelatorio() {
           <label className="text-xs text-white/60">Até
             <Input type="date" value={fim} onChange={(e) => setFim(e.target.value)} className="bg-white/5 border-white/10 text-white" />
           </label>
+          <Button onClick={() => gerarRelatorioPosVendasPDF(filtradas, inicio, fim)} disabled={!filtradas.length}
+            className="bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 text-white">
+            <FileDown className="w-4 h-4 mr-2" />Gerar PDF
+          </Button>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
