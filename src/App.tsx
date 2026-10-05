@@ -301,6 +301,7 @@ import LogisticaHub from "./pages/logistica/LogisticaHub";
 import PosVendasHub from "./pages/pos-vendas/PosVendasHub";
 import PosVendasPedidos from "./pages/pos-vendas/PosVendasPedidos";
 import PosVendasRespostaPesquisa from "./pages/pos-vendas/PosVendasRespostaPesquisa";
+import PosVendasRelatorio from "./pages/pos-vendas/PosVendasRelatorio";
 
 import ExpedicaoMinimalista from "./pages/logistica/ExpedicaoMinimalista";
 import NovaNeoForm from "./pages/logistica/NovaNeoForm";
@@ -639,6 +640,7 @@ const App = () => (
 
                 {/* Hub de Pós-Vendas */}
                 <Route path="/pos-vendas" element={<ProtectedRoute routeKeyPrefix="pos_vendas_"><PosVendasHub /></ProtectedRoute>} />
+                <Route path="/pos-vendas/relatorio" element={<ProtectedRoute routeKey="pos_vendas_relatorio"><PosVendasRelatorio /></ProtectedRoute>} />
                 <Route path="/pos-vendas/pedidos" element={<ProtectedRoute routeKey="pos_vendas_pedidos"><PosVendasPedidos /></ProtectedRoute>} />
                 <Route path="/pos-vendas/pedidos/:pedidoId/resposta" element={<ProtectedRoute routeKey="pos_vendas_pedidos"><PosVendasRespostaPesquisa /></ProtectedRoute>} />
                 
