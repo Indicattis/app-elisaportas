@@ -12,3 +12,4 @@ Anexos vão para bucket privado `pesquisas-satisfacao` (criado lazy pela edge fu
 Ao enviar o formulário: insere em `pesquisas_satisfacao`, marca `pedidos_producao.arquivado=true` (sem filtrar etapa), registra `pedidos_movimentacoes` com etapa pos_vendas. Substitui a necessidade do botão Arquivar manual nessa etapa.
 
 Route keys: `pos_vendas_hub`, `pos_vendas_pedidos`.
+Follow-up: tabela `pos_vendas_followups` (3 tentativas por pedido, bolinhas na lista). Com 3 marcadas libera botão Arquivar (arquiva sem pesquisa).
