@@ -1090,6 +1090,11 @@ export function PedidoDetalhesSheet({ pedido, open, onOpenChange }: PedidoDetalh
                                             {qtd > 1 && <span className="text-white/60">{qtd}x </span>}
                                             {nome}
                                           </p>
+                                          {tipo === 'manutencao' && produto.descricao && (
+                                            <p className="text-[10px] text-white/50 mt-0.5 whitespace-pre-wrap break-words">
+                                              {produto.descricao}
+                                            </p>
+                                          )}
                                           <div className="flex items-center gap-1.5 mt-0.5">
                                             {tamanhoStr && (
                                               <span className="text-[10px] text-white/40">{tamanhoStr}</span>
