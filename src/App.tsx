@@ -512,7 +512,8 @@ const App = () => (
                 <Route path="/vendas/catalogo/cores" element={<Navigate to="/marketing/catalogo/cores" replace />} />
                 <Route path="/marketing/catalogo/cores" element={<ProtectedRoute routeKeyPrefix="marketing_"><CatalogoCoresMinimalista /></ProtectedRoute>} />
                 <Route path="/vendas/meus-orcamentos" element={<ProtectedRoute routeKey="vendas_hub"><MeusOrcamentos /></ProtectedRoute>} />
-                <Route path="/vendas/meus-orcamentos/novo" element={<ProtectedRoute routeKey="vendas_hub"><MeuOrcamentoNovo /></ProtectedRoute>} />
+<Route path="/vendas/meus-orcamentos/novo" element={<ProtectedRoute routeKey="vendas_hub"><MeuOrcamentoNovo /></ProtectedRoute>} />
+                <Route path="/vendas/meus-orcamentos/:id/editar" element={<ProtectedRoute routeKey="vendas_hub"><MeuOrcamentoNovo /></ProtectedRoute>} />
                 <Route path="/vendas/meus-orcamentos/:id" element={<ProtectedRoute routeKey="vendas_hub"><MeuOrcamentoDetalhe /></ProtectedRoute>} />
                 <Route path="/vendas/meus-parceiros" element={<ProtectedRoute routeKey="vendas_hub"><MeusParceiros /></ProtectedRoute>} />
                 <Route path="/vendas/meus-parceiros/:id/editar" element={<ProtectedRoute routeKey="vendas_hub"><EditarAutorizadoDirecao /></ProtectedRoute>} />
