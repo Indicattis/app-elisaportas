@@ -14,6 +14,7 @@ import { AdicionarItemAvulsoDialog } from '@/components/vendas/orcamento-novo/Ad
 import { AdicionarFreteDialog } from '@/components/vendas/orcamento-novo/AdicionarFreteDialog';
 import { CarrinhoOrcamento } from '@/components/vendas/orcamento-novo/CarrinhoOrcamento';
 import {
+  downloadMeuOrcamentoPDF,
   previewMeuOrcamentoPDF,
   type CartPorta, type CartAvulso, type CartFrete,
 } from '@/utils/meuOrcamentoPDFGenerator';
