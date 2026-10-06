@@ -2,6 +2,7 @@ import { DoorOpen, Package, Truck, Trash2 } from 'lucide-react';
 import type { CartPorta, CartAvulso, CartFrete } from '@/utils/meuOrcamentoPDFGenerator';
 
 interface Props {
+  detalharItens?: boolean;
   portas: CartPorta[];
   avulsos: CartAvulso[];
   frete: CartFrete | null;
@@ -12,7 +13,7 @@ interface Props {
 
 const fmt = (n: number) => `R$ ${n.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
-export function CarrinhoOrcamento({ portas, avulsos, frete, onRemovePorta, onRemoveAvulso, onRemoveFrete }: Props) {
+export function CarrinhoOrcamento({ detalharItens, portas, avulsos, frete, onRemovePorta, onRemoveAvulso, onRemoveFrete }: Props) {
   const vazio = !portas.length && !avulsos.length && !frete;
   if (vazio) {
     return (
