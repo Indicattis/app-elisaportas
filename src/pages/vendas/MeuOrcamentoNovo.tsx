@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useMutation } from '@tanstack/react-query';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { ArrowLeft, DoorOpen, Package, Truck, ChevronRight, FileDown, Save, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -22,6 +22,8 @@ const fmt = (n: number) => `R$ ${n.toLocaleString('pt-BR', { minimumFractionDigi
 
 export default function MeuOrcamentoNovo() {
   const navigate = useNavigate();
+  const { id: editId } = useParams();
+  const isEdit = !!editId;
   const { user, userRole } = useAuth();
   const [mounted, setMounted] = useState(false);
   const [cliente, setCliente] = useState('');
@@ -31,8 +33,38 @@ export default function MeuOrcamentoNovo() {
   const [dlgPorta, setDlgPorta] = useState(false);
   const [dlgAvulso, setDlgAvulso] = useState(false);
   const [dlgFrete, setDlgFrete] = useState(false);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => { const t = setTimeout(() => setMounted(true), 50); return () => clearTimeout(t); }, []);
+
+  const { data: orcamentoEdit, isLoading: loadingEdit } = useQuery({
+    queryKey: ['meu-orcamento-edit', editId],
+    enabled: isEdit,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('orcamentos')
+        .select('id, numero_orcamento, cliente_nome, status, campos_personalizados')
+        .eq('id', editId!)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  useEffect(() => {
+    if (!orcamentoEdit || loaded) return;
+    if (!['pendente', 'aprovado'].includes(orcamentoEdit.status)) {
+      toast.error('Este orçamento não pode mais ser editado');
+      navigate(`/vendas/meus-orcamentos/${editId}`);
+      return;
+    }
+    const cp: any = orcamentoEdit.campos_personalizados || {};
+    setCliente(orcamentoEdit.cliente_nome || '');
+    setPortas(Array.isArray(cp.portas) ? cp.portas : []);
+    setAvulsos(Array.isArray(cp.avulsos) ? cp.avulsos : []);
+    setFrete(cp.frete || null);
+    setLoaded(true);
+  }, [orcamentoEdit, loaded, editId, navigate]);
 
   const totalPortas = portas.reduce((s, p) => s + p.preco_unitario * p.quantidade, 0);
   const totalAvulsos = avulsos.reduce((s, a) => s + a.preco_unitario * a.quantidade, 0);
@@ -47,6 +79,25 @@ export default function MeuOrcamentoNovo() {
       if (!cliente.trim()) throw new Error('Informe o nome do cliente');
       if (!portas.length && !avulsos.length) throw new Error('Adicione ao menos um item');
       if (!user?.id) throw new Error('Usuário não autenticado');
+
+      if (isEdit) {
+        const { data, error } = await supabase
+          .from('orcamentos')
+          .update({
+            cliente_nome: cliente.trim(),
+            valor_produto: totalPortas + totalAvulsos,
+            valor_pintura: valorPintura,
+            valor_instalacao: valorInstalacao,
+            valor_frete: totalFrete,
+            valor_total: total,
+            campos_personalizados: { portas, avulsos, frete } as any,
+          } as any)
+          .eq('id', editId!)
+          .select('id, numero_orcamento')
+          .single();
+        if (error) throw error;
+        return data;
+      }
 
       // próximo número
       const { data: maxRow } = await supabase
@@ -77,7 +128,9 @@ export default function MeuOrcamentoNovo() {
       return data;
     },
     onSuccess: (rec) => {
-      toast.success(`Orçamento Nº ${String(rec.numero_orcamento).padStart(4, '0')} salvo`);
+      toast.success(isEdit
+        ? `Orçamento Nº ${String(rec.numero_orcamento).padStart(4, '0')} atualizado`
+        : `Orçamento Nº ${String(rec.numero_orcamento).padStart(4, '0')} salvo`);
       downloadMeuOrcamentoPDF({
         numero: rec.numero_orcamento,
         data: new Date(),
@@ -98,7 +151,7 @@ export default function MeuOrcamentoNovo() {
           { label: 'Home', path: '/home' },
           { label: 'Vendas', path: '/vendas' },
           { label: 'Meus Orçamentos', path: '/vendas/meus-orcamentos' },
-          { label: 'Novo' },
+          { label: isEdit ? `Editar Nº ${String(orcamentoEdit?.numero_orcamento ?? '').padStart(4, '0')}` : 'Novo' },
         ]}
         mounted={mounted}
       />
@@ -115,7 +168,7 @@ export default function MeuOrcamentoNovo() {
         style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(20px)', transition: 'all 0.6s cubic-bezier(0.34,1.56,0.64,1) 300ms' }}>
 
         <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-white">Novo Orçamento</h1>
+          <h1 className="text-2xl font-semibold text-white">{isEdit ? 'Editar Orçamento' : 'Novo Orçamento'}</h1>
           <p className="text-white/40 text-sm">Monte sua proposta adicionando portas, itens e frete</p>
         </div>
 
@@ -158,9 +211,9 @@ export default function MeuOrcamentoNovo() {
               <span className="text-xl font-bold text-blue-300">{fmt(total)}</span>
             </div>
 
-            <Button onClick={() => saveMut.mutate()} disabled={saveMut.isPending} className="w-full bg-gradient-to-br from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 text-white shadow-lg shadow-blue-500/30">
+            <Button onClick={() => saveMut.mutate()} disabled={saveMut.isPending || loadingEdit} className="w-full bg-gradient-to-br from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 text-white shadow-lg shadow-blue-500/30">
               {saveMut.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-              Salvar e gerar PDF
+              {isEdit ? 'Salvar alterações' : 'Salvar e gerar PDF'}
             </Button>
 
             <Button

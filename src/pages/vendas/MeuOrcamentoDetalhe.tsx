@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, FileDown, Loader2 } from 'lucide-react';
+import { ArrowLeft, FileDown, Loader2, Pencil } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
@@ -87,9 +87,16 @@ export default function MeuOrcamentoDetalhe() {
                 <h1 className="text-2xl font-semibold text-white">Proposta Nº {String(data.numero_orcamento ?? '').padStart(4, '0')}</h1>
                 <p className="text-white/40 text-sm">{data.cliente_nome}</p>
               </div>
-              <Button onClick={exportar} className="bg-blue-600 hover:bg-blue-500">
-                <FileDown className="w-4 h-4 mr-2" /> Exportar PDF
-              </Button>
+              <div className="flex items-center gap-2">
+                {['pendente', 'aprovado'].includes(data.status) && (
+                  <Button variant="outline" onClick={() => navigate(`/vendas/meus-orcamentos/${data.id}/editar`)} className="bg-white/5 border-white/10 text-white hover:bg-white/10">
+                    <Pencil className="w-4 h-4 mr-2" /> Editar
+                  </Button>
+                )}
+                <Button onClick={exportar} className="bg-blue-600 hover:bg-blue-500">
+                  <FileDown className="w-4 h-4 mr-2" /> Exportar PDF
+                </Button>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
