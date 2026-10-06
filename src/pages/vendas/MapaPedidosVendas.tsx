@@ -118,11 +118,18 @@ export default function MapaPedidosVendas() {
             )}
           </>
         )}
-        <Select value={estado} onValueChange={setEstado}>
+        <Select value={estado} onValueChange={(v) => { setEstado(v); setCidade("todos"); }}>
           <SelectTrigger className="bg-white/5 border-white/10"><SelectValue /></SelectTrigger>
           <SelectContent className="z-[1100]">
             <SelectItem value="todos">Todos os estados</SelectItem>
             {estados.map((e) => <SelectItem key={e} value={e}>{e}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={cidade} onValueChange={setCidade}>
+          <SelectTrigger className="bg-white/5 border-white/10"><SelectValue /></SelectTrigger>
+          <SelectContent className="z-[1100]">
+            <SelectItem value="todos">Todas as cidades</SelectItem>
+            {cidades.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={vendedor} onValueChange={setVendedor}>
