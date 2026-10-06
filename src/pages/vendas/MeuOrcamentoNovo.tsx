@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { ArrowLeft, DoorOpen, Package, Truck, ChevronRight, FileDown, Save, Loader2 } from 'lucide-react';
+import { ArrowLeft, DoorOpen, Package, Truck, ChevronRight, Eye, Save, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
@@ -14,7 +14,7 @@ import { AdicionarItemAvulsoDialog } from '@/components/vendas/orcamento-novo/Ad
 import { AdicionarFreteDialog } from '@/components/vendas/orcamento-novo/AdicionarFreteDialog';
 import { CarrinhoOrcamento } from '@/components/vendas/orcamento-novo/CarrinhoOrcamento';
 import {
-  downloadMeuOrcamentoPDF,
+  previewMeuOrcamentoPDF,
   type CartPorta, type CartAvulso, type CartFrete,
 } from '@/utils/meuOrcamentoPDFGenerator';
 
