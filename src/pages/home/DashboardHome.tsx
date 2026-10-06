@@ -149,7 +149,7 @@ export default function DashboardHome() {
         mounted={mounted}
       />
 
-      <div className="relative z-10 max-w-2xl mx-auto px-4 pt-16 pb-10 flex flex-col gap-4">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 pt-16 pb-10 grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
         <div
           style={{
             opacity: mounted ? 1 : 0,
