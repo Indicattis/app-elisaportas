@@ -168,7 +168,7 @@ export default function MeuOrcamentoNovo() {
         style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(20px)', transition: 'all 0.6s cubic-bezier(0.34,1.56,0.64,1) 300ms' }}>
 
         <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-white">Novo Orçamento</h1>
+          <h1 className="text-2xl font-semibold text-white">{isEdit ? 'Editar Orçamento' : 'Novo Orçamento'}</h1>
           <p className="text-white/40 text-sm">Monte sua proposta adicionando portas, itens e frete</p>
         </div>
 
@@ -211,9 +211,9 @@ export default function MeuOrcamentoNovo() {
               <span className="text-xl font-bold text-blue-300">{fmt(total)}</span>
             </div>
 
-            <Button onClick={() => saveMut.mutate()} disabled={saveMut.isPending} className="w-full bg-gradient-to-br from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 text-white shadow-lg shadow-blue-500/30">
+            <Button onClick={() => saveMut.mutate()} disabled={saveMut.isPending || loadingEdit} className="w-full bg-gradient-to-br from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 text-white shadow-lg shadow-blue-500/30">
               {saveMut.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-              Salvar e gerar PDF
+              {isEdit ? 'Salvar alterações' : 'Salvar e gerar PDF'}
             </Button>
 
             <Button
