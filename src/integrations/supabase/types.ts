@@ -11401,6 +11401,15 @@ export type Database = {
           estado: string
         }[]
       }
+      get_kit_itens: {
+        Args: { p_kit_id: string }
+        Returns: {
+          categoria: string
+          descricao: string
+          quantidade: number
+          unidade: string
+        }[]
+      }
       get_materiais_ranking_completo: {
         Args: never
         Returns: {
