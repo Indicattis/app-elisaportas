@@ -243,7 +243,7 @@ export default function MeuOrcamentoNovo() {
               onClick={() => {
                 if (!cliente.trim()) { toast.error('Informe o nome do cliente'); return; }
                 if (!portas.length && !avulsos.length) { toast.error('Adicione ao menos um item'); return; }
-                downloadMeuOrcamentoPDF({
+                previewMeuOrcamentoPDF({
                   numero: 0, data: new Date(), cliente: cliente.trim(),
                   clienteCpf: clienteCpf.trim() || undefined,
                   clienteCidade: clienteCidade.trim() || undefined,
@@ -252,7 +252,7 @@ export default function MeuOrcamentoNovo() {
               }}
               className="w-full bg-white/5 border-white/10 text-white hover:bg-white/10"
             >
-              <FileDown className="w-4 h-4 mr-2" /> Pré-visualizar PDF
+              <Eye className="w-4 h-4 mr-2" /> Pré-visualizar PDF
             </Button>
           </aside>
         </div>
