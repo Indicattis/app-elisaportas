@@ -89,6 +89,8 @@ export default function MeuOrcamentoNovo() {
           .from('orcamentos')
           .update({
             cliente_nome: cliente.trim(),
+            cliente_cpf: clienteCpf.trim() || null,
+            cliente_cidade: clienteCidade.trim() || null,
             valor_produto: totalPortas + totalAvulsos,
             valor_pintura: valorPintura,
             valor_instalacao: valorInstalacao,
@@ -117,6 +119,8 @@ export default function MeuOrcamentoNovo() {
         .insert([{
           atendente_id: user.id,
           cliente_nome: cliente.trim(),
+          cliente_cpf: clienteCpf.trim() || null,
+          cliente_cidade: clienteCidade.trim() || null,
           valor_produto: totalPortas + totalAvulsos,
           valor_pintura: valorPintura,
           valor_instalacao: valorInstalacao,
@@ -139,6 +143,8 @@ export default function MeuOrcamentoNovo() {
         numero: rec.numero_orcamento,
         data: new Date(),
         cliente: cliente.trim(),
+        clienteCpf: clienteCpf.trim() || undefined,
+        clienteCidade: clienteCidade.trim() || undefined,
         vendedor: userRole?.nome || 'Elisa Portas',
         portas, avulsos, frete,
       });
