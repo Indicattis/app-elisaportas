@@ -29,7 +29,7 @@ export default function MeuOrcamentoDetalhe() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('orcamentos')
-        .select('id, numero_orcamento, cliente_nome, valor_total, valor_frete, created_at, campos_personalizados, status')
+        .select('id, numero_orcamento, cliente_nome, cliente_cpf, cliente_cidade, valor_total, valor_frete, created_at, campos_personalizados, status')
         .eq('id', id!)
         .maybeSingle();
       if (error) throw error;
@@ -52,6 +52,8 @@ export default function MeuOrcamentoDetalhe() {
       numero: data.numero_orcamento ?? 0,
       data: new Date(data.created_at),
       cliente: data.cliente_nome || '—',
+      clienteCpf: data.cliente_cpf || undefined,
+      clienteCidade: data.cliente_cidade || undefined,
       vendedor: userRole?.nome || 'Elisa Portas',
       portas, avulsos, frete,
     });

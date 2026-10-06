@@ -27,6 +27,8 @@ export default function MeuOrcamentoNovo() {
   const { user, userRole } = useAuth();
   const [mounted, setMounted] = useState(false);
   const [cliente, setCliente] = useState('');
+  const [clienteCpf, setClienteCpf] = useState('');
+  const [clienteCidade, setClienteCidade] = useState('');
   const [portas, setPortas] = useState<CartPorta[]>([]);
   const [avulsos, setAvulsos] = useState<CartAvulso[]>([]);
   const [frete, setFrete] = useState<CartFrete | null>(null);
@@ -43,7 +45,7 @@ export default function MeuOrcamentoNovo() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('orcamentos')
-        .select('id, numero_orcamento, cliente_nome, status, campos_personalizados')
+        .select('id, numero_orcamento, cliente_nome, cliente_cpf, cliente_cidade, status, campos_personalizados')
         .eq('id', editId!)
         .maybeSingle();
       if (error) throw error;
@@ -60,6 +62,8 @@ export default function MeuOrcamentoNovo() {
     }
     const cp: any = orcamentoEdit.campos_personalizados || {};
     setCliente(orcamentoEdit.cliente_nome || '');
+    setClienteCpf(orcamentoEdit.cliente_cpf || '');
+    setClienteCidade(orcamentoEdit.cliente_cidade || '');
     setPortas(Array.isArray(cp.portas) ? cp.portas : []);
     setAvulsos(Array.isArray(cp.avulsos) ? cp.avulsos : []);
     setFrete(cp.frete || null);
@@ -85,6 +89,8 @@ export default function MeuOrcamentoNovo() {
           .from('orcamentos')
           .update({
             cliente_nome: cliente.trim(),
+            cliente_cpf: clienteCpf.trim() || null,
+            cliente_cidade: clienteCidade.trim() || null,
             valor_produto: totalPortas + totalAvulsos,
             valor_pintura: valorPintura,
             valor_instalacao: valorInstalacao,
@@ -113,6 +119,8 @@ export default function MeuOrcamentoNovo() {
         .insert([{
           atendente_id: user.id,
           cliente_nome: cliente.trim(),
+          cliente_cpf: clienteCpf.trim() || null,
+          cliente_cidade: clienteCidade.trim() || null,
           valor_produto: totalPortas + totalAvulsos,
           valor_pintura: valorPintura,
           valor_instalacao: valorInstalacao,
@@ -135,6 +143,8 @@ export default function MeuOrcamentoNovo() {
         numero: rec.numero_orcamento,
         data: new Date(),
         cliente: cliente.trim(),
+        clienteCpf: clienteCpf.trim() || undefined,
+        clienteCidade: clienteCidade.trim() || undefined,
         vendedor: userRole?.nome || 'Elisa Portas',
         portas, avulsos, frete,
       });
@@ -175,9 +185,21 @@ export default function MeuOrcamentoNovo() {
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
           <div className="space-y-5">
             {/* Cliente */}
-            <div className="rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 p-4">
-              <label className="text-[11px] uppercase tracking-wider text-white/50 font-medium">Nome do cliente *</label>
-              <Input className="mt-1 bg-white/5 border-white/10 text-white" value={cliente} onChange={e => setCliente(e.target.value)} placeholder="Ex.: João da Silva" />
+            <div className="rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 p-4 space-y-3">
+              <div>
+                <label className="text-[11px] uppercase tracking-wider text-white/50 font-medium">Nome do cliente *</label>
+                <Input className="mt-1 bg-white/5 border-white/10 text-white" value={cliente} onChange={e => setCliente(e.target.value)} placeholder="Ex.: João da Silva" />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] uppercase tracking-wider text-white/50 font-medium">CPF / CNPJ</label>
+                  <Input className="mt-1 bg-white/5 border-white/10 text-white" value={clienteCpf} onChange={e => setClienteCpf(e.target.value)} placeholder="Opcional" />
+                </div>
+                <div>
+                  <label className="text-[11px] uppercase tracking-wider text-white/50 font-medium">Cidade</label>
+                  <Input className="mt-1 bg-white/5 border-white/10 text-white" value={clienteCidade} onChange={e => setClienteCidade(e.target.value)} placeholder="Opcional" />
+                </div>
+              </div>
             </div>
 
             {/* Cards de ação */}
@@ -223,6 +245,8 @@ export default function MeuOrcamentoNovo() {
                 if (!portas.length && !avulsos.length) { toast.error('Adicione ao menos um item'); return; }
                 downloadMeuOrcamentoPDF({
                   numero: 0, data: new Date(), cliente: cliente.trim(),
+                  clienteCpf: clienteCpf.trim() || undefined,
+                  clienteCidade: clienteCidade.trim() || undefined,
                   vendedor: userRole?.nome || 'Elisa Portas', portas, avulsos, frete,
                 });
               }}

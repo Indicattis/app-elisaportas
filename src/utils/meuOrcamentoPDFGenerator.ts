@@ -35,6 +35,8 @@ export interface MeuOrcamentoPDFData {
   numero: number | string;
   data: Date;
   cliente: string;
+  clienteCpf?: string;
+  clienteCidade?: string;
   vendedor: string;
   portas: CartPorta[];
   avulsos: CartAvulso[];
@@ -90,6 +92,11 @@ export function generateMeuOrcamentoPDF(data: MeuOrcamentoPDFData): jsPDF {
   pdf.rect(margin, y, leftBoxW, 26);
   pdf.setFont('helvetica', 'normal').setFontSize(10);
   pdf.text(data.cliente || '—', margin + 3, y + 6);
+  pdf.setFontSize(8).setTextColor(90, 90, 90);
+  let extraY = y + 11;
+  if (data.clienteCpf) { pdf.text(`CPF/CNPJ: ${data.clienteCpf}`, margin + 3, extraY); extraY += 4.5; }
+  if (data.clienteCidade) { pdf.text(`Cidade: ${data.clienteCidade}`, margin + 3, extraY); }
+  pdf.setTextColor(0, 0, 0);
 
   // Caixa de número/data com duas linhas
   autoTable(pdf, {
