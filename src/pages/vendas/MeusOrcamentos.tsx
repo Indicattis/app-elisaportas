@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Plus, FileText, Clock, CheckCircle, XCircle, AlertCircle, FileSignature, ArrowRight, DollarSign, Pencil } from 'lucide-react';
+import { Plus, FileText, Clock, CheckCircle, XCircle, AlertCircle, FileSignature, ArrowRight, DollarSign, Pencil, Search, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
@@ -16,6 +16,7 @@ export default function MeusOrcamentos() {
   const { user } = useAuth();
   const [mesAtual] = useState(new Date());
   const [statusFiltro, setStatusFiltro] = useState<string>('');
+  const [busca, setBusca] = useState('');
   const [contratoOrcamentoId, setContratoOrcamentoId] = useState<string | null>(null);
 
   const inicioMes = startOfMonth(mesAtual);
@@ -34,6 +35,7 @@ export default function MeusOrcamentos() {
           status,
           valor_total,
           cliente_nome,
+          numero_orcamento,
           requer_analise
         `)
         .eq('atendente_id', user.id)
@@ -45,6 +47,37 @@ export default function MeusOrcamentos() {
       return data || [];
     },
     enabled: !!user?.id
+  });
+
+  // Busca por nome ou número do orçamento (ignora o filtro de mês)
+  const termoBusca = busca.trim().toLowerCase();
+  const buscando = termoBusca.length > 0;
+
+  const { data: resultadosBusca, isLoading: isLoadingBusca } = useQuery({
+    queryKey: ['meus-orcamentos-busca', user?.id, termoBusca],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data, error } = await supabase
+        .from('orcamentos')
+        .select(`
+          id,
+          created_at,
+          status,
+          valor_total,
+          cliente_nome,
+          numero_orcamento,
+          requer_analise
+        `)
+        .eq('atendente_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(500);
+      if (error) throw error;
+      return (data || []).filter(o =>
+        (o.cliente_nome || '').toLowerCase().includes(termoBusca) ||
+        String(o.numero_orcamento ?? '').includes(termoBusca)
+      );
+    },
+    enabled: !!user?.id && buscando
   });
 
   const orcamentoIds = (orcamentos || []).map(o => o.id);
@@ -64,9 +97,10 @@ export default function MeusOrcamentos() {
     enabled: orcamentoIds.length > 0,
   });
 
-  const orcamentosFiltrados = orcamentos?.filter(orc => 
+  const listaBase = buscando ? (resultadosBusca || []) : (orcamentos || []);
+  const orcamentosFiltrados = listaBase.filter(orc => 
     !statusFiltro || orc.status === statusFiltro
-  ) || [];
+  );
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -237,8 +271,8 @@ export default function MeusOrcamentos() {
         </div>
       </div>
 
-      {/* Filtro por status */}
-      <div className="flex flex-wrap gap-2 mb-6">
+      {/* Filtro por status + busca */}
+      <div className="flex flex-wrap items-center gap-2 mb-6">
         {statusOptions.map(opt => (
           <button
             key={opt.value}
@@ -252,11 +286,32 @@ export default function MeusOrcamentos() {
             {opt.label}
           </button>
         ))}
+
+        <div className="relative flex-1 min-w-[220px] sm:max-w-xs ml-auto">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 pointer-events-none" />
+          <input
+            type="text"
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            placeholder="Buscar por nome ou nº do orçamento"
+            className="w-full h-9 pl-9 pr-9 rounded-full bg-white/5 border border-white/10 backdrop-blur-xl text-sm text-white placeholder:text-white/40 outline-none focus:border-blue-400/50 focus:bg-white/10 transition-colors"
+          />
+          {busca && (
+            <button
+              type="button"
+              onClick={() => setBusca('')}
+              title="Limpar busca"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-white/10 flex items-center justify-center text-white/60 hover:text-white hover:bg-white/20 transition"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Lista de orçamentos */}
       <div className="space-y-3">
-        {isLoading ? (
+        {(isLoading || (buscando && isLoadingBusca)) ? (
           Array.from({ length: 5 }).map((_, i) => (
             <Skeleton key={i} className="h-20 bg-white/5" />
           ))
@@ -285,12 +340,13 @@ export default function MeusOrcamentos() {
                   </div>
                 </div>
 
-                {/* Nome + data */}
+                {/* Nome + nº + data */}
                 <div className="min-w-0 w-44 sm:w-52">
                   <h4 className="text-white font-semibold truncate text-sm">
                     {orcamento.cliente_nome || 'Cliente não informado'}
                   </h4>
                   <p className="text-[11px] text-white/50 truncate">
+                    {orcamento.numero_orcamento != null ? `Nº ${orcamento.numero_orcamento} · ` : ''}
                     {format(new Date(orcamento.created_at), "dd 'de' MMM", { locale: ptBR })} · {statusInfo.label}
                   </p>
                 </div>
@@ -343,15 +399,21 @@ export default function MeusOrcamentos() {
         ) : (
           <div className="text-center py-12">
             <FileText className="w-12 h-12 text-white/20 mx-auto mb-4" />
-            <p className="text-white/60">Nenhum orçamento encontrado neste mês</p>
-            <Button 
-              onClick={() => navigate('/vendas/meus-orcamentos/novo')}
-              variant="outline"
-              className="mt-4 border-white/20 text-white hover:bg-white/10"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Criar primeiro orçamento
-            </Button>
+            <p className="text-white/60">
+              {buscando
+                ? `Nenhum orçamento encontrado para "${busca.trim()}"`
+                : 'Nenhum orçamento encontrado neste mês'}
+            </p>
+            {!buscando && (
+              <Button 
+                onClick={() => navigate('/vendas/meus-orcamentos/novo')}
+                variant="outline"
+                className="mt-4 border-white/20 text-white hover:bg-white/10"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Criar primeiro orçamento
+              </Button>
+            )}
           </div>
         )}
       </div>
