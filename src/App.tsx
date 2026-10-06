@@ -33,6 +33,7 @@ import { useTarefasCount } from "@/hooks/useTarefasCount";
 import { ProfileDropdownMenu } from "@/components/ProfileDropdownMenu";
 import Index from "./pages/Index";
 import Home from "./pages/Home";
+import DashboardHome from "./pages/home/DashboardHome";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Performance from "./pages/Performance";
@@ -472,6 +473,7 @@ const App = () => (
                 <Route path="/rastreio/:token" element={<RastreioVendaPublico />} />
                 <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
                 <Route path="/perfil" element={<ProtectedRoute><MeuPerfil /></ProtectedRoute>} />
+                <Route path="/home/dashboard" element={<ProtectedRoute><DashboardHome /></ProtectedRoute>} />
                 <Route path="/home/pedidos-producao" element={<ProtectedRoute><GestaoFabricaDirecao /></ProtectedRoute>} />
                 <Route path="/home/calendario-expedicao" element={<ProtectedRoute><CalendarioExpedicaoReadOnly /></ProtectedRoute>} />
                 <Route path="/auth" element={<Auth />} />
