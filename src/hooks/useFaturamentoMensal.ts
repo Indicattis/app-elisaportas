@@ -10,11 +10,11 @@ export interface FaturamentoMensal {
   numero_vendas: number;
 }
 
-export function useFaturamentoMensal() {
+export function useFaturamentoMensal(ano?: number) {
+  const anoAtual = ano ?? new Date().getFullYear();
   return useQuery({
-    queryKey: ['faturamento-mensal', new Date().getFullYear()],
+    queryKey: ['faturamento-mensal', anoAtual],
     queryFn: async () => {
-      const anoAtual = new Date().getFullYear();
       const inicioAno = startOfYear(new Date(anoAtual, 0, 1));
       const fimAno = endOfYear(new Date(anoAtual, 11, 31));
 

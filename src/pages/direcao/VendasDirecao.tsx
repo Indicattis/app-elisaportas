@@ -258,6 +258,11 @@ export default function VendasDirecao() {
     defaultValue: null
   });
 
+  const [selectedYear, setSelectedYear] = useSessionFilters<number>({
+    key: 'direcao_vendas_year',
+    defaultValue: new Date().getFullYear()
+  });
+
   const [atendentes, setAtendentes] = useState<any[]>([]);
   const [metodosExtraPorVenda, setMetodosExtraPorVenda] = useState<Map<string, string[]>>(new Map());
   const [parcelasPorVenda, setParcelasPorVenda] = useState<Map<string, any[]>>(new Map());
@@ -269,7 +274,7 @@ export default function VendasDirecao() {
 
   // Handler para clique no mês do grid
   const handleMonthClick = useCallback((monthIndex: number) => {
-    const year = new Date().getFullYear();
+    const year = selectedYear;
     const monthDate = setMonth(new Date(year, 0, 1), monthIndex);
     const from = startOfMonth(monthDate);
     const to = endOfMonth(monthDate);
@@ -285,7 +290,7 @@ export default function VendasDirecao() {
       setSelectedMonth(monthIndex);
       setDateRange({ from, to });
     }
-  }, [selectedMonth]);
+  }, [selectedMonth, selectedYear]);
 
   // Colunas fixas (funcionalidade de personalização removida)
   const visibleColumns = COLUNAS_DISPONIVEIS.filter(c => c.defaultVisible);
@@ -1253,6 +1258,14 @@ export default function VendasDirecao() {
       <FaturamentoMensalGrid 
         onMonthClick={handleMonthClick}
         selectedMonth={selectedMonth}
+        year={selectedYear}
+        onYearChange={(y) => {
+          setSelectedYear(y);
+          if (selectedMonth !== null) {
+            const d = new Date(y, selectedMonth, 1);
+            setDateRange({ from: startOfMonth(d), to: endOfMonth(d) });
+          }
+        }}
       />
 
       {/* Cards de Estatísticas */}
