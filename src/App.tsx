@@ -33,6 +33,7 @@ import { useTarefasCount } from "@/hooks/useTarefasCount";
 import { ProfileDropdownMenu } from "@/components/ProfileDropdownMenu";
 import Index from "./pages/Index";
 import Home from "./pages/Home";
+import DashboardHome from "./pages/home/DashboardHome";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Performance from "./pages/Performance";
