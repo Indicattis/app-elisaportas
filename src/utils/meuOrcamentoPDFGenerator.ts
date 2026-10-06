@@ -180,8 +180,8 @@ export function generateMeuOrcamentoPDF(data: MeuOrcamentoPDFData): jsPDF {
       const w = p.largura * scale, h = p.altura * scale;
       const x = (pageW - w) / 2, top = 66 + (136 - h) / 2;
       pdf.setDrawColor(90).setLineWidth(0.3);
-      pdf.setFillColor(190).rect(x, top, w, 12, 'FD');
-      pdf.setFillColor(140).rect(x - 6, top + 12, 6, h - 12, 'FD');
+      pdf.setFillColor(190, 190, 190).rect(x, top, w, 12, 'FD');
+      pdf.setFillColor(140, 140, 140).rect(x - 6, top + 12, 6, h - 12, 'FD');
       pdf.rect(x + w, top + 12, 6, h - 12, 'FD');
       pdf.setFillColor(232, 240, 252).rect(x, top + 12, w, h - 12, 'F');
       pdf.setDrawColor(...blue).setLineWidth(0.5).line(x, top + 12, x + w, top + 12);
@@ -193,7 +193,7 @@ export function generateMeuOrcamentoPDF(data: MeuOrcamentoPDFData): jsPDF {
       pdf.setDrawColor(50).setLineWidth(0.25);
       pdf.line(x, bottom + 2, x, bottom + 14); pdf.line(x + w, bottom + 2, x + w, bottom + 14);
       pdf.line(x, bottom + 12, x + w, bottom + 12);
-      pdf.setFillColor(90).triangle(x, bottom + 12, x + 3, bottom + 11, x + 3, bottom + 13, 'F');
+      pdf.setFillColor(90, 90, 90).triangle(x, bottom + 12, x + 3, bottom + 11, x + 3, bottom + 13, 'F');
       pdf.triangle(x + w, bottom + 12, x + w - 3, bottom + 11, x + w - 3, bottom + 13, 'F');
       const dimX = x + w + 16;
       pdf.line(dimX - 8, top, dimX + 2, top); pdf.line(dimX - 8, bottom, dimX + 2, bottom);
