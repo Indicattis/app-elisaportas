@@ -271,8 +271,8 @@ export default function MeusOrcamentos() {
         </div>
       </div>
 
-      {/* Filtro por status */}
-      <div className="flex flex-wrap gap-2 mb-6">
+      {/* Filtro por status + busca */}
+      <div className="flex flex-wrap items-center gap-2 mb-6">
         {statusOptions.map(opt => (
           <button
             key={opt.value}
@@ -286,6 +286,27 @@ export default function MeusOrcamentos() {
             {opt.label}
           </button>
         ))}
+
+        <div className="relative flex-1 min-w-[220px] sm:max-w-xs ml-auto">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 pointer-events-none" />
+          <input
+            type="text"
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            placeholder="Buscar por nome ou nº do orçamento"
+            className="w-full h-9 pl-9 pr-9 rounded-full bg-white/5 border border-white/10 backdrop-blur-xl text-sm text-white placeholder:text-white/40 outline-none focus:border-blue-400/50 focus:bg-white/10 transition-colors"
+          />
+          {busca && (
+            <button
+              type="button"
+              onClick={() => setBusca('')}
+              title="Limpar busca"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-white/10 flex items-center justify-center text-white/60 hover:text-white hover:bg-white/20 transition"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Lista de orçamentos */}
