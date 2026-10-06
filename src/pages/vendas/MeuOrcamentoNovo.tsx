@@ -128,7 +128,9 @@ export default function MeuOrcamentoNovo() {
       return data;
     },
     onSuccess: (rec) => {
-      toast.success(`Orçamento Nº ${String(rec.numero_orcamento).padStart(4, '0')} salvo`);
+      toast.success(isEdit
+        ? `Orçamento Nº ${String(rec.numero_orcamento).padStart(4, '0')} atualizado`
+        : `Orçamento Nº ${String(rec.numero_orcamento).padStart(4, '0')} salvo`);
       downloadMeuOrcamentoPDF({
         numero: rec.numero_orcamento,
         data: new Date(),
@@ -149,7 +151,7 @@ export default function MeuOrcamentoNovo() {
           { label: 'Home', path: '/home' },
           { label: 'Vendas', path: '/vendas' },
           { label: 'Meus Orçamentos', path: '/vendas/meus-orcamentos' },
-          { label: 'Novo' },
+          { label: isEdit ? `Editar Nº ${String(orcamentoEdit?.numero_orcamento ?? '').padStart(4, '0')}` : 'Novo' },
         ]}
         mounted={mounted}
       />
