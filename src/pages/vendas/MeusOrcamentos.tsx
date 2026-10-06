@@ -399,15 +399,21 @@ export default function MeusOrcamentos() {
         ) : (
           <div className="text-center py-12">
             <FileText className="w-12 h-12 text-white/20 mx-auto mb-4" />
-            <p className="text-white/60">Nenhum orçamento encontrado neste mês</p>
-            <Button 
-              onClick={() => navigate('/vendas/meus-orcamentos/novo')}
-              variant="outline"
-              className="mt-4 border-white/20 text-white hover:bg-white/10"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Criar primeiro orçamento
-            </Button>
+            <p className="text-white/60">
+              {buscando
+                ? `Nenhum orçamento encontrado para "${busca.trim()}"`
+                : 'Nenhum orçamento encontrado neste mês'}
+            </p>
+            {!buscando && (
+              <Button 
+                onClick={() => navigate('/vendas/meus-orcamentos/novo')}
+                variant="outline"
+                className="mt-4 border-white/20 text-white hover:bg-white/10"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Criar primeiro orçamento
+              </Button>
+            )}
           </div>
         )}
       </div>
