@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useMutation } from '@tanstack/react-query';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { ArrowLeft, DoorOpen, Package, Truck, ChevronRight, FileDown, Save, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -22,6 +22,8 @@ const fmt = (n: number) => `R$ ${n.toLocaleString('pt-BR', { minimumFractionDigi
 
 export default function MeuOrcamentoNovo() {
   const navigate = useNavigate();
+  const { id: editId } = useParams();
+  const isEdit = !!editId;
   const { user, userRole } = useAuth();
   const [mounted, setMounted] = useState(false);
   const [cliente, setCliente] = useState('');
@@ -31,8 +33,38 @@ export default function MeuOrcamentoNovo() {
   const [dlgPorta, setDlgPorta] = useState(false);
   const [dlgAvulso, setDlgAvulso] = useState(false);
   const [dlgFrete, setDlgFrete] = useState(false);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => { const t = setTimeout(() => setMounted(true), 50); return () => clearTimeout(t); }, []);
+
+  const { data: orcamentoEdit, isLoading: loadingEdit } = useQuery({
+    queryKey: ['meu-orcamento-edit', editId],
+    enabled: isEdit,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('orcamentos')
+        .select('id, numero_orcamento, cliente_nome, status, campos_personalizados')
+        .eq('id', editId!)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  useEffect(() => {
+    if (!orcamentoEdit || loaded) return;
+    if (!['pendente', 'aprovado'].includes(orcamentoEdit.status)) {
+      toast.error('Este orçamento não pode mais ser editado');
+      navigate(`/vendas/meus-orcamentos/${editId}`);
+      return;
+    }
+    const cp: any = orcamentoEdit.campos_personalizados || {};
+    setCliente(orcamentoEdit.cliente_nome || '');
+    setPortas(Array.isArray(cp.portas) ? cp.portas : []);
+    setAvulsos(Array.isArray(cp.avulsos) ? cp.avulsos : []);
+    setFrete(cp.frete || null);
+    setLoaded(true);
+  }, [orcamentoEdit, loaded, editId, navigate]);
 
   const totalPortas = portas.reduce((s, p) => s + p.preco_unitario * p.quantidade, 0);
   const totalAvulsos = avulsos.reduce((s, a) => s + a.preco_unitario * a.quantidade, 0);
