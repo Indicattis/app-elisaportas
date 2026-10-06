@@ -48,6 +48,7 @@ const routeKeyMap: Record<string, string[]> = {
 };
 
 const menuItems = [
+  { label: "Dashboard", icon: LayoutDashboard, path: "/home/dashboard" },
   { label: "Direção", icon: Shield, path: "/direcao", isGold: true },
   { label: "Autorizados", icon: Users, path: "/autorizados", isGreen: true },
   { label: "Marketing", icon: BarChart3, path: "/marketing" },

@@ -472,6 +472,7 @@ const App = () => (
                 <Route path="/rastreio/:token" element={<RastreioVendaPublico />} />
                 <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
                 <Route path="/perfil" element={<ProtectedRoute><MeuPerfil /></ProtectedRoute>} />
+                <Route path="/home/dashboard" element={<ProtectedRoute><DashboardHome /></ProtectedRoute>} />
                 <Route path="/home/pedidos-producao" element={<ProtectedRoute><GestaoFabricaDirecao /></ProtectedRoute>} />
                 <Route path="/home/calendario-expedicao" element={<ProtectedRoute><CalendarioExpedicaoReadOnly /></ProtectedRoute>} />
                 <Route path="/auth" element={<Auth />} />
