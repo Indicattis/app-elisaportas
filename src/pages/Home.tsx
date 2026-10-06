@@ -29,7 +29,9 @@ const routePrefixMap: Record<string, string> = {
 };
 
 const routeKeyMap: Record<string, string[]> = {
+  '/home/dashboard': ['home_dashboard'],
   '/financeiro': [
+
     'financeiro_hub',
     'admin_financeiro',
     'admin_gastos',
