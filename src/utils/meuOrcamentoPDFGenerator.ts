@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { toast } from 'sonner';
 
 export interface CartPorta {
   uid: string;
@@ -325,4 +326,20 @@ export function generateMeuOrcamentoPDF(data: MeuOrcamentoPDFData): jsPDF {
 export function downloadMeuOrcamentoPDF(data: MeuOrcamentoPDFData) {
   const pdf = generateMeuOrcamentoPDF(data);
   pdf.save(`Elisa_Portas_-_${String(data.numero).padStart(4, '0')}.pdf`);
+}
+
+export function previewMeuOrcamentoPDF(data: MeuOrcamentoPDFData) {
+  const pdf = generateMeuOrcamentoPDF(data);
+  const url = pdf.output('bloburl').toString();
+  const win = window.open(url, '_blank');
+  if (!win) {
+    // Popup bloqueado: abre aba em branco com iframe, sem salvar o arquivo
+    const w = window.open('', '_blank');
+    if (w) {
+      w.document.write(`<iframe src="${url}" style="border:0;width:100%;height:100%;"></iframe>`);
+      w.document.title = 'Pré-visualização do Orçamento';
+    } else {
+      toast.error('Permita pop-ups para visualizar o PDF');
+    }
+  }
 }

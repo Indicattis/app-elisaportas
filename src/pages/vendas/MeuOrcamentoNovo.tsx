@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { ArrowLeft, DoorOpen, Package, Truck, ChevronRight, FileDown, Save, Loader2 } from 'lucide-react';
+import { ArrowLeft, DoorOpen, Package, Truck, ChevronRight, Eye, Save, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
@@ -15,6 +15,7 @@ import { AdicionarFreteDialog } from '@/components/vendas/orcamento-novo/Adicion
 import { CarrinhoOrcamento } from '@/components/vendas/orcamento-novo/CarrinhoOrcamento';
 import {
   downloadMeuOrcamentoPDF,
+  previewMeuOrcamentoPDF,
   type CartPorta, type CartAvulso, type CartFrete,
 } from '@/utils/meuOrcamentoPDFGenerator';
 
@@ -243,7 +244,7 @@ export default function MeuOrcamentoNovo() {
               onClick={() => {
                 if (!cliente.trim()) { toast.error('Informe o nome do cliente'); return; }
                 if (!portas.length && !avulsos.length) { toast.error('Adicione ao menos um item'); return; }
-                downloadMeuOrcamentoPDF({
+                previewMeuOrcamentoPDF({
                   numero: 0, data: new Date(), cliente: cliente.trim(),
                   clienteCpf: clienteCpf.trim() || undefined,
                   clienteCidade: clienteCidade.trim() || undefined,
@@ -252,7 +253,7 @@ export default function MeuOrcamentoNovo() {
               }}
               className="w-full bg-white/5 border-white/10 text-white hover:bg-white/10"
             >
-              <FileDown className="w-4 h-4 mr-2" /> Pré-visualizar PDF
+              <Eye className="w-4 h-4 mr-2" /> Pré-visualizar PDF
             </Button>
           </aside>
         </div>
