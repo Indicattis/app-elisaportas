@@ -39,6 +39,9 @@ export interface MeuOrcamentoPDFData {
   clienteCpf?: string;
   clienteCidade?: string;
   vendedor: string;
+  vendedorFoto?: string;
+  /** interno: foto já convertida em dataURL */
+  vendedorFotoData?: string;
   portas: CartPorta[];
   avulsos: CartAvulso[];
   frete: CartFrete | null;
@@ -115,8 +118,21 @@ export function generateMeuOrcamentoPDF(data: MeuOrcamentoPDFData): jsPDF {
 
   y += 32;
   pdf.setFont('helvetica', 'normal').setFontSize(10);
-  pdf.text(`Vendedor(a): ${data.vendedor || '—'}`, margin, y);
-  y += 7;
+  pdf.setFont('helvetica', 'bold').setFontSize(10);
+  pdf.text('Vendedor(a) responsável', margin, y);
+  y += 3;
+  let nomeX = margin;
+  if (data.vendedorFotoData) {
+    try {
+      const fmt = data.vendedorFotoData.startsWith('data:image/png') ? 'PNG' : 'JPEG';
+      pdf.addImage(data.vendedorFotoData, fmt, margin, y, 12, 12);
+      nomeX = margin + 15;
+    } catch { /* ignora */ }
+  }
+  pdf.setFont('helvetica', 'bold').setFontSize(9).text(data.vendedor || '—', nomeX, y + 5);
+  pdf.setFont('helvetica', 'normal').setFontSize(8).setTextColor(90, 90, 90).text('Departamento Comercial', nomeX, y + 9.5);
+  pdf.setTextColor(0, 0, 0);
+  y += 18;
 
   // ===== Itens =====
   pdf.setFont('helvetica', 'bold').setFontSize(10);
@@ -323,13 +339,49 @@ export function generateMeuOrcamentoPDF(data: MeuOrcamentoPDFData): jsPDF {
   return pdf;
 }
 
-export function downloadMeuOrcamentoPDF(data: MeuOrcamentoPDFData) {
-  const pdf = generateMeuOrcamentoPDF(data);
+async function urlToDataURL(url?: string): Promise<string | undefined> {
+  if (!url) return undefined;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return undefined;
+    const blob = await res.blob();
+    const raw: string = await new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result as string);
+      r.onerror = reject;
+      r.readAsDataURL(blob);
+    });
+    // normaliza para JPEG via canvas (suporta webp etc.)
+    return await new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const size = Math.min(img.width, img.height);
+        const c = document.createElement('canvas');
+        c.width = 200; c.height = 200;
+        const ctx = c.getContext('2d');
+        if (!ctx) return resolve(raw);
+        ctx.drawImage(img, (img.width - size) / 2, (img.height - size) / 2, size, size, 0, 0, 200, 200);
+        resolve(c.toDataURL('image/jpeg', 0.9));
+      };
+      img.onerror = () => resolve(undefined);
+      img.src = raw;
+    });
+  } catch {
+    return undefined;
+  }
+}
+
+async function prepare(data: MeuOrcamentoPDFData): Promise<MeuOrcamentoPDFData> {
+  return { ...data, vendedorFotoData: await urlToDataURL(data.vendedorFoto) };
+}
+
+export async function downloadMeuOrcamentoPDF(data: MeuOrcamentoPDFData) {
+  const pdf = generateMeuOrcamentoPDF(await prepare(data));
   pdf.save(`Elisa_Portas_-_${String(data.numero).padStart(4, '0')}.pdf`);
 }
 
-export function previewMeuOrcamentoPDF(data: MeuOrcamentoPDFData) {
-  const pdf = generateMeuOrcamentoPDF(data);
+export async function previewMeuOrcamentoPDF(data: MeuOrcamentoPDFData) {
+  const pdf = generateMeuOrcamentoPDF(await prepare(data));
   const url = pdf.output('bloburl').toString();
   const win = window.open(url, '_blank');
   if (!win) {

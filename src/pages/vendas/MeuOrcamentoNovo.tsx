@@ -146,7 +146,7 @@ export default function MeuOrcamentoNovo() {
         cliente: cliente.trim(),
         clienteCpf: clienteCpf.trim() || undefined,
         clienteCidade: clienteCidade.trim() || undefined,
-        vendedor: userRole?.nome || 'Elisa Portas',
+        vendedor: userRole?.nome || 'Elisa Portas', vendedorFoto: userRole?.foto_perfil_url || undefined,
         portas, avulsos, frete,
       });
       navigate(`/vendas/meus-orcamentos/${rec.id}`);
@@ -248,7 +248,7 @@ export default function MeuOrcamentoNovo() {
                   numero: 0, data: new Date(), cliente: cliente.trim(),
                   clienteCpf: clienteCpf.trim() || undefined,
                   clienteCidade: clienteCidade.trim() || undefined,
-                  vendedor: userRole?.nome || 'Elisa Portas', portas, avulsos, frete,
+                  vendedor: userRole?.nome || 'Elisa Portas', vendedorFoto: userRole?.foto_perfil_url || undefined, portas, avulsos, frete,
                 });
               }}
               className="w-full bg-white/5 border-white/10 text-white hover:bg-white/10"
