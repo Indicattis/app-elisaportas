@@ -185,9 +185,21 @@ export default function MeuOrcamentoNovo() {
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
           <div className="space-y-5">
             {/* Cliente */}
-            <div className="rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 p-4">
-              <label className="text-[11px] uppercase tracking-wider text-white/50 font-medium">Nome do cliente *</label>
-              <Input className="mt-1 bg-white/5 border-white/10 text-white" value={cliente} onChange={e => setCliente(e.target.value)} placeholder="Ex.: João da Silva" />
+            <div className="rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 p-4 space-y-3">
+              <div>
+                <label className="text-[11px] uppercase tracking-wider text-white/50 font-medium">Nome do cliente *</label>
+                <Input className="mt-1 bg-white/5 border-white/10 text-white" value={cliente} onChange={e => setCliente(e.target.value)} placeholder="Ex.: João da Silva" />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] uppercase tracking-wider text-white/50 font-medium">CPF / CNPJ</label>
+                  <Input className="mt-1 bg-white/5 border-white/10 text-white" value={clienteCpf} onChange={e => setClienteCpf(e.target.value)} placeholder="Opcional" />
+                </div>
+                <div>
+                  <label className="text-[11px] uppercase tracking-wider text-white/50 font-medium">Cidade</label>
+                  <Input className="mt-1 bg-white/5 border-white/10 text-white" value={clienteCidade} onChange={e => setClienteCidade(e.target.value)} placeholder="Opcional" />
+                </div>
+              </div>
             </div>
 
             {/* Cards de ação */}
@@ -233,6 +245,8 @@ export default function MeuOrcamentoNovo() {
                 if (!portas.length && !avulsos.length) { toast.error('Adicione ao menos um item'); return; }
                 downloadMeuOrcamentoPDF({
                   numero: 0, data: new Date(), cliente: cliente.trim(),
+                  clienteCpf: clienteCpf.trim() || undefined,
+                  clienteCidade: clienteCidade.trim() || undefined,
                   vendedor: userRole?.nome || 'Elisa Portas', portas, avulsos, frete,
                 });
               }}
