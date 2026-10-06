@@ -121,7 +121,7 @@ export function generateMeuOrcamentoPDF(data: MeuOrcamentoPDFData): jsPDF {
   data.portas.forEach((p) => {
     linhasItens.push(['Porta de Enrolar', p.descricao, quantity(p.quantidade), fmtCurrency(p.preco_unitario), '-', fmtCurrency(p.preco_unitario * p.quantidade)]);
     if (data.detalharItens) p.kit_itens?.forEach((k) => {
-      const style = { textColor: gray, fontSize: 8 };
+      const style = { textColor: gray, fontSize: 8, cellPadding: { top: 1.5, bottom: 1.5, left: 3, right: 3 } };
       linhasItens.push(['Kit', k.descricao, `${quantity(Number(k.quantidade || 0) * p.quantidade)} ${k.unidade || 'Un'}`, 'Incluso', '-', 'Incluso'].map(content => ({ content, styles: style })));
     });
   });
@@ -249,8 +249,16 @@ export function generateMeuOrcamentoPDF(data: MeuOrcamentoPDFData): jsPDF {
   const writeSections = (items: Array<{ title: string; lines: string[] }>) => {
     items.forEach(section => {
       pdf.setFont('helvetica', 'normal').setFontSize(8);
-      const paragraphs = section.lines.join(' ').replace(/\s+/g, ' ');
-      const lines = pdf.splitTextToSize(paragraphs, contentW);
+      const paragraphs: string[] = [];
+      section.lines.forEach(line => {
+        if (/^(•|\d\.\d|NOBREAK:|CAIXA:|WIFI|0[45] -|\()/.test(line) || !paragraphs.length) {
+          paragraphs.push(line.trim());
+        } else {
+          const last = paragraphs.length - 1;
+          paragraphs[last] = `${paragraphs[last]} ${line.trim()}`;
+        }
+      });
+      const lines = paragraphs.flatMap(paragraph => pdf.splitTextToSize(paragraph, contentW));
       if (py + 8 + lines.length * 3.5 > pageBottom) { pdf.addPage(); py = 18; }
       pdf.setFont('helvetica', 'bold').setFontSize(9).text(section.title, margin, py); py += 5;
       pdf.setFont('helvetica', 'normal').setFontSize(8).text(lines, margin, py);
