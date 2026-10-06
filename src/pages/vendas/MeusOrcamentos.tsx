@@ -35,6 +35,7 @@ export default function MeusOrcamentos() {
           status,
           valor_total,
           cliente_nome,
+          numero_orcamento,
           requer_analise
         `)
         .eq('atendente_id', user.id)
@@ -46,6 +47,37 @@ export default function MeusOrcamentos() {
       return data || [];
     },
     enabled: !!user?.id
+  });
+
+  // Busca por nome ou número do orçamento (ignora o filtro de mês)
+  const termoBusca = busca.trim().toLowerCase();
+  const buscando = termoBusca.length > 0;
+
+  const { data: resultadosBusca, isLoading: isLoadingBusca } = useQuery({
+    queryKey: ['meus-orcamentos-busca', user?.id, termoBusca],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data, error } = await supabase
+        .from('orcamentos')
+        .select(`
+          id,
+          created_at,
+          status,
+          valor_total,
+          cliente_nome,
+          numero_orcamento,
+          requer_analise
+        `)
+        .eq('atendente_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(500);
+      if (error) throw error;
+      return (data || []).filter(o =>
+        (o.cliente_nome || '').toLowerCase().includes(termoBusca) ||
+        String(o.numero_orcamento ?? '').includes(termoBusca)
+      );
+    },
+    enabled: !!user?.id && buscando
   });
 
   const orcamentoIds = (orcamentos || []).map(o => o.id);
@@ -65,9 +97,10 @@ export default function MeusOrcamentos() {
     enabled: orcamentoIds.length > 0,
   });
 
-  const orcamentosFiltrados = orcamentos?.filter(orc => 
+  const listaBase = buscando ? (resultadosBusca || []) : (orcamentos || []);
+  const orcamentosFiltrados = listaBase.filter(orc => 
     !statusFiltro || orc.status === statusFiltro
-  ) || [];
+  );
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
