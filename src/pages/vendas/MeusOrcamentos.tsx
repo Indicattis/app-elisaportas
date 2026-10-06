@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Plus, FileText, Clock, CheckCircle, XCircle, AlertCircle, FileSignature, ArrowRight, DollarSign, Pencil } from 'lucide-react';
+import { Plus, FileText, Clock, CheckCircle, XCircle, AlertCircle, FileSignature, ArrowRight, DollarSign, Pencil, Search, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
@@ -16,6 +16,7 @@ export default function MeusOrcamentos() {
   const { user } = useAuth();
   const [mesAtual] = useState(new Date());
   const [statusFiltro, setStatusFiltro] = useState<string>('');
+  const [busca, setBusca] = useState('');
   const [contratoOrcamentoId, setContratoOrcamentoId] = useState<string | null>(null);
 
   const inicioMes = startOfMonth(mesAtual);
