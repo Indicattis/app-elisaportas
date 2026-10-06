@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useFaturamentoMensal } from "@/hooks/useFaturamentoMensal";
 import { Skeleton } from "@/components/ui/skeleton";
-import { TrendingUp } from "lucide-react";
+import { TrendingUp, ChevronLeft, ChevronRight } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { 
   Carousel, 
@@ -15,20 +15,24 @@ import { cn } from "@/lib/utils";
 interface FaturamentoMensalGridProps {
   onMonthClick?: (monthIndex: number) => void;
   selectedMonth?: number | null;
+  year?: number;
+  onYearChange?: (year: number) => void;
 }
 
-export function FaturamentoMensalGrid({ onMonthClick, selectedMonth }: FaturamentoMensalGridProps) {
-  const { data: faturamento, isLoading } = useFaturamentoMensal();
+export function FaturamentoMensalGrid({ onMonthClick, selectedMonth, year, onYearChange }: FaturamentoMensalGridProps) {
+  const ano = year ?? new Date().getFullYear();
+  const { data: faturamento, isLoading } = useFaturamentoMensal(ano);
+  const isAnoAtual = ano === new Date().getFullYear();
   const isMobile = useIsMobile();
   const [api, setApi] = useState<CarouselApi>();
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  const currentMonth = new Date().getMonth();
+  const currentMonth = isAnoAtual ? new Date().getMonth() : -1;
 
   // Scroll para o mês atual quando o carousel estiver pronto
   useEffect(() => {
     if (api && isMobile) {
-      api.scrollTo(currentMonth);
+      api.scrollTo(Math.max(currentMonth, 0));
     }
   }, [api, currentMonth, isMobile]);
 
@@ -62,7 +66,16 @@ export function FaturamentoMensalGrid({ onMonthClick, selectedMonth }: Faturamen
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-3">
           <TrendingUp className="h-4 w-4 text-white/60" />
-          <h3 className="text-sm font-medium text-white/60">Faturamento {new Date().getFullYear()}</h3>
+          <h3 className="text-sm font-medium text-white/60">Faturamento</h3>
+          {onYearChange ? (
+            <div className="flex items-center gap-1">
+              <button type="button" aria-label="Ano anterior" onClick={() => onYearChange(ano - 1)} className="p-1 rounded-md text-white/60 hover:text-white hover:bg-white/10"><ChevronLeft className="h-4 w-4" /></button>
+              <span className="text-sm font-semibold text-white min-w-[3rem] text-center">{ano}</span>
+              <button type="button" aria-label="Próximo ano" onClick={() => onYearChange(ano + 1)} className="p-1 rounded-md text-white/60 hover:text-white hover:bg-white/10"><ChevronRight className="h-4 w-4" /></button>
+            </div>
+          ) : (
+            <span className="text-sm font-medium text-white/60">{ano}</span>
+          )}
         </div>
         {isMobile ? (
           <Skeleton className="h-28 w-full bg-blue-500/10 rounded-xl" />
@@ -129,13 +142,22 @@ export function FaturamentoMensalGrid({ onMonthClick, selectedMonth }: Faturamen
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-3">
           <TrendingUp className="h-4 w-4 text-white/60" />
-          <h3 className="text-sm font-medium text-white/60">Faturamento {new Date().getFullYear()}</h3>
+          <h3 className="text-sm font-medium text-white/60">Faturamento</h3>
+          {onYearChange ? (
+            <div className="flex items-center gap-1">
+              <button type="button" aria-label="Ano anterior" onClick={() => onYearChange(ano - 1)} className="p-1 rounded-md text-white/60 hover:text-white hover:bg-white/10"><ChevronLeft className="h-4 w-4" /></button>
+              <span className="text-sm font-semibold text-white min-w-[3rem] text-center">{ano}</span>
+              <button type="button" aria-label="Próximo ano" onClick={() => onYearChange(ano + 1)} className="p-1 rounded-md text-white/60 hover:text-white hover:bg-white/10"><ChevronRight className="h-4 w-4" /></button>
+            </div>
+          ) : (
+            <span className="text-sm font-medium text-white/60">{ano}</span>
+          )}
         </div>
         
         <Carousel 
           setApi={setApi}
           opts={{ 
-            startIndex: currentMonth,
+            startIndex: Math.max(currentMonth, 0),
             loop: false,
             align: "center"
           }}
@@ -185,7 +207,16 @@ export function FaturamentoMensalGrid({ onMonthClick, selectedMonth }: Faturamen
     <div className="mb-6">
       <div className="flex items-center gap-2 mb-3">
         <TrendingUp className="h-4 w-4 text-white/60" />
-        <h3 className="text-sm font-medium text-white/60">Faturamento {new Date().getFullYear()}</h3>
+        <h3 className="text-sm font-medium text-white/60">Faturamento</h3>
+          {onYearChange ? (
+            <div className="flex items-center gap-1">
+              <button type="button" aria-label="Ano anterior" onClick={() => onYearChange(ano - 1)} className="p-1 rounded-md text-white/60 hover:text-white hover:bg-white/10"><ChevronLeft className="h-4 w-4" /></button>
+              <span className="text-sm font-semibold text-white min-w-[3rem] text-center">{ano}</span>
+              <button type="button" aria-label="Próximo ano" onClick={() => onYearChange(ano + 1)} className="p-1 rounded-md text-white/60 hover:text-white hover:bg-white/10"><ChevronRight className="h-4 w-4" /></button>
+            </div>
+          ) : (
+            <span className="text-sm font-medium text-white/60">{ano}</span>
+          )}
       </div>
       <div className="grid grid-cols-3 gap-2">
         {faturamento?.map((mes, index) => renderMonthCard(mes, index))}
