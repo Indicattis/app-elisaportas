@@ -145,7 +145,7 @@ export default function DashboardHome() {
   return (
     <div className="min-h-screen bg-black relative overflow-hidden">
       <AnimatedBreadcrumb
-        items={[{ label: "Home", onClick: () => navigate("/home") }, { label: "Dashboard" }]}
+        items={[{ label: "Home", path: "/home" }, { label: "Dashboard" }]}
         mounted={mounted}
       />
 
