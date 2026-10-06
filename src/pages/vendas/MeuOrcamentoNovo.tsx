@@ -80,6 +80,25 @@ export default function MeuOrcamentoNovo() {
       if (!portas.length && !avulsos.length) throw new Error('Adicione ao menos um item');
       if (!user?.id) throw new Error('Usuário não autenticado');
 
+      if (isEdit) {
+        const { data, error } = await supabase
+          .from('orcamentos')
+          .update({
+            cliente_nome: cliente.trim(),
+            valor_produto: totalPortas + totalAvulsos,
+            valor_pintura: valorPintura,
+            valor_instalacao: valorInstalacao,
+            valor_frete: totalFrete,
+            valor_total: total,
+            campos_personalizados: { portas, avulsos, frete } as any,
+          } as any)
+          .eq('id', editId!)
+          .select('id, numero_orcamento')
+          .single();
+        if (error) throw error;
+        return data;
+      }
+
       // próximo número
       const { data: maxRow } = await supabase
         .from('orcamentos')
