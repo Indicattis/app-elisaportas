@@ -46,12 +46,27 @@ export default function MapaPedidosVendas() {
   const { data = [], isLoading } = useMapaPedidosFinalizados();
   const [estado, setEstado] = useState("todos");
   const [vendedor, setVendedor] = useState("todos");
+  const [cidade, setCidade] = useState("todos");
 
   const estados = useMemo(() => Array.from(new Set(data.map((p) => p.estado).filter(Boolean))).sort() as string[], [data]);
   const vendedores = useMemo(() => Array.from(new Set(data.map((p) => p.vendedor).filter(Boolean))).sort() as string[], [data]);
 
+  const cidades = useMemo(() =>
+    Array.from(
+      new Set(
+        data
+          .filter((p) => estado === "todos" || p.estado === estado)
+          .map((p) => (p.cidade ? `${p.cidade} - ${p.estado}` : null))
+          .filter(Boolean)
+      )
+    ).sort() as string[],
+  [data, estado]);
+
   const filtrados = data.filter(
-    (p) => (estado === "todos" || p.estado === estado) && (vendedor === "todos" || p.vendedor === vendedor)
+    (p) =>
+      (estado === "todos" || p.estado === estado) &&
+      (vendedor === "todos" || p.vendedor === vendedor) &&
+      (cidade === "todos" || (p.cidade && `${p.cidade} - ${p.estado}` === cidade))
   );
   const noMapa = filtrados.filter((p) => p.lat != null && p.lng != null);
   const semLocal = filtrados.length - noMapa.length;
@@ -103,11 +118,18 @@ export default function MapaPedidosVendas() {
             )}
           </>
         )}
-        <Select value={estado} onValueChange={setEstado}>
+        <Select value={estado} onValueChange={(v) => { setEstado(v); setCidade("todos"); }}>
           <SelectTrigger className="bg-white/5 border-white/10"><SelectValue /></SelectTrigger>
           <SelectContent className="z-[1100]">
             <SelectItem value="todos">Todos os estados</SelectItem>
             {estados.map((e) => <SelectItem key={e} value={e}>{e}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={cidade} onValueChange={setCidade}>
+          <SelectTrigger className="bg-white/5 border-white/10"><SelectValue /></SelectTrigger>
+          <SelectContent className="z-[1100]">
+            <SelectItem value="todos">Todas as cidades</SelectItem>
+            {cidades.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={vendedor} onValueChange={setVendedor}>
