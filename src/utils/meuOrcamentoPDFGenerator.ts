@@ -1,6 +1,9 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+
+export interface KitItem { descricao: string; quantidade: number; unidade: string; categoria?: string }
 
 export interface CartPorta {
   uid: string;
@@ -14,6 +17,8 @@ export interface CartPorta {
   quantidade: number;
   preco_unitario: number;
   descricao: string;
+  kit_id?: string | null;
+  kit_itens?: KitItem[];
 }
 export interface CartAvulso {
   uid: string;
@@ -42,6 +47,7 @@ export interface MeuOrcamentoPDFData {
   vendedorFoto?: string;
   /** interno: foto já convertida em dataURL */
   vendedorFotoData?: string;
+  detalharItens?: boolean;
   portas: CartPorta[];
   avulsos: CartAvulso[];
   frete: CartFrete | null;
@@ -141,6 +147,19 @@ export function generateMeuOrcamentoPDF(data: MeuOrcamentoPDFData): jsPDF {
 
   const linhasItens: any[] = [];
   data.portas.forEach((p) => {
+    if (data.detalharItens && p.kit_itens && p.kit_itens.length) {
+      linhasItens.push([
+        { content: p.descricao, styles: { fontStyle: 'bold' } }, '—', 'Un', fmtBR(p.quantidade),
+        fmtBR(p.preco_unitario), '0,00', fmtBR(p.preco_unitario), fmtBR(p.preco_unitario * p.quantidade),
+      ]);
+      p.kit_itens.forEach((k) => {
+        linhasItens.push([
+          { content: `   • ${k.descricao}`, styles: { textColor: [80, 80, 80], fontSize: 8 } },
+          '', k.unidade || 'Un', fmtBR(Number(k.quantidade || 0) * p.quantidade), '', '', '', '',
+        ]);
+      });
+      return;
+    }
     linhasItens.push([
       p.descricao,
       '—',
@@ -371,8 +390,37 @@ async function urlToDataURL(url?: string): Promise<string | undefined> {
   }
 }
 
+export async function fetchKitItens(kitId: string): Promise<KitItem[]> {
+  const { data, error } = await supabase.rpc('get_kit_itens', { p_kit_id: kitId });
+  if (error) return [];
+  return (data || []).map((d: any) => ({ descricao: d.descricao, quantidade: Number(d.quantidade || 0), unidade: d.unidade || 'Un', categoria: d.categoria }));
+}
+
+export async function findKitId(largura: number, altura: number): Promise<string | null> {
+  const { data } = await supabase
+    .from('tabela_precos_portas')
+    .select('id,largura,altura')
+    .eq('ativo', true)
+    .gte('largura', largura)
+    .gte('altura', altura);
+  if (!data || !data.length) return null;
+  const best = [...data].sort((a: any, b: any) => (a.largura - largura + a.altura - altura) - (b.largura - largura + b.altura - altura))[0] as any;
+  return best?.id ?? null;
+}
+
+/** Garante kit_id e kit_itens em cada porta (para orçamentos antigos também) */
+export async function resolveKitItens(portas: CartPorta[]): Promise<CartPorta[]> {
+  return Promise.all(portas.map(async (p) => {
+    if (p.kit_itens && p.kit_itens.length) return p;
+    const kitId = p.kit_id || await findKitId(p.largura, p.altura);
+    if (!kitId) return p;
+    return { ...p, kit_id: kitId, kit_itens: await fetchKitItens(kitId) };
+  }));
+}
+
 async function prepare(data: MeuOrcamentoPDFData): Promise<MeuOrcamentoPDFData> {
-  return { ...data, vendedorFotoData: await urlToDataURL(data.vendedorFoto) };
+  const portas = data.detalharItens ? await resolveKitItens(data.portas) : data.portas;
+  return { ...data, portas, vendedorFotoData: await urlToDataURL(data.vendedorFoto) };
 }
 
 export async function downloadMeuOrcamentoPDF(data: MeuOrcamentoPDFData) {

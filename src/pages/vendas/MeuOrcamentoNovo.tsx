@@ -8,6 +8,7 @@ import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { DelayedParticles } from '@/components/DelayedParticles';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { AdicionarPortaDialog } from '@/components/vendas/orcamento-novo/AdicionarPortaDialog';
 import { AdicionarItemAvulsoDialog } from '@/components/vendas/orcamento-novo/AdicionarItemAvulsoDialog';
@@ -16,6 +17,7 @@ import { CarrinhoOrcamento } from '@/components/vendas/orcamento-novo/CarrinhoOr
 import {
   downloadMeuOrcamentoPDF,
   previewMeuOrcamentoPDF,
+  resolveKitItens,
   type CartPorta, type CartAvulso, type CartFrete,
 } from '@/utils/meuOrcamentoPDFGenerator';
 
@@ -37,6 +39,16 @@ export default function MeuOrcamentoNovo() {
   const [dlgAvulso, setDlgAvulso] = useState(false);
   const [dlgFrete, setDlgFrete] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [detalharItens, setDetalharItens] = useState(false);
+
+  // Ao ligar "Detalhar itens", busca os itens do kit de cada porta
+  useEffect(() => {
+    if (!detalharItens) return;
+    if (!portas.some(p => !p.kit_itens)) return;
+    let cancel = false;
+    resolveKitItens(portas).then(r => { if (!cancel) setPortas(r.map(p => ({ ...p, kit_itens: p.kit_itens || [] }))); });
+    return () => { cancel = true; };
+  }, [detalharItens, portas]);
 
   useEffect(() => { const t = setTimeout(() => setMounted(true), 50); return () => clearTimeout(t); }, []);
 
@@ -68,6 +80,7 @@ export default function MeuOrcamentoNovo() {
     setPortas(Array.isArray(cp.portas) ? cp.portas : []);
     setAvulsos(Array.isArray(cp.avulsos) ? cp.avulsos : []);
     setFrete(cp.frete || null);
+    setDetalharItens(!!cp.detalhar_itens);
     setLoaded(true);
   }, [orcamentoEdit, loaded, editId, navigate]);
 
@@ -97,7 +110,7 @@ export default function MeuOrcamentoNovo() {
             valor_instalacao: valorInstalacao,
             valor_frete: totalFrete,
             valor_total: total,
-            campos_personalizados: { portas, avulsos, frete } as any,
+            campos_personalizados: { portas, avulsos, frete, detalhar_itens: detalharItens } as any,
           } as any)
           .eq('id', editId!)
           .select('id, numero_orcamento')
@@ -129,7 +142,7 @@ export default function MeuOrcamentoNovo() {
           valor_total: total,
           status: 'pendente',
           numero_orcamento: proximo,
-          campos_personalizados: { portas, avulsos, frete } as any,
+          campos_personalizados: { portas, avulsos, frete, detalhar_itens: detalharItens } as any,
         }] as any)
         .select('id, numero_orcamento')
         .single();
@@ -147,7 +160,7 @@ export default function MeuOrcamentoNovo() {
         clienteCpf: clienteCpf.trim() || undefined,
         clienteCidade: clienteCidade.trim() || undefined,
         vendedor: userRole?.nome || 'Elisa Portas', vendedorFoto: userRole?.foto_perfil_url || undefined,
-        portas, avulsos, frete,
+        portas, avulsos, frete, detalharItens,
       });
       navigate(`/vendas/meus-orcamentos/${rec.id}`);
     },
@@ -214,8 +227,18 @@ export default function MeuOrcamentoNovo() {
               </div>
             </div>
 
+            {/* Detalhar itens */}
+            <div className="rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 p-4 flex items-center justify-between gap-3">
+              <div>
+                <div className="text-sm font-semibold text-white">Detalhar itens</div>
+                <div className="text-xs text-white/40">Mostra os itens do kit de cada porta no orçamento e no PDF</div>
+              </div>
+              <Switch checked={detalharItens} onCheckedChange={setDetalharItens} />
+            </div>
+
             {/* Carrinho */}
             <CarrinhoOrcamento
+              detalharItens={detalharItens}
               portas={portas} avulsos={avulsos} frete={frete}
               onRemovePorta={(uid) => setPortas(prev => prev.filter(p => p.uid !== uid))}
               onRemoveAvulso={(uid) => setAvulsos(prev => prev.filter(a => a.uid !== uid))}
@@ -248,7 +271,7 @@ export default function MeuOrcamentoNovo() {
                   numero: 0, data: new Date(), cliente: cliente.trim(),
                   clienteCpf: clienteCpf.trim() || undefined,
                   clienteCidade: clienteCidade.trim() || undefined,
-                  vendedor: userRole?.nome || 'Elisa Portas', vendedorFoto: userRole?.foto_perfil_url || undefined, portas, avulsos, frete,
+                  vendedor: userRole?.nome || 'Elisa Portas', vendedorFoto: userRole?.foto_perfil_url || undefined, portas, avulsos, frete, detalharItens,
                 });
               }}
               className="w-full bg-white/5 border-white/10 text-white hover:bg-white/10"
