@@ -61,193 +61,156 @@ const fmtCurrency = (n: number) => `R$ ${fmtBR(n)}`;
 export function generateMeuOrcamentoPDF(data: MeuOrcamentoPDFData): jsPDF {
   const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
   const pageW = pdf.internal.pageSize.getWidth();
-  const margin = 14;
+  const margin = 12;
+  const contentW = pageW - margin * 2;
+  const blue: [number, number, number] = [25, 118, 210];
+  const gray: [number, number, number] = [128, 128, 128];
+  const light: [number, number, number] = [245, 245, 245];
+  const pageBottom = 278;
+  const lastTableY = () => (pdf as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? 120;
 
-  // ===== Cabeçalho =====
   try {
-    pdf.addImage('/lovable-uploads/9f8b49f3-817e-40f0-87b0-856e0cbe536a.png', 'PNG', margin, 10, 55, 22);
+    pdf.addImage('/lovable-uploads/9f8b49f3-817e-40f0-87b0-856e0cbe536a.png', 'PNG', margin, 8, 62, 22);
   } catch {
-    pdf.setFont('helvetica', 'bold').setFontSize(22).text('ELISA', margin, 22);
+    pdf.setFont('helvetica', 'bold').setFontSize(24).text('ELISA', margin, 22);
     pdf.setFont('helvetica', 'normal').setFontSize(9).text('PORTAS DE ENROLAR', margin, 28);
   }
-
-  pdf.setFont('helvetica', 'normal').setFontSize(9).setTextColor(0, 0, 0);
-  const headerRight = [
-    'ELISA PORTAS LTDA',
-    'Rua Padre Elio Baron Toaldo, Nº 571',
-    '95055-652 - Caxias do Sul, RS',
-    'Telefone: (54) 99219-9382',
+  pdf.setFont('helvetica', 'normal').setFontSize(9).setTextColor(0);
+  [
+    'Rua Padre Elio Baron Toaldo, 571',
+    '95055652 - Caxias do Sul, RS',
     'CNPJ: 59.277.825/0001-09',
-  ];
-  headerRight.forEach((line, i) => {
-    pdf.text(line, pageW - margin, 14 + i * 5, { align: 'right' });
-  });
-
-  // ===== Título =====
-  let y = 50;
-  pdf.setFont('helvetica', 'bold').setFontSize(18);
-  pdf.text(`Proposta Nº ${String(data.numero).padStart(4, '0')}`, pageW / 2, y, { align: 'center' });
-  y += 12;
-
-  // ===== "Para" + caixa de número/data =====
-  pdf.setFont('helvetica', 'bold').setFontSize(10);
-  pdf.text('Para', margin, y);
-  y += 2;
-
-  const leftBoxW = 115;
-  const rightBoxX = margin + leftBoxW + 8;
-  const rightBoxW = pageW - margin - rightBoxX;
-
-  pdf.setDrawColor(180);
-  pdf.rect(margin, y, leftBoxW, 26);
+    'Telefone: (54) 99219-9382',
+  ].forEach((line, i) => pdf.text(line, pageW - margin - 58, 14 + i * 4.3));
+  pdf.setDrawColor(...gray).setLineWidth(0.2).line(margin, 33, pageW - margin, 33);
+  pdf.setFont('helvetica', 'bold').setFontSize(16).text('PROPOSTA COMERCIAL', margin, 43);
   pdf.setFont('helvetica', 'normal').setFontSize(10);
-  pdf.text(data.cliente || '—', margin + 3, y + 6);
-  pdf.setFontSize(8).setTextColor(90, 90, 90);
-  let extraY = y + 11;
-  if (data.clienteCpf) { pdf.text(`CPF/CNPJ: ${data.clienteCpf}`, margin + 3, extraY); extraY += 4.5; }
-  if (data.clienteCidade) { pdf.text(`Cidade: ${data.clienteCidade}`, margin + 3, extraY); }
-  pdf.setTextColor(0, 0, 0);
+  pdf.text(`Nº: ${data.numero}`, pageW - margin - 58, 39.5);
+  pdf.text(`Data: ${data.data.toLocaleDateString('pt-BR')}`, pageW - margin - 58, 45.5);
 
-  // Caixa de número/data com duas linhas
-  autoTable(pdf, {
-    startY: y,
-    margin: { left: rightBoxX, right: margin },
-    tableWidth: rightBoxW,
-    styles: { fontSize: 9, cellPadding: 2, lineColor: [180, 180, 180], lineWidth: 0.2 },
-    headStyles: { fillColor: [255, 255, 255] },
-    body: [
-      [{ content: 'Número da Proposta', styles: { fontStyle: 'bold' } }, String(data.numero).padStart(4, '0')],
-      [{ content: 'Data', styles: { fontStyle: 'bold' } }, data.data.toLocaleDateString('pt-BR')],
-    ],
-    theme: 'grid',
-  });
+  pdf.setFont('helvetica', 'bold').setFontSize(12).text('Dados do cliente', margin, 55);
+  pdf.setFont('helvetica', 'normal').setFontSize(9);
+  const nameLines = pdf.splitTextToSize(`Nome: ${data.cliente || 'Não informado'}`, contentW / 2 - 10);
+  const cityLines = pdf.splitTextToSize(`Cidade: ${data.clienteCidade || 'Não informado'}`, contentW / 2 - 10);
+  const boxH = Math.max(18, Math.max(nameLines.length, cityLines.length) * 4.2 + 12);
+  pdf.setFillColor(...light).rect(margin, 60, contentW, boxH, 'F');
+  pdf.text(nameLines, margin + 4, 66);
+  if (data.clienteCpf) pdf.text(`CPF/CNPJ: ${data.clienteCpf}`, margin + 4, 66 + nameLines.length * 4.2 + 2);
+  pdf.text(cityLines, pageW / 2, 66);
+  // O estado disponível pertence ao destino do frete, não ao cadastro do cliente.
 
-  y += 32;
-  pdf.setFont('helvetica', 'normal').setFontSize(10);
-  pdf.setFont('helvetica', 'bold').setFontSize(10);
-  pdf.text('Vendedor(a) responsável', margin, y);
-  y += 3;
-  let nomeX = margin;
+  let y = 60 + boxH + 9;
+  pdf.setFont('helvetica', 'bold').setFontSize(12).text('Atendente responsável', margin, y);
+  y += 4;
   if (data.vendedorFotoData) {
     try {
-      const fmt = data.vendedorFotoData.startsWith('data:image/png') ? 'PNG' : 'JPEG';
-      pdf.addImage(data.vendedorFotoData, fmt, margin, y, 12, 12);
-      nomeX = margin + 15;
-    } catch { /* ignora */ }
+      const imageType = data.vendedorFotoData.startsWith('data:image/png') ? 'PNG' : 'JPEG';
+      pdf.addImage(data.vendedorFotoData, imageType, margin, y, 14, 14);
+    } catch { /* Foto indisponível: mantém o nome do atendente. */ }
   }
-  pdf.setFont('helvetica', 'bold').setFontSize(9).text(data.vendedor || '—', nomeX, y + 5);
-  pdf.setFont('helvetica', 'normal').setFontSize(8).setTextColor(90, 90, 90).text('Departamento Comercial', nomeX, y + 9.5);
-  pdf.setTextColor(0, 0, 0);
-  y += 18;
-
-  // ===== Itens =====
+  const nomeX = data.vendedorFotoData ? margin + 19 : margin;
   pdf.setFont('helvetica', 'bold').setFontSize(10);
-  pdf.text('Itens da proposta comercial', margin, y);
-  y += 2;
+  const sellerLines = pdf.splitTextToSize(data.vendedor || 'Não informado', pageW - margin - nomeX);
+  pdf.text(sellerLines, nomeX, y + 4);
+  pdf.setFont('helvetica', 'normal').setFontSize(9).text('Departamento Comercial', nomeX, y + 4 + sellerLines.length * 4.2);
+  y += Math.max(22, sellerLines.length * 4.2 + 14);
+  pdf.setFont('helvetica', 'bold').setFontSize(12).text('Produtos e Serviços', margin, y);
 
   const linhasItens: any[] = [];
+  const quantity = (n: number) => n.toLocaleString('pt-BR', { maximumFractionDigits: 3 });
   data.portas.forEach((p) => {
-    if (data.detalharItens && p.kit_itens && p.kit_itens.length) {
-      linhasItens.push([
-        { content: p.descricao, styles: { fontStyle: 'bold' } }, '—', 'Un', fmtBR(p.quantidade),
-        fmtBR(p.preco_unitario), '0,00', fmtBR(p.preco_unitario), fmtBR(p.preco_unitario * p.quantidade),
-      ]);
-      p.kit_itens.forEach((k) => {
-        linhasItens.push([
-          { content: `   • ${k.descricao}`, styles: { textColor: [80, 80, 80], fontSize: 8 } },
-          '', k.unidade || 'Un', fmtBR(Number(k.quantidade || 0) * p.quantidade), '', '', '', '',
-        ]);
-      });
-      return;
-    }
-    linhasItens.push([
-      p.descricao,
-      '—',
-      'Un',
-      fmtBR(p.quantidade),
-      fmtBR(p.preco_unitario),
-      '0,00',
-      fmtBR(p.preco_unitario),
-      fmtBR(p.preco_unitario * p.quantidade),
-    ]);
+    linhasItens.push(['Porta de Enrolar', p.descricao, quantity(p.quantidade), fmtCurrency(p.preco_unitario), '-', fmtCurrency(p.preco_unitario * p.quantidade)]);
+    if (data.detalharItens) p.kit_itens?.forEach((k) => {
+      const style = { textColor: gray, fontSize: 8, cellPadding: { top: 1.5, bottom: 1.5, left: 3, right: 3 } };
+      linhasItens.push(['Kit', k.descricao, `${quantity(Number(k.quantidade || 0) * p.quantidade)} ${k.unidade || 'Un'}`, 'Incluso', '-', 'Incluso'].map(content => ({ content, styles: style })));
+    });
   });
-  data.avulsos.forEach((a) => {
-    linhasItens.push([
-      a.descricao,
-      '—',
-      a.unidade || 'Un',
-      fmtBR(a.quantidade),
-      fmtBR(a.preco_unitario),
-      '0,00',
-      fmtBR(a.preco_unitario),
-      fmtBR(a.preco_unitario * a.quantidade),
-    ]);
-  });
-
+  data.avulsos.forEach((a) => linhasItens.push(['Avulso', a.descricao, `${quantity(a.quantidade)} ${a.unidade || 'Un'}`, fmtCurrency(a.preco_unitario), '-', fmtCurrency(a.preco_unitario * a.quantidade)]));
   autoTable(pdf, {
-    startY: y,
-    margin: { left: margin, right: margin },
-    head: [['Descrição do produto/serviço', 'Código', 'Un', 'Qtd.', 'Preço lista.', 'Desconto %', 'Preço un.', 'Preço total']],
-    body: linhasItens.length ? linhasItens : [[{ content: 'Nenhum item', colSpan: 8, styles: { halign: 'center' } }]],
-    styles: { fontSize: 9, cellPadding: 2.2, lineColor: [180, 180, 180], lineWidth: 0.2 },
-    headStyles: { fillColor: [245, 245, 245], textColor: [0, 0, 0], fontStyle: 'bold' },
+    startY: y + 3,
+    margin: { left: margin, right: margin, bottom: 20, top: 15 },
+    head: [['Categoria', 'Produto', 'Un.', 'Valor', 'Desconto', 'Valor final']],
+    body: linhasItens.length ? linhasItens : [[{ content: 'Nenhum item', colSpan: 6, styles: { halign: 'center' } }]],
+    theme: 'striped',
+    styles: { fontSize: 9, cellPadding: 3, textColor: [70, 70, 70], overflow: 'linebreak' },
+    headStyles: { fillColor: blue, textColor: [255, 255, 255], fontStyle: 'bold', minCellHeight: 10 },
+    alternateRowStyles: { fillColor: light },
+    rowPageBreak: 'avoid',
     columnStyles: {
-      0: { cellWidth: 60 },
-      3: { halign: 'right' },
-      4: { halign: 'right' },
-      5: { halign: 'right' },
-      6: { halign: 'right' },
-      7: { halign: 'right' },
+      0: { cellWidth: 32 }, 1: { cellWidth: 58 }, 2: { cellWidth: 19, halign: 'center' },
+      3: { cellWidth: 27, halign: 'right' }, 4: { cellWidth: 24, halign: 'center' }, 5: { cellWidth: contentW - 160, halign: 'right' },
     },
-    theme: 'grid',
   });
-
-  // ===== Resumo =====
-  const totalPortas = data.portas.reduce((s, p) => s + p.preco_unitario * p.quantidade, 0);
-  const totalAvulsos = data.avulsos.reduce((s, a) => s + a.preco_unitario * a.quantidade, 0);
-  const totalItens = totalPortas + totalAvulsos;
+  const totalItens = data.portas.reduce((s, p) => s + p.preco_unitario * p.quantidade, 0) + data.avulsos.reduce((s, a) => s + a.preco_unitario * a.quantidade, 0);
   const frete = data.frete?.valor || 0;
   const totalProposta = totalItens + frete;
-  const somaQtds = data.portas.reduce((s, p) => s + p.quantidade, 0) + data.avulsos.reduce((s, a) => s + a.quantidade, 0);
-  const nItens = data.portas.length + data.avulsos.length;
+  y = lastTableY() + 12;
+  if (y + 49 > pageBottom) { pdf.addPage(); y = 18; }
+  pdf.setTextColor(0).setFont('helvetica', 'bold').setFontSize(12).text('RESUMO FINANCEIRO', margin, y);
+  y += 9;
+  pdf.setFont('helvetica', 'normal').setFontSize(10).text('Valor dos Produtos:', margin, y);
+  pdf.text(fmtCurrency(totalItens), pageW - margin, y, { align: 'right' });
+  y += 6;
+  pdf.text('Frete:', margin, y);
+  pdf.text(data.frete ? fmtCurrency(frete) : 'Não incluso', pageW - margin, y, { align: 'right' });
+  y += 7;
+  pdf.setDrawColor(...gray).setLineWidth(0.4).line(margin, y, pageW - margin, y);
+  y += 8;
+  pdf.setFont('helvetica', 'bold').setFontSize(16).text('TOTAL:', margin, y);
+  pdf.text(fmtCurrency(totalProposta), pageW - margin, y, { align: 'right' });
+  y += 9;
+  pdf.setFont('helvetica', 'normal').setFontSize(10);
+  const payment = pdf.splitTextToSize('Forma de Pagamento: Entrada de 70% + boleto 21 dias (valor à vista) ou até 10x no cartão sem juros.', contentW);
+  pdf.text(payment, margin, y);
+  y += payment.length * 4.5 + 1;
+  pdf.text('Previsão de Entrega: 30 a 60 dias úteis.', margin, y);
 
-  const afterItensY = (pdf as any).lastAutoTable.finalY + 6;
-
-  autoTable(pdf, {
-    startY: afterItensY,
-    margin: { left: margin, right: margin },
-    head: [['Nº de Itens', 'Soma das Qtdes', 'Total outros itens', 'Desconto total dos itens', 'Total dos itens', 'Frete', 'Total da proposta']],
-    body: [[
-      String(nItens).padStart(2, '0') + ',00',
-      String(somaQtds),
-      fmtBR(totalAvulsos),
-      '0,00',
-      fmtBR(totalItens),
-      fmtBR(frete),
-      fmtBR(totalProposta),
-    ]],
-    styles: { fontSize: 9, cellPadding: 2.2, halign: 'right', lineColor: [180, 180, 180], lineWidth: 0.2 },
-    headStyles: { fillColor: [245, 245, 245], textColor: [0, 0, 0], fontStyle: 'bold', halign: 'right' },
-    theme: 'grid',
+  // Desenho proporcional às medidas de cada porta, em página própria.
+  const totalPortas = data.portas.reduce((n, p) => n + p.quantidade, 0);
+  let doorNumber = 0;
+  data.portas.forEach(p => {
+    for (let i = 0; i < p.quantidade; i++) {
+      doorNumber++;
+      pdf.addPage();
+      pdf.setTextColor(0).setFont('helvetica', 'bold').setFontSize(14).text('DESENHO TÉCNICO', 15, 18);
+      pdf.setTextColor(...gray).setFont('helvetica', 'normal').setFontSize(10);
+      pdf.text(`Porta ${doorNumber} de ${totalPortas} - ${fmtBR(p.largura)}m x ${fmtBR(p.altura)}m`, 15, 25);
+      if (p.largura <= 0 || p.altura <= 0) continue;
+      const scale = Math.min(136 / p.largura, 136 / p.altura);
+      const w = p.largura * scale, h = p.altura * scale;
+      const x = (pageW - w) / 2, top = 66 + (136 - h) / 2;
+      pdf.setDrawColor(90).setLineWidth(0.3);
+      pdf.setFillColor(190, 190, 190).rect(x, top, w, 12, 'FD');
+      pdf.setFillColor(140, 140, 140).rect(x - 6, top + 12, 6, h - 12, 'FD');
+      pdf.rect(x + w, top + 12, 6, h - 12, 'FD');
+      pdf.setFillColor(232, 240, 252).rect(x, top + 12, w, h - 12, 'F');
+      pdf.setDrawColor(...blue).setLineWidth(0.5).line(x, top + 12, x + w, top + 12);
+      pdf.line(x, top + h, x + w, top + h);
+      pdf.setLineWidth(0.15);
+      for (let slat = top + 19; slat < top + h; slat += 7) pdf.line(x, slat, x + w, slat);
+      pdf.setTextColor(80).setFontSize(7).text('Rolo / eixo', pageW / 2, top + 7, { align: 'center' });
+      const bottom = top + h;
+      pdf.setDrawColor(50).setLineWidth(0.25);
+      pdf.line(x, bottom + 2, x, bottom + 14); pdf.line(x + w, bottom + 2, x + w, bottom + 14);
+      pdf.line(x, bottom + 12, x + w, bottom + 12);
+      pdf.setFillColor(90, 90, 90).triangle(x, bottom + 12, x + 3, bottom + 11, x + 3, bottom + 13, 'F');
+      pdf.triangle(x + w, bottom + 12, x + w - 3, bottom + 11, x + w - 3, bottom + 13, 'F');
+      const dimX = x + w + 16;
+      pdf.line(dimX - 8, top, dimX + 2, top); pdf.line(dimX - 8, bottom, dimX + 2, bottom);
+      pdf.line(dimX, top, dimX, bottom);
+      pdf.triangle(dimX, top, dimX - 1, top + 3, dimX + 1, top + 3, 'F');
+      pdf.triangle(dimX, bottom, dimX - 1, bottom - 3, dimX + 1, bottom - 3, 'F');
+      pdf.setTextColor(0).setFont('helvetica', 'bold').setFontSize(10);
+      pdf.text(`Largura: ${fmtBR(p.largura)} m`, pageW / 2, bottom + 9, { align: 'center' });
+      pdf.text(`Altura: ${fmtBR(p.altura)} m`, dimX + 4, top + h / 2 - 12, { angle: 90 });
+      pdf.setTextColor(...gray).setFont('helvetica', 'normal').setFontSize(9);
+      pdf.text(`Área: ${fmtBR(p.largura * p.altura)} m²`, pageW / 2, bottom + 20, { align: 'center' });
+    }
   });
 
-  let y2 = (pdf as any).lastAutoTable.finalY + 8;
-
-  // ===== Outros itens / Formas de pagamento =====
-  pdf.setFont('helvetica', 'bold').setFontSize(11);
-  pdf.text('Outros itens ou serviços', margin, y2);
-  y2 += 6;
-
-  pdf.setFont('helvetica', 'normal').setFontSize(10);
-  pdf.text('Formas de pagamento:', margin, y2); y2 += 5;
-  pdf.text('Entrada de 70% + boleto 21 dias, considerando valor à vista.', margin, y2); y2 += 5;
-  pdf.text(`Valor à vista (3% de desconto): ${fmtCurrency(totalProposta * 0.97)}`, margin, y2); y2 += 5;
-  pdf.text('Ou até 10x no cartão SEM JUROS.', margin, y2); y2 += 5;
-
-  // ===== Página 2: condições =====
   pdf.addPage();
   let py = 18;
-  pdf.setFont('helvetica', 'bold').setFontSize(14);
+  pdf.setTextColor(0).setFont('helvetica', 'bold').setFontSize(14);
   pdf.text('Condições comerciais', margin, py); py += 8;
 
   const sections: Array<{ title: string; lines: string[] }> = [
@@ -283,13 +246,26 @@ export function generateMeuOrcamentoPDF(data: MeuOrcamentoPDFData): jsPDF {
     },
   ];
 
-  pdf.setFontSize(9);
-  sections.forEach((s) => {
-    pdf.setFont('helvetica', 'bold').text(s.title, margin, py); py += 5;
-    pdf.setFont('helvetica', 'normal');
-    s.lines.forEach((l) => { pdf.text(l, margin, py); py += 4.5; });
-    py += 2;
-  });
+  const writeSections = (items: Array<{ title: string; lines: string[] }>) => {
+    items.forEach(section => {
+      pdf.setFont('helvetica', 'normal').setFontSize(8);
+      const paragraphs: string[] = [];
+      section.lines.forEach(line => {
+        if (/^(•|\d\.\d|NOBREAK:|CAIXA:|WIFI|0[45] -|\()/.test(line) || !paragraphs.length) {
+          paragraphs.push(line.trim());
+        } else {
+          const last = paragraphs.length - 1;
+          paragraphs[last] = `${paragraphs[last]} ${line.trim()}`;
+        }
+      });
+      const lines = paragraphs.flatMap(paragraph => pdf.splitTextToSize(paragraph, contentW));
+      if (py + 8 + lines.length * 3.5 > pageBottom) { pdf.addPage(); py = 18; }
+      pdf.setFont('helvetica', 'bold').setFontSize(9).text(section.title, margin, py); py += 5;
+      pdf.setFont('helvetica', 'normal').setFontSize(8).text(lines, margin, py);
+      py += lines.length * 3.5 + 4;
+    });
+  };
+  writeSections(sections);
 
   py += 2;
   pdf.setFont('helvetica', 'bold').setFontSize(13).text('TERMO DE GARANTIA', margin, py); py += 7;
@@ -341,20 +317,18 @@ export function generateMeuOrcamentoPDF(data: MeuOrcamentoPDFData): jsPDF {
     },
   ];
 
-  pdf.setFontSize(9);
-  garantia.forEach((s) => {
-    if (py > 270) { pdf.addPage(); py = 18; }
-    pdf.setFont('helvetica', 'bold').text(s.title, margin, py); py += 5;
-    pdf.setFont('helvetica', 'normal');
-    s.lines.forEach((l) => { pdf.text(l, margin, py); py += 4.5; });
-    py += 2;
-  });
+  writeSections(garantia);
 
   py += 4;
   pdf.setFont('helvetica', 'normal').setFontSize(10);
   pdf.text('Atenciosamente,', margin, py); py += 5;
   pdf.text('Departamento de vendas', margin, py);
 
+  for (let page = 1; page <= pdf.getNumberOfPages(); page++) {
+    pdf.setPage(page);
+    pdf.setFont('helvetica', 'normal').setFontSize(8).setTextColor(...gray);
+    pdf.text('Elisa Portas LTDA - A maior fábrica de portas de enrolar do Sul do País', margin, 289);
+  }
   return pdf;
 }
 
@@ -379,8 +353,9 @@ async function urlToDataURL(url?: string): Promise<string | undefined> {
         c.width = 200; c.height = 200;
         const ctx = c.getContext('2d');
         if (!ctx) return resolve(raw);
+        ctx.beginPath(); ctx.arc(100, 100, 100, 0, Math.PI * 2); ctx.clip();
         ctx.drawImage(img, (img.width - size) / 2, (img.height - size) / 2, size, size, 0, 0, 200, 200);
-        resolve(c.toDataURL('image/jpeg', 0.9));
+        resolve(c.toDataURL('image/png'));
       };
       img.onerror = () => resolve(undefined);
       img.src = raw;
