@@ -2,6 +2,7 @@ import { DoorOpen, Package, Truck, Trash2 } from 'lucide-react';
 import type { CartPorta, CartAvulso, CartFrete } from '@/utils/meuOrcamentoPDFGenerator';
 
 interface Props {
+  detalharItens?: boolean;
   portas: CartPorta[];
   avulsos: CartAvulso[];
   frete: CartFrete | null;
@@ -12,7 +13,7 @@ interface Props {
 
 const fmt = (n: number) => `R$ ${n.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
-export function CarrinhoOrcamento({ portas, avulsos, frete, onRemovePorta, onRemoveAvulso, onRemoveFrete }: Props) {
+export function CarrinhoOrcamento({ detalharItens, portas, avulsos, frete, onRemovePorta, onRemoveAvulso, onRemoveFrete }: Props) {
   const vazio = !portas.length && !avulsos.length && !frete;
   if (vazio) {
     return (
@@ -31,6 +32,20 @@ export function CarrinhoOrcamento({ portas, avulsos, frete, onRemovePorta, onRem
               <div className="flex-1 min-w-0">
                 <div className="text-sm text-white truncate">{p.descricao}</div>
                 <div className="text-[11px] text-white/40">Qtd {p.quantidade} · {fmt(p.preco_unitario)} cada</div>
+                {detalharItens && (
+                  p.kit_itens === undefined
+                    ? <div className="text-[11px] text-white/30 mt-1">Carregando itens do kit…</div>
+                    : p.kit_itens.length === 0
+                      ? <div className="text-[11px] text-white/30 mt-1">Sem kit correspondente</div>
+                      : <ul className="mt-1 space-y-0.5">
+                          {p.kit_itens.map((k, i) => (
+                            <li key={i} className="text-[11px] text-white/60 flex justify-between gap-2">
+                              <span className="truncate">• {k.descricao}</span>
+                              <span className="text-white/40 shrink-0">{(k.quantidade * p.quantidade).toLocaleString('pt-BR')} {k.unidade}</span>
+                            </li>
+                          ))}
+                        </ul>
+                )}
               </div>
               <div className="text-sm font-semibold text-white">{fmt(p.preco_unitario * p.quantidade)}</div>
             </Row>

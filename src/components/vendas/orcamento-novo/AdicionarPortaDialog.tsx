@@ -92,6 +92,7 @@ export function AdicionarPortaDialog({ open, onOpenChange, onAdd }: Props) {
       quantidade: qtd,
       preco_unitario: precoUnit,
       descricao: desc,
+      kit_id: match.id,
     });
     onOpenChange(false);
   };

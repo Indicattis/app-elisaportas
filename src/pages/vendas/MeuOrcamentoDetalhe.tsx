@@ -54,7 +54,7 @@ export default function MeuOrcamentoDetalhe() {
       cliente: data.cliente_nome || '—',
       clienteCpf: data.cliente_cpf || undefined,
       clienteCidade: data.cliente_cidade || undefined,
-      vendedor: userRole?.nome || 'Elisa Portas', vendedorFoto: userRole?.foto_perfil_url || undefined,
+      vendedor: userRole?.nome || 'Elisa Portas', vendedorFoto: userRole?.foto_perfil_url || undefined, detalharItens: !!cp.detalhar_itens,
       portas, avulsos, frete,
     });
   };
