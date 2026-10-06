@@ -27,13 +27,21 @@ export function AdicionarFreteDialog({ open, onOpenChange, onAdd }: Props) {
     queryKey: ['fretes-cidades-ativos'],
     enabled: open,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('frete_cidades')
-        .select('id,estado,cidade,valor_frete')
-        .eq('ativo', true)
-        .order('estado').order('cidade');
-      if (error) throw error;
-      return data || [];
+      // Busca paginada: são mais de 1000 cidades (limite por consulta)
+      const all: any[] = [];
+      const page = 1000;
+      for (let from = 0; ; from += page) {
+        const { data, error } = await supabase
+          .from('frete_cidades')
+          .select('id,estado,cidade,valor_frete')
+          .eq('ativo', true)
+          .order('estado').order('cidade').order('id')
+          .range(from, from + page - 1);
+        if (error) throw error;
+        all.push(...(data || []));
+        if (!data || data.length < page) break;
+      }
+      return all;
     },
   });
 
