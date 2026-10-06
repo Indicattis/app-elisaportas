@@ -27,6 +27,8 @@ export default function MeuOrcamentoNovo() {
   const { user, userRole } = useAuth();
   const [mounted, setMounted] = useState(false);
   const [cliente, setCliente] = useState('');
+  const [clienteCpf, setClienteCpf] = useState('');
+  const [clienteCidade, setClienteCidade] = useState('');
   const [portas, setPortas] = useState<CartPorta[]>([]);
   const [avulsos, setAvulsos] = useState<CartAvulso[]>([]);
   const [frete, setFrete] = useState<CartFrete | null>(null);
@@ -43,7 +45,7 @@ export default function MeuOrcamentoNovo() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('orcamentos')
-        .select('id, numero_orcamento, cliente_nome, status, campos_personalizados')
+        .select('id, numero_orcamento, cliente_nome, cliente_cpf, cliente_cidade, status, campos_personalizados')
         .eq('id', editId!)
         .maybeSingle();
       if (error) throw error;
@@ -60,6 +62,8 @@ export default function MeuOrcamentoNovo() {
     }
     const cp: any = orcamentoEdit.campos_personalizados || {};
     setCliente(orcamentoEdit.cliente_nome || '');
+    setClienteCpf(orcamentoEdit.cliente_cpf || '');
+    setClienteCidade(orcamentoEdit.cliente_cidade || '');
     setPortas(Array.isArray(cp.portas) ? cp.portas : []);
     setAvulsos(Array.isArray(cp.avulsos) ? cp.avulsos : []);
     setFrete(cp.frete || null);
