@@ -46,12 +46,27 @@ export default function MapaPedidosVendas() {
   const { data = [], isLoading } = useMapaPedidosFinalizados();
   const [estado, setEstado] = useState("todos");
   const [vendedor, setVendedor] = useState("todos");
+  const [cidade, setCidade] = useState("todos");
 
   const estados = useMemo(() => Array.from(new Set(data.map((p) => p.estado).filter(Boolean))).sort() as string[], [data]);
   const vendedores = useMemo(() => Array.from(new Set(data.map((p) => p.vendedor).filter(Boolean))).sort() as string[], [data]);
 
+  const cidades = useMemo(() =>
+    Array.from(
+      new Set(
+        data
+          .filter((p) => estado === "todos" || p.estado === estado)
+          .map((p) => (p.cidade ? `${p.cidade} - ${p.estado}` : null))
+          .filter(Boolean)
+      )
+    ).sort() as string[],
+  [data, estado]);
+
   const filtrados = data.filter(
-    (p) => (estado === "todos" || p.estado === estado) && (vendedor === "todos" || p.vendedor === vendedor)
+    (p) =>
+      (estado === "todos" || p.estado === estado) &&
+      (vendedor === "todos" || p.vendedor === vendedor) &&
+      (cidade === "todos" || (p.cidade && `${p.cidade} - ${p.estado}` === cidade))
   );
   const noMapa = filtrados.filter((p) => p.lat != null && p.lng != null);
   const semLocal = filtrados.length - noMapa.length;
