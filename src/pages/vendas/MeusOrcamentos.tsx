@@ -311,7 +311,7 @@ export default function MeusOrcamentos() {
 
       {/* Lista de orçamentos */}
       <div className="space-y-3">
-        {isLoading ? (
+        {(isLoading || (buscando && isLoadingBusca)) ? (
           Array.from({ length: 5 }).map((_, i) => (
             <Skeleton key={i} className="h-20 bg-white/5" />
           ))
@@ -340,12 +340,13 @@ export default function MeusOrcamentos() {
                   </div>
                 </div>
 
-                {/* Nome + data */}
+                {/* Nome + nº + data */}
                 <div className="min-w-0 w-44 sm:w-52">
                   <h4 className="text-white font-semibold truncate text-sm">
                     {orcamento.cliente_nome || 'Cliente não informado'}
                   </h4>
                   <p className="text-[11px] text-white/50 truncate">
+                    {orcamento.numero_orcamento != null ? `Nº ${orcamento.numero_orcamento} · ` : ''}
                     {format(new Date(orcamento.created_at), "dd 'de' MMM", { locale: ptBR })} · {statusInfo.label}
                   </p>
                 </div>
