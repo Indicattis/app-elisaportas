@@ -381,17 +381,13 @@ export async function downloadMeuOrcamentoPDF(data: MeuOrcamentoPDFData) {
 }
 
 export async function previewMeuOrcamentoPDF(data: MeuOrcamentoPDFData) {
+  // Abre a aba já no clique para não ser bloqueada pelo navegador
+  const win = window.open('', '_blank');
   const pdf = generateMeuOrcamentoPDF(await prepare(data));
   const url = pdf.output('bloburl').toString();
-  const win = window.open(url, '_blank');
-  if (!win) {
-    // Popup bloqueado: abre aba em branco com iframe, sem salvar o arquivo
-    const w = window.open('', '_blank');
-    if (w) {
-      w.document.write(`<iframe src="${url}" style="border:0;width:100%;height:100%;"></iframe>`);
-      w.document.title = 'Pré-visualização do Orçamento';
-    } else {
-      toast.error('Permita pop-ups para visualizar o PDF');
-    }
+  if (win) {
+    win.location.href = url;
+  } else {
+    toast.error('Permita pop-ups para visualizar o PDF');
   }
 }
