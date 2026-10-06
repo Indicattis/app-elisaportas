@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Plus, FileText, Clock, CheckCircle, XCircle, AlertCircle, FileSignature, ArrowRight, DollarSign } from 'lucide-react';
+import { Plus, FileText, Clock, CheckCircle, XCircle, AlertCircle, FileSignature, ArrowRight, DollarSign, Pencil } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
@@ -312,6 +312,18 @@ export default function MeusOrcamentos() {
                     />
                   </div>
                 </div>
+
+                {/* Editar (apenas pendente/aprovado) */}
+                {['pendente', 'aprovado'].includes(orcamento.status) && (
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); navigate(`/vendas/meus-orcamentos/${orcamento.id}/editar`); }}
+                    title="Editar orçamento"
+                    className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full border border-white/15 bg-white/5 text-white/70 hover:bg-white/15 hover:text-white transition"
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                  </button>
+                )}
 
                 {/* Badge de contratos */}
                 <button
