@@ -13,6 +13,23 @@ function kitTotal(i: ItemTabelaPreco) {
   return Number(i.valor_porta || 0) + Number(i.valor_instalacao || 0) + Number(i.valor_pintura || 0);
 }
 
+export type KitLucros = {
+  lucroPorta: number | null;
+  lucroInstalacao: number | null;
+  lucroPintura: number | null;
+};
+
+export type KitLucrosMap = Record<string, KitLucros>;
+
+const fmtBRLorDash = (n: number | null) => (n === null ? "-" : fmtBRL(n));
+
+function lucroTotal(l: KitLucros | undefined): number | null {
+  if (!l) return null;
+  const parts = [l.lucroPorta, l.lucroInstalacao, l.lucroPintura].filter((v): v is number => v !== null);
+  if (parts.length === 0) return null;
+  return parts.reduce((a, b) => a + b, 0);
+}
+
 function agruparPorCategoria(itens: CustoItem[]) {
   const map = new Map<string, CustoItem[]>();
   itens.forEach((it) => {
