@@ -40,7 +40,7 @@ function agruparPorCategoria(itens: CustoItem[]) {
   return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b, "pt-BR"));
 }
 
-export function exportEstrategiaPrecosPDF(kits: ItemTabelaPreco[], itensAvulso: CustoItem[] = []) {
+export function exportEstrategiaPrecosPDF(kits: ItemTabelaPreco[], itensAvulso: CustoItem[] = [], lucros: KitLucrosMap = {}) {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
   const data = new Date().toLocaleDateString("pt-BR");
 
@@ -57,27 +57,38 @@ export function exportEstrategiaPrecosPDF(kits: ItemTabelaPreco[], itensAvulso: 
 
   autoTable(doc, {
     startY: 32,
-    head: [["#", "Descrição", "L (m)", "A (m)", "Porta", "Instalação", "Pintura", "Total"]],
-    body: kits.map((k, idx) => [
-      String(idx + 1),
-      k.descricao,
-      String(k.largura ?? ""),
-      String(k.altura ?? ""),
-      fmtBRL(k.valor_porta),
-      fmtBRL(k.valor_instalacao),
-      fmtBRL(k.valor_pintura),
-      fmtBRL(kitTotal(k)),
-    ]),
-    styles: { fontSize: 9, cellPadding: 2 },
-    headStyles: { fillColor: [30, 41, 59] },
+    head: [["#", "Descrição", "L (m)", "A (m)", "Porta", "Instalação", "Pintura", "Total", "Lucro Porta", "Lucro Inst.", "Lucro Pint.", "Lucro Total"]],
+    body: kits.map((k, idx) => {
+      const l = lucros[k.id];
+      return [
+        String(idx + 1),
+        k.descricao,
+        String(k.largura ?? ""),
+        String(k.altura ?? ""),
+        fmtBRL(k.valor_porta),
+        fmtBRL(k.valor_instalacao),
+        fmtBRL(k.valor_pintura),
+        fmtBRL(kitTotal(k)),
+        fmtBRLorDash(l?.lucroPorta ?? null),
+        fmtBRLorDash(l?.lucroInstalacao ?? null),
+        fmtBRLorDash(l?.lucroPintura ?? null),
+        fmtBRLorDash(lucroTotal(l)),
+      ];
+    }),
+    styles: { fontSize: 8, cellPadding: 2 },
+    headStyles: { fillColor: [30, 41, 59], fontSize: 8 },
     columnStyles: {
-      0: { halign: "center", cellWidth: 12 },
-      2: { halign: "center", cellWidth: 18 },
-      3: { halign: "center", cellWidth: 18 },
+      0: { halign: "center", cellWidth: 10 },
+      2: { halign: "center", cellWidth: 14 },
+      3: { halign: "center", cellWidth: 14 },
       4: { halign: "right" },
       5: { halign: "right" },
       6: { halign: "right" },
       7: { halign: "right", fontStyle: "bold" },
+      8: { halign: "right" },
+      9: { halign: "right" },
+      10: { halign: "right" },
+      11: { halign: "right", fontStyle: "bold" },
     },
   });
 
