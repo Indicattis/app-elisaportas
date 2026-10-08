@@ -17,7 +17,7 @@ import { BulkUploadTabelaPrecos } from "@/components/tabela-precos/BulkUploadTab
 import { useKitsMontagemResumo } from "@/hooks/useKitMontagem";
 import { useCustosItensPadroes, useCustosItens } from "@/hooks/useCustosItens";
 import { useConfigLucro } from "@/hooks/useConfigLucro";
-import { exportEstrategiaPrecosPDF, exportEstrategiaPrecosExcel } from "@/utils/estrategiaPrecosExport";
+import { exportEstrategiaPrecosPDF, exportEstrategiaPrecosExcel, type KitLucrosMap } from "@/utils/estrategiaPrecosExport";
 import { useQueryClient } from "@tanstack/react-query";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import {
@@ -102,11 +102,19 @@ export default function TabelaPrecos({
         toast.error('Nada para exportar');
         return;
       }
+      const lucros: KitLucrosMap = {};
+      for (const item of itens || []) {
+        const lucroPorta = getLucroEfetivo(item).value;
+        const lucroPintura = getPinturaLucro(item)?.valor ?? null;
+        const valorInstal = Number(item.valor_instalacao || 0);
+        const lucroInstal = valorInstal > 0 ? valorInstal * (instalLucroPct / 100) : null;
+        lucros[item.id] = { lucroPorta, lucroInstalacao: lucroInstal, lucroPintura };
+      }
       if (kind === 'pdf') {
-        exportEstrategiaPrecosPDF(itens || [], itensAvulso);
+        exportEstrategiaPrecosPDF(itens || [], itensAvulso, lucros);
         toast.success('PDF gerado');
       } else {
-        exportEstrategiaPrecosExcel(itens || [], itensAvulso);
+        exportEstrategiaPrecosExcel(itens || [], itensAvulso, lucros);
         toast.success('Excel gerado');
       }
     } catch (e: any) {

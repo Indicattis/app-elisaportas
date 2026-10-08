@@ -13,6 +13,23 @@ function kitTotal(i: ItemTabelaPreco) {
   return Number(i.valor_porta || 0) + Number(i.valor_instalacao || 0) + Number(i.valor_pintura || 0);
 }
 
+export type KitLucros = {
+  lucroPorta: number | null;
+  lucroInstalacao: number | null;
+  lucroPintura: number | null;
+};
+
+export type KitLucrosMap = Record<string, KitLucros>;
+
+const fmtBRLorDash = (n: number | null) => (n === null ? "-" : fmtBRL(n));
+
+function lucroTotal(l: KitLucros | undefined): number | null {
+  if (!l) return null;
+  const parts = [l.lucroPorta, l.lucroInstalacao, l.lucroPintura].filter((v): v is number => v !== null);
+  if (parts.length === 0) return null;
+  return parts.reduce((a, b) => a + b, 0);
+}
+
 function agruparPorCategoria(itens: CustoItem[]) {
   const map = new Map<string, CustoItem[]>();
   itens.forEach((it) => {
@@ -23,7 +40,7 @@ function agruparPorCategoria(itens: CustoItem[]) {
   return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b, "pt-BR"));
 }
 
-export function exportEstrategiaPrecosPDF(kits: ItemTabelaPreco[], itensAvulso: CustoItem[] = []) {
+export function exportEstrategiaPrecosPDF(kits: ItemTabelaPreco[], itensAvulso: CustoItem[] = [], lucros: KitLucrosMap = {}) {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
   const data = new Date().toLocaleDateString("pt-BR");
 
@@ -40,27 +57,38 @@ export function exportEstrategiaPrecosPDF(kits: ItemTabelaPreco[], itensAvulso: 
 
   autoTable(doc, {
     startY: 32,
-    head: [["#", "Descrição", "L (m)", "A (m)", "Porta", "Instalação", "Pintura", "Total"]],
-    body: kits.map((k, idx) => [
-      String(idx + 1),
-      k.descricao,
-      String(k.largura ?? ""),
-      String(k.altura ?? ""),
-      fmtBRL(k.valor_porta),
-      fmtBRL(k.valor_instalacao),
-      fmtBRL(k.valor_pintura),
-      fmtBRL(kitTotal(k)),
-    ]),
-    styles: { fontSize: 9, cellPadding: 2 },
-    headStyles: { fillColor: [30, 41, 59] },
+    head: [["#", "Descrição", "L (m)", "A (m)", "Porta", "Instalação", "Pintura", "Total", "Lucro Porta", "Lucro Inst.", "Lucro Pint.", "Lucro Total"]],
+    body: kits.map((k, idx) => {
+      const l = lucros[k.id];
+      return [
+        String(idx + 1),
+        k.descricao,
+        String(k.largura ?? ""),
+        String(k.altura ?? ""),
+        fmtBRL(k.valor_porta),
+        fmtBRL(k.valor_instalacao),
+        fmtBRL(k.valor_pintura),
+        fmtBRL(kitTotal(k)),
+        fmtBRLorDash(l?.lucroPorta ?? null),
+        fmtBRLorDash(l?.lucroInstalacao ?? null),
+        fmtBRLorDash(l?.lucroPintura ?? null),
+        fmtBRLorDash(lucroTotal(l)),
+      ];
+    }),
+    styles: { fontSize: 8, cellPadding: 2 },
+    headStyles: { fillColor: [30, 41, 59], fontSize: 8 },
     columnStyles: {
-      0: { halign: "center", cellWidth: 12 },
-      2: { halign: "center", cellWidth: 18 },
-      3: { halign: "center", cellWidth: 18 },
+      0: { halign: "center", cellWidth: 10 },
+      2: { halign: "center", cellWidth: 14 },
+      3: { halign: "center", cellWidth: 14 },
       4: { halign: "right" },
       5: { halign: "right" },
       6: { halign: "right" },
       7: { halign: "right", fontStyle: "bold" },
+      8: { halign: "right" },
+      9: { halign: "right" },
+      10: { halign: "right" },
+      11: { halign: "right", fontStyle: "bold" },
     },
   });
 
@@ -113,24 +141,31 @@ export function exportEstrategiaPrecosPDF(kits: ItemTabelaPreco[], itensAvulso: 
   doc.save(`tabela-precos-${hoje()}.pdf`);
 }
 
-export function exportEstrategiaPrecosExcel(kits: ItemTabelaPreco[], itensAvulso: CustoItem[] = []) {
+export function exportEstrategiaPrecosExcel(kits: ItemTabelaPreco[], itensAvulso: CustoItem[] = [], lucros: KitLucrosMap = {}) {
   const wb = XLSX.utils.book_new();
 
   const kitsRows = [
-    ["#", "Descrição", "Largura (m)", "Altura (m)", "Porta", "Instalação", "Pintura", "Total"],
-    ...kits.map((k, idx) => [
-      idx + 1,
-      k.descricao,
-      Number(k.largura || 0),
-      Number(k.altura || 0),
-      Number(k.valor_porta || 0),
-      Number(k.valor_instalacao || 0),
-      Number(k.valor_pintura || 0),
-      kitTotal(k),
-    ]),
+    ["#", "Descrição", "Largura (m)", "Altura (m)", "Porta", "Instalação", "Pintura", "Total", "Lucro Porta", "Lucro Instalação", "Lucro Pintura", "Lucro Total"],
+    ...kits.map((k, idx) => {
+      const l = lucros[k.id];
+      return [
+        idx + 1,
+        k.descricao,
+        Number(k.largura || 0),
+        Number(k.altura || 0),
+        Number(k.valor_porta || 0),
+        Number(k.valor_instalacao || 0),
+        Number(k.valor_pintura || 0),
+        kitTotal(k),
+        l?.lucroPorta ?? null,
+        l?.lucroInstalacao ?? null,
+        l?.lucroPintura ?? null,
+        lucroTotal(l),
+      ];
+    }),
   ];
   const wsKits = XLSX.utils.aoa_to_sheet(kitsRows);
-  wsKits["!cols"] = [{ wch: 5 }, { wch: 40 }, { wch: 12 }, { wch: 12 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 14 }];
+  wsKits["!cols"] = [{ wch: 5 }, { wch: 40 }, { wch: 12 }, { wch: 12 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 16 }, { wch: 14 }, { wch: 14 }];
   XLSX.utils.book_append_sheet(wb, wsKits, "Kits");
 
   if (itensAvulso.length > 0) {
