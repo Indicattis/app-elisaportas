@@ -141,24 +141,31 @@ export function exportEstrategiaPrecosPDF(kits: ItemTabelaPreco[], itensAvulso: 
   doc.save(`tabela-precos-${hoje()}.pdf`);
 }
 
-export function exportEstrategiaPrecosExcel(kits: ItemTabelaPreco[], itensAvulso: CustoItem[] = []) {
+export function exportEstrategiaPrecosExcel(kits: ItemTabelaPreco[], itensAvulso: CustoItem[] = [], lucros: KitLucrosMap = {}) {
   const wb = XLSX.utils.book_new();
 
   const kitsRows = [
-    ["#", "Descrição", "Largura (m)", "Altura (m)", "Porta", "Instalação", "Pintura", "Total"],
-    ...kits.map((k, idx) => [
-      idx + 1,
-      k.descricao,
-      Number(k.largura || 0),
-      Number(k.altura || 0),
-      Number(k.valor_porta || 0),
-      Number(k.valor_instalacao || 0),
-      Number(k.valor_pintura || 0),
-      kitTotal(k),
-    ]),
+    ["#", "Descrição", "Largura (m)", "Altura (m)", "Porta", "Instalação", "Pintura", "Total", "Lucro Porta", "Lucro Instalação", "Lucro Pintura", "Lucro Total"],
+    ...kits.map((k, idx) => {
+      const l = lucros[k.id];
+      return [
+        idx + 1,
+        k.descricao,
+        Number(k.largura || 0),
+        Number(k.altura || 0),
+        Number(k.valor_porta || 0),
+        Number(k.valor_instalacao || 0),
+        Number(k.valor_pintura || 0),
+        kitTotal(k),
+        l?.lucroPorta ?? null,
+        l?.lucroInstalacao ?? null,
+        l?.lucroPintura ?? null,
+        lucroTotal(l),
+      ];
+    }),
   ];
   const wsKits = XLSX.utils.aoa_to_sheet(kitsRows);
-  wsKits["!cols"] = [{ wch: 5 }, { wch: 40 }, { wch: 12 }, { wch: 12 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 14 }];
+  wsKits["!cols"] = [{ wch: 5 }, { wch: 40 }, { wch: 12 }, { wch: 12 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 16 }, { wch: 14 }, { wch: 14 }];
   XLSX.utils.book_append_sheet(wb, wsKits, "Kits");
 
   if (itensAvulso.length > 0) {
