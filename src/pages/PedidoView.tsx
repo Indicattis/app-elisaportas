@@ -264,9 +264,7 @@ export default function PedidoView() {
           responsavel_id,
           capturada_em,
           data_conclusao,
-          tempo_conclusao_segundos,
-          capturado_por:admin_users!ordens_perfiladeira_created_by_fkey(nome, foto_perfil_url),
-          concluido_por:admin_users!ordens_perfiladeira_responsavel_id_fkey(nome, foto_perfil_url)
+          tempo_conclusao_segundos
         `)
         .eq("pedido_id", id);
       
@@ -280,9 +278,7 @@ export default function PedidoView() {
           responsavel_id,
           capturada_em,
           data_conclusao,
-          tempo_conclusao_segundos,
-          capturado_por:admin_users!ordens_separacao_created_by_fkey(nome, foto_perfil_url),
-          concluido_por:admin_users!ordens_separacao_responsavel_id_fkey(nome, foto_perfil_url)
+          tempo_conclusao_segundos
         `)
         .eq("pedido_id", id);
       
@@ -296,9 +292,7 @@ export default function PedidoView() {
           responsavel_id,
           capturada_em,
           data_conclusao,
-          tempo_conclusao_segundos,
-          capturado_por:admin_users!ordens_soldagem_created_by_fkey(nome, foto_perfil_url),
-          concluido_por:admin_users!ordens_soldagem_responsavel_id_fkey(nome, foto_perfil_url)
+          tempo_conclusao_segundos
         `)
         .eq("pedido_id", id);
       
@@ -312,9 +306,7 @@ export default function PedidoView() {
           responsavel_id,
           capturada_em,
           data_conclusao,
-          tempo_conclusao_segundos,
-          capturado_por:admin_users!ordens_pintura_created_by_fkey(nome, foto_perfil_url),
-          concluido_por:admin_users!ordens_pintura_responsavel_id_fkey(nome, foto_perfil_url)
+          tempo_conclusao_segundos
         `)
         .eq("pedido_id", id);
       
@@ -349,6 +341,21 @@ export default function PedidoView() {
         `)
         .eq("pedido_id", id);
       
+      // Resolver nomes dos usuários (tabelas sem FK para admin_users)
+      {
+        const semFk = [ordensPerfiladeira, ordensSeparacao, ordensSoldagem, ordensPintura];
+        const ids = new Set<string>();
+        semFk.forEach(l => (l || []).forEach((o: any) => { if (o.created_by) ids.add(o.created_by); if (o.responsavel_id) ids.add(o.responsavel_id); }));
+        if (ids.size) {
+          const { data: users } = await supabase.from("admin_users").select("user_id, nome, foto_perfil_url").in("user_id", Array.from(ids));
+          const map = new Map((users || []).map((u: any) => [u.user_id, { nome: u.nome, foto_perfil_url: u.foto_perfil_url }]));
+          semFk.forEach(l => (l || []).forEach((o: any) => {
+            o.capturado_por = o.created_by ? map.get(o.created_by) || null : null;
+            o.concluido_por = o.responsavel_id ? map.get(o.responsavel_id) || null : null;
+          }));
+        }
+      }
+
       // Ordens instalacao removidas - agora usa tabela instalacoes diretamente
 
       if (ordensPerfiladeira) {
