@@ -478,7 +478,7 @@ export const PedidoLinhasEditor = ({
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-80 p-0" align="start">
-                  <Command>
+                  <Command shouldFilter={false}>
                     <CommandInput 
                       placeholder="Buscar produto..." 
                       value={buscaEdicao}
@@ -497,7 +497,7 @@ export const PedidoLinhasEditor = ({
                             .map((produto) => (
                               <CommandItem
                                 key={produto.id}
-                                value={produto.id}
+                                value={produto.nome_produto}
                                 onSelect={() => {
                                   setDadosEdicao({...dadosEdicao, estoque_id: produto.id});
                                   setPopoverEdicaoAberto(false);
