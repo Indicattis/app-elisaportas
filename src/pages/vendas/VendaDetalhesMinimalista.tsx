@@ -8,7 +8,8 @@ import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { User, MapPin, Calendar, DollarSign, FileText, History, Edit, Package } from "lucide-react";
+import { User, MapPin, Calendar, DollarSign, FileText, History, Edit, Package, Paperclip, ExternalLink } from "lucide-react";
+import { ComprovanteUploadModal } from "@/components/vendas/ComprovanteUploadModal";
 import type { Tables } from "@/integrations/supabase/types";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 
@@ -68,6 +69,7 @@ export default function VendaDetalhesMinimalista() {
   const [historico, setHistorico] = useState<HistoricoItem[]>([]);
   const [produtos, setProdutos] = useState<ProdutoVendaWithRelations[]>([]);
   const [loading, setLoading] = useState(true);
+  const [comprovanteOpen, setComprovanteOpen] = useState(false);
 
   const { isAdmin } = useAuth();
   const { toast } = useToast();
@@ -344,6 +346,49 @@ export default function VendaDetalhesMinimalista() {
           )}
         </div>
 
+        {/* Comprovante de Pagamento */}
+        <Card className={cardClass}>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-white">
+              <Paperclip className="w-4 h-4" />
+              Comprovante de Pagamento
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {venda.comprovante_url ? (
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center gap-2 border border-primary/10 rounded-lg p-3 bg-primary/5 flex-1 min-w-[200px]">
+                  <FileText className="w-5 h-5 text-white/60 shrink-0" />
+                  <span className="text-sm text-white/80 truncate">
+                    {venda.comprovante_nome || 'Comprovante anexado'}
+                  </span>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.open(venda.comprovante_url!, '_blank')}
+                >
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  Visualizar
+                </Button>
+                <Button size="sm" onClick={() => setComprovanteOpen(true)}>
+                  Substituir
+                </Button>
+              </div>
+            ) : (
+              <div className="flex flex-wrap items-center gap-3">
+                <p className="text-sm text-white/60 flex-1 min-w-[200px]">
+                  Nenhum comprovante anexado a esta venda.
+                </p>
+                <Button size="sm" onClick={() => setComprovanteOpen(true)}>
+                  <Paperclip className="w-4 h-4 mr-2" />
+                  Anexar Comprovante
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Orçamentos */}
         {orcamentos.length > 0 && (
           <Card className={cardClass}>
@@ -537,6 +582,22 @@ export default function VendaDetalhesMinimalista() {
           </Card>
         )}
       </div>
+
+      <ComprovanteUploadModal
+        open={comprovanteOpen}
+        onOpenChange={(open) => {
+          setComprovanteOpen(open);
+          if (!open) {
+            fetchVendaDetails();
+          }
+        }}
+        venda={{
+          id: venda.id,
+          cliente_nome: venda.cliente_nome || 'Venda',
+          comprovante_url: venda.comprovante_url,
+          comprovante_nome: venda.comprovante_nome
+        }}
+      />
     </MinimalistLayout>
   );
 }
