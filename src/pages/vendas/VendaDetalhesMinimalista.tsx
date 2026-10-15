@@ -582,6 +582,22 @@ export default function VendaDetalhesMinimalista() {
           </Card>
         )}
       </div>
+
+      <ComprovanteUploadModal
+        open={comprovanteOpen}
+        onOpenChange={(open) => {
+          setComprovanteOpen(open);
+          if (!open) {
+            fetchVendaDetails();
+          }
+        }}
+        venda={{
+          id: venda.id,
+          cliente_nome: venda.cliente_nome || 'Venda',
+          comprovante_url: venda.comprovante_url,
+          comprovante_nome: venda.comprovante_nome
+        }}
+      />
     </MinimalistLayout>
   );
 }
