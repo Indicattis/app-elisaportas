@@ -4,7 +4,8 @@ import { SemMedicaoBadge } from '@/components/vendas/SemMedicaoBadge';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Plus, ShoppingCart, DollarSign, FileCheck, Search, CalendarIcon, Truck, Hammer, ArrowUpDown, ArrowUp, ArrowDown, Download, FileText, FileSpreadsheet, Edit, Trash2, MapPin } from 'lucide-react';
+import { Plus, ShoppingCart, DollarSign, FileCheck, Search, CalendarIcon, Truck, Hammer, ArrowUpDown, ArrowUp, ArrowDown, Download, FileText, FileSpreadsheet, Edit, Trash2, MapPin, Paperclip } from 'lucide-react';
+import { ComprovanteUploadModal } from '@/components/vendas/ComprovanteUploadModal';
 import * as XLSX from 'xlsx';
 import { generateVendasRelatorioPDF } from '@/utils/vendasPDFGenerator';
 import { toast } from 'sonner';
@@ -45,6 +46,7 @@ interface Venda {
   data_prevista_entrega: string | null;
   tipo_entrega: string | null;
   comprovante_url: string | null;
+  comprovante_nome: string | null;
   metodo_pagamento: string | null;
   produtos_vendas: ProdutoVenda[];
   pedidos_producao: { id: string; status: string } | null;
@@ -80,6 +82,7 @@ export default function MinhasVendas() {
   const [dataFim, setDataFim] = useState<Date | undefined>(endOfMonth(new Date()));
   const [sortField, setSortField] = useState<SortField>('data');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [vendaComprovante, setVendaComprovante] = useState<Venda | null>(null);
   
   const {
     columns,
@@ -111,6 +114,7 @@ export default function MinhasVendas() {
           data_prevista_entrega,
           tipo_entrega,
           comprovante_url,
+          comprovante_nome,
           atendente_id,
           frete_aprovado,
           metodo_pagamento,
@@ -642,6 +646,9 @@ export default function MinhasVendas() {
                       </TableHead>
                     );
                   })}
+                  <TableHead className="text-white/60 font-semibold text-xs uppercase tracking-wider w-12">
+                    Compr.
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -656,6 +663,23 @@ export default function MinhasVendas() {
                         {renderCell(venda, col.id)}
                       </TableCell>
                     ))}
+                    <TableCell className="text-white/80">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setVendaComprovante(venda);
+                        }}
+                        title={venda.comprovante_url ? 'Ver/substituir comprovante' : 'Anexar comprovante'}
+                        className={cn(
+                          "h-8 w-8 rounded-lg border transition-all flex items-center justify-center",
+                          venda.comprovante_url
+                            ? "border-green-500/30 bg-green-500/10 text-green-400 hover:bg-green-500/20"
+                            : "border-white/10 bg-white/5 text-white/50 hover:bg-white/10 hover:text-white"
+                        )}
+                      >
+                        <Paperclip className="w-4 h-4" />
+                      </button>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -679,6 +703,22 @@ export default function MinhasVendas() {
           </div>
         )}
       </div>
+
+      <ComprovanteUploadModal
+        open={!!vendaComprovante}
+        onOpenChange={(open) => {
+          if (!open) {
+            setVendaComprovante(null);
+            queryClient.invalidateQueries({ queryKey: ['minhas-vendas'] });
+          }
+        }}
+        venda={vendaComprovante ? {
+          id: vendaComprovante.id,
+          cliente_nome: vendaComprovante.cliente_nome || 'Venda',
+          comprovante_url: vendaComprovante.comprovante_url,
+          comprovante_nome: vendaComprovante.comprovante_nome
+        } : null}
+      />
 
     </MinimalistLayout>
   );
