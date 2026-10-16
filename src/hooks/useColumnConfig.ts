@@ -11,7 +11,8 @@ interface StoredConfig {
   visible: string[];
 }
 
-export function useColumnConfig(storageKey: string, defaultColumns: ColumnConfig[]) {
+export function useColumnConfig(storageKey: string, defaultColumns: ColumnConfig[], storageType: 'local' | 'session' = 'local') {
+  const store = storageType === 'session' ? sessionStorage : localStorage;
   const [columns, setColumns] = useState<ColumnConfig[]>(defaultColumns);
   const [visibleIds, setVisibleIds] = useState<Set<string>>(
     new Set(defaultColumns.filter(c => c.defaultVisible).map(c => c.id))
@@ -20,7 +21,7 @@ export function useColumnConfig(storageKey: string, defaultColumns: ColumnConfig
   // Load from localStorage on mount
   useEffect(() => {
     try {
-      const stored = localStorage.getItem(storageKey);
+      const stored = store.getItem(storageKey);
       if (stored) {
         const config: StoredConfig = JSON.parse(stored);
         
@@ -56,7 +57,7 @@ export function useColumnConfig(storageKey: string, defaultColumns: ColumnConfig
     } catch (error) {
       console.error('Error loading column config:', error);
     }
-  }, [storageKey, defaultColumns]);
+  }, [storageKey, defaultColumns, store]);
 
   // Save to localStorage when config changes
   const saveConfig = useCallback((newColumns: ColumnConfig[], newVisibleIds: Set<string>) => {
@@ -65,11 +66,11 @@ export function useColumnConfig(storageKey: string, defaultColumns: ColumnConfig
         order: newColumns.map(c => c.id),
         visible: Array.from(newVisibleIds)
       };
-      localStorage.setItem(storageKey, JSON.stringify(config));
+      store.setItem(storageKey, JSON.stringify(config));
     } catch (error) {
       console.error('Error saving column config:', error);
     }
-  }, [storageKey]);
+  }, [storageKey, store]);
 
   // Toggle column visibility
   const toggleColumn = useCallback((columnId: string) => {
@@ -109,8 +110,8 @@ export function useColumnConfig(storageKey: string, defaultColumns: ColumnConfig
     setColumns(defaultColumns);
     const defaultVisibleIds = new Set(defaultColumns.filter(c => c.defaultVisible).map(c => c.id));
     setVisibleIds(defaultVisibleIds);
-    localStorage.removeItem(storageKey);
-  }, [defaultColumns, storageKey]);
+    store.removeItem(storageKey);
+  }, [defaultColumns, storageKey, store]);
 
   // Get visible columns in order
   const visibleColumns = columns.filter(c => visibleIds.has(c.id));

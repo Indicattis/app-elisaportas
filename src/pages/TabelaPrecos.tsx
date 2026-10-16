@@ -17,7 +17,26 @@ import { BulkUploadTabelaPrecos } from "@/components/tabela-precos/BulkUploadTab
 import { useKitsMontagemResumo } from "@/hooks/useKitMontagem";
 import { useCustosItensPadroes, useCustosItens } from "@/hooks/useCustosItens";
 import { useConfigLucro } from "@/hooks/useConfigLucro";
-import { exportEstrategiaPrecosPDF, exportEstrategiaPrecosExcel, type KitLucrosMap } from "@/utils/estrategiaPrecosExport";
+import { exportEstrategiaPrecosPDF, exportEstrategiaPrecosExcel, type ExportColuna } from "@/utils/estrategiaPrecosExport";
+import { useColumnConfig, type ColumnConfig } from "@/hooks/useColumnConfig";
+import { ColumnManager } from "@/components/ColumnManager";
+
+const KIT_COLUNAS: ColumnConfig[] = [
+  { id: "largura", label: "Largura", defaultVisible: true },
+  { id: "altura", label: "Altura", defaultVisible: true },
+  { id: "valor_porta", label: "Valor Porta", defaultVisible: true },
+  { id: "custo_porta", label: "Custo Porta", defaultVisible: true },
+  { id: "lucro", label: "Lucro", defaultVisible: true },
+  { id: "pct_lucro", label: "% Lucro", defaultVisible: true },
+  { id: "valor_instalacao", label: "Valor Instalação", defaultVisible: true },
+  { id: "lucro_instalacao", label: "Lucro Instalação", defaultVisible: true },
+  { id: "pct_lucro_inst", label: "% Lucro Inst.", defaultVisible: true },
+  { id: "valor_pintura", label: "Valor Pintura", defaultVisible: true },
+  { id: "lucro_pintura", label: "Lucro Pintura", defaultVisible: true },
+  { id: "pct_lucro_pint", label: "% Lucro Pint.", defaultVisible: true },
+  { id: "total", label: "Total", defaultVisible: true },
+  { id: "montagem", label: "Montagem", defaultVisible: true },
+];
 import { useQueryClient } from "@tanstack/react-query";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import {
@@ -77,6 +96,15 @@ export default function TabelaPrecos({
   const [itemEditando, setItemEditando] = useState<ItemTabelaPreco | null>(null);
   const [itemParaInativar, setItemParaInativar] = useState<ItemTabelaPreco | null>(null);
   const navigate = useNavigate();
+  const colunasDisponiveis = useMemo(() => KIT_COLUNAS.filter((c) => {
+    if (['lucro', 'pct_lucro', 'custo_porta'].includes(c.id) && (hideLucroColumn || readOnly)) return false;
+    if (['lucro_instalacao', 'pct_lucro_inst', 'lucro_pintura', 'pct_lucro_pint'].includes(c.id) && readOnly) return false;
+    if (c.id === 'total' && hideTotalColumn) return false;
+    if (c.id === 'montagem' && hideAcoesColumn) return false;
+    return true;
+  }), [hideLucroColumn, readOnly, hideTotalColumn, hideAcoesColumn]);
+  const colCfg = useColumnConfig('estrategia_kits_columns', colunasDisponiveis, 'session');
+  const show = (id: string) => !enableReorder || colCfg.isVisible(id);
 
   const queryClient = useQueryClient();
   const { itens, isLoading, adicionarItem, editarItem, inativarItem, reordenarItens } = useTabelaPrecos(searchTerm);
@@ -102,19 +130,40 @@ export default function TabelaPrecos({
         toast.error('Nada para exportar');
         return;
       }
-      const lucros: KitLucrosMap = {};
-      for (const item of itens || []) {
-        const lucroPorta = getLucroEfetivo(item).value;
-        const lucroPintura = getPinturaLucro(item)?.valor ?? null;
-        const valorInstal = Number(item.valor_instalacao || 0);
-        const lucroInstal = valorInstal > 0 ? valorInstal * (instalLucroPct / 100) : null;
-        lucros[item.id] = { lucroPorta, lucroInstalacao: lucroInstal, lucroPintura };
-      }
+      const brl = (n: number | null) => n === null ? '-' : n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      const pctF = (n: number | null) => n === null ? '-' : `${n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`;
+      const lucroP = (i: ItemTabelaPreco) => getLucroEfetivo(i).value;
+      const lucroI = (i: ItemTabelaPreco) => Number(i.valor_instalacao || 0) > 0 ? Number(i.valor_instalacao) * (instalLucroPct / 100) : null;
+      const defs: Record<string, (i: ItemTabelaPreco) => [string, number | string | null, boolean?]> = {
+        largura: (i) => [String(i.largura ?? ''), Number(i.largura || 0)],
+        altura: (i) => [String(i.altura ?? ''), Number(i.altura || 0)],
+        valor_porta: (i) => [brl(Number(i.valor_porta || 0)), Number(i.valor_porta || 0)],
+        custo_porta: (i) => { const l = lucroP(i); const v = l === null ? null : Number(i.valor_porta || 0) - l; return [brl(v), v, true]; },
+        lucro: (i) => [brl(lucroP(i)), lucroP(i)],
+        pct_lucro: (i) => { const l = lucroP(i); const p = Number(i.valor_porta || 0); const v = l === null || p <= 0 ? null : (l / p) * 100; return [pctF(v), v]; },
+        valor_instalacao: (i) => [brl(Number(i.valor_instalacao || 0)), Number(i.valor_instalacao || 0)],
+        lucro_instalacao: (i) => [brl(lucroI(i)), lucroI(i)],
+        pct_lucro_inst: () => [pctF(instalLucroPct), instalLucroPct],
+        valor_pintura: (i) => [brl(Number(i.valor_pintura || 0)), Number(i.valor_pintura || 0)],
+        lucro_pintura: (i) => { const v = getPinturaLucro(i)?.valor ?? null; return [brl(v), v]; },
+        pct_lucro_pint: (i) => { const v = getPinturaLucro(i)?.pct ?? null; return [pctF(v), v]; },
+        total: (i) => [brl(calcularTotal(i)), calcularTotal(i)],
+        montagem: (i) => { const r = getLucroEfetivo(i); const t = r.fromMontagem ? `${r.count} ${r.count === 1 ? 'item' : 'itens'}` : 'Sem montagem'; return [t, t]; },
+      };
+      const colunas: ExportColuna[] = colCfg.columns
+        .filter((c) => show(c.id) && defs[c.id])
+        .map((c) => ({
+          label: c.label,
+          pdf: (i) => defs[c.id](i)[0],
+          excel: (i) => defs[c.id](i)[1],
+          rosa: c.id === 'custo_porta',
+          alinhar: c.id === 'largura' || c.id === 'altura' ? 'center' : 'right',
+        }));
       if (kind === 'pdf') {
-        exportEstrategiaPrecosPDF(itens || [], itensAvulso, lucros);
+        exportEstrategiaPrecosPDF(itens || [], itensAvulso, colunas);
         toast.success('PDF gerado');
       } else {
-        exportEstrategiaPrecosExcel(itens || [], itensAvulso, lucros);
+        exportEstrategiaPrecosExcel(itens || [], itensAvulso, colunas);
         toast.success('Excel gerado');
       }
     } catch (e: any) {
@@ -235,6 +284,15 @@ export default function TabelaPrecos({
   const headerActions = (
     <div className="flex items-center gap-2">
       {extraHeaderActions}
+      {enableReorder && (
+        <ColumnManager
+          columns={colCfg.columns}
+          visibleIds={colCfg.visibleIds}
+          onToggle={colCfg.toggleColumn}
+          onReorder={colCfg.setColumnOrder}
+          onReset={colCfg.resetColumns}
+        />
+      )}
       <Popover>
         <PopoverTrigger asChild>
           <Button
@@ -308,7 +366,7 @@ export default function TabelaPrecos({
                     <TableRow key={item.id} className={cn("border-white/10 hover:bg-white/5", index % 2 === 1 && "bg-white/[0.02]")}>
                         <TableCell className="text-center text-white/50">{index + 1}</TableCell>
                         <TableCell className="font-medium text-white">{item.descricao}</TableCell>
-                        <TableCell className="text-center text-blue-400">{item.largura}m</TableCell>
+                        {show("largura") && <TableCell className="text-center text-blue-400">{item.largura}m</TableCell>}
                         <TableCell className="text-center text-blue-400">{item.altura}m</TableCell>
                         <TableCell className="text-right text-white/70">
                           {item.valor_porta.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
@@ -394,20 +452,21 @@ export default function TabelaPrecos({
                       {enableReorder && <TableHead className="w-10 text-white/60"></TableHead>}
                       <TableHead className="text-center text-white/60 w-12">#</TableHead>
                       <TableHead className="text-white/60">Descrição</TableHead>
-                      <TableHead className="text-center text-white/60">Largura</TableHead>
-                      <TableHead className="text-center text-white/60">Altura</TableHead>
-                      <TableHead className="text-right text-white/60">Valor Porta</TableHead>
-                      {!hideLucroColumn && !readOnly && <TableHead className="text-right hidden md:table-cell text-white/60">Lucro</TableHead>}
-                      {!hideLucroColumn && !readOnly && <TableHead className="text-right hidden md:table-cell text-white/60">% Lucro</TableHead>}
-                      <TableHead className="text-right hidden md:table-cell text-white/60">Valor Instalação</TableHead>
-                      {!readOnly && <TableHead className="text-right hidden md:table-cell text-white/60">Lucro Instalação</TableHead>}
-                      {!readOnly && <TableHead className="text-right hidden md:table-cell text-white/60">% Lucro Inst.</TableHead>}
-                      <TableHead className="text-right hidden md:table-cell text-white/60">Valor Pintura</TableHead>
-                      {!readOnly && <TableHead className="text-right hidden md:table-cell text-white/60">Lucro Pintura</TableHead>}
-                      {!readOnly && <TableHead className="text-right hidden md:table-cell text-white/60">% Lucro Pint.</TableHead>}
-                      {!hideTotalColumn && <TableHead className="text-right text-white/60">Total</TableHead>}
-                      {!hideAcoesColumn && <TableHead className="text-center text-white/60">Montagem</TableHead>}
-                      {!hideAcoesColumn && !readOnly && <TableHead className="text-center w-24 text-white/60">Ações</TableHead>}
+                      <>{show("largura") && <TableHead className="text-center text-white/60">Largura</TableHead>}
+                      {show("altura") && <TableHead className="text-center text-white/60">Altura</TableHead>}
+                      {show("valor_porta") && <TableHead className="text-right text-white/60">Valor Porta</TableHead>}
+                      {!hideLucroColumn && !readOnly && show("custo_porta") && <TableHead className="text-right hidden md:table-cell text-pink-400">Custo Porta</TableHead>}
+                      {!hideLucroColumn && !readOnly && show("lucro") && <TableHead className="text-right hidden md:table-cell text-white/60">Lucro</TableHead>}
+                      {!hideLucroColumn && !readOnly && show("pct_lucro") && <TableHead className="text-right hidden md:table-cell text-white/60">% Lucro</TableHead>}
+                      {show("valor_instalacao") && <TableHead className="text-right hidden md:table-cell text-white/60">Valor Instalação</TableHead>}
+                      {!readOnly && show("lucro_instalacao") && <TableHead className="text-right hidden md:table-cell text-white/60">Lucro Instalação</TableHead>}
+                      {!readOnly && show("pct_lucro_inst") && <TableHead className="text-right hidden md:table-cell text-white/60">% Lucro Inst.</TableHead>}
+                      {show("valor_pintura") && <TableHead className="text-right hidden md:table-cell text-white/60">Valor Pintura</TableHead>}
+                      {!readOnly && show("lucro_pintura") && <TableHead className="text-right hidden md:table-cell text-white/60">Lucro Pintura</TableHead>}
+                      {!readOnly && show("pct_lucro_pint") && <TableHead className="text-right hidden md:table-cell text-white/60">% Lucro Pint.</TableHead>}
+                      {!hideTotalColumn && show("total") && <TableHead className="text-right text-white/60">Total</TableHead>}
+                      {!hideAcoesColumn && show("montagem") && <TableHead className="text-center text-white/60">Montagem</TableHead>}
+                      {!hideAcoesColumn && !readOnly && <TableHead className="text-center w-24 text-white/60">Ações</TableHead>}</>
                     </TableRow>
                   </TableHeader>
                   <DndContext
@@ -463,14 +522,16 @@ export default function TabelaPrecos({
                             </div>
                           </TableCell>
                           <TableCell className="text-center text-blue-400">{item.largura}m</TableCell>
-                          <TableCell className="text-center text-blue-400">{item.altura}m</TableCell>
-                          <TableCell className="text-right text-white/70">
-                            {item.valor_porta.toLocaleString('pt-BR', { 
-                              style: 'currency', 
-                              currency: 'BRL' 
-                            })}
-                          </TableCell>
-                          {!hideLucroColumn && !readOnly && (() => {
+                          {show("altura") && <TableCell className="text-center text-blue-400">{item.altura}m</TableCell>}
+                          {show("valor_porta") && <TableCell className="text-right text-white/70">
+                            {item.valor_porta.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                          </TableCell>}
+                          {!hideLucroColumn && !readOnly && show("custo_porta") && (
+                            <TableCell className="text-right hidden md:table-cell text-pink-400">
+                              {lucroInfo.value === null ? <span className="text-white/30">—</span> : (Number(item.valor_porta || 0) - lucroInfo.value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                            </TableCell>
+                          )}
+                          {!hideLucroColumn && !readOnly && show("lucro") && (() => {
                             if (lucroInfo.value === null) {
                               return (
                                 <TableCell className="text-right hidden md:table-cell text-white/30">—</TableCell>
@@ -488,7 +549,7 @@ export default function TabelaPrecos({
                               </TableCell>
                             );
                           })()}
-                          {!hideLucroColumn && !readOnly && (() => {
+                          {!hideLucroColumn && !readOnly && show("pct_lucro") && (() => {
                             if (lucroInfo.value === null) {
                               return (
                                 <TableCell className="text-right hidden md:table-cell text-white/30">—</TableCell>
@@ -503,13 +564,13 @@ export default function TabelaPrecos({
                               </TableCell>
                             );
                           })()}
-                          <TableCell className="text-right hidden md:table-cell text-white/70">
+                          {show("valor_instalacao") && <TableCell className="text-right hidden md:table-cell text-white/70">
                             {item.valor_instalacao.toLocaleString('pt-BR', { 
                               style: 'currency', 
                               currency: 'BRL' 
                             })}
-                          </TableCell>
-                          {!readOnly && (
+                          </TableCell>}
+                          {!readOnly && show("lucro_instalacao") && (
                             <TableCell className="text-right hidden md:table-cell text-emerald-400">
                               {(item.valor_instalacao * (instalLucroPct / 100)).toLocaleString('pt-BR', {
                                 style: 'currency',
@@ -517,33 +578,33 @@ export default function TabelaPrecos({
                               })}
                             </TableCell>
                           )}
-                          {!readOnly && (
+                          {!readOnly && show("pct_lucro_inst") && (
                             <TableCell className="text-right hidden md:table-cell font-medium text-orange-400">
                               {instalLucroPct.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%
                             </TableCell>
                           )}
-                          <TableCell className="text-right hidden md:table-cell text-white/70">
+                          {show("valor_pintura") && <TableCell className="text-right hidden md:table-cell text-white/70">
                             {item.valor_pintura.toLocaleString('pt-BR', { 
                               style: 'currency', 
                               currency: 'BRL' 
                             })}
-                          </TableCell>
+                          </TableCell>}
                           {!readOnly && (() => {
                             const p = getPinturaLucro(item);
                             return (
                               <>
-                                <TableCell className="text-right hidden md:table-cell text-emerald-400">
+                                {show("lucro_pintura") && <TableCell className="text-right hidden md:table-cell text-emerald-400">
                                   {p ? p.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '—'}
-                                </TableCell>
-                                <TableCell className="text-right hidden md:table-cell font-medium text-orange-400">
+                                </TableCell>}
+                                {show("pct_lucro_pint") && <TableCell className="text-right hidden md:table-cell font-medium text-orange-400">
                                   {p && p.pct != null
                                     ? `${p.pct.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`
                                     : '—'}
-                                </TableCell>
+                                </TableCell>}
                               </>
                             );
                           })()}
-                          {!hideTotalColumn && <TableCell className="text-right">
+                          {!hideTotalColumn && show("total") && <TableCell className="text-right">
                             <Badge className="font-semibold bg-white/10 text-white">
                               {total.toLocaleString('pt-BR', { 
                                 style: 'currency', 
@@ -551,7 +612,7 @@ export default function TabelaPrecos({
                               })}
                             </Badge>
                           </TableCell>}
-                          {!hideAcoesColumn && (
+                          {!hideAcoesColumn && show("montagem") && (
                             <TableCell className="text-center">
                               {readOnly ? (
                                 lucroInfo.fromMontagem ? (
