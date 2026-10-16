@@ -15,7 +15,7 @@ import { useTabelaPrecos, ItemTabelaPreco, ItemTabelaPrecoInput } from "@/hooks/
 import { ItemModal } from "@/components/tabela-precos/ItemModal";
 import { BulkUploadTabelaPrecos } from "@/components/tabela-precos/BulkUploadTabelaPrecos";
 import { useKitsMontagemResumo } from "@/hooks/useKitMontagem";
-import { useCustosItensPadroes, useCustosItens } from "@/hooks/useCustosItens";
+import { useCustosItensPadroes } from "@/hooks/useCustosItens";
 import { useConfigLucro } from "@/hooks/useConfigLucro";
 import { exportEstrategiaPrecosPDF, exportEstrategiaPrecosExcel, PDF_CORES, type ExportColuna } from "@/utils/estrategiaPrecosExport";
 import { useColumnConfig, type ColumnConfig } from "@/hooks/useColumnConfig";
@@ -110,19 +110,6 @@ export default function TabelaPrecos({
   const { itens, isLoading, adicionarItem, editarItem, inativarItem, reordenarItens } = useTabelaPrecos(searchTerm);
   const { data: resumoMontagem = {} } = useKitsMontagemResumo();
   const { padroes } = useCustosItensPadroes();
-  const { items: custosItens } = useCustosItens();
-
-  const itensAvulso = useMemo(
-    () =>
-      (custosItens ?? [])
-        .filter((i: any) => i.vendavel_avulso)
-        .sort((a: any, b: any) => {
-          const ca = (a.categoria || 'Sem categoria').localeCompare(b.categoria || 'Sem categoria');
-          if (ca !== 0) return ca;
-          return (a.descricao || '').localeCompare(b.descricao || '');
-        }),
-    [custosItens],
-  );
 
   const handleExport = (kind: 'pdf' | 'excel') => {
     try {
