@@ -171,10 +171,10 @@ export default function TabelaPrecos({
           alinhar: c.id === 'largura' || c.id === 'altura' ? 'center' : 'right',
         }));
       if (kind === 'pdf') {
-        exportEstrategiaPrecosPDF(itens || [], itensAvulso, colunas);
+        exportEstrategiaPrecosPDF(itens || [], colunas);
         toast.success('PDF gerado');
       } else {
-        exportEstrategiaPrecosExcel(itens || [], itensAvulso, colunas);
+        exportEstrategiaPrecosExcel(itens || [], colunas);
         toast.success('Excel gerado');
       }
     } catch (e: any) {
