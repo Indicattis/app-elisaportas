@@ -17,7 +17,7 @@ import { BulkUploadTabelaPrecos } from "@/components/tabela-precos/BulkUploadTab
 import { useKitsMontagemResumo } from "@/hooks/useKitMontagem";
 import { useCustosItensPadroes, useCustosItens } from "@/hooks/useCustosItens";
 import { useConfigLucro } from "@/hooks/useConfigLucro";
-import { exportEstrategiaPrecosPDF, exportEstrategiaPrecosExcel, type ExportColuna } from "@/utils/estrategiaPrecosExport";
+import { exportEstrategiaPrecosPDF, exportEstrategiaPrecosExcel, PDF_CORES, type ExportColuna } from "@/utils/estrategiaPrecosExport";
 import { useColumnConfig, type ColumnConfig } from "@/hooks/useColumnConfig";
 import { ColumnManager } from "@/components/ColumnManager";
 
@@ -156,7 +156,18 @@ export default function TabelaPrecos({
           label: c.label,
           pdf: (i) => defs[c.id](i)[0],
           excel: (i) => defs[c.id](i)[1],
-          rosa: c.id === 'custo_porta',
+          cor: (i: ItemTabelaPreco) => {
+            switch (c.id) {
+              case 'largura': case 'altura': return PDF_CORES.azul;
+              case 'custo_porta': return PDF_CORES.rosa;
+              case 'lucro': { const l = lucroP(i) ?? 0; return l > 0 ? PDF_CORES.verde : l < 0 ? PDF_CORES.vermelho : PDF_CORES.claro; }
+              case 'lucro_instalacao': case 'lucro_pintura': return PDF_CORES.verde;
+              case 'pct_lucro': case 'pct_lucro_inst': case 'pct_lucro_pint': return PDF_CORES.laranja;
+              case 'total': return PDF_CORES.branco;
+              case 'montagem': return getLucroEfetivo(i).fromMontagem ? PDF_CORES.claro : PDF_CORES.ambar;
+              default: return PDF_CORES.claro;
+            }
+          },
           alinhar: c.id === 'largura' || c.id === 'altura' ? 'center' : 'right',
         }));
       if (kind === 'pdf') {

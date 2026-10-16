@@ -4,6 +4,37 @@ import * as XLSX from "xlsx";
 import type { ItemTabelaPreco } from "@/hooks/useTabelaPrecos";
 import type { CustoItem } from "@/hooks/useCustosItens";
 
+type RGB = [number, number, number];
+const BG: RGB = [15, 23, 42];
+const ROW: RGB = [22, 31, 52];
+const ROW_ALT: RGB = [28, 38, 61];
+const HEAD: RGB = [36, 48, 74];
+const LINE: RGB = [51, 65, 85];
+const TXT: RGB = [226, 232, 240];
+const MUTED: RGB = [148, 163, 184];
+export const PDF_CORES = {
+  azul: [96, 165, 250] as RGB,
+  verde: [52, 211, 153] as RGB,
+  vermelho: [248, 113, 113] as RGB,
+  laranja: [251, 146, 60] as RGB,
+  rosa: [244, 114, 182] as RGB,
+  ambar: [252, 211, 77] as RGB,
+  claro: [203, 213, 225] as RGB,
+  branco: [255, 255, 255] as RGB,
+  apagado: [100, 116, 139] as RGB,
+};
+const pintarFundo = (doc: jsPDF) => {
+  doc.setFillColor(...BG);
+  doc.rect(0, 0, doc.internal.pageSize.getWidth(), doc.internal.pageSize.getHeight(), "F");
+};
+const darkTable = {
+  theme: "grid" as const,
+  styles: { fillColor: ROW, textColor: TXT, lineColor: LINE, lineWidth: 0.1 },
+  alternateRowStyles: { fillColor: ROW_ALT },
+  headStyles: { fillColor: HEAD, textColor: MUTED, fontStyle: "bold" as const, lineColor: LINE, lineWidth: 0.1 },
+  willDrawPage: (d: any) => { if (d.pageNumber > 1) pintarFundo(d.doc); },
+};
+
 const fmtBRL = (n: number) =>
   Number(n || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -17,7 +48,7 @@ export type ExportColuna = {
   label: string;
   pdf: (k: ItemTabelaPreco) => string;
   excel: (k: ItemTabelaPreco) => number | string | null;
-  rosa?: boolean;
+  cor?: (k: ItemTabelaPreco) => [number, number, number];
   alinhar?: "left" | "center" | "right";
 };
 
@@ -45,28 +76,38 @@ export function exportEstrategiaPrecosPDF(kits: ItemTabelaPreco[], itensAvulso: 
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
   const data = new Date().toLocaleDateString("pt-BR");
 
+  pintarFundo(doc);
+  doc.setTextColor(...PDF_CORES.branco);
   doc.setFontSize(16);
   doc.text("Tabela de Preços — Estratégia", 14, 14);
   doc.setFontSize(10);
-  doc.setTextColor(120);
+  doc.setTextColor(...MUTED);
   doc.text(`Gerado em ${data}`, 14, 20);
-  doc.setTextColor(0);
+  doc.setTextColor(...PDF_CORES.branco);
 
   // Section 1: Kits
   doc.setFontSize(12);
   doc.text("Kits de Portas", 14, 28);
 
-  const columnStyles: Record<number, any> = { 0: { halign: "center", cellWidth: 10 } };
-  colunas.forEach((c, i) => {
-    columnStyles[i + 2] = { halign: c.alinhar || "right", ...(c.rosa ? { textColor: [236, 72, 153] } : {}) };
-  });
+  const fs = colunas.length > 10 ? 7 : 8;
   autoTable(doc, {
+    ...darkTable,
     startY: 32,
     head: [["#", "Descrição", ...colunas.map((c) => c.label)]],
     body: kits.map((k, idx) => [String(idx + 1), k.descricao, ...colunas.map((c) => c.pdf(k))]),
-    styles: { fontSize: colunas.length > 10 ? 7 : 8, cellPadding: 2 },
-    headStyles: { fillColor: [30, 41, 59], fontSize: colunas.length > 10 ? 7 : 8 },
-    columnStyles,
+    styles: { ...darkTable.styles, fontSize: fs, cellPadding: 2 },
+    headStyles: { ...darkTable.headStyles, fontSize: fs },
+    columnStyles: { 0: { halign: "center", cellWidth: 10, textColor: MUTED }, 1: { textColor: PDF_CORES.branco, fontStyle: "bold" } },
+    didParseCell: (d: any) => {
+      const ci = d.column.index - 2;
+      if (ci < 0) return;
+      const c = colunas[ci];
+      d.cell.styles.halign = c.alinhar || "right";
+      if (d.section !== "body") return;
+      const k = kits[d.row.index];
+      if (d.cell.raw === "-" || d.cell.raw === "—") { d.cell.styles.textColor = PDF_CORES.apagado; return; }
+      if (c.cor) d.cell.styles.textColor = c.cor(k);
+    },
   });
 
   if (itensAvulso.length > 0) {
@@ -75,9 +116,11 @@ export function exportEstrategiaPrecosPDF(kits: ItemTabelaPreco[], itensAvulso: 
 
     if (cursorY > doc.internal.pageSize.getHeight() - 30) {
       doc.addPage();
+      pintarFundo(doc);
       cursorY = 14;
     }
     doc.setFontSize(12);
+    doc.setTextColor(...PDF_CORES.branco);
     doc.text("Itens Avulso", 14, cursorY);
     cursorY += 4;
 
@@ -85,10 +128,11 @@ export function exportEstrategiaPrecosPDF(kits: ItemTabelaPreco[], itensAvulso: 
       autoTable(doc, {
         startY: cursorY,
         head: [[
-          { content: `${categoria} (${lista.length})`, colSpan: 3, styles: { halign: "left", fillColor: [30, 41, 59], textColor: 255 } },
+          { content: `${categoria} (${lista.length})`, colSpan: 3, styles: { halign: "left", fillColor: HEAD, textColor: PDF_CORES.branco } },
         ]],
         body: [],
         theme: "plain",
+        willDrawPage: darkTable.willDrawPage,
         margin: { left: 14, right: 14 },
       });
       cursorY = (doc as any).lastAutoTable.finalY;
@@ -101,15 +145,14 @@ export function exportEstrategiaPrecosPDF(kits: ItemTabelaPreco[], itensAvulso: 
           it.unidade || "-",
           fmtBRL(Number(it.preco_venda || 0)),
         ]),
-        styles: { fontSize: 9, cellPadding: 2 },
-        headStyles: { fillColor: [51, 65, 85], textColor: 255 },
+        ...darkTable,
+        styles: { ...darkTable.styles, fontSize: 9, cellPadding: 2 },
         columnStyles: {
           0: { cellWidth: "auto" },
           1: { cellWidth: 30, halign: "center" },
-          2: { cellWidth: 40, halign: "right", fontStyle: "bold" },
+          2: { cellWidth: 40, halign: "right", fontStyle: "bold", textColor: PDF_CORES.verde },
         },
         margin: { left: 14, right: 14 },
-        theme: "striped",
       });
       cursorY = (doc as any).lastAutoTable.finalY + 4;
     });
