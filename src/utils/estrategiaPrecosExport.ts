@@ -21,6 +21,15 @@ export type ExportColuna = {
   alinhar?: "left" | "center" | "right";
 };
 
+const COLUNAS_PADRAO: ExportColuna[] = [
+  { label: "L (m)", pdf: (k) => String(k.largura ?? ""), excel: (k) => Number(k.largura || 0), alinhar: "center" },
+  { label: "A (m)", pdf: (k) => String(k.altura ?? ""), excel: (k) => Number(k.altura || 0), alinhar: "center" },
+  { label: "Porta", pdf: (k) => fmtBRL(k.valor_porta), excel: (k) => Number(k.valor_porta || 0) },
+  { label: "Instalação", pdf: (k) => fmtBRL(k.valor_instalacao), excel: (k) => Number(k.valor_instalacao || 0) },
+  { label: "Pintura", pdf: (k) => fmtBRL(k.valor_pintura), excel: (k) => Number(k.valor_pintura || 0) },
+  { label: "Total", pdf: (k) => fmtBRL(kitTotal(k)), excel: (k) => kitTotal(k) },
+];
+
 function agruparPorCategoria(itens: CustoItem[]) {
   const map = new Map<string, CustoItem[]>();
   itens.forEach((it) => {
@@ -31,7 +40,8 @@ function agruparPorCategoria(itens: CustoItem[]) {
   return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b, "pt-BR"));
 }
 
-export function exportEstrategiaPrecosPDF(kits: ItemTabelaPreco[], itensAvulso: CustoItem[] = [], colunas: ExportColuna[] = []) {
+export function exportEstrategiaPrecosPDF(kits: ItemTabelaPreco[], itensAvulso: CustoItem[] = [], colunasIn: ExportColuna[] = []) {
+  const colunas = colunasIn.length ? colunasIn : COLUNAS_PADRAO;
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
   const data = new Date().toLocaleDateString("pt-BR");
 
@@ -108,7 +118,8 @@ export function exportEstrategiaPrecosPDF(kits: ItemTabelaPreco[], itensAvulso: 
   doc.save(`tabela-precos-${hoje()}.pdf`);
 }
 
-export function exportEstrategiaPrecosExcel(kits: ItemTabelaPreco[], itensAvulso: CustoItem[] = [], colunas: ExportColuna[] = []) {
+export function exportEstrategiaPrecosExcel(kits: ItemTabelaPreco[], itensAvulso: CustoItem[] = [], colunasIn: ExportColuna[] = []) {
+  const colunas = colunasIn.length ? colunasIn : COLUNAS_PADRAO;
   const wb = XLSX.utils.book_new();
 
   const kitsRows = [
