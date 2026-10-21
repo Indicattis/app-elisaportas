@@ -57,8 +57,8 @@ export const useGastos = (mesFiltro?: string, ordenarPor: GastosOrdenarPor = 'ca
     const rows = (data || []) as unknown as Gasto[];
 
     // fetch tipo_custo names
-    const tipoCustoIds = [...new Set(rows.map((r) => r.tipo_custo_id))];
-    const responsavelIds = [...new Set(rows.map((r) => r.responsavel_id))];
+    const tipoCustoIds = [...new Set(rows.map((r) => r.tipo_custo_id).filter(Boolean))];
+    const responsavelIds = [...new Set(rows.map((r) => r.responsavel_id).filter(Boolean))];
     const bancoIds = [...new Set(rows.map((r) => r.banco_id).filter(Boolean))];
 
     let tiposMap: Record<string, string> = {};
@@ -99,7 +99,7 @@ export const useGastos = (mesFiltro?: string, ordenarPor: GastosOrdenarPor = 'ca
 
     const enriched = rows.map((r) => ({
       ...r,
-      tipo_custo_nome: tiposMap[r.tipo_custo_id] || "—",
+      tipo_custo_nome: r.tipo_custo_id ? tiposMap[r.tipo_custo_id] || "—" : "Sem tipo",
       tipo_custo_aparece_no_dre: tiposDreMap[r.tipo_custo_id] ?? true,
       responsavel_nome: responsaveisMap[r.responsavel_id]?.nome || "—",
       responsavel_foto: responsaveisMap[r.responsavel_id]?.foto || null,
