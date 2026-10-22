@@ -14,6 +14,8 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatCurrency } from '@/lib/utils';
 import { GerarContratoElisaModal } from '@/components/contratos/GerarContratoElisaModal';
+import { GerarContratoKitModal } from '@/components/contratos/GerarContratoKitModal';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { GerarContratoAvulsoModal } from '@/components/contratos/GerarContratoAvulsoModal';
 import { AnexarContratoModal } from '@/components/vendas/AnexarContratoModal';
 import { desliberarContrato } from '@/lib/desliberarContrato';
@@ -87,6 +89,8 @@ export default function ContratosVendas({ scope = 'all' }: ContratosVendasProps 
   const [vendedores, setVendedores] = useState<Record<string, VendedorInfo>>({});
   const [balancos, setBalancos] = useState<Record<string, BalancoInfo>>({});
   const [modalOpen, setModalOpen] = useState(false);
+  const [kitOpen, setKitOpen] = useState(false);
+  const [escolhaOpen, setEscolhaOpen] = useState(false);
   const [selectedVendaId, setSelectedVendaId] = useState<string | null>(null);
   const [anexarOpen, setAnexarOpen] = useState(false);
   const [anexarVenda, setAnexarVenda] = useState<{ id: string; nome: string } | null>(null);
@@ -188,6 +192,15 @@ export default function ContratosVendas({ scope = 'all' }: ContratosVendasProps 
     });
     return map;
   }, [contratos]);
+
+  const renderTipoContrato = (vendaId: string) => {
+    const tipo = (contratosByVenda[vendaId]?.[0] as any)?.tipo_contrato as string | undefined;
+    if (tipo === 'kit')
+      return <span className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-orange-500/15 text-orange-300 border border-orange-400/30">Kit</span>;
+    if (tipo === 'elisa')
+      return <span className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-blue-500/15 text-blue-300 border border-blue-400/30">Elisa</span>;
+    return <span className="text-white/40">—</span>;
+  };
 
   const matchesSearch = (v: VendaRow) => {
     const term = search.trim().toLowerCase();
@@ -401,7 +414,9 @@ export default function ContratosVendas({ scope = 'all' }: ContratosVendasProps 
     actionIcon: ActionIcon,
     onAction,
     extraRow,
+    showTipo,
   }: {
+    showTipo?: boolean;
     rows: VendaRow[];
     actionLabel?: string;
     actionClass?: string;
@@ -420,6 +435,7 @@ export default function ContratosVendas({ scope = 'all' }: ContratosVendasProps 
             <th className="px-3 py-2 font-medium">Cidade</th>
             <th className="px-3 py-2 font-medium text-right">Valor</th>
             <th className="px-3 py-2 font-medium text-right">Desc./Acréscimo</th>
+            {showTipo && <th className="px-3 py-2 font-medium">Tipo de Contrato</th>}
             {(onAction || extraRow) && <th className="px-3 py-2 font-medium text-right">Ações</th>}
           </tr>
         </thead>
@@ -439,6 +455,7 @@ export default function ContratosVendas({ scope = 'all' }: ContratosVendasProps 
                 {formatCurrency(v.valor_venda || 0)}
               </td>
               <td className="px-3 py-2 text-right whitespace-nowrap">{renderDescontoAcrescimo(v.id)}</td>
+              {showTipo && <td className="px-3 py-2">{renderTipoContrato(v.id)}</td>}
               {(onAction || extraRow) && (
                 <td className="px-3 py-2 text-right">
                   <div className="flex flex-row flex-nowrap items-center justify-end gap-1">
@@ -632,7 +649,7 @@ export default function ContratosVendas({ scope = 'all' }: ContratosVendasProps 
                     onAction={(v) => {
                       setSelectedVendaId(v.id);
                       setGeneratingVendaId(v.id);
-                      setModalOpen(true);
+                      setEscolhaOpen(true);
                     }}
                     extraRow={(v) => (
                       <Button
@@ -667,6 +684,7 @@ export default function ContratosVendas({ scope = 'all' }: ContratosVendasProps 
                 ) : (
                   <TableView
                     rows={gerados}
+                    showTipo
                     actionLabel="Anexar Assinado"
                     actionIcon={Upload}
                     actionClass="bg-gradient-to-r from-emerald-500 to-emerald-700 hover:from-emerald-400 hover:to-emerald-600 text-white border border-emerald-400/30"
@@ -710,6 +728,7 @@ export default function ContratosVendas({ scope = 'all' }: ContratosVendasProps 
                 ) : (
                   <TableView
                     rows={assinados}
+                    showTipo
                     actionLabel={isMeus ? undefined : "Liberar para Pend. Faturamento"}
                     actionIcon={isMeus ? undefined : ArrowRight}
                     actionClass="bg-gradient-to-r from-yellow-500 to-yellow-700 hover:from-yellow-400 hover:to-yellow-600 text-white border border-yellow-400/30"
@@ -802,6 +821,52 @@ export default function ContratosVendas({ scope = 'all' }: ContratosVendasProps 
         open={modalOpen}
         onOpenChange={(o) => {
           setModalOpen(o);
+          if (!o) setGeneratingVendaId(null);
+        }}
+        vendaId={selectedVendaId}
+        onGerado={() => {
+          setRefreshKey(k => k + 1);
+          setActiveTab('gerados');
+          setGeneratingVendaId(null);
+        }}
+      />
+
+      <Dialog
+        open={escolhaOpen}
+        onOpenChange={(o) => {
+          setEscolhaOpen(o);
+          if (!o && !modalOpen && !kitOpen) setGeneratingVendaId(null);
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Qual modelo de contrato?</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-3">
+            <Button
+              variant="outline"
+              className="h-auto py-3 justify-start text-left flex-col items-start"
+              onClick={() => { setModalOpen(true); setEscolhaOpen(false); }}
+            >
+              <span className="font-semibold">Contrato Elisa</span>
+              <span className="text-xs text-muted-foreground">Compra, venda e instalação</span>
+            </Button>
+            <Button
+              variant="outline"
+              className="h-auto py-3 justify-start text-left flex-col items-start"
+              onClick={() => { setKitOpen(true); setEscolhaOpen(false); }}
+            >
+              <span className="font-semibold">Contrato de Kit</span>
+              <span className="text-xs text-muted-foreground">Somente o kit, sem instalação</span>
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <GerarContratoKitModal
+        open={kitOpen}
+        onOpenChange={(o) => {
+          setKitOpen(o);
           if (!o) setGeneratingVendaId(null);
         }}
         vendaId={selectedVendaId}
