@@ -60,12 +60,14 @@ export function useContratosVendas(filters: ContratosVendasFilters = {}) {
       file, 
       vendaId, 
       templateId, 
-      observacoes 
+      observacoes,
+      tipoContrato,
     }: { 
       file: File; 
       vendaId: string; 
       templateId?: string; 
       observacoes?: string;
+      tipoContrato?: 'elisa' | 'kit';
     }) => {
       const { data: userData } = await supabase.auth.getUser();
       const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
@@ -92,6 +94,7 @@ export function useContratosVendas(filters: ContratosVendasFilters = {}) {
           nome_arquivo: file.name,
           tamanho_arquivo: file.size,
           observacoes,
+          tipo_contrato: tipoContrato ?? null,
           uploaded_by: userData.user?.id
         })
         .select()
