@@ -1847,6 +1847,7 @@ export type Database = {
           observacoes: string | null
           tamanho_arquivo: number
           template_id: string | null
+          tipo_contrato: string | null
           updated_at: string | null
           uploaded_by: string | null
           venda_id: string
@@ -1859,6 +1860,7 @@ export type Database = {
           observacoes?: string | null
           tamanho_arquivo: number
           template_id?: string | null
+          tipo_contrato?: string | null
           updated_at?: string | null
           uploaded_by?: string | null
           venda_id: string
@@ -1871,6 +1873,7 @@ export type Database = {
           observacoes?: string | null
           tamanho_arquivo?: number
           template_id?: string | null
+          tipo_contrato?: string | null
           updated_at?: string | null
           uploaded_by?: string | null
           venda_id?: string
