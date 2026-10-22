@@ -14,6 +14,14 @@ import { ContratoVariaveis } from "@/types/contrato";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { FileDown } from "lucide-react";
+import { generateContratoKitPDF, ContratoKitData } from "@/utils/contratoKitPDFGenerator";
+
+const KIT_ID = "__kit__";
+const kitVazio: ContratoKitData = {
+  comprador_nome: "", comprador_documento: "", comprador_endereco: "", quantidade_kits: "01 (um)",
+  material: "", motor: "", cor: "", dimensoes: "", valor_total: "", forma_pagamento: "",
+  cidade_assinatura: "Caxias do Sul/RS",
+};
 import { toast } from "sonner";
 
 interface GerarContratoAvulsoModalProps {
@@ -56,6 +64,8 @@ export function GerarContratoAvulsoModal({ open, onOpenChange }: GerarContratoAv
 
   const [templateId, setTemplateId] = useState("");
   const [form, setForm] = useState<FormState>(emptyForm);
+  const [kit, setKit] = useState<ContratoKitData>(kitVazio);
+  const isKit = templateId === KIT_ID;
 
   const templatesAtivos = useMemo(() => (templates || []).filter((t) => t.ativo), [templates]);
   const templateSelecionado = templatesAtivos.find((t) => t.id === templateId);
@@ -82,6 +92,7 @@ export function GerarContratoAvulsoModal({ open, onOpenChange }: GerarContratoAv
   useEffect(() => {
     if (!open) {
       setForm(emptyForm);
+      setKit(kitVazio);
       setTemplateId("");
     }
   }, [open]);
@@ -107,6 +118,29 @@ export function GerarContratoAvulsoModal({ open, onOpenChange }: GerarContratoAv
     setForm((prev) => ({ ...prev, [key]: e.target.value }));
 
   const handleGerar = () => {
+    if (isKit) {
+      if (!kit.comprador_nome.trim()) {
+        toast.error("Informe o nome do comprador");
+        return;
+      }
+      try {
+        const blob = generateContratoKitPDF(kit);
+        const slug = kit.comprador_nome.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+          .replace(/[^a-zA-Z0-9\s]/g, "").trim().replace(/\s+/g, "_");
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `contrato-kit-${slug}-${Date.now()}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast.success("Contrato de kit gerado com sucesso!");
+        onOpenChange(false);
+      } catch (error) {
+        console.error(error);
+        toast.error("Erro ao gerar contrato");
+      }
+      return;
+    }
     if (!templateSelecionado || !variaveisFinais || !companySettings) {
       toast.error("Selecione um template");
       return;
@@ -153,6 +187,7 @@ export function GerarContratoAvulsoModal({ open, onOpenChange }: GerarContratoAv
                 <SelectValue placeholder="Selecione um template" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value={KIT_ID}>Contrato de Kit (sem instalação)</SelectItem>
                 {templatesAtivos.map((t) => (
                   <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
                 ))}
@@ -160,6 +195,32 @@ export function GerarContratoAvulsoModal({ open, onOpenChange }: GerarContratoAv
             </Select>
           </div>
 
+          {isKit ? (
+            <section className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {([
+                ["comprador_nome", "Nome do comprador *"],
+                ["comprador_documento", "CPF / CNPJ"],
+                ["comprador_endereco", "Endereço completo", true],
+                ["quantidade_kits", "Quantidade de kits"],
+                ["cor", "Cor da pintura"],
+                ["material", "Material (ex.: 01 porta de enrolar (5,57 m x 3,20 m); acabamento na cor ...)", true],
+                ["motor", "Motor (ex.: 01 motor de 600 kg, baixo fluxo operacional, monofásico 220 V, 120 RPM)", true],
+                ["dimensoes", "Dimensões da(s) porta(s)"],
+                ["valor_total", "Valor total (ex.: R$ 13.000,00 (treze mil reais))"],
+                ["forma_pagamento", "Forma de pagamento", true],
+                ["cidade_assinatura", "Cidade da assinatura"],
+              ] as [keyof ContratoKitData, string, boolean?][]).map(([k, label, area]) => (
+                <div key={k} className={area ? "md:col-span-2 space-y-1.5" : "space-y-1.5"}>
+                  <Label htmlFor={`kit-${k}`}>{label}</Label>
+                  {area ? (
+                    <Textarea id={`kit-${k}`} rows={2} value={kit[k]} onChange={(e) => setKit((p) => ({ ...p, [k]: e.target.value }))} />
+                  ) : (
+                    <Input id={`kit-${k}`} value={kit[k]} onChange={(e) => setKit((p) => ({ ...p, [k]: e.target.value }))} />
+                  )}
+                </div>
+              ))}
+            </section>
+          ) : (<>
           <section className="space-y-3">
             <h3 className="text-sm font-semibold">Cliente</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -210,7 +271,9 @@ export function GerarContratoAvulsoModal({ open, onOpenChange }: GerarContratoAv
             </div>
           </section>
 
-          {templateSelecionado && (
+          </>)}
+
+          {!isKit && templateSelecionado && (
             <Card className="p-4">
               <h3 className="font-semibold mb-3">Preview</h3>
               <div className="max-h-[300px] overflow-y-auto bg-muted/30 p-4 rounded-lg">
@@ -222,7 +285,7 @@ export function GerarContratoAvulsoModal({ open, onOpenChange }: GerarContratoAv
 
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={handleGerar} disabled={!templateId || !companySettings}>
+          <Button onClick={handleGerar} disabled={!templateId || (!isKit && !companySettings)}>
             <FileDown className="h-4 w-4 mr-2" />
             Gerar PDF
           </Button>
