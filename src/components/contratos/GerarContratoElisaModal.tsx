@@ -193,7 +193,7 @@ export function GerarContratoElisaModal({ open, onOpenChange, vendaId, onGerado 
 
       // Upload + registro
       uploadContrato(
-        { file, vendaId, observacoes: 'Contrato GRUPO ELISA gerado pelo sistema' },
+        { file, vendaId, observacoes: 'Contrato GRUPO ELISA gerado pelo sistema', tipoContrato: 'elisa' },
         {
           onSuccess: () => {
             onGerado?.();
