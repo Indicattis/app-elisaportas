@@ -36,9 +36,9 @@ function inteiroExtenso(n: number): string {
   });
   if (partes.length > 1) {
     const ultimo = n % 1000;
-    const usaE = ultimo > 0 && (ultimo < 100 || ultimo % 100 === 0);
     const fim = partes.pop()!;
-    return `${partes.join(', ')}${usaE ? ' e ' : ', '}${fim}`.replace(/, (?=[^,]*$)/, partes.length ? ' ' : ', ').replace(/\s+/g, ' ');
+    const usaE = ultimo > 0 && (ultimo < 100 || ultimo % 100 === 0);
+    return `${partes.join(' ')}${usaE ? ' e ' : ' '}${fim}`;
   }
   return partes[0];
 }
