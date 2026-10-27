@@ -1,3 +1,5 @@
+// ============= Full file contents =============
+
 import { useEffect, useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -5,15 +7,12 @@ import { ChevronLeft, ChevronRight, Settings2, Building2, SlidersHorizontal } fr
 import { useNavigate } from 'react-router-dom';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { TiposDreDialog } from '@/components/direcao/estrategia/TiposDreDialog';
-import { formatCurrency } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 
 export default function EstrategiaDespesas() {
   const anoAtual = new Date().getFullYear();
   const [ano, setAno] = useState(anoAtual);
-  const [totaisMes, setTotaisMes] = useState<Record<string, number>>({});
   const [statusMes, setStatusMes] = useState<Record<string, 'pendente' | 'alana' | 'luan'>>({});
-  const [ultimaAlteracaoMes, setUltimaAlteracaoMes] = useState<Record<string, string>>({});
   const [tiposDreOpen, setTiposDreOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -22,40 +21,12 @@ export default function EstrategiaDespesas() {
     const run = async () => {
       const start = `${ano}-01-01`;
       const end = `${ano}-12-31`;
-      const [{ data: folhaRows }, { data: lancRows }, { data: statusRows }, { data: histRows }] = await Promise.all([
-        supabase
-          .from('despesas_manuais_folha' as any)
-          .select('total, mes_referencia')
-          .gte('mes_referencia', start)
-          .lte('mes_referencia', end),
-        supabase
-          .from('despesas_manuais_lancamentos' as any)
-          .select('valor, mes_referencia')
-          .gte('mes_referencia', start)
-          .lte('mes_referencia', end),
-        supabase
-          .from('despesas_mes_status' as any)
-          .select('mes_referencia, status')
-          .gte('mes_referencia', start)
-          .lte('mes_referencia', end),
-        supabase
-          .from('despesas_status_historico' as any)
-          .select('mes_referencia, created_at')
-          .gte('mes_referencia', start)
-          .lte('mes_referencia', end)
-          .order('created_at', { ascending: false }),
-      ]);
+      const { data: statusRows } = await supabase
+        .from('despesas_mes_status' as any)
+        .select('mes_referencia, status')
+        .gte('mes_referencia', start)
+        .lte('mes_referencia', end);
       if (cancelled) return;
-      const acc: Record<string, number> = {};
-      ((folhaRows || []) as any[]).forEach((f) => {
-        const key = String(f.mes_referencia).slice(0, 7);
-        acc[key] = (acc[key] || 0) + (Number(f.total) || 0);
-      });
-      ((lancRows || []) as any[]).forEach((l) => {
-        const key = String(l.mes_referencia).slice(0, 7);
-        acc[key] = (acc[key] || 0) + (Number(l.valor) || 0);
-      });
-      setTotaisMes(acc);
       const st: Record<string, 'pendente' | 'alana' | 'luan'> = {};
       ((statusRows || []) as any[]).forEach((s) => {
         const key = String(s.mes_referencia).slice(0, 7);
@@ -63,12 +34,6 @@ export default function EstrategiaDespesas() {
         st[key] = raw === 'alana' ? 'alana' : raw === 'luan' || raw === 'pronto' ? 'luan' : 'pendente';
       });
       setStatusMes(st);
-      const ult: Record<string, string> = {};
-      ((histRows || []) as any[]).forEach((h) => {
-        const key = String(h.mes_referencia).slice(0, 7);
-        if (!ult[key]) ult[key] = h.created_at;
-      });
-      setUltimaAlteracaoMes(ult);
     };
     run();
     return () => {
@@ -76,13 +41,10 @@ export default function EstrategiaDespesas() {
     };
   }, [ano]);
 
-  const totalAno = Object.values(totaisMes).reduce((s, v) => s + v, 0);
-  const mediaMensal = totalAno / 12;
-
   return (
     <MinimalistLayout
       title="Despesas"
-      subtitle={`Ano ${ano} — ${mediaMensal > 1 ? formatCurrency(mediaMensal) + '/mês' : 'Carregando...'}`}
+      subtitle={`Ano ${ano}`}
       backPath="/direcao/estrategia"
       fullWidth
       breadcrumbItems={[
@@ -120,21 +82,17 @@ export default function EstrategiaDespesas() {
       }
     >
       <TiposDreDialog open={tiposDreOpen} onOpenChange={setTiposDreOpen} />
-      <div className="text-center mb-2">
-        <h2 className="text-3xl font-bold text-white tracking-wide">{ano}</h2>
-        <div className="w-16 h-0.5 bg-blue-400/60 mx-auto mt-2 rounded-full" />
-      </div>
 
-      <div className="flex items-center gap-3 mb-4">
+      <div className="flex items-center gap-4 mt-6">
         <button
           onClick={() => setAno((a) => a - 1)}
-          className="flex items-center justify-center w-10 h-10 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
+          className="flex items-center justify-center w-12 h-12 shrink-0 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
           aria-label="Ano anterior"
         >
-          <ChevronLeft className="w-5 h-5 text-white/70" />
+          <ChevronLeft className="w-6 h-6 text-white/70" />
         </button>
 
-        <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="flex-1 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5">
           {Array.from({ length: 12 }, (_, i) => i).map((mIdx) => {
             const mesDate = new Date(ano, mIdx, 1);
             const mesKey = format(mesDate, 'yyyy-MM');
@@ -142,26 +100,19 @@ export default function EstrategiaDespesas() {
             const st = statusMes[mesKey] || 'pendente';
             const dotColor = st === 'luan' ? 'bg-emerald-400' : st === 'alana' ? 'bg-yellow-400' : 'bg-red-400';
             const dotTitle = st === 'luan' ? 'Luan' : st === 'alana' ? 'Alana' : 'Pendente';
-            const ultima = ultimaAlteracaoMes[mesKey];
             return (
               <button
                 key={mesKey}
                 onClick={() => navigate(`/direcao/estrategia/despesas/${mesKey}`)}
-                className="relative p-5 rounded-xl border text-left transition-all duration-200 bg-white/5 border-white/10 hover:bg-white/10 hover:border-blue-400/40"
+                className="relative flex items-center justify-center min-h-[140px] px-6 rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-blue-400/40 transition-all duration-200"
               >
+                <span className="text-xl md:text-2xl font-semibold capitalize text-white/80">
+                  {mesNome}
+                </span>
                 <span
-                  className={`absolute top-3 right-3 w-2.5 h-2.5 rounded-full ${dotColor}`}
+                  className={`absolute top-4 right-4 w-2.5 h-2.5 rounded-full ${dotColor}`}
                   title={dotTitle}
                 />
-                <p className="text-sm text-white/50 capitalize mb-1">{mesNome}</p>
-                <p className="text-lg font-semibold text-white">
-                  {formatCurrency(totaisMes[mesKey] || 0)}
-                </p>
-                <p className="text-[11px] text-white/40 mt-1">
-                  {ultima
-                    ? `Último status: ${new Date(ultima).toLocaleString('pt-BR')}`
-                    : 'Sem alterações de status'}
-                </p>
               </button>
             );
           })}
@@ -169,10 +120,10 @@ export default function EstrategiaDespesas() {
 
         <button
           onClick={() => setAno((a) => a + 1)}
-          className="flex items-center justify-center w-10 h-10 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
+          className="flex items-center justify-center w-12 h-12 shrink-0 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
           aria-label="Próximo ano"
         >
-          <ChevronRight className="w-5 h-5 text-white/70" />
+          <ChevronRight className="w-6 h-6 text-white/70" />
         </button>
       </div>
     </MinimalistLayout>
