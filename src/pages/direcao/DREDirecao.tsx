@@ -181,6 +181,14 @@ export default function DREDirecao() {
               {mostrarLucro ? <Eye className="w-4 h-4" strokeWidth={1.8} /> : <EyeOff className="w-4 h-4" strokeWidth={1.8} />}
               <span className="text-xs">Líquido</span>
             </button>
+            <button
+              onClick={() => navigate('/direcao/estrategia/despesas/configuracoes')}
+              title="Configurações padrão das despesas"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-white/10 bg-white/5 text-white/60 hover:text-white hover:bg-white/10 transition-all"
+            >
+              <Settings2 className="w-4 h-4" strokeWidth={1.8} />
+              <span className="text-xs">Configurações padrão</span>
+            </button>
           </div>
         ) : undefined
       }
