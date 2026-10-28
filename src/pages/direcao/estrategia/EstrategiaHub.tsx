@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Lightbulb, Table2, DollarSign, Wallet, BarChart3, Package } from 'lucide-react';
+import { ArrowLeft, Lightbulb, Table2, DollarSign, BarChart3, Package } from 'lucide-react';
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { DelayedParticles } from '@/components/DelayedParticles';
 
@@ -8,7 +8,6 @@ const menuItems = [
   { label: 'Itens do Catálogo', icon: Package, path: '/direcao/estrategia/itens' },
   { label: 'Tabela de Lucro Líquido Kits', icon: Table2, path: '/direcao/estrategia/kits' },
   { label: 'Tabela de Preços Vendedores', icon: DollarSign, path: '/direcao/estrategia/precos' },
-  { label: 'Despesa fixa, salarial e variável', icon: Wallet, path: '/direcao/estrategia/despesas' },
   { label: 'D.R.E. Elisa Portas', icon: BarChart3, path: '/direcao/estrategia/dre' },
 ];
 
