@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Settings2, Building2, SlidersHorizontal } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Building2, SlidersHorizontal } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { TiposDreDialog } from '@/components/direcao/estrategia/TiposDreDialog';
@@ -61,13 +61,6 @@ export default function EstrategiaDespesas() {
           >
             <SlidersHorizontal className="w-4 h-4" />
             Tipos de Despesas
-          </button>
-          <button
-            onClick={() => navigate('/direcao/estrategia/despesas/configuracoes')}
-            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm hover:bg-white/10 transition-colors backdrop-blur-xl"
-          >
-            <Settings2 className="w-4 h-4" />
-            Configurações padrão
           </button>
           <button
             onClick={() => navigate('/administrativo/empresas')}
