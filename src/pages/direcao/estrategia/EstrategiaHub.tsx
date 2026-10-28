@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Lightbulb, Table2, DollarSign, Wallet, BarChart3, Package } from 'lucide-react';
+import { ArrowLeft, Lightbulb, Table2, DollarSign, BarChart3, Package } from 'lucide-react';
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { DelayedParticles } from '@/components/DelayedParticles';
 
