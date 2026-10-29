@@ -1,0 +1,15 @@
+CREATE TABLE public.motoristas_frete (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), nome text NOT NULL, pix text, pix_secundario_nome text, pix_secundario text, created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now());
+CREATE TABLE public.registro_km_viagens (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), motorista_id uuid NOT NULL REFERENCES public.motoristas_frete(id) ON DELETE CASCADE, cidade text NOT NULL, data date, km numeric, valor_km numeric, valor_viagem numeric NOT NULL DEFAULT 0, status text NOT NULL DEFAULT 'pendente', observacao text, created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now());
+CREATE TABLE public.registro_km_adiantamentos (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), motorista_id uuid NOT NULL REFERENCES public.motoristas_frete(id) ON DELETE CASCADE, data date, valor numeric NOT NULL DEFAULT 0, observacao text, created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now());
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.motoristas_frete, public.registro_km_viagens, public.registro_km_adiantamentos TO authenticated;
+GRANT ALL ON public.motoristas_frete, public.registro_km_viagens, public.registro_km_adiantamentos TO service_role;
+ALTER TABLE public.motoristas_frete ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.registro_km_viagens ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.registro_km_adiantamentos ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "auth all" ON public.motoristas_frete FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "auth all" ON public.registro_km_viagens FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "auth all" ON public.registro_km_adiantamentos FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE OR REPLACE FUNCTION public.rkm_touch() RETURNS trigger LANGUAGE plpgsql SET search_path=public AS $$ BEGIN NEW.updated_at=now(); RETURN NEW; END $$;
+CREATE TRIGGER t1 BEFORE UPDATE ON public.motoristas_frete FOR EACH ROW EXECUTE FUNCTION public.rkm_touch();
+CREATE TRIGGER t2 BEFORE UPDATE ON public.registro_km_viagens FOR EACH ROW EXECUTE FUNCTION public.rkm_touch();
+CREATE TRIGGER t3 BEFORE UPDATE ON public.registro_km_adiantamentos FOR EACH ROW EXECUTE FUNCTION public.rkm_touch();
