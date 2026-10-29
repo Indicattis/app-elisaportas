@@ -148,6 +148,13 @@ export function exportPrecosFornecedoresPDF(kits: ItemTabelaPreco[], custoPorta:
       4: { cellWidth: 24 }, 5: { cellWidth: 23 }, 6: { cellWidth: 23 }, 7: { cellWidth: 23 }, 8: { cellWidth: 23 }, 9: { cellWidth: 23 },
       10: { halign: "right", cellWidth: 26, fontStyle: "bold" },
     },
+    didParseCell: (d: any) => {
+      if (preencherPrecoSugerido && d.section === "body" && d.column.index === 4) {
+        d.cell.styles.halign = "right";
+        d.cell.styles.fontStyle = "bold";
+        d.cell.styles.textColor = [25, 118, 210];
+      }
+    },
     didDrawPage: (d: any) => {
       const h = doc.internal.pageSize.getHeight();
       doc.setFontSize(8);
@@ -158,14 +165,25 @@ export function exportPrecosFornecedoresPDF(kits: ItemTabelaPreco[], custoPorta:
   doc.save(`tabela-precos-${hoje()}.pdf`);
 }
 
-export function exportPrecosFornecedoresExcel(kits: ItemTabelaPreco[], custoPorta: (k: ItemTabelaPreco) => number | null) {
+export function exportPrecosFornecedoresExcel(kits: ItemTabelaPreco[], custoPorta: (k: ItemTabelaPreco) => number | null, preencherPrecoSugerido = false) {
   const wb = XLSX.utils.book_new();
   const rows = [
     FORNECEDORES_HEAD,
-    ...kits.map((k, i) => [i + 1, k.descricao, Number(k.largura || 0), Number(k.altura || 0), null, null, null, null, null, null, custoPorta(k)]),
+    ...kits.map((k, i) => {
+      const c = custoPorta(k);
+      return [i + 1, k.descricao, Number(k.largura || 0), Number(k.altura || 0), preencherPrecoSugerido ? c : null, null, null, null, null, null, c];
+    }),
   ];
   const ws = XLSX.utils.aoa_to_sheet(rows);
   ws["!cols"] = [{ wch: 5 }, { wch: 40 }, { wch: 10 }, { wch: 10 }, ...Array(6).fill({ wch: 16 }), { wch: 16 }];
+  const BRL = "R$ #,##0.00";
+  rows.forEach((_, r) => {
+    if (r === 0) return;
+    ["E", "K"].forEach((col) => {
+      const cell = ws[`${col}${r + 1}`];
+      if (cell && typeof cell.v === "number") cell.z = BRL;
+    });
+  });
   XLSX.utils.book_append_sheet(wb, ws, "Kits");
   XLSX.writeFile(wb, `tabela-precos-${hoje()}.xlsx`);
 }
