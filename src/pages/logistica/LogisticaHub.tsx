@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
-import { Truck, Car, CalendarDays, ArrowLeft, Package, AlertCircle, PackageCheck } from "lucide-react";
+import { Truck, Car, CalendarDays, ArrowLeft, Package, AlertCircle, PackageCheck, Gauge } from "lucide-react";
 
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { DelayedParticles } from '@/components/DelayedParticles';
@@ -12,6 +12,7 @@ const menuItems = [
   { label: "Frota", icon: Car, path: "/logistica/frota" },
   { label: "Frete", icon: Package, path: "/logistica/frete" },
   { label: "Pedidos s/ Entrega", icon: AlertCircle, path: "/logistica/pedidos-sem-entrega" },
+  { label: "Registro de KM", icon: Gauge, path: "/logistica/registro-km" },
 ];
 
 export default function LogisticaHub() {

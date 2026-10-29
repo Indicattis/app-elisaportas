@@ -334,6 +334,7 @@ import FreteTransportadoras from "./pages/logistica/FreteTransportadoras";
 import FreteValoresTransportadoras from "./pages/logistica/FreteValoresTransportadoras";
 
 import PedidosPagosSemEntrega from "./pages/logistica/PedidosPagosSemEntrega";
+import RegistroKmPage from "./pages/logistica/RegistroKmPage";
 import AutorizadosLogistica from "./pages/logistica/AutorizadosLogistica";
 import AutorizadosHome from "./pages/AutorizadosHome";
 import AutorizadosGestaoHome from "./pages/autorizados/AutorizadosGestaoHome";
@@ -672,6 +673,7 @@ const App = () => (
                 <Route path="/logistica/autorizados/novo" element={<Navigate to="/autorizados/novo" replace />} />
                 <Route path="/logistica/autorizados/:id/editar" element={<Navigate to="/autorizados/:id/editar" replace />} />
                 <Route path="/logistica/pedidos-sem-entrega" element={<ProtectedRoute routeKey="logistica_pedidos_sem_entrega"><PedidosPagosSemEntrega /></ProtectedRoute>} />
+                <Route path="/logistica/registro-km" element={<ProtectedRoute routeKey="logistica_registro_km"><RegistroKmPage /></ProtectedRoute>} />
                 
                 <Route path="/logistica/instalacoes" element={<ProtectedRoute routeKey="logistica_hub"><OrdensInstalacoesLogistica /></ProtectedRoute>} />
                 <Route path="/logistica/entregas" element={<ProtectedRoute routeKey="logistica_hub"><OrdensEntregasLogistica /></ProtectedRoute>} />
