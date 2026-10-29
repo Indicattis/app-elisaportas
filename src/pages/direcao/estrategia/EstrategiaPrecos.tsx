@@ -4,10 +4,11 @@ import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { Button } from '@/components/ui/button';
 import { FileText, FileSpreadsheet, Menu, BookOpen } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { useTabelaPrecos } from '@/hooks/useTabelaPrecos';
 import { useCustosItens } from '@/hooks/useCustosItens';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { exportPrecosFornecedoresPDF, exportPrecosFornecedoresExcel } from '@/utils/estrategiaPrecosExport';
 import { useKitsMontagemResumo } from '@/hooks/useKitMontagem';
 import { useCustosItensPadroes } from '@/hooks/useCustosItens';
@@ -21,6 +22,7 @@ export default function EstrategiaPrecos() {
   const { items: custosItens } = useCustosItens();
   const { data: resumoMontagem = {} } = useKitsMontagemResumo();
   const { padroes } = useCustosItensPadroes();
+  const [preencherPreco, setPreencherPreco] = useState(false);
   const custoPorta = (k: ItemTabelaPreco): number | null => {
     const r = (resumoMontagem as any)[k.id];
     if (!r || !(r.count > 0)) return null;
@@ -51,11 +53,11 @@ export default function EstrategiaPrecos() {
         return;
       }
       if (kind === 'pdf') {
-        exportPrecosFornecedoresPDF(kits || [], custoPorta);
-        toast.success('PDF gerado');
+        exportPrecosFornecedoresPDF(kits || [], custoPorta, preencherPreco);
+        toast.success(preencherPreco ? 'PDF gerado com preço sugerido' : 'PDF gerado');
       } else {
-        exportPrecosFornecedoresExcel(kits || [], custoPorta);
-        toast.success('Excel gerado');
+        exportPrecosFornecedoresExcel(kits || [], custoPorta, preencherPreco);
+        toast.success(preencherPreco ? 'Excel gerado com preço sugerido' : 'Excel gerado');
       }
     } catch (e: any) {
       toast.error(`Falha ao gerar ${kind === 'pdf' ? 'PDF' : 'Excel'}: ${e?.message ?? e}`);
@@ -82,7 +84,20 @@ export default function EstrategiaPrecos() {
           Exportar
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-48 p-1">
+      <PopoverContent align="end" className="w-64 p-1">
+        <label className="flex items-start gap-2 px-3 py-2 mb-1 rounded-md border border-border bg-muted/30 cursor-pointer select-none">
+          <Checkbox
+            checked={preencherPreco}
+            onCheckedChange={(v) => setPreencherPreco(v === true)}
+            className="mt-0.5"
+          />
+          <span className="text-xs text-foreground/80 leading-snug">
+            Exportar com preço sugerido
+            <span className="block text-[11px] text-muted-foreground">
+              Preenche a coluna com o mesmo valor do custo da porta
+            </span>
+          </span>
+        </label>
         <button
           onClick={() => handleExport('pdf')}
           className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md hover:bg-red-500/10 hover:text-red-300 transition-colors"
