@@ -116,3 +116,55 @@ export function exportEstrategiaPrecosExcel(kits: ItemTabelaPreco[], colunasIn: 
 
   XLSX.writeFile(wb, `tabela-precos-${hoje()}.xlsx`);
 }
+
+const FORNECEDORES_HEAD = ["#", "Descrição", "Largura", "Altura", "Preço sugerido", "Fornecedor 1", "Fornecedor 2", "Fornecedor 3", "Fornecedor 4", "Fornecedor 5", "Custo da Porta"];
+
+export function exportPrecosFornecedoresPDF(kits: ItemTabelaPreco[], custoPorta: (k: ItemTabelaPreco) => number | null) {
+  const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+  const data = new Date().toLocaleDateString("pt-BR");
+  doc.setTextColor(20, 20, 20);
+  doc.setFontSize(16);
+  doc.text("Tabela de Preços — Estratégia", 14, 14);
+  doc.setFontSize(10);
+  doc.setTextColor(110, 110, 110);
+  doc.text(`Gerado em ${data}`, 14, 20);
+  autoTable(doc, {
+    theme: "grid",
+    startY: 26,
+    head: [FORNECEDORES_HEAD],
+    body: kits.map((k, i) => {
+      const c = custoPorta(k);
+      return [String(i + 1), k.descricao, String(k.largura ?? ""), String(k.altura ?? ""), "", "", "", "", "", "", c == null ? "—" : fmtBRL(c)];
+    }),
+    styles: { fontSize: 8, cellPadding: 2.5, textColor: [30, 30, 30], lineColor: [200, 200, 200], lineWidth: 0.1, minCellHeight: 8 },
+    headStyles: { fillColor: [25, 118, 210], textColor: [255, 255, 255], fontStyle: "bold", halign: "center" },
+    alternateRowStyles: { fillColor: [245, 245, 245] },
+    columnStyles: {
+      0: { halign: "center", cellWidth: 9 },
+      1: { cellWidth: 52 },
+      2: { halign: "center", cellWidth: 16 },
+      3: { halign: "center", cellWidth: 16 },
+      4: { cellWidth: 24 }, 5: { cellWidth: 23 }, 6: { cellWidth: 23 }, 7: { cellWidth: 23 }, 8: { cellWidth: 23 }, 9: { cellWidth: 23 },
+      10: { halign: "right", cellWidth: 26, fontStyle: "bold" },
+    },
+    didDrawPage: (d: any) => {
+      const h = doc.internal.pageSize.getHeight();
+      doc.setFontSize(8);
+      doc.setTextColor(130, 130, 130);
+      doc.text(`${data} · Página ${d.pageNumber}`, doc.internal.pageSize.getWidth() - 14, h - 6, { align: "right" });
+    },
+  });
+  doc.save(`tabela-precos-${hoje()}.pdf`);
+}
+
+export function exportPrecosFornecedoresExcel(kits: ItemTabelaPreco[], custoPorta: (k: ItemTabelaPreco) => number | null) {
+  const wb = XLSX.utils.book_new();
+  const rows = [
+    FORNECEDORES_HEAD,
+    ...kits.map((k, i) => [i + 1, k.descricao, Number(k.largura || 0), Number(k.altura || 0), null, null, null, null, null, null, custoPorta(k)]),
+  ];
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws["!cols"] = [{ wch: 5 }, { wch: 40 }, { wch: 10 }, { wch: 10 }, ...Array(6).fill({ wch: 16 }), { wch: 16 }];
+  XLSX.utils.book_append_sheet(wb, ws, "Kits");
+  XLSX.writeFile(wb, `tabela-precos-${hoje()}.xlsx`);
+}
