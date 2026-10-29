@@ -119,7 +119,7 @@ export function exportEstrategiaPrecosExcel(kits: ItemTabelaPreco[], colunasIn: 
 
 const FORNECEDORES_HEAD = ["#", "Descrição", "Largura", "Altura", "Preço sugerido", "Fornecedor 1", "Fornecedor 2", "Fornecedor 3", "Fornecedor 4", "Fornecedor 5", "Custo da Porta"];
 
-export function exportPrecosFornecedoresPDF(kits: ItemTabelaPreco[], custoPorta: (k: ItemTabelaPreco) => number | null) {
+export function exportPrecosFornecedoresPDF(kits: ItemTabelaPreco[], custoPorta: (k: ItemTabelaPreco) => number | null, preencherPrecoSugerido = false) {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
   const data = new Date().toLocaleDateString("pt-BR");
   doc.setTextColor(20, 20, 20);
@@ -134,7 +134,8 @@ export function exportPrecosFornecedoresPDF(kits: ItemTabelaPreco[], custoPorta:
     head: [FORNECEDORES_HEAD],
     body: kits.map((k, i) => {
       const c = custoPorta(k);
-      return [String(i + 1), k.descricao, String(k.largura ?? ""), String(k.altura ?? ""), "", "", "", "", "", "", c == null ? "—" : fmtBRL(c)];
+      const sugerido = preencherPrecoSugerido ? (c == null ? "—" : fmtBRL(c)) : "";
+      return [String(i + 1), k.descricao, String(k.largura ?? ""), String(k.altura ?? ""), sugerido, "", "", "", "", "", c == null ? "—" : fmtBRL(c)];
     }),
     styles: { fontSize: 8, cellPadding: 2.5, textColor: [30, 30, 30], lineColor: [200, 200, 200], lineWidth: 0.1, minCellHeight: 8 },
     headStyles: { fillColor: [25, 118, 210], textColor: [255, 255, 255], fontStyle: "bold", halign: "center" },
