@@ -8,7 +8,10 @@ import { toast } from 'sonner';
 import { useTabelaPrecos } from '@/hooks/useTabelaPrecos';
 import { useCustosItens } from '@/hooks/useCustosItens';
 import { useMemo } from 'react';
-import { exportEstrategiaPrecosPDF, exportEstrategiaPrecosExcel } from '@/utils/estrategiaPrecosExport';
+import { exportPrecosFornecedoresPDF, exportPrecosFornecedoresExcel } from '@/utils/estrategiaPrecosExport';
+import { useKitsMontagemResumo } from '@/hooks/useKitMontagem';
+import { useCustosItensPadroes } from '@/hooks/useCustosItens';
+import type { ItemTabelaPreco } from '@/hooks/useTabelaPrecos';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 
@@ -16,6 +19,15 @@ export default function EstrategiaPrecos() {
   const navigate = useNavigate();
   const { itens: kits } = useTabelaPrecos();
   const { items: custosItens } = useCustosItens();
+  const { data: resumoMontagem = {} } = useKitsMontagemResumo();
+  const { padroes } = useCustosItensPadroes();
+  const custoPorta = (k: ItemTabelaPreco): number | null => {
+    const r = (resumoMontagem as any)[k.id];
+    if (!r || !(r.count > 0)) return null;
+    const preco = Number(k.valor_porta || 0);
+    const taxas = (Number(padroes?.taxa_impostos ?? 0) + Number(padroes?.taxa_descontos ?? 0) + Number(padroes?.taxa_cartao ?? 0)) / 100;
+    return Number(r.custoTotal || 0) + preco * taxas;
+  };
 
   const itensAvulso = useMemo(
     () =>
@@ -39,10 +51,10 @@ export default function EstrategiaPrecos() {
         return;
       }
       if (kind === 'pdf') {
-        exportEstrategiaPrecosPDF(kits || []);
+        exportPrecosFornecedoresPDF(kits || [], custoPorta);
         toast.success('PDF gerado');
       } else {
-        exportEstrategiaPrecosExcel(kits || []);
+        exportPrecosFornecedoresExcel(kits || [], custoPorta);
         toast.success('Excel gerado');
       }
     } catch (e: any) {
