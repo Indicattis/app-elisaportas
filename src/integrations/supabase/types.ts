@@ -5394,6 +5394,36 @@ export type Database = {
           },
         ]
       }
+      motoristas_frete: {
+        Row: {
+          created_at: string
+          id: string
+          nome: string
+          pix: string | null
+          pix_secundario: string | null
+          pix_secundario_nome: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nome: string
+          pix?: string | null
+          pix_secundario?: string | null
+          pix_secundario_nome?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nome?: string
+          pix?: string | null
+          pix_secundario?: string | null
+          pix_secundario_nome?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       multas: {
         Row: {
           aceite_condutor: boolean
@@ -8574,6 +8604,94 @@ export type Database = {
           vendas_catalogo_id?: string | null
         }
         Relationships: []
+      }
+      registro_km_adiantamentos: {
+        Row: {
+          created_at: string
+          data: string | null
+          id: string
+          motorista_id: string
+          observacao: string | null
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          created_at?: string
+          data?: string | null
+          id?: string
+          motorista_id: string
+          observacao?: string | null
+          updated_at?: string
+          valor?: number
+        }
+        Update: {
+          created_at?: string
+          data?: string | null
+          id?: string
+          motorista_id?: string
+          observacao?: string | null
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registro_km_adiantamentos_motorista_id_fkey"
+            columns: ["motorista_id"]
+            isOneToOne: false
+            referencedRelation: "motoristas_frete"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      registro_km_viagens: {
+        Row: {
+          cidade: string
+          created_at: string
+          data: string | null
+          id: string
+          km: number | null
+          motorista_id: string
+          observacao: string | null
+          status: string
+          updated_at: string
+          valor_km: number | null
+          valor_viagem: number
+        }
+        Insert: {
+          cidade: string
+          created_at?: string
+          data?: string | null
+          id?: string
+          km?: number | null
+          motorista_id: string
+          observacao?: string | null
+          status?: string
+          updated_at?: string
+          valor_km?: number | null
+          valor_viagem?: number
+        }
+        Update: {
+          cidade?: string
+          created_at?: string
+          data?: string | null
+          id?: string
+          km?: number | null
+          motorista_id?: string
+          observacao?: string | null
+          status?: string
+          updated_at?: string
+          valor_km?: number | null
+          valor_viagem?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registro_km_viagens_motorista_id_fkey"
+            columns: ["motorista_id"]
+            isOneToOne: false
+            referencedRelation: "motoristas_frete"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       regras_etiquetas: {
         Row: {
