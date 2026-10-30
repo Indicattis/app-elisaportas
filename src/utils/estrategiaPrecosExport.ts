@@ -117,7 +117,7 @@ export function exportEstrategiaPrecosExcel(kits: ItemTabelaPreco[], colunasIn: 
   XLSX.writeFile(wb, `tabela-precos-${hoje()}.xlsx`);
 }
 
-const FORNECEDORES_HEAD = ["#", "Descrição", "Largura", "Altura", "Preço sugerido", "Fornecedor 1", "Fornecedor 2", "Fornecedor 3", "Fornecedor 4", "Fornecedor 5", "Custo da Porta"];
+const FORNECEDORES_HEAD = ["#", "Descrição", "Largura", "Altura", "Preço sugerido", "Fornecedor 1", "Fornecedor 2", "Fornecedor 3", "Fornecedor 4", "Fornecedor 5"];
 
 export function exportPrecosFornecedoresPDF(kits: ItemTabelaPreco[], custoPorta: (k: ItemTabelaPreco) => number | null, preencherPrecoSugerido = false) {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
@@ -135,18 +135,17 @@ export function exportPrecosFornecedoresPDF(kits: ItemTabelaPreco[], custoPorta:
     body: kits.map((k, i) => {
       const c = custoPorta(k);
       const sugerido = preencherPrecoSugerido ? (c == null ? "—" : fmtBRL(c)) : "";
-      return [String(i + 1), k.descricao, String(k.largura ?? ""), String(k.altura ?? ""), sugerido, "", "", "", "", "", c == null ? "—" : fmtBRL(c)];
+      return [String(i + 1), k.descricao, String(k.largura ?? ""), String(k.altura ?? ""), sugerido, "", "", "", "", ""];
     }),
     styles: { fontSize: 8, cellPadding: 2.5, textColor: [30, 30, 30], lineColor: [200, 200, 200], lineWidth: 0.1, minCellHeight: 8 },
     headStyles: { fillColor: [25, 118, 210], textColor: [255, 255, 255], fontStyle: "bold", halign: "center" },
     alternateRowStyles: { fillColor: [245, 245, 245] },
     columnStyles: {
       0: { halign: "center", cellWidth: 9 },
-      1: { cellWidth: 52 },
+      1: { cellWidth: 62 },
       2: { halign: "center", cellWidth: 16 },
       3: { halign: "center", cellWidth: 16 },
-      4: { cellWidth: 24 }, 5: { cellWidth: 23 }, 6: { cellWidth: 23 }, 7: { cellWidth: 23 }, 8: { cellWidth: 23 }, 9: { cellWidth: 23 },
-      10: { halign: "right", cellWidth: 26, fontStyle: "bold" },
+      4: { cellWidth: 26 }, 5: { cellWidth: 27 }, 6: { cellWidth: 27 }, 7: { cellWidth: 27 }, 8: { cellWidth: 27 }, 9: { cellWidth: 27 },
     },
     didParseCell: (d: any) => {
       if (preencherPrecoSugerido && d.section === "body" && d.column.index === 4) {
@@ -171,18 +170,16 @@ export function exportPrecosFornecedoresExcel(kits: ItemTabelaPreco[], custoPort
     FORNECEDORES_HEAD,
     ...kits.map((k, i) => {
       const c = custoPorta(k);
-      return [i + 1, k.descricao, Number(k.largura || 0), Number(k.altura || 0), preencherPrecoSugerido ? c : null, null, null, null, null, null, c];
+      return [i + 1, k.descricao, Number(k.largura || 0), Number(k.altura || 0), preencherPrecoSugerido ? c : null, null, null, null, null, null];
     }),
   ];
   const ws = XLSX.utils.aoa_to_sheet(rows);
-  ws["!cols"] = [{ wch: 5 }, { wch: 40 }, { wch: 10 }, { wch: 10 }, ...Array(6).fill({ wch: 16 }), { wch: 16 }];
+  ws["!cols"] = [{ wch: 5 }, { wch: 40 }, { wch: 10 }, { wch: 10 }, ...Array(6).fill({ wch: 16 })];
   const BRL = "R$ #,##0.00";
   rows.forEach((_, r) => {
     if (r === 0) return;
-    ["E", "K"].forEach((col) => {
-      const cell = ws[`${col}${r + 1}`];
-      if (cell && typeof cell.v === "number") cell.z = BRL;
-    });
+    const cell = ws[`E${r + 1}`];
+    if (cell && typeof cell.v === "number") cell.z = BRL;
   });
   XLSX.utils.book_append_sheet(wb, ws, "Kits");
   XLSX.writeFile(wb, `tabela-precos-${hoje()}.xlsx`);
