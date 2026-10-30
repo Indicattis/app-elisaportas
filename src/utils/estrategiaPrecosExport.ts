@@ -142,10 +142,10 @@ export function exportPrecosFornecedoresPDF(kits: ItemTabelaPreco[], custoPorta:
     alternateRowStyles: { fillColor: [245, 245, 245] },
     columnStyles: {
       0: { halign: "center", cellWidth: 9 },
-      1: { cellWidth: 62 },
-      2: { halign: "center", cellWidth: 16 },
-      3: { halign: "center", cellWidth: 16 },
-      4: { cellWidth: 26 }, 5: { cellWidth: 27 }, 6: { cellWidth: 27 }, 7: { cellWidth: 27 }, 8: { cellWidth: 27 }, 9: { cellWidth: 27 },
+      1: { cellWidth: 56 },
+      2: { halign: "center", cellWidth: 15 },
+      3: { halign: "center", cellWidth: 15 },
+      4: { cellWidth: 25 }, 5: { cellWidth: 25 }, 6: { cellWidth: 25 }, 7: { cellWidth: 25 }, 8: { cellWidth: 25 }, 9: { cellWidth: 25 },
     },
     didParseCell: (d: any) => {
       if (preencherPrecoSugerido && d.section === "body" && d.column.index === 4) {
