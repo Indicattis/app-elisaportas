@@ -1,6 +1,7 @@
 import { useState, useRef, useMemo } from 'react';
-import { Plus, Trash2, Users, Receipt, TrendingDown, TrendingUp, Landmark, Briefcase, Truck, Banknote, Package, FileDown, GripVertical, X, Check, FolderPlus, ChevronRight, AlertTriangle, FileText, RotateCcw, Handshake, Wallet, UserMinus, UserCheck, SlidersHorizontal } from 'lucide-react';
+import { Plus, Trash2, Users, Receipt, TrendingDown, TrendingUp, Landmark, Briefcase, Truck, Banknote, Package, FileDown, GripVertical, X, Check, FolderPlus, ChevronRight, AlertTriangle, FileText, RotateCcw, Handshake, Wallet, UserMinus, UserCheck, SlidersHorizontal, NotebookPen } from 'lucide-react';
 import { TiposDreDialog } from '@/components/direcao/estrategia/TiposDreDialog';
+import { ComissoesAcordosDialog } from '@/components/direcao/estrategia/ComissoesAcordosDialog';
 import GastoFormDialog from '@/components/financeiro/GastoFormDialog';
 import { useGastosPorTipoMes } from '@/hooks/useGastosPorTipoMes';
 import { useContagemGastosPorTipoMes } from '@/hooks/useContagemGastosPorTipoMes';
@@ -46,6 +47,7 @@ import { restrictToVerticalAxis, restrictToParentElement } from '@dnd-kit/modifi
 
 export default function EstrategiaDespesasConfiguracoes() {
   const [tiposDreOpen, setTiposDreOpen] = useState(false);
+  const [acordosOpen, setAcordosOpen] = useState(false);
   return (
     <MinimalistLayout
       title="Configurações padrão"
@@ -53,15 +55,26 @@ export default function EstrategiaDespesasConfiguracoes() {
       backPath="/direcao/estrategia/despesas"
       fullWidth
       headerActions={
-        <button
-          type="button"
-          onClick={() => setTiposDreOpen(true)}
-          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm hover:bg-white/10 transition-colors backdrop-blur-xl"
-          title="Gerenciar quais tipos de despesa debitam do lucro no DRE"
-        >
-          <SlidersHorizontal className="w-4 h-4" />
-          Tipos de Despesas
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setAcordosOpen(true)}
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm hover:bg-white/10 transition-colors backdrop-blur-xl"
+            title="Bloco de notas com os acordos de comissões"
+          >
+            <NotebookPen className="w-4 h-4" />
+            Acordos de Comissões
+          </button>
+          <button
+            type="button"
+            onClick={() => setTiposDreOpen(true)}
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm hover:bg-white/10 transition-colors backdrop-blur-xl"
+            title="Gerenciar quais tipos de despesa debitam do lucro no DRE"
+          >
+            <SlidersHorizontal className="w-4 h-4" />
+            Tipos de Despesas
+          </button>
+        </div>
       }
       breadcrumbItems={[
         { label: 'Home', path: '/home' },
@@ -72,6 +85,7 @@ export default function EstrategiaDespesasConfiguracoes() {
       ]}
     >
       <TiposDreDialog open={tiposDreOpen} onOpenChange={setTiposDreOpen} />
+      <ComissoesAcordosDialog open={acordosOpen} onOpenChange={setAcordosOpen} />
       <DespesasGridContent mode="config" />
     </MinimalistLayout>
   );
