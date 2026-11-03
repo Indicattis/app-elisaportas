@@ -1399,6 +1399,33 @@ export type Database = {
           },
         ]
       }
+      comissoes_acordos: {
+        Row: {
+          chave: string
+          conteudo: string
+          created_at: string
+          id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          chave?: string
+          conteudo?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          chave?: string
+          conteudo?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       company_settings: {
         Row: {
           cep: string
