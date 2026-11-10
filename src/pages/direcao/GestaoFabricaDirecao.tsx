@@ -1974,7 +1974,6 @@ export default function GestaoFabricaDirecao() {
               <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-red-500/10 text-red-500 border-red-500/30 font-mono">{'>'} 4 dias</Badge>
             </div>
             <div className="flex items-center justify-between gap-2">
-              <span className="flex items-center gap-1.5"><ClipboardCheck className="h-3 w-3" /> Inspeção de Qualidade</span>
               <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-red-500/10 text-red-500 border-red-500/30 font-mono">{'>'} 3h</Badge>
             </div>
             <div className="flex items-center justify-between gap-2">
