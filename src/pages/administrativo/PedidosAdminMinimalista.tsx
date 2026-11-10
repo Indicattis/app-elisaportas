@@ -57,14 +57,6 @@ const ETAPAS_CONFIG: EtapaConfig[] = [
     bgColor: 'bg-orange-500/20' 
   },
   { 
-    id: 'inspecao_qualidade', 
-    label: 'Inspeção de Qualidade', 
-    shortLabel: 'Qualidade',
-    icon: CheckCircle, 
-    color: 'text-purple-400', 
-    bgColor: 'bg-purple-500/20' 
-  },
-  { 
     id: 'aguardando_pintura', 
     label: 'Aguardando Pintura', 
     shortLabel: 'Pintura',
