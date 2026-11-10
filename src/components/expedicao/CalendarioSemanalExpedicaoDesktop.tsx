@@ -173,11 +173,6 @@ export const CalendarioSemanalExpedicaoDesktop = ({
       const ordem = ordens.find((o) => o.id === ordemId);
       if (!ordem) return;
 
-      if (ordem.carregamento_concluido) {
-        toast.error("Este pedido já foi carregado e não pode ser reagendado");
-        return;
-      }
-
       if (ordem.data_carregamento) {
         const dataAtual = new Date(ordem.data_carregamento);
         if (isSameDay(dataAtual, novaData)) return;
@@ -186,10 +181,12 @@ export const CalendarioSemanalExpedicaoDesktop = ({
       if (onUpdateOrdem) {
         await onUpdateOrdem({
           id: ordemId,
-          data: {
-            data_carregamento: dataFormatada,
-            status: ordem.fonte === 'instalacoes' ? 'pronta_fabrica' : 'agendada',
-          },
+          data: ordem.carregamento_concluido
+            ? { data_carregamento: dataFormatada }
+            : {
+                data_carregamento: dataFormatada,
+                status: ordem.fonte === 'instalacoes' ? 'pronta_fabrica' : 'agendada',
+              },
           fonte: ordem.fonte,
         });
         toast.success("Data de carregamento atualizada");
