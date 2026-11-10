@@ -76,7 +76,6 @@ export const useOrdensCarregamentoCalendario = (
         `)
         .gte("data_carregamento", inicio)
         .lte("data_carregamento", fim)
-        .eq("carregamento_concluido", false)
         .order("data_carregamento", { ascending: true });
 
       if (errorOrdens) throw errorOrdens;
@@ -142,7 +141,6 @@ export const useOrdensCarregamentoCalendario = (
         .not("data_carregamento", "is", null)
         .gte("data_carregamento", inicio)
         .lte("data_carregamento", fim)
-        .eq("carregamento_concluido", false);
 
       if (errorInstalacoes) throw errorInstalacoes;
 
@@ -202,7 +200,6 @@ export const useOrdensCarregamentoCalendario = (
         .not("data_carregamento", "is", null)
         .gte("data_carregamento", inicio)
         .lte("data_carregamento", fim)
-        .eq("carregamento_concluido", false);
 
       if (errorCorrecoes) throw errorCorrecoes;
 
