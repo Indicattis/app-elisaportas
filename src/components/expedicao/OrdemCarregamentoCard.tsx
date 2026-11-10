@@ -100,6 +100,11 @@ export const OrdemCarregamentoCard = ({
           >
             {getResponsavelNome()}
           </Badge>
+          {ordem.carregamento_concluido && (
+            <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 shrink-0">
+              Carregada
+            </Badge>
+          )}
         </div>
 
         <div className="flex items-center gap-1 shrink-0">
