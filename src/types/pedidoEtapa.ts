@@ -148,7 +148,6 @@ export const ORDEM_ETAPAS: EtapaPedido[] = [
   'aberto',
   'aprovacao_ceo',
   'em_producao',
-  'inspecao_qualidade',
   'aguardando_pintura',
   'embalagem',
   'aguardando_coleta',

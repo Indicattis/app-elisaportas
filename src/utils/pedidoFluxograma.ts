@@ -119,8 +119,7 @@ export function determinarFluxograma(pedido: any): FluxogramaEtapa[] {
     FLUXOGRAMA_ETAPAS.aprovacao_diretor,
     FLUXOGRAMA_ETAPAS.aberto,
     FLUXOGRAMA_ETAPAS.aprovacao_ceo,
-    FLUXOGRAMA_ETAPAS.em_producao,
-    FLUXOGRAMA_ETAPAS.inspecao_qualidade
+    FLUXOGRAMA_ETAPAS.em_producao
   ];
   
   // Se tem pintura, adiciona etapa de pintura
