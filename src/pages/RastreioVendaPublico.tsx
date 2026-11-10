@@ -34,7 +34,6 @@ const ETAPAS = [
   { id: "compra_confirmada", label: "Compra confirmada", icon: ShieldCheck },
   { id: "aberto", label: "Pedido na fábrica", icon: Factory },
   { id: "em_producao", label: "Em produção", icon: Factory },
-  { id: "inspecao_qualidade", label: "Inspeção de qualidade", icon: ShieldCheck },
   { id: "aguardando_pintura", label: "Pintura", icon: Package },
   { id: "embalagem", label: "Embalagem", icon: Package },
   { id: "aguardando_coleta", label: "Pronto para entrega", icon: Truck },

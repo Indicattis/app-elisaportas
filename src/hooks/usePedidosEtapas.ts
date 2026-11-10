@@ -843,7 +843,7 @@ export function usePedidosEtapas(etapa?: EtapaPedido) {
           l => l.tipo_ordem === 'soldagem' || l.tipo_ordem === 'perfiladeira'
         );
         
-        if (!temSoldaOuPerfiladeira) {
+        if (true) { // Inspeção de qualidade removida do fluxo
           // Pedido só tem separação - pular inspeção de qualidade
           console.log('[moverParaProximaEtapa] Pedido só tem separação - pulando inspeção de qualidade');
           

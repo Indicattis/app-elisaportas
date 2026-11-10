@@ -517,7 +517,7 @@ export default function PedidosAdminMinimalista() {
         <TabsList className="hidden md:flex w-full justify-start overflow-x-auto flex-nowrap h-auto p-1 gap-2 bg-white/5 border border-blue-500/10">
           {/* Grupo Vermelho: Produção */}
           <div className="flex gap-1 border-2 border-red-500/50 rounded-lg p-1">
-            {(['aberto', 'aprovacao_ceo', 'em_producao', 'inspecao_qualidade', 'aguardando_pintura', 'embalagem'] as const).map((etapaId) => {
+            {(['aberto', 'aprovacao_ceo', 'em_producao', 'aguardando_pintura', 'embalagem'] as const).map((etapaId) => {
               const etapa = ETAPAS_CONFIG.find(e => e.id === etapaId);
               if (!etapa) return null;
               const Icon = etapa.icon;

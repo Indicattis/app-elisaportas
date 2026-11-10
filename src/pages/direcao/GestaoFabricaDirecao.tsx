@@ -1034,7 +1034,7 @@ export default function GestaoFabricaDirecao() {
 
             {/* Grupo Vermelho: Produção */}
             <div className="flex gap-1 border-2 border-red-500/50 rounded-lg p-1 h-full">
-              {(['aberto', 'aprovacao_ceo', 'em_producao', 'inspecao_qualidade', 'aguardando_pintura', 'embalagem'] as const).map(etapa => {
+              {(['aberto', 'aprovacao_ceo', 'em_producao', 'aguardando_pintura', 'embalagem'] as const).map(etapa => {
                 const config = ETAPAS_CONFIG[etapa];
                 const count = contadores[etapa] || 0;
                 const IconComponent = ETAPA_ICONS[etapa];

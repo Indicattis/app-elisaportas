@@ -17,7 +17,6 @@ interface CronogramaSidebarProps {
 
 const ABAS_ETAPAS = [
   { value: 'em_producao', label: 'Produção' },
-  { value: 'inspecao_qualidade', label: 'Qualidade' },
   { value: 'aguardando_pintura', label: 'Pintura' },
 ] as const;
 
