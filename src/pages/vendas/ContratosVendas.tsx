@@ -729,10 +729,10 @@ export default function ContratosVendas({ scope = 'all' }: ContratosVendasProps 
                   <TableView
                     rows={assinados}
                     showTipo
-                    actionLabel={isMeus ? undefined : "Liberar para Pend. Faturamento"}
-                    actionIcon={isMeus ? undefined : ArrowRight}
+                    actionLabel="Liberar para Pend. Faturamento"
+                    actionIcon={ArrowRight}
                     actionClass="bg-gradient-to-r from-yellow-500 to-yellow-700 hover:from-yellow-400 hover:to-yellow-600 text-white border border-yellow-400/30"
-                    onAction={isMeus ? undefined : (v) => setLiberarVenda(v)}
+                    onAction={(v) => setLiberarVenda(v)}
                     extraRow={(v) => (
                       <>
                         {renderContratoFiles(v.id, false)}
