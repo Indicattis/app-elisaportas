@@ -41,6 +41,15 @@ export function useVendaTemMedicao(vendaId?: string | null): VendaMedicaoStatus 
       const exige = produtos.some((p) => p.tipo_produto === "porta_enrolar");
       if (!exige) return { exigeMedicao: false, temMedicao: true } as const;
 
+      const { data: vinculada } = await supabase
+        .from("visitas_tecnicas_agendadas")
+        .select("id")
+        .eq("venda_id", vendaId as string)
+        .eq("status", "concluida")
+        .limit(1)
+        .maybeSingle();
+      if (vinculada) return { exigeMedicao: true, temMedicao: true, visitaId: (vinculada as any).id } as const;
+
       const nome = normalizeName((venda as any)?.cliente_nome);
       const tel = digits((venda as any)?.cliente_telefone);
 

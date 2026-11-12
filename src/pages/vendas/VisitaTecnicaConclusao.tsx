@@ -28,6 +28,7 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { useCronometro } from '@/hooks/useCronometro';
 import { formatCronometro } from '@/utils/timeFormat';
+import { VinculoVendaVisita } from '@/components/vendas/VinculoVendaVisita';
 import { VisitaMidiasFinais, type MidiaFinalExistente } from '@/components/vendas/VisitaMidiasFinais';
 
 interface Cor { id: string; nome: string; codigo_hex: string }
@@ -583,6 +584,7 @@ export default function VisitaTecnicaConclusao() {
           transition: 'all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 300ms',
         }}
       >
+        {visitaId && <div className="mb-4"><VinculoVendaVisita visitaId={visitaId} /></div>}
         <div className="mb-6">
           <div className="flex items-start justify-between gap-4">
             <h1 className="text-xl font-semibold text-white">

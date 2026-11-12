@@ -10776,6 +10776,7 @@ export type Database = {
           tipo: string
           titulo: string
           updated_at: string
+          venda_id: string | null
         }
         Insert: {
           bairro?: string | null
@@ -10801,6 +10802,7 @@ export type Database = {
           tipo?: string
           titulo: string
           updated_at?: string
+          venda_id?: string | null
         }
         Update: {
           bairro?: string | null
@@ -10826,8 +10828,17 @@ export type Database = {
           tipo?: string
           titulo?: string
           updated_at?: string
+          venda_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "visitas_tecnicas_agendadas_venda_id_fkey"
+            columns: ["venda_id"]
+            isOneToOne: false
+            referencedRelation: "vendas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       visitas_tecnicas_conclusoes: {
         Row: {

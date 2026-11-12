@@ -1,0 +1,2 @@
+ALTER TABLE public.visitas_tecnicas_agendadas ADD COLUMN IF NOT EXISTS venda_id uuid REFERENCES public.vendas(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS idx_visitas_agendadas_venda_id ON public.visitas_tecnicas_agendadas(venda_id);

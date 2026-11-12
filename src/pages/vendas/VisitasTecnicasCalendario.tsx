@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { DndContext, PointerSensor, useSensor, useSensors, useDraggable, useDroppable, DragOverlay, type DragEndEvent, type DragStartEvent } from '@dnd-kit/core';
 import { createPortal } from 'react-dom';
+import { VinculoVendaVisita } from '@/components/vendas/VinculoVendaVisita';
 import { VisitasHistoricoPanel } from '@/components/vendas/VisitasHistoricoPanel';
 import { logVisitaHistorico, diffVisita } from '@/lib/visitasHistorico';
 import { useAuth } from '@/hooks/useAuth';
@@ -1604,6 +1605,7 @@ export default function VisitasTecnicasCalendario() {
                     {selectedVisita.observacoes}
                   </div>
                 )}
+                <VinculoVendaVisita visitaId={selectedVisita.id} />
                 {selectedVisita.status === 'cancelada' && (
                   <div className="mt-2 text-xs text-red-300 bg-red-500/10 border border-red-400/20 rounded-lg px-3 py-2">
                     Visita cancelada
