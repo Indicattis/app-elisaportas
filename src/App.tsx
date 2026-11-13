@@ -699,8 +699,8 @@ const App = () => (
                 <Route path="/administrativo" element={<ProtectedRoute routeKeyPrefix="administrativo_"><AdministrativoHub /></ProtectedRoute>} />
                 <Route path="/administrativo/pedidos" element={<Navigate to="/fabrica/montagem-pedidos" replace />} />
                 <Route path="/administrativo/pedidos/:id" element={<RedirectPedidoAdmin />} />
-                <Route path="/fabrica/montagem-pedidos" element={<ProtectedRoute routeKey="administrativo_hub"><PedidosAdminMinimalista /></ProtectedRoute>} />
-                <Route path="/fabrica/montagem-pedidos/:id" element={<ProtectedRoute routeKey="administrativo_hub"><PedidoViewMinimalista /></ProtectedRoute>} />
+                <Route path="/fabrica/montagem-pedidos" element={<ProtectedRoute routeKey="fabrica_pedidos" alternativeRouteKeys={["administrativo_hub"]}><PedidosAdminMinimalista /></ProtectedRoute>} />
+                <Route path="/fabrica/montagem-pedidos/:id" element={<ProtectedRoute routeKey="fabrica_pedidos" alternativeRouteKeys={["administrativo_hub"]}><PedidoViewMinimalista /></ProtectedRoute>} />
                 <Route path="/administrativo/vendas/:id" element={<ProtectedRoute routeKey="administrativo_hub"><VendaDetalhesMinimalista /></ProtectedRoute>} />
                 <Route path="/financeiro" element={<ProtectedRoute routeKey="financeiro_hub" alternativeRouteKeys={["admin_financeiro", "admin_gastos", "admin_entradas", "admin_bancos", "admin_faturamento", "admin_faturamento_vendas", "admin_faturamento_produtos", "admin_custos", "admin_caixa", "admin_caixa_gestao", "admin_contas_receber", "admin_contas_pagar", "admin_cobrancas"]}><FinanceiroHub /></ProtectedRoute>} />
                 <Route path="/financeiro/faturamento" element={<ProtectedRoute routeKey="admin_faturamento"><FaturamentoHub /></ProtectedRoute>} />

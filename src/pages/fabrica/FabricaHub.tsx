@@ -17,7 +17,7 @@ const menuItems = [
 ];
 
 const routeKeyMap: Record<string, string> = {
-  '/fabrica/montagem-pedidos': 'administrativo_hub',
+  '/fabrica/montagem-pedidos': 'fabrica_pedidos',
   '/fabrica/ordens-pedidos': 'fabrica_ordens_pedidos',
   '/fabrica/cronograma-producao': 'fabrica_cronograma_producao',
   '/fabrica/produtos': 'fabrica_produtos',
