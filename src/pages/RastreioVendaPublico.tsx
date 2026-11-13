@@ -6,7 +6,6 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import portinhaAsset from "@/assets/portinha-rastreio.png.asset.json";
 import williamAsset from "@/assets/william-entregas.png.asset.json";
-import magnoAsset from "@/assets/magno-vendas.png.asset.json";
 
 const PORTINHA_FALLBACK_URL = `https://id-preview--9eb1bc32-7d67-4330-b27a-36a057f315d7.lovable.app${portinhaAsset.url}`;
 const ASSET_FALLBACK_ORIGIN = "https://id-preview--9eb1bc32-7d67-4330-b27a-36a057f315d7.lovable.app";
@@ -75,14 +74,6 @@ const CONTATOS = [
     whatsapp: "555484229239",
     foto: williamAsset.url,
     fotoFallback: `${ASSET_FALLBACK_ORIGIN}${williamAsset.url}`,
-  },
-  {
-    nome: "Magno",
-    area: "Vendas",
-    telefone: "+55 54 9272-7818",
-    whatsapp: "555492727818",
-    foto: magnoAsset.url,
-    fotoFallback: `${ASSET_FALLBACK_ORIGIN}${magnoAsset.url}`,
   },
   {
     nome: "Jenifer",
