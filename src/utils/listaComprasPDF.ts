@@ -216,17 +216,31 @@ export async function gerarListaComprasPDF(etapaLabel: string, itens: ItemListaC
           const kg = arredondarKgTinta(kgTintaPorM2(c.m2));
           return { c, kg, latas: latasTinta(kg) };
         });
-        autoTable(doc, {
-          head: [["COR", "PORTAS", "M²", "TINTA (KG)", "LATAS (25 KG)"]],
-          body: linhas.map(({ c, kg, latas }) => [c.cor, String(c.portas), fmt(c.m2), `${kg} kg`, String(latas)]),
-          foot: [["TOTAL", String(linhas.reduce((a, l) => a + l.c.portas, 0)), fmt(linhas.reduce((a, l) => a + l.c.m2, 0)), `${linhas.reduce((a, l) => a + l.kg, 0)} kg`, String(linhas.reduce((a, l) => a + l.latas, 0))]],
-          startY: y + 4,
-          theme: "grid",
-          styles: { fontSize: 9, cellPadding: 2.5, textColor: 40 },
-          headStyles: { fillColor: [37, 99, 235], textColor: 255, fontStyle: "bold" },
-          footStyles: { fillColor: [240, 240, 240], textColor: 20, fontStyle: "bold" },
-          columnStyles: { 1: { halign: "right" }, 2: { halign: "right" }, 3: { halign: "right" }, 4: { halign: "right" } },
-          margin: { left: 14, right: 14 },
+        const totLatas = linhas.reduce((acc, l) => acc + l.latas, 0);
+        const cardW = 62, cardH = 30, gap = 6, perRow = Math.floor((pageWidth - 28 + gap) / (cardW + gap));
+        const cards = [...linhas.map((l) => ({ t: l.c.cor, n: l.latas, sub: `${l.kg} kg · ${fmt(l.c.m2)} m² · ${l.c.portas} porta(s)`, total: false })),
+          { t: "TOTAL DE LATAS", n: totLatas, sub: `${linhas.reduce((acc, l) => acc + l.kg, 0)} kg no total`, total: true }];
+        let cy = y + 5;
+        const pageH = doc.internal.pageSize.getHeight();
+        cards.forEach((c, i) => {
+          const col = i % perRow;
+          if (i > 0 && col === 0) cy += cardH + gap;
+          if (cy + cardH > pageH - 12) { doc.addPage(); cy = 16; }
+          const x = 14 + col * (cardW + gap);
+          if (c.total) doc.setFillColor(37, 99, 235); else doc.setFillColor(243, 246, 252);
+          doc.setDrawColor(37, 99, 235);
+          doc.roundedRect(x, cy, cardW, cardH, 3, 3, c.total ? "F" : "FD");
+          doc.setTextColor(c.total ? 255 : 60);
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(9);
+          doc.text(doc.splitTextToSize(c.t.toUpperCase(), cardW - 6)[0], x + 3, cy + 6);
+          doc.setFontSize(20);
+          doc.setTextColor(c.total ? 255 : 37, c.total ? 255 : 99, c.total ? 255 : 235);
+          doc.text(`${c.n} ${c.n === 1 ? "lata" : "latas"}`, x + 3, cy + 18);
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(7.5);
+          doc.setTextColor(c.total ? 255 : 110);
+          doc.text(c.sub, x + 3, cy + 25);
         });
       }
     }
