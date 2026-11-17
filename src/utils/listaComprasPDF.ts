@@ -48,6 +48,7 @@ export interface TintaPedido {
 
 export interface TintaCor {
   cor: string;
+  hex?: string;
   portas: number;
   m2: number;
 }
@@ -218,8 +219,8 @@ export async function gerarListaComprasPDF(etapaLabel: string, itens: ItemListaC
         });
         const totLatas = linhas.reduce((acc, l) => acc + l.latas, 0);
         const cardW = 62, cardH = 30, gap = 6, perRow = Math.floor((pageWidth - 28 + gap) / (cardW + gap));
-        const cards = [...linhas.map((l) => ({ t: l.c.cor, n: l.latas, sub: `${l.kg} kg · ${fmt(l.c.m2)} m² · ${l.c.portas} porta(s)`, total: false })),
-          { t: "TOTAL DE LATAS", n: totLatas, sub: `${linhas.reduce((acc, l) => acc + l.kg, 0)} kg no total`, total: true }];
+        const cards = [...linhas.map((l) => ({ t: l.c.cor, n: l.latas, sub: `${l.kg} kg · ${fmt(l.c.m2)} m² · ${l.c.portas} porta(s)`, total: false, hex: l.c.hex })),
+          { t: "TOTAL DE LATAS", n: totLatas, sub: `${linhas.reduce((acc, l) => acc + l.kg, 0)} kg no total`, total: true, hex: undefined as string | undefined }];
         let cy = y + 5;
         const pageH = doc.internal.pageSize.getHeight();
         cards.forEach((c, i) => {
@@ -241,6 +242,23 @@ export async function gerarListaComprasPDF(etapaLabel: string, itens: ItemListaC
           doc.setFontSize(7.5);
           doc.setTextColor(c.total ? 255 : 110);
           doc.text(c.sub, x + 3, cy + 25);
+          const m = c.hex && /^#?([0-9a-f]{6})$/i.exec(c.hex.trim());
+          if (m) {
+            const n = parseInt(m[1], 16);
+            const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+            const label = `RGB ${r}, ${g}, ${b}`;
+            doc.setFontSize(6.5);
+            doc.setFont("helvetica", "bold");
+            const tw = doc.getTextWidth(label) + 9;
+            const tx = x + cardW - tw - 3, ty = cy + 2.5;
+            doc.setFillColor(255, 255, 255);
+            doc.setDrawColor(200, 200, 200);
+            doc.roundedRect(tx, ty, tw, 5, 2.5, 2.5, "FD");
+            doc.setFillColor(r, g, b);
+            doc.circle(tx + 2.8, ty + 2.5, 1.6, "FD");
+            doc.setTextColor(60);
+            doc.text(label, tx + 5.5, ty + 3.6);
+          }
         });
       }
     }

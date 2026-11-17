@@ -244,7 +244,7 @@ export default function GestaoFabricaDirecao() {
         if (vendaIds.length) {
           const { data: prods } = await supabase
             .from('produtos_vendas')
-            .select('venda_id, tipo_produto, valor_pintura, largura, altura, quantidade, cor:catalogo_cores(nome)')
+            .select('venda_id, tipo_produto, valor_pintura, largura, altura, quantidade, cor:catalogo_cores(nome, codigo_hex)')
             .in('venda_id', vendaIds);
           (peds || []).forEach((p: any) => {
             const linhasP = (prods || []).filter((pv: any) =>
@@ -263,7 +263,7 @@ export default function GestaoFabricaDirecao() {
               portas += q;
               m2 += a;
               const c = tintaPorCor.find((x) => x.cor === cor);
-              if (c) { c.portas += q; c.m2 += a; } else tintaPorCor.push({ cor, portas: q, m2: a });
+              if (c) { c.portas += q; c.m2 += a; } else tintaPorCor.push({ cor, hex: pv.cor?.codigo_hex || undefined, portas: q, m2: a });
             });
             tinta.push({ pedido: `#${p.numero_pedido ?? '-'}`, cliente: p.vendas?.cliente_nome || '-', cores: [...coresP].join(', '), portas, m2 });
           });
