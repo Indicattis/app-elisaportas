@@ -1,10 +1,20 @@
 import { supabase } from "@/integrations/supabase/client";
 
-export const ETAPAS_ENCERRADAS = ["finalizado", "pos_vendas"];
+/**
+ * Etapas que ficam FORA da conta de pedidos por item.
+ * Vazia: pedidos finalizados e em pós-vendas também entram na conta.
+ * Só pedidos arquivados ficam de fora.
+ */
+export const ETAPAS_FORA_DE_COMPRA: string[] = [];
+
+/** Diz se um pedido, pela etapa em que está, entra na conta de pedidos por item. */
+export function contaNaDemanda(etapaAtual: string | null | undefined): boolean {
+  return !ETAPAS_FORA_DE_COMPRA.includes(etapaAtual || "");
+}
 
 export interface DemandaItem { pedidos: number; pecas: number }
 
-/** Pedidos ativos (não arquivados, fora de finalizado/pós-vendas) que usam cada item, e a soma de peças. */
+/** Pedidos não arquivados (incluindo finalizados e pós-vendas) que usam cada item, e a soma de peças. */
 export async function fetchDemandaPorItem(): Promise<Record<string, DemandaItem>> {
   const ativos = new Set<string>();
   for (let from = 0; ; from += 1000) {
@@ -15,7 +25,7 @@ export async function fetchDemandaPorItem(): Promise<Record<string, DemandaItem>
       .order("id")
       .range(from, from + 999);
     if (error) throw error;
-    for (const p of data || []) if (!ETAPAS_ENCERRADAS.includes(p.etapa_atual || "")) ativos.add(p.id);
+    for (const p of data || []) if (contaNaDemanda(p.etapa_atual)) ativos.add(p.id);
     if (!data || data.length < 1000) break;
   }
   const ids = [...ativos];

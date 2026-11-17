@@ -374,7 +374,7 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
       )}
       {!hidePedidos && (
         <TableCell className="text-center text-white/60 text-sm">
-          {pedidosCount ? (<span title={`${pedidosCount.pedidos} pedido(s) ativo(s) · ${pedidosCount.pecas} peça(s)`}>{pedidosCount.pedidos} <span className="text-white/40 text-xs">· {pedidosCount.pecas} pç</span></span>) : 0}
+          {pedidosCount ? (<span title={`${pedidosCount.pedidos} pedido(s) · ${pedidosCount.pecas} peça(s)`}>{pedidosCount.pedidos} <span className="text-white/40 text-xs">· {pedidosCount.pecas} pç</span></span>) : 0}
         </TableCell>
       )}
       {!hideConferir && (
@@ -538,7 +538,7 @@ export default function ProdutosFabrica({
 
   // Fetch pedidos count per estoque item
   const { data: pedidosCountMap = {} } = useQuery({
-    queryKey: ["pedidos-count-by-estoque-ativos"],
+    queryKey: ["pedidos-count-by-estoque"],
     queryFn: fetchDemandaPorItem,
   });
 
