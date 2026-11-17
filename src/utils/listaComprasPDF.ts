@@ -41,11 +41,18 @@ export interface ItemListaCompras {
 export interface TintaPedido {
   pedido: string;
   cliente: string;
+  cores?: string;
   portas: number;
   m2: number;
 }
 
-export async function gerarListaComprasPDF(etapaLabel: string, itens: ItemListaCompras[], tinta?: TintaPedido[]) {
+export interface TintaCor {
+  cor: string;
+  portas: number;
+  m2: number;
+}
+
+export async function gerarListaComprasPDF(etapaLabel: string, itens: ItemListaCompras[], tinta?: TintaPedido[], tintaPorCor?: TintaCor[]) {
   const doc = new jsPDF({ orientation: "landscape", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
 
@@ -185,20 +192,43 @@ export async function gerarListaComprasPDF(etapaLabel: string, itens: ItemListaC
       const totKg = kgTintaPorM2(totM2);
       const kgComprar = arredondarKgTinta(totKg);
       autoTable(doc, {
-        head: [["PEDIDO", "CLIENTE", "PORTAS COM PINTURA", "M²", "TINTA (KG)", "LATAS (25 KG)"]],
+        head: [["PEDIDO", "CLIENTE", "COR", "PORTAS COM PINTURA", "M²", "TINTA (KG)", "LATAS (25 KG)"]],
         body: tinta.map((t) => {
           const kg = kgTintaPorM2(t.m2);
-          return [t.pedido, t.cliente, String(t.portas), fmt(t.m2), fmt(kg), String(latasTinta(kg))];
+          return [t.pedido, t.cliente, t.cores || '-', String(t.portas), fmt(t.m2), fmt(kg), String(latasTinta(kg))];
         }),
-        foot: [["TOTAL PARA COMPRA", "", String(totPortas), fmt(totM2), `${kgComprar} kg (${fmt(totKg)})`, String(latasTinta(kgComprar))]],
+        foot: [["TOTAL PARA COMPRA", "", "", String(totPortas), fmt(totM2), `${kgComprar} kg (${fmt(totKg)})`, String(latasTinta(kgComprar))]],
         startY: 30,
         theme: "grid",
         styles: { fontSize: 9, cellPadding: 2.5, textColor: 40 },
         headStyles: { fillColor: [37, 99, 235], textColor: 255, fontStyle: "bold" },
         footStyles: { fillColor: [240, 240, 240], textColor: 20, fontStyle: "bold" },
-        columnStyles: { 2: { halign: "right" }, 3: { halign: "right" }, 4: { halign: "right" }, 5: { halign: "right" } },
+        columnStyles: { 3: { halign: "right" }, 4: { halign: "right" }, 5: { halign: "right" }, 6: { halign: "right" } },
         margin: { left: 14, right: 14 },
       });
+      if (tintaPorCor && tintaPorCor.length) {
+        const y = (doc as any).lastAutoTable.finalY + 10;
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(0);
+        doc.text("Compra por cor", 14, y);
+        const linhas = tintaPorCor.map((c) => {
+          const kg = arredondarKgTinta(kgTintaPorM2(c.m2));
+          return { c, kg, latas: latasTinta(kg) };
+        });
+        autoTable(doc, {
+          head: [["COR", "PORTAS", "M²", "TINTA (KG)", "LATAS (25 KG)"]],
+          body: linhas.map(({ c, kg, latas }) => [c.cor, String(c.portas), fmt(c.m2), `${kg} kg`, String(latas)]),
+          foot: [["TOTAL", String(linhas.reduce((a, l) => a + l.c.portas, 0)), fmt(linhas.reduce((a, l) => a + l.c.m2, 0)), `${linhas.reduce((a, l) => a + l.kg, 0)} kg`, String(linhas.reduce((a, l) => a + l.latas, 0))]],
+          startY: y + 4,
+          theme: "grid",
+          styles: { fontSize: 9, cellPadding: 2.5, textColor: 40 },
+          headStyles: { fillColor: [37, 99, 235], textColor: 255, fontStyle: "bold" },
+          footStyles: { fillColor: [240, 240, 240], textColor: 20, fontStyle: "bold" },
+          columnStyles: { 1: { halign: "right" }, 2: { halign: "right" }, 3: { halign: "right" }, 4: { halign: "right" } },
+          margin: { left: 14, right: 14 },
+        });
+      }
     }
   }
 

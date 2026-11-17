@@ -50,7 +50,7 @@ import type { VendaPendentePedido } from "@/hooks/useVendasPendentePedido";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { enviarParaAguardandoCliente } from "@/lib/aguardandoCliente";
-import { gerarListaComprasPDF, type ItemListaCompras, type TintaPedido } from "@/utils/listaComprasPDF";
+import { gerarListaComprasPDF, type ItemListaCompras, type TintaPedido, type TintaCor } from "@/utils/listaComprasPDF";
 import { buscarDadosPedidoProducaoPDF } from "@/utils/buscarDadosPedidoProducaoPDF";
 import { imprimirPedidosProducaoPDFBatch } from "@/utils/pedidoProducaoPDFGenerator";
 import { PedidosSelecaoBar } from "@/components/pedidos/PedidosSelecaoBar";
@@ -234,6 +234,7 @@ export default function GestaoFabricaDirecao() {
 
       // Tinta necessária para portas com pintura
       const tinta: TintaPedido[] = [];
+      const tintaPorCor: TintaCor[] = [];
       try {
         const { data: peds } = await supabase
           .from('pedidos_producao')
@@ -243,7 +244,7 @@ export default function GestaoFabricaDirecao() {
         if (vendaIds.length) {
           const { data: prods } = await supabase
             .from('produtos_vendas')
-            .select('venda_id, tipo_produto, valor_pintura, largura, altura, quantidade')
+            .select('venda_id, tipo_produto, valor_pintura, largura, altura, quantidade, cor:catalogo_cores(nome)')
             .in('venda_id', vendaIds);
           (peds || []).forEach((p: any) => {
             const linhasP = (prods || []).filter((pv: any) =>
@@ -253,17 +254,23 @@ export default function GestaoFabricaDirecao() {
             );
             if (!linhasP.length) return;
             let portas = 0, m2 = 0;
+            const coresP = new Set<string>();
             linhasP.forEach((pv: any) => {
               const q = Number(pv.quantidade) || 1;
+              const a = q * (Number(pv.largura) || 0) * (Number(pv.altura) || 0);
+              const cor = pv.cor?.nome || 'Sem cor definida';
+              coresP.add(cor);
               portas += q;
-              m2 += q * (Number(pv.largura) || 0) * (Number(pv.altura) || 0);
+              m2 += a;
+              const c = tintaPorCor.find((x) => x.cor === cor);
+              if (c) { c.portas += q; c.m2 += a; } else tintaPorCor.push({ cor, portas: q, m2: a });
             });
-            tinta.push({ pedido: `#${p.numero_pedido ?? '-'}`, cliente: p.vendas?.cliente_nome || '-', portas, m2 });
+            tinta.push({ pedido: `#${p.numero_pedido ?? '-'}`, cliente: p.vendas?.cliente_nome || '-', cores: [...coresP].join(', '), portas, m2 });
           });
         }
       } catch (e) { console.error('tinta', e); }
 
-      await gerarListaComprasPDF(etapaLabel, itens, tinta);
+      await gerarListaComprasPDF(etapaLabel, itens, tinta, tintaPorCor.sort((a, b) => a.cor.localeCompare(b.cor)));
     } catch (err: any) {
       console.error(err);
       toast({ title: 'Erro', description: err.message || 'Falha ao gerar lista', variant: 'destructive' });

@@ -11,3 +11,10 @@ describe("tinta", () => {
   it("60 kg são 3 latas", () => expect(latasTinta(60)).toBe(3));
   it("0 kg é 0 lata", () => expect(latasTinta(0)).toBe(0));
 });
+
+describe("latas por cor", () => {
+  it("26 kg cinza + 10 kg preto = 3 latas", async () => {
+    const { latasTinta } = await import("./tinta");
+    expect(latasTinta(26) + latasTinta(10)).toBe(3);
+  });
+});
