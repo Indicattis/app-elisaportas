@@ -3,32 +3,39 @@ import { supabase } from "@/integrations/supabase/client";
 /**
  * Etapas que ficam FORA da conta de pedidos por item.
  * Vazia: pedidos finalizados e em pós-vendas também entram na conta.
- * Só pedidos arquivados ficam de fora.
  */
 export const ETAPAS_FORA_DE_COMPRA: string[] = [];
 
-/** Diz se um pedido, pela etapa em que está, entra na conta de pedidos por item. */
-export function contaNaDemanda(etapaAtual: string | null | undefined): boolean {
-  return !ETAPAS_FORA_DE_COMPRA.includes(etapaAtual || "");
+/** Arquivados também entram na conta. Mude para true para deixá-los de fora. */
+export const EXCLUIR_ARQUIVADOS = false;
+
+export interface PedidoResumo {
+  etapa_atual?: string | null;
+  arquivado?: boolean | null;
+}
+
+/** Diz se um pedido entra na conta de pedidos por item. */
+export function contaNaDemanda(pedido: PedidoResumo): boolean {
+  if (EXCLUIR_ARQUIVADOS && pedido.arquivado) return false;
+  return !ETAPAS_FORA_DE_COMPRA.includes(pedido.etapa_atual || "");
 }
 
 export interface DemandaItem { pedidos: number; pecas: number }
 
-/** Pedidos não arquivados (incluindo finalizados e pós-vendas) que usam cada item, e a soma de peças. */
+/** Todos os pedidos do sistema (inclusive finalizados, pós-vendas e arquivados) que usam cada item, e a soma de peças. */
 export async function fetchDemandaPorItem(): Promise<Record<string, DemandaItem>> {
-  const ativos = new Set<string>();
+  const relevantes = new Set<string>();
   for (let from = 0; ; from += 1000) {
     const { data, error } = await supabase
       .from("pedidos_producao")
-      .select("id, etapa_atual")
-      .eq("arquivado", false)
+      .select("id, etapa_atual, arquivado")
       .order("id")
       .range(from, from + 999);
     if (error) throw error;
-    for (const p of data || []) if (contaNaDemanda(p.etapa_atual)) ativos.add(p.id);
+    for (const p of data || []) if (contaNaDemanda(p)) relevantes.add(p.id);
     if (!data || data.length < 1000) break;
   }
-  const ids = [...ativos];
+  const ids = [...relevantes];
   const seen: Record<string, Set<string>> = {};
   const pecas: Record<string, number> = {};
   for (let i = 0; i < ids.length; i += 200) {
