@@ -3,6 +3,7 @@ import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { formatarQuantidadeUnidade, getUnidadeAbreviacao } from "./unidadesMedida";
+import { arredondarKgTinta, kgTintaPorM2 } from "@/lib/tinta";
 import logoUrl from "@/assets/logo-lista-material.png";
 
 let logoDataUrlCache: string | null = null;
@@ -37,7 +38,14 @@ export interface ItemListaCompras {
   materia_prima_conversao?: number | null;
 }
 
-export async function gerarListaComprasPDF(etapaLabel: string, itens: ItemListaCompras[]) {
+export interface TintaPedido {
+  pedido: string;
+  cliente: string;
+  portas: number;
+  m2: number;
+}
+
+export async function gerarListaComprasPDF(etapaLabel: string, itens: ItemListaCompras[], tinta?: TintaPedido[]) {
   const doc = new jsPDF({ orientation: "landscape", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
 
@@ -156,6 +164,39 @@ export async function gerarListaComprasPDF(etapaLabel: string, itens: ItemListaC
       cursorY = 20;
     }
   });
+
+  if (tinta) {
+    doc.addPage();
+    doc.setTextColor(0);
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text("Tinta necessária", pageWidth / 2, 18, { align: "center" });
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(100);
+    doc.text("1 m² = 1,25 kg de tinta", pageWidth / 2, 24, { align: "center" });
+    const fmt = (n: number) => n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    if (tinta.length === 0) {
+      doc.setFontSize(11);
+      doc.text("Nenhuma porta com pintura nos pedidos selecionados", pageWidth / 2, 40, { align: "center" });
+    } else {
+      const totPortas = tinta.reduce((a, t) => a + t.portas, 0);
+      const totM2 = tinta.reduce((a, t) => a + t.m2, 0);
+      const totKg = kgTintaPorM2(totM2);
+      autoTable(doc, {
+        head: [["PEDIDO", "CLIENTE", "PORTAS COM PINTURA", "M²", "TINTA (KG)"]],
+        body: tinta.map((t) => [t.pedido, t.cliente, String(t.portas), fmt(t.m2), fmt(kgTintaPorM2(t.m2))]),
+        foot: [["TOTAL PARA COMPRA", "", String(totPortas), fmt(totM2), `${arredondarKgTinta(totKg)} kg (${fmt(totKg)})`]],
+        startY: 30,
+        theme: "grid",
+        styles: { fontSize: 9, cellPadding: 2.5, textColor: 40 },
+        headStyles: { fillColor: [37, 99, 235], textColor: 255, fontStyle: "bold" },
+        footStyles: { fillColor: [240, 240, 240], textColor: 20, fontStyle: "bold" },
+        columnStyles: { 2: { halign: "right" }, 3: { halign: "right" }, 4: { halign: "right" } },
+        margin: { left: 14, right: 14 },
+      });
+    }
+  }
 
   doc.save(`lista-compras-${etapaLabel.toLowerCase().replace(/\s+/g, "-")}-${format(new Date(), "yyyy-MM-dd")}.pdf`);
 }

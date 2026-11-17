@@ -50,7 +50,7 @@ import type { VendaPendentePedido } from "@/hooks/useVendasPendentePedido";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { enviarParaAguardandoCliente } from "@/lib/aguardandoCliente";
-import { gerarListaComprasPDF, type ItemListaCompras } from "@/utils/listaComprasPDF";
+import { gerarListaComprasPDF, type ItemListaCompras, type TintaPedido } from "@/utils/listaComprasPDF";
 import { buscarDadosPedidoProducaoPDF } from "@/utils/buscarDadosPedidoProducaoPDF";
 import { imprimirPedidosProducaoPDFBatch } from "@/utils/pedidoProducaoPDFGenerator";
 import { PedidosSelecaoBar } from "@/components/pedidos/PedidosSelecaoBar";
@@ -232,7 +232,38 @@ export default function GestaoFabricaDirecao() {
         });
       }
 
-      await gerarListaComprasPDF(etapaLabel, itens);
+      // Tinta necessária para portas com pintura
+      const tinta: TintaPedido[] = [];
+      try {
+        const { data: peds } = await supabase
+          .from('pedidos_producao')
+          .select('id, numero_pedido, venda_id, vendas:venda_id ( cliente_nome )')
+          .in('id', pedidoIds);
+        const vendaIds = (peds || []).map((p: any) => p.venda_id).filter(Boolean);
+        if (vendaIds.length) {
+          const { data: prods } = await supabase
+            .from('produtos_vendas')
+            .select('venda_id, tipo_produto, valor_pintura, largura, altura, quantidade')
+            .in('venda_id', vendaIds);
+          (peds || []).forEach((p: any) => {
+            const linhasP = (prods || []).filter((pv: any) =>
+              pv.venda_id === p.venda_id &&
+              (pv.tipo_produto === 'pintura_epoxi' ||
+                ((pv.tipo_produto === 'porta_enrolar' || pv.tipo_produto === 'porta_social') && Number(pv.valor_pintura) > 0))
+            );
+            if (!linhasP.length) return;
+            let portas = 0, m2 = 0;
+            linhasP.forEach((pv: any) => {
+              const q = Number(pv.quantidade) || 1;
+              portas += q;
+              m2 += q * (Number(pv.largura) || 0) * (Number(pv.altura) || 0);
+            });
+            tinta.push({ pedido: `#${p.numero_pedido ?? '-'}`, cliente: p.vendas?.cliente_nome || '-', portas, m2 });
+          });
+        }
+      } catch (e) { console.error('tinta', e); }
+
+      await gerarListaComprasPDF(etapaLabel, itens, tinta);
     } catch (err: any) {
       console.error(err);
       toast({ title: 'Erro', description: err.message || 'Falha ao gerar lista', variant: 'destructive' });
