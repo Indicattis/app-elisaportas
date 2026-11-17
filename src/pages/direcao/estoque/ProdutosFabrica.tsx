@@ -1,3 +1,4 @@
+import { fetchDemandaPorItem, type DemandaItem } from "@/lib/pedidosPorItem";
 import { useState, useEffect, useMemo, Fragment } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -160,7 +161,7 @@ interface SortableProductRowProps {
   produto: ProdutoEstoque;
   onDoubleClick: (id: string) => void;
   isDragDisabled: boolean;
-  pedidosCount: number;
+  pedidosCount?: DemandaItem;
   onToggleConferir: (id: string, currentStatus: boolean) => void;
   onExcluir: (id: string) => void;
   onUpdateField: (id: string, patch: Record<string, any>) => Promise<void>;
@@ -373,7 +374,7 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
       )}
       {!hidePedidos && (
         <TableCell className="text-center text-white/60 text-sm">
-          {pedidosCount || 0}
+          {pedidosCount ? (<span title={`${pedidosCount.pedidos} pedido(s) ativo(s) · ${pedidosCount.pecas} peça(s)`}>{pedidosCount.pedidos} <span className="text-white/40 text-xs">· {pedidosCount.pecas} pç</span></span>) : 0}
         </TableCell>
       )}
       {!hideConferir && (
@@ -537,24 +538,8 @@ export default function ProdutosFabrica({
 
   // Fetch pedidos count per estoque item
   const { data: pedidosCountMap = {} } = useQuery({
-    queryKey: ["pedidos-count-by-estoque"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("pedido_linhas")
-        .select("estoque_id, pedido_id");
-      if (error) throw error;
-      const countMap: Record<string, number> = {};
-      const seen: Record<string, Set<string>> = {};
-      for (const row of data || []) {
-        if (!row.estoque_id) continue;
-        if (!seen[row.estoque_id]) seen[row.estoque_id] = new Set();
-        seen[row.estoque_id].add(row.pedido_id);
-      }
-      for (const [estoqueId, pedidoSet] of Object.entries(seen)) {
-        countMap[estoqueId] = pedidoSet.size;
-      }
-      return countMap;
-    },
+    queryKey: ["pedidos-count-by-estoque-ativos"],
+    queryFn: fetchDemandaPorItem,
   });
 
   const handleToggleConferir = async (id: string, currentStatus: boolean) => {
@@ -1331,7 +1316,7 @@ export default function ProdutosFabrica({
                               produto={produto}
                               onDoubleClick={handleDoubleClick}
                               isDragDisabled={isDragDisabled}
-                              pedidosCount={pedidosCountMap[produto.id] || 0}
+                              pedidosCount={pedidosCountMap[produto.id]}
                               onToggleConferir={handleToggleConferir}
                               onExcluir={handleExcluir}
                               onUpdateField={handleUpdateField}
