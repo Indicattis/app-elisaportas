@@ -3,7 +3,7 @@ import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { formatarQuantidadeUnidade, getUnidadeAbreviacao } from "./unidadesMedida";
-import { arredondarKgTinta, kgTintaPorM2 } from "@/lib/tinta";
+import { arredondarKgTinta, kgTintaPorM2, latasTinta } from "@/lib/tinta";
 import logoUrl from "@/assets/logo-lista-material.png";
 
 let logoDataUrlCache: string | null = null;
@@ -174,7 +174,7 @@ export async function gerarListaComprasPDF(etapaLabel: string, itens: ItemListaC
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(100);
-    doc.text("1 m² = 1,25 kg de tinta", pageWidth / 2, 24, { align: "center" });
+    doc.text("1 m² = 1,25 kg de tinta · 1 lata = 25 kg", pageWidth / 2, 24, { align: "center" });
     const fmt = (n: number) => n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     if (tinta.length === 0) {
       doc.setFontSize(11);
@@ -183,16 +183,20 @@ export async function gerarListaComprasPDF(etapaLabel: string, itens: ItemListaC
       const totPortas = tinta.reduce((a, t) => a + t.portas, 0);
       const totM2 = tinta.reduce((a, t) => a + t.m2, 0);
       const totKg = kgTintaPorM2(totM2);
+      const kgComprar = arredondarKgTinta(totKg);
       autoTable(doc, {
-        head: [["PEDIDO", "CLIENTE", "PORTAS COM PINTURA", "M²", "TINTA (KG)"]],
-        body: tinta.map((t) => [t.pedido, t.cliente, String(t.portas), fmt(t.m2), fmt(kgTintaPorM2(t.m2))]),
-        foot: [["TOTAL PARA COMPRA", "", String(totPortas), fmt(totM2), `${arredondarKgTinta(totKg)} kg (${fmt(totKg)})`]],
+        head: [["PEDIDO", "CLIENTE", "PORTAS COM PINTURA", "M²", "TINTA (KG)", "LATAS (25 KG)"]],
+        body: tinta.map((t) => {
+          const kg = kgTintaPorM2(t.m2);
+          return [t.pedido, t.cliente, String(t.portas), fmt(t.m2), fmt(kg), String(latasTinta(kg))];
+        }),
+        foot: [["TOTAL PARA COMPRA", "", String(totPortas), fmt(totM2), `${kgComprar} kg (${fmt(totKg)})`, String(latasTinta(kgComprar))]],
         startY: 30,
         theme: "grid",
         styles: { fontSize: 9, cellPadding: 2.5, textColor: 40 },
         headStyles: { fillColor: [37, 99, 235], textColor: 255, fontStyle: "bold" },
         footStyles: { fillColor: [240, 240, 240], textColor: 20, fontStyle: "bold" },
-        columnStyles: { 2: { halign: "right" }, 3: { halign: "right" }, 4: { halign: "right" } },
+        columnStyles: { 2: { halign: "right" }, 3: { halign: "right" }, 4: { halign: "right" }, 5: { halign: "right" } },
         margin: { left: 14, right: 14 },
       });
     }
