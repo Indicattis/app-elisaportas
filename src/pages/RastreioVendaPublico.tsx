@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import { Check, Circle, Clock3, Factory, Loader2, MapPin, MessageCircle, Package, Phone, ShieldCheck, Truck } from "lucide-react";
@@ -91,6 +92,9 @@ const formatarData = (value?: string | null) => value
 
 export default function RastreioVendaPublico() {
   const { token } = useParams();
+  useEffect(() => {
+    document.title = "Rastreio da Compra | Elisa Portas";
+  }, []);
   const tokenValido = Boolean(token && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(token));
   const { data, isLoading, isError } = useQuery({
     queryKey: ["rastreio-publico", token],
