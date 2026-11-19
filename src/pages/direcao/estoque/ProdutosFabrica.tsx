@@ -327,37 +327,32 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
               })
             }
           />
-          {produto.materia_prima && (
-            <EditableCell
-              value={produto.materia_prima_conversao ?? ""}
-              type="number"
-              placeholder="Conversão"
-              display={
-                produto.materia_prima_conversao && produto.materia_prima_conversao > 0 ? (
-                  <span className="text-xs text-white/50">
-                    1 {produto.materia_prima.unidade} = {produto.materia_prima_conversao} {produto.unidade || "un"}
-                  </span>
-                ) : (
-                  <span className="text-xs text-amber-400/70">Definir conversão</span>
-                )
-              }
-              onSave={(v) =>
-                onUpdateField(produto.id, { materia_prima_conversao: Number(v) || null })
-              }
-            />
-          )}
         </div>
       </TableCell>
       )}
       {!hideMateriaPrima && (
       <TableCell className="text-white/60 text-sm">
-        {produto.materia_prima && produto.materia_prima_conversao && produto.materia_prima_conversao > 0 ? (
-          <span
-            className="text-xs text-white/50 block truncate"
-            title={`1 ${produto.materia_prima.unidade} = ${produto.materia_prima_conversao} ${produto.unidade || "un"}`}
-          >
-            1 {produto.materia_prima.unidade} = {produto.materia_prima_conversao} {produto.unidade || "un"}
-          </span>
+        {produto.materia_prima ? (
+          <EditableCell
+            value={produto.materia_prima_conversao ?? ""}
+            type="number"
+            placeholder="Conversão"
+            display={
+              produto.materia_prima_conversao && produto.materia_prima_conversao > 0 ? (
+                <span
+                  className="text-xs text-white/50 block truncate"
+                  title={`1 ${produto.materia_prima.unidade} = ${produto.materia_prima_conversao} ${produto.unidade || "un"}`}
+                >
+                  1 {produto.materia_prima.unidade} = {produto.materia_prima_conversao} {produto.unidade || "un"}
+                </span>
+              ) : (
+                <span className="text-xs text-amber-400/70">Definir conversão</span>
+              )
+            }
+            onSave={(v) =>
+              onUpdateField(produto.id, { materia_prima_conversao: Number(v) || null })
+            }
+          />
         ) : (
           <span className="text-xs text-white/30">—</span>
         )}
