@@ -49,7 +49,6 @@ import {
 
 const emptyForm = {
   nome: "",
-  descricao: "",
   unidade: "un",
   quantidade: 0,
   custo_unitario: 0,
@@ -83,7 +82,6 @@ export default function MateriasPrimasPage() {
     setEditando(m);
     setForm({
       nome: m.nome,
-      descricao: m.descricao || "",
       unidade: normalizarUnidade(m.unidade),
       quantidade: Number(m.quantidade),
       custo_unitario: Number(m.custo_unitario),
@@ -96,7 +94,6 @@ export default function MateriasPrimasPage() {
     if (!form.nome.trim()) return;
     const payload = {
       nome: form.nome.trim(),
-      descricao: form.descricao.trim() || null,
       unidade: form.unidade,
       quantidade: form.quantidade,
       custo_unitario: form.custo_unitario,
@@ -299,14 +296,6 @@ export default function MateriasPrimasPage() {
                 value={form.nome}
                 onChange={(e) => setForm({ ...form, nome: e.target.value })}
                 placeholder="Ex: Bobina de aço"
-              />
-            </div>
-            <div className="space-y-2 md:col-span-2">
-              <Label>Descrição</Label>
-              <Input
-                value={form.descricao}
-                onChange={(e) => setForm({ ...form, descricao: e.target.value })}
-                placeholder="Ex: Bobina 1,25mm x 1200mm"
               />
             </div>
             <div className="space-y-2">

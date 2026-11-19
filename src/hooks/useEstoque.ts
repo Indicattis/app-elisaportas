@@ -68,7 +68,6 @@ export interface ProdutoEstoque {
     id: string;
     nome: string;
     unidade: string;
-    descricao?: string | null;
   } | null;
 }
 
@@ -123,7 +122,7 @@ export const useEstoque = (termoBuscaInicial: string = "", setorFiltro: 'perfila
           *,
           subcategoria:estoque_subcategorias(id, nome),
           fornecedor:fornecedores(id, nome),
-          materia_prima:materias_primas(id, nome, unidade, descricao)
+          materia_prima:materias_primas(id, nome, unidade)
         `)
         .eq("ativo", true)
         .order("ordem", { ascending: true });

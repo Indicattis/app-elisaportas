@@ -171,7 +171,6 @@ interface SortableProductRowProps {
   isDragDisabled: boolean;
   pedidosCount?: DemandaItem;
   onToggleConferir: (id: string, currentStatus: boolean) => void;
-  onUpdateMateriaPrima: (id: string, patch: Record<string, any>) => Promise<void>;
   onExcluir: (id: string) => void;
   onUpdateField: (id: string, patch: Record<string, any>) => Promise<void>;
   categorias: Categoria[];
@@ -193,7 +192,7 @@ const SETOR_STYLES: Record<string, string> = {
   __none__: "bg-white/5 border-white/10 text-white/40",
 };
 
-function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCount, onToggleConferir, onUpdateMateriaPrima, onExcluir, onUpdateField, categorias, fornecedores, materiasPrimas, hideSku, hideMateriaPrima, hidePedidos, hideConferir, hideStockColumns, showPrecoVenda }: SortableProductRowProps) {
+function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCount, onToggleConferir, onExcluir, onUpdateField, categorias, fornecedores, materiasPrimas, hideSku, hideMateriaPrima, hidePedidos, hideConferir, hideStockColumns, showPrecoVenda }: SortableProductRowProps) {
   const {
     attributes,
     listeners,
@@ -352,17 +351,13 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
       )}
       {!hideMateriaPrima && (
       <TableCell className="text-white/60 text-sm">
-        {produto.materia_prima ? (
-          <EditableCell
-            value={produto.materia_prima.descricao ?? ""}
-            placeholder="Descrição"
-            display={
-              produto.materia_prima.descricao
-                ? <span className="text-xs text-white/60 block truncate" title={produto.materia_prima.descricao}>{truncTexto(produto.materia_prima.descricao)}</span>
-                : <span className="text-xs text-white/30">—</span>
-            }
-            onSave={(v) => onUpdateMateriaPrima(produto.materia_prima!.id, { descricao: String(v) || null })}
-          />
+        {produto.materia_prima && produto.materia_prima_conversao && produto.materia_prima_conversao > 0 ? (
+          <span
+            className="text-xs text-white/50 block truncate"
+            title={`1 ${produto.materia_prima.unidade} = ${produto.materia_prima_conversao} ${produto.unidade || "un"}`}
+          >
+            1 {produto.materia_prima.unidade} = {produto.materia_prima_conversao} {produto.unidade || "un"}
+          </span>
         ) : (
           <span className="text-xs text-white/30">—</span>
         )}
@@ -590,18 +585,6 @@ export default function ProdutosFabrica({
     if (!error) {
       queryClient.invalidateQueries({ queryKey: ["estoque"] });
     }
-  };
-
-  const handleUpdateMateriaPrima = async (id: string, patch: Record<string, any>) => {
-    const { error } = await supabase
-      .from("materias_primas")
-      .update(patch)
-      .eq("id", id);
-    if (error) {
-      toast.error("Não foi possível salvar a descrição da matéria-prima");
-      return;
-    }
-    queryClient.invalidateQueries({ queryKey: ["materias-primas"] });
   };
 
   const handleExcluir = async (id: string) => {
@@ -1397,7 +1380,6 @@ export default function ProdutosFabrica({
                               isDragDisabled={isDragDisabled}
                               pedidosCount={pedidosCountMap[produto.id]}
                               onToggleConferir={handleToggleConferir}
-                              onUpdateMateriaPrima={handleUpdateMateriaPrima}
                               onExcluir={handleExcluir}
                               onUpdateField={handleUpdateField}
                               categorias={categorias}

@@ -5,7 +5,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 export interface MateriaPrima {
   id: string;
   nome: string;
-  descricao?: string | null;
   unidade: string;
   quantidade: number;
   custo_unitario: number;
@@ -20,7 +19,6 @@ export interface MateriaPrima {
 
 export interface MateriaPrimaInput {
   nome: string;
-  descricao?: string | null;
   unidade: string;
   quantidade?: number;
   custo_unitario?: number;
@@ -71,7 +69,6 @@ export const useMateriasPrimas = () => {
         .from("materias_primas")
         .insert({
           nome: input.nome,
-          descricao: input.descricao ?? null,
           unidade: input.unidade,
           quantidade: input.quantidade ?? 0,
           custo_unitario: input.custo_unitario ?? 0,
@@ -98,7 +95,6 @@ export const useMateriasPrimas = () => {
         .from("materias_primas")
         .update({
           nome: input.nome,
-          descricao: input.descricao ?? null,
           unidade: input.unidade,
           quantidade: input.quantidade ?? 0,
           custo_unitario: input.custo_unitario ?? 0,
