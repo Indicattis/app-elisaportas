@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.sync_pedido_linha_para_ordem() FROM PUBLIC, anon, authenticated;
