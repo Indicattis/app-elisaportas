@@ -20,6 +20,7 @@ import { useCategorias } from "@/hooks/useCategorias";
 import { useSubcategorias } from "@/hooks/useSubcategorias";
 import { useFornecedores } from "@/hooks/useFornecedores";
 import { useMateriasPrimas, MateriaPrima } from "@/hooks/useMateriasPrimas";
+import { useSessionFilters } from "@/hooks/useSessionFilters";
 import type { Categoria } from "@/hooks/useCategorias";
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { toast } from "sonner";
@@ -581,7 +582,14 @@ export default function ProdutosFabrica({
   const [gerenciarCategoriasOpen, setGerenciarCategoriasOpen] = useState(false);
   const [blockDeleteOpen, setBlockDeleteOpen] = useState(false);
   // matérias-primas agora abrem em página dedicada
-  const [searchTerm, setSearchTerm] = useState("");
+  const isDirecaoProdutos = location.pathname.startsWith("/direcao/estoque/configuracoes/produtos/fabrica");
+  const [sessionSearchTerm, setSessionSearchTerm] = useSessionFilters<string>({
+    key: "direcao_estoque_produtos_fabrica_search",
+    defaultValue: "",
+  });
+  const [localSearchTerm, setLocalSearchTerm] = useState("");
+  const searchTerm = isDirecaoProdutos ? sessionSearchTerm : localSearchTerm;
+  const setSearchTerm = isDirecaoProdutos ? setSessionSearchTerm : setLocalSearchTerm;
   const [activeId, setActiveId] = useState<string | null>(null);
 
   // Sync local state with React Query data
