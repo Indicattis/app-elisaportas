@@ -243,7 +243,7 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
           placeholder="Descrição"
           display={
             produto.descricao_produto
-              ? <span className="text-xs text-white/60" title={produto.descricao_produto}>{truncTexto(produto.descricao_produto)}</span>
+              ? <span className="text-xs text-white/60 block truncate" title={produto.descricao_produto}>{truncTexto(produto.descricao_produto)}</span>
               : <span className="text-xs text-white/30">—</span>
           }
           onSave={(v) => onUpdateField(produto.id, { descricao_produto: String(v) || null })}
@@ -268,7 +268,7 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
           value={(produto as any).setor_responsavel_producao || "__none__"}
           onValueChange={(v) => onUpdateField(produto.id, { setor_responsavel_producao: v === "__none__" ? null : v })}
         >
-          <SelectTrigger className={`h-7 w-[120px] text-xs border ${SETOR_STYLES[(produto as any).setor_responsavel_producao || "__none__"]}`}>
+          <SelectTrigger className={`h-7 w-full max-w-[120px] text-xs border ${SETOR_STYLES[(produto as any).setor_responsavel_producao || "__none__"]}`}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent className="bg-zinc-900 border-white/10">
@@ -295,7 +295,7 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
         <EditableSelectCell
           value={produto.fornecedor?.id ?? null}
           options={fornecedores.map(f => ({ value: f.id, label: f.nome }))}
-          display={produto.fornecedor?.nome ? <span title={produto.fornecedor.nome}>{truncTexto(produto.fornecedor.nome)}</span> : <span className="text-white/30">—</span>}
+          display={produto.fornecedor?.nome ? <span className="block truncate" title={produto.fornecedor.nome}>{truncTexto(produto.fornecedor.nome)}</span> : <span className="text-white/30">—</span>}
           placeholder="Fornecedor"
           onSave={(v) => onUpdateField(produto.id, { fornecedor_id: v || null })}
         />
@@ -312,7 +312,7 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
             ]}
             display={
               produto.materia_prima ? (
-                <span className="text-sm">
+                <span className="text-sm block truncate" title={produto.materia_prima.nome}>
                   {produto.materia_prima.nome}
                   <span className="text-white/40"> ({produto.materia_prima.unidade})</span>
                 </span>
@@ -358,7 +358,7 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
             placeholder="Descrição"
             display={
               produto.materia_prima.descricao
-                ? <span className="text-xs text-white/60" title={produto.materia_prima.descricao}>{truncTexto(produto.materia_prima.descricao)}</span>
+                ? <span className="text-xs text-white/60 block truncate" title={produto.materia_prima.descricao}>{truncTexto(produto.materia_prima.descricao)}</span>
                 : <span className="text-xs text-white/30">—</span>
             }
             onSave={(v) => onUpdateMateriaPrima(produto.materia_prima!.id, { descricao: String(v) || null })}
@@ -1243,6 +1243,38 @@ export default function ProdutosFabrica({
         >
           <SortableContext items={filteredProdutos.map(p => p.id)} strategy={verticalListSortingStrategy}>
             {(() => {
+              // Larguras fixas e iguais em todas as seções, para as colunas ficarem alinhadas
+              const colDefs: { key: string; w: number }[] = [
+                { key: "drag", w: 3 },
+                { key: "produto", w: 16 },
+                { key: "descricao", w: 11 },
+              ];
+              if (!hideSku) colDefs.push({ key: "sku", w: 6 });
+              colDefs.push({ key: "setor", w: 10 });
+              colDefs.push({ key: "pintura", w: 6 });
+              if (!hideStockColumns) colDefs.push({ key: "fornecedor", w: 9 });
+              if (!hideMateriaPrima) colDefs.push({ key: "materia_prima", w: 10 });
+              if (!hideMateriaPrima) colDefs.push({ key: "descricao_mp", w: 9 });
+              if (!hideStockColumns) colDefs.push({ key: "categoria", w: 8 });
+              if (!hidePedidos) colDefs.push({ key: "pedidos", w: 5 });
+              if (!hideStockColumns) colDefs.push({ key: "unidade", w: 5 });
+              if (showPrecoVenda) {
+                colDefs.push({ key: "lucro", w: 7 });
+                colDefs.push({ key: "impostos", w: 6 });
+                colDefs.push({ key: "desc_gerente", w: 6 });
+                colDefs.push({ key: "cartao", w: 6 });
+                colDefs.push({ key: "preco_final", w: 7 });
+              }
+              colDefs.push({ key: "acoes", w: 4 });
+              const totalPeso = colDefs.reduce((s, c) => s + c.w, 0);
+              const renderColgroup = () => (
+                <colgroup>
+                  {colDefs.map((c) => (
+                    <col key={c.key} style={{ width: `${(c.w / totalPeso) * 100}%` }} />
+                  ))}
+                </colgroup>
+              );
+
               const renderHeader = () => (
                 <TableHeader>
                   <TableRow className="border-white/10 hover:bg-transparent">
@@ -1275,7 +1307,8 @@ export default function ProdutosFabrica({
                 return (
                   <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
                     <div className="rounded-lg overflow-hidden">
-                      <Table>
+                      <Table className="table-fixed">
+                        {renderColgroup()}
                         {renderHeader()}
                         <TableBody>
                           <TableRow className="border-white/10">
@@ -1292,7 +1325,8 @@ export default function ProdutosFabrica({
                 return (
                   <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10">
                     <div className="rounded-lg overflow-hidden">
-                      <Table>
+                      <Table className="table-fixed">
+                        {renderColgroup()}
                         {renderHeader()}
                         <TableBody>
                           <TableRow className="border-white/10">
@@ -1351,7 +1385,8 @@ export default function ProdutosFabrica({
                                 <span className="text-[11px] uppercase tracking-wider font-medium text-white/60">{g.label}</span>
                                 <span className="text-[11px] text-white/30">· {g.items.length}</span>
                               </div>
-                        <Table>
+                        <Table className="table-fixed">
+                        {renderColgroup()}
                         {renderHeader()}
                         <TableBody>
                           {g.items.map((produto) => (
