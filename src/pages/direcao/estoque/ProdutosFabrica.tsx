@@ -208,7 +208,7 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
     <TableRow
       ref={setNodeRef}
       style={style}
-      className="border-white/10 hover:bg-white/5 cursor-pointer"
+      className="h-[50px] max-h-[50px] border-white/5 hover:bg-white/5 cursor-pointer [&>td]:py-1"
       onDoubleClick={() => onDoubleClick(produto.id)}
     >
       <TableCell className="w-10 px-1">
@@ -359,7 +359,7 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
         />
       </TableCell>
       )}
-      {!hideStockColumns && (
+      {false && (
       <TableCell className="text-center text-white/80">
         {produto.conferir_estoque ? (
           <EditableCell
@@ -371,7 +371,7 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
         ) : "---"}
       </TableCell>
       )}
-      {!hideStockColumns && (
+      {false && (
       <TableCell className="text-center text-white/80">
         {produto.conferir_estoque ? (
           <EditableCell
@@ -383,7 +383,7 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
         ) : "---"}
       </TableCell>
       )}
-      {!hideStockColumns && (
+      {false && (
       <TableCell className="text-center">
         {produto.conferir_estoque ? (
           <EditableCell
@@ -1238,9 +1238,9 @@ export default function ProdutosFabrica({
                     {!hideStockColumns && <TableHead className="text-xs font-medium text-white/60">Fornecedor</TableHead>}
                     {!hideMateriaPrima && <TableHead className="text-xs font-medium text-white/60">Matéria-prima</TableHead>}
                     {!hideStockColumns && <TableHead className="text-xs font-medium text-white/60">Categoria</TableHead>}
-                    {!hideStockColumns && <TableHead className="text-center text-xs font-medium text-white/60">Est. Mín</TableHead>}
-                    {!hideStockColumns && <TableHead className="text-center text-xs font-medium text-white/60">Est. Máx</TableHead>}
-                    {!hideStockColumns && <TableHead className="text-center text-xs font-medium text-white/60">Atual</TableHead>}
+                    {false && <TableHead className="text-center text-xs font-medium text-white/60">Est. Mín</TableHead>}
+                    {false && <TableHead className="text-center text-xs font-medium text-white/60">Est. Máx</TableHead>}
+                    {false && <TableHead className="text-center text-xs font-medium text-white/60">Atual</TableHead>}
                     {!hidePedidos && <TableHead className="text-center text-xs font-medium text-white/60">Pedidos</TableHead>}
                     {!hideConferir && <TableHead className="text-center text-xs font-medium text-white/60">Conferir</TableHead>}
                     <TableHead className="text-right text-xs font-medium text-white/60">Custo</TableHead>
@@ -1315,7 +1315,7 @@ export default function ProdutosFabrica({
               const colSpanCount = (() => {
                 let count = 4; // drag + produto + setor + pintura
                 if (!hideSku) count++;
-                if (!hideStockColumns) count += 5; // fornecedor + categoria + est.min + est.max + atual
+                if (!hideStockColumns) count += 2; // fornecedor + categoria
                 if (!hideMateriaPrima) count++;
                 if (!hidePedidos) count++;
                 if (!hideConferir) count++;
@@ -1328,22 +1328,10 @@ export default function ProdutosFabrica({
               })();
 
               return (
-                <div className="rounded-xl overflow-hidden bg-white/5 backdrop-blur-xl border border-white/10">
-                  <Table>
-                    {renderHeader()}
+                <div className="space-y-4">
                     {groups.map((g, index) => (
-                      <Fragment key={g.key}>
-                        {index > 0 && (
-                          <tbody>
-                            <TableRow className="border-none hover:bg-transparent">
-                              <TableCell colSpan={colSpanCount} className="py-3" />
-                            </TableRow>
-                          </tbody>
-                        )}
-                        <tbody>
-                          <TableRow className="border-none hover:bg-transparent">
-                            <TableCell colSpan={colSpanCount} className="py-2 px-1">
-                              <div className="flex items-center gap-2">
+                      <section key={g.key} className="rounded-xl overflow-hidden bg-white/5 backdrop-blur-xl border border-white/10">
+                              <div className="flex items-center gap-2 px-4 py-3 border-b border-white/10">
                                 <span
                                   className="inline-block h-1.5 w-1.5 rounded-full"
                                   style={{ background: g.cor ? `hsl(var(--${g.cor}-500, 0 0% 60%))` : "rgba(255,255,255,0.4)" }}
@@ -1351,9 +1339,8 @@ export default function ProdutosFabrica({
                                 <span className="text-[11px] uppercase tracking-wider font-medium text-white/60">{g.label}</span>
                                 <span className="text-[11px] text-white/30">· {g.items.length}</span>
                               </div>
-                            </TableCell>
-                          </TableRow>
-                        </tbody>
+                        <Table>
+                        {renderHeader()}
                         <TableBody>
                           {g.items.map((produto) => (
                             <SortableProductRow
@@ -1377,46 +1364,13 @@ export default function ProdutosFabrica({
                             />
                           ))}
                         </TableBody>
-                      </Fragment>
+                        </Table>
+                      </section>
                     ))}
-                    <TableFooter className="bg-white/5 border-t border-white/20">
-                      <TableRow className="border-white/10 hover:bg-transparent">
-                        <TableCell className="w-10 px-1" />
-                        <TableCell className="font-bold text-white">
-                          TOTAL ({filteredProdutos.length} itens)
-                        </TableCell>
-                        {!hideSku && <TableCell />}
-                        <TableCell />
-                        {!hideStockColumns && <TableCell />}
-                        {!hideMateriaPrima && <TableCell />}
-                        {!hideStockColumns && <TableCell />}
-                        {!hideStockColumns && (
-                          <TableCell className="text-center font-bold text-white">{totals.ideal}</TableCell>
-                        )}
-                        {!hideStockColumns && (
-                          <TableCell className="text-center font-bold text-white">{totals.maxima}</TableCell>
-                        )}
-                        {!hideStockColumns && (
-                          <TableCell className="text-center font-bold text-white">{totals.atual}</TableCell>
-                        )}
-                        {!hidePedidos && <TableCell />}
-                        {!hideConferir && <TableCell />}
-                        <TableCell className="text-right font-bold text-white/50">---</TableCell>
-                        {!hideStockColumns && <TableCell />}
-                        {showPrecoVenda && <TableCell className="bg-blue-500/10" />}
-                        {showPrecoVenda && <TableCell className="bg-orange-500/10" />}
-                        {showPrecoVenda && <TableCell className="bg-yellow-500/10" />}
-                        {showPrecoVenda && <TableCell className="bg-teal-500/10" />}
-                        {showPrecoVenda && <TableCell className="bg-green-500/10" />}
-                        {!hideStockColumns && (
-                          <TableCell className="text-right font-bold text-white">
-                            {formatCurrency(totals.valor)}
-                          </TableCell>
-                        )}
-                        <TableCell />
-                      </TableRow>
-                    </TableFooter>
-                  </Table>
+                  <div className="flex items-center justify-between rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 px-4 py-3 text-sm">
+                    <span className="font-semibold text-white">TOTAL ({filteredProdutos.length} itens)</span>
+                    {!hideStockColumns && <span className="font-semibold text-white">{formatCurrency(totals.valor)}</span>}
+                  </div>
                 </div>
               );
             })()}
