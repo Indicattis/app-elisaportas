@@ -48,6 +48,7 @@ export function GerenciarMateriasPrimasModal({ open, onOpenChange }: Props) {
   const [removerId, setRemoverId] = useState<string | null>(null);
   const [form, setForm] = useState({
     nome: "",
+    descricao: "",
     unidade: "un",
     quantidade: 0,
     custo_unitario: 0,
@@ -56,13 +57,14 @@ export function GerenciarMateriasPrimasModal({ open, onOpenChange }: Props) {
 
   const reset = () => {
     setEditando(null);
-    setForm({ nome: "", unidade: "un", quantidade: 0, custo_unitario: 0, fornecedor_id: "" });
+    setForm({ nome: "", descricao: "", unidade: "un", quantidade: 0, custo_unitario: 0, fornecedor_id: "" });
   };
 
   const handleEditar = (m: MateriaPrima) => {
     setEditando(m);
     setForm({
       nome: m.nome,
+      descricao: m.descricao || "",
       unidade: m.unidade,
       quantidade: Number(m.quantidade),
       custo_unitario: Number(m.custo_unitario),
@@ -74,6 +76,7 @@ export function GerenciarMateriasPrimasModal({ open, onOpenChange }: Props) {
     if (!form.nome.trim()) return;
     const payload = {
       nome: form.nome.trim(),
+      descricao: form.descricao.trim() || null,
       unidade: form.unidade,
       quantidade: form.quantidade,
       custo_unitario: form.custo_unitario,
@@ -120,6 +123,14 @@ export function GerenciarMateriasPrimasModal({ open, onOpenChange }: Props) {
                     value={form.nome}
                     onChange={(e) => setForm({ ...form, nome: e.target.value })}
                     placeholder="Ex: Bobina de aço"
+                  />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label>Descrição</Label>
+                  <Input
+                    value={form.descricao}
+                    onChange={(e) => setForm({ ...form, descricao: e.target.value })}
+                    placeholder="Ex: Bobina 1,25mm x 1200mm"
                   />
                 </div>
                 <div className="space-y-2">

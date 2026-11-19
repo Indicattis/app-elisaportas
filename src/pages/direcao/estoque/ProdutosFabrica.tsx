@@ -50,6 +50,13 @@ import { restrictToWindowEdges } from "@dnd-kit/modifiers";
 import { ProdutoEstoque } from "@/hooks/useEstoque";
 
 // --- EditableCell: clique único para editar in-place ---
+const LIMITE_TEXTO = 22;
+
+function truncTexto(texto?: string | null) {
+  if (!texto) return "";
+  return texto.length > LIMITE_TEXTO ? `${texto.slice(0, LIMITE_TEXTO)}...` : texto;
+}
+
 type EditableCellProps = {
   value: string | number | null | undefined;
   type?: "text" | "number" | "currency";
@@ -164,6 +171,7 @@ interface SortableProductRowProps {
   isDragDisabled: boolean;
   pedidosCount?: DemandaItem;
   onToggleConferir: (id: string, currentStatus: boolean) => void;
+  onUpdateMateriaPrima: (id: string, patch: Record<string, any>) => Promise<void>;
   onExcluir: (id: string) => void;
   onUpdateField: (id: string, patch: Record<string, any>) => Promise<void>;
   categorias: Categoria[];
@@ -185,7 +193,7 @@ const SETOR_STYLES: Record<string, string> = {
   __none__: "bg-white/5 border-white/10 text-white/40",
 };
 
-function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCount, onToggleConferir, onExcluir, onUpdateField, categorias, fornecedores, materiasPrimas, hideSku, hideMateriaPrima, hidePedidos, hideConferir, hideStockColumns, showPrecoVenda }: SortableProductRowProps) {
+function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCount, onToggleConferir, onUpdateMateriaPrima, onExcluir, onUpdateField, categorias, fornecedores, materiasPrimas, hideSku, hideMateriaPrima, hidePedidos, hideConferir, hideStockColumns, showPrecoVenda }: SortableProductRowProps) {
   const {
     attributes,
     listeners,
@@ -235,7 +243,7 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
           placeholder="Descrição"
           display={
             produto.descricao_produto
-              ? <span className="text-xs text-white/60">{produto.descricao_produto}</span>
+              ? <span className="text-xs text-white/60" title={produto.descricao_produto}>{truncTexto(produto.descricao_produto)}</span>
               : <span className="text-xs text-white/30">—</span>
           }
           onSave={(v) => onUpdateField(produto.id, { descricao_produto: String(v) || null })}
@@ -287,7 +295,7 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
         <EditableSelectCell
           value={produto.fornecedor?.id ?? null}
           options={fornecedores.map(f => ({ value: f.id, label: f.nome }))}
-          display={produto.fornecedor?.nome || <span className="text-white/30">—</span>}
+          display={produto.fornecedor?.nome ? <span title={produto.fornecedor.nome}>{truncTexto(produto.fornecedor.nome)}</span> : <span className="text-white/30">—</span>}
           placeholder="Fornecedor"
           onSave={(v) => onUpdateField(produto.id, { fornecedor_id: v || null })}
         />
@@ -340,6 +348,24 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
             />
           )}
         </div>
+      </TableCell>
+      )}
+      {!hideMateriaPrima && (
+      <TableCell className="text-white/60 text-sm">
+        {produto.materia_prima ? (
+          <EditableCell
+            value={produto.materia_prima.descricao ?? ""}
+            placeholder="Descrição"
+            display={
+              produto.materia_prima.descricao
+                ? <span className="text-xs text-white/60" title={produto.materia_prima.descricao}>{truncTexto(produto.materia_prima.descricao)}</span>
+                : <span className="text-xs text-white/30">—</span>
+            }
+            onSave={(v) => onUpdateMateriaPrima(produto.materia_prima!.id, { descricao: String(v) || null })}
+          />
+        ) : (
+          <span className="text-xs text-white/30">—</span>
+        )}
       </TableCell>
       )}
       {!hideStockColumns && (
@@ -564,6 +590,18 @@ export default function ProdutosFabrica({
     if (!error) {
       queryClient.invalidateQueries({ queryKey: ["estoque"] });
     }
+  };
+
+  const handleUpdateMateriaPrima = async (id: string, patch: Record<string, any>) => {
+    const { error } = await supabase
+      .from("materias_primas")
+      .update(patch)
+      .eq("id", id);
+    if (error) {
+      toast.error("Não foi possível salvar a descrição da matéria-prima");
+      return;
+    }
+    queryClient.invalidateQueries({ queryKey: ["materias-primas"] });
   };
 
   const handleExcluir = async (id: string) => {
@@ -1216,6 +1254,7 @@ export default function ProdutosFabrica({
                     <TableHead className="text-xs font-medium text-white/60">Pintura</TableHead>
                     {!hideStockColumns && <TableHead className="text-xs font-medium text-white/60">Fornecedor</TableHead>}
                     {!hideMateriaPrima && <TableHead className="text-xs font-medium text-white/60">Matéria-prima</TableHead>}
+                    {!hideMateriaPrima && <TableHead className="text-xs font-medium text-white/60">Descrição MP</TableHead>}
                     {!hideStockColumns && <TableHead className="text-xs font-medium text-white/60">Categoria</TableHead>}
                     {false && <TableHead className="text-center text-xs font-medium text-white/60">Est. Mín</TableHead>}
                     {false && <TableHead className="text-center text-xs font-medium text-white/60">Est. Máx</TableHead>}
@@ -1292,7 +1331,7 @@ export default function ProdutosFabrica({
                 let count = 5; // drag + produto + descricao + setor + pintura
                 if (!hideSku) count++;
                 if (!hideStockColumns) count += 2; // fornecedor + categoria
-                if (!hideMateriaPrima) count++;
+                if (!hideMateriaPrima) count += 2; // materia-prima + descricao mp
                 if (!hidePedidos) count++;
                 if (!hideStockColumns) count++; // unidade
                 if (showPrecoVenda) count += 5;
@@ -1323,6 +1362,7 @@ export default function ProdutosFabrica({
                               isDragDisabled={isDragDisabled}
                               pedidosCount={pedidosCountMap[produto.id]}
                               onToggleConferir={handleToggleConferir}
+                              onUpdateMateriaPrima={handleUpdateMateriaPrima}
                               onExcluir={handleExcluir}
                               onUpdateField={handleUpdateField}
                               categorias={categorias}

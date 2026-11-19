@@ -5122,6 +5122,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           custo_unitario: number
+          descricao: string | null
           fornecedor_id: string | null
           id: string
           nome: string
@@ -5135,6 +5136,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           custo_unitario?: number
+          descricao?: string | null
           fornecedor_id?: string | null
           id?: string
           nome: string
@@ -5148,6 +5150,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           custo_unitario?: number
+          descricao?: string | null
           fornecedor_id?: string | null
           id?: string
           nome?: string

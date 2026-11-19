@@ -1,0 +1,1 @@
+ALTER TABLE public.materias_primas ADD COLUMN IF NOT EXISTS descricao text;
