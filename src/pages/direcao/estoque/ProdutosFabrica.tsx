@@ -272,6 +272,16 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
           </SelectContent>
         </Select>
       </TableCell>
+      <TableCell onClick={(e) => e.stopPropagation()} onDoubleClick={(e) => e.stopPropagation()}>
+        <button
+          type="button"
+          onClick={() => onUpdateField(produto.id, { requer_pintura: !(produto as any).requer_pintura })}
+          className={`h-7 px-2 rounded-md text-xs border ${(produto as any).requer_pintura ? "bg-pink-500/15 text-pink-300 border-pink-500/30" : "bg-white/5 text-white/40 border-white/10"}`}
+          title="Clique para alternar"
+        >
+          {(produto as any).requer_pintura ? "Pintado" : "Não"}
+        </button>
+      </TableCell>
       {!hideStockColumns && (
       <TableCell className="text-white/60 text-sm">
         <EditableSelectCell
@@ -599,7 +609,7 @@ export default function ProdutosFabrica({
       return;
     }
     queryClient.invalidateQueries({ queryKey: ["estoque"] });
-    toast.success(patch.setor_responsavel_producao !== undefined ? "Setor atualizado" : "Atualizado");
+    toast.success(patch.setor_responsavel_producao !== undefined ? "Setor atualizado" : (patch as any).requer_pintura !== undefined ? "Pintura atualizada" : "Atualizado");
   };
 
   const [localProdutos, setLocalProdutos] = useState<ProdutoEstoque[]>([]);
@@ -1224,6 +1234,7 @@ export default function ProdutosFabrica({
                     <TableHead className="text-xs font-medium text-white/60">Produto</TableHead>
                     {!hideSku && <TableHead className="text-xs font-medium text-white/60">SKU</TableHead>}
                     <TableHead className="text-xs font-medium text-white/60">Setor</TableHead>
+                    <TableHead className="text-xs font-medium text-white/60">Pintura</TableHead>
                     {!hideStockColumns && <TableHead className="text-xs font-medium text-white/60">Fornecedor</TableHead>}
                     {!hideMateriaPrima && <TableHead className="text-xs font-medium text-white/60">Matéria-prima</TableHead>}
                     {!hideStockColumns && <TableHead className="text-xs font-medium text-white/60">Categoria</TableHead>}
@@ -1253,7 +1264,7 @@ export default function ProdutosFabrica({
                         {renderHeader()}
                         <TableBody>
                           <TableRow className="border-white/10">
-                            <TableCell colSpan={15} className="text-center py-8 text-sm text-white/40">Carregando...</TableCell>
+                            <TableCell colSpan={16} className="text-center py-8 text-sm text-white/40">Carregando...</TableCell>
                           </TableRow>
                         </TableBody>
                       </Table>
@@ -1270,7 +1281,7 @@ export default function ProdutosFabrica({
                         {renderHeader()}
                         <TableBody>
                           <TableRow className="border-white/10">
-                            <TableCell colSpan={15} className="text-center py-8 text-sm text-white/40">
+                            <TableCell colSpan={16} className="text-center py-8 text-sm text-white/40">
                               {searchTerm ? "Nenhum produto encontrado" : "Nenhum produto cadastrado"}
                             </TableCell>
                           </TableRow>
@@ -1302,7 +1313,7 @@ export default function ProdutosFabrica({
               });
 
               const colSpanCount = (() => {
-                let count = 3; // drag + produto + setor
+                let count = 4; // drag + produto + setor + pintura
                 if (!hideSku) count++;
                 if (!hideStockColumns) count += 5; // fornecedor + categoria + est.min + est.max + atual
                 if (!hideMateriaPrima) count++;
