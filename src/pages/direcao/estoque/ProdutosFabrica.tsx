@@ -223,23 +223,23 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
         )}
       </TableCell>
       <TableCell>
-        <div className="space-y-1">
-          <EditableCell
-            value={produto.nome_produto}
-            display={<span className="text-sm font-medium text-white">{produto.nome_produto}</span>}
-            onSave={(v) => onUpdateField(produto.id, { nome_produto: String(v) })}
-          />
-          <EditableCell
-            value={produto.descricao_produto ?? ""}
-            placeholder="Descrição"
-            display={
-              produto.descricao_produto
-                ? <span className="text-xs text-white/50">{produto.descricao_produto}</span>
-                : <span className="text-xs text-white/30">Adicionar descrição</span>
-            }
-            onSave={(v) => onUpdateField(produto.id, { descricao_produto: String(v) || null })}
-          />
-        </div>
+        <EditableCell
+          value={produto.nome_produto}
+          display={<span className="text-sm font-medium text-white">{produto.nome_produto}</span>}
+          onSave={(v) => onUpdateField(produto.id, { nome_produto: String(v) })}
+        />
+      </TableCell>
+      <TableCell className="text-white/60 text-sm min-w-[200px]">
+        <EditableCell
+          value={produto.descricao_produto ?? ""}
+          placeholder="Descrição"
+          display={
+            produto.descricao_produto
+              ? <span className="text-xs text-white/60">{produto.descricao_produto}</span>
+              : <span className="text-xs text-white/30">—</span>
+          }
+          onSave={(v) => onUpdateField(produto.id, { descricao_produto: String(v) || null })}
+        />
       </TableCell>
       {!hideSku && (
         <TableCell className="text-white/70 text-sm">
@@ -413,23 +413,6 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
           {pedidosCount ? (<span title={`${pedidosCount.pedidos} pedido(s) · ${pedidosCount.pecas} peça(s)`}>{pedidosCount.pedidos} <span className="text-white/40 text-xs">· {pedidosCount.pecas} pç</span></span>) : 0}
         </TableCell>
       )}
-      {!hideConferir && (
-        <TableCell className="text-center">
-          <Checkbox
-            checked={produto.conferir_estoque}
-            onCheckedChange={() => onToggleConferir(produto.id, !!produto.conferir_estoque)}
-          />
-        </TableCell>
-      )}
-      <TableCell className="text-right text-white/80">
-        <EditableCell
-          value={produto.custo_unitario}
-          type="currency"
-          align="right"
-          display={<span>{formatCurrency(produto.custo_unitario)}</span>}
-          onSave={(v) => onUpdateField(produto.id, { custo_unitario: Number(v) })}
-        />
-      </TableCell>
       {!hideStockColumns && (
       <TableCell className="text-center text-white/70 text-sm">
         <EditableSelectCell
@@ -503,11 +486,6 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
             onSave={(v) => onUpdateField(produto.id, { preco_venda: Number(v) })}
           />
         </TableCell>
-      )}
-      {!hideStockColumns && (
-      <TableCell className="text-right font-medium text-white">
-        {produto.conferir_estoque ? formatCurrency(produto.quantidade * produto.custo_unitario) : "---"}
-      </TableCell>
       )}
       <TableCell className="text-center">
         <Button
@@ -1232,6 +1210,7 @@ export default function ProdutosFabrica({
                   <TableRow className="border-white/10 hover:bg-transparent">
                     <TableHead className="w-10 px-1" />
                     <TableHead className="text-xs font-medium text-white/60">Produto</TableHead>
+                    <TableHead className="text-xs font-medium text-white/60">Descrição</TableHead>
                     {!hideSku && <TableHead className="text-xs font-medium text-white/60">SKU</TableHead>}
                     <TableHead className="text-xs font-medium text-white/60">Setor</TableHead>
                     <TableHead className="text-xs font-medium text-white/60">Pintura</TableHead>
@@ -1242,15 +1221,12 @@ export default function ProdutosFabrica({
                     {false && <TableHead className="text-center text-xs font-medium text-white/60">Est. Máx</TableHead>}
                     {false && <TableHead className="text-center text-xs font-medium text-white/60">Atual</TableHead>}
                     {!hidePedidos && <TableHead className="text-center text-xs font-medium text-white/60">Pedidos</TableHead>}
-                    {!hideConferir && <TableHead className="text-center text-xs font-medium text-white/60">Conferir</TableHead>}
-                    <TableHead className="text-right text-xs font-medium text-white/60">Custo</TableHead>
                     {!hideStockColumns && <TableHead className="text-center text-xs font-medium text-white/60">Unidade</TableHead>}
                     {showPrecoVenda && <TableHead className="text-right text-xs font-medium text-white/80 bg-blue-500/10">Lucro</TableHead>}
                     {showPrecoVenda && <TableHead className="text-right text-xs font-medium text-white/80 bg-orange-500/10">Impostos %</TableHead>}
                     {showPrecoVenda && <TableHead className="text-right text-xs font-medium text-white/80 bg-yellow-500/10">Desc. Gerente %</TableHead>}
                     {showPrecoVenda && <TableHead className="text-right text-xs font-medium text-white/80 bg-teal-500/10">Cartão %</TableHead>}
                     {showPrecoVenda && <TableHead className="text-right text-xs font-medium text-white/80 bg-green-500/10">Preço Final</TableHead>}
-                    {!hideStockColumns && <TableHead className="text-right text-xs font-medium text-white/60">Valor Total</TableHead>}
                     <TableHead className="text-center text-xs font-medium text-white/60">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -1313,16 +1289,13 @@ export default function ProdutosFabrica({
               });
 
               const colSpanCount = (() => {
-                let count = 4; // drag + produto + setor + pintura
+                let count = 5; // drag + produto + descricao + setor + pintura
                 if (!hideSku) count++;
                 if (!hideStockColumns) count += 2; // fornecedor + categoria
                 if (!hideMateriaPrima) count++;
                 if (!hidePedidos) count++;
-                if (!hideConferir) count++;
-                count++; // custo
                 if (!hideStockColumns) count++; // unidade
                 if (showPrecoVenda) count += 5;
-                if (!hideStockColumns) count++; // valor total
                 count++; // acoes
                 return count;
               })();
