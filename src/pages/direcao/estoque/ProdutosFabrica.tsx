@@ -177,6 +177,14 @@ interface SortableProductRowProps {
   showPrecoVenda?: boolean;
 }
 
+const SETOR_STYLES: Record<string, string> = {
+  perfiladeira: "bg-blue-500/15 border-blue-500/30 text-blue-300",
+  soldagem: "bg-orange-500/15 border-orange-500/30 text-orange-300",
+  separacao: "bg-green-500/15 border-green-500/30 text-green-300",
+  pintura: "bg-pink-500/15 border-pink-500/30 text-pink-300",
+  __none__: "bg-white/5 border-white/10 text-white/40",
+};
+
 function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCount, onToggleConferir, onExcluir, onUpdateField, categorias, fornecedores, materiasPrimas, hideSku, hideMateriaPrima, hidePedidos, hideConferir, hideStockColumns, showPrecoVenda }: SortableProductRowProps) {
   const {
     attributes,
@@ -247,6 +255,23 @@ function SortableProductRow({ produto, onDoubleClick, isDragDisabled, pedidosCou
           />
         </TableCell>
       )}
+      <TableCell onClick={(e) => e.stopPropagation()} onDoubleClick={(e) => e.stopPropagation()}>
+        <Select
+          value={(produto as any).setor_responsavel_producao || "__none__"}
+          onValueChange={(v) => onUpdateField(produto.id, { setor_responsavel_producao: v === "__none__" ? null : v })}
+        >
+          <SelectTrigger className={`h-7 w-[120px] text-xs border ${SETOR_STYLES[(produto as any).setor_responsavel_producao || "__none__"]}`}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className="bg-zinc-900 border-white/10">
+            <SelectItem value="perfiladeira">Perfiladeira</SelectItem>
+            <SelectItem value="soldagem">Soldagem</SelectItem>
+            <SelectItem value="separacao">Separação</SelectItem>
+            <SelectItem value="pintura">Pintura</SelectItem>
+            <SelectItem value="__none__">Sem setor</SelectItem>
+          </SelectContent>
+        </Select>
+      </TableCell>
       {!hideStockColumns && (
       <TableCell className="text-white/60 text-sm">
         <EditableSelectCell
@@ -574,7 +599,7 @@ export default function ProdutosFabrica({
       return;
     }
     queryClient.invalidateQueries({ queryKey: ["estoque"] });
-    toast.success("Atualizado");
+    toast.success(patch.setor_responsavel_producao !== undefined ? "Setor atualizado" : "Atualizado");
   };
 
   const [localProdutos, setLocalProdutos] = useState<ProdutoEstoque[]>([]);
@@ -1198,6 +1223,7 @@ export default function ProdutosFabrica({
                     <TableHead className="w-10 px-1" />
                     <TableHead className="text-xs font-medium text-white/60">Produto</TableHead>
                     {!hideSku && <TableHead className="text-xs font-medium text-white/60">SKU</TableHead>}
+                    <TableHead className="text-xs font-medium text-white/60">Setor</TableHead>
                     {!hideStockColumns && <TableHead className="text-xs font-medium text-white/60">Fornecedor</TableHead>}
                     {!hideMateriaPrima && <TableHead className="text-xs font-medium text-white/60">Matéria-prima</TableHead>}
                     {!hideStockColumns && <TableHead className="text-xs font-medium text-white/60">Categoria</TableHead>}
@@ -1276,7 +1302,7 @@ export default function ProdutosFabrica({
               });
 
               const colSpanCount = (() => {
-                let count = 2; // drag + produto
+                let count = 3; // drag + produto + setor
                 if (!hideSku) count++;
                 if (!hideStockColumns) count += 5; // fornecedor + categoria + est.min + est.max + atual
                 if (!hideMateriaPrima) count++;
@@ -1349,6 +1375,7 @@ export default function ProdutosFabrica({
                           TOTAL ({filteredProdutos.length} itens)
                         </TableCell>
                         {!hideSku && <TableCell />}
+                        <TableCell />
                         {!hideStockColumns && <TableCell />}
                         {!hideMateriaPrima && <TableCell />}
                         {!hideStockColumns && <TableCell />}
